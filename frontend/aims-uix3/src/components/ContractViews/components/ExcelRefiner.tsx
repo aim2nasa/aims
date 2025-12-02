@@ -40,6 +40,9 @@ import './ExcelRefiner.css'
 // 우측 정렬이 필요한 컬럼명 패턴
 const RIGHT_ALIGN_PATTERNS = ['증권번호', '보험료', '이체일', '납입주기', '납입기간', '납입상태', '연락처', '계약일', '피보험자']
 
+// 시트별 검증 상태 타입
+type SheetValidationStatus = 'pending' | 'validating' | 'valid' | 'invalid'
+
 function isRightAlignColumn(columnName: string): boolean {
   if (!columnName) return false
   return RIGHT_ALIGN_PATTERNS.some(pattern => columnName.includes(pattern))
@@ -168,6 +171,12 @@ export function ExcelRefiner() {
 
   // 고객명-연락처 매핑 (계약 가져오기 시 사용)
   const [customerPhoneMap, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
+
+  // === 시트별 검증 상태 (새 UX 플로우) ===
+  const [sheetValidationStatus, setSheetValidationStatus] = useState<Map<string, SheetValidationStatus>>(new Map())
+  const [sheetIssueCount, setSheetIssueCount] = useState<Map<string, number>>(new Map())
+  const [isValidatingAll, setIsValidatingAll] = useState(false)
+
 
   // 초기화 완료 여부 (sessionStorage 로드 후 true)
   const isInitialized = useRef(false)
@@ -576,6 +585,9 @@ export function ExcelRefiner() {
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
     setActionLog(null)
+    // 시트별 검증 상태도 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
   }, [])
 
   // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
@@ -749,6 +761,159 @@ export function ExcelRefiner() {
       setImportProgress(null)
     }
   }, [currentSheet, activeSheetIndex, validatingColumns, productMatchResult, columnValidationResults, isImporting])
+
+  // === 전체 시트 순차 검증 (새 UX 플로우) ===
+  const handleValidateAllSheets = useCallback(async () => {
+    if (!sheets.length || isImporting || isValidatingAll) return
+
+    setIsValidatingAll(true)
+    setActionLog('검증 시작...')
+
+    // 기존 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumns(new Set())
+    setValidatedColumnsHistory(new Set())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setProductStatusFilter(null)
+
+    const newStatus = new Map<string, SheetValidationStatus>()
+    const newIssueCount = new Map<string, number>()
+
+    // 시트 순서: 개인고객 → 법인고객 → 계약
+    const sheetOrder = ['개인고객', '법인고객', '계약']
+
+    for (const sheetName of sheetOrder) {
+      const sheetIndex = sheets.findIndex(s => s.name === sheetName)
+      if (sheetIndex === -1) continue
+
+      const sheet = sheets[sheetIndex]
+      if (!sheet) continue
+
+      // 검증 중 상태로 표시
+      newStatus.set(sheetName, 'validating')
+      setSheetValidationStatus(new Map(newStatus))
+      setActiveSheetIndex(sheetIndex)
+
+      // UI 업데이트를 위한 짧은 대기
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // 시트별 필수컬럼 정의
+      const isCustomerSheet = sheetName === '개인고객' || sheetName === '법인고객'
+      const requiredTypes: Array<{ type: ValidationType; label: string }> = isCustomerSheet
+        ? [{ type: 'customerName', label: '고객명' }]
+        : [
+            { type: 'customerName', label: '고객명' },
+            { type: 'productName', label: '상품명' },
+            { type: 'contractDate', label: '계약일' },
+            { type: 'policyNumber', label: '증권번호' }
+          ]
+
+      let totalIssues = 0
+      const issueDetails: string[] = []
+
+      // 각 필수컬럼 검증
+      for (const { type, label } of requiredTypes) {
+        const colIndex = sheet.columns.findIndex(col => col && getValidationType(col) === type)
+        if (colIndex === -1) {
+          issueDetails.push(`${label} 컬럼 없음`)
+          totalIssues++
+          continue
+        }
+
+        const columnName = sheet.columns[colIndex] as string
+
+        if (type === 'productName') {
+          // 상품명은 비동기 검증
+          try {
+            const result = await validateProductNames(sheet.data, colIndex)
+            setProductMatchResult(result)
+            setProductNameColumnIndex(colIndex)
+
+            // 수정된 상품명 대체
+            if (result.modified.size > 0) {
+              const idToName = new Map<string, string>()
+              result.productNames.forEach((id, name) => {
+                idToName.set(id, name)
+              })
+
+              setSheets(prev => {
+                const updated = [...prev]
+                const targetSheet = updated[sheetIndex]
+                if (!targetSheet) return prev
+
+                const newData = [...targetSheet.data]
+                result.modified.forEach((objectId, rowIndex) => {
+                  const originalProductName = idToName.get(objectId)
+                  if (originalProductName && newData[rowIndex]) {
+                    newData[rowIndex] = [...newData[rowIndex]]
+                    newData[rowIndex][colIndex] = originalProductName
+                  }
+                })
+
+                updated[sheetIndex] = {
+                  name: targetSheet.name,
+                  columns: targetSheet.columns,
+                  data: newData
+                }
+                return updated
+              })
+            }
+
+            if (result.unmatched.length > 0) {
+              issueDetails.push(`${label} 미매칭 ${result.unmatched.length}건`)
+              totalIssues += result.unmatched.length
+            }
+
+            // 검증 완료 컬럼 추가
+            setValidatingColumns(prev => new Set([...prev, colIndex]))
+            setValidatedColumnsHistory(prev => new Set([...prev, colIndex]))
+          } catch (error) {
+            console.error('상품명 검증 오류:', error)
+            issueDetails.push(`${label} 검증 오류`)
+            totalIssues++
+          }
+        } else {
+          // 일반 검증 (동기)
+          const validationResult = validateColumn(sheet.data, colIndex, columnName)
+          const empties = validationResult.empties.length
+          const duplicates = type === 'policyNumber' ? validationResult.duplicates.length : 0
+
+          if (empties > 0) {
+            issueDetails.push(`${label} 빈값 ${empties}건`)
+            totalIssues += empties
+          }
+          if (duplicates > 0) {
+            issueDetails.push(`${label} 중복 ${duplicates}건`)
+            totalIssues += duplicates
+          }
+
+          // 검증 완료 컬럼 추가
+          setValidatingColumns(prev => new Set([...prev, colIndex]))
+          setValidatedColumnsHistory(prev => new Set([...prev, colIndex]))
+        }
+      }
+
+      // 시트 검증 결과 반영
+      if (totalIssues > 0) {
+        newStatus.set(sheetName, 'invalid')
+        newIssueCount.set(sheetName, totalIssues)
+        setSheetValidationStatus(new Map(newStatus))
+        setSheetIssueCount(new Map(newIssueCount))
+        setActionLog(`⚠️ ${sheetName}: ${issueDetails.join(', ')}`)
+        setIsValidatingAll(false)
+        return // 문제 발견 시 중단
+      }
+
+      newStatus.set(sheetName, 'valid')
+      setSheetValidationStatus(new Map(newStatus))
+    }
+
+    // 모든 시트 검증 완료
+    setIsValidatingAll(false)
+    setActionLog('✓ 모든 시트 검증 완료 - 등록 가능')
+  }, [sheets, isImporting, isValidatingAll])
 
   // 삭제 모드 토글
   const handleToggleDeleteMode = useCallback(() => {
@@ -1477,87 +1642,74 @@ export function ExcelRefiner() {
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
 
-  // Wizard 단계 계산
+  // Wizard 단계 계산 (시트 기반 검증 플로우)
   const wizardStep = useMemo(() => {
-    if (!currentSheet) return null
+    if (!sheets.length) return null
 
-    // 시트별 필수 컬럼 타입
-    // - 개인고객, 법인고객: 고객명만 필수
-    // - 계약: 고객명, 상품명, 계약일, 증권번호 필수
-    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
-    const requiredTypes = isCustomerSheet
-      ? ['customerName']
-      : ['customerName', 'productName', 'contractDate', 'policyNumber']
+    const allSheets = ['개인고객', '법인고객', '계약']
+    const existingSheets = allSheets.filter(name => sheets.some(s => s.name === name))
 
-    // 현재 시트에서 필수 컬럼 찾기
-    const requiredColIndices: number[] = []
-    currentSheet.columns.forEach((col, idx) => {
-      if (!col) return // null 체크
-      const type = getValidationType(col)
-      if (requiredTypes.includes(type)) {
-        requiredColIndices.push(idx)
-      }
-    })
+    // 검증된 시트 수
+    const validatedCount = existingSheets.filter(name =>
+      sheetValidationStatus.get(name) === 'valid'
+    ).length
 
-    // 검증된 필수 컬럼 수 (이력 기반 - 컬럼별 클릭으로도 누적됨)
-    const validatedRequiredCount = requiredColIndices.filter(idx => validatedColumnsHistory.has(idx)).length
-
-    // 검증 진행 중인지
-    const isValidating = validatingInProgress.size > 0
+    // 문제 있는 시트
+    const invalidSheet = existingSheets.find(name =>
+      sheetValidationStatus.get(name) === 'invalid'
+    )
 
     // 등록 결과 상태 계산 (step 4 색상용)
-    // 'success': 100% 성공 (녹색), 'partial': 부분 성공 (주황색), 'error': 완전 실패 (빨간색), null: 아직 등록 안함
     let resultStatus: 'success' | 'partial' | 'error' | null = null
     if (importResult) {
       if (importResult.inserted === 0 && importResult.total > 0) {
-        // 0% 등록 = 완전 실패
         resultStatus = 'error'
       } else if (importResult.inserted === importResult.total && importResult.total > 0) {
-        // 100% 등록 = 완전 성공
         resultStatus = 'success'
       } else if (importResult.inserted > 0) {
-        // 부분 등록
         resultStatus = 'partial'
       } else if (importResult.errors > 0) {
-        // 오류만 있는 경우
         resultStatus = 'error'
       }
     }
 
-    // Step 결정
-    if (validatedRequiredCount === 0) {
-      // 아직 검증 시작 안함
-      return { step: 1, label: '필수컬럼검증', message: "'필수컬럼검증' 버튼을 클릭하여 데이터를 검증하세요.", resultStatus: null }
-    } else if (isValidating) {
-      // 검증 진행 중
-      return { step: 2, label: '검증 중', message: '데이터를 검증하고 있습니다. 잠시만 기다려주세요...', resultStatus: null }
-    } else if (problematicRows.length > 0) {
-      // 문제 발견
-      return { step: 3, label: '데이터 수정', message: `${problematicRows.length}개 문제 발견 → '검증 초기화' 클릭 → 컬럼별로 검증하며 수정`, resultStatus: null }
-    } else if (validatedRequiredCount === requiredColIndices.length && requiredColIndices.length === requiredTypes.length) {
-      // 모든 필수 컬럼(4개) 검증 완료, 문제 없음
-      // 등록 결과가 있으면 결과 메시지 표시
+    // Step 1: 검증 미시작
+    if (sheetValidationStatus.size === 0) {
+      return { step: 1, label: '검증', message: "'검증' 버튼을 클릭하여 시작하세요.", resultStatus: null }
+    }
+
+    // Step 2: 검증 진행 중
+    if (isValidatingAll) {
+      const validating = existingSheets.find(name =>
+        sheetValidationStatus.get(name) === 'validating'
+      )
+      return { step: 2, label: '진행', message: `${validating || ''} 검증 중...`, resultStatus: null }
+    }
+
+    // Step 3: 문제 발견
+    if (invalidSheet) {
+      const count = sheetIssueCount.get(invalidSheet) || 0
+      return { step: 3, label: '수정', message: `${invalidSheet}: ${count}건 수정 필요`, resultStatus: null }
+    }
+
+    // Step 4: 모든 검증 완료
+    if (validatedCount === existingSheets.length) {
       if (importResult && resultStatus) {
         let message = ''
         if (resultStatus === 'success') {
           message = `${importResult.inserted}건 모두 등록 완료`
         } else if (resultStatus === 'partial') {
-          message = `${importResult.inserted}/${importResult.total}건 등록 (${importResult.skipped}건은 이미 등록된 증권번호)`
+          message = `${importResult.inserted}/${importResult.total}건 등록`
         } else {
-          message = `0/${importResult.total}건 등록 (모두 이미 등록된 증권번호)`
+          message = `등록 실패`
         }
         return { step: 4, label: '등록', message, resultStatus }
       }
-      return { step: 4, label: '일괄등록', message: "'일괄등록' 버튼을 클릭하여 데이터를 등록하세요.", resultStatus: null }
-    } else if (requiredColIndices.length < requiredTypes.length) {
-      // 필수 4개 컬럼이 없는 시트 (개인/법인 등)
-      const missingCount = requiredTypes.length - requiredColIndices.length
-      return { step: 1, label: '컬럼 부족', message: `필수 컬럼 ${missingCount}개 누락. 계약 데이터가 있는 시트를 선택하세요.`, resultStatus: null }
-    } else {
-      // 일부 필수 컬럼만 검증됨
-      return { step: 2, label: '검증 계속', message: `필수 컬럼 ${validatedRequiredCount}/${requiredColIndices.length}개 검증 완료. 계속 검증하세요.`, resultStatus: null }
+      return { step: 4, label: '등록', message: '등록 가능', resultStatus: null }
     }
-  }, [currentSheet, validatedColumnsHistory, validatingInProgress.size, problematicRows.length, importResult])
+
+    return { step: 1, label: '검증', message: "'검증' 버튼을 클릭하여 시작하세요.", resultStatus: null }
+  }, [sheets, sheetValidationStatus, sheetIssueCount, isValidatingAll, importResult])
 
   // 컬럼별 검증 실패 이유 생성
   const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
@@ -1840,19 +1992,20 @@ export function ExcelRefiner() {
             {/* 행2: 액션바 - 검증버튼 + 상태 + 삭제모드 + 범례 */}
             <div className="excel-refiner__action-bar">
               <div className="excel-refiner__action-bar-left">
-                {/* 필수컬럼검증 버튼 */}
-                <Tooltip content="고객명, 상품명, 계약일, 증권번호 컬럼을 순차 검증합니다">
+                {/* 검증 버튼 - 모든 시트 순차 검증 */}
+                <Tooltip content="개인고객 → 법인고객 → 계약 순으로 검증합니다">
                 <Button
-                  variant="secondary"
+                  variant={sheetValidationStatus.size > 0 ? "secondary" : "primary"}
                   size="sm"
-                  onClick={handleValidateAllRequired}
+                  onClick={handleValidateAllSheets}
+                  disabled={isValidatingAll || isImporting}
                 >
-                  필수컬럼검증
+                  {isValidatingAll ? '검증 중...' : '검증'}
                 </Button>
                 </Tooltip>
 
                 {/* 검증 초기화 버튼 */}
-                {validatingColumns.size > 0 && (
+                {(validatingColumns.size > 0 || sheetValidationStatus.size > 0) && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -1863,7 +2016,7 @@ export function ExcelRefiner() {
                 )}
 
                 {/* 상태 표시 */}
-                {wizardStep?.step === 4 && problematicRows.length === 0 ? (
+                {wizardStep?.step === 4 ? (
                   <>
                     <span className="excel-refiner__status excel-refiner__status--success">✅ 검증 완료</span>
                     <Button
@@ -1875,9 +2028,9 @@ export function ExcelRefiner() {
                       {isImporting ? '등록 중...' : '일괄등록'}
                     </Button>
                   </>
-                ) : problematicRows.length > 0 ? (
+                ) : wizardStep?.step === 3 ? (
                   <span className="excel-refiner__status excel-refiner__status--error">
-                    ⚠️ {problematicRows.length}개 문제
+                    ⚠️ {sheetIssueCount.get(Array.from(sheetValidationStatus.entries()).find(([_, v]) => v === 'invalid')?.[0] || '') || 0}건 수정 필요
                   </span>
                 ) : wizardStep?.step === 1 ? (
                   <span className="excel-refiner__status excel-refiner__status--hint">
@@ -2022,16 +2175,23 @@ export function ExcelRefiner() {
 
             {/* 행3: 시트 탭 */}
             <div className="excel-refiner__sheet-tabs">
-              {sheets.map((sheet, index) => (
-                <button
-                  key={sheet.name}
-                  type="button"
-                  className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''}`}
-                  onClick={() => handleSheetChange(index)}
-                >
-                  {sheet.name}
-                </button>
-              ))}
+              {sheets.map((sheet, index) => {
+                const status = sheetValidationStatus.get(sheet.name)
+                const issueCount = sheetIssueCount.get(sheet.name) || 0
+                return (
+                  <button
+                    key={sheet.name}
+                    type="button"
+                    className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''} ${status ? `excel-refiner__sheet-tab--${status}` : ''}`}
+                    onClick={() => handleSheetChange(index)}
+                  >
+                    {sheet.name}
+                    {status === 'valid' && ' ✓'}
+                    {status === 'invalid' && ` (${issueCount})`}
+                    {status === 'validating' && ' ...'}
+                  </button>
+                )
+              })}
             </div>
 
             {/* 데이터 테이블 */}

@@ -695,6 +695,41 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--active {
   border-bottom-color: var(--color-bg-primary);
 }
 
+
+
+/* 시트 탭 검증 상태 */
+.excel-refiner__sheet-tab--valid {
+  color: var(--color-success-600);
+}
+
+.excel-refiner__sheet-tab--valid.excel-refiner__sheet-tab--active {
+  color: var(--color-success-600);
+}
+
+.excel-refiner__sheet-tab--invalid {
+  color: var(--color-error-600);
+}
+
+.excel-refiner__sheet-tab--invalid.excel-refiner__sheet-tab--active {
+  color: var(--color-error-600);
+}
+
+.excel-refiner__sheet-tab--validating {
+  color: var(--color-primary-500);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--valid {
+  color: var(--color-success-400);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--invalid {
+  color: var(--color-error-400);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
+  color: var(--color-primary-400);
+}
+
 /* === TABLE === */
 
 .excel-refiner__table-container {
