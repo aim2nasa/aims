@@ -2,7 +2,7 @@
  * ContractImportView Component
  * @since 1.0.0
  *
- * 계약 일괄등록 뷰 - Excel Refiner 통합
+ * 고객·계약 일괄등록 뷰 - Excel Refiner 통합
  * CenterPaneView 기반 구현
  */
 
@@ -24,7 +24,7 @@ export default function ContractImportView({
   return (
     <CenterPaneView
       visible={visible}
-      title="계약 일괄등록"
+      title="고객·계약 일괄등록"
       titleIcon={
         <span className="menu-icon-green">
           <SFSymbol

@@ -660,7 +660,7 @@ export default function ContractAllView({
                 weight={SFSymbolWeight.LIGHT}
               />
               <p>등록된 계약이 없습니다.</p>
-              <p className="contract-empty-hint">계약 일괄등록에서 엑셀 파일을 업로드하세요.</p>
+              <p className="contract-empty-hint">고객·계약 일괄등록에서 엑셀 파일을 업로드하세요.</p>
             </div>
           )}
 

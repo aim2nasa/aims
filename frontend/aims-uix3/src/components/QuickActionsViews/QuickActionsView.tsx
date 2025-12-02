@@ -182,8 +182,8 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
                   weight={SFSymbolWeight.MEDIUM}
                 />
               </span>
-              <span className="action-card-title">계약 일괄등록</span>
-              <span className="action-card-description">엑셀 파일에서 계약을 일괄 등록합니다</span>
+              <span className="action-card-title">고객·계약 일괄등록</span>
+              <span className="action-card-description">엑셀 파일에서 고객과 계약을 일괄 등록합니다</span>
             </button>
           </div>
         </section>

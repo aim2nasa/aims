@@ -337,8 +337,8 @@ const CustomMenu = ({
         {
           key: 'contracts-import',
           icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
-          label: '계약 일괄등록',
-          tooltipTitle: '엑셀 파일에서 계약 정보를 일괄 등록합니다',
+          label: '고객·계약 일괄등록',
+          tooltipTitle: '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다',
         }
       ]
     },
