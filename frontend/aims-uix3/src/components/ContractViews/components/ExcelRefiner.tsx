@@ -1649,36 +1649,18 @@ export function ExcelRefiner() {
         ) : (
           /* 데이터 뷰 */
           <div className="excel-refiner__content">
-            {/* 툴바 */}
-            <div className="excel-refiner__toolbar">
-              <div className="excel-refiner__toolbar-left">
+            {/* 행1: 헤더바 - 파일정보 + 위자드 + 전역버튼 */}
+            <div className="excel-refiner__header-bar">
+              <div className="excel-refiner__header-left">
                 <span className="excel-refiner__filename">{fileName}</span>
                 <span className="excel-refiner__row-count">
                   ({currentSheet.data.length}행)
                 </span>
               </div>
-              <div className="excel-refiner__toolbar-right">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleCloseExcel}
-                >
-                  엑셀닫기
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveRefined}
-                >
-                  다운로드
-                </Button>
-              </div>
-            </div>
 
-            {/* Wizard 안내 - 파일 로드 후 단계별 가이드 */}
-            {wizardStep && (
-              <div className={`excel-refiner__wizard excel-refiner__wizard--step-${wizardStep.step}`}>
-                <div className="excel-refiner__wizard-steps">
+              {/* 위자드 스텝 (중앙) */}
+              {wizardStep && (
+                <div className={`excel-refiner__wizard-compact excel-refiner__wizard--step-${wizardStep.step}`}>
                   <div className={`excel-refiner__wizard-step ${wizardStep.step >= 1 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 1 ? 'excel-refiner__wizard-step--completed' : ''}`}>
                     <span className="excel-refiner__wizard-step-number">1</span>
                     <span className="excel-refiner__wizard-step-label">검증</span>
@@ -1700,30 +1682,35 @@ export function ExcelRefiner() {
                     </span>
                     <span className="excel-refiner__wizard-step-label">
                       {wizardStep.resultStatus && importResult
-                        ? `등록 ${Math.round((importResult.inserted / (importResult.total || 1)) * 100)}%`
+                        ? `${Math.round((importResult.inserted / (importResult.total || 1)) * 100)}%`
                         : '등록'}
                     </span>
                   </div>
                 </div>
-                <div className={`excel-refiner__wizard-message ${wizardStep.resultStatus ? `excel-refiner__wizard-message--${wizardStep.resultStatus}` : ''}`}>
-                  <span className="excel-refiner__wizard-message-icon">
-                    {wizardStep.step === 1 && '👆'}
-                    {wizardStep.step === 2 && '⏳'}
-                    {wizardStep.step === 3 && '⚠️'}
-                    {wizardStep.step === 4 && !wizardStep.resultStatus && '✅'}
-                    {wizardStep.step === 4 && wizardStep.resultStatus === 'success' && '🎉'}
-                    {wizardStep.step === 4 && wizardStep.resultStatus === 'partial' && '⚠️'}
-                    {wizardStep.step === 4 && wizardStep.resultStatus === 'error' && '❌'}
-                  </span>
-                  <span className="excel-refiner__wizard-message-text">{wizardStep.message}</span>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* 검증 안내 */}
-            <div className="excel-refiner__validation">
-              <div className="excel-refiner__validation-header">
-                <span>컬럼 헤더를 클릭하여 검증하세요</span>
+              <div className="excel-refiner__header-right">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCloseExcel}
+                >
+                  엑셀닫기
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveRefined}
+                >
+                  다운로드
+                </Button>
+              </div>
+            </div>
+
+            {/* 행2: 액션바 - 검증버튼 + 상태 + 삭제모드 + 범례 */}
+            <div className="excel-refiner__action-bar">
+              <div className="excel-refiner__action-bar-left">
+                {/* 필수컬럼검증 버튼 */}
                 <Button
                   variant="secondary"
                   size="sm"
@@ -1732,76 +1719,45 @@ export function ExcelRefiner() {
                 >
                   필수컬럼검증
                 </Button>
+
+                {/* 검증 초기화 버튼 */}
                 {validatingColumns.size > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleClearValidation}
+                  >
+                    검증 초기화
+                  </Button>
+                )}
+
+                {/* 상태 표시 */}
+                {wizardStep?.step === 4 && problematicRows.length === 0 ? (
                   <>
-                    <span className="excel-refiner__validation-column">
-                      (선택: {validatingColumns.size}개 컬럼)
-                    </span>
+                    <span className="excel-refiner__status excel-refiner__status--success">✅ 검증 완료</span>
                     <Button
-                      variant="secondary"
+                      variant="primary"
                       size="sm"
-                      onClick={handleClearValidation}
+                      onClick={handleImportContracts}
+                      disabled={isImporting}
                     >
-                      검증 초기화
+                      {isImporting ? '등록 중...' : '계약 일괄등록'}
                     </Button>
                   </>
-                )}
-              </div>
+                ) : problematicRows.length > 0 ? (
+                  <span className="excel-refiner__status excel-refiner__status--error">
+                    ⚠️ {problematicRows.length}개 문제
+                  </span>
+                ) : wizardStep?.step === 1 ? (
+                  <span className="excel-refiner__status excel-refiner__status--hint">
+                    👆 클릭하여 시작
+                  </span>
+                ) : null}
 
-              {validatingColumns.size > 0 && (
-                <div className="excel-refiner__validation-result">
-                  {wizardStep?.step === 4 && problematicRows.length === 0 ? (
-                    <>
-                      <div className="excel-refiner__validation-status excel-refiner__validation-status--success">
-                        모든 검증 통과
-                      </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleImportContracts}
-                        disabled={isImporting}
-                      >
-                        {isImporting ? '등록 중...' : '계약 일괄등록'}
-                      </Button>
-                    </>
-                  ) : problematicRows.length > 0 ? (
-                    <div className="excel-refiner__validation-status excel-refiner__validation-status--error">
-                      문제 발견: {problematicRows.length}행
-                    </div>
-                  ) : null}
-                </div>
-              )}
+                {/* 구분선 */}
+                <span className="excel-refiner__divider" />
 
-              {/* 상품명 검증 색상 범례 */}
-              {productMatchResult && (
-                <div className="excel-refiner__validation-legend">
-                  <span
-                    className="excel-refiner__legend-label"
-                    title="수작업으로 입력하여 틀릴 수 있는 상품명을 보험상품 DB에 등록된 정확한 이름과 비교 검증합니다."
-                  >상품명 검증:</span>
-                  <span
-                    className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
-                    title="보험상품 DB에 등록된 상품명과 정확히 일치합니다. 수정이 필요 없습니다. (클릭하면 맨 위로 정렬)"
-                    onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
-                  >정확 매칭 ({productMatchResult.originalMatch.size})</span>
-                  <span
-                    className={`excel-refiner__legend-item excel-refiner__legend-item--modified${productStatusFilter === 'modified' ? ' excel-refiner__legend-item--active' : ''}`}
-                    title="공백이나 대소문자 차이가 있었지만 DB 상품명으로 자동 수정되었습니다. (클릭하면 맨 위로 정렬)"
-                    onClick={() => setProductStatusFilter(productStatusFilter === 'modified' ? null : 'modified')}
-                  >수정 매칭 ({productMatchResult.modified.size})</span>
-                  <span
-                    className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
-                    title="보험상품 DB에서 찾을 수 없는 상품명입니다. 상품명을 확인해주세요. (클릭하면 맨 위로 정렬)"
-                    onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
-                  >미매칭 ({productMatchResult.unmatched.length})</span>
-                </div>
-              )}
-            </div>
-
-            {/* 액션 바 */}
-            <div className="excel-refiner__actions">
-              <div className="excel-refiner__actions-left">
-                {/* 삭제 모드 토글 버튼 - 테이블 바로 위에 배치 */}
+                {/* 삭제 모드 토글 버튼 */}
                 <button
                   type="button"
                   className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
@@ -1818,6 +1774,7 @@ export function ExcelRefiner() {
                     </svg>
                   )}
                 </button>
+
                 {/* 삭제 모드가 아닐 때: 문제 행 원클릭 삭제 버튼 */}
                 {!isDeleteMode && problematicRows.length > 0 && (
                   <Button
@@ -1828,10 +1785,11 @@ export function ExcelRefiner() {
                     문제 행 삭제 ({problematicRows.length})
                   </Button>
                 )}
+
                 {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
                 {isDeleteMode && (
                   <>
-                    <span className="excel-refiner__selected-count">{selectedRows.size}개 선택됨</span>
+                    <span className="excel-refiner__selected-count">{selectedRows.size}개 선택</span>
                     <Button
                       variant="destructive"
                       size="sm"
@@ -1842,7 +1800,8 @@ export function ExcelRefiner() {
                     </Button>
                   </>
                 )}
-                {/* 삭제 모드일 때 문제 행 선택 버튼 표시 */}
+
+                {/* 삭제 모드일 때 문제 행 선택 버튼 */}
                 {isDeleteMode && problematicRows.length > 0 && (
                   <Button
                     variant="secondary"
@@ -1852,6 +1811,7 @@ export function ExcelRefiner() {
                     문제 행 선택 ({problematicRows.length})
                   </Button>
                 )}
+
                 {isDeleteMode && selectedRows.size > 0 && (
                   <Button
                     variant="ghost"
@@ -1862,39 +1822,64 @@ export function ExcelRefiner() {
                   </Button>
                 )}
               </div>
-              {/* 진행 상태 표시 */}
-              {importProgress && (
-                <div className="excel-refiner__import-progress">
-                  <span className="excel-refiner__import-progress-text">
-                    {importProgress.message} ({importProgress.current}/{importProgress.total})
-                  </span>
-                  <div className="excel-refiner__import-progress-bar">
-                    <div
-                      className="excel-refiner__import-progress-fill"
-                      style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
-                    />
+
+              <div className="excel-refiner__action-bar-right">
+                {/* 상품명 검증 색상 범례 */}
+                {productMatchResult && (
+                  <div className="excel-refiner__legend">
+                    <span
+                      className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
+                      title="보험상품 DB에 등록된 상품명과 정확히 일치"
+                      onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
+                    >정확({productMatchResult.originalMatch.size})</span>
+                    <span
+                      className={`excel-refiner__legend-item excel-refiner__legend-item--modified${productStatusFilter === 'modified' ? ' excel-refiner__legend-item--active' : ''}`}
+                      title="공백/대소문자 차이 → 자동 수정됨"
+                      onClick={() => setProductStatusFilter(productStatusFilter === 'modified' ? null : 'modified')}
+                    >수정({productMatchResult.modified.size})</span>
+                    <span
+                      className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
+                      title="DB에서 찾을 수 없음 - 확인 필요"
+                      onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
+                    >미매칭({productMatchResult.unmatched.length})</span>
                   </div>
-                </div>
-              )}
-              {/* 액션 로그 메시지 */}
-              {actionLog && !importProgress && (
-                <div className="excel-refiner__action-log">
-                  {actionLog}
-                  <button
-                    type="button"
-                    className="excel-refiner__action-log-clear"
-                    onClick={() => setActionLog(null)}
-                    title="로그 지우기"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-              )}
+                )}
+
+                {/* 진행 상태 표시 */}
+                {importProgress && (
+                  <div className="excel-refiner__import-progress">
+                    <span className="excel-refiner__import-progress-text">
+                      {importProgress.message} ({importProgress.current}/{importProgress.total})
+                    </span>
+                    <div className="excel-refiner__import-progress-bar">
+                      <div
+                        className="excel-refiner__import-progress-fill"
+                        style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 액션 로그 메시지 */}
+                {actionLog && !importProgress && (
+                  <div className="excel-refiner__action-log">
+                    {actionLog}
+                    <button
+                      type="button"
+                      className="excel-refiner__action-log-clear"
+                      onClick={() => setActionLog(null)}
+                      title="로그 지우기"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* 엑셀 시트 탭 - 테이블 바로 위에 배치 */}
+            {/* 행3: 시트 탭 */}
             <div className="excel-refiner__sheet-tabs">
               {sheets.map((sheet, index) => (
                 <button
