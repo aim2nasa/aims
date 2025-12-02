@@ -648,15 +648,15 @@ html[data-theme="dark"] .excel-refiner__legend-item--unmatched {
   display: flex;
   align-items: flex-end;
   gap: 0;
-  padding: 0 var(--spacing-4);
+  padding: 0 var(--spacing-2);
   background: var(--color-bg-tertiary);
-  border-bottom: 2px solid var(--color-border-secondary);
-  min-height: 32px;
+  border-bottom: 1px solid var(--color-border-secondary);
+  min-height: 24px;
 }
 
 .excel-refiner__sheet-tab {
   position: relative;
-  padding: var(--spacing-2) var(--spacing-4);
+  padding: 4px 12px;
   border: 1px solid transparent;
   border-bottom: none;
   background: var(--color-bg-tertiary);
@@ -666,7 +666,7 @@ html[data-theme="dark"] .excel-refiner__legend-item--unmatched {
   cursor: pointer;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   transition: all var(--duration-fast) var(--easing-default);
-  margin-bottom: -2px;
+  margin-bottom: -1px;
 }
 
 .excel-refiner__sheet-tab:hover {
@@ -679,7 +679,7 @@ html[data-theme="dark"] .excel-refiner__legend-item--unmatched {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold); /* 600 */
   border-color: var(--color-border-secondary);
-  border-bottom: 2px solid var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-bg-primary);
   z-index: 1;
 }
 
