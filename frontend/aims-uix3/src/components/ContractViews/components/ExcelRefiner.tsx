@@ -59,6 +59,15 @@ interface PersistedState {
   activeSheetIndex: number
   validatingColumns: number[]
   validatedColumnsHistory: number[]
+  // 시트별 검증 상태 (Map → 배열로 직렬화)
+  sheetValidationStatus: Array<[string, SheetValidationStatus]>
+  sheetIssueCount: Array<[string, number]>
+  // 등록 결과
+  importResult: {
+    개인고객: { total: number; success: number }
+    법인고객: { total: number; success: number }
+    계약: { total: number; success: number }
+  } | null
 }
 
 // sessionStorage에서 상태 로드
@@ -192,6 +201,16 @@ export function ExcelRefiner() {
       setActiveSheetIndex(saved.activeSheetIndex)
       setValidatingColumns(new Set(saved.validatingColumns))
       setValidatedColumnsHistory(new Set(saved.validatedColumnsHistory))
+      // 시트별 검증 상태 복원
+      if (saved.sheetValidationStatus) {
+        setSheetValidationStatus(new Map(saved.sheetValidationStatus))
+      }
+      if (saved.sheetIssueCount) {
+        setSheetIssueCount(new Map(saved.sheetIssueCount))
+      }
+      if (saved.importResult) {
+        setImportResult(saved.importResult)
+      }
       // productMatchResult는 Map을 포함하므로 저장/복원 불가 → 검증 다시 실행 필요
     }
     isInitialized.current = true
@@ -213,9 +232,12 @@ export function ExcelRefiner() {
       sheets,
       activeSheetIndex,
       validatingColumns: Array.from(validatingColumns),
-      validatedColumnsHistory: Array.from(validatedColumnsHistory)
+      validatedColumnsHistory: Array.from(validatedColumnsHistory),
+      sheetValidationStatus: Array.from(sheetValidationStatus.entries()),
+      sheetIssueCount: Array.from(sheetIssueCount.entries()),
+      importResult
     })
-  }, [fileName, sheets, activeSheetIndex, validatingColumns, validatedColumnsHistory])
+  }, [fileName, sheets, activeSheetIndex, validatingColumns, validatedColumnsHistory, sheetValidationStatus, sheetIssueCount, importResult])
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
