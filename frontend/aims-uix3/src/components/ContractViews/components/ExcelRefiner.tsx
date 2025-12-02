@@ -1555,12 +1555,8 @@ export function ExcelRefiner() {
             onDrop={handleDrop}
           >
             <div className="excel-refiner__dropzone-inner">
-              {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 (클릭시 샘플 다운로드) */}
-              <a
-                href="/일괄등록_샘플.xlsx"
-                download="일괄등록_샘플.xlsx"
-                className="excel-refiner__format-guide excel-refiner__format-guide--clickable"
-              >
+              {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 */}
+              <div className="excel-refiner__format-guide">
                 <div className="excel-refiner__format-guide-header">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.2"/>
@@ -1569,6 +1565,17 @@ export function ExcelRefiner() {
                     <line x1="9" y1="2" x2="9" y2="14" stroke="currentColor" strokeWidth="1.2"/>
                   </svg>
                   <span>엑셀 표준 포맷 예시</span>
+                  <a
+                    href="/일괄등록_샘플.xlsx"
+                    download="일괄등록_샘플.xlsx"
+                    className="excel-refiner__format-download"
+                    title="샘플 엑셀 다운로드"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3 12v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </a>
                 </div>
                 <div className="excel-refiner__format-table-wrapper">
                   <table className="excel-refiner__format-table">
@@ -1617,9 +1624,8 @@ export function ExcelRefiner() {
                 <div className="excel-refiner__format-legend">
                   <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--required">■ 필수 컬럼</span>
                   <span className="excel-refiner__format-legend-item">□ 선택 컬럼</span>
-                  <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--download">클릭하여 샘플 다운로드</span>
                 </div>
-              </a>
+              </div>
 
               {/* 파일 업로드 영역 - 하단 배치 */}
               <label className="excel-refiner__dropzone-content">

@@ -91,21 +91,9 @@
 /* === FORMAT GUIDE === */
 
 .excel-refiner__format-guide {
-  display: block;
   padding: var(--spacing-4);
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: inherit;
-}
-
-.excel-refiner__format-guide--clickable {
-  cursor: pointer;
-  transition: opacity var(--duration-fast) var(--easing-default);
-}
-
-.excel-refiner__format-guide--clickable:hover {
-  opacity: 0.8;
 }
 
 .excel-refiner__format-guide-header {
@@ -119,9 +107,24 @@
   font-weight: 600;
 }
 
-.excel-refiner__format-guide-header svg {
+.excel-refiner__format-guide-header > svg {
   flex-shrink: 0;
   color: var(--color-success-500);
+}
+
+.excel-refiner__format-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--spacing-1);
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__format-download:hover {
+  opacity: 1;
+  color: var(--color-primary-500);
 }
 
 .excel-refiner__format-table-wrapper {
@@ -197,11 +200,6 @@ html[data-theme="dark"] .excel-refiner__format-th--required {
 
 html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   color: var(--color-primary-400);
-}
-
-.excel-refiner__format-legend-item--download {
-  color: var(--color-text-tertiary);
-  opacity: 0.7;
 }
 
 /* === CONTENT === */
