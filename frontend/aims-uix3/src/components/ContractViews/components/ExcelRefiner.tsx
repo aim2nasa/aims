@@ -1466,7 +1466,7 @@ export function ExcelRefiner() {
 
     if (type === 'customerName') {
       if (result.empties.length === 0) return '모든 고객명 유효'
-      return `${result.empties.length}개 오류\n• 빈 값\n• 숫자만 있는 경우\n• 특수문자 포함\n• 더미 데이터 (테스트, 홍길동 등)\n→ 셀을 직접 수정하세요`
+      return `${result.empties.length}개 오류\n• 빈 값\n→ 셀을 직접 수정하세요`
     }
 
     return ''

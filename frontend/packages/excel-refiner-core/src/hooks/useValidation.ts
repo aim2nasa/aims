@@ -127,7 +127,8 @@ export function validateContractDate(
 
 /**
  * 고객명 검증 함수
- * - 오류(empties): 빈값, 숫자만, 특수문자, 더미데이터
+ * - 오류(empties): 빈값만 체크
+ * - 숫자, 특수문자 허용 (기업명 가능: "365", "(주)삼성" 등)
  * - 중복은 체크하지 않음 (동명이인 당연히 존재)
  */
 export function validateCustomerName(
@@ -136,31 +137,12 @@ export function validateCustomerName(
 ): ValidationResult {
   const empties: number[] = []
 
-  const dummyPatterns = ['테스트', 'test', 'xxx', 'ㅇㅇㅇ', 'ㅁㅁㅁ', 'aaa', 'bbb', '가가가', '나나나', '홍길동']
-
   data.forEach((row, index) => {
     const value = cellToString(row[columnIndex]).trim()
 
-    // 빈값
+    // 빈값만 체크
     if (!value || value.toLowerCase() === 'nan') {
       empties.push(index)
-      return
-    }
-    // 숫자만
-    if (/^\d+$/.test(value)) {
-      empties.push(index)
-      return
-    }
-    // 특수문자 (괄호는 동명이인 구분용으로 허용)
-    if (/[@#$%^&*+=\[\]{}|\\:;"'<>,?/~`!]/.test(value)) {
-      empties.push(index)
-      return
-    }
-    // 더미 데이터
-    const lowerValue = value.toLowerCase()
-    if (dummyPatterns.some(pattern => lowerValue === pattern.toLowerCase())) {
-      empties.push(index)
-      return
     }
   })
 
