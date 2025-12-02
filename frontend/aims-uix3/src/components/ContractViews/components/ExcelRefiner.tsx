@@ -1961,13 +1961,14 @@ export function ExcelRefiner() {
 
               <div className="excel-refiner__action-bar-right">
                 {/* 상품명 검증 색상 범례 */}
-                {productMatchResult && (
+                {productMatchResult && productNameColumnIndex !== null && (
                   <div className="excel-refiner__legend">
+                    <span className="excel-refiner__legend-label">상품명 검증</span>
                     <Tooltip content="보험상품 DB에 등록된 상품명과 정확히 일치">
                     <span
                       className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
                       onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
-                    >정확({productMatchResult.originalMatch.size})</span>
+                    >일치({productMatchResult.originalMatch.size})</span>
                     </Tooltip>
                     <Tooltip content="공백/대소문자 차이 → 자동 수정됨">
                     <span

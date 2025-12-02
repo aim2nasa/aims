@@ -532,6 +532,13 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   gap: var(--spacing-2);
 }
 
+.excel-refiner__legend-label {
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-right: var(--spacing-1);
+}
+
 .excel-refiner__legend-item {
   display: inline-flex;
   align-items: center;
