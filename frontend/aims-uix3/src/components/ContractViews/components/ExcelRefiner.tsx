@@ -1555,8 +1555,12 @@ export function ExcelRefiner() {
             onDrop={handleDrop}
           >
             <div className="excel-refiner__dropzone-inner">
-              {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 */}
-              <div className="excel-refiner__format-guide">
+              {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 (클릭시 샘플 다운로드) */}
+              <a
+                href="/일괄등록_샘플.xlsx"
+                download="일괄등록_샘플.xlsx"
+                className="excel-refiner__format-guide excel-refiner__format-guide--clickable"
+              >
                 <div className="excel-refiner__format-guide-header">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.2"/>
@@ -1613,8 +1617,9 @@ export function ExcelRefiner() {
                 <div className="excel-refiner__format-legend">
                   <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--required">■ 필수 컬럼</span>
                   <span className="excel-refiner__format-legend-item">□ 선택 컬럼</span>
+                  <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--download">클릭하여 샘플 다운로드</span>
                 </div>
-              </div>
+              </a>
 
               {/* 파일 업로드 영역 - 하단 배치 */}
               <label className="excel-refiner__dropzone-content">

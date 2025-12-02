@@ -91,9 +91,21 @@
 /* === FORMAT GUIDE === */
 
 .excel-refiner__format-guide {
+  display: block;
   padding: var(--spacing-4);
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+}
+
+.excel-refiner__format-guide--clickable {
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__format-guide--clickable:hover {
+  opacity: 0.8;
 }
 
 .excel-refiner__format-guide-header {
@@ -185,6 +197,11 @@ html[data-theme="dark"] .excel-refiner__format-th--required {
 
 html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   color: var(--color-primary-400);
+}
+
+.excel-refiner__format-legend-item--download {
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
 }
 
 /* === CONTENT === */
