@@ -30,7 +30,7 @@ import {
   type InsuranceProduct,
   type ValidationType
 } from '@aims/excel-refiner-core'
-import { CustomerService } from '@/services/customerService'
+import { CustomerService, type BulkCustomerInput } from '@/services/customerService'
 import { ContractService } from '@/services/contractService'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { ProductSearchModal } from './ProductSearchModal'
@@ -156,12 +156,14 @@ export function ExcelRefiner() {
     errors: number      // 오류 계약 수
   } | null>(null)
 
-  // 계약 가져오기 확인 모달 상태
+  // 일괄등록 확인 모달 상태
   const [importConfirmModal, setImportConfirmModal] = useState<{
     isOpen: boolean
     customerCount: number
     customerNames: string[]
-  }>({ isOpen: false, customerCount: 0, customerNames: [] })
+    customers: BulkCustomerInput[]  // 고객 전체 정보 (bulkImportCustomers용)
+    isCustomerSheet: boolean        // 고객 시트 여부
+  }>({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })
 
   // 고객명-연락처 매핑 (계약 가져오기 시 사용)
   const [customerPhoneMap, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
@@ -1098,9 +1100,13 @@ export function ExcelRefiner() {
     }
   }, [handleCellEditSave, handleCellEditCancel])
 
-  // 계약 가져오기 버튼 클릭 - 확인 모달 열기
+  // 일괄등록 버튼 클릭 - 확인 모달 열기
   const handleImportContracts = useCallback(() => {
     if (!currentSheet) return
+
+    // 고객 시트 여부 확인
+    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
+    const customerType: '개인' | '법인' = currentSheet.name === '법인고객' ? '법인' : '개인'
 
     // 고객명 컬럼 찾기
     const customerNameColIndex = currentSheet.columns.findIndex(
@@ -1116,272 +1122,351 @@ export function ExcelRefiner() {
       return
     }
 
-    // 연락처 컬럼 찾기
-    const contactColIndex = currentSheet.columns.findIndex(
-      col => col && col.includes('연락처')
-    )
+    // 컬럼 인덱스 찾기
+    const contactColIndex = currentSheet.columns.findIndex(col => col && col.includes('연락처'))
+    const addressColIndex = currentSheet.columns.findIndex(col => col && col.includes('주소'))
+    const genderColIndex = currentSheet.columns.findIndex(col => col && col.includes('성별'))
+    const birthDateColIndex = currentSheet.columns.findIndex(col => col && col.includes('생년월일'))
 
-    // 고유한 고객명 및 연락처 매핑 추출
-    const customerNames = new Set<string>()
-    const customerPhoneMap = new Map<string, string>() // 고객명 → 연락처
-    currentSheet.data.forEach(row => {
-      const name = cellToString(row[customerNameColIndex] as CellValue).trim()
-      if (name) {
-        customerNames.add(name)
-        // 첫 번째로 발견된 연락처를 사용 (같은 고객이 여러 계약을 가질 수 있음)
-        if (contactColIndex !== -1 && !customerPhoneMap.has(name)) {
+    if (isCustomerSheet) {
+      // === 고객 시트: BulkCustomerInput 배열로 변환 ===
+      const customersMap = new Map<string, BulkCustomerInput>()
+
+      currentSheet.data.forEach(row => {
+        const name = cellToString(row[customerNameColIndex] as CellValue).trim()
+        if (!name) return
+
+        // 이미 처리된 고객은 건너뜀 (첫 번째 행 데이터 사용)
+        if (customersMap.has(name)) return
+
+        const customer: BulkCustomerInput = {
+          name,
+          customer_type: customerType
+        }
+
+        // 연락처
+        if (contactColIndex !== -1) {
           const phone = cellToString(row[contactColIndex] as CellValue).trim()
-          if (phone) {
-            customerPhoneMap.set(name, phone)
+          if (phone) customer.mobile_phone = phone
+        }
+
+        // 주소
+        if (addressColIndex !== -1) {
+          const address = cellToString(row[addressColIndex] as CellValue).trim()
+          if (address) customer.address = address
+        }
+
+        // 성별 (개인고객만)
+        if (customerType === '개인' && genderColIndex !== -1) {
+          const gender = cellToString(row[genderColIndex] as CellValue).trim()
+          if (gender) customer.gender = gender
+        }
+
+        // 생년월일 (개인고객만)
+        if (customerType === '개인' && birthDateColIndex !== -1) {
+          const birthDate = cellToString(row[birthDateColIndex] as CellValue).trim()
+          if (birthDate) customer.birth_date = birthDate
+        }
+
+        customersMap.set(name, customer)
+      })
+
+      const customers = Array.from(customersMap.values())
+      if (customers.length === 0) {
+        showAlert({
+          title: '데이터 오류',
+          message: '고객명 데이터가 없습니다.',
+          iconType: 'warning'
+        })
+        return
+      }
+
+      setImportConfirmModal({
+        isOpen: true,
+        customerCount: customers.length,
+        customerNames: customers.map(c => c.name),
+        customers,
+        isCustomerSheet: true
+      })
+    } else {
+      // === 계약 시트: 기존 로직 유지 ===
+      const customerNames = new Set<string>()
+      const phoneMap = new Map<string, string>()
+
+      currentSheet.data.forEach(row => {
+        const name = cellToString(row[customerNameColIndex] as CellValue).trim()
+        if (name) {
+          customerNames.add(name)
+          if (contactColIndex !== -1 && !phoneMap.has(name)) {
+            const phone = cellToString(row[contactColIndex] as CellValue).trim()
+            if (phone) phoneMap.set(name, phone)
           }
         }
-      }
-    })
+      })
 
-    const uniqueNames = Array.from(customerNames)
-    if (uniqueNames.length === 0) {
+      const uniqueNames = Array.from(customerNames)
+      if (uniqueNames.length === 0) {
+        showAlert({
+          title: '데이터 오류',
+          message: '고객명 데이터가 없습니다.',
+          iconType: 'warning'
+        })
+        return
+      }
+
+      setCustomerPhoneMap(phoneMap)
+      setImportConfirmModal({
+        isOpen: true,
+        customerCount: uniqueNames.length,
+        customerNames: uniqueNames,
+        customers: [],
+        isCustomerSheet: false
+      })
+    }
+  }, [currentSheet])
+
+  // 일괄등록 확인 후 실행
+  const handleConfirmImport = useCallback(async () => {
+    const { customerNames, customers, isCustomerSheet } = importConfirmModal
+    setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })
+
+    if (!user?._id) {
       showAlert({
-        title: '데이터 오류',
-        message: '고객명 데이터가 없습니다.',
+        title: '로그인 필요',
+        message: '로그인이 필요합니다.',
         iconType: 'warning'
       })
       return
     }
 
-    // 확인 모달 열기 (customerPhoneMap을 전달하기 위해 state 저장)
-    setCustomerPhoneMap(customerPhoneMap)
-    setImportConfirmModal({
-      isOpen: true,
-      customerCount: uniqueNames.length,
-      customerNames: uniqueNames
-    })
-  }, [currentSheet])
-
-  // 계약 가져오기 확인 후 실행
-  const handleConfirmImport = useCallback(async () => {
-    const { customerNames } = importConfirmModal
-    setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })
-
-    if (customerNames.length === 0 || !currentSheet || !user?._id) {
-      if (!user?._id) {
-        showAlert({
-          title: '로그인 필요',
-          message: '로그인이 필요합니다.',
-          iconType: 'warning'
-        })
-      }
-      return
-    }
-
     setIsImporting(true)
-    setImportProgress({ current: 0, total: 3, message: '1/3: 고객 생성 준비 중...' })
-
-    let customerCreatedCount = 0
-    let customerSkippedCount = 0
-    const customerErrors: string[] = []
 
     try {
-      // === 1단계: 고객 생성 ===
-      const existingResponse = await CustomerService.getCustomers({ limit: 100000 })
-      const existingNames = new Set(
-        existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
-      )
+      if (isCustomerSheet) {
+        // === 고객 시트: bulkImportCustomers API 사용 ===
+        if (customers.length === 0) return
 
-      for (let i = 0; i < customerNames.length; i++) {
-        const name = customerNames[i]!
-        setImportProgress({
-          current: 1,
-          total: 3,
-          message: `1/3: 고객 생성 중 (${i + 1}/${customerNames.length}) - ${name}`
+        setImportProgress({ current: 1, total: 1, message: `고객 등록 중 (${customers.length}명)...` })
+
+        const result = await CustomerService.bulkImportCustomers(customers)
+
+        // 결과 메시지 생성
+        const hasSuccess = result.createdCount > 0 || result.updatedCount > 0
+        const hasFailure = result.skippedCount > 0 || result.errorCount > 0
+
+        let statusIcon: string
+        let statusText: string
+        if (hasSuccess && !hasFailure) {
+          statusIcon = '✓'
+          statusText = '일괄등록 완료'
+        } else if (hasSuccess && hasFailure) {
+          statusIcon = '⚠️'
+          statusText = '일괄등록 일부 완료'
+        } else {
+          statusIcon = '✗'
+          statusText = '일괄등록 실패'
+        }
+
+        const parts: string[] = [`${statusIcon} ${statusText}`]
+
+        if (result.createdCount > 0) {
+          parts.push(`${result.createdCount}명 생성`)
+        }
+        if (result.updatedCount > 0) {
+          parts.push(`${result.updatedCount}명 정보 업데이트`)
+        }
+        if (result.skippedCount > 0) {
+          parts.push(`${result.skippedCount}명 변경없음`)
+        }
+        if (result.errorCount > 0) {
+          parts.push(`오류 ${result.errorCount}건`)
+        }
+
+        setActionLog(parts.join(' | '))
+
+        // 결과 저장 (Wizard 색상용)
+        setImportResult({
+          total: customers.length,
+          inserted: result.createdCount,
+          skipped: result.skippedCount + result.updatedCount,  // 업데이트도 건너뛰지 않았으므로
+          errors: result.errorCount
         })
 
-        if (existingNames.has(name.toLowerCase())) {
-          customerSkippedCount++
-          continue
-        }
+        // 완료 이벤트
+        window.dispatchEvent(new CustomEvent('customerChanged'))
 
-        try {
-          // 연락처 정보 가져오기
-          const phone = customerPhoneMap.get(name)
-          const result = await CustomerService.createCustomer({
-            personal_info: {
-              name,
-              ...(phone && { mobile_phone: phone })
-            },
-            insurance_info: {
-              customer_type: '개인'  // 명시적으로 지정되지 않으면 개인 고객으로 생성
-            },
-            contracts: [],
-            documents: [],
-            consultations: []
-          })
-          if (import.meta.env.DEV) {
-            console.log(`[고객 생성 성공] ${name}:`, result)
-          }
-          customerCreatedCount++
-          existingNames.add(name.toLowerCase())
-        } catch (err) {
-          console.error(`[고객 생성 실패] ${name}:`, err)
-          customerErrors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
-        }
-      }
-
-      // === 2단계: Excel 데이터에서 계약 추출 ===
-      setImportProgress({ current: 2, total: 3, message: '2/3: 계약 데이터 추출 중...' })
-
-      // 컬럼 인덱스 찾기
-      const colIndexMap: Record<string, number> = {}
-      const columnMapping: Record<string, string> = {
-        '고객명': 'customer_name',
-        '상품명': 'product_name',
-        '계약일': 'contract_date',
-        '증권번호': 'policy_number',
-        '보험료': 'premium',
-        '이체일': 'payment_day',
-        '납입주기': 'payment_cycle',
-        '납입기간': 'payment_period',
-        '피보험자': 'insured_person',
-        '납입상태': 'payment_status'
-      }
-
-      currentSheet.columns.forEach((colName, idx) => {
-        if (!colName) return // null 체크
-        for (const [korName, engName] of Object.entries(columnMapping)) {
-          if (colName.includes(korName)) {
-            colIndexMap[engName] = idx
-            break
-          }
-        }
-      })
-
-      // 필수 컬럼 확인
-      if (colIndexMap['policy_number'] === undefined) {
-        showAlert({
-          title: '컬럼 오류',
-          message: '증권번호 컬럼을 찾을 수 없습니다.',
-          iconType: 'warning'
-        })
-        return
-      }
-
-      // 계약 데이터 추출
-      const contracts = currentSheet.data.map(row => {
-        const getValue = (field: string): string => {
-          const idx = colIndexMap[field]
-          if (idx === undefined) return ''
-          return cellToString(row[idx] as CellValue).trim()
-        }
-
-        const getNumberValue = (field: string): number => {
-          const val = getValue(field)
-          const num = parseInt(val.replace(/[^0-9]/g, ''), 10)
-          return isNaN(num) ? 0 : num
-        }
-
-        return {
-          customer_name: getValue('customer_name'),
-          product_name: getValue('product_name'),
-          contract_date: getValue('contract_date') || null,
-          policy_number: getValue('policy_number'),
-          premium: getNumberValue('premium'),
-          payment_day: getValue('payment_day') || null,  // 원본 텍스트 그대로 저장
-          payment_cycle: getValue('payment_cycle') || null,
-          payment_period: getValue('payment_period') || null,
-          insured_person: getValue('insured_person') || null,
-          payment_status: getValue('payment_status') || null
-        }
-      }).filter(c => c.policy_number) // 증권번호가 있는 행만
-
-      if (contracts.length === 0) {
-        setActionLog(`✓ 고객 생성: ${customerCreatedCount}명 | 건너뜀: ${customerSkippedCount}명 | 계약: 0건 (증권번호 없음)`)
-        return
-      }
-
-      // === 3단계: 계약 일괄 등록 ===
-      setImportProgress({ current: 3, total: 3, message: `3/3: 계약 등록 중 (${contracts.length}건)...` })
-
-      const bulkResult = await ContractService.createContractsBulk({
-        agent_id: user._id,
-        contracts
-      })
-
-      // 최종 결과 메시지 - 상태에 따라 다른 표현
-      const contractResult = bulkResult.data
-      const totalErrors = customerErrors.length + contractResult.errorCount
-      const hasSuccess = customerCreatedCount > 0 || contractResult.insertedCount > 0
-      const hasFailure = customerSkippedCount > 0 || contractResult.skippedCount > 0 || totalErrors > 0
-
-      // 상태 결정
-      let statusIcon: string
-      let statusText: string
-      if (hasSuccess && !hasFailure) {
-        statusIcon = '✓'
-        statusText = '일괄등록 완료'
-      } else if (hasSuccess && hasFailure) {
-        statusIcon = '⚠️'
-        statusText = '일괄등록 일부 완료'
       } else {
-        statusIcon = '✗'
-        statusText = '일괄등록 실패'
+        // === 계약 시트: 기존 로직 (고객 생성 + 계약 등록) ===
+        if (customerNames.length === 0 || !currentSheet) return
+
+        setImportProgress({ current: 0, total: 3, message: '1/3: 고객 생성 준비 중...' })
+
+        let customerCreatedCount = 0
+        let customerSkippedCount = 0
+        const customerErrors: string[] = []
+
+        // 1단계: 고객 생성
+        const existingResponse = await CustomerService.getCustomers({ limit: 100000 })
+        const existingNames = new Set(
+          existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
+        )
+
+        for (let i = 0; i < customerNames.length; i++) {
+          const name = customerNames[i]!
+          setImportProgress({
+            current: 1,
+            total: 3,
+            message: `1/3: 고객 생성 중 (${i + 1}/${customerNames.length}) - ${name}`
+          })
+
+          if (existingNames.has(name.toLowerCase())) {
+            customerSkippedCount++
+            continue
+          }
+
+          try {
+            const phone = customerPhoneMap.get(name)
+            await CustomerService.createCustomer({
+              personal_info: {
+                name,
+                ...(phone && { mobile_phone: phone })
+              },
+              insurance_info: { customer_type: '개인' },
+              contracts: [],
+              documents: [],
+              consultations: []
+            })
+            customerCreatedCount++
+            existingNames.add(name.toLowerCase())
+          } catch (err) {
+            console.error(`[고객 생성 실패] ${name}:`, err)
+            customerErrors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+          }
+        }
+
+        // 2단계: 계약 데이터 추출
+        setImportProgress({ current: 2, total: 3, message: '2/3: 계약 데이터 추출 중...' })
+
+        const colIndexMap: Record<string, number> = {}
+        const columnMapping: Record<string, string> = {
+          '고객명': 'customer_name',
+          '상품명': 'product_name',
+          '계약일': 'contract_date',
+          '증권번호': 'policy_number',
+          '보험료': 'premium',
+          '이체일': 'payment_day',
+          '납입주기': 'payment_cycle',
+          '납입기간': 'payment_period',
+          '피보험자': 'insured_person',
+          '납입상태': 'payment_status'
+        }
+
+        currentSheet.columns.forEach((colName, idx) => {
+          if (!colName) return
+          for (const [korName, engName] of Object.entries(columnMapping)) {
+            if (colName.includes(korName)) {
+              colIndexMap[engName] = idx
+              break
+            }
+          }
+        })
+
+        if (colIndexMap['policy_number'] === undefined) {
+          showAlert({
+            title: '컬럼 오류',
+            message: '증권번호 컬럼을 찾을 수 없습니다.',
+            iconType: 'warning'
+          })
+          return
+        }
+
+        const contracts = currentSheet.data.map(row => {
+          const getValue = (field: string): string => {
+            const idx = colIndexMap[field]
+            if (idx === undefined) return ''
+            return cellToString(row[idx] as CellValue).trim()
+          }
+          const getNumberValue = (field: string): number => {
+            const val = getValue(field)
+            const num = parseInt(val.replace(/[^0-9]/g, ''), 10)
+            return isNaN(num) ? 0 : num
+          }
+          return {
+            customer_name: getValue('customer_name'),
+            product_name: getValue('product_name'),
+            contract_date: getValue('contract_date') || null,
+            policy_number: getValue('policy_number'),
+            premium: getNumberValue('premium'),
+            payment_day: getValue('payment_day') || null,
+            payment_cycle: getValue('payment_cycle') || null,
+            payment_period: getValue('payment_period') || null,
+            insured_person: getValue('insured_person') || null,
+            payment_status: getValue('payment_status') || null
+          }
+        }).filter(c => c.policy_number)
+
+        if (contracts.length === 0) {
+          setActionLog(`✓ 고객 생성: ${customerCreatedCount}명 | 건너뜀: ${customerSkippedCount}명 | 계약: 0건 (증권번호 없음)`)
+          return
+        }
+
+        // 3단계: 계약 등록
+        setImportProgress({ current: 3, total: 3, message: `3/3: 계약 등록 중 (${contracts.length}건)...` })
+
+        const bulkResult = await ContractService.createContractsBulk({
+          agent_id: user._id,
+          contracts
+        })
+
+        const contractResult = bulkResult.data
+        const totalErrors = customerErrors.length + contractResult.errorCount
+        const hasSuccess = customerCreatedCount > 0 || contractResult.insertedCount > 0
+        const hasFailure = customerSkippedCount > 0 || contractResult.skippedCount > 0 || totalErrors > 0
+
+        let statusIcon: string
+        let statusText: string
+        if (hasSuccess && !hasFailure) {
+          statusIcon = '✓'
+          statusText = '일괄등록 완료'
+        } else if (hasSuccess && hasFailure) {
+          statusIcon = '⚠️'
+          statusText = '일괄등록 일부 완료'
+        } else {
+          statusIcon = '✗'
+          statusText = '일괄등록 실패'
+        }
+
+        const parts: string[] = [`${statusIcon} ${statusText}`]
+        if (customerCreatedCount > 0) parts.push(`고객 ${customerCreatedCount}명 생성`)
+        if (customerSkippedCount > 0) parts.push(`기존 고객 ${customerSkippedCount}명`)
+        if (contractResult.insertedCount > 0) parts.push(`계약 ${contractResult.insertedCount}건 등록`)
+        if (contractResult.skippedCount > 0) parts.push(`중복 증권번호 ${contractResult.skippedCount}건`)
+        if (totalErrors > 0) parts.push(`오류 ${totalErrors}건`)
+
+        setActionLog(parts.join(' | '))
+        setImportResult({
+          total: contracts.length,
+          inserted: contractResult.insertedCount,
+          skipped: contractResult.skippedCount,
+          errors: contractResult.errorCount
+        })
+
+        if (customerErrors.length > 0) {
+          console.error('고객 생성 오류:', customerErrors)
+        }
+
+        window.dispatchEvent(new CustomEvent('customerChanged'))
+        window.dispatchEvent(new CustomEvent('contractChanged'))
       }
-
-      const parts: string[] = [`${statusIcon} ${statusText}`]
-
-      // 고객 결과
-      if (customerCreatedCount > 0) {
-        parts.push(`고객 ${customerCreatedCount}명 생성`)
-      }
-      if (customerSkippedCount > 0) {
-        parts.push(`기존 고객 ${customerSkippedCount}명`)
-      }
-
-      // 계약 결과
-      if (contractResult.insertedCount > 0) {
-        parts.push(`계약 ${contractResult.insertedCount}건 등록`)
-      }
-      if (contractResult.skippedCount > 0) {
-        parts.push(`중복 증권번호 ${contractResult.skippedCount}건`)
-      }
-
-      // 오류
-      if (totalErrors > 0) {
-        parts.push(`오류 ${totalErrors}건`)
-      }
-
-      const resultMsg = parts.join(' | ')
-
-      setActionLog(resultMsg)
-
-      // 계약 등록 결과 저장 (Wizard 4단계 색상 표시용)
-      setImportResult({
-        total: contracts.length,
-        inserted: contractResult.insertedCount,
-        skipped: contractResult.skippedCount,
-        errors: contractResult.errorCount
-      })
-
-      if (customerErrors.length > 0) {
-        console.error('고객 생성 오류:', customerErrors)
-      }
-
-      // 가져오기 완료 후 이벤트 발생 (대시보드 동기화)
-      window.dispatchEvent(new CustomEvent('customerChanged'))
-      window.dispatchEvent(new CustomEvent('contractChanged'))
 
     } catch (err) {
-      console.error('가져오기 오류:', err)
+      console.error('일괄등록 오류:', err)
       showAlert({
-        title: '가져오기 오류',
-        message: `가져오기 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`,
+        title: '일괄등록 오류',
+        message: `일괄등록 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`,
         iconType: 'error'
       })
-      // 오류 발생 시 결과 초기화 (완전 실패)
-      setImportResult({
-        total: 0,
-        inserted: 0,
-        skipped: 0,
-        errors: 1
-      })
+      setImportResult({ total: 0, inserted: 0, skipped: 0, errors: 1 })
     } finally {
       setIsImporting(false)
       setImportProgress(null)
@@ -2201,23 +2286,25 @@ export function ExcelRefiner() {
       {/* 일괄등록 확인 모달 */}
       <Modal
         visible={importConfirmModal.isOpen}
-        onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })}
+        onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })}
         title="일괄등록 확인"
         size="sm"
         backdropClosable
       >
         <div className="excel-refiner__confirm-modal">
           <p className="excel-refiner__confirm-message">
-            <strong>{importConfirmModal.customerCount}명</strong>의 고객을 생성하시겠습니까?
+            <strong>{importConfirmModal.customerCount}명</strong>의 고객을 {importConfirmModal.isCustomerSheet ? '등록/업데이트' : '생성'}하시겠습니까?
           </p>
           <p className="excel-refiner__confirm-note">
-            동일한 이름의 기존 고객이 있으면 생성하지 않습니다.
+            {importConfirmModal.isCustomerSheet
+              ? '동일 고객명이 존재하면 정보만 업데이트합니다.'
+              : '동일한 이름의 기존 고객이 있으면 생성하지 않습니다.'}
           </p>
           <div className="excel-refiner__confirm-actions">
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })}
+              onClick={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })}
             >
               취소
             </Button>
