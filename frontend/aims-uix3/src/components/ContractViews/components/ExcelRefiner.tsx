@@ -1617,31 +1617,22 @@ export function ExcelRefiner() {
               </div>
 
               {/* 파일 업로드 영역 - 하단 배치 */}
-              <div className="excel-refiner__dropzone-content">
-                {/* Excel 아이콘 */}
-                <svg
-                  className="excel-refiner__dropzone-icon"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                >
-                  {/* 파일 배경 */}
-                  <path d="M6 2C4.9 2 4 2.9 4 4V28C4 29.1 4.9 30 6 30H26C27.1 30 28 29.1 28 28V10L20 2H6Z" fill="#185C37"/>
-                  {/* 접힌 모서리 */}
-                  <path d="M20 2V10H28L20 2Z" fill="#21A366"/>
-                  {/* X 글자 */}
-                  <path d="M9.5 13L13 18L9.5 23H12.5L14.5 20L16.5 23H19.5L16 18L19.5 13H16.5L14.5 16L12.5 13H9.5Z" fill="white"/>
-                </svg>
-                <p>엑셀 파일을 여기에 드래그하거나</p>
-                <label className="excel-refiner__file-label">
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleFileSelect}
-                    className="excel-refiner__file-input"
-                  />
-                  <span>파일 선택</span>
-                </label>
-              </div>
+              <label className="excel-refiner__dropzone-content">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileSelect}
+                  className="excel-refiner__file-input"
+                />
+                {/* + 버튼 */}
+                <div className="excel-refiner__plus-icon">
+                  <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                    <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="excel-refiner__dropzone-hint">엑셀 파일을 끌어다 놓으세요!</span>
+                <span className="excel-refiner__dropzone-subhint">또는 클릭하여 엑셀 파일 선택</span>
+              </label>
             </div>
           </div>
         ) : (

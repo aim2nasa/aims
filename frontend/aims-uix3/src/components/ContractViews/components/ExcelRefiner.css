@@ -51,47 +51,37 @@
 }
 
 .excel-refiner__dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   color: var(--color-text-secondary);
+  cursor: pointer;
+  gap: var(--spacing-2);
 }
 
-.excel-refiner__dropzone-icon {
-  display: block;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--spacing-4) auto;
-  opacity: 0.5;
-}
-
-.excel-refiner__dropzone-content p {
-  margin-bottom: var(--spacing-4);
-  font-size: 13px;
-}
-
-.excel-refiner__file-label {
-  display: inline-flex;
+.excel-refiner__plus-icon {
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-2) var(--spacing-4);
-  background: var(--color-button-primary-bg);
-  color: var(--color-button-primary-text);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  transition: background-color var(--duration-fast) var(--easing-default);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-primary-500);
 }
 
-.excel-refiner__file-label:hover {
-  background: var(--color-button-primary-bg-hover);
+.excel-refiner__dropzone-hint {
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-primary);
+  letter-spacing: -0.3px;
 }
 
-.excel-refiner__file-label--small {
-  padding: var(--spacing-1) var(--spacing-3);
-  font-size: var(--font-size-sm);
-  min-height: 2rem;
-  display: inline-flex;
-  align-items: center;
+.excel-refiner__dropzone-subhint {
+  font-size: 14px;
+  opacity: 0.6;
+  color: var(--color-text-secondary);
 }
 
 .excel-refiner__file-input {
