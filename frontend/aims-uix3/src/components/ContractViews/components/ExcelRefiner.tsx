@@ -152,12 +152,11 @@ export function ExcelRefiner() {
   const [isImporting, setIsImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; message: string } | null>(null)
 
-  // 계약 가져오기 결과 상태 (등록 완료 후 표시용)
+  // 일괄등록 결과 상태 (등록 완료 후 표시용)
   const [importResult, setImportResult] = useState<{
-    total: number       // 전체 계약 수
-    inserted: number    // 등록된 계약 수
-    skipped: number     // 건너뛴 계약 수
-    errors: number      // 오류 계약 수
+    개인고객: { total: number; success: number }
+    법인고객: { total: number; success: number }
+    계약: { total: number; success: number }
   } | null>(null)
 
   // 일괄등록 확인 모달 상태
@@ -167,7 +166,10 @@ export function ExcelRefiner() {
     customerNames: string[]
     customers: BulkCustomerInput[]  // 고객 전체 정보 (bulkImportCustomers용)
     isCustomerSheet: boolean        // 고객 시트 여부
-  }>({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })
+    개인고객Count: number           // 개인고객 수
+    법인고객Count: number           // 법인고객 수
+    계약Count: number               // 계약 수
+  }>({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })
 
   // 고객명-연락처 매핑 (계약 가져오기 시 사용)
   const [customerPhoneMap, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
@@ -1274,6 +1276,8 @@ export function ExcelRefiner() {
     const allCustomers: BulkCustomerInput[] = []
     const customerNamesSet = new Set<string>()
     const phoneMap = new Map<string, string>()
+    let 개인고객Count = 0
+    let 법인고객Count = 0
 
     // 헬퍼: 시트에서 컬럼 인덱스 찾기
     const findColIndex = (sheet: SheetData, pattern: string) =>
@@ -1314,6 +1318,7 @@ export function ExcelRefiner() {
             if (birth) customer.birth_date = birth
           }
           allCustomers.push(customer)
+          개인고객Count++
         })
       }
     }
@@ -1341,13 +1346,16 @@ export function ExcelRefiner() {
             if (addr) customer.address = addr
           }
           allCustomers.push(customer)
+          법인고객Count++
         })
       }
     }
 
     // 3. 계약 시트에서 추가 고객명 수집 (고객 시트에 없는 고객)
     const contractSheet = sheets.find(s => s.name === '계약')
+    let 계약Count = 0
     if (contractSheet) {
+      계약Count = contractSheet.data.length
       const nameIdx = findCustomerNameColIndex(contractSheet)
       const contactIdx = findColIndex(contractSheet, '연락처')
 
@@ -1364,14 +1372,15 @@ export function ExcelRefiner() {
             if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
           }
           allCustomers.push(customer)
+          개인고객Count++
         })
       }
     }
 
-    if (allCustomers.length === 0) {
+    if (allCustomers.length === 0 && 계약Count === 0) {
       showAlert({
         title: '데이터 오류',
-        message: '등록할 고객 데이터가 없습니다.',
+        message: '등록할 데이터가 없습니다.',
         iconType: 'warning'
       })
       return
@@ -1383,14 +1392,17 @@ export function ExcelRefiner() {
       customerCount: allCustomers.length,
       customerNames: allCustomers.map(c => c.name),
       customers: allCustomers,
-      isCustomerSheet: false  // 전체 등록 모드
+      isCustomerSheet: false,
+      개인고객Count,
+      법인고객Count,
+      계약Count
     })
   }, [sheets])
 
   // 일괄등록 확인 후 실행
   const handleConfirmImport = useCallback(async () => {
-    const { customerNames, customers, isCustomerSheet } = importConfirmModal
-    setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })
+    const { customerNames, customers, isCustomerSheet, 개인고객Count, 법인고객Count, 계약Count } = importConfirmModal
+    setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })
 
     if (!user?._id) {
       showAlert({
@@ -1446,12 +1458,11 @@ export function ExcelRefiner() {
 
         setActionLog(parts.join(' | '))
 
-        // 결과 저장 (Wizard 색상용)
+        // 결과 저장 (Wizard 표시용) - 고객 시트만 처리한 경우 (신규 생성만 성공으로 카운트)
         setImportResult({
-          total: customers.length,
-          inserted: result.createdCount,
-          skipped: result.skippedCount + result.updatedCount,  // 업데이트도 건너뛰지 않았으므로
-          errors: result.errorCount
+          개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (개인고객Count / customers.length)) : 0 },
+          법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (법인고객Count / customers.length)) : 0 },
+          계약: { total: 0, success: 0 }
         })
 
         // 완료 이벤트
@@ -1469,7 +1480,11 @@ export function ExcelRefiner() {
             if (result.createdCount > 0) parts.push(`${result.createdCount}명 생성`)
             if (result.updatedCount > 0) parts.push(`${result.updatedCount}명 업데이트`)
             setActionLog(`✓ 고객 등록 완료: ${parts.join(', ')}`)
-            setImportResult({ total: customers.length, inserted: result.createdCount, skipped: result.skippedCount, errors: result.errorCount })
+            setImportResult({
+              개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (개인고객Count / customers.length)) : 0 },
+              법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (법인고객Count / customers.length)) : 0 },
+              계약: { total: 0, success: 0 }
+            })
             window.dispatchEvent(new CustomEvent('customerChanged'))
           }
           return
@@ -1597,11 +1612,13 @@ export function ExcelRefiner() {
         if (totalErrors > 0) parts.push(`오류 ${totalErrors}건`)
 
         setActionLog(parts.join(' | '))
+
+        // 신규 등록 성공률 계산 (신규 생성만 = 성공, 기존 고객/중복은 제외)
+        const totalCustomers = 개인고객Count + 법인고객Count
         setImportResult({
-          total: contracts.length,
-          inserted: contractResult.insertedCount,
-          skipped: contractResult.skippedCount,
-          errors: contractResult.errorCount
+          개인고객: { total: 개인고객Count, success: totalCustomers > 0 ? Math.round(customerCreatedCount * (개인고객Count / totalCustomers)) : 0 },
+          법인고객: { total: 법인고객Count, success: totalCustomers > 0 ? Math.round(customerCreatedCount * (법인고객Count / totalCustomers)) : 0 },
+          계약: { total: contracts.length, success: contractResult.insertedCount }
         })
 
         if (customerErrors.length > 0) {
@@ -1619,7 +1636,11 @@ export function ExcelRefiner() {
         message: `일괄등록 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`,
         iconType: 'error'
       })
-      setImportResult({ total: 0, inserted: 0, skipped: 0, errors: 1 })
+      setImportResult({
+        개인고객: { total: 개인고객Count, success: 0 },
+        법인고객: { total: 법인고객Count, success: 0 },
+        계약: { total: 계약Count, success: 0 }
+      })
     } finally {
       setIsImporting(false)
       setImportProgress(null)
@@ -1641,14 +1662,14 @@ export function ExcelRefiner() {
     // 등록 결과 상태 계산
     let resultStatus: 'success' | 'partial' | 'error' | null = null
     if (importResult) {
-      if (importResult.inserted === 0 && importResult.total > 0) {
+      const totalItems = importResult.개인고객.total + importResult.법인고객.total + importResult.계약.total
+      const successItems = importResult.개인고객.success + importResult.법인고객.success + importResult.계약.success
+      if (successItems === 0 && totalItems > 0) {
         resultStatus = 'error'
-      } else if (importResult.inserted === importResult.total && importResult.total > 0) {
+      } else if (successItems === totalItems && totalItems > 0) {
         resultStatus = 'success'
-      } else if (importResult.inserted > 0) {
+      } else if (successItems > 0) {
         resultStatus = 'partial'
-      } else if (importResult.errors > 0) {
-        resultStatus = 'error'
       }
     }
 
@@ -1659,17 +1680,22 @@ export function ExcelRefiner() {
     // Step 4: 모든 검증 완료 → 등록 단계
     if (allValid) {
       if (importResult && resultStatus) {
-        let message = ''
-        if (resultStatus === 'success') {
-          message = `${importResult.inserted}건 모두 등록 완료`
-        } else if (resultStatus === 'partial') {
-          message = `${importResult.inserted}/${importResult.total}건 등록`
-        } else {
-          message = `등록 실패`
-        }
-        return { step: 4, label: '등록', message, resultStatus }
+        // 퍼센트 계산 헬퍼
+        const pct = (s: number, t: number) => t > 0 ? Math.round((s / t) * 100) : 0
+        const 개인pct = pct(importResult.개인고객.success, importResult.개인고객.total)
+        const 법인pct = pct(importResult.법인고객.success, importResult.법인고객.total)
+        const 계약pct = pct(importResult.계약.success, importResult.계약.total)
+
+        // 결과 메시지 생성 (있는 항목만 표시)
+        const parts: string[] = []
+        if (importResult.개인고객.total > 0) parts.push(`개인:${개인pct}%`)
+        if (importResult.법인고객.total > 0) parts.push(`법인:${법인pct}%`)
+        if (importResult.계약.total > 0) parts.push(`계약:${계약pct}%`)
+
+        const message = parts.join(' ')
+        return { step: 4, label: '등록결과', message, resultStatus }
       }
-      return { step: 4, label: '등록', message: '등록 가능', resultStatus: null }
+      return { step: 4, label: '일괄등록', message: '등록 가능', resultStatus: null }
     }
 
     // 시트별 단계 결정
@@ -1934,8 +1960,8 @@ export function ExcelRefiner() {
                       {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
                     </span>
                     <span className="excel-refiner__wizard-step-label">
-                      {wizardStep.resultStatus && importResult
-                        ? `${Math.round((importResult.inserted / (importResult.total || 1)) * 100)}%`
+                      {wizardStep.step === 4 && wizardStep.resultStatus
+                        ? `${wizardStep.label}(${wizardStep.message})`
                         : '일괄등록'}
                     </span>
                   </div>
@@ -2461,7 +2487,7 @@ export function ExcelRefiner() {
       {/* 일괄등록 확인 모달 */}
       <Modal
         visible={importConfirmModal.isOpen}
-        onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })}
+        onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })}
         title="일괄등록 확인"
         size="sm"
         backdropClosable
@@ -2479,7 +2505,7 @@ export function ExcelRefiner() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false })}
+              onClick={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [], customers: [], isCustomerSheet: false, 개인고객Count: 0, 법인고객Count: 0, 계약Count: 0 })}
             >
               취소
             </Button>
