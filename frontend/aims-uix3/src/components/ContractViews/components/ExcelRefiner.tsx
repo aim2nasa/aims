@@ -2006,13 +2006,19 @@ export function ExcelRefiner() {
 
                 {/* 검증 초기화 버튼 */}
                 {(validatingColumns.size > 0 || sheetValidationStatus.size > 0) && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleClearValidation}
-                  >
-                    검증 초기화
-                  </Button>
+                  <Tooltip content="검증 초기화">
+                    <button
+                      type="button"
+                      className="excel-refiner__icon-btn"
+                      onClick={handleClearValidation}
+                      aria-label="검증 초기화"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2.5 8a5.5 5.5 0 1 1 1.3 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M2.5 12V8.5H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
                 )}
 
                 {/* 상태 표시 */}
