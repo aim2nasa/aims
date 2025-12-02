@@ -1683,17 +1683,18 @@ export function ExcelRefiner() {
                     <line x1="9" y1="2" x2="9" y2="14" stroke="currentColor" strokeWidth="1.2"/>
                   </svg>
                   <span>계약 엑셀 양식</span>
+                  <Tooltip content="샘플 엑셀 다운로드">
                   <a
                     href="/일괄등록_샘플.xlsx"
                     download="일괄등록_샘플.xlsx"
                     className="excel-refiner__format-download"
-                    title="샘플 엑셀 다운로드"
                   >
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                       <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M3 12v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                   </a>
+                </Tooltip>
                 </div>
                 <div className="excel-refiner__format-table-wrapper">
                   <table className="excel-refiner__format-table">
@@ -1840,14 +1841,15 @@ export function ExcelRefiner() {
             <div className="excel-refiner__action-bar">
               <div className="excel-refiner__action-bar-left">
                 {/* 필수컬럼검증 버튼 */}
+                <Tooltip content="고객명, 상품명, 계약일, 증권번호 컬럼을 순차 검증합니다">
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={handleValidateAllRequired}
-                  title="고객명, 상품명, 계약일, 증권번호 컬럼을 순차 검증합니다"
                 >
                   필수컬럼검증
                 </Button>
+                </Tooltip>
 
                 {/* 검증 초기화 버튼 */}
                 {validatingColumns.size > 0 && (
@@ -1961,21 +1963,24 @@ export function ExcelRefiner() {
                 {/* 상품명 검증 색상 범례 */}
                 {productMatchResult && (
                   <div className="excel-refiner__legend">
+                    <Tooltip content="보험상품 DB에 등록된 상품명과 정확히 일치">
                     <span
                       className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
-                      title="보험상품 DB에 등록된 상품명과 정확히 일치"
                       onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
                     >정확({productMatchResult.originalMatch.size})</span>
+                    </Tooltip>
+                    <Tooltip content="공백/대소문자 차이 → 자동 수정됨">
                     <span
                       className={`excel-refiner__legend-item excel-refiner__legend-item--modified${productStatusFilter === 'modified' ? ' excel-refiner__legend-item--active' : ''}`}
-                      title="공백/대소문자 차이 → 자동 수정됨"
                       onClick={() => setProductStatusFilter(productStatusFilter === 'modified' ? null : 'modified')}
                     >수정({productMatchResult.modified.size})</span>
+                    </Tooltip>
+                    <Tooltip content="DB에서 찾을 수 없음 - 확인 필요">
                     <span
                       className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
-                      title="DB에서 찾을 수 없음 - 확인 필요"
                       onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
                     >미매칭({productMatchResult.unmatched.length})</span>
+                    </Tooltip>
                   </div>
                 )}
 
@@ -1998,16 +2003,17 @@ export function ExcelRefiner() {
                 {actionLog && !importProgress && (
                   <div className="excel-refiner__action-log">
                     {actionLog}
+                    <Tooltip content="로그 지우기">
                     <button
                       type="button"
                       className="excel-refiner__action-log-clear"
                       onClick={() => setActionLog(null)}
-                      title="로그 지우기"
                     >
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                         <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                       </svg>
                     </button>
+                    </Tooltip>
                   </div>
                 )}
               </div>
@@ -2035,25 +2041,27 @@ export function ExcelRefiner() {
                     {/* 삭제 모드일 때 체크박스 컬럼 */}
                     {isDeleteMode && (
                       <th className="excel-refiner__th excel-refiner__th--checkbox">
+                        <Tooltip content="전체 선택/해제">
                         <input
                           type="checkbox"
                           checked={selectedRows.size === sortedDataWithIndices.length && sortedDataWithIndices.length > 0}
                           onChange={handleSelectAll}
-                          title="전체 선택/해제"
                         />
+                        </Tooltip>
                       </th>
                     )}
                     <th className={`excel-refiner__th excel-refiner__th--row-num ${sortColumn === -1 ? 'excel-refiner__th--sorted' : ''}`}>
                       <div className="excel-refiner__th-content">
                         <span className="excel-refiner__th-text">#</span>
+                        <Tooltip content={sortColumn === -1 ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}>
                         <button
                           type="button"
                           className="excel-refiner__sort-btn"
                           onClick={(e) => handleSortClick(-1, e)}
-                          title={sortColumn === -1 ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}
                         >
                           {sortColumn === -1 ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
                         </button>
+                        </Tooltip>
                       </div>
                     </th>
                     {currentSheet.columns.map((col, index) => {
@@ -2094,27 +2102,28 @@ export function ExcelRefiner() {
                           key={index}
                           className={thClassName}
                           onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
-                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : type === 'productName' ? '상품명' : '계약일'} 검증)` : '클릭하여 정렬'}
+                          
                         >
                           <div className="excel-refiner__th-content">
                             {lastClickedColumn === index && (
-                              <span className="excel-refiner__th-last-clicked" title="마지막 클릭">
+                              <Tooltip content="마지막 클릭"><span className="excel-refiner__th-last-clicked">
                                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                                   <circle cx="8" cy="8" r="4" />
                                 </svg>
-                              </span>
+                              </span></Tooltip>
                             )}
                             <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
                             {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
                             {!isInProgress && renderColumnBadge(index, col)}
+                            <Tooltip content={isSorted ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}>
                             <button
                               type="button"
                               className="excel-refiner__sort-btn"
                               onClick={(e) => handleSortClick(index, e)}
-                              title={isSorted ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}
                             >
                               {isSorted ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
                             </button>
+                            </Tooltip>
                           </div>
                         </th>
                       )
@@ -2140,13 +2149,14 @@ export function ExcelRefiner() {
                         {/* 삭제 모드일 때 체크박스 */}
                         {isDeleteMode && (
                           <td className="excel-refiner__td excel-refiner__td--checkbox">
+                            <Tooltip content={`행 ${getExcelRowNumber(originalIndex)} 선택`}>
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleDeleteSelect(originalIndex)}
                               onClick={(e) => e.stopPropagation()}
-                              title={`행 ${getExcelRowNumber(originalIndex)} 선택`}
                             />
+                            </Tooltip>
                           </td>
                         )}
                         <td className="excel-refiner__td excel-refiner__td--row-num">
@@ -2223,7 +2233,6 @@ export function ExcelRefiner() {
                             <td
                               key={colIndex}
                               className={tdClassName}
-                              title={cellTitle}
                               onDoubleClick={handleDoubleClick}
                               onContextMenu={handleContextMenu}
                             >
