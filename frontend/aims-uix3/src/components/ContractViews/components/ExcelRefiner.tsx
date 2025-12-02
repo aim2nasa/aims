@@ -1629,24 +1629,16 @@ export function ExcelRefiner() {
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
 
-  // Wizard 단계 계산 (시트 기반 검증 플로우)
+  // Wizard 단계 계산 (개인고객 → 법인고객 → 계약 → 등록)
   const wizardStep = useMemo(() => {
     if (!sheets.length) return null
 
-    const allSheets = ['개인고객', '법인고객', '계약']
-    const existingSheets = allSheets.filter(name => sheets.some(s => s.name === name))
+    const sheetNames = ['개인고객', '법인고객', '계약']
 
-    // 검증된 시트 수
-    const validatedCount = existingSheets.filter(name =>
-      sheetValidationStatus.get(name) === 'valid'
-    ).length
+    // 각 시트의 상태 확인
+    const getSheetStatus = (name: string) => sheetValidationStatus.get(name) || 'pending'
 
-    // 문제 있는 시트
-    const invalidSheet = existingSheets.find(name =>
-      sheetValidationStatus.get(name) === 'invalid'
-    )
-
-    // 등록 결과 상태 계산 (step 4 색상용)
+    // 등록 결과 상태 계산
     let resultStatus: 'success' | 'partial' | 'error' | null = null
     if (importResult) {
       if (importResult.inserted === 0 && importResult.total > 0) {
@@ -1660,27 +1652,12 @@ export function ExcelRefiner() {
       }
     }
 
-    // Step 1: 검증 미시작
-    if (sheetValidationStatus.size === 0) {
-      return { step: 1, label: '검증', message: "'검증' 버튼을 클릭하여 시작하세요.", resultStatus: null }
-    }
+    // 모든 시트가 valid인지 확인
+    const existingSheets = sheetNames.filter(name => sheets.some(s => s.name === name))
+    const allValid = existingSheets.length > 0 && existingSheets.every(name => getSheetStatus(name) === 'valid')
 
-    // Step 2: 검증 진행 중
-    if (isValidatingAll) {
-      const validating = existingSheets.find(name =>
-        sheetValidationStatus.get(name) === 'validating'
-      )
-      return { step: 2, label: '진행', message: `${validating || ''} 검증 중...`, resultStatus: null }
-    }
-
-    // Step 3: 문제 발견
-    if (invalidSheet) {
-      const count = sheetIssueCount.get(invalidSheet) || 0
-      return { step: 3, label: '수정', message: `${invalidSheet}: ${count}건 수정 필요`, resultStatus: null }
-    }
-
-    // Step 4: 모든 검증 완료
-    if (validatedCount === existingSheets.length) {
+    // Step 4: 모든 검증 완료 → 등록 단계
+    if (allValid) {
       if (importResult && resultStatus) {
         let message = ''
         if (resultStatus === 'success') {
@@ -1695,8 +1672,26 @@ export function ExcelRefiner() {
       return { step: 4, label: '등록', message: '등록 가능', resultStatus: null }
     }
 
-    return { step: 1, label: '검증', message: "'검증' 버튼을 클릭하여 시작하세요.", resultStatus: null }
-  }, [sheets, sheetValidationStatus, sheetIssueCount, isValidatingAll, importResult])
+    // 시트별 단계 결정
+    for (let i = 0; i < sheetNames.length; i++) {
+      const sheetName = sheetNames[i] as string
+      const status = getSheetStatus(sheetName)
+      const step = i + 1
+
+      if (status === 'validating') {
+        return { step, label: sheetName, message: '검증 중...', resultStatus: null }
+      }
+      if (status === 'invalid') {
+        const count = sheetIssueCount.get(sheetName) || 0
+        return { step, label: sheetName, message: `${count}건 수정 필요`, resultStatus: null }
+      }
+      if (status === 'pending') {
+        return { step, label: sheetName, message: '검증 대기', resultStatus: null }
+      }
+    }
+
+    return { step: 1, label: '개인고객', message: '검증 대기', resultStatus: null }
+  }, [sheets, sheetValidationStatus, sheetIssueCount, importResult])
 
   // 컬럼별 검증 실패 이유 생성
   const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
@@ -1916,22 +1911,22 @@ export function ExcelRefiner() {
                 </span>
               </div>
 
-              {/* 위자드 스텝 (중앙) */}
+              {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → 계약 → 등록 */}
               {wizardStep && (
                 <div className={`excel-refiner__wizard-compact excel-refiner__wizard--step-${wizardStep.step}`}>
                   <div className={`excel-refiner__wizard-step ${wizardStep.step >= 1 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 1 ? 'excel-refiner__wizard-step--completed' : ''}`}>
                     <span className="excel-refiner__wizard-step-number">1</span>
-                    <span className="excel-refiner__wizard-step-label">검증</span>
+                    <span className="excel-refiner__wizard-step-label">개인고객 검증</span>
                   </div>
                   <div className="excel-refiner__wizard-connector" />
                   <div className={`excel-refiner__wizard-step ${wizardStep.step >= 2 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 2 ? 'excel-refiner__wizard-step--completed' : ''}`}>
                     <span className="excel-refiner__wizard-step-number">2</span>
-                    <span className="excel-refiner__wizard-step-label">진행</span>
+                    <span className="excel-refiner__wizard-step-label">법인고객 검증</span>
                   </div>
                   <div className="excel-refiner__wizard-connector" />
                   <div className={`excel-refiner__wizard-step ${wizardStep.step >= 3 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 3 ? 'excel-refiner__wizard-step--completed' : ''}`}>
                     <span className="excel-refiner__wizard-step-number">3</span>
-                    <span className="excel-refiner__wizard-step-label">수정</span>
+                    <span className="excel-refiner__wizard-step-label">계약 검증</span>
                   </div>
                   <div className="excel-refiner__wizard-connector" />
                   <div className={`excel-refiner__wizard-step ${wizardStep.step >= 4 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus}` : ''}`}>
@@ -1941,7 +1936,7 @@ export function ExcelRefiner() {
                     <span className="excel-refiner__wizard-step-label">
                       {wizardStep.resultStatus && importResult
                         ? `${Math.round((importResult.inserted / (importResult.total || 1)) * 100)}%`
-                        : '등록'}
+                        : '일괄등록'}
                     </span>
                   </div>
                 </div>
