@@ -17,6 +17,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--color-layout-content-dark);
 }
 
 /* === DROPZONE === */
@@ -27,9 +28,9 @@
   align-items: center;
   justify-content: center;
   margin: var(--spacing-8);
-  border: 2px dashed var(--color-border-secondary);
+  border: 2px dashed var(--color-upload-zone-border);
   border-radius: var(--radius-xl);
-  background: var(--color-bg-primary);
+  background: var(--color-upload-zone-bg);
   transition: all var(--duration-fast) var(--easing-default);
   overflow: auto;
 }
@@ -1204,7 +1205,7 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
 
 .excel-refiner__footer {
   padding: var(--spacing-2) var(--spacing-6);
-  background: var(--color-bg-primary);
+  background: var(--color-layout-content-dark);
   border-top: 1px solid var(--color-border-primary);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
