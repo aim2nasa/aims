@@ -1887,22 +1887,27 @@ export function ExcelRefiner() {
                 <span className="excel-refiner__divider" />
 
                 {/* 삭제 모드 토글 버튼 */}
-                <button
-                  type="button"
-                  className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
-                  onClick={handleToggleDeleteMode}
-                  title={isDeleteMode ? '삭제 완료' : '행 삭제'}
-                >
-                  {isDeleteMode ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </button>
+                <Tooltip content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
+                  <button
+                    type="button"
+                    className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
+                    onClick={handleToggleDeleteMode}
+                    aria-label={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}
+                  >
+                    {isDeleteMode ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <SFSymbol
+                        name="trash"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                </Tooltip>
 
                 {/* 삭제 모드가 아닐 때: 문제 행 원클릭 삭제 버튼 */}
                 {!isDeleteMode && problematicRows.length > 0 && (

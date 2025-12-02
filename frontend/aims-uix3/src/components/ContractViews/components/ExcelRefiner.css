@@ -1130,28 +1130,32 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--color-error-500);
+  opacity: 0.7;
   transition: all var(--duration-fast) var(--easing-default);
 }
 
 .excel-refiner__delete-mode-btn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
+  opacity: 1;
+  transform: scale(1.1);
+  color: var(--color-error-600);
 }
 
 .excel-refiner__delete-mode-btn--active {
   background: var(--color-error-500);
   color: var(--color-neutral-0);
+  opacity: 1;
 }
 
 .excel-refiner__delete-mode-btn--active:hover {
   background: var(--color-error-600);
+  transform: none;
 }
 
 .excel-refiner__selected-count {
