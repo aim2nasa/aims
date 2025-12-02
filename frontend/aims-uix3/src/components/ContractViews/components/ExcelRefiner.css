@@ -798,10 +798,21 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--active {
 
 .excel-refiner__th,
 .excel-refiner__td {
-  padding: var(--spacing-2) var(--spacing-3);
   text-align: left;
   border-bottom: 1px solid var(--color-border-primary);
   white-space: nowrap;
+}
+
+/* 테이블 헤더 */
+.excel-refiner__th {
+  padding: 4px var(--spacing-3);
+  line-height: 1.2;
+}
+
+/* 테이블 데이터 셀 */
+.excel-refiner__td {
+  padding: 4px var(--spacing-3);
+  line-height: 1.2;
 }
 
 .excel-refiner__td--right {
