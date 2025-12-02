@@ -1675,22 +1675,6 @@ export function ExcelRefiner() {
               </div>
             </div>
 
-            {/* 시트 탭 */}
-            {sheets.length > 1 && (
-              <div className="excel-refiner__tabs">
-                {sheets.map((sheet, index) => (
-                  <button
-                    key={sheet.name}
-                    type="button"
-                    className={`excel-refiner__tab ${index === activeSheetIndex ? 'excel-refiner__tab--active' : ''}`}
-                    onClick={() => handleSheetChange(index)}
-                  >
-                    {sheet.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Wizard 안내 - 파일 로드 후 단계별 가이드 */}
             {wizardStep && (
               <div className={`excel-refiner__wizard excel-refiner__wizard--step-${wizardStep.step}`}>
@@ -1908,6 +1892,20 @@ export function ExcelRefiner() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* 엑셀 시트 탭 - 테이블 바로 위에 배치 */}
+            <div className="excel-refiner__sheet-tabs">
+              {sheets.map((sheet, index) => (
+                <button
+                  key={sheet.name}
+                  type="button"
+                  className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''}`}
+                  onClick={() => handleSheetChange(index)}
+                >
+                  {sheet.name}
+                </button>
+              ))}
             </div>
 
             {/* 데이터 테이블 */}
