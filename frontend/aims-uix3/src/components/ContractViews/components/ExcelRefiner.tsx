@@ -1266,130 +1266,126 @@ export function ExcelRefiner() {
     }
   }, [handleCellEditSave, handleCellEditCancel])
 
-  // 일괄등록 버튼 클릭 - 확인 모달 열기
+  // 일괄등록 버튼 클릭 - 확인 모달 열기 (모든 시트에서 고객 수집)
   const handleImportContracts = useCallback(() => {
-    if (!currentSheet) return
+    if (!sheets.length) return
 
-    // 고객 시트 여부 확인
-    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
-    const customerType: '개인' | '법인' = currentSheet.name === '법인고객' ? '법인' : '개인'
+    // 모든 시트에서 고객 정보 수집
+    const allCustomers: BulkCustomerInput[] = []
+    const customerNamesSet = new Set<string>()
+    const phoneMap = new Map<string, string>()
 
-    // 고객명 컬럼 찾기
-    const customerNameColIndex = currentSheet.columns.findIndex(
-      col => col && getValidationType(col) === 'customerName'
-    )
+    // 헬퍼: 시트에서 컬럼 인덱스 찾기
+    const findColIndex = (sheet: SheetData, pattern: string) =>
+      sheet.columns.findIndex(col => col && col.includes(pattern))
+    const findCustomerNameColIndex = (sheet: SheetData) =>
+      sheet.columns.findIndex(col => col && getValidationType(col) === 'customerName')
 
-    if (customerNameColIndex === -1) {
+    // 1. 개인고객 시트 처리
+    const individualSheet = sheets.find(s => s.name === '개인고객')
+    if (individualSheet) {
+      const nameIdx = findCustomerNameColIndex(individualSheet)
+      const contactIdx = findColIndex(individualSheet, '연락처')
+      const addressIdx = findColIndex(individualSheet, '주소')
+      const genderIdx = findColIndex(individualSheet, '성별')
+      const birthIdx = findColIndex(individualSheet, '생년월일')
+
+      if (nameIdx !== -1) {
+        individualSheet.data.forEach(row => {
+          const name = cellToString(row[nameIdx] as CellValue).trim()
+          if (!name || customerNamesSet.has(name)) return
+          customerNamesSet.add(name)
+
+          const customer: BulkCustomerInput = { name, customer_type: '개인' }
+          if (contactIdx !== -1) {
+            const phone = cellToString(row[contactIdx] as CellValue).trim()
+            if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
+          }
+          if (addressIdx !== -1) {
+            const addr = cellToString(row[addressIdx] as CellValue).trim()
+            if (addr) customer.address = addr
+          }
+          if (genderIdx !== -1) {
+            const gender = cellToString(row[genderIdx] as CellValue).trim()
+            if (gender) customer.gender = gender
+          }
+          if (birthIdx !== -1) {
+            const birth = cellToString(row[birthIdx] as CellValue).trim()
+            if (birth) customer.birth_date = birth
+          }
+          allCustomers.push(customer)
+        })
+      }
+    }
+
+    // 2. 법인고객 시트 처리
+    const corporateSheet = sheets.find(s => s.name === '법인고객')
+    if (corporateSheet) {
+      const nameIdx = findCustomerNameColIndex(corporateSheet)
+      const contactIdx = findColIndex(corporateSheet, '연락처')
+      const addressIdx = findColIndex(corporateSheet, '주소')
+
+      if (nameIdx !== -1) {
+        corporateSheet.data.forEach(row => {
+          const name = cellToString(row[nameIdx] as CellValue).trim()
+          if (!name || customerNamesSet.has(name)) return
+          customerNamesSet.add(name)
+
+          const customer: BulkCustomerInput = { name, customer_type: '법인' }
+          if (contactIdx !== -1) {
+            const phone = cellToString(row[contactIdx] as CellValue).trim()
+            if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
+          }
+          if (addressIdx !== -1) {
+            const addr = cellToString(row[addressIdx] as CellValue).trim()
+            if (addr) customer.address = addr
+          }
+          allCustomers.push(customer)
+        })
+      }
+    }
+
+    // 3. 계약 시트에서 추가 고객명 수집 (고객 시트에 없는 고객)
+    const contractSheet = sheets.find(s => s.name === '계약')
+    if (contractSheet) {
+      const nameIdx = findCustomerNameColIndex(contractSheet)
+      const contactIdx = findColIndex(contractSheet, '연락처')
+
+      if (nameIdx !== -1) {
+        contractSheet.data.forEach(row => {
+          const name = cellToString(row[nameIdx] as CellValue).trim()
+          if (!name || customerNamesSet.has(name)) return
+          customerNamesSet.add(name)
+
+          // 계약 시트에만 있는 고객은 기본값으로 개인고객
+          const customer: BulkCustomerInput = { name, customer_type: '개인' }
+          if (contactIdx !== -1) {
+            const phone = cellToString(row[contactIdx] as CellValue).trim()
+            if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
+          }
+          allCustomers.push(customer)
+        })
+      }
+    }
+
+    if (allCustomers.length === 0) {
       showAlert({
-        title: '컬럼 오류',
-        message: '고객명 컬럼을 찾을 수 없습니다.',
+        title: '데이터 오류',
+        message: '등록할 고객 데이터가 없습니다.',
         iconType: 'warning'
       })
       return
     }
 
-    // 컬럼 인덱스 찾기
-    const contactColIndex = currentSheet.columns.findIndex(col => col && col.includes('연락처'))
-    const addressColIndex = currentSheet.columns.findIndex(col => col && col.includes('주소'))
-    const genderColIndex = currentSheet.columns.findIndex(col => col && col.includes('성별'))
-    const birthDateColIndex = currentSheet.columns.findIndex(col => col && col.includes('생년월일'))
-
-    if (isCustomerSheet) {
-      // === 고객 시트: BulkCustomerInput 배열로 변환 ===
-      const customersMap = new Map<string, BulkCustomerInput>()
-
-      currentSheet.data.forEach(row => {
-        const name = cellToString(row[customerNameColIndex] as CellValue).trim()
-        if (!name) return
-
-        // 이미 처리된 고객은 건너뜀 (첫 번째 행 데이터 사용)
-        if (customersMap.has(name)) return
-
-        const customer: BulkCustomerInput = {
-          name,
-          customer_type: customerType
-        }
-
-        // 연락처
-        if (contactColIndex !== -1) {
-          const phone = cellToString(row[contactColIndex] as CellValue).trim()
-          if (phone) customer.mobile_phone = phone
-        }
-
-        // 주소
-        if (addressColIndex !== -1) {
-          const address = cellToString(row[addressColIndex] as CellValue).trim()
-          if (address) customer.address = address
-        }
-
-        // 성별 (개인고객만)
-        if (customerType === '개인' && genderColIndex !== -1) {
-          const gender = cellToString(row[genderColIndex] as CellValue).trim()
-          if (gender) customer.gender = gender
-        }
-
-        // 생년월일 (개인고객만)
-        if (customerType === '개인' && birthDateColIndex !== -1) {
-          const birthDate = cellToString(row[birthDateColIndex] as CellValue).trim()
-          if (birthDate) customer.birth_date = birthDate
-        }
-
-        customersMap.set(name, customer)
-      })
-
-      const customers = Array.from(customersMap.values())
-      if (customers.length === 0) {
-        showAlert({
-          title: '데이터 오류',
-          message: '고객명 데이터가 없습니다.',
-          iconType: 'warning'
-        })
-        return
-      }
-
-      setImportConfirmModal({
-        isOpen: true,
-        customerCount: customers.length,
-        customerNames: customers.map(c => c.name),
-        customers,
-        isCustomerSheet: true
-      })
-    } else {
-      // === 계약 시트: 기존 로직 유지 ===
-      const customerNames = new Set<string>()
-      const phoneMap = new Map<string, string>()
-
-      currentSheet.data.forEach(row => {
-        const name = cellToString(row[customerNameColIndex] as CellValue).trim()
-        if (name) {
-          customerNames.add(name)
-          if (contactColIndex !== -1 && !phoneMap.has(name)) {
-            const phone = cellToString(row[contactColIndex] as CellValue).trim()
-            if (phone) phoneMap.set(name, phone)
-          }
-        }
-      })
-
-      const uniqueNames = Array.from(customerNames)
-      if (uniqueNames.length === 0) {
-        showAlert({
-          title: '데이터 오류',
-          message: '고객명 데이터가 없습니다.',
-          iconType: 'warning'
-        })
-        return
-      }
-
-      setCustomerPhoneMap(phoneMap)
-      setImportConfirmModal({
-        isOpen: true,
-        customerCount: uniqueNames.length,
-        customerNames: uniqueNames,
-        customers: [],
-        isCustomerSheet: false
-      })
-    }
-  }, [currentSheet])
+    setCustomerPhoneMap(phoneMap)
+    setImportConfirmModal({
+      isOpen: true,
+      customerCount: allCustomers.length,
+      customerNames: allCustomers.map(c => c.name),
+      customers: allCustomers,
+      isCustomerSheet: false  // 전체 등록 모드
+    })
+  }, [sheets])
 
   // 일괄등록 확인 후 실행
   const handleConfirmImport = useCallback(async () => {
@@ -1462,8 +1458,22 @@ export function ExcelRefiner() {
         window.dispatchEvent(new CustomEvent('customerChanged'))
 
       } else {
-        // === 계약 시트: 기존 로직 (고객 생성 + 계약 등록) ===
-        if (customerNames.length === 0 || !currentSheet) return
+        // === 전체 등록: 고객(bulkImport) + 계약 ===
+        const contractSheet = sheets.find(s => s.name === '계약')
+        if (!contractSheet) {
+          // 계약 시트 없으면 고객만 등록
+          if (customers.length > 0) {
+            setImportProgress({ current: 1, total: 1, message: `고객 등록 중 (${customers.length}명)...` })
+            const result = await CustomerService.bulkImportCustomers(customers)
+            const parts: string[] = []
+            if (result.createdCount > 0) parts.push(`${result.createdCount}명 생성`)
+            if (result.updatedCount > 0) parts.push(`${result.updatedCount}명 업데이트`)
+            setActionLog(`✓ 고객 등록 완료: ${parts.join(', ')}`)
+            setImportResult({ total: customers.length, inserted: result.createdCount, skipped: result.skippedCount, errors: result.errorCount })
+            window.dispatchEvent(new CustomEvent('customerChanged'))
+          }
+          return
+        }
 
         setImportProgress({ current: 0, total: 3, message: '1/3: 고객 생성 준비 중...' })
 
@@ -1471,42 +1481,19 @@ export function ExcelRefiner() {
         let customerSkippedCount = 0
         const customerErrors: string[] = []
 
-        // 1단계: 고객 생성
-        const existingResponse = await CustomerService.getCustomers({ limit: 100000 })
-        const existingNames = new Set(
-          existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
-        )
-
-        for (let i = 0; i < customerNames.length; i++) {
-          const name = customerNames[i]!
-          setImportProgress({
-            current: 1,
-            total: 3,
-            message: `1/3: 고객 생성 중 (${i + 1}/${customerNames.length}) - ${name}`
-          })
-
-          if (existingNames.has(name.toLowerCase())) {
-            customerSkippedCount++
-            continue
-          }
-
+        // 1단계: bulkImportCustomers로 고객 생성 (customer_type 반영)
+        if (customers.length > 0) {
+          setImportProgress({ current: 1, total: 3, message: `1/3: 고객 등록 중 (${customers.length}명)...` })
           try {
-            const phone = customerPhoneMap.get(name)
-            await CustomerService.createCustomer({
-              personal_info: {
-                name,
-                ...(phone && { mobile_phone: phone })
-              },
-              insurance_info: { customer_type: '개인' },
-              contracts: [],
-              documents: [],
-              consultations: []
-            })
-            customerCreatedCount++
-            existingNames.add(name.toLowerCase())
+            const result = await CustomerService.bulkImportCustomers(customers)
+            customerCreatedCount = result.createdCount
+            customerSkippedCount = result.skippedCount + result.updatedCount
+            if (result.errorCount > 0) {
+              customerErrors.push(`${result.errorCount}건 오류`)
+            }
           } catch (err) {
-            console.error(`[고객 생성 실패] ${name}:`, err)
-            customerErrors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+            console.error('[고객 일괄등록 실패]:', err)
+            customerErrors.push(`일괄등록 오류: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
           }
         }
 
