@@ -1300,28 +1300,33 @@ export function ExcelRefiner() {
         contracts
       })
 
-      // 최종 결과 메시지
+      // 최종 결과 메시지 - 간결한 요약
       const contractResult = bulkResult.data
-      let resultMsg = `✓ 가져오기 완료 | 고객: ${customerCreatedCount}명 생성, ${customerSkippedCount}명 건너뜀`
-      resultMsg += ` | 계약: ${contractResult.insertedCount}건 등록, ${contractResult.skippedCount}건 건너뜀`
+      const parts: string[] = ['✓ 가져오기 완료']
 
-      if (customerErrors.length > 0 || contractResult.errorCount > 0) {
-        resultMsg += ` | 오류: ${customerErrors.length + contractResult.errorCount}건`
+      // 고객 결과
+      if (customerCreatedCount > 0) {
+        parts.push(`고객 ${customerCreatedCount}명 생성`)
+      }
+      if (customerSkippedCount > 0) {
+        parts.push(`기존 고객 ${customerSkippedCount}명`)
       }
 
-      // 중복 증권번호로 건너뛴 계약 상세 정보 표시
-      if (contractResult.skipped && contractResult.skipped.length > 0) {
-        const skippedPolicies = contractResult.skipped
-          .map(s => s.contract?.policy_number)
-          .filter(Boolean) as string[]
-        if (skippedPolicies.length > 0) {
-          const displayPolicies = skippedPolicies.slice(0, 5).join(', ')
-          resultMsg += ` | 중복: ${displayPolicies}`
-          if (contractResult.skippedCount > 5) {
-            resultMsg += ` 외 ${contractResult.skippedCount - 5}건`
-          }
-        }
+      // 계약 결과
+      if (contractResult.insertedCount > 0) {
+        parts.push(`계약 ${contractResult.insertedCount}건 등록`)
       }
+      if (contractResult.skippedCount > 0) {
+        parts.push(`중복 증권번호 ${contractResult.skippedCount}건`)
+      }
+
+      // 오류
+      const totalErrors = customerErrors.length + contractResult.errorCount
+      if (totalErrors > 0) {
+        parts.push(`오류 ${totalErrors}건`)
+      }
+
+      const resultMsg = parts.join(' | ')
 
       setActionLog(resultMsg)
 
