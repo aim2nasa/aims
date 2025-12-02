@@ -12,6 +12,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
 import { Tooltip } from '@/shared/ui/Tooltip'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import {
   parseExcel,
   exportExcel,
@@ -1807,20 +1808,31 @@ export function ExcelRefiner() {
               )}
 
               <div className="excel-refiner__header-right">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleCloseExcel}
-                >
-                  엑셀닫기
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveRefined}
-                >
-                  다운로드
-                </Button>
+                <Tooltip content="다운로드">
+                  <button
+                    type="button"
+                    className="excel-refiner__icon-btn"
+                    onClick={handleSaveRefined}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3 12v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+                <Tooltip content="파일 닫기">
+                  <button
+                    type="button"
+                    className="excel-refiner__icon-btn excel-refiner__icon-btn--close"
+                    onClick={handleCloseExcel}
+                  >
+                    <SFSymbol
+                      name="xmark"
+                      size={SFSymbolSize.BODY}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                </Tooltip>
               </div>
             </div>
 
