@@ -575,17 +575,22 @@ export function ExcelRefiner() {
     setActionLog(null)
   }, [])
 
-  // 필수컬럼검증 (고객명, 상품명, 계약일, 증권번호 순차 검증)
+  // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
   const handleValidateAllRequired = useCallback(async () => {
     if (!currentSheet || isImporting) return
 
-    // 검증 가능한 컬럼 찾기 (순서: 고객명 → 상품명 → 계약일 → 증권번호)
-    const requiredTypes: Array<{ type: ValidationType; label: string }> = [
-      { type: 'customerName', label: '고객명' },
-      { type: 'productName', label: '상품명' },
-      { type: 'contractDate', label: '계약일' },
-      { type: 'policyNumber', label: '증권번호' }
-    ]
+    // 시트별 필수컬럼 정의
+    // - 개인고객, 법인고객: 고객명만 필수
+    // - 계약: 고객명, 상품명, 계약일, 증권번호 필수
+    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
+    const requiredTypes: Array<{ type: ValidationType; label: string }> = isCustomerSheet
+      ? [{ type: 'customerName', label: '고객명' }]
+      : [
+          { type: 'customerName', label: '고객명' },
+          { type: 'productName', label: '상품명' },
+          { type: 'contractDate', label: '계약일' },
+          { type: 'policyNumber', label: '증권번호' }
+        ]
 
     const columnsToValidate: Array<{ colIndex: number; columnName: string; type: ValidationType; label: string }> = []
 
@@ -1300,9 +1305,27 @@ export function ExcelRefiner() {
         contracts
       })
 
-      // 최종 결과 메시지 - 간결한 요약
+      // 최종 결과 메시지 - 상태에 따라 다른 표현
       const contractResult = bulkResult.data
-      const parts: string[] = ['✓ 가져오기 완료']
+      const totalErrors = customerErrors.length + contractResult.errorCount
+      const hasSuccess = customerCreatedCount > 0 || contractResult.insertedCount > 0
+      const hasFailure = customerSkippedCount > 0 || contractResult.skippedCount > 0 || totalErrors > 0
+
+      // 상태 결정
+      let statusIcon: string
+      let statusText: string
+      if (hasSuccess && !hasFailure) {
+        statusIcon = '✓'
+        statusText = '일괄등록 완료'
+      } else if (hasSuccess && hasFailure) {
+        statusIcon = '⚠️'
+        statusText = '일괄등록 일부 완료'
+      } else {
+        statusIcon = '✗'
+        statusText = '일괄등록 실패'
+      }
+
+      const parts: string[] = [`${statusIcon} ${statusText}`]
 
       // 고객 결과
       if (customerCreatedCount > 0) {
@@ -1321,7 +1344,6 @@ export function ExcelRefiner() {
       }
 
       // 오류
-      const totalErrors = customerErrors.length + contractResult.errorCount
       if (totalErrors > 0) {
         parts.push(`오류 ${totalErrors}건`)
       }
@@ -1373,8 +1395,13 @@ export function ExcelRefiner() {
   const wizardStep = useMemo(() => {
     if (!currentSheet) return null
 
-    // 필수 컬럼 타입
-    const requiredTypes = ['customerName', 'productName', 'contractDate', 'policyNumber']
+    // 시트별 필수 컬럼 타입
+    // - 개인고객, 법인고객: 고객명만 필수
+    // - 계약: 고객명, 상품명, 계약일, 증권번호 필수
+    const isCustomerSheet = currentSheet.name === '개인고객' || currentSheet.name === '법인고객'
+    const requiredTypes = isCustomerSheet
+      ? ['customerName']
+      : ['customerName', 'productName', 'contractDate', 'policyNumber']
 
     // 현재 시트에서 필수 컬럼 찾기
     const requiredColIndices: number[] = []
