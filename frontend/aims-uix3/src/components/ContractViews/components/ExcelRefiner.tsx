@@ -1564,7 +1564,7 @@ export function ExcelRefiner() {
                     <line x1="5.5" y1="2" x2="5.5" y2="14" stroke="currentColor" strokeWidth="1.2"/>
                     <line x1="9" y1="2" x2="9" y2="14" stroke="currentColor" strokeWidth="1.2"/>
                   </svg>
-                  <span>엑셀 표준 포맷 예시</span>
+                  <span>계약 엑셀 양식</span>
                   <a
                     href="/일괄등록_샘플.xlsx"
                     download="일괄등록_샘플.xlsx"
