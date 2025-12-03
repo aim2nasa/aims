@@ -1687,10 +1687,19 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
 
 /* === 일괄등록 상세 결과 모달 === */
 
+/* 모달 content 스크롤 제거 - 테이블 내부에서만 스크롤 */
 .excel-refiner__result-detail {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
+  overflow: hidden;
+  margin: calc(-1 * var(--spacing-6));
+  padding: var(--spacing-6);
+}
+
+/* 부모 modal__content의 overflow 제거 */
+.modal__content:has(.excel-refiner__result-detail) {
+  overflow: hidden;
 }
 
 .excel-refiner__result-summary {
@@ -1836,6 +1845,16 @@ html[data-theme="dark"] .excel-refiner__result-stat--error {
 
 /* === 일괄등록 상세 결과 모달 - 탭 UI === */
 
+/* 개인 고객 아이콘 - 파란색 */
+.excel-refiner__result-tab .customer-icon--personal {
+  color: var(--color-icon-blue);
+}
+
+/* 법인 고객 아이콘 - 주황색 */
+.excel-refiner__result-tab .customer-icon--corporate {
+  color: var(--color-icon-orange);
+}
+
 .excel-refiner__result-tabs {
   display: flex;
   gap: var(--spacing-1);
@@ -1897,7 +1916,7 @@ html[data-theme="dark"] .excel-refiner__result-tab--active {
 /* === 일괄등록 상세 결과 - 테이블 === */
 
 .excel-refiner__result-table-container {
-  max-height: 400px;
+  height: 320px;
   overflow: auto;
   border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-md);

@@ -3371,21 +3371,20 @@ export function ExcelRefiner() {
                   onClick={() => setImportResultDetail(prev => ({ ...prev, activeTab: tab }))}
                 >
                   {tab === '개인고객' && (
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="5" r="3" />
-                      <path d="M8 9c-3 0-5 2-5 4v1h10v-1c0-2-2-4-5-4z" />
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                      <circle cx="10" cy="10" r="10" opacity="0.2" />
+                      <circle cx="10" cy="7" r="3" />
+                      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
                     </svg>
                   )}
                   {tab === '법인고객' && (
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M2 14V4h5v2h7v8H2zm1-1h4V5H3v8zm5 0h5V7H8v6z"/>
-                      <rect x="4" y="6" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/>
-                      <rect x="9" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/>
-                      <rect x="9" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/>
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+                      <circle cx="10" cy="10" r="10" opacity="0.2" />
+                      <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
                     </svg>
                   )}
                   {tab === '계약' && (
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M4 1.5a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V4.707L9.293 1.5H4z"/>
                     </svg>
                   )}
