@@ -1918,29 +1918,38 @@ export function ExcelRefiner() {
         const hasSuccess = customerCreatedCount > 0 || customerUpdatedCount > 0 || contractSuccessCount > 0
         const hasFailure = customerSkippedCount > 0 || contractResult.skippedCount > 0 || totalErrors > 0
 
-        let statusIcon: string
+        // 모달용 상태 텍스트 (공식 상태)
         let statusText: string
         if (hasSuccess && !hasFailure) {
-          statusIcon = '✓'
           statusText = '일괄등록 완료'
         } else if (hasSuccess && hasFailure) {
-          statusIcon = '⚠️'
           statusText = '일괄등록 일부 완료'
         } else {
-          statusIcon = '✗'
           statusText = '일괄등록 실패'
         }
 
-        const parts: string[] = [`${statusIcon} ${statusText}`]
-        if (customerCreatedCount > 0) parts.push(`고객 ${customerCreatedCount}명 생성`)
-        if (customerUpdatedCount > 0) parts.push(`고객 ${customerUpdatedCount}명 업데이트`)
-        if (customerSkippedCount > 0) parts.push(`기존 고객 ${customerSkippedCount}명`)
-        if (contractResult.createdCount > 0) parts.push(`계약 ${contractResult.createdCount}건 등록`)
-        if (contractResult.updatedCount > 0) parts.push(`계약 ${contractResult.updatedCount}건 업데이트`)
-        if (contractResult.skippedCount > 0) parts.push(`변경없음 ${contractResult.skippedCount}건`)
-        if (totalErrors > 0) parts.push(`오류 ${totalErrors}건`)
+        // 액션 로그용 간결한 메시지 (신규/수정 구분)
+        const totalCreated = customerCreatedCount + contractResult.createdCount
+        const totalUpdated = customerUpdatedCount + contractResult.updatedCount
 
-        setActionLog(parts.join(' | '))
+        // 변경 내역 문구 생성
+        const changeParts: string[] = []
+        if (totalCreated > 0) changeParts.push(`신규 ${totalCreated}건`)
+        if (totalUpdated > 0) changeParts.push(`수정 ${totalUpdated}건`)
+        const changeText = changeParts.join(', ')
+
+        let actionLogMessage: string
+        if (hasSuccess && !hasFailure) {
+          actionLogMessage = `✓ ${changeText} 완료`
+        } else if (hasSuccess && hasFailure) {
+          actionLogMessage = `⚠️ ${changeText} 완료, 일부 건너뜀`
+        } else if (totalErrors > 0) {
+          actionLogMessage = `✗ 등록 중 오류 발생 (${totalErrors}건)`
+        } else {
+          actionLogMessage = '변경사항 없음 - 이미 등록된 데이터입니다'
+        }
+
+        setActionLog(actionLogMessage)
 
         // 신규 등록 + 업데이트 성공률 계산
         const totalCustomers = 개인고객Count + 법인고객Count
