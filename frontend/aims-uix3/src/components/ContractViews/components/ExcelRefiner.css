@@ -1465,26 +1465,51 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-caption-1); /* 12px */
+  table-layout: fixed;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .excel-refiner__duplicate-table thead {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-secondary);
 }
 
 .excel-refiner__duplicate-table th {
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-2);
   font-size: var(--font-size-caption-2); /* 11px */
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   text-align: left;
   border-bottom: 1px solid var(--color-border-secondary);
+  white-space: nowrap;
+}
+
+.excel-refiner__duplicate-table th svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: var(--spacing-1);
+  margin-bottom: 1px;
+}
+
+/* 테이블 컬럼 너비 - 한 줄 표시 */
+.excel-refiner__duplicate-table th:nth-child(1) { width: 80px; } /* 고객명 */
+.excel-refiner__duplicate-table th:nth-child(2) { width: 110px; } /* 연락처 */
+.excel-refiner__duplicate-table th:nth-child(3) { width: auto; } /* 주소 */
+.excel-refiner__duplicate-table th:nth-child(4) { width: 55px; } /* 작업 */
+
+.excel-refiner__duplicate-table tbody {
+  background: var(--color-bg-primary);
 }
 
 .excel-refiner__duplicate-table td {
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-2);
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-border-tertiary);
   vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .excel-refiner__duplicate-table tbody tr:hover {
@@ -1539,6 +1564,39 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   border-top: 1px solid var(--color-border-tertiary);
 }
 
+/* 동명이인 모달 고객 타입 아이콘 */
+.excel-refiner__type-icon {
+  margin-right: var(--spacing-2);
+  vertical-align: middle;
+}
+
+.excel-refiner__type-icon--personal {
+  color: var(--color-primary-500);
+}
+
+.excel-refiner__type-icon--corporate {
+  color: var(--color-warning);
+}
+
+/* 동명이인 모달 테이블 헤더 아이콘 */
+.excel-refiner__th-icon {
+  display: inline-block;
+  margin-right: var(--spacing-1);
+  vertical-align: middle;
+}
+
+.excel-refiner__th-icon--person {
+  color: var(--color-primary-500);
+}
+
+.excel-refiner__th-icon--phone {
+  color: var(--color-icon-blue);
+}
+
+.excel-refiner__th-icon--address {
+  color: var(--color-icon-green);
+}
+
 /* 동명이인 모달 아이콘 버튼 */
 .excel-refiner__icon-btn {
   display: inline-flex;
@@ -1556,16 +1614,23 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
 }
 
 .excel-refiner__icon-btn:hover {
-  color: var(--color-text-primary);
   opacity: 0.8;
   transform: scale(1.1);
 }
 
+.excel-refiner__icon-btn--edit {
+  color: var(--color-primary-500);
+}
+
+.excel-refiner__icon-btn--edit:hover {
+  color: var(--color-primary-600);
+}
+
 .excel-refiner__icon-btn--delete {
-  color: var(--color-status-error);
+  color: var(--color-error-500);
 }
 
 .excel-refiner__icon-btn--delete:hover {
-  color: var(--color-status-error);
+  color: var(--color-error-600);
   opacity: 0.8;
 }

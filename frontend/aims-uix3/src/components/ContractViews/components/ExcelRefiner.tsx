@@ -2919,8 +2919,10 @@ export function ExcelRefiner() {
             {/* 개인고객 테이블 */}
             <div className="excel-refiner__duplicate-table-section">
               <h4 className="excel-refiner__duplicate-table-title">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="excel-refiner__type-icon excel-refiner__type-icon--personal">
+                  <circle cx="10" cy="10" r="10" opacity="0.2" />
+                  <circle cx="10" cy="7" r="3" />
+                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
                 </svg>
                 개인고객 ({duplicateNameModal.individualCustomers.length}명)
               </h4>
@@ -2930,9 +2932,24 @@ export function ExcelRefiner() {
                 <table className="excel-refiner__duplicate-table">
                   <thead>
                     <tr>
-                      <th>고객명</th>
-                      <th>연락처</th>
-                      <th>주소</th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--person">
+                          <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/>
+                        </svg>
+                        고객명
+                      </th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--phone">
+                          <path d="M3.654 1.328a.678.678 0 00-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 004.168 6.608 17.569 17.569 0 006.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 00-.063-1.015l-2.307-1.794a.678.678 0 00-.58-.122l-2.19.547a1.745 1.745 0 01-1.657-.459L5.482 8.062a1.745 1.745 0 01-.46-1.657l.548-2.19a.678.678 0 00-.122-.58L3.654 1.328z"/>
+                        </svg>
+                        연락처
+                      </th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--address">
+                          <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z"/>
+                        </svg>
+                        주소
+                      </th>
                       <th>작업</th>
                     </tr>
                   </thead>
@@ -2975,7 +2992,7 @@ export function ExcelRefiner() {
                               <Tooltip content="이름 변경">
                                 <button
                                   type="button"
-                                  className="excel-refiner__icon-btn"
+                                  className="excel-refiner__icon-btn excel-refiner__icon-btn--edit"
                                   onClick={() => startEditingCustomerName('individual', customer.rowIndex, customer.name)}
                                   aria-label="이름 변경"
                                 >
@@ -3010,9 +3027,9 @@ export function ExcelRefiner() {
             {/* 법인고객 테이블 */}
             <div className="excel-refiner__duplicate-table-section">
               <h4 className="excel-refiner__duplicate-table-title">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-7zm0-1h7a1.5 1.5 0 011.5 1.5v11a1.5 1.5 0 01-1.5 1.5h-7a1.5 1.5 0 01-1.5-1.5v-11A1.5 1.5 0 014.5 1z"/>
-                  <path d="M6 4h4v1H6V4zm0 2h4v1H6V6zm0 2h4v1H6V8zm0 2h2v1H6v-1z"/>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="excel-refiner__type-icon excel-refiner__type-icon--corporate">
+                  <circle cx="10" cy="10" r="10" opacity="0.2" />
+                  <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
                 </svg>
                 법인고객 ({duplicateNameModal.corporateCustomers.length}명)
               </h4>
@@ -3022,9 +3039,24 @@ export function ExcelRefiner() {
                 <table className="excel-refiner__duplicate-table">
                   <thead>
                     <tr>
-                      <th>고객명</th>
-                      <th>연락처</th>
-                      <th>주소</th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--person">
+                          <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/>
+                        </svg>
+                        고객명
+                      </th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--phone">
+                          <path d="M3.654 1.328a.678.678 0 00-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 004.168 6.608 17.569 17.569 0 006.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 00-.063-1.015l-2.307-1.794a.678.678 0 00-.58-.122l-2.19.547a1.745 1.745 0 01-1.657-.459L5.482 8.062a1.745 1.745 0 01-.46-1.657l.548-2.19a.678.678 0 00-.122-.58L3.654 1.328z"/>
+                        </svg>
+                        연락처
+                      </th>
+                      <th>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--address">
+                          <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z"/>
+                        </svg>
+                        주소
+                      </th>
                       <th>작업</th>
                     </tr>
                   </thead>
@@ -3067,7 +3099,7 @@ export function ExcelRefiner() {
                               <Tooltip content="이름 변경">
                                 <button
                                   type="button"
-                                  className="excel-refiner__icon-btn"
+                                  className="excel-refiner__icon-btn excel-refiner__icon-btn--edit"
                                   onClick={() => startEditingCustomerName('corporate', customer.rowIndex, customer.name)}
                                   aria-label="이름 변경"
                                 >
@@ -3109,9 +3141,11 @@ export function ExcelRefiner() {
 
           {/* 하단 버튼 */}
           <div className="excel-refiner__duplicate-footer">
-            <Button variant="secondary" size="sm" onClick={closeDuplicateNameModal}>
-              나중에 처리
-            </Button>
+            {!isDuplicateResolved && (
+              <Button variant="secondary" size="sm" onClick={closeDuplicateNameModal}>
+                취소
+              </Button>
+            )}
             {isDuplicateResolved && (
               <Button variant="primary" size="sm" onClick={goToNextDuplicateName}>
                 {duplicateNameModal.currentIndex < duplicateNameModal.allDuplicateNames.length - 1
