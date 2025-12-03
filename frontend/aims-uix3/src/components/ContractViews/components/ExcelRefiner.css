@@ -489,6 +489,15 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   background: var(--color-error-600);
 }
 
+/* 클릭 가능한 등록결과 스텝 */
+.excel-refiner__wizard-step--clickable {
+  cursor: pointer;
+}
+
+.excel-refiner__wizard-step--clickable:hover {
+  filter: brightness(0.95);
+}
+
 /* === 행2: 액션바 (검증버튼 + 상태 + 삭제모드 + 범례) === */
 
 .excel-refiner__action-bar {

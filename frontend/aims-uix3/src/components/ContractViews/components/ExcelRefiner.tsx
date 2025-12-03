@@ -2399,13 +2399,16 @@ export function ExcelRefiner() {
                       <span className="excel-refiner__wizard-step-label">계약 검증</span>
                     </div>
                     <div className="excel-refiner__wizard-connector" />
-                    <div className={`excel-refiner__wizard-step ${allValid ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus}` : ''}`}>
+                    <div
+                      className={`excel-refiner__wizard-step ${allValid ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus} excel-refiner__wizard-step--clickable` : ''}`}
+                      onClick={wizardStep.resultStatus ? () => setImportResultDetail(prev => ({ ...prev, isOpen: true })) : undefined}
+                    >
                       <span className="excel-refiner__wizard-step-number">
                         {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
                       </span>
                       <span className="excel-refiner__wizard-step-label">
                         {wizardStep.step === 4 && wizardStep.resultStatus
-                          ? `${wizardStep.label}(${wizardStep.message})`
+                          ? '등록결과'
                           : '일괄등록'}
                       </span>
                     </div>
@@ -2568,18 +2571,7 @@ export function ExcelRefiner() {
                 {/* 액션 로그 메시지 */}
                 {actionLog && !importProgress && (
                   <div className="excel-refiner__action-log">
-                    {importResultDetail.summary ? (
-                      <button
-                        type="button"
-                        className="excel-refiner__action-log-clickable"
-                        onClick={() => setImportResultDetail(prev => ({ ...prev, isOpen: true }))}
-                      >
-                        {actionLog}
-                        <span className="excel-refiner__action-log-hint">클릭하여 상세 보기</span>
-                      </button>
-                    ) : (
-                      <span>{actionLog}</span>
-                    )}
+                    <span>{actionLog}</span>
                     <Tooltip content="로그 지우기">
                     <button
                       type="button"
