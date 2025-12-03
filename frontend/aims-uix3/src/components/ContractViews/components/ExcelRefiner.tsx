@@ -188,7 +188,18 @@ export function ExcelRefiner() {
       errors: Array<{ name: string; reason: string }>
     }
     계약: {
-      created: Array<{ customer_name: string; product_name: string; policy_number: string; contract_date?: string | undefined; premium?: number | undefined }>
+      created: Array<{
+        customer_name: string
+        product_name: string
+        policy_number: string
+        contract_date?: string | undefined
+        premium?: number | undefined
+        payment_day?: number | undefined
+        payment_cycle?: string | undefined
+        payment_period?: string | undefined
+        insured_person?: string | undefined
+        payment_status?: string | undefined
+      }>
       skipped: Array<{ customer_name: string; policy_number: string; reason: string }>
       errors: Array<{ customer_name: string; policy_number: string; reason: string }>
     }
@@ -2076,7 +2087,12 @@ export function ExcelRefiner() {
                 product_name: c.product_name,
                 policy_number: c.policy_number,
                 contract_date: c.contract_date || undefined,
-                premium: c.premium
+                premium: c.premium,
+                payment_day: c.payment_day,
+                payment_cycle: c.payment_cycle,
+                payment_period: c.payment_period,
+                insured_person: c.insured_person,
+                payment_status: c.payment_status
               }))
           : []
 
@@ -3574,9 +3590,14 @@ export function ExcelRefiner() {
                       <th className="excel-refiner__result-th">상태</th>
                       <th className="excel-refiner__result-th">고객명</th>
                       <th className="excel-refiner__result-th">상품명</th>
-                      <th className="excel-refiner__result-th">증권번호</th>
                       <th className="excel-refiner__result-th">계약일</th>
+                      <th className="excel-refiner__result-th">증권번호</th>
                       <th className="excel-refiner__result-th">보험료</th>
+                      <th className="excel-refiner__result-th">이체일</th>
+                      <th className="excel-refiner__result-th">납입주기</th>
+                      <th className="excel-refiner__result-th">납입기간</th>
+                      <th className="excel-refiner__result-th">피보험자</th>
+                      <th className="excel-refiner__result-th">납입상태</th>
                       <th className="excel-refiner__result-th">비고</th>
                     </tr>
                   </thead>
@@ -3586,9 +3607,14 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-created">신규</td>
                         <td className="excel-refiner__result-td">{c.customer_name}</td>
                         <td className="excel-refiner__result-td">{c.product_name}</td>
-                        <td className="excel-refiner__result-td">{c.policy_number}</td>
                         <td className="excel-refiner__result-td">{c.contract_date || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.policy_number}</td>
                         <td className="excel-refiner__result-td">{c.premium ? c.premium.toLocaleString() + '원' : '-'}</td>
+                        <td className="excel-refiner__result-td">{c.payment_day ? c.payment_day + '일' : '-'}</td>
+                        <td className="excel-refiner__result-td">{c.payment_cycle || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.payment_period || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.insured_person || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.payment_status || '-'}</td>
                         <td className="excel-refiner__result-td">-</td>
                       </tr>
                     ))}
@@ -3597,7 +3623,12 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
                         <td className="excel-refiner__result-td">{c.customer_name}</td>
                         <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">{c.policy_number}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">{c.reason}</td>
@@ -3608,7 +3639,12 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-error">오류</td>
                         <td className="excel-refiner__result-td">{c.customer_name || '-'}</td>
                         <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">{c.policy_number || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">-</td>
                         <td className="excel-refiner__result-td">{c.reason}</td>
