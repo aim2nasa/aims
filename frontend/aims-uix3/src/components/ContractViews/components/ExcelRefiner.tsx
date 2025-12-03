@@ -1954,7 +1954,7 @@ export function ExcelRefiner() {
           '납입상태': 'payment_status'
         }
 
-        currentSheet.columns.forEach((colName, idx) => {
+        contractSheet.columns.forEach((colName, idx) => {
           if (!colName) return
           for (const [korName, engName] of Object.entries(columnMapping)) {
             if (colName.includes(korName)) {
@@ -1973,7 +1973,7 @@ export function ExcelRefiner() {
           return
         }
 
-        const contracts = currentSheet.data.map(row => {
+        const contracts = contractSheet.data.map(row => {
           const getValue = (field: string): string => {
             const idx = colIndexMap[field]
             if (idx === undefined) return ''
