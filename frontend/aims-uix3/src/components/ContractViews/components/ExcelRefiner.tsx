@@ -139,7 +139,7 @@ export function ExcelRefiner() {
   const [productNameColumnIndex, setProductNameColumnIndex] = useState<number | null>(null)
 
   // 상품명 상태 필터 (범례 클릭 시 해당 상태 행을 맨 위로)
-  const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'modified' | 'unmatched' | null>(null)
+  const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'unmatched' | null>(null)
 
   // 삭제 모드 상태
   const [isDeleteMode, setIsDeleteMode] = useState(false)
@@ -399,11 +399,9 @@ export function ExcelRefiner() {
         let bMatch = false
 
         if (productStatusFilter === 'original') {
-          aMatch = productMatchResult.originalMatch.has(a.originalIndex)
-          bMatch = productMatchResult.originalMatch.has(b.originalIndex)
-        } else if (productStatusFilter === 'modified') {
-          aMatch = productMatchResult.modified.has(a.originalIndex)
-          bMatch = productMatchResult.modified.has(b.originalIndex)
+          // "매칭" = originalMatch + modified 모두 포함
+          aMatch = productMatchResult.originalMatch.has(a.originalIndex) || productMatchResult.modified.has(a.originalIndex)
+          bMatch = productMatchResult.originalMatch.has(b.originalIndex) || productMatchResult.modified.has(b.originalIndex)
         } else if (productStatusFilter === 'unmatched') {
           aMatch = productMatchResult.unmatched.includes(a.originalIndex)
           bMatch = productMatchResult.unmatched.includes(b.originalIndex)
@@ -2675,28 +2673,20 @@ export function ExcelRefiner() {
               </div>
 
               <div className="excel-refiner__action-bar-right">
-                {/* 상품명 검증 색상 범례 */}
+                {/* 상품명 검증 결과 - 매칭/미매칭만 표시 */}
                 {productMatchResult && productNameColumnIndex !== null && (
                   <div className="excel-refiner__legend">
-                    <span className="excel-refiner__legend-label">상품명 검증</span>
-                    <Tooltip content="보험상품 DB에 등록된 상품명과 정확히 일치">
+                    <span className="excel-refiner__legend-label">상품명</span>
                     <span
                       className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
                       onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
-                    >일치({productMatchResult.originalMatch.size})</span>
-                    </Tooltip>
-                    <Tooltip content="공백/대소문자 차이 → 자동 수정됨">
-                    <span
-                      className={`excel-refiner__legend-item excel-refiner__legend-item--modified${productStatusFilter === 'modified' ? ' excel-refiner__legend-item--active' : ''}`}
-                      onClick={() => setProductStatusFilter(productStatusFilter === 'modified' ? null : 'modified')}
-                    >수정({productMatchResult.modified.size})</span>
-                    </Tooltip>
-                    <Tooltip content="DB에서 찾을 수 없음 - 확인 필요">
-                    <span
-                      className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
-                      onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
-                    >미매칭({productMatchResult.unmatched.length})</span>
-                    </Tooltip>
+                    >매칭 {productMatchResult.originalMatch.size + productMatchResult.modified.size}</span>
+                    {productMatchResult.unmatched.length > 0 && (
+                      <span
+                        className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
+                        onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
+                      >미매칭 {productMatchResult.unmatched.length}</span>
+                    )}
                   </div>
                 )}
 
