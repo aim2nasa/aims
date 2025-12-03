@@ -133,20 +133,51 @@ export const ContractListResponseSchema = z.object({
 
 /**
  * 계약 일괄 등록 응답 스키마
+ * - 증권번호 기준 upsert: 존재하면 업데이트, 없으면 생성
  */
 export const BulkCreateResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   data: z.object({
-    insertedCount: z.number(),
+    createdCount: z.number(),
+    updatedCount: z.number(),
     skippedCount: z.number(),
     errorCount: z.number(),
+    created: z.array(z.object({
+      customer_name: z.string(),
+      product_name: z.string(),
+      policy_number: z.string(),
+      contract_date: z.string().nullable().optional(),
+      premium: z.number().optional(),
+      payment_day: z.any().optional(),
+      payment_cycle: z.string().nullable().optional(),
+      payment_period: z.string().nullable().optional(),
+      insured_person: z.string().nullable().optional(),
+      payment_status: z.string().nullable().optional(),
+      _id: z.string(),
+    })).optional(),
+    updated: z.array(z.object({
+      customer_name: z.string(),
+      product_name: z.string(),
+      policy_number: z.string(),
+      contract_date: z.string().nullable().optional(),
+      premium: z.number().optional(),
+      payment_day: z.any().optional(),
+      payment_cycle: z.string().nullable().optional(),
+      payment_period: z.string().nullable().optional(),
+      insured_person: z.string().nullable().optional(),
+      payment_status: z.string().nullable().optional(),
+      _id: z.string(),
+      changes: z.array(z.string()),
+    })).optional(),
     skipped: z.array(z.object({
-      contract: z.any(),
+      customer_name: z.string(),
+      policy_number: z.string(),
       reason: z.string(),
     })).optional(),
     errors: z.array(z.object({
-      contract: z.any(),
+      customer_name: z.string(),
+      policy_number: z.string(),
       reason: z.string(),
     })).optional(),
   }),

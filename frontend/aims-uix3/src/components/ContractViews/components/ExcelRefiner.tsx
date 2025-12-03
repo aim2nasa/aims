@@ -200,6 +200,19 @@ export function ExcelRefiner() {
         insured_person?: string | undefined
         payment_status?: string | undefined
       }>
+      updated: Array<{
+        customer_name: string
+        product_name: string
+        policy_number: string
+        contract_date?: string | undefined
+        premium?: number | undefined
+        payment_day?: number | undefined
+        payment_cycle?: string | undefined
+        payment_period?: string | undefined
+        insured_person?: string | undefined
+        payment_status?: string | undefined
+        changes: string[]
+      }>
       skipped: Array<{ customer_name: string; policy_number: string; reason: string }>
       errors: Array<{ customer_name: string; policy_number: string; reason: string }>
     }
@@ -210,7 +223,7 @@ export function ExcelRefiner() {
     hideSkipped: true,
     개인고객: { created: [], updated: [], skipped: [], errors: [] },
     법인고객: { created: [], updated: [], skipped: [], errors: [] },
-    계약: { created: [], skipped: [], errors: [] }
+    계약: { created: [], updated: [], skipped: [], errors: [] }
   })
 
   // 일괄등록 확인 모달 상태
@@ -1999,8 +2012,9 @@ export function ExcelRefiner() {
         })
 
         const contractResult = bulkResult.data
+        const contractSuccessCount = contractResult.createdCount + contractResult.updatedCount
         const totalErrors = customerErrors.length + contractResult.errorCount
-        const hasSuccess = customerCreatedCount > 0 || contractResult.insertedCount > 0
+        const hasSuccess = customerCreatedCount > 0 || customerUpdatedCount > 0 || contractSuccessCount > 0
         const hasFailure = customerSkippedCount > 0 || contractResult.skippedCount > 0 || totalErrors > 0
 
         let statusIcon: string
@@ -2018,19 +2032,22 @@ export function ExcelRefiner() {
 
         const parts: string[] = [`${statusIcon} ${statusText}`]
         if (customerCreatedCount > 0) parts.push(`고객 ${customerCreatedCount}명 생성`)
+        if (customerUpdatedCount > 0) parts.push(`고객 ${customerUpdatedCount}명 업데이트`)
         if (customerSkippedCount > 0) parts.push(`기존 고객 ${customerSkippedCount}명`)
-        if (contractResult.insertedCount > 0) parts.push(`계약 ${contractResult.insertedCount}건 등록`)
-        if (contractResult.skippedCount > 0) parts.push(`중복 증권번호 ${contractResult.skippedCount}건`)
+        if (contractResult.createdCount > 0) parts.push(`계약 ${contractResult.createdCount}건 등록`)
+        if (contractResult.updatedCount > 0) parts.push(`계약 ${contractResult.updatedCount}건 업데이트`)
+        if (contractResult.skippedCount > 0) parts.push(`변경없음 ${contractResult.skippedCount}건`)
         if (totalErrors > 0) parts.push(`오류 ${totalErrors}건`)
 
         setActionLog(parts.join(' | '))
 
-        // 신규 등록 성공률 계산 (신규 생성만 = 성공, 기존 고객/중복은 제외)
+        // 신규 등록 + 업데이트 성공률 계산
         const totalCustomers = 개인고객Count + 법인고객Count
+        const customerSuccessCount = customerCreatedCount + customerUpdatedCount
         setImportResult({
-          개인고객: { total: 개인고객Count, success: totalCustomers > 0 ? Math.round(customerCreatedCount * (개인고객Count / totalCustomers)) : 0 },
-          법인고객: { total: 법인고객Count, success: totalCustomers > 0 ? Math.round(customerCreatedCount * (법인고객Count / totalCustomers)) : 0 },
-          계약: { total: contracts.length, success: contractResult.insertedCount }
+          개인고객: { total: 개인고객Count, success: totalCustomers > 0 ? Math.round(customerSuccessCount * (개인고객Count / totalCustomers)) : 0 },
+          법인고객: { total: 법인고객Count, success: totalCustomers > 0 ? Math.round(customerSuccessCount * (법인고객Count / totalCustomers)) : 0 },
+          계약: { total: contracts.length, success: contractSuccessCount }
         })
 
         // 상세 결과 저장 - 입력 데이터와 API 결과 크로스 레퍼런스
@@ -2073,80 +2090,51 @@ export function ExcelRefiner() {
         const 법인Errors = (customerBulkResult?.errors || [])
           .filter(c => customerMap.get(c.name)?.customer_type === '법인')
 
-        // 계약 상세 결과 - insertedCount가 실제 성공 건수
-        const skippedFromApi = contractResult.skipped || []
-        const skippedPolicyNumbers = new Set(skippedFromApi.map(s => s.contract?.policy_number))
+        // 계약 상세 결과 - API에서 직접 반환된 배열 사용
+        const 계약Created = (contractResult.created || []).map(c => ({
+          customer_name: c.customer_name || '',
+          product_name: c.product_name || '',
+          policy_number: c.policy_number || '',
+          contract_date: c.contract_date || undefined,
+          premium: c.premium || 0,
+          payment_day: c.payment_day || undefined,
+          payment_cycle: c.payment_cycle || undefined,
+          payment_period: c.payment_period || undefined,
+          insured_person: c.insured_person || undefined,
+          payment_status: c.payment_status || undefined
+        }))
 
-        // insertedCount가 0이면 신규 등록 없음, 아니면 skipped 제외한 것 중 insertedCount만큼 성공
-        const 계약Created = contractResult.insertedCount > 0
-          ? contracts
-              .filter(c => !skippedPolicyNumbers.has(c.policy_number))
-              .slice(0, contractResult.insertedCount) // insertedCount만큼만
-              .map(c => ({
-                customer_name: c.customer_name,
-                product_name: c.product_name,
-                policy_number: c.policy_number,
-                contract_date: c.contract_date || undefined,
-                premium: c.premium,
-                payment_day: c.payment_day,
-                payment_cycle: c.payment_cycle,
-                payment_period: c.payment_period,
-                insured_person: c.insured_person,
-                payment_status: c.payment_status
-              }))
-          : []
+        const 계약Updated = (contractResult.updated || []).map(c => ({
+          customer_name: c.customer_name || '',
+          product_name: c.product_name || '',
+          policy_number: c.policy_number || '',
+          contract_date: c.contract_date || undefined,
+          premium: c.premium || 0,
+          payment_day: c.payment_day || undefined,
+          payment_cycle: c.payment_cycle || undefined,
+          payment_period: c.payment_period || undefined,
+          insured_person: c.insured_person || undefined,
+          payment_status: c.payment_status || undefined,
+          changes: c.changes || []
+        }))
 
-        // API skipped 배열 + skippedCount가 더 많으면 원본에서 추가로 찾기
-        const 계약Skipped: Array<{ customer_name: string; policy_number: string; reason: string }> = []
+        const 계약Skipped = (contractResult.skipped || []).map(s => ({
+          customer_name: s.customer_name || '',
+          policy_number: s.policy_number || '',
+          reason: s.reason || '변경사항 없음'
+        }))
 
-        // 1. API에서 온 skipped 추가
-        skippedFromApi.forEach(s => {
-          계약Skipped.push({
-            customer_name: s.contract?.customer_name || '',
-            policy_number: s.contract?.policy_number || '',
-            reason: s.reason
-          })
-        })
-
-        // 2. skippedCount가 API skipped 배열보다 크면 나머지는 원본에서 찾아서 추가
-        if (contractResult.skippedCount > skippedFromApi.length) {
-          const createdPolicyNumbers = new Set(계약Created.map(c => c.policy_number))
-          const remainingSkipped = contracts
-            .filter(c => !skippedPolicyNumbers.has(c.policy_number) && !createdPolicyNumbers.has(c.policy_number))
-            .slice(0, contractResult.skippedCount - skippedFromApi.length)
-
-          remainingSkipped.forEach(c => {
-            계약Skipped.push({
-              customer_name: c.customer_name,
-              policy_number: c.policy_number,
-              reason: '이미 존재하는 증권번호'
-            })
-          })
-        }
-
-        // 오류 건수가 있으면 skipped에 포함되지 않은 나머지를 오류로 처리
-        const 계약Errors: Array<{ customer_name: string; policy_number: string; reason: string }> = []
-        if (contractResult.errorCount > 0) {
-          const processedPolicyNumbers = new Set([
-            ...skippedPolicyNumbers,
-            ...계약Created.map(c => c.policy_number)
-          ])
-          const errorContracts = contracts
-            .filter(c => !processedPolicyNumbers.has(c.policy_number))
-            .slice(0, contractResult.errorCount)
-          errorContracts.forEach(c => {
-            계약Errors.push({
-              customer_name: c.customer_name,
-              policy_number: c.policy_number,
-              reason: '등록 오류'
-            })
-          })
-        }
+        const 계약Errors = (contractResult.errors || []).map(e => ({
+          customer_name: e.customer_name || '',
+          policy_number: e.policy_number || '',
+          reason: e.reason || '등록 오류'
+        }))
 
         setImportResultDetail({
           isOpen: false,
           summary: statusText,
           activeTab: '개인고객',
+          hideSkipped: true,
           개인고객: {
             created: 개인Created,
             updated: 개인Updated,
@@ -2161,6 +2149,7 @@ export function ExcelRefiner() {
           },
           계약: {
             created: 계약Created,
+            updated: 계약Updated,
             skipped: 계약Skipped,
             errors: 계약Errors
           }
@@ -3407,7 +3396,7 @@ export function ExcelRefiner() {
             <div className="excel-refiner__result-tabs">
               {(['개인고객', '법인고객', '계약'] as const).map(tab => {
                 const totalCount = tab === '계약'
-                  ? importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
+                  ? importResultDetail.계약.created.length + importResultDetail.계약.updated.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
                   : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
                 return (
                   <button
@@ -3581,7 +3570,7 @@ export function ExcelRefiner() {
           {/* 탭 콘텐츠 - 계약 */}
           {importResultDetail.activeTab === '계약' && (
             <div className="excel-refiner__result-table-container">
-              {importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length === 0 ? (
+              {importResultDetail.계약.created.length + importResultDetail.계약.updated.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length === 0 ? (
                 <div className="excel-refiner__result-empty">등록된 계약이 없습니다</div>
               ) : (
                 <table className="excel-refiner__result-table">
@@ -3616,6 +3605,21 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td">{c.insured_person || '-'}</td>
                         <td className="excel-refiner__result-td">{c.payment_status || '-'}</td>
                         <td className="excel-refiner__result-td">-</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.계약.updated.map((c, i) => (
+                      <tr key={`updated-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--updated">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-updated">업데이트</td>
+                        <td className="excel-refiner__result-td">{c.customer_name}</td>
+                        <td className="excel-refiner__result-td">{c.product_name}</td>
+                        <td className="excel-refiner__result-td">{c.contract_date || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('보험료') ? 'excel-refiner__result-td--changed' : ''}`}>{c.premium ? c.premium.toLocaleString() + '원' : '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('이체일') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_day ? c.payment_day + '일' : '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('납입주기') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_cycle || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('납입기간') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_period || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('피보험자') ? 'excel-refiner__result-td--changed' : ''}`}>{c.insured_person || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('납입상태') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_status || '-'}</td>
+                        <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
                       </tr>
                     ))}
                     {!importResultDetail.hideSkipped && importResultDetail.계약.skipped.map((c, i) => (

@@ -4744,7 +4744,9 @@ app.post('/api/contracts', async (req, res) => {
 
 /**
  * POST /api/contracts/bulk
- * 일괄 계약 등록 (Excel Import용)
+ * 일괄 계약 등록/업데이트 (Excel Import용)
+ * - 증권번호 기준 upsert: 존재하면 업데이트, 없으면 생성
+ * - 변경사항 없으면 건너뜀
  */
 app.post('/api/contracts/bulk', async (req, res) => {
   try {
@@ -4792,79 +4794,203 @@ app.post('/api/contracts/bulk', async (req, res) => {
       if (name) productMap.set(name, p._id);
     });
 
-    // 기존 증권번호 조회 (중복 체크용)
-    const existingPolicyNumbers = new Set();
+    // 기존 계약 조회 (증권번호로 매칭, 전체 데이터 포함)
     const existingContracts = await db.collection(CONTRACTS_COLLECTION)
-      .find({ agent_id: agentObjectId }, { projection: { policy_number: 1 } })
+      .find({ agent_id: agentObjectId })
       .toArray();
+    const contractMap = new Map();
     existingContracts.forEach(c => {
-      if (c.policy_number) existingPolicyNumbers.add(c.policy_number);
+      if (c.policy_number) contractMap.set(c.policy_number, c);
     });
 
-    const toInsert = [];
+    const created = [];
+    const updated = [];
     const skipped = [];
     const errors = [];
 
     for (const contract of contracts) {
-      // 증권번호 중복 체크
-      if (!contract.policy_number) {
-        errors.push({ contract, reason: '증권번호 누락' });
-        continue;
-      }
-
-      if (existingPolicyNumbers.has(contract.policy_number)) {
-        skipped.push({ contract, reason: '이미 존재하는 증권번호' });
-        continue;
-      }
-
-      // FK 매칭
-      const customerName = contract.customer_name?.trim().toLowerCase();
-      const productName = contract.product_name?.trim().toLowerCase();
-      const customerId = customerMap.get(customerName) || null;
-      const productId = productMap.get(productName) || null;
-
-      const newContract = {
-        agent_id: agentObjectId,
-        customer_id: customerId,
-        insurer_id: null,
-        product_id: productId,
-        customer_name: contract.customer_name || '',
-        product_name: contract.product_name || '',
-        contract_date: contract.contract_date || null,
-        policy_number: contract.policy_number,
-        premium: Number(contract.premium) || 0,
-        payment_day: contract.payment_day || null,  // 원본 텍스트 그대로 저장
-        payment_cycle: contract.payment_cycle || null,
-        payment_period: contract.payment_period || null,
-        insured_person: contract.insured_person || null,
-        payment_status: contract.payment_status || null,
-        meta: {
-          created_at: now,
-          updated_at: now,
-          created_by: agent_id,
-          source: 'excel_import'
+      try {
+        // 증권번호 필수 체크
+        if (!contract.policy_number) {
+          errors.push({
+            customer_name: contract.customer_name || '(미지정)',
+            policy_number: '',
+            reason: '증권번호 누락'
+          });
+          continue;
         }
-      };
 
-      toInsert.push(newContract);
-      existingPolicyNumbers.add(contract.policy_number); // 현재 배치 내 중복 방지
-    }
+        const existingContract = contractMap.get(contract.policy_number);
 
-    let insertedCount = 0;
-    if (toInsert.length > 0) {
-      const result = await db.collection(CONTRACTS_COLLECTION).insertMany(toInsert);
-      insertedCount = result.insertedCount;
+        if (existingContract) {
+          // 기존 계약 존재 - 업데이트 필요 여부 확인
+          const changes = [];
+          const updateFields = {};
+
+          // 보험료 비교/업데이트
+          const newPremium = Number(contract.premium) || 0;
+          if (newPremium && newPremium !== existingContract.premium) {
+            updateFields.premium = newPremium;
+            changes.push('보험료');
+          }
+
+          // 계약일 비교/업데이트
+          if (contract.contract_date && contract.contract_date !== existingContract.contract_date) {
+            updateFields.contract_date = contract.contract_date;
+            changes.push('계약일');
+          }
+
+          // 이체일 비교/업데이트
+          const newPaymentDay = contract.payment_day || null;
+          if (newPaymentDay !== null && newPaymentDay !== existingContract.payment_day) {
+            updateFields.payment_day = newPaymentDay;
+            changes.push('이체일');
+          }
+
+          // 납입주기 비교/업데이트
+          if (contract.payment_cycle && contract.payment_cycle !== existingContract.payment_cycle) {
+            updateFields.payment_cycle = contract.payment_cycle;
+            changes.push('납입주기');
+          }
+
+          // 납입기간 비교/업데이트
+          if (contract.payment_period && contract.payment_period !== existingContract.payment_period) {
+            updateFields.payment_period = contract.payment_period;
+            changes.push('납입기간');
+          }
+
+          // 피보험자 비교/업데이트
+          if (contract.insured_person && contract.insured_person !== existingContract.insured_person) {
+            updateFields.insured_person = contract.insured_person;
+            changes.push('피보험자');
+          }
+
+          // 납입상태 비교/업데이트
+          if (contract.payment_status && contract.payment_status !== existingContract.payment_status) {
+            updateFields.payment_status = contract.payment_status;
+            changes.push('납입상태');
+          }
+
+          // 상품명 비교/업데이트
+          if (contract.product_name && contract.product_name !== existingContract.product_name) {
+            updateFields.product_name = contract.product_name;
+            // product_id도 업데이트
+            const productName = contract.product_name?.trim().toLowerCase();
+            const productId = productMap.get(productName) || null;
+            updateFields.product_id = productId;
+            changes.push('상품명');
+          }
+
+          // 고객명 비교/업데이트
+          if (contract.customer_name && contract.customer_name !== existingContract.customer_name) {
+            updateFields.customer_name = contract.customer_name;
+            // customer_id도 업데이트
+            const customerName = contract.customer_name?.trim().toLowerCase();
+            const customerId = customerMap.get(customerName) || null;
+            updateFields.customer_id = customerId;
+            changes.push('고객명');
+          }
+
+          if (changes.length > 0) {
+            // 변경사항 있음 - 업데이트
+            updateFields['meta.updated_at'] = now;
+
+            await db.collection(CONTRACTS_COLLECTION).updateOne(
+              { _id: existingContract._id },
+              { $set: updateFields }
+            );
+
+            updated.push({
+              customer_name: contract.customer_name || existingContract.customer_name,
+              product_name: contract.product_name || existingContract.product_name,
+              policy_number: contract.policy_number,
+              contract_date: contract.contract_date || existingContract.contract_date,
+              premium: newPremium || existingContract.premium,
+              payment_day: contract.payment_day || existingContract.payment_day,
+              payment_cycle: contract.payment_cycle || existingContract.payment_cycle,
+              payment_period: contract.payment_period || existingContract.payment_period,
+              insured_person: contract.insured_person || existingContract.insured_person,
+              payment_status: contract.payment_status || existingContract.payment_status,
+              _id: existingContract._id.toString(),
+              changes
+            });
+          } else {
+            // 변경사항 없음 - 건너뜀
+            skipped.push({
+              customer_name: contract.customer_name || existingContract.customer_name,
+              policy_number: contract.policy_number,
+              reason: '변경사항 없음'
+            });
+          }
+        } else {
+          // 신규 계약 생성
+          const customerName = contract.customer_name?.trim().toLowerCase();
+          const productName = contract.product_name?.trim().toLowerCase();
+          const customerId = customerMap.get(customerName) || null;
+          const productId = productMap.get(productName) || null;
+
+          const newContract = {
+            agent_id: agentObjectId,
+            customer_id: customerId,
+            insurer_id: null,
+            product_id: productId,
+            customer_name: contract.customer_name || '',
+            product_name: contract.product_name || '',
+            contract_date: contract.contract_date || null,
+            policy_number: contract.policy_number,
+            premium: Number(contract.premium) || 0,
+            payment_day: contract.payment_day || null,
+            payment_cycle: contract.payment_cycle || null,
+            payment_period: contract.payment_period || null,
+            insured_person: contract.insured_person || null,
+            payment_status: contract.payment_status || null,
+            meta: {
+              created_at: now,
+              updated_at: now,
+              created_by: agent_id,
+              source: 'excel_import'
+            }
+          };
+
+          const result = await db.collection(CONTRACTS_COLLECTION).insertOne(newContract);
+          created.push({
+            customer_name: contract.customer_name || '',
+            product_name: contract.product_name || '',
+            policy_number: contract.policy_number,
+            contract_date: contract.contract_date || null,
+            premium: Number(contract.premium) || 0,
+            payment_day: contract.payment_day || null,
+            payment_cycle: contract.payment_cycle || null,
+            payment_period: contract.payment_period || null,
+            insured_person: contract.insured_person || null,
+            payment_status: contract.payment_status || null,
+            _id: result.insertedId.toString()
+          });
+
+          // 현재 배치 내 중복 방지를 위해 맵에 추가
+          contractMap.set(contract.policy_number, { ...newContract, _id: result.insertedId });
+        }
+      } catch (itemError) {
+        errors.push({
+          customer_name: contract.customer_name || '(미지정)',
+          policy_number: contract.policy_number || '',
+          reason: itemError.message
+        });
+      }
     }
 
     res.json({
       success: true,
-      message: `${insertedCount}건 등록, ${skipped.length}건 건너뜀, ${errors.length}건 오류`,
+      message: `${created.length}건 등록, ${updated.length}건 업데이트, ${skipped.length}건 건너뜀`,
       data: {
-        insertedCount,
+        createdCount: created.length,
+        updatedCount: updated.length,
         skippedCount: skipped.length,
         errorCount: errors.length,
-        skipped: skipped.slice(0, 10), // 처음 10개만 반환
-        errors: errors.slice(0, 10)
+        created: created.slice(0, 50),
+        updated: updated.slice(0, 50),
+        skipped: skipped.slice(0, 50),
+        errors: errors.slice(0, 50)
       }
     });
 
