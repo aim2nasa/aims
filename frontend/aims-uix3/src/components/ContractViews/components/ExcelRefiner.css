@@ -223,7 +223,6 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   background: var(--color-bg-primary);
   margin: var(--spacing-4);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-primary);
 }
 
 /* === 행1: 헤더바 (파일정보 + 위자드 + 전역버튼) === */
@@ -696,44 +695,46 @@ html[data-theme="dark"] .excel-refiner__legend-item--unmatched {
   display: flex;
   align-items: flex-end;
   gap: 0;
-  padding: 0 var(--spacing-2);
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border-secondary);
+  padding: 0 var(--spacing-3);
+  background: var(--color-bg-primary);
   min-height: 24px;
 }
 
 .excel-refiner__sheet-tab {
   position: relative;
-  padding: 4px 12px;
-  border: 1px solid transparent;
-  border-bottom: none;
-  background: var(--color-bg-tertiary);
+  padding: 5px 14px;
+  border: 1px solid var(--color-border-secondary);
+  border-bottom: 1px solid var(--color-border-secondary);
+  background: var(--color-neutral-100);
   color: var(--color-text-tertiary);
   font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY */
   font-weight: var(--font-weight-regular); /* 400 */
   cursor: pointer;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   transition: all var(--duration-fast) var(--easing-default);
   margin-bottom: -1px;
 }
 
-.excel-refiner__sheet-tab:hover {
-  background: var(--color-bg-secondary);
+html[data-theme="dark"] .excel-refiner__sheet-tab {
+  background: var(--color-neutral-800);
+}
+
+.excel-refiner__sheet-tab:hover:not(.excel-refiner__sheet-tab--active) {
+  background: var(--color-neutral-50);
   color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab:hover:not(.excel-refiner__sheet-tab--active) {
+  background: var(--color-neutral-700);
 }
 
 .excel-refiner__sheet-tab--active {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold); /* 600 */
-  border-color: var(--color-border-secondary);
+  border-top: 3px solid var(--color-success-500);
   border-bottom: 1px solid var(--color-bg-primary);
   z-index: 1;
-}
-
-html[data-theme="dark"] .excel-refiner__sheet-tab--active {
-  border-color: var(--color-border-primary);
-  border-bottom-color: var(--color-bg-primary);
 }
 
 
@@ -786,7 +787,7 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
 .excel-refiner__th,
 .excel-refiner__td {
   text-align: left;
-  border-bottom: 1px solid var(--color-border-primary);
+  border: 1px solid var(--color-border-secondary);
   white-space: nowrap;
 }
 
