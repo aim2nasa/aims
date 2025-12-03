@@ -2040,10 +2040,20 @@ export function ExcelRefiner() {
           reason: e.reason || '등록 오류'
         }))
 
+        // 변경이 있는 탭을 자동 선택 (created나 updated가 있는 첫 번째 탭)
+        let defaultActiveTab: '개인고객' | '법인고객' | '계약' = '개인고객'
+        if (개인Created.length > 0 || 개인Updated.length > 0) {
+          defaultActiveTab = '개인고객'
+        } else if (법인Created.length > 0 || 법인Updated.length > 0) {
+          defaultActiveTab = '법인고객'
+        } else if (계약Created.length > 0 || 계약Updated.length > 0) {
+          defaultActiveTab = '계약'
+        }
+
         setImportResultDetail({
           isOpen: false,
           summary: statusText,
-          activeTab: '개인고객',
+          activeTab: defaultActiveTab,
           hideSkipped: true,
           개인고객: {
             created: 개인Created,
