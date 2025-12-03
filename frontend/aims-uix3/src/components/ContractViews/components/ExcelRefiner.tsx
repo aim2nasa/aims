@@ -176,7 +176,7 @@ export function ExcelRefiner() {
     activeTab: '개인고객' | '법인고객' | '계약'
     개인고객: {
       created: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; gender?: string | undefined; birth_date?: string | undefined }>
-      updated: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; changes: string[] }>
+      updated: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; gender?: string | undefined; birth_date?: string | undefined; changes: string[] }>
       skipped: Array<{ name: string; reason: string }>
       errors: Array<{ name: string; reason: string }>
     }
@@ -2033,7 +2033,7 @@ export function ExcelRefiner() {
           .filter(c => customerMap.get(c.name)?.customer_type === '개인')
           .map(c => {
             const input = customerMap.get(c.name)
-            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
+            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
           })
 
         const 개인Skipped = (customerBulkResult?.skipped || [])
@@ -3458,8 +3458,8 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td">{c.name}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('mobile_phone') ? 'excel-refiner__result-td--changed' : ''}`}>{c.mobile_phone || '-'}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('address') ? 'excel-refiner__result-td--changed' : ''}`}>{c.address || '-'}</td>
-                        <td className="excel-refiner__result-td">-</td>
-                        <td className="excel-refiner__result-td">-</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('gender') ? 'excel-refiner__result-td--changed' : ''}`}>{c.gender || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('birth_date') ? 'excel-refiner__result-td--changed' : ''}`}>{c.birth_date || '-'}</td>
                         <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
                       </tr>
                     ))}
