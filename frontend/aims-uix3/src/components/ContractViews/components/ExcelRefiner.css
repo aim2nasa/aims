@@ -400,6 +400,26 @@ html[data-theme="dark"] .excel-refiner__wizard-step--completed .excel-refiner__w
   background: var(--color-success-600);
 }
 
+/* 검증 실패 - 빨간색 */
+.excel-refiner__wizard-step--invalid {
+  background: var(--color-error-100);
+  color: var(--color-error-700);
+}
+
+.excel-refiner__wizard-step--invalid .excel-refiner__wizard-step-number {
+  background: var(--color-error-500);
+  color: var(--color-text-inverse);
+}
+
+html[data-theme="dark"] .excel-refiner__wizard-step--invalid {
+  background: var(--color-error-bg);
+  color: var(--color-error-500);
+}
+
+html[data-theme="dark"] .excel-refiner__wizard-step--invalid .excel-refiner__wizard-step-number {
+  background: var(--color-error-600);
+}
+
 .excel-refiner__wizard-connector {
   width: 16px;
   height: 2px;
@@ -461,8 +481,8 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-partial .excel-refin
 }
 
 html[data-theme="dark"] .excel-refiner__wizard-step--result-error {
-  background: var(--color-error-900);
-  color: var(--color-error-300);
+  background: var(--color-error-bg);
+  color: var(--color-error-500);
 }
 
 html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner__wizard-step-number {

@@ -1035,8 +1035,10 @@ export function ExcelRefiner() {
                 }
               })
 
-              // 검증 상태 업데이트
+              // 검증 상태 업데이트 - 개인/법인 모두 invalid 처리
+              newStatus.set('개인고객', 'invalid')
               newStatus.set('법인고객', 'invalid')
+              newIssueCount.set('개인고객', uniqueDuplicates.length)
               newIssueCount.set('법인고객', uniqueDuplicates.length)
               setSheetValidationStatus(new Map(newStatus))
               setSheetIssueCount(new Map(newIssueCount))
@@ -2287,35 +2289,51 @@ export function ExcelRefiner() {
               </div>
 
               {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → 계약 → 등록 */}
-              {wizardStep && (
-                <div className={`excel-refiner__wizard-compact excel-refiner__wizard--step-${wizardStep.step}`}>
-                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 1 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 1 ? 'excel-refiner__wizard-step--completed' : ''}`}>
-                    <span className="excel-refiner__wizard-step-number">1</span>
-                    <span className="excel-refiner__wizard-step-label">개인고객 검증</span>
+              {wizardStep && (() => {
+                // 각 시트의 검증 상태에 따른 스텝 클래스 결정
+                const getStepClass = (sheetName: string) => {
+                  const status = sheetValidationStatus.get(sheetName)
+                  if (!status || status === 'pending') return '' // 회색 (기본)
+                  if (status === 'validating') return 'excel-refiner__wizard-step--active' // 파란색
+                  if (status === 'valid') return 'excel-refiner__wizard-step--completed' // 녹색
+                  if (status === 'invalid') return 'excel-refiner__wizard-step--invalid' // 빨간색
+                  return ''
+                }
+
+                const allValid = ['개인고객', '법인고객', '계약'].every(
+                  name => sheetValidationStatus.get(name) === 'valid'
+                )
+
+                return (
+                  <div className={`excel-refiner__wizard-compact excel-refiner__wizard--step-${wizardStep.step}`}>
+                    <div className={`excel-refiner__wizard-step ${getStepClass('개인고객')}`}>
+                      <span className="excel-refiner__wizard-step-number">1</span>
+                      <span className="excel-refiner__wizard-step-label">개인고객 검증</span>
+                    </div>
+                    <div className="excel-refiner__wizard-connector" />
+                    <div className={`excel-refiner__wizard-step ${getStepClass('법인고객')}`}>
+                      <span className="excel-refiner__wizard-step-number">2</span>
+                      <span className="excel-refiner__wizard-step-label">법인고객 검증</span>
+                    </div>
+                    <div className="excel-refiner__wizard-connector" />
+                    <div className={`excel-refiner__wizard-step ${getStepClass('계약')}`}>
+                      <span className="excel-refiner__wizard-step-number">3</span>
+                      <span className="excel-refiner__wizard-step-label">계약 검증</span>
+                    </div>
+                    <div className="excel-refiner__wizard-connector" />
+                    <div className={`excel-refiner__wizard-step ${allValid ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus}` : ''}`}>
+                      <span className="excel-refiner__wizard-step-number">
+                        {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
+                      </span>
+                      <span className="excel-refiner__wizard-step-label">
+                        {wizardStep.step === 4 && wizardStep.resultStatus
+                          ? `${wizardStep.label}(${wizardStep.message})`
+                          : '일괄등록'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="excel-refiner__wizard-connector" />
-                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 2 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 2 ? 'excel-refiner__wizard-step--completed' : ''}`}>
-                    <span className="excel-refiner__wizard-step-number">2</span>
-                    <span className="excel-refiner__wizard-step-label">법인고객 검증</span>
-                  </div>
-                  <div className="excel-refiner__wizard-connector" />
-                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 3 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 3 ? 'excel-refiner__wizard-step--completed' : ''}`}>
-                    <span className="excel-refiner__wizard-step-number">3</span>
-                    <span className="excel-refiner__wizard-step-label">계약 검증</span>
-                  </div>
-                  <div className="excel-refiner__wizard-connector" />
-                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 4 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus}` : ''}`}>
-                    <span className="excel-refiner__wizard-step-number">
-                      {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
-                    </span>
-                    <span className="excel-refiner__wizard-step-label">
-                      {wizardStep.step === 4 && wizardStep.resultStatus
-                        ? `${wizardStep.label}(${wizardStep.message})`
-                        : '일괄등록'}
-                    </span>
-                  </div>
-                </div>
-              )}
+                )
+              })()}
 
               <div className="excel-refiner__header-right">
                 <Tooltip content="다운로드">
