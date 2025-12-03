@@ -2493,19 +2493,16 @@ export function ExcelRefiner() {
                   </Tooltip>
                 )}
 
-                {/* 상태 표시 */}
+                {/* 상태 표시 + 일괄등록 버튼 */}
                 {wizardStep?.step === 4 ? (
-                  <>
-                    <span className="excel-refiner__status excel-refiner__status--success">✅ 검증 완료</span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleImportContracts}
-                      disabled={isImporting}
-                    >
-                      {isImporting ? '등록 중...' : '일괄등록'}
-                    </Button>
-                  </>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleImportContracts}
+                    disabled={isImporting}
+                  >
+                    {isImporting ? '등록 중...' : '일괄등록'}
+                  </Button>
                 ) : wizardStep?.step === 3 ? (
                   <span className="excel-refiner__status excel-refiner__status--error">
                     ⚠️ {sheetIssueCount.get(Array.from(sheetValidationStatus.entries()).find(([_, v]) => v === 'invalid')?.[0] || '') || 0}건 수정 필요
