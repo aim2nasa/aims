@@ -42,11 +42,11 @@ export const PersonalInfoSchema = z.object({
     (val) => (val === '남' ? 'M' : val === '여' ? 'F' : val === null ? undefined : val),
     z.enum(['M', 'F']).optional()
   ),
-  mobile_phone: z.string().optional(),
-  home_phone: z.string().optional(),
-  work_phone: z.string().optional(),
-  email: z.string().email('유효한 이메일 주소를 입력해주세요').optional().or(z.literal('')),
-  address: AddressSchema.optional(),
+  mobile_phone: z.string().nullable().optional(),
+  home_phone: z.string().nullable().optional(),
+  work_phone: z.string().nullable().optional(),
+  email: z.string().email('유효한 이메일 주소를 입력해주세요').nullable().optional().or(z.literal('')),
+  address: AddressSchema.nullable().optional(),
 });
 
 /**
