@@ -498,6 +498,26 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   filter: brightness(0.95);
 }
 
+/* 등록결과 주의 필요 시 깜빡임 (partial, error) */
+.excel-refiner__wizard-step--result-partial.excel-refiner__wizard-step--clickable,
+.excel-refiner__wizard-step--result-error.excel-refiner__wizard-step--clickable {
+  animation: result-attention 1.5s ease-in-out infinite;
+}
+
+.excel-refiner__wizard-step--result-partial.excel-refiner__wizard-step--clickable:hover,
+.excel-refiner__wizard-step--result-error.excel-refiner__wizard-step--clickable:hover {
+  animation: none;
+}
+
+@keyframes result-attention {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* === 행2: 액션바 (검증버튼 + 상태 + 삭제모드 + 범례) === */
 
 .excel-refiner__action-bar {
