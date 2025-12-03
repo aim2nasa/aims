@@ -932,6 +932,49 @@ export function ExcelRefiner() {
 
       newStatus.set(sheetName, 'valid')
       setSheetValidationStatus(new Map(newStatus))
+
+      // 법인고객 시트 검증 완료 후: 개인/법인 간 동명이인 검증
+      if (sheetName === '법인고객') {
+        const individualSheet = sheets.find(s => s.name === '개인고객')
+        const corporateSheet = sheets.find(s => s.name === '법인고객')
+
+        if (individualSheet && corporateSheet) {
+          const findCustomerNameColIndex = (s: SheetData) =>
+            s.columns.findIndex(col => col && getValidationType(col) === 'customerName')
+
+          const indNameIdx = findCustomerNameColIndex(individualSheet)
+          const corpNameIdx = findCustomerNameColIndex(corporateSheet)
+
+          if (indNameIdx !== -1 && corpNameIdx !== -1) {
+            // 개인고객 이름 수집
+            const individualNames = new Set<string>()
+            individualSheet.data.forEach(row => {
+              const name = cellToString(row[indNameIdx] as CellValue).trim()
+              if (name) individualNames.add(name)
+            })
+
+            // 법인고객과 겹치는 이름 찾기
+            const duplicateNames: string[] = []
+            corporateSheet.data.forEach(row => {
+              const name = cellToString(row[corpNameIdx] as CellValue).trim()
+              if (name && individualNames.has(name)) {
+                duplicateNames.push(name)
+              }
+            })
+
+            if (duplicateNames.length > 0) {
+              const uniqueDuplicates = [...new Set(duplicateNames)]
+              newStatus.set('법인고객', 'invalid')
+              newIssueCount.set('법인고객', uniqueDuplicates.length)
+              setSheetValidationStatus(new Map(newStatus))
+              setSheetIssueCount(new Map(newIssueCount))
+              setActionLog(`⚠️ 개인/법인 동명이인: ${uniqueDuplicates.join(', ')} - 한쪽에서 삭제하거나 이름을 변경하세요`)
+              setIsValidatingAll(false)
+              return
+            }
+          }
+        }
+      }
     }
 
     // 모든 시트 검증 완료
@@ -2516,12 +2559,24 @@ export function ExcelRefiner() {
       >
         <div className="excel-refiner__confirm-modal">
           <p className="excel-refiner__confirm-message">
-            <strong>{importConfirmModal.customerCount}명</strong>의 고객을 {importConfirmModal.isCustomerSheet ? '등록/업데이트' : '생성'}하시겠습니까?
+            다음 데이터를 등록하시겠습니까?
           </p>
+          <div className="excel-refiner__confirm-stats">
+            <div className="excel-refiner__confirm-stat">
+              <span>개인고객</span>
+              <strong>{importConfirmModal.개인고객Count}명</strong>
+            </div>
+            <div className="excel-refiner__confirm-stat">
+              <span>법인고객</span>
+              <strong>{importConfirmModal.법인고객Count}명</strong>
+            </div>
+            <div className="excel-refiner__confirm-stat">
+              <span>계약</span>
+              <strong>{importConfirmModal.계약Count}건</strong>
+            </div>
+          </div>
           <p className="excel-refiner__confirm-note">
-            {importConfirmModal.isCustomerSheet
-              ? '동일 고객명이 존재하면 정보만 업데이트합니다.'
-              : '동일한 이름의 기존 고객이 있으면 생성하지 않습니다.'}
+            ※ 이미 등록된 고객과 중복 증권번호는 건너뜁니다.
           </p>
           <div className="excel-refiner__confirm-actions">
             <Button
