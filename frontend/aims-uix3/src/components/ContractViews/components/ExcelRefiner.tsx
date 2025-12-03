@@ -2513,56 +2513,6 @@ export function ExcelRefiner() {
                   </span>
                 ) : null}
 
-                {/* 구분선 */}
-                <span className="excel-refiner__divider" />
-
-                {/* 삭제 모드 토글 버튼 */}
-                <Tooltip content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
-                  <button
-                    type="button"
-                    className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
-                    onClick={handleToggleDeleteMode}
-                    aria-label={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}
-                  >
-                    {isDeleteMode ? (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    ) : (
-                      <SFSymbol
-                        name="trash"
-                        size={SFSymbolSize.CAPTION_1}
-                        weight={SFSymbolWeight.MEDIUM}
-                        decorative={true}
-                      />
-                    )}
-                  </button>
-                </Tooltip>
-
-                {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
-                {isDeleteMode && (
-                  <>
-                    <span className="excel-refiner__selected-count">{selectedRows.size}개 선택</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteSelected}
-                      disabled={selectedRows.size === 0}
-                    >
-                      삭제
-                    </Button>
-                  </>
-                )}
-
-                {isDeleteMode && selectedRows.size > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearSelection}
-                  >
-                    선택 해제
-                  </Button>
-                )}
               </div>
 
               <div className="excel-refiner__action-bar-right">
@@ -2863,6 +2813,53 @@ export function ExcelRefiner() {
             ? `${currentSheet.data.length}행 | 선택: ${selectedRows.size}행`
             : '파일을 드래그하여 시작하세요'}
         </span>
+        {/* 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
+        {currentSheet && (
+          <div className="excel-refiner__footer-actions">
+            <Tooltip content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
+              <button
+                type="button"
+                className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
+                onClick={handleToggleDeleteMode}
+                aria-label={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}
+              >
+                {isDeleteMode ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <SFSymbol
+                    name="trash"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                )}
+              </button>
+            </Tooltip>
+            {isDeleteMode && (
+              <>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedRows.size === 0}
+                >
+                  선택 삭제
+                </Button>
+                {selectedRows.size > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearSelection}
+                  >
+                    선택 해제
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </footer>
 
       {/* 상품 검색 모달 */}
