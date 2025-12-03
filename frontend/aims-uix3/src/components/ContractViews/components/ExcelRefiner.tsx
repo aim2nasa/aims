@@ -168,6 +168,37 @@ export function ExcelRefiner() {
     계약: { total: number; success: number }
   } | null>(null)
 
+  // 일괄등록 상세 결과 (모달 표시용) - 모든 상세 정보 포함
+  const [importResultDetail, setImportResultDetail] = useState<{
+    isOpen: boolean
+    summary: string
+    activeTab: '개인고객' | '법인고객' | '계약'
+    개인고객: {
+      created: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; gender?: string | undefined; birth_date?: string | undefined }>
+      updated: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; changes: string[] }>
+      skipped: Array<{ name: string; reason: string }>
+      errors: Array<{ name: string; reason: string }>
+    }
+    법인고객: {
+      created: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined }>
+      updated: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; changes: string[] }>
+      skipped: Array<{ name: string; reason: string }>
+      errors: Array<{ name: string; reason: string }>
+    }
+    계약: {
+      created: Array<{ customer_name: string; product_name: string; policy_number: string; contract_date?: string | undefined; premium?: number | undefined }>
+      skipped: Array<{ customer_name: string; policy_number: string; reason: string }>
+      errors: Array<{ customer_name: string; policy_number: string; reason: string }>
+    }
+  }>({
+    isOpen: false,
+    summary: '',
+    activeTab: '개인고객',
+    개인고객: { created: [], updated: [], skipped: [], errors: [] },
+    법인고객: { created: [], updated: [], skipped: [], errors: [] },
+    계약: { created: [], skipped: [], errors: [] }
+  })
+
   // 일괄등록 확인 모달 상태
   const [importConfirmModal, setImportConfirmModal] = useState<{
     isOpen: boolean
@@ -1845,7 +1876,16 @@ export function ExcelRefiner() {
 
         let customerCreatedCount = 0
         let customerSkippedCount = 0
+        let customerUpdatedCount = 0
         const customerErrors: string[] = []
+
+        // 상세 결과 저장용
+        let customerBulkResult: {
+          created: Array<{ name: string; _id: string }>
+          updated: Array<{ name: string; _id: string; changes: string[] }>
+          skipped: Array<{ name: string; reason: string }>
+          errors: Array<{ name: string; reason: string }>
+        } | null = null
 
         // 1단계: bulkImportCustomers로 고객 생성 (customer_type 반영)
         if (customers.length > 0) {
@@ -1853,7 +1893,14 @@ export function ExcelRefiner() {
           try {
             const result = await CustomerService.bulkImportCustomers(customers)
             customerCreatedCount = result.createdCount
-            customerSkippedCount = result.skippedCount + result.updatedCount
+            customerUpdatedCount = result.updatedCount
+            customerSkippedCount = result.skippedCount
+            customerBulkResult = {
+              created: result.created || [],
+              updated: result.updated || [],
+              skipped: result.skipped || [],
+              errors: result.errors || []
+            }
             if (result.errorCount > 0) {
               customerErrors.push(`${result.errorCount}건 오류`)
             }
@@ -1972,6 +2019,111 @@ export function ExcelRefiner() {
           계약: { total: contracts.length, success: contractResult.insertedCount }
         })
 
+        // 상세 결과 저장 - 입력 데이터와 API 결과 크로스 레퍼런스
+        const customerMap = new Map(customers.map(c => [c.name, c]))
+
+        // 개인/법인 분리된 상세 결과
+        const 개인Created = (customerBulkResult?.created || [])
+          .map(c => customerMap.get(c.name))
+          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
+          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
+
+        const 개인Updated = (customerBulkResult?.updated || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+          .map(c => {
+            const input = customerMap.get(c.name)
+            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
+          })
+
+        const 개인Skipped = (customerBulkResult?.skipped || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+
+        const 개인Errors = (customerBulkResult?.errors || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+
+        const 법인Created = (customerBulkResult?.created || [])
+          .map(c => customerMap.get(c.name))
+          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
+          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
+
+        const 법인Updated = (customerBulkResult?.updated || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+          .map(c => {
+            const input = customerMap.get(c.name)
+            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
+          })
+
+        const 법인Skipped = (customerBulkResult?.skipped || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+
+        const 법인Errors = (customerBulkResult?.errors || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+
+        // 계약 상세 결과 - insertedCount가 실제 성공 건수
+        const skippedPolicyNumbers = new Set((contractResult.skipped || []).map(s => s.contract?.policy_number))
+
+        // insertedCount가 0이면 신규 등록 없음, 아니면 skipped 제외한 것 중 insertedCount만큼 성공
+        const 계약Created = contractResult.insertedCount > 0
+          ? contracts
+              .filter(c => !skippedPolicyNumbers.has(c.policy_number))
+              .slice(0, contractResult.insertedCount) // insertedCount만큼만
+              .map(c => ({
+                customer_name: c.customer_name,
+                product_name: c.product_name,
+                policy_number: c.policy_number,
+                contract_date: c.contract_date || undefined,
+                premium: c.premium
+              }))
+          : []
+
+        const 계약Skipped = (contractResult.skipped || []).map(s => ({
+          customer_name: s.contract?.customer_name || '',
+          policy_number: s.contract?.policy_number || '',
+          reason: s.reason
+        }))
+
+        // 오류 건수가 있으면 skipped에 포함되지 않은 나머지를 오류로 처리
+        const 계약Errors: Array<{ customer_name: string; policy_number: string; reason: string }> = []
+        if (contractResult.errorCount > 0) {
+          const processedPolicyNumbers = new Set([
+            ...skippedPolicyNumbers,
+            ...계약Created.map(c => c.policy_number)
+          ])
+          const errorContracts = contracts
+            .filter(c => !processedPolicyNumbers.has(c.policy_number))
+            .slice(0, contractResult.errorCount)
+          errorContracts.forEach(c => {
+            계약Errors.push({
+              customer_name: c.customer_name,
+              policy_number: c.policy_number,
+              reason: '등록 오류'
+            })
+          })
+        }
+
+        setImportResultDetail({
+          isOpen: false,
+          summary: statusText,
+          activeTab: '개인고객',
+          개인고객: {
+            created: 개인Created,
+            updated: 개인Updated,
+            skipped: 개인Skipped,
+            errors: 개인Errors
+          },
+          법인고객: {
+            created: 법인Created,
+            updated: 법인Updated,
+            skipped: 법인Skipped,
+            errors: 법인Errors
+          },
+          계약: {
+            created: 계약Created,
+            skipped: 계약Skipped,
+            errors: 계약Errors
+          }
+        })
+
         if (customerErrors.length > 0) {
           console.error('고객 생성 오류:', customerErrors)
         }
@@ -2033,15 +2185,13 @@ export function ExcelRefiner() {
       if (importResult && resultStatus) {
         // 퍼센트 계산 헬퍼
         const pct = (s: number, t: number) => t > 0 ? Math.round((s / t) * 100) : 0
-        const 개인pct = pct(importResult.개인고객.success, importResult.개인고객.total)
-        const 법인pct = pct(importResult.법인고객.success, importResult.법인고객.total)
-        const 계약pct = pct(importResult.계약.success, importResult.계약.total)
+        const fmt = (s: number, t: number) => `${pct(s, t)}%(${s}/${t})`
 
         // 결과 메시지 생성 (있는 항목만 표시)
         const parts: string[] = []
-        if (importResult.개인고객.total > 0) parts.push(`개인:${개인pct}%`)
-        if (importResult.법인고객.total > 0) parts.push(`법인:${법인pct}%`)
-        if (importResult.계약.total > 0) parts.push(`계약:${계약pct}%`)
+        if (importResult.개인고객.total > 0) parts.push(`개인:${fmt(importResult.개인고객.success, importResult.개인고객.total)}`)
+        if (importResult.법인고객.total > 0) parts.push(`법인:${fmt(importResult.법인고객.success, importResult.법인고객.total)}`)
+        if (importResult.계약.total > 0) parts.push(`계약:${fmt(importResult.계약.success, importResult.계약.total)}`)
 
         const message = parts.join(' ')
         return { step: 4, label: '등록결과', message, resultStatus }
@@ -2537,12 +2687,26 @@ export function ExcelRefiner() {
                 {/* 액션 로그 메시지 */}
                 {actionLog && !importProgress && (
                   <div className="excel-refiner__action-log">
-                    {actionLog}
+                    {importResultDetail.summary ? (
+                      <button
+                        type="button"
+                        className="excel-refiner__action-log-clickable"
+                        onClick={() => setImportResultDetail(prev => ({ ...prev, isOpen: true }))}
+                      >
+                        {actionLog}
+                        <span className="excel-refiner__action-log-hint">클릭하여 상세 보기</span>
+                      </button>
+                    ) : (
+                      <span>{actionLog}</span>
+                    )}
                     <Tooltip content="로그 지우기">
                     <button
                       type="button"
                       className="excel-refiner__action-log-clear"
-                      onClick={() => setActionLog(null)}
+                      onClick={() => {
+                        setActionLog(null)
+                        setImportResultDetail(prev => ({ ...prev, summary: '', isOpen: false }))
+                      }}
                     >
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                         <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -3171,6 +3335,257 @@ export function ExcelRefiner() {
                   : '완료'}
               </Button>
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* 일괄등록 상세 결과 모달 */}
+      <Modal
+        visible={importResultDetail.isOpen}
+        onClose={() => setImportResultDetail(prev => ({ ...prev, isOpen: false }))}
+        title="일괄등록 결과 상세"
+        size="lg"
+      >
+        <div className="excel-refiner__result-detail">
+          {/* 상태 배지 */}
+          <div className="excel-refiner__result-summary">
+            <span className={`excel-refiner__result-badge excel-refiner__result-badge--${
+              importResultDetail.summary === '일괄등록 완료' ? 'success' :
+              importResultDetail.summary === '일괄등록 일부 완료' ? 'partial' : 'error'
+            }`}>
+              {importResultDetail.summary}
+            </span>
+          </div>
+
+          {/* 탭 네비게이션 */}
+          <div className="excel-refiner__result-tabs">
+            {(['개인고객', '법인고객', '계약'] as const).map(tab => {
+              const totalCount = tab === '계약'
+                ? importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
+                : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`excel-refiner__result-tab ${importResultDetail.activeTab === tab ? 'excel-refiner__result-tab--active' : ''}`}
+                  onClick={() => setImportResultDetail(prev => ({ ...prev, activeTab: tab }))}
+                >
+                  {tab === '개인고객' && (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="8" cy="5" r="3" />
+                      <path d="M8 9c-3 0-5 2-5 4v1h10v-1c0-2-2-4-5-4z" />
+                    </svg>
+                  )}
+                  {tab === '법인고객' && (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2 14V4h5v2h7v8H2zm1-1h4V5H3v8zm5 0h5V7H8v6z"/>
+                      <rect x="4" y="6" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/>
+                      <rect x="9" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/>
+                      <rect x="9" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/>
+                    </svg>
+                  )}
+                  {tab === '계약' && (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M4 1.5a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V4.707L9.293 1.5H4z"/>
+                    </svg>
+                  )}
+                  {tab}
+                  <span className="excel-refiner__result-tab-count">{totalCount}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* 탭 콘텐츠 - 개인고객 */}
+          {importResultDetail.activeTab === '개인고객' && (
+            <div className="excel-refiner__result-table-container">
+              {importResultDetail.개인고객.created.length + importResultDetail.개인고객.updated.length + importResultDetail.개인고객.skipped.length === 0 ? (
+                <div className="excel-refiner__result-empty">등록된 개인고객이 없습니다</div>
+              ) : (
+                <table className="excel-refiner__result-table">
+                  <thead>
+                    <tr>
+                      <th className="excel-refiner__result-th">상태</th>
+                      <th className="excel-refiner__result-th">고객명</th>
+                      <th className="excel-refiner__result-th">연락처</th>
+                      <th className="excel-refiner__result-th">주소</th>
+                      <th className="excel-refiner__result-th">성별</th>
+                      <th className="excel-refiner__result-th">생년월일</th>
+                      <th className="excel-refiner__result-th">비고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResultDetail.개인고객.created.map((c, i) => (
+                      <tr key={`created-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--created">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-created">신규</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">{c.mobile_phone || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.address || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.gender || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.birth_date || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.개인고객.updated.map((c, i) => (
+                      <tr key={`updated-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--updated">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-updated">업데이트</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('mobile_phone') ? 'excel-refiner__result-td--changed' : ''}`}>{c.mobile_phone || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('address') ? 'excel-refiner__result-td--changed' : ''}`}>{c.address || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.개인고객.skipped.map((c, i) => (
+                      <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.개인고객.errors.map((c, i) => (
+                      <tr key={`error-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--error">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-error">오류</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* 탭 콘텐츠 - 법인고객 */}
+          {importResultDetail.activeTab === '법인고객' && (
+            <div className="excel-refiner__result-table-container">
+              {importResultDetail.법인고객.created.length + importResultDetail.법인고객.updated.length + importResultDetail.법인고객.skipped.length === 0 ? (
+                <div className="excel-refiner__result-empty">등록된 법인고객이 없습니다</div>
+              ) : (
+                <table className="excel-refiner__result-table">
+                  <thead>
+                    <tr>
+                      <th className="excel-refiner__result-th">상태</th>
+                      <th className="excel-refiner__result-th">법인명</th>
+                      <th className="excel-refiner__result-th">연락처</th>
+                      <th className="excel-refiner__result-th">주소</th>
+                      <th className="excel-refiner__result-th">비고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResultDetail.법인고객.created.map((c, i) => (
+                      <tr key={`created-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--created">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-created">신규</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">{c.mobile_phone || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.address || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.법인고객.updated.map((c, i) => (
+                      <tr key={`updated-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--updated">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-updated">업데이트</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('mobile_phone') ? 'excel-refiner__result-td--changed' : ''}`}>{c.mobile_phone || '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('address') ? 'excel-refiner__result-td--changed' : ''}`}>{c.address || '-'}</td>
+                        <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.법인고객.skipped.map((c, i) => (
+                      <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.법인고객.errors.map((c, i) => (
+                      <tr key={`error-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--error">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-error">오류</td>
+                        <td className="excel-refiner__result-td">{c.name}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* 탭 콘텐츠 - 계약 */}
+          {importResultDetail.activeTab === '계약' && (
+            <div className="excel-refiner__result-table-container">
+              {importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length === 0 ? (
+                <div className="excel-refiner__result-empty">등록된 계약이 없습니다</div>
+              ) : (
+                <table className="excel-refiner__result-table">
+                  <thead>
+                    <tr>
+                      <th className="excel-refiner__result-th">상태</th>
+                      <th className="excel-refiner__result-th">고객명</th>
+                      <th className="excel-refiner__result-th">상품명</th>
+                      <th className="excel-refiner__result-th">증권번호</th>
+                      <th className="excel-refiner__result-th">계약일</th>
+                      <th className="excel-refiner__result-th">보험료</th>
+                      <th className="excel-refiner__result-th">비고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResultDetail.계약.created.map((c, i) => (
+                      <tr key={`created-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--created">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-created">신규</td>
+                        <td className="excel-refiner__result-td">{c.customer_name}</td>
+                        <td className="excel-refiner__result-td">{c.product_name}</td>
+                        <td className="excel-refiner__result-td">{c.policy_number}</td>
+                        <td className="excel-refiner__result-td">{c.contract_date || '-'}</td>
+                        <td className="excel-refiner__result-td">{c.premium ? c.premium.toLocaleString() + '원' : '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.계약.skipped.map((c, i) => (
+                      <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
+                        <td className="excel-refiner__result-td">{c.customer_name}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.policy_number}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                    {importResultDetail.계약.errors.map((c, i) => (
+                      <tr key={`error-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--error">
+                        <td className="excel-refiner__result-td excel-refiner__result-td--status-error">오류</td>
+                        <td className="excel-refiner__result-td">{c.customer_name || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.policy_number || '-'}</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">-</td>
+                        <td className="excel-refiner__result-td">{c.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          <div className="excel-refiner__result-footer">
+            <Button variant="primary" size="sm" onClick={() => setImportResultDetail(prev => ({ ...prev, isOpen: false }))}>
+              확인
+            </Button>
           </div>
         </div>
       </Modal>
