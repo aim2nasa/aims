@@ -1942,7 +1942,7 @@ export function ExcelRefiner() {
         // 변경 내역 문구 생성
         const changeParts: string[] = []
         if (totalCreated > 0) changeParts.push(`신규 ${totalCreated}건`)
-        if (totalUpdated > 0) changeParts.push(`수정 ${totalUpdated}건`)
+        if (totalUpdated > 0) changeParts.push(`업데이트 ${totalUpdated}건`)
         const changeText = changeParts.join(', ')
 
         let actionLogMessage: string
