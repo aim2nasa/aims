@@ -11,6 +11,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
+import { DraggableModal } from '@/shared/ui/DraggableModal'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import {
@@ -2060,7 +2061,8 @@ export function ExcelRefiner() {
           .filter(c => customerMap.get(c.name)?.customer_type === '법인')
 
         // 계약 상세 결과 - insertedCount가 실제 성공 건수
-        const skippedPolicyNumbers = new Set((contractResult.skipped || []).map(s => s.contract?.policy_number))
+        const skippedFromApi = contractResult.skipped || []
+        const skippedPolicyNumbers = new Set(skippedFromApi.map(s => s.contract?.policy_number))
 
         // insertedCount가 0이면 신규 등록 없음, 아니면 skipped 제외한 것 중 insertedCount만큼 성공
         const 계약Created = contractResult.insertedCount > 0
@@ -2076,11 +2078,33 @@ export function ExcelRefiner() {
               }))
           : []
 
-        const 계약Skipped = (contractResult.skipped || []).map(s => ({
-          customer_name: s.contract?.customer_name || '',
-          policy_number: s.contract?.policy_number || '',
-          reason: s.reason
-        }))
+        // API skipped 배열 + skippedCount가 더 많으면 원본에서 추가로 찾기
+        const 계약Skipped: Array<{ customer_name: string; policy_number: string; reason: string }> = []
+
+        // 1. API에서 온 skipped 추가
+        skippedFromApi.forEach(s => {
+          계약Skipped.push({
+            customer_name: s.contract?.customer_name || '',
+            policy_number: s.contract?.policy_number || '',
+            reason: s.reason
+          })
+        })
+
+        // 2. skippedCount가 API skipped 배열보다 크면 나머지는 원본에서 찾아서 추가
+        if (contractResult.skippedCount > skippedFromApi.length) {
+          const createdPolicyNumbers = new Set(계약Created.map(c => c.policy_number))
+          const remainingSkipped = contracts
+            .filter(c => !skippedPolicyNumbers.has(c.policy_number) && !createdPolicyNumbers.has(c.policy_number))
+            .slice(0, contractResult.skippedCount - skippedFromApi.length)
+
+          remainingSkipped.forEach(c => {
+            계약Skipped.push({
+              customer_name: c.customer_name,
+              policy_number: c.policy_number,
+              reason: '이미 존재하는 증권번호'
+            })
+          })
+        }
 
         // 오류 건수가 있으면 skipped에 포함되지 않은 나머지를 오류로 처리
         const 계약Errors: Array<{ customer_name: string; policy_number: string; reason: string }> = []
@@ -3340,11 +3364,14 @@ export function ExcelRefiner() {
       </Modal>
 
       {/* 일괄등록 상세 결과 모달 */}
-      <Modal
+      <DraggableModal
         visible={importResultDetail.isOpen}
         onClose={() => setImportResultDetail(prev => ({ ...prev, isOpen: false }))}
         title="일괄등록 결과 상세"
-        size="lg"
+        initialWidth={800}
+        initialHeight={560}
+        minWidth={600}
+        minHeight={400}
       >
         <div className="excel-refiner__result-detail">
           {/* 상태 배지 */}
@@ -3581,13 +3608,8 @@ export function ExcelRefiner() {
             </div>
           )}
 
-          <div className="excel-refiner__result-footer">
-            <Button variant="primary" size="sm" onClick={() => setImportResultDetail(prev => ({ ...prev, isOpen: false }))}>
-              확인
-            </Button>
-          </div>
         </div>
-      </Modal>
+      </DraggableModal>
     </div>
   )
 }

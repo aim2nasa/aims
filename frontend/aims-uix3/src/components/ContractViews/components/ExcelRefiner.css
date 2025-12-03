@@ -1687,18 +1687,21 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
 
 /* === 일괄등록 상세 결과 모달 === */
 
-/* 모달 content 스크롤 제거 - 테이블 내부에서만 스크롤 */
+/* 모달 content를 flex로 확장 */
+.draggable-modal__content:has(.excel-refiner__result-detail) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .excel-refiner__result-detail {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  overflow: hidden;
-  margin: calc(-1 * var(--spacing-6));
-  padding: var(--spacing-6);
-}
-
-/* 부모 modal__content의 overflow 제거 */
-.modal__content:has(.excel-refiner__result-detail) {
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1916,7 +1919,8 @@ html[data-theme="dark"] .excel-refiner__result-tab--active {
 /* === 일괄등록 상세 결과 - 테이블 === */
 
 .excel-refiner__result-table-container {
-  height: 320px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-md);
