@@ -3444,7 +3444,7 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td">{c.contract_date || '-'}</td>
                         <td className="excel-refiner__result-td">{c.policy_number}</td>
                         <td className="excel-refiner__result-td">{c.premium ? c.premium.toLocaleString() + '원' : '-'}</td>
-                        <td className="excel-refiner__result-td">{c.payment_day ? c.payment_day + '일' : '-'}</td>
+                        <td className="excel-refiner__result-td">{c.payment_day ? (String(c.payment_day).endsWith('일') ? c.payment_day : c.payment_day + '일') : '-'}</td>
                         <td className="excel-refiner__result-td">{c.payment_cycle || '-'}</td>
                         <td className="excel-refiner__result-td">{c.payment_period || '-'}</td>
                         <td className="excel-refiner__result-td">{c.insured_person || '-'}</td>
@@ -3459,7 +3459,7 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td">{c.product_name}</td>
                         <td className="excel-refiner__result-td">{c.contract_date || '-'}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('보험료') ? 'excel-refiner__result-td--changed' : ''}`}>{c.premium ? c.premium.toLocaleString() + '원' : '-'}</td>
-                        <td className={`excel-refiner__result-td ${c.changes.includes('이체일') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_day ? c.payment_day + '일' : '-'}</td>
+                        <td className={`excel-refiner__result-td ${c.changes.includes('이체일') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_day ? (String(c.payment_day).endsWith('일') ? c.payment_day : c.payment_day + '일') : '-'}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('납입주기') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_cycle || '-'}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('납입기간') ? 'excel-refiner__result-td--changed' : ''}`}>{c.payment_period || '-'}</td>
                         <td className={`excel-refiner__result-td ${c.changes.includes('피보험자') ? 'excel-refiner__result-td--changed' : ''}`}>{c.insured_person || '-'}</td>
