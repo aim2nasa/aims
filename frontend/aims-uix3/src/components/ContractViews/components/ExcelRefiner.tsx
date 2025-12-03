@@ -188,6 +188,36 @@ export function ExcelRefiner() {
   const [sheetIssueCount, setSheetIssueCount] = useState<Map<string, number>>(new Map())
   const [isValidatingAll, setIsValidatingAll] = useState(false)
 
+  // === 개인/법인 동명이인 모달 상태 ===
+  type DuplicateCustomerInfo = {
+    name: string
+    contact: string
+    address: string
+    rowIndex: number
+  }
+  type DuplicateNameModalState = {
+    isOpen: boolean
+    duplicateName: string
+    individualCustomers: DuplicateCustomerInfo[]
+    corporateCustomers: DuplicateCustomerInfo[]
+    allDuplicateNames: string[]  // 전체 동명이인 목록
+    currentIndex: number         // 현재 처리 중인 인덱스
+  }
+  const [duplicateNameModal, setDuplicateNameModal] = useState<DuplicateNameModalState>({
+    isOpen: false,
+    duplicateName: '',
+    individualCustomers: [],
+    corporateCustomers: [],
+    allDuplicateNames: [],
+    currentIndex: 0
+  })
+  // 이름 변경 편집 상태
+  const [editingCustomerName, setEditingCustomerName] = useState<{
+    type: 'individual' | 'corporate'
+    rowIndex: number
+    newName: string
+  } | null>(null)
+
 
   // 초기화 완료 여부 (sessionStorage 로드 후 true)
   const isInitialized = useRef(false)
@@ -941,34 +971,86 @@ export function ExcelRefiner() {
         if (individualSheet && corporateSheet) {
           const findCustomerNameColIndex = (s: SheetData) =>
             s.columns.findIndex(col => col && getValidationType(col) === 'customerName')
+          const findColIdx = (s: SheetData, pattern: string) =>
+            s.columns.findIndex(col => col && col.includes(pattern))
 
           const indNameIdx = findCustomerNameColIndex(individualSheet)
           const corpNameIdx = findCustomerNameColIndex(corporateSheet)
 
           if (indNameIdx !== -1 && corpNameIdx !== -1) {
-            // 개인고객 이름 수집
-            const individualNames = new Set<string>()
-            individualSheet.data.forEach(row => {
+            // 개인고객 컬럼 인덱스
+            const indContactIdx = findColIdx(individualSheet, '연락처')
+            const indAddressIdx = findColIdx(individualSheet, '주소')
+
+            // 법인고객 컬럼 인덱스
+            const corpContactIdx = findColIdx(corporateSheet, '연락처')
+            const corpAddressIdx = findColIdx(corporateSheet, '주소')
+
+            // 개인고객 이름-행 매핑
+            const individualNameMap = new Map<string, { contact: string; address: string; rowIndex: number }[]>()
+            individualSheet.data.forEach((row, rowIndex) => {
               const name = cellToString(row[indNameIdx] as CellValue).trim()
-              if (name) individualNames.add(name)
+              if (name) {
+                const existing = individualNameMap.get(name) || []
+                existing.push({
+                  contact: indContactIdx !== -1 ? cellToString(row[indContactIdx] as CellValue).trim() : '',
+                  address: indAddressIdx !== -1 ? cellToString(row[indAddressIdx] as CellValue).trim() : '',
+                  rowIndex
+                })
+                individualNameMap.set(name, existing)
+              }
             })
 
             // 법인고객과 겹치는 이름 찾기
             const duplicateNames: string[] = []
             corporateSheet.data.forEach(row => {
               const name = cellToString(row[corpNameIdx] as CellValue).trim()
-              if (name && individualNames.has(name)) {
+              if (name && individualNameMap.has(name)) {
                 duplicateNames.push(name)
               }
             })
 
             if (duplicateNames.length > 0) {
               const uniqueDuplicates = [...new Set(duplicateNames)]
+              const firstName = uniqueDuplicates[0]
+
+              // 첫 번째 동명이인에 대한 상세 정보 수집
+              const individualCustomers = (individualNameMap.get(firstName) || []).map(info => ({
+                name: firstName,
+                contact: info.contact,
+                address: info.address,
+                rowIndex: info.rowIndex
+              }))
+
+              const corporateCustomers: { name: string; contact: string; address: string; rowIndex: number }[] = []
+              corporateSheet.data.forEach((row, rowIndex) => {
+                const name = cellToString(row[corpNameIdx] as CellValue).trim()
+                if (name === firstName) {
+                  corporateCustomers.push({
+                    name,
+                    contact: corpContactIdx !== -1 ? cellToString(row[corpContactIdx] as CellValue).trim() : '',
+                    address: corpAddressIdx !== -1 ? cellToString(row[corpAddressIdx] as CellValue).trim() : '',
+                    rowIndex
+                  })
+                }
+              })
+
+              // 검증 상태 업데이트
               newStatus.set('법인고객', 'invalid')
               newIssueCount.set('법인고객', uniqueDuplicates.length)
               setSheetValidationStatus(new Map(newStatus))
               setSheetIssueCount(new Map(newIssueCount))
-              setActionLog(`⚠️ 개인/법인 동명이인: ${uniqueDuplicates.join(', ')} - 한쪽에서 삭제하거나 이름을 변경하세요`)
+
+              // 동명이인 모달 열기
+              setDuplicateNameModal({
+                isOpen: true,
+                duplicateName: firstName,
+                individualCustomers,
+                corporateCustomers,
+                allDuplicateNames: uniqueDuplicates,
+                currentIndex: 0
+              })
+
               setIsValidatingAll(false)
               return
             }
@@ -981,6 +1063,208 @@ export function ExcelRefiner() {
     setIsValidatingAll(false)
     setActionLog('✓ 모든 시트 검증 완료 - 등록 가능')
   }, [sheets, isImporting, isValidatingAll])
+
+  // === 동명이인 모달 핸들러 ===
+
+  // 동명이인 모달 닫기
+  const closeDuplicateNameModal = useCallback(() => {
+    setDuplicateNameModal({
+      isOpen: false,
+      duplicateName: '',
+      individualCustomers: [],
+      corporateCustomers: [],
+      allDuplicateNames: [],
+      currentIndex: 0
+    })
+    setEditingCustomerName(null)
+  }, [])
+
+  // 동명이인: 개인고객에서 삭제
+  const handleDeleteFromIndividual = useCallback((rowIndex: number) => {
+    const individualSheet = sheets.find(s => s.name === '개인고객')
+    if (!individualSheet) return
+
+    const sheetIndex = sheets.findIndex(s => s.name === '개인고객')
+    const newData = individualSheet.data.filter((_, idx) => idx !== rowIndex)
+
+    setSheets(prev => {
+      const updated = [...prev]
+      updated[sheetIndex] = {
+        ...individualSheet,
+        data: newData
+      }
+      return updated
+    })
+
+    // 모달에서 해당 고객 제거
+    setDuplicateNameModal(prev => ({
+      ...prev,
+      individualCustomers: prev.individualCustomers.filter(c => c.rowIndex !== rowIndex)
+    }))
+
+    setActionLog(`✓ 개인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨`)
+  }, [sheets, duplicateNameModal.duplicateName])
+
+  // 동명이인: 법인고객에서 삭제
+  const handleDeleteFromCorporate = useCallback((rowIndex: number) => {
+    const corporateSheet = sheets.find(s => s.name === '법인고객')
+    if (!corporateSheet) return
+
+    const sheetIndex = sheets.findIndex(s => s.name === '법인고객')
+    const newData = corporateSheet.data.filter((_, idx) => idx !== rowIndex)
+
+    setSheets(prev => {
+      const updated = [...prev]
+      updated[sheetIndex] = {
+        ...corporateSheet,
+        data: newData
+      }
+      return updated
+    })
+
+    // 모달에서 해당 고객 제거
+    setDuplicateNameModal(prev => ({
+      ...prev,
+      corporateCustomers: prev.corporateCustomers.filter(c => c.rowIndex !== rowIndex)
+    }))
+
+    setActionLog(`✓ 법인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨`)
+  }, [sheets, duplicateNameModal.duplicateName])
+
+  // 동명이인: 이름 변경 시작
+  const startEditingCustomerName = useCallback((type: 'individual' | 'corporate', rowIndex: number, currentName: string) => {
+    setEditingCustomerName({
+      type,
+      rowIndex,
+      newName: currentName
+    })
+  }, [])
+
+  // 동명이인: 이름 변경 저장
+  const saveCustomerNameChange = useCallback(() => {
+    if (!editingCustomerName) return
+
+    const { type, rowIndex, newName } = editingCustomerName
+    const trimmedName = newName.trim()
+
+    if (!trimmedName) {
+      setActionLog('⚠️ 고객명을 입력해주세요')
+      return
+    }
+
+    if (trimmedName === duplicateNameModal.duplicateName) {
+      setActionLog('⚠️ 기존 이름과 동일합니다')
+      return
+    }
+
+    const sheetName = type === 'individual' ? '개인고객' : '법인고객'
+    const sheet = sheets.find(s => s.name === sheetName)
+    if (!sheet) return
+
+    // 고객명 컬럼 인덱스 찾기
+    const nameColIdx = sheet.columns.findIndex(col => col && getValidationType(col) === 'customerName')
+    if (nameColIdx === -1) return
+
+    const sheetIndex = sheets.findIndex(s => s.name === sheetName)
+
+    setSheets(prev => {
+      const updated = [...prev]
+      const newData = [...sheet.data]
+      newData[rowIndex] = [...newData[rowIndex]]
+      newData[rowIndex][nameColIdx] = trimmedName
+      updated[sheetIndex] = {
+        ...sheet,
+        data: newData
+      }
+      return updated
+    })
+
+    // 모달에서 해당 고객 제거 (이름이 변경되었으므로 더 이상 동명이인 아님)
+    if (type === 'individual') {
+      setDuplicateNameModal(prev => ({
+        ...prev,
+        individualCustomers: prev.individualCustomers.filter(c => c.rowIndex !== rowIndex)
+      }))
+    } else {
+      setDuplicateNameModal(prev => ({
+        ...prev,
+        corporateCustomers: prev.corporateCustomers.filter(c => c.rowIndex !== rowIndex)
+      }))
+    }
+
+    setEditingCustomerName(null)
+    setActionLog(`✓ ${sheetName}의 고객명이 '${trimmedName}'(으)로 변경됨`)
+  }, [editingCustomerName, duplicateNameModal.duplicateName, sheets])
+
+  // 동명이인: 다음 동명이인으로 이동
+  const goToNextDuplicateName = useCallback(() => {
+    const { allDuplicateNames, currentIndex } = duplicateNameModal
+    if (currentIndex >= allDuplicateNames.length - 1) {
+      // 마지막 동명이인이면 모달 닫고 재검증
+      closeDuplicateNameModal()
+      setActionLog('동명이인 처리 완료 - 검증을 다시 실행해주세요')
+      return
+    }
+
+    const nextIndex = currentIndex + 1
+    const nextName = allDuplicateNames[nextIndex]
+
+    // 다음 동명이인 정보 수집
+    const individualSheet = sheets.find(s => s.name === '개인고객')
+    const corporateSheet = sheets.find(s => s.name === '법인고객')
+    if (!individualSheet || !corporateSheet) return
+
+    const findCustomerNameColIndex = (s: SheetData) =>
+      s.columns.findIndex(col => col && getValidationType(col) === 'customerName')
+    const findColIdx = (s: SheetData, pattern: string) =>
+      s.columns.findIndex(col => col && col.includes(pattern))
+
+    const indNameIdx = findCustomerNameColIndex(individualSheet)
+    const corpNameIdx = findCustomerNameColIndex(corporateSheet)
+
+    const indContactIdx = findColIdx(individualSheet, '연락처')
+    const indAddressIdx = findColIdx(individualSheet, '주소')
+    const corpContactIdx = findColIdx(corporateSheet, '연락처')
+    const corpAddressIdx = findColIdx(corporateSheet, '주소')
+
+    const individualCustomers: typeof duplicateNameModal.individualCustomers = []
+    individualSheet.data.forEach((row, rowIndex) => {
+      const name = cellToString(row[indNameIdx] as CellValue).trim()
+      if (name === nextName) {
+        individualCustomers.push({
+          name,
+          contact: indContactIdx !== -1 ? cellToString(row[indContactIdx] as CellValue).trim() : '',
+          address: indAddressIdx !== -1 ? cellToString(row[indAddressIdx] as CellValue).trim() : '',
+          rowIndex
+        })
+      }
+    })
+
+    const corporateCustomers: typeof duplicateNameModal.corporateCustomers = []
+    corporateSheet.data.forEach((row, rowIndex) => {
+      const name = cellToString(row[corpNameIdx] as CellValue).trim()
+      if (name === nextName) {
+        corporateCustomers.push({
+          name,
+          contact: corpContactIdx !== -1 ? cellToString(row[corpContactIdx] as CellValue).trim() : '',
+          address: corpAddressIdx !== -1 ? cellToString(row[corpAddressIdx] as CellValue).trim() : '',
+          rowIndex
+        })
+      }
+    })
+
+    setDuplicateNameModal(prev => ({
+      ...prev,
+      duplicateName: nextName,
+      individualCustomers,
+      corporateCustomers,
+      currentIndex: nextIndex
+    }))
+    setEditingCustomerName(null)
+  }, [duplicateNameModal, sheets, closeDuplicateNameModal])
+
+  // 동명이인 해결 완료 확인 (양쪽 중 하나가 비면 해결된 것)
+  const isDuplicateResolved = duplicateNameModal.individualCustomers.length === 0 || duplicateNameModal.corporateCustomers.length === 0
 
   // 삭제 모드 토글
   const handleToggleDeleteMode = useCallback(() => {
@@ -2593,6 +2877,248 @@ export function ExcelRefiner() {
             >
               확인
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 개인/법인 동명이인 모달 */}
+      <Modal
+        visible={duplicateNameModal.isOpen}
+        onClose={closeDuplicateNameModal}
+        title="개인/법인 동명이인 확인"
+        size="lg"
+        backdropClosable={false}
+      >
+        <div className="excel-refiner__duplicate-modal">
+          {/* 설명 섹션 */}
+          <div className="excel-refiner__duplicate-info">
+            <p className="excel-refiner__duplicate-info-text">
+              개인고객과 법인고객에서 동일한 고객명이 발견되었습니다.
+              <br />
+              <strong>하나의 고객명은 개인 또는 법인 중 한 곳에만 존재해야 합니다.</strong>
+              <br />
+              아래에서 유지할 고객을 확인하고, 나머지는 삭제하거나 이름을 변경해주세요.
+            </p>
+          </div>
+
+          {/* 진행 상황 */}
+          {duplicateNameModal.allDuplicateNames.length > 1 && (
+            <div className="excel-refiner__duplicate-progress">
+              동명이인 처리: {duplicateNameModal.currentIndex + 1} / {duplicateNameModal.allDuplicateNames.length}
+            </div>
+          )}
+
+          {/* 동명이인 이름 표시 */}
+          <div className="excel-refiner__duplicate-name-header">
+            <span className="excel-refiner__duplicate-name-label">동명이인:</span>
+            <span className="excel-refiner__duplicate-name-value">{duplicateNameModal.duplicateName}</span>
+          </div>
+
+          {/* 두 테이블을 나란히 배치 */}
+          <div className="excel-refiner__duplicate-tables">
+            {/* 개인고객 테이블 */}
+            <div className="excel-refiner__duplicate-table-section">
+              <h4 className="excel-refiner__duplicate-table-title">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/>
+                </svg>
+                개인고객 ({duplicateNameModal.individualCustomers.length}명)
+              </h4>
+              {duplicateNameModal.individualCustomers.length === 0 ? (
+                <div className="excel-refiner__duplicate-empty">삭제됨</div>
+              ) : (
+                <table className="excel-refiner__duplicate-table">
+                  <thead>
+                    <tr>
+                      <th>고객명</th>
+                      <th>연락처</th>
+                      <th>주소</th>
+                      <th>작업</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicateNameModal.individualCustomers.map((customer) => (
+                      <tr key={customer.rowIndex}>
+                        <td>
+                          {editingCustomerName?.type === 'individual' && editingCustomerName.rowIndex === customer.rowIndex ? (
+                            <input
+                              type="text"
+                              className="excel-refiner__duplicate-name-input"
+                              value={editingCustomerName.newName}
+                              onChange={(e) => setEditingCustomerName({ ...editingCustomerName, newName: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveCustomerNameChange()
+                                if (e.key === 'Escape') setEditingCustomerName(null)
+                              }}
+                              autoFocus
+                              aria-label="새 고객명 입력"
+                              placeholder="새 고객명"
+                            />
+                          ) : (
+                            customer.name
+                          )}
+                        </td>
+                        <td>{customer.contact || '-'}</td>
+                        <td className="excel-refiner__duplicate-address">{customer.address || '-'}</td>
+                        <td className="excel-refiner__duplicate-actions">
+                          {editingCustomerName?.type === 'individual' && editingCustomerName.rowIndex === customer.rowIndex ? (
+                            <>
+                              <Button variant="primary" size="sm" onClick={saveCustomerNameChange}>
+                                저장
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingCustomerName(null)}>
+                                취소
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Tooltip content="이름 변경">
+                                <button
+                                  type="button"
+                                  className="excel-refiner__icon-btn"
+                                  onClick={() => startEditingCustomerName('individual', customer.rowIndex, customer.name)}
+                                  aria-label="이름 변경"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M12.146.146a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-10 10a.5.5 0 01-.168.11l-5 2a.5.5 0 01-.65-.65l2-5a.5.5 0 01.11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 01.5.5v.5h.5a.5.5 0 01.5.5v.5h.293l6.5-6.5z"/>
+                                  </svg>
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="삭제">
+                                <button
+                                  type="button"
+                                  className="excel-refiner__icon-btn excel-refiner__icon-btn--delete"
+                                  onClick={() => handleDeleteFromIndividual(customer.rowIndex)}
+                                  aria-label="삭제"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/>
+                                    <path fillRule="evenodd" d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 01-1-1V2a1 1 0 011-1H6a1 1 0 011-1h2a1 1 0 011 1h3.5a1 1 0 011 1v1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                  </svg>
+                                </button>
+                              </Tooltip>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* 법인고객 테이블 */}
+            <div className="excel-refiner__duplicate-table-section">
+              <h4 className="excel-refiner__duplicate-table-title">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-7zm0-1h7a1.5 1.5 0 011.5 1.5v11a1.5 1.5 0 01-1.5 1.5h-7a1.5 1.5 0 01-1.5-1.5v-11A1.5 1.5 0 014.5 1z"/>
+                  <path d="M6 4h4v1H6V4zm0 2h4v1H6V6zm0 2h4v1H6V8zm0 2h2v1H6v-1z"/>
+                </svg>
+                법인고객 ({duplicateNameModal.corporateCustomers.length}명)
+              </h4>
+              {duplicateNameModal.corporateCustomers.length === 0 ? (
+                <div className="excel-refiner__duplicate-empty">삭제됨</div>
+              ) : (
+                <table className="excel-refiner__duplicate-table">
+                  <thead>
+                    <tr>
+                      <th>고객명</th>
+                      <th>연락처</th>
+                      <th>주소</th>
+                      <th>작업</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicateNameModal.corporateCustomers.map((customer) => (
+                      <tr key={customer.rowIndex}>
+                        <td>
+                          {editingCustomerName?.type === 'corporate' && editingCustomerName.rowIndex === customer.rowIndex ? (
+                            <input
+                              type="text"
+                              className="excel-refiner__duplicate-name-input"
+                              value={editingCustomerName.newName}
+                              onChange={(e) => setEditingCustomerName({ ...editingCustomerName, newName: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveCustomerNameChange()
+                                if (e.key === 'Escape') setEditingCustomerName(null)
+                              }}
+                              autoFocus
+                              aria-label="새 고객명 입력"
+                              placeholder="새 고객명"
+                            />
+                          ) : (
+                            customer.name
+                          )}
+                        </td>
+                        <td>{customer.contact || '-'}</td>
+                        <td className="excel-refiner__duplicate-address">{customer.address || '-'}</td>
+                        <td className="excel-refiner__duplicate-actions">
+                          {editingCustomerName?.type === 'corporate' && editingCustomerName.rowIndex === customer.rowIndex ? (
+                            <>
+                              <Button variant="primary" size="sm" onClick={saveCustomerNameChange}>
+                                저장
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingCustomerName(null)}>
+                                취소
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Tooltip content="이름 변경">
+                                <button
+                                  type="button"
+                                  className="excel-refiner__icon-btn"
+                                  onClick={() => startEditingCustomerName('corporate', customer.rowIndex, customer.name)}
+                                  aria-label="이름 변경"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M12.146.146a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-10 10a.5.5 0 01-.168.11l-5 2a.5.5 0 01-.65-.65l2-5a.5.5 0 01.11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 01.5.5v.5h.5a.5.5 0 01.5.5v.5h.293l6.5-6.5z"/>
+                                  </svg>
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="삭제">
+                                <button
+                                  type="button"
+                                  className="excel-refiner__icon-btn excel-refiner__icon-btn--delete"
+                                  onClick={() => handleDeleteFromCorporate(customer.rowIndex)}
+                                  aria-label="삭제"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/>
+                                    <path fillRule="evenodd" d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 01-1-1V2a1 1 0 011-1H6a1 1 0 011-1h2a1 1 0 011 1h3.5a1 1 0 011 1v1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                  </svg>
+                                </button>
+                              </Tooltip>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* 해결됨 안내 */}
+          {isDuplicateResolved && (
+            <div className="excel-refiner__duplicate-resolved">
+              ✓ 이 동명이인이 해결되었습니다
+            </div>
+          )}
+
+          {/* 하단 버튼 */}
+          <div className="excel-refiner__duplicate-footer">
+            <Button variant="secondary" size="sm" onClick={closeDuplicateNameModal}>
+              나중에 처리
+            </Button>
+            {isDuplicateResolved && (
+              <Button variant="primary" size="sm" onClick={goToNextDuplicateName}>
+                {duplicateNameModal.currentIndex < duplicateNameModal.allDuplicateNames.length - 1
+                  ? '다음 동명이인'
+                  : '완료'}
+              </Button>
+            )}
           </div>
         </div>
       </Modal>
