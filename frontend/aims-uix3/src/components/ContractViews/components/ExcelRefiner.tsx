@@ -346,19 +346,6 @@ export function ExcelRefiner() {
     return results
   }, [currentSheet?.data, currentSheet?.columns, validatingColumns])
 
-  // 전체 문제 행 인덱스 (모든 검증 컬럼 결합 + 상품명 미매칭)
-  const problematicRows = useMemo(() => {
-    const allRows: number[] = []
-    columnValidationResults.forEach(result => {
-      allRows.push(...getProblematicRows(result))
-    })
-    // 상품명 미매칭 행 추가
-    if (productMatchResult) {
-      allRows.push(...productMatchResult.unmatched)
-    }
-    return [...new Set(allRows)].sort((a, b) => a - b)
-  }, [columnValidationResults, productMatchResult])
-
   // 정렬된 데이터 (컬럼 정렬 → 문제 행 우선)
   const sortedDataWithIndices = useMemo(() => {
     if (!currentSheet?.data) return []
@@ -1355,90 +1342,6 @@ export function ExcelRefiner() {
       setSelectedRows(new Set(allIndices))
     }
   }, [currentSheet, sortedDataWithIndices, selectedRows.size])
-
-  // 문제 행 모두 선택
-  const handleSelectProblematic = useCallback(() => {
-    setSelectedRows(new Set(problematicRows))
-  }, [problematicRows])
-
-  // 문제 행 원클릭 삭제 (삭제 모드 없이 바로 삭제)
-  const handleDeleteProblematicRows = useCallback(async () => {
-    if (problematicRows.length === 0 || !currentSheet) return
-
-    const beforeCount = currentSheet.data.length
-    const rowsToDelete = new Set(problematicRows)
-
-    // AppleConfirmModal로 삭제 확인
-    const confirmed = await showConfirm({
-      title: '문제 행 삭제',
-      message: `${problematicRows.length}개의 문제 행을 삭제하시겠습니까?`,
-      confirmText: '삭제',
-      confirmStyle: 'destructive',
-      cancelText: '취소'
-    })
-    if (!confirmed) return
-
-    const selectedIndices = Array.from(rowsToDelete).sort((a, b) => a - b)
-    const newData = currentSheet.data.filter((_, index) => !rowsToDelete.has(index))
-    const afterCount = newData.length
-
-    setSheets(prev => {
-      const updated = [...prev]
-      const sheet = updated[activeSheetIndex]
-      if (!sheet) return prev
-      updated[activeSheetIndex] = {
-        name: sheet.name,
-        columns: sheet.columns,
-        data: newData
-      }
-      return updated
-    })
-
-    // productMatchResult 업데이트: 삭제된 행 제거 및 인덱스 재계산
-    if (productMatchResult) {
-      setProductMatchResult(prev => {
-        if (!prev) return prev
-
-        const remapIndex = (oldIndex: number): number => {
-          let newIndex = oldIndex
-          for (const deletedIdx of selectedIndices) {
-            if (deletedIdx < oldIndex) {
-              newIndex--
-            }
-          }
-          return newIndex
-        }
-
-        const newOriginalMatch = new Map<number, string>()
-        prev.originalMatch.forEach((objectId, rowIndex) => {
-          if (!rowsToDelete.has(rowIndex)) {
-            newOriginalMatch.set(remapIndex(rowIndex), objectId)
-          }
-        })
-
-        const newModified = new Map<number, string>()
-        prev.modified.forEach((objectId, rowIndex) => {
-          if (!rowsToDelete.has(rowIndex)) {
-            newModified.set(remapIndex(rowIndex), objectId)
-          }
-        })
-
-        const newUnmatched = prev.unmatched
-          .filter(rowIndex => !rowsToDelete.has(rowIndex))
-          .map(rowIndex => remapIndex(rowIndex))
-
-        return {
-          ...prev,
-          originalMatch: newOriginalMatch,
-          modified: newModified,
-          unmatched: newUnmatched
-        }
-      })
-    }
-
-    // 액션 로그 표시
-    setActionLog(`✓ ${problematicRows.length}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
-  }, [problematicRows, currentSheet, activeSheetIndex, productMatchResult, showConfirm])
 
   // 선택 해제
   const handleClearSelection = useCallback(() => {
@@ -2620,17 +2523,6 @@ export function ExcelRefiner() {
                   </button>
                 </Tooltip>
 
-                {/* 삭제 모드가 아닐 때: 문제 행 원클릭 삭제 버튼 */}
-                {!isDeleteMode && problematicRows.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteProblematicRows}
-                  >
-                    문제 행 삭제 ({problematicRows.length})
-                  </Button>
-                )}
-
                 {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
                 {isDeleteMode && (
                   <>
@@ -2644,17 +2536,6 @@ export function ExcelRefiner() {
                       삭제
                     </Button>
                   </>
-                )}
-
-                {/* 삭제 모드일 때 문제 행 선택 버튼 */}
-                {isDeleteMode && problematicRows.length > 0 && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleSelectProblematic}
-                  >
-                    문제 행 선택 ({problematicRows.length})
-                  </Button>
                 )}
 
                 {isDeleteMode && selectedRows.size > 0 && (
