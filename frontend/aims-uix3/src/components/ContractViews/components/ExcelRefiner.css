@@ -560,6 +560,10 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   color: var(--color-error-600);
 }
 
+.excel-refiner__status--warning {
+  color: var(--color-warning-600);
+}
+
 .excel-refiner__status--hint {
   color: var(--color-text-tertiary);
   font-weight: var(--font-weight-regular); /* 400 */

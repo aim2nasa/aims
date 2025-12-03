@@ -1528,6 +1528,23 @@ export function ExcelRefiner() {
 
     // 값이 변경되었을 때만 업데이트
     if (value !== oldValue) {
+      // 필수검증칼럼 수정 시 해당 시트 검증 상태 초기화
+      const columnName = currentSheet.columns[colIndex]
+      if (columnName) {
+        const validationType = getValidationType(columnName)
+        // 필수검증칼럼: customerName, productName, contractDate, policyNumber
+        const requiredTypes = ['customerName', 'productName', 'contractDate', 'policyNumber']
+        if (requiredTypes.includes(validationType)) {
+          // 해당 시트의 검증 상태를 'pending'으로 변경 (재검증 필요)
+          setSheetValidationStatus(prev => {
+            const newStatus = new Map(prev)
+            newStatus.set(currentSheet.name, 'pending')
+            return newStatus
+          })
+          setActionLog(`⚠️ 필수컬럼 수정됨 - 재검증 필요`)
+        }
+      }
+
       setSheets(prev => {
         const updated = [...prev]
         const sheet = updated[activeSheetIndex]
@@ -1544,7 +1561,9 @@ export function ExcelRefiner() {
         }
         return updated
       })
-      setActionLog(`✓ 셀 편집: "${oldValue}" → "${value}"`)
+      if (!['customerName', 'productName', 'contractDate', 'policyNumber'].includes(getValidationType(currentSheet.columns[colIndex] || ''))) {
+        setActionLog(`✓ 셀 편집: "${oldValue}" → "${value}"`)
+      }
     }
 
     setEditingCell(null)
@@ -2475,9 +2494,12 @@ export function ExcelRefiner() {
                     {isImporting ? '등록 중...' : '일괄등록'}
                   </Button>
                 ) : wizardStep?.step === 3 ? (
-                  <span className="excel-refiner__status excel-refiner__status--error">
-                    ⚠️ {sheetIssueCount.get(Array.from(sheetValidationStatus.entries()).find(([_, v]) => v === 'invalid')?.[0] || '') || 0}건 수정 필요
-                  </span>
+                  // pending 상태가 아닌 경우에만 수정 필요 건수 표시 (pending은 우측 actionLog에서 표시)
+                  !Array.from(sheetValidationStatus.values()).some(v => v === 'pending') && (
+                    <span className="excel-refiner__status excel-refiner__status--error">
+                      ⚠️ {sheetIssueCount.get(Array.from(sheetValidationStatus.entries()).find(([_, v]) => v === 'invalid')?.[0] || '') || 0}건 수정 필요
+                    </span>
+                  )
                 ) : wizardStep?.step === 1 ? (
                   <span className="excel-refiner__status excel-refiner__status--hint">
                     👆 클릭하여 시작
