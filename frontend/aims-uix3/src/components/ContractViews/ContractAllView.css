@@ -677,11 +677,13 @@ html[data-theme="dark"] .contract-empty {
 
 .contract-empty p {
   margin: 0;
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-footnote); /* 13px - Dense Typography */
+  font-weight: var(--font-weight-regular); /* 400 */
 }
 
 .contract-empty-hint {
-  font-size: var(--font-size-caption-1);
+  font-size: var(--font-size-caption-2); /* 11px - Dense Typography */
+  font-weight: var(--font-weight-regular); /* 400 */
   opacity: 0.7;
 }
 
