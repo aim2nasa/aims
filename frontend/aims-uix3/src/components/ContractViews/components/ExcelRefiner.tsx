@@ -3225,9 +3225,9 @@ export function ExcelRefiner() {
         visible={importResultDetail.isOpen}
         onClose={() => setImportResultDetail(prev => ({ ...prev, isOpen: false }))}
         title="일괄등록 결과 상세"
-        initialWidth={800}
+        initialWidth={1200}
         initialHeight={560}
-        minWidth={600}
+        minWidth={900}
         minHeight={400}
       >
         <div className="excel-refiner__result-detail">

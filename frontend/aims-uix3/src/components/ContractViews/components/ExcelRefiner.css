@@ -1973,7 +1973,8 @@ html[data-theme="dark"] .excel-refiner__result-tab--active {
 }
 
 .excel-refiner__result-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-caption-1);
 }
@@ -1997,7 +1998,11 @@ html[data-theme="dark"] .excel-refiner__result-tab--active {
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-border-tertiary);
   white-space: nowrap;
-  max-width: 200px;
+}
+
+/* 상품명 셀만 최대 너비 제한 (너무 긴 경우 대비) */
+.excel-refiner__result-td:nth-child(3) {
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
