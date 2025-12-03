@@ -675,18 +675,6 @@ export function ExcelRefiner() {
     }, 100)
   }, [validatingColumns, currentSheet, activeSheetIndex])
 
-  // 검증 초기화
-  const handleClearValidation = useCallback(() => {
-    setValidatingColumns(new Set())
-    setValidatedColumnsHistory(new Set())
-    setProductMatchResult(null)
-    setProductNameColumnIndex(null)
-    setActionLog(null)
-    // 시트별 검증 상태도 초기화
-    setSheetValidationStatus(new Map())
-    setSheetIssueCount(new Map())
-  }, [])
-
   // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
   const handleValidateAllRequired = useCallback(async () => {
     if (!currentSheet || isImporting) return
@@ -2464,36 +2452,19 @@ export function ExcelRefiner() {
             {/* 행2: 액션바 - 검증버튼 + 상태 + 삭제모드 + 범례 */}
             <div className="excel-refiner__action-bar">
               <div className="excel-refiner__action-bar-left">
-                {/* 검증 버튼 - 모든 시트 순차 검증 */}
+                {/* 검증 버튼 */}
                 <Tooltip content="개인고객 → 법인고객 → 계약 순으로 검증합니다">
-                <Button
-                  variant={sheetValidationStatus.size > 0 ? "secondary" : "primary"}
-                  size="sm"
-                  onClick={handleValidateAllSheets}
-                  disabled={isValidatingAll || isImporting}
-                >
-                  {isValidatingAll ? '검증 중...' : '검증'}
-                </Button>
+                  <Button
+                    variant={sheetValidationStatus.size > 0 ? "secondary" : "primary"}
+                    size="sm"
+                    onClick={handleValidateAllSheets}
+                    disabled={isValidatingAll || isImporting}
+                  >
+                    {isValidatingAll ? '검증 중...' : '검증'}
+                  </Button>
                 </Tooltip>
 
-                {/* 검증 초기화 버튼 */}
-                {(validatingColumns.size > 0 || sheetValidationStatus.size > 0) && (
-                  <Tooltip content="검증 초기화">
-                    <button
-                      type="button"
-                      className="excel-refiner__icon-btn"
-                      onClick={handleClearValidation}
-                      aria-label="검증 초기화"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M2.5 8a5.5 5.5 0 1 1 1.3 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <path d="M2.5 12V8.5H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </Tooltip>
-                )}
-
-                {/* 상태 표시 + 일괄등록 버튼 */}
+                {/* 일괄등록 버튼 */}
                 {wizardStep?.step === 4 ? (
                   <Button
                     variant="primary"
