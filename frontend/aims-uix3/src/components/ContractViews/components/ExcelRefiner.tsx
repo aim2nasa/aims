@@ -2380,9 +2380,6 @@ export function ExcelRefiner() {
             <div className="excel-refiner__header-bar">
               <div className="excel-refiner__header-left">
                 <span className="excel-refiner__filename">{fileName}</span>
-                <span className="excel-refiner__row-count">
-                  ({currentSheet.data.length}행)
-                </span>
               </div>
 
               {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → 계약 → 등록 */}
