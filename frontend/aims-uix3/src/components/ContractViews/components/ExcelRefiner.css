@@ -1012,8 +1012,14 @@ html[data-theme="dark"] .excel-refiner__th--validation-error:hover {
   background: var(--color-error-600);
 }
 
-.excel-refiner__th-badge {
+.excel-refiner__th-badge-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
   margin-left: var(--spacing-1);
+}
+
+.excel-refiner__th-badge {
   padding: 1px var(--spacing-1);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-caption-2); /* 11px - DENSE_TYPOGRAPHY: 배지 */
@@ -1022,6 +1028,14 @@ html[data-theme="dark"] .excel-refiner__th--validation-error:hover {
   display: inline-flex;
   align-items: center;
   line-height: var(--line-height-tight);
+}
+
+.excel-refiner__th-badge-group .excel-refiner__th-badge {
+  margin-left: 0;
+}
+
+.excel-refiner__th:not(:has(.excel-refiner__th-badge-group)) .excel-refiner__th-badge {
+  margin-left: var(--spacing-1);
 }
 
 .excel-refiner__th-badge--success {

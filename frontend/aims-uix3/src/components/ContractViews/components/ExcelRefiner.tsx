@@ -2285,26 +2285,22 @@ export function ExcelRefiner() {
     if (!columnName) return null
     const type = getValidationType(columnName)
 
-    // 상품명 검증 결과 표시
+    // 상품명 검증 결과 표시 - 매칭/미매칭 모두 컬럼 헤더에 표시
     if (type === 'productName' && productMatchResult && productNameColumnIndex === colIndex) {
-      const originalCount = productMatchResult.originalMatch.size
-      const modifiedCount = productMatchResult.modified.size
+      const matchedCount = productMatchResult.originalMatch.size + productMatchResult.modified.size
       const unmatchedCount = productMatchResult.unmatched.length
       const tooltip = getValidationTooltip(type, null, productMatchResult)
 
-      if (unmatchedCount === 0) {
-        return (
-          <Tooltip content={tooltip}>
-            <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓ {originalCount + modifiedCount}</span>
-          </Tooltip>
-        )
-      } else {
-        return (
-          <Tooltip content={tooltip}>
-            <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{unmatchedCount} 미매칭</span>
-          </Tooltip>
-        )
-      }
+      return (
+        <Tooltip content={tooltip}>
+          <span className="excel-refiner__th-badge-group">
+            <span className="excel-refiner__th-badge excel-refiner__th-badge--success">{matchedCount} 매칭</span>
+            {unmatchedCount > 0 && (
+              <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{unmatchedCount} 미매칭</span>
+            )}
+          </span>
+        </Tooltip>
+      )
     }
 
     const result = columnValidationResults.get(colIndex)
@@ -2673,23 +2669,6 @@ export function ExcelRefiner() {
               </div>
 
               <div className="excel-refiner__action-bar-right">
-                {/* 상품명 검증 결과 - 매칭/미매칭만 표시 */}
-                {productMatchResult && productNameColumnIndex !== null && (
-                  <div className="excel-refiner__legend">
-                    <span className="excel-refiner__legend-label">상품명</span>
-                    <span
-                      className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
-                      onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
-                    >매칭 {productMatchResult.originalMatch.size + productMatchResult.modified.size}</span>
-                    {productMatchResult.unmatched.length > 0 && (
-                      <span
-                        className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
-                        onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
-                      >미매칭 {productMatchResult.unmatched.length}</span>
-                    )}
-                  </div>
-                )}
-
                 {/* 진행 상태 표시 */}
                 {importProgress && (
                   <div className="excel-refiner__import-progress">
