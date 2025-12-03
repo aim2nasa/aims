@@ -1848,6 +1848,15 @@ html[data-theme="dark"] .excel-refiner__result-stat--error {
 
 /* === 일괄등록 상세 결과 모달 - 탭 UI === */
 
+/* 탭 wrapper - 탭과 필터 옵션 정렬 */
+.excel-refiner__result-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border-secondary);
+  margin-bottom: var(--spacing-3);
+}
+
 /* 개인 고객 아이콘 - 파란색 */
 .excel-refiner__result-tab .customer-icon--personal {
   color: var(--color-icon-blue);
@@ -1858,12 +1867,35 @@ html[data-theme="dark"] .excel-refiner__result-stat--error {
   color: var(--color-icon-orange);
 }
 
+/* 필터 체크박스 */
+.excel-refiner__result-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.excel-refiner__result-filter:hover {
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__result-filter input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
 .excel-refiner__result-tabs {
   display: flex;
   gap: var(--spacing-1);
   padding: var(--spacing-2) 0;
-  border-bottom: 1px solid var(--color-border-secondary);
-  margin-bottom: var(--spacing-3);
 }
 
 .excel-refiner__result-tab {

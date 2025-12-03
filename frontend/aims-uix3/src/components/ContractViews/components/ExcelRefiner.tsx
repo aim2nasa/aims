@@ -174,6 +174,7 @@ export function ExcelRefiner() {
     isOpen: boolean
     summary: string
     activeTab: '개인고객' | '법인고객' | '계약'
+    hideSkipped: boolean
     개인고객: {
       created: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; gender?: string | undefined; birth_date?: string | undefined }>
       updated: Array<{ name: string; mobile_phone?: string | undefined; address?: string | undefined; gender?: string | undefined; birth_date?: string | undefined; changes: string[] }>
@@ -195,6 +196,7 @@ export function ExcelRefiner() {
     isOpen: false,
     summary: '',
     activeTab: '개인고객',
+    hideSkipped: true,
     개인고객: { created: [], updated: [], skipped: [], errors: [] },
     법인고객: { created: [], updated: [], skipped: [], errors: [] },
     계약: { created: [], skipped: [], errors: [] }
@@ -3385,41 +3387,51 @@ export function ExcelRefiner() {
           </div>
 
           {/* 탭 네비게이션 */}
-          <div className="excel-refiner__result-tabs">
-            {(['개인고객', '법인고객', '계약'] as const).map(tab => {
-              const totalCount = tab === '계약'
-                ? importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
-                : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  className={`excel-refiner__result-tab ${importResultDetail.activeTab === tab ? 'excel-refiner__result-tab--active' : ''}`}
-                  onClick={() => setImportResultDetail(prev => ({ ...prev, activeTab: tab }))}
-                >
-                  {tab === '개인고객' && (
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                      <circle cx="10" cy="10" r="10" opacity="0.2" />
-                      <circle cx="10" cy="7" r="3" />
-                      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                    </svg>
-                  )}
-                  {tab === '법인고객' && (
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
-                      <circle cx="10" cy="10" r="10" opacity="0.2" />
-                      <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-                    </svg>
-                  )}
-                  {tab === '계약' && (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M4 1.5a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V4.707L9.293 1.5H4z"/>
-                    </svg>
-                  )}
-                  {tab}
-                  <span className="excel-refiner__result-tab-count">{totalCount}</span>
-                </button>
-              )
-            })}
+          <div className="excel-refiner__result-tabs-wrapper">
+            <div className="excel-refiner__result-tabs">
+              {(['개인고객', '법인고객', '계약'] as const).map(tab => {
+                const totalCount = tab === '계약'
+                  ? importResultDetail.계약.created.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
+                  : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`excel-refiner__result-tab ${importResultDetail.activeTab === tab ? 'excel-refiner__result-tab--active' : ''}`}
+                    onClick={() => setImportResultDetail(prev => ({ ...prev, activeTab: tab }))}
+                  >
+                    {tab === '개인고객' && (
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                        <circle cx="10" cy="10" r="10" opacity="0.2" />
+                        <circle cx="10" cy="7" r="3" />
+                        <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                      </svg>
+                    )}
+                    {tab === '법인고객' && (
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+                        <circle cx="10" cy="10" r="10" opacity="0.2" />
+                        <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                      </svg>
+                    )}
+                    {tab === '계약' && (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 1.5a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V4.707L9.293 1.5H4z"/>
+                      </svg>
+                    )}
+                    {tab}
+                    <span className="excel-refiner__result-tab-count">{totalCount}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <label className="excel-refiner__result-filter">
+              <input
+                type="checkbox"
+                checked={importResultDetail.hideSkipped}
+                onChange={(e) => setImportResultDetail(prev => ({ ...prev, hideSkipped: e.target.checked }))}
+              />
+              <span>변경된 항목만 보기</span>
+            </label>
           </div>
 
           {/* 탭 콘텐츠 - 개인고객 */}
@@ -3463,7 +3475,7 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
                       </tr>
                     ))}
-                    {importResultDetail.개인고객.skipped.map((c, i) => (
+                    {!importResultDetail.hideSkipped && importResultDetail.개인고객.skipped.map((c, i) => (
                       <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
                         <td className="excel-refiner__result-td">{c.name}</td>
@@ -3526,7 +3538,7 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td excel-refiner__result-td--changes">{c.changes.join(', ')}</td>
                       </tr>
                     ))}
-                    {importResultDetail.법인고객.skipped.map((c, i) => (
+                    {!importResultDetail.hideSkipped && importResultDetail.법인고객.skipped.map((c, i) => (
                       <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
                         <td className="excel-refiner__result-td">{c.name}</td>
@@ -3580,7 +3592,7 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__result-td">-</td>
                       </tr>
                     ))}
-                    {importResultDetail.계약.skipped.map((c, i) => (
+                    {!importResultDetail.hideSkipped && importResultDetail.계약.skipped.map((c, i) => (
                       <tr key={`skipped-${i}`} className="excel-refiner__result-tr excel-refiner__result-tr--skipped">
                         <td className="excel-refiner__result-td excel-refiner__result-td--status-skipped">건너뜀</td>
                         <td className="excel-refiner__result-td">{c.customer_name}</td>
