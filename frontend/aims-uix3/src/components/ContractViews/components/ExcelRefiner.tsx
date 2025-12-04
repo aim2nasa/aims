@@ -383,8 +383,8 @@ export function ExcelRefiner() {
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
-  // 표준 순서에 맞춘 컬럼 구조 (누락된 컬럼 포함)
-  // { name: 컬럼명, dataIndex: 실제 데이터 인덱스 (-1이면 누락), isMissing: 누락 여부 }
+  // 원본 엑셀 순서 유지 + 누락 컬럼만 마지막에 추가
+  // { name: 컬럼명, dataIndex: 실제 데이터 인덱스 (-1이면 누락), isMissing: 누락 여부, isExtra: 규격 외 여부 }
   const orderedColumns = useMemo(() => {
     if (!currentSheet) return []
 
@@ -396,43 +396,51 @@ export function ExcelRefiner() {
       return currentSheet.columns.map((name, index) => ({
         name,
         dataIndex: index,
-        isMissing: false
+        isMissing: false,
+        isExtra: false
       }))
     }
 
-    // 현재 시트 컬럼명 → 인덱스 매핑
-    const columnToIndex = new Map<string, number>()
-    currentSheet.columns.forEach((col, index) => {
+    // 표준 컬럼 패턴 (소문자)
+    const standardPatterns = standardOrder.map(s => s.toLowerCase())
+
+    // 원본 순서대로 컬럼 생성 (표준/규격외 구분)
+    const matchedStandards = new Set<string>()
+    const originalColumns = currentSheet.columns.map((col, index) => {
       const lowerCol = col.toLowerCase()
-      columnToIndex.set(lowerCol, index)
-    })
+      const matchedPattern = standardPatterns.find(pattern =>
+        lowerCol.includes(pattern) || pattern.includes(lowerCol)
+      )
 
-    // 표준 순서대로 컬럼 생성
-    return standardOrder.map(stdCol => {
-      const lowerStdCol = stdCol.toLowerCase()
-      // 현재 시트에서 매칭되는 컬럼 찾기
-      let foundIndex = -1
-      for (const [colName, index] of columnToIndex.entries()) {
-        if (colName.includes(lowerStdCol) || lowerStdCol.includes(colName)) {
-          foundIndex = index
-          break
-        }
-      }
-
-      if (foundIndex >= 0) {
+      if (matchedPattern) {
+        matchedStandards.add(matchedPattern)
         return {
-          name: currentSheet.columns[foundIndex],
-          dataIndex: foundIndex,
-          isMissing: false
+          name: col,
+          dataIndex: index,
+          isMissing: false,
+          isExtra: false
         }
       } else {
         return {
-          name: stdCol,
-          dataIndex: -1,
-          isMissing: true
+          name: col,
+          dataIndex: index,
+          isMissing: false,
+          isExtra: true
         }
       }
     })
+
+    // 누락된 표준 컬럼 찾기 (마지막에 추가)
+    const missingColumns = standardOrder
+      .filter(stdCol => !matchedStandards.has(stdCol.toLowerCase()))
+      .map(stdCol => ({
+        name: stdCol,
+        dataIndex: -1,
+        isMissing: true,
+        isExtra: false
+      }))
+
+    return [...originalColumns, ...missingColumns]
   }, [currentSheet])
 
   // 현재 시트의 검증 컬럼 (파생 상태)
@@ -2832,7 +2840,7 @@ export function ExcelRefiner() {
                       </div>
                     </th>
                     {orderedColumns.map((orderedCol, displayIndex) => {
-                      const { name: col, dataIndex, isMissing } = orderedCol
+                      const { name: col, dataIndex, isMissing, isExtra } = orderedCol
 
                       // 누락된 컬럼은 빨간색 스타일
                       if (isMissing) {
@@ -2841,6 +2849,18 @@ export function ExcelRefiner() {
                             <div className="excel-refiner__th-content">
                               <span className="excel-refiner__th-text">{col}</span>
                               <span className="excel-refiner__th-badge excel-refiner__th-badge--missing">누락</span>
+                            </div>
+                          </th>
+                        )
+                      }
+
+                      // 규격 외 컬럼은 회색 스타일
+                      if (isExtra) {
+                        return (
+                          <th key={`extra-${col}-${dataIndex}`} className="excel-refiner__th excel-refiner__th--extra">
+                            <div className="excel-refiner__th-content">
+                              <span className="excel-refiner__th-text">{col}</span>
+                              <span className="excel-refiner__th-badge excel-refiner__th-badge--extra">규격 외</span>
                             </div>
                           </th>
                         )
@@ -2949,13 +2969,23 @@ export function ExcelRefiner() {
                           {getExcelRowNumber(originalIndex)}
                         </td>
                         {orderedColumns.map((orderedCol) => {
-                          const { name: colName, dataIndex, isMissing } = orderedCol
+                          const { name: colName, dataIndex, isMissing, isExtra } = orderedCol
 
                           // 누락된 컬럼은 빈 셀
                           if (isMissing) {
                             return (
                               <td key={`missing-${colName}`} className="excel-refiner__td excel-refiner__td--missing">
                                 -
+                              </td>
+                            )
+                          }
+
+                          // 규격 외 컬럼은 회색 스타일로 데이터 표시
+                          if (isExtra) {
+                            const cellValue = cellToString(row[dataIndex] as CellValue)
+                            return (
+                              <td key={`extra-${colName}-${dataIndex}`} className="excel-refiner__td excel-refiner__td--extra">
+                                {cellValue || '-'}
                               </td>
                             )
                           }

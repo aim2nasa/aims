@@ -1059,6 +1059,31 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
   border-bottom: 2px solid var(--color-error-500);
 }
 
+/* 규격 외 컬럼 헤더 (회색) */
+.excel-refiner__th--extra {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  border-left: 1px dashed var(--color-border-secondary);
+  border-right: 1px dashed var(--color-border-secondary);
+}
+
+.excel-refiner__th-badge--extra {
+  background: var(--color-neutral-400);
+  color: var(--color-badge-text);
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* 규격 외 컬럼 셀 (회색) */
+.excel-refiner__td--extra {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  border-left: 1px dashed var(--color-border-secondary);
+  border-right: 1px dashed var(--color-border-secondary);
+}
+
 .excel-refiner__th-content {
   display: flex;
   align-items: center;
