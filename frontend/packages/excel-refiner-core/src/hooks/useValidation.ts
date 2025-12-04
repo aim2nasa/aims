@@ -339,19 +339,27 @@ export async function validateProductNames(
 }
 
 /**
- * 시트별 필수 컬럼 정의
- * EXCEL_IMPORT_SPECIFICATION.md v0.1 기준
+ * 시트별 필수/선택 컬럼 정의
+ * EXCEL_IMPORT_SPECIFICATION.md v0.2 기준
  */
-const SHEET_REQUIREMENTS: Record<string, { required: Array<{ name: string; patterns: string[] }> }> = {
+const SHEET_REQUIREMENTS: Record<string, {
+  required: Array<{ name: string; patterns: string[] }>;
+  optional: string[];  // 선택 컬럼 (표준에 있지만 필수는 아닌 컬럼)
+  columnOrder: string[];  // 표준 컬럼 순서
+}> = {
   '개인고객': {
     required: [
       { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
-    ]
+    ],
+    optional: ['이메일', '연락처', '주소', '성별', '생년월일'],
+    columnOrder: ['고객명', '이메일', '연락처', '주소', '성별', '생년월일']
   },
   '법인고객': {
     required: [
       { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
-    ]
+    ],
+    optional: ['이메일', '연락처', '주소', '사업자번호', '대표자명'],
+    columnOrder: ['고객명', '이메일', '연락처', '주소', '사업자번호', '대표자명']
   },
   '계약': {
     required: [
@@ -359,8 +367,17 @@ const SHEET_REQUIREMENTS: Record<string, { required: Array<{ name: string; patte
       { name: '상품명', patterns: ['상품명', '상품', '보험명'] },
       { name: '계약일', patterns: ['계약일'] },
       { name: '증권번호', patterns: ['증권번호', 'policy'] }
-    ]
+    ],
+    optional: ['보험료(원)', '모집/이양', '이체일', '납입주기', '납입기간', '피보험자', '납입상태'],
+    columnOrder: ['고객명', '상품명', '계약일', '증권번호', '보험료(원)', '모집/이양', '이체일', '납입주기', '납입기간', '피보험자', '납입상태']
   }
+}
+
+/**
+ * 시트의 표준 컬럼 순서 가져오기
+ */
+export function getStandardColumnOrder(sheetName: string): string[] | undefined {
+  return SHEET_REQUIREMENTS[sheetName]?.columnOrder
 }
 
 /**
@@ -403,6 +420,9 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
 
     const columnChecks: RequiredColumnCheck[] = []
 
+    let sheetExtraColumns: string[] = []
+    let sheetMissingOptional: string[] = []
+
     if (found && sheet) {
       // 시트가 존재하면 필수 컬럼 검사
       for (const req of requirements.required) {
@@ -433,6 +453,29 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
           hasError = true
         }
       }
+
+      // 규격 외 컬럼 감지
+      // 표준 컬럼: required 패턴 + optional 컬럼명
+      const allRequiredPatterns = requirements.required.flatMap(r => r.patterns.map(p => p.toLowerCase()))
+      const allOptionalPatterns = requirements.optional.map(o => o.toLowerCase())
+      const allStandardPatterns = [...allRequiredPatterns, ...allOptionalPatterns]
+
+      sheetExtraColumns = sheet.columns.filter(col => {
+        const lowerCol = col.toLowerCase()
+        // 표준 패턴과 하나도 매칭되지 않으면 규격 외 컬럼
+        return !allStandardPatterns.some(pattern => lowerCol.includes(pattern))
+      })
+
+      // 누락된 선택 컬럼 감지
+      sheetMissingOptional = requirements.optional.filter(optCol => {
+        const lowerOptCol = optCol.toLowerCase()
+        // 시트 컬럼 중 선택 컬럼명을 포함하는 것이 없으면 누락
+        return !sheet.columns.some(col => col.toLowerCase().includes(lowerOptCol))
+      })
+
+      if (sheetMissingOptional.length > 0) {
+        hasError = true  // 표준 컬럼 누락은 오류
+      }
     }
 
     const hasAllRequired = found && columnChecks.every(c => c.found)
@@ -441,7 +484,9 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
       name: sheetName,
       found,
       requiredColumns: columnChecks,
-      hasAllRequired
+      hasAllRequired,
+      missingOptionalColumns: sheetMissingOptional.length > 0 ? sheetMissingOptional : undefined,
+      extraColumns: sheetExtraColumns.length > 0 ? sheetExtraColumns : undefined
     })
   }
 
@@ -457,31 +502,59 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
 
   if (hasError) {
     status = 'error'
-    const missingColumns = sheetChecks
+    // 필수 컬럼 누락
+    const missingRequired = sheetChecks
       .filter(s => s.found && !s.hasAllRequired)
       .map(s => `${s.name}: ${s.requiredColumns.filter(c => !c.found).map(c => c.name).join(', ')} 누락`)
+    // 선택 컬럼 누락
+    const missingOptional = sheetChecks
+      .filter(s => s.missingOptionalColumns && s.missingOptionalColumns.length > 0)
+      .map(s => `${s.name}: ${s.missingOptionalColumns!.join(', ')} 누락`)
 
     if (foundSheets.length === 0) {
       message = '표준 시트(개인고객, 법인고객, 계약)가 없습니다'
-    } else if (missingColumns.length > 0) {
-      message = missingColumns.join(' | ')
+    } else if (missingRequired.length > 0 || missingOptional.length > 0) {
+      message = [...missingRequired, ...missingOptional].join(' | ')
     } else {
-      message = '필수 컬럼이 누락되었습니다'
+      message = '표준 컬럼이 누락되었습니다'
     }
   } else if (hasWarning) {
     status = 'warning'
     const variantColumns = sheetChecks
       .flatMap(s => s.requiredColumns.filter(c => c.foundAs))
       .map(c => `${c.name} → ${c.foundAs}`)
-    message = `컬럼명 변형 감지: ${variantColumns.join(', ')}`
+    const missingOptional = sheetChecks
+      .filter(s => s.missingOptionalColumns && s.missingOptionalColumns.length > 0)
+      .flatMap(s => s.missingOptionalColumns!)
+
+    const warnings: string[] = []
+    if (variantColumns.length > 0) {
+      warnings.push(`컬럼명 변형: ${variantColumns.join(', ')}`)
+    }
+    if (missingOptional.length > 0) {
+      warnings.push(`선택 컬럼 누락: ${missingOptional.join(', ')}`)
+    }
+    message = warnings.join(' | ')
   } else {
     status = 'compliant'
     message = '표준 규격 준수'
   }
 
+  // 전체 규격 외 컬럼 집계
+  const allExtraColumns = sheetChecks
+    .filter(s => s.extraColumns && s.extraColumns.length > 0)
+    .flatMap(s => s.extraColumns!)
+
+  // 전체 누락된 선택 컬럼 집계
+  const allMissingOptional = sheetChecks
+    .filter(s => s.missingOptionalColumns && s.missingOptionalColumns.length > 0)
+    .flatMap(s => s.missingOptionalColumns!)
+
   return {
     status,
     sheets: sheetChecks,
-    message
+    message,
+    missingOptionalColumns: allMissingOptional.length > 0 ? allMissingOptional : undefined,
+    extraColumns: allExtraColumns.length > 0 ? allExtraColumns : undefined
   }
 }

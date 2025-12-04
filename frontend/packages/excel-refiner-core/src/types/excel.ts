@@ -63,10 +63,14 @@ export interface SheetComplianceCheck {
   found: boolean                        // 시트 존재 여부
   requiredColumns: RequiredColumnCheck[] // 필수 컬럼 검사 결과
   hasAllRequired: boolean               // 모든 필수 컬럼 존재 여부
+  missingOptionalColumns?: string[]     // 누락된 선택 컬럼 (표준에 있지만 없는 컬럼)
+  extraColumns?: string[]               // 규격 외 컬럼 (표준에 없는 컬럼)
 }
 
 export interface FormatComplianceResult {
   status: FormatComplianceStatus        // 전체 준수 상태
   sheets: SheetComplianceCheck[]        // 시트별 검사 결과
   message: string                       // 요약 메시지
+  missingOptionalColumns?: string[]     // 전체 누락된 선택 컬럼 목록
+  extraColumns?: string[]               // 전체 규격 외 컬럼 목록
 }

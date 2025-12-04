@@ -26,6 +26,7 @@ import {
   getProblematicRows,
   validateProductNames,
   checkFormatCompliance,
+  getStandardColumnOrder,
   type SheetData,
   type CellValue,
   type ValidationResult,
@@ -381,6 +382,58 @@ export function ExcelRefiner() {
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
+
+  // 표준 순서에 맞춘 컬럼 구조 (누락된 컬럼 포함)
+  // { name: 컬럼명, dataIndex: 실제 데이터 인덱스 (-1이면 누락), isMissing: 누락 여부 }
+  const orderedColumns = useMemo(() => {
+    if (!currentSheet) return []
+
+    const sheetName = currentSheet.name
+    const standardOrder = getStandardColumnOrder(sheetName)
+
+    // 비표준 시트는 그대로 반환
+    if (!standardOrder) {
+      return currentSheet.columns.map((name, index) => ({
+        name,
+        dataIndex: index,
+        isMissing: false
+      }))
+    }
+
+    // 현재 시트 컬럼명 → 인덱스 매핑
+    const columnToIndex = new Map<string, number>()
+    currentSheet.columns.forEach((col, index) => {
+      const lowerCol = col.toLowerCase()
+      columnToIndex.set(lowerCol, index)
+    })
+
+    // 표준 순서대로 컬럼 생성
+    return standardOrder.map(stdCol => {
+      const lowerStdCol = stdCol.toLowerCase()
+      // 현재 시트에서 매칭되는 컬럼 찾기
+      let foundIndex = -1
+      for (const [colName, index] of columnToIndex.entries()) {
+        if (colName.includes(lowerStdCol) || lowerStdCol.includes(colName)) {
+          foundIndex = index
+          break
+        }
+      }
+
+      if (foundIndex >= 0) {
+        return {
+          name: currentSheet.columns[foundIndex],
+          dataIndex: foundIndex,
+          isMissing: false
+        }
+      } else {
+        return {
+          name: stdCol,
+          dataIndex: -1,
+          isMissing: true
+        }
+      }
+    })
+  }, [currentSheet])
 
   // 현재 시트의 검증 컬럼 (파생 상태)
   const validatingColumns = useMemo(() => {
@@ -2538,12 +2591,25 @@ export function ExcelRefiner() {
             <div className="excel-refiner__header-bar">
               <div className="excel-refiner__header-left">
                 <span className="excel-refiner__filename">{fileName}</span>
-                {/* 포맷 준수 배지 */}
+                {/* 포맷 준수 배지 + 위반 사유 */}
                 {formatCompliance && (
-                  <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
-                    {formatCompliance.status === 'compliant' && `✓ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
-                    {formatCompliance.status === 'warning' && `⚠ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
-                    {formatCompliance.status === 'error' && `✕ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                  <>
+                    <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
+                      {formatCompliance.status === 'compliant' && `✓ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                      {formatCompliance.status === 'warning' && `⚠ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                      {formatCompliance.status === 'error' && `✕ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                    </span>
+                    {formatCompliance.status !== 'compliant' && formatCompliance.message && (
+                      <span className={`excel-refiner__compliance-message excel-refiner__compliance-message--${formatCompliance.status}`}>
+                        {formatCompliance.message}
+                      </span>
+                    )}
+                  </>
+                )}
+                {/* 규격 외 컬럼 안내 */}
+                {formatCompliance?.extraColumns && formatCompliance.extraColumns.length > 0 && (
+                  <span className="excel-refiner__extra-columns-info">
+                    ⓘ 규격 외 컬럼: {formatCompliance.extraColumns.join(', ')}
                   </span>
                 )}
               </div>
@@ -2646,7 +2712,7 @@ export function ExcelRefiner() {
                     variant="primary"
                     size="sm"
                     onClick={handleImportContracts}
-                    disabled={isImporting}
+                    disabled={isImporting || formatCompliance?.status === 'error'}
                   >
                     {isImporting ? '등록 중...' : '일괄등록'}
                   </Button>
@@ -2714,17 +2780,26 @@ export function ExcelRefiner() {
             </div>
 
             {/* 데이터 테이블 */}
-            {/* 표준 시트(개인고객, 법인고객, 계약)만 규격준수 테두리 표시, 추가 시트는 neutral */}
+            {/* 시트별로 개별 규격준수 상태에 따라 테두리 표시 */}
             <div className={`excel-refiner__table-container ${
               (() => {
-                const isStandardSheet = ['개인고객', '법인고객', '계약'].includes(currentSheet?.name || '')
-                if (!isStandardSheet && formatCompliance) {
+                const sheetName = currentSheet?.name || ''
+                const isStandardSheet = ['개인고객', '법인고객', '계약'].includes(sheetName)
+                if (!isStandardSheet) {
                   return 'excel-refiner__table-container--extra'
                 }
-                if (formatCompliance?.status === 'compliant') return 'excel-refiner__table-container--compliant'
-                if (formatCompliance?.status === 'warning') return 'excel-refiner__table-container--warning'
-                if (formatCompliance?.status === 'error') return 'excel-refiner__table-container--error'
-                return ''
+                // 현재 시트의 규격 준수 상태 확인
+                const sheetCheck = formatCompliance?.sheets.find(s => s.name === sheetName)
+                if (!sheetCheck || !sheetCheck.found) {
+                  return ''  // 시트가 없으면 기본
+                }
+                // 시트에 문제가 있는지 확인 (필수 컬럼 누락 또는 선택 컬럼 누락)
+                const hasRequiredMissing = !sheetCheck.hasAllRequired
+                const hasOptionalMissing = sheetCheck.missingOptionalColumns && sheetCheck.missingOptionalColumns.length > 0
+                if (hasRequiredMissing || hasOptionalMissing) {
+                  return 'excel-refiner__table-container--error'
+                }
+                return 'excel-refiner__table-container--compliant'
               })()
             }`}>
               <table className="excel-refiner__table">
@@ -2756,14 +2831,29 @@ export function ExcelRefiner() {
                         </Tooltip>
                       </div>
                     </th>
-                    {currentSheet.columns.map((col, index) => {
-                      const isInProgress = validatingInProgress.has(index)
-                      const isValidated = validatingColumns.has(index)
-                      const result = columnValidationResults.get(index)
+                    {orderedColumns.map((orderedCol, displayIndex) => {
+                      const { name: col, dataIndex, isMissing } = orderedCol
+
+                      // 누락된 컬럼은 빨간색 스타일
+                      if (isMissing) {
+                        return (
+                          <th key={`missing-${col}`} className="excel-refiner__th excel-refiner__th--missing">
+                            <div className="excel-refiner__th-content">
+                              <span className="excel-refiner__th-text">{col}</span>
+                              <span className="excel-refiner__th-badge excel-refiner__th-badge--missing">누락</span>
+                            </div>
+                          </th>
+                        )
+                      }
+
+                      // 정상 컬럼
+                      const isInProgress = validatingInProgress.has(dataIndex)
+                      const isValidated = validatingColumns.has(dataIndex)
+                      const result = columnValidationResults.get(dataIndex)
                       const hasIssues = result && (!result.valid || result.duplicates.length > 0)
                       const type = col ? getValidationType(col) : 'default'
                       const isValidatable = type !== 'default'
-                      const isSorted = sortColumn === index
+                      const isSorted = sortColumn === dataIndex
 
                       // 검증 가능한 컬럼만 검증 클릭 스타일 적용
                       let thClassName = 'excel-refiner__th excel-refiner__th--sortable'
@@ -2774,7 +2864,7 @@ export function ExcelRefiner() {
                         thClassName += ' excel-refiner__th--validating'
                       } else if (isValidated) {
                         // 상품명 칼럼은 미매칭 여부에 따라 error/success 구분
-                        if (type === 'productName' && productMatchResult && productNameColumnIndex === index) {
+                        if (type === 'productName' && productMatchResult && productNameColumnIndex === dataIndex) {
                           const hasUnmatched = productMatchResult.unmatched.length > 0
                           thClassName += hasUnmatched
                             ? ' excel-refiner__th--validation-error'
@@ -2791,27 +2881,27 @@ export function ExcelRefiner() {
 
                       return (
                         <th
-                          key={index}
+                          key={dataIndex}
                           className={thClassName}
-                          onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
-                          
+                          onClick={isValidatable ? () => handleColumnClick(dataIndex, col) : undefined}
+
                         >
                           <div className="excel-refiner__th-content">
-                            {lastClickedColumn === index && (
+                            {lastClickedColumn === dataIndex && (
                               <Tooltip content="마지막 클릭"><span className="excel-refiner__th-last-clicked">
                                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                                   <circle cx="8" cy="8" r="4" />
                                 </svg>
                               </span></Tooltip>
                             )}
-                            <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
+                            <span className="excel-refiner__th-text">{col || `열 ${dataIndex + 1}`}</span>
                             {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
-                            {!isInProgress && renderColumnBadge(index, col)}
+                            {!isInProgress && renderColumnBadge(dataIndex, col)}
                             <Tooltip content={isSorted ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}>
                             <button
                               type="button"
                               className="excel-refiner__sort-btn"
-                              onClick={(e) => handleSortClick(index, e)}
+                              onClick={(e) => handleSortClick(dataIndex, e)}
                             >
                               {isSorted ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
                             </button>
@@ -2858,20 +2948,31 @@ export function ExcelRefiner() {
                         <td className="excel-refiner__td excel-refiner__td--row-num">
                           {getExcelRowNumber(originalIndex)}
                         </td>
-                        {currentSheet.columns.map((colName, colIndex) => {
+                        {orderedColumns.map((orderedCol) => {
+                          const { name: colName, dataIndex, isMissing } = orderedCol
+
+                          // 누락된 컬럼은 빈 셀
+                          if (isMissing) {
+                            return (
+                              <td key={`missing-${colName}`} className="excel-refiner__td excel-refiner__td--missing">
+                                -
+                              </td>
+                            )
+                          }
+
                           const isRightAlign = isRightAlignColumn(colName)
                           let tdClassName = 'excel-refiner__td'
                           if (isRightAlign) {
                             tdClassName += ' excel-refiner__td--right'
                           }
-                          if (validatingColumns.has(colIndex)) {
+                          if (validatingColumns.has(dataIndex)) {
                             tdClassName += ' excel-refiner__td--validation'
                           }
 
                           // 상품명 칼럼에만 매칭 상태 색상 적용 (계약 시트에서만)
                           let matchedProductId: string | null = null
                           let isUnmatchedProduct = false
-                          if (currentSheet?.name === '계약' && colIndex === productNameColumnIndex && productMatchResult) {
+                          if (currentSheet?.name === '계약' && dataIndex === productNameColumnIndex && productMatchResult) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
                               tdClassName += ` excel-refiner__td--product-${productStatus}`
@@ -2885,10 +2986,10 @@ export function ExcelRefiner() {
                             }
                           }
 
-                          const cellValue = cellToString(row[colIndex] as CellValue)
+                          const cellValue = cellToString(row[dataIndex] as CellValue)
 
                           // 현재 셀이 편집 중인지 확인
-                          const isEditing = editingCell?.rowIndex === originalIndex && editingCell?.colIndex === colIndex
+                          const isEditing = editingCell?.rowIndex === originalIndex && editingCell?.colIndex === dataIndex
 
                           // 미매칭 상품명 외에는 편집 가능
                           if (!isUnmatchedProduct) {
@@ -2904,7 +3005,7 @@ export function ExcelRefiner() {
                             if (isUnmatchedProduct) {
                               handleUnmatchedProductClick(originalIndex, cellValue)
                             } else {
-                              handleCellDoubleClick(originalIndex, colIndex, cellValue)
+                              handleCellDoubleClick(originalIndex, dataIndex, cellValue)
                             }
                           }
 
@@ -2927,7 +3028,7 @@ export function ExcelRefiner() {
 
                           return (
                             <td
-                              key={colIndex}
+                              key={dataIndex}
                               className={tdClassName}
                               onDoubleClick={handleDoubleClick}
                               onContextMenu={handleContextMenu}

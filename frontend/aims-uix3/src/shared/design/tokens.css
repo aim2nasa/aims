@@ -73,6 +73,11 @@
   --color-error-bg: rgba(239, 68, 68, 0.1);
   --color-neutral-bg: rgba(156, 163, 175, 0.1);
 
+  /* Status Background Colors - Dark theme (15% opacity) */
+  --color-error-bg-dark: rgba(239, 68, 68, 0.15);
+  --color-warning-bg-dark: rgba(234, 179, 8, 0.15);
+  --color-info-bg-dark: rgba(59, 130, 246, 0.15);
+
   /* Status Text Colors */
   --color-success-text: #16a34a;
   --color-neutral-text: #6b7280;

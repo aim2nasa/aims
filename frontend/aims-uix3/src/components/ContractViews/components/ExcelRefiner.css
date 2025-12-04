@@ -393,6 +393,49 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   color: var(--color-error-400);
 }
 
+/* 규격 위반 사유 메시지 */
+.excel-refiner__compliance-message {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.excel-refiner__compliance-message--error {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+}
+
+.excel-refiner__compliance-message--warning {
+  background: var(--color-warning-50);
+  color: var(--color-warning-700);
+}
+
+[data-theme="dark"] .excel-refiner__compliance-message--error {
+  background: var(--color-error-bg-dark);
+  color: var(--color-error-400);
+}
+
+[data-theme="dark"] .excel-refiner__compliance-message--warning {
+  background: var(--color-warning-bg-dark);
+  color: var(--color-warning-400);
+}
+
+/* 규격 외 컬럼 안내 (info) */
+.excel-refiner__extra-columns-info {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--color-info-50);
+  color: var(--color-info-600);
+  margin-left: 8px;
+}
+
+[data-theme="dark"] .excel-refiner__extra-columns-info {
+  background: var(--color-info-bg-dark);
+  color: var(--color-primary-400);
+}
+
 /* === TABS === */
 
 .excel-refiner__tabs {
@@ -971,6 +1014,49 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
 
 .excel-refiner__th--sortable {
   cursor: default;
+}
+
+/* 누락된 컬럼 헤더 (빨간색) - 특이성 강화로 우선순위 확보 */
+.excel-refiner__table .excel-refiner__th.excel-refiner__th--missing {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+  border-top: 2px solid var(--color-error-500);
+  border-left: 2px solid var(--color-error-500);
+  border-right: 2px solid var(--color-error-500);
+  border-bottom: none;
+}
+
+[data-theme="dark"] .excel-refiner__table .excel-refiner__th.excel-refiner__th--missing {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+  border-top: 2px solid var(--color-error-500);
+  border-left: 2px solid var(--color-error-500);
+  border-right: 2px solid var(--color-error-500);
+  border-bottom: none;
+}
+
+.excel-refiner__th-badge--missing {
+  background: var(--color-error-500);
+  color: var(--color-badge-text);
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* 누락된 컬럼 셀 (빨간 테두리) */
+.excel-refiner__td--missing {
+  background: var(--color-error-50);
+  color: var(--color-text-quaternary);
+  text-align: center;
+  font-style: italic;
+  border-left: 2px solid var(--color-error-500);
+  border-right: 2px solid var(--color-error-500);
+}
+
+/* 누락된 컬럼 마지막 행 하단 테두리 */
+.excel-refiner__table tbody tr:last-child .excel-refiner__td--missing {
+  border-bottom: 2px solid var(--color-error-500);
 }
 
 .excel-refiner__th-content {
