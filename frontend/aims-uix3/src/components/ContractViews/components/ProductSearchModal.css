@@ -9,7 +9,7 @@
 .product-search-modal__body {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 /* Search Area */
@@ -47,11 +47,11 @@
 
 /* Hint */
 .product-search-modal__hint {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
+  background: transparent;
+  margin-bottom: 8px;
 }
 
 /* Product List */
@@ -62,7 +62,14 @@
   max-height: 350px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-bg-primary);
+  background: #e8e8ed;
+  padding: 8px 0;
+  margin-bottom: 16px;
+}
+
+/* 다크 테마 */
+html[data-theme="dark"] .product-search-modal__list {
+  background: var(--color-bg-secondary);
 }
 
 .product-search-modal__loading,
@@ -81,12 +88,17 @@
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
+  border-bottom: 1px solid var(--color-border);
   background: transparent;
   text-align: left;
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   cursor: pointer;
   transition: background var(--transition-fast);
+}
+
+.product-search-modal__item:last-child {
+  border-bottom: none;
 }
 
 .product-search-modal__item:hover {
@@ -109,7 +121,8 @@
 
 /* Apply All Checkbox */
 .product-search-modal__apply-all {
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-md) 0;
+  margin-top: var(--spacing-sm);
 }
 
 .product-search-modal__checkbox-label {
