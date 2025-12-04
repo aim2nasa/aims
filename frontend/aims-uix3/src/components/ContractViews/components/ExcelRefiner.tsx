@@ -300,6 +300,8 @@ export function ExcelRefiner() {
 
   // 초기화 완료 여부 (sessionStorage 로드 후 true)
   const isInitialized = useRef(false)
+  // 복원 후 상품명 검증 재실행 필요 여부
+  const needsProductValidation = useRef<{ sheetIndex: number; colIndex: number } | null>(null)
 
   // sessionStorage에서 상태 복원 (마운트 시 1회)
   useEffect(() => {
@@ -342,9 +344,50 @@ export function ExcelRefiner() {
         setActionLog(saved.actionLog)
       }
       // productMatchResult는 Map을 포함하므로 저장/복원 불가 → 검증 다시 실행 필요
+      // 계약 시트에서 상품명 컬럼이 검증 대상이면 검증 재실행 예약
+      if (saved.validatingColumnsBySheet && saved.sheets) {
+        const contractSheetIndex = saved.sheets.findIndex((s: { name: string }) => s.name === '계약')
+        if (contractSheetIndex !== -1) {
+          const contractSheet = saved.sheets[contractSheetIndex]
+          const validatingCols = saved.validatingColumnsBySheet.find(([name]: [string, number[]]) => name === '계약')
+          if (validatingCols && contractSheet) {
+            // 상품명 컬럼 인덱스 찾기
+            const productNameColIndex = contractSheet.columns.findIndex((col: string) =>
+              col && getValidationType(col) === 'productName'
+            )
+            if (productNameColIndex !== -1 && validatingCols[1].includes(productNameColIndex)) {
+              needsProductValidation.current = { sheetIndex: contractSheetIndex, colIndex: productNameColIndex }
+            }
+          }
+        }
+      }
     }
     isInitialized.current = true
   }, [])
+
+  // 복원 후 상품명 검증 재실행 (productMatchResult는 저장되지 않으므로)
+  useEffect(() => {
+    if (!needsProductValidation.current || sheets.length === 0) return
+
+    const { sheetIndex, colIndex } = needsProductValidation.current
+    const sheet = sheets[sheetIndex]
+    if (!sheet) return
+
+    // 한 번만 실행
+    needsProductValidation.current = null
+
+    // 비동기로 상품명 검증 재실행
+    const revalidate = async () => {
+      try {
+        const result = await validateProductNames(sheet.data, colIndex)
+        setProductMatchResult(result)
+        setProductNameColumnIndex(colIndex)
+      } catch (error) {
+        console.error('상품명 검증 복원 오류:', error)
+      }
+    }
+    revalidate()
+  }, [sheets])
 
   // 상태 변경 시 sessionStorage에 저장
   useEffect(() => {
