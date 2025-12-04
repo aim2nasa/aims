@@ -1073,16 +1073,17 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
   border-bottom: 2px solid var(--color-error-500);
 }
 
-/* 규격 외 컬럼 헤더 (회색) */
+/* 규격 외 컬럼 헤더 (회색) - 초록색 border 연속성 끊김 표시 */
 .excel-refiner__th--extra {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
-  border-left: 1px dashed var(--color-border-secondary);
-  border-right: 1px dashed var(--color-border-secondary);
+  background: var(--color-neutral-200);
+  color: var(--color-text-secondary);
+  border-left: 2px dashed var(--color-neutral-400);
+  border-right: 2px dashed var(--color-neutral-400);
+  border-top: 3px solid var(--color-neutral-500); /* 초록색 대신 진한 회색으로 연속성 끊김 */
 }
 
 .excel-refiner__th-badge--extra {
-  background: var(--color-neutral-400);
+  background: var(--color-neutral-500);
   color: var(--color-badge-text);
   font-size: 9px;
   padding: 1px 4px;
@@ -1092,10 +1093,31 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
 
 /* 규격 외 컬럼 셀 (회색) */
 .excel-refiner__td--extra {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
-  border-left: 1px dashed var(--color-border-secondary);
-  border-right: 1px dashed var(--color-border-secondary);
+  background: var(--color-neutral-200);
+  color: var(--color-text-secondary);
+  border-left: 2px dashed var(--color-neutral-400);
+  border-right: 2px dashed var(--color-neutral-400);
+}
+
+/* 규격 외 컬럼 다크 테마 */
+html[data-theme="dark"] .excel-refiner__th--extra {
+  background: var(--color-neutral-700);
+  color: var(--color-neutral-200);
+  border-left: 2px dashed var(--color-neutral-500);
+  border-right: 2px dashed var(--color-neutral-500);
+  border-top: 3px solid var(--color-neutral-500);
+}
+
+html[data-theme="dark"] .excel-refiner__td--extra {
+  background: var(--color-neutral-800);
+  color: var(--color-neutral-300);
+  border-left: 2px dashed var(--color-neutral-500);
+  border-right: 2px dashed var(--color-neutral-500);
+}
+
+/* 규격 외 컬럼 마지막 행 하단 테두리 - 초록색 연속성 끊김 */
+.excel-refiner__table tbody tr:last-child .excel-refiner__td--extra {
+  border-bottom: 2px solid var(--color-neutral-500);
 }
 
 .excel-refiner__th-content {

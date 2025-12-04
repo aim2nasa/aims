@@ -383,7 +383,7 @@ export function ExcelRefiner() {
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
-  // 표준 순서 기준 컬럼 배치 (누락 컬럼도 표준 위치에 표시) + 규격 외 컬럼은 마지막에
+  // 원본 엑셀 순서 기준 컬럼 배치 (규격 외 컬럼도 원본 위치에 표시, 누락 컬럼은 표준 순서 위치에 삽입)
   // { name: 컬럼명, dataIndex: 실제 데이터 인덱스 (-1이면 누락), isMissing: 누락 여부, isExtra: 규격 외 여부 }
   const orderedColumns = useMemo(() => {
     if (!currentSheet) return []
@@ -401,59 +401,80 @@ export function ExcelRefiner() {
       }))
     }
 
-    // 실제 컬럼 → 인덱스 매핑
-    const columnToIndex = new Map<number, { name: string; index: number }>()
+    // 실제 컬럼 매핑: dataIndex -> 매칭된 표준 컬럼
+    const columnToStandard = new Map<number, string>()
+    const matchedStandards = new Set<string>()
+
     currentSheet.columns.forEach((col, index) => {
-      columnToIndex.set(index, { name: col, index })
-    })
-
-    // 표준 컬럼과 매칭된 인덱스 추적
-    const matchedIndices = new Set<number>()
-
-    // 표준 순서대로 컬럼 생성 (매칭 또는 누락 표시)
-    const standardColumns = standardOrder.map(stdCol => {
-      const lowerStdCol = stdCol.toLowerCase()
-
-      // 실제 컬럼에서 매칭 찾기
-      let foundEntry: { name: string; index: number } | null = null
-      for (const [idx, entry] of columnToIndex.entries()) {
-        const lowerCol = entry.name.toLowerCase()
+      const lowerCol = col.toLowerCase()
+      for (const stdCol of standardOrder) {
+        if (matchedStandards.has(stdCol)) continue
+        const lowerStdCol = stdCol.toLowerCase()
         if (lowerCol.includes(lowerStdCol) || lowerStdCol.includes(lowerCol)) {
-          foundEntry = entry
-          matchedIndices.add(idx)
+          columnToStandard.set(index, stdCol)
+          matchedStandards.add(stdCol)
           break
         }
       }
-
-      if (foundEntry) {
-        return {
-          name: foundEntry.name,
-          dataIndex: foundEntry.index,
-          isMissing: false,
-          isExtra: false
-        }
-      } else {
-        return {
-          name: stdCol,
-          dataIndex: -1,
-          isMissing: true,
-          isExtra: false
-        }
-      }
     })
 
-    // 규격 외 컬럼 (표준에 매칭되지 않은 컬럼들) - 마지막에 추가
-    const extraColumns = currentSheet.columns
-      .map((col, index) => ({ col, index }))
-      .filter(({ index }) => !matchedIndices.has(index))
-      .map(({ col, index }) => ({
+    // 표준 인덱스 맵
+    const stdIndexMap = new Map(standardOrder.map((s, i) => [s, i]))
+
+    // 결과 배열 생성
+    const result: { name: string; dataIndex: number; isMissing: boolean; isExtra: boolean }[] = []
+    const insertedMissing = new Set<string>()
+    let lastStdIndex = -1
+
+    // 원본 컬럼 순서대로 처리
+    currentSheet.columns.forEach((col, index) => {
+      const matchedStd = columnToStandard.get(index)
+
+      if (matchedStd) {
+        const currentStdIndex = stdIndexMap.get(matchedStd)!
+
+        // 이전 표준 컬럼과 현재 표준 컬럼 사이에 누락 컬럼 삽입
+        standardOrder.forEach(stdCol => {
+          if (matchedStandards.has(stdCol)) return // 이미 매칭된 표준 컬럼은 건너뜀
+          if (insertedMissing.has(stdCol)) return // 이미 삽입된 누락 컬럼은 건너뜀
+
+          const missingIdx = stdIndexMap.get(stdCol)!
+          if (missingIdx > lastStdIndex && missingIdx < currentStdIndex) {
+            result.push({
+              name: stdCol,
+              dataIndex: -1,
+              isMissing: true,
+              isExtra: false
+            })
+            insertedMissing.add(stdCol)
+          }
+        })
+
+        lastStdIndex = currentStdIndex
+      }
+
+      result.push({
         name: col,
         dataIndex: index,
         isMissing: false,
-        isExtra: true
-      }))
+        isExtra: !matchedStd
+      })
+    })
 
-    return [...standardColumns, ...extraColumns]
+    // 마지막에 남은 누락 컬럼 추가
+    standardOrder.forEach(stdCol => {
+      if (matchedStandards.has(stdCol)) return
+      if (insertedMissing.has(stdCol)) return
+
+      result.push({
+        name: stdCol,
+        dataIndex: -1,
+        isMissing: true,
+        isExtra: false
+      })
+    })
+
+    return result
   }, [currentSheet])
 
   // 현재 시트의 검증 컬럼 (파생 상태)
