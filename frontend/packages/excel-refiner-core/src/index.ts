@@ -45,7 +45,8 @@ export {
   fetchInsuranceProducts,
   useValidation,
   checkFormatCompliance,
-  getStandardColumnOrder
+  getStandardColumnOrder,
+  EXCEL_SPEC_VERSION
 } from './hooks/useValidation'
 
 export type { ValidationType } from './hooks/useValidation'

@@ -20,6 +20,12 @@ import { cellToString } from '../utils/excel'
 const INSURANCE_PRODUCTS_API = '/api/insurance-products'
 
 /**
+ * 엑셀 표준규격 버전 (EXCEL_IMPORT_SPECIFICATION.md 기준)
+ * 검증 로직 변경 시 이 버전도 함께 업데이트해야 함
+ */
+export const EXCEL_SPEC_VERSION = 'v0.2.1'
+
+/**
  * 증권번호 검증 함수
  * - 빈 값 → 오류
  * - 중복 값 → 오류 (100% 고유성 필수)
@@ -340,7 +346,10 @@ export async function validateProductNames(
 
 /**
  * 시트별 필수/선택 컬럼 정의
- * EXCEL_IMPORT_SPECIFICATION.md v0.2 기준
+ * EXCEL_IMPORT_SPECIFICATION.md v0.2.1 기준
+ * - 최소 1개 이상의 시트 필요 (1, 2, 3개 모두 유효)
+ * - 존재하는 시트만 DB에 반영
+ * - 선택 컬럼은 없어도 표준 준수
  */
 const SHEET_REQUIREMENTS: Record<string, {
   required: Array<{ name: string; patterns: string[] }>;
@@ -466,16 +475,13 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
         return !allStandardPatterns.some(pattern => lowerCol.includes(pattern))
       })
 
-      // 누락된 선택 컬럼 감지
+      // 누락된 선택 컬럼 감지 (정보 제공용, 오류 아님)
       sheetMissingOptional = requirements.optional.filter(optCol => {
         const lowerOptCol = optCol.toLowerCase()
         // 시트 컬럼 중 선택 컬럼명을 포함하는 것이 없으면 누락
         return !sheet.columns.some(col => col.toLowerCase().includes(lowerOptCol))
       })
-
-      if (sheetMissingOptional.length > 0) {
-        hasError = true  // 표준 컬럼 누락은 오류
-      }
+      // 선택 컬럼 누락은 오류가 아님 (표준규격 v0.2.1: 선택 컬럼은 없어도 됨)
     }
 
     const hasAllRequired = found && columnChecks.every(c => c.found)
@@ -502,19 +508,15 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
 
   if (hasError) {
     status = 'error'
-    // 필수 컬럼 누락
+    // 필수 컬럼 누락만 오류로 처리 (선택 컬럼 누락은 오류 아님)
     const missingRequired = sheetChecks
       .filter(s => s.found && !s.hasAllRequired)
       .map(s => `${s.name}: ${s.requiredColumns.filter(c => !c.found).map(c => c.name).join(', ')} 누락`)
-    // 선택 컬럼 누락
-    const missingOptional = sheetChecks
-      .filter(s => s.missingOptionalColumns && s.missingOptionalColumns.length > 0)
-      .map(s => `${s.name}: ${s.missingOptionalColumns!.join(', ')} 누락`)
 
     if (foundSheets.length === 0) {
       message = '표준 시트(개인고객, 법인고객, 계약)가 없습니다'
-    } else if (missingRequired.length > 0 || missingOptional.length > 0) {
-      message = [...missingRequired, ...missingOptional].join(' | ')
+    } else if (missingRequired.length > 0) {
+      message = missingRequired.join(' | ')
     } else {
       message = '표준 컬럼이 누락되었습니다'
     }
