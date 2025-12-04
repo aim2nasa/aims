@@ -1192,6 +1192,15 @@ export function ExcelRefiner() {
     const sheetIndex = sheets.findIndex(s => s.name === '개인고객')
     const newData = individualSheet.data.filter((_, idx) => idx !== rowIndex)
 
+    // 데이터 수정 시 모든 검증 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setImportResult(null)
+
     setSheets(prev => {
       const updated = [...prev]
       updated[sheetIndex] = {
@@ -1207,7 +1216,7 @@ export function ExcelRefiner() {
       individualCustomers: prev.individualCustomers.filter(c => c.rowIndex !== rowIndex)
     }))
 
-    setActionLog(`✓ 개인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨`)
+    setActionLog(`⚠️ 개인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨 - 재검증 필요`)
   }, [sheets, duplicateNameModal.duplicateName])
 
   // 동명이인: 법인고객에서 삭제
@@ -1217,6 +1226,15 @@ export function ExcelRefiner() {
 
     const sheetIndex = sheets.findIndex(s => s.name === '법인고객')
     const newData = corporateSheet.data.filter((_, idx) => idx !== rowIndex)
+
+    // 데이터 수정 시 모든 검증 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setImportResult(null)
 
     setSheets(prev => {
       const updated = [...prev]
@@ -1233,7 +1251,7 @@ export function ExcelRefiner() {
       corporateCustomers: prev.corporateCustomers.filter(c => c.rowIndex !== rowIndex)
     }))
 
-    setActionLog(`✓ 법인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨`)
+    setActionLog(`⚠️ 법인고객에서 '${duplicateNameModal.duplicateName}' 삭제됨 - 재검증 필요`)
   }, [sheets, duplicateNameModal.duplicateName])
 
   // 동명이인: 이름 변경 시작
@@ -1272,6 +1290,15 @@ export function ExcelRefiner() {
 
     const sheetIndex = sheets.findIndex(s => s.name === sheetName)
 
+    // 데이터 수정 시 모든 검증 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setImportResult(null)
+
     setSheets(prev => {
       const updated = [...prev]
       const newData = [...sheet.data]
@@ -1298,7 +1325,7 @@ export function ExcelRefiner() {
     }
 
     setEditingCustomerName(null)
-    setActionLog(`✓ ${sheetName}의 고객명이 '${trimmedName}'(으)로 변경됨`)
+    setActionLog(`⚠️ ${sheetName}의 고객명이 '${trimmedName}'(으)로 변경됨 - 재검증 필요`)
   }, [editingCustomerName, duplicateNameModal.duplicateName, sheets])
 
   // 동명이인: 다음 동명이인으로 이동
@@ -1425,6 +1452,15 @@ export function ExcelRefiner() {
     })
     if (!confirmed) return
 
+    // 데이터 수정 시 모든 검증 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setImportResult(null)
+
     const newData = currentSheet.data.filter((_, index) => !selectedRows.has(index))
     const afterCount = newData.length
 
@@ -1440,59 +1476,13 @@ export function ExcelRefiner() {
       return updated
     })
 
-    // productMatchResult 업데이트: 삭제된 행 제거 및 인덱스 재계산
-    if (productMatchResult) {
-      setProductMatchResult(prev => {
-        if (!prev) return prev
-
-        // 인덱스 재매핑 함수: 삭제된 행보다 큰 인덱스는 삭제된 개수만큼 감소
-        const remapIndex = (oldIndex: number): number => {
-          let newIndex = oldIndex
-          for (const deletedIdx of selectedIndices) {
-            if (deletedIdx < oldIndex) {
-              newIndex--
-            }
-          }
-          return newIndex
-        }
-
-        // originalMatch 재계산
-        const newOriginalMatch = new Map<number, string>()
-        prev.originalMatch.forEach((objectId, rowIndex) => {
-          if (!selectedRows.has(rowIndex)) {
-            newOriginalMatch.set(remapIndex(rowIndex), objectId)
-          }
-        })
-
-        // modified 재계산
-        const newModified = new Map<number, string>()
-        prev.modified.forEach((objectId, rowIndex) => {
-          if (!selectedRows.has(rowIndex)) {
-            newModified.set(remapIndex(rowIndex), objectId)
-          }
-        })
-
-        // unmatched 재계산
-        const newUnmatched = prev.unmatched
-          .filter(rowIndex => !selectedRows.has(rowIndex))
-          .map(rowIndex => remapIndex(rowIndex))
-
-        return {
-          ...prev,
-          originalMatch: newOriginalMatch,
-          modified: newModified,
-          unmatched: newUnmatched
-        }
-      })
-    }
-
     // 삭제 후 상태 초기화
     setSelectedRows(new Set())
     setIsDeleteMode(false)
 
     // 액션 로그 표시
-    setActionLog(`✓ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
-  }, [selectedRows, currentSheet, activeSheetIndex, productMatchResult, showConfirm])
+    setActionLog(`⚠️ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행) - 재검증 필요`)
+  }, [selectedRows, currentSheet, activeSheetIndex, showConfirm])
 
   // 정제된 파일 저장
   const handleSaveRefined = useCallback(() => {
@@ -1538,6 +1528,15 @@ export function ExcelRefiner() {
           .map(item => item.idx)
       : [productSearchRowIndex]
 
+    // 데이터 수정 시 모든 검증 상태 초기화
+    setSheetValidationStatus(new Map())
+    setSheetIssueCount(new Map())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setImportResult(null)
+
     // 데이터 업데이트
     setSheets(prev => {
       const updated = [...prev]
@@ -1558,23 +1557,8 @@ export function ExcelRefiner() {
       return updated
     })
 
-    // productMatchResult 업데이트: unmatched에서 제거하고 modified로 이동
-    setProductMatchResult(prev => {
-      if (!prev) return prev
-      const newUnmatched = prev.unmatched.filter(idx => !rowsToUpdate.includes(idx))
-      const newModified = new Map(prev.modified)
-      rowsToUpdate.forEach(rowIdx => {
-        newModified.set(rowIdx, productId)
-      })
-      return {
-        ...prev,
-        unmatched: newUnmatched,
-        modified: newModified
-      }
-    })
-
     // 로그 메시지 표시
-    setActionLog(`✓ "${originalProductName}" → "${productName}" (${rowsToUpdate.length}개 행)`)
+    setActionLog(`⚠️ "${originalProductName}" → "${productName}" (${rowsToUpdate.length}개 행) - 재검증 필요`)
 
     // 모달 닫기
     setIsProductSearchOpen(false)
@@ -1600,22 +1584,15 @@ export function ExcelRefiner() {
 
     // 값이 변경되었을 때만 업데이트
     if (value !== oldValue) {
-      // 필수검증칼럼 수정 시 해당 시트 검증 상태 초기화
-      const columnName = currentSheet.columns[colIndex]
-      if (columnName) {
-        const validationType = getValidationType(columnName)
-        // 필수검증칼럼: customerName, productName, contractDate, policyNumber
-        const requiredTypes = ['customerName', 'productName', 'contractDate', 'policyNumber']
-        if (requiredTypes.includes(validationType)) {
-          // 해당 시트의 검증 상태를 'pending'으로 변경 (재검증 필요)
-          setSheetValidationStatus(prev => {
-            const newStatus = new Map(prev)
-            newStatus.set(currentSheet.name, 'pending')
-            return newStatus
-          })
-          setActionLog(`⚠️ 필수컬럼 수정됨 - 재검증 필요`)
-        }
-      }
+      // 어떤 셀이든 수정되면 모든 검증 상태 초기화 (재검증 필요)
+      setSheetValidationStatus(new Map())
+      setSheetIssueCount(new Map())
+      setValidatingColumnsBySheet(new Map())
+      setValidatedColumnsHistoryBySheet(new Map())
+      setProductMatchResult(null)
+      setProductNameColumnIndex(null)
+      setImportResult(null)
+      setActionLog(`⚠️ 데이터 수정됨 - 재검증 필요`)
 
       setSheets(prev => {
         const updated = [...prev]
@@ -1633,9 +1610,6 @@ export function ExcelRefiner() {
         }
         return updated
       })
-      if (!['customerName', 'productName', 'contractDate', 'policyNumber'].includes(getValidationType(currentSheet.columns[colIndex] || ''))) {
-        setActionLog(`✓ 셀 편집: "${oldValue}" → "${value}"`)
-      }
     }
 
     setEditingCell(null)
