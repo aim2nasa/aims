@@ -40,8 +40,11 @@ describe('CorporateRelationshipModal', () => {
 
       const callArgs = vi.mocked(RelationshipModalModule.RelationshipModal).mock.calls[0]?.[0];
       expect(callArgs?.visible).toBe(true);
-      expect(callArgs?.onCancel).toBe(mockOnCancel);
       expect(callArgs?.customerId).toBe(mockCustomerId);
+      // onCancel은 handleCancel로 래핑되므로 동작 검증
+      expect(callArgs?.onCancel).toBeTypeOf('function');
+      callArgs?.onCancel();
+      expect(mockOnCancel).toHaveBeenCalled();
     });
 
     it('onSuccess prop이 제공되면 RelationshipModal에 전달해야 한다', () => {
