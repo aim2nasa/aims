@@ -2617,11 +2617,9 @@ export function ExcelRefiner() {
                     className="excel-refiner__icon-btn excel-refiner__icon-btn--close"
                     onClick={handleCloseExcel}
                   >
-                    <SFSymbol
-                      name="xmark"
-                      size={SFSymbolSize.BODY}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
+                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+                      <path d="M4.5 4.5L12.5 12.5M12.5 4.5L4.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
                   </button>
                 </Tooltip>
               </div>
