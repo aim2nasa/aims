@@ -659,6 +659,15 @@ export function ExcelRefiner() {
       const complianceResult = checkFormatCompliance(parsedSheets)
       setFormatCompliance(complianceResult)
 
+      // 표준규격 위반 시 경고 모달 표시
+      if (complianceResult.status === 'error') {
+        showAlert({
+          title: '엑셀 표준규격 위반',
+          message: `이 파일은 엑셀 표준규격을 준수하지 않아 일괄등록을 진행할 수 없습니다.\n\n위반 사유: ${complianceResult.message}\n\n일괄등록을 진행하려면 엑셀 파일을 표준규격에 맞게 수정해주세요.\n\n엑셀 표준규격을 준수하는 샘플 파일은 고객·계약 일괄등록 페이지에서 다운로드 할 수 있습니다.`,
+          iconType: 'error'
+        })
+      }
+
       // 액션 로그 표시
       const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
       setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)
