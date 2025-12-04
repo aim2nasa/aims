@@ -19,13 +19,18 @@ import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './QuickFamilyAssignPanel.css';
 
+/** 패널 모드 */
+type PanelMode = 'family' | 'corporate';
+
 interface QuickFamilyAssignPanelProps {
-  /** 선택된 가족관계 미설정 고객 */
+  /** 선택된 고객 (가족관계 미설정 개인 또는 관계자 미설정 법인) */
   customer: Customer;
   /** 등록 완료 시 콜백 */
   onComplete: () => void;
   /** 패널 닫기 */
   onClose: () => void;
+  /** 패널 모드: 가족 등록 또는 법인 구성원 등록 */
+  mode?: PanelMode;
 }
 
 /** 가족 관계 유형 */
@@ -35,6 +40,13 @@ const FAMILY_RELATIONSHIP_TYPES = [
   { value: 'child', label: '자녀', icon: '👶', description: '하위 세대' },
 ];
 
+/** 법인 관계자 유형 */
+const CORPORATE_RELATIONSHIP_TYPES = [
+  { value: 'ceo', label: '대표', icon: '👔', description: '법인의 대표이사' },
+  { value: 'executive', label: '임원', icon: '🎯', description: '법인의 임원' },
+  { value: 'employee', label: '직원', icon: '👤', description: '법인의 일반 직원' },
+];
+
 /**
  * QuickFamilyAssignPanel - 빠른 가족 등록 패널 (테이블 UI 임베드 버전)
  */
@@ -42,20 +54,32 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   customer,
   onComplete,
   onClose,
+  mode = 'family',
 }) => {
+  // 모드별 설정
+  const isCorporateMode = mode === 'corporate';
+  const relationshipTypes = isCorporateMode ? CORPORATE_RELATIONSHIP_TYPES : FAMILY_RELATIONSHIP_TYPES;
+  const panelTitle = isCorporateMode ? '빠른 구성원 등록' : '빠른 가족 등록';
+  const relationshipCategory = isCorporateMode ? 'corporate' : 'family';
+
   // 로드 상태 추적 (중복 로드 방지)
   const hasLoadedRef = useRef(false);
 
   // 역할 모드: 선택된 고객이 대표인지 구성원인지
   // 'representative': 선택된 고객이 가족 대표 → 테이블에서 구성원 선택
   // 'member': 선택된 고객이 구성원 → 테이블에서 가족 대표 선택
+  // 법인 모드에서는 항상 'representative' (법인이 from_customer)
   const [roleMode, setRoleMode] = useState<'representative' | 'member'>('representative');
+
+  // 직접 입력 관계 유형 (법인 모드에서만 사용)
+  const [customRelationType, setCustomRelationType] = useState('');
 
   // 상태 관리
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
   const [familyCustomerIds, setFamilyCustomerIds] = useState<Set<string>>(new Set());
   const [familyRepresentativeIds, setFamilyRepresentativeIds] = useState<Set<string>>(new Set());
+  const [corporateEmployeeIds, setCorporateEmployeeIds] = useState<Set<string>>(new Set());
   const [selectedCandidate, setSelectedCandidate] = useState<Customer | null>(null);
   const [relationshipType, setRelationshipType] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,25 +115,28 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         // 가족 관계 ID 추출
         const familyIds = new Set<string>(); // 가족 관계에 포함된 모든 고객
         const representativeIds = new Set<string>(); // 가족 대표 (family_representative 필드)
+        const employeeIds = new Set<string>(); // 법인 관계자 (corporate)
 
         relationshipsResponse.relationships.forEach(rel => {
-          if (rel.relationship_info?.relationship_category === 'family') {
-            // from_customer ID 추출
-            let fromId = '';
-            if (typeof rel.from_customer === 'string') {
-              fromId = rel.from_customer;
-            } else if (rel.from_customer && typeof rel.from_customer === 'object' && '_id' in rel.from_customer) {
-              fromId = rel.from_customer._id;
-            }
+          const category = rel.relationship_info?.relationship_category;
 
-            // related_customer ID 추출
-            let toId = '';
-            if (typeof rel.related_customer === 'string') {
-              toId = rel.related_customer;
-            } else if (rel.related_customer && typeof rel.related_customer === 'object' && '_id' in rel.related_customer) {
-              toId = rel.related_customer._id;
-            }
+          // from_customer ID 추출
+          let fromId = '';
+          if (typeof rel.from_customer === 'string') {
+            fromId = rel.from_customer;
+          } else if (rel.from_customer && typeof rel.from_customer === 'object' && '_id' in rel.from_customer) {
+            fromId = rel.from_customer._id;
+          }
 
+          // related_customer ID 추출
+          let toId = '';
+          if (typeof rel.related_customer === 'string') {
+            toId = rel.related_customer;
+          } else if (rel.related_customer && typeof rel.related_customer === 'object' && '_id' in rel.related_customer) {
+            toId = rel.related_customer._id;
+          }
+
+          if (category === 'family') {
             // family_representative ID 추출 (진짜 가족 대표!)
             let repId = '';
             const familyRep = (rel as { family_representative?: string | { _id: string } }).family_representative;
@@ -127,16 +154,21 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
             if (repId) {
               representativeIds.add(repId);
             }
+          } else if (category === 'corporate' || category === 'professional') {
+            // 법인 관계자 추가 (개인 고객만)
+            if (toId) employeeIds.add(toId);
           }
         });
 
-        console.log('[QuickFamilyAssignPanel] 가족 관계:', {
+        console.log('[QuickFamilyAssignPanel] 관계 데이터:', {
           familyCount: familyIds.size,
-          representativeCount: representativeIds.size
+          representativeCount: representativeIds.size,
+          employeeCount: employeeIds.size
         });
 
         setFamilyCustomerIds(familyIds);
         setFamilyRepresentativeIds(representativeIds);
+        setCorporateEmployeeIds(employeeIds);
         setCandidatesLoading(false);
       } catch (err) {
         console.error('[QuickFamilyAssignPanel] 데이터 로드 실패:', err);
@@ -204,15 +236,24 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
     let filtered = allCustomers.filter(c => {
       // 자기 자신 제외
       if (c._id === customer._id) return false;
-      // 개인 고객만
+      // 개인 고객만 (법인 구성원 후보는 개인 고객)
       if (c.insurance_info?.customer_type !== '개인') return false;
 
-      if (roleMode === 'representative') {
-        // 대표 모드: 가족 관계가 없는 고객만 (구성원으로 추가할 후보)
-        if (familyCustomerIds.has(c._id)) return false;
+      if (isCorporateMode) {
+        // 법인 모드: 이미 법인 관계자인 고객 제외 (같은 법인의 구성원으로 추가된 경우)
+        // 여기서는 모든 개인 고객을 보여주고, 같은 법인에 이미 등록된 관계자는 추후 체크
+        // (현재는 단순히 corporateEmployeeIds에 없는 개인 고객만 표시)
+        // if (corporateEmployeeIds.has(c._id)) return false; // 다른 법인에 등록되어 있어도 추가 가능
+        return true;
       } else {
-        // 구성원 모드: 가족 대표인 고객만 표시 (대표로 선택할 후보)
-        if (!familyRepresentativeIds.has(c._id)) return false;
+        // 가족 모드
+        if (roleMode === 'representative') {
+          // 대표 모드: 가족 관계가 없는 고객만 (구성원으로 추가할 후보)
+          if (familyCustomerIds.has(c._id)) return false;
+        } else {
+          // 구성원 모드: 가족 대표인 고객만 표시 (대표로 선택할 후보)
+          if (!familyRepresentativeIds.has(c._id)) return false;
+        }
       }
 
       return true;
@@ -279,7 +320,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
     }
 
     return filtered;
-  }, [allCustomers, customer._id, familyCustomerIds, familyRepresentativeIds, roleMode, searchQuery, isSearching, selectedInitial, initialType, sortConfig]);
+  }, [allCustomers, customer._id, familyCustomerIds, familyRepresentativeIds, roleMode, searchQuery, isSearching, selectedInitial, initialType, sortConfig, isCorporateMode]);
 
   // 정렬 핸들러
   const handleSort = useCallback((key: string) => {
@@ -292,25 +333,29 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
 
   // 관계 유형 라벨 가져오기
   const getRelationshipLabel = useCallback((type: string): string => {
-    const found = FAMILY_RELATIONSHIP_TYPES.find(t => t.value === type);
+    const types = isCorporateMode ? CORPORATE_RELATIONSHIP_TYPES : FAMILY_RELATIONSHIP_TYPES;
+    const found = types.find(t => t.value === type);
     return found?.label || type;
-  }, []);
+  }, [isCorporateMode]);
 
   // 관계 등록
   const handleSubmit = useCallback(async () => {
-    if (!selectedCandidate || !relationshipType) return;
+    // 직접 입력 모드에서는 customRelationType 사용
+    const finalRelationType = relationshipType === 'custom' ? customRelationType : relationshipType;
+    if (!selectedCandidate || !finalRelationType) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      const categoryLabel = isCorporateMode ? '법인 관계자' : '가족 관계';
       const relationshipData: CreateRelationshipData = {
-        relationship_type: relationshipType,
-        relationship_category: 'family',
+        relationship_type: finalRelationType,
+        relationship_category: relationshipCategory,
         strength: 'strong',
         relationship_details: {
-          description: `가족 관계 - ${getRelationshipLabel(relationshipType)}`,
-          contact_frequency: 'weekly',
+          description: `${categoryLabel} - ${getRelationshipLabel(finalRelationType)}`,
+          contact_frequency: isCorporateMode ? 'monthly' : 'weekly',
           influence_level: 'high',
         },
         insurance_relevance: {
@@ -321,10 +366,16 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
       };
 
       // 역할 모드에 따라 from_customer와 related_customer 결정
-      // representative: 선택된 고객(customer)이 대표 → customer가 from
-      // member: 선택된 고객(customer)이 구성원 → selectedCandidate가 from (대표)
-      const fromCustomerId = roleMode === 'representative' ? customer._id : selectedCandidate._id;
-      const relatedCustomerId = roleMode === 'representative' ? selectedCandidate._id : customer._id;
+      // 법인 모드: 법인(customer)이 from, 개인(selectedCandidate)이 related
+      // 가족 모드:
+      //   representative: 선택된 고객(customer)이 대표 → customer가 from
+      //   member: 선택된 고객(customer)이 구성원 → selectedCandidate가 from (대표)
+      const fromCustomerId = isCorporateMode
+        ? customer._id  // 법인이 항상 from
+        : (roleMode === 'representative' ? customer._id : selectedCandidate._id);
+      const relatedCustomerId = isCorporateMode
+        ? selectedCandidate._id  // 개인 관계자가 related
+        : (roleMode === 'representative' ? selectedCandidate._id : customer._id);
 
       await RelationshipService.createRelationship(
         fromCustomerId,
@@ -335,12 +386,13 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
       window.dispatchEvent(new CustomEvent('relationshipChanged'));
       onComplete();
     } catch (err) {
-      console.error('[QuickFamilyAssignPanel] 가족 관계 등록 실패:', err);
-      setError('가족 관계 등록에 실패했습니다. 다시 시도해주세요.');
+      const errorMsg = isCorporateMode ? '구성원 등록에 실패했습니다.' : '가족 관계 등록에 실패했습니다.';
+      console.error('[QuickFamilyAssignPanel] 관계 등록 실패:', err);
+      setError(`${errorMsg} 다시 시도해주세요.`);
     } finally {
       setLoading(false);
     }
-  }, [customer._id, selectedCandidate, relationshipType, roleMode, getRelationshipLabel, onComplete]);
+  }, [customer._id, selectedCandidate, relationshipType, customRelationType, roleMode, isCorporateMode, relationshipCategory, getRelationshipLabel, onComplete]);
 
   // 후보 선택
   const handleCandidateSelect = useCallback((candidate: Customer) => {
@@ -367,7 +419,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
           <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="quick-family-assign-panel__title-icon">
             <path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641l2.5-8.5z"/>
           </svg>
-          빠른 가족 등록
+          {panelTitle}
         </h3>
         <button
           type="button"
@@ -381,42 +433,45 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         </button>
       </div>
 
-      {/* 선택된 고객 정보 + 역할 선택 */}
+      {/* 선택된 고객 정보 + 역할 선택 (가족 모드에서만) */}
       <div className="quick-family-assign-panel__selected-customer">
         <div className="quick-family-assign-panel__customer-info">
-          <span className="quick-family-assign-panel__label">선택된 고객</span>
+          <span className="quick-family-assign-panel__label">{isCorporateMode ? '선택된 법인' : '선택된 고객'}</span>
           <span className="quick-family-assign-panel__customer-name">
             {customer.personal_info?.name || '이름없음'}
           </span>
         </div>
-        <div className="quick-family-assign-panel__role-selector">
-          <button
-            type="button"
-            className={`quick-family-assign-panel__role-btn ${roleMode === 'representative' ? 'active' : ''}`}
-            onClick={() => {
-              setRoleMode('representative');
-              setSelectedCandidate(null);
-              setRelationshipType(null);
-            }}
-            title="이 고객을 가족 대표로 설정"
-          >
-            <span className="role-icon">👑</span>
-            <span className="role-text">가족 대표</span>
-          </button>
-          <button
-            type="button"
-            className={`quick-family-assign-panel__role-btn ${roleMode === 'member' ? 'active' : ''}`}
-            onClick={() => {
-              setRoleMode('member');
-              setSelectedCandidate(null);
-              setRelationshipType(null);
-            }}
-            title="이 고객을 가족 구성원으로 설정"
-          >
-            <span className="role-icon">👤</span>
-            <span className="role-text">가족 구성원</span>
-          </button>
-        </div>
+        {/* 가족 모드에서만 역할 선택 표시 */}
+        {!isCorporateMode && (
+          <div className="quick-family-assign-panel__role-selector">
+            <button
+              type="button"
+              className={`quick-family-assign-panel__role-btn ${roleMode === 'representative' ? 'active' : ''}`}
+              onClick={() => {
+                setRoleMode('representative');
+                setSelectedCandidate(null);
+                setRelationshipType(null);
+              }}
+              title="이 고객을 가족 대표로 설정"
+            >
+              <span className="role-icon">👑</span>
+              <span className="role-text">가족 대표</span>
+            </button>
+            <button
+              type="button"
+              className={`quick-family-assign-panel__role-btn ${roleMode === 'member' ? 'active' : ''}`}
+              onClick={() => {
+                setRoleMode('member');
+                setSelectedCandidate(null);
+                setRelationshipType(null);
+              }}
+              title="이 고객을 가족 구성원으로 설정"
+            >
+              <span className="role-icon">👤</span>
+              <span className="role-text">가족 구성원</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 에러 메시지 */}
@@ -544,7 +599,14 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
 
       {/* 역할 모드 안내 */}
       <div className="quick-family-assign-panel__mode-guide">
-        {roleMode === 'representative' ? (
+        {isCorporateMode ? (
+          <>
+            <span className="mode-icon">🏢</span>
+            <span className="mode-text">
+              <strong>{customer.personal_info?.name}</strong>의 <strong>구성원</strong>을 아래에서 선택하세요
+            </span>
+          </>
+        ) : roleMode === 'representative' ? (
           <>
             <span className="mode-icon">👑</span>
             <span className="mode-text">
@@ -646,27 +708,59 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
       {/* 관계 유형 선택 */}
       <div className="quick-family-assign-panel__relationship-section">
         <span className="quick-family-assign-panel__label">
-          {roleMode === 'representative'
-            ? `${customer.personal_info?.name}의 ${selectedCandidate?.personal_info?.name || '?'}은(는)`
-            : `${selectedCandidate?.personal_info?.name || '?'}의 ${customer.personal_info?.name}은(는)`
+          {isCorporateMode
+            ? `${selectedCandidate?.personal_info?.name || '?'}의 직책은`
+            : (roleMode === 'representative'
+              ? `${customer.personal_info?.name}의 ${selectedCandidate?.personal_info?.name || '?'}은(는)`
+              : `${selectedCandidate?.personal_info?.name || '?'}의 ${customer.personal_info?.name}은(는)`)
           }
         </span>
         <div className="quick-family-assign-panel__type-buttons">
-          {FAMILY_RELATIONSHIP_TYPES.map((type) => (
+          {relationshipTypes.map((type) => (
             <button
               key={type.value}
               type="button"
               className={`quick-family-assign-panel__type-btn ${
                 relationshipType === type.value ? 'selected' : ''
               }`}
-              onClick={() => setRelationshipType(type.value)}
+              onClick={() => {
+                setRelationshipType(type.value);
+                setCustomRelationType('');
+              }}
               disabled={!selectedCandidate}
             >
               <span className="quick-family-assign-panel__type-icon">{type.icon}</span>
               <span className="quick-family-assign-panel__type-label">{type.label}</span>
             </button>
           ))}
+          {/* 법인 모드에서만 직접 입력 옵션 */}
+          {isCorporateMode && (
+            <button
+              type="button"
+              className={`quick-family-assign-panel__type-btn ${
+                relationshipType === 'custom' ? 'selected' : ''
+              }`}
+              onClick={() => setRelationshipType('custom')}
+              disabled={!selectedCandidate}
+            >
+              <span className="quick-family-assign-panel__type-icon">✏️</span>
+              <span className="quick-family-assign-panel__type-label">직접입력</span>
+            </button>
+          )}
         </div>
+        {/* 직접 입력 필드 */}
+        {isCorporateMode && relationshipType === 'custom' && (
+          <div className="quick-family-assign-panel__custom-input">
+            <input
+              type="text"
+              className="quick-family-assign-panel__custom-input-field"
+              placeholder="관계 직접 입력 (예: 고문, 계약직)"
+              value={customRelationType}
+              onChange={(e) => setCustomRelationType(e.target.value)}
+              aria-label="관계 유형 직접 입력"
+            />
+          </div>
+        )}
       </div>
 
       {/* 액션 버튼 */}
@@ -681,7 +775,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         <Button
           variant="primary"
           onClick={handleSubmit}
-          disabled={!selectedCandidate || !relationshipType || loading}
+          disabled={!selectedCandidate || !relationshipType || (relationshipType === 'custom' && !customRelationType.trim()) || loading}
         >
           {loading ? '등록 중...' : '등록'}
         </Button>

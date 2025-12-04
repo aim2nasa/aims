@@ -538,3 +538,37 @@ html[data-theme="dark"] .quick-family-assign-panel__actions {
 .quick-family-assign-panel {
   animation: slideInRight 0.25s ease-out;
 }
+
+/* 직접 입력 필드 (법인 구성원 모드) */
+.quick-family-assign-panel__custom-input {
+  margin-top: var(--spacing-2);
+  padding: 0;
+}
+
+.quick-family-assign-panel__custom-input-field {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.quick-family-assign-panel__custom-input-field:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+html[data-theme="dark"] .quick-family-assign-panel__custom-input-field {
+  background: var(--color-layout-accent-dark);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .quick-family-assign-panel__custom-input-field:focus {
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}

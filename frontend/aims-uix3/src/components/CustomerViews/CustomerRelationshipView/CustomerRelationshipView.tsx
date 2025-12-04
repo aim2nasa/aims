@@ -51,6 +51,7 @@ interface StructuredData {
   가족그룹: Record<string, FamilyGroup>;
   법인: Record<string, CorporateGroup>;
   가족관계미설정: Customer[]; // 가족관계가 없는 개인 고객들
+  법인관계자미설정: Customer[]; // 관계자가 없는 법인 고객들
 }
 
 interface CorporateGroup {
@@ -91,6 +92,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   // 빠른 가족 등록 패널용 상태
   const [selectedUnassignedCustomer, setSelectedUnassignedCustomer] = useState<Customer | null>(null);
+
+  // 빠른 구성원 등록 패널용 상태 (법인)
+  const [selectedUnassignedCorporate, setSelectedUnassignedCorporate] = useState<Customer | null>(null);
 
   // LocalStorage에서 트리 확장 상태 복원
   // 기본 viewMode가 'representative'이므로 'no-family-relationship'은 닫힌 상태
@@ -265,19 +269,20 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 데이터 구조화
   const structuredData = useMemo((): StructuredData => {
     if (!relationships.length && documentCustomerMap.size === 0) {
-      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [] };
+      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [], 법인관계자미설정: [] };
     }
 
     const mergedCustomerMap = new Map(resolvedCustomerMap);
 
     if (mergedCustomerMap.size === 0) {
-      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [] };
+      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [], 법인관계자미설정: [] };
     }
 
     const result: StructuredData = {
       가족그룹: {},
       법인: {},
-      가족관계미설정: []
+      가족관계미설정: [],
+      법인관계자미설정: []
     };
 
     const familyNetworks = new Map<string, Set<string>>();
@@ -482,6 +487,28 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
     result.가족관계미설정 = noFamilyRelationshipCustomers;
 
+    // 관계자가 없는 법인 고객 찾기
+    const corporateIdsWithRelationship = new Set(Object.keys(result.법인));
+    const noCorporateRelationshipCustomers: Customer[] = [];
+    mergedCustomerMap.forEach((customer) => {
+      // 법인 고객이고 관계자가 없는 경우
+      if (
+        customer.insurance_info?.customer_type === '법인' &&
+        !corporateIdsWithRelationship.has(customer._id)
+      ) {
+        noCorporateRelationshipCustomers.push(customer);
+      }
+    });
+
+    // 이름순 정렬
+    noCorporateRelationshipCustomers.sort((a, b) => {
+      const nameA = a.personal_info?.name || '';
+      const nameB = b.personal_info?.name || '';
+      return nameA.localeCompare(nameB, 'ko');
+    });
+
+    result.법인관계자미설정 = noCorporateRelationshipCustomers;
+
     return result;
   }, [documentCustomerMap, relationships, resolvedCustomerMap]);
 
@@ -564,6 +591,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const corporateEntries = Object.entries(structuredData.법인);
   const noFamilyRelationshipCustomers = structuredData.가족관계미설정 || [];
+  const noCorporateRelationshipCustomers = structuredData.법인관계자미설정 || [];
 
   // 🚀 성능 최적화: 가족 그룹을 초성별로 그룹화 (의존성 최적화)
   const familyGroupsByConsonant = useMemo(() => {
@@ -797,7 +825,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     );
   }
 
-  const hasNoData = familyGroupsByConsonant.size === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0;
+  const hasNoData = familyGroupsByConsonant.size === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0;
 
   return (
     <CenterPaneView
@@ -1161,8 +1189,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             </div>
           )}
 
-          {/* 법인 관계 섹션 */}
-          {corporateEntries.length > 0 && (
+          {/* 법인 관계 섹션 - 법인 그룹 또는 관계자 미설정 법인이 있을 때 표시 */}
+          {(corporateEntries.length > 0 || noCorporateRelationshipCustomers.length > 0) && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -1179,6 +1207,55 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
               {expandedNodes.has('corporate') && (
                 <div className="tree-children">
+                  {/* 관계자 미설정 섹션 - 법인 폴더 내 최상단 */}
+                  {noCorporateRelationshipCustomers.length > 0 && (
+                    <div className="tree-group">
+                      <div
+                        className="tree-node tree-node--group"
+                        onClick={() => toggleNode('no-corporate-relationship')}
+                      >
+                        <span className="tree-node__icon">
+                          ⚠️
+                        </span>
+                        <div className="tree-node__content">
+                          <span className="tree-node__label tree-node__label--no-relationship">
+                            관계자 미설정
+                          </span>
+                          <span className="tree-node__badge tree-node__badge--warning">
+                            {noCorporateRelationshipCustomers.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedNodes.has('no-corporate-relationship') && (
+                        <div className="tree-children">
+                          {noCorporateRelationshipCustomers.map((customer) => (
+                            <div key={customer._id} className="tree-node tree-node--leaf">
+                              <span className="tree-node__icon">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate" style={{ opacity: 0.5 }}>
+                                  <rect x="2" y="4" width="16" height="14" rx="2" opacity="0.2" />
+                                  <rect x="5" y="7" width="4" height="3" rx="0.5" />
+                                  <rect x="11" y="7" width="4" height="3" rx="0.5" />
+                                  <rect x="5" y="12" width="4" height="3" rx="0.5" />
+                                  <rect x="11" y="12" width="4" height="3" rx="0.5" />
+                                </svg>
+                              </span>
+                              <span
+                                className="tree-node__label tree-node__label--clickable"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedUnassignedCorporate(customer);
+                                }}
+                              >
+                                {highlightText(customer.personal_info?.name || '회사명없음')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {corporateEntries
                     .sort(([, a], [, b]) => {
                       const nameA = a.company.personal_info?.name || '';
@@ -1255,6 +1332,20 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                   setSelectedUnassignedCustomer(null);
                 }}
                 onClose={() => setSelectedUnassignedCustomer(null)}
+              />
+            </div>
+          )}
+
+          {/* 빠른 구성원 등록 패널 (법인) */}
+          {selectedUnassignedCorporate && (
+            <div className="relationship-view__panel">
+              <QuickFamilyAssignPanel
+                customer={selectedUnassignedCorporate}
+                mode="corporate"
+                onComplete={() => {
+                  setSelectedUnassignedCorporate(null);
+                }}
+                onClose={() => setSelectedUnassignedCorporate(null)}
               />
             </div>
           )}
