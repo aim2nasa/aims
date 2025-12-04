@@ -2620,15 +2620,17 @@ export function ExcelRefiner() {
               {sheets.map((sheet, index) => {
                 const status = sheetValidationStatus.get(sheet.name)
                 const issueCount = sheetIssueCount.get(sheet.name) || 0
+                const isStandardSheet = ['개인고객', '법인고객', '계약'].includes(sheet.name)
+                const isExtraSheet = !isStandardSheet && formatCompliance
                 return (
                   <button
                     key={sheet.name}
                     type="button"
-                    className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''} ${status ? `excel-refiner__sheet-tab--${status}` : ''}`}
+                    className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''} ${isExtraSheet ? 'excel-refiner__sheet-tab--extra' : status ? `excel-refiner__sheet-tab--${status}` : ''}`}
                     onClick={() => handleSheetChange(index)}
                   >
                     {sheet.name}
-                    {status === 'valid' && ' ✓'}
+                    {!isExtraSheet && status === 'valid' && ' ✓'}
                     {status === 'invalid' && ` (${issueCount})`}
                     {status === 'validating' && ' ...'}
                   </button>
@@ -2637,10 +2639,18 @@ export function ExcelRefiner() {
             </div>
 
             {/* 데이터 테이블 */}
+            {/* 표준 시트(개인고객, 법인고객, 계약)만 규격준수 테두리 표시, 추가 시트는 neutral */}
             <div className={`excel-refiner__table-container ${
-              formatCompliance?.status === 'compliant' ? 'excel-refiner__table-container--compliant' :
-              formatCompliance?.status === 'warning' ? 'excel-refiner__table-container--warning' :
-              formatCompliance?.status === 'error' ? 'excel-refiner__table-container--error' : ''
+              (() => {
+                const isStandardSheet = ['개인고객', '법인고객', '계약'].includes(currentSheet?.name || '')
+                if (!isStandardSheet && formatCompliance) {
+                  return 'excel-refiner__table-container--extra'
+                }
+                if (formatCompliance?.status === 'compliant') return 'excel-refiner__table-container--compliant'
+                if (formatCompliance?.status === 'warning') return 'excel-refiner__table-container--warning'
+                if (formatCompliance?.status === 'error') return 'excel-refiner__table-container--error'
+                return ''
+              })()
             }`}>
               <table className="excel-refiner__table">
                 <thead>

@@ -820,6 +820,24 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
   color: var(--color-primary-400);
 }
 
+/* 추가 시트 (표준 규격 외) - 중립적 회색 */
+.excel-refiner__sheet-tab--extra {
+  color: var(--color-text-tertiary);
+}
+
+.excel-refiner__sheet-tab--extra.excel-refiner__sheet-tab--active {
+  color: var(--color-text-tertiary);
+  border-top-color: var(--color-text-tertiary);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--extra {
+  color: var(--color-text-tertiary);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-tab--active {
+  border-top-color: var(--color-text-tertiary);
+}
+
 /* === TABLE === */
 
 .excel-refiner__table-container {
@@ -844,6 +862,11 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
 
 .excel-refiner__table-container--error .excel-refiner__table {
   border-color: var(--color-error-500);
+}
+
+/* 추가 시트 (표준 규격 외) - 중립적 회색 테두리 */
+.excel-refiner__table-container--extra .excel-refiner__table {
+  border-color: var(--color-text-tertiary);
 }
 
 .excel-refiner__th,
