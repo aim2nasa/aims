@@ -2403,13 +2403,11 @@ export function ExcelRefiner() {
                 <span className="excel-refiner__filename">{fileName}</span>
                 {/* 포맷 준수 배지 */}
                 {formatCompliance && (
-                  <Tooltip content={formatCompliance.message}>
-                    <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
-                      {formatCompliance.status === 'compliant' && '✓ 표준'}
-                      {formatCompliance.status === 'warning' && '⚠ 표준'}
-                      {formatCompliance.status === 'error' && '✕ 표준'}
-                    </span>
-                  </Tooltip>
+                  <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
+                    {formatCompliance.status === 'compliant' && '✓ 엑셀표준규격준수'}
+                    {formatCompliance.status === 'warning' && '⚠ 엑셀표준규격준수'}
+                    {formatCompliance.status === 'error' && '✕ 엑셀표준규격준수'}
+                  </span>
                 )}
               </div>
 
@@ -2593,7 +2591,11 @@ export function ExcelRefiner() {
             </div>
 
             {/* 데이터 테이블 */}
-            <div className="excel-refiner__table-container">
+            <div className={`excel-refiner__table-container ${
+              formatCompliance?.status === 'compliant' ? 'excel-refiner__table-container--compliant' :
+              formatCompliance?.status === 'warning' ? 'excel-refiner__table-container--warning' :
+              formatCompliance?.status === 'error' ? 'excel-refiner__table-container--error' : ''
+            }`}>
               <table className="excel-refiner__table">
                 <thead>
                   <tr>

@@ -830,6 +830,20 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--validating {
 .excel-refiner__table {
   border-collapse: collapse;
   font-size: var(--font-size-caption-1); /* 12px - DENSE_TYPOGRAPHY: 테이블 데이터 */
+  border: 2px solid transparent;
+}
+
+/* 테이블 포맷 준수 상태 테두리 - 실제 데이터 영역 경계 */
+.excel-refiner__table-container--compliant .excel-refiner__table {
+  border-color: var(--color-success-500);
+}
+
+.excel-refiner__table-container--warning .excel-refiner__table {
+  border-color: var(--color-warning-500);
+}
+
+.excel-refiner__table-container--error .excel-refiner__table {
+  border-color: var(--color-error-500);
 }
 
 .excel-refiner__th,
