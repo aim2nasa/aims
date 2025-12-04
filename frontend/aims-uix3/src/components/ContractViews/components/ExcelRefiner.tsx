@@ -383,7 +383,7 @@ export function ExcelRefiner() {
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
-  // 원본 엑셀 순서 유지 + 누락 컬럼만 마지막에 추가
+  // 표준 순서 기준 컬럼 배치 (누락 컬럼도 표준 위치에 표시) + 규격 외 컬럼은 마지막에
   // { name: 컬럼명, dataIndex: 실제 데이터 인덱스 (-1이면 누락), isMissing: 누락 여부, isExtra: 규격 외 여부 }
   const orderedColumns = useMemo(() => {
     if (!currentSheet) return []
@@ -401,46 +401,59 @@ export function ExcelRefiner() {
       }))
     }
 
-    // 표준 컬럼 패턴 (소문자)
-    const standardPatterns = standardOrder.map(s => s.toLowerCase())
+    // 실제 컬럼 → 인덱스 매핑
+    const columnToIndex = new Map<number, { name: string; index: number }>()
+    currentSheet.columns.forEach((col, index) => {
+      columnToIndex.set(index, { name: col, index })
+    })
 
-    // 원본 순서대로 컬럼 생성 (표준/규격외 구분)
-    const matchedStandards = new Set<string>()
-    const originalColumns = currentSheet.columns.map((col, index) => {
-      const lowerCol = col.toLowerCase()
-      const matchedPattern = standardPatterns.find(pattern =>
-        lowerCol.includes(pattern) || pattern.includes(lowerCol)
-      )
+    // 표준 컬럼과 매칭된 인덱스 추적
+    const matchedIndices = new Set<number>()
 
-      if (matchedPattern) {
-        matchedStandards.add(matchedPattern)
+    // 표준 순서대로 컬럼 생성 (매칭 또는 누락 표시)
+    const standardColumns = standardOrder.map(stdCol => {
+      const lowerStdCol = stdCol.toLowerCase()
+
+      // 실제 컬럼에서 매칭 찾기
+      let foundEntry: { name: string; index: number } | null = null
+      for (const [idx, entry] of columnToIndex.entries()) {
+        const lowerCol = entry.name.toLowerCase()
+        if (lowerCol.includes(lowerStdCol) || lowerStdCol.includes(lowerCol)) {
+          foundEntry = entry
+          matchedIndices.add(idx)
+          break
+        }
+      }
+
+      if (foundEntry) {
         return {
-          name: col,
-          dataIndex: index,
+          name: foundEntry.name,
+          dataIndex: foundEntry.index,
           isMissing: false,
           isExtra: false
         }
       } else {
         return {
-          name: col,
-          dataIndex: index,
-          isMissing: false,
-          isExtra: true
+          name: stdCol,
+          dataIndex: -1,
+          isMissing: true,
+          isExtra: false
         }
       }
     })
 
-    // 누락된 표준 컬럼 찾기 (마지막에 추가)
-    const missingColumns = standardOrder
-      .filter(stdCol => !matchedStandards.has(stdCol.toLowerCase()))
-      .map(stdCol => ({
-        name: stdCol,
-        dataIndex: -1,
-        isMissing: true,
-        isExtra: false
+    // 규격 외 컬럼 (표준에 매칭되지 않은 컬럼들) - 마지막에 추가
+    const extraColumns = currentSheet.columns
+      .map((col, index) => ({ col, index }))
+      .filter(({ index }) => !matchedIndices.has(index))
+      .map(({ col, index }) => ({
+        name: col,
+        dataIndex: index,
+        isMissing: false,
+        isExtra: true
       }))
 
-    return [...originalColumns, ...missingColumns]
+    return [...standardColumns, ...extraColumns]
   }, [currentSheet])
 
   // 현재 시트의 검증 컬럼 (파생 상태)
