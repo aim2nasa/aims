@@ -2788,16 +2788,35 @@ export function ExcelRefiner() {
                 const issueCount = sheetIssueCount.get(sheet.name) || 0
                 const isStandardSheet = ['개인고객', '법인고객', '계약'].includes(sheet.name)
                 const isExtraSheet = !isStandardSheet && formatCompliance
+
+                // 규격 준수 상태 확인 (누락 컬럼 여부)
+                const sheetCheck = formatCompliance?.sheets.find(s => s.name === sheet.name)
+                const hasFormatIssue = sheetCheck && (
+                  !sheetCheck.hasAllRequired ||
+                  (sheetCheck.missingOptionalColumns && sheetCheck.missingOptionalColumns.length > 0)
+                )
+
+                // 탭 스타일 결정: 규격 위반 > 검증 상태
+                let tabStatus = ''
+                if (isExtraSheet) {
+                  tabStatus = 'excel-refiner__sheet-tab--extra'
+                } else if (hasFormatIssue) {
+                  tabStatus = 'excel-refiner__sheet-tab--format-error'
+                } else if (status) {
+                  tabStatus = `excel-refiner__sheet-tab--${status}`
+                }
+
                 return (
                   <button
                     key={sheet.name}
                     type="button"
-                    className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''} ${isExtraSheet ? 'excel-refiner__sheet-tab--extra' : status ? `excel-refiner__sheet-tab--${status}` : ''}`}
+                    className={`excel-refiner__sheet-tab ${index === activeSheetIndex ? 'excel-refiner__sheet-tab--active' : ''} ${tabStatus}`}
                     onClick={() => handleSheetChange(index)}
                   >
                     {sheet.name}
-                    {!isExtraSheet && status === 'valid' && ' ✓'}
-                    {status === 'invalid' && ` (${issueCount})`}
+                    {!isExtraSheet && !hasFormatIssue && status === 'valid' && ' ✓'}
+                    {hasFormatIssue && ' ✕'}
+                    {!hasFormatIssue && status === 'invalid' && ` (${issueCount})`}
                     {status === 'validating' && ' ...'}
                   </button>
                 )

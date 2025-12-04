@@ -900,6 +900,16 @@ html[data-theme="dark"] .excel-refiner__sheet-tab:hover:not(.excel-refiner__shee
   color: var(--color-error-600);
 }
 
+/* 규격 위반 (누락 컬럼) - 빨간색 */
+.excel-refiner__sheet-tab--format-error {
+  color: var(--color-error-600);
+}
+
+.excel-refiner__sheet-tab--format-error.excel-refiner__sheet-tab--active {
+  color: var(--color-error-600);
+  border-top-color: var(--color-error-500);
+}
+
 .excel-refiner__sheet-tab--validating {
   color: var(--color-primary-500);
 }
@@ -909,6 +919,10 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--valid {
 }
 
 html[data-theme="dark"] .excel-refiner__sheet-tab--invalid {
+  color: var(--color-error-400);
+}
+
+html[data-theme="dark"] .excel-refiner__sheet-tab--format-error {
   color: var(--color-error-400);
 }
 
