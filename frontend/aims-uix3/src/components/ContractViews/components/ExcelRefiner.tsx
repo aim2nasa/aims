@@ -129,6 +129,9 @@ export function ExcelRefiner() {
   // 현재 클릭한 행 (일반 모드에서 행 번호 표시용)
   const [focusedRow, setFocusedRow] = useState<number | null>(null)
 
+  // 선택된 컬럼 (컬럼 삭제용) - dataIndex 기준
+  const [selectedColumn, setSelectedColumn] = useState<number | null>(null)
+
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false)
 
@@ -1599,6 +1602,65 @@ export function ExcelRefiner() {
     setActionLog(`⚠️ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행) - 재검증 필요`)
   }, [selectedRows, currentSheet, activeSheetIndex, showConfirm])
 
+  // 컬럼 선택 (헤더 클릭 시)
+  const handleSelectColumn = useCallback((dataIndex: number) => {
+    // 같은 컬럼 클릭 시 선택 해제
+    if (selectedColumn === dataIndex) {
+      setSelectedColumn(null)
+    } else {
+      setSelectedColumn(dataIndex)
+    }
+  }, [selectedColumn])
+
+  // 선택된 컬럼 삭제
+  const handleDeleteColumn = useCallback(async () => {
+    if (selectedColumn === null || !currentSheet) return
+
+    // 선택된 컬럼명 찾기
+    const columnName = currentSheet.columns[selectedColumn] || `컬럼 ${selectedColumn + 1}`
+
+    // 삭제 확인
+    const confirmed = await showConfirm({
+      title: '컬럼 삭제',
+      message: `"${columnName}" 컬럼을 삭제하시겠습니까?\n모든 행에서 해당 컬럼 데이터가 삭제됩니다.`,
+      confirmText: '삭제',
+      confirmStyle: 'destructive',
+      cancelText: '취소'
+    })
+
+    if (!confirmed) return
+
+    // 새로운 sheets 계산
+    const newSheets = sheets.map((sheet, idx) => {
+      if (idx !== activeSheetIndex) return sheet
+
+      // 컬럼 헤더에서 삭제
+      const newColumns = sheet.columns.filter((_, colIdx) => colIdx !== selectedColumn)
+
+      // 각 행에서 해당 컬럼 데이터 삭제
+      const newData = sheet.data.map(row => row.filter((_, colIdx) => colIdx !== selectedColumn))
+
+      return {
+        ...sheet,
+        columns: newColumns,
+        data: newData
+      }
+    })
+
+    // 컬럼 삭제 실행
+    setSheets(newSheets)
+
+    // 표준규격 준수 재검증
+    const complianceResult = checkFormatCompliance(newSheets)
+    setFormatCompliance(complianceResult)
+
+    // 상태 초기화
+    setSelectedColumn(null)
+
+    // 액션 로그 표시
+    setActionLog(`⚠️ "${columnName}" 컬럼 삭제됨 - 표준규격 재검증 완료`)
+  }, [selectedColumn, currentSheet, activeSheetIndex, sheets, showConfirm])
+
   // 정제된 파일 저장
   const handleSaveRefined = useCallback(() => {
     if (sheets.length === 0 || !fileName) return
@@ -2913,8 +2975,13 @@ export function ExcelRefiner() {
 
                       // 규격 외 컬럼은 회색 스타일
                       if (isExtra) {
+                        const isSelected = selectedColumn === dataIndex
                         return (
-                          <th key={`extra-${col}-${dataIndex}`} className="excel-refiner__th excel-refiner__th--extra">
+                          <th
+                            key={`extra-${col}-${dataIndex}`}
+                            className={`excel-refiner__th excel-refiner__th--extra${isSelected ? ' excel-refiner__th--selected' : ''}`}
+                            onClick={() => handleSelectColumn(dataIndex)}
+                          >
                             <div className="excel-refiner__th-content">
                               <span className="excel-refiner__th-text">{col}</span>
                               <span className="excel-refiner__th-badge excel-refiner__th-badge--extra">규격 외</span>
@@ -2931,6 +2998,7 @@ export function ExcelRefiner() {
                       const type = col ? getValidationType(col) : 'default'
                       const isValidatable = type !== 'default'
                       const isSorted = sortColumn === dataIndex
+                      const isSelected = selectedColumn === dataIndex
 
                       // 검증 가능한 컬럼만 검증 클릭 스타일 적용
                       let thClassName = 'excel-refiner__th excel-refiner__th--sortable'
@@ -2955,13 +3023,20 @@ export function ExcelRefiner() {
                       if (isSorted) {
                         thClassName += ' excel-refiner__th--sorted'
                       }
+                      if (isSelected) {
+                        thClassName += ' excel-refiner__th--selected'
+                      }
 
                       return (
                         <th
                           key={dataIndex}
                           className={thClassName}
-                          onClick={isValidatable ? () => handleColumnClick(dataIndex, col) : undefined}
-
+                          onClick={() => {
+                            handleSelectColumn(dataIndex)
+                            if (isValidatable) {
+                              handleColumnClick(dataIndex, col)
+                            }
+                          }}
                         >
                           <div className="excel-refiner__th-content">
                             {lastClickedColumn === dataIndex && (
@@ -3157,9 +3232,31 @@ export function ExcelRefiner() {
             : focusedRow !== null
               ? `${currentSheet.data.length}행 | ${getExcelRowNumber(focusedRow)}행`
               : `${currentSheet.data.length}행`}
+          {selectedColumn !== null && currentSheet.columns[selectedColumn] && (
+            <> | 컬럼: {currentSheet.columns[selectedColumn]}</>
+          )}
         </span>
-        {/* 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
-        {currentSheet && (
+        {/* 컬럼 삭제 UI */}
+        {selectedColumn !== null && currentSheet.columns[selectedColumn] && (
+          <div className="excel-refiner__footer-actions">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteColumn}
+            >
+              컬럼 삭제
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedColumn(null)}
+            >
+              선택 해제
+            </Button>
+          </div>
+        )}
+        {/* 행 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
+        {currentSheet && selectedColumn === null && (
           <div className="excel-refiner__footer-actions">
             <Tooltip key={isDeleteMode ? 'delete-done' : 'delete-select'} content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
               <button

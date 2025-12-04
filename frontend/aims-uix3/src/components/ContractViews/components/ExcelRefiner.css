@@ -1030,6 +1030,23 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
   cursor: default;
 }
 
+/* 선택된 컬럼 헤더 (파란색 테두리) - 특이성 강화 */
+.excel-refiner__table .excel-refiner__th.excel-refiner__th--selected {
+  outline: 3px solid var(--color-primary-500);
+  outline-offset: -3px;
+  background: var(--color-primary-100);
+}
+
+html[data-theme="dark"] .excel-refiner__table .excel-refiner__th.excel-refiner__th--selected {
+  background: var(--color-primary-800);
+  outline-color: var(--color-primary-400);
+}
+
+/* 규격 외 컬럼도 선택 가능하도록 커서 추가 */
+.excel-refiner__th--extra {
+  cursor: pointer;
+}
+
 /* 누락된 컬럼 헤더 (빨간색) - 특이성 강화로 우선순위 확보 */
 .excel-refiner__table .excel-refiner__th.excel-refiner__th--missing {
   background: var(--color-error-50);
