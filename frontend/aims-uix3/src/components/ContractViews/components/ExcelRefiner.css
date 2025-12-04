@@ -971,7 +971,7 @@ html[data-theme="dark"] .excel-refiner__sheet-tab--extra.excel-refiner__sheet-ta
 }
 
 .excel-refiner__table-container--error .excel-refiner__table {
-  border-color: var(--color-error-500);
+  border-color: var(--color-success-500); /* 테이블 전체는 초록색, 문제 컬럼만 빨간색 */
 }
 
 /* 추가 시트 (표준 규격 외) - 중립적 회색 테두리 */
