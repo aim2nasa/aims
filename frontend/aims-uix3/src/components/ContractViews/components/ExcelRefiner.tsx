@@ -2012,6 +2012,51 @@ export function ExcelRefiner() {
           계약: { total: 0, success: 0 }
         })
 
+        // 상세 결과 저장 (결과 상세 모달용) - 고객 시트만 처리한 경우
+        const customerMap = new Map(customers.map(c => [c.name, c]))
+        const 개인Created = (result.created || [])
+          .map(c => customerMap.get(c.name))
+          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
+          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
+        const 개인Updated = (result.updated || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+          .map(c => {
+            const input = customerMap.get(c.name)
+            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
+          })
+        const 개인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
+        const 개인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
+
+        const 법인Created = (result.created || [])
+          .map(c => customerMap.get(c.name))
+          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
+          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
+        const 법인Updated = (result.updated || [])
+          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+          .map(c => {
+            const input = customerMap.get(c.name)
+            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
+          })
+        const 법인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+        const 법인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+
+        // 데이터가 있는 탭을 기본 선택
+        const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
+        const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+        let defaultTab: '개인고객' | '법인고객' | '계약' = '개인고객'
+        if (개인Total > 0) defaultTab = '개인고객'
+        else if (법인Total > 0) defaultTab = '법인고객'
+
+        setImportResultDetail({
+          isOpen: false,
+          summary: statusText,
+          activeTab: defaultTab,
+          hideSkipped: true,
+          개인고객: { created: 개인Created, updated: 개인Updated, skipped: 개인Skipped, errors: 개인Errors },
+          법인고객: { created: 법인Created, updated: 법인Updated, skipped: 법인Skipped, errors: 법인Errors },
+          계약: { created: [], updated: [], skipped: [], errors: [] }
+        })
+
         // 완료 이벤트
         window.dispatchEvent(new CustomEvent('customerChanged'))
 
@@ -2032,6 +2077,59 @@ export function ExcelRefiner() {
               법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (법인고객Count / customers.length)) : 0 },
               계약: { total: 0, success: 0 }
             })
+
+            // 상세 결과 저장 (결과 상세 모달용) - 계약 시트 없이 고객만 처리한 경우
+            const customerMap = new Map(customers.map(c => [c.name, c]))
+            const 개인Created = (result.created || [])
+              .map(c => customerMap.get(c.name))
+              .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
+              .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
+            const 개인Updated = (result.updated || [])
+              .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+              .map(c => {
+                const input = customerMap.get(c.name)
+                return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
+              })
+            const 개인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
+            const 개인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
+
+            const 법인Created = (result.created || [])
+              .map(c => customerMap.get(c.name))
+              .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
+              .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
+            const 법인Updated = (result.updated || [])
+              .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+              .map(c => {
+                const input = customerMap.get(c.name)
+                return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
+              })
+            const 법인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+            const 법인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+
+            // 데이터가 있는 탭을 기본 선택
+            const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
+            const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+            let defaultTab: '개인고객' | '법인고객' | '계약' = '개인고객'
+            if (개인Total > 0) defaultTab = '개인고객'
+            else if (법인Total > 0) defaultTab = '법인고객'
+
+            // 상태 텍스트
+            const hasSuccess = result.createdCount > 0 || result.updatedCount > 0
+            const hasFailure = result.skippedCount > 0 || result.errorCount > 0
+            let statusText = '일괄등록 완료'
+            if (hasSuccess && hasFailure) statusText = '일괄등록 일부 완료'
+            else if (!hasSuccess) statusText = '일괄등록 실패'
+
+            setImportResultDetail({
+              isOpen: false,
+              summary: statusText,
+              activeTab: defaultTab,
+              hideSkipped: true,
+              개인고객: { created: 개인Created, updated: 개인Updated, skipped: 개인Skipped, errors: 개인Errors },
+              법인고객: { created: 법인Created, updated: 법인Updated, skipped: 법인Skipped, errors: 법인Errors },
+              계약: { created: [], updated: [], skipped: [], errors: [] }
+            })
+
             window.dispatchEvent(new CustomEvent('customerChanged'))
           }
           return
@@ -2277,13 +2375,17 @@ export function ExcelRefiner() {
           reason: e.reason || '등록 오류'
         }))
 
-        // 변경이 있는 탭을 자동 선택 (created나 updated가 있는 첫 번째 탭)
+        // 데이터가 있는 탭을 자동 선택 (created, updated, skipped, errors 중 하나라도 있는 첫 번째 탭)
+        const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
+        const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+        const 계약Total = 계약Created.length + 계약Updated.length + 계약Skipped.length + 계약Errors.length
+
         let defaultActiveTab: '개인고객' | '법인고객' | '계약' = '개인고객'
-        if (개인Created.length > 0 || 개인Updated.length > 0) {
+        if (개인Total > 0) {
           defaultActiveTab = '개인고객'
-        } else if (법인Created.length > 0 || 법인Updated.length > 0) {
+        } else if (법인Total > 0) {
           defaultActiveTab = '법인고객'
-        } else if (계약Created.length > 0 || 계약Updated.length > 0) {
+        } else if (계약Total > 0) {
           defaultActiveTab = '계약'
         }
 
@@ -3693,14 +3795,18 @@ export function ExcelRefiner() {
             </span>
           </div>
 
-          {/* 탭 네비게이션 */}
+          {/* 탭 네비게이션 - 데이터가 있는 탭만 표시 */}
           <div className="excel-refiner__result-tabs-wrapper">
             <div className="excel-refiner__result-tabs">
-              {(['개인고객', '법인고객', '계약'] as const).map(tab => {
-                const totalCount = tab === '계약'
-                  ? importResultDetail.계약.created.length + importResultDetail.계약.updated.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
-                  : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
-                return (
+              {(['개인고객', '법인고객', '계약'] as const)
+                .map(tab => {
+                  const totalCount = tab === '계약'
+                    ? importResultDetail.계약.created.length + importResultDetail.계약.updated.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
+                    : importResultDetail[tab].created.length + importResultDetail[tab].updated.length + importResultDetail[tab].skipped.length + importResultDetail[tab].errors.length
+                  return { tab, totalCount }
+                })
+                .filter(({ totalCount }) => totalCount > 0)
+                .map(({ tab, totalCount }) => (
                   <button
                     key={tab}
                     type="button"
@@ -3728,8 +3834,7 @@ export function ExcelRefiner() {
                     {tab}
                     <span className="excel-refiner__result-tab-count">{totalCount}</span>
                   </button>
-                )
-              })}
+                ))}
             </div>
             <label className="excel-refiner__result-filter">
               <input
