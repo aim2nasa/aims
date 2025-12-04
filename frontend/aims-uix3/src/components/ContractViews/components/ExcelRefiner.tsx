@@ -60,8 +60,9 @@ interface PersistedState {
   fileName: string | null
   sheets: SheetData[]
   activeSheetIndex: number
-  validatingColumns: number[]
-  validatedColumnsHistory: number[]
+  // 시트별 검증 컬럼 (Map<sheetName, colIndices[]> → 배열로 직렬화)
+  validatingColumnsBySheet: Array<[string, number[]]>
+  validatedColumnsHistoryBySheet: Array<[string, number[]]>
   // 시트별 검증 상태 (Map → 배열로 직렬화)
   sheetValidationStatus: Array<[string, SheetValidationStatus]>
   sheetIssueCount: Array<[string, number]>
@@ -123,14 +124,14 @@ export function ExcelRefiner() {
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false)
 
-  // 검증 대상 컬럼 (사용자가 클릭한 컬럼)
-  const [validatingColumns, setValidatingColumns] = useState<Set<number>>(new Set())
+  // 시트별 검증 대상 컬럼 (Map<sheetName, Set<colIndex>>)
+  const [validatingColumnsBySheet, setValidatingColumnsBySheet] = useState<Map<string, Set<number>>>(new Map())
 
   // 검증 진행 중인 컬럼 (클릭 직후 ~ 검증 완료 전)
   const [validatingInProgress, setValidatingInProgress] = useState<Set<number>>(new Set())
 
-  // 검증 완료 이력 (컬럼별 클릭 시에도 누적됨, 4개 필수 컬럼 완료 추적용)
-  const [validatedColumnsHistory, setValidatedColumnsHistory] = useState<Set<number>>(new Set())
+  // 시트별 검증 완료 이력 (Map<sheetName, Set<colIndex>>)
+  const [validatedColumnsHistoryBySheet, setValidatedColumnsHistoryBySheet] = useState<Map<string, Set<number>>>(new Map())
 
   // 정렬 상태
   const [sortColumn, setSortColumn] = useState<number | null>(null)
@@ -295,8 +296,21 @@ export function ExcelRefiner() {
       setFileName(saved.fileName)
       setSheets(saved.sheets)
       setActiveSheetIndex(saved.activeSheetIndex)
-      setValidatingColumns(new Set(saved.validatingColumns))
-      setValidatedColumnsHistory(new Set(saved.validatedColumnsHistory))
+      // 시트별 검증 컬럼 복원 (Array<[string, number[]]> → Map<string, Set<number>>)
+      if (saved.validatingColumnsBySheet) {
+        const map = new Map<string, Set<number>>()
+        for (const [sheetName, cols] of saved.validatingColumnsBySheet) {
+          map.set(sheetName, new Set(cols))
+        }
+        setValidatingColumnsBySheet(map)
+      }
+      if (saved.validatedColumnsHistoryBySheet) {
+        const map = new Map<string, Set<number>>()
+        for (const [sheetName, cols] of saved.validatedColumnsHistoryBySheet) {
+          map.set(sheetName, new Set(cols))
+        }
+        setValidatedColumnsHistoryBySheet(map)
+      }
       // 시트별 검증 상태 복원
       if (saved.sheetValidationStatus) {
         setSheetValidationStatus(new Map(saved.sheetValidationStatus))
@@ -323,20 +337,63 @@ export function ExcelRefiner() {
       return
     }
 
+    // Map<string, Set<number>> → Array<[string, number[]]>로 직렬화
+    const validatingBySheetArr: Array<[string, number[]]> = []
+    validatingColumnsBySheet.forEach((cols, sheetName) => {
+      validatingBySheetArr.push([sheetName, Array.from(cols)])
+    })
+    const validatedHistoryBySheetArr: Array<[string, number[]]> = []
+    validatedColumnsHistoryBySheet.forEach((cols, sheetName) => {
+      validatedHistoryBySheetArr.push([sheetName, Array.from(cols)])
+    })
+
     savePersistedState({
       fileName,
       sheets,
       activeSheetIndex,
-      validatingColumns: Array.from(validatingColumns),
-      validatedColumnsHistory: Array.from(validatedColumnsHistory),
+      validatingColumnsBySheet: validatingBySheetArr,
+      validatedColumnsHistoryBySheet: validatedHistoryBySheetArr,
       sheetValidationStatus: Array.from(sheetValidationStatus.entries()),
       sheetIssueCount: Array.from(sheetIssueCount.entries()),
       importResult
     })
-  }, [fileName, sheets, activeSheetIndex, validatingColumns, validatedColumnsHistory, sheetValidationStatus, sheetIssueCount, importResult])
+  }, [fileName, sheets, activeSheetIndex, validatingColumnsBySheet, validatedColumnsHistoryBySheet, sheetValidationStatus, sheetIssueCount, importResult])
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
+
+  // 현재 시트의 검증 컬럼 (파생 상태)
+  const validatingColumns = useMemo(() => {
+    const sheetName = currentSheet?.name
+    if (!sheetName) return new Set<number>()
+    return validatingColumnsBySheet.get(sheetName) || new Set<number>()
+  }, [validatingColumnsBySheet, currentSheet?.name])
+
+  // 현재 시트의 검증 이력 (파생 상태)
+  const validatedColumnsHistory = useMemo(() => {
+    const sheetName = currentSheet?.name
+    if (!sheetName) return new Set<number>()
+    return validatedColumnsHistoryBySheet.get(sheetName) || new Set<number>()
+  }, [validatedColumnsHistoryBySheet, currentSheet?.name])
+
+  // 시트별 검증 컬럼 업데이트 헬퍼
+  const updateValidatingColumns = useCallback((sheetName: string, updater: (prev: Set<number>) => Set<number>) => {
+    setValidatingColumnsBySheet(prev => {
+      const next = new Map(prev)
+      const existing = prev.get(sheetName) || new Set()
+      next.set(sheetName, updater(existing))
+      return next
+    })
+  }, [])
+
+  const updateValidatedHistory = useCallback((sheetName: string, updater: (prev: Set<number>) => Set<number>) => {
+    setValidatedColumnsHistoryBySheet(prev => {
+      const next = new Map(prev)
+      const existing = prev.get(sheetName) || new Set()
+      next.set(sheetName, updater(existing))
+      return next
+    })
+  }, [])
 
   // 컬럼별 검증 결과 계산
   const columnValidationResults = useMemo(() => {
@@ -463,9 +520,9 @@ export function ExcelRefiner() {
       setFileName(file.name)
       setActiveSheetIndex(0)
       setSelectedRows(new Set())
-      setValidatingColumns(new Set())
+      setValidatingColumnsBySheet(new Map())
       setValidatingInProgress(new Set())
-      setValidatedColumnsHistory(new Set())
+      setValidatedColumnsHistoryBySheet(new Map())
       // 상품명 검증 상태 초기화
       setProductMatchResult(null)
       setProductNameColumnIndex(null)
@@ -527,9 +584,9 @@ export function ExcelRefiner() {
     setSheets([])
     setActiveSheetIndex(0)
     setSelectedRows(new Set())
-    setValidatingColumns(new Set())
+    setValidatingColumnsBySheet(new Map())
     setValidatingInProgress(new Set())
-    setValidatedColumnsHistory(new Set())
+    setValidatedColumnsHistoryBySheet(new Map())
     setSortColumn(null)
     setSortDirection('asc')
     setProductMatchResult(null)
@@ -552,12 +609,11 @@ export function ExcelRefiner() {
     clearPersistedState()
   }, [])
 
-  // 시트 탭 변경
+  // 시트 탭 변경 (시트별 검증 상태는 유지)
   const handleSheetChange = useCallback((index: number) => {
     setActiveSheetIndex(index)
     setSelectedRows(new Set())
-    setValidatingColumns(new Set())
-    setValidatedColumnsHistory(new Set())
+    // 시트별 검증 상태는 Map에 유지되므로 초기화하지 않음
     setSortColumn(null)
     setSortDirection('asc')
   }, [])
@@ -577,17 +633,19 @@ export function ExcelRefiner() {
   // 컬럼 헤더 클릭 - 검증 활성화 (항상 하나의 컬럼만 검증 상태 유지)
   const handleColumnClick = useCallback(async (colIndex: number, columnName: string) => {
     // 검증 로직이 정의된 컬럼만 클릭 가능
-    if (!columnName) return
+    if (!columnName || !currentSheet) return
     const type = getValidationType(columnName)
     if (type === 'default') return
+
+    const sheetName = currentSheet.name
 
     // 마지막으로 클릭된 컬럼 표시
     setLastClickedColumn(colIndex)
     // 범례 필터 초기화 (컬럼 클릭이 우선)
     setProductStatusFilter(null)
 
-    // 검증 초기화 (항상 하나의 컬럼만 검증 상태 유지)
-    setValidatingColumns(new Set())
+    // 검증 초기화 (현재 시트만 - 항상 하나의 컬럼만 검증 상태 유지)
+    updateValidatingColumns(sheetName, () => new Set())
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
 
@@ -599,7 +657,7 @@ export function ExcelRefiner() {
     })
 
     // 상품명 검증은 비동기로 처리
-    if (type === 'productName' && currentSheet) {
+    if (type === 'productName') {
       try {
         const result = await validateProductNames(currentSheet.data, colIndex)
         setProductMatchResult(result)
@@ -638,14 +696,14 @@ export function ExcelRefiner() {
           })
         }
 
-        // 검증 컬럼에 추가 (현재 활성 상태)
-        setValidatingColumns(prev => {
+        // 검증 컬럼에 추가 (현재 시트)
+        updateValidatingColumns(sheetName, prev => {
           const next = new Set(prev)
           next.add(colIndex)
           return next
         })
-        // 검증 완료 이력에 추가 (누적)
-        setValidatedColumnsHistory(prev => {
+        // 검증 완료 이력에 추가 (현재 시트, 누적)
+        updateValidatedHistory(sheetName, prev => {
           const next = new Set(prev)
           next.add(colIndex)
           return next
@@ -669,13 +727,13 @@ export function ExcelRefiner() {
 
     // 일반 검증 (동기)
     setTimeout(() => {
-      setValidatingColumns(prev => {
+      updateValidatingColumns(sheetName, prev => {
         const next = new Set(prev)
         next.add(colIndex)
         return next
       })
-      // 검증 완료 이력에 추가 (누적)
-      setValidatedColumnsHistory(prev => {
+      // 검증 완료 이력에 추가 (현재 시트, 누적)
+      updateValidatedHistory(sheetName, prev => {
         const next = new Set(prev)
         next.add(colIndex)
         return next
@@ -687,7 +745,7 @@ export function ExcelRefiner() {
         return next
       })
     }, 100)
-  }, [validatingColumns, currentSheet, activeSheetIndex])
+  }, [currentSheet, activeSheetIndex, updateValidatingColumns, updateValidatedHistory, showAlert])
 
   // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
   const handleValidateAllRequired = useCallback(async () => {
@@ -816,15 +874,15 @@ export function ExcelRefiner() {
         results.push({ label, hasIssues: issueCount > 0, issueCount })
       }
 
-      // 검증 완료 - 컬럼 추가
-      setValidatingColumns(prev => {
+      // 검증 완료 - 컬럼 추가 (현재 시트)
+      updateValidatingColumns(currentSheet.name, prev => {
         const next = new Set(prev)
         next.add(colIndex)
         return next
       })
 
-      // 검증 완료 이력에 추가 (누적)
-      setValidatedColumnsHistory(prev => {
+      // 검증 완료 이력에 추가 (현재 시트, 누적)
+      updateValidatedHistory(currentSheet.name, prev => {
         const next = new Set(prev)
         next.add(colIndex)
         return next
@@ -871,8 +929,8 @@ export function ExcelRefiner() {
     // 기존 상태 초기화
     setSheetValidationStatus(new Map())
     setSheetIssueCount(new Map())
-    setValidatingColumns(new Set())
-    setValidatedColumnsHistory(new Set())
+    setValidatingColumnsBySheet(new Map())
+    setValidatedColumnsHistoryBySheet(new Map())
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
     setProductStatusFilter(null)
@@ -965,9 +1023,9 @@ export function ExcelRefiner() {
               totalIssues += result.unmatched.length
             }
 
-            // 검증 완료 컬럼 추가
-            setValidatingColumns(prev => new Set([...prev, colIndex]))
-            setValidatedColumnsHistory(prev => new Set([...prev, colIndex]))
+            // 검증 완료 컬럼 추가 (해당 시트)
+            updateValidatingColumns(sheetName, prev => new Set([...prev, colIndex]))
+            updateValidatedHistory(sheetName, prev => new Set([...prev, colIndex]))
           } catch (error) {
             console.error('상품명 검증 오류:', error)
             issueDetails.push(`${label} 검증 오류`)
@@ -988,9 +1046,9 @@ export function ExcelRefiner() {
             totalIssues += duplicates
           }
 
-          // 검증 완료 컬럼 추가
-          setValidatingColumns(prev => new Set([...prev, colIndex]))
-          setValidatedColumnsHistory(prev => new Set([...prev, colIndex]))
+          // 검증 완료 컬럼 추가 (해당 시트)
+          updateValidatingColumns(sheetName, prev => new Set([...prev, colIndex]))
+          updateValidatedHistory(sheetName, prev => new Set([...prev, colIndex]))
         }
       }
 
