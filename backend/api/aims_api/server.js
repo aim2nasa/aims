@@ -2147,15 +2147,31 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
           const changes = [];
           const updateFields = {};
 
+          // MongoDB 제약: 부모 필드가 null이면 중첩 필드 설정 불가
+          // 부모 필드가 null인 경우 전체 객체로 설정해야 함
+          const hasPersonalInfo = existingCustomer.personal_info !== null && existingCustomer.personal_info !== undefined;
+          const hasInsuranceInfo = existingCustomer.insurance_info !== null && existingCustomer.insurance_info !== undefined;
+          const hasMeta = existingCustomer.meta !== null && existingCustomer.meta !== undefined;
+
           // 연락처 비교/업데이트
           if (customer.mobile_phone && customer.mobile_phone !== existingCustomer.personal_info?.mobile_phone) {
-            updateFields['personal_info.mobile_phone'] = customer.mobile_phone;
+            if (hasPersonalInfo) {
+              updateFields['personal_info.mobile_phone'] = customer.mobile_phone;
+            } else {
+              updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, mobile_phone: customer.mobile_phone };
+            }
             changes.push('연락처');
           }
 
           // 주소 비교/업데이트
           if (customer.address && customer.address !== existingCustomer.personal_info?.address?.address1) {
-            updateFields['personal_info.address.address1'] = customer.address;
+            if (!hasPersonalInfo) {
+              updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, address: { address1: customer.address } };
+            } else if (existingCustomer.personal_info?.address === null || existingCustomer.personal_info?.address === undefined) {
+              updateFields['personal_info.address'] = { address1: customer.address };
+            } else {
+              updateFields['personal_info.address.address1'] = customer.address;
+            }
             changes.push('주소');
           }
 
@@ -2164,27 +2180,43 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
             const normalizedGender = customer.gender === '남' || customer.gender === 'M' ? 'M' :
                                      customer.gender === '여' || customer.gender === 'F' ? 'F' : null;
             if (normalizedGender && normalizedGender !== existingCustomer.personal_info?.gender) {
-              updateFields['personal_info.gender'] = normalizedGender;
+              if (hasPersonalInfo) {
+                updateFields['personal_info.gender'] = normalizedGender;
+              } else {
+                updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, gender: normalizedGender };
+              }
               changes.push('성별');
             }
           }
 
           // 생년월일 비교/업데이트 (개인 고객만)
           if (customer.birth_date && customer.birth_date !== existingCustomer.personal_info?.birth_date) {
-            updateFields['personal_info.birth_date'] = customer.birth_date;
+            if (hasPersonalInfo) {
+              updateFields['personal_info.birth_date'] = customer.birth_date;
+            } else {
+              updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, birth_date: customer.birth_date };
+            }
             changes.push('생년월일');
           }
 
           // 고객 유형 비교/업데이트
           if (customer.customer_type && customer.customer_type !== existingCustomer.insurance_info?.customer_type) {
-            updateFields['insurance_info.customer_type'] = customer.customer_type;
+            if (hasInsuranceInfo) {
+              updateFields['insurance_info.customer_type'] = customer.customer_type;
+            } else {
+              updateFields['insurance_info'] = { customer_type: customer.customer_type };
+            }
             changes.push('고객유형');
           }
 
           if (changes.length > 0) {
             // 변경사항 있음 - 업데이트
-            updateFields['meta.updated_at'] = now;
-            updateFields['meta.last_modified_by'] = userId;
+            if (hasMeta) {
+              updateFields['meta.updated_at'] = now;
+              updateFields['meta.last_modified_by'] = userId;
+            } else {
+              updateFields['meta'] = { updated_at: now, last_modified_by: userId };
+            }
 
             await db.collection(CUSTOMERS_COLLECTION).updateOne(
               { _id: existingCustomer._id },
@@ -4893,7 +4925,12 @@ app.post('/api/contracts/bulk', async (req, res) => {
 
           if (changes.length > 0) {
             // 변경사항 있음 - 업데이트
-            updateFields['meta.updated_at'] = now;
+            // MongoDB 제약: meta가 null이면 중첩 필드 설정 불가
+            if (existingContract.meta !== null && existingContract.meta !== undefined) {
+              updateFields['meta.updated_at'] = now;
+            } else {
+              updateFields['meta'] = { updated_at: now };
+            }
 
             await db.collection(CONTRACTS_COLLECTION).updateOne(
               { _id: existingContract._id },
