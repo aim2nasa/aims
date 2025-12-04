@@ -373,8 +373,8 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
 }
 
 .excel-refiner__compliance-badge--error {
-  background: var(--color-error-50);
-  color: var(--color-error-600);
+  background: transparent;
+  color: var(--color-error-500);
 }
 
 /* 다크 테마 */
@@ -388,9 +388,9 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   color: var(--color-warning-400);
 }
 
-[data-theme="dark"] .excel-refiner__compliance-badge--error {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-error-400);
+html[data-theme="dark"] .excel-refiner__compliance-badge--error {
+  background: transparent;
+  color: #f87171;
 }
 
 /* 규격 위반 사유 메시지 */
@@ -402,8 +402,8 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
 }
 
 .excel-refiner__compliance-message--error {
-  background: var(--color-error-50);
-  color: var(--color-error-600);
+  background: transparent;
+  color: var(--color-error-500);
 }
 
 .excel-refiner__compliance-message--warning {
@@ -411,9 +411,9 @@ html[data-theme="dark"] .excel-refiner__format-legend-item--required {
   color: var(--color-warning-700);
 }
 
-[data-theme="dark"] .excel-refiner__compliance-message--error {
-  background: var(--color-error-bg-dark);
-  color: var(--color-error-400);
+html[data-theme="dark"] .excel-refiner__compliance-message--error {
+  background: transparent;
+  color: #f87171;
 }
 
 [data-theme="dark"] .excel-refiner__compliance-message--warning {
