@@ -112,8 +112,11 @@ export function ExcelRefiner() {
   const [sheets, setSheets] = useState<SheetData[]>([])
   const [activeSheetIndex, setActiveSheetIndex] = useState(0)
 
-  // 선택 상태
+  // 선택 상태 (삭제 모드용)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+
+  // 현재 클릭한 행 (일반 모드에서 행 번호 표시용)
+  const [focusedRow, setFocusedRow] = useState<number | null>(null)
 
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false)
@@ -2669,15 +2672,19 @@ export function ExcelRefiner() {
                   {sortedDataWithIndices.map(({ row, originalIndex }) => {
                     const status = getRowValidationStatus(originalIndex)
                     const isSelected = selectedRows.has(originalIndex)
+                    const isFocused = !isDeleteMode && focusedRow === originalIndex
 
                     return (
                       <tr
                         key={originalIndex}
-                        className={`excel-refiner__tr excel-refiner__tr--${status} ${isSelected ? 'excel-refiner__tr--selected' : ''} ${isDeleteMode ? 'excel-refiner__tr--delete-mode' : ''}`}
+                        className={`excel-refiner__tr excel-refiner__tr--${status} ${isSelected ? 'excel-refiner__tr--selected' : ''} ${isFocused ? 'excel-refiner__tr--focused' : ''} ${isDeleteMode ? 'excel-refiner__tr--delete-mode' : ''}`}
                         onClick={() => {
-                          // 삭제 모드일 때만 행 클릭으로 선택
                           if (isDeleteMode) {
+                            // 삭제 모드: 다중 선택
                             handleDeleteSelect(originalIndex)
+                          } else {
+                            // 일반 모드: 현재 행 표시
+                            setFocusedRow(originalIndex)
                           }
                         }}
                       >
@@ -2803,7 +2810,11 @@ export function ExcelRefiner() {
       <footer className="excel-refiner__footer">
         <span>
           {currentSheet
-            ? `${currentSheet.data.length}행 | 선택: ${selectedRows.size}행`
+            ? isDeleteMode
+              ? `${currentSheet.data.length}행 | 선택: ${selectedRows.size}행`
+              : focusedRow !== null
+                ? `${currentSheet.data.length}행 | ${getExcelRowNumber(focusedRow)}행`
+                : `${currentSheet.data.length}행`
             : '파일을 드래그하여 시작하세요'}
         </span>
         {/* 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}

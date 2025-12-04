@@ -1173,6 +1173,27 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   background: var(--color-product-unmatched-selected);
 }
 
+/* 포커스 상태 (일반 모드에서 클릭한 행) */
+.excel-refiner__tr--focused {
+  background: var(--color-primary-50);
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: -2px;
+}
+
+.excel-refiner__tr--focused:hover {
+  background: var(--color-primary-100);
+}
+
+/* 다크 테마에서 포커스 행 */
+[data-theme="dark"] .excel-refiner__tr--focused {
+  background: rgba(59, 130, 246, 0.15);
+  outline-color: var(--color-primary-500);
+}
+
+[data-theme="dark"] .excel-refiner__tr--focused:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
 .excel-refiner__td--validation {
   font-weight: 600;
 }
