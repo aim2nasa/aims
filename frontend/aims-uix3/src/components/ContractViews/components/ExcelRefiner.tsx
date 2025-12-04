@@ -72,6 +72,10 @@ interface PersistedState {
     법인고객: { total: number; success: number }
     계약: { total: number; success: number }
   } | null
+  // 포맷 준수 검사 결과
+  formatCompliance: FormatComplianceResult | null
+  // 액션 로그
+  actionLog: string | null
 }
 
 // sessionStorage에서 상태 로드
@@ -321,6 +325,14 @@ export function ExcelRefiner() {
       if (saved.importResult) {
         setImportResult(saved.importResult)
       }
+      // 포맷 준수 검사 결과 복원
+      if (saved.formatCompliance) {
+        setFormatCompliance(saved.formatCompliance)
+      }
+      // 액션 로그 복원
+      if (saved.actionLog) {
+        setActionLog(saved.actionLog)
+      }
       // productMatchResult는 Map을 포함하므로 저장/복원 불가 → 검증 다시 실행 필요
     }
     isInitialized.current = true
@@ -355,9 +367,11 @@ export function ExcelRefiner() {
       validatedColumnsHistoryBySheet: validatedHistoryBySheetArr,
       sheetValidationStatus: Array.from(sheetValidationStatus.entries()),
       sheetIssueCount: Array.from(sheetIssueCount.entries()),
-      importResult
+      importResult,
+      formatCompliance,
+      actionLog
     })
-  }, [fileName, sheets, activeSheetIndex, validatingColumnsBySheet, validatedColumnsHistoryBySheet, sheetValidationStatus, sheetIssueCount, importResult])
+  }, [fileName, sheets, activeSheetIndex, validatingColumnsBySheet, validatedColumnsHistoryBySheet, sheetValidationStatus, sheetIssueCount, importResult, formatCompliance, actionLog])
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
