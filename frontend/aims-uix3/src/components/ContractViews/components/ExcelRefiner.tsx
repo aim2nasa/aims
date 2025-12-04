@@ -43,6 +43,9 @@ import './ExcelRefiner.css'
 // 우측 정렬이 필요한 컬럼명 패턴
 const RIGHT_ALIGN_PATTERNS = ['증권번호', '보험료', '이체일', '납입주기', '납입기간', '납입상태', '연락처', '계약일', '피보험자']
 
+// 엑셀 표준 규격 버전 (EXCEL_IMPORT_SPECIFICATION.md 참조)
+const EXCEL_SPEC_VERSION = 'v0.2'
+
 // 시트별 검증 상태 타입
 type SheetValidationStatus = 'pending' | 'validating' | 'valid' | 'invalid'
 
@@ -2538,9 +2541,9 @@ export function ExcelRefiner() {
                 {/* 포맷 준수 배지 */}
                 {formatCompliance && (
                   <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
-                    {formatCompliance.status === 'compliant' && '✓ 엑셀표준규격준수'}
-                    {formatCompliance.status === 'warning' && '⚠ 엑셀표준규격준수'}
-                    {formatCompliance.status === 'error' && '✕ 엑셀표준규격준수'}
+                    {formatCompliance.status === 'compliant' && `✓ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                    {formatCompliance.status === 'warning' && `⚠ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                    {formatCompliance.status === 'error' && `✕ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
                   </span>
                 )}
               </div>
