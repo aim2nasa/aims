@@ -2973,7 +2973,7 @@ export function ExcelRefiner() {
         {/* 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
         {currentSheet && (
           <div className="excel-refiner__footer-actions">
-            <Tooltip content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
+            <Tooltip key={isDeleteMode ? 'delete-done' : 'delete-select'} content={isDeleteMode ? '삭제 완료' : '행 선택 삭제'}>
               <button
                 type="button"
                 className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
