@@ -2973,16 +2973,15 @@ export function ExcelRefiner() {
         )}
       </div>
 
-      {/* 상태바 */}
+      {/* 상태바 - 파일 로드 후에만 표시 */}
+      {currentSheet && (
       <footer className="excel-refiner__footer">
         <span>
-          {currentSheet
-            ? isDeleteMode
-              ? `${currentSheet.data.length}행 | 선택: ${selectedRows.size}행`
-              : focusedRow !== null
-                ? `${currentSheet.data.length}행 | ${getExcelRowNumber(focusedRow)}행`
-                : `${currentSheet.data.length}행`
-            : '파일을 드래그하여 시작하세요'}
+          {isDeleteMode
+            ? `${currentSheet.data.length}행 | 선택: ${selectedRows.size}행`
+            : focusedRow !== null
+              ? `${currentSheet.data.length}행 | ${getExcelRowNumber(focusedRow)}행`
+              : `${currentSheet.data.length}행`}
         </span>
         {/* 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
         {currentSheet && (
@@ -3032,6 +3031,7 @@ export function ExcelRefiner() {
           </div>
         )}
       </footer>
+      )}
 
       {/* 상품 검색 모달 */}
       <ProductSearchModal
