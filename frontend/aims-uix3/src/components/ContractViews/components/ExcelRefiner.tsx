@@ -2603,9 +2603,9 @@ export function ExcelRefiner() {
                 {formatCompliance && (
                   <>
                     <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
-                      {formatCompliance.status === 'compliant' && `✓ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
-                      {formatCompliance.status === 'warning' && `⚠ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
-                      {formatCompliance.status === 'error' && `✕ 엑셀표준규격준수(${EXCEL_SPEC_VERSION})`}
+                      {formatCompliance.status === 'compliant' && `✓ 엑셀 표준규격 준수(${EXCEL_SPEC_VERSION})`}
+                      {formatCompliance.status === 'warning' && `⚠ 엑셀 표준규격 준수(${EXCEL_SPEC_VERSION})`}
+                      {formatCompliance.status === 'error' && `✕ 엑셀 표준규격 준수(${EXCEL_SPEC_VERSION})`}
                     </span>
                     {formatCompliance.status !== 'compliant' && formatCompliance.message && (
                       <span className={`excel-refiner__compliance-message excel-refiner__compliance-message--${formatCompliance.status}`}>
@@ -2702,29 +2702,32 @@ export function ExcelRefiner() {
             {/* 행2: 액션바 - 검증버튼 + 상태 + 삭제모드 + 범례 */}
             <div className="excel-refiner__action-bar">
               <div className="excel-refiner__action-bar-left">
-                {/* 검증 버튼 */}
-                <Tooltip content="개인고객 → 법인고객 → 계약 순으로 검증합니다">
-                  <Button
-                    variant={sheetValidationStatus.size > 0 ? "secondary" : "primary"}
-                    size="sm"
-                    onClick={handleValidateAllSheets}
-                    disabled={isValidatingAll || isImporting}
-                  >
-                    {isValidatingAll ? '검증 중...' : '검증'}
-                  </Button>
-                </Tooltip>
+                {/* 검증/일괄등록 버튼: 규격 준수 시에만 표시 */}
+                {formatCompliance?.status !== 'error' && (
+                  <>
+                    {/* 검증 버튼 */}
+                    <Tooltip content="개인고객 → 법인고객 → 계약 순으로 검증합니다">
+                      <Button
+                        variant={sheetValidationStatus.size > 0 ? "secondary" : "primary"}
+                        size="sm"
+                        onClick={handleValidateAllSheets}
+                        disabled={isValidatingAll || isImporting}
+                      >
+                        {isValidatingAll ? '검증 중...' : '검증'}
+                      </Button>
+                    </Tooltip>
 
-                {/* 일괄등록 버튼 */}
-                {wizardStep?.step === 4 ? (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleImportContracts}
-                    disabled={isImporting || formatCompliance?.status === 'error'}
-                  >
-                    {isImporting ? '등록 중...' : '일괄등록'}
-                  </Button>
-                ) : wizardStep?.step === 3 ? (
+                    {/* 일괄등록 버튼 */}
+                    {wizardStep?.step === 4 ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleImportContracts}
+                        disabled={isImporting}
+                      >
+                        {isImporting ? '등록 중...' : '일괄등록'}
+                      </Button>
+                    ) : wizardStep?.step === 3 ? (
                   // pending 상태가 아닌 경우에만 수정 필요 건수 표시 (pending은 우측 actionLog에서 표시)
                   !Array.from(sheetValidationStatus.values()).some(v => v === 'pending') && (
                     <span className="excel-refiner__status excel-refiner__status--error">
@@ -2736,7 +2739,8 @@ export function ExcelRefiner() {
                     👆 클릭하여 시작
                   </span>
                 ) : null}
-
+                  </>
+                )}
               </div>
 
               <div className="excel-refiner__action-bar-right">
