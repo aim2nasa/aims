@@ -2599,7 +2599,7 @@ export function ExcelRefiner() {
               })()}
 
               <div className="excel-refiner__header-right">
-                <Tooltip content="다운로드">
+                <Tooltip content="엑셀 저장">
                   <button
                     type="button"
                     className="excel-refiner__icon-btn"
@@ -2611,7 +2611,7 @@ export function ExcelRefiner() {
                     </svg>
                   </button>
                 </Tooltip>
-                <Tooltip content="파일 닫기">
+                <Tooltip content="엑셀 닫기">
                   <button
                     type="button"
                     className="excel-refiner__icon-btn excel-refiner__icon-btn--close"
