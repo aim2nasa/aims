@@ -772,7 +772,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     e.stopPropagation();
     const customer = resolvedCustomerMap.get(customerId);
     if (customer) {
-      setSelectedUnassignedCustomer(null); // QuickFamilyAssignPanel 닫기
+      // 빠른 등록 패널 모두 닫기 (상호 배타적)
+      setSelectedUnassignedCustomer(null);
+      setSelectedUnassignedCorporate(null);
       onCustomerSelect?.(customerId, customer);
     }
   }, [resolvedCustomerMap, onCustomerSelect]);
@@ -1038,7 +1040,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               </span>
                               <span
                                 className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
-                                onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCustomer(customer); }}
+                                onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCorporate(null); setSelectedUnassignedCustomer(customer); }}
                               >
                                 {highlightText(customer.personal_info?.name || '이름없음')}
                               </span>
@@ -1241,9 +1243,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 </svg>
                               </span>
                               <span
-                                className="tree-node__label tree-node__label--clickable"
+                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCorporate?._id === customer._id ? "tree-node__label--selected" : ""}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  onCustomerSelect?.(null, undefined);
+                                  setSelectedUnassignedCustomer(null);
                                   setSelectedUnassignedCorporate(customer);
                                 }}
                               >
