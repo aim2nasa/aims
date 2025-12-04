@@ -2737,10 +2737,10 @@ export function ExcelRefiner() {
                             tdClassName += ' excel-refiner__td--validation'
                           }
 
-                          // 상품명 칼럼에만 매칭 상태 색상 적용
+                          // 상품명 칼럼에만 매칭 상태 색상 적용 (계약 시트에서만)
                           let matchedProductId: string | null = null
                           let isUnmatchedProduct = false
-                          if (colIndex === productNameColumnIndex && productMatchResult) {
+                          if (currentSheet?.name === '계약' && colIndex === productNameColumnIndex && productMatchResult) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
                               tdClassName += ` excel-refiner__td--product-${productStatus}`
