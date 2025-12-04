@@ -16,7 +16,11 @@ export type {
   InsuranceProduct,
   ValidationConfig,
   RowStatus,
-  ProductCellStatus
+  ProductCellStatus,
+  FormatComplianceStatus,
+  FormatComplianceResult,
+  SheetComplianceCheck,
+  RequiredColumnCheck
 } from './types/excel'
 
 // Utils
@@ -39,7 +43,8 @@ export {
   getRowStatus,
   getProblematicRows,
   fetchInsuranceProducts,
-  useValidation
+  useValidation,
+  checkFormatCompliance
 } from './hooks/useValidation'
 
 export type { ValidationType } from './hooks/useValidation'

@@ -4,7 +4,16 @@
  */
 
 import { useMemo } from 'react'
-import type { CellValue, ValidationResult, ProductMatchResult, InsuranceProduct } from '../types/excel'
+import type {
+  CellValue,
+  ValidationResult,
+  ProductMatchResult,
+  InsuranceProduct,
+  SheetData,
+  FormatComplianceResult,
+  SheetComplianceCheck,
+  RequiredColumnCheck
+} from '../types/excel'
 import { cellToString } from '../utils/excel'
 
 // 보험상품 API URL (Vite 프록시를 통해 tars.giize.com:3010으로 전달)
@@ -326,5 +335,153 @@ export async function validateProductNames(
     unmatched,
     productNames: productNameMap,
     allProducts
+  }
+}
+
+/**
+ * 시트별 필수 컬럼 정의
+ * EXCEL_IMPORT_SPECIFICATION.md v0.1 기준
+ */
+const SHEET_REQUIREMENTS: Record<string, { required: Array<{ name: string; patterns: string[] }> }> = {
+  '개인고객': {
+    required: [
+      { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
+    ]
+  },
+  '법인고객': {
+    required: [
+      { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
+    ]
+  },
+  '계약': {
+    required: [
+      { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] },
+      { name: '상품명', patterns: ['상품명', '상품', '보험명'] },
+      { name: '계약일', patterns: ['계약일'] },
+      { name: '증권번호', patterns: ['증권번호', 'policy'] }
+    ]
+  }
+}
+
+/**
+ * 컬럼명이 패턴과 일치하는지 검사
+ * @returns 일치하는 컬럼명 또는 null
+ */
+function findMatchingColumn(columns: string[], patterns: string[]): string | null {
+  const lowerPatterns = patterns.map(p => p.toLowerCase())
+
+  for (const col of columns) {
+    const lowerCol = col.toLowerCase()
+    for (const pattern of lowerPatterns) {
+      if (lowerCol.includes(pattern)) {
+        return col
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * 엑셀 파일의 포맷 준수 여부를 검사합니다.
+ * 파일 로드 즉시 호출하여 표준 준수 상태를 확인합니다.
+ *
+ * @param sheets 파싱된 시트 데이터 배열
+ * @returns 포맷 준수 검사 결과
+ */
+export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResult {
+  const sheetMap = new Map<string, SheetData>()
+  sheets.forEach(sheet => sheetMap.set(sheet.name, sheet))
+
+  const sheetChecks: SheetComplianceCheck[] = []
+  let hasError = false
+  let hasWarning = false
+
+  // 각 표준 시트에 대해 검사
+  for (const [sheetName, requirements] of Object.entries(SHEET_REQUIREMENTS)) {
+    const sheet = sheetMap.get(sheetName)
+    const found = !!sheet
+
+    const columnChecks: RequiredColumnCheck[] = []
+
+    if (found && sheet) {
+      // 시트가 존재하면 필수 컬럼 검사
+      for (const req of requirements.required) {
+        const matchedColumn = findMatchingColumn(sheet.columns, req.patterns)
+
+        if (matchedColumn) {
+          // 정확히 일치하는지, 변형된 이름인지 체크
+          const isExactMatch = req.patterns.some(p => p.toLowerCase() === matchedColumn.toLowerCase())
+
+          columnChecks.push({
+            name: req.name,
+            patterns: req.patterns,
+            found: true,
+            foundAs: isExactMatch ? undefined : matchedColumn
+          })
+
+          // 변형된 이름으로 찾은 경우 경고
+          if (!isExactMatch) {
+            hasWarning = true
+          }
+        } else {
+          // 필수 컬럼 누락 → 오류
+          columnChecks.push({
+            name: req.name,
+            patterns: req.patterns,
+            found: false
+          })
+          hasError = true
+        }
+      }
+    }
+
+    const hasAllRequired = found && columnChecks.every(c => c.found)
+
+    sheetChecks.push({
+      name: sheetName,
+      found,
+      requiredColumns: columnChecks,
+      hasAllRequired
+    })
+  }
+
+  // 최소 1개 시트 필요 검사
+  const foundSheets = sheetChecks.filter(s => s.found)
+  if (foundSheets.length === 0) {
+    hasError = true
+  }
+
+  // 상태 결정
+  let status: 'compliant' | 'warning' | 'error'
+  let message: string
+
+  if (hasError) {
+    status = 'error'
+    const missingColumns = sheetChecks
+      .filter(s => s.found && !s.hasAllRequired)
+      .map(s => `${s.name}: ${s.requiredColumns.filter(c => !c.found).map(c => c.name).join(', ')} 누락`)
+
+    if (foundSheets.length === 0) {
+      message = '표준 시트(개인고객, 법인고객, 계약)가 없습니다'
+    } else if (missingColumns.length > 0) {
+      message = missingColumns.join(' | ')
+    } else {
+      message = '필수 컬럼이 누락되었습니다'
+    }
+  } else if (hasWarning) {
+    status = 'warning'
+    const variantColumns = sheetChecks
+      .flatMap(s => s.requiredColumns.filter(c => c.foundAs))
+      .map(c => `${c.name} → ${c.foundAs}`)
+    message = `컬럼명 변형 감지: ${variantColumns.join(', ')}`
+  } else {
+    status = 'compliant'
+    message = '표준 규격 준수'
+  }
+
+  return {
+    status,
+    sheets: sheetChecks,
+    message
   }
 }

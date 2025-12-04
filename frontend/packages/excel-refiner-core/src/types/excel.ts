@@ -47,3 +47,26 @@ export type RowStatus = 'normal' | 'empty' | 'duplicate' | 'selected'
 
 // 상품명 셀 상태 (상품명 칼럼에만 적용)
 export type ProductCellStatus = 'original' | 'modified' | 'unmatched'
+
+// 포맷 준수 검사 결과
+export type FormatComplianceStatus = 'compliant' | 'warning' | 'error'
+
+export interface RequiredColumnCheck {
+  name: string           // 필수 컬럼 이름 (예: '고객명')
+  patterns: string[]     // 인식 패턴 (예: ['고객명', '이름', '성명', '고객'])
+  found: boolean         // 발견 여부
+  foundAs?: string       // 변형된 컬럼명으로 찾은 경우 (예: '계약자이름')
+}
+
+export interface SheetComplianceCheck {
+  name: string                          // 시트명 (예: '개인고객', '법인고객', '계약')
+  found: boolean                        // 시트 존재 여부
+  requiredColumns: RequiredColumnCheck[] // 필수 컬럼 검사 결과
+  hasAllRequired: boolean               // 모든 필수 컬럼 존재 여부
+}
+
+export interface FormatComplianceResult {
+  status: FormatComplianceStatus        // 전체 준수 상태
+  sheets: SheetComplianceCheck[]        // 시트별 검사 결과
+  message: string                       // 요약 메시지
+}

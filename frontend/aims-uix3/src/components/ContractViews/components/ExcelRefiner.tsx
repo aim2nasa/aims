@@ -25,12 +25,14 @@ import {
   getRowStatus,
   getProblematicRows,
   validateProductNames,
+  checkFormatCompliance,
   type SheetData,
   type CellValue,
   type ValidationResult,
   type ProductMatchResult,
   type InsuranceProduct,
-  type ValidationType
+  type ValidationType,
+  type FormatComplianceResult
 } from '@aims/excel-refiner-core'
 import { CustomerService, type BulkCustomerInput } from '@/services/customerService'
 import { ContractService } from '@/services/contractService'
@@ -164,6 +166,9 @@ export function ExcelRefiner() {
   // 계약 가져오기 진행 상태
   const [isImporting, setIsImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; message: string } | null>(null)
+
+  // 포맷 준수 검사 결과 (파일 로드 즉시 표시)
+  const [formatCompliance, setFormatCompliance] = useState<FormatComplianceResult | null>(null)
 
   // 일괄등록 결과 상태 (등록 완료 후 표시용)
   const [importResult, setImportResult] = useState<{
@@ -475,6 +480,10 @@ export function ExcelRefiner() {
       setIsImporting(false)
       setImportProgress(null)
 
+      // 포맷 준수 검사 (파일 로드 즉시)
+      const complianceResult = checkFormatCompliance(parsedSheets)
+      setFormatCompliance(complianceResult)
+
       // 액션 로그 표시
       const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
       setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)
@@ -537,6 +546,8 @@ export function ExcelRefiner() {
     setImportResult(null)
     setIsImporting(false)
     setImportProgress(null)
+    // 포맷 준수 검사 초기화
+    setFormatCompliance(null)
     // sessionStorage 정리
     clearPersistedState()
   }, [])
@@ -2390,6 +2401,16 @@ export function ExcelRefiner() {
             <div className="excel-refiner__header-bar">
               <div className="excel-refiner__header-left">
                 <span className="excel-refiner__filename">{fileName}</span>
+                {/* 포맷 준수 배지 */}
+                {formatCompliance && (
+                  <Tooltip content={formatCompliance.message}>
+                    <span className={`excel-refiner__compliance-badge excel-refiner__compliance-badge--${formatCompliance.status}`}>
+                      {formatCompliance.status === 'compliant' && '✓ 표준'}
+                      {formatCompliance.status === 'warning' && '⚠ 표준'}
+                      {formatCompliance.status === 'error' && '✕ 표준'}
+                    </span>
+                  </Tooltip>
+                )}
               </div>
 
               {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → 계약 → 등록 */}
