@@ -97,6 +97,59 @@
   border-radius: var(--radius-lg);
 }
 
+/* 양식 가이드 헤더 */
+.excel-refiner__format-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.excel-refiner__format-title {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* 양식 가이드 시트 탭 */
+.excel-refiner__format-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border-secondary);
+  padding-bottom: 0;
+}
+
+.excel-refiner__format-tab {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-caption1); /* 12px */
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+  position: relative;
+  margin-bottom: -1px;
+}
+
+.excel-refiner__format-tab:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+}
+
+.excel-refiner__format-tab--active {
+  color: var(--color-success-600);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-bg-primary);
+  border-color: var(--color-border-secondary);
+  border-bottom-color: var(--color-bg-primary);
+}
+
 .excel-refiner__format-guide-header {
   display: flex;
   align-items: center;

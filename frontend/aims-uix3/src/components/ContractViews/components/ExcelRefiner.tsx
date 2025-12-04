@@ -128,6 +128,9 @@ export function ExcelRefiner() {
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false)
 
+  // 양식 가이드 탭 상태
+  const [formatGuideTab, setFormatGuideTab] = useState<'개인고객' | '법인고객' | '계약'>('개인고객')
+
   // 시트별 검증 대상 컬럼 (Map<sheetName, Set<colIndex>>)
   const [validatingColumnsBySheet, setValidatingColumnsBySheet] = useState<Map<string, Set<number>>>(new Map())
 
@@ -2350,71 +2353,156 @@ export function ExcelRefiner() {
             <div className="excel-refiner__dropzone-inner">
               {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 */}
               <div className="excel-refiner__format-guide">
-                <div className="excel-refiner__format-guide-header">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="2" y1="5.5" x2="14" y2="5.5" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="5.5" y1="2" x2="5.5" y2="14" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="9" y1="2" x2="9" y2="14" stroke="currentColor" strokeWidth="1.2"/>
-                  </svg>
-                  <span>계약 엑셀 양식</span>
+                {/* 헤더: 엑셀 예시 + 다운로드 */}
+                <div className="excel-refiner__format-header">
+                  <span className="excel-refiner__format-title">엑셀 예시</span>
                   <Tooltip content="샘플 엑셀 다운로드">
-                  <a
-                    href="/일괄등록_샘플.xlsx"
-                    download="일괄등록_샘플.xlsx"
-                    className="excel-refiner__format-download"
+                    <a
+                      href="/일괄등록_샘플.xlsx"
+                      download="일괄등록_샘플.xlsx"
+                      className="excel-refiner__format-download"
+                      aria-label="샘플 엑셀 다운로드"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M3 12v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </a>
+                  </Tooltip>
+                </div>
+
+                {/* 시트 탭 */}
+                <div className="excel-refiner__format-tabs">
+                  <button
+                    type="button"
+                    className={`excel-refiner__format-tab ${formatGuideTab === '개인고객' ? 'excel-refiner__format-tab--active' : ''}`}
+                    onClick={() => setFormatGuideTab('개인고객')}
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 2v8M8 10L5 7M8 10l3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M3 12v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </a>
-                </Tooltip>
+                    개인고객
+                  </button>
+                  <button
+                    type="button"
+                    className={`excel-refiner__format-tab ${formatGuideTab === '법인고객' ? 'excel-refiner__format-tab--active' : ''}`}
+                    onClick={() => setFormatGuideTab('법인고객')}
+                  >
+                    법인고객
+                  </button>
+                  <button
+                    type="button"
+                    className={`excel-refiner__format-tab ${formatGuideTab === '계약' ? 'excel-refiner__format-tab--active' : ''}`}
+                    onClick={() => setFormatGuideTab('계약')}
+                  >
+                    계약
+                  </button>
                 </div>
-                <div className="excel-refiner__format-table-wrapper">
-                  <table className="excel-refiner__format-table">
-                    <thead>
-                      <tr>
-                        <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
-                        <th className="excel-refiner__format-th excel-refiner__format-th--required">상품명</th>
-                        <th className="excel-refiner__format-th excel-refiner__format-th--required">계약일</th>
-                        <th className="excel-refiner__format-th excel-refiner__format-th--required">증권번호</th>
-                        <th className="excel-refiner__format-th">보험료(원)</th>
-                        <th className="excel-refiner__format-th">이체일</th>
-                        <th className="excel-refiner__format-th">납입주기</th>
-                        <th className="excel-refiner__format-th">납입기간</th>
-                        <th className="excel-refiner__format-th">피보험자</th>
-                        <th className="excel-refiner__format-th">납입상태</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="excel-refiner__format-td">홍길동</td>
-                        <td className="excel-refiner__format-td">무배당프로미라이프</td>
-                        <td className="excel-refiner__format-td">2024-01-15</td>
-                        <td className="excel-refiner__format-td">1234567890</td>
-                        <td className="excel-refiner__format-td excel-refiner__format-td--right">150,000</td>
-                        <td className="excel-refiner__format-td">15일</td>
-                        <td className="excel-refiner__format-td">월납</td>
-                        <td className="excel-refiner__format-td">20년</td>
-                        <td className="excel-refiner__format-td">홍길동</td>
-                        <td className="excel-refiner__format-td">정상</td>
-                      </tr>
-                      <tr>
-                        <td className="excel-refiner__format-td">김철수</td>
-                        <td className="excel-refiner__format-td">The건강한종신보험</td>
-                        <td className="excel-refiner__format-td">2023-06-20</td>
-                        <td className="excel-refiner__format-td">9876543210</td>
-                        <td className="excel-refiner__format-td excel-refiner__format-td--right">200,000</td>
-                        <td className="excel-refiner__format-td">25일</td>
-                        <td className="excel-refiner__format-td">월납</td>
-                        <td className="excel-refiner__format-td">종신</td>
-                        <td className="excel-refiner__format-td">김철수</td>
-                        <td className="excel-refiner__format-td">정상</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+
+                {/* 개인고객 시트 */}
+                {formatGuideTab === '개인고객' && (
+                  <div className="excel-refiner__format-table-wrapper">
+                    <table className="excel-refiner__format-table">
+                      <thead>
+                        <tr>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
+                          <th className="excel-refiner__format-th">이메일</th>
+                          <th className="excel-refiner__format-th">연락처</th>
+                          <th className="excel-refiner__format-th">주소</th>
+                          <th className="excel-refiner__format-th">성별</th>
+                          <th className="excel-refiner__format-th">생년월일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="excel-refiner__format-td">홍길동</td>
+                          <td className="excel-refiner__format-td">hong@gmail.com</td>
+                          <td className="excel-refiner__format-td">010-1234-5678</td>
+                          <td className="excel-refiner__format-td">서울시 강남구 역삼동 123-45</td>
+                          <td className="excel-refiner__format-td">남</td>
+                          <td className="excel-refiner__format-td">1985-03-15</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* 법인고객 시트 */}
+                {formatGuideTab === '법인고객' && (
+                  <div className="excel-refiner__format-table-wrapper">
+                    <table className="excel-refiner__format-table">
+                      <thead>
+                        <tr>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
+                          <th className="excel-refiner__format-th">이메일</th>
+                          <th className="excel-refiner__format-th">연락처</th>
+                          <th className="excel-refiner__format-th">주소</th>
+                          <th className="excel-refiner__format-th">사업자번호</th>
+                          <th className="excel-refiner__format-th">대표자명</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="excel-refiner__format-td">(주)행복산업</td>
+                          <td className="excel-refiner__format-td">info@happyind.co.kr</td>
+                          <td className="excel-refiner__format-td">02-1234-5678</td>
+                          <td className="excel-refiner__format-td">서울시 강남구 테헤란로 123</td>
+                          <td className="excel-refiner__format-td">123-45-67890</td>
+                          <td className="excel-refiner__format-td">김대표</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* 계약 시트 */}
+                {formatGuideTab === '계약' && (
+                  <div className="excel-refiner__format-table-wrapper">
+                    <table className="excel-refiner__format-table">
+                      <thead>
+                        <tr>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">상품명</th>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">계약일</th>
+                          <th className="excel-refiner__format-th excel-refiner__format-th--required">증권번호</th>
+                          <th className="excel-refiner__format-th">보험료(원)</th>
+                          <th className="excel-refiner__format-th">모집/이양</th>
+                          <th className="excel-refiner__format-th">이체일</th>
+                          <th className="excel-refiner__format-th">납입주기</th>
+                          <th className="excel-refiner__format-th">납입기간</th>
+                          <th className="excel-refiner__format-th">피보험자</th>
+                          <th className="excel-refiner__format-th">납입상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="excel-refiner__format-td">홍길동</td>
+                          <td className="excel-refiner__format-td">무배당 마스터플랜 변액유니버셜종신보험</td>
+                          <td className="excel-refiner__format-td">2024-01-15</td>
+                          <td className="excel-refiner__format-td">1234567890</td>
+                          <td className="excel-refiner__format-td excel-refiner__format-td--right">250,000</td>
+                          <td className="excel-refiner__format-td">모집</td>
+                          <td className="excel-refiner__format-td">15일</td>
+                          <td className="excel-refiner__format-td">월납</td>
+                          <td className="excel-refiner__format-td">종신</td>
+                          <td className="excel-refiner__format-td">홍길동</td>
+                          <td className="excel-refiner__format-td">정상</td>
+                        </tr>
+                        <tr>
+                          <td className="excel-refiner__format-td">(주)행복산업</td>
+                          <td className="excel-refiner__format-td">무배당 미리받는 변액종신보험 공감</td>
+                          <td className="excel-refiner__format-td">2023-06-20</td>
+                          <td className="excel-refiner__format-td">9876543210</td>
+                          <td className="excel-refiner__format-td excel-refiner__format-td--right">200,000</td>
+                          <td className="excel-refiner__format-td">모집</td>
+                          <td className="excel-refiner__format-td">25일</td>
+                          <td className="excel-refiner__format-td">월납</td>
+                          <td className="excel-refiner__format-td">종신</td>
+                          <td className="excel-refiner__format-td">김영희</td>
+                          <td className="excel-refiner__format-td">정상</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
                 <div className="excel-refiner__format-legend">
                   <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--required">■ 필수 컬럼</span>
                   <span className="excel-refiner__format-legend-item">□ 선택 컬럼</span>
