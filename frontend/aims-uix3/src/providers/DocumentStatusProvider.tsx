@@ -174,6 +174,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         })
 
         // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
+        // 🔧 깜빡임 방지: 문서 변경 시에만 상태 업데이트
         setDocuments((prevDocs) => {
           const tempDocs = prevDocs.filter((doc) => doc['id']?.startsWith('temp-'))
           const realDocFilenames = documentsWithCustomerRelation.map((doc: Document) =>
@@ -185,6 +186,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           })
 
           const finalDocs = [...documentsWithCustomerRelation, ...uniqueTempDocs]
+
+          // 🔧 변경 감지: ID 목록 비교로 불필요한 리렌더링 방지
+          const prevIds = prevDocs.map(doc => doc._id || doc.id || '').sort().join(',')
+          const newIds = finalDocs.map(doc => doc._id || doc.id || '').sort().join(',')
+
+          // ID가 동일하면 기존 배열 유지 (참조 동일 → 리렌더링 없음)
+          if (prevIds === newIds && prevDocs.length === finalDocs.length) {
+            return prevDocs
+          }
+
           return finalDocs
         })
 
