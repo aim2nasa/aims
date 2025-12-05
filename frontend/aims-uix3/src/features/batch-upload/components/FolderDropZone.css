@@ -99,12 +99,12 @@
 .folder-guide-header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 10px;
 }
 
 .folder-guide-badge {
   padding: 2px 8px;
-  background: var(--color-ios-blue, #007aff);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
   color: white;
   font-size: 10px;
   font-weight: 600;
@@ -123,7 +123,10 @@
 .folder-guide-content {
   display: flex;
   justify-content: center;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-md);
+  background: rgba(0, 122, 255, 0.12);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-xs) 0;
 }
 
 .folder-guide-tree {
@@ -224,6 +227,10 @@
   font-weight: 500;
   border-radius: 8px;
   font-family: var(--font-family-base);
+}
+
+.guide-desc.alt {
+  background: var(--color-ios-orange, #ff9500);
 }
 
 .guide-match {

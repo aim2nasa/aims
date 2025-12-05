@@ -138,7 +138,7 @@ export default function FolderDropZone({
               <div className="guide-node-content">
                 <span className="guide-icon folder">📁</span>
                 <span className="guide-name root">내 고객 문서</span>
-                <span className="guide-desc">← 이 폴더를 드래그</span>
+                <span className="guide-desc">← 상위 폴더를 드래그하거나</span>
               </div>
 
               {/* 홍길동 고객 폴더 */}
@@ -146,6 +146,7 @@ export default function FolderDropZone({
                 <div className="guide-node-content">
                   <span className="guide-icon folder">📁</span>
                   <span className="guide-name customer">홍길동</span>
+                  <span className="guide-desc alt">← 고객 폴더를 직접 선택</span>
                   <span className="guide-match">
                     <span className="guide-arrow">→</span>
                     <span className="guide-customer-badge">👤 홍길동 고객</span>
@@ -215,6 +216,10 @@ export default function FolderDropZone({
         <div className="folder-guide-tips">
           <div className="guide-tip">
             <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION1} weight={SFSymbolWeight.MEDIUM} />
+            <span>상위 폴더 또는 고객 폴더 직접 선택 가능</span>
+          </div>
+          <div className="guide-tip">
+            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION1} weight={SFSymbolWeight.MEDIUM} />
             <span>폴더명 = 고객명이면 자동 매칭</span>
           </div>
           <div className="guide-tip">
@@ -236,7 +241,7 @@ export default function FolderDropZone({
 
         <div className="folder-drop-zone-text">
           <p className="folder-drop-zone-title">
-            {isDragOver ? '여기에 놓으세요' : '위 예시처럼 준비한 폴더를 드래그하세요'}
+            {isDragOver ? '여기에 놓으세요' : '상위 폴더 또는 고객명 폴더를 드래그하세요'}
           </p>
           <p className="folder-drop-zone-description">
             폴더명이 고객명과 일치하면 자동으로 연결됩니다
