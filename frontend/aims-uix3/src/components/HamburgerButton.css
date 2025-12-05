@@ -132,7 +132,7 @@
 .hamburger-container {
   margin-block-start: auto; /* RTL 지원: margin-top → margin-block-start */
   display: flex;
-  padding-block-start: var(--spacing-4); /* RTL 지원: padding-top → padding-block-start */
+  padding-block-start: 0; /* 높이 최소화 - padding 제거 */
   /* 🍎 애플 철학: border 제거 - 공간으로 구분하는 미니멀 접근 */
 }
 

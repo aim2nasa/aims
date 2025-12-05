@@ -768,7 +768,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             width: layoutDimensions.leftPaneWidthVar,
             height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-            padding: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)', /* 🍎 애플 표준: 1:2 비율 (12px/24px) */
+            paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+            paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+            paddingBottom: 'var(--spacing-2)', /* 하단 여백 최소화 */
+            paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
             transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
           }}
         >
@@ -787,7 +790,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <div
               className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
               style={{
-                paddingBottom: 'var(--spacing-2)',
+                paddingBottom: 0,
                 fontSize: 'var(--font-size-caption-2)',
                 color: 'var(--color-text-tertiary)',
                 opacity: 0.6,
