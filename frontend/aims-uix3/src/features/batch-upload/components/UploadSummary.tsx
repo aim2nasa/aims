@@ -103,16 +103,16 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
       {/* 통계 카드 */}
       <div className="upload-summary-stats">
         <div className="upload-summary-stat">
-          <span className="upload-summary-stat-value">{folders.length}</span>
+          <span className="upload-summary-stat-value">{folders.length}개</span>
           <span className="upload-summary-stat-label">폴더</span>
         </div>
         <div className="upload-summary-stat">
-          <span className="upload-summary-stat-value success">{completedFiles}</span>
+          <span className="upload-summary-stat-value success">{completedFiles}개</span>
           <span className="upload-summary-stat-label">성공</span>
         </div>
         {failedFiles > 0 && (
           <div className="upload-summary-stat">
-            <span className="upload-summary-stat-value error">{failedFiles}</span>
+            <span className="upload-summary-stat-value error">{failedFiles}개</span>
             <span className="upload-summary-stat-label">실패</span>
           </div>
         )}
@@ -153,12 +153,7 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         )}
         {onViewDocuments && (
           <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
-            <SFSymbol
-              name="doc-text-magnifyingglass"
-              size={SFSymbolSize.FOOTNOTE}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>현재 진행상황 보기</span>
+            현재 진행상황 보기
           </button>
         )}
         <button className="upload-summary-btn primary" onClick={onClose}>

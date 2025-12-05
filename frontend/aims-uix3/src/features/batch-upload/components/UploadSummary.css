@@ -56,8 +56,8 @@
 /* 통계 카드 */
 .upload-summary-stats {
   display: flex;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
+  gap: 24px;  /* 충분한 간격 */
+  padding: var(--spacing-md) var(--spacing-xl);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-lg);
@@ -68,10 +68,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
+  min-width: 60px;
 }
 
 .upload-summary-stat-value {
-  font-size: var(--font-size-footnote);  /* 13px */
+  font-size: var(--font-size-subheadline);  /* 15px - 더 큰 숫자 */
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -85,7 +86,7 @@
 }
 
 .upload-summary-stat-label {
-  font-size: var(--font-size-caption-2);  /* 11px - 라벨 */
+  font-size: var(--font-size-caption-1);  /* 12px - 라벨 */
   font-weight: 400;
   color: var(--color-text-tertiary);
 }
@@ -137,7 +138,7 @@
 /* 버튼 */
 .upload-summary-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: 12px;  /* 버튼 간 충분한 간격 */
 }
 
 .upload-summary-btn {
@@ -165,10 +166,12 @@
 }
 
 .upload-summary-btn.secondary {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
+  background: var(--color-ios-blue, #007aff);
+  color: white;
+  opacity: 0.85;
 }
 
 .upload-summary-btn.secondary:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-ios-blue-hover, #0066d6);
+  opacity: 1;
 }
