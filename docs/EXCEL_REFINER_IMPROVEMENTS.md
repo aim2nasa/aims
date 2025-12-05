@@ -72,25 +72,80 @@ const result = {
 
 ---
 
-## P2 - 오픈 후 1주 내 (대기)
+## P2 - 오픈 후 1주 내 (완료)
 
 ### P2-1: sessionStorage Map 직렬화
 
-**상태**: 대기
+**날짜**: 2025.12.05
 
-**문제**: `productMatchResult`의 Map 객체가 JSON 직렬화 불가능
+**문제**: `productMatchResult`의 Map 객체가 JSON 직렬화 불가능하여 새로고침 시 상품명 검증을 다시 실행해야 함
 
-**해결 방향**: Map을 배열로 변환하여 저장, 복원 시 다시 Map으로 변환
+**해결책**:
+- `serializeProductMatchResult()`: Map → 배열 변환 함수 추가
+- `deserializeProductMatchResult()`: 배열 → Map 복원 함수 추가
+- `PersistedState`에 `productMatchResult`, `productNameColumnIndex` 필드 추가
+- 새로고침 후 상품명 검증 재실행 로직 제거 (불필요해짐)
+
+**예시 코드**:
+```typescript
+interface SerializedProductMatchResult {
+  originalMatch: Array<[number, string]>
+  modified: Array<[number, string]>
+  unmatched: number[]
+  productNames: Array<[string, string]>
+  allProducts: Array<[string, InsuranceProduct]>
+}
+
+function serializeProductMatchResult(result: ProductMatchResult): SerializedProductMatchResult {
+  return {
+    originalMatch: Array.from(result.originalMatch.entries()),
+    modified: Array.from(result.modified.entries()),
+    unmatched: result.unmatched,
+    productNames: Array.from(result.productNames.entries()),
+    allProducts: Array.from(result.allProducts.entries())
+  }
+}
+```
 
 ---
 
 ### P2-2: 고객 필터링 로직 중복 제거
 
-**상태**: 대기
+**날짜**: 2025.12.05
 
-**문제**: 동일한 필터링 로직이 3곳에서 반복됨
+**문제**: 동일한 고객 타입별 분류 로직이 3곳에서 반복됨 (약 80줄 중복)
 
-**해결 방향**: 공통 유틸리티 함수 추출
+**해결책**:
+- `partitionBulkResultByType()` 유틸리티 함수 추출
+- API 결과를 개인/법인 고객으로 분류하는 로직 통합
+- 3곳의 중복 코드를 함수 호출로 대체
+
+**적용 위치**:
+- 라인 2211: 고객 시트만 처리한 경우
+- 라인 2264: 계약 시트 없이 고객만 처리한 경우
+- 라인 2470: 전체 등록 (고객 + 계약)
+
+**예시 코드**:
+```typescript
+function partitionBulkResultByType(
+  result: BulkImportResult,
+  customers: BulkCustomerInput[]
+): PartitionedCustomerResult {
+  const customerMap = new Map(customers.map(c => [c.name, c]))
+
+  // 개인/법인별 created, updated, skipped, errors 분류
+  // ... (약 40줄 → 함수로 추출)
+
+  return { 개인고객: {...}, 법인고객: {...} }
+}
+
+// 사용
+const partitioned = partitionBulkResultByType(result, customers)
+setImportResultDetail({
+  ...partitioned,
+  계약: { ... }
+})
+```
 
 ---
 
@@ -110,6 +165,8 @@ const result = {
 
 ## 자동화 테스트
 
+### P1 테스트
+
 **테스트 파일**: `ExcelRefiner.apiValidation.test.ts`
 
 **테스트 항목 (18개)**:
@@ -123,10 +180,30 @@ const result = {
 - 에러 분류 로직 시뮬레이션 (5개)
 - API 응답 기본값 시뮬레이션 (5개)
 
+### P2 테스트
+
+**테스트 파일**: `ExcelRefiner.p2.test.ts`
+
+**테스트 항목 (19개)**:
+- P2-1: sessionStorage Map 직렬화 (6개)
+  - SerializedProductMatchResult 인터페이스 정의
+  - serializeProductMatchResult 함수 정의
+  - deserializeProductMatchResult 함수 정의
+  - PersistedState 필드 추가
+  - 저장/로드 로직 구현
+- P2-2: 고객 필터링 로직 중복 제거 (5개)
+  - BulkImportResult 인터페이스 정의
+  - PartitionedCustomerResult 인터페이스 정의
+  - partitionBulkResultByType 함수 정의
+  - 3곳에서 함수 사용
+- Map 직렬화 로직 시뮬레이션 (4개)
+- 고객 분류 로직 시뮬레이션 (4개)
+
 **실행 방법**:
 ```bash
 cd frontend/aims-uix3
-npm test -- ExcelRefiner.apiValidation
+npm test -- ExcelRefiner  # 전체 테스트 (75개)
+npm test -- ExcelRefiner.p2  # P2 테스트만 (19개)
 ```
 
 ---
@@ -135,4 +212,5 @@ npm test -- ExcelRefiner.apiValidation
 
 | 날짜 | 작업 | 커밋 | 상태 |
 |------|------|------|------|
-| 2025.12.05 | P1-1, P1-2 완료 + 테스트 추가 | (pending) | 완료 |
+| 2025.12.05 | P1-1, P1-2 완료 + 테스트 추가 | `9ff85889` | 완료 |
+| 2025.12.05 | P2-1, P2-2 완료 + 테스트 추가 | (pending) | 완료 |

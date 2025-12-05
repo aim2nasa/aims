@@ -58,8 +58,120 @@ function isRightAlignColumn(columnName: string): boolean {
 // sessionStorage 키
 const STORAGE_KEY = 'excelRefiner_state'
 
+// ===== P2-1: Map 직렬화 유틸리티 =====
+
+// ProductMatchResult를 JSON 직렬화 가능한 형태로 변환
+interface SerializedProductMatchResult {
+  originalMatch: Array<[number, string]>
+  modified: Array<[number, string]>
+  unmatched: number[]
+  productNames: Array<[string, string]>
+  allProducts: Array<[string, InsuranceProduct]>
+}
+
+function serializeProductMatchResult(result: ProductMatchResult): SerializedProductMatchResult {
+  return {
+    originalMatch: Array.from(result.originalMatch.entries()),
+    modified: Array.from(result.modified.entries()),
+    unmatched: result.unmatched,
+    productNames: Array.from(result.productNames.entries()),
+    allProducts: Array.from(result.allProducts.entries())
+  }
+}
+
+function deserializeProductMatchResult(serialized: SerializedProductMatchResult): ProductMatchResult {
+  return {
+    originalMatch: new Map(serialized.originalMatch),
+    modified: new Map(serialized.modified),
+    unmatched: serialized.unmatched,
+    productNames: new Map(serialized.productNames),
+    allProducts: new Map(serialized.allProducts)
+  }
+}
+
+// ===== P2-2: 고객 결과 분류 유틸리티 =====
+
+// API 응답 타입 (bulkImportCustomers)
+interface BulkImportResult {
+  created: Array<{ name: string; [key: string]: unknown }>
+  updated: Array<{ name: string; changes?: string[]; [key: string]: unknown }>
+  skipped: Array<{ name: string; [key: string]: unknown }>
+  errors: Array<{ name: string; [key: string]: unknown }>
+}
+
+// 분류된 고객 결과 타입
+interface PartitionedCustomerResult {
+  개인고객: {
+    created: Array<{ name: string; mobile_phone?: string; address?: string; gender?: string; birth_date?: string }>
+    updated: Array<{ name: string; mobile_phone?: string; address?: string; gender?: string; birth_date?: string; changes: string[] }>
+    skipped: Array<{ name: string; reason: string }>
+    errors: Array<{ name: string; reason: string }>
+  }
+  법인고객: {
+    created: Array<{ name: string; mobile_phone?: string; address?: string }>
+    updated: Array<{ name: string; mobile_phone?: string; address?: string; changes: string[] }>
+    skipped: Array<{ name: string; reason: string }>
+    errors: Array<{ name: string; reason: string }>
+  }
+}
+
+/**
+ * P2-2: API 결과를 개인/법인으로 분류하는 유틸리티 함수
+ * 3곳에서 중복되던 로직을 통합
+ */
+function partitionBulkResultByType(
+  result: BulkImportResult,
+  customers: BulkCustomerInput[]
+): PartitionedCustomerResult {
+  const customerMap = new Map(customers.map(c => [c.name, c]))
+
+  // 개인 고객 결과
+  const 개인Created = result.created
+    .map(c => customerMap.get(c.name))
+    .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
+    .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
+
+  const 개인Updated = result.updated
+    .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+    .map(c => {
+      const input = customerMap.get(c.name)
+      return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes || [] }
+    })
+
+  const 개인Skipped = result.skipped
+    .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+    .map(c => ({ name: c.name, reason: (c as { reason?: string }).reason || '변경사항 없음' }))
+  const 개인Errors = result.errors
+    .filter(c => customerMap.get(c.name)?.customer_type === '개인')
+    .map(c => ({ name: c.name, reason: (c as { reason?: string }).reason || '등록 오류' }))
+
+  // 법인 고객 결과
+  const 법인Created = result.created
+    .map(c => customerMap.get(c.name))
+    .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
+    .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
+
+  const 법인Updated = result.updated
+    .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+    .map(c => {
+      const input = customerMap.get(c.name)
+      return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes || [] }
+    })
+
+  const 법인Skipped = result.skipped
+    .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+    .map(c => ({ name: c.name, reason: (c as { reason?: string }).reason || '변경사항 없음' }))
+  const 법인Errors = result.errors
+    .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+    .map(c => ({ name: c.name, reason: (c as { reason?: string }).reason || '등록 오류' }))
+
+  return {
+    개인고객: { created: 개인Created, updated: 개인Updated, skipped: 개인Skipped, errors: 개인Errors },
+    법인고객: { created: 법인Created, updated: 법인Updated, skipped: 법인Skipped, errors: 법인Errors }
+  }
+}
+
 // sessionStorage에 저장할 상태 타입
-// 주의: productMatchResult는 Map 객체를 포함하므로 JSON 직렬화 불가 → 저장하지 않음
 interface PersistedState {
   fileName: string | null
   sheets: SheetData[]
@@ -80,6 +192,9 @@ interface PersistedState {
   formatCompliance: FormatComplianceResult | null
   // 액션 로그
   actionLog: string | null
+  // P2-1: 상품명 매칭 결과 (Map → 배열로 직렬화)
+  productMatchResult?: SerializedProductMatchResult | null
+  productNameColumnIndex?: number | null
 }
 
 // sessionStorage에서 상태 로드
@@ -306,8 +421,6 @@ export function ExcelRefiner() {
 
   // 초기화 완료 여부 (sessionStorage 로드 후 true)
   const isInitialized = useRef(false)
-  // 복원 후 상품명 검증 재실행 필요 여부
-  const needsProductValidation = useRef<{ sheetIndex: number; colIndex: number } | null>(null)
 
   // sessionStorage에서 상태 복원 (마운트 시 1회)
   useEffect(() => {
@@ -349,51 +462,16 @@ export function ExcelRefiner() {
       if (saved.actionLog) {
         setActionLog(saved.actionLog)
       }
-      // productMatchResult는 Map을 포함하므로 저장/복원 불가 → 검증 다시 실행 필요
-      // 계약 시트에서 상품명 컬럼이 검증 대상이면 검증 재실행 예약
-      if (saved.validatingColumnsBySheet && saved.sheets) {
-        const contractSheetIndex = saved.sheets.findIndex((s: { name: string }) => s.name === '계약')
-        if (contractSheetIndex !== -1) {
-          const contractSheet = saved.sheets[contractSheetIndex]
-          const validatingCols = saved.validatingColumnsBySheet.find(([name]: [string, number[]]) => name === '계약')
-          if (validatingCols && contractSheet) {
-            // 상품명 컬럼 인덱스 찾기
-            const productNameColIndex = contractSheet.columns.findIndex((col: string) =>
-              col && getValidationType(col) === 'productName'
-            )
-            if (productNameColIndex !== -1 && validatingCols[1].includes(productNameColIndex)) {
-              needsProductValidation.current = { sheetIndex: contractSheetIndex, colIndex: productNameColIndex }
-            }
-          }
+      // P2-1: productMatchResult 복원 (직렬화된 Map 역직렬화)
+      if (saved.productMatchResult) {
+        setProductMatchResult(deserializeProductMatchResult(saved.productMatchResult))
+        if (saved.productNameColumnIndex !== undefined) {
+          setProductNameColumnIndex(saved.productNameColumnIndex)
         }
       }
     }
     isInitialized.current = true
   }, [])
-
-  // 복원 후 상품명 검증 재실행 (productMatchResult는 저장되지 않으므로)
-  useEffect(() => {
-    if (!needsProductValidation.current || sheets.length === 0) return
-
-    const { sheetIndex, colIndex } = needsProductValidation.current
-    const sheet = sheets[sheetIndex]
-    if (!sheet) return
-
-    // 한 번만 실행
-    needsProductValidation.current = null
-
-    // 비동기로 상품명 검증 재실행
-    const revalidate = async () => {
-      try {
-        const result = await validateProductNames(sheet.data, colIndex)
-        setProductMatchResult(result)
-        setProductNameColumnIndex(colIndex)
-      } catch (error) {
-        console.error('상품명 검증 복원 오류:', error)
-      }
-    }
-    revalidate()
-  }, [sheets])
 
   // 상태 변경 시 sessionStorage에 저장
   useEffect(() => {
@@ -426,9 +504,12 @@ export function ExcelRefiner() {
       sheetIssueCount: Array.from(sheetIssueCount.entries()),
       importResult,
       formatCompliance,
-      actionLog
+      actionLog,
+      // P2-1: productMatchResult 직렬화하여 저장
+      productMatchResult: productMatchResult ? serializeProductMatchResult(productMatchResult) : null,
+      productNameColumnIndex: productNameColumnIndex
     })
-  }, [fileName, sheets, activeSheetIndex, validatingColumnsBySheet, validatedColumnsHistoryBySheet, sheetValidationStatus, sheetIssueCount, importResult, formatCompliance, actionLog])
+  }, [fileName, sheets, activeSheetIndex, validatingColumnsBySheet, validatedColumnsHistoryBySheet, sheetValidationStatus, sheetIssueCount, importResult, formatCompliance, actionLog, productMatchResult, productNameColumnIndex])
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
@@ -2134,37 +2215,12 @@ export function ExcelRefiner() {
           계약: { total: 0, success: 0 }
         })
 
-        // 상세 결과 저장 (결과 상세 모달용) - 고객 시트만 처리한 경우
-        const customerMap = new Map(customers.map(c => [c.name, c]))
-        const 개인Created = (result.created || [])
-          .map(c => customerMap.get(c.name))
-          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
-          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
-        const 개인Updated = (result.updated || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
-          .map(c => {
-            const input = customerMap.get(c.name)
-            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
-          })
-        const 개인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
-        const 개인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
-
-        const 법인Created = (result.created || [])
-          .map(c => customerMap.get(c.name))
-          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
-          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
-        const 법인Updated = (result.updated || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
-          .map(c => {
-            const input = customerMap.get(c.name)
-            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
-          })
-        const 법인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
-        const 법인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+        // 상세 결과 저장 (결과 상세 모달용) - P2-2: 헬퍼 함수 사용
+        const partitioned = partitionBulkResultByType(result, customers)
 
         // 데이터가 있는 탭을 기본 선택
-        const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
-        const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+        const 개인Total = partitioned.개인고객.created.length + partitioned.개인고객.updated.length + partitioned.개인고객.skipped.length + partitioned.개인고객.errors.length
+        const 법인Total = partitioned.법인고객.created.length + partitioned.법인고객.updated.length + partitioned.법인고객.skipped.length + partitioned.법인고객.errors.length
         let defaultTab: '개인고객' | '법인고객' | '계약' = '개인고객'
         if (개인Total > 0) defaultTab = '개인고객'
         else if (법인Total > 0) defaultTab = '법인고객'
@@ -2174,8 +2230,7 @@ export function ExcelRefiner() {
           summary: statusText,
           activeTab: defaultTab,
           hideSkipped: true,
-          개인고객: { created: 개인Created, updated: 개인Updated, skipped: 개인Skipped, errors: 개인Errors },
-          법인고객: { created: 법인Created, updated: 법인Updated, skipped: 법인Skipped, errors: 법인Errors },
+          ...partitioned,
           계약: { created: [], updated: [], skipped: [], errors: [] }
         })
 
@@ -2213,37 +2268,12 @@ export function ExcelRefiner() {
               계약: { total: 0, success: 0 }
             })
 
-            // 상세 결과 저장 (결과 상세 모달용) - 계약 시트 없이 고객만 처리한 경우
-            const customerMap = new Map(customers.map(c => [c.name, c]))
-            const 개인Created = result.created
-              .map(c => customerMap.get(c.name))
-              .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
-              .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
-            const 개인Updated = result.updated
-              .filter(c => customerMap.get(c.name)?.customer_type === '개인')
-              .map(c => {
-                const input = customerMap.get(c.name)
-                return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
-              })
-            const 개인Skipped = result.skipped.filter(c => customerMap.get(c.name)?.customer_type === '개인')
-            const 개인Errors = result.errors.filter(c => customerMap.get(c.name)?.customer_type === '개인')
-
-            const 법인Created = result.created
-              .map(c => customerMap.get(c.name))
-              .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
-              .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
-            const 법인Updated = result.updated
-              .filter(c => customerMap.get(c.name)?.customer_type === '법인')
-              .map(c => {
-                const input = customerMap.get(c.name)
-                return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
-              })
-            const 법인Skipped = result.skipped.filter(c => customerMap.get(c.name)?.customer_type === '법인')
-            const 법인Errors = result.errors.filter(c => customerMap.get(c.name)?.customer_type === '법인')
+            // 상세 결과 저장 (결과 상세 모달용) - P2-2: 헬퍼 함수 사용
+            const partitioned = partitionBulkResultByType(result, customers)
 
             // 데이터가 있는 탭을 기본 선택
-            const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
-            const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+            const 개인Total = partitioned.개인고객.created.length + partitioned.개인고객.updated.length + partitioned.개인고객.skipped.length + partitioned.개인고객.errors.length
+            const 법인Total = partitioned.법인고객.created.length + partitioned.법인고객.updated.length + partitioned.법인고객.skipped.length + partitioned.법인고객.errors.length
             let defaultTab: '개인고객' | '법인고객' | '계약' = '개인고객'
             if (개인Total > 0) defaultTab = '개인고객'
             else if (법인Total > 0) defaultTab = '법인고객'
@@ -2260,8 +2290,7 @@ export function ExcelRefiner() {
               summary: statusText,
               activeTab: defaultTab,
               hideSkipped: true,
-              개인고객: { created: 개인Created, updated: 개인Updated, skipped: 개인Skipped, errors: 개인Errors },
-              법인고객: { created: 법인Created, updated: 법인Updated, skipped: 법인Skipped, errors: 법인Errors },
+              ...partitioned,
               계약: { created: [], updated: [], skipped: [], errors: [] }
             })
 
@@ -2445,45 +2474,13 @@ export function ExcelRefiner() {
           계약: { total: contracts.length, success: contractSuccessCount }
         })
 
-        // 상세 결과 저장 - 입력 데이터와 API 결과 크로스 레퍼런스
-        const customerMap = new Map(customers.map(c => [c.name, c]))
-
-        // 개인/법인 분리된 상세 결과
-        const 개인Created = (customerBulkResult?.created || [])
-          .map(c => customerMap.get(c.name))
-          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
-          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
-
-        const 개인Updated = (customerBulkResult?.updated || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
-          .map(c => {
-            const input = customerMap.get(c.name)
-            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
-          })
-
-        const 개인Skipped = (customerBulkResult?.skipped || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
-
-        const 개인Errors = (customerBulkResult?.errors || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '개인')
-
-        const 법인Created = (customerBulkResult?.created || [])
-          .map(c => customerMap.get(c.name))
-          .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
-          .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
-
-        const 법인Updated = (customerBulkResult?.updated || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
-          .map(c => {
-            const input = customerMap.get(c.name)
-            return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
-          })
-
-        const 법인Skipped = (customerBulkResult?.skipped || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
-
-        const 법인Errors = (customerBulkResult?.errors || [])
-          .filter(c => customerMap.get(c.name)?.customer_type === '법인')
+        // 상세 결과 저장 - P2-2: 헬퍼 함수 사용
+        const customerPartitioned = partitionBulkResultByType({
+          created: customerBulkResult?.created || [],
+          updated: customerBulkResult?.updated || [],
+          skipped: customerBulkResult?.skipped || [],
+          errors: customerBulkResult?.errors || []
+        }, customers)
 
         // 계약 상세 결과 - API에서 직접 반환된 배열 사용
         const 계약Created = (contractResult.created || []).map(c => ({
@@ -2526,8 +2523,8 @@ export function ExcelRefiner() {
         }))
 
         // 데이터가 있는 탭을 자동 선택 (created, updated, skipped, errors 중 하나라도 있는 첫 번째 탭)
-        const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
-        const 법인Total = 법인Created.length + 법인Updated.length + 법인Skipped.length + 법인Errors.length
+        const 개인Total = customerPartitioned.개인고객.created.length + customerPartitioned.개인고객.updated.length + customerPartitioned.개인고객.skipped.length + customerPartitioned.개인고객.errors.length
+        const 법인Total = customerPartitioned.법인고객.created.length + customerPartitioned.법인고객.updated.length + customerPartitioned.법인고객.skipped.length + customerPartitioned.법인고객.errors.length
         const 계약Total = 계약Created.length + 계약Updated.length + 계약Skipped.length + 계약Errors.length
 
         let defaultActiveTab: '개인고객' | '법인고객' | '계약' = '개인고객'
@@ -2544,18 +2541,7 @@ export function ExcelRefiner() {
           summary: statusText,
           activeTab: defaultActiveTab,
           hideSkipped: true,
-          개인고객: {
-            created: 개인Created,
-            updated: 개인Updated,
-            skipped: 개인Skipped,
-            errors: 개인Errors
-          },
-          법인고객: {
-            created: 법인Created,
-            updated: 법인Updated,
-            skipped: 법인Skipped,
-            errors: 법인Errors
-          },
+          ...customerPartitioned,
           계약: {
             created: 계약Created,
             updated: 계약Updated,
