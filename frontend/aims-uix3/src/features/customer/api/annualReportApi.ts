@@ -156,7 +156,7 @@ export interface ParseAnnualReportApiResponse {
  */
 export interface CustomerIdentificationResult {
   scenario: 'single' | 'multiple' | 'none';
-  customers: any[]; // Customer 타입 (임포트 필요시 수정)
+  customers: Customer[];
   metadata: CheckAnnualReportResponse['metadata'];
 }
 

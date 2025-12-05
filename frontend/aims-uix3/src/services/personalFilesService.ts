@@ -23,6 +23,26 @@ const getHeaders = () => {
 };
 
 /**
+ * 문서 라이브러리 파일의 원본 Document 정보 (뱃지 표시용)
+ * 순환 참조 방지를 위해 필요한 필드만 정의
+ */
+export interface PersonalFileDocument {
+  _id?: string;
+  badgeType?: 'TXT' | 'OCR' | 'BIN';
+  mimeType?: string;
+  ocr?: {
+    status?: string;
+    confidence?: number | string;
+  };
+  meta?: {
+    full_text?: string;
+  };
+  docembed?: {
+    text_source?: string;
+  };
+}
+
+/**
  * 파일 시스템 항목 인터페이스
  */
 export interface PersonalFileItem {
@@ -38,7 +58,7 @@ export interface PersonalFileItem {
   storagePath?: string;
   isLibraryDocument?: boolean; // 문서 라이브러리 파일인지 여부
   // 🍎 문서 라이브러리 파일의 원본 Document 정보 (뱃지 표시용)
-  document?: any; // Document 타입 (순환 참조 방지를 위해 any 사용)
+  document?: PersonalFileDocument;
 }
 
 /**

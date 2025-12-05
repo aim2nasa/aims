@@ -26,6 +26,7 @@ import RefreshButton from '../../RefreshButton/RefreshButton'
 import { formatDateTime } from '@/shared/lib/timeUtils'
 import { api, ApiError } from '@/shared/lib/api'
 import { LinkIcon } from '../components/DocumentActionIcons'
+import type { Document } from '@/types/documentStatus'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
@@ -69,7 +70,7 @@ const DocumentLibraryContent: React.FC<{
   onDeleteSelected: () => void
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
-  onBulkLinkClick: (documents: any[]) => void
+  onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
 }> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose }) => {
   const controller = useDocumentStatusController()
@@ -810,7 +811,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 // 일괄 연결용 DocumentLinkModal 래퍼 (DocumentStatusProvider 내부에서 사용)
 const DocumentLinkModalWrapper: React.FC<{
   visible: boolean
-  documents: any[]
+  documents: Document[]
   onClose: () => void
   onLinkSuccess: () => void
 }> = ({ visible, documents, onClose }) => {

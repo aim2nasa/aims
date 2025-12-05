@@ -13,6 +13,7 @@ export type {
   UpdateDocumentData,
   DocumentSearchQuery,
   DocumentSearchResponse,
+  DocumentTypeInput,
 } from './model';
 
 export {

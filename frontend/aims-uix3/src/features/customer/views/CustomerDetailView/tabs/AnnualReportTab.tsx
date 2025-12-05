@@ -20,6 +20,7 @@ import { useAppleConfirmController } from '../../../../../controllers/useAppleCo
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
+import type { CustomerDocumentItem } from '@/services/DocumentService';
 import './AnnualReportTab.css';
 
 // 🍎 정렬 필드 타입
@@ -284,13 +285,13 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       // ⭐ 먼저 Documents 탭의 문서들을 가져와서 중복 AR 정리
       try {
         // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-        const docsData = await api.get<{ success: boolean; data: { documents: any[] } }>(
+        const docsData = await api.get<{ success: boolean; data: { documents: CustomerDocumentItem[] } }>(
           `/api/customers/${customer._id}/documents`
         );
 
         if (docsData.success && docsData.data?.documents) {
           const arDocuments = docsData.data.documents.filter(
-            (doc: any) => doc.relationship === 'annual_report' && doc.linkedAt && doc.ar_metadata?.issue_date
+            (doc) => doc.relationship === 'annual_report' && doc.linkedAt && doc.ar_metadata?.issue_date
           );
 
           if (arDocuments.length > 0) {

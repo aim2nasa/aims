@@ -53,6 +53,23 @@ const toNumber = (value: unknown): number | undefined => {
 }
 
 /**
+ * 문서 처리 단계 정보
+ */
+export interface DocumentStages {
+  ocr?: {
+    status?: string;
+    message?: string;
+    started_at?: string;
+    completed_at?: string;
+  };
+  embedding?: {
+    status?: string;
+    message?: string;
+  };
+  [key: string]: unknown;
+}
+
+/**
  * 고객 문서 연결 정보
  */
 export interface CustomerDocumentItem {
@@ -68,7 +85,7 @@ export interface CustomerDocumentItem {
   progress?: number;
   isAnnualReport?: boolean;
   ocrConfidence?: number | string;
-  stages?: any;
+  stages?: DocumentStages;
   badgeType?: 'TXT' | 'OCR' | 'BIN';  // 🔥 백엔드에서 계산된 뱃지 타입
   ar_metadata?: {
     issue_date?: string;

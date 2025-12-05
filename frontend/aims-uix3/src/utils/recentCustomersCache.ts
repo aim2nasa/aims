@@ -3,6 +3,8 @@
  * localStorage를 사용하여 최근 선택한 고객 정보를 저장
  */
 
+import type { Customer } from '@/entities/customer'
+
 export interface RecentCustomer {
   _id: string
   name: string
@@ -36,7 +38,7 @@ export function getRecentCustomers(): RecentCustomer[] {
 /**
  * 고객을 최근 선택 목록에 추가
  */
-export function addRecentCustomer(customer: any): void {
+export function addRecentCustomer(customer: Customer): void {
   try {
     const recentCustomers = getRecentCustomers()
 

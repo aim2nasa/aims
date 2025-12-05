@@ -1,13 +1,23 @@
 /**
  * Account Settings Store
  * @since 2025-11-07
- * @updated 2025-11-29
+ * @updated 2025-12-05
  *
  * 계정 설정 View 상태 관리 (Zustand)
  * 상태 기반 접근으로 리팩토링 (setter 저장 안티패턴 제거)
  */
 
 import { create } from 'zustand'
+import type { Customer } from '@/entities/customer'
+import type { SelectedDocument } from '../../utils/documentTransformers'
+
+/** URL 파라미터 타입 */
+interface URLParams {
+  view?: string | null
+  customerId?: string | null
+  documentId?: string | null
+  tab?: string | null
+}
 
 interface AccountSettingsState {
   /** 계정 설정 화면 열기 요청 (App.tsx가 구독) */
@@ -20,27 +30,26 @@ interface AccountSettingsState {
   clearOpenRequest: () => void
 
   // === Legacy API (하위 호환성) ===
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   /** @deprecated registerSetters 대신 openRequested 상태를 구독하세요 */
   setActiveDocumentView: ((view: string | null) => void) | null
   /** @deprecated */
   setRightPaneVisible: ((visible: boolean) => void) | null
   /** @deprecated */
-  setSelectedDocument: ((doc: any) => void) | null
+  setSelectedDocument: ((doc: SelectedDocument | null) => void) | null
   /** @deprecated */
-  setSelectedCustomer: ((customer: any) => void) | null
+  setSelectedCustomer: ((customer: Customer | null) => void) | null
   /** @deprecated */
   setRightPaneContentType: ((type: 'document' | 'customer' | null) => void) | null
   /** @deprecated */
-  updateURLParams: ((params: any) => void) | null
+  updateURLParams: ((params: URLParams) => void) | null
   /** @deprecated requestOpenAccountSettings를 사용하세요 */
   registerSetters: (setters: {
     setActiveDocumentView: (view: string | null) => void
     setRightPaneVisible: (visible: boolean) => void
-    setSelectedDocument: (doc: any) => void
-    setSelectedCustomer: (customer: any) => void
+    setSelectedDocument: (doc: SelectedDocument | null) => void
+    setSelectedCustomer: (customer: Customer | null) => void
     setRightPaneContentType: (type: 'document' | 'customer' | null) => void
-    updateURLParams: (params: any) => void
+    updateURLParams: (params: URLParams) => void
   }) => void
   /** @deprecated requestOpenAccountSettings를 사용하세요 */
   openAccountSettingsView: () => void

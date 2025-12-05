@@ -15,7 +15,7 @@ import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { getDocumentStatistics } from '@/services/DocumentService';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
-import { DocumentUtils } from '@/entities/document';
+import { DocumentUtils, type DocumentTypeInput } from '@/entities/document';
 import { Tooltip } from '@/shared/ui';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
@@ -80,7 +80,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   /**
    * Document에서 OCR confidence 추출
    */
-  const getOcrConfidence = (document: any): number | null => {
+  const getOcrConfidence = (document: DocumentTypeInput): number | null => {
     // 1. document.ocr?.confidence 먼저 시도
     if (document.ocr && typeof document.ocr !== 'string') {
       const directConfidence = document.ocr.confidence
@@ -190,7 +190,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   /**
    * 문서의 날짜 추출 (created_at, uploaded_at, 또는 MongoDB ObjectId에서)
    */
-  const getDocumentDate = (doc: any): Date | null => {
+  const getDocumentDate = (doc: DocumentTypeInput): Date | null => {
     // 1. created_at 시도
     if (doc.created_at) {
       return new Date(doc.created_at);

@@ -113,6 +113,33 @@ export type DocumentSearchQuery = z.infer<typeof DocumentSearchQuerySchema>;
 export type DocumentSearchResponse = z.infer<typeof DocumentSearchResponseSchema>;
 
 /**
+ * 문서 타입 판별용 입력 타입
+ * Document, SearchResultItem, CustomerDocumentItem 등 다양한 소스에서 사용
+ */
+export interface DocumentTypeInput {
+  badgeType?: string
+  mimeType?: string
+  ocr?: {
+    status?: string
+    confidence?: number | string
+  } | string
+  docembed?: {
+    text_source?: string
+  }
+  meta?: {
+    full_text?: string
+  }
+  stages?: {
+    ocr?: {
+      message?: string
+    }
+  }
+  created_at?: string
+  uploaded_at?: string
+  _id?: string
+}
+
+/**
  * 문서 유틸리티
  */
 export const DocumentUtils = {
@@ -333,15 +360,15 @@ export const DocumentUtils = {
 
   /**
    * 문서 타입 판별: OCR 기반 vs TXT 기반
-   * @param document - Document 또는 SearchResultItem (any 타입)
+   * @param document - Document, SearchResultItem, CustomerDocumentItem 등
    * @returns 'ocr' | 'txt' | 'bin'
    *
    * 판별 기준:
    * - OCR 기반: ocr 필드가 존재하고 status가 'done'
    * - TXT 기반: meta.full_text가 있거나 docembed.text_source가 'meta'
-   * - null: 판별 불가
+   * - bin: 판별 불가
    */
-  getDocumentType: (document: any): 'ocr' | 'txt' | 'bin' => {
+  getDocumentType: (document: DocumentTypeInput | null | undefined): 'ocr' | 'txt' | 'bin' => {
     if (!document) return 'bin';
 
     // 🔥 우선순위 1: 백엔드가 계산한 badgeType 사용 (고객 문서 탭용)
@@ -392,10 +419,10 @@ export const DocumentUtils = {
 
   /**
    * 문서 타입 레이블 반환
-   * @param document - Document 또는 SearchResultItem
-   * @returns 'OCR' | 'TXT' | ''
+   * @param document - Document, SearchResultItem, CustomerDocumentItem 등
+   * @returns 'OCR' | 'TXT' | 'BIN' | ''
    */
-  getDocumentTypeLabel: (document: any): 'OCR' | 'TXT' | 'BIN' | '' => {
+  getDocumentTypeLabel: (document: DocumentTypeInput | null | undefined): 'OCR' | 'TXT' | 'BIN' | '' => {
     const type = DocumentUtils.getDocumentType(document);
     if (type === 'ocr') return 'OCR';
     if (type === 'txt') return 'TXT';
