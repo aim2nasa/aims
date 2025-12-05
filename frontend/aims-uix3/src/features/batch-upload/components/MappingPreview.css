@@ -91,13 +91,18 @@
   flex: 1;
   min-height: 0; /* flexbox 스크롤 활성화 */
   padding: var(--spacing-md);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 0;
-  background-color: var(--color-bg-primary, #fff);
-  overflow-y: auto;
+  border: none;
+  background-color: #e8eaed;  /* 라이트 테마에서 눈에 띄는 배경색 */
+  border-radius: var(--radius-md);
+  overflow: auto;  /* 수평/수직 모두 스크롤 가능 */
   font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
   font-size: 12px;
   line-height: 1.6;
+}
+
+/* 다크 테마 지원 */
+html[data-theme="dark"] .tree-container {
+  background-color: var(--color-bg-tertiary, #1f2937);
 }
 
 /* 트리 아이템 */
@@ -214,6 +219,7 @@
 .tree-size {
   min-width: 60px;
   text-align: right;
+  margin-right: var(--spacing-sm);  /* 우측 경계와의 여백 */
 }
 
 /* 자식 노드 */
