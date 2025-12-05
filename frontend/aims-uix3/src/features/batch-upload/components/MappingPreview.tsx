@@ -220,14 +220,25 @@ export default function MappingPreview({
     <div className="mapping-preview">
       {/* 요약 통계 */}
       <div className="preview-stats">
-        <span className="stat matched">{stats.matched}</span>
-        <span className="stat-label">매칭</span>
-        <span className="stat unmatched">{stats.unmatched}</span>
-        <span className="stat-label">미매칭</span>
-        <span className="stat">{stats.totalFiles}</span>
-        <span className="stat-label">파일</span>
-        <span className="stat">{formatFileSize(stats.totalSize)}</span>
-        <span className="stat-label">총 크기</span>
+        <div className="stat-item">
+          <span className="stat-value matched">{stats.matched}</span>
+          <span className="stat-label">매칭</span>
+        </div>
+        <div className="stat-divider" />
+        <div className="stat-item">
+          <span className="stat-value unmatched">{stats.unmatched}</span>
+          <span className="stat-label">미매칭</span>
+        </div>
+        <div className="stat-divider" />
+        <div className="stat-item">
+          <span className="stat-value">{stats.totalFiles}</span>
+          <span className="stat-label">파일</span>
+        </div>
+        <div className="stat-divider" />
+        <div className="stat-item">
+          <span className="stat-value">{formatFileSize(stats.totalSize)}</span>
+          <span className="stat-label">총 크기</span>
+        </div>
       </div>
 
       {/* 트리 헤더 */}
