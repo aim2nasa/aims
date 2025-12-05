@@ -13,18 +13,7 @@
   border: 2px dashed var(--color-border, #d1d5db);
   border-radius: var(--radius-lg);
   background-color: var(--color-bg-secondary, #f9fafb);
-  cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.folder-drop-zone:hover:not(.disabled) {
-  border-color: var(--color-primary, #007aff);
-  background-color: var(--color-primary-bg, rgba(0, 122, 255, 0.05));
-}
-
-.folder-drop-zone:focus-visible {
-  outline: 2px solid var(--color-primary, #007aff);
-  outline-offset: 2px;
 }
 
 .folder-drop-zone.drag-over {
@@ -35,11 +24,6 @@
 
 .folder-drop-zone.disabled {
   opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.folder-input {
-  display: none;
 }
 
 .folder-drop-zone-content {
