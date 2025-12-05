@@ -1,6 +1,7 @@
 /**
- * MappingPreview Styles
+ * MappingPreview Styles (Windows Explorer Tree)
  * @since 2025-12-05
+ * @version 3.0.0
  */
 
 .mapping-preview {
@@ -11,125 +12,197 @@
 }
 
 /* 요약 통계 */
-.mapping-preview-summary {
+.preview-stats {
   display: flex;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-md);
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--color-bg-secondary, #f9fafb);
   border-radius: var(--radius-md);
+  font-size: var(--font-size-caption-1);
 }
 
-.mapping-preview-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xxs);
-}
-
-.mapping-preview-stat-value {
-  font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS: 섹션 제목급 */
+.stat {
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
-.mapping-preview-stat-value.matched {
+.stat.matched {
   color: var(--color-ios-green, #34c759);
 }
 
-.mapping-preview-stat-value.unmatched {
+.stat.unmatched {
   color: var(--color-ios-orange, #ff9500);
 }
 
-.mapping-preview-stat-label {
-  font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 보조 라벨 */
+.stat-label {
   font-weight: 400;
   color: var(--color-text-secondary);
+  margin-right: var(--spacing-md);
 }
 
-/* 매핑 목록 */
-.mapping-preview-list {
-  flex: 1;
+/* 트리 헤더 */
+.tree-header {
   display: flex;
-  flex-direction: column;
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.mapping-preview-header {
-  display: grid;
-  grid-template-columns: 50px 1fr 1fr 80px 80px;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-bg-tertiary, #f3f4f6);
-  font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 테이블 헤더 */
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-caption-2);
   font-weight: 600;
   color: var(--color-text-secondary);
 }
 
-.mapping-preview-body {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-.mapping-preview-row {
-  display: grid;
-  grid-template-columns: 50px 1fr 1fr 80px 80px;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--color-border-light, #f3f4f6);
-  font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 테이블 데이터 */
+.toggle-all-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-ios-blue, #007aff);
+  font-size: var(--font-size-caption-2);
   font-weight: 400;
-  transition: background-color 0.15s ease;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
-.mapping-preview-row:last-child {
-  border-bottom: none;
+.toggle-all-btn:hover {
+  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
 }
 
-.mapping-preview-row:hover {
-  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.02));
+/* 트리 컨테이너 */
+.tree-container {
+  flex: 1;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-primary, #fff);
+  overflow-y: auto;
+  max-height: 400px;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-.mapping-preview-row.unmatched {
-  opacity: 0.7;
+/* 트리 아이템 */
+.tree-item {
+  /* wrapper */
 }
 
-.mapping-preview-col-status {
+.tree-root {
+  margin-bottom: var(--spacing-xs);
+}
+
+/* 트리 라인 (각 행) */
+.tree-line {
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 2px 0;
+  white-space: nowrap;
+  cursor: default;
+  border-radius: var(--radius-xs);
 }
 
-.mapping-status-icon.matched {
+.tree-line.folder {
+  cursor: pointer;
+}
+
+.tree-line.folder:hover {
+  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.tree-line.root {
+  font-weight: 600;
+}
+
+.tree-line.root.matched {
+  color: var(--color-text-primary);
+}
+
+.tree-line.root.unmatched {
+  opacity: 0.6;
+}
+
+/* 트리 접두사 (├── └── │) */
+.tree-prefix {
+  color: var(--color-text-tertiary, #9ca3af);
+  white-space: pre;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 펼침/접힘 토글 */
+.tree-toggle {
+  width: 14px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 아이콘 */
+.tree-icon {
+  margin-right: 4px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.tree-icon.folder {
+  /* 폴더 아이콘 */
+}
+
+.tree-icon.file {
+  /* 파일 아이콘 */
+}
+
+/* 이름 */
+.tree-name {
+  color: var(--color-text-primary);
+  margin-right: var(--spacing-sm);
+}
+
+/* 매칭 배지 */
+.tree-badge {
+  font-size: 10px;
+  font-weight: 400;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  margin-right: var(--spacing-sm);
+}
+
+.tree-badge.matched {
+  background-color: var(--color-ios-green-bg, rgba(52, 199, 89, 0.12));
   color: var(--color-ios-green, #34c759);
 }
 
-.mapping-status-icon.unmatched {
+.tree-badge.unmatched {
+  background-color: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.12));
   color: var(--color-ios-orange, #ff9500);
 }
 
-.mapping-preview-col-folder,
-.mapping-preview-col-customer {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mapping-preview-col-files,
-.mapping-preview-col-size {
-  text-align: right;
-  color: var(--color-text-secondary);
-}
-
-.mapping-no-match {
+/* 정보 (파일 수, 크기) */
+.tree-info {
+  margin-left: auto;
+  display: flex;
+  gap: var(--spacing-md);
   color: var(--color-text-tertiary);
-  font-style: italic;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.tree-count {
+  min-width: 40px;
+  text-align: right;
+}
+
+.tree-size {
+  min-width: 60px;
+  text-align: right;
+}
+
+/* 자식 노드 */
+.tree-children {
+  /* 하위 노드들 */
 }
 
 /* 경고 메시지 */
-.mapping-preview-warning {
+.preview-warning {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -137,12 +210,12 @@
   background-color: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
   color: var(--color-warning, #ff9500);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 보조 정보 */
+  font-size: var(--font-size-caption-1);
   font-weight: 400;
 }
 
 /* 버튼 영역 */
-.mapping-preview-actions {
+.preview-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-sm);
