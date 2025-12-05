@@ -6,7 +6,7 @@
  * 폴더-고객 매핑 미리보기 (윈도우 탐색기 스타일 트리)
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
 import { formatFileSize } from '../utils/fileValidation'
@@ -123,6 +123,11 @@ export default function MappingPreview({
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(() => {
     return new Set(mappings.filter(m => m.matched).map(m => m.folderName))
   })
+
+  // mappings가 변경될 때 선택 상태 동기화 (모든 매칭된 폴더 자동 선택)
+  useEffect(() => {
+    setSelectedFolders(new Set(mappings.filter(m => m.matched).map(m => m.folderName)))
+  }, [mappings])
 
   const stats = useMemo(() => {
     const matched = mappings.filter(m => m.matched).length
