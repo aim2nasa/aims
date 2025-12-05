@@ -1,0 +1,148 @@
+/**
+ * StorageQuotaBar Component Styles
+ * @since 2025-12-05
+ */
+
+.storage-quota-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-secondary);
+}
+
+.storage-quota-bar.warning {
+  border-color: var(--color-ios-orange, #ff9500);
+  background: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.06));
+}
+
+.storage-quota-bar.danger {
+  border-color: var(--color-ios-red, #ff3b30);
+  background: var(--color-ios-red-bg, rgba(255, 59, 48, 0.06));
+}
+
+/* 헤더 */
+.storage-quota-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.storage-quota-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.storage-quota-tier {
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+}
+
+.storage-quota-values {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.storage-quota-used {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.storage-quota-separator {
+  color: var(--color-text-quaternary);
+}
+
+.storage-quota-max {
+  color: var(--color-text-tertiary);
+}
+
+/* 프로그레스 바 */
+.storage-quota-progress {
+  position: relative;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.storage-quota-progress-used {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--color-ios-blue, #007aff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.storage-quota-bar.warning .storage-quota-progress-used {
+  background: var(--color-ios-orange, #ff9500);
+}
+
+.storage-quota-bar.danger .storage-quota-progress-used {
+  background: var(--color-ios-red, #ff3b30);
+}
+
+.storage-quota-progress-pending {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--color-ios-blue, #007aff);
+  opacity: 0.4;
+  border-radius: 3px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* 푸터 */
+.storage-quota-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.storage-quota-remaining {
+  color: var(--color-text-tertiary);
+}
+
+.storage-quota-pending-info {
+  color: var(--color-ios-blue, #007aff);
+  font-weight: 500;
+}
+
+.storage-quota-warning,
+.storage-quota-danger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.storage-quota-warning {
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.storage-quota-danger {
+  color: var(--color-ios-red, #ff3b30);
+}
