@@ -10,15 +10,15 @@
   justify-content: center;
   min-height: 300px;
   padding: var(--spacing-xl);
-  border: 2px dashed var(--color-border, #d1d5db);
+  border: 2px dashed var(--color-upload-zone-border);
   border-radius: var(--radius-lg);
-  background-color: var(--color-bg-secondary, #f9fafb);
+  background: var(--color-upload-zone-bg);
   transition: all 0.2s ease;
 }
 
 .folder-drop-zone.drag-over {
-  border-color: var(--color-primary, #007aff);
-  background-color: var(--color-primary-bg, rgba(0, 122, 255, 0.1));
+  border-color: var(--color-primary-500);
+  background: var(--color-selection-bg);
   transform: scale(1.01);
 }
 
