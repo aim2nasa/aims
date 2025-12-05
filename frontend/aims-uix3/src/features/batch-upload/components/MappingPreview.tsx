@@ -332,14 +332,14 @@ export default function MappingPreview({
                   <span className="guide-toggle">
                     {isExpanded ? '▼' : '▶'}
                   </span>
-                  <span className="guide-icon folder">📁</span>
-                  <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
-                  {mapping.matched && (
-                    <span className="guide-match">
-                      <span className="guide-arrow">→</span>
-                      <span className="guide-customer-badge">👤 {mapping.customerName}</span>
+                  {mapping.matched ? (
+                    <span className="guide-icon customer-icon">
+                      <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
                     </span>
+                  ) : (
+                    <span className="guide-icon folder">📁</span>
                   )}
+                  <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>{mapping.folderName}</span>
                   {!mapping.matched && (
                     <span className="guide-note">미매칭</span>
                   )}

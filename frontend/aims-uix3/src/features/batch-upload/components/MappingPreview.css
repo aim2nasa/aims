@@ -270,6 +270,18 @@ html[data-theme="dark"] .tree-container {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
 }
 
+.tree-container .guide-icon.customer-icon {
+  color: var(--color-ios-blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 하위 폴더 아이콘 */
+.tree-container .guide-node .guide-node .guide-icon.folder {
+  opacity: 0.6;
+}
+
 /* 이름 */
 .tree-container .guide-name {
   color: var(--color-text-secondary);
@@ -277,7 +289,7 @@ html[data-theme="dark"] .tree-container {
 }
 
 .tree-container .guide-name.customer {
-  color: var(--color-ios-blue, #007aff);
+  color: var(--color-ios-green, #34c759);
   font-weight: 600;
 }
 
@@ -285,9 +297,10 @@ html[data-theme="dark"] .tree-container {
   color: var(--color-ios-orange, #ff9500);
 }
 
+
 .tree-container .guide-name.subfolder {
-  color: var(--color-text-secondary);
-  font-weight: 600;
+  color: var(--color-text-tertiary);
+  font-weight: 400;
 }
 
 .tree-container .guide-name.file {
