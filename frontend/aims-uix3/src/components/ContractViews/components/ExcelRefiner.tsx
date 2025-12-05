@@ -25,6 +25,7 @@ import {
   getRowStatus,
   getProblematicRows,
   validateProductNames,
+  validateCustomerNamesWithDB,
   checkFormatCompliance,
   getStandardColumnOrder,
   EXCEL_SPEC_VERSION,
@@ -34,7 +35,8 @@ import {
   type ProductMatchResult,
   type InsuranceProduct,
   type ValidationType,
-  type FormatComplianceResult
+  type FormatComplianceResult,
+  type CustomerNameValidationResult
 } from '@aims/excel-refiner-core'
 import { CustomerService, type BulkCustomerInput } from '@/services/customerService'
 import { ContractService } from '@/services/contractService'
@@ -155,6 +157,10 @@ export function ExcelRefiner() {
   // 상품명 검증 결과 (행 인덱스 → ObjectId 매칭)
   const [productMatchResult, setProductMatchResult] = useState<ProductMatchResult | null>(null)
   const [productNameColumnIndex, setProductNameColumnIndex] = useState<number | null>(null)
+
+  // 고객명 DB 검증 결과 (행 인덱스 → 검증 결과)
+  const [customerNameValidationResult, setCustomerNameValidationResult] = useState<CustomerNameValidationResult | null>(null)
+  const [customerNameColumnIndex, setCustomerNameColumnIndex] = useState<number | null>(null)
 
   // 상품명 상태 필터 (범례 클릭 시 해당 상태 행을 맨 위로)
   const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'unmatched' | null>(null)
@@ -822,6 +828,8 @@ export function ExcelRefiner() {
     updateValidatingColumns(sheetName, () => new Set())
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
+    setCustomerNameValidationResult(null)
+    setCustomerNameColumnIndex(null)
 
     // 먼저 "검증 중" 상태 표시
     setValidatingInProgress(prev => {
@@ -829,6 +837,43 @@ export function ExcelRefiner() {
       next.add(colIndex)
       return next
     })
+
+    // 고객명 DB 검증 (개인고객/법인고객 시트에서만)
+    if (type === 'customerName' && (sheetName === '개인고객' || sheetName === '법인고객')) {
+      try {
+        const customerType = sheetName === '개인고객' ? '개인' : '법인'
+        const result = await validateCustomerNamesWithDB(currentSheet.data, colIndex, customerType)
+        setCustomerNameValidationResult(result)
+        setCustomerNameColumnIndex(colIndex)
+
+        // 검증 컬럼에 추가 (현재 시트)
+        updateValidatingColumns(sheetName, prev => {
+          const next = new Set(prev)
+          next.add(colIndex)
+          return next
+        })
+        // 검증 완료 이력에 추가 (현재 시트, 누적)
+        updateValidatedHistory(sheetName, prev => {
+          const next = new Set(prev)
+          next.add(colIndex)
+          return next
+        })
+      } catch (error) {
+        console.error('고객명 DB 검증 오류:', error)
+        showAlert({
+          title: '검증 오류',
+          message: '고객명 DB 검증 중 오류가 발생했습니다.',
+          iconType: 'error'
+        })
+      } finally {
+        setValidatingInProgress(prev => {
+          const next = new Set(prev)
+          next.delete(colIndex)
+          return next
+        })
+      }
+      return
+    }
 
     // 상품명 검증은 비동기로 처리
     if (type === 'productName') {
@@ -2613,6 +2658,27 @@ export function ExcelRefiner() {
       )
     }
 
+    // 고객명 DB 검증 결과 표시 (개인고객/법인고객 시트)
+    if (type === 'customerName' && customerNameValidationResult && customerNameColumnIndex === colIndex) {
+      const { stats } = customerNameValidationResult
+      const validCount = stats.new + stats.update
+      const errorCount = stats.typeConflict + stats.empty
+      const tooltip = `신규: ${stats.new}명\n업데이트: ${stats.update}명${errorCount > 0 ? `\n\n오류:\n• 타입 충돌: ${stats.typeConflict}명\n• 빈 값: ${stats.empty}명` : ''}`
+
+      return (
+        <Tooltip content={tooltip}>
+          <span className="excel-refiner__th-badge-group">
+            {validCount > 0 && (
+              <span className="excel-refiner__th-badge excel-refiner__th-badge--success">{validCount} 유효</span>
+            )}
+            {errorCount > 0 && (
+              <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{errorCount} 오류</span>
+            )}
+          </span>
+        </Tooltip>
+      )
+    }
+
     const result = columnValidationResults.get(colIndex)
     if (!result) return null
 
@@ -2645,6 +2711,16 @@ export function ExcelRefiner() {
     if (productMatchResult.modified.has(rowIndex)) return 'modified'
     if (productMatchResult.unmatched.includes(rowIndex)) return 'unmatched'
     return null
+  }
+
+  // 고객명 셀 상태 계산 (고객명 칼럼에만 적용)
+  const getCustomerNameCellStatus = (rowIndex: number): 'new' | 'update' | 'type_conflict' | 'empty' | null => {
+    if (!customerNameValidationResult || customerNameColumnIndex === null) return null
+
+    const item = customerNameValidationResult.results.get(rowIndex)
+    if (!item) return null
+
+    return item.status
   }
 
   // 행 상태 계산 (상품명 미매칭은 셀 레벨에서만 적용, 행 레벨 제외)
@@ -3302,6 +3378,20 @@ export function ExcelRefiner() {
                                 matchedProductId = productMatchResult.modified.get(originalIndex) || null
                               } else if (productStatus === 'unmatched') {
                                 isUnmatchedProduct = true
+                              }
+                            }
+                          }
+
+                          // 고객명 칼럼에 DB 검증 상태 색상 적용 (개인고객/법인고객 시트)
+                          const isCustomerSheet = currentSheet?.name === '개인고객' || currentSheet?.name === '법인고객'
+                          if (isCustomerSheet && dataIndex === customerNameColumnIndex && customerNameValidationResult) {
+                            const customerStatus = getCustomerNameCellStatus(originalIndex)
+                            if (customerStatus) {
+                              // new, update = 녹색 (유효), type_conflict, empty = 빨간색 (오류)
+                              if (customerStatus === 'new' || customerStatus === 'update') {
+                                tdClassName += ' excel-refiner__td--customer-valid'
+                              } else if (customerStatus === 'type_conflict' || customerStatus === 'empty') {
+                                tdClassName += ' excel-refiner__td--customer-error'
                               }
                             }
                           }

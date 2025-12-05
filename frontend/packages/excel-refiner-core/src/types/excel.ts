@@ -48,6 +48,44 @@ export type RowStatus = 'normal' | 'empty' | 'duplicate' | 'selected'
 // 상품명 셀 상태 (상품명 칼럼에만 적용)
 export type ProductCellStatus = 'original' | 'modified' | 'unmatched'
 
+// 고객명 DB 검증 결과 상태
+export type CustomerNameStatus = 'new' | 'update' | 'type_conflict' | 'empty'
+
+// 기존 고객 정보 (DB에서 조회)
+export interface ExistingCustomer {
+  _id: string
+  name: string
+  customerType: '개인' | '법인'
+  email?: string
+  phone?: string
+  address?: string
+  birthDate?: string
+  businessNumber?: string
+  representativeName?: string
+}
+
+// 고객명 검증 결과 (단일 행)
+export interface CustomerNameValidationItem {
+  name: string
+  status: CustomerNameStatus
+  message: string
+  existingCustomer?: ExistingCustomer
+  existingType?: '개인' | '법인'
+  requestedType?: '개인' | '법인'
+}
+
+// 고객명 DB 검증 결과 (전체)
+export interface CustomerNameValidationResult {
+  results: Map<number, CustomerNameValidationItem>  // 행 인덱스 → 검증 결과
+  stats: {
+    total: number
+    new: number
+    update: number
+    typeConflict: number
+    empty: number
+  }
+}
+
 // 포맷 준수 검사 결과
 export type FormatComplianceStatus = 'compliant' | 'warning' | 'error'
 

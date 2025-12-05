@@ -20,7 +20,11 @@ export type {
   FormatComplianceStatus,
   FormatComplianceResult,
   SheetComplianceCheck,
-  RequiredColumnCheck
+  RequiredColumnCheck,
+  CustomerNameStatus,
+  ExistingCustomer,
+  CustomerNameValidationItem,
+  CustomerNameValidationResult
 } from './types/excel'
 
 // Utils
@@ -39,6 +43,7 @@ export {
   validateCustomerName,
   validateContractDate,
   validateProductNames,
+  validateCustomerNamesWithDB,
   getValidationType,
   getRowStatus,
   getProblematicRows,

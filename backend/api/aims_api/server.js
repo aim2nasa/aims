@@ -2295,6 +2295,126 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * POST /api/customers/validate-names
+ * 고객명 DB 중복 검사 (Excel Import 검증용)
+ * - 엑셀 고객명과 DB 기존 고객 비교
+ * - 동일 타입: UPDATE 대상 (허용)
+ * - 다른 타입: 고유성 위반 (에러)
+ */
+app.post('/api/customers/validate-names', authenticateJWT, async (req, res) => {
+  try {
+    const { customers } = req.body; // [{ name: string, customerType: '개인' | '법인' }]
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId required'
+      });
+    }
+
+    if (!Array.isArray(customers) || customers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '고객 데이터가 비어있습니다.'
+      });
+    }
+
+    // 해당 설계사의 기존 고객 목록 조회
+    const existingCustomers = await db.collection(CUSTOMERS_COLLECTION)
+      .find({ 'meta.created_by': userId })
+      .toArray();
+
+    // 이름 → 기존 고객 맵
+    const customerMap = new Map();
+    existingCustomers.forEach(c => {
+      const name = c.personal_info?.name?.trim();
+      if (name) {
+        customerMap.set(name, {
+          _id: c._id.toString(),
+          name: name,
+          customerType: c.insurance_info?.customer_type || '개인',
+          email: c.personal_info?.email,
+          phone: c.personal_info?.mobile_phone,
+          address: c.personal_info?.address?.address1,
+          birthDate: c.personal_info?.birth_date,
+          businessNumber: c.insurance_info?.business_number,
+          representativeName: c.insurance_info?.representative_name
+        });
+      }
+    });
+
+    // 검증 결과
+    const results = [];
+
+    for (const customer of customers) {
+      const name = customer.name?.trim();
+      const requestedType = customer.customerType || '개인';
+
+      if (!name) {
+        results.push({
+          name: customer.name || '',
+          status: 'empty',
+          message: '고객명 누락'
+        });
+        continue;
+      }
+
+      const existing = customerMap.get(name);
+
+      if (!existing) {
+        // DB에 없음 → 신규 생성
+        results.push({
+          name: name,
+          status: 'new',
+          message: '신규 고객'
+        });
+      } else if (existing.customerType === requestedType) {
+        // 동일 타입 → UPDATE 대상
+        results.push({
+          name: name,
+          status: 'update',
+          message: '기존 고객 정보 업데이트',
+          existingCustomer: existing
+        });
+      } else {
+        // 다른 타입 → 고유성 위반
+        results.push({
+          name: name,
+          status: 'type_conflict',
+          message: `이미 ${existing.customerType}고객으로 등록됨`,
+          existingType: existing.customerType,
+          requestedType: requestedType
+        });
+      }
+    }
+
+    // 통계
+    const stats = {
+      total: results.length,
+      new: results.filter(r => r.status === 'new').length,
+      update: results.filter(r => r.status === 'update').length,
+      typeConflict: results.filter(r => r.status === 'type_conflict').length,
+      empty: results.filter(r => r.status === 'empty').length
+    };
+
+    res.json({
+      success: true,
+      data: results,
+      stats: stats
+    });
+
+  } catch (error) {
+    console.error('고객명 검증 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객명 검증에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */

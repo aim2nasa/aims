@@ -12,12 +12,16 @@ import type {
   SheetData,
   FormatComplianceResult,
   SheetComplianceCheck,
-  RequiredColumnCheck
+  RequiredColumnCheck,
+  CustomerNameValidationResult,
+  CustomerNameValidationItem
 } from '../types/excel'
 import { cellToString } from '../utils/excel'
 
 // 보험상품 API URL (Vite 프록시를 통해 tars.giize.com:3010으로 전달)
 const INSURANCE_PRODUCTS_API = '/api/insurance-products'
+// 고객명 검증 API URL
+const CUSTOMER_VALIDATE_NAMES_API = '/api/customers/validate-names'
 
 /**
  * 엑셀 표준규격 버전 (EXCEL_IMPORT_SPECIFICATION.md 기준)
@@ -341,6 +345,104 @@ export async function validateProductNames(
     unmatched,
     productNames: productNameMap,
     allProducts
+  }
+}
+
+/**
+ * 고객명 DB 검증 함수 (비동기)
+ * - 엑셀의 고객명을 DB 기존 고객과 비교
+ * - new: 신규 생성 대상
+ * - update: 기존 고객 정보 업데이트 대상 (동일 타입)
+ * - type_conflict: 고유성 위반 (다른 타입으로 이미 존재)
+ * - empty: 빈값
+ *
+ * @param data 엑셀 데이터 (2D 배열)
+ * @param columnIndex 고객명 컬럼 인덱스
+ * @param customerType 시트의 고객 타입 ('개인' | '법인')
+ */
+export async function validateCustomerNamesWithDB(
+  data: CellValue[][],
+  columnIndex: number,
+  customerType: '개인' | '법인'
+): Promise<CustomerNameValidationResult> {
+  // 고객명 목록 추출
+  const customerNames: Array<{ name: string; customerType: '개인' | '법인' }> = []
+
+  data.forEach(row => {
+    const value = cellToString(row[columnIndex]).trim()
+    customerNames.push({
+      name: value,
+      customerType: customerType
+    })
+  })
+
+  try {
+    // API 호출
+    const response = await fetch(CUSTOMER_VALIDATE_NAMES_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ customers: customerNames }),
+      credentials: 'include'  // JWT 쿠키 포함
+    })
+
+    if (!response.ok) {
+      throw new Error(`API 오류: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (!result.success) {
+      throw new Error(result.error || 'API 오류')
+    }
+
+    // 결과를 Map으로 변환
+    const resultsMap = new Map<number, CustomerNameValidationItem>()
+
+    result.data.forEach((item: CustomerNameValidationItem, index: number) => {
+      resultsMap.set(index, item)
+    })
+
+    return {
+      results: resultsMap,
+      stats: result.stats
+    }
+  } catch (error) {
+    console.error('고객명 DB 검증 오류:', error)
+
+    // 오류 시 모든 행을 'new'로 처리 (검증 실패 시 신규로 간주)
+    const resultsMap = new Map<number, CustomerNameValidationItem>()
+    let emptyCount = 0
+
+    data.forEach((row, index) => {
+      const value = cellToString(row[columnIndex]).trim()
+      if (!value || value.toLowerCase() === 'nan') {
+        resultsMap.set(index, {
+          name: value,
+          status: 'empty',
+          message: '고객명 누락'
+        })
+        emptyCount++
+      } else {
+        resultsMap.set(index, {
+          name: value,
+          status: 'new',
+          message: '검증 실패 - 신규로 처리'
+        })
+      }
+    })
+
+    return {
+      results: resultsMap,
+      stats: {
+        total: data.length,
+        new: data.length - emptyCount,
+        update: 0,
+        typeConflict: 0,
+        empty: emptyCount
+      }
+    }
   }
 }
 
