@@ -293,50 +293,96 @@ const BLOCKED_EXTENSIONS = [
 
 ---
 
-## 8. 구현 단계
+## 8. 구현 워크플로우
 
-### Phase 1: 기반 구조
+### 작업 원칙
+- 각 단계마다 100% 기능 증명을 위한 테스트 작성
+- `npm test`에서 모든 테스트 통과 필수
+- 테스트 검증 완료 후 커밋
+- CLAUDE.md 규칙 준수
 
-| 작업 | 설명 |
-|------|------|
-| DB 스키마 | agent_tiers, upload_batches 컬렉션 생성 |
-| 초기 데이터 | 4개 등급 데이터 삽입 |
-| API 엔드포인트 | 고객명 조회, 할당량 확인, 배치 업로드 API |
-| 설계사 등급 | users 컬렉션에 tierId, tierStartedAt 필드 추가 |
-| TTL 인덱스 | upload_batches.expiresAt에 TTL 인덱스 설정 (30일) |
+### 메뉴 위치
+- **파일**: `src/components/CustomMenu/CustomMenu.tsx`
+- **위치**: "고객·계약 일괄등록" (`contracts-import`) 메뉴 바로 아래
+
+---
+
+## 9. 구현 단계
+
+### Phase 1: 기반 구조 (Frontend 유틸리티)
+
+#### 1.1 타입 정의
+- [ ] `src/features/batch-upload/types/index.ts`
+  - `AgentTier`, `UploadBatch`, `FileValidationResult`, `FolderMapping` 인터페이스
+
+#### 1.2 파일 검증 유틸리티
+- [ ] `src/features/batch-upload/utils/fileValidation.ts`
+  - 차단 확장자 상수 정의
+  - `isBlockedExtension(filename)` 함수
+  - `isFileSizeValid(size)` 함수 (50MB 제한)
+  - `validateBatchSize(files, tierLimit)` 함수
+
+**테스트**: `fileValidation.test.ts`
+- 차단 확장자 검증 (exe, bat, dll 등)
+- 허용 확장자 통과 (pdf, doc, jpg 등)
+- 파일 크기 검증 (50MB 초과 차단)
+- 배치 크기 검증 (등급별 한도)
+
+#### 1.3 고객명 매칭 유틸리티
+- [ ] `src/features/batch-upload/utils/customerMatcher.ts`
+  - `matchFolderToCustomer(folderName, customers)` 함수
+  - 100% 정확 일치만 허용 (trim, case-sensitive)
+
+**테스트**: `customerMatcher.test.ts`
+- 정확 일치 매칭
+- 부분 일치 거부
+- 공백 트림 처리
+- 대소문자 구분
 
 ### Phase 2: 프론트엔드 UI
 
 | 작업 | 설명 |
 |------|------|
+| 메뉴 추가 | CustomMenu.tsx에 "고객 문서 일괄등록" 메뉴 |
+| 라우트 추가 | App.tsx에 `/batch-upload` 라우트 |
 | 페이지 생성 | BatchDocumentUploadView 컴포넌트 |
-| 폴더 선택 | webkitdirectory 활용 또는 File System Access API |
-| 매핑 미리보기 | 테이블 형태로 매칭/미매칭 표시 |
-| 진행률 표시 | 업로드 속도, 남은 시간 등 |
-| 등급 표시 | 현재 등급, 잔여 용량, 무료체험 남은 기간 표시 |
+| 폴더 선택 | FolderDropZone 컴포넌트 |
+| 매핑 미리보기 | MappingPreview 컴포넌트 |
+
+**테스트**: `FolderDropZone.test.tsx`, `MappingPreview.test.tsx`
 
 ### Phase 3: 업로드 로직
 
 | 작업 | 설명 |
 |------|------|
-| 파일 검증 | 크기, 확장자, MIME 타입 |
-| 중복 처리 | Windows 스타일 대화상자 |
-| 재시도 로직 | 실패 시 자동 3회 재시도 |
-| 배치 완료 | 결과 요약 표시 |
+| 업로드 Hook | useBatchUpload.ts - 상태 관리, 진행률, 재시도 |
+| API 클라이언트 | batchUploadApi.ts - 고객명 조회, 배치 업로드 |
+| 진행률 UI | UploadProgress.tsx, UploadSummary.tsx |
 
-### Phase 4: 보안 강화
+**테스트**: `useBatchUpload.test.ts`
+
+### Phase 4: 중복 처리 & 완성
 
 | 작업 | 설명 |
 |------|------|
+| 중복 다이얼로그 | DuplicateDialog.tsx - 덮어쓰기/건너뛰기/둘다유지 |
+| Storage Quota | StorageQuotaBar.tsx - 사용량/최대 용량 표시 |
+
+**테스트**: `DuplicateDialog.test.tsx`
+
+### Phase 5: 보안 강화 (Backend)
+
+| 작업 | 설명 |
+|------|------|
+| DB 스키마 | agent_tiers, upload_batches 컬렉션 생성 |
 | ClamAV 설치 | 서버에 ClamAV 데몬 설치 및 설정 |
 | ClamAV 연동 | 업로드 파일 실시간 검사 |
 | MIME 검증 | 서버에서 확장자 위조 탐지 |
 | 할당량 강제 | 업로드 중 실시간 확인 |
-| 무료체험 체크 | 만료 여부 확인 및 차단 |
 
 ---
 
-## 9. 수정 대상 파일
+## 10. 수정 대상 파일
 
 ### Frontend (신규)
 - `src/features/batch-upload/BatchDocumentUploadView.tsx`
@@ -365,16 +411,16 @@ const BLOCKED_EXTENSIONS = [
 
 ---
 
-## 10. 테스트 계획
+## 11. 테스트 계획
 
-### 10.1 단위 테스트
+### 11.1 단위 테스트
 - [ ] 확장자 검증 로직
 - [ ] 파일 크기 검증 로직
 - [ ] 고객명 매칭 로직
 - [ ] 할당량 계산 로직
 - [ ] 무료체험 만료 계산 로직
 
-### 10.2 통합 테스트
+### 11.2 통합 테스트
 - [ ] 폴더 선택 → 매핑 → 업로드 전체 플로우
 - [ ] 중복 파일 처리
 - [ ] 네트워크 오류 재시도
@@ -382,29 +428,44 @@ const BLOCKED_EXTENSIONS = [
 - [ ] ClamAV 바이러스 감지 시 처리
 - [ ] 무료체험 만료 시 차단
 
-### 10.3 E2E 테스트
+### 11.3 E2E 테스트
 - [ ] 실제 폴더 업로드 시나리오
 - [ ] 대용량 배치 (100+ 파일) 업로드
 - [ ] 등급별 제한 테스트
 
 ---
 
-## 11. 진행 상황
+## 12. 진행 상황
 
 | 단계 | 상태 | 비고 |
 |------|------|------|
 | 요구사항 정의 | ✅ 완료 | |
 | 기술 검토 | ✅ 완료 | |
 | 상세 설계 | ✅ 완료 | |
-| Phase 1 구현 | ⏳ 대기 | |
+| Phase 1 구현 | ✅ 완료 | 52개 테스트 통과 |
 | Phase 2 구현 | ⏳ 대기 | |
 | Phase 3 구현 | ⏳ 대기 | |
 | Phase 4 구현 | ⏳ 대기 | |
 | 테스트 | ⏳ 대기 | |
 
+### Phase 1 구현 결과 (2025-12-05)
+
+#### 생성된 파일
+- `src/features/batch-upload/types/index.ts` - 타입 정의
+- `src/features/batch-upload/utils/fileValidation.ts` - 파일 검증 유틸리티
+- `src/features/batch-upload/utils/customerMatcher.ts` - 고객명 매칭 유틸리티
+
+#### 테스트 파일
+- `src/features/batch-upload/utils/__tests__/fileValidation.test.ts` (29개 테스트)
+- `src/features/batch-upload/utils/__tests__/customerMatcher.test.ts` (23개 테스트)
+
+#### 테스트 결과
+- Phase 1 테스트: 52개 통과
+- 전체 테스트: 3,261개 통과 (26개 스킵)
+
 ---
 
-## 12. 결정된 사항 요약
+## 13. 결정된 사항 요약
 
 | 항목 | 결정 |
 |------|------|
