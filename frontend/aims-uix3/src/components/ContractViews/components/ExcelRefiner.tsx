@@ -824,12 +824,15 @@ export function ExcelRefiner() {
     // 범례 필터 초기화 (컬럼 클릭이 우선)
     setProductStatusFilter(null)
 
-    // 검증 초기화 (현재 시트만 - 항상 하나의 컬럼만 검증 상태 유지)
-    updateValidatingColumns(sheetName, () => new Set())
-    setProductMatchResult(null)
-    setProductNameColumnIndex(null)
-    setCustomerNameValidationResult(null)
-    setCustomerNameColumnIndex(null)
+    // 해당 타입의 컬럼 결과만 초기화 (기존 검증 상태는 유지)
+    if (type === 'productName') {
+      setProductMatchResult(null)
+      setProductNameColumnIndex(null)
+    }
+    if (type === 'customerName') {
+      setCustomerNameValidationResult(null)
+      setCustomerNameColumnIndex(null)
+    }
 
     // 먼저 "검증 중" 상태 표시
     setValidatingInProgress(prev => {
@@ -1703,15 +1706,28 @@ export function ExcelRefiner() {
     setActionLog(`⚠️ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행) - 재검증 필요`)
   }, [selectedRows, currentSheet, activeSheetIndex, showConfirm])
 
-  // 컬럼 선택 (헤더 클릭 시)
+  // 컬럼 선택 (헤더 클릭 시) - 표준규격 외 컬럼만 선택 가능
   const handleSelectColumn = useCallback((dataIndex: number) => {
+    if (!currentSheet) return
+
+    // 표준 컬럼인지 확인
+    const columnName = currentSheet.columns[dataIndex]
+    const standardColumns = getStandardColumnOrder(currentSheet.name) || []
+    const isStandardColumn = standardColumns.includes(columnName)
+
+    // 표준 컬럼은 선택하지 않음 (정렬만 가능)
+    if (isStandardColumn) {
+      setSelectedColumn(null)
+      return
+    }
+
     // 같은 컬럼 클릭 시 선택 해제
     if (selectedColumn === dataIndex) {
       setSelectedColumn(null)
     } else {
       setSelectedColumn(dataIndex)
     }
-  }, [selectedColumn])
+  }, [selectedColumn, currentSheet])
 
   // 선택된 컬럼 삭제
   const handleDeleteColumn = useCallback(async () => {
@@ -3234,9 +3250,11 @@ export function ExcelRefiner() {
                       const isSorted = sortColumn === dataIndex
                       const isSelected = selectedColumn === dataIndex
 
-                      // 검증 가능한 컬럼만 검증 클릭 스타일 적용
+                      // 검증 가능하지만 아직 검증되지 않은 컬럼만 파란색(clickable) 스타일 적용
+                      // 파란색 = 필수검증 컬럼 (아직 검증 안 됨)
+                      // 초록색 = 검증 완료됨
                       let thClassName = 'excel-refiner__th excel-refiner__th--sortable'
-                      if (isValidatable) {
+                      if (isValidatable && !isValidated && !isInProgress) {
                         thClassName += ' excel-refiner__th--clickable'
                       }
                       if (isInProgress) {
@@ -3484,25 +3502,32 @@ export function ExcelRefiner() {
             <> | 컬럼: {currentSheet.columns[selectedColumn]}</>
           )}
         </span>
-        {/* 컬럼 삭제 UI */}
-        {selectedColumn !== null && currentSheet.columns[selectedColumn] && (
-          <div className="excel-refiner__footer-actions">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteColumn}
-            >
-              컬럼 삭제
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedColumn(null)}
-            >
-              선택 해제
-            </Button>
-          </div>
-        )}
+        {/* 컬럼 삭제 UI - 표준규격 외 컬럼만 표시 */}
+        {selectedColumn !== null && currentSheet.columns[selectedColumn] && (() => {
+          const columnName = currentSheet.columns[selectedColumn]
+          const standardColumns = getStandardColumnOrder(currentSheet.name) || []
+          const isExtraColumn = !standardColumns.includes(columnName)
+          // 표준 컬럼이면 UI 표시 안 함
+          if (!isExtraColumn) return null
+          return (
+            <div className="excel-refiner__footer-actions">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteColumn}
+              >
+                컬럼 삭제
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedColumn(null)}
+              >
+                선택 해제
+              </Button>
+            </div>
+          )
+        })()}
         {/* 행 삭제 관련 UI: 휴지통 아이콘 + 삭제/선택해제 버튼 */}
         {currentSheet && selectedColumn === null && (
           <div className="excel-refiner__footer-actions">
