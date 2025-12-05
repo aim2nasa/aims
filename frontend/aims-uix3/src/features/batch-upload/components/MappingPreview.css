@@ -218,9 +218,9 @@
   flex-shrink: 0; /* 크기 고정 */
 }
 
-/* 복원 상태 경고 (파란색) */
+/* 복원 상태 경고 (파란색, 배경 없음) */
 .preview-warning.restored {
-  background-color: var(--color-ios-blue-bg, rgba(0, 122, 255, 0.1));
+  background-color: transparent;
   color: var(--color-ios-blue, #007aff);
 }
 
@@ -230,7 +230,6 @@
   justify-content: flex-end;
   gap: var(--spacing-sm);
   padding-top: var(--spacing-md);
-  border-top: 1px solid var(--color-border, #e5e7eb);
   flex-shrink: 0; /* 크기 고정 */
   margin-top: auto; /* 남은 공간을 위로 밀어서 하단 고정 */
 }
