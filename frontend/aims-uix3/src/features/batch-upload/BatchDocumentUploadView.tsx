@@ -99,6 +99,16 @@ function loadFromSessionStorage(): SerializedState | null {
 }
 
 /**
+ * 직렬화된 파일 정보를 가짜 File 객체로 변환 (트리 표시용)
+ */
+function createPlaceholderFile(info: SerializedFileInfo): File {
+  const file = new File([], info.name, { type: '' })
+  Object.defineProperty(file, 'size', { value: info.size, writable: false })
+  Object.defineProperty(file, 'webkitRelativePath', { value: info.webkitRelativePath, writable: false })
+  return file
+}
+
+/**
  * sessionStorage 초기화
  */
 function clearSessionStorage(): void {
@@ -123,7 +133,6 @@ export default function BatchDocumentUploadView({
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [customers, setCustomers] = useState<CustomerForMatching[]>([])
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
-  const [restoredMetadata, setRestoredMetadata] = useState<SerializedState['folderMappingsMetadata'] | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const isInitializedRef = useRef(false)
 
@@ -141,52 +150,29 @@ export default function BatchDocumentUploadView({
   // 현재 사용자의 등급별 배치 업로드 한도 (임시: 일반 등급)
   const tierLimit = TIER_LIMITS.STANDARD.maxBatchUpload
 
-  // sessionStorage에서 상태 복원 (최초 1회)
+  // 초기화 시 sessionStorage에서 상태 복원
   useEffect(() => {
     if (isInitializedRef.current) return
     isInitializedRef.current = true
 
     const saved = loadFromSessionStorage()
-    if (saved) {
-      // 고객 목록 복원
-      if (saved.customers.length > 0) {
-        setCustomers(saved.customers)
-      }
+    if (saved && saved.step === 'preview') {
+      // 미리보기 상태 복원
+      setStep(saved.step)
+      setCustomers(saved.customers)
+      setExpandedPaths(new Set(saved.expandedPaths))
 
-      // preview 단계였다면 메타데이터만 복원
-      if (saved.step === 'preview' && saved.folderMappingsMetadata.length > 0) {
-        setRestoredMetadata(saved.folderMappingsMetadata)
-        // Mock File 객체 생성 (트리 구조 표시용, 실제 업로드 불가)
-        const restoredMappings: FolderMapping[] = saved.folderMappingsMetadata.map(meta => {
-          // serializedFiles가 있으면 사용, 없으면 빈 배열
-          const serializedFiles = meta.serializedFiles || []
-
-          return {
-            folderName: meta.folderName,
-            customerId: meta.customerId,
-            customerName: meta.customerName,
-            matched: meta.matched,
-            fileCount: meta.fileCount,
-            totalSize: meta.totalSize,
-            // Mock File 객체 생성 (webkitRelativePath 포함)
-            files: serializedFiles.map(sf => {
-              // File-like 객체 생성 (실제 File이 아니지만 트리 표시에 필요한 속성 포함)
-              const mockFile = new File([], sf.name, { type: 'application/octet-stream' })
-              Object.defineProperty(mockFile, 'size', { value: sf.size, writable: false })
-              Object.defineProperty(mockFile, 'webkitRelativePath', { value: sf.webkitRelativePath, writable: false })
-              return mockFile
-            })
-          }
-        })
-        setFolderMappings(restoredMappings)
-
-        // 펼쳐진 폴더 상태 복원
-        if (saved.expandedPaths && saved.expandedPaths.length > 0) {
-          setExpandedPaths(new Set(saved.expandedPaths))
-        }
-
-        setStep('preview')
-      }
+      // 메타데이터로 FolderMapping 복원 (가짜 File 객체 사용)
+      const restoredMappings: FolderMapping[] = saved.folderMappingsMetadata.map(meta => ({
+        folderName: meta.folderName,
+        customerId: meta.customerId,
+        customerName: meta.customerName,
+        matched: meta.matched,
+        fileCount: meta.fileCount,
+        totalSize: meta.totalSize,
+        files: meta.serializedFiles.map(createPlaceholderFile)
+      }))
+      setFolderMappings(restoredMappings)
     }
   }, [])
 
@@ -222,9 +208,6 @@ export default function BatchDocumentUploadView({
   }, [progress.state])
 
   const handleFilesSelected = useCallback((files: File[]) => {
-    // 복원된 메타데이터 초기화 (새 파일 선택됨)
-    setRestoredMetadata(null)
-
     // 1. 파일을 폴더별로 그룹화
     const fileGroups = groupFilesByFolder(files)
 
@@ -263,7 +246,6 @@ export default function BatchDocumentUploadView({
     setStep('select')
     setFolderMappings([])
     setValidationErrors([])
-    setRestoredMetadata(null)
     setExpandedPaths(new Set())
   }, [])
 
@@ -282,7 +264,6 @@ export default function BatchDocumentUploadView({
     setStep('select')
     setFolderMappings([])
     setValidationErrors([])
-    setRestoredMetadata(null)
     setExpandedPaths(new Set())
     clearSessionStorage()
   }, [resetUpload])
@@ -323,7 +304,6 @@ export default function BatchDocumentUploadView({
               mappings={folderMappings}
               onBack={handleBack}
               onStartUpload={handleStartUpload}
-              isRestored={restoredMetadata !== null}
               expandedPaths={expandedPaths}
               onExpandedPathsChange={setExpandedPaths}
             />

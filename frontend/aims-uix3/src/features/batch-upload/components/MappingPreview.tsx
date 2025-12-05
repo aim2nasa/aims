@@ -17,7 +17,6 @@ interface MappingPreviewProps {
   mappings: FolderMapping[]
   onBack: () => void
   onStartUpload: (selectedMappings: FolderMapping[]) => void  // 선택된 매핑만 업로드
-  isRestored?: boolean  // sessionStorage에서 복원됨 (파일 없음)
   expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
   onExpandedPathsChange?: (paths: Set<string>) => void  // 펼침 상태 변경 콜백
 }
@@ -105,7 +104,6 @@ export default function MappingPreview({
   mappings,
   onBack,
   onStartUpload,
-  isRestored = false,
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange
 }: MappingPreviewProps) {
@@ -142,8 +140,8 @@ export default function MappingPreview({
     return mappings.filter(m => m.matched && selectedFolders.has(m.folderName)).length
   }, [mappings, selectedFolders])
 
-  // 복원된 상태면 파일이 없으므로 업로드 불가, 선택된 폴더가 있어야 업로드 가능
-  const canUpload = selectedCount > 0 && !isRestored
+  // 선택된 폴더가 있어야 업로드 가능
+  const canUpload = selectedCount > 0
 
   // 폴더 선택 토글
   const toggleSelection = useCallback((folderName: string, e: React.MouseEvent) => {
@@ -356,16 +354,8 @@ export default function MappingPreview({
         </div>
       </div>
 
-      {/* 복원 상태 경고 */}
-      {isRestored && (
-        <div className="preview-warning restored">
-          <SFSymbol name="arrow-clockwise" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-          <span>페이지가 새로고침되어 파일을 다시 선택해야 합니다. 뒤로 버튼을 눌러 폴더를 다시 드래그하세요.</span>
-        </div>
-      )}
-
       {/* 경고 */}
-      {stats.unmatched > 0 && !isRestored && (
+      {stats.unmatched > 0 && (
         <div className="preview-warning">
           <SFSymbol name="exclamationmark-triangle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
           <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다.</span>
@@ -376,11 +366,9 @@ export default function MappingPreview({
       <div className="preview-actions">
         <Button variant="secondary" onClick={onBack}>뒤로</Button>
         <Button variant="primary" onClick={handleStartUpload} disabled={!canUpload}>
-          {isRestored
-            ? '파일을 다시 선택하세요'
-            : canUpload
-              ? `${selectedCount}개 폴더 업로드 시작`
-              : '업로드할 폴더를 선택하세요'}
+          {canUpload
+            ? `${selectedCount}개 폴더 업로드 시작`
+            : '업로드할 폴더를 선택하세요'}
         </Button>
       </div>
     </div>
