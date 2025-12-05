@@ -368,9 +368,9 @@ html[data-theme="dark"] .tree-container {
   flex-shrink: 0; /* 크기 고정 */
 }
 
-/* 복원 상태 경고 (파란색, 배경 없음) */
-.preview-warning.restored {
-  background-color: transparent;
+/* placeholder 상태 경고 (파란색) */
+.preview-warning.placeholder {
+  background-color: rgba(0, 122, 255, 0.1);
   color: var(--color-ios-blue, #007aff);
 }
 

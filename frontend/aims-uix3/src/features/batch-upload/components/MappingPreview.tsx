@@ -132,7 +132,8 @@ export default function MappingPreview({
     const unmatched = mappings.length - matched
     const totalFiles = mappings.reduce((sum, m) => sum + m.fileCount, 0)
     const totalSize = mappings.reduce((sum, m) => sum + m.totalSize, 0)
-    return { matched, unmatched, totalFiles, totalSize }
+    const hasPlaceholder = mappings.some(m => m.isPlaceholder)
+    return { matched, unmatched, totalFiles, totalSize, hasPlaceholder }
   }, [mappings])
 
   // 선택된 매칭 폴더 수
@@ -140,8 +141,8 @@ export default function MappingPreview({
     return mappings.filter(m => m.matched && selectedFolders.has(m.folderName)).length
   }, [mappings, selectedFolders])
 
-  // 선택된 폴더가 있어야 업로드 가능
-  const canUpload = selectedCount > 0
+  // 선택된 폴더가 있고, placeholder가 아니어야 업로드 가능
+  const canUpload = selectedCount > 0 && !stats.hasPlaceholder
 
   // 폴더 선택 토글
   const toggleSelection = useCallback((folderName: string, e: React.MouseEvent) => {
@@ -354,8 +355,16 @@ export default function MappingPreview({
         </div>
       </div>
 
-      {/* 경고 */}
-      {stats.unmatched > 0 && (
+      {/* 경고 - placeholder 상태 */}
+      {stats.hasPlaceholder && (
+        <div className="preview-warning placeholder">
+          <SFSymbol name="arrow-counterclockwise" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+          <span>새로고침으로 파일 내용이 사라졌습니다. 뒤로 가서 폴더를 다시 선택해주세요.</span>
+        </div>
+      )}
+
+      {/* 경고 - 미매칭 */}
+      {stats.unmatched > 0 && !stats.hasPlaceholder && (
         <div className="preview-warning">
           <SFSymbol name="exclamationmark-triangle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
           <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다.</span>
@@ -366,9 +375,11 @@ export default function MappingPreview({
       <div className="preview-actions">
         <Button variant="secondary" onClick={onBack}>뒤로</Button>
         <Button variant="primary" onClick={handleStartUpload} disabled={!canUpload}>
-          {canUpload
-            ? `${selectedCount}개 폴더 업로드 시작`
-            : '업로드할 폴더를 선택하세요'}
+          {stats.hasPlaceholder
+            ? '폴더 다시 선택 필요'
+            : canUpload
+              ? `${selectedCount}개 폴더 업로드 시작`
+              : '업로드할 폴더를 선택하세요'}
         </Button>
       </div>
     </div>

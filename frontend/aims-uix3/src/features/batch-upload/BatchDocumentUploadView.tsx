@@ -100,11 +100,13 @@ function loadFromSessionStorage(): SerializedState | null {
 
 /**
  * 직렬화된 파일 정보를 가짜 File 객체로 변환 (트리 표시용)
+ * 실제 파일 내용은 없으므로 업로드 불가 - isPlaceholder 플래그로 구분
  */
-function createPlaceholderFile(info: SerializedFileInfo): File {
-  const file = new File([], info.name, { type: '' })
+function createPlaceholderFile(info: SerializedFileInfo): File & { isPlaceholder?: boolean } {
+  const file = new File([], info.name, { type: '' }) as File & { isPlaceholder?: boolean }
   Object.defineProperty(file, 'size', { value: info.size, writable: false })
   Object.defineProperty(file, 'webkitRelativePath', { value: info.webkitRelativePath, writable: false })
+  Object.defineProperty(file, 'isPlaceholder', { value: true, writable: false })
   return file
 }
 
@@ -165,6 +167,7 @@ export default function BatchDocumentUploadView({
       setExpandedPaths(new Set(saved.expandedPaths))
 
       // 메타데이터로 FolderMapping 복원 (가짜 File 객체 사용)
+      // isPlaceholder: true - 실제 파일 내용이 없어 업로드 불가, 재선택 필요
       const restoredMappings: FolderMapping[] = saved.folderMappingsMetadata.map(meta => ({
         folderName: meta.folderName,
         customerId: meta.customerId,
@@ -172,7 +175,8 @@ export default function BatchDocumentUploadView({
         matched: meta.matched,
         fileCount: meta.fileCount,
         totalSize: meta.totalSize,
-        files: meta.serializedFiles.map(createPlaceholderFile)
+        files: meta.serializedFiles.map(createPlaceholderFile),
+        isPlaceholder: true
       }))
       setFolderMappings(restoredMappings)
     }

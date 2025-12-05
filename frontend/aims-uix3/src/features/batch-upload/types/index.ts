@@ -75,6 +75,7 @@ export interface FolderMapping {
   files: File[]
   fileCount: number
   totalSize: number
+  isPlaceholder?: boolean  // sessionStorage에서 복원된 경우 true (업로드 불가)
 }
 
 /**
