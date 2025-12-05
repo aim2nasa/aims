@@ -49,6 +49,7 @@ import type { SelectedDocument, SmartSearchDocumentResponse } from './utils/docu
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/documentTransformers'
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
 import { useRightPaneContent } from './hooks/useRightPaneContent'
+import { usePersistentTheme } from './hooks/usePersistentTheme'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -419,41 +420,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     updateURLParams({ view: activeDocumentView })
   }, [activeDocumentView, updateURLParams])
 
-  // 테마 시스템 - localStorage 영속화 지원
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    try {
-      const savedTheme = localStorage.getItem('aims-theme')
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        return savedTheme
-      }
-      return 'light'
-    } catch {
-      return 'light'
-    }
-  })
+  // 테마 시스템 - usePersistentTheme 훅으로 관리
+  const { theme, toggleTheme: baseToggleTheme } = usePersistentTheme()
 
-  // 테마 적용
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-
-    // localStorage에 테마 설정 저장
-    try {
-      localStorage.setItem('aims-theme', theme)
-      if (import.meta.env.DEV) {
-        console.log(`[Theme] 테마 설정 저장: ${theme}`)
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[Theme] localStorage 저장 실패:', error)
-      }
-    }
-  }, [theme])
-
-  const toggleTheme = () => {
+  // 테마 토글 with 햅틱 피드백
+  const toggleTheme = useCallback(() => {
     // iOS 16+ 미디움 햅틱 피드백 - 인터페이스 변경
     haptic.triggerHaptic('medium')
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
+    baseToggleTheme()
+  }, [haptic, baseToggleTheme])
 
   // 브라우저 리사이즈 상태 관리
   const [isResizing, setIsResizing] = useState(false)
