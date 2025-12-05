@@ -161,6 +161,66 @@ setImportResultDetail({
 
 ---
 
+### P3-2: 대용량 파일 처리 최적화 (상세 분석)
+
+**문제**:
+엑셀 파일에 수천~수만 행이 있는 경우:
+1. **UI 멈춤**: 수천 개의 `<tr>` 요소가 한번에 렌더링되어 브라우저가 버벅거림
+2. **메모리 문제**: 모든 데이터를 한번에 메모리에 적재
+3. **검증 지연**: 상품명/고객명 검증이 전체 데이터에 대해 동기적으로 실행
+
+**해결 방안**:
+
+#### 방안 1: 가상화 (Virtualization)
+
+화면에 보이는 행만 실제 DOM에 렌더링하는 기법
+
+| 라이브러리 | 장점 | 단점 |
+|------------|------|------|
+| `react-window` | 가볍고 빠름 | 가변 높이 지원 제한적 |
+| `react-virtualized` | 기능 풍부 | 번들 크기 큼 |
+| `@tanstack/react-virtual` | TanStack 생태계 | 학습 곡선 |
+
+**적용 대상**: 테이블 렌더링 (미리보기 화면)
+
+#### 방안 2: 청크 단위 검증
+
+검증 로직을 작은 단위로 나누어 비동기 처리
+
+```typescript
+async function validateInChunks<T>(
+  items: T[],
+  validator: (item: T) => Promise<boolean>,
+  chunkSize = 100
+): Promise<boolean[]> {
+  const results: boolean[] = []
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize)
+    const chunkResults = await Promise.all(chunk.map(validator))
+    results.push(...chunkResults)
+    // UI 업데이트를 위한 yield
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+  return results
+}
+```
+
+**적용 대상**: 상품명 검증, 고객명 DB 검증
+
+**난이도/위험도 분석**:
+
+| 방안 | 난이도 | 위험도 | 비고 |
+|------|--------|--------|------|
+| 가상화 | 중~상 | 중 | 테이블 구조 변경 필요, 기존 스타일링과 충돌 가능 |
+| 청크 검증 | 하~중 | 하 | 기존 로직을 감싸는 형태로 점진적 적용 가능 |
+
+**권장 사항**:
+- 현재 상태에서 오픈 진행 가능
+- 실제 사용자 피드백을 받은 후 필요성 판단
+- 구현 시 청크 검증 먼저 도입 (위험도 낮음) → 이후 가상화 검토
+
+---
+
 ---
 
 ## 자동화 테스트
