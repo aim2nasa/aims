@@ -32,6 +32,7 @@ const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/C
 const ContractManagementView = lazy(() => import('./components/ContractViews/ContractManagementView'))
 const ContractAllView = lazy(() => import('./components/ContractViews/ContractAllView'))
 const ContractImportView = lazy(() => import('./components/ContractViews/ContractImportView'))
+const BatchDocumentUploadView = lazy(() => import('./features/batch-upload/BatchDocumentUploadView'))
 const QuickActionsView = lazy(() => import('./components/QuickActionsViews/QuickActionsView'))
 const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
@@ -238,6 +239,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "contracts" ||
         activeDocumentView === "contracts-all" ||
         activeDocumentView === "contracts-import" ||
+        activeDocumentView === "batch-document-upload" ||
         activeDocumentView === "quick-actions" ||
         activeDocumentView === "account-settings") {
       setPaginationVisible(false)
@@ -486,7 +488,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 고객 관리 View들
       'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship', 'customers-full-detail',
       // 계약 관리 View들
-      'contracts', 'contracts-all', 'contracts-import',
+      'contracts', 'contracts-all', 'contracts-import', 'batch-document-upload',
       // 설정 View들
       'account-settings'
     ]
@@ -996,6 +998,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={null}>
             <ContractImportView
               visible={activeDocumentView === 'contracts-import'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <BatchDocumentUploadView
+              visible={activeDocumentView === 'batch-document-upload'}
               onClose={closeDocumentView}
             />
           </Suspense>

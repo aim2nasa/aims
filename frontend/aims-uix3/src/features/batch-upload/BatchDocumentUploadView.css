@@ -1,0 +1,40 @@
+/**
+ * BatchDocumentUploadView Styles
+ * @since 2025-12-05
+ */
+
+.batch-upload-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.batch-upload-errors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.batch-upload-error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-error-bg, rgba(255, 59, 48, 0.1));
+  color: var(--color-error, #ff3b30);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.batch-upload-progress-placeholder,
+.batch-upload-complete-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}

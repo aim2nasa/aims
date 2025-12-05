@@ -1,0 +1,97 @@
+/**
+ * FolderDropZone Styles
+ * @since 2025-12-05
+ */
+
+.folder-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: var(--spacing-xl);
+  border: 2px dashed var(--color-border, #d1d5db);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-secondary, #f9fafb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.folder-drop-zone:hover:not(.disabled) {
+  border-color: var(--color-primary, #007aff);
+  background-color: var(--color-primary-bg, rgba(0, 122, 255, 0.05));
+}
+
+.folder-drop-zone:focus-visible {
+  outline: 2px solid var(--color-primary, #007aff);
+  outline-offset: 2px;
+}
+
+.folder-drop-zone.drag-over {
+  border-color: var(--color-primary, #007aff);
+  background-color: var(--color-primary-bg, rgba(0, 122, 255, 0.1));
+  transform: scale(1.01);
+}
+
+.folder-drop-zone.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.folder-input {
+  display: none;
+}
+
+.folder-drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.folder-drop-zone-icon {
+  color: var(--color-ios-cyan, #32ade6);
+  opacity: 0.8;
+}
+
+.folder-drop-zone.drag-over .folder-drop-zone-icon {
+  opacity: 1;
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.folder-drop-zone-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.folder-drop-zone-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.folder-drop-zone-description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.folder-drop-zone-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-tertiary, #f3f4f6);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.folder-drop-zone-hint-icon {
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+}

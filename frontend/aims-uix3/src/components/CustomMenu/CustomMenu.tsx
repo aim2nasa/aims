@@ -109,6 +109,14 @@ const MenuIcons = {
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
+  ),
+  // 문서 일괄등록 아이콘
+  DocumentBatchUpload: () => (
+    <SFSymbol
+      name="folder-fill-badge-plus"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 
@@ -333,6 +341,12 @@ const CustomMenu = ({
           icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
           label: '고객·계약 일괄등록',
           tooltipTitle: '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다',
+        },
+        {
+          key: 'batch-document-upload',
+          icon: <span className="menu-icon-cyan"><MenuIcons.DocumentBatchUpload /></span>,
+          label: '고객 문서 일괄등록',
+          tooltipTitle: '폴더별로 정리된 문서를 고객에게 일괄 등록합니다',
         }
       ]
     },
@@ -356,6 +370,12 @@ const CustomMenu = ({
         icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
         label: '',
         tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+      },
+      {
+        key: 'batch-document-upload',
+        icon: <span className="menu-icon-cyan"><MenuIcons.DocumentBatchUpload /></span>,
+        label: '',
+        tooltipTitle: '폴더별로 정리된 문서를 고객에게 일괄 등록합니다',
       }
     ] : []),
 

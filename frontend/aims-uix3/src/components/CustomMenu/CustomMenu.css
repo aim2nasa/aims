@@ -770,6 +770,11 @@
   color: var(--color-ios-pink); /* iOS systemPink */
 }
 
+/* 문서 일괄등록 - iOS systemCyan */
+.menu-icon-cyan {
+  color: var(--color-ios-cyan, #32ade6); /* iOS systemCyan */
+}
+
 /* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */
 
 /* === SMOOTH SCROLLING === */
