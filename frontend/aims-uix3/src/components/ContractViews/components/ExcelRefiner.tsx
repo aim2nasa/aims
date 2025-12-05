@@ -784,6 +784,9 @@ export function ExcelRefiner() {
     // 시트별 검증 상태는 Map에 유지되므로 초기화하지 않음
     setSortColumn(null)
     setSortDirection('asc')
+    // 시트 전환 시 필터 상태 초기화 (다른 시트에 적용되지 않도록)
+    setProductStatusFilter(null)
+    setLastClickedColumn(null)
   }, [])
 
   // 컬럼 정렬
@@ -800,6 +803,9 @@ export function ExcelRefiner() {
 
   // 컬럼 헤더 클릭 - 검증 활성화 (항상 하나의 컬럼만 검증 상태 유지)
   const handleColumnClick = useCallback(async (colIndex: number, columnName: string) => {
+    // 검증 진행 중이면 클릭 무시 (경쟁 상태 방지)
+    if (validatingInProgress.size > 0) return
+
     // 검증 로직이 정의된 컬럼만 클릭 가능
     if (!columnName || !currentSheet) return
     const type = getValidationType(columnName)
@@ -913,7 +919,7 @@ export function ExcelRefiner() {
         return next
       })
     }, 100)
-  }, [currentSheet, activeSheetIndex, updateValidatingColumns, updateValidatedHistory, showAlert])
+  }, [currentSheet, activeSheetIndex, updateValidatingColumns, updateValidatedHistory, showAlert, validatingInProgress])
 
   // 필수컬럼검증 (시트별로 다른 필수컬럼 적용)
   const handleValidateAllRequired = useCallback(async () => {
