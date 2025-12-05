@@ -27,8 +27,8 @@
 }
 
 .mapping-preview-stat-value {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
+  font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS: 섹션 제목급 */
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
@@ -41,7 +41,8 @@
 }
 
 .mapping-preview-stat-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 보조 라벨 */
+  font-weight: 400;
   color: var(--color-text-secondary);
 }
 
@@ -61,11 +62,9 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--color-bg-tertiary, #f3f4f6);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 테이블 헤더 */
   font-weight: 600;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .mapping-preview-body {
@@ -80,7 +79,8 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 1px solid var(--color-border-light, #f3f4f6);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 테이블 데이터 */
+  font-weight: 400;
   transition: background-color 0.15s ease;
 }
 
@@ -137,7 +137,8 @@
   background-color: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
   color: var(--color-warning, #ff9500);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 보조 정보 */
+  font-weight: 400;
 }
 
 /* 버튼 영역 */
