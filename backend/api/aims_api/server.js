@@ -445,10 +445,14 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     // 전체 문서 수 조회
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(query);
 
-    // customer_relation이 있는 문서의 customer_id 수집
+    // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
+    // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
     const customerIds = documents
-      .filter(doc => doc.customer_relation?.customer_id)
-      .map(doc => doc.customer_relation.customer_id);
+      .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
+      .map(doc => {
+        const id = doc.customer_relation?.customer_id || doc.customerId;
+        return typeof id === 'string' ? new ObjectId(id) : id;
+      });
 
     // 고객 정보 일괄 조회
     const customerMap = {};
@@ -484,16 +488,18 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
       }
 
       // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
+      // 🔧 customerId fallback: customer_relation이 없어도 customerId로 연결 표시
       let customerRelation = null;
-      if (doc.customer_relation?.customer_id) {
-        const customerId = doc.customer_relation.customer_id.toString();
+      const effectiveCustomerId = doc.customer_relation?.customer_id || doc.customerId;
+      if (effectiveCustomerId) {
+        const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
           customer_name: customerMap[customerId] || null,
-          relationship_type: doc.customer_relation.relationship_type,
-          assigned_by: doc.customer_relation.assigned_by,
-          assigned_at: doc.customer_relation.assigned_at,
-          notes: doc.customer_relation.notes
+          relationship_type: doc.customer_relation?.relationship_type || 'auto',
+          assigned_by: doc.customer_relation?.assigned_by || 'system',
+          assigned_at: doc.customer_relation?.assigned_at || doc.upload?.uploaded_at,
+          notes: doc.customer_relation?.notes || ''
         };
       }
 
@@ -762,10 +768,14 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         .toArray();
     }
 
-    // customer_relation이 있는 문서의 customer_id 수집
+    // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
+    // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
     const customerIds = documents
-      .filter(doc => doc.customer_relation?.customer_id)
-      .map(doc => doc.customer_relation.customer_id);
+      .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
+      .map(doc => {
+        const id = doc.customer_relation?.customer_id || doc.customerId;
+        return typeof id === 'string' ? new ObjectId(id) : id;
+      });
 
     // 고객 정보 일괄 조회
     const customerMap = {};
@@ -804,16 +814,18 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       }
 
       // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
+      // 🔧 customerId fallback: customer_relation이 없어도 customerId로 연결 표시
       let customerRelation = null;
-      if (doc.customer_relation?.customer_id) {
-        const customerId = doc.customer_relation.customer_id.toString();
+      const effectiveCustomerId = doc.customer_relation?.customer_id || doc.customerId;
+      if (effectiveCustomerId) {
+        const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
           customer_name: customerMap[customerId] || null,
-          relationship_type: doc.customer_relation.relationship_type,
-          assigned_by: doc.customer_relation.assigned_by,
-          assigned_at: doc.customer_relation.assigned_at,
-          notes: doc.customer_relation.notes
+          relationship_type: doc.customer_relation?.relationship_type || 'auto',
+          assigned_by: doc.customer_relation?.assigned_by || 'system',
+          assigned_at: doc.customer_relation?.assigned_at || doc.upload?.uploaded_at,
+          notes: doc.customer_relation?.notes || ''
         };
       }
 
