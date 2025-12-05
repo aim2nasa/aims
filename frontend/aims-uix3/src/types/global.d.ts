@@ -4,6 +4,14 @@
  * @version 1.0.0
  */
 
+/**
+ * PDF.js Worker URL 타입 선언 (Vite ?url import)
+ */
+declare module 'pdfjs-dist/build/pdf.worker.min.mjs?url' {
+  const workerUrl: string
+  export default workerUrl
+}
+
 type HapticEventHandler<TEvent extends Event = Event> = (event: TEvent) => void;
 
 interface AimsHaptic {

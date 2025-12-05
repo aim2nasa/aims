@@ -26,8 +26,6 @@ import { formatDateTime } from '@/shared/lib/timeUtils'
 import { getAuthHeaders } from '@/shared/lib/api'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
-// @ts-ignore - 다른 모듈에서 사용될 수 있음
-const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
 
 type MaybeSerialized<T> = T | string | null | undefined
 

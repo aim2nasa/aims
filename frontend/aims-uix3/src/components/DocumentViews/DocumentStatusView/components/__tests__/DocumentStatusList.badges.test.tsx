@@ -324,7 +324,7 @@ describe('DocumentStatusList - OCR/AR 뱃지 시스템 (commit dcbe7d1)', () => 
     it('stages.ocr가 문자열이면 뱃지 표시 안 함', () => {
       const doc = createMockDocument({
         stages: {
-          // @ts-ignore - 테스트를 위한 의도적 타입 불일치
+          // @ts-expect-error - 테스트를 위한 의도적 타입 불일치 (백엔드가 문자열을 반환하는 경우 테스트)
           ocr: 'completed'
         }
       })

@@ -6,7 +6,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 // PDF.js worker 설정 (Vite 환경)
-// @ts-ignore
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
