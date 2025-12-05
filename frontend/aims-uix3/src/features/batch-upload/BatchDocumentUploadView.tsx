@@ -203,14 +203,14 @@ export default function BatchDocumentUploadView({
       titleIcon={
         <span className="menu-icon-cyan">
           <SFSymbol
-            name="doc-badge-plus"
+            name="archivebox"
             size={SFSymbolSize.CALLOUT}
             weight={SFSymbolWeight.MEDIUM}
           />
         </span>
       }
       onClose={onClose}
-      placeholderIcon="doc-badge-plus"
+      placeholderIcon="archivebox"
       placeholderMessage="폴더별로 정리된 문서를 고객에게 일괄 등록합니다."
     >
       {renderContent()}

@@ -113,7 +113,7 @@ const MenuIcons = {
   // 문서 일괄등록 아이콘
   DocumentBatchUpload: () => (
     <SFSymbol
-      name="doc-badge-plus"
+      name="archivebox"
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
