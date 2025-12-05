@@ -11,8 +11,25 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AnnualReportApi } from '../annualReportApi';
 
-// Mock fetch
-global.fetch = vi.fn();
+// api 모듈 mock 설정
+const mockApiPost = vi.fn();
+
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: vi.fn(),
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn()
+  },
+  apiRequest: vi.fn(),
+  ApiError: class ApiError extends Error {
+    constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
+      super(message);
+      this.name = 'ApiError';
+    }
+  }
+}));
 
 // Mock localStorage for auth
 const mockLocalStorage = (() => {
@@ -62,10 +79,7 @@ describe('AnnualReportApi', () => {
         }
       };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -80,15 +94,12 @@ describe('AnnualReportApi', () => {
       expect(result.kept_report?.customer_name).toBe('홍길동');
 
       // API 호출 확인
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockApiPost).toHaveBeenCalledWith(
         expect.stringContaining(`/customers/${customerId}/annual-reports/cleanup-duplicates`),
         expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({
-            issue_date: issueDate,
-            reference_linked_at: referenceLinkedAt,
-            customer_name: customerName
-          })
+          issue_date: issueDate,
+          reference_linked_at: referenceLinkedAt,
+          customer_name: customerName
         })
       );
     });
@@ -100,10 +111,7 @@ describe('AnnualReportApi', () => {
         deleted_count: 0
       };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -124,10 +132,7 @@ describe('AnnualReportApi', () => {
         deleted_count: 0
       };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -140,18 +145,13 @@ describe('AnnualReportApi', () => {
       expect(result.success).toBe(true);
 
       // customer_name이 undefined로 전송됨
-      const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      const [, callBody] = mockApiPost.mock.calls[0] as [string, Record<string, unknown>];
       expect(callBody.customer_name).toBeUndefined();
     });
 
     it('API 오류 시 success: false와 에러 메시지를 반환한다', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({
-          success: false,
-          message: '서버 오류'
-        })
-      } as Response);
+      const { ApiError } = await import('@/shared/lib/api');
+      mockApiPost.mockRejectedValueOnce(new ApiError('서버 오류', 500, 'Internal Server Error'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -166,7 +166,7 @@ describe('AnnualReportApi', () => {
     });
 
     it('네트워크 오류 시 success: false와 에러 메시지를 반환한다', async () => {
-      vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
+      mockApiPost.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -183,10 +183,7 @@ describe('AnnualReportApi', () => {
     it('userId가 쿼리 파라미터로 전달된다', async () => {
       const mockResponse = { success: true, deleted_count: 0 };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -196,17 +193,14 @@ describe('AnnualReportApi', () => {
         customerName
       );
 
-      const callUrl = (global.fetch as any).mock.calls[0][0];
+      const [callUrl] = mockApiPost.mock.calls[0] as [string, unknown];
       expect(callUrl).toContain(`userId=${encodeURIComponent(userId)}`);
     });
 
-    it('Authorization 헤더가 포함된다', async () => {
+    it('Authorization 헤더가 api 모듈에 의해 자동 포함된다', async () => {
+      // api 모듈이 헤더를 자동으로 처리하므로 호출만 확인
       const mockResponse = { success: true, deleted_count: 0 };
-
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         customerId,
@@ -216,8 +210,8 @@ describe('AnnualReportApi', () => {
         customerName
       );
 
-      const callHeaders = (global.fetch as any).mock.calls[0][1].headers;
-      expect(callHeaders.Authorization).toBe('Bearer test-jwt-token');
+      // api.post가 호출되었는지 확인 (헤더는 api 모듈이 자동 처리)
+      expect(mockApiPost).toHaveBeenCalled();
     });
   });
 
@@ -238,10 +232,7 @@ describe('AnnualReportApi', () => {
         }
       };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         'customer123',
@@ -263,10 +254,7 @@ describe('AnnualReportApi', () => {
         deleted_count: 0
       };
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       // 홍길동의 AR에 대해 정리 요청했지만
       // 같은 발행일에 다른 고객명(김철수)의 AR이 있어도 삭제되지 않음

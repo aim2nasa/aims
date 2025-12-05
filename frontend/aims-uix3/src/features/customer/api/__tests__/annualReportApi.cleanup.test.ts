@@ -12,8 +12,25 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AnnualReportApi } from '../annualReportApi';
 
-// Fetch mock 설정
-global.fetch = vi.fn();
+// api 모듈 mock 설정
+const mockApiPost = vi.fn();
+
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: vi.fn(),
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn()
+  },
+  apiRequest: vi.fn(),
+  ApiError: class ApiError extends Error {
+    constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
+      super(message);
+      this.name = 'ApiError';
+    }
+  }
+}));
 
 describe('AnnualReportApi.cleanupDuplicates', () => {
   const mockCustomerId = '6735aaaa3333333333333333';
@@ -42,10 +59,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         }
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -68,10 +82,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 0
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -92,10 +103,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 1
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -104,13 +112,11 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         mockReferenceLinkedAt
       );
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockApiPost).toHaveBeenCalledWith(
         `/api/customers/${mockCustomerId}/annual-reports/cleanup-duplicates?userId=${mockUserId}`,
         expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          issue_date: mockIssueDate,
+          reference_linked_at: mockReferenceLinkedAt
         })
       );
     });
@@ -122,10 +128,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 1
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -134,23 +137,20 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         mockReferenceLinkedAt
       );
 
-      const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-      if (!fetchCall) throw new Error('fetch was not called');
-      const requestBody = JSON.parse(fetchCall[1].body);
+      const [, requestBody] = mockApiPost.mock.calls[0] as [string, Record<string, unknown>];
 
       // userId는 query string에 있고, body에는 issue_date와 reference_linked_at만 있음
       expect(requestBody).toEqual({
         issue_date: mockIssueDate,
-        reference_linked_at: mockReferenceLinkedAt
+        reference_linked_at: mockReferenceLinkedAt,
+        customer_name: undefined
       });
     });
   });
 
   describe('에러 처리', () => {
     it('네트워크 에러 시 에러 메시지를 반환해야 한다', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-        new Error('Network error')
-      );
+      mockApiPost.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -165,12 +165,8 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
     });
 
     it('HTTP 404 에러 시 에러 메시지를 반환해야 한다', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-        json: async () => ({ message: '고객을 찾을 수 없습니다' })
-      });
+      const { ApiError } = await import('@/shared/lib/api');
+      mockApiPost.mockRejectedValueOnce(new ApiError('고객을 찾을 수 없습니다', 404, 'Not Found'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -184,12 +180,8 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
     });
 
     it('HTTP 403 에러 시 에러 메시지를 반환해야 한다', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        statusText: 'Forbidden',
-        json: async () => ({ message: '권한이 없습니다' })
-      });
+      const { ApiError } = await import('@/shared/lib/api');
+      mockApiPost.mockRejectedValueOnce(new ApiError('권한이 없습니다', 403, 'Forbidden'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -203,12 +195,8 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
     });
 
     it('HTTP 500 에러 시 서버 에러 메시지를 반환해야 한다', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        json: async () => ({ detail: '서버 오류가 발생했습니다' })
-      });
+      const { ApiError } = await import('@/shared/lib/api');
+      mockApiPost.mockRejectedValueOnce(new ApiError('서버 오류가 발생했습니다', 500, 'Internal Server Error'));
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -221,14 +209,10 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
       expect(result.message).toBeDefined();
     });
 
-    it('응답 JSON 파싱 실패 시 에러를 처리해야 한다', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        json: async () => {
-          throw new Error('Invalid JSON');
-        }
+    it('응답 success가 false일 때 에러를 처리해야 한다', async () => {
+      mockApiPost.mockResolvedValueOnce({
+        success: false,
+        message: 'Bad Request'
       });
 
       const result = await AnnualReportApi.cleanupDuplicates(
@@ -251,11 +235,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 0
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         '',
@@ -264,7 +244,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         mockReferenceLinkedAt
       );
 
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockApiPost).toHaveBeenCalled();
     });
 
     it('issue_date가 T로 구분된 ISO 형식이어도 처리해야 한다', async () => {
@@ -274,10 +254,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 1
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -286,10 +263,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         mockReferenceLinkedAt
       );
 
-      const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-      if (!fetchCall) throw new Error('fetch was not called');
-      const requestBody = JSON.parse(fetchCall[1].body);
-
+      const [, requestBody] = mockApiPost.mock.calls[0] as [string, Record<string, unknown>];
       expect(requestBody.issue_date).toBe('2025-08-29T00:00:00Z');
     });
   });
@@ -309,10 +283,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         }
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -338,10 +309,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         // kept_report 없음
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
+      mockApiPost.mockResolvedValueOnce(mockResponse);
 
       const result = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,
@@ -372,15 +340,9 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 1
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse1
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse2
-        });
+      mockApiPost
+        .mockResolvedValueOnce(mockResponse1)
+        .mockResolvedValueOnce(mockResponse2);
 
       const result1 = await AnnualReportApi.cleanupDuplicates(
         customer1Id,
@@ -398,7 +360,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
 
       expect(result1.deleted_count).toBe(2);
       expect(result2.deleted_count).toBe(1);
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(mockApiPost).toHaveBeenCalledTimes(2);
     });
 
     it('연속된 정리 작업이 올바르게 동작해야 한다', async () => {
@@ -417,15 +379,9 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
         deleted_count: 2
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse1
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse2
-        });
+      mockApiPost
+        .mockResolvedValueOnce(mockResponse1)
+        .mockResolvedValueOnce(mockResponse2);
 
       const result1 = await AnnualReportApi.cleanupDuplicates(
         mockCustomerId,

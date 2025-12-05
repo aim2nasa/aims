@@ -5,7 +5,7 @@
  */
 
 import type { Customer } from '@/entities/customer';
-import { getAuthHeaders } from '@/shared/lib/api';
+import { api, apiRequest, ApiError } from '@/shared/lib/api';
 
 // Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
 const ANNUAL_REPORT_API_URL = '/api';
@@ -173,18 +173,15 @@ export class AnnualReportApi {
     request: ParseAnnualReportRequest
   ): Promise<ParseAnnualReportResponse> {
     try {
-      const response = await fetch(`${ANNUAL_REPORT_API_URL}/annual-report/parse`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify(request),
-      });
+      const data = await api.post<{
+        success?: boolean;
+        message?: string;
+        file_id?: string;
+        status_url?: string;
+        error?: string;
+      }>(`${ANNUAL_REPORT_API_URL}/annual-report/parse`, request);
 
-      const data = await response.json();
-
-      if (response.ok && data.success !== false) {
+      if (data.success !== false) {
         return {
           success: true,
           message: data.message,
@@ -195,11 +192,10 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || 'Annual Report 파싱 요청에 실패했습니다.');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Annual Report 파싱 중 오류가 발생했습니다.',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'Annual Report 파싱 중 오류가 발생했습니다.');
+      return { success: false, error: message };
     }
   }
 
@@ -211,14 +207,17 @@ export class AnnualReportApi {
    */
   static async getParseStatus(fileId: string): Promise<ParseStatusResponse> {
     try {
-      const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/annual-report/status/${fileId}`,
-        { headers: getAuthHeaders() }
-      );
+      const data = await api.get<{
+        success?: boolean;
+        status?: 'processing' | 'completed' | 'failed' | 'not_annual_report';
+        file_id?: string;
+        progress?: string;
+        result?: AnnualReport;
+        message?: string;
+        error?: string;
+      }>(`${ANNUAL_REPORT_API_URL}/annual-report/status/${fileId}`);
 
-      const data = await response.json();
-
-      if (response.ok && data.success !== false) {
+      if (data.success !== false) {
         return {
           success: true,
           status: data.status,
@@ -230,11 +229,10 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || '상태 조회에 실패했습니다.');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '상태 조회 중 오류가 발생했습니다.',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : '상태 조회 중 오류가 발생했습니다.');
+      return { success: false, error: message };
     }
   }
 
@@ -252,21 +250,22 @@ export class AnnualReportApi {
     limit: number = 10
   ): Promise<AnnualReportsListResponse> {
     try {
-      const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}`,
-        { headers: getAuthHeaders() }
-      );
+      const data = await api.get<{
+        success?: boolean;
+        data?: AnnualReportSummary[];
+        count?: number;
+        total?: number;
+        message?: string;
+        error?: string;
+      }>(`${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}`);
 
-      const data = await response.json();
-
-      if (response.ok && data.success !== false) {
+      if (data.success !== false) {
         // 백엔드 응답: { success: true, data: [...], count: 1, total: 1 }
-        // data는 이미 배열이고, 각 요소가 AnnualReportSummary
         return {
           success: true,
           data: {
             customer_id: customerId,
-            reports: Array.isArray(data.data) ? data.data : [],  // data 배열을 reports로 매핑
+            reports: Array.isArray(data.data) ? data.data : [],
             total_count: data.total || data.count || 0,
           },
         };
@@ -274,11 +273,10 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || 'Annual Reports 조회에 실패했습니다.');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Annual Reports 조회 중 오류가 발생했습니다.',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'Annual Reports 조회 중 오류가 발생했습니다.');
+      return { success: false, error: message };
     }
   }
 
@@ -294,45 +292,34 @@ export class AnnualReportApi {
     _userId: string
   ): Promise<LatestAnnualReportResponse> {
     try {
-      const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest`,
-        { headers: getAuthHeaders() }
-      );
-
-      // 404는 데이터 없음 (정상 케이스)
-      if (response.status === 404) {
-        return {
-          success: true,
-          data: {
-            customer_id: customerId,
-            report: null,
-          },
-        };
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await api.get<{
+        success?: boolean;
+        data?: unknown;
+        message?: string;
+        error?: string;
+      }>(`${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest`);
 
       if (data.success) {
         // 백엔드 응답: { success: true, data: { report_date, parsed_data: {...} } }
-        // data.data가 이미 report 객체 자체
         return {
           success: true,
-          data: data.data || null,  // report를 감싸지 않음
+          data: data.data || null,
         };
       }
 
       throw new Error(data.message || data.error || '최신 Annual Report 조회에 실패했습니다.');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        error:
-          error instanceof Error ? error.message : '최신 Annual Report 조회 중 오류가 발생했습니다.',
-      };
+      // 404는 데이터 없음 (정상 케이스)
+      if (error instanceof ApiError && error.status === 404) {
+        return {
+          success: true,
+          data: { customer_id: customerId, report: null },
+        };
+      }
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : '최신 Annual Report 조회 중 오류가 발생했습니다.');
+      return { success: false, error: message };
     }
   }
 
@@ -432,26 +419,14 @@ export class AnnualReportApi {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${ANNUAL_REPORT_API_URL}/annual-report/check`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await api.post<CheckAnnualReportResponse>(
+        `${ANNUAL_REPORT_API_URL}/annual-report/check`,
+        formData
+      );
       return data;
-    } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
+    } catch {
       // 에러 시에도 is_annual_report: false로 반환 (조용히 실패)
-      return {
-        is_annual_report: false,
-        confidence: 0,
-        metadata: null,
-      };
+      return { is_annual_report: false, confidence: 0, metadata: null };
     }
   }
 
@@ -473,24 +448,16 @@ export class AnnualReportApi {
       formData.append('file', file);
       formData.append('customer_id', customerId);
 
-      const response = await fetch(`${ANNUAL_REPORT_API_URL}/annual-report/parse-file`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await api.post<ParseAnnualReportApiResponse>(
+        `${ANNUAL_REPORT_API_URL}/annual-report/parse-file`,
+        formData
+      );
       return data;
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Annual Report 파싱 요청에 실패했습니다.',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'Annual Report 파싱 요청에 실패했습니다.');
+      return { success: false, message };
     }
   }
 
@@ -504,20 +471,15 @@ export class AnnualReportApi {
   static async searchCustomersByName(name: string, _userId: string): Promise<Customer[]> {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
-      const response = await fetch(
-        `/api/customers?search=${encodeURIComponent(name)}`,
-        { headers: getAuthHeaders() }
-      );
+      const data = await api.get<{
+        success?: boolean;
+        data?: { customers?: Customer[] };
+      }>(`/api/customers?search=${encodeURIComponent(name)}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       // 백엔드 응답 구조: { success: true, data: { customers: [...] } }
       return data.data?.customers || [];
-    } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
+    } catch {
+      // 에러 시 빈 배열 반환 (조용히 실패)
       return [];
     }
   }
@@ -536,21 +498,16 @@ export class AnnualReportApi {
     indices: number[]
   ): Promise<{ success: boolean; message: string; deleted_count?: number }> {
     try {
-      const response = await fetch(
+      const data = await apiRequest<{
+        success?: boolean;
+        message?: string;
+        deleted_count?: number;
+      }>(
         `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?userId=${encodeURIComponent(userId)}`,
-        {
-          method: 'DELETE',
-          headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-          body: JSON.stringify({ indices }),
-        }
+        { method: 'DELETE', body: { indices } }
       );
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data.success) {
         return {
           success: true,
           message: data.message || 'Annual Reports가 삭제되었습니다',
@@ -560,11 +517,10 @@ export class AnnualReportApi {
 
       throw new Error(data.message || 'Annual Reports 삭제에 실패했습니다');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다');
+      return { success: false, message };
     }
   }
 
@@ -602,25 +558,25 @@ export class AnnualReportApi {
     };
   }> {
     try {
-      const response = await fetch(
+      const data = await api.post<{
+        success?: boolean;
+        message?: string;
+        deleted_count?: number;
+        kept_report?: {
+          issue_date?: string;
+          parsed_at?: string;
+          customer_name?: string;
+        };
+      }>(
         `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/cleanup-duplicates?userId=${encodeURIComponent(userId)}`,
         {
-          method: 'POST',
-          headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-          body: JSON.stringify({
-            issue_date: issueDate,
-            reference_linked_at: referenceLinkedAt,
-            customer_name: customerName,
-          }),
+          issue_date: issueDate,
+          reference_linked_at: referenceLinkedAt,
+          customer_name: customerName,
         }
       );
 
-      const data = await response.json();
-
-      if (response.ok && data.success !== false) {
+      if (data.success !== false) {
         return {
           success: true,
           message: data.message || '중복 Annual Reports가 정리되었습니다',
@@ -631,12 +587,10 @@ export class AnnualReportApi {
 
       throw new Error(data.message || '중복 Annual Reports 정리에 실패했습니다');
     } catch (error) {
-      // 에러는 리턴값으로 처리되므로 로깅 불필요
-      return {
-        success: false,
-        message:
-          error instanceof Error ? error.message : '중복 Annual Reports 정리 중 오류가 발생했습니다',
-      };
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : '중복 Annual Reports 정리 중 오류가 발생했습니다');
+      return { success: false, message };
     }
   }
 }

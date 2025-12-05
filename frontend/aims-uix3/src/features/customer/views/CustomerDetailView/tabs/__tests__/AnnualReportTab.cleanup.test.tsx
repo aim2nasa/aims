@@ -15,20 +15,29 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnnualReportTab } from '../AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 
-// Fetch mock 설정 (cleanup API, annual-reports API 등에서 사용)
-global.fetch = vi.fn();
-
-// api 모듈 mock 설정 (documents, pending 조회에서 사용)
+// api 모듈 mock 설정
 const mockApiGet = vi.fn();
+const mockApiPost = vi.fn();
+
 vi.mock('@/shared/lib/api', () => ({
   api: {
     get: (...args: unknown[]) => mockApiGet(...args),
-    post: vi.fn(),
+    post: (...args: unknown[]) => mockApiPost(...args),
     patch: vi.fn(),
     delete: vi.fn()
   },
-  getAuthHeaders: () => ({ 'Authorization': 'Bearer mock-token' })
+  apiRequest: vi.fn(),
+  getAuthHeaders: () => ({ 'Authorization': 'Bearer mock-token' }),
+  ApiError: class ApiError extends Error {
+    constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
+      super(message);
+      this.name = 'ApiError';
+    }
+  }
 }));
+
+// Fetch mock은 Annual Reports 목록 조회용으로만 사용
+global.fetch = vi.fn();
 
 // Mock customer data
 const mockCustomer: Customer = {
@@ -69,6 +78,7 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockApiGet.mockReset();
+    mockApiPost.mockReset();
   });
 
   describe('자동 정리 실행', () => {
@@ -123,18 +133,18 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // Cleanup API는 이제 api.post 사용
+      mockApiPost
+        .mockResolvedValueOnce(mockCleanupResponse1)
+        .mockResolvedValueOnce(mockCleanupResponse2);
+
+      // Annual Reports 목록 조회는 여전히 api.get
+      // 하지만 getAnnualReports도 api.get을 사용하므로 mockApiGet 설정 필요
+      // 테스트를 단순화하기 위해 fetch로 남겨둠
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Cleanup 1
-          ok: true,
-          json: async () => mockCleanupResponse1
-        })
-        .mockResolvedValueOnce({  // Cleanup 2
-          ok: true,
-          json: async () => mockCleanupResponse2
-        })
         .mockResolvedValueOnce({  // Annual Reports API
           ok: true,
           json: async () => mockAnnualReports
@@ -147,9 +157,9 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       );
 
       await waitFor(() => {
-        // Cleanup API가 2번 호출되었는지 확인
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        // Cleanup API가 2번 호출되었는지 확인 (api.post)
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(2);
       });
@@ -176,9 +186,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // fetch는 Annual Reports용
       (global.fetch as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({  // Annual Reports API
           ok: true,
@@ -192,9 +203,9 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       );
 
       await waitFor(() => {
-        // Cleanup API가 호출되지 않았는지 확인
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        // Cleanup API가 호출되지 않았는지 확인 (api.post)
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(0);
       });
@@ -239,14 +250,14 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // Cleanup API는 api.post 사용
+      mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
+
+      // fetch는 Annual Reports용
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Cleanup (doc1만)
-          ok: true,
-          json: async () => mockCleanupResponse
-        })
         .mockResolvedValueOnce({  // Annual Reports API
           ok: true,
           json: async () => mockAnnualReports
@@ -260,8 +271,8 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
 
       await waitFor(() => {
         // Cleanup API가 1번만 호출되었는지 확인 (linkedAt 있는 것만)
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(1);
       });
@@ -307,14 +318,14 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // Cleanup API는 api.post 사용
+      mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
+
+      // fetch는 Annual Reports용
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Cleanup (doc1만)
-          ok: true,
-          json: async () => mockCleanupResponse
-        })
         .mockResolvedValueOnce({  // Annual Reports API
           ok: true,
           json: async () => mockAnnualReports
@@ -328,8 +339,8 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
 
       await waitFor(() => {
         // Cleanup API가 1번만 호출되었는지 확인
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(1);
       });
@@ -367,17 +378,20 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
-      // Documents API는 이제 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // Documents API와 Annual Reports API 모두 api.get 사용
+      // URL에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.reject(new Error('Unknown URL'));
+      });
 
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(  // Cleanup 실패
-          new Error('Network error')
-        )
-        .mockResolvedValueOnce({  // Annual Reports API (정리 실패해도 실행됨)
-          ok: true,
-          json: async () => mockAnnualReports
-        });
+      // Cleanup API 실패 (api.post)
+      mockApiPost.mockRejectedValueOnce(new Error('Network error'));
 
       render(
         <Wrapper>
@@ -387,9 +401,9 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
 
       // AR 목록이 표시되는지 확인 (에러에도 불구하고)
       await waitFor(() => {
-        // Annual Reports API가 호출되었는지 확인
-        const arCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('/annual-reports') && !call[0].includes('cleanup')
+        // Annual Reports API가 호출되었는지 확인 (api.get)
+        const arCalls = mockApiGet.mock.calls.filter(
+          call => (call[0] as string).includes('/annual-reports')
         );
         expect(arCalls.length).toBeGreaterThan(0);
       });
@@ -408,14 +422,17 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
-      // Documents API 실패 (api.get)
-      mockApiGet.mockRejectedValue(new Error('Network error'));
-
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Annual Reports API (정리 없이 바로 실행)
-          ok: true,
-          json: async () => mockAnnualReports
-        });
+      // Documents API는 실패, Annual Reports API는 성공
+      // URL에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.reject(new Error('Network error'));
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.reject(new Error('Unknown URL'));
+      });
 
       render(
         <Wrapper>
@@ -424,15 +441,15 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       );
 
       await waitFor(() => {
-        // Cleanup API가 호출되지 않았는지 확인
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        // Cleanup API가 호출되지 않았는지 확인 (api.post)
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(0);
 
-        // Annual Reports API는 호출되었는지 확인
-        const arCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('/annual-reports') && !call[0].includes('cleanup')
+        // Annual Reports API는 호출되었는지 확인 (api.get)
+        const arCalls = mockApiGet.mock.calls.filter(
+          call => (call[0] as string).includes('/annual-reports')
         );
         expect(arCalls.length).toBeGreaterThan(0);
       });
@@ -476,13 +493,17 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       // Annual Reports API 응답
       const mockAnnualReports = { success: true, data: [] };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // Cleanup API는 api.post 사용
+      mockApiPost
+        .mockResolvedValueOnce(mockCleanupResponse1)
+        .mockResolvedValueOnce(mockCleanupResponse2)
+        .mockResolvedValueOnce(mockCleanupResponse3);
+
+      // fetch는 Annual Reports용
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse1 })
-        .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse2 })
-        .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse3 })
         .mockResolvedValueOnce({ ok: true, json: async () => mockAnnualReports });
 
       render(
@@ -492,9 +513,9 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       );
 
       await waitFor(() => {
-        // Cleanup API가 3번 호출되었는지 확인
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        // Cleanup API가 3번 호출되었는지 확인 (api.post)
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(3);
       });
@@ -524,11 +545,14 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       // Annual Reports API 응답
       const mockAnnualReports = { success: true, data: [] };
 
-      // Documents API는 이제 api.get 사용
+      // Documents API는 api.get 사용
       mockApiGet.mockResolvedValue(mockDocuments);
 
+      // Cleanup API는 api.post 사용
+      mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
+
+      // fetch는 Annual Reports용
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse })
         .mockResolvedValueOnce({ ok: true, json: async () => mockAnnualReports });
 
       render(
@@ -538,16 +562,16 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       );
 
       await waitFor(() => {
-        // Cleanup API 호출 검증
-        const cleanupCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-          call => call[0].includes('cleanup-duplicates')
+        // Cleanup API 호출 검증 (api.post)
+        const cleanupCalls = mockApiPost.mock.calls.filter(
+          call => (call[0] as string).includes('cleanup-duplicates')
         );
         expect(cleanupCalls.length).toBe(1);
 
         // issue_date가 날짜만 추출되어 전송되었는지 확인
         const firstCall = cleanupCalls[0];
         if (!firstCall) throw new Error('cleanup call not found');
-        const requestBody = JSON.parse(firstCall[1].body);
+        const requestBody = firstCall[1] as Record<string, unknown>;
         expect(requestBody.issue_date).toBe('2025-08-29');
       });
     });
