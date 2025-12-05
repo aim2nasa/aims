@@ -136,12 +136,14 @@ html[data-theme="dark"] .tree-container {
   font-weight: 600;
 }
 
-.tree-line.root.matched {
-  color: var(--color-text-primary);
+.tree-line.root.matched .tree-name {
+  color: var(--color-ios-green, #34c759);
+  font-weight: 600;
 }
 
-.tree-line.root.unmatched {
-  opacity: 0.6;
+.tree-line.root.unmatched .tree-name {
+  color: var(--color-ios-orange, #ff9500);
+  font-weight: 600;
 }
 
 /* 트리 접두사 (├── └── │) */

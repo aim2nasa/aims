@@ -268,9 +268,7 @@ export default function MappingPreview({
                 </span>
                 <span className="tree-icon folder">📁</span>
                 <span className="tree-name">{mapping.folderName}</span>
-                {mapping.matched ? (
-                  <span className="tree-badge matched">→ {mapping.customerName}</span>
-                ) : (
+                {!mapping.matched && (
                   <span className="tree-badge unmatched">미매칭</span>
                 )}
                 <span className="tree-info">
