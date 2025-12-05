@@ -2079,7 +2079,19 @@ export function ExcelRefiner() {
 
         setImportProgress({ current: 1, total: 1, message: `고객 등록 중 (${customers.length}명)...` })
 
-        const result = await CustomerService.bulkImportCustomers(customers)
+        const rawResult = await CustomerService.bulkImportCustomers(customers)
+
+        // API 응답 검증 및 기본값 설정
+        const result = {
+          createdCount: rawResult?.createdCount ?? 0,
+          updatedCount: rawResult?.updatedCount ?? 0,
+          skippedCount: rawResult?.skippedCount ?? 0,
+          errorCount: rawResult?.errorCount ?? 0,
+          created: Array.isArray(rawResult?.created) ? rawResult.created : [],
+          updated: Array.isArray(rawResult?.updated) ? rawResult.updated : [],
+          skipped: Array.isArray(rawResult?.skipped) ? rawResult.skipped : [],
+          errors: Array.isArray(rawResult?.errors) ? rawResult.errors : []
+        }
 
         // 결과 메시지 생성
         const hasSuccess = result.createdCount > 0 || result.updatedCount > 0
@@ -2177,7 +2189,20 @@ export function ExcelRefiner() {
           // 계약 시트 없으면 고객만 등록
           if (customers.length > 0) {
             setImportProgress({ current: 1, total: 1, message: `고객 등록 중 (${customers.length}명)...` })
-            const result = await CustomerService.bulkImportCustomers(customers)
+            const rawResult = await CustomerService.bulkImportCustomers(customers)
+
+            // API 응답 검증 및 기본값 설정
+            const result = {
+              createdCount: rawResult?.createdCount ?? 0,
+              updatedCount: rawResult?.updatedCount ?? 0,
+              skippedCount: rawResult?.skippedCount ?? 0,
+              errorCount: rawResult?.errorCount ?? 0,
+              created: Array.isArray(rawResult?.created) ? rawResult.created : [],
+              updated: Array.isArray(rawResult?.updated) ? rawResult.updated : [],
+              skipped: Array.isArray(rawResult?.skipped) ? rawResult.skipped : [],
+              errors: Array.isArray(rawResult?.errors) ? rawResult.errors : []
+            }
+
             const parts: string[] = []
             if (result.createdCount > 0) parts.push(`${result.createdCount}명 생성`)
             if (result.updatedCount > 0) parts.push(`${result.updatedCount}명 업데이트`)
@@ -2190,31 +2215,31 @@ export function ExcelRefiner() {
 
             // 상세 결과 저장 (결과 상세 모달용) - 계약 시트 없이 고객만 처리한 경우
             const customerMap = new Map(customers.map(c => [c.name, c]))
-            const 개인Created = (result.created || [])
+            const 개인Created = result.created
               .map(c => customerMap.get(c.name))
               .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '개인')
               .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address, gender: c.gender, birth_date: c.birth_date }))
-            const 개인Updated = (result.updated || [])
+            const 개인Updated = result.updated
               .filter(c => customerMap.get(c.name)?.customer_type === '개인')
               .map(c => {
                 const input = customerMap.get(c.name)
                 return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, gender: input?.gender, birth_date: input?.birth_date, changes: c.changes }
               })
-            const 개인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
-            const 개인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '개인')
+            const 개인Skipped = result.skipped.filter(c => customerMap.get(c.name)?.customer_type === '개인')
+            const 개인Errors = result.errors.filter(c => customerMap.get(c.name)?.customer_type === '개인')
 
-            const 법인Created = (result.created || [])
+            const 법인Created = result.created
               .map(c => customerMap.get(c.name))
               .filter((c): c is BulkCustomerInput => c !== undefined && c.customer_type === '법인')
               .map(c => ({ name: c.name, mobile_phone: c.mobile_phone, address: c.address }))
-            const 법인Updated = (result.updated || [])
+            const 법인Updated = result.updated
               .filter(c => customerMap.get(c.name)?.customer_type === '법인')
               .map(c => {
                 const input = customerMap.get(c.name)
                 return { name: c.name, mobile_phone: input?.mobile_phone, address: input?.address, changes: c.changes }
               })
-            const 법인Skipped = (result.skipped || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
-            const 법인Errors = (result.errors || []).filter(c => customerMap.get(c.name)?.customer_type === '법인')
+            const 법인Skipped = result.skipped.filter(c => customerMap.get(c.name)?.customer_type === '법인')
+            const 법인Errors = result.errors.filter(c => customerMap.get(c.name)?.customer_type === '법인')
 
             // 데이터가 있는 탭을 기본 선택
             const 개인Total = 개인Created.length + 개인Updated.length + 개인Skipped.length + 개인Errors.length
@@ -2264,18 +2289,21 @@ export function ExcelRefiner() {
         if (customers.length > 0) {
           setImportProgress({ current: 1, total: 3, message: `1/3: 고객 등록 중 (${customers.length}명)...` })
           try {
-            const result = await CustomerService.bulkImportCustomers(customers)
-            customerCreatedCount = result.createdCount
-            customerUpdatedCount = result.updatedCount
-            customerSkippedCount = result.skippedCount
+            const rawResult = await CustomerService.bulkImportCustomers(customers)
+
+            // API 응답 검증 및 기본값 설정
+            customerCreatedCount = rawResult?.createdCount ?? 0
+            customerUpdatedCount = rawResult?.updatedCount ?? 0
+            customerSkippedCount = rawResult?.skippedCount ?? 0
             customerBulkResult = {
-              created: result.created || [],
-              updated: result.updated || [],
-              skipped: result.skipped || [],
-              errors: result.errors || []
+              created: Array.isArray(rawResult?.created) ? rawResult.created : [],
+              updated: Array.isArray(rawResult?.updated) ? rawResult.updated : [],
+              skipped: Array.isArray(rawResult?.skipped) ? rawResult.skipped : [],
+              errors: Array.isArray(rawResult?.errors) ? rawResult.errors : []
             }
-            if (result.errorCount > 0) {
-              customerErrors.push(`${result.errorCount}건 오류`)
+            const errorCount = rawResult?.errorCount ?? 0
+            if (errorCount > 0) {
+              customerErrors.push(`${errorCount}건 오류`)
             }
           } catch (err) {
             console.error('[고객 일괄등록 실패]:', err)
@@ -2357,7 +2385,19 @@ export function ExcelRefiner() {
           contracts
         })
 
-        const contractResult = bulkResult.data
+        // API 응답 검증 및 기본값 설정
+        const rawContractResult = bulkResult?.data
+        const contractResult = {
+          createdCount: rawContractResult?.createdCount ?? 0,
+          updatedCount: rawContractResult?.updatedCount ?? 0,
+          skippedCount: rawContractResult?.skippedCount ?? 0,
+          errorCount: rawContractResult?.errorCount ?? 0,
+          created: Array.isArray(rawContractResult?.created) ? rawContractResult.created : [],
+          updated: Array.isArray(rawContractResult?.updated) ? rawContractResult.updated : [],
+          skipped: Array.isArray(rawContractResult?.skipped) ? rawContractResult.skipped : [],
+          errors: Array.isArray(rawContractResult?.errors) ? rawContractResult.errors : []
+        }
+
         const contractSuccessCount = contractResult.createdCount + contractResult.updatedCount
         const totalErrors = customerErrors.length + contractResult.errorCount
         const hasSuccess = customerCreatedCount > 0 || customerUpdatedCount > 0 || contractSuccessCount > 0
@@ -2534,9 +2574,33 @@ export function ExcelRefiner() {
 
     } catch (err) {
       console.error('일괄등록 오류:', err)
+
+      // 에러 유형별 메시지 분류
+      let errorTitle = '일괄등록 오류'
+      let errorMessage = '알 수 없는 오류가 발생했습니다.'
+
+      if (err instanceof Error) {
+        const message = err.message.toLowerCase()
+        if (message.includes('network') || message.includes('fetch') || message.includes('failed to fetch')) {
+          errorTitle = '네트워크 오류'
+          errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
+        } else if (message.includes('401') || message.includes('unauthorized') || message.includes('token')) {
+          errorTitle = '인증 오류'
+          errorMessage = '로그인이 만료되었습니다. 다시 로그인해주세요.'
+        } else if (message.includes('403') || message.includes('forbidden')) {
+          errorTitle = '권한 오류'
+          errorMessage = '이 작업을 수행할 권한이 없습니다.'
+        } else if (message.includes('500') || message.includes('server')) {
+          errorTitle = '서버 오류'
+          errorMessage = '서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        } else {
+          errorMessage = err.message
+        }
+      }
+
       showAlert({
-        title: '일괄등록 오류',
-        message: `일괄등록 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`,
+        title: errorTitle,
+        message: errorMessage,
         iconType: 'error'
       })
       setImportResult({
