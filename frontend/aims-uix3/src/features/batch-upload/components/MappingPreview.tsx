@@ -17,6 +17,9 @@ interface MappingPreviewProps {
   mappings: FolderMapping[]
   onBack: () => void
   onStartUpload: () => void
+  isRestored?: boolean  // sessionStorage에서 복원됨 (파일 없음)
+  expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
+  onExpandedPathsChange?: (paths: Set<string>) => void  // 펼침 상태 변경 콜백
 }
 
 // 트리 노드 타입
@@ -101,12 +104,20 @@ function calculateSize(nodes: TreeNode[]): number {
 export default function MappingPreview({
   mappings,
   onBack,
-  onStartUpload
+  onStartUpload,
+  isRestored = false,
+  expandedPaths: controlledExpandedPaths,
+  onExpandedPathsChange
 }: MappingPreviewProps) {
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(() => {
+  // 내부 상태 (controlled prop이 없을 때 사용)
+  const [internalExpandedPaths, setInternalExpandedPaths] = useState<Set<string>>(() => {
     // 기본적으로 루트 폴더들만 펼침
     return new Set(mappings.map(m => m.folderName))
   })
+
+  // controlled 또는 uncontrolled 모드 지원
+  const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths
+  const setExpandedPaths = onExpandedPathsChange ?? setInternalExpandedPaths
 
   const stats = useMemo(() => {
     const matched = mappings.filter(m => m.matched).length
@@ -116,7 +127,8 @@ export default function MappingPreview({
     return { matched, unmatched, totalFiles, totalSize }
   }, [mappings])
 
-  const canUpload = stats.matched > 0
+  // 복원된 상태면 파일이 없으므로 업로드 불가
+  const canUpload = stats.matched > 0 && !isRestored
 
   // 모든 폴더 경로 수집
   const allFolderPaths = useMemo(() => {
@@ -267,8 +279,16 @@ export default function MappingPreview({
         })}
       </div>
 
+      {/* 복원 상태 경고 */}
+      {isRestored && (
+        <div className="preview-warning restored">
+          <SFSymbol name="arrow-clockwise" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+          <span>페이지가 새로고침되어 파일을 다시 선택해야 합니다. 뒤로 버튼을 눌러 폴더를 다시 드래그하세요.</span>
+        </div>
+      )}
+
       {/* 경고 */}
-      {stats.unmatched > 0 && (
+      {stats.unmatched > 0 && !isRestored && (
         <div className="preview-warning">
           <SFSymbol name="exclamationmark-triangle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
           <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다.</span>
@@ -279,7 +299,11 @@ export default function MappingPreview({
       <div className="preview-actions">
         <Button variant="secondary" onClick={onBack}>뒤로</Button>
         <Button variant="primary" onClick={onStartUpload} disabled={!canUpload}>
-          {canUpload ? `${stats.matched}개 폴더 업로드 시작` : '매칭된 폴더가 없습니다'}
+          {isRestored
+            ? '파일을 다시 선택하세요'
+            : canUpload
+              ? `${stats.matched}개 폴더 업로드 시작`
+              : '매칭된 폴더가 없습니다'}
         </Button>
       </div>
     </div>
