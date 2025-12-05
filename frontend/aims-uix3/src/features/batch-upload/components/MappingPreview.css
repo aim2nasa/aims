@@ -75,7 +75,7 @@
   min-height: 0; /* flexbox 스크롤 활성화 */
   padding: var(--spacing-md);
   border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background-color: var(--color-bg-primary, #fff);
   overflow-y: auto;
   font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
