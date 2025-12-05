@@ -143,9 +143,8 @@
   background-color: #e8eaed;  /* 라이트 테마에서 눈에 띄는 배경색 */
   border-radius: var(--radius-md);
   overflow: auto;  /* 수평/수직 모두 스크롤 가능 */
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1;
 }
 
 /* 다크 테마 지원 */
@@ -153,54 +152,87 @@ html[data-theme="dark"] .tree-container {
   background-color: var(--color-bg-tertiary, #1f2937);
 }
 
-/* 트리 아이템 */
-.tree-item {
-  /* wrapper */
+/* ==================== 트리 노드 - CSS 라인으로 연결 ==================== */
+
+/* 트리 노드 */
+.tree-container .guide-node {
+  position: relative;
+  padding-left: 20px;
 }
 
-.tree-root {
-  margin-bottom: var(--spacing-xs);
+.tree-container .guide-node.root {
+  padding-left: 0;
 }
 
-/* 트리 라인 (각 행) */
-.tree-line {
+/* 수직선 (부모에서 자식으로) */
+.tree-container .guide-node:not(.root)::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border, #d1d5db);
+}
+
+/* 마지막 노드는 수직선을 중간까지만 */
+.tree-container .guide-node.last::before {
+  bottom: auto;
+  height: 11px;
+}
+
+/* 수평선 (아이콘으로 연결) */
+.tree-container .guide-node:not(.root)::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 11px;
+  width: 10px;
+  height: 1px;
+  background-color: var(--color-border, #d1d5db);
+}
+
+/* 노드 콘텐츠 */
+.tree-container .guide-node-content {
   display: flex;
   align-items: center;
-  padding: 2px 0;
+  gap: 4px;
+  padding: 3px 0;
   white-space: nowrap;
   cursor: default;
   border-radius: var(--radius-xs);
 }
 
-.tree-line.folder {
+.tree-container .guide-node-content.clickable,
+.tree-container .guide-node-content.customer-root {
   cursor: pointer;
 }
 
-.tree-line.folder:hover {
-  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.03));
+.tree-container .guide-node-content.clickable:hover,
+.tree-container .guide-node-content.customer-root:hover {
+  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
 }
 
-.tree-line.root {
+/* 고객 루트 스타일 */
+.tree-container .guide-node-content.customer-root {
   font-weight: 600;
 }
 
-.tree-line.root.matched .tree-name {
+.tree-container .guide-node-content.customer-root.matched .guide-name {
   color: var(--color-ios-green, #34c759);
-  font-weight: 600;
 }
 
-.tree-line.root.unmatched .tree-name {
+.tree-container .guide-node-content.customer-root.unmatched .guide-name {
   color: var(--color-ios-orange, #ff9500);
-  font-weight: 600;
 }
 
-/* 선택되지 않은 매칭 폴더 스타일 */
-.tree-line.root.matched:not(.selected) .tree-name {
+/* 선택되지 않은 매칭 폴더 */
+.tree-container .guide-node-content.customer-root.matched:not(.selected) .guide-name {
   opacity: 0.5;
 }
 
 /* 체크박스 */
-.tree-checkbox {
+.tree-container .guide-checkbox {
   margin-right: 4px;
   cursor: pointer;
   font-size: 14px;
@@ -209,95 +241,99 @@ html[data-theme="dark"] .tree-container {
   user-select: none;
 }
 
-.tree-checkbox:hover {
+.tree-container .guide-checkbox:hover {
   color: var(--color-ios-blue, #007aff);
 }
 
-.tree-checkbox.checked {
+.tree-container .guide-checkbox.checked {
   color: var(--color-ios-green, #34c759);
 }
 
-/* 트리 접두사 (├── └── │) */
-.tree-prefix {
-  color: var(--color-text-tertiary, #9ca3af);
-  white-space: pre;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* 펼침/접힘 토글 */
-.tree-toggle {
+/* 토글 */
+.tree-container .guide-toggle {
   width: 14px;
   font-size: 10px;
   color: var(--color-text-secondary);
   -webkit-user-select: none;
   user-select: none;
+  text-align: center;
 }
 
 /* 아이콘 */
-.tree-icon {
-  margin-right: 4px;
-  -webkit-user-select: none;
-  user-select: none;
+.tree-container .guide-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.tree-icon.folder {
-  /* 폴더 아이콘 */
-}
-
-.tree-icon.file {
-  /* 파일 아이콘 */
+.tree-container .guide-icon.folder {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
 }
 
 /* 이름 */
-.tree-name {
-  color: var(--color-text-primary);
-  margin-right: var(--spacing-sm);
+.tree-container .guide-name {
+  color: var(--color-text-secondary);
+  font-size: 11px;
 }
 
-/* 매칭 배지 */
-.tree-badge {
-  font-size: 10px;
-  font-weight: 400;
-  padding: 1px 6px;
-  border-radius: var(--radius-xs);
-  margin-right: var(--spacing-sm);
+.tree-container .guide-name.customer {
+  color: var(--color-ios-blue, #007aff);
+  font-weight: 600;
 }
 
-.tree-badge.matched {
-  background-color: var(--color-ios-green-bg, rgba(52, 199, 89, 0.12));
-  color: var(--color-ios-green, #34c759);
-}
-
-.tree-badge.unmatched {
-  background-color: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.12));
+.tree-container .guide-name.customer.unmatched {
   color: var(--color-ios-orange, #ff9500);
 }
 
-/* 정보 (파일 수, 크기) */
-.tree-info {
-  margin-left: auto;
-  display: flex;
-  gap: var(--spacing-md);
+.tree-container .guide-name.subfolder {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.tree-container .guide-name.file {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-caption-2);  /* 11px */
+}
+
+/* 매칭 표시 */
+.tree-container .guide-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.tree-container .guide-arrow {
+  color: var(--color-ios-green, #34c759);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.tree-container .guide-customer-badge {
+  padding: 1px 8px;
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--color-ios-green, #34c759);
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* 미매칭 노트 */
+.tree-container .guide-note {
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(255, 149, 0, 0.15);
+  color: var(--color-ios-orange, #ff9500);
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* 정보 (파일 수, 크기) */
+.tree-container .guide-info {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
   font-weight: 400;
-}
-
-.tree-count {
-  min-width: 40px;
-  text-align: right;
-}
-
-.tree-size {
-  min-width: 60px;
-  text-align: right;
-  margin-right: var(--spacing-sm);  /* 우측 경계와의 여백 */
-}
-
-/* 자식 노드 */
-.tree-children {
-  /* 하위 노드들 */
 }
 
 /* 경고 메시지 */
