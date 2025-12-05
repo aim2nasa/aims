@@ -14,9 +14,10 @@ interface UploadSummaryProps {
   progress: BatchUploadProgress
   onClose: () => void
   onRetryFailed?: () => void
+  onViewDocuments?: () => void  // "전체 문서 보기"로 이동
 }
 
-export default function UploadSummary({ progress, onClose, onRetryFailed }: UploadSummaryProps) {
+export default function UploadSummary({ progress, onClose, onRetryFailed, onViewDocuments }: UploadSummaryProps) {
   const { totalFiles, completedFiles, failedFiles, folders, state } = progress
 
   const isFullSuccess = failedFiles === 0 && completedFiles === totalFiles
@@ -148,6 +149,16 @@ export default function UploadSummary({ progress, onClose, onRetryFailed }: Uplo
               weight={SFSymbolWeight.MEDIUM}
             />
             <span>실패 항목 재시도</span>
+          </button>
+        )}
+        {onViewDocuments && (
+          <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
+            <SFSymbol
+              name="doc-text-magnifyingglass"
+              size={SFSymbolSize.FOOTNOTE}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+            <span>현재 진행상황 보기</span>
           </button>
         )}
         <button className="upload-summary-btn primary" onClick={onClose}>

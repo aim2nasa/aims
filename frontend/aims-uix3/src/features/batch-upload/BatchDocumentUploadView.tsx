@@ -122,11 +122,13 @@ function clearSessionStorage(): void {
 interface BatchDocumentUploadViewProps {
   visible: boolean
   onClose: () => void
+  onViewDocuments?: () => void  // "전체 문서 보기"로 이동
 }
 
 export default function BatchDocumentUploadView({
   visible,
-  onClose
+  onClose,
+  onViewDocuments
 }: BatchDocumentUploadViewProps) {
   const [step, setStep] = useState<'select' | 'preview' | 'upload' | 'complete'>('select')
   const [folderMappings, setFolderMappings] = useState<FolderMapping[]>([])
@@ -329,6 +331,7 @@ export default function BatchDocumentUploadView({
               progress={progress}
               onClose={handleComplete}
               onRetryFailed={progress.failedFiles > 0 ? handleRetryFailed : undefined}
+              onViewDocuments={onViewDocuments}
             />
           </div>
         )

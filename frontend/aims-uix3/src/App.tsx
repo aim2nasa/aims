@@ -1009,6 +1009,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <BatchDocumentUploadView
               visible={activeDocumentView === 'batch-document-upload'}
               onClose={closeDocumentView}
+              onViewDocuments={() => setActiveDocumentView('documents-library')}
             />
           </Suspense>
 

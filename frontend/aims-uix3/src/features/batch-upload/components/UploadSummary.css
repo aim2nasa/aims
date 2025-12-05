@@ -144,14 +144,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-lg);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-caption-1);  /* 12px */
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-footnote);  /* 13px */
   font-weight: 600;  /* 500 금지 → 600 사용 */
   cursor: pointer;
   transition: all 0.15s ease;
+  min-width: 100px;
 }
 
 .upload-summary-btn.primary {
