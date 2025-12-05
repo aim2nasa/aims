@@ -60,6 +60,33 @@
   background-color: var(--color-border, #e5e7eb);
 }
 
+/* 매칭 범례 설명 */
+.preview-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-size: var(--font-size-caption-2);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.legend-item {
+  font-weight: 400;
+}
+
+.legend-item.matched {
+  color: var(--color-ios-green, #34c759);
+}
+
+.legend-item.unmatched {
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.legend-divider {
+  color: var(--color-border, #e5e7eb);
+}
+
 /* 트리 헤더 */
 .tree-header {
   display: flex;

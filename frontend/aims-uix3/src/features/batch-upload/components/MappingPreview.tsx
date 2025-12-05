@@ -241,6 +241,13 @@ export default function MappingPreview({
         </div>
       </div>
 
+      {/* 매칭 설명 */}
+      <div className="preview-legend">
+        <span className="legend-item matched">매칭: 고객명과 일치</span>
+        <span className="legend-divider">|</span>
+        <span className="legend-item unmatched">미매칭: 일치하는 고객명 없음</span>
+      </div>
+
       {/* 트리 헤더 */}
       <div className="tree-header">
         <span>폴더 구조</span>
