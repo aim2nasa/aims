@@ -164,6 +164,11 @@ html[data-theme="dark"] .tree-container {
   padding-left: 0;
 }
 
+/* 고객 하위 첫 번째 레벨 - 체크박스+토글+아이콘 위치에서 시작 */
+.tree-container .guide-node.has-children > .guide-node {
+  margin-left: 32px;  /* 체크박스(18) + 토글(14) 공간 */
+}
+
 /* 수직선 (부모에서 자식으로) */
 .tree-container .guide-node:not(.root)::before {
   content: '';
@@ -187,7 +192,7 @@ html[data-theme="dark"] .tree-container {
   position: absolute;
   left: 6px;
   top: 11px;
-  width: 10px;
+  width: 12px;
   height: 1px;
   background-color: var(--color-border, #d1d5db);
 }
