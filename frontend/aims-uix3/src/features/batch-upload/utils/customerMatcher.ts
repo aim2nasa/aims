@@ -122,30 +122,72 @@ export function calculateMatchingStats(
 /**
  * File 객체 배열을 폴더별로 그룹화
  *
+ * 상위 폴더를 드래그한 경우 하위 폴더들을 고객 폴더로 인식:
+ * - "temp/한승우/file.pdf" → "한승우" 폴더로 그룹화
+ * - "한승우/file.pdf" → "한승우" 폴더로 그룹화
+ *
  * @param files File 객체 배열 (webkitRelativePath 포함)
  * @returns 폴더명 -> File 배열 맵
  */
 export function groupFilesByFolder(
   files: File[]
 ): Map<string, File[]> {
-  const groups = new Map<string, File[]>()
+  // 1단계: 일단 최상위 폴더로 그룹화하여 구조 분석
+  const topLevelGroups = new Map<string, File[]>()
 
   for (const file of files) {
-    // webkitRelativePath: "폴더명/하위폴더/파일명.pdf"
     const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
     const parts = relativePath.split('/')
-
-    // 최상위 폴더명 추출
     const topFolder = parts.length > 1 ? parts[0] : ''
 
     if (!topFolder) continue
 
-    const existing = groups.get(topFolder) || []
+    const existing = topLevelGroups.get(topFolder) || []
     existing.push(file)
-    groups.set(topFolder, existing)
+    topLevelGroups.set(topFolder, existing)
   }
 
-  return groups
+  // 2단계: 최상위 폴더가 하나이고, 그 안에 하위 폴더들이 있는지 확인
+  // 이 경우 상위 폴더를 드래그한 것이므로 하위 폴더를 고객 폴더로 사용
+  if (topLevelGroups.size === 1) {
+    const [parentFolderName, parentFiles] = [...topLevelGroups.entries()][0]
+
+    // 하위 폴더가 있는지 확인 (path parts가 3개 이상: parent/child/file.ext)
+    const hasSubfolders = parentFiles.some(file => {
+      const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
+      const parts = relativePath.split('/')
+      return parts.length >= 3  // parent/subfolder/file
+    })
+
+    if (hasSubfolders) {
+      // 2번째 레벨(하위 폴더)로 재그룹화
+      const subfolderGroups = new Map<string, File[]>()
+
+      for (const file of parentFiles) {
+        const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
+        const parts = relativePath.split('/')
+
+        // parts: [parentFolder, subFolder, ...rest, fileName]
+        if (parts.length >= 3) {
+          const subFolder = parts[1]  // 두 번째 레벨 폴더
+          const existing = subfolderGroups.get(subFolder) || []
+          existing.push(file)
+          subfolderGroups.set(subFolder, existing)
+        } else if (parts.length === 2) {
+          // 상위 폴더 바로 아래 파일은 무시하거나 별도 처리
+          // (고객 폴더 없이 바로 파일이 있는 경우)
+        }
+      }
+
+      // 하위 폴더가 실제로 있으면 그것을 반환
+      if (subfolderGroups.size > 0) {
+        return subfolderGroups
+      }
+    }
+  }
+
+  // 기본 동작: 최상위 폴더 그룹 반환
+  return topLevelGroups
 }
 
 /**
