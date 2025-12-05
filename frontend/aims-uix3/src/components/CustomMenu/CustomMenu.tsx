@@ -113,7 +113,7 @@ const MenuIcons = {
   // 문서 일괄등록 아이콘
   DocumentBatchUpload: () => (
     <SFSymbol
-      name="folder-fill-badge-plus"
+      name="doc-badge-plus"
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
@@ -345,7 +345,7 @@ const CustomMenu = ({
         {
           key: 'batch-document-upload',
           icon: <span className="menu-icon-cyan"><MenuIcons.DocumentBatchUpload /></span>,
-          label: '고객 문서 일괄등록',
+          label: '문서 일괄등록',
           tooltipTitle: '폴더별로 정리된 문서를 고객에게 일괄 등록합니다',
         }
       ]

@@ -199,18 +199,18 @@ export default function BatchDocumentUploadView({
   return (
     <CenterPaneView
       visible={visible}
-      title="고객 문서 일괄등록"
+      title="문서 일괄등록"
       titleIcon={
         <span className="menu-icon-cyan">
           <SFSymbol
-            name="folder-fill-badge-plus"
+            name="doc-badge-plus"
             size={SFSymbolSize.CALLOUT}
             weight={SFSymbolWeight.MEDIUM}
           />
         </span>
       }
       onClose={onClose}
-      placeholderIcon="folder-fill-badge-plus"
+      placeholderIcon="doc-badge-plus"
       placeholderMessage="폴더별로 정리된 문서를 고객에게 일괄 등록합니다."
     >
       {renderContent()}
