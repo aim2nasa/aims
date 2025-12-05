@@ -267,10 +267,10 @@ export default function BatchDocumentUploadView({
     setExpandedPaths(new Set())
   }, [])
 
-  const handleStartUpload = useCallback(async () => {
+  const handleStartUpload = useCallback(async (selectedMappings: FolderMapping[]) => {
     setStep('upload')
-    await startUpload(folderMappings)
-  }, [folderMappings, startUpload])
+    await startUpload(selectedMappings)
+  }, [startUpload])
 
   const handleCancel = useCallback(() => {
     cancelUpload()

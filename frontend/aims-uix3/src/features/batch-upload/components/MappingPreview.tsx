@@ -16,7 +16,7 @@ import './MappingPreview.css'
 interface MappingPreviewProps {
   mappings: FolderMapping[]
   onBack: () => void
-  onStartUpload: () => void
+  onStartUpload: (selectedMappings: FolderMapping[]) => void  // 선택된 매핑만 업로드
   isRestored?: boolean  // sessionStorage에서 복원됨 (파일 없음)
   expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
   onExpandedPathsChange?: (paths: Set<string>) => void  // 펼침 상태 변경 콜백
@@ -119,6 +119,11 @@ export default function MappingPreview({
   const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths
   const setExpandedPaths = onExpandedPathsChange ?? setInternalExpandedPaths
 
+  // 선택된 폴더 상태 (기본값: 모든 매칭된 폴더 선택)
+  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(() => {
+    return new Set(mappings.filter(m => m.matched).map(m => m.folderName))
+  })
+
   const stats = useMemo(() => {
     const matched = mappings.filter(m => m.matched).length
     const unmatched = mappings.length - matched
@@ -127,8 +132,45 @@ export default function MappingPreview({
     return { matched, unmatched, totalFiles, totalSize }
   }, [mappings])
 
-  // 복원된 상태면 파일이 없으므로 업로드 불가
-  const canUpload = stats.matched > 0 && !isRestored
+  // 선택된 매칭 폴더 수
+  const selectedCount = useMemo(() => {
+    return mappings.filter(m => m.matched && selectedFolders.has(m.folderName)).length
+  }, [mappings, selectedFolders])
+
+  // 복원된 상태면 파일이 없으므로 업로드 불가, 선택된 폴더가 있어야 업로드 가능
+  const canUpload = selectedCount > 0 && !isRestored
+
+  // 폴더 선택 토글
+  const toggleSelection = useCallback((folderName: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 트리 펼침/접힘 방지
+    setSelectedFolders(prev => {
+      const next = new Set(prev)
+      if (next.has(folderName)) {
+        next.delete(folderName)
+      } else {
+        next.add(folderName)
+      }
+      return next
+    })
+  }, [])
+
+  // 전체 선택/해제
+  const toggleAllSelection = useCallback(() => {
+    const matchedFolders = mappings.filter(m => m.matched).map(m => m.folderName)
+    if (selectedCount === stats.matched) {
+      // 모두 선택됨 -> 모두 해제
+      setSelectedFolders(new Set())
+    } else {
+      // 일부 또는 없음 -> 모두 선택
+      setSelectedFolders(new Set(matchedFolders))
+    }
+  }, [mappings, selectedCount, stats.matched])
+
+  // 업로드 시작 핸들러
+  const handleStartUpload = useCallback(() => {
+    const selectedMappings = mappings.filter(m => m.matched && selectedFolders.has(m.folderName))
+    onStartUpload(selectedMappings)
+  }, [mappings, selectedFolders, onStartUpload])
 
   // 모든 폴더 경로 수집
   const allFolderPaths = useMemo(() => {
@@ -221,8 +263,8 @@ export default function MappingPreview({
       {/* 요약 통계 */}
       <div className="preview-stats">
         <div className="stat-item">
-          <span className="stat-value matched">{stats.matched}</span>
-          <span className="stat-label">매칭</span>
+          <span className="stat-value matched">{selectedCount}/{stats.matched}</span>
+          <span className="stat-label">선택됨</span>
         </div>
         <div className="stat-divider" />
         <div className="stat-item">
@@ -250,7 +292,14 @@ export default function MappingPreview({
 
       {/* 트리 헤더 */}
       <div className="tree-header">
-        <span>폴더 구조</span>
+        <div className="tree-header-left">
+          <span>폴더 구조</span>
+          {stats.matched > 0 && (
+            <button type="button" className="select-all-btn" onClick={toggleAllSelection}>
+              {selectedCount === stats.matched ? '전체 해제' : '전체 선택'}
+            </button>
+          )}
+        </div>
         <button type="button" className="toggle-all-btn" onClick={toggleAll}>
           {allExpanded ? '▲ 모두 접기' : '▼ 모두 펼치기'}
         </button>
@@ -262,13 +311,23 @@ export default function MappingPreview({
           const isExpanded = expandedPaths.has(mapping.folderName)
           const tree = buildTree(mapping.files, mapping.folderName)
           const isLast = idx === mappings.length - 1
+          const isSelected = selectedFolders.has(mapping.folderName)
 
           return (
             <div key={mapping.folderName} className="tree-root">
               <div
-                className={`tree-line root ${mapping.matched ? 'matched' : 'unmatched'}`}
+                className={`tree-line root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
                 onClick={() => togglePath(mapping.folderName)}
               >
+                {/* 매칭된 폴더에만 체크박스 표시 */}
+                {mapping.matched && (
+                  <span
+                    className={`tree-checkbox ${isSelected ? 'checked' : ''}`}
+                    onClick={(e) => toggleSelection(mapping.folderName, e)}
+                  >
+                    {isSelected ? '☑' : '☐'}
+                  </span>
+                )}
                 <span className="tree-prefix">{isLast ? '└── ' : '├── '}</span>
                 <span className={`tree-toggle ${isExpanded ? 'expanded' : ''}`}>
                   {isExpanded ? '▼' : '▶'}
@@ -314,12 +373,12 @@ export default function MappingPreview({
       {/* 버튼 */}
       <div className="preview-actions">
         <Button variant="secondary" onClick={onBack}>뒤로</Button>
-        <Button variant="primary" onClick={onStartUpload} disabled={!canUpload}>
+        <Button variant="primary" onClick={handleStartUpload} disabled={!canUpload}>
           {isRestored
             ? '파일을 다시 선택하세요'
             : canUpload
-              ? `${stats.matched}개 폴더 업로드 시작`
-              : '매칭된 폴더가 없습니다'}
+              ? `${selectedCount}개 폴더 업로드 시작`
+              : '업로드할 폴더를 선택하세요'}
         </Button>
       </div>
     </div>

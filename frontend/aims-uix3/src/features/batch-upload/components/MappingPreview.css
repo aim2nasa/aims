@@ -98,6 +98,27 @@
   flex-shrink: 0; /* 크기 고정 */
 }
 
+.tree-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.select-all-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-ios-blue, #007aff);
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.select-all-btn:hover {
+  background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+}
+
 .toggle-all-btn {
   padding: var(--spacing-xs) var(--spacing-sm);
   border: none;
@@ -171,6 +192,29 @@ html[data-theme="dark"] .tree-container {
 .tree-line.root.unmatched .tree-name {
   color: var(--color-ios-orange, #ff9500);
   font-weight: 600;
+}
+
+/* 선택되지 않은 매칭 폴더 스타일 */
+.tree-line.root.matched:not(.selected) .tree-name {
+  opacity: 0.5;
+}
+
+/* 체크박스 */
+.tree-checkbox {
+  margin-right: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.tree-checkbox:hover {
+  color: var(--color-ios-blue, #007aff);
+}
+
+.tree-checkbox.checked {
+  color: var(--color-ios-green, #34c759);
 }
 
 /* 트리 접두사 (├── └── │) */
