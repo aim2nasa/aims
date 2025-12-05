@@ -69,14 +69,15 @@
 
 .folder-drop-zone-title {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-footnote);  /* 13px - FONT_SIZE_STANDARDS: 섹션 제목 */
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .folder-drop-zone-description {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-caption-1);  /* 12px - FONT_SIZE_STANDARDS: 보조 정보 */
+  font-weight: 400;
   color: var(--color-text-secondary);
 }
 
@@ -87,7 +88,8 @@
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--color-bg-tertiary, #f3f4f6);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-2);  /* 11px - FONT_SIZE_STANDARDS: 힌트 */
+  font-weight: 400;
   color: var(--color-text-tertiary);
 }
 
