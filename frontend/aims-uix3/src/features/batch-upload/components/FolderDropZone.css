@@ -82,3 +82,202 @@
   color: var(--color-text-tertiary);
   opacity: 0.7;
 }
+
+/* ==================== 폴더 준비 가이드 ==================== */
+
+.folder-guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary, #f3f4f6) 100%);
+  border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.folder-guide-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.folder-guide-badge {
+  padding: 2px 8px;
+  background: var(--color-ios-blue, #007aff);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.folder-guide-title {
+  margin: 0;
+  font-size: var(--font-size-footnote);  /* 13px */
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.folder-guide-content {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-sm) 0;
+}
+
+.folder-guide-tree {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* 트리 노드 - CSS 라인으로 연결 */
+.guide-node {
+  position: relative;
+  padding-left: 20px;
+}
+
+.guide-node.root {
+  padding-left: 0;
+}
+
+/* 수직선 (부모에서 자식으로) */
+.guide-node:not(.root)::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border, #d1d5db);
+}
+
+/* 마지막 노드는 수직선을 중간까지만 */
+.guide-node.last::before {
+  bottom: auto;
+  height: 11px;
+}
+
+/* 수평선 (아이콘으로 연결) */
+.guide-node:not(.root)::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 11px;
+  width: 10px;
+  height: 1px;
+  background-color: var(--color-border, #d1d5db);
+}
+
+.guide-node-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  white-space: nowrap;
+}
+
+.guide-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.guide-icon.folder {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}
+
+.guide-icon.folder.sub {
+  opacity: 0.8;
+}
+
+.guide-name {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.guide-name.root {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.guide-name.customer {
+  color: var(--color-ios-blue, #007aff);
+  font-weight: 600;
+}
+
+.guide-name.subfolder {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.guide-name.file {
+  color: var(--color-text-tertiary);
+}
+
+.guide-desc {
+  margin-left: 8px;
+  padding: 1px 6px;
+  background: var(--color-ios-blue, #007aff);
+  color: white;
+  font-size: 9px;
+  font-weight: 500;
+  border-radius: 8px;
+  font-family: var(--font-family-base);
+}
+
+.guide-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.guide-arrow {
+  color: var(--color-ios-green, #34c759);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.guide-customer-badge {
+  padding: 1px 8px;
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--color-ios-green, #34c759);
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  font-family: var(--font-family-base);
+}
+
+.guide-note {
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(255, 149, 0, 0.15);
+  color: var(--color-ios-orange, #ff9500);
+  font-size: 9px;
+  font-weight: 500;
+  border-radius: 8px;
+  font-family: var(--font-family-base);
+}
+
+/* 팁 영역 */
+.folder-guide-tips {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+}
+
+.guide-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-ios-green, #34c759);
+}
+
+.guide-tip svg {
+  flex-shrink: 0;
+}
