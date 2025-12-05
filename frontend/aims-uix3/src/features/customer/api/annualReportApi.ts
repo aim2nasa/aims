@@ -5,6 +5,7 @@
  */
 
 import type { Customer } from '@/entities/customer';
+import { getAuthHeaders } from '@/shared/lib/api';
 
 // Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
 const ANNUAL_REPORT_API_URL = '/api';
@@ -157,30 +158,6 @@ export interface CustomerIdentificationResult {
   scenario: 'single' | 'multiple' | 'none';
   customers: any[]; // Customer 타입 (임포트 필요시 수정)
   metadata: CheckAnnualReportResponse['metadata'];
-}
-
-// ==================== 헬퍼 함수 ====================
-
-/**
- * JWT 토큰을 포함한 Authorization 헤더 가져오기
- * @returns Authorization 헤더 객체 또는 빈 객체
- */
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-
-  try {
-    const authStorage = localStorage.getItem('auth-storage');
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage);
-      const token = parsed?.state?.token;
-      if (token) {
-        return { 'Authorization': `Bearer ${token}` };
-      }
-    }
-  } catch {
-    // 파싱 실패 시 무시
-  }
-  return {};
 }
 
 // ==================== API 클래스 ====================

@@ -23,31 +23,11 @@ import type {
 } from '../types/documentStatus'
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 import { formatDateTime } from '@/shared/lib/timeUtils'
+import { getAuthHeaders } from '@/shared/lib/api'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
 // @ts-ignore - 다른 모듈에서 사용될 수 있음
 const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
-
-/**
- * JWT 토큰을 포함한 Authorization 헤더 가져오기
- */
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-
-  try {
-    const authStorage = localStorage.getItem('auth-storage');
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage);
-      const token = parsed?.state?.token;
-      if (token) {
-        return { 'Authorization': `Bearer ${token}` };
-      }
-    }
-  } catch {
-    // 파싱 실패 시 무시
-  }
-  return {};
-}
 
 type MaybeSerialized<T> = T | string | null | undefined
 

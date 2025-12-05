@@ -26,7 +26,8 @@ vi.mock('@/shared/lib/api', () => ({
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn()
-  }
+  },
+  getAuthHeaders: () => ({ 'Authorization': 'Bearer mock-token' })
 }));
 
 // Mock customer data

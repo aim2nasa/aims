@@ -10,6 +10,43 @@
 // API 로그 디버그 모드 (필요시 true로 변경)
 const API_DEBUG = false;
 
+/**
+ * JWT 토큰을 포함한 Authorization 헤더 가져오기
+ * localStorage의 auth-storage에서 토큰을 추출하여 Bearer 토큰 형식으로 반환
+ *
+ * @returns Authorization 헤더 객체 또는 빈 객체
+ *
+ * @example
+ * ```ts
+ * const headers = getAuthHeaders()
+ * // { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+ *
+ * fetch('/api/endpoint', {
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *     ...getAuthHeaders()
+ *   }
+ * })
+ * ```
+ */
+export function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+
+  try {
+    const authStorage = localStorage.getItem('auth-storage')
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage)
+      const token = parsed?.state?.token
+      if (token) {
+        return { 'Authorization': `Bearer ${token}` }
+      }
+    }
+  } catch {
+    // 파싱 실패 시 무시
+  }
+  return {}
+}
+
 // API 설정
 export const API_CONFIG = {
   BASE_URL: import.meta.env['VITE_API_BASE_URL'] || '',
@@ -131,30 +168,12 @@ export async function apiRequest<T = unknown>(
       })()
     : '';
 
-  // JWT 토큰 가져오기 (authStore의 persist 저장소에서)
-  let token: string | null = null;
-  if (typeof window !== 'undefined') {
-    try {
-      const authStorage = localStorage.getItem('auth-storage');
-      if (authStorage) {
-        const parsed = JSON.parse(authStorage);
-        token = parsed?.state?.token || null;
-      }
-    } catch {
-      // 파싱 실패 시 무시
-    }
-  }
-
   const requestHeaders: Record<string, string> = {
     ...API_CONFIG.DEFAULT_HEADERS,
     'x-user-id': currentUserId, // ⭐ localStorage에서 현재 사용자 ID 가져오기
+    ...getAuthHeaders(), // JWT 토큰 헤더 추가
     ...(headers as Record<string, string>),
   };
-
-  // JWT 토큰이 있으면 Authorization 헤더 추가
-  if (token) {
-    requestHeaders['Authorization'] = `Bearer ${token}`;
-  }
 
   // 요청 옵션 구성
   const requestOptions: RequestInit = {
