@@ -36,7 +36,7 @@ export default function FolderDropZone({
     setIsDragOver(false)
   }, [])
 
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(false)
@@ -44,29 +44,75 @@ export default function FolderDropZone({
     if (disabled) return
 
     const items = e.dataTransfer.items
-    const files: File[] = []
+    const allFiles: File[] = []
 
-    // DataTransferItemList에서 파일 추출
-    if (items) {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        if (item.kind === 'file') {
-          const file = item.getAsFile()
-          if (file) {
-            files.push(file)
+    // 폴더 엔트리를 재귀적으로 읽는 함수
+    const readEntry = async (entry: FileSystemEntry, path: string): Promise<void> => {
+      if (entry.isFile) {
+        const fileEntry = entry as FileSystemFileEntry
+        return new Promise((resolve) => {
+          fileEntry.file((file) => {
+            // webkitRelativePath를 수동으로 설정한 새 File 객체 생성
+            const fileWithPath = new File([file], file.name, {
+              type: file.type,
+              lastModified: file.lastModified,
+            })
+            // webkitRelativePath는 readonly라서 Object.defineProperty 사용
+            Object.defineProperty(fileWithPath, 'webkitRelativePath', {
+              value: path + file.name,
+              writable: false,
+            })
+            allFiles.push(fileWithPath)
+            resolve()
+          })
+        })
+      } else if (entry.isDirectory) {
+        const dirEntry = entry as FileSystemDirectoryEntry
+        const dirReader = dirEntry.createReader()
+
+        return new Promise((resolve) => {
+          const readEntries = () => {
+            dirReader.readEntries(async (entries) => {
+              if (entries.length === 0) {
+                resolve()
+                return
+              }
+
+              for (const childEntry of entries) {
+                await readEntry(childEntry, path + entry.name + '/')
+              }
+
+              // 더 읽을 엔트리가 있을 수 있음 (100개 제한)
+              readEntries()
+            })
           }
-        }
-      }
-    } else {
-      // 폴백: FileList 사용
-      const fileList = e.dataTransfer.files
-      for (let i = 0; i < fileList.length; i++) {
-        files.push(fileList[i])
+          readEntries()
+        })
       }
     }
 
-    if (files.length > 0) {
-      onFilesSelected(files)
+    // DataTransferItemList에서 엔트리 추출
+    if (items) {
+      const entries: FileSystemEntry[] = []
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry?.()
+          if (entry) {
+            entries.push(entry)
+          }
+        }
+      }
+
+      // 모든 엔트리 처리
+      for (const entry of entries) {
+        await readEntry(entry, '')
+      }
+    }
+
+    if (allFiles.length > 0) {
+      onFilesSelected(allFiles)
     }
   }, [disabled, onFilesSelected])
 
