@@ -9,11 +9,15 @@
  * - 업로드 진행률 표시
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import FolderDropZone from './components/FolderDropZone'
 import MappingPreview from './components/MappingPreview'
+import UploadProgress from './components/UploadProgress'
+import UploadSummary from './components/UploadSummary'
+import { useBatchUpload } from './hooks/useBatchUpload'
+import { BatchUploadApi } from './api/batchUploadApi'
 import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
 import type { FolderMapping } from './types'
@@ -25,9 +29,6 @@ interface BatchDocumentUploadViewProps {
   onClose: () => void
 }
 
-// 임시 고객 데이터 (실제로는 API에서 가져옴)
-const mockCustomers: CustomerForMatching[] = []
-
 export default function BatchDocumentUploadView({
   visible,
   onClose
@@ -35,9 +36,45 @@ export default function BatchDocumentUploadView({
   const [step, setStep] = useState<'select' | 'preview' | 'upload' | 'complete'>('select')
   const [folderMappings, setFolderMappings] = useState<FolderMapping[]>([])
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [customers, setCustomers] = useState<CustomerForMatching[]>([])
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
+
+  // 업로드 훅
+  const {
+    progress,
+    startUpload,
+    pauseUpload,
+    resumeUpload,
+    cancelUpload,
+    retryFailed,
+    reset: resetUpload,
+  } = useBatchUpload()
 
   // 현재 사용자의 등급별 배치 업로드 한도 (임시: 일반 등급)
   const tierLimit = TIER_LIMITS.STANDARD.maxBatchUpload
+
+  // 고객 목록 로드
+  useEffect(() => {
+    if (visible && customers.length === 0) {
+      setIsLoadingCustomers(true)
+      BatchUploadApi.getCustomersForMatching()
+        .then((result) => {
+          if (result.success) {
+            setCustomers(result.customers)
+          }
+        })
+        .finally(() => {
+          setIsLoadingCustomers(false)
+        })
+    }
+  }, [visible, customers.length])
+
+  // 업로드 완료 감지
+  useEffect(() => {
+    if (progress.state === 'completed' || progress.state === 'cancelled') {
+      setStep('complete')
+    }
+  }, [progress.state])
 
   const handleFilesSelected = useCallback((files: File[]) => {
     // 1. 파일을 폴더별로 그룹화
@@ -62,15 +99,14 @@ export default function BatchDocumentUploadView({
     setValidationErrors(errors)
 
     // 3. 폴더-고객 매핑 생성
-    // TODO: 실제 고객 목록은 API에서 가져와야 함
-    const mappings = createFolderMappings(fileGroups, mockCustomers)
+    const mappings = createFolderMappings(fileGroups, customers)
     setFolderMappings(mappings)
 
     // 4. 미리보기 단계로 이동
     if (mappings.length > 0) {
       setStep('preview')
     }
-  }, [tierLimit])
+  }, [tierLimit, customers])
 
   const handleBack = useCallback(() => {
     setStep('select')
@@ -78,17 +114,42 @@ export default function BatchDocumentUploadView({
     setValidationErrors([])
   }, [])
 
-  const handleStartUpload = useCallback(() => {
-    // TODO: 업로드 로직 구현 (Phase 3)
+  const handleStartUpload = useCallback(async () => {
     setStep('upload')
-  }, [])
+    await startUpload(folderMappings)
+  }, [folderMappings, startUpload])
+
+  const handleCancel = useCallback(() => {
+    cancelUpload()
+  }, [cancelUpload])
+
+  const handleComplete = useCallback(() => {
+    // 모든 상태 초기화
+    resetUpload()
+    setStep('select')
+    setFolderMappings([])
+    setValidationErrors([])
+  }, [resetUpload])
+
+  const handleRetryFailed = useCallback(async () => {
+    setStep('upload')
+    await retryFailed()
+  }, [retryFailed])
 
   const renderContent = () => {
     switch (step) {
       case 'select':
         return (
           <div className="batch-upload-content">
-            <FolderDropZone onFilesSelected={handleFilesSelected} />
+            <FolderDropZone
+              onFilesSelected={handleFilesSelected}
+              disabled={isLoadingCustomers}
+            />
+            {isLoadingCustomers && (
+              <div className="batch-upload-loading">
+                <span>고객 목록을 불러오는 중...</span>
+              </div>
+            )}
             {validationErrors.length > 0 && (
               <div className="batch-upload-errors">
                 {validationErrors.map((error, index) => (
@@ -113,18 +174,23 @@ export default function BatchDocumentUploadView({
       case 'upload':
         return (
           <div className="batch-upload-content">
-            <div className="batch-upload-progress-placeholder">
-              <p>업로드 진행 중... (Phase 3에서 구현)</p>
-            </div>
+            <UploadProgress
+              progress={progress}
+              onPause={pauseUpload}
+              onResume={resumeUpload}
+              onCancel={handleCancel}
+            />
           </div>
         )
 
       case 'complete':
         return (
           <div className="batch-upload-content">
-            <div className="batch-upload-complete-placeholder">
-              <p>업로드 완료! (Phase 3에서 구현)</p>
-            </div>
+            <UploadSummary
+              progress={progress}
+              onClose={handleComplete}
+              onRetryFailed={progress.failedFiles > 0 ? handleRetryFailed : undefined}
+            />
           </div>
         )
     }
