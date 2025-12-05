@@ -24,6 +24,7 @@ import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { formatDateTime } from '@/shared/lib/timeUtils'
+import { api, ApiError } from '@/shared/lib/api'
 import { LinkIcon } from '../components/DocumentActionIcons'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
@@ -680,47 +681,14 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     try {
       setIsDeleting(true)
 
-      // JWT 토큰 가져오기 (api.ts와 동일한 로직)
-      let token: string | null = null;
-      if (typeof window !== 'undefined') {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            token = parsed?.state?.token || null;
-          }
-        } catch {
-          // 파싱 실패 시 무시
-        }
-      }
-
-      // 선택된 모든 문서 삭제
+      // 선택된 모든 문서 삭제 (api 모듈 사용 - 토큰/헤더 자동 처리)
       const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
         try {
-          const userIdForDelete = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-          const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'x-user-id': userIdForDelete,
-          };
-
-          // JWT 토큰이 있으면 Authorization 헤더 추가
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
-
-          const response = await fetch(`/api/documents/${docId}`, {
-            method: 'DELETE',
-            headers,
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `Failed to delete document ${docId}`)
-          }
-
+          await api.delete(`/api/documents/${docId}`)
           return { success: true, docId }
         } catch (error) {
-          console.error(`Error deleting document ${docId}:`, error)
+          const message = error instanceof ApiError ? error.message : `Failed to delete document ${docId}`
+          console.error(`Error deleting document ${docId}:`, message)
           return { success: false, docId, error }
         }
       })

@@ -8,8 +8,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCustomersController } from '../useCustomersController';
 
-// fetch mock
-global.fetch = vi.fn();
+// api 모듈 mock
+const mockApiGet = vi.fn();
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn()
+  },
+  ApiError: class ApiError extends Error {
+    constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
+      super(message);
+      this.name = 'ApiError';
+    }
+  }
+}));
 
 describe('useCustomersController (Features)', () => {
   const mockCustomers = [
@@ -34,6 +49,7 @@ describe('useCustomersController (Features)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockApiGet.mockReset();
   });
 
   describe('초기화', () => {
@@ -67,31 +83,25 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('autoLoad가 true면 자동으로 로드해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       renderHook(() => useCustomersController({ autoLoad: true }));
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalled();
+        expect(mockApiGet).toHaveBeenCalled();
       });
     });
 
     it('autoLoad가 false면 자동 로드하지 않아야 함', () => {
       renderHook(() => useCustomersController({ autoLoad: false }));
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
   });
 
   describe('searchCustomers', () => {
     it('검색을 실행하고 고객 목록을 로드해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -107,10 +117,7 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('검색 시 페이지를 1로 리셋해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -126,10 +133,7 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('API 호출 시 올바른 쿼리 파라미터를 전달해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -144,7 +148,7 @@ describe('useCustomersController (Features)', () => {
       });
 
       await waitFor(() => {
-        const callUrl = vi.mocked(global.fetch).mock.calls?.[0]?.[0] as string;
+        const callUrl = mockApiGet.mock.calls?.[0]?.[0] as string;
         expect(callUrl).toContain('search=%ED%99%8D%EA%B8%B8%EB%8F%99');
         expect(callUrl).toContain('status=active');
         expect(callUrl).toContain('customerType=%EA%B0%9C%EC%9D%B8');
@@ -157,25 +161,19 @@ describe('useCustomersController (Features)', () => {
       const page1Customers = [mockCustomers[0]];
       const page2Customers = [mockCustomers[1]];
 
-      vi.mocked(global.fetch)
+      mockApiGet
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: {
-              customers: page1Customers,
-              pagination: { ...mockPagination, currentPage: 1 }
-            }
-          })
-        } as Response)
+          data: {
+            customers: page1Customers,
+            pagination: { ...mockPagination, currentPage: 1 }
+          }
+        })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: {
-              customers: page2Customers,
-              pagination: { ...mockPagination, currentPage: 2 }
-            }
-          })
-        } as Response);
+          data: {
+            customers: page2Customers,
+            pagination: { ...mockPagination, currentPage: 2 }
+          }
+        });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -201,15 +199,12 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('마지막 페이지에서는 loadMore가 작동하지 않아야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          data: {
-            customers: mockCustomers,
-            pagination: { ...mockPagination, currentPage: 3, totalPages: 3 }
-          }
-        })
-      } as Response);
+      mockApiGet.mockResolvedValue({
+        data: {
+          customers: mockCustomers,
+          pagination: { ...mockPagination, currentPage: 3, totalPages: 3 }
+        }
+      });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -223,37 +218,31 @@ describe('useCustomersController (Features)', () => {
         expect(result.current.customers).toHaveLength(2);
       });
 
-      const callCountBefore = vi.mocked(global.fetch).mock.calls?.length ?? 0;
+      const callCountBefore = mockApiGet.mock.calls?.length ?? 0;
 
       await act(async () => {
         result.current.loadMore();
       });
 
-      expect(vi.mocked(global.fetch).mock.calls?.length ?? 0).toBe(callCountBefore);
+      expect(mockApiGet.mock.calls?.length ?? 0).toBe(callCountBefore);
     });
   });
 
   describe('goToPage', () => {
     it('특정 페이지로 이동해야 함', async () => {
-      vi.mocked(global.fetch)
+      mockApiGet
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: {
-              customers: mockCustomers,
-              pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
-            }
-          })
-        } as Response)
+          data: {
+            customers: mockCustomers,
+            pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
+          }
+        })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: {
-              customers: mockCustomers,
-              pagination: { ...mockPagination, currentPage: 2, totalPages: 3 }
-            }
-          })
-        } as Response);
+          data: {
+            customers: mockCustomers,
+            pagination: { ...mockPagination, currentPage: 2, totalPages: 3 }
+          }
+        });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -279,15 +268,12 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('범위를 벗어난 페이지는 무시해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          data: {
-            customers: mockCustomers,
-            pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
-          }
-        })
-      } as Response);
+      mockApiGet.mockResolvedValue({
+        data: {
+          customers: mockCustomers,
+          pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
+        }
+      });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -301,22 +287,19 @@ describe('useCustomersController (Features)', () => {
         expect(result.current.customers).toHaveLength(2);
       });
 
-      const callCountBefore = vi.mocked(global.fetch).mock.calls?.length ?? 0;
+      const callCountBefore = mockApiGet.mock.calls?.length ?? 0;
 
       await act(async () => {
         result.current.goToPage(10); // totalPages는 3
       });
 
-      expect(vi.mocked(global.fetch).mock.calls?.length ?? 0).toBe(callCountBefore);
+      expect(mockApiGet.mock.calls?.length ?? 0).toBe(callCountBefore);
     });
   });
 
   describe('refresh', () => {
     it('현재 쿼리로 다시 로드해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -330,24 +313,21 @@ describe('useCustomersController (Features)', () => {
         expect(result.current.customers).toHaveLength(2);
       });
 
-      vi.mocked(global.fetch).mockClear();
+      mockApiGet.mockClear();
 
       await act(async () => {
         result.current.refresh();
       });
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      const callUrl = vi.mocked(global.fetch).mock.calls?.[0]?.[0] as string;
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
+      const callUrl = mockApiGet.mock.calls?.[0]?.[0] as string;
       expect(callUrl).toContain('search=%ED%99%8D%EA%B8%B8%EB%8F%99');
     });
   });
 
   describe('handleSearchChange', () => {
     it('검색어를 변경하고 검색을 실행해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -365,10 +345,7 @@ describe('useCustomersController (Features)', () => {
 
   describe('handleFilterChange', () => {
     it('필터를 변경하고 검색을 실행해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -387,15 +364,12 @@ describe('useCustomersController (Features)', () => {
 
   describe('계산된 상태', () => {
     it('hasMore는 currentPage < totalPages일 때 true여야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          data: {
-            customers: mockCustomers,
-            pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
-          }
-        })
-      } as Response);
+      mockApiGet.mockResolvedValue({
+        data: {
+          customers: mockCustomers,
+          pagination: { ...mockPagination, currentPage: 1, totalPages: 3 }
+        }
+      });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -419,10 +393,7 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('totalCustomers는 pagination.totalCount와 같아야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { customers: mockCustomers, pagination: mockPagination } })
-      } as Response);
+      mockApiGet.mockResolvedValue({ data: { customers: mockCustomers, pagination: mockPagination } });
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -440,10 +411,9 @@ describe('useCustomersController (Features)', () => {
 
   describe('에러 처리', () => {
     it('API 응답이 ok가 아니면 에러를 설정해야 함', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: false,
-        json: async () => ({ message: 'API 에러' })
-      } as Response);
+      // api.get throws ApiError for non-ok responses
+      const { ApiError } = await import('@/shared/lib/api');
+      mockApiGet.mockRejectedValue(new ApiError('API 에러', 400, 'Bad Request'));
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })
@@ -459,7 +429,7 @@ describe('useCustomersController (Features)', () => {
     });
 
     it('네트워크 에러를 처리해야 함', async () => {
-      vi.mocked(global.fetch).mockRejectedValue(new Error('네트워크 에러'));
+      mockApiGet.mockRejectedValue(new Error('네트워크 에러'));
 
       const { result } = renderHook(() =>
         useCustomersController({ autoLoad: false })

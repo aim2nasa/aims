@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CustomerSearchQuerySchema, type Customer, type CustomerSearchQuery } from '@/entities/customer/model';
+import { api, ApiError } from '@/shared/lib/api';
 
 interface UseCustomersControllerProps {
   /** 초기 페이지 크기 */
@@ -89,22 +90,18 @@ export const useCustomersController = ({
         params.append('hasDocuments', String(validatedQuery.hasDocuments));
       }
 
-      // ⭐ 설계사별 고객 데이터 격리: userId 헤더 추가
-      const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-
-      // API 호출
-      const response = await fetch(`/api/customers?${params.toString()}`, {
-        headers: {
-          'x-user-id': currentUserId
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '고객 목록 조회에 실패했습니다.');
+      // API 호출 (api 모듈 사용 - x-user-id 헤더 자동 처리)
+      interface CustomersResponse {
+        success: boolean;
+        data?: {
+          customers: Customer[];
+          pagination: PaginationInfo;
+        };
+        customers?: Customer[];
+        pagination?: PaginationInfo;
       }
 
-      const result = await response.json();
+      const result = await api.get<CustomersResponse>(`/api/customers?${params.toString()}`);
 
       // 백엔드 응답 형식: { success: true, data: { customers, pagination } }
       const data = result.data || result;
@@ -121,9 +118,11 @@ export const useCustomersController = ({
         setPagination(data.pagination);
       }
     } catch (err) {
-      const error = err as Error;
-      setError(error.message || '고객 목록 조회 중 오류가 발생했습니다.');
-      console.error('[useCustomersController] Fetch error:', error);
+      const message = err instanceof ApiError
+        ? err.message
+        : (err instanceof Error ? err.message : '고객 목록 조회 중 오류가 발생했습니다.');
+      setError(message);
+      console.error('[useCustomersController] Fetch error:', err);
     } finally {
       setIsLoading(false);
     }

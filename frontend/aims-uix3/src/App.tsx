@@ -48,6 +48,7 @@ import DownloadHelper from './utils/downloadHelper'
 import type { SelectedDocument } from './utils/documentTransformers'
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/documentTransformers'
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
+import { api } from '@/shared/lib/api'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -567,21 +568,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     try {
       // /api/documents/:id/status API로 문서 상세 정보 조회
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const authData = localStorage.getItem('auth-storage');
-      const token = authData ? JSON.parse(authData).state?.token : null;
-      const response = await fetch(`/api/documents/${documentId}/status`, {
-        headers: {
-          'x-user-id': userId,
-          ...(token && { Authorization: `Bearer ${token}` })
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`API 오류: ${response.status}`)
-      }
-
-      const result = await response.json()
+      const result = await api.get<{ success: boolean; data?: { raw?: unknown } }>(`/api/documents/${documentId}/status`)
       if (import.meta.env.DEV) {
         console.log('[App] API 응답:', result)
       }
@@ -596,7 +583,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // result.data.raw를 SmartSearchDocumentResponse로 변환
       if (import.meta.env.DEV) {
         console.log('[App] result.data.raw:', result.data.raw)
-        console.log('[App] result.data.raw.ocr:', result.data.raw?.ocr)
+        console.log('[App] result.data.raw.ocr:', (result.data.raw as Record<string, unknown>)?.['ocr'])
       }
 
       const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
