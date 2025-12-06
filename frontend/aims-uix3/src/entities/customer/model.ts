@@ -86,6 +86,9 @@ export const CustomerSchema = z.object({
   segments: z.array(z.string()).optional(),
   labels: z.array(z.string()).optional(),
   search_metadata: z.record(z.string(), z.unknown()).optional(),
+  // ⭐ Soft Delete 필드
+  deleted_at: z.string().datetime().nullable().optional(),
+  deleted_by: z.string().nullable().optional(),
 });
 
 /**

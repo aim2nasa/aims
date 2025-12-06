@@ -134,21 +134,51 @@ export class CustomerService {
   }
 
   /**
-   * 고객 삭제
+   * 고객 삭제 (Soft Delete - 휴면 처리)
    */
   static async deleteCustomer(id: string): Promise<void> {
     if (!id.trim()) {
       throw new Error('고객 ID가 필요합니다');
     }
 
+    // Soft Delete (기본값)
     await api.delete(ENDPOINTS.CUSTOMER(id));
 
     // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
     window.dispatchEvent(new CustomEvent('customerChanged'));
-    // contractChanged 이벤트 발생 (고객 삭제 시 계약도 cascade 삭제됨)
+  }
+
+  /**
+   * 고객 영구 삭제 (Hard Delete)
+   * 주의: 연결된 문서, 계약, 관계도 모두 삭제됨
+   */
+  static async permanentDeleteCustomer(id: string): Promise<{
+    deletedRelationships: number;
+    deletedContracts: number;
+    deletedDocuments: number;
+  }> {
+    if (!id.trim()) {
+      throw new Error('고객 ID가 필요합니다');
+    }
+
+    // Hard Delete with ?permanent=true
+    const response = await api.delete<{
+      success: boolean;
+      deletedRelationships: number;
+      deletedContracts: number;
+      deletedDocuments: number;
+    }>(`${ENDPOINTS.CUSTOMER(id)}?permanent=true`);
+
+    // 모든 관련 이벤트 발생
+    window.dispatchEvent(new CustomEvent('customerChanged'));
     window.dispatchEvent(new CustomEvent('contractChanged'));
-    // documentChanged 이벤트 발생 (고객 삭제 시 연결된 문서도 cascade 삭제됨)
     window.dispatchEvent(new CustomEvent('documentChanged'));
+
+    return {
+      deletedRelationships: response.deletedRelationships || 0,
+      deletedContracts: response.deletedContracts || 0,
+      deletedDocuments: response.deletedDocuments || 0,
+    };
   }
 
   /**
@@ -413,6 +443,7 @@ export const {
   createCustomer,
   updateCustomer,
   deleteCustomer,
+  permanentDeleteCustomer,
   restoreCustomer,
   searchCustomers,
   getCustomersByTags,
