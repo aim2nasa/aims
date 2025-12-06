@@ -2724,6 +2724,7 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
 app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
+    const { permanent } = req.query; // ?permanent=true for hard delete
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -2747,6 +2748,39 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
         error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
+
+    // ⭐ Soft Delete (Default)
+    if (permanent !== 'true') {
+      const result = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            'meta.status': 'inactive',
+            'meta.updated_at': utcNowISO(),
+            deleted_at: utcNowDate(),
+            deleted_by: userId
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.'
+        });
+      }
+
+      console.log(`🗂️ [Soft Delete] 고객 ${id} 휴면 처리 완료 (by ${userId})`);
+
+      return res.json({
+        success: true,
+        message: '고객이 휴면 처리되었습니다.',
+        soft_delete: true
+      });
+    }
+
+    // ⭐ Hard Delete (Permanent) - 기존 로직 유지
+    console.log(`🗑️ [Hard Delete] 고객 ${id} 영구 삭제 시작...`);
 
     // ⭐ Cascading Delete: 순차적으로 관련 데이터 삭제
     // 참고: MongoDB Standalone은 트랜잭션 미지원 → 순차 삭제 + 정리 API로 대응
@@ -2780,7 +2814,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
       customerId: new ObjectId(id)
     }).toArray();
 
-    console.log(`🗑️ [고객 삭제] 고객 ${id}와 연결된 문서 ${customerDocuments.length}개 삭제 시작`);
+    console.log(`🗑️ [Hard Delete] 고객 ${id}와 연결된 문서 ${customerDocuments.length}개 삭제 시작`);
 
     // 각 문서 삭제
     for (const document of customerDocuments) {
@@ -2844,15 +2878,16 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
     // 4. 고객 삭제
     await db.collection(CUSTOMERS_COLLECTION).deleteOne({ _id: customerId });
 
-    console.log(`🗑️ [Cascading Delete] 고객 ${id} 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서=${filesUpdateCount}`);
+    console.log(`🗑️ [Hard Delete] 고객 ${id} 영구 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서=${filesUpdateCount}`);
 
     res.json({
       success: true,
-      message: '고객이 성공적으로 삭제되었습니다.',
+      message: '고객이 영구적으로 삭제되었습니다.',
       deletedRelationships: relationshipsDeleteCount,
       deletedContracts: contractsDeleteCount,
       deletedDocuments: filesUpdateCount,
-      cascading: true  // Cascading Delete 사용 여부 표시
+      cascading: true,  // Cascading Delete 사용 여부 표시
+      permanent: true
     });
   } catch (error) {
     console.error('고객 삭제 오류:', error);
