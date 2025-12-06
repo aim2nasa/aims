@@ -55,7 +55,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
-    const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-all-type-filter', 'all');
+    // 고객 타입 필터는 항상 'all'로 고정 (개인/법인 모두 표시)
+    const customerTypeFilter: 'all' | 'personal' | 'corporate' = 'all';
     const [statusFilter, setStatusFilter] = usePersistedState<'all' | 'active' | 'inactive'>('customer-all-status-filter', 'all');
 
     // 칼럼 정렬 상태
@@ -668,7 +669,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 onClick={() => handleStatusFilterChange('active')}
                 title="활성 고객만 보기"
               >
-                활성 {statusCounts.active}
+                활성(개인 {typeCounts.active.personal}, 법인 {typeCounts.active.corporate})
               </button>
               <span className="type-filter-separator">/</span>
               <button
@@ -676,7 +677,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 onClick={() => handleStatusFilterChange('inactive')}
                 title="휴면 고객만 보기"
               >
-                휴면 {statusCounts.inactive}
+                휴면(개인 {typeCounts.inactive.personal}, 법인 {typeCounts.inactive.corporate})
               </button>
               <span className="type-filter-separator">/</span>
               <button
@@ -684,7 +685,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 onClick={() => handleStatusFilterChange('all')}
                 title="모든 고객 보기"
               >
-                전체 {statusCounts.total}
+                전체({typeCounts.all.personal + typeCounts.all.corporate})
               </button>
 
               {/* 삭제 모드일 때 선택 수 및 삭제 버튼 */}
