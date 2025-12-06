@@ -278,14 +278,14 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     setIsEditModalVisible(true)
   }, [])
 
-  // 🍎 삭제 핸들러
-  const handleDeleteClick = useCallback(async () => {
+  // 🍎 소프트 삭제 핸들러 (휴면 처리)
+  const handleSoftDeleteClick = useCallback(async () => {
     if (!customer) return
 
     const confirmed = await confirmController.actions.openModal({
-      title: '고객 삭제',
-      message: `"${customer.personal_info?.name}" 고객을 삭제하시겠습니까?`,
-      confirmText: '삭제',
+      title: '고객 휴면 처리',
+      message: `"${customer.personal_info?.name}" 고객을 휴면 처리하시겠습니까?\n\n휴면 처리된 고객은 언제든지 복원할 수 있습니다.`,
+      confirmText: '휴면 처리',
       cancelText: '취소',
       confirmStyle: 'destructive',
       showCancel: true,
@@ -300,8 +300,51 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
         onClose()
       } catch (error) {
         await confirmController.actions.openModal({
-          title: '삭제 실패',
-          message: error instanceof Error ? error.message : '고객 삭제에 실패했습니다.',
+          title: '휴면 처리 실패',
+          message: error instanceof Error ? error.message : '고객 휴면 처리에 실패했습니다.',
+          confirmText: '확인',
+          confirmStyle: 'destructive',
+          showCancel: false,
+          iconType: 'error'
+        })
+      }
+    }
+  }, [customer, onClose, onCustomerDeleted, confirmController])
+
+  // 🍎 영구 삭제 핸들러 (Hard Delete)
+  const handlePermanentDeleteClick = useCallback(async () => {
+    if (!customer) return
+
+    const confirmed = await confirmController.actions.openModal({
+      title: '고객 영구 삭제 (개발용)',
+      message: `⚠️ 경고: "${customer.personal_info?.name}" 고객과 연결된 모든 데이터를 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다!\n\n삭제될 데이터:\n- 고객 정보\n- 연결된 모든 문서\n- 연결된 모든 계약\n- 연결된 모든 관계`,
+      confirmText: '영구 삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'error'
+    })
+
+    if (confirmed) {
+      try {
+        const document = CustomerDocument.getInstance()
+        const result = await document.permanentDeleteCustomer(customer._id)
+
+        await confirmController.actions.openModal({
+          title: '영구 삭제 완료',
+          message: `고객이 영구 삭제되었습니다.\n\n삭제된 데이터:\n- 관계: ${result.deletedRelationships}개\n- 계약: ${result.deletedContracts}개\n- 문서: ${result.deletedDocuments}개`,
+          confirmText: '확인',
+          confirmStyle: 'primary',
+          showCancel: false,
+          iconType: 'success'
+        })
+
+        onCustomerDeleted?.()
+        onClose()
+      } catch (error) {
+        await confirmController.actions.openModal({
+          title: '영구 삭제 실패',
+          message: error instanceof Error ? error.message : '고객 영구 삭제에 실패했습니다.',
           confirmText: '확인',
           confirmStyle: 'destructive',
           showCancel: false,
@@ -510,16 +553,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   정보 수정
                 </Button>
               </Tooltip>
-              <Tooltip content="고객을 삭제합니다. 삭제후 되돌릴 수 없습니다.">
+              <Tooltip content="고객을 휴면 처리합니다 (복원 가능)">
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleDeleteClick}
-                  leftIcon={<span>🗑️</span>}
+                  onClick={handleSoftDeleteClick}
+                  leftIcon={<span>💤</span>}
                 >
-                  고객 삭제
+                  휴면 처리
                 </Button>
               </Tooltip>
+              {import.meta.env.DEV && (
+                <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handlePermanentDeleteClick}
+                    leftIcon={<span>🗑️</span>}
+                  >
+                    영구 삭제 (개발용)
+                  </Button>
+                </Tooltip>
+              )}
               <div className="customer-full-detail__actions-spacer" />
               {/* 🍎 레이아웃 리셋 버튼 (변경 시에만 표시) */}
               {isLayoutModified && (

@@ -193,16 +193,32 @@ export const useCustomerRegistrationController = ({
         customer_type: '개인',
       });
     } catch (error) {
-      const err = error as Error;
+      const err = error as any; // ApiError 타입
+
+      // API 에러 응답에서 메시지 추출
+      // ApiError의 경우: err.data에 백엔드 응답이 직접 들어있음
+      // 우선순위: data.error > message > 기본 메시지
+      const errorMessage = (err.data && typeof err.data === 'object' && 'error' in err.data)
+        ? (err.data.error as string)
+        : err.message || '고객 등록 중 오류가 발생했습니다.';
+
+      if (import.meta.env.DEV) {
+        console.error('[useCustomerRegistrationController] 고객 등록 실패:', {
+          status: err.status,
+          error: err.data?.error,
+          details: err.data?.details,
+          fullError: err,
+        });
+      }
 
       // 에러 콜백 (async 지원)
       if (onError) {
-        await onError(err);
+        await onError(new Error(errorMessage));
       }
 
       // 일반 에러 메시지 설정
       setErrors({
-        submit: err.message || '고객 등록 중 오류가 발생했습니다.',
+        submit: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

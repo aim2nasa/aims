@@ -2141,55 +2141,6 @@ app.get('/api/customers', authenticateJWT, async (req, res) => {
 });
 
 /**
- * 윈도우식 중복명 처리를 위한 고유한 고객명 생성 함수
- * @param {string} originalName - 원본 고객명
- * @param {string} userId - 설계사(사용자) ID - 설계사별로 고객명 중복 체크
- */
-async function generateUniqueCustomerName(originalName, userId) {
-  // 해당 설계사의 고객 중에서만 중복 체크
-  const filter = { 'personal_info.name': originalName };
-  if (userId) {
-    filter['meta.created_by'] = userId;
-  }
-
-  // 원본 이름으로 먼저 검색 (해당 설계사 소속 고객만)
-  const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
-    .findOne(filter);
-
-  // 중복이 없으면 원본 이름 반환
-  if (!existingCustomer) {
-    return originalName;
-  }
-
-  // 중복이 있으면 (1), (2), ... 형태로 번호 붙이기
-  let counter = 1;
-  let uniqueName;
-
-  while (true) {
-    uniqueName = `${originalName} (${counter})`;
-
-    const duplicateFilter = { 'personal_info.name': uniqueName };
-    if (userId) {
-      duplicateFilter['meta.created_by'] = userId;
-    }
-
-    const duplicateCheck = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne(duplicateFilter);
-
-    if (!duplicateCheck) {
-      return uniqueName;
-    }
-
-    counter++;
-
-    // 무한 루프 방지 (최대 100개까지)
-    if (counter > 100) {
-      return `${originalName} (${Date.now()})`;
-    }
-  }
-}
-
-/**
  * 새 고객 등록 API
  */
 app.post('/api/customers', authenticateJWT, async (req, res) => {
@@ -2205,7 +2156,7 @@ app.post('/api/customers', authenticateJWT, async (req, res) => {
       });
     }
 
-    // 원본 고객명을 기준으로 유니크한 이름 생성
+    // 고객명 필수 체크
     const originalName = customerData.personal_info?.name;
     if (!originalName) {
       return res.status(400).json({
@@ -2214,22 +2165,51 @@ app.post('/api/customers', authenticateJWT, async (req, res) => {
       });
     }
 
-    const uniqueName = await generateUniqueCustomerName(originalName, userId);
+    // 중복 체크 (한글 collation 적용)
+    const customerType = customerData.insurance_info?.customer_type;
+    const existingCustomer = await db.collection(CUSTOMERS_COLLECTION).findOne(
+      {
+        'personal_info.name': originalName,
+        'insurance_info.customer_type': customerType
+      },
+      {
+        collation: {
+          locale: 'ko',
+          strength: 2
+        }
+      }
+    );
+
+    if (existingCustomer) {
+      const statusText = existingCustomer.meta?.status === 'inactive' ? ' (휴면 상태)' : '';
+      return res.status(409).json({
+        success: false,
+        error: `이미 등록된 고객명입니다${statusText}.`,
+        details: {
+          field: 'personal_info.name',
+          value: originalName,
+          customerType: customerType,
+          existingCustomerId: existingCustomer._id.toString(),
+          existingStatus: existingCustomer.meta?.status
+        }
+      });
+    }
 
     const newCustomer = {
       ...customerData,
       personal_info: {
         ...customerData.personal_info,
-        name: uniqueName
+        name: originalName
       },
       meta: {
         created_at: utcNowDate(),
         updated_at: utcNowDate(),
         created_by: userId,
         last_modified_by: userId,
-        status: 'active',
-        original_name: originalName !== uniqueName ? originalName : undefined
-      }
+        status: 'active'
+      },
+      deleted_at: null,
+      deleted_by: null
     };
 
     const result = await db.collection(CUSTOMERS_COLLECTION).insertOne(newCustomer);
