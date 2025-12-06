@@ -99,9 +99,96 @@ function requireRole(...roles) {
   };
 }
 
+/**
+ * API Key 인증 미들웨어
+ * n8n 웹훅 등 서버간 통신용
+ */
+function authenticateAPIKey(req, res, next) {
+  const apiKey = req.headers['x-api-key'];
+
+  if (!apiKey) {
+    return res.status(401).json({
+      success: false,
+      message: 'No API key provided'
+    });
+  }
+
+  if (apiKey !== process.env.N8N_API_KEY) {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid API key'
+    });
+  }
+
+  // API Key 인증 성공 시 시스템 사용자로 설정
+  // n8n이 보내는 요청의 userId는 body에서 받음
+  req.user = {
+    id: req.body.userId || req.query.userId,
+    role: 'system',
+    authMethod: 'apiKey'
+  };
+
+  next();
+}
+
+/**
+ * JWT 또는 API Key 인증 미들웨어
+ * JWT 토큰이나 API Key 중 하나만 있으면 인증 성공
+ */
+function authenticateJWTorAPIKey(req, res, next) {
+  const apiKey = req.headers['x-api-key'];
+  const authHeader = req.headers.authorization;
+
+  // API Key 우선 확인
+  if (apiKey) {
+    if (apiKey === process.env.N8N_API_KEY) {
+      req.user = {
+        id: req.body.userId || req.query.userId,
+        role: 'system',
+        authMethod: 'apiKey'
+      };
+      return next();
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid API key'
+      });
+    }
+  }
+
+  // API Key 없으면 JWT 확인
+  if (!authHeader) {
+    return res.status(401).json({
+      success: false,
+      message: 'No authentication provided (JWT or API Key required)'
+    });
+  }
+
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : authHeader;
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    req.user = {
+      ...decoded,
+      authMethod: 'jwt'
+    };
+    next();
+  });
+}
+
 module.exports = {
   generateToken,
   authenticateJWT,
   optionalAuthJWT,
-  requireRole
+  requireRole,
+  authenticateAPIKey,
+  authenticateJWTorAPIKey
 };

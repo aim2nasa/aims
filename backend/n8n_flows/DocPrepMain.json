@@ -979,6 +979,40 @@
       ],
       "id": "1c616ed1-a312-4d2c-8538-7478c5bb8d1f",
       "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://aims.giize.com/api/customers/{{ $json.customerId }}/documents",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"document_id\": \"{{ $json._id }}\",\n  \"userId\": \"{{ $json.ownerId }}\",\n  \"notes\": \"\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1300,
+        150
+      ],
+      "id": "connect-to-customer",
+      "name": "Connect Document to Customer"
     }
   ],
   "pinData": {},
@@ -1332,6 +1366,11 @@
             "node": "Merge",
             "type": "main",
             "index": 1
+          },
+          {
+            "node": "Connect Document to Customer",
+            "type": "main",
+            "index": 0
           }
         ]
       ]

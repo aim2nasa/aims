@@ -11,7 +11,7 @@ const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHe
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
-const { generateToken, authenticateJWT } = require('./middleware/auth');
+const { generateToken, authenticateJWT, authenticateJWTorAPIKey } = require('./middleware/auth');
 
 const app = express();
 app.use(cors({
@@ -3168,8 +3168,9 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
 /**
  * 고객에 문서 연결 API
  * ⭐ 설계사별 고객 데이터 격리 적용
+ * 🔑 JWT 또는 API Key 인증 지원 (n8n 웹훅용)
  */
-app.post('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
+app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const { document_id, relationship_type, notes, assigned_by } = req.body;
