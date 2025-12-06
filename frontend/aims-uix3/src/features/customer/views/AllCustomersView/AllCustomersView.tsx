@@ -658,12 +658,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 </Tooltip>
               )}
 
-              <span className="type-filter-button">
-                활성(개인 {typeCounts.active.personal}, 법인 {typeCounts.active.corporate}), 휴면(개인 {typeCounts.inactive.personal}, 법인 {typeCounts.inactive.corporate}) / 전체({typeCounts.all.personal + typeCounts.all.corporate})
-              </span>
-
               {/* 상태 필터 버튼 */}
-              <span className="type-filter-separator">&nbsp;&nbsp;|&nbsp;</span>
               <button
                 className={`type-filter-button ${statusFilter === 'active' ? 'active' : ''}`}
                 onClick={() => handleStatusFilterChange('active')}
