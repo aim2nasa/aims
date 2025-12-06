@@ -438,8 +438,8 @@ frontend/aims-uix3/src/
 | test_customer_restore.js | 10 | ✅ 통과 | 복원 기능 |
 | test_customer_list_status_filter.js | 8 | ✅ 통과 | 상태 필터 |
 | test_duplicate_name_rejection.js | 8 | ✅ 통과 | 중복 차단 |
-| test_integration_soft_delete_flow.js | 18 | ⏸️ 대기 | End-to-End |
-| **합계** | **59** | **51/59** | **86%** |
+| test_integration_soft_delete_flow.js | 18 | ✅ 통과 | End-to-End |
+| **합계** | **59** | **59/59** | **100%** |
 
 ---
 
@@ -488,6 +488,34 @@ frontend/aims-uix3/src/
 - ✅ **완벽한 동기화**: Document-View 패턴으로 모든 View 자동 업데이트
 - ✅ **정확한 카운트 표시**: 활성/휴면 고객 수를 개인/법인별로 분리 표시
 
+### 중요한 추가 수정 사항
+
+#### 1. 데이터베이스 이름 수정 (2025-12-07)
+**문제**: 모든 마이그레이션 및 테스트 파일이 `DB_NAME = 'aims'`를 사용했으나, 실제 프로덕션 DB는 `'docupload'`
+**해결**:
+- 마이그레이션 파일 `001_add_soft_delete_fields.js` DB 이름 수정
+- 모든 테스트 파일 DB 이름 수정 (7개 파일)
+- 서버에서 마이그레이션 실행하여 유니크 인덱스 생성
+
+#### 2. 유니크 인덱스 생성 완료
+**실행**: `node migrations/001_add_soft_delete_fields.js` on production
+**결과**:
+```
+✅ Created unique index: unique_customer_name_type
+✅ Collation: { locale: 'ko', strength: 2 } (한글 대소문자 무관 비교)
+```
+
+**검증**:
+```javascript
+db.customers.getIndexes()
+// 결과: unique_customer_name_type 인덱스 존재 확인
+```
+
+#### 3. 테스트 완료율: 100%
+- 초기 실행: 17/18 테스트 통과 (STEP 4 duplicate check 실패)
+- DB 이름 수정 후: 59/59 테스트 통과 ✅
+
 ### 다음 단계
-- STEP 11: 전체 통합 테스트 실행 (선택)
-- STEP 12: 최종 검토 및 문서화 (선택)
+- ✅ 완료: 전체 통합 테스트 실행 (59/59 통과)
+- ⏸️ 보류: 브라우저 수동 테스트 (실제 사용자 시나리오)
+- ⏸️ 보류: 프로덕션 배포 및 모니터링
