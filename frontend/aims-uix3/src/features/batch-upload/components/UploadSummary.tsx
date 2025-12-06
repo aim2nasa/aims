@@ -153,7 +153,7 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         )}
         {onViewDocuments && (
           <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
-            현재 진행상황 보기
+            처리 상태 보기
           </button>
         )}
         <button className="upload-summary-btn primary" onClick={onClose}>
