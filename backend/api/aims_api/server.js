@@ -2736,7 +2736,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
 
     // ⭐ Soft Delete (Default)
     if (permanent !== 'true') {
-      const result = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      const result = await db.collection(CUSTOMERS_COLLECTION).findOneAndUpdate(
         { _id: new ObjectId(id) },
         {
           $set: {
@@ -2745,22 +2745,33 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
             deleted_at: utcNowDate(),
             deleted_by: userId
           }
-        }
+        },
+        { returnDocument: 'after' }  // 업데이트 후 문서 반환
       );
 
-      if (result.matchedCount === 0) {
+      // 🔍 디버그: result 구조 확인
+      console.log('🔍 [DEBUG] findOneAndUpdate result:', JSON.stringify({
+        hasValue: !!result.value,
+        hasOk: !!result.ok,
+        resultKeys: Object.keys(result || {}),
+        resultType: typeof result
+      }));
+
+      if (!result.value && !result) {
         return res.status(404).json({
           success: false,
           error: '고객을 찾을 수 없습니다.'
         });
       }
 
+      const updatedCustomer = result.value || result;
       console.log(`🗂️ [Soft Delete] 고객 ${id} 휴면 처리 완료 (by ${userId})`);
 
       return res.json({
         success: true,
         message: '고객이 휴면 처리되었습니다.',
-        soft_delete: true
+        soft_delete: true,
+        customer: updatedCustomer  // 업데이트된 고객 데이터 반환
       });
     }
 
@@ -2923,7 +2934,7 @@ app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
     }
 
     // ⭐ 복원 처리
-    const result = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+    const result = await db.collection(CUSTOMERS_COLLECTION).findOneAndUpdate(
       { _id: new ObjectId(id) },
       {
         $set: {
@@ -2932,26 +2943,23 @@ app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
           deleted_at: null,
           deleted_by: null
         }
-      }
+      },
+      { returnDocument: 'after' }  // 업데이트 후 문서 반환
     );
 
-    if (result.matchedCount === 0) {
+    if (!result.value) {
       return res.status(404).json({
         success: false,
         error: '복원할 수 없는 고객입니다.'
       });
     }
 
-    // 복원된 고객 정보 조회
-    const restoredCustomer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
-
     console.log(`♻️ [Restore] 고객 ${id} 복원 완료 (by ${userId})`);
 
     res.json({
       success: true,
       message: '고객이 복원되었습니다.',
-      data: restoredCustomer
+      data: result.value  // 복원된 고객 데이터 반환
     });
   } catch (error) {
     console.error('고객 복원 오류:', error);

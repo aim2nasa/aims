@@ -135,17 +135,30 @@ export class CustomerService {
 
   /**
    * 고객 삭제 (Soft Delete - 휴면 처리)
+   * 서버가 업데이트된 고객 데이터를 반환하여 즉시 로컬 상태 업데이트 가능
    */
-  static async deleteCustomer(id: string): Promise<void> {
+  static async deleteCustomer(id: string): Promise<Customer> {
     if (!id.trim()) {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    // Soft Delete (기본값)
-    await api.delete(ENDPOINTS.CUSTOMER(id));
+    // Soft Delete (기본값) - 서버가 업데이트된 고객 반환
+    const response = await api.delete<{
+      success: boolean;
+      message: string;
+      soft_delete: boolean;
+      customer: unknown;
+    }>(ENDPOINTS.CUSTOMER(id));
+
+    if (!response.success || !response.customer) {
+      throw new Error('고객을 휴면 처리할 수 없습니다');
+    }
 
     // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
     window.dispatchEvent(new CustomEvent('customerChanged'));
+
+    // 업데이트된 고객 데이터 반환
+    return CustomerUtils.validate(response.customer);
   }
 
   /**

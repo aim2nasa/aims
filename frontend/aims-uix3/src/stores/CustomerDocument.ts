@@ -339,20 +339,32 @@ export class CustomerDocument {
   /**
    * 고객 삭제 (DELETE - Soft Delete)
    * 휴면 처리: status='inactive', deleted_at 설정
+   * 서버가 업데이트된 고객을 반환하여 즉시 로컬 상태 업데이트
    */
   async deleteCustomer(id: string): Promise<void> {
     try {
       if (import.meta.env.DEV) {
         console.log('[CustomerDocument] 고객 삭제 (휴면 처리) 시작:', id);
       }
-      await CustomerService.deleteCustomer(id);
+
+      // 서버가 업데이트된 고객 데이터 반환
+      const updatedCustomer = await CustomerService.deleteCustomer(id);
 
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 삭제 완료, 최신 데이터 로드 중:', id);
+        console.log('[CustomerDocument] 고객 삭제 완료, 로컬 상태 업데이트:', updatedCustomer);
       }
 
-      // 삭제 후 서버에서 최신 데이터 다시 로드 (모든 고객)
-      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
+      // 로컬 상태 즉시 업데이트 (서버 반환 데이터 사용)
+      const index = this.customers.findIndex(c => c._id === id);
+      if (index !== -1) {
+        this.customers = [
+          ...this.customers.slice(0, index),
+          updatedCustomer,
+          ...this.customers.slice(index + 1)
+        ];
+      }
+
+      this.notify(); // 모든 View에 즉시 알림
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
       throw error;
@@ -375,11 +387,14 @@ export class CustomerDocument {
       const result = await CustomerService.permanentDeleteCustomer(id);
 
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 영구 삭제 완료, 최신 데이터 로드 중:', id, result);
+        console.log('[CustomerDocument] 고객 영구 삭제 완료, 로컬 상태 업데이트:', id, result);
       }
 
-      // 영구 삭제 후 서버에서 최신 데이터 다시 로드 (모든 고객)
-      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
+      // 로컬 상태에서 즉시 제거
+      this.customers = this.customers.filter(c => c._id !== id);
+      this.total = Math.max(0, this.total - 1);
+
+      this.notify(); // 모든 View에 즉시 알림
 
       return result;
     } catch (error) {
@@ -391,20 +406,32 @@ export class CustomerDocument {
   /**
    * 고객 복원 (RESTORE)
    * 휴면 처리된 고객을 활성 상태로 복원: status='active', deleted_at=null
+   * 서버가 복원된 고객을 반환하여 즉시 로컬 상태 업데이트
    */
   async restoreCustomer(id: string): Promise<Customer> {
     try {
       if (import.meta.env.DEV) {
         console.log('[CustomerDocument] 고객 복원 시작:', id);
       }
+
+      // 서버가 복원된 고객 데이터 반환
       const restoredCustomer = await CustomerService.restoreCustomer(id);
 
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 복원 완료, 최신 데이터 로드 중:', id);
+        console.log('[CustomerDocument] 고객 복원 완료, 로컬 상태 업데이트:', restoredCustomer);
       }
 
-      // 복원 후 서버에서 최신 데이터 다시 로드 (모든 고객)
-      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
+      // 로컬 상태 즉시 업데이트 (서버 반환 데이터 사용)
+      const index = this.customers.findIndex(c => c._id === id);
+      if (index !== -1) {
+        this.customers = [
+          ...this.customers.slice(0, index),
+          restoredCustomer,
+          ...this.customers.slice(index + 1)
+        ];
+      }
+
+      this.notify(); // 모든 View에 즉시 알림
 
       return restoredCustomer;
     } catch (error) {
@@ -422,8 +449,8 @@ export class CustomerDocument {
     if (import.meta.env.DEV) {
       console.log('[CustomerDocument] 전체 데이터 새로고침');
     }
-    // 기본 query 설정 (limit이 없으면 10000 적용)
-    const defaultQuery = { limit: 10000, page: 1 };
+    // 기본 query 설정 (limit이 없으면 10000, status='all' 적용)
+    const defaultQuery = { limit: 10000, page: 1, status: 'all' as const };
     const mergedQuery = query ? { ...defaultQuery, ...query } : defaultQuery;
     await this.loadCustomers(mergedQuery);
   }
