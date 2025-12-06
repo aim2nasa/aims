@@ -2702,27 +2702,87 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
     });
     contractsDeleteCount = contractsDeleteResult.deletedCount;
 
-    // 3. 문서에서 해당 고객 참조 제거
-    const filesUpdateResult = await db.collection(COLLECTION_NAME).updateMany(
-      { 'customer_relation.customer_id': customerId },
-      {
-        $unset: { 'customer_relation.customer_id': '' },
-        $set: { 'meta.updated_at': utcNowDate() }
+    // 3. 고객과 연결된 모든 문서 삭제 (파일 + DB + Qdrant)
+    const fs = require('fs').promises;
+    let deletedDocumentsCount = 0;
+
+    // 고객과 연결된 모든 문서 조회
+    const customerDocuments = await db.collection(COLLECTION_NAME).find({
+      customerId: id
+    }).toArray();
+
+    console.log(`🗑️ [고객 삭제] 고객 ${id}와 연결된 문서 ${customerDocuments.length}개 삭제 시작`);
+
+    // 각 문서 삭제
+    for (const document of customerDocuments) {
+      try {
+        const docId = document._id.toString();
+
+        // AR 파싱 데이터 삭제
+        if (document.is_annual_report) {
+          try {
+            const arCustomerId = document.customer_relation?.customer_id;
+            const issueDate = document.ar_metadata?.issue_date;
+
+            if (arCustomerId && issueDate) {
+              await db.collection(CUSTOMERS_COLLECTION).updateOne(
+                { '_id': arCustomerId },
+                {
+                  $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+                  $set: { 'meta.updated_at': utcNowDate() }
+                }
+              );
+            }
+          } catch (arError) {
+            console.warn(`⚠️ [AR 삭제] 실패: ${arError.message}`);
+          }
+        }
+
+        // 파일 시스템에서 파일 삭제
+        if (document.upload?.destPath) {
+          try {
+            await fs.unlink(document.upload.destPath);
+            console.log(`✅ 파일 삭제: ${document.upload.destPath}`);
+          } catch (fileError) {
+            console.warn(`⚠️ 파일 삭제 실패: ${fileError.message}`);
+          }
+        }
+
+        // MongoDB에서 문서 삭제
+        await db.collection(COLLECTION_NAME).deleteOne({ _id: document._id });
+
+        // Qdrant에서 임베딩 삭제
+        try {
+          await qdrantClient.delete(QDRANT_COLLECTION, {
+            filter: {
+              must: [{ key: 'doc_id', match: { value: docId } }]
+            }
+          });
+        } catch (qdrantError) {
+          console.warn(`⚠️ [Qdrant] 임베딩 삭제 실패: ${qdrantError.message}`);
+        }
+
+        deletedDocumentsCount++;
+        console.log(`✅ 문서 삭제 완료: ${docId}`);
+
+      } catch (docError) {
+        console.error(`❌ 문서 삭제 중 오류: ${docError.message}`);
       }
-    );
-    filesUpdateCount = filesUpdateResult.modifiedCount;
+    }
+
+    filesUpdateCount = deletedDocumentsCount;
 
     // 4. 고객 삭제
     await db.collection(CUSTOMERS_COLLECTION).deleteOne({ _id: customerId });
 
-    console.log(`🗑️ [Cascading Delete] 고객 ${id} 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서참조=${filesUpdateCount}`);
+    console.log(`🗑️ [Cascading Delete] 고객 ${id} 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서=${filesUpdateCount}`);
 
     res.json({
       success: true,
       message: '고객이 성공적으로 삭제되었습니다.',
       deletedRelationships: relationshipsDeleteCount,
       deletedContracts: contractsDeleteCount,
-      updatedFiles: filesUpdateCount,
+      deletedDocuments: filesUpdateCount,
       cascading: true  // Cascading Delete 사용 여부 표시
     });
   } catch (error) {
