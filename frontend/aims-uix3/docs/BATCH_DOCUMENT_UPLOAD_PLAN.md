@@ -445,9 +445,9 @@ const BLOCKED_EXTENSIONS = [
 | 기술 검토 | ✅ 완료 | |
 | 상세 설계 | ✅ 완료 | |
 | Phase 1 구현 | ✅ 완료 | 기반 구조 (52개 테스트 통과) |
-| Phase 2 구현 | ✅ 완료 | UI 컴포넌트 (테스트 6개 실패) |
+| Phase 2 구현 | ✅ 완료 | UI 컴포넌트 (모든 테스트 통과) |
 | Phase 3 구현 | ✅ 완료 | 업로드 로직 (7개 테스트 통과) |
-| Phase 4 구현 | ✅ 완료 | 중복 처리 & 완성 |
+| Phase 4 구현 | ✅ 완료 | 중복 처리 & 완성 (모든 테스트 통과) |
 | Phase 5 구현 | ❌ 미완료 | **Backend API 미구현** |
 | 통합 테스트 | ⏳ 대기 | Backend 완료 후 진행 |
 
@@ -484,13 +484,17 @@ const BLOCKED_EXTENSIONS = [
 - `src/App.tsx` - `batch-document-upload` 라우트 추가
 
 #### 테스트 파일
-- `src/features/batch-upload/__tests__/FolderDropZone.test.tsx`
-- `src/features/batch-upload/__tests__/MappingPreview.test.tsx`
+- `src/features/batch-upload/__tests__/FolderDropZone.test.tsx` (10개 테스트)
+- `src/features/batch-upload/__tests__/MappingPreview.test.tsx` (12개 테스트)
 
 #### 테스트 결과
-- FolderDropZone: 테스트 존재 ✅
-- MappingPreview: 12개 테스트 중 6개 실패 ⚠️
-  - 이슈: React key 중복 경고 (테스트 데이터 문제)
+- FolderDropZone: 10개 통과 ✅
+- MappingPreview: 12개 통과 ✅
+- **batch-upload 전체: 92개 테스트 통과 ✅**
+
+#### 테스트 수정 이력 (2025-12-06)
+- `c1bb7e40`: MappingPreview 테스트 React key 중복 경고 해결
+- `1d1d861d`: FolderDropZone 테스트 UI 변경에 맞춰 수정
 
 ---
 
@@ -559,12 +563,13 @@ const BLOCKED_EXTENSIONS = [
 
 | 번호 | 이슈 | 심각도 | 상태 |
 |------|------|--------|------|
-| 1 | MappingPreview 테스트 6개 실패 (React key 중복) | 낮음 | 수정 필요 |
-| 2 | Backend API 전체 미구현 | **높음** | **차단** |
-| 3 | DB 스키마 미생성 | 높음 | 대기 |
-| 4 | ClamAV 보안 검사 미연동 | 중간 | 대기 |
+| 1 | MappingPreview 테스트 6개 실패 (React key 중복) | 낮음 | ✅ **해결됨** (c1bb7e40) |
+| 2 | FolderDropZone 테스트 10개 실패 (UI 변경) | 낮음 | ✅ **해결됨** (1d1d861d) |
+| 3 | Backend API 전체 미구현 | **높음** | **차단** |
+| 4 | DB 스키마 미생성 | 높음 | 대기 |
+| 5 | ClamAV 보안 검사 미연동 | 중간 | 대기 |
 
-**현재 상태**: Frontend 완성, **Backend 전체 미구현으로 기능 동작 불가**
+**현재 상태**: **Frontend 완성 (모든 테스트 통과)**, Backend 전체 미구현으로 기능 동작 불가
 
 ---
 
