@@ -124,7 +124,7 @@
   display: flex;
   justify-content: center;
   padding: 32px 40px;
-  background: rgba(0, 122, 255, 0.12);
+  background: rgba(0, 122, 255, 0.08);
   border-radius: var(--radius-md);
   margin: var(--spacing-xs) 0;
 }
@@ -185,38 +185,45 @@
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .guide-icon.folder {
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.guide-icon.file {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .guide-icon.folder.sub {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .guide-name {
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   font-size: 13px;
+  font-weight: 600;
 }
 
 .guide-name.root {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .guide-name.customer {
   color: var(--color-ios-blue, #007aff);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .guide-name.subfolder {
-  color: var(--color-text-secondary);
-  font-weight: 500;
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .guide-name.file {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .guide-desc {
@@ -225,9 +232,10 @@
   background: var(--color-ios-blue, #007aff);
   color: white;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   border-radius: 10px;
   font-family: var(--font-family-base);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .guide-desc.alt {
@@ -243,29 +251,32 @@
 
 .guide-arrow {
   color: var(--color-ios-green, #34c759);
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 900;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .guide-customer-badge {
   padding: 2px 10px;
-  background: rgba(52, 199, 89, 0.15);
+  background: rgba(52, 199, 89, 0.25);
   color: var(--color-ios-green, #34c759);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 12px;
   font-family: var(--font-family-base);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .guide-note {
   margin-left: 8px;
   padding: 2px 8px;
-  background: rgba(255, 149, 0, 0.15);
+  background: rgba(255, 149, 0, 0.25);
   color: var(--color-ios-orange, #ff9500);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   border-radius: 10px;
   font-family: var(--font-family-base);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* 팁 영역 */
@@ -282,7 +293,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-ios-green, #34c759);
 }
 
