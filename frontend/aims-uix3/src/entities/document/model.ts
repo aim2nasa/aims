@@ -34,15 +34,7 @@ export const DocumentSchema = z.object({
   // 고객 연결 정보
   customerId: z.string().optional(),
   customerName: z.string().optional(),
-  customer_relation: z.object({
-    customer_id: z.string(),
-    customer_name: z.string().optional(),
-    relationship_type: z.string().optional(),
-    assigned_by: z.string().nullable().optional(),
-    assigned_at: z.string().optional(),
-    notes: z.string().optional(),
-    linked_at: z.string().optional(),
-  }).optional(),
+  customer_notes: z.string().optional(),
 
   // Annual Report 여부
   is_annual_report: z.boolean().optional(),

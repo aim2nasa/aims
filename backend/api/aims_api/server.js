@@ -44,6 +44,27 @@ function escapeRegex(str) {
 }
 
 /**
+ * customerId를 안전하게 ObjectId로 변환
+ * 문자열이면 ObjectId로 변환, 이미 ObjectId면 그대로 반환
+ * @param {string|ObjectId|null} id - 변환할 ID
+ * @returns {ObjectId|null} - ObjectId 또는 null
+ */
+function toSafeObjectId(id) {
+  if (!id) return null;
+  if (typeof id === 'string') {
+    try {
+      return new ObjectId(id);
+    } catch (err) {
+      console.error(`❌ Invalid ObjectId string: ${id}`);
+      return null;
+    }
+  }
+  if (id instanceof ObjectId) return id;
+  console.error(`❌ Unexpected customerId type: ${typeof id}`);
+  return null;
+}
+
+/**
  * 명백한 BIN 타입 체크 (OCR 비용 절감)
  * FILE_BADGE_SYSTEM.md 참조
  * @param {string} mimeType - MIME 타입
@@ -447,12 +468,41 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
 
     // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
     // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
+    // 🔥 문자열 customerId 자동 수정
+    const docsToFix = [];
     const customerIds = documents
       .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
       .map(doc => {
         const id = doc.customer_relation?.customer_id || doc.customerId;
-        return typeof id === 'string' ? new ObjectId(id) : id;
+
+        // 문자열이면 ObjectId로 변환하고 수정 대상에 추가
+        if (typeof id === 'string') {
+          const objectId = toSafeObjectId(id);
+          if (objectId && doc.customerId) {
+            docsToFix.push({ _id: doc._id, customerId: objectId });
+          }
+          return objectId;
+        }
+        return id;
+      })
+      .filter(id => id !== null);
+
+    // 문자열 customerId 일괄 수정 (비동기)
+    if (docsToFix.length > 0) {
+      console.log(`🔧 [AUTO-FIX] ${docsToFix.length}개 문서의 customerId를 문자열→ObjectId로 변환 중...`);
+      Promise.all(
+        docsToFix.map(doc =>
+          db.collection(COLLECTION_NAME).updateOne(
+            { _id: doc._id },
+            { $set: { customerId: doc.customerId } }
+          )
+        )
+      ).then(() => {
+        console.log(`✅ [AUTO-FIX] customerId 변환 완료`);
+      }).catch(err => {
+        console.error(`❌ [AUTO-FIX] customerId 변환 실패:`, err);
       });
+    }
 
     // 고객 정보 일괄 조회
     const customerMap = {};
@@ -488,18 +538,14 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
       }
 
       // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
-      // 🔧 customerId fallback: customer_relation이 없어도 customerId로 연결 표시
       let customerRelation = null;
-      const effectiveCustomerId = doc.customer_relation?.customer_id || doc.customerId;
+      const effectiveCustomerId = doc.customerId;
       if (effectiveCustomerId) {
         const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
           customer_name: customerMap[customerId] || null,
-          relationship_type: doc.customer_relation?.relationship_type || 'auto',
-          assigned_by: doc.customer_relation?.assigned_by || 'system',
-          assigned_at: doc.customer_relation?.assigned_at || doc.upload?.uploaded_at,
-          notes: doc.customer_relation?.notes || ''
+          notes: doc.customer_notes || ''
         };
       }
 
@@ -770,12 +816,41 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
 
     // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
     // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
+    // 🔥 문자열 customerId 자동 수정
+    const docsToFix = [];
     const customerIds = documents
       .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
       .map(doc => {
         const id = doc.customer_relation?.customer_id || doc.customerId;
-        return typeof id === 'string' ? new ObjectId(id) : id;
+
+        // 문자열이면 ObjectId로 변환하고 수정 대상에 추가
+        if (typeof id === 'string') {
+          const objectId = toSafeObjectId(id);
+          if (objectId && doc.customerId) {
+            docsToFix.push({ _id: doc._id, customerId: objectId });
+          }
+          return objectId;
+        }
+        return id;
+      })
+      .filter(id => id !== null);
+
+    // 문자열 customerId 일괄 수정 (비동기)
+    if (docsToFix.length > 0) {
+      console.log(`🔧 [AUTO-FIX] ${docsToFix.length}개 문서의 customerId를 문자열→ObjectId로 변환 중...`);
+      Promise.all(
+        docsToFix.map(doc =>
+          db.collection(COLLECTION_NAME).updateOne(
+            { _id: doc._id },
+            { $set: { customerId: doc.customerId } }
+          )
+        )
+      ).then(() => {
+        console.log(`✅ [AUTO-FIX] customerId 변환 완료`);
+      }).catch(err => {
+        console.error(`❌ [AUTO-FIX] customerId 변환 실패:`, err);
       });
+    }
 
     // 고객 정보 일괄 조회
     const customerMap = {};
@@ -814,18 +889,14 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       }
 
       // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
-      // 🔧 customerId fallback: customer_relation이 없어도 customerId로 연결 표시
       let customerRelation = null;
-      const effectiveCustomerId = doc.customer_relation?.customer_id || doc.customerId;
+      const effectiveCustomerId = doc.customerId;
       if (effectiveCustomerId) {
         const customerId = effectiveCustomerId.toString();
         customerRelation = {
           customer_id: customerId,
           customer_name: customerMap[customerId] || null,
-          relationship_type: doc.customer_relation?.relationship_type || 'auto',
-          assigned_by: doc.customer_relation?.assigned_by || 'system',
-          assigned_at: doc.customer_relation?.assigned_at || doc.upload?.uploaded_at,
-          notes: doc.customer_relation?.notes || ''
+          notes: doc.customer_notes || ''
         };
       }
 
@@ -2708,7 +2779,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
 
     // 고객과 연결된 모든 문서 조회
     const customerDocuments = await db.collection(COLLECTION_NAME).find({
-      customerId: id
+      customerId: new ObjectId(id)
     }).toArray();
 
     console.log(`🗑️ [고객 삭제] 고객 ${id}와 연결된 문서 ${customerDocuments.length}개 삭제 시작`);
@@ -3173,7 +3244,7 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
 app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
-    const { document_id, relationship_type, notes, assigned_by } = req.body;
+    const { document_id, notes } = req.body;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -3212,7 +3283,6 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
     // 고객에 문서 연결 추가
     const documentLink = {
       document_id: new ObjectId(document_id),
-      relationship: relationship_type || 'general',
       upload_date: utcNowDate(),
       notes: notes || ''
     };
@@ -3230,14 +3300,8 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       { _id: new ObjectId(document_id) },
       {
         $set: {
-          customerId: new ObjectId(id),  // 🔥 AR 파싱을 위한 customerId 필드 추가
-          customer_relation: {
-            customer_id: new ObjectId(id),
-            relationship_type: relationship_type || 'general',
-            assigned_by: assigned_by || null,
-            assigned_at: utcNowDate(),
-            notes: notes || ''
-          }
+          customerId: new ObjectId(id),
+          customer_notes: notes || ''
         }
       }
     );
@@ -3364,7 +3428,10 @@ app.delete('/api/customers/:id/documents/:document_id', authenticateJWT, async (
     await db.collection(COLLECTION_NAME).updateOne(
       { _id: new ObjectId(document_id) },
       {
-        $unset: { customer_relation: "" }
+        $unset: {
+          customerId: "",
+          customer_notes: ""
+        }
       }
     );
 
@@ -3454,12 +3521,12 @@ app.patch('/api/customers/:id/documents/:document_id', authenticateJWT, async (r
       }
     );
 
-    // 문서 컬렉션에서도 customer_relation.notes 업데이트
+    // 문서 컬렉션에서도 customer_notes 업데이트
     await db.collection(COLLECTION_NAME).updateOne(
       { _id: new ObjectId(document_id) },
       {
         $set: {
-          'customer_relation.notes': newNotes
+          customer_notes: newNotes
         }
       }
     );
