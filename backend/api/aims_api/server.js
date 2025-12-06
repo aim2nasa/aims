@@ -1479,16 +1479,95 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
     }
     // ========================================
 
-    // Python API (포트 8080)로 프록시 (검증된 문서만)
-    const pythonApiUrl = 'http://172.17.0.1:8080/documents';
+    // 문서들을 직접 삭제 (파일 + DB + Qdrant)
+    const fs = require('fs').promises;
+    let deletedCount = 0;
+    let failedCount = 0;
+    const errors = [];
 
-    const response = await axios.delete(pythonApiUrl, {
-      data: { document_ids: ownedDocIds },
-      timeout: 30000 // 30초 타임아웃 (대량 삭제 고려)
+    for (const docId of ownedDocIds) {
+      try {
+        // 문서 조회
+        const document = await db.collection(COLLECTION_NAME)
+          .findOne({ _id: new ObjectId(docId) });
+
+        if (!document) {
+          errors.push({ document_id: docId, error: '문서를 찾을 수 없습니다' });
+          failedCount++;
+          continue;
+        }
+
+        // AR 파싱 데이터 삭제
+        if (document.is_annual_report) {
+          try {
+            const customerId = document.customer_relation?.customer_id;
+            const issueDate = document.ar_metadata?.issue_date;
+
+            if (customerId && issueDate) {
+              const arDeleteResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+                { '_id': customerId },
+                {
+                  $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+                  $set: { 'meta.updated_at': utcNowDate() }
+                }
+              );
+
+              if (arDeleteResult.modifiedCount > 0) {
+                console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료: customer_id=${customerId}, issue_date=${issueDate}`);
+              }
+            }
+          } catch (arError) {
+            console.warn('⚠️ [AR 삭제] AR 파싱 데이터 삭제 실패:', arError.message);
+          }
+        }
+
+        // 파일 시스템에서 파일 삭제
+        if (document.upload?.destPath) {
+          try {
+            await fs.unlink(document.upload.destPath);
+            console.log(`✅ 파일 삭제 성공: ${document.upload.destPath}`);
+          } catch (fileError) {
+            console.warn('⚠️ 파일 삭제 실패:', fileError.message);
+          }
+        }
+
+        // MongoDB에서 문서 삭제
+        await db.collection(COLLECTION_NAME).deleteOne({ _id: new ObjectId(docId) });
+
+        // Qdrant에서 임베딩 삭제
+        try {
+          await qdrantClient.delete(QDRANT_COLLECTION, {
+            filter: {
+              must: [{ key: 'doc_id', match: { value: docId } }]
+            }
+          });
+          console.log(`✅ [Qdrant] 문서 임베딩 삭제 완료: doc_id=${docId}`);
+        } catch (qdrantError) {
+          console.warn('⚠️ [Qdrant] 임베딩 삭제 실패:', qdrantError.message);
+        }
+
+        deletedCount++;
+        console.log(`✅ DB 문서 삭제 성공: ${docId}`);
+
+      } catch (error) {
+        errors.push({ document_id: docId, error: error.message });
+        failedCount++;
+        console.error(`❌ 문서 삭제 중 오류: ${docId} - ${error.message}`);
+      }
+    }
+
+    const message = deletedCount > 0
+      ? `${deletedCount}건 삭제되었습니다` + (failedCount > 0 ? ` (${failedCount}건 실패)` : '')
+      : '삭제된 문서가 없습니다';
+
+    console.log(`✅ [문서 삭제] 삭제 완료: ${deletedCount}/${document_ids.length}건`);
+    res.json({
+      success: deletedCount > 0,
+      message,
+      deleted_count: deletedCount,
+      failed_count: failedCount,
+      errors
     });
-
-    console.log(`✅ [문서 삭제] 삭제 완료:`, response.data);
-    res.json(response.data);
 
   } catch (error) {
     console.error('❌ [문서 삭제] 오류:', error.message);
