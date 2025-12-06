@@ -466,14 +466,13 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     // 전체 문서 수 조회
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(query);
 
-    // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
-    // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
+    // customerId가 있는 문서의 customer_id 수집
     // 🔥 문자열 customerId 자동 수정
     const docsToFix = [];
     const customerIds = documents
-      .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
+      .filter(doc => doc.customerId)
       .map(doc => {
-        const id = doc.customer_relation?.customer_id || doc.customerId;
+        const id = doc.customerId;
 
         // 문자열이면 ObjectId로 변환하고 수정 대상에 추가
         if (typeof id === 'string') {
@@ -622,9 +621,9 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
 
     // 🍎 고객 연결 필터 추가
     if (customerLink === 'linked') {
-      filter['customer_relation.customer_id'] = { $exists: true, $ne: null };
+      filter['customerId'] = { $exists: true, $ne: null };
     } else if (customerLink === 'unlinked') {
-      filter['customer_relation.customer_id'] = { $exists: false };
+      filter['customerId'] = { $exists: false };
     }
 
     if (search) {
@@ -644,7 +643,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         {
           $lookup: {
             from: 'customers',
-            localField: 'customer_relation.customer_id',
+            localField: 'customerId',
             foreignField: '_id',
             as: 'customer_info'
           }
@@ -814,14 +813,13 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         .toArray();
     }
 
-    // customer_relation 또는 customerId가 있는 문서의 customer_id 수집
-    // 🔧 customerId fallback: n8n 웹훅에서 customerId만 저장된 경우 지원
+    // customerId가 있는 문서의 customer_id 수집
     // 🔥 문자열 customerId 자동 수정
     const docsToFix = [];
     const customerIds = documents
-      .filter(doc => doc.customer_relation?.customer_id || doc.customerId)
+      .filter(doc => doc.customerId)
       .map(doc => {
-        const id = doc.customer_relation?.customer_id || doc.customerId;
+        const id = doc.customerId;
 
         // 문자열이면 ObjectId로 변환하고 수정 대상에 추가
         if (typeof id === 'string') {
@@ -1406,11 +1404,11 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
         console.log(`🗑️  [AR 삭제] Annual Report 문서 삭제 감지: file_id=${id}`);
 
         // 1. 고객 ID 및 발행일 추출
-        const customerId = document.customer_relation?.customer_id;
+        const customerId = document.customerId;
         const issueDate = document.ar_metadata?.issue_date;
 
         if (!customerId) {
-          console.warn('⚠️ [AR 삭제] customer_id를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
+          console.warn('⚠️ [AR 삭제] customerId를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
         } else if (!issueDate) {
           console.warn('⚠️ [AR 삭제] issue_date를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
         } else {
@@ -1571,7 +1569,7 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
         // AR 파싱 데이터 삭제
         if (document.is_annual_report) {
           try {
-            const customerId = document.customer_relation?.customer_id;
+            const customerId = document.customerId;
             const issueDate = document.ar_metadata?.issue_date;
 
             if (customerId && issueDate) {
@@ -2792,7 +2790,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
         // AR 파싱 데이터 삭제
         if (document.is_annual_report) {
           try {
-            const arCustomerId = document.customer_relation?.customer_id;
+            const arCustomerId = document.customerId;
             const issueDate = document.ar_metadata?.issue_date;
 
             if (arCustomerId && issueDate) {
@@ -3026,11 +3024,11 @@ app.get('/api/admin/data-integrity-report', async (req, res) => {
 
     // 5. 고아 파일 참조 탐지
     const filesWithCustomerRef = await db.collection(COLLECTION_NAME).find(
-      { 'customer_relation.customer_id': { $exists: true, $ne: null } },
-      { projection: { 'customer_relation.customer_id': 1 } }
+      { 'customerId': { $exists: true, $ne: null } },
+      { projection: { 'customerId': 1 } }
     ).toArray();
     const orphanedFileRefs = filesWithCustomerRef.filter(f => {
-      const customerId = f.customer_relation?.customer_id?.toString();
+      const customerId = f.customerId?.toString();
       return customerId && !allCustomerIds.has(customerId);
     });
 
@@ -3118,13 +3116,13 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
 
     // 4. 고아 파일 참조 정리 (참조만 제거, 파일은 유지)
     const filesWithCustomerRef = await db.collection(COLLECTION_NAME).find(
-      { 'customer_relation.customer_id': { $exists: true, $ne: null } },
-      { projection: { _id: 1, 'customer_relation.customer_id': 1 } }
+      { 'customerId': { $exists: true, $ne: null } },
+      { projection: { _id: 1, 'customerId': 1 } }
     ).toArray();
 
     const orphanedFileIds = filesWithCustomerRef
       .filter(f => {
-        const customerId = f.customer_relation?.customer_id?.toString();
+        const customerId = f.customerId?.toString();
         return customerId && !allCustomerIds.has(customerId);
       })
       .map(f => f._id);
@@ -3134,7 +3132,7 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
       const result = await db.collection(COLLECTION_NAME).updateMany(
         { _id: { $in: orphanedFileIds } },
         {
-          $unset: { 'customer_relation.customer_id': '' },
+          $unset: { 'customerId': '', 'customer_notes': '' },
           $set: { 'meta.updated_at': utcNowDate() }
         }
       );
