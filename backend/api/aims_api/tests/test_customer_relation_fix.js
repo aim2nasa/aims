@@ -79,7 +79,7 @@ function assertIncludes(content, searchString, testName, minCount = 1) {
 console.log('\n🧪 Starting customer_relation → customerId Migration Tests\n');
 
 // server.js 파일 읽기
-const serverPath = path.join(__dirname, 'server.js');
+const serverPath = path.join(__dirname, '../server.js');
 const serverContent = fs.readFileSync(serverPath, 'utf-8');
 
 console.log('📋 Test Suite 1: No customer_relation.customer_id references\n');

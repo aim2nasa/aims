@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test:migration": "node test_customer_relation_fix.js",
+    "test:migration": "node tests/test_customer_relation_fix.js && node tests/test_customer_cascade_delete.js",
     "test": "npm run test:migration && node scripts/setup-test-env.js && cross-env MONGO_URI=mongodb://localhost:27017 jest && node scripts/teardown-test-env.js",
     "test:ci": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
     "test:watch": "jest --watch",
