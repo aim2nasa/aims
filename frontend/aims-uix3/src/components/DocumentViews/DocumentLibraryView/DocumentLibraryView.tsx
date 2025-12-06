@@ -26,6 +26,7 @@ import RefreshButton from '../../RefreshButton/RefreshButton'
 import { formatDateTime } from '@/shared/lib/timeUtils'
 import { api, ApiError } from '@/shared/lib/api'
 import { LinkIcon } from '../components/DocumentActionIcons'
+import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
@@ -152,13 +153,21 @@ const DocumentLibraryContent: React.FC<{
   const handleSelectAll = React.useCallback((checked: boolean) => {
     if (checked) {
       const allIds = controller.paginatedDocuments
+        .filter(doc => {
+          // 삭제 모드: 완료된 문서만 선택 가능
+          if (isDeleteMode) {
+            const status = DocumentStatusService.extractStatus(doc)
+            return status === 'completed'
+          }
+          return true
+        })
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
       onSelectAllIds(allIds)
     } else {
       onSelectAllIds([])
     }
-  }, [controller.paginatedDocuments, onSelectAllIds])
+  }, [controller.paginatedDocuments, onSelectAllIds, isDeleteMode])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)

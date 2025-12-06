@@ -1129,6 +1129,16 @@ html[data-theme="dark"] .status-item:hover .document-icon.file-icon--text {
   accent-color: var(--color-primary-500);
 }
 
+/* 비활성화된 체크박스 스타일 */
+.document-checkbox-wrapper--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.document-checkbox-wrapper--disabled .document-checkbox {
+  cursor: not-allowed;
+}
+
 /* === MEMO BUTTON === */
 
 .document-notes-btn {

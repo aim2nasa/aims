@@ -264,6 +264,13 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   const hasCustomer = doc.customer_relation?.customer_name
                   return hasCustomer || selectedDocumentIds.has(docId)
                 }
+                // 🍎 삭제 모드: 완료되지 않은 문서는 제외
+                if (isDeleteMode) {
+                  const status = DocumentStatusService.extractStatus(doc)
+                  if (status !== 'completed') {
+                    return true // 비활성화된 항목은 체크 상태 계산에서 제외 (항상 true로 처리)
+                  }
+                }
                 return selectedDocumentIds.has(docId)
               })}
               onChange={(e) => onSelectAll?.(e.target.checked)}
@@ -489,11 +496,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
               // 삭제 모드 또는 일괄 연결 모드 (미연결 문서)
               if (isDeleteMode || isBulkLinkMode) {
+                // 삭제 모드에서 완료되지 않은 문서는 비활성화
+                const isDisabled = isDeleteMode && status !== 'completed'
+
                 return (
                   <div
-                    className="document-checkbox-wrapper"
+                    className={`document-checkbox-wrapper ${isDisabled ? 'document-checkbox-wrapper--disabled' : ''}`}
                     onClick={(e) => {
-                      if (documentId) {
+                      if (documentId && !isDisabled) {
                         onSelectDocument?.(documentId, e)
                       }
                     }}
@@ -502,6 +512,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => {}}
+                      disabled={isDisabled}
                       aria-label={`${DocumentStatusService.extractFilename(document)} 선택`}
                       className="document-checkbox"
                     />
