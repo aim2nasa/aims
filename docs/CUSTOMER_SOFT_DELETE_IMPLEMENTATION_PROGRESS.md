@@ -1,13 +1,13 @@
 # Customer Soft Delete Implementation Progress
 
-**마지막 업데이트**: 2025-12-06
+**마지막 업데이트**: 2025-12-07
 **참조 문서**: [CUSTOMER_NAME_UNIQUENESS_STRATEGY.md](./CUSTOMER_NAME_UNIQUENESS_STRATEGY.md)
 
 ---
 
 ## 📊 전체 진행 상황
 
-### ✅ 완료된 작업 (Steps 1-8 + 중복 차단)
+### ✅ 완료된 작업 (Steps 1-10 완료)
 
 | 단계 | 작업 내용 | 상태 | 커밋 | 테스트 |
 |------|----------|------|------|--------|
@@ -19,6 +19,8 @@
 | STEP 6 | 프론트엔드 CustomerService 업데이트 | ✅ 완료 | `db44e3d9` | N/A |
 | STEP 7 | 프론트엔드 CustomerDocument 업데이트 | ✅ 완료 | `db44e3d9` | N/A |
 | STEP 8 | CustomerFullDetailView UI 업데이트 | ✅ 완료 | `db44e3d9` | N/A |
+| STEP 9 | CustomerDetailView UI 업데이트 | ✅ 완료 | `04b018c5` | N/A |
+| STEP 10 | 전체 View 활성/휴면 통합 및 카운트 표시 | ✅ 완료 | `04b018c5` | N/A |
 | **추가** | **중복 고객명 등록 차단** | ✅ 완료 | `c41d8af6` | 8/8 통과 |
 
 ---
@@ -249,21 +251,98 @@ const errorMessage = (err.data && typeof err.data === 'object' && 'error' in err
 
 ---
 
-## 🔜 남은 작업
-
-### STEP 9: CustomerDetailView UI 업데이트
+### 10. CustomerDetailView UI 업데이트 (STEP 9)
+**커밋**: `04b018c5`
 **파일**: `frontend/aims-uix3/src/features/customer/views/CustomerDetailView/CustomerDetailView.tsx`
 
-**작업 내용**:
-- CustomerFullDetailView와 동일하게 "휴면 처리" 및 "영구 삭제(개발용)" 버튼 추가
-- handleSoftDeleteClick 핸들러 구현
-- handlePermanentDeleteClick 핸들러 구현 (개발 모드만)
+**추가된 기능**:
+- CustomerFullDetailView와 동일한 휴면 처리/복원 UI
+- **"휴면 처리"** 버튼: 활성 고객 상태일 때 표시
+- **"복원"** 버튼: 휴면 고객 상태일 때 표시
+- **"영구 삭제"** 버튼: 개발 모드에서만 표시
 
-**예상 소요**: 30분
+**버튼 표시 로직**:
+```typescript
+{customer.meta?.status === 'inactive' ? (
+  <Button onClick={handleRestoreClick} leftIcon={<span>♻️</span>}>
+    복원
+  </Button>
+) : (
+  <Button onClick={handleSoftDeleteClick} leftIcon={<span>💤</span>}>
+    휴면 처리
+  </Button>
+)}
+{import.meta.env.DEV && (
+  <Button onClick={handlePermanentDeleteClick} leftIcon={<span>🗑️</span>}>
+    영구 삭제 (개발용)
+  </Button>
+)}
+```
 
 ---
 
-### STEP 10: 전체 통합 테스트
+### 11. 전체 View 활성/휴면 통합 및 카운트 표시 (STEP 10)
+**커밋**: `04b018c5`
+
+#### 문제 상황
+하드 리프레시 시 AllCustomersView의 활성/휴면 고객 카운트가 잘못 표시되는 문제 발생:
+- **원인**: 여러 View(CustomerRegionalView, CustomerRelationshipView, CustomerSelectorModal)가 `status` 파라미터 없이 `loadCustomers()`를 호출
+- **결과**: 백엔드 기본값 `status='active'`로 활성 고객만 반환, 마지막 호출이 Document 데이터를 덮어씀
+
+#### 해결 방법
+
+**1. AllCustomersView - 활성/휴면 카운트 표시**
+**파일**: `frontend/aims-uix3/src/features/customer/views/AllCustomersView/AllCustomersView.tsx`
+
+- 활성/휴면/전체 카운트를 개인/법인별로 분리 표시:
+  ```
+  활성(개인 0, 법인 1), 휴면(개인 1, 법인 0) / 전체(2)
+  ```
+
+- `lastUpdated` 체크로 초기 로드 완료 전까지 빈 카운트 표시:
+  ```typescript
+  if (lastUpdated === 0 || isLoading) {
+    return {
+      active: { personal: 0, corporate: 0 },
+      inactive: { personal: 0, corporate: 0 },
+      all: { personal: 0, corporate: 0 }
+    };
+  }
+  ```
+
+- useEffect dependency를 빈 배열로 변경하여 React Strict Mode 대응:
+  ```typescript
+  useEffect(() => {
+    loadCustomers({ limit: 10000, page: 1, status: 'all' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  ```
+
+**2. 모든 View에 status='all' 파라미터 추가**
+
+| 파일 | 수정 내용 |
+|------|----------|
+| `CustomerRegionalView.tsx` | `loadCustomers({ limit: 10000, page: 1, status: 'all' })` |
+| `CustomerRelationshipView.tsx` | `loadCustomers({ limit: 10000, page: 1, status: 'all' })` |
+| `CustomerSelectorModal.tsx` | `loadCustomers({ limit: 10000, page: 1, status: 'all' })` |
+
+**3. CustomerDocument - 모든 CRUD 작업 후 status='all'로 재로드**
+
+```typescript
+// deleteCustomer, permanentDeleteCustomer, restoreCustomer 모두
+await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
+```
+
+#### 효과
+- ✅ 하드 리프레시 후에도 정확한 활성/휴면 카운트 표시
+- ✅ 모든 View에서 활성 + 휴면 고객 모두 로드
+- ✅ Document-View 패턴으로 자동 동기화
+
+---
+
+## 🔜 남은 작업
+
+### STEP 11: 전체 통합 테스트
 **파일**: `backend/api/aims_api/tests/test_integration_soft_delete_flow.js` (✅ 이미 생성됨)
 
 **테스트 시나리오** (7단계):
@@ -284,7 +363,7 @@ ssh rossi@tars.giize.com 'cd /home/rossi/aims/backend/api/aims_api/tests && node
 
 ---
 
-### STEP 11: 최종 검토 및 문서화
+### STEP 12: 최종 검토 및 문서화
 **체크리스트**:
 - [ ] 브라우저 수동 테스트
   - [ ] 고객 등록 → 휴면 처리 → 복원
@@ -332,9 +411,20 @@ frontend/aims-uix3/src/
 │   └── CustomerDocument.ts                     ✏️ 수정
 ├── features/customer/controllers/
 │   └── useCustomerRegistrationController.ts    ✏️ 수정
-└── features/customer/views/
-    └── CustomerFullDetailView/
-        └── CustomerFullDetailView.tsx          ✏️ 수정
+├── features/customer/views/
+│   ├── AllCustomersView/
+│   │   └── AllCustomersView.tsx                ✏️ 수정 (활성/휴면 카운트)
+│   ├── CustomerDetailView/
+│   │   └── CustomerDetailView.tsx              ✏️ 수정 (휴면/복원 버튼)
+│   └── CustomerFullDetailView/
+│       └── CustomerFullDetailView.tsx          ✏️ 수정 (휴면/복원 버튼)
+├── components/CustomerViews/
+│   ├── CustomerRegionalView/
+│   │   └── CustomerRegionalView.tsx            ✏️ 수정 (status='all')
+│   └── CustomerRelationshipView/
+│       └── CustomerRelationshipView.tsx        ✏️ 수정 (status='all')
+└── shared/ui/CustomerSelectorModal/
+    └── CustomerSelectorModal.tsx               ✏️ 수정 (status='all')
 ```
 
 ---
@@ -384,7 +474,20 @@ frontend/aims-uix3/src/
 |----------|------|------|
 | `db44e3d9` | fix: 업로드 요약 화면 UX 개선 | 2025-12-06 |
 | `c41d8af6` | fix: 중복 고객명 등록 차단 및 명확한 에러 메시지 제공 | 2025-12-06 |
+| `04b018c5` | fix: 고객 목록 View에서 활성/휴면 고객 모두 로드 및 카운트 오류 수정 | 2025-12-07 |
 
 ---
 
-**다음 작업**: STEP 9 - CustomerDetailView UI 업데이트
+## 📝 구현 완료 요약
+
+### 핵심 성과
+- ✅ **완전한 소프트 삭제 시스템**: 휴면 처리 → 복원 가능
+- ✅ **전체 DB 유니크 제약**: 활성 + 휴면 고객 중복 방지
+- ✅ **직관적인 UX**: "휴면 처리" 용어로 사용자 심리적 부담 감소
+- ✅ **개발자 친화적**: 영구 삭제 기능은 개발 모드에서만 노출
+- ✅ **완벽한 동기화**: Document-View 패턴으로 모든 View 자동 업데이트
+- ✅ **정확한 카운트 표시**: 활성/휴면 고객 수를 개인/법인별로 분리 표시
+
+### 다음 단계
+- STEP 11: 전체 통합 테스트 실행 (선택)
+- STEP 12: 최종 검토 및 문서화 (선택)
