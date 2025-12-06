@@ -2011,7 +2011,7 @@ app.get('/api/customers', authenticateJWT, async (req, res) => {
       page = 1,
       limit = 10,
       search,
-      status,
+      status = 'active',  // ⭐ 기본값: active (활성 고객만)
       customerType,
       region,
       startDate,
@@ -2034,17 +2034,22 @@ app.get('/api/customers', authenticateJWT, async (req, res) => {
       } catch (e) {
         decodedSearch = search; // 디코딩 실패 시 원본 사용
       }
-      
+
       filter.$or = [
         { 'personal_info.name': { $regex: decodedSearch, $options: 'i' } },
         { 'personal_info.phone': { $regex: decodedSearch, $options: 'i' } },
         { 'personal_info.email': { $regex: decodedSearch, $options: 'i' } }
       ];
     }
-    
-    // 기존 상태 필터
-    if (status) {
-      filter['meta.status'] = status;
+
+    // ⭐ Status filter (soft delete 지원)
+    if (status === 'all') {
+      // No status filter - show all customers
+    } else if (status === 'inactive') {
+      filter['meta.status'] = 'inactive';
+    } else {
+      // Default: only active customers
+      filter['meta.status'] = 'active';
     }
     
     // 고급 검색 필터들
