@@ -48,16 +48,16 @@ describe('MappingPreview', () => {
         />
       )
 
-      // 매칭 2개
-      expect(screen.getByText('2')).toBeInTheDocument()
+      // 선택됨: 2/2 (선택된 수/전체 매칭 수)
+      expect(screen.getByText('2/2')).toBeInTheDocument()
       // 미매칭 1개
       expect(screen.getByText('1')).toBeInTheDocument()
     })
 
     test('총 파일 수가 표시된다', () => {
       const mappings: FolderMapping[] = [
-        createMockMapping({ fileCount: 5 }),
-        createMockMapping({ fileCount: 10 }),
+        createMockMapping({ folderName: '홍길동', fileCount: 5 }),
+        createMockMapping({ folderName: '김철수', fileCount: 10 }),
       ]
 
       render(
@@ -73,8 +73,8 @@ describe('MappingPreview', () => {
 
     test('총 크기가 포맷되어 표시된다', () => {
       const mappings: FolderMapping[] = [
-        createMockMapping({ totalSize: 1024 * 1024 }), // 1MB
-        createMockMapping({ totalSize: 2 * 1024 * 1024 }), // 2MB
+        createMockMapping({ folderName: '홍길동', totalSize: 1024 * 1024 }), // 1MB
+        createMockMapping({ folderName: '김철수', totalSize: 2 * 1024 * 1024 }), // 2MB
       ]
 
       render(
@@ -90,7 +90,7 @@ describe('MappingPreview', () => {
   })
 
   describe('매핑 목록', () => {
-    test('테이블 헤더가 표시된다', () => {
+    test('트리 헤더가 표시된다', () => {
       render(
         <MappingPreview
           mappings={[createMockMapping()]}
@@ -99,11 +99,9 @@ describe('MappingPreview', () => {
         />
       )
 
-      expect(screen.getByText('상태')).toBeInTheDocument()
-      expect(screen.getByText('폴더명')).toBeInTheDocument()
-      expect(screen.getByText('고객명')).toBeInTheDocument()
-      expect(screen.getByText('파일')).toBeInTheDocument()
-      expect(screen.getByText('크기')).toBeInTheDocument()
+      expect(screen.getByText('폴더 구조')).toBeInTheDocument()
+      expect(screen.getByText('전체 해제')).toBeInTheDocument() // 기본적으로 모든 매칭 폴더 선택됨
+      expect(screen.getByText(/모두 접기|모두 펼치기/)).toBeInTheDocument()
     })
 
     test('매칭된 폴더가 표시된다', () => {
@@ -125,10 +123,10 @@ describe('MappingPreview', () => {
       // 폴더명과 고객명이 같으면 두 번 표시됨
       const hongElements = screen.getAllByText('홍길동')
       expect(hongElements.length).toBeGreaterThanOrEqual(1)
-      expect(screen.getByText('5개')).toBeInTheDocument()
+      expect(screen.getByText(/5개/)).toBeInTheDocument()
     })
 
-    test('미매칭 폴더에 "일치하는 고객 없음" 표시', () => {
+    test('미매칭 폴더에 "미매칭" 표시', () => {
       const mapping = createMockMapping({
         folderName: '미매칭폴더',
         matched: false,
@@ -144,15 +142,17 @@ describe('MappingPreview', () => {
         />
       )
 
-      expect(screen.getByText('일치하는 고객 없음')).toBeInTheDocument()
+      // "미매칭"이 legend와 폴더 note에 모두 표시됨
+      const unmatchedElements = screen.getAllByText('미매칭')
+      expect(unmatchedElements.length).toBeGreaterThanOrEqual(1)
     })
   })
 
   describe('경고 메시지', () => {
     test('미매칭 폴더가 있으면 경고가 표시된다', () => {
       const mappings: FolderMapping[] = [
-        createMockMapping({ matched: true }),
-        createMockMapping({ matched: false, customerId: null, customerName: null }),
+        createMockMapping({ folderName: '홍길동', matched: true }),
+        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
       ]
 
       render(
@@ -163,13 +163,13 @@ describe('MappingPreview', () => {
         />
       )
 
-      expect(screen.getByText(/미매칭된 1개 폴더의 문서는 업로드되지 않습니다/)).toBeInTheDocument()
+      expect(screen.getByText(/미매칭된 1개 폴더는 업로드되지 않습니다/)).toBeInTheDocument()
     })
 
     test('모두 매칭되면 경고가 표시되지 않는다', () => {
       const mappings: FolderMapping[] = [
-        createMockMapping({ matched: true }),
-        createMockMapping({ matched: true }),
+        createMockMapping({ folderName: '홍길동', matched: true }),
+        createMockMapping({ folderName: '김철수', matched: true }),
       ]
 
       render(
@@ -180,7 +180,7 @@ describe('MappingPreview', () => {
         />
       )
 
-      expect(screen.queryByText(/미매칭된.*폴더의 문서는 업로드되지 않습니다/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/미매칭된.*폴더는 업로드되지 않습니다/)).not.toBeInTheDocument()
     })
   })
 
@@ -214,13 +214,13 @@ describe('MappingPreview', () => {
     test('매칭된 폴더가 없으면 업로드 버튼이 비활성화된다', () => {
       render(
         <MappingPreview
-          mappings={[createMockMapping({ matched: false, customerId: null, customerName: null })]}
+          mappings={[createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null })]}
           onBack={mockOnBack}
           onStartUpload={mockOnStartUpload}
         />
       )
 
-      const uploadButton = screen.getByText('매칭된 폴더가 없습니다')
+      const uploadButton = screen.getByText('업로드할 폴더를 선택하세요')
       expect(uploadButton.closest('button')).toBeDisabled()
     })
 
@@ -228,9 +228,9 @@ describe('MappingPreview', () => {
       render(
         <MappingPreview
           mappings={[
-            createMockMapping({ matched: true }),
-            createMockMapping({ matched: true }),
-            createMockMapping({ matched: false, customerId: null, customerName: null }),
+            createMockMapping({ folderName: '홍길동', matched: true }),
+            createMockMapping({ folderName: '김철수', matched: true }),
+            createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
           ]}
           onBack={mockOnBack}
           onStartUpload={mockOnStartUpload}
