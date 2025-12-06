@@ -27,6 +27,7 @@ import type { Customer } from '@/entities/customer/model'
 import { CustomerService } from '@/services/customerService'
 import { CustomerDocument } from '@/stores/CustomerDocument'
 import { RelationshipService } from '@/services/relationshipService'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { formatDate } from '@/shared/lib/timeUtils'
 import './CustomerFullDetailView.css'
@@ -50,6 +51,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 🍎 개발자 모드 (Ctrl+Alt+D)
+  const { isDevMode } = useDevModeStore()
 
   // 🍎 모달 상태
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
@@ -619,7 +623,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   </Button>
                 </Tooltip>
               )}
-              {import.meta.env.DEV && (
+              {isDevMode && (
                 <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)">
                   <Button
                     variant="destructive"
@@ -627,7 +631,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     onClick={handlePermanentDeleteClick}
                     leftIcon={<span>🗑️</span>}
                   >
-                    영구 삭제 (개발용)
+                    영구 삭제
                   </Button>
                 </Tooltip>
               )}

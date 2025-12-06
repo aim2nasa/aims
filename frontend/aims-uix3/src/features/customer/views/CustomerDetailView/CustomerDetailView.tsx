@@ -24,6 +24,7 @@ import { AnnualReportTab } from './tabs/AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
+import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import './CustomerDetailView.css';
 
 interface CustomerDetailViewProps {
@@ -58,6 +59,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isCorporateModalVisible, setIsCorporateModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0);
+
+  // 🍎 개발자 모드 (Ctrl+Alt+D)
+  const { isDevMode } = useDevModeStore();
 
   // URL에서 활성 탭 복원 (초기 마운트 시에만)
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -591,7 +595,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 휴면 처리
               </Button>
             )}
-            {import.meta.env.DEV && (
+            {isDevMode && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -599,7 +603,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 leftIcon={<span>🗑️</span>}
                 title="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)"
               >
-                영구 삭제 (개발용)
+                영구 삭제
               </Button>
             )}
             {onOpenFullDetail && (
