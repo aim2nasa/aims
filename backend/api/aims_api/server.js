@@ -2947,7 +2947,17 @@ app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
       { returnDocument: 'after' }  // 업데이트 후 문서 반환
     );
 
-    if (!result.value) {
+    // 🔍 디버그: result 구조 확인
+    console.log('🔍 [DEBUG] findOneAndUpdate result:', JSON.stringify({
+      hasValue: !!result.value,
+      hasOk: !!result.ok,
+      resultKeys: Object.keys(result || {}),
+      resultType: typeof result
+    }));
+
+    const restoredCustomer = result.value || result;
+
+    if (!restoredCustomer) {
       return res.status(404).json({
         success: false,
         error: '복원할 수 없는 고객입니다.'
@@ -2959,7 +2969,7 @@ app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
     res.json({
       success: true,
       message: '고객이 복원되었습니다.',
-      data: result.value  // 복원된 고객 데이터 반환
+      data: restoredCustomer  // 복원된 고객 데이터 반환
     });
   } catch (error) {
     console.error('고객 복원 오류:', error);
