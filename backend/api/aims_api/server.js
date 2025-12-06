@@ -2900,6 +2900,85 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 고객 복원 API
+ * POST /api/customers/:id/restore
+ */
+app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 복원 가능
+    const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
+
+    if (!existingCustomer) {
+      return res.status(403).json({
+        success: false,
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+      });
+    }
+
+    // 이미 활성 상태인지 확인
+    if (existingCustomer.meta?.status === 'active') {
+      return res.status(400).json({
+        success: false,
+        error: '이미 활성 상태인 고객입니다.'
+      });
+    }
+
+    // ⭐ 복원 처리
+    const result = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          'meta.status': 'active',
+          'meta.updated_at': utcNowISO(),
+          deleted_at: null,
+          deleted_by: null
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '복원할 수 없는 고객입니다.'
+      });
+    }
+
+    // 복원된 고객 정보 조회
+    const restoredCustomer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    console.log(`♻️ [Restore] 고객 ${id} 복원 완료 (by ${userId})`);
+
+    res.json({
+      success: true,
+      message: '고객이 복원되었습니다.',
+      data: restoredCustomer
+    });
+  } catch (error) {
+    console.error('고객 복원 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 복원에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * Orphaned Relationships 조회 API (관리용)
  */
 app.get('/api/admin/orphaned-relationships', async (req, res) => {
