@@ -16,6 +16,7 @@ interface UploadProgressProps {
   onPause?: () => void
   onResume?: () => void
   onCancel?: () => void
+  onViewDocuments?: () => void
 }
 
 export default function UploadProgress({
@@ -23,6 +24,7 @@ export default function UploadProgress({
   onPause,
   onResume,
   onCancel,
+  onViewDocuments,
 }: UploadProgressProps) {
   const { state, totalFiles, completedFiles, failedFiles, overallProgress, folders, currentFile } =
     progress
@@ -209,6 +211,21 @@ export default function UploadProgress({
           </div>
         ))}
       </div>
+
+      {/* 전체 문서 보기 버튼 */}
+      {onViewDocuments && (
+        <div className="upload-view-documents">
+          <button type="button" className="upload-view-documents-btn" onClick={onViewDocuments}>
+            <SFSymbol
+              name="books-vertical"
+              size={SFSymbolSize.BODY}
+              weight={SFSymbolWeight.MEDIUM}
+              style={{ color: 'var(--color-purple-500, #8e44ad)' }}
+            />
+            <span>전체 문서 보기</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

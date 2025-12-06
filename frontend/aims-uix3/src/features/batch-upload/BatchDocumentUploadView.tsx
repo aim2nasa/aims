@@ -324,6 +324,7 @@ export default function BatchDocumentUploadView({
               onPause={pauseUpload}
               onResume={resumeUpload}
               onCancel={handleCancel}
+              onViewDocuments={onViewDocuments}
             />
           </div>
         )

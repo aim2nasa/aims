@@ -253,3 +253,43 @@
   color: var(--color-ios-red, #ff3b30);
   margin-left: var(--spacing-xs);
 }
+
+/* 전체 문서 보기 버튼 */
+.upload-view-documents {
+  display: flex;
+  justify-content: center;
+  padding-top: 32px;
+  margin-top: 24px;
+}
+
+.upload-view-documents-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-caption-1);  /* 12px */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.upload-view-documents-btn:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+}
+
+.upload-view-documents-btn:active {
+  background: var(--color-bg-tertiary);
+}
+
+html[data-theme="dark"] .upload-view-documents-btn {
+  border-color: var(--color-border-primary);
+}
+
+html[data-theme="dark"] .upload-view-documents-btn:hover {
+  border-color: var(--color-purple-500, #8e44ad);
+}
