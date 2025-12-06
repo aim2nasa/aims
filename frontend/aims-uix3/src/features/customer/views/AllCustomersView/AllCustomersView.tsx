@@ -56,6 +56,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
     const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-all-type-filter', 'all');
+    const [statusFilter, setStatusFilter] = usePersistedState<'all' | 'active' | 'inactive'>('customer-all-status-filter', 'all');
 
     // 칼럼 정렬 상태
     const [sortField, setSortField] = usePersistedState<SortField | null>('customer-all-sort-field', null);
@@ -116,15 +117,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       error,
       loadCustomers,
       refresh,
+      lastUpdated,
     } = useCustomerDocument();
 
-    // 초기 데이터 로드
+    // 초기 데이터 로드 (모든 고객 불러오기: status=all)
+    // dependency를 빈 배열로 설정하여 Strict Mode에서도 최종 마운트 시 한 번만 실행
     useEffect(() => {
       if (import.meta.env.DEV) {
         console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
       }
-      loadCustomers({ limit: 10000, page: 1 });
-    }, [loadCustomers]);
+      loadCustomers({ limit: 10000, page: 1, status: 'all' });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Note: customerChanged 이벤트 리스너는 불필요
     // AllCustomersView는 useCustomerDocument 훅을 통해 CustomerDocument를 구독하므로
@@ -134,6 +138,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // 검색 및 유형 필터링된 고객 목록
     const filteredCustomers = useMemo(() => {
       let customers = allCustomers;
+
+      // 상태 필터링
+      if (statusFilter === 'active') {
+        customers = customers.filter(c => c.meta?.status === 'active');
+      } else if (statusFilter === 'inactive') {
+        customers = customers.filter(c => c.meta?.status === 'inactive');
+      }
+      // statusFilter === 'all'이면 필터링하지 않음
 
       // 유형 필터링
       if (customerTypeFilter === 'personal') {
@@ -159,7 +171,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
 
       return customers;
-    }, [allCustomers, searchValue, customerTypeFilter]);
+    }, [allCustomers, searchValue, customerTypeFilter, statusFilter]);
 
     // 정렬된 고객 목록 (페이지네이션 적용 전)
     const sortedCustomers = useMemo(() => {
@@ -278,11 +290,65 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       return sortedCustomers.slice(offset, offset + itemsPerPageNumber);
     }, [sortedCustomers, currentPageForView, itemsPerPageNumber]);
 
-    // 개인/법인 고객 수 계산 (전체 기준)
-    const customerTypeCounts = useMemo(() => {
-      const personal = allCustomers.filter(c => c.insurance_info?.customer_type === '개인').length;
-      const corporate = allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
-      return { personal, corporate, total: allCustomers.length };
+    // 개인/법인 고객 수 계산 (활성/휴면/전체 모두)
+    // 초기 로드가 완료된 후에만 계산 (lastUpdated > 0)
+    const typeCounts = useMemo(() => {
+      if (import.meta.env.DEV) {
+        console.log('[AllCustomersView] typeCounts 계산 시작, lastUpdated:', lastUpdated, 'allCustomers.length:', allCustomers.length);
+        console.log('[AllCustomersView] allCustomers:', allCustomers.map(c => ({
+          name: c.personal_info?.name,
+          type: c.insurance_info?.customer_type,
+          status: c.meta?.status
+        })));
+      }
+
+      // 아직 초기 데이터 로드가 완료되지 않았으면 빈 카운트 반환
+      // - lastUpdated === 0: 아직 한 번도 로드되지 않음
+      // - isLoading === true: 로딩 중
+      // 둘 중 하나라도 true면 데이터가 완전하지 않으므로 빈 카운트 반환
+      if (lastUpdated === 0 || isLoading) {
+        return {
+          active: { personal: 0, corporate: 0 },
+          inactive: { personal: 0, corporate: 0 },
+          all: { personal: 0, corporate: 0 }
+        };
+      }
+
+      const activeCustomers = allCustomers.filter(c => c.meta?.status === 'active');
+      const inactiveCustomers = allCustomers.filter(c => c.meta?.status === 'inactive');
+
+      const result = {
+        active: {
+          personal: activeCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
+          corporate: activeCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
+        },
+        inactive: {
+          personal: inactiveCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
+          corporate: inactiveCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
+        },
+        all: {
+          personal: allCustomers.filter(c => c.insurance_info?.customer_type === '개인').length,
+          corporate: allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length,
+        }
+      };
+
+      if (import.meta.env.DEV) {
+        console.log('[AllCustomersView] typeCounts 계산 완료:', result);
+      }
+
+      return result;
+    }, [allCustomers, lastUpdated]);
+
+    // 필터링된 고객 수 계산 (테이블에 보이는 고객)
+    const filteredCount = useMemo(() => {
+      return filteredCustomers.length;
+    }, [filteredCustomers]);
+
+    // 활성/휴면 고객 수 계산 (전체 기준)
+    const statusCounts = useMemo(() => {
+      const active = allCustomers.filter(c => c.meta?.status === 'active').length;
+      const inactive = allCustomers.filter(c => c.meta?.status === 'inactive').length;
+      return { active, inactive, total: allCustomers.length };
     }, [allCustomers]);
 
     // refresh 함수를 부모에게 노출
@@ -336,6 +402,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
       setCustomerTypeFilter(filter);
+      setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+    };
+
+    const handleStatusFilterChange = (filter: 'all' | 'active' | 'inactive') => {
+      setStatusFilter(filter);
       setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
     };
 
@@ -586,27 +657,35 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 </Tooltip>
               )}
 
+              <span className="type-filter-button">
+                활성(개인 {typeCounts.active.personal}, 법인 {typeCounts.active.corporate}), 휴면(개인 {typeCounts.inactive.personal}, 법인 {typeCounts.inactive.corporate}) / 전체({typeCounts.all.personal + typeCounts.all.corporate})
+              </span>
+
+              {/* 상태 필터 버튼 */}
+              <span className="type-filter-separator">&nbsp;&nbsp;|&nbsp;</span>
               <button
-                className={`type-filter-button ${customerTypeFilter === 'all' ? 'active' : ''}`}
-                onClick={() => handleTypeFilterChange('all')}
+                className={`type-filter-button ${statusFilter === 'active' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('active')}
+                title="활성 고객만 보기"
               >
-                총 {customerTypeCounts.total}명
+                활성 {statusCounts.active}
               </button>
-              <span className="type-filter-separator">(</span>
+              <span className="type-filter-separator">/</span>
               <button
-                className={`type-filter-button ${customerTypeFilter === 'personal' ? 'active' : ''}`}
-                onClick={() => handleTypeFilterChange('personal')}
+                className={`type-filter-button ${statusFilter === 'inactive' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('inactive')}
+                title="휴면 고객만 보기"
               >
-                개인 {customerTypeCounts.personal}
+                휴면 {statusCounts.inactive}
               </button>
-              <span className="type-filter-separator">,</span>
+              <span className="type-filter-separator">/</span>
               <button
-                className={`type-filter-button ${customerTypeFilter === 'corporate' ? 'active' : ''}`}
-                onClick={() => handleTypeFilterChange('corporate')}
+                className={`type-filter-button ${statusFilter === 'all' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('all')}
+                title="모든 고객 보기"
               >
-                법인 {customerTypeCounts.corporate}
+                전체 {statusCounts.total}
               </button>
-              <span className="type-filter-separator">)</span>
 
               {/* 삭제 모드일 때 선택 수 및 삭제 버튼 */}
               {isDeleteMode && (

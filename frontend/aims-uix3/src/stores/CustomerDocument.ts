@@ -351,8 +351,8 @@ export class CustomerDocument {
         console.log('[CustomerDocument] 고객 삭제 완료, 최신 데이터 로드 중:', id);
       }
 
-      // 삭제 후 서버에서 최신 데이터 다시 로드 (활성 고객만)
-      await this.loadCustomers({ limit: 10000, page: 1 });
+      // 삭제 후 서버에서 최신 데이터 다시 로드 (모든 고객)
+      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
       throw error;
@@ -378,8 +378,8 @@ export class CustomerDocument {
         console.log('[CustomerDocument] 고객 영구 삭제 완료, 최신 데이터 로드 중:', id, result);
       }
 
-      // 영구 삭제 후 서버에서 최신 데이터 다시 로드
-      await this.loadCustomers({ limit: 10000, page: 1 });
+      // 영구 삭제 후 서버에서 최신 데이터 다시 로드 (모든 고객)
+      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
 
       return result;
     } catch (error) {
@@ -403,8 +403,8 @@ export class CustomerDocument {
         console.log('[CustomerDocument] 고객 복원 완료, 최신 데이터 로드 중:', id);
       }
 
-      // 복원 후 서버에서 최신 데이터 다시 로드 (활성 고객 목록에 표시)
-      await this.loadCustomers({ limit: 10000, page: 1 });
+      // 복원 후 서버에서 최신 데이터 다시 로드 (모든 고객)
+      await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
 
       return restoredCustomer;
     } catch (error) {

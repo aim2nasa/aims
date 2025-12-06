@@ -274,6 +274,51 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     }
   }, [customer, onClose, onDelete, confirmController]);
 
+  const handleRestoreClick = useCallback(async () => {
+    const confirmed = await confirmController.actions.openModal({
+      title: '고객 복원',
+      message: `"${customer.personal_info?.name}" 고객을 활성 상태로 복원하시겠습니까?\n\n복원 후 고객 목록에 다시 표시됩니다.`,
+      confirmText: '복원',
+      cancelText: '취소',
+      confirmStyle: 'primary',
+      showCancel: true,
+      iconType: 'info'
+    });
+
+    if (confirmed) {
+      try {
+        // Document-View 패턴: CustomerDocument를 통해 복원
+        const document = CustomerDocument.getInstance();
+        await document.restoreCustomer(customer._id);
+
+        if (import.meta.env.DEV) {
+          console.log('[CustomerDetailView] 고객 복원 완료');
+        }
+
+        await confirmController.actions.openModal({
+          title: '복원 완료',
+          message: `"${customer.personal_info?.name}" 고객이 활성 상태로 복원되었습니다.`,
+          confirmText: '확인',
+          confirmStyle: 'primary',
+          showCancel: false,
+          iconType: 'success'
+        });
+
+        onDelete?.(); // View 새로고침 트리거
+        onClose();
+      } catch (error) {
+        await confirmController.actions.openModal({
+          title: '복원 실패',
+          message: error instanceof Error ? error.message : '고객 복원에 실패했습니다.',
+          confirmText: '확인',
+          confirmStyle: 'destructive',
+          showCancel: false,
+          iconType: 'error'
+        });
+      }
+    }
+  }, [customer, onClose, onDelete, confirmController]);
+
   const handleSaveSuccess = useCallback(() => {
     if (import.meta.env.DEV) {
       console.log('[CustomerDetailView] 고객 수정 완료 - Document가 자동으로 모든 View 업데이트함');
@@ -525,15 +570,27 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             >
               정보 수정
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleSoftDeleteClick}
-              leftIcon={<span>💤</span>}
-              title="고객을 휴면 처리합니다 (복원 가능)"
-            >
-              휴면 처리
-            </Button>
+            {customer.meta?.status === 'inactive' ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleRestoreClick}
+                leftIcon={<span>♻️</span>}
+                title="휴면 상태의 고객을 활성 상태로 복원합니다"
+              >
+                복원
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleSoftDeleteClick}
+                leftIcon={<span>💤</span>}
+                title="고객을 휴면 처리합니다 (복원 가능)"
+              >
+                휴면 처리
+              </Button>
+            )}
             {import.meta.env.DEV && (
               <Button
                 variant="destructive"

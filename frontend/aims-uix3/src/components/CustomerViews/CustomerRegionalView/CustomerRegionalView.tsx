@@ -66,7 +66,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     if (import.meta.env.DEV) {
       console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
     }
-    loadCustomers({ limit: 10000 })
+    loadCustomers({ limit: 10000, page: 1, status: 'all' })
   }, [loadCustomers])
 
   // Note: customerChanged 이벤트 리스너는 불필요

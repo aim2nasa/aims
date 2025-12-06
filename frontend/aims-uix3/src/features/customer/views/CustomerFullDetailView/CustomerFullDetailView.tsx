@@ -354,6 +354,49 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     }
   }, [customer, onClose, onCustomerDeleted, confirmController])
 
+  // 🍎 복원 핸들러 (Restore)
+  const handleRestoreClick = useCallback(async () => {
+    if (!customer) return
+
+    const confirmed = await confirmController.actions.openModal({
+      title: '고객 복원',
+      message: `"${customer.personal_info?.name}" 고객을 활성 상태로 복원하시겠습니까?\n\n복원 후 고객 목록에 다시 표시됩니다.`,
+      confirmText: '복원',
+      cancelText: '취소',
+      confirmStyle: 'primary',
+      showCancel: true,
+      iconType: 'info'
+    })
+
+    if (confirmed) {
+      try {
+        const document = CustomerDocument.getInstance()
+        await document.restoreCustomer(customer._id)
+
+        await confirmController.actions.openModal({
+          title: '복원 완료',
+          message: `"${customer.personal_info?.name}" 고객이 활성 상태로 복원되었습니다.`,
+          confirmText: '확인',
+          confirmStyle: 'primary',
+          showCancel: false,
+          iconType: 'success'
+        })
+
+        onCustomerDeleted?.() // View 새로고침 트리거
+        onClose()
+      } catch (error) {
+        await confirmController.actions.openModal({
+          title: '복원 실패',
+          message: error instanceof Error ? error.message : '고객 복원에 실패했습니다.',
+          confirmText: '확인',
+          confirmStyle: 'destructive',
+          showCancel: false,
+          iconType: 'error'
+        })
+      }
+    }
+  }, [customer, onClose, onCustomerDeleted, confirmController])
+
   // 🍎 수정 성공 핸들러
   const handleSaveSuccess = useCallback(() => {
     void loadCustomer()
@@ -553,16 +596,29 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   정보 수정
                 </Button>
               </Tooltip>
-              <Tooltip content="고객을 휴면 처리합니다 (복원 가능)">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleSoftDeleteClick}
-                  leftIcon={<span>💤</span>}
-                >
-                  휴면 처리
-                </Button>
-              </Tooltip>
+              {customer.meta?.status === 'inactive' ? (
+                <Tooltip content="휴면 상태의 고객을 활성 상태로 복원합니다">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleRestoreClick}
+                    leftIcon={<span>♻️</span>}
+                  >
+                    복원
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Tooltip content="고객을 휴면 처리합니다 (복원 가능)">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleSoftDeleteClick}
+                    leftIcon={<span>💤</span>}
+                  >
+                    휴면 처리
+                  </Button>
+                </Tooltip>
+              )}
               {import.meta.env.DEV && (
                 <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)">
                   <Button

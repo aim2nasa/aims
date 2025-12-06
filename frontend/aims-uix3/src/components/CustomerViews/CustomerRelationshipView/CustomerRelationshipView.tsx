@@ -157,7 +157,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     if (import.meta.env.DEV) {
       console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
     }
-    loadCustomers({ limit: 10000 });
+    loadCustomers({ limit: 10000, page: 1, status: 'all' });
   }, [loadCustomers]);
 
   const loadRelationshipsData = useCallback(async () => {

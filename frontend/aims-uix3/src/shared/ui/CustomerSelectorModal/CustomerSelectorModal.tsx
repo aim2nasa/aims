@@ -91,7 +91,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   useEffect(() => {
     if (visible) {
       console.log('[CustomerSelectorModal] 고객 데이터 로딩 시작');
-      loadCustomers({ limit: 10000, page: 1 });
+      loadCustomers({ limit: 10000, page: 1, status: 'all' });
       setSelectedCustomer(null);
       setSearchQuery('');
       // filterCustomerType이 설정되어 있으면 해당 타입으로 고정
