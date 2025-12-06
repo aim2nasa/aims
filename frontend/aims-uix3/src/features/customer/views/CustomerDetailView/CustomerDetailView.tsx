@@ -193,11 +193,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     setIsEditModalVisible(true);
   }, []);
 
-  const handleDeleteClick = useCallback(async () => {
+  const handleSoftDeleteClick = useCallback(async () => {
     const confirmed = await confirmController.actions.openModal({
-      title: '고객 삭제',
-      message: `"${customer.personal_info?.name}" 고객을 삭제하시겠습니까?`,
-      confirmText: '삭제',
+      title: '고객 휴면 처리',
+      message: `"${customer.personal_info?.name}" 고객을 휴면 처리하시겠습니까?\n\n휴면 처리된 고객은 언제든지 복원할 수 있습니다.`,
+      confirmText: '휴면 처리',
       cancelText: '취소',
       confirmStyle: 'destructive',
       showCancel: true,
@@ -206,19 +206,65 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
     if (confirmed) {
       try {
-        // Document-View 패턴: CustomerDocument를 통해 삭제
+        // Document-View 패턴: CustomerDocument를 통해 소프트 삭제
         const document = CustomerDocument.getInstance();
         await document.deleteCustomer(customer._id);
         if (import.meta.env.DEV) {
-          console.log('[CustomerDetailView] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+          console.log('[CustomerDetailView] 고객 휴면 처리 완료 - 모든 View 자동 업데이트됨');
         }
 
         onDelete?.();
         onClose();
       } catch (error) {
         await confirmController.actions.openModal({
-          title: '삭제 실패',
-          message: error instanceof Error ? error.message : '고객 삭제에 실패했습니다.',
+          title: '휴면 처리 실패',
+          message: error instanceof Error ? error.message : '고객 휴면 처리에 실패했습니다.',
+          confirmText: '확인',
+          confirmStyle: 'destructive',
+          showCancel: false,
+          iconType: 'error'
+        });
+      }
+    }
+  }, [customer, onClose, onDelete, confirmController]);
+
+  const handlePermanentDeleteClick = useCallback(async () => {
+    const confirmed = await confirmController.actions.openModal({
+      title: '고객 영구 삭제 (개발용)',
+      message: `⚠️ 경고: "${customer.personal_info?.name}" 고객과 연결된 모든 데이터를 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다!\n\n삭제될 데이터:\n- 고객 정보\n- 연결된 모든 문서\n- 연결된 모든 계약\n- 연결된 모든 관계`,
+      confirmText: '영구 삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'error'
+    });
+
+    if (confirmed) {
+      try {
+        // Document-View 패턴: CustomerDocument를 통해 영구 삭제
+        const document = CustomerDocument.getInstance();
+        const result = await document.permanentDeleteCustomer(customer._id);
+
+        if (import.meta.env.DEV) {
+          console.log('[CustomerDetailView] 고객 영구 삭제 완료:', result);
+        }
+
+        // 삭제 결과 요약 표시
+        await confirmController.actions.openModal({
+          title: '영구 삭제 완료',
+          message: `고객이 영구 삭제되었습니다.\n\n삭제된 데이터:\n- 관계: ${result.deletedRelationships}개\n- 계약: ${result.deletedContracts}개\n- 문서: ${result.deletedDocuments}개`,
+          confirmText: '확인',
+          confirmStyle: 'primary',
+          showCancel: false,
+          iconType: 'success'
+        });
+
+        onDelete?.();
+        onClose();
+      } catch (error) {
+        await confirmController.actions.openModal({
+          title: '영구 삭제 실패',
+          message: error instanceof Error ? error.message : '고객 영구 삭제에 실패했습니다.',
           confirmText: '확인',
           confirmStyle: 'destructive',
           showCancel: false,
@@ -482,11 +528,23 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <Button
               variant="destructive"
               size="sm"
-              onClick={handleDeleteClick}
-              leftIcon={<span>🗑️</span>}
+              onClick={handleSoftDeleteClick}
+              leftIcon={<span>💤</span>}
+              title="고객을 휴면 처리합니다 (복원 가능)"
             >
-              고객 삭제
+              휴면 처리
             </Button>
+            {import.meta.env.DEV && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handlePermanentDeleteClick}
+                leftIcon={<span>🗑️</span>}
+                title="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)"
+              >
+                영구 삭제 (개발용)
+              </Button>
+            )}
             {onOpenFullDetail && (
               <Button
                 variant="secondary"

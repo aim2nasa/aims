@@ -337,12 +337,13 @@ export class CustomerDocument {
   }
 
   /**
-   * 고객 삭제 (DELETE)
+   * 고객 삭제 (DELETE - Soft Delete)
+   * 휴면 처리: status='inactive', deleted_at 설정
    */
   async deleteCustomer(id: string): Promise<void> {
     try {
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 삭제 시작:', id);
+        console.log('[CustomerDocument] 고객 삭제 (휴면 처리) 시작:', id);
       }
       await CustomerService.deleteCustomer(id);
 
@@ -350,10 +351,64 @@ export class CustomerDocument {
         console.log('[CustomerDocument] 고객 삭제 완료, 최신 데이터 로드 중:', id);
       }
 
-      // 삭제 후 서버에서 최신 데이터 다시 로드
+      // 삭제 후 서버에서 최신 데이터 다시 로드 (활성 고객만)
       await this.loadCustomers({ limit: 10000, page: 1 });
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 고객 영구 삭제 (Permanent Delete - Hard Delete)
+   * 주의: 연결된 문서, 계약, 관계도 모두 삭제됨
+   */
+  async permanentDeleteCustomer(id: string): Promise<{
+    deletedRelationships: number;
+    deletedContracts: number;
+    deletedDocuments: number;
+  }> {
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 영구 삭제 시작:', id);
+      }
+      const result = await CustomerService.permanentDeleteCustomer(id);
+
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 영구 삭제 완료, 최신 데이터 로드 중:', id, result);
+      }
+
+      // 영구 삭제 후 서버에서 최신 데이터 다시 로드
+      await this.loadCustomers({ limit: 10000, page: 1 });
+
+      return result;
+    } catch (error) {
+      console.error('[CustomerDocument] 고객 영구 삭제 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 고객 복원 (RESTORE)
+   * 휴면 처리된 고객을 활성 상태로 복원: status='active', deleted_at=null
+   */
+  async restoreCustomer(id: string): Promise<Customer> {
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 복원 시작:', id);
+      }
+      const restoredCustomer = await CustomerService.restoreCustomer(id);
+
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 복원 완료, 최신 데이터 로드 중:', id);
+      }
+
+      // 복원 후 서버에서 최신 데이터 다시 로드 (활성 고객 목록에 표시)
+      await this.loadCustomers({ limit: 10000, page: 1 });
+
+      return restoredCustomer;
+    } catch (error) {
+      console.error('[CustomerDocument] 고객 복원 실패:', error);
       throw error;
     }
   }
