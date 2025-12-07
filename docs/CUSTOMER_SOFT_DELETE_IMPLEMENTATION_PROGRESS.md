@@ -1,19 +1,20 @@
 # Customer Soft Delete Implementation Progress
 
 **마지막 업데이트**: 2025-12-07
+**상태**: ✅ **구현 완료**
 **참조 문서**: [CUSTOMER_NAME_UNIQUENESS_STRATEGY.md](./CUSTOMER_NAME_UNIQUENESS_STRATEGY.md)
 
 ---
 
 ## 📊 전체 진행 상황
 
-### ✅ 완료된 작업 (Steps 1-10 완료)
+### ✅ 모든 작업 완료
 
 | 단계 | 작업 내용 | 상태 | 커밋 | 테스트 |
 |------|----------|------|------|--------|
 | STEP 1 | DB 스키마 마이그레이션 | ✅ 완료 | `db44e3d9` | 5/5 통과 |
 | STEP 2 | 백엔드 소프트/하드 삭제 API | ✅ 완료 | `db44e3d9` | 10/10 통과 |
-| STEP 3 | 백엔드 복원 API | ✅ 완료 | `db44e3d9` | 10/10 통과 |
+| STEP 3 | 백엔드 휴면 해제 API | ✅ 완료 | `db44e3d9` | 10/10 통과 |
 | STEP 4 | 백엔드 상태 필터 (active/inactive/all) | ✅ 완료 | `db44e3d9` | 8/8 통과 |
 | STEP 5 | 프론트엔드 Customer 모델 업데이트 | ✅ 완료 | `db44e3d9` | N/A |
 | STEP 6 | 프론트엔드 CustomerService 업데이트 | ✅ 완료 | `db44e3d9` | N/A |
@@ -22,6 +23,11 @@
 | STEP 9 | CustomerDetailView UI 업데이트 | ✅ 완료 | `04b018c5` | N/A |
 | STEP 10 | 전체 View 활성/휴면 통합 및 카운트 표시 | ✅ 완료 | `04b018c5` | N/A |
 | **추가** | **중복 고객명 등록 차단** | ✅ 완료 | `c41d8af6` | 8/8 통과 |
+| **추가** | **즉시 UI 업데이트** | ✅ 완료 | `b53bf3ce` | N/A |
+| **추가** | **휴면 해제 404 에러 수정** | ✅ 완료 | `d203bbf7` | N/A |
+| **추가** | **영구 삭제 버튼 앱 개발자 모드 전용** | ✅ 완료 | `cbb77ba5` | N/A |
+| **추가** | **휴면 처리/해제 후 활성 필터 자동 전환** | ✅ 완료 | `fbc9862b` | N/A |
+| **추가** | **용어 통일 (복원→휴면 해제)** | ✅ 완료 | `7a5d5b49` | N/A |
 
 ---
 
@@ -95,7 +101,7 @@ db.customers.createIndex(
 
 ---
 
-### 3. Backend Restore API (STEP 3)
+### 3. Backend 휴면 해제 API (STEP 3)
 **엔드포인트**: `POST /api/customers/:id/restore`
 
 ```javascript
@@ -189,12 +195,16 @@ class CustomerDocument {
 **파일**: `frontend/aims-uix3/src/features/customer/views/CustomerFullDetailView/CustomerFullDetailView.tsx`
 
 **추가된 버튼**:
-- **"휴면 처리"** 버튼 (항상 표시)
-  - 확인 모달: "휴면 처리하시겠습니까? 언제든지 복원할 수 있습니다."
+- **"휴면 처리"** 버튼 (활성 고객일 때 표시)
+  - 확인 모달: "휴면 처리하시겠습니까? 언제든지 휴면 해제할 수 있습니다."
   - 아이콘: 💤
 
-- **"영구 삭제 (개발용)"** 버튼 (`import.meta.env.DEV`만 표시)
-  - 확인 모달: "영구 삭제 경고 - 복구 불가능"
+- **"휴면 해제"** 버튼 (휴면 고객일 때 표시)
+  - 확인 모달: "활성 상태로 변경하시겠습니까?"
+  - 아이콘: ♻️
+
+- **"영구 삭제"** 버튼 (앱 개발자 모드에서만 표시, Ctrl+Alt+D)
+  - 확인 모달: "영구 삭제 - 되돌릴 수 없습니다"
   - 아이콘: 🗑️
   - 삭제 결과 요약 표시
 
@@ -256,25 +266,25 @@ const errorMessage = (err.data && typeof err.data === 'object' && 'error' in err
 **파일**: `frontend/aims-uix3/src/features/customer/views/CustomerDetailView/CustomerDetailView.tsx`
 
 **추가된 기능**:
-- CustomerFullDetailView와 동일한 휴면 처리/복원 UI
+- CustomerFullDetailView와 동일한 휴면 처리/휴면 해제 UI
 - **"휴면 처리"** 버튼: 활성 고객 상태일 때 표시
-- **"복원"** 버튼: 휴면 고객 상태일 때 표시
-- **"영구 삭제"** 버튼: 개발 모드에서만 표시
+- **"휴면 해제"** 버튼: 휴면 고객 상태일 때 표시
+- **"영구 삭제"** 버튼: 앱 개발자 모드(Ctrl+Alt+D)에서만 표시
 
 **버튼 표시 로직**:
 ```typescript
 {customer.meta?.status === 'inactive' ? (
   <Button onClick={handleRestoreClick} leftIcon={<span>♻️</span>}>
-    복원
+    휴면 해제
   </Button>
 ) : (
   <Button onClick={handleSoftDeleteClick} leftIcon={<span>💤</span>}>
     휴면 처리
   </Button>
 )}
-{import.meta.env.DEV && (
+{isDevMode && (
   <Button onClick={handlePermanentDeleteClick} leftIcon={<span>🗑️</span>}>
-    영구 삭제 (개발용)
+    영구 삭제
   </Button>
 )}
 ```
@@ -340,17 +350,17 @@ await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
 
 ---
 
-## 🔜 남은 작업
+## ✅ 완료된 테스트
 
-### STEP 11: 전체 통합 테스트
-**파일**: `backend/api/aims_api/tests/test_integration_soft_delete_flow.js` (✅ 이미 생성됨)
+### 전체 통합 테스트
+**파일**: `backend/api/aims_api/tests/test_integration_soft_delete_flow.js`
 
 **테스트 시나리오** (7단계):
 1. ✅ 고객 생성 → status=active
 2. ✅ 소프트 삭제 → status=inactive, deleted_at 설정
 3. ✅ 활성 목록에 없음 확인
 4. ✅ 중복 고객명 등록 시도 → 409 에러
-5. ✅ 고객 복원 → status=active, deleted_at=null
+5. ✅ 고객 휴면 해제 → status=active, deleted_at=null
 6. ✅ 활성 목록에 다시 표시
 7. ✅ 영구 삭제 → DB에서 완전 제거
 
@@ -359,26 +369,24 @@ await this.loadCustomers({ limit: 10000, page: 1, status: 'all' });
 ssh rossi@tars.giize.com 'cd /home/rossi/aims/backend/api/aims_api/tests && node test_integration_soft_delete_flow.js'
 ```
 
-**예상 결과**: 18/18 테스트 통과
+**결과**: ✅ 18/18 테스트 통과
 
 ---
 
-### STEP 12: 최종 검토 및 문서화
+### 최종 검토 완료
 **체크리스트**:
-- [ ] 브라우저 수동 테스트
-  - [ ] 고객 등록 → 휴면 처리 → 복원
-  - [ ] 중복 고객명 등록 시도 → 에러 확인
-  - [ ] 개발 모드에서 영구 삭제 테스트
+- [x] 브라우저 수동 테스트
+  - [x] 고객 등록 → 휴면 처리 → 휴면 해제
+  - [x] 중복 고객명 등록 시도 → 에러 확인
+  - [x] 앱 개발자 모드(Ctrl+Alt+D)에서 영구 삭제 테스트
 
-- [ ] 모든 자동화 테스트 재실행
-  - [ ] `test_migration_001.js` (5/5)
-  - [ ] `test_customer_soft_delete.js` (10/10)
-  - [ ] `test_customer_restore.js` (10/10)
-  - [ ] `test_customer_list_status_filter.js` (8/8)
-  - [ ] `test_duplicate_name_rejection.js` (8/8)
-  - [ ] `test_integration_soft_delete_flow.js` (18/18)
-
-- [ ] README 업데이트 (선택)
+- [x] 모든 자동화 테스트 통과
+  - [x] `test_migration_001.js` (5/5)
+  - [x] `test_customer_soft_delete.js` (10/10)
+  - [x] `test_customer_restore.js` (10/10)
+  - [x] `test_customer_list_status_filter.js` (8/8)
+  - [x] `test_duplicate_name_rejection.js` (8/8)
+  - [x] `test_integration_soft_delete_flow.js` (18/18)
 
 ---
 
@@ -446,18 +454,23 @@ frontend/aims-uix3/src/
 ## 🎯 핵심 설계 결정
 
 ### 1. Soft Delete 기본 동작
-- **기본값**: 소프트 삭제 (복원 가능)
-- **명시적**: `?permanent=true` (하드 삭제, 개발 모드만)
+- **기본값**: 소프트 삭제 (휴면 해제 가능)
+- **명시적**: `?permanent=true` (하드 삭제, 앱 개발자 모드만)
 
 ### 2. 유니크 제약
 - **범위**: 전체 DB (활성 + 휴면)
 - **이유**: 데이터 무결성 보장, 중복 방지
-- **사용자 경험**: 명확한 에러 메시지로 복원 유도
+- **사용자 경험**: 명확한 에러 메시지로 휴면 해제 유도
 
 ### 3. UX 원칙
-- **용어**: "휴면 처리" (삭제보다 덜 파괴적)
-- **복원**: 언제든지 가능
-- **영구 삭제**: 개발 모드에서만 노출
+- **용어**: "휴면 처리" / "휴면 해제" (삭제/복원보다 덜 파괴적)
+- **휴면 해제**: 언제든지 가능
+- **영구 삭제**: 앱 개발자 모드(Ctrl+Alt+D)에서만 노출
+
+### 4. 자동 필터 전환
+- **휴면 처리 후**: 자동으로 '활성' 필터로 전환
+- **휴면 해제 후**: 자동으로 '활성' 필터로 전환
+- **이유**: 작업 완료 후 결과를 즉시 확인할 수 있도록
 
 ---
 
@@ -475,18 +488,26 @@ frontend/aims-uix3/src/
 | `db44e3d9` | fix: 업로드 요약 화면 UX 개선 | 2025-12-06 |
 | `c41d8af6` | fix: 중복 고객명 등록 차단 및 명확한 에러 메시지 제공 | 2025-12-06 |
 | `04b018c5` | fix: 고객 목록 View에서 활성/휴면 고객 모두 로드 및 카운트 오류 수정 | 2025-12-07 |
+| `b53bf3ce` | fix: 고객 휴면 처리 시 즉시 업데이트되도록 개선 | 2025-12-07 |
+| `d203bbf7` | fix: 고객 휴면 해제 시 404 에러 수정 | 2025-12-07 |
+| `cc21a9cf` | fix: 고객 목록 헤더에서 활성/휴면 카운트 요약 텍스트 제거 | 2025-12-07 |
+| `cbb77ba5` | fix: 영구 삭제 버튼을 앱 개발자 모드에서만 표시하도록 변경 | 2025-12-07 |
+| `fbc9862b` | feat: 휴면 처리/휴면 해제 후 활성 필터 자동 선택 | 2025-12-07 |
+| `7a5d5b49` | refactor: 고객 상태 변경 모달 문구 개선 (복원→휴면 해제) | 2025-12-07 |
 
 ---
 
 ## 📝 구현 완료 요약
 
 ### 핵심 성과
-- ✅ **완전한 소프트 삭제 시스템**: 휴면 처리 → 복원 가능
+- ✅ **완전한 소프트 삭제 시스템**: 휴면 처리 → 휴면 해제 가능
 - ✅ **전체 DB 유니크 제약**: 활성 + 휴면 고객 중복 방지
-- ✅ **직관적인 UX**: "휴면 처리" 용어로 사용자 심리적 부담 감소
-- ✅ **개발자 친화적**: 영구 삭제 기능은 개발 모드에서만 노출
+- ✅ **직관적인 UX**: "휴면 처리" / "휴면 해제" 용어로 사용자 심리적 부담 감소
+- ✅ **개발자 친화적**: 영구 삭제 기능은 앱 개발자 모드(Ctrl+Alt+D)에서만 노출
 - ✅ **완벽한 동기화**: Document-View 패턴으로 모든 View 자동 업데이트
 - ✅ **정확한 카운트 표시**: 활성/휴면 고객 수를 개인/법인별로 분리 표시
+- ✅ **자동 필터 전환**: 휴면 처리/해제 후 자동으로 '활성' 필터로 전환
+- ✅ **즉시 UI 업데이트**: 서버 응답 데이터를 사용하여 지연 없이 UI 반영
 
 ### 중요한 추가 수정 사항
 
@@ -505,17 +526,21 @@ frontend/aims-uix3/src/
 ✅ Collation: { locale: 'ko', strength: 2 } (한글 대소문자 무관 비교)
 ```
 
-**검증**:
-```javascript
-db.customers.getIndexes()
-// 결과: unique_customer_name_type 인덱스 존재 확인
-```
+#### 3. 용어 통일 (2025-12-07)
+- "복원" → "휴면 해제"로 변경
+- "영구 삭제 (개발용)" → "영구 삭제"로 간소화
+- 모달 메시지 UI 용어(활성, 휴면)와 일관성 유지
 
-#### 3. 테스트 완료율: 100%
+#### 4. 앱 개발자 모드 적용 (2025-12-07)
+- `import.meta.env.DEV` → `useDevModeStore().isDevMode`로 변경
+- Ctrl+Alt+D로 활성화하는 앱 내부 개발자 모드 사용
+- 영구 삭제 버튼은 개발자 모드에서만 표시
+
+#### 5. 테스트 완료율: 100%
 - 초기 실행: 17/18 테스트 통과 (STEP 4 duplicate check 실패)
 - DB 이름 수정 후: 59/59 테스트 통과 ✅
 
-### 다음 단계
-- ✅ 완료: 전체 통합 테스트 실행 (59/59 통과)
-- ⏸️ 보류: 브라우저 수동 테스트 (실제 사용자 시나리오)
-- ⏸️ 보류: 프로덕션 배포 및 모니터링
+### 구현 완료
+- ✅ 전체 통합 테스트 실행 (59/59 통과)
+- ✅ 브라우저 수동 테스트 완료
+- ✅ 프로덕션 배포 완료
