@@ -89,16 +89,14 @@ export default function DuplicateDialog({
         </div>
 
         {/* 일괄 적용 체크박스 */}
-        {remainingCount > 0 && (
-          <label className="duplicate-dialog-apply-all">
-            <input
-              type="checkbox"
-              checked={applyToAll}
-              onChange={(e) => setApplyToAll(e.target.checked)}
-            />
-            <span>나머지 {remainingCount}개 중복 파일에도 동일하게 적용</span>
-          </label>
-        )}
+        <label className="duplicate-dialog-apply-all">
+          <input
+            type="checkbox"
+            checked={applyToAll}
+            onChange={(e) => setApplyToAll(e.target.checked)}
+          />
+          <span>다음 중복 파일도 같은 방식으로 처리 (묻지 않음)</span>
+        </label>
 
         {/* 버튼 */}
         <div className="duplicate-dialog-actions">
