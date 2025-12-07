@@ -80,10 +80,8 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
     const response = await api.get<CustomerDocumentsResponse>(
       `/api/customers/${customerId}/documents`
     )
-    console.log('[duplicateChecker] API 응답:', customerId, response)
 
     const documents = response?.data?.documents || []
-    console.log('[duplicateChecker] 문서 목록:', documents.length, '개')
 
     if (documents.length === 0) {
       return []
@@ -123,8 +121,6 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
     })
 
     const results = await Promise.all(hashPromises)
-    console.log('[duplicateChecker] 고객 문서 조회 완료:', results.length, '개')
-    console.log('[duplicateChecker] 조회된 문서:', results.map(r => ({ fileName: r.fileName, hasHash: !!r.fileHash })))
     return results
   } catch (error) {
     console.error('[duplicateChecker] 고객 문서 해시 조회 실패:', error)
@@ -156,7 +152,6 @@ export async function checkDuplicateFile(
   )
 
   if (hashMatch) {
-    console.log('[duplicateChecker] 해시 일치:', hashMatch.fileName)
     return {
       isDuplicate: true,
       existingDoc: hashMatch,
@@ -166,22 +161,17 @@ export async function checkDuplicateFile(
 
   // 2차: 파일명 비교 (fallback - 해시가 없는 기존 문서와 비교)
   // 해시가 없는 문서들 중에서 파일명이 일치하는 것 찾기
-  console.log('[duplicateChecker] 해시 없는 문서들:', existingHashes.filter(d => !d.fileHash).map(d => d.fileName))
-  console.log('[duplicateChecker] 업로드 파일명:', file.name)
   const nameMatch = existingHashes.find(
     (doc) => !doc.fileHash && doc.fileName === file.name
   )
 
   if (nameMatch) {
-    console.log('[duplicateChecker] 파일명 일치 (fallback):', nameMatch.fileName)
     return {
       isDuplicate: true,
       existingDoc: nameMatch,
       newFileHash,
     }
   }
-
-  console.log('[duplicateChecker] 중복 없음')
 
   return {
     isDuplicate: false,
