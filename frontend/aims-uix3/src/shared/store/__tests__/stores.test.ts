@@ -194,11 +194,44 @@ describe('useLayoutStore', () => {
       expect(useLayoutStore.getState().leftPaneVisible).toBe(false)
     })
 
+    it('toggleCenterPane로 센터 패널을 토글할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().toggleCenterPane()
+      })
+      expect(useLayoutStore.getState().centerPaneVisible).toBe(false)
+
+      act(() => {
+        useLayoutStore.getState().toggleCenterPane()
+      })
+      expect(useLayoutStore.getState().centerPaneVisible).toBe(true)
+    })
+
     it('toggleRightPane로 오른쪽 패널을 토글할 수 있음', () => {
       act(() => {
         useLayoutStore.getState().toggleRightPane()
       })
       expect(useLayoutStore.getState().rightPaneVisible).toBe(true)
+    })
+
+    it('toggleMainPane로 메인 패널을 토글할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().toggleMainPane()
+      })
+      expect(useLayoutStore.getState().mainPaneVisible).toBe(false)
+    })
+
+    it('toggleBrb로 BRB를 토글할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().toggleBrb()
+      })
+      expect(useLayoutStore.getState().brbVisible).toBe(false)
+    })
+
+    it('togglePagination로 페이지네이션을 토글할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().togglePagination()
+      })
+      expect(useLayoutStore.getState().paginationVisible).toBe(false)
     })
   })
 
@@ -210,11 +243,46 @@ describe('useLayoutStore', () => {
       expect(useLayoutStore.getState().headerVisible).toBe(false)
     })
 
+    it('setLeftPaneVisible로 왼쪽 패널을 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setLeftPaneVisible(false)
+      })
+      expect(useLayoutStore.getState().leftPaneVisible).toBe(false)
+    })
+
+    it('setCenterPaneVisible로 센터 패널을 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setCenterPaneVisible(false)
+      })
+      expect(useLayoutStore.getState().centerPaneVisible).toBe(false)
+    })
+
     it('setRightPaneVisible로 오른쪽 패널을 설정할 수 있음', () => {
       act(() => {
         useLayoutStore.getState().setRightPaneVisible(true)
       })
       expect(useLayoutStore.getState().rightPaneVisible).toBe(true)
+    })
+
+    it('setMainPaneVisible로 메인 패널을 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setMainPaneVisible(false)
+      })
+      expect(useLayoutStore.getState().mainPaneVisible).toBe(false)
+    })
+
+    it('setBrbVisible로 BRB를 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setBrbVisible(false)
+      })
+      expect(useLayoutStore.getState().brbVisible).toBe(false)
+    })
+
+    it('setPaginationVisible로 페이지네이션을 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setPaginationVisible(false)
+      })
+      expect(useLayoutStore.getState().paginationVisible).toBe(false)
     })
   })
 
@@ -280,6 +348,55 @@ describe('useLayoutStore', () => {
       })
       expect(useLayoutStore.getState().isResizing).toBe(true)
     })
+
+    it('setResizeTimer로 타이머를 설정할 수 있음', () => {
+      const timer = setTimeout(() => {}, 1000)
+
+      act(() => {
+        useLayoutStore.getState().setResizeTimer(timer)
+      })
+      expect(useLayoutStore.getState().resizeTimer).toBe(timer)
+
+      act(() => {
+        useLayoutStore.getState().setResizeTimer(null)
+      })
+      expect(useLayoutStore.getState().resizeTimer).toBeNull()
+    })
+
+    it('새 타이머 설정 시 기존 타이머를 정리함', () => {
+      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout')
+      const timer1 = setTimeout(() => {}, 1000)
+      const timer2 = setTimeout(() => {}, 2000)
+
+      act(() => {
+        useLayoutStore.getState().setResizeTimer(timer1)
+      })
+      act(() => {
+        useLayoutStore.getState().setResizeTimer(timer2)
+      })
+
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(timer1)
+      clearTimeoutSpy.mockRestore()
+    })
+  })
+
+  describe('애니메이션 상태', () => {
+    it('setLeftPaneAnimationState로 애니메이션 상태를 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setLeftPaneAnimationState('expanding')
+      })
+      expect(useLayoutStore.getState().leftPaneAnimationState).toBe('expanding')
+
+      act(() => {
+        useLayoutStore.getState().setLeftPaneAnimationState('collapsing')
+      })
+      expect(useLayoutStore.getState().leftPaneAnimationState).toBe('collapsing')
+
+      act(() => {
+        useLayoutStore.getState().setLeftPaneAnimationState('idle')
+      })
+      expect(useLayoutStore.getState().leftPaneAnimationState).toBe('idle')
+    })
   })
 
   describe('모달 상태', () => {
@@ -311,13 +428,36 @@ describe('useLayoutStore', () => {
       act(() => {
         useLayoutStore.getState().openLayoutControlModal()
       })
-      const firstProtection = useLayoutStore.getState().modalClickProtection
 
       act(() => {
         useLayoutStore.getState().openLayoutControlModal()
       })
       // modalClickProtection이 그대로 유지됨 (재호출 안됨)
       expect(useLayoutStore.getState().layoutControlModalOpen).toBe(true)
+    })
+
+    it('클릭 보호 중에는 모달을 열 수 없음', () => {
+      act(() => {
+        useLayoutStore.getState().setModalClickProtection(true)
+      })
+
+      act(() => {
+        useLayoutStore.getState().openLayoutControlModal()
+      })
+
+      expect(useLayoutStore.getState().layoutControlModalOpen).toBe(false)
+    })
+
+    it('setModalClickProtection으로 클릭 보호를 설정할 수 있음', () => {
+      act(() => {
+        useLayoutStore.getState().setModalClickProtection(true)
+      })
+      expect(useLayoutStore.getState().modalClickProtection).toBe(true)
+
+      act(() => {
+        useLayoutStore.getState().setModalClickProtection(false)
+      })
+      expect(useLayoutStore.getState().modalClickProtection).toBe(false)
     })
   })
 })
