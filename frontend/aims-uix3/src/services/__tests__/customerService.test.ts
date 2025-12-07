@@ -362,13 +362,19 @@ describe('CustomerService', () => {
 
   describe('deleteCustomer', () => {
     it('고객을 삭제해야 함', async () => {
-      vi.mocked(api.delete).mockResolvedValueOnce(undefined)
+      vi.mocked(api.delete).mockResolvedValueOnce({
+        success: true,
+        message: '고객이 휴면 처리되었습니다',
+        soft_delete: true,
+        customer: mockCustomer,
+      })
 
-      await CustomerService.deleteCustomer('507f1f77bcf86cd799439011')
+      const result = await CustomerService.deleteCustomer('507f1f77bcf86cd799439011')
 
       expect(api.delete).toHaveBeenCalledWith(
         '/api/customers/507f1f77bcf86cd799439011'
       )
+      expect(result._id).toBe(mockCustomer._id)
     })
 
     it('빈 ID에 대해 에러를 던져야 함', async () => {
@@ -790,7 +796,12 @@ describe('CustomerService', () => {
 
   describe('deleteCustomers', () => {
     it('여러 고객을 동시에 삭제해야 함', async () => {
-      vi.mocked(api.delete).mockResolvedValue(undefined)
+      vi.mocked(api.delete).mockResolvedValue({
+        success: true,
+        message: '고객이 휴면 처리되었습니다',
+        soft_delete: true,
+        customer: mockCustomer,
+      })
 
       await CustomerService.deleteCustomers([
         '507f1f77bcf86cd799439011',

@@ -523,7 +523,7 @@ describe('CustomerDocument', () => {
   // 7. deleteCustomer() - 고객 삭제
   // ============================================================================
   describe('deleteCustomer', () => {
-    it('고객을 삭제하고 목록에서 제거해야 함', async () => {
+    it('고객을 휴면 처리하고 로컬 상태를 업데이트해야 함', async () => {
       const customers: Customer[] = [
         {
           _id: 'customer1',
@@ -569,27 +569,48 @@ describe('CustomerDocument', () => {
       })
       await document.loadCustomers()
 
-      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
-      // deleteCustomer가 loadCustomers를 호출하므로 삭제 후 결과를 모킹
-      const remainingCustomer = customers[1]
-      if (!remainingCustomer) throw new Error('Test setup error: customer2 not found')
-      vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
-        customers: [remainingCustomer], // customer2만 남음
-        pagination: { total: 1, hasMore: false, page: 1, limit: 10000 },
-      })
+      // deleteCustomer는 휴면 처리된 고객을 반환함 (soft delete)
+      const deletedCustomer: Customer = {
+        ...customers[0]!,
+        meta: {
+          ...customers[0]!.meta,
+          status: 'inactive',
+          deleted_at: '2025-10-14T11:00:00Z',
+        },
+      }
+      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(deletedCustomer)
 
       await document.deleteCustomer('customer1')
 
-      expect(document.getCustomers()).toHaveLength(1)
-      expect(document.getCustomers()?.[0]?._id).toBe('customer2')
-      expect(document.getTotal()).toBe(1)
+      // 고객이 목록에서 제거되지 않고, 상태만 변경됨
+      expect(document.getCustomers()).toHaveLength(2)
+      expect(document.getCustomers()?.[0]?.meta.status).toBe('inactive')
+      expect(document.getTotal()).toBe(2)
     })
 
     it('구독자에게 알림을 보내야 함', async () => {
       const callback = vi.fn()
       document.subscribe(callback)
 
-      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
+      const deletedCustomer: Customer = {
+        _id: 'customer1',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'inactive',
+        },
+        tags: [],
+      }
+      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(deletedCustomer)
 
       await document.deleteCustomer('customer1')
 
@@ -695,9 +716,9 @@ describe('CustomerDocument', () => {
 
       await document.refresh({ limit: 20 })
 
-      // refresh는 기본 { limit: 10000, page: 1 }에 사용자 query를 병합
-      // 사용자가 limit: 20을 전달하면 limit은 20으로 오버라이드되고 page: 1은 유지
-      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20, page: 1 })
+      // refresh는 기본 { limit: 10000, page: 1, status: 'all' }에 사용자 query를 병합
+      // 사용자가 limit: 20을 전달하면 limit은 20으로 오버라이드되고 page: 1, status: 'all'은 유지
+      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20, page: 1, status: 'all' })
     })
   })
 
@@ -830,17 +851,32 @@ describe('CustomerDocument', () => {
 
       expect(document.getCustomers()?.[0]?.personal_info.mobile_phone).toBe('010-9999-9999')
 
-      // Delete
-      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
-      // deleteCustomer가 loadCustomers를 호출하므로 삭제 후 빈 결과를 모킹
-      vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
-        customers: [],
-        pagination: { total: 0, hasMore: false, page: 1, limit: 10000 },
-      })
+      // Delete (soft delete - 휴면 처리)
+      const deletedCustomer: Customer = {
+        _id: 'customer1',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-9999-9999',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T12:00:00Z',
+          status: 'inactive',
+        },
+        tags: [],
+      }
+      vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(deletedCustomer)
 
       await document.deleteCustomer('customer1')
 
-      expect(document.getCustomers()).toHaveLength(0)
+      // 휴면 처리 후 고객은 목록에 남아있지만 status가 변경됨
+      expect(document.getCustomers()).toHaveLength(1)
+      expect(document.getCustomers()?.[0]?.meta.status).toBe('inactive')
     })
 
     it('여러 구독자가 동시에 동작해야 함', async () => {
