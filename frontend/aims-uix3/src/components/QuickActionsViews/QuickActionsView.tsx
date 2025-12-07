@@ -151,7 +151,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
                 />
               </span>
               <span className="action-card-title">새 고객 등록</span>
-              <span className="action-card-description">새로운 고객 정보를 등록합니다</span>
+              <span className="action-card-description">한명의 신규 고객을 등록합니다</span>
             </button>
 
             <button
@@ -167,7 +167,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
                 />
               </span>
               <span className="action-card-title">새 문서 등록</span>
-              <span className="action-card-description">문서를 업로드하고 OCR 처리합니다</span>
+              <span className="action-card-description">한명의 고객에 대한 문서들을 등록합니다</span>
             </button>
 
             <button
