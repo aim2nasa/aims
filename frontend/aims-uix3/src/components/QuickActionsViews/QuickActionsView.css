@@ -20,8 +20,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-footnote);  /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+  font-weight: var(--font-weight-semibold);  /* 600 */
   color: var(--color-text-primary);
   margin: 0;
 }
@@ -61,8 +61,8 @@
 }
 
 .action-card-title {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-footnote);  /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+  font-weight: var(--font-weight-semibold);  /* 600 - font-weight 500 금지 */
   color: var(--color-text-primary);
 }
 
@@ -112,8 +112,8 @@
 }
 
 .menu-card-title {
-  font-size: var(--font-size-callout);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-footnote);  /* 13px - DENSE_TYPOGRAPHY: 섹션 제목 */
+  font-weight: var(--font-weight-semibold);  /* 600 */
   color: var(--color-text-primary);
 }
 
@@ -133,8 +133,8 @@
 
 .menu-card-action {
   padding: var(--spacing-1) var(--spacing-3);
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-caption-1);  /* 12px */
+  font-weight: var(--font-weight-semibold);  /* 600 - font-weight 500 금지 */
   color: var(--color-primary-600);
   background: var(--color-primary-50);
   border: none;
