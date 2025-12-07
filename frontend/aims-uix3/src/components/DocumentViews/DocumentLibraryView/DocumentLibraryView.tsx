@@ -154,10 +154,10 @@ const DocumentLibraryContent: React.FC<{
     if (checked) {
       const allIds = controller.paginatedDocuments
         .filter(doc => {
-          // 삭제 모드: 완료된 문서만 선택 가능
+          // 삭제 모드: 처리중 문서만 제외 (완료, 오류, 대기중, 시간초과는 선택 가능)
           if (isDeleteMode) {
             const status = DocumentStatusService.extractStatus(doc)
-            return status === 'completed'
+            return status !== 'processing'
           }
           return true
         })
