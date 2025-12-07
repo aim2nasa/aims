@@ -30,7 +30,7 @@
   background: var(--color-bg-primary);
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  width: 420px;
+  width: 480px;
   max-width: 90vw;
   animation: slideUp 0.2s ease;
 }
@@ -53,18 +53,6 @@
   align-items: center;
   padding: 24px 24px 16px;
   border-bottom: 1px solid var(--color-border-secondary);
-}
-
-.duplicate-dialog-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.12));
-  color: var(--color-ios-orange, #ff9500);
-  border-radius: 12px;
-  margin-bottom: 12px;
 }
 
 .duplicate-dialog-title {
@@ -154,7 +142,8 @@
 /* 버튼 */
 .duplicate-dialog-actions {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   padding: 16px 24px;
   border-top: 1px solid var(--color-border-secondary);
 }
@@ -163,37 +152,45 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  flex: 1;
-  padding: 10px 12px;
-  border: none;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
+  white-space: nowrap;
 }
 
 .duplicate-dialog-btn:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-secondary);
+}
+
+.duplicate-dialog-btn:active {
+  transform: scale(0.98);
 }
 
 .duplicate-dialog-btn.secondary {
+  border-color: transparent;
   background: transparent;
   color: var(--color-text-secondary);
 }
 
 .duplicate-dialog-btn.secondary:hover {
   background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
 .duplicate-dialog-btn.primary {
+  border-color: var(--color-ios-blue, #007aff);
   background: var(--color-ios-blue, #007aff);
   color: white;
 }
 
 .duplicate-dialog-btn.primary:hover {
   background: var(--color-ios-blue-hover, #0066d6);
+  border-color: var(--color-ios-blue-hover, #0066d6);
 }

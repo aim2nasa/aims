@@ -9,7 +9,6 @@
  */
 
 import { useState } from 'react'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import './DuplicateDialog.css'
 
 /**
@@ -60,13 +59,6 @@ export default function DuplicateDialog({
       <div className="duplicate-dialog">
         {/* 헤더 */}
         <div className="duplicate-dialog-header">
-          <div className="duplicate-dialog-icon">
-            <SFSymbol
-              name="doc-on-doc-fill"
-              size={SFSymbolSize.TITLE2}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-          </div>
           <h2 className="duplicate-dialog-title">중복 파일 발견</h2>
         </div>
 
@@ -120,34 +112,19 @@ export default function DuplicateDialog({
             className="duplicate-dialog-btn"
             onClick={() => handleAction('skip')}
           >
-            <SFSymbol
-              name="arrow-right-circle"
-              size={SFSymbolSize.FOOTNOTE}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>건너뛰기</span>
+            건너뛰기
           </button>
           <button
             className="duplicate-dialog-btn"
             onClick={() => handleAction('keep_both')}
           >
-            <SFSymbol
-              name="plus-circle"
-              size={SFSymbolSize.FOOTNOTE}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>둘 다 유지</span>
+            둘 다 유지
           </button>
           <button
             className="duplicate-dialog-btn primary"
             onClick={() => handleAction('overwrite')}
           >
-            <SFSymbol
-              name="arrow-triangle-2-circlepath"
-              size={SFSymbolSize.FOOTNOTE}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>덮어쓰기</span>
+            덮어쓰기
           </button>
         </div>
       </div>
