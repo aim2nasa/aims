@@ -58,6 +58,16 @@ export type UploadProgressCallback = (
   fileName: string
 ) => void
 
+/**
+ * 업로드 옵션
+ */
+export interface UploadOptions {
+  /** 기존 파일 덮어쓰기 */
+  overwrite?: boolean
+  /** 덮어쓸 기존 문서 ID */
+  existingDocId?: string
+}
+
 // ==================== API 클래스 ====================
 
 export class BatchUploadApi {
@@ -88,12 +98,19 @@ export class BatchUploadApi {
   /**
    * 단일 파일 업로드 (진행률 추적)
    * XMLHttpRequest를 사용하여 진행률을 추적합니다
+   *
+   * @param file - 업로드할 파일
+   * @param customerId - 고객 ID
+   * @param onProgress - 진행률 콜백
+   * @param signal - 취소 신호
+   * @param options - 업로드 옵션 (덮어쓰기 등)
    */
   static async uploadFile(
     file: File,
     customerId: string,
     onProgress?: UploadProgressCallback,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    options?: UploadOptions
   ): Promise<FileUploadResult> {
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest()
@@ -168,6 +185,12 @@ export class BatchUploadApi {
         ? localStorage.getItem('aims-current-user-id') || ''
         : ''
       formData.append('userId', currentUserId)
+
+      // 덮어쓰기 옵션 추가
+      if (options?.overwrite && options?.existingDocId) {
+        formData.append('overwrite', 'true')
+        formData.append('existingDocId', options.existingDocId)
+      }
 
       // 요청 설정
       xhr.open('POST', UPLOAD_ENDPOINT)

@@ -137,7 +137,24 @@ export interface UploadBatch {
 export type DuplicateAction = 'overwrite' | 'skip' | 'keep_both'
 
 /**
- * 중복 파일 정보
+ * 중복 파일 정보 (배치 업로드용)
+ */
+export interface DuplicateFileInfo {
+  file: File
+  fileId: string
+  folderName: string
+  customerId: string
+  customerName: string
+  newFileHash: string
+  newFileSize: number
+  existingDocumentId: string
+  existingFileName: string
+  existingFileSize: number
+  existingUploadedAt: string
+}
+
+/**
+ * 중복 파일 정보 (Legacy - 하위 호환성)
  */
 export interface DuplicateFile {
   newFile: File

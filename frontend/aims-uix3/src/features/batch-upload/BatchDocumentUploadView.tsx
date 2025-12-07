@@ -17,11 +17,12 @@ import FolderDropZone from './components/FolderDropZone'
 import MappingPreview from './components/MappingPreview'
 import UploadProgress from './components/UploadProgress'
 import UploadSummary from './components/UploadSummary'
+import DuplicateDialog, { type DuplicateFile } from './components/DuplicateDialog'
 import { useBatchUpload } from './hooks/useBatchUpload'
 import { BatchUploadApi } from './api/batchUploadApi'
 import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
-import type { FolderMapping } from './types'
+import type { FolderMapping, DuplicateAction } from './types'
 import { TIER_LIMITS } from './types'
 import './BatchDocumentUploadView.css'
 
@@ -149,6 +150,7 @@ export default function BatchDocumentUploadView({
     cancelUpload,
     retryFailed,
     reset: resetUpload,
+    handleDuplicateAction,
   } = useBatchUpload()
 
   // 현재 사용자의 등급별 배치 업로드 한도 (임시: 일반 등급)
@@ -343,6 +345,30 @@ export default function BatchDocumentUploadView({
     }
   }
 
+  // DuplicateFileInfo를 DuplicateFile로 변환
+  const currentDuplicate = progress.duplicateState?.currentDuplicate
+  const duplicateDialogFile: DuplicateFile | null = currentDuplicate
+    ? {
+        fileName: currentDuplicate.existingFileName,
+        folderName: currentDuplicate.folderName,
+        customerName: currentDuplicate.customerName,
+        existingFileDate: currentDuplicate.existingUploadedAt,
+        newFileSize: currentDuplicate.newFileSize,
+        existingFileSize: currentDuplicate.existingFileSize,
+      }
+    : null
+
+  // 남은 중복 파일 수 (총 중복 - 이미 처리된 수)
+  const remainingDuplicates = Math.max(
+    0,
+    progress.duplicateState.totalDuplicates - progress.duplicateState.resolvedCount - 1
+  )
+
+  // 중복 다이얼로그 취소 핸들러 (업로드 취소)
+  const handleDuplicateCancel = useCallback(() => {
+    cancelUpload()
+  }, [cancelUpload])
+
   return (
     <CenterPaneView
       visible={visible}
@@ -361,6 +387,16 @@ export default function BatchDocumentUploadView({
       placeholderMessage="폴더별로 정리된 문서를 고객에게 일괄 등록합니다."
     >
       {renderContent()}
+
+      {/* 중복 파일 다이얼로그 */}
+      {duplicateDialogFile && (
+        <DuplicateDialog
+          file={duplicateDialogFile}
+          onAction={handleDuplicateAction}
+          onCancel={handleDuplicateCancel}
+          remainingCount={remainingDuplicates}
+        />
+      )}
     </CenterPaneView>
   )
 }

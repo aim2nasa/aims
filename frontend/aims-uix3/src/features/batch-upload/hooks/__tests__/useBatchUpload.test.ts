@@ -19,6 +19,16 @@ vi.mock('../../api/batchUploadApi', () => ({
   },
 }))
 
+// duplicateChecker 모킹 (Web Crypto API 의존성 해결)
+vi.mock('../../utils/duplicateChecker', () => ({
+  getCustomerFileHashes: vi.fn().mockResolvedValue([]),
+  checkDuplicateFile: vi.fn().mockResolvedValue({
+    isDuplicate: false,
+    newFileHash: 'mock-hash',
+  }),
+  getUniqueFileName: vi.fn((name: string) => name),
+}))
+
 /**
  * 테스트용 매핑 데이터 생성
  */
