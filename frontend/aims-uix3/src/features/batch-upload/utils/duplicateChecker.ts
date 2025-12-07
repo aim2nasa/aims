@@ -1,10 +1,11 @@
 /**
  * Duplicate File Checker Utility
  * @since 2025-12-07
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 배치 업로드 시 중복 파일 감지를 위한 유틸리티
- * SHA-256 해시 기반 비교
+ * - SHA-256 해시 기반 비교 (백엔드 지원 시)
+ * - 파일명 기반 비교 (fallback)
  */
 
 import { api } from '../../../shared/lib/api'
@@ -35,16 +36,18 @@ export interface DuplicateCheckResult {
  */
 interface CustomerDocumentsResponse {
   success?: boolean
-  customer_id?: string
-  documents?: Array<{
-    _id: string
-    originalName?: string
-    filename?: string
-    fileSize?: number
-    uploadedAt?: string
-    linkedAt?: string
-  }>
-  total?: number
+  data?: {
+    customer_id?: string
+    documents?: Array<{
+      _id: string
+      originalName?: string
+      filename?: string
+      fileSize?: number
+      uploadedAt?: string
+      linkedAt?: string
+    }>
+    total?: number
+  }
 }
 
 /**
@@ -77,43 +80,52 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
     const response = await api.get<CustomerDocumentsResponse>(
       `/api/customers/${customerId}/documents`
     )
+    console.log('[duplicateChecker] API 응답:', customerId, response)
 
-    const documents = response?.documents || []
+    const documents = response?.data?.documents || []
+    console.log('[duplicateChecker] 문서 목록:', documents.length, '개')
 
     if (documents.length === 0) {
       return []
     }
 
     // 2. 각 문서의 해시 조회 (병렬 처리)
-    const hashPromises = documents.map(async (doc): Promise<ExistingFileHash | null> => {
+    // 해시가 없어도 파일명 기반 비교를 위해 정보 반환
+    const hashPromises = documents.map(async (doc): Promise<ExistingFileHash> => {
+      const fileName = doc.originalName || doc.filename || 'unknown'
+      const fileSize = doc.fileSize || 0
+      const uploadedAt = doc.uploadedAt || doc.linkedAt || ''
+
       try {
         const statusResponse = await api.get<DocumentStatusResponse>(
           `/api/documents/${doc._id}/status`
         )
 
-        const fileHash = statusResponse?.data?.raw?.meta?.file_hash
-
-        if (!fileHash) {
-          return null
-        }
+        const fileHash = statusResponse?.data?.raw?.meta?.file_hash || ''
 
         return {
           documentId: doc._id,
-          fileName: doc.originalName || doc.filename || 'unknown',
+          fileName,
           fileHash,
-          fileSize: doc.fileSize || 0,
-          uploadedAt: doc.uploadedAt || doc.linkedAt || '',
+          fileSize,
+          uploadedAt,
         }
       } catch {
-        // 개별 문서 조회 실패는 무시
-        return null
+        // 해시 조회 실패 시에도 파일명 정보는 반환 (fallback용)
+        return {
+          documentId: doc._id,
+          fileName,
+          fileHash: '',
+          fileSize,
+          uploadedAt,
+        }
       }
     })
 
     const results = await Promise.all(hashPromises)
-
-    // null 제거
-    return results.filter((item): item is ExistingFileHash => item !== null)
+    console.log('[duplicateChecker] 고객 문서 조회 완료:', results.length, '개')
+    console.log('[duplicateChecker] 조회된 문서:', results.map(r => ({ fileName: r.fileName, hasHash: !!r.fileHash })))
+    return results
   } catch (error) {
     console.error('[duplicateChecker] 고객 문서 해시 조회 실패:', error)
     return []
@@ -122,6 +134,10 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
 
 /**
  * 파일이 중복인지 확인
+ *
+ * 검사 우선순위:
+ * 1. SHA-256 해시 비교 (정확한 중복 검사)
+ * 2. 파일명 비교 (fallback - 백엔드에서 해시 미제공 시)
  *
  * @param file 확인할 파일
  * @param existingHashes 기존 문서 해시 목록
@@ -134,12 +150,41 @@ export async function checkDuplicateFile(
   // 파일 해시 계산
   const newFileHash = await calculateFileHash(file)
 
-  // 기존 해시 목록에서 일치하는 것 찾기
-  const existingDoc = existingHashes.find((doc) => doc.fileHash === newFileHash)
+  // 1차: 해시 비교 (가장 정확)
+  const hashMatch = existingHashes.find(
+    (doc) => doc.fileHash && doc.fileHash === newFileHash
+  )
+
+  if (hashMatch) {
+    console.log('[duplicateChecker] 해시 일치:', hashMatch.fileName)
+    return {
+      isDuplicate: true,
+      existingDoc: hashMatch,
+      newFileHash,
+    }
+  }
+
+  // 2차: 파일명 비교 (fallback - 해시가 없는 기존 문서와 비교)
+  // 해시가 없는 문서들 중에서 파일명이 일치하는 것 찾기
+  console.log('[duplicateChecker] 해시 없는 문서들:', existingHashes.filter(d => !d.fileHash).map(d => d.fileName))
+  console.log('[duplicateChecker] 업로드 파일명:', file.name)
+  const nameMatch = existingHashes.find(
+    (doc) => !doc.fileHash && doc.fileName === file.name
+  )
+
+  if (nameMatch) {
+    console.log('[duplicateChecker] 파일명 일치 (fallback):', nameMatch.fileName)
+    return {
+      isDuplicate: true,
+      existingDoc: nameMatch,
+      newFileHash,
+    }
+  }
+
+  console.log('[duplicateChecker] 중복 없음')
 
   return {
-    isDuplicate: !!existingDoc,
-    existingDoc,
+    isDuplicate: false,
     newFileHash,
   }
 }

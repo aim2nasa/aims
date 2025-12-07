@@ -53,8 +53,10 @@ describe('duplicateChecker', () => {
     it('문서가 없는 고객은 빈 배열 반환', async () => {
       mockApi.get.mockResolvedValueOnce({
         success: true,
-        documents: [],
-        total: 0,
+        data: {
+          documents: [],
+          total: 0,
+        },
       })
 
       const result = await getCustomerFileHashes('customer-123')
@@ -67,11 +69,13 @@ describe('duplicateChecker', () => {
       // 고객 문서 목록 응답
       mockApi.get.mockResolvedValueOnce({
         success: true,
-        documents: [
-          { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000, uploadedAt: '2025-12-01' },
-          { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000, uploadedAt: '2025-12-02' },
-        ],
-        total: 2,
+        data: {
+          documents: [
+            { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000, uploadedAt: '2025-12-01' },
+            { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000, uploadedAt: '2025-12-02' },
+          ],
+          total: 2,
+        },
       })
 
       // 각 문서 상태 응답
@@ -104,14 +108,16 @@ describe('duplicateChecker', () => {
       })
     })
 
-    it('해시가 없는 문서는 결과에서 제외', async () => {
+    it('해시가 없는 문서도 파일명 정보와 함께 반환 (fallback용)', async () => {
       mockApi.get.mockResolvedValueOnce({
         success: true,
-        documents: [
-          { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000 },
-          { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000 },
-        ],
-        total: 2,
+        data: {
+          documents: [
+            { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000 },
+            { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000 },
+          ],
+          total: 2,
+        },
       })
 
       // doc-1은 해시 있음, doc-2는 해시 없음
@@ -127,18 +133,25 @@ describe('duplicateChecker', () => {
 
       const result = await getCustomerFileHashes('customer-123')
 
-      expect(result).toHaveLength(1)
+      // 해시 없는 문서도 반환 (파일명 기반 fallback 비교용)
+      expect(result).toHaveLength(2)
       expect(result[0].documentId).toBe('doc-1')
+      expect(result[0].fileHash).toBe('hash-abc123')
+      expect(result[1].documentId).toBe('doc-2')
+      expect(result[1].fileHash).toBe('') // 빈 문자열
+      expect(result[1].fileName).toBe('file2.pdf') // 파일명은 있음
     })
 
-    it('개별 문서 조회 실패 시 해당 문서만 제외', async () => {
+    it('개별 문서 조회 실패 시 빈 해시로 반환 (파일명 fallback용)', async () => {
       mockApi.get.mockResolvedValueOnce({
         success: true,
-        documents: [
-          { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000 },
-          { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000 },
-        ],
-        total: 2,
+        data: {
+          documents: [
+            { _id: 'doc-1', originalName: 'file1.pdf', fileSize: 1000 },
+            { _id: 'doc-2', originalName: 'file2.pdf', fileSize: 2000 },
+          ],
+          total: 2,
+        },
       })
 
       // doc-1 성공, doc-2 실패
@@ -151,8 +164,13 @@ describe('duplicateChecker', () => {
 
       const result = await getCustomerFileHashes('customer-123')
 
-      expect(result).toHaveLength(1)
+      // 조회 실패한 문서도 빈 해시로 반환 (파일명 fallback 비교용)
+      expect(result).toHaveLength(2)
       expect(result[0].documentId).toBe('doc-1')
+      expect(result[0].fileHash).toBe('hash-abc123')
+      expect(result[1].documentId).toBe('doc-2')
+      expect(result[1].fileHash).toBe('') // 조회 실패 → 빈 해시
+      expect(result[1].fileName).toBe('file2.pdf') // 파일명은 있음
     })
 
     it('전체 API 실패 시 빈 배열 반환', async () => {
@@ -214,6 +232,73 @@ describe('duplicateChecker', () => {
 
       expect(result.isDuplicate).toBe(false)
       expect(result.existingDoc).toBeUndefined()
+    })
+
+    it('해시가 없는 문서와 파일명 일치 시 중복 감지 (fallback)', async () => {
+      // 해시가 빈 문자열인 문서 (백엔드에서 해시 미제공)
+      const existingHashes: ExistingFileHash[] = [
+        {
+          documentId: 'doc-1',
+          fileName: 'test.pdf', // mockFile.name과 동일
+          fileHash: '', // 빈 해시
+          fileSize: 1000,
+          uploadedAt: '2025-12-01',
+        },
+      ]
+
+      mockCalculateFileHash.mockResolvedValueOnce('hash-new')
+
+      const result = await checkDuplicateFile(mockFile, existingHashes)
+
+      // 해시는 다르지만 파일명이 같으므로 중복
+      expect(result.isDuplicate).toBe(true)
+      expect(result.existingDoc).toEqual(existingHashes[0])
+    })
+
+    it('해시가 있는 문서는 파일명이 같아도 해시 우선 비교', async () => {
+      const existingHashes: ExistingFileHash[] = [
+        {
+          documentId: 'doc-1',
+          fileName: 'test.pdf', // mockFile.name과 동일
+          fileHash: 'hash-existing', // 해시 있음
+          fileSize: 1000,
+          uploadedAt: '2025-12-01',
+        },
+      ]
+
+      mockCalculateFileHash.mockResolvedValueOnce('hash-different')
+
+      const result = await checkDuplicateFile(mockFile, existingHashes)
+
+      // 해시가 다르면 파일명이 같아도 중복 아님
+      expect(result.isDuplicate).toBe(false)
+    })
+
+    it('해시 일치가 파일명 일치보다 우선', async () => {
+      const existingHashes: ExistingFileHash[] = [
+        {
+          documentId: 'doc-name-match',
+          fileName: 'test.pdf', // 파일명 일치하지만 해시 없음
+          fileHash: '',
+          fileSize: 1000,
+          uploadedAt: '2025-12-01',
+        },
+        {
+          documentId: 'doc-hash-match',
+          fileName: 'other.pdf', // 파일명 다르지만 해시 일치
+          fileHash: 'hash-match',
+          fileSize: 2000,
+          uploadedAt: '2025-12-02',
+        },
+      ]
+
+      mockCalculateFileHash.mockResolvedValueOnce('hash-match')
+
+      const result = await checkDuplicateFile(mockFile, existingHashes)
+
+      // 해시 일치 문서가 반환되어야 함
+      expect(result.isDuplicate).toBe(true)
+      expect(result.existingDoc?.documentId).toBe('doc-hash-match')
     })
   })
 

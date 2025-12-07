@@ -345,6 +345,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
     await Promise.all(
       customerIds.map(async (customerId) => {
         const hashes = await getCustomerFileHashes(customerId)
+        console.log('[useBatchUpload] 고객 해시 캐시 로드:', customerId, hashes.length, '개 문서')
         customerHashCacheRef.current.set(customerId, hashes)
         // 기존 파일명 목록도 저장
         customerFileNames.set(customerId, hashes.map((h) => h.fileName))
@@ -389,10 +390,14 @@ export function useBatchUpload(): UseBatchUploadReturn {
 
         // 중복 검사
         const existingHashes = customerHashCacheRef.current.get(nextFile.customerId) || []
+        console.log('[useBatchUpload] 중복 검사 시작:', file.name, '기존 문서:', existingHashes.length, '개')
+        console.log('[useBatchUpload] 기존 문서 목록:', existingHashes.map(h => ({ fileName: h.fileName, fileHash: h.fileHash?.slice(0, 8) || '(없음)' })))
         const duplicateResult = await checkDuplicateFile(file, existingHashes)
+        console.log('[useBatchUpload] 중복 검사 결과:', duplicateResult.isDuplicate ? '중복!' : '새 파일', duplicateResult.existingDoc?.fileName)
         nextFile.fileHash = duplicateResult.newFileHash
 
         if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
+          console.log('[useBatchUpload] 중복 파일 발견! 다이얼로그 표시 준비...')
           let action: DuplicateAction | undefined = undefined
 
           // 다른 다이얼로그가 표시 중이면 대기 (race condition 방지)
@@ -430,7 +435,9 @@ export function useBatchUpload(): UseBatchUploadReturn {
                 existingUploadedAt: duplicateResult.existingDoc.uploadedAt,
               }
 
+              console.log('[useBatchUpload] 다이얼로그 표시!', duplicateInfo.existingFileName)
               action = await waitForDuplicateDecision(duplicateInfo)
+              console.log('[useBatchUpload] 사용자 액션:', action)
               isPausedRef.current = false
             }
           }
