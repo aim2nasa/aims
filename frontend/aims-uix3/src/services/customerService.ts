@@ -157,6 +157,9 @@ export class CustomerService {
     // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
     window.dispatchEvent(new CustomEvent('customerChanged'));
 
+    // 휴면 처리 후 활성 필터로 전환
+    window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));
+
     // 업데이트된 고객 데이터 반환
     return CustomerUtils.validate(response.customer);
   }
@@ -210,6 +213,12 @@ export class CustomerService {
     if (!response.success || !response.data) {
       throw new Error('고객을 복원할 수 없습니다');
     }
+
+    // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
+    window.dispatchEvent(new CustomEvent('customerChanged'));
+
+    // 복원 후 활성 필터로 전환
+    window.dispatchEvent(new CustomEvent('customerStatusFilterChange', { detail: { filter: 'active' } }));
 
     return CustomerUtils.validate(response.data);
   }
