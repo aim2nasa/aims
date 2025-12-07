@@ -283,8 +283,8 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
         />
       )
 
-      // 남은 개수 = totalDuplicates(5) - resolvedCount(1) - 1(현재) = 3
-      expect(screen.getByText(/나머지 3개 중복 파일에도 동일하게 적용/)).toBeInTheDocument()
+      // 체크박스와 안내 문구가 항상 표시됨
+      expect(screen.getByText(/다음 중복 파일도 같은 방식으로 처리/)).toBeInTheDocument()
     })
 
     it('체크박스 선택 후 액션 클릭 시 applyToAll=true로 호출', () => {
@@ -323,7 +323,7 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
       expect(mockHandleDuplicateAction).toHaveBeenCalledWith('skip', true)
     })
 
-    it('남은 중복 파일이 0개면 체크박스 미표시', () => {
+    it('마지막 중복 파일에서도 체크박스가 표시됨', () => {
       mockUseBatchUpload.mockReturnValue({
         progress: createMockProgress({
           state: 'paused',
@@ -349,8 +349,8 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
         />
       )
 
-      // 체크박스가 없어야 함
-      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+      // 체크박스가 항상 표시됨
+      expect(screen.getByRole('checkbox')).toBeInTheDocument()
     })
   })
 })

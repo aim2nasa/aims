@@ -139,7 +139,7 @@ describe('DuplicateDialog', () => {
   })
 
   describe('일괄 적용', () => {
-    test('remainingCount가 0이면 체크박스가 표시되지 않는다', () => {
+    test('체크박스가 항상 표시된다', () => {
       render(
         <DuplicateDialog
           file={createMockDuplicateFile()}
@@ -149,21 +149,8 @@ describe('DuplicateDialog', () => {
         />
       )
 
-      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
-    })
-
-    test('remainingCount가 있으면 체크박스가 표시된다', () => {
-      render(
-        <DuplicateDialog
-          file={createMockDuplicateFile()}
-          onAction={mockOnAction}
-          onCancel={mockOnCancel}
-          remainingCount={5}
-        />
-      )
-
       expect(screen.getByRole('checkbox')).toBeInTheDocument()
-      expect(screen.getByText(/나머지 5개 중복 파일/)).toBeInTheDocument()
+      expect(screen.getByText(/다음 중복 파일도 같은 방식으로 처리/)).toBeInTheDocument()
     })
 
     test('체크박스 선택 후 버튼 클릭 시 applyToAll이 true로 전달된다', () => {
