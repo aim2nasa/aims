@@ -200,7 +200,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const handleSoftDeleteClick = useCallback(async () => {
     const confirmed = await confirmController.actions.openModal({
       title: '고객 휴면 처리',
-      message: `"${customer.personal_info?.name}" 고객을 휴면 처리하시겠습니까?\n\n휴면 처리된 고객은 언제든지 복원할 수 있습니다.`,
+      message: `"${customer.personal_info?.name}" 고객을 휴면 처리하시겠습니까?\n\n휴면 처리된 고객은 언제든지 휴면 해제할 수 있습니다.`,
       confirmText: '휴면 처리',
       cancelText: '취소',
       confirmStyle: 'destructive',
@@ -234,8 +234,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   const handlePermanentDeleteClick = useCallback(async () => {
     const confirmed = await confirmController.actions.openModal({
-      title: '고객 영구 삭제 (개발용)',
-      message: `⚠️ 경고: "${customer.personal_info?.name}" 고객과 연결된 모든 데이터를 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다!\n\n삭제될 데이터:\n- 고객 정보\n- 연결된 모든 문서\n- 연결된 모든 계약\n- 연결된 모든 관계`,
+      title: '영구 삭제',
+      message: `"${customer.personal_info?.name}" 고객과 연결된 모든 데이터를 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다.\n\n삭제될 데이터:\n- 고객 정보\n- 연결된 모든 문서\n- 연결된 모든 계약\n- 연결된 모든 관계`,
       confirmText: '영구 삭제',
       cancelText: '취소',
       confirmStyle: 'destructive',
@@ -280,9 +280,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   const handleRestoreClick = useCallback(async () => {
     const confirmed = await confirmController.actions.openModal({
-      title: '고객 복원',
-      message: `"${customer.personal_info?.name}" 고객을 활성 상태로 복원하시겠습니까?\n\n복원 후 고객 목록에 다시 표시됩니다.`,
-      confirmText: '복원',
+      title: '휴면 해제',
+      message: `"${customer.personal_info?.name}" 고객을 활성 상태로 변경하시겠습니까?`,
+      confirmText: '휴면 해제',
       cancelText: '취소',
       confirmStyle: 'primary',
       showCancel: true,
@@ -291,17 +291,17 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
     if (confirmed) {
       try {
-        // Document-View 패턴: CustomerDocument를 통해 복원
+        // Document-View 패턴: CustomerDocument를 통해 휴면 해제
         const document = CustomerDocument.getInstance();
         await document.restoreCustomer(customer._id);
 
         if (import.meta.env.DEV) {
-          console.log('[CustomerDetailView] 고객 복원 완료');
+          console.log('[CustomerDetailView] 고객 휴면 해제 완료');
         }
 
         await confirmController.actions.openModal({
-          title: '복원 완료',
-          message: `"${customer.personal_info?.name}" 고객이 활성 상태로 복원되었습니다.`,
+          title: '휴면 해제 완료',
+          message: `"${customer.personal_info?.name}" 고객이 활성 상태로 변경되었습니다.`,
           confirmText: '확인',
           confirmStyle: 'primary',
           showCancel: false,
@@ -312,8 +312,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onClose();
       } catch (error) {
         await confirmController.actions.openModal({
-          title: '복원 실패',
-          message: error instanceof Error ? error.message : '고객 복원에 실패했습니다.',
+          title: '휴면 해제 실패',
+          message: error instanceof Error ? error.message : '휴면 해제에 실패했습니다.',
           confirmText: '확인',
           confirmStyle: 'destructive',
           showCancel: false,
@@ -580,9 +580,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 size="sm"
                 onClick={handleRestoreClick}
                 leftIcon={<span>♻️</span>}
-                title="휴면 상태의 고객을 활성 상태로 복원합니다"
+                title="휴면 고객을 활성 상태로 변경합니다"
               >
-                복원
+                휴면 해제
               </Button>
             ) : (
               <Button
@@ -590,7 +590,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 size="sm"
                 onClick={handleSoftDeleteClick}
                 leftIcon={<span>💤</span>}
-                title="고객을 휴면 처리합니다 (복원 가능)"
+                title="고객을 휴면 처리합니다 (휴면 해제 가능)"
               >
                 휴면 처리
               </Button>
@@ -601,7 +601,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 size="sm"
                 onClick={handlePermanentDeleteClick}
                 leftIcon={<span>🗑️</span>}
-                title="고객과 연결된 모든 데이터를 영구 삭제합니다 (개발 모드 전용)"
+                title="고객과 연결된 모든 데이터를 영구 삭제합니다"
               >
                 영구 삭제
               </Button>
