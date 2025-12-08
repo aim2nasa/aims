@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/api/apiClient';
-import { User } from '@/features/auth/types';
+import type { User } from '@/features/auth/types';
 
 export interface GetUsersParams {
   page?: number;

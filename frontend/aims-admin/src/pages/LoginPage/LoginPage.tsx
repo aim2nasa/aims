@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { useAuthStore } from '@/shared/store/authStore';
-import { User } from '@/features/auth/types';
+import type { User } from '@/features/auth/types';
 import './LoginPage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';

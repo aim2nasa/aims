@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { usersApi } from '@/features/users/api';
 import { Table } from '@/shared/ui/Table/Table';
 import { Button } from '@/shared/ui/Button/Button';
-import { User } from '@/features/auth/types';
+import type { User } from '@/features/auth/types';
 import './UsersPage.css';
 
 const ROLE_LABELS: Record<string, string> = {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, HealthStatus } from '@/features/dashboard/api';
+import { dashboardApi } from '@/features/dashboard/api';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './DashboardPage.css';

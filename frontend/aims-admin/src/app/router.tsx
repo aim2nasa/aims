@@ -4,7 +4,7 @@ import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage/DashboardPage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
-import App from './App';
+import App from '../App';
 
 export const router = createBrowserRouter([
   {
