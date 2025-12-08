@@ -85,17 +85,34 @@ npm test
 
 ---
 
-### ✅ 6단계: Git 커밋
+### ✅ 6단계: Git 커밋 및 Push
 **명령어**:
 ```bash
 git add backend/api/aims_api/package-lock.json docs/SECURITY_FIX_LOG.md
 git commit -m "fix: npm 보안 취약점 해결 (6개→2개)"
+git push
 ```
 
 **결과**:
-- ✅ 커밋 완료 (de997995)
+- ✅ 커밋 완료 (de997995, ff69fb7e)
 - ✅ 2개 파일 변경 (189 삽입, 48 삭제)
 - ✅ SECURITY_FIX_LOG.md 생성
+- ✅ Push 완료
+
+---
+
+### ✅ 7단계: 서버 재배포
+**명령어**:
+```bash
+ssh tars.giize.com "cd /home/rossi/aims && git pull"
+ssh tars.giize.com "cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh"
+```
+
+**결과**:
+- ✅ Git pull 완료 (80a42013 → ff69fb7e)
+- ✅ Docker 컨테이너 재빌드 및 재시작
+- ✅ 업데이트된 package-lock.json 반영
+- ✅ 헬스체크 통과 (API 서버 정상 작동, DB 연결 정상)
 
 ---
 
