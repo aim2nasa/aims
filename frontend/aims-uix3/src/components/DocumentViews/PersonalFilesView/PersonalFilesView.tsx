@@ -1040,13 +1040,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 🍎 전체 선택/해제 핸들러
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      const allFileIds = currentFolderItems
+      const allItemIds = currentFolderItems
         .filter(item => {
-          // 파일만 선택 가능 (폴더는 제외)
-          if (item.type !== 'file') return false
+          // 폴더는 모두 선택 가능
+          if (item.type === 'folder') return true
           // 문서 라이브러리 파일인 경우: 처리중이 아닌 것만
           if (item.isLibraryDocument && item.document) {
-            const status = DocumentStatusService.extractStatus(item.document)
+            const status = DocumentStatusService.extractStatus(item.document as any)
             return status !== 'processing'
           }
           // 일반 파일은 모두 선택 가능
@@ -1054,28 +1054,49 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         })
         .map(item => item._id)
         .filter(id => id !== '')
-      setSelectedDocumentIds(new Set(allFileIds))
+      setSelectedDocumentIds(new Set(allItemIds))
     } else {
       setSelectedDocumentIds(new Set())
     }
   }, [currentFolderItems])
 
-  // 🍎 선택된 파일 삭제 핸들러
+  // 🍎 선택된 파일/폴더 삭제 핸들러
   const handleDeleteSelected = useCallback(async () => {
     if (selectedDocumentIds.size === 0) {
       await confirmModal.actions.openModal({
         title: '선택 항목 없음',
-        message: '삭제할 파일을 선택해주세요.',
+        message: '삭제할 항목을 선택해주세요.',
         confirmText: '확인',
         showCancel: false,
       })
       return
     }
 
+    // 선택된 항목들의 타입 구분
+    const itemsToDelete = currentFolderItems.filter(item =>
+      selectedDocumentIds.has(item._id)
+    )
+    const fileCount = itemsToDelete.filter(item => item.type === 'file').length
+    const folderCount = itemsToDelete.filter(item => item.type === 'folder').length
+
+    // 확인 메시지 생성
+    let deleteMessage = '선택한 '
+    if (fileCount > 0 && folderCount > 0) {
+      deleteMessage += `${fileCount}개의 파일과 ${folderCount}개의 폴더를 삭제하시겠습니까?`
+    } else if (fileCount > 0) {
+      deleteMessage += `${fileCount}개의 파일을 삭제하시겠습니까?`
+    } else {
+      deleteMessage += `${folderCount}개의 폴더를 삭제하시겠습니까?`
+    }
+
+    if (folderCount > 0) {
+      deleteMessage += '\n\n⚠️ 폴더 내의 모든 하위 파일과 폴더도 함께 삭제됩니다.'
+    }
+
     // 확인 모달 표시
     const confirmed = await confirmModal.actions.openModal({
-      title: '파일 삭제',
-      message: `선택한 ${selectedDocumentIds.size}개의 파일을 삭제하시겠습니까?`,
+      title: '항목 삭제',
+      message: deleteMessage,
       confirmText: '삭제',
       cancelText: '취소',
       showCancel: true,
@@ -1087,24 +1108,24 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     try {
       setIsDeleting(true)
 
-      // 선택된 파일들의 정보 가져오기
+      // 선택된 항목들의 정보 가져오기
       const itemsToDelete = currentFolderItems.filter(item =>
         selectedDocumentIds.has(item._id)
       )
 
-      // 각 파일 삭제 (라이브러리 문서는 API 삭제, 일반 파일은 폴더 시스템 삭제)
+      // 각 항목 삭제 (라이브러리 문서는 API 삭제, 일반 파일/폴더는 폴더 시스템 삭제)
       const deletePromises = itemsToDelete.map(async (item) => {
         try {
           if (item.isLibraryDocument) {
             // 문서 라이브러리 파일 삭제
             await api.delete(`/api/documents/${item._id}`)
           } else {
-            // 폴더 시스템 파일 삭제
+            // 폴더 시스템 파일/폴더 삭제 (폴더 삭제 시 하위 항목도 재귀적으로 삭제됨)
             await personalFilesService.deleteItem(item._id)
           }
           return { success: true, itemId: item._id }
         } catch (error) {
-          console.error(`Error deleting file ${item._id}:`, error)
+          console.error(`Error deleting item ${item._id}:`, error)
           return { success: false, itemId: item._id, error }
         }
       })
@@ -1133,7 +1154,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       if (failedDeletes.length > 0) {
         await confirmModal.actions.openModal({
           title: '삭제 실패',
-          message: `${failedDeletes.length}개의 파일 삭제에 실패했습니다.`,
+          message: `${failedDeletes.length}개의 항목 삭제에 실패했습니다.`,
           confirmText: '확인',
           showCancel: false,
         })
@@ -1143,7 +1164,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setIsDeleting(false)
       await confirmModal.actions.openModal({
         title: '삭제 실패',
-        message: '파일 삭제 중 오류가 발생했습니다.',
+        message: '항목 삭제 중 오류가 발생했습니다.',
         confirmText: '확인',
         showCancel: false,
       })
@@ -1981,14 +2002,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               // 리스트 뷰
               <div className={`files-list ${isDeleteMode ? 'files-list--delete-mode' : ''}`} onContextMenu={(e) => handleContextMenu(e)}>
                 <div className="files-list-header" onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                  {/* 🍎 삭제 모드: 전체 선택 체크박스 */}
+                  {/* 🍎 삭제 모드: 전체 선택 체크박스 (폴더 포함) */}
                   {isDeleteMode && (
                     <div className="header-checkbox">
                       <input
                         type="checkbox"
                         checked={filteredAndSortedItems.length > 0 && filteredAndSortedItems.every(item => {
-                          // 폴더는 제외
-                          if (item.type !== 'file') return true
+                          // 폴더는 모두 선택 가능
+                          if (item.type === 'folder') {
+                            return selectedDocumentIds.has(item._id)
+                          }
                           // 문서 라이브러리 파일인 경우 처리중이면 제외
                           if (item.isLibraryDocument && item.document) {
                             const status = DocumentStatusService.extractStatus(item.document as any)
@@ -2134,7 +2157,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   const isProcessing = item.isLibraryDocument && item.document
                     ? DocumentStatusService.extractStatus(item.document as any) === 'processing'
                     : false
-                  const isCheckboxDisabled = item.type === 'folder' || (isDeleteMode && isProcessing)
+                  const isCheckboxDisabled = isDeleteMode && isProcessing
 
                   return (
                     <div
@@ -2156,29 +2179,25 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       onDragLeave={item.type === 'folder' ? handleDragLeave : undefined}
                       onDrop={item.type === 'folder' ? (e) => handleDrop(e, item._id) : undefined}
                     >
-                      {/* 🍎 삭제 모드: 개별 선택 체크박스 */}
+                      {/* 🍎 삭제 모드: 개별 선택 체크박스 (폴더와 파일 모두 표시) */}
                       {isDeleteMode && (
-                        item.type === 'folder' ? (
-                          <div className="document-checkbox-wrapper"></div>
-                        ) : (
-                          <div
-                            className={`document-checkbox-wrapper ${isCheckboxDisabled ? 'document-checkbox-wrapper--disabled' : ''}`}
-                            onClick={(e) => {
-                              if (!isCheckboxDisabled) {
-                                handleSelectDocument(item._id, e)
-                              }
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              disabled={isCheckboxDisabled}
-                              aria-label={`${item.name} 선택`}
-                              className="document-checkbox"
-                            />
-                          </div>
-                        )
+                        <div
+                          className={`document-checkbox-wrapper ${isCheckboxDisabled ? 'document-checkbox-wrapper--disabled' : ''}`}
+                          onClick={(e) => {
+                            if (!isCheckboxDisabled) {
+                              handleSelectDocument(item._id, e)
+                            }
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            disabled={isCheckboxDisabled}
+                            aria-label={`${item.name} 선택`}
+                            className="document-checkbox"
+                          />
+                        </div>
                       )}
                       <div className="row-name">
                       {item.type === 'folder' ? (
