@@ -17,9 +17,9 @@ echo "🚫 기존 컨테이너 중지 및 제거..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
 docker rm $CONTAINER_NAME 2>/dev/null || true
 
-# 2. 새 이미지 빌드
+# 2. 새 이미지 빌드 (BuildKit 사용)
 echo "📦 새 이미지 빌드 중..."
-docker build -t $IMAGE_NAME .
+DOCKER_BUILDKIT=1 docker build -t $IMAGE_NAME .
 
 # 3. 컨테이너 실행 (환경변수 전달 + 볼륨 마운트)
 echo "🚀 새 컨테이너 실행..."
