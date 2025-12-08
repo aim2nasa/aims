@@ -541,6 +541,11 @@ html[data-theme="dark"] .search-input {
   letter-spacing: 0.05em;
 }
 
+/* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+.files-list--delete-mode .files-list-header {
+  grid-template-columns: 24px minmax(200px, 1fr) 100px 140px 110px 115px;
+}
+
 /* 헤더 셀 flex 레이아웃 - 아이콘+텍스트+정렬 인디케이터 한 줄 정렬 */
 .files-list-header > div {
   display: flex;
@@ -563,6 +568,11 @@ html[data-theme="dark"] .search-input {
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+.files-list--delete-mode .file-list-row {
+  grid-template-columns: 24px minmax(200px, 1fr) 100px 140px 110px 115px;
 }
 
 .file-list-row:last-child {
@@ -1625,4 +1635,50 @@ html[data-theme="dark"] .toolbar-actions .dot-inactive {
 
 .toolbar-actions .refresh-button:disabled:hover {
   transform: none;
+}
+
+/* === 🍎 DELETE MODE: 체크박스 스타일 === */
+.header-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.document-select-all-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+.document-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.document-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+/* 비활성화된 체크박스 스타일 */
+.document-checkbox-wrapper--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.document-checkbox-wrapper--disabled .document-checkbox {
+  cursor: not-allowed;
+}
+
+/* 선택된 행 스타일 */
+.file-list-row.status-item--selected {
+  background: var(--color-bg-selected);
 }
