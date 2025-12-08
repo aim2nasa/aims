@@ -1,8 +1,107 @@
-export const DashboardPage = () => {
+import { useQuery } from '@tanstack/react-query';
+import { dashboardApi, HealthStatus } from '@/features/dashboard/api';
+import { StatCard } from '@/shared/ui/StatCard/StatCard';
+import { Button } from '@/shared/ui/Button/Button';
+import './DashboardPage.css';
+
+interface HealthCardProps {
+  service: string;
+  status: 'healthy' | 'unhealthy';
+}
+
+const HealthCard = ({ service, status }: HealthCardProps) => {
+  const isHealthy = status === 'healthy';
+
   return (
-    <div>
-      <h1>Dashboard (구현 예정)</h1>
-      <p>시스템 통계 및 헬스체크가 표시될 예정입니다.</p>
+    <div className="health-card">
+      <div className="health-card__header">
+        <span className="health-card__service">{service}</span>
+        <span
+          className={`health-card__status ${
+            isHealthy ? 'health-card__status--healthy' : 'health-card__status--unhealthy'
+          }`}
+        >
+          <span
+            className={`health-card__indicator ${
+              isHealthy ? 'health-card__indicator--healthy' : 'health-card__indicator--unhealthy'
+            }`}
+          />
+          {isHealthy ? 'Healthy' : 'Unhealthy'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export const DashboardPage = () => {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['admin', 'dashboard'],
+    queryFn: dashboardApi.getDashboard,
+    refetchInterval: 10000, // 10초마다 갱신
+  });
+
+  if (isLoading) {
+    return <div className="dashboard-page__loading">데이터를 불러오는 중...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="dashboard-page__error">
+        <p>데이터를 불러오는데 실패했습니다.</p>
+        <p>{error instanceof Error ? error.message : '알 수 없는 오류'}</p>
+        <Button onClick={() => refetch()}>다시 시도</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-page">
+      <h1 className="dashboard-page__title">대시보드</h1>
+
+      {/* 통계 섹션 */}
+      <section className="dashboard-page__section">
+        <h2 className="dashboard-page__section-title">시스템 통계</h2>
+        <div className="dashboard-page__stats-grid">
+          <StatCard title="전체 사용자" value={data?.stats.totalUsers || 0} />
+          <StatCard title="활성 사용자" value={data?.stats.activeUsers || 0} subtitle="최근 30일 내 로그인" />
+          <StatCard title="고객 수" value={data?.stats.totalCustomers || 0} />
+          <StatCard title="문서 수" value={data?.stats.totalDocuments || 0} />
+          <StatCard title="계약 수" value={data?.stats.totalContracts || 0} />
+        </div>
+      </section>
+
+      {/* 문서 처리 현황 */}
+      <section className="dashboard-page__section">
+        <h2 className="dashboard-page__section-title">문서 처리 현황</h2>
+        <div className="dashboard-page__stats-grid">
+          <StatCard
+            title="OCR 대기"
+            value={data?.processing.ocrQueue || 0}
+            subtitle="처리 대기중인 문서"
+          />
+          <StatCard
+            title="임베딩 대기"
+            value={data?.processing.embedQueue || 0}
+            subtitle="벡터화 대기중인 문서"
+          />
+          <StatCard
+            title="처리 실패"
+            value={data?.processing.failedDocuments || 0}
+            subtitle="재처리 필요"
+          />
+        </div>
+      </section>
+
+      {/* 시스템 상태 */}
+      <section className="dashboard-page__section">
+        <h2 className="dashboard-page__section-title">시스템 상태</h2>
+        <div className="dashboard-page__health-grid">
+          <HealthCard service="Node.js API" status={data?.health.nodeApi || 'unhealthy'} />
+          <HealthCard service="Python API" status={data?.health.pythonApi || 'unhealthy'} />
+          <HealthCard service="MongoDB" status={data?.health.mongodb || 'unhealthy'} />
+          <HealthCard service="Qdrant" status={data?.health.qdrant || 'unhealthy'} />
+        </div>
+      </section>
     </div>
   );
 };

@@ -1,0 +1,111 @@
+.dashboard-page {
+  max-width: 1400px;
+}
+
+.dashboard-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xl) 0;
+}
+
+.dashboard-page__section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.dashboard-page__section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.dashboard-page__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.dashboard-page__health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* Health Card */
+.health-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-fast);
+}
+
+.health-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-hover);
+}
+
+.health-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.health-card__service {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.health-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+}
+
+.health-card__status--healthy {
+  color: var(--color-success);
+  background-color: rgba(52, 199, 89, 0.1);
+}
+
+.health-card__status--unhealthy {
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+.health-card__indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.health-card__indicator--healthy {
+  background-color: var(--color-success);
+}
+
+.health-card__indicator--unhealthy {
+  background-color: var(--color-error);
+}
+
+/* Loading & Error States */
+.dashboard-page__loading,
+.dashboard-page__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.dashboard-page__error {
+  flex-direction: column;
+  gap: var(--spacing-md);
+  color: var(--color-error);
+}
