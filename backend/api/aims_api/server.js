@@ -3360,6 +3360,149 @@ app.get('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
 });
 
 /**
+ * 관리자: 대시보드 통계 조회
+ */
+app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    // 병렬로 모든 통계 쿼리 실행
+    const [totalUsers, totalCustomers, totalDocuments, totalContracts] = await Promise.all([
+      db.collection('users').countDocuments(),
+      db.collection('customers').countDocuments({ deleted_at: null }),
+      db.collection('files').countDocuments(),
+      db.collection('contracts').countDocuments()
+    ]);
+
+    // 활성 사용자 (최근 30일 이내 로그인)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const activeUsers = await db.collection('users').countDocuments({
+      lastLogin: { $gte: thirtyDaysAgo }
+    });
+
+    // 문서 처리 상태
+    const [ocrPending, ocrFailed, embedFailed] = await Promise.all([
+      // OCR 대기: full_text가 없고 OCR 상태도 없는 문서
+      db.collection('files').countDocuments({
+        'meta.full_text': null,
+        'ocr.status': null
+      }),
+      // OCR 실패
+      db.collection('files').countDocuments({ 'ocr.status': 'error' }),
+      // 임베딩 실패
+      db.collection('files').countDocuments({ 'docembed.status': 'failed' })
+    ]);
+
+    // 임베딩 대기 (임베딩이 없는 문서 - 간단하게)
+    const embedPending = 0; // TODO: Redis 큐 조회 필요
+
+    // 시스템 상태 (간단한 버전 - 실제로는 ping 필요)
+    const health = {
+      nodeApi: 'healthy',
+      pythonApi: 'healthy', // TODO: axios.get(PYTHON_API_URL + '/health') 호출
+      mongodb: 'healthy',
+      qdrant: 'healthy' // TODO: qdrantClient.getCollections() 호출
+    };
+
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        activeUsers,
+        totalCustomers,
+        totalDocuments,
+        totalContracts
+      },
+      processing: {
+        ocrQueue: ocrPending,
+        embedQueue: embedPending,
+        failedDocuments: ocrFailed + embedFailed
+      },
+      health
+    });
+  } catch (error) {
+    console.error('[Admin] 대시보드 통계 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '대시보드 통계 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 사용자 목록 조회 (페이징, 검색, 필터)
+ */
+app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { page = 1, limit = 50, search = '', role = '', hasOcrPermission } = req.query;
+
+  try {
+    // 검색 필터 구성
+    const filter = {};
+
+    if (search) {
+      const searchRegex = new RegExp(escapeRegex(search), 'i');
+      filter.$or = [
+        { name: searchRegex },
+        { email: searchRegex }
+      ];
+    }
+
+    if (role) {
+      filter.role = role;
+    }
+
+    if (hasOcrPermission !== undefined && hasOcrPermission !== '') {
+      filter.hasOcrPermission = hasOcrPermission === 'true';
+    }
+
+    // 페이지네이션
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const limitNum = parseInt(limit);
+
+    // 병렬로 사용자 목록과 전체 개수 조회
+    const [users, total] = await Promise.all([
+      db.collection('users')
+        .find(filter, {
+          projection: {
+            // 보안상 소셜 로그인 ID 제외
+            kakaoId: 0,
+            naverId: 0,
+            googleId: 0
+          }
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray(),
+      db.collection('users').countDocuments(filter)
+    ]);
+
+    // ObjectId를 문자열로 변환
+    const usersWithStringId = users.map(u => ({
+      ...u,
+      _id: u._id.toString()
+    }));
+
+    res.json({
+      success: true,
+      users: usersWithStringId,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 사용자 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '사용자 목록 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
+/**
  * Qdrant에서 문서의 모든 청크에 customer_id를 동기화합니다.
  * @param {string} documentId - 문서 ID (ObjectId 문자열)
  * @param {string|null} customerId - 고객 ID (ObjectId 문자열, null이면 제거)
