@@ -196,27 +196,75 @@ ssh tars.giize.com "cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_ap
 
 ---
 
-### Issue #2: Jest 테스트 실패 (로컬 MongoDB 미실행)
+### Issue #2: Jest 테스트 실패 ✅ 완전 해결 (98/98 통과)
 
 **발견 일시**: 2025-12-08
-**상태**: 추후 처리 예정
-**우선순위**: 낮음 (서버 정상 작동 중)
+**해결 일시**: 2025-12-08
+**상태**: ✅ 완전 해결 (98/98 전체 통과)
 
-**테스트 결과**: 51/98 통과 (47개 실패)
+**초기 문제**:
+1. 로컬 MongoDB 미실행으로 테스트 실패 (51/98 통과)
+2. customer-isolation.test.js에서 12개 인증 실패 (86/98 통과)
 
-**실패 원인**:
-- 로컬 환경에 MongoDB 미실행
-- `mongodb://localhost:27017` 연결 타임아웃 (5000ms 초과)
+**문제 원인**:
+1. **인증 방식 불일치**:
+   - 테스트가 `x-user-id` 헤더 사용
+   - 서버는 JWT 토큰 (`Authorization: Bearer <token>`) 요구
+   - 결과: 모든 요청이 401 Unauthorized 반환
 
-**실패 테스트 파일**:
-1. `__tests__/bulkImport.test.js` - 고객 일괄등록 테스트
-2. `__tests__/apiEndpoints.test.js` - API 엔드포인트 통합 테스트
+2. **JWT_SECRET 불일치**:
+   - 테스트가 테스트용 시크릿으로 토큰 생성
+   - 서버가 프로덕션 시크릿으로 토큰 검증
+   - 결과: 토큰 검증 실패로 403 Forbidden 반환
 
-**처리 방안** (추후 결정):
-1. 로컬에 MongoDB 설치 및 실행
-2. 또는 Docker로 테스트용 MongoDB 컨테이너 실행
-3. 또는 테스트 환경 설정 문서화 (`docs/TESTING.md`)
+3. **Soft Delete 동작 불일치**:
+   - 테스트가 hard delete (DB에서 완전 삭제) 기대
+   - 서버는 soft delete (deleted_at 추가, status='inactive') 수행
+   - 결과: 삭제 검증 테스트 실패
 
-**참고**:
-- npm 패키지 업데이트와 무관
-- 서버(tars.giize.com)에서는 정상 작동 중
+**해결 방법**:
+1. **JWT 인증 구현** (`__tests__/customer-isolation.test.js`):
+   ```javascript
+   // Line 8: generateToken 임포트
+   const { generateToken } = require('../middleware/auth');
+
+   // Line 15: 서버 JWT_SECRET 사용
+   JWT_SECRET: process.env.JWT_SECRET || '09d0ec3f...',
+
+   // Line 39: JWT_SECRET 환경변수 설정
+   process.env.JWT_SECRET = TEST_CONFIG.JWT_SECRET;
+
+   // Line 47-48: JWT 토큰 생성
+   tokenUserA = generateToken({ id: USER_A, name: 'Test User A', role: 'user' });
+   tokenUserB = generateToken({ id: USER_B, name: 'Test User B', role: 'user' });
+
+   // Line 108: Authorization 헤더 사용
+   'Authorization': `Bearer ${token}`
+   ```
+
+2. **테스트 케이스 업데이트**:
+   - "userId 없이 ..." → "JWT 토큰 없이 ..." (Line 153, 202, 254)
+   - 기대 상태: 400 → 401 (인증 실패)
+   - Soft delete 검증으로 변경 (Line 271-276)
+
+**최종 결과** (tars.giize.com):
+```
+Test Suites: 8 passed, 8 total
+Tests:       98 passed, 98 total
+Snapshots:   0 total
+Time:        2.159 s
+```
+
+**통과한 테스트 스위트**:
+1. ✅ customer-isolation.test.js - 고객 데이터 격리 (12개)
+2. ✅ cascadingDelete.test.js - Cascade delete 검증
+3. ✅ bulkImport.test.js - 고객 일괄등록
+4. ✅ documentDeletion.test.js - 문서 삭제
+5. ✅ prepareDocumentResponse.test.js - 문서 응답 준비
+6. ✅ arDeletion.test.js - AR 삭제
+7. ✅ timeUtils.test.js - 시간 유틸리티
+8. ✅ apiEndpoints.test.js - API 엔드포인트
+
+**관련 파일**:
+- `backend/api/aims_api/__tests__/customer-isolation.test.js` (수정 완료)
+- `backend/api/aims_api/middleware/auth.js` (검증 대상)

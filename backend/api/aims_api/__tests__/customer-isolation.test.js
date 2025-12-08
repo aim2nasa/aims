@@ -5,17 +5,23 @@
  */
 
 const { MongoClient, ObjectId } = require('mongodb');
+const { generateToken } = require('../middleware/auth');
 
 // 테스트 설정
 const TEST_CONFIG = {
   MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017',
   DB_NAME: 'docupload',
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3010',
+  JWT_SECRET: process.env.JWT_SECRET || '09d0ec3fa027dba25479492f323417f39e13b00437628b82aa12f2e593791c71e88a75097f8ca6bf32ae1cd64ce1020779b2cf6458aa34f013af9c6869e742b4',
 };
 
 // 테스트용 사용자 ID
 const USER_A = 'test-user-A';
 const USER_B = 'test-user-B';
+
+// JWT 토큰
+let tokenUserA = null;
+let tokenUserB = null;
 
 // 테스트용 고객 데이터
 let testCustomerA = null; // USER_A 소유
@@ -29,10 +35,17 @@ let db = null;
  * 테스트 전 설정
  */
 beforeAll(async () => {
+  // JWT_SECRET 설정 (테스트용)
+  process.env.JWT_SECRET = TEST_CONFIG.JWT_SECRET;
+
   // MongoDB 연결
   mongoClient = new MongoClient(TEST_CONFIG.MONGO_URI);
   await mongoClient.connect();
   db = mongoClient.db(TEST_CONFIG.DB_NAME);
+
+  // JWT 토큰 생성
+  tokenUserA = generateToken({ id: USER_A, name: 'Test User A', role: 'user' });
+  tokenUserB = generateToken({ id: USER_B, name: 'Test User B', role: 'user' });
 
   // 테스트용 고객 생성 (USER_A 소유)
   const resultA = await db.collection('customers').insertOne({
@@ -88,11 +101,15 @@ afterAll(async () => {
  */
 async function apiCall(method, endpoint, userId, body = null) {
   const url = `${TEST_CONFIG.API_BASE_URL}${endpoint}`;
+
+  // userId에 따라 적절한 JWT 토큰 선택
+  const token = userId === USER_A ? tokenUserA : tokenUserB;
+
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'x-user-id': userId,
+      'Authorization': `Bearer ${token}`,
     },
   };
 
@@ -137,15 +154,15 @@ describe('Phase 1: 고객 CRUD API 격리 테스트', () => {
       expect(response.data.success).toBe(false);
     });
 
-    test('userId 없이 조회 - 400 반환해야 함', async () => {
+    test('JWT 토큰 없이 조회 - 401 반환해야 함', async () => {
       const url = `${TEST_CONFIG.API_BASE_URL}/api/customers/${testCustomerA}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        // x-user-id 헤더 없음
+        // Authorization 헤더 없음
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -186,16 +203,16 @@ describe('Phase 1: 고객 CRUD API 격리 테스트', () => {
       expect(response.data.success).toBe(false);
     });
 
-    test('userId 없이 수정 - 400 반환해야 함', async () => {
+    test('JWT 토큰 없이 수정 - 401 반환해야 함', async () => {
       const url = `${TEST_CONFIG.API_BASE_URL}/api/customers/${testCustomerA}`;
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ personal_info: { name: '해킹' } }),
-        // x-user-id 헤더 없음
+        // Authorization 헤더 없음
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -234,15 +251,15 @@ describe('Phase 1: 고객 CRUD API 격리 테스트', () => {
       expect(customer).not.toBeNull();
     });
 
-    test('userId 없이 삭제 - 400 반환해야 함', async () => {
+    test('JWT 토큰 없이 삭제 - 401 반환해야 함', async () => {
       const url = `${TEST_CONFIG.API_BASE_URL}/api/customers/${testCustomerA}`;
       const response = await fetch(url, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        // x-user-id 헤더 없음
+        // Authorization 헤더 없음
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
     });
 
     test('본인 고객 삭제 - 성공해야 함', async () => {
@@ -251,11 +268,12 @@ describe('Phase 1: 고객 CRUD API 격리 테스트', () => {
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
 
-      // 고객이 삭제되었는지 확인
+      // 고객이 soft delete되었는지 확인
       const customer = await db.collection('customers').findOne({ _id: tempCustomerForDelete });
-      expect(customer).toBeNull();
-
-      tempCustomerForDelete = null; // 정리 불필요 표시
+      expect(customer).not.toBeNull();
+      expect(customer.deleted_at).toBeDefined();
+      expect(customer.deleted_by).toBe(USER_A);
+      expect(customer.meta.status).toBe('inactive');
     });
   });
 });
