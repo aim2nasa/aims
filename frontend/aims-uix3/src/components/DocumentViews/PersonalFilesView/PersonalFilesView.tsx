@@ -1767,7 +1767,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               </Tooltip>
 
               {/* 삭제 버튼 */}
-              <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+              <Tooltip key={`delete-mode-${isDeleteMode}`} content={isDeleteMode ? '삭제 완료' : '삭제'}>
                 <button
                   className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
                   onClick={handleToggleDeleteMode}
