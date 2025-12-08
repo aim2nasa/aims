@@ -9,9 +9,12 @@ const { generateToken, authenticateJWT } = require('../middleware/auth');
 // 허용된 리다이렉트 도메인 목록 (보안)
 const ALLOWED_REDIRECT_ORIGINS = [
   'https://aims.giize.com',
+  'https://admin.aims.giize.com',
   'http://localhost:5177',
+  'http://localhost:5178',
   'http://localhost:5173',
   'http://127.0.0.1:5177',
+  'http://127.0.0.1:5178',
   'http://127.0.0.1:5173'
 ];
 
@@ -96,7 +99,7 @@ module.exports = function(db) {
         }
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+        res.redirect(`${frontendUrl}/login?token=${token}`);
       } catch (error) {
         console.error('Token generation error:', error);
         res.redirect(`${process.env.FRONTEND_URL}/login?error=token_generation_failed`);

@@ -14,8 +14,29 @@ const cookieParser = require('cookie-parser');
 const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
 
 const app = express();
+
+// CORS 허용 origin 목록
+const ALLOWED_ORIGINS = [
+  'https://aims.giize.com',
+  'https://admin.aims.giize.com',
+  'http://localhost:5177',
+  'http://localhost:5178',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5177',
+  origin: function (origin, callback) {
+    // origin이 없는 경우 (same-origin 또는 curl 등) 허용
+    if (!origin) return callback(null, true);
+    // 허용된 origin인 경우 허용
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`[CORS] Blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ charset: 'utf-8' }));
