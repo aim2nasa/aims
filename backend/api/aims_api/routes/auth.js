@@ -116,7 +116,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1, hasOcrPermission: 1 } }
       );
 
       if (!user) {
@@ -138,7 +138,8 @@ module.exports = function(db) {
           avatarUrl: user.avatarUrl,
           role: user.role,
           authProvider: user.authProvider,
-          profileCompleted: user.profileCompleted ?? true
+          profileCompleted: user.profileCompleted ?? true,
+          hasOcrPermission: user.hasOcrPermission || false
         }
       });
     } catch (error) {
@@ -227,7 +228,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1, hasOcrPermission: 1 } }
       );
 
       res.json({
@@ -242,7 +243,8 @@ module.exports = function(db) {
           avatarUrl: user.avatarUrl,
           role: user.role,
           authProvider: user.authProvider,
-          profileCompleted: user.profileCompleted
+          profileCompleted: user.profileCompleted,
+          hasOcrPermission: user.hasOcrPermission || false
         }
       });
     } catch (error) {

@@ -11,7 +11,7 @@ const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHe
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
-const { generateToken, authenticateJWT, authenticateJWTorAPIKey } = require('./middleware/auth');
+const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
 
 const app = express();
 app.use(cors({
@@ -3281,6 +3281,85 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
 });
 
 /**
+ * 관리자: 사용자 OCR 권한 설정
+ */
+app.put('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const { hasOcrPermission } = req.body;
+
+  if (typeof hasOcrPermission !== 'boolean') {
+    return res.status(400).json({
+      success: false,
+      message: 'hasOcrPermission은 boolean이어야 합니다'
+    });
+  }
+
+  try {
+    const result = await db.collection('users').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { hasOcrPermission } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다'
+      });
+    }
+
+    console.log(`[Admin] 사용자 ${id} OCR 권한 ${hasOcrPermission ? '활성화' : '비활성화'}`);
+
+    res.json({
+      success: true,
+      message: `OCR 권한이 ${hasOcrPermission ? '활성화' : '비활성화'}되었습니다`,
+      userId: id,
+      hasOcrPermission
+    });
+  } catch (error) {
+    console.error('OCR 권한 설정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'OCR 권한 설정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 사용자 OCR 권한 조회
+ */
+app.get('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await db.collection('users').findOne(
+      { _id: new ObjectId(id) },
+      { projection: { hasOcrPermission: 1 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다'
+      });
+    }
+
+    res.json({
+      success: true,
+      userId: id,
+      hasOcrPermission: user.hasOcrPermission || false
+    });
+  } catch (error) {
+    console.error('OCR 권한 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'OCR 권한 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * Qdrant에서 문서의 모든 청크에 customer_id를 동기화합니다.
  * @param {string} documentId - 문서 ID (ObjectId 문자열)
  * @param {string|null} customerId - 고객 ID (ObjectId 문자열, null이면 제거)
@@ -5713,6 +5792,84 @@ MongoClient.connect(MONGO_URI)
     console.error('MongoDB 연결 실패:', error);
     registerFallbackHandlers();
   });
+
+// ==================== OCR 권한 백그라운드 체크 ====================
+// 주기적으로 권한 없는 사용자의 문서를 확인하여 ocr.warn 설정
+let ocrPermissionCheckInterval = null;
+
+async function checkOcrPermissions() {
+  try {
+    const client = await MongoClient.connect(MONGO_URI);
+    const db = client.db(DB_NAME);
+
+    try {
+      // meta 완료 + full_text 없음 + ocr.warn 없음 + ocr.status 없음인 문서 조회
+      const documents = await db.collection(COLLECTION_NAME).find({
+        'meta.meta_status': 'ok',
+        $or: [
+          { 'meta.full_text': null },
+          { 'meta.full_text': '' }
+        ],
+        'ocr.warn': { $exists: false },
+        'ocr.status': { $exists: false }
+      }).limit(100).toArray(); // 한 번에 최대 100개만 처리
+
+      let processedCount = 0;
+      let skippedCount = 0;
+
+      for (const doc of documents) {
+        if (!doc.ownerId) {
+          console.log(`[OCR Permission Check] 문서 ${doc._id}: ownerId 없음, 스킵`);
+          continue;
+        }
+
+        const user = await db.collection('users').findOne({ _id: new ObjectId(doc.ownerId) });
+
+        if (!user || !user.hasOcrPermission) {
+          await db.collection(COLLECTION_NAME).updateOne(
+            { _id: doc._id },
+            {
+              $set: {
+                'ocr.warn': 'OCR 권한이 없습니다. 관리자에게 문의하세요.',
+                'ocr.status': 'skipped'
+              }
+            }
+          );
+          skippedCount++;
+          console.log(`[OCR Permission Check] 문서 ${doc._id}: OCR 권한 없음, ocr.warn 설정`);
+        }
+
+        processedCount++;
+      }
+
+      if (processedCount > 0) {
+        console.log(`[OCR Permission Check] 처리 완료: ${processedCount}개 확인, ${skippedCount}개 스킵 설정`);
+      }
+    } finally {
+      await client.close();
+    }
+  } catch (error) {
+    console.error('[OCR Permission Check] 오류:', error);
+  }
+}
+
+// 5초마다 실행
+ocrPermissionCheckInterval = setInterval(checkOcrPermissions, 5000);
+
+// 서버 종료 시 interval 정리
+process.on('SIGTERM', () => {
+  if (ocrPermissionCheckInterval) {
+    clearInterval(ocrPermissionCheckInterval);
+    console.log('[OCR Permission Check] Interval 정리 완료');
+  }
+});
+
+process.on('SIGINT', () => {
+  if (ocrPermissionCheckInterval) {
+    clearInterval(ocrPermissionCheckInterval);
+    console.log('[OCR Permission Check] Interval 정리 완료');
+  }
+});
 
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', () => {

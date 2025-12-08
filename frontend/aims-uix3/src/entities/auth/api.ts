@@ -14,6 +14,7 @@ export interface User {
   role: string;
   authProvider?: string;
   profileCompleted?: boolean;
+  hasOcrPermission?: boolean;  // 🆕 OCR 권한 (기본값: false)
 }
 
 export interface AuthResponse {

@@ -46,6 +46,7 @@ module.exports = function(db) {
           avatarUrl,
           role: 'user',
           authProvider: 'kakao',
+          hasOcrPermission: false,  // 🆕 OCR 권한 (기본값: 불가)
           profileCompleted: false,  // 프로필 미완료
           createdAt: new Date(),
           lastLogin: new Date()
