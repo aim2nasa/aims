@@ -102,7 +102,7 @@ router.get('/folders', authenticateToken, async (req, res) => {
       data: {
         currentFolder: null,
         items,
-        breadcrumbs: [{ _id: null, name: '내 파일' }]
+        breadcrumbs: [{ _id: null, name: '내 보관함' }]
       }
     });
 
@@ -172,7 +172,7 @@ router.get('/folders/:folderId', authenticateToken, async (req, res) => {
     }
 
     // 루트 추가
-    breadcrumbs.unshift({ _id: null, name: '내 파일' });
+    breadcrumbs.unshift({ _id: null, name: '내 보관함' });
 
     res.json({
       success: true,
