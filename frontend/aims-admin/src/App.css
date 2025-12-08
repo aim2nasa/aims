@@ -1,42 +1,96 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-background-secondary);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Header */
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  padding: 0 var(--spacing-lg);
+  background-color: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app__header-left {
+  display: flex;
+  align-items: center;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.app__logo {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
 }
 
-.card {
-  padding: 2em;
+.app__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
 }
 
-.read-the-docs {
-  color: #888;
+.app__user-name {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Body Layout */
+.app__body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.app__sidebar {
+  width: 240px;
+  background-color: var(--color-background);
+  border-right: 1px solid var(--color-border);
+  padding: var(--spacing-lg) 0;
+  overflow-y: auto;
+}
+
+.app__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app__nav-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app__nav-item:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-primary);
+}
+
+.app__nav-item--active {
+  color: var(--color-primary);
+  background-color: rgba(0, 113, 227, 0.1);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Main Content */
+.app__main {
+  flex: 1;
+  padding: var(--spacing-xl);
+  overflow-y: auto;
 }
