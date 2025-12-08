@@ -765,6 +765,11 @@
   color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
 }
 
+/* 내 보관함 - Windows Explorer 폴더 노란색 */
+.menu-icon-yellow {
+  color: var(--color-folder-yellow); /* Windows Explorer 폴더 노란색 */
+}
+
 /* 관계별 보기 - iOS systemPink */
 .menu-icon-pink {
   color: var(--color-ios-pink); /* iOS systemPink */

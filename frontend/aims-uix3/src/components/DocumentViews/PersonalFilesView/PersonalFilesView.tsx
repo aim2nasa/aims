@@ -322,7 +322,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         // 폴더 시스템 파일과 합치기
         finalItems = [...data.items, ...myFileItems]
       } catch (docErr) {
-        console.error('⚠️ 내 파일 조회 실패:', docErr)
+        console.error('⚠️ 내 보관함 조회 실패:', docErr)
         // 실패해도 폴더 시스템은 정상 표시
       }
 
@@ -670,7 +670,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       fileSize: file.size,
       status: 'pending' as const,
       progress: 0,
-      customerId: userId  // 🆕 내 파일: customerId = userId (규약)
+      customerId: userId  // 🆕 내 보관함: customerId = userId (규약)
     }))
 
     setUploadingFiles(prev => [...prev, ...newUploadFiles])
@@ -1498,8 +1498,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     <CenterPaneView
       visible={visible}
       onClose={onClose}
-      title="내 파일"
-      titleIcon={<span className="menu-icon-green"><SFSymbol name="folder" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}
+      title="내 보관함"
+      titleIcon={<span className="menu-icon-yellow"><SFSymbol name="folder" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}
       marginTop={0}
       marginBottom={0}
       marginLeft={0}
@@ -1524,7 +1524,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           {/* 폴더 트리 - Google Drive 스타일 */}
           <div className="sidebar-section">
             <div className="folder-tree">
-              {/* 내 파일 (루트) */}
+              {/* 내 보관함 (루트) */}
               <div className="folder-tree-item">
                 <div
                   className={`folder-tree-row ${currentFolderId === null ? 'active' : ''} ${dragOverFolderId === null && draggingItemId ? 'drag-over' : ''}`}
@@ -1541,7 +1541,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       e.stopPropagation()
                       setMyDriveExpanded(!myDriveExpanded)
                     }}
-                    aria-label={myDriveExpanded ? '내 파일 닫기' : '내 파일 열기'}
+                    aria-label={myDriveExpanded ? '내 보관함 닫기' : '내 보관함 열기'}
                   >
                     {myDriveExpanded ? (
                       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -1563,7 +1563,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     <span className="folder-icon">
                       {currentFolderId === null ? '📂' : '📁'}
                     </span>
-                    <span className="folder-name">내 파일</span>
+                    <span className="folder-name">내 보관함</span>
                   </button>
                 </div>
 
@@ -2370,7 +2370,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               <DocumentIcon />
                             </button>
                           </Tooltip>
-                          {/* 내 파일(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
+                          {/* 내 보관함(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
                           {!(item.document.ownerId && item.document.customerId && item.document.ownerId === item.document.customerId) && (
                             <Tooltip content="고객에게 연결">
                               <button
