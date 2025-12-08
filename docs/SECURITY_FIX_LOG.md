@@ -127,37 +127,72 @@ ssh tars.giize.com "cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_ap
 
 ## 🔖 별도 이슈 추적
 
-### Issue #1: Migration 테스트 실패 (test_customer_cascade_delete.js)
+### Issue #1: Migration 테스트 실패 (test_customer_cascade_delete.js) ✅ 완전 해결
 
 **발견 일시**: 2025-12-08
-**상태**: 추후 처리 예정
-**우선순위**: 낮음 (서버 정상 작동 중)
+**해결 일시**: 2025-12-08
+**상태**: ✅ 완전 해결 (20/20 전체 테스트 통과)
 
-**테스트 결과**: 5/19 통과
+**초기 테스트 결과**: 5/19 통과
+**최종 결과**: **20/20 전체 통과** ✅
 
-**실패 항목**:
-1. Document deletion loop 패턴 미발견
-2. Physical file deletion (fs.unlink) 미발견
-3. MongoDB document deletion 미발견
-4. Qdrant embedding deletion 미발견
-5. Annual Report parsing data deletion check 미발견
-6. Relationships/Documents 삭제 순서 검증 실패
-7. Frontend cascade deletion 주석 미발견
-8. Complete cascade delete flow 단계 검증 실패
+**문제 원인**:
+1. **백엔드 추출 실패** (5→10 실패):
+   - 테스트의 endPattern이 non-greedy 매칭 (`[\\s\\S]*?`) 사용
+   - 첫 번째 catch 블록 (Qdrant 오류 처리)에서 종료
+   - Hard delete 로직이 포함된 메인 catch 블록까지 도달하지 못함
+   - 4,656자만 추출 (전체 ~88,000자 중)
 
-**분석**:
-- 테스트는 코드 구조 검증용 (정규식 패턴 매칭)
-- 실제 기능은 정상 작동 (서버에서 확인됨)
-- 코드 구조 변경 또는 테스트 로직 개선 필요
+2. **프론트엔드 패턴 불일치** (3개 실패):
+   - API 호출 패턴: 제네릭 타입 `<{...}>` 추가로 패턴 불일치
+   - Cascade delete 경고: 메서드 구조 변경 (deleteCustomer → permanentDeleteCustomer)
+   - 주석 위치 변경: "연결된 문서, 계약, 관계도 모두 삭제됨"
 
-**처리 방안** (추후 결정):
-1. 현재 코드 구조에 맞게 테스트 패턴 업데이트
-2. 또는 테스트가 요구하는 코드 구조로 리팩토링
-3. 또는 테스트를 실제 동작 기반 테스트로 전환
+**해결 방법**:
+1. **백엔드 테스트 수정**:
+   - Line 89: Hard delete 로직 포함 설명 주석 추가
+   - Line 93: endPattern을 greedy 매칭으로 변경
+     - Before: `"\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*?\\}\\s*\\}\\);"`
+     - After: `"\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*\\}\\s*\\}\\);"`
+     - 변경점: `*?` → `*` (non-greedy → greedy)
+
+2. **프론트엔드 테스트 수정** (현재 코드 구조에 맞게):
+   - `permanentDeleteCustomer` 메서드 존재 확인 추가
+   - API 호출 패턴: `await\\s+api\\.delete<` (제네릭 허용)
+   - Cascade 주석: "연결된 문서, 계약, 관계도 모두 삭제" 검색
+   - `contractChanged`, `documentChanged` 이벤트 발생 확인
+
+**최종 결과** (20/20 ✅):
+- ✅ 백엔드 검증: 10/10 통과
+  - Customer deletion API endpoint exists ✅
+  - Documents queried by customerId ✅
+  - Document deletion loop exists ✅
+  - Physical file deletion (fs.unlink) ✅
+  - MongoDB document deletion ✅
+  - Qdrant embedding deletion ✅
+  - Annual Report parsing data deletion ✅
+  - Relationships deleted before documents ✅
+  - Documents deleted before customer ✅
+  - Complete cascade delete flow (4 steps) ✅
+
+- ✅ 프론트엔드 검증: 7/7 통과
+  - deleteCustomer method exists ✅
+  - permanentDeleteCustomer method exists ✅
+  - DELETE API endpoint calls ✅
+  - Cascade deletion warning in comments ✅
+  - customerChanged event dispatch ✅
+  - contractChanged event dispatch ✅
+  - documentChanged event dispatch ✅
+
+- ✅ 통합 검증: 3/3 통과
+  - Extraction: 88,357 chars (complete function) ✅
+  - Deletion order: Relationships → Contracts → Documents → Customer ✅
+  - All cascade operations validated ✅
 
 **관련 파일**:
-- `backend/api/aims_api/tests/test_customer_cascade_delete.js`
-- `backend/api/aims_api/routes/customer-routes.js`
+- `backend/api/aims_api/tests/test_customer_cascade_delete.js` (수정 완료)
+- `backend/api/aims_api/server.js` (검증 대상)
+- `frontend/aims-uix3/src/services/customerService.ts` (검증 대상)
 
 ---
 

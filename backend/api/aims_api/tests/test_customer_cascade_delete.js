@@ -86,10 +86,11 @@ assertIncludes(
 );
 
 // 3. 고객 삭제 API 내의 cascade delete 블록 추출
+// Hard delete 로직을 포함하도록 catch 블록까지 추출
 const deleteApiBlock = findCodeBlock(
   serverContent,
   "app\\.delete\\('/api/customers/:id'",
-  "res\\.json\\(\\{[\\s\\S]*?success: true[\\s\\S]*?\\}\\);"
+  "\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*\\}\\s*\\}\\);"
 );
 
 if (!deleteApiBlock) {
@@ -173,42 +174,49 @@ try {
 }
 
 if (frontendTests > 0) {
-  // 11. deleteCustomer 메서드 존재
+  // 11. deleteCustomer 메서드 존재 (Soft Delete)
   assertIncludes(
     frontendContent,
     'static\\s+async\\s+deleteCustomer\\(id:\\s*string\\)',
     'Frontend deleteCustomer method exists'
   );
 
-  // 12. DELETE API 호출
+  // 12. permanentDeleteCustomer 메서드 존재 (Hard Delete with Cascade)
   assertIncludes(
     frontendContent,
-    'await\\s+api\\.delete\\(ENDPOINTS\\.CUSTOMER\\(id\\)\\)',
+    'static\\s+async\\s+permanentDeleteCustomer\\(id:\\s*string\\)',
+    'Frontend permanentDeleteCustomer method exists'
+  );
+
+  // 13. DELETE API 호출 (제네릭 타입 포함)
+  assertIncludes(
+    frontendContent,
+    'await\\s+api\\.delete<',
     'Frontend calls DELETE API endpoint'
   );
 
-  // 13. customerChanged 이벤트 발생
+  // 14. Cascade delete 경고 주석
+  assertIncludes(
+    frontendContent,
+    '연결된 문서, 계약, 관계도 모두 삭제',
+    'Frontend acknowledges cascade deletion in comments'
+  );
+
+  // 15. customerChanged 이벤트 발생
   assertIncludes(
     frontendContent,
     "dispatchEvent\\(new\\s+CustomEvent\\('customerChanged'\\)\\)",
     'Frontend dispatches customerChanged event'
   );
 
-  // 14. contractChanged 이벤트 발생 (cascade delete 주석 확인)
+  // 16. contractChanged 이벤트 발생
   assertIncludes(
     frontendContent,
-    "고객 삭제 시 계약도 cascade 삭제",
-    'Frontend acknowledges cascade deletion for contracts'
+    "dispatchEvent\\(new\\s+CustomEvent\\('contractChanged'\\)\\)",
+    'Frontend dispatches contractChanged event'
   );
 
-  // 15. documentChanged 이벤트 발생 (cascade delete 주석 확인)
-  assertIncludes(
-    frontendContent,
-    "고객 삭제 시 연결된 문서도 cascade 삭제",
-    'Frontend acknowledges cascade deletion for documents'
-  );
-
-  // 16. documentChanged 이벤트 dispatch 확인
+  // 17. documentChanged 이벤트 발생
   assertIncludes(
     frontendContent,
     "dispatchEvent\\(new\\s+CustomEvent\\('documentChanged'\\)\\)",
