@@ -42,6 +42,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null)
+  const [infoTab, setInfoTab] = useState<'summary' | 'snippet'>('summary')
 
   // 🍎 검색 입력 ref
   const inputRef = useRef<HTMLInputElement>(null)
@@ -447,18 +448,33 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                 )}
               </div>
 
-              {/* 🍎 모든 문서에 요약 + 검색어 위치 표시 */}
+              {/* 🍎 탭 형식 요약/검색어 위치 */}
               <div className={`doc-search-right__info${isPdf(selectedItem) ? ' doc-search-right__info--with-preview' : ''}`}>
-                {/* 요약 */}
-                <div className="doc-search-right__section">
-                  <span className="doc-search-right__label">요약</span>
-                  <p className="doc-search-right__text">{getSummary(selectedItem)}</p>
+                {/* 탭 헤더 */}
+                <div className="doc-search-right__tabs">
+                  <button
+                    type="button"
+                    className={`doc-search-right__tab${infoTab === 'summary' ? ' doc-search-right__tab--active' : ''}`}
+                    onClick={() => setInfoTab('summary')}
+                  >
+                    요약
+                  </button>
+                  <button
+                    type="button"
+                    className={`doc-search-right__tab${infoTab === 'snippet' ? ' doc-search-right__tab--active' : ''}`}
+                    onClick={() => setInfoTab('snippet')}
+                  >
+                    검색어 위치
+                  </button>
                 </div>
 
-                {/* 검색어 위치 */}
-                <div className="doc-search-right__section doc-search-right__section--snippet">
-                  <span className="doc-search-right__label">검색어 위치</span>
-                  <p className="doc-search-right__text">{highlightKeywords(getTextSnippet(selectedItem))}</p>
+                {/* 탭 콘텐츠 */}
+                <div className="doc-search-right__tab-content">
+                  {infoTab === 'summary' ? (
+                    <p className="doc-search-right__text">{getSummary(selectedItem)}</p>
+                  ) : (
+                    <p className="doc-search-right__text">{highlightKeywords(getTextSnippet(selectedItem))}</p>
+                  )}
                 </div>
               </div>
 

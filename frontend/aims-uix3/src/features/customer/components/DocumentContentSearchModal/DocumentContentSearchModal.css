@@ -366,54 +366,86 @@ html[data-theme="dark"] .doc-search-right__header {
   border: none;
 }
 
-/* 정보 영역 (요약 + 검색어 위치) */
+/* 정보 영역 (탭 형식) - 컴팩트 */
 .doc-search-right__info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .doc-search-right__info {
+  border-bottom-color: var(--color-ios-separator-dark);
 }
 
 /* PDF와 함께 표시될 때는 고정 높이로 */
 .doc-search-right__info--with-preview {
   flex: 0 0 auto;
-  max-height: 35%;
-  min-height: 140px;
+  max-height: 20%;
+  min-height: 80px;
 }
 
-/* 섹션 */
-.doc-search-right__section {
-  padding: 14px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
+/* 탭 헤더 */
+.doc-search-right__tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
 }
 
-html[data-theme="dark"] .doc-search-right__section {
-  background: var(--color-ios-bg-secondary-dark);
+html[data-theme="dark"] .doc-search-right__tabs {
+  border-bottom-color: var(--color-ios-separator-dark);
 }
 
-.doc-search-right__section--snippet {
-  border-left: 3px solid var(--color-primary-400);
+.doc-search-right__tab {
   flex: 1;
-  overflow-y: auto;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
 }
 
-.doc-search-right__label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
+.doc-search-right__tab:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .doc-search-right__tab:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.doc-search-right__tab--active {
   color: var(--color-primary-500);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.doc-search-right__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary-500);
+}
+
+/* 탭 콘텐츠 */
+.doc-search-right__tab-content {
+  flex: 1;
+  padding: 8px 12px;
+  overflow-y: auto;
 }
 
 .doc-search-right__text {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--color-text-secondary);
 }
 
