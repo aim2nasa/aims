@@ -258,7 +258,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
         size={SFSymbolSize.BODY}
         weight={SFSymbolWeight.MEDIUM}
       />
-      <span>문서 내용 검색</span>
+      <span>간편 문서 검색</span>
       <span className="doc-search-modal-title__customer">{customerName}</span>
     </div>
   )
@@ -447,28 +447,29 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                 )}
               </div>
 
-              {/* PDF 미리보기 또는 정보 영역 */}
-              {isPdf(selectedItem) && getFileUrl(selectedItem) ? (
+              {/* 🍎 모든 문서에 요약 + 검색어 위치 표시 */}
+              <div className={`doc-search-right__info${isPdf(selectedItem) ? ' doc-search-right__info--with-preview' : ''}`}>
+                {/* 요약 */}
+                <div className="doc-search-right__section">
+                  <span className="doc-search-right__label">요약</span>
+                  <p className="doc-search-right__text">{getSummary(selectedItem)}</p>
+                </div>
+
+                {/* 검색어 위치 */}
+                <div className="doc-search-right__section doc-search-right__section--snippet">
+                  <span className="doc-search-right__label">검색어 위치</span>
+                  <p className="doc-search-right__text">{highlightKeywords(getTextSnippet(selectedItem))}</p>
+                </div>
+              </div>
+
+              {/* PDF 미리보기 */}
+              {isPdf(selectedItem) && getFileUrl(selectedItem) && (
                 <div className="doc-search-right__preview">
                   <iframe
                     src={getFileUrl(selectedItem) || ''}
                     className="doc-search-right__preview-iframe"
                     title={getFileName(selectedItem)}
                   />
-                </div>
-              ) : (
-                <div className="doc-search-right__info">
-                  {/* 요약 */}
-                  <div className="doc-search-right__section">
-                    <span className="doc-search-right__label">요약</span>
-                    <p className="doc-search-right__text">{getSummary(selectedItem)}</p>
-                  </div>
-
-                  {/* 검색어 위치 */}
-                  <div className="doc-search-right__section doc-search-right__section--snippet">
-                    <span className="doc-search-right__label">검색어 위치</span>
-                    <p className="doc-search-right__text">{highlightKeywords(getTextSnippet(selectedItem))}</p>
-                  </div>
                 </div>
               )}
             </>

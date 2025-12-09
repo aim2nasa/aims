@@ -366,7 +366,7 @@ html[data-theme="dark"] .doc-search-right__header {
   border: none;
 }
 
-/* 정보 영역 (PDF가 아닌 경우) */
+/* 정보 영역 (요약 + 검색어 위치) */
 .doc-search-right__info {
   flex: 1;
   display: flex;
@@ -374,6 +374,13 @@ html[data-theme="dark"] .doc-search-right__header {
   gap: 12px;
   padding: 16px;
   overflow-y: auto;
+}
+
+/* PDF와 함께 표시될 때는 고정 높이로 */
+.doc-search-right__info--with-preview {
+  flex: 0 0 auto;
+  max-height: 35%;
+  min-height: 140px;
 }
 
 /* 섹션 */
