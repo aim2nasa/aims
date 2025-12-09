@@ -663,6 +663,17 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   font-size: var(--font-icon);
 }
 
+/* 메모 영역 */
+.customer-info-memos {
+  margin-top: var(--spacing-3);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .customer-info-memos {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
 /* ============================================
    🍎 보험계약 섹션 - 통일된 행 높이 + 수평 스크롤
    ============================================ */

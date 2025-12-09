@@ -334,3 +334,22 @@ export const CustomerTypeUtils = {
     return customerType === '법인' ? 'blue' : 'green';
   },
 };
+
+// ==================== Customer Memo ====================
+
+/**
+ * 고객 메모 스키마
+ * @since 2025-12-10
+ */
+export const CustomerMemoSchema = z.object({
+  _id: z.string(),
+  customer_id: z.string(),
+  content: z.string().min(1),
+  created_by: z.string(),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+  updated_by: z.string().optional(),
+  is_mine: z.boolean().optional(),
+});
+
+export type CustomerMemo = z.infer<typeof CustomerMemoSchema>;

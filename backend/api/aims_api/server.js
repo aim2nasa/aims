@@ -4975,6 +4975,241 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
   }
 });
 
+// ==================== Customer Memos API ====================
+
+const CUSTOMER_MEMOS_COLLECTION = 'customer_memos';
+
+/**
+ * GET /api/customers/:id/memos
+ * 고객 메모 목록 조회
+ */
+app.get('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // 고객 존재 및 소유권 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION).findOne({
+      _id: new ObjectId(id),
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 메모 목록 조회 (최신순)
+    const memos = await db.collection(CUSTOMER_MEMOS_COLLECTION)
+      .find({ customer_id: new ObjectId(id) })
+      .sort({ created_at: -1 })
+      .toArray();
+
+    // is_mine 필드 추가 (본인 메모 여부)
+    const memosWithMine = memos.map(memo => ({
+      ...memo,
+      is_mine: memo.created_by === userId
+    }));
+
+    res.json({
+      success: true,
+      data: memosWithMine,
+      total: memos.length
+    });
+
+  } catch (error) {
+    console.error('메모 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '메모 목록 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/customers/:id/memos
+ * 고객 메모 생성
+ */
+app.post('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { content } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '메모 내용을 입력해주세요.'
+      });
+    }
+
+    // 고객 존재 및 소유권 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION).findOne({
+      _id: new ObjectId(id),
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    const now = utcNowDate();
+    const newMemo = {
+      customer_id: new ObjectId(id),
+      content: content.trim(),
+      created_by: userId,
+      created_at: now,
+      updated_at: now
+    };
+
+    const result = await db.collection(CUSTOMER_MEMOS_COLLECTION).insertOne(newMemo);
+
+    res.json({
+      success: true,
+      data: {
+        _id: result.insertedId,
+        ...newMemo,
+        is_mine: true
+      },
+      message: '메모가 저장되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('메모 생성 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '메모 저장에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/customers/:id/memos/:memoId
+ * 고객 메모 수정 (본인만 가능)
+ */
+app.put('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res) => {
+  try {
+    const { id, memoId } = req.params;
+    const userId = req.user.id;
+    const { content } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '메모 내용을 입력해주세요.'
+      });
+    }
+
+    // 메모 존재 확인
+    const memo = await db.collection(CUSTOMER_MEMOS_COLLECTION).findOne({
+      _id: new ObjectId(memoId),
+      customer_id: new ObjectId(id)
+    });
+
+    if (!memo) {
+      return res.status(404).json({
+        success: false,
+        error: '메모를 찾을 수 없습니다.'
+      });
+    }
+
+    // 본인 메모인지 확인
+    if (memo.created_by !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: '본인이 작성한 메모만 수정할 수 있습니다.'
+      });
+    }
+
+    const now = utcNowDate();
+    await db.collection(CUSTOMER_MEMOS_COLLECTION).updateOne(
+      { _id: new ObjectId(memoId) },
+      {
+        $set: {
+          content: content.trim(),
+          updated_at: now,
+          updated_by: userId
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        _id: memoId,
+        content: content.trim(),
+        updated_at: now,
+        is_mine: true
+      },
+      message: '메모가 수정되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('메모 수정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '메모 수정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/customers/:id/memos/:memoId
+ * 고객 메모 삭제 (본인만 가능)
+ */
+app.delete('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res) => {
+  try {
+    const { id, memoId } = req.params;
+    const userId = req.user.id;
+
+    // 메모 존재 확인
+    const memo = await db.collection(CUSTOMER_MEMOS_COLLECTION).findOne({
+      _id: new ObjectId(memoId),
+      customer_id: new ObjectId(id)
+    });
+
+    if (!memo) {
+      return res.status(404).json({
+        success: false,
+        error: '메모를 찾을 수 없습니다.'
+      });
+    }
+
+    // 본인 메모인지 확인
+    if (memo.created_by !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: '본인이 작성한 메모만 삭제할 수 있습니다.'
+      });
+    }
+
+    await db.collection(CUSTOMER_MEMOS_COLLECTION).deleteOne({
+      _id: new ObjectId(memoId)
+    });
+
+    res.json({
+      success: true,
+      message: '메모가 삭제되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('메모 삭제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '메모 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
 // ==================== Insurance Products API ====================
 
 const INSURANCE_PRODUCTS_COLLECTION = 'insurance_products';

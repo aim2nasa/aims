@@ -17,6 +17,7 @@ import { useAppleConfirmController } from '../../../../controllers/useAppleConfi
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { Button } from '../../../../shared/ui/Button'
 import { RelationshipsTab } from '../CustomerDetailView/tabs/RelationshipsTab'
+import { MemosTab } from '../CustomerDetailView/tabs/MemosTab'
 import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
@@ -777,6 +778,10 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       customer={customer}
                       {...(onSelectCustomer ? { onSelectCustomer } : {})}
                     />
+                  </div>
+                  {/* 메모 영역 */}
+                  <div className="customer-info-memos">
+                    <MemosTab customer={customer} />
                   </div>
                 </div>
               </section>
