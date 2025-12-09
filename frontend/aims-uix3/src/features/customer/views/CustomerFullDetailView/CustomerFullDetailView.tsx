@@ -80,8 +80,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
-  const DEFAULT_LEFT_WIDTH = 38 // 🍎 상단/하단 통합 - 오른쪽(보험계약/AR)에 충분한 공간 확보
-  const DEFAULT_TOP_ROW_FLEX = 0.97
+  const DEFAULT_TOP_LEFT_WIDTH = 38 // 🍎 상단: 고객정보 ↔ 보험계약
+  const DEFAULT_BOTTOM_LEFT_WIDTH = 38 // 🍎 하단: 문서 ↔ Annual Report
+  const DEFAULT_TOP_ROW_FLEX = 1 // 🍎 상단/하단 행 동일 높이
 
   // 🍎 localStorage에서 저장된 레이아웃 불러오기
   const getInitialLayoutValues = () => {
@@ -90,8 +91,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       if (saved) {
         const parsed = JSON.parse(saved)
         return {
-          // 🍎 하위 호환: 기존 topLeftWidth 또는 bottomLeftWidth가 있으면 사용
-          leftWidth: parsed.leftWidth ?? parsed.topLeftWidth ?? parsed.bottomLeftWidth ?? DEFAULT_LEFT_WIDTH,
+          // 🍎 하위 호환: 기존 leftWidth가 있으면 상단/하단 모두에 적용
+          topLeftWidth: parsed.topLeftWidth ?? parsed.leftWidth ?? DEFAULT_TOP_LEFT_WIDTH,
+          bottomLeftWidth: parsed.bottomLeftWidth ?? parsed.leftWidth ?? DEFAULT_BOTTOM_LEFT_WIDTH,
           topRowFlex: parsed.topRowFlex ?? DEFAULT_TOP_ROW_FLEX
         }
       }
@@ -99,24 +101,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       console.warn('[CustomerFullDetailView] localStorage 레이아웃 불러오기 실패:', e)
     }
     return {
-      leftWidth: DEFAULT_LEFT_WIDTH,
+      topLeftWidth: DEFAULT_TOP_LEFT_WIDTH,
+      bottomLeftWidth: DEFAULT_BOTTOM_LEFT_WIDTH,
       topRowFlex: DEFAULT_TOP_ROW_FLEX
     }
   }
 
   // 🍎 리사이즈 상태 (퍼센트 기반) - localStorage에서 초기값 로드
-  // 🍎 상단/하단 왼쪽 너비 통합 → 보험계약과 Annual Report 경계 일치
-  const [leftWidth, setLeftWidth] = useState(() => getInitialLayoutValues().leftWidth)
+  // 🍎 상단/하단 왼쪽 너비 독립 조절
+  const [topLeftWidth, setTopLeftWidth] = useState(() => getInitialLayoutValues().topLeftWidth)
+  const [bottomLeftWidth, setBottomLeftWidth] = useState(() => getInitialLayoutValues().bottomLeftWidth)
   const [topRowFlex, setTopRowFlex] = useState(() => getInitialLayoutValues().topRowFlex)
 
   // 🍎 레이아웃 변경 여부 확인
   const isLayoutModified =
-    Math.abs(leftWidth - DEFAULT_LEFT_WIDTH) > 0.01 ||
-    Math.abs(topRowFlex - DEFAULT_TOP_ROW_FLEX) > 0.001
+    Math.abs(topLeftWidth - DEFAULT_TOP_LEFT_WIDTH) > 0.01 ||
+    Math.abs(bottomLeftWidth - DEFAULT_BOTTOM_LEFT_WIDTH) > 0.01 ||
+    Math.abs(topRowFlex - DEFAULT_TOP_ROW_FLEX) > 0.01
 
   // 🍎 레이아웃 리셋 핸들러 (localStorage도 삭제)
   const handleResetLayout = useCallback(() => {
-    setLeftWidth(DEFAULT_LEFT_WIDTH)
+    setTopLeftWidth(DEFAULT_TOP_LEFT_WIDTH)
+    setBottomLeftWidth(DEFAULT_BOTTOM_LEFT_WIDTH)
     setTopRowFlex(DEFAULT_TOP_ROW_FLEX)
 
     // 🍎 localStorage에서 저장된 레이아웃 삭제
@@ -134,14 +140,16 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   useEffect(() => {
     if (prevIsDragging.current !== null && isDragging === null) {
       console.log('📐 [레이아웃 값]', {
-        leftWidth: leftWidth.toFixed(2),
+        topLeftWidth: topLeftWidth.toFixed(2),
+        bottomLeftWidth: bottomLeftWidth.toFixed(2),
         topRowFlex: topRowFlex.toFixed(3)
       })
 
       // 🍎 localStorage에 레이아웃 저장
       try {
         localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
-          leftWidth,
+          topLeftWidth,
+          bottomLeftWidth,
           topRowFlex
         }))
       } catch (e) {
@@ -149,7 +157,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       }
     }
     prevIsDragging.current = isDragging
-  }, [isDragging, leftWidth, topRowFlex])
+  }, [isDragging, topLeftWidth, bottomLeftWidth, topRowFlex])
 
   const confirmController = useAppleConfirmController()
 
@@ -414,11 +422,11 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     void loadCustomer()
   }, [loadCustomer])
 
-  // 🍎 리사이즈 핸들러 - 수평 (상단/하단 통합: 경계 일치)
+  // 🍎 리사이즈 핸들러 - 수평 (상단/하단 독립 조절)
   const handleHorizontalResize = useCallback((e: React.MouseEvent, handleType: 'top-h' | 'bottom-h') => {
     e.preventDefault()
     const startX = e.clientX
-    const startWidth = leftWidth
+    const startWidth = handleType === 'top-h' ? topLeftWidth : bottomLeftWidth
     const container = contentRef.current
     if (!container) return
 
@@ -429,7 +437,13 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       const deltaX = moveEvent.clientX - startX
       const deltaPercent = (deltaX / containerRect.width) * 100
       const newWidth = Math.max(20, Math.min(80, startWidth + deltaPercent))
-      setLeftWidth(newWidth) // 🍎 상단/하단 동시 변경
+
+      // 🍎 상단/하단 독립적으로 변경
+      if (handleType === 'top-h') {
+        setTopLeftWidth(newWidth)
+      } else {
+        setBottomLeftWidth(newWidth)
+      }
     }
 
     const handleMouseUp = () => {
@@ -440,7 +454,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-  }, [leftWidth])
+  }, [topLeftWidth, bottomLeftWidth])
 
   // 🍎 리사이즈 핸들러 - 수직 (상단 행 ↔ 하단 행)
   const handleVerticalResize = useCallback((e: React.MouseEvent) => {
@@ -637,18 +651,21 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
               </Button>
             </div>
 
-            {/* 🍎 섹션들 - 2x2 그리드 (열 공유로 경계 일치) */}
+            {/* 🍎 섹션들 - 2행 레이아웃 (상단/하단 독립 조절) */}
             <div
               ref={contentRef}
               className={`customer-full-detail__content ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
               style={{
-                '--left-width': `${leftWidth}%`,
-                '--top-row-flex': `${topRowFlex}fr`,
-                '--bottom-row-flex': '1fr',
+                '--top-left-width': `${topLeftWidth}%`,
+                '--bottom-left-width': `${bottomLeftWidth}%`,
+                '--top-row-flex': topRowFlex,
+                '--bottom-row-flex': 1,
               } as React.CSSProperties}
             >
-              {/* 🍎 고객 정보 섹션 (1행 1열) */}
-              <section className="customer-full-detail__section customer-full-detail__section--customer-info">
+              {/* 🍎 상단 행: 고객정보 | 리사이즈 핸들 | 보험계약 */}
+              <div className="customer-full-detail__row customer-full-detail__row--top">
+                {/* 🍎 고객 정보 섹션 */}
+                <section className="customer-full-detail__section customer-full-detail__section--customer-info">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="8" cy="5" r="2.5"/>
@@ -722,17 +739,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 </div>
               </section>
 
-              {/* 🍎 리사이즈 핸들 - 고객정보 ↔ 보험계약 (1행 2열) */}
-              <div
-                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--top-h ${isDragging === 'top-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
-                onMouseDown={(e) => handleHorizontalResize(e, 'top-h')}
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="고객정보와 보험계약 사이 크기 조절"
-              />
+                {/* 🍎 리사이즈 핸들 - 고객정보 ↔ 보험계약 */}
+                <div
+                  className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--top-h ${isDragging === 'top-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                  onMouseDown={(e) => handleHorizontalResize(e, 'top-h')}
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="고객정보와 보험계약 사이 크기 조절"
+                />
 
-              {/* 🍎 보험 계약 섹션 (1행 3열) */}
-              <section className="customer-full-detail__section customer-full-detail__section--contracts">
+                {/* 🍎 보험 계약 섹션 */}
+                <section className="customer-full-detail__section customer-full-detail__section--contracts">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <rect x="2" y="2" width="12" height="12" rx="2"/>
@@ -775,17 +792,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     )}
                   </div>
                 </h2>
-                <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
-                  <ContractsTab
-                    customer={customer}
-                    onContractCountChange={setContractCount}
-                    searchTerm={contractSearchTerm}
-                    onSearchChange={setContractSearchTerm}
-                  />
-                </div>
-              </section>
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
+                    <ContractsTab
+                      customer={customer}
+                      onContractCountChange={setContractCount}
+                      searchTerm={contractSearchTerm}
+                      onSearchChange={setContractSearchTerm}
+                    />
+                  </div>
+                </section>
+              </div>
 
-              {/* 🍎 리사이즈 핸들 - 상단 행 ↔ 하단 행 (2행 전체) */}
+              {/* 🍎 리사이즈 핸들 - 상단 행 ↔ 하단 행 */}
               <div
                 className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--vertical ${isDragging === 'vertical' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
                 onMouseDown={handleVerticalResize}
@@ -794,8 +812,10 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 aria-label="상단 행과 하단 행 사이 크기 조절"
               />
 
-              {/* 🍎 문서 섹션 (3행 1열) */}
-              <section className="customer-full-detail__section customer-full-detail__section--documents">
+              {/* 🍎 하단 행: 문서 | 리사이즈 핸들 | Annual Report */}
+              <div className="customer-full-detail__row customer-full-detail__row--bottom">
+                {/* 🍎 문서 섹션 */}
+                <section className="customer-full-detail__section customer-full-detail__section--documents">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
@@ -837,28 +857,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     )}
                   </div>
                 </h2>
-                <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
-                  <DocumentsTab
-                    customer={customer}
-                    onDocumentCountChange={setDocumentCount}
-                    onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
-                    searchTerm={documentSearchTerm}
-                    onSearchChange={setDocumentSearchTerm}
-                  />
-                </div>
-              </section>
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
+                    <DocumentsTab
+                      customer={customer}
+                      onDocumentCountChange={setDocumentCount}
+                      onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
+                      searchTerm={documentSearchTerm}
+                      onSearchChange={setDocumentSearchTerm}
+                    />
+                  </div>
+                </section>
 
-              {/* 🍎 리사이즈 핸들 - 문서 ↔ Annual Report (3행 2열) */}
-              <div
-                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--bottom-h ${isDragging === 'bottom-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
-                onMouseDown={(e) => handleHorizontalResize(e, 'bottom-h')}
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="문서와 Annual Report 사이 크기 조절"
-              />
+                {/* 🍎 리사이즈 핸들 - 문서 ↔ Annual Report */}
+                <div
+                  className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--bottom-h ${isDragging === 'bottom-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                  onMouseDown={(e) => handleHorizontalResize(e, 'bottom-h')}
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="문서와 Annual Report 사이 크기 조절"
+                />
 
-              {/* 🍎 Annual Report 섹션 (3행 3열) */}
-              <section className="customer-full-detail__section customer-full-detail__section--annual-report">
+                {/* 🍎 Annual Report 섹션 */}
+                <section className="customer-full-detail__section customer-full-detail__section--annual-report">
                 <h2 className="customer-full-detail__section-title">
                   <svg
                     width="16"
@@ -909,16 +929,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     )}
                   </div>
                 </h2>
-                <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
-                  <AnnualReportTab
-                    customer={customer}
-                    onAnnualReportCountChange={setAnnualReportCount}
-                    refreshTrigger={annualReportRefreshTrigger}
-                    searchTerm={annualReportSearchTerm}
-                    onSearchChange={setAnnualReportSearchTerm}
-                  />
-                </div>
-              </section>
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
+                    <AnnualReportTab
+                      customer={customer}
+                      onAnnualReportCountChange={setAnnualReportCount}
+                      refreshTrigger={annualReportRefreshTrigger}
+                      searchTerm={annualReportSearchTerm}
+                      onSearchChange={setAnnualReportSearchTerm}
+                    />
+                  </div>
+                </section>
+              </div>
             </div>
           </>
         )}

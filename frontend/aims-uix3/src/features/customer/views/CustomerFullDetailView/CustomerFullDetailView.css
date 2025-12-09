@@ -133,53 +133,34 @@ html[data-theme="dark"] .customer-full-detail__reset-layout:hover {
   height: 14px;
 }
 
-/* === 콘텐츠 - 2x2 그리드 레이아웃 (열 공유로 경계 일치) === */
+/* === 콘텐츠 - 2행 레이아웃 (상단/하단 독립 조절) === */
 .customer-full-detail__content {
   flex: 1;
   overflow: hidden;
   padding: 8px;
-  display: grid;
-  /* 🍎 핵심: 3열 x 3행 그리드 - 열을 공유하여 수직 경계 일치 */
-  /* 🍎 38%: 오른쪽(보험계약/AR)에 충분한 공간 확보 */
-  grid-template-columns: var(--left-width, 38%) 6px 1fr;
-  grid-template-rows: var(--top-row-flex, 1fr) 6px var(--bottom-row-flex, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0;
 }
 
-/* === 그리드 영역 배치 === */
-/* 🍎 고객정보: 1행 1열 */
-.customer-full-detail__section--customer-info {
-  grid-area: 1 / 1 / 2 / 2;
+/* === 행 공통 === */
+.customer-full-detail__row {
+  display: grid;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* 🍎 보험계약: 1행 3열 */
-.customer-full-detail__section--contracts {
-  grid-area: 1 / 3 / 2 / 4;
+/* === 상단 행 - 고객정보 | 리사이즈 핸들 | 보험계약 === */
+.customer-full-detail__row--top {
+  grid-template-columns: var(--top-left-width, 38%) 6px 1fr;
+  flex: var(--top-row-flex, 1) 1 0;
 }
 
-/* 🍎 문서: 3행 1열 */
-.customer-full-detail__section--documents {
-  grid-area: 3 / 1 / 4 / 2;
-}
-
-/* 🍎 Annual Report: 3행 3열 */
-.customer-full-detail__section--annual-report {
-  grid-area: 3 / 3 / 4 / 4;
-}
-
-/* 🍎 상단 수평 리사이즈 핸들: 1행 2열 */
-.customer-full-detail__resize-handle--top-h {
-  grid-area: 1 / 2 / 2 / 3;
-}
-
-/* 🍎 수직 리사이즈 핸들: 2행 전체 (1~3열) */
-.customer-full-detail__resize-handle--vertical {
-  grid-area: 2 / 1 / 3 / 4;
-}
-
-/* 🍎 하단 수평 리사이즈 핸들: 3행 2열 */
-.customer-full-detail__resize-handle--bottom-h {
-  grid-area: 3 / 2 / 4 / 3;
+/* === 하단 행 - 문서 | 리사이즈 핸들 | Annual Report === */
+.customer-full-detail__row--bottom {
+  grid-template-columns: var(--bottom-left-width, 38%) 6px 1fr;
+  flex: var(--bottom-row-flex, 1) 1 0;
 }
 
 /* ============================================
