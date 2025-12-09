@@ -10,6 +10,7 @@ import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
+import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
 import type { Customer } from './entities/customer'
@@ -506,8 +507,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [updateURLParams])
 
+  // 최근 검색 고객 스토어
+  const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
+
   // 최근 검색 고객 클릭 핸들러 - 고객 전체보기 페이지로 이동
-  const handleRecentCustomerClick = useCallback((customerId: string) => {
+  const handleRecentCustomerClick = useCallback(async (customerId: string) => {
     // customers-full-detail 뷰로 이동
     setActiveDocumentView('customers-full-detail')
     setFullDetailCustomerId(customerId)
@@ -520,7 +524,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // URL 업데이트
     updateURLParams({ view: 'customers-full-detail', customerId, documentId: null })
-  }, [updateURLParams])
+
+    // 최근 검색 고객 목록 순서 업데이트 (클릭한 고객을 맨 위로)
+    try {
+      const customer = await CustomerService.getCustomer(customerId)
+      addRecentCustomer(customer)
+    } catch (error) {
+      console.error('[App] 최근 고객 순서 업데이트 실패:', error)
+    }
+  }, [updateURLParams, addRecentCustomer])
 
   // 계정 설정 Store에 모든 setter 등록
   useEffect(() => {
