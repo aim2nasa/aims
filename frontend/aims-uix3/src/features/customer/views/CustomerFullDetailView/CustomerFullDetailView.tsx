@@ -22,6 +22,7 @@ import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
 import { useAddressArchiveController } from '../../controllers/useAddressArchiveController'
 import { AddressArchiveModal } from '../../components/AddressArchiveModal'
+import { DocumentContentSearchModal } from '../../components/DocumentContentSearchModal'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import type { Customer } from '@/entities/customer/model'
 import { CustomerService } from '@/services/customerService'
@@ -74,6 +75,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 Annual Report 검색 상태
   const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
+
+  // 🍎 문서 내용 검색 모달 상태
+  const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
 
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
@@ -856,6 +860,19 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </button>
                     )}
                   </div>
+                  {/* 🍎 문서 내용 검색 버튼 */}
+                  <Tooltip content="문서 내용 검색">
+                    <button
+                      type="button"
+                      className="customer-full-detail__content-search-btn"
+                      onClick={() => setIsDocContentSearchModalOpen(true)}
+                      aria-label="문서 내용 검색"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
                     <DocumentsTab
@@ -975,6 +992,13 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             addressHistory={addressArchiveController.addressHistory}
             isLoading={addressArchiveController.isLoading}
             error={addressArchiveController.error}
+            customerName={customer.personal_info?.name || ''}
+          />
+
+          <DocumentContentSearchModal
+            isOpen={isDocContentSearchModalOpen}
+            onClose={() => setIsDocContentSearchModalOpen(false)}
+            customerId={customer._id}
             customerName={customer.personal_info?.name || ''}
           />
         </>
