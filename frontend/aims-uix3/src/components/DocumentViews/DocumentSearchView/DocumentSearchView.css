@@ -1365,11 +1365,8 @@ html[data-theme="dark"] .row-actions .action-button[data-disabled="true"] {
 }
 
 .similarity-label {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* 🍎 공간 최적화: 라벨 숨김 (툴팁으로 대체) */
+  display: none;
 }
 
 /* 유사도 레벨별 시각적 강조 */
