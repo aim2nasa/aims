@@ -42,6 +42,10 @@ interface DocumentsTabProps {
   onDocumentCountChange?: (count: number) => void
   onDocumentLibraryRefresh?: () => Promise<void>
   onAnnualReportNeedRefresh?: () => void
+  /** 외부에서 전달받는 검색어 (CustomerFullDetailView에서 사용) */
+  searchTerm?: string
+  /** 검색어 변경 핸들러 */
+  onSearchChange?: (term: string) => void
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -72,7 +76,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onRefresh,
   onDocumentCountChange,
   onDocumentLibraryRefresh,
-  onAnnualReportNeedRefresh
+  onAnnualReportNeedRefresh,
+  searchTerm: externalSearchTerm,
+  onSearchChange
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -192,6 +198,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [sortField, setSortField] = useState<SortField>('linkedAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
+  // 🍎 파일명 검색 상태 (외부에서 전달받거나 내부 상태 사용)
+  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const searchTerm = externalSearchTerm ?? internalSearchTerm
+  const setSearchTerm = onSearchChange ?? setInternalSearchTerm
+
   // 🍎 메모 모달 상태
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{
@@ -256,9 +267,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     return calculatedWidth;
   }, [documents]);
 
+  // 🍎 검색어로 필터링된 문서 목록
+  const filteredDocuments = useMemo(() => {
+    if (!searchTerm.trim()) return documents
+    const term = searchTerm.toLowerCase().trim()
+    return documents.filter(doc =>
+      (doc.originalName ?? '').toLowerCase().includes(term)
+    )
+  }, [documents, searchTerm])
+
   // 🍎 정렬된 문서 목록
   const sortedDocuments = useMemo(() => {
-    const sorted = [...documents].sort((a, b) => {
+    const sorted = [...filteredDocuments].sort((a, b) => {
       let aValue: string | number | null
       let bValue: string | number | null
 
@@ -284,7 +304,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       return 0
     })
     return sorted
-  }, [documents, sortField, sortDirection])
+  }, [filteredDocuments, sortField, sortDirection])
 
   // 🍎 페이지네이션 계산
   const totalPages = Math.ceil(sortedDocuments.length / itemsPerPage)

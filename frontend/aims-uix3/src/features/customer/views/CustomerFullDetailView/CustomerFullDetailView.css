@@ -296,7 +296,6 @@ html[data-theme="dark"] .customer-full-detail__section-title {
   color: var(--color-primary-700);
   font-size: var(--font-caption);
   font-weight: var(--weight-title);
-  margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -305,6 +304,73 @@ html[data-theme="dark"] .customer-full-detail__section-title {
 html[data-theme="dark"] .customer-full-detail__section-count {
   background: var(--color-primary-900);
   color: var(--color-primary-300);
+}
+
+/* === 섹션 검색 입력 === */
+.customer-full-detail__section-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  width: 140px;
+  max-width: 140px;
+}
+
+.customer-full-detail__section-search .section-search-icon {
+  position: absolute;
+  left: 6px;
+  color: var(--color-text-quaternary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.customer-full-detail__section-search .section-search-input {
+  flex: 1;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-primary);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  outline: none;
+  padding: 3px 22px 3px 22px;
+  transition: border-color 0.2s ease-out, width 0.2s ease-out;
+}
+
+.customer-full-detail__section-search .section-search-input::placeholder {
+  color: var(--color-text-quaternary);
+  font-weight: 400;
+}
+
+.customer-full-detail__section-search .section-search-input:focus {
+  border-color: var(--color-primary);
+}
+
+.customer-full-detail__section-search .section-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-quaternary);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.15s ease-out;
+}
+
+.customer-full-detail__section-search .section-search-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .customer-full-detail__section-search .section-search-input {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border);
 }
 
 /* === 섹션 컨텐츠 === */
