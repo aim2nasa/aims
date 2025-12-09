@@ -50,6 +50,14 @@ html[data-theme="dark"] .center-pane-view__header {
   border-bottom-color: var(--color-layout-accent-dark);
 }
 
+/* 왼쪽 액세서리 (돌아가기 버튼 등) */
+.center-pane-view__title-left-accessory {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
 /* 제목 스타일 - 애플 정제된 타이포그래피 */
 .center-pane-view__title {
   margin: 0;
@@ -226,4 +234,34 @@ html[data-theme="dark"] .center-pane-view__header {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 🍎 돌아가기 아이콘 버튼 - 타이틀 옆에 배치 */
+.back-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.back-icon-button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.back-icon-button:active {
+  transform: scale(0.95);
+}
+
+.back-icon-button svg {
+  width: 16px;
+  height: 16px;
 }

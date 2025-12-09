@@ -18,6 +18,8 @@ interface CenterPaneViewProps {
   title: string
   /** 제목 앞에 표시할 아이콘 (React Node) */
   titleIcon?: React.ReactNode
+  /** 제목 왼쪽에 표시할 액세서리 (예: 돌아가기 버튼) */
+  titleLeftAccessory?: React.ReactNode
   /** 제목 오른쪽에 표시할 액세서리 (예: RefreshButton) */
   titleAccessory?: React.ReactNode
   /** View 닫기 핸들러 */
@@ -93,6 +95,7 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   visible,
   title,
   titleIcon,
+  titleLeftAccessory,
   titleAccessory,
   onClose: _onClose,
   marginTop = 4,
@@ -121,6 +124,12 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
     >
       {/* 헤더 영역 - 애플 스타일 적용 */}
       <div className="center-pane-view__header">
+        {/* 왼쪽 액세서리 (돌아가기 버튼 등) */}
+        {titleLeftAccessory && (
+          <div className="center-pane-view__title-left-accessory">
+            {titleLeftAccessory}
+          </div>
+        )}
         <h2 className="center-pane-view__title">
           {titleIcon && <span className="center-pane-view__title-icon">{titleIcon}</span>}
           {title}

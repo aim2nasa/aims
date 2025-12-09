@@ -136,8 +136,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const documentLibraryRefreshRef = useRef<(() => Promise<void>) | null>(null)
 
   // URL 상태 동기화 헬퍼 함수들
-  const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null; tab?: string | null }) => {
+  // usePush: true면 pushState (히스토리에 추가), false면 replaceState (현재 항목 교체)
+  const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null; tab?: string | null }, usePush = false) => {
     const url = new URL(window.location.href)
+    const currentView = url.searchParams.get('view')
+    const isViewChange = params.view !== undefined && params.view !== currentView
 
     if (params.view !== undefined) {
       if (params.view) {
@@ -171,7 +174,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
     }
 
-    window.history.replaceState({}, '', url.toString())
+    // 🍎 View 변경 시 pushState로 히스토리에 추가 (뒤로가기 지원)
+    if (usePush || isViewChange) {
+      window.history.pushState({}, '', url.toString())
+    } else {
+      window.history.replaceState({}, '', url.toString())
+    }
   }, [])
 
   // RightPane 콘텐츠 관리 훅
@@ -366,6 +374,36 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [])
 
+  // 🍎 브라우저 뒤로가기/앞으로가기 처리 (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const urlView = urlParams.get('view')
+      const urlCustomerId = urlParams.get('customerId')
+
+      // 🍎 View 전환
+      let viewToRestore = urlView || 'customers'
+      if (viewToRestore === 'customers-full-detail' && !urlCustomerId) {
+        viewToRestore = 'customers'
+      }
+      setActiveDocumentView(viewToRestore)
+
+      // 🍎 customers-full-detail의 경우 customerId 복원
+      if (viewToRestore === 'customers-full-detail' && urlCustomerId) {
+        setFullDetailCustomerId(urlCustomerId)
+      } else {
+        setFullDetailCustomerId(null)
+      }
+
+      if (import.meta.env.DEV) {
+        console.log('[App] popstate 이벤트 처리:', { view: viewToRestore, customerId: urlCustomerId })
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   // iOS Dynamic Type + 햅틱 피드백 시스템 초기화
   useEffect(() => {
     initializeDynamicType()
@@ -502,8 +540,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneContentType(null)
       setRightPaneVisible(false)
 
-      // URL에서 고객/문서 ID 제거
-      updateURLParams({ customerId: null, documentId: null })
+      // 🍎 URL 업데이트 (view 포함하여 pushState로 히스토리에 추가)
+      updateURLParams({ view: menuKey, customerId: null, documentId: null })
     }
   }, [updateURLParams])
 

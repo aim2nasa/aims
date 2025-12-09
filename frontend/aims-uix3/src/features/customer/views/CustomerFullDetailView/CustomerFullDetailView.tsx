@@ -521,6 +521,20 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       visible={visible}
       title={customer?.personal_info?.name || '고객 정보'}
       titleIcon={customer ? getCustomerTypeIcon() : undefined}
+      titleAccessory={
+        <Tooltip content="이전 페이지로 돌아가기">
+          <button
+            type="button"
+            className="back-icon-button"
+            onClick={() => window.history.back()}
+            aria-label="돌아가기"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+          </button>
+        </Tooltip>
+      }
       onClose={onClose}
       className="customer-full-detail-view"
     >
@@ -648,14 +662,6 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   </button>
                 </Tooltip>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                leftIcon={<span>←</span>}
-              >
-                돌아가기
-              </Button>
             </div>
 
             {/* 🍎 섹션들 - 2행 레이아웃 (상단/하단 독립 조절) */}
