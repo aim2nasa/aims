@@ -114,3 +114,30 @@ html[data-theme="dark"] .selected-address-display {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* Geocoding 오류 알림 */
+.geocoding-error-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 149, 0, 0.1);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.geocoding-error-notice .notice-icon {
+  font-size: 16px;
+}
+
+.geocoding-error-notice .notice-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .geocoding-error-notice {
+  background: rgba(255, 149, 0, 0.15);
+  border-color: rgba(255, 149, 0, 0.4);
+}

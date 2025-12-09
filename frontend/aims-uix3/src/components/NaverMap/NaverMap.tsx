@@ -112,6 +112,8 @@ interface NaverMapProps {
   selectedRegion?: string | null
   /** 선택된 구/군 (줌 레벨 결정용) */
   selectedDistrict?: string | null
+  /** Geocoding 실패 고객 ID 목록 변경 콜백 */
+  onGeocodingFailedCustomersChange?: (customerIds: Set<string>) => void
 }
 
 /**
@@ -133,7 +135,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   selectionTimestamp = 0,
   center = null,
   selectedRegion = null,
-  selectedDistrict = null
+  selectedDistrict = null,
+  onGeocodingFailedCustomersChange
 }) => {
   // 초기 지도 중심 좌표 (제주도 포함 남한 전체 보기)
   const initialCenter = { lat: 36.0, lng: 127.5 }
@@ -575,7 +578,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           if (import.meta.env.DEV) {
             console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
           }
-          return null
+          // Geocoding 실패 고객 ID 반환 (나중에 수집)
+          return { customer, result: null, failed: true }
         }
 
         // 성공하면 캐시에 저장
@@ -595,10 +599,22 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       // 실제 고객 위치로 bounds 계산 (지역/구군 선택 시)
       const allPositions: Array<{ lat: number; lng: number }> = []
 
+      // Geocoding 실패 고객 ID 수집
+      const failedCustomerIds = new Set<string>()
+
       for (const item of geocodingResults) {
         if (!item) continue
 
+        // Geocoding 실패한 경우
+        if ('failed' in item && item.failed) {
+          if (item.customer._id) {
+            failedCustomerIds.add(item.customer._id)
+          }
+          continue
+        }
+
         const { customer, result } = item
+        if (!result) continue
 
         // 모든 고객 위치를 수집 (bounds 계산용)
         allPositions.push({ lat: result.latitude, lng: result.longitude })
@@ -841,13 +857,21 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
       if (import.meta.env.DEV) {
         console.log(`[NaverMap] 총 ${addressGroups.current.size}개의 마커 생성됨 (고객 ${markers.current.size}명)`)
+        if (failedCustomerIds.size > 0) {
+          console.log(`[NaverMap] Geocoding 실패 고객: ${failedCustomerIds.size}명`)
+        }
+      }
+
+      // Geocoding 실패 고객 ID 콜백 호출
+      if (onGeocodingFailedCustomersChange) {
+        onGeocodingFailedCustomersChange(failedCustomerIds)
       }
     }
 
     createMarkers().catch(error => {
       console.error('[NaverMap] 마커 생성 중 오류:', error)
     })
-  }, [customers, isMapReady, selectedRegion, selectedDistrict])
+  }, [customers, isMapReady, selectedRegion, selectedDistrict, onGeocodingFailedCustomersChange])
 
   // RightPane 열림/닫힘 시 bounds 재조정 (고객 선택 시)
   useEffect(() => {

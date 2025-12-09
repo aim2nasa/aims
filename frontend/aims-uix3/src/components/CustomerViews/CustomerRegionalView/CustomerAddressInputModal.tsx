@@ -23,6 +23,8 @@ interface CustomerAddressInputModalProps {
   onClose: () => void;
   /** 주소 저장 핸들러 */
   onSave: (customerId: string, address: FormattedAddress) => Promise<void>;
+  /** Geocoding 실패로 인한 모달인지 여부 */
+  isGeocodingFailure?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
   customer,
   onClose,
   onSave,
+  isGeocodingFailure = false,
 }) => {
   const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<FormattedAddress | null>(null);
@@ -43,6 +46,16 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
   const [isSaving, setIsSaving] = useState(false);
 
   const customerName = customer?.personal_info?.name || '이름 없음';
+  const currentAddress = customer?.personal_info?.address?.address1;
+
+  // 모달 제목과 설명 메시지
+  const modalTitle = isGeocodingFailure
+    ? `주소 수정 - ${customerName}`
+    : `주소 입력 - ${customerName}`;
+
+  const descriptionMessage = isGeocodingFailure
+    ? `현재 입력된 주소 "${currentAddress}"가 지도에서 인식되지 않습니다. 올바른 주소로 수정해주세요.`
+    : `${customerName} 님의 주소를 입력해주세요.`;
 
   const handleAddressSelect = (address: FormattedAddress) => {
     setSelectedAddress(address);
@@ -85,13 +98,19 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
       <Modal
         visible={isOpen}
         onClose={handleClose}
-        title={`주소 입력 - ${customerName}`}
+        title={modalTitle}
         size="md"
       >
         <div className="customer-address-input-modal">
           <div className="address-input-section">
+            {isGeocodingFailure && (
+              <div className="geocoding-error-notice">
+                <span className="notice-icon">⚠️</span>
+                <span className="notice-text">주소 형식 오류로 지도에 표시되지 않습니다</span>
+              </div>
+            )}
             <p className="address-input-description">
-              {customerName} 님의 주소를 입력해주세요.
+              {descriptionMessage}
             </p>
 
             {/* 주소 검색 버튼 */}

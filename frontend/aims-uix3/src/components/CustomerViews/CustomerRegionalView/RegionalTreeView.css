@@ -296,6 +296,22 @@ html[data-theme="dark"] .badge-no-address {
   opacity: 1;
 }
 
+/* Geocoding 실패 고객 (주소 오류로 지도에 표시 불가) */
+.tree-customer-item.geocoding-failed {
+  opacity: 0.7;
+}
+
+.tree-customer-item.geocoding-failed .tree-customer-name {
+  color: var(--color-text-secondary);
+}
+
+.geocoding-failed-badge {
+  margin-left: 4px;
+  font-size: 11px;
+  opacity: 0.8;
+  cursor: help;
+}
+
 .tree-customer-name {
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
   font-family: var(--font-family-text);

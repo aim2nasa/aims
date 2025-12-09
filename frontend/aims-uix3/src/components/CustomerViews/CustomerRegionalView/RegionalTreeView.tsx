@@ -485,6 +485,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 주소 입력 모달 상태
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [selectedCustomerForAddress, setSelectedCustomerForAddress] = useState<Customer | null>(null)
+  const [isAddressModalForGeocodingFailure, setIsAddressModalForGeocodingFailure] = useState(false)
+
+  // Geocoding 실패 고객 ID 목록 (지도에 표시 불가)
+  const [geocodingFailedCustomers, setGeocodingFailedCustomers] = useState<Set<string>>(new Set())
 
   // 1단계: 타입 필터만 적용된 고객 목록 (드롭다운 옵션 계산용)
   const typeFilteredCustomers = useMemo(() => {
@@ -905,6 +909,14 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 고객 선택 핸들러
   const handleCustomerClick = (customer: Customer) => {
     if (onCustomerSelect && customer._id) {
+      // Geocoding 실패한 고객인 경우: 주소 수정 모달 열기
+      if (geocodingFailedCustomers.has(customer._id)) {
+        setSelectedCustomerForAddress(customer)
+        setIsAddressModalForGeocodingFailure(true)
+        setIsAddressModalOpen(true)
+        return
+      }
+
       // 해당 고객이 속한 폴더들을 자동으로 펼치기
       const address = customer.personal_info?.address?.address1
       if (address) {
@@ -927,6 +939,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       } else {
         // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
         setSelectedCustomerForAddress(customer)
+        setIsAddressModalForGeocodingFailure(false)
         setIsAddressModalOpen(true)
         setExpandedKeys(prev => {
           const newSet = new Set(prev)
@@ -1055,21 +1068,28 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         {/* 고객 목록 */}
         {hasCustomers && isExpanded && (
           <div className="tree-node-customers">
-            {node.customers!.map(customer => (
-              <div
-                key={customer._id}
-                className={`tree-customer-item tree-customer-item-level-${level + 1} ${(localSelectedCustomerId || selectedCustomerId) === customer._id ? 'selected' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleCustomerClick(customer)
-                }}
-              >
-                {getCustomerTypeIcon(customer)}
-                <span className="tree-customer-name">
-                  {customer?.personal_info?.name ?? '이름 없음'}
-                </span>
-              </div>
-            ))}
+            {node.customers!.map(customer => {
+              const isGeocodingFailed = customer._id ? geocodingFailedCustomers.has(customer._id) : false
+              return (
+                <div
+                  key={customer._id}
+                  className={`tree-customer-item tree-customer-item-level-${level + 1} ${(localSelectedCustomerId || selectedCustomerId) === customer._id ? 'selected' : ''} ${isGeocodingFailed ? 'geocoding-failed' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleCustomerClick(customer)
+                  }}
+                  title={isGeocodingFailed ? '주소 형식 오류로 지도에 표시되지 않습니다' : undefined}
+                >
+                  {getCustomerTypeIcon(customer)}
+                  <span className="tree-customer-name">
+                    {customer?.personal_info?.name ?? '이름 없음'}
+                  </span>
+                  {isGeocodingFailed && (
+                    <span className="geocoding-failed-badge" title="주소 형식 오류">⚠️</span>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -1232,6 +1252,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
             selectedRegion={selectedRegion}
             selectedDistrict={selectedDistrict}
             height="100%"
+            onGeocodingFailedCustomersChange={setGeocodingFailedCustomers}
           />
         </div>
       </div>
@@ -1242,8 +1263,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         onClose={() => {
           setIsAddressModalOpen(false);
           setSelectedCustomerForAddress(null);
+          setIsAddressModalForGeocodingFailure(false);
         }}
         onSave={handleAddressSave}
+        isGeocodingFailure={isAddressModalForGeocodingFailure}
       />
     </div>
   )
