@@ -1036,18 +1036,21 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     </svg>
                   </button>
                   <span className="simple-document-search__divider">|</span>
-                  <span className="simple-document-search__detail-label">상세 문서 검색</span>
-                  <button
-                    type="button"
-                    className="simple-document-search__detail-btn"
-                    onClick={handleGoToDetailSearch}
-                    aria-label="문서 상세 검색 이동"
-                    title="문서 상세 검색 페이지로 이동"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                    </svg>
-                  </button>
+                  <Tooltip content="문서 검색 페이지로 이동 (현재 고객 자동 선택)">
+                    <div className="simple-document-search__detail-group">
+                      <span className="simple-document-search__detail-label">상세 문서검색</span>
+                      <button
+                        type="button"
+                        className="simple-document-search__detail-btn"
+                        onClick={handleGoToDetailSearch}
+                        aria-label="문서 상세 검색 이동"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </Tooltip>
                 </div>
               )}
 

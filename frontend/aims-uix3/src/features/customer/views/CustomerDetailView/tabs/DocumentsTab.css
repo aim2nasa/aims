@@ -637,7 +637,15 @@
   flex-shrink: 0;
 }
 
-/* 상세 문서 검색 라벨 */
+/* 상세 문서검색 그룹 (라벨 + 버튼) */
+.simple-document-search__detail-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+/* 상세 문서검색 라벨 */
 .simple-document-search__detail-label {
   font-size: 11px;
   font-weight: 400;
