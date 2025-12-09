@@ -29,6 +29,7 @@ import { CustomerService } from '@/services/customerService'
 import { CustomerDocument } from '@/stores/CustomerDocument'
 import { RelationshipService } from '@/services/relationshipService'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { formatDate } from '@/shared/lib/timeUtils'
 import './CustomerFullDetailView.css'
@@ -59,6 +60,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 개발자 모드 (Ctrl+Alt+D)
   const { isDevMode } = useDevModeStore()
+
+  // 🍎 최근 고객 목록 관리
+  const { removeRecentCustomer } = useRecentCustomersStore()
 
   // 🍎 모달 상태
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
@@ -195,13 +199,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       if (errorMessage.includes('404') || errorMessage.includes('삭제')) {
         setIsDeleted(true)
         setError('해당 고객은 삭제되었습니다.')
+        // 🍎 최근 검색 고객 목록에서 삭제된 고객 제거
+        if (customerId) {
+          removeRecentCustomer(customerId)
+          console.log('[CustomerFullDetailView] 삭제된 고객을 최근 목록에서 제거:', customerId)
+        }
       } else {
         setError(errorMessage)
       }
     } finally {
       setIsLoading(false)
     }
-  }, [customerId])
+  }, [customerId, removeRecentCustomer])
 
   // 🍎 초기 로드
   useEffect(() => {
