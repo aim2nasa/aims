@@ -43,11 +43,15 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   const [hasSearched, setHasSearched] = useState(false)
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null)
   const [infoTab, setInfoTab] = useState<'summary' | 'snippet'>('summary')
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320)
 
   // 🍎 검색 입력 ref
   const inputRef = useRef<HTMLInputElement>(null)
   // 🍎 자동 검색 플래그 (초기 검색어로 자동 검색 여부)
   const shouldAutoSearch = useRef(false)
+  // 🍎 리사이즈 관련 ref
+  const splitContainerRef = useRef<HTMLDivElement>(null)
+  const isResizing = useRef(false)
 
   // 🍎 모달 열릴 때 입력창 포커스 및 초기 검색어 설정
   useEffect(() => {
@@ -107,6 +111,43 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       void autoSearch()
     }
   }, [searchQuery, isOpen, customerId])
+
+  // 🍎 리사이즈 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizing.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current || !splitContainerRef.current) return
+
+      const containerRect = splitContainerRef.current.getBoundingClientRect()
+      const newWidth = e.clientX - containerRect.left
+
+      // 최소 200px, 최대 500px로 제한
+      const clampedWidth = Math.max(200, Math.min(500, newWidth))
+      setLeftPanelWidth(clampedWidth)
+    }
+
+    const handleMouseUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
 
   // 🍎 검색 실행
   const handleSearch = useCallback(async () => {
@@ -276,8 +317,12 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       minHeight={400}
       className="doc-content-search-modal"
     >
-      {/* 🍎 2-Pane 레이아웃 */}
-      <div className="doc-search-split">
+      {/* 🍎 2-Pane 레이아웃 (리사이즈 가능) */}
+      <div
+        ref={splitContainerRef}
+        className="doc-search-split"
+        style={{ gridTemplateColumns: `${leftPanelWidth}px 6px 1fr` }}
+      >
         {/* 🍎 왼쪽: 검색 + 결과 목록 */}
         <div className="doc-search-left">
 
@@ -409,6 +454,15 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
             )}
           </div>
         </div>
+
+        {/* 🍎 리사이즈 핸들 */}
+        <div
+          className="doc-search-resize-handle"
+          onMouseDown={handleResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="패널 크기 조절"
+        />
 
         {/* 🍎 오른쪽: 문서 정보 + PDF 미리보기 */}
         <div className="doc-search-right">

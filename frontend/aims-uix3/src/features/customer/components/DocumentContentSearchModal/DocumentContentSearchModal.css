@@ -44,9 +44,45 @@ html[data-theme="dark"] .doc-search-modal-title__customer {
 
 .doc-search-split {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  /* grid-template-columns은 JS에서 동적으로 설정 */
+  grid-template-columns: 320px 6px 1fr;
   height: 100%;
   overflow: hidden;
+}
+
+/* 🍎 리사이즈 핸들 */
+.doc-search-resize-handle {
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.doc-search-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 32px;
+  background: var(--color-border-secondary);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.doc-search-resize-handle:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+.doc-search-resize-handle:hover::after {
+  opacity: 1;
+}
+
+html[data-theme="dark"] .doc-search-resize-handle:hover {
+  background: var(--color-ios-bg-tertiary-dark);
 }
 
 /* ============================================
@@ -56,13 +92,11 @@ html[data-theme="dark"] .doc-search-modal-title__customer {
 .doc-search-left {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--color-ios-separator-light);
   background: var(--color-ios-bg-secondary-light);
   overflow: hidden;
 }
 
 html[data-theme="dark"] .doc-search-left {
-  border-right-color: var(--color-ios-separator-dark);
   background: var(--color-ios-bg-secondary-dark);
 }
 
