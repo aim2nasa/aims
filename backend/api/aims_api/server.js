@@ -2207,30 +2207,32 @@ app.post('/api/customers', authenticateJWT, async (req, res) => {
       });
     }
 
-    // 중복 체크 (한글 collation 적용)
-    const customerType = customerData.insurance_info?.customer_type;
+    // 🔴 중복 체크 (철칙: 고객명은 userId 내에서 개인/법인/활성/휴면 모두 통틀어 유일해야 함)
+    // - customer_type 조건 없음: 개인 "홍길동"이 있으면 법인 "홍길동" 등록 불가
+    // - status 조건 없음: 휴면 고객도 포함하여 중복 체크
     const existingCustomer = await db.collection(CUSTOMERS_COLLECTION).findOne(
       {
         'personal_info.name': originalName,
-        'insurance_info.customer_type': customerType
+        'meta.created_by': userId  // 같은 설계사 내에서만 중복 체크
       },
       {
         collation: {
           locale: 'ko',
-          strength: 2
+          strength: 2  // 대소문자 무시
         }
       }
     );
 
     if (existingCustomer) {
-      const statusText = existingCustomer.meta?.status === 'inactive' ? ' (휴면 상태)' : '';
+      const statusText = existingCustomer.meta?.status === 'inactive' ? ' (휴면)' : '';
+      const typeText = existingCustomer.insurance_info?.customer_type || '';
       return res.status(409).json({
         success: false,
-        error: `이미 등록된 고객명입니다${statusText}.`,
+        error: `이미 등록된 고객명입니다. [${typeText}${statusText}]`,
         details: {
           field: 'personal_info.name',
           value: originalName,
-          customerType: customerType,
+          existingCustomerType: existingCustomer.insurance_info?.customer_type,
           existingCustomerId: existingCustomer._id.toString(),
           existingStatus: existingCustomer.meta?.status
         }
