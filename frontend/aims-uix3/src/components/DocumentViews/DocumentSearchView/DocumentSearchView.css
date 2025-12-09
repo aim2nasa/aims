@@ -2116,3 +2116,117 @@ html[data-theme="dark"] .recent-search-icon {
 html[data-theme="dark"] .customer-name-text {
   color: var(--color-ios-text-primary-dark);
 }
+
+/* === 🍎 검색어 위치 액션 버튼 === */
+.action-button--keyword-location {
+  color: var(--color-ios-system-orange-light);
+}
+
+html[data-theme="dark"] .action-button--keyword-location {
+  color: var(--color-ios-system-orange-dark);
+}
+
+.action-button--keyword-location:hover {
+  opacity: 0.7;
+}
+
+/* === 🍎 검색어 위치 모달 스타일 === */
+.keyword-location-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .keyword-location-modal-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.keyword-location-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  gap: 12px;
+}
+
+.keyword-location-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-ios-bg-tertiary-light);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+html[data-theme="dark"] .keyword-location-modal-header {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.keyword-location-filename {
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+html[data-theme="dark"] .keyword-location-filename {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.keyword-location-query {
+  color: var(--color-ios-text-secondary-light);
+  font-size: 11px;
+}
+
+html[data-theme="dark"] .keyword-location-query {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.keyword-location-query strong {
+  color: var(--color-ios-system-orange-light);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .keyword-location-query strong {
+  color: var(--color-ios-system-orange-dark);
+}
+
+.keyword-location-text {
+  flex: 1;
+  padding: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-ios-text-primary-light);
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+html[data-theme="dark"] .keyword-location-text {
+  background: var(--color-ios-bg-secondary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 검색어 하이라이트 스타일 */
+.doc-search-highlight {
+  background: #fef08a;
+  color: #1a1a1a;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.3);
+}
+
+html[data-theme="dark"] .doc-search-highlight {
+  background: #facc15;
+  color: #0a0a0a;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.5), 0 0 8px rgba(250, 204, 21, 0.3);
+}

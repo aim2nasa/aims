@@ -16,6 +16,7 @@ import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/searc
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import DraggableModal from '@/shared/ui/DraggableModal'
 import {
   DocumentIcon,
   EyeIcon,
@@ -143,6 +144,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  // 🍎 검색어 위치 모달 상태 (키워드 검색 전용)
+  const [keywordLocationModalVisible, setKeywordLocationModalVisible] = useState(false)
+  const [selectedDocumentForKeywordLocation, setSelectedDocumentForKeywordLocation] = useState<SearchResultItem | null>(null)
 
   // 🍎 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
@@ -582,6 +587,59 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       return { color: 'very-low', label: '매우 낮음' }
     }
   }
+
+  /**
+   * 🍎 텍스트 스니펫 추출 (키워드 검색용)
+   * 검색어 주변 컨텍스트를 추출하여 보여줌
+   */
+  const getTextSnippet = useCallback((item: SearchResultItem): string => {
+    const fullText = (item as any).ocr?.full_text ||
+                     (item as any).meta?.full_text ||
+                     (item as any).text?.full_text ||
+                     ''
+
+    if (!fullText) return '텍스트를 찾을 수 없습니다.'
+
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return fullText.substring(0, 300) + '...'
+
+    // 첫 번째 키워드 기준으로 앞뒤 context 추출
+    const searchLower = fullText.toLowerCase()
+    const keywordLower = keywords[0].toLowerCase()
+    const idx = searchLower.indexOf(keywordLower)
+
+    if (idx === -1) return fullText.substring(0, 300) + '...'
+
+    const start = Math.max(0, idx - 100)
+    const end = Math.min(fullText.length, idx + keywordLower.length + 200)
+    let snippet = fullText.substring(start, end)
+
+    if (start > 0) snippet = '...' + snippet
+    if (end < fullText.length) snippet = snippet + '...'
+
+    return snippet
+  }, [query])
+
+  /**
+   * 🍎 키워드 하이라이트 (키워드 검색용)
+   * 텍스트 내 검색어를 하이라이트 처리
+   */
+  const highlightKeywords = useCallback((text: string): React.ReactNode => {
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return text
+
+    const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi')
+    const parts = text.split(pattern)
+
+    return parts.map((part, index) => {
+      const isMatch = keywords.some(kw => part.toLowerCase() === kw.toLowerCase())
+      return isMatch ? (
+        <mark key={index} className="doc-search-highlight">{part}</mark>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    })
+  }, [query])
 
   return (
     <CenterPaneView
@@ -1236,6 +1294,27 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       </button>
                     </Tooltip>
 
+                    {/* 🍎 검색어 위치 버튼 (키워드 검색 시에만 표시) */}
+                    {lastSearchMode === 'keyword' && (
+                      <Tooltip content="검색어 위치 보기">
+                        <button
+                          type="button"
+                          className="action-button action-button--keyword-location"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedDocumentForKeywordLocation(item)
+                            setKeywordLocationModalVisible(true)
+                          }}
+                          aria-label="검색어 위치 보기"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            <path d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5z"/>
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    )}
+
                     {/* 🍎 고객에게 연결 버튼 (DEV 모드에서만 표시) */}
                     {isDevMode && (
                       <Tooltip content={linkTooltip}>
@@ -1426,6 +1505,43 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           console.log('선택된 고객:', customer)
         }}
       />
+
+      {/* 🍎 검색어 위치 모달 (키워드 검색 전용) */}
+      {selectedDocumentForKeywordLocation && (
+        <DraggableModal
+          visible={keywordLocationModalVisible}
+          onClose={() => {
+            setKeywordLocationModalVisible(false)
+            setSelectedDocumentForKeywordLocation(null)
+          }}
+          title={
+            <div className="keyword-location-modal-title">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+              </svg>
+              <span>검색어 위치</span>
+            </div>
+          }
+          initialWidth={600}
+          initialHeight={400}
+          minWidth={400}
+          minHeight={300}
+        >
+          <div className="keyword-location-modal-content">
+            <div className="keyword-location-modal-header">
+              <span className="keyword-location-filename">
+                {SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
+              </span>
+              <span className="keyword-location-query">
+                검색어: <strong>{query}</strong>
+              </span>
+            </div>
+            <div className="keyword-location-text">
+              {highlightKeywords(getTextSnippet(selectedDocumentForKeywordLocation))}
+            </div>
+          </div>
+        </DraggableModal>
+      )}
     </CenterPaneView>
   )
 }
