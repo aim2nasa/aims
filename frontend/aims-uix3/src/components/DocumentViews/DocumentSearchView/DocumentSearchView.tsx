@@ -101,6 +101,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     query,
     searchMode,
     keywordMode,
+    customerId,
     topK,
     results,
     answer,
@@ -171,6 +172,24 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setSortOrder('asc')
     }
   }, [lastSearchMode, results.length])
+
+  // 🍎 Context의 customerId가 설정되면 해당 고객 자동 선택 (상세 문서 검색 이동 시)
+  useEffect(() => {
+    if (customerId && !selectedCustomer) {
+      // 최근 고객 목록에서 해당 고객 찾기
+      const recent = getRecentCustomers()
+      const recentCustomer = recent.find(c => c._id === customerId)
+      if (recentCustomer) {
+        // Customer 객체 재구성 (화면 표시용)
+        setSelectedCustomer({
+          _id: recentCustomer._id,
+          personal_info: {
+            name: recentCustomer.name
+          }
+        } as Customer)
+      }
+    }
+  }, [customerId, selectedCustomer, getRecentCustomers])
 
   /**
    * 정렬 핸들러

@@ -539,8 +539,8 @@
 
 .simple-document-search__input {
   flex: 1;
-  min-width: 80px;
-  max-width: 150px;
+  min-width: 120px;
+  max-width: 225px;
   height: 24px;
   padding: 0 var(--spacing-2);
   border: 1px solid var(--color-border-secondary);
@@ -626,6 +626,24 @@
 
 .simple-document-search__detail-btn:active {
   transform: scale(0.95);
+}
+
+/* 구분선 */
+.simple-document-search__divider {
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  opacity: 0.5;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* 상세 문서 검색 라벨 */
+.simple-document-search__detail-label {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* === 🍎 AR BADGE: Annual Report indicator (상단 중앙, 보라색) === */

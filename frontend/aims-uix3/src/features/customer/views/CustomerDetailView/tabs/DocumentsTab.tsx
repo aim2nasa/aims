@@ -35,6 +35,7 @@ import {
 } from '../../../../../components/DocumentViews/components/DocumentActionIcons'
 import { DocumentNotesModal } from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentNotesModal'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
 import './DocumentsTab.css'
 
@@ -226,6 +227,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [simpleSearchQuery, setSimpleSearchQuery] = useState('')
   const [isContentSearchModalOpen, setIsContentSearchModalOpen] = useState(false)
   const documentSearch = useDocumentSearch()
+  const { addRecentCustomer } = useRecentCustomersStore()
 
   // 🍎 간편 문서검색 핸들러 - 문서 내용 검색 모달 열기
   const handleSimpleSearch = useCallback(() => {
@@ -237,6 +239,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const handleGoToDetailSearch = useCallback(() => {
     if (!onNavigate) return
 
+    // 🍎 고객을 최근 고객 목록에 추가 (문서 검색 페이지에서 자동 선택용)
+    addRecentCustomer(customer)
+
     // DocumentSearchContext에 검색어와 고객 ID 설정
     documentSearch.handleQueryChange(simpleSearchQuery.trim())
     documentSearch.handleCustomerIdChange(customer._id)
@@ -244,7 +249,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
     // 문서 검색 페이지로 이동
     onNavigate('documents-search')
-  }, [simpleSearchQuery, onNavigate, documentSearch, customer._id])
+  }, [simpleSearchQuery, onNavigate, documentSearch, customer, addRecentCustomer])
 
   // 🍎 간편 문서검색 Enter 키 핸들러
   const handleSimpleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -1030,6 +1035,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                     </svg>
                   </button>
+                  <span className="simple-document-search__divider">|</span>
+                  <span className="simple-document-search__detail-label">상세 문서 검색</span>
                   <button
                     type="button"
                     className="simple-document-search__detail-btn"
