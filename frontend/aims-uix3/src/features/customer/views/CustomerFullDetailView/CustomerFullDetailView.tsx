@@ -55,6 +55,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleted, setIsDeleted] = useState(false)  // 🍎 삭제된 고객 여부
 
   // 🍎 개발자 모드 (Ctrl+Alt+D)
   const { isDevMode } = useDevModeStore()
@@ -181,13 +182,22 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
     setIsLoading(true)
     setError(null)
+    setIsDeleted(false)
 
     try {
       const data = await CustomerService.getCustomer(customerId)
       setCustomer(data)
     } catch (err) {
       console.error('[CustomerFullDetailView] 고객 로드 실패:', err)
-      setError(err instanceof Error ? err.message : '고객 정보를 불러올 수 없습니다.')
+      const errorMessage = err instanceof Error ? err.message : '고객 정보를 불러올 수 없습니다.'
+
+      // 🍎 삭제된 고객 감지 (404 또는 "삭제되었습니다" 메시지)
+      if (errorMessage.includes('404') || errorMessage.includes('삭제')) {
+        setIsDeleted(true)
+        setError('해당 고객은 삭제되었습니다.')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -554,20 +564,30 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
         {/* 🍎 에러 상태 */}
         {error && !isLoading && (
-          <div className="customer-full-detail__state customer-full-detail__state--error">
+          <div className={`customer-full-detail__state ${isDeleted ? 'customer-full-detail__state--deleted' : 'customer-full-detail__state--error'}`}>
             <SFSymbol
-              name="exclamationmark.triangle.fill"
+              name={isDeleted ? 'trash.fill' : 'exclamationmark.triangle.fill'}
               size={SFSymbolSize.TITLE_2}
               weight={SFSymbolWeight.MEDIUM}
             />
             <span>{error}</span>
-            <button
-              type="button"
-              className="customer-full-detail__retry"
-              onClick={() => void loadCustomer()}
-            >
-              다시 시도
-            </button>
+            {isDeleted ? (
+              <button
+                type="button"
+                className="customer-full-detail__back"
+                onClick={() => window.history.back()}
+              >
+                돌아가기
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="customer-full-detail__retry"
+                onClick={() => void loadCustomer()}
+              >
+                다시 시도
+              </button>
+            )}
           </div>
         )}
 

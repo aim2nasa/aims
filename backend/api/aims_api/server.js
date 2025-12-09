@@ -2620,23 +2620,30 @@ app.get('/api/customers/:id', authenticateJWT, async (req, res) => {
       });
     }
 
-    // ⭐ 소유권 검증: 해당 설계사의 고객만 조회 가능
-    const customer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({
-        _id: new ObjectId(id),
-        'meta.created_by': userId
-      });
+    // ⭐ 1단계: 고객 존재 여부 확인 (소유권 무관)
+    const customerExists = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
 
-    if (!customer) {
+    if (!customerExists) {
+      // 🔴 고객이 DB에 없음 (삭제됨)
+      return res.status(404).json({
+        success: false,
+        error: '해당 고객은 삭제되었습니다.',
+        deleted: true
+      });
+    }
+
+    // ⭐ 2단계: 소유권 검증 (해당 설계사의 고객인지)
+    if (customerExists.meta?.created_by !== userId) {
       return res.status(403).json({
         success: false,
-        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        error: '접근 권한이 없습니다.'
       });
     }
 
     res.json({
       success: true,
-      data: customer
+      data: customerExists
     });
   } catch (error) {
     console.error('고객 조회 오류:', error);
