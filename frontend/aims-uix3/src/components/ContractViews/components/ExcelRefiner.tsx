@@ -39,6 +39,7 @@ import {
   type CustomerNameValidationResult
 } from '@aims/excel-refiner-core'
 import { CustomerService, type BulkCustomerInput } from '@/services/customerService'
+import { getAuthHeaders } from '@/shared/lib/api'
 import { ContractService } from '@/services/contractService'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { ProductSearchModal } from './ProductSearchModal'
@@ -2007,7 +2008,7 @@ export function ExcelRefiner() {
   }, [handleCellEditSave, handleCellEditCancel])
 
   // 일괄등록 버튼 클릭 - 확인 모달 열기 (모든 시트에서 고객 수집)
-  const handleImportContracts = useCallback(() => {
+  const handleImportContracts = useCallback(async () => {
     if (!sheets.length) return
 
     // 모든 시트에서 고객 정보 수집
@@ -2098,16 +2099,58 @@ export function ExcelRefiner() {
       const contactIdx = findColIndex(contractSheet, '연락처')
 
       if (nameIdx !== -1) {
+        // 계약 시트에서 새로운 고객명 수집 (개인/법인고객 시트에 없는 고객)
+        const contractOnlyCustomers: Array<{ name: string; phone: string | undefined }> = []
         contractSheet.data.forEach(row => {
           const name = cellToString(row[nameIdx] as CellValue).trim()
           if (!name || customerNamesSet.has(name)) return
-          customerNamesSet.add(name)
+          customerNamesSet.add(name)  // 중복 방지를 위해 즉시 추가
 
-          // 계약 시트에만 있는 고객은 기본값으로 개인고객
+          const phone = contactIdx !== -1 ? cellToString(row[contactIdx] as CellValue).trim() : undefined
+          contractOnlyCustomers.push({ name, phone: phone || undefined })
+        })
+
+        // DB에서 기존 고객 여부 조회 (status: 'new'가 아니면 기존 고객)
+        const existingCustomerNames = new Set<string>()
+        if (contractOnlyCustomers.length > 0) {
+          try {
+            const response = await fetch('/api/customers/validate-names', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+              },
+              body: JSON.stringify({
+                customers: contractOnlyCustomers.map(c => ({ name: c.name, customerType: '개인' }))
+              })
+            })
+
+            if (response.ok) {
+              const result = await response.json()
+              if (result.success && result.data) {
+                // status가 'new'가 아니면 이미 DB에 존재하는 고객
+                result.data.forEach((item: { name: string; status: string }) => {
+                  if (item.status !== 'new') {
+                    existingCustomerNames.add(item.name)
+                  }
+                })
+              }
+            }
+          } catch (error) {
+            console.warn('[ExcelRefiner] DB 고객 조회 실패:', error)
+          }
+        }
+
+        // DB에 없는 신규 고객만 추가 (기존 고객은 계약만 연결)
+        contractOnlyCustomers.forEach(({ name, phone }) => {
+          // DB에 이미 존재하는 고객은 추가하지 않음 (계약만 연결됨)
+          if (existingCustomerNames.has(name)) return
+
+          // 신규 고객만 추가 (기본값: 개인)
           const customer: BulkCustomerInput = { name, customer_type: '개인' }
-          if (contactIdx !== -1) {
-            const phone = cellToString(row[contactIdx] as CellValue).trim()
-            if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
+          if (phone) {
+            customer.mobile_phone = phone
+            phoneMap.set(name, phone)
           }
           allCustomers.push(customer)
           개인고객Count++
