@@ -34,6 +34,8 @@ import {
   LinkIcon
 } from '../../../../../components/DocumentViews/components/DocumentActionIcons'
 import { DocumentNotesModal } from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentNotesModal'
+import { useDocumentSearch } from '@/contexts/useDocumentSearch'
+import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -46,6 +48,8 @@ interface DocumentsTabProps {
   searchTerm?: string
   /** 검색어 변경 핸들러 */
   onSearchChange?: (term: string) => void
+  /** 메뉴 네비게이션 핸들러 (간편 문서검색 → 문서 검색 페이지) */
+  onNavigate?: (menuKey: string) => void
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -78,7 +82,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onDocumentLibraryRefresh,
   onAnnualReportNeedRefresh,
   searchTerm: externalSearchTerm,
-  onSearchChange
+  onSearchChange,
+  onNavigate
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -216,6 +221,37 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // 🍎 간편 문서검색 상태
+  const [simpleSearchQuery, setSimpleSearchQuery] = useState('')
+  const [isContentSearchModalOpen, setIsContentSearchModalOpen] = useState(false)
+  const documentSearch = useDocumentSearch()
+
+  // 🍎 간편 문서검색 핸들러 - 문서 내용 검색 모달 열기
+  const handleSimpleSearch = useCallback(() => {
+    if (!simpleSearchQuery.trim()) return
+    setIsContentSearchModalOpen(true)
+  }, [simpleSearchQuery])
+
+  // 🍎 문서 상세 검색 이동 핸들러 - 문서 검색 페이지로 이동
+  const handleGoToDetailSearch = useCallback(() => {
+    if (!onNavigate) return
+
+    // DocumentSearchContext에 검색어와 고객 ID 설정
+    documentSearch.handleQueryChange(simpleSearchQuery.trim())
+    documentSearch.handleCustomerIdChange(customer._id)
+    documentSearch.handleSearchModeChange('keyword')
+
+    // 문서 검색 페이지로 이동
+    onNavigate('documents-search')
+  }, [simpleSearchQuery, onNavigate, documentSearch, customer._id])
+
+  // 🍎 간편 문서검색 Enter 키 핸들러
+  const handleSimpleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSimpleSearch()
+    }
+  }, [handleSimpleSearch])
 
   // 🍎 정렬 핸들러
   const handleSort = useCallback((field: SortField) => {
@@ -969,9 +1005,49 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 />
               </div>
 
+              {/* 🍎 간편 문서검색 */}
+              {onNavigate && (
+                <div className="simple-document-search">
+                  <span className="simple-document-search__label">간편 문서검색</span>
+                  <input
+                    type="text"
+                    className="simple-document-search__input"
+                    placeholder="검색어 입력"
+                    value={simpleSearchQuery}
+                    onChange={(e) => setSimpleSearchQuery(e.target.value)}
+                    onKeyDown={handleSimpleSearchKeyDown}
+                    aria-label="간편 문서검색"
+                  />
+                  <button
+                    type="button"
+                    className="simple-document-search__btn"
+                    onClick={handleSimpleSearch}
+                    disabled={!simpleSearchQuery.trim()}
+                    aria-label="검색"
+                    title="문서 내용 검색"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="simple-document-search__detail-btn"
+                    onClick={handleGoToDetailSearch}
+                    aria-label="문서 상세 검색 이동"
+                    title="문서 상세 검색 페이지로 이동"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               {totalPages > 1 && (
                 <div className="pagination-controls">
                   <button
+                    type="button"
                     className="pagination-button pagination-button--prev"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
@@ -987,6 +1063,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   </div>
 
                   <button
+                    type="button"
                     className="pagination-button pagination-button--next"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -1034,6 +1111,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
           onDelete={handleDeleteNotes}
         />
       )}
+
+      {/* 🍎 간편 문서검색 모달 */}
+      <DocumentContentSearchModal
+        isOpen={isContentSearchModalOpen}
+        onClose={() => {
+          setIsContentSearchModalOpen(false)
+          setSimpleSearchQuery('')
+        }}
+        customerId={customer._id}
+        customerName={customer.personal_info?.name ?? ''}
+        initialQuery={simpleSearchQuery}
+      />
     </div>
   )
 }

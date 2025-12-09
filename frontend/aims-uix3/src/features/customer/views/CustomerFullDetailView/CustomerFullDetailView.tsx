@@ -39,6 +39,8 @@ interface CustomerFullDetailViewProps {
   onClose: () => void
   onCustomerDeleted?: () => void
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void
+  /** 메뉴 네비게이션 핸들러 (문서 검색 등) */
+  onNavigate?: (menuKey: string) => void
 }
 
 export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
@@ -46,7 +48,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   customerId,
   onClose,
   onCustomerDeleted,
-  onSelectCustomer
+  onSelectCustomer,
+  onNavigate
 }) => {
   // 🍎 상태 관리
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -881,6 +884,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
                       searchTerm={documentSearchTerm}
                       onSearchChange={setDocumentSearchTerm}
+                      onNavigate={onNavigate}
                     />
                   </div>
                 </section>

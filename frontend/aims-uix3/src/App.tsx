@@ -997,6 +997,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 }
               }}
               onSelectCustomer={handleCustomerClick}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 

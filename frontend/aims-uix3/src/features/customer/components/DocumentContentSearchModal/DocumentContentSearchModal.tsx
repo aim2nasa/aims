@@ -24,13 +24,16 @@ interface DocumentContentSearchModalProps {
   customerId: string
   /** 고객 이름 */
   customerName: string
+  /** 초기 검색어 (간편 문서검색에서 전달) */
+  initialQuery?: string
 }
 
 export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProps> = ({
   isOpen,
   onClose,
   customerId,
-  customerName
+  customerName,
+  initialQuery = ''
 }) => {
   // 🍎 상태
   const [searchQuery, setSearchQuery] = useState('')
@@ -42,13 +45,20 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
 
   // 🍎 검색 입력 ref
   const inputRef = useRef<HTMLInputElement>(null)
+  // 🍎 자동 검색 플래그 (초기 검색어로 자동 검색 여부)
+  const shouldAutoSearch = useRef(false)
 
-  // 🍎 모달 열릴 때 입력창 포커스
+  // 🍎 모달 열릴 때 입력창 포커스 및 초기 검색어 설정
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen) {
+      // 초기 검색어가 있으면 설정하고 자동 검색 플래그 설정
+      if (initialQuery.trim()) {
+        setSearchQuery(initialQuery)
+        shouldAutoSearch.current = true
+      }
       setTimeout(() => inputRef.current?.focus(), 100)
     }
-  }, [isOpen])
+  }, [isOpen, initialQuery])
 
   // 🍎 모달 닫힐 때 상태 초기화
   useEffect(() => {
@@ -58,8 +68,44 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       setError(null)
       setHasSearched(false)
       setSelectedItem(null)
+      shouldAutoSearch.current = false
     }
   }, [isOpen])
+
+  // 🍎 초기 검색어로 자동 검색 실행
+  useEffect(() => {
+    if (shouldAutoSearch.current && searchQuery.trim() && isOpen) {
+      shouldAutoSearch.current = false
+      // 검색 실행 (비동기)
+      const autoSearch = async () => {
+        setIsLoading(true)
+        setError(null)
+        setHasSearched(true)
+        setSelectedItem(null)
+
+        try {
+          const response = await SearchService.searchDocuments({
+            query: searchQuery.trim(),
+            search_mode: 'keyword',
+            mode: 'AND',
+            customer_id: customerId
+          })
+
+          setResults(response.search_results || [])
+          if (response.search_results && response.search_results.length > 0) {
+            setSelectedItem(response.search_results[0])
+          }
+        } catch (err) {
+          console.error('[DocumentContentSearchModal] 자동 검색 실패:', err)
+          setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
+          setResults([])
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      void autoSearch()
+    }
+  }, [searchQuery, isOpen, customerId])
 
   // 🍎 검색 실행
   const handleSearch = useCallback(async () => {

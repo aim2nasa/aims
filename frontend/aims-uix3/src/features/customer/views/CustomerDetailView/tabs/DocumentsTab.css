@@ -518,6 +518,116 @@
   height: 1px;
 }
 
+/* === 🍎 간편 문서검색 === */
+.simple-document-search {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1;
+  justify-content: center;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.simple-document-search__label {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.simple-document-search__input {
+  flex: 1;
+  min-width: 80px;
+  max-width: 150px;
+  height: 24px;
+  padding: 0 var(--spacing-2);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-caption-1);
+  font-family: inherit;
+  transition: border-color var(--duration-ios-quick) var(--easing-ios-default),
+              box-shadow var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.simple-document-search__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.simple-document-search__input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+[data-theme="dark"] .simple-document-search__input:focus {
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.simple-document-search__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary-500);
+  color: white;
+  cursor: pointer;
+  transition: background-color var(--duration-ios-quick) var(--easing-ios-default),
+              transform var(--duration-ios-quick) var(--easing-ios-default),
+              opacity var(--duration-ios-quick) var(--easing-ios-default);
+  flex-shrink: 0;
+}
+
+.simple-document-search__btn:hover:not(:disabled) {
+  background-color: var(--color-primary-600);
+}
+
+.simple-document-search__btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.simple-document-search__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 문서 상세 검색 이동 버튼 */
+.simple-document-search__detail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-ios-quick) var(--easing-ios-default),
+              border-color var(--duration-ios-quick) var(--easing-ios-default),
+              color var(--duration-ios-quick) var(--easing-ios-default),
+              transform var(--duration-ios-quick) var(--easing-ios-default);
+  flex-shrink: 0;
+}
+
+.simple-document-search__detail-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+.simple-document-search__detail-btn:active {
+  transform: scale(0.95);
+}
+
 /* === 🍎 AR BADGE: Annual Report indicator (상단 중앙, 보라색) === */
 .document-ar-badge {
   position: absolute;
