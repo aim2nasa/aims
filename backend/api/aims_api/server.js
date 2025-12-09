@@ -1019,6 +1019,26 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
     // ✅ NEW: raw + computed 구조 사용
     const response = prepareDocumentResponse(document);
 
+    // 🆕 customer_relation 동적 생성 (customerId가 있는 경우)
+    let customerRelation = null;
+    if (document.customerId) {
+      const customerId = document.customerId.toString();
+      // 고객 이름 조회
+      const customer = await db.collection('customers')
+        .findOne(
+          { _id: new ObjectId(customerId) },
+          { projection: { 'personal_info.name': 1 } }
+        );
+      customerRelation = {
+        customer_id: customerId,
+        customer_name: customer?.personal_info?.name || null,
+        notes: document.customer_notes || ''
+      };
+    }
+
+    // raw에 customer_relation 업데이트
+    response.raw.customer_relation = customerRelation;
+
     res.json({
       success: true,
       data: {
@@ -1034,7 +1054,8 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
         uploadedAt: normalizeTimestamp(document.upload?.uploaded_at),
         fileSize: document.meta?.size_bytes,
         mimeType: document.meta?.mime,
-        filePath: document.upload?.destPath
+        filePath: document.upload?.destPath,
+        customer_relation: customerRelation  // 🆕 하위 호환성용 추가
       }
     });
   } catch (error) {
