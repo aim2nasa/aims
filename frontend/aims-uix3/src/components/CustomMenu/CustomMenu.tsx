@@ -3,6 +3,7 @@ import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
+import { useRecentCustomersStore } from '../../shared/store/useRecentCustomersStore'
 import './CustomMenu.css'
 import './CustomMenuTooltip.css'
 
@@ -117,6 +118,29 @@ const MenuIcons = {
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
+  ),
+  // 최근 검색 고객 섹션 아이콘 (시계)
+  Clock: () => (
+    <SFSymbol
+      name="clock"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
+  ),
+  // 개인 고객 아이콘 (전체 고객 보기와 동일한 SVG)
+  PersonSmall: () => (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+      <circle cx="10" cy="10" r="10" opacity="0.2" />
+      <circle cx="10" cy="7" r="3" />
+      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+    </svg>
+  ),
+  // 법인 고객 아이콘 (전체 고객 보기와 동일한 SVG)
+  BuildingSmall: () => (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--corporate">
+      <circle cx="10" cy="10" r="10" opacity="0.2" />
+      <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+    </svg>
   )
 }
 
@@ -132,6 +156,7 @@ export interface MenuItem {
 // 컴포넌트 Props 타입 정의
 interface CustomMenuProps {
   onMenuClick?: (key: string) => void
+  onCustomerClick?: (customerId: string) => void  // 최근 검색 고객 클릭 핸들러
   hasSearchResults?: boolean
   searchResultsCount?: number
   collapsed?: boolean
@@ -256,6 +281,7 @@ const CustomMenuItem = ({
 // 메인 CustomMenu 컴포넌트
 const CustomMenu = ({
   onMenuClick,
+  onCustomerClick,
   hasSearchResults = false,
   searchResultsCount = 0,
   collapsed = false,
@@ -263,6 +289,9 @@ const CustomMenu = ({
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+
+  // 최근 검색 고객 목록 가져오기
+  const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
   useEffect(() => {
@@ -304,6 +333,14 @@ const CustomMenu = ({
         }
         setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents'])
       }, 800)
+
+      // 5단계: 1000ms 후 최근 검색 고객도 펼침
+      setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 5단계 - 최근 검색 고객 추가 펼침')
+        }
+        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents', 'recent-customers'])
+      }, 1000)
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
@@ -491,8 +528,24 @@ const CustomMenu = ({
         label: '',
         tooltipTitle: '문서를 검색합니다',
       }
-    ] : [])
-  ], [collapsed, hasSearchResults, searchResultsCount])
+    ] : []),
+
+    // ━━━ 최근 검색 고객 ━━━ (고객 목록이 있을 때만 표시, collapsed 상태에서는 숨김)
+    ...(recentCustomers.length > 0 && !collapsed ? [{
+      key: 'recent-customers',
+      icon: <span className="menu-icon-teal"><MenuIcons.Clock /></span>,
+      label: '최근 검색 고객',
+      tooltipTitle: '최근 검색한 고객',
+      children: recentCustomers.slice(0, 5).map(customer => ({
+        key: `recent-customer-${customer._id}`,
+        icon: customer.customerType === '법인'
+          ? <MenuIcons.BuildingSmall />
+          : <MenuIcons.PersonSmall />,
+        label: customer.name,
+        tooltipTitle: `${customer.name} (${customer.customerType})`,
+      }))
+    }] : [])
+  ], [collapsed, hasSearchResults, searchResultsCount, recentCustomers])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>
@@ -514,6 +567,15 @@ const CustomMenu = ({
     const menuContainer = document.querySelector('.custom-menu') as HTMLElement
     if (menuContainer) {
       menuContainer.focus()
+    }
+
+    // 최근 검색 고객 클릭 처리
+    if (key.startsWith('recent-customer-')) {
+      const customerId = key.replace('recent-customer-', '')
+      if (onCustomerClick) {
+        onCustomerClick(customerId)
+      }
+      return
     }
 
     // selectedKey는 외부에서 제어되므로 setSelectedKey 제거

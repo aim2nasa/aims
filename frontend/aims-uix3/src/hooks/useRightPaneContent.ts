@@ -16,6 +16,7 @@ import type { SelectedDocument } from '../utils/documentTransformers'
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from '../utils/documentTransformers'
 import { CustomerService } from '@/services/customerService'
 import { api } from '@/shared/lib/api'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 
 /**
  * RightPane 콘텐츠 타입
@@ -115,6 +116,9 @@ export function useRightPaneContent(
     setFullDetailCustomerId,
     customerAllViewRefreshRef,
   } = options
+
+  // 최근 검색 고객 스토어
+  const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
 
   // RightPane 상태
   const [rightPaneVisible, setRightPaneVisible] = useState(false)
@@ -225,13 +229,18 @@ export function useRightPaneContent(
         return
       }
 
+      let customer: Customer
       if (customerData) {
+        customer = customerData
         setSelectedCustomer(customerData)
       } else {
-        const customer = await CustomerService.getCustomer(customerId)
+        customer = await CustomerService.getCustomer(customerId)
         setSelectedCustomer(customer)
       }
       setRightPaneContentType('customer')
+
+      // 최근 검색 고객 목록에 추가
+      addRecentCustomer(customer)
 
       // RightPane이 숨겨져 있으면 표시
       setRightPaneVisible(true)
@@ -239,12 +248,12 @@ export function useRightPaneContent(
       // URL에 고객 ID와 탭 저장
       updateURLParams({ customerId, documentId: null, tab: initialTab || null })
     },
-    [updateURLParams, activeDocumentView]
+    [updateURLParams, activeDocumentView, addRecentCustomer]
   )
 
   // 고객 전체 정보 페이지 열기 핸들러
   const handleOpenFullDetail = useCallback(
-    (customerId: string) => {
+    async (customerId: string) => {
       // 현재 전체 UI 상태 저장 (돌아가기 버튼에서 복원용)
       previousUIStateRef.current = {
         view: activeDocumentView,
@@ -257,6 +266,14 @@ export function useRightPaneContent(
       setSelectedCustomer(null)
       setRightPaneContentType(null)
       setRightPaneVisible(false)
+
+      // 최근 검색 고객 목록에 추가
+      try {
+        const customer = await CustomerService.getCustomer(customerId)
+        addRecentCustomer(customer)
+      } catch (error) {
+        console.error('[useRightPaneContent] 고객 정보 로드 실패:', error)
+      }
 
       // CustomerFullDetailView 표시
       setFullDetailCustomerId(customerId)
@@ -273,6 +290,7 @@ export function useRightPaneContent(
       rightPaneContentType,
       setActiveDocumentView,
       setFullDetailCustomerId,
+      addRecentCustomer,
     ]
   )
 

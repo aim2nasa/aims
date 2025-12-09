@@ -506,6 +506,22 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [updateURLParams])
 
+  // 최근 검색 고객 클릭 핸들러 - 고객 전체보기 페이지로 이동
+  const handleRecentCustomerClick = useCallback((customerId: string) => {
+    // customers-full-detail 뷰로 이동
+    setActiveDocumentView('customers-full-detail')
+    setFullDetailCustomerId(customerId)
+
+    // RightPane 닫기
+    setSelectedDocument(null)
+    setSelectedCustomer(null)
+    setRightPaneContentType(null)
+    setRightPaneVisible(false)
+
+    // URL 업데이트
+    updateURLParams({ view: 'customers-full-detail', customerId, documentId: null })
+  }, [updateURLParams])
+
   // 계정 설정 Store에 모든 setter 등록
   useEffect(() => {
     registerSetters({
@@ -780,6 +796,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomMenu
               collapsed={leftPaneCollapsed}
               onMenuClick={handleMenuClick}
+              onCustomerClick={handleRecentCustomerClick}
               selectedKey={activeDocumentView || 'dsd'}
             />
           </Suspense>

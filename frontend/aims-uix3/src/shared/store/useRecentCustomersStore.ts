@@ -15,6 +15,7 @@ export interface RecentCustomer {
   name: string
   phone?: string
   address?: string
+  customerType: '개인' | '법인'  // 고객 유형
   selectedAt: string // ISO 날짜 문자열
 }
 
@@ -55,10 +56,14 @@ export const useRecentCustomersStore = create<RecentCustomersState>()(
           ].filter(Boolean)
           const address = addressParts.length > 0 ? addressParts.join(' ') : undefined
 
+          // 고객 유형 추출 (기본값: 개인)
+          const customerType = (customer.insurance_info?.customer_type as '개인' | '법인') || '개인'
+
           // 새로운 고객 정보 생성
           const newRecentCustomer: RecentCustomer = {
             _id: customer._id,
             name: customer.personal_info?.name || '이름 없음',
+            customerType,
             selectedAt: new Date().toISOString(),
             ...(phone && { phone }),
             ...(address && { address })
@@ -93,7 +98,7 @@ export const useRecentCustomersStore = create<RecentCustomersState>()(
     }),
     {
       name: 'aims-recent-customers', // localStorage key
-      version: 1
+      version: 2  // v2: customerType 필드 추가
     }
   )
 )

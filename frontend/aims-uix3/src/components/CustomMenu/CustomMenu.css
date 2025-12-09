@@ -514,6 +514,15 @@
   color: var(--color-ios-green); /* iOS systemGreen - 선택 시에도 원래 색상 유지 */
 }
 
+/* 고객 타입 아이콘 - 선택 시에도 원래 색상 유지 */
+.custom-menu .custom-menu-item.selected .customer-icon--personal {
+  color: var(--color-icon-blue, #007aff); /* 개인 고객 - 파란색 */
+}
+
+.custom-menu .custom-menu-item.selected .customer-icon--corporate {
+  color: var(--color-icon-orange, #ff9500); /* 법인 고객 - 주황색 */
+}
+
 /* 🍎 애플 스타일: 모든 메뉴 동일한 선택 상태 - 개별 색상 제거 */
 /* iOS에서는 모든 메뉴 아이템이 동일한 선택 스타일을 가짐 */
 
@@ -778,6 +787,28 @@
 /* 문서 일괄등록 - iOS systemCyan */
 .menu-icon-cyan {
   color: var(--color-ios-cyan, #32ade6); /* iOS systemCyan */
+}
+
+/* 최근 검색 고객 섹션 - iOS systemTeal */
+.menu-icon-teal {
+  color: var(--color-ios-teal, #30b0c7); /* iOS systemTeal */
+}
+
+/* 개인 고객 아이콘 - iOS systemGray */
+.menu-icon-gray {
+  color: var(--color-neutral-500, #8e8e93); /* iOS systemGray */
+}
+
+/* ━━━ 고객 타입 아이콘 (전체 고객 보기와 동일) ━━━ */
+
+/* 개인 고객 - 파란색 */
+.custom-menu .customer-icon--personal {
+  color: var(--color-icon-blue, #007aff);
+}
+
+/* 법인 고객 - 주황색 (iOS systemOrange) */
+.custom-menu .customer-icon--corporate {
+  color: var(--color-icon-orange, #ff9500);
 }
 
 /* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */

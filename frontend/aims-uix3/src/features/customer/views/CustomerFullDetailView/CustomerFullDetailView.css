@@ -1331,7 +1331,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 }
 
 .customer-icon--corporate {
-  color: var(--color-icon-purple);
+  color: var(--color-icon-orange);  /* 전체 고객 보기와 동일 */
 }
 
 /* ============================================
