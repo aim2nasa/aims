@@ -907,26 +907,29 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         <PreviewIcon />
                       </button>
                     </Tooltip>
-                    <Tooltip content="연결된 문서는 해제할 수 없습니다">
-                      <button
-                        type="button"
-                        className="action-btn action-btn--unlink"
-                        onClick={() => void handleUnlink(document)}
-                        aria-label="연결 해제"
-                        disabled={true}
-                      >
-                        {unlinkingId === document._id ? (
-                          <SFSymbol
-                            name="arrow.clockwise"
-                            animation={SFSymbolAnimation.ROTATE}
-                            size={SFSymbolSize.CAPTION_1}
-                            weight={SFSymbolWeight.REGULAR}
-                          />
-                        ) : (
-                          <LinkIcon />
-                        )}
-                      </button>
-                    </Tooltip>
+                    {/* 🍎 연결 해제 버튼 (DEV 모드에서만 표시) */}
+                    {isDevMode && (
+                      <Tooltip content="연결된 문서는 해제할 수 없습니다">
+                        <button
+                          type="button"
+                          className="action-btn action-btn--unlink"
+                          onClick={() => void handleUnlink(document)}
+                          aria-label="연결 해제"
+                          disabled={true}
+                        >
+                          {unlinkingId === document._id ? (
+                            <SFSymbol
+                              name="arrow.clockwise"
+                              animation={SFSymbolAnimation.ROTATE}
+                              size={SFSymbolSize.CAPTION_1}
+                              weight={SFSymbolWeight.REGULAR}
+                            />
+                          ) : (
+                            <LinkIcon />
+                          )}
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               )
