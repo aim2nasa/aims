@@ -80,8 +80,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
-  const DEFAULT_TOP_LEFT_WIDTH = 37.5
-  const DEFAULT_BOTTOM_LEFT_WIDTH = 62.01
+  const DEFAULT_LEFT_WIDTH = 38 // 🍎 상단/하단 통합 - 오른쪽(보험계약/AR)에 충분한 공간 확보
   const DEFAULT_TOP_ROW_FLEX = 0.97
 
   // 🍎 localStorage에서 저장된 레이아웃 불러오기
@@ -91,8 +90,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       if (saved) {
         const parsed = JSON.parse(saved)
         return {
-          topLeftWidth: parsed.topLeftWidth ?? DEFAULT_TOP_LEFT_WIDTH,
-          bottomLeftWidth: parsed.bottomLeftWidth ?? DEFAULT_BOTTOM_LEFT_WIDTH,
+          // 🍎 하위 호환: 기존 topLeftWidth 또는 bottomLeftWidth가 있으면 사용
+          leftWidth: parsed.leftWidth ?? parsed.topLeftWidth ?? parsed.bottomLeftWidth ?? DEFAULT_LEFT_WIDTH,
           topRowFlex: parsed.topRowFlex ?? DEFAULT_TOP_ROW_FLEX
         }
       }
@@ -100,27 +99,24 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       console.warn('[CustomerFullDetailView] localStorage 레이아웃 불러오기 실패:', e)
     }
     return {
-      topLeftWidth: DEFAULT_TOP_LEFT_WIDTH,
-      bottomLeftWidth: DEFAULT_BOTTOM_LEFT_WIDTH,
+      leftWidth: DEFAULT_LEFT_WIDTH,
       topRowFlex: DEFAULT_TOP_ROW_FLEX
     }
   }
 
   // 🍎 리사이즈 상태 (퍼센트 기반) - localStorage에서 초기값 로드
-  const [topLeftWidth, setTopLeftWidth] = useState(() => getInitialLayoutValues().topLeftWidth)
-  const [bottomLeftWidth, setBottomLeftWidth] = useState(() => getInitialLayoutValues().bottomLeftWidth)
+  // 🍎 상단/하단 왼쪽 너비 통합 → 보험계약과 Annual Report 경계 일치
+  const [leftWidth, setLeftWidth] = useState(() => getInitialLayoutValues().leftWidth)
   const [topRowFlex, setTopRowFlex] = useState(() => getInitialLayoutValues().topRowFlex)
 
   // 🍎 레이아웃 변경 여부 확인
   const isLayoutModified =
-    Math.abs(topLeftWidth - DEFAULT_TOP_LEFT_WIDTH) > 0.01 ||
-    Math.abs(bottomLeftWidth - DEFAULT_BOTTOM_LEFT_WIDTH) > 0.01 ||
+    Math.abs(leftWidth - DEFAULT_LEFT_WIDTH) > 0.01 ||
     Math.abs(topRowFlex - DEFAULT_TOP_ROW_FLEX) > 0.001
 
   // 🍎 레이아웃 리셋 핸들러 (localStorage도 삭제)
   const handleResetLayout = useCallback(() => {
-    setTopLeftWidth(DEFAULT_TOP_LEFT_WIDTH)
-    setBottomLeftWidth(DEFAULT_BOTTOM_LEFT_WIDTH)
+    setLeftWidth(DEFAULT_LEFT_WIDTH)
     setTopRowFlex(DEFAULT_TOP_ROW_FLEX)
 
     // 🍎 localStorage에서 저장된 레이아웃 삭제
@@ -138,16 +134,14 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   useEffect(() => {
     if (prevIsDragging.current !== null && isDragging === null) {
       console.log('📐 [레이아웃 값]', {
-        topLeftWidth: topLeftWidth.toFixed(2),
-        bottomLeftWidth: bottomLeftWidth.toFixed(2),
+        leftWidth: leftWidth.toFixed(2),
         topRowFlex: topRowFlex.toFixed(3)
       })
 
       // 🍎 localStorage에 레이아웃 저장
       try {
         localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
-          topLeftWidth,
-          bottomLeftWidth,
+          leftWidth,
           topRowFlex
         }))
       } catch (e) {
@@ -155,7 +149,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       }
     }
     prevIsDragging.current = isDragging
-  }, [isDragging, topLeftWidth, bottomLeftWidth, topRowFlex])
+  }, [isDragging, leftWidth, topRowFlex])
 
   const confirmController = useAppleConfirmController()
 
@@ -420,22 +414,22 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     void loadCustomer()
   }, [loadCustomer])
 
-  // 🍎 리사이즈 핸들러 - 수평 (상단 행: 고객정보 ↔ 보험계약)
-  const handleTopHorizontalResize = useCallback((e: React.MouseEvent) => {
+  // 🍎 리사이즈 핸들러 - 수평 (상단/하단 통합: 경계 일치)
+  const handleHorizontalResize = useCallback((e: React.MouseEvent, handleType: 'top-h' | 'bottom-h') => {
     e.preventDefault()
     const startX = e.clientX
-    const startWidth = topLeftWidth
+    const startWidth = leftWidth
     const container = contentRef.current
     if (!container) return
 
-    setIsDragging('top-h')
+    setIsDragging(handleType)
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const containerRect = container.getBoundingClientRect()
       const deltaX = moveEvent.clientX - startX
       const deltaPercent = (deltaX / containerRect.width) * 100
       const newWidth = Math.max(20, Math.min(80, startWidth + deltaPercent))
-      setTopLeftWidth(newWidth)
+      setLeftWidth(newWidth) // 🍎 상단/하단 동시 변경
     }
 
     const handleMouseUp = () => {
@@ -446,35 +440,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-  }, [topLeftWidth])
-
-  // 🍎 리사이즈 핸들러 - 수평 (하단 행: 문서 ↔ Annual Report)
-  const handleBottomHorizontalResize = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const startX = e.clientX
-    const startWidth = bottomLeftWidth
-    const container = contentRef.current
-    if (!container) return
-
-    setIsDragging('bottom-h')
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const containerRect = container.getBoundingClientRect()
-      const deltaX = moveEvent.clientX - startX
-      const deltaPercent = (deltaX / containerRect.width) * 100
-      const newWidth = Math.max(20, Math.min(80, startWidth + deltaPercent))
-      setBottomLeftWidth(newWidth)
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(null)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [bottomLeftWidth])
+  }, [leftWidth])
 
   // 🍎 리사이즈 핸들러 - 수직 (상단 행 ↔ 하단 행)
   const handleVerticalResize = useCallback((e: React.MouseEvent) => {
@@ -671,21 +637,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
               </Button>
             </div>
 
-            {/* 🍎 섹션들 - 스크롤 가능한 컨테이너 */}
+            {/* 🍎 섹션들 - 2x2 그리드 (열 공유로 경계 일치) */}
             <div
               ref={contentRef}
               className={`customer-full-detail__content ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
               style={{
-                '--top-left-width': `${topLeftWidth}%`,
-                '--bottom-left-width': `${bottomLeftWidth}%`,
-                '--top-row-flex': topRowFlex,
-                '--bottom-row-flex': 1,
+                '--left-width': `${leftWidth}%`,
+                '--top-row-flex': `${topRowFlex}fr`,
+                '--bottom-row-flex': '1fr',
               } as React.CSSProperties}
             >
-              {/* 🍎 상단 행 - 고객정보 | 리사이즈 핸들 | 보험계약 */}
-              <div className="customer-full-detail__row customer-full-detail__row--top">
-                {/* 🍎 고객 정보 섹션 (기본정보 + 가족관계 통합) */}
-                <section className="customer-full-detail__section customer-full-detail__section--customer-info">
+              {/* 🍎 고객 정보 섹션 (1행 1열) */}
+              <section className="customer-full-detail__section customer-full-detail__section--customer-info">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="8" cy="5" r="2.5"/>
@@ -759,17 +722,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 </div>
               </section>
 
-              {/* 🍎 리사이즈 핸들 - 고객정보 ↔ 보험계약 */}
+              {/* 🍎 리사이즈 핸들 - 고객정보 ↔ 보험계약 (1행 2열) */}
               <div
-                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal ${isDragging === 'top-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
-                onMouseDown={handleTopHorizontalResize}
+                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--top-h ${isDragging === 'top-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                onMouseDown={(e) => handleHorizontalResize(e, 'top-h')}
                 role="separator"
                 aria-orientation="vertical"
                 aria-label="고객정보와 보험계약 사이 크기 조절"
               />
 
-              {/* 🍎 보험 계약 섹션 */}
-              <section className="customer-full-detail__section">
+              {/* 🍎 보험 계약 섹션 (1행 3열) */}
+              <section className="customer-full-detail__section customer-full-detail__section--contracts">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <rect x="2" y="2" width="12" height="12" rx="2"/>
@@ -821,9 +784,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   />
                 </div>
               </section>
-              </div>
 
-              {/* 🍎 리사이즈 핸들 - 상단 행 ↔ 하단 행 */}
+              {/* 🍎 리사이즈 핸들 - 상단 행 ↔ 하단 행 (2행 전체) */}
               <div
                 className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--vertical ${isDragging === 'vertical' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
                 onMouseDown={handleVerticalResize}
@@ -832,134 +794,131 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 aria-label="상단 행과 하단 행 사이 크기 조절"
               />
 
-              {/* 🍎 하단 행 - 문서 | 리사이즈 핸들 | Annual Report */}
-              <div className="customer-full-detail__row customer-full-detail__row--bottom">
-                {/* 🍎 문서 섹션 */}
-                <section className="customer-full-detail__section">
-                  <h2 className="customer-full-detail__section-title">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
-                    </svg>
-                    <span>문서</span>
-                    {documentCount > 0 && (
-                      <span className="customer-full-detail__section-count">{documentCount}</span>
-                    )}
-                    {/* 🍎 파일명 검색 */}
-                    <div className="customer-full-detail__section-search">
-                      <SFSymbol
-                        name="magnifyingglass"
-                        size={SFSymbolSize.CAPTION_2}
-                        weight={SFSymbolWeight.MEDIUM}
-                        className="section-search-icon"
-                        decorative={true}
-                      />
-                      <input
-                        type="text"
-                        value={documentSearchTerm}
-                        onChange={(e) => setDocumentSearchTerm(e.target.value)}
-                        placeholder="파일명 검색"
-                        className="section-search-input"
-                      />
-                      {documentSearchTerm && (
-                        <button
-                          type="button"
-                          className="section-search-clear"
-                          onClick={() => setDocumentSearchTerm('')}
-                          aria-label="검색어 지우기"
-                        >
-                          <SFSymbol
-                            name="xmark.circle.fill"
-                            size={SFSymbolSize.CAPTION_2}
-                            weight={SFSymbolWeight.REGULAR}
-                            decorative={true}
-                          />
-                        </button>
-                      )}
-                    </div>
-                  </h2>
-                  <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
-                    <DocumentsTab
-                      customer={customer}
-                      onDocumentCountChange={setDocumentCount}
-                      onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
-                      searchTerm={documentSearchTerm}
-                      onSearchChange={setDocumentSearchTerm}
+              {/* 🍎 문서 섹션 (3행 1열) */}
+              <section className="customer-full-detail__section customer-full-detail__section--documents">
+                <h2 className="customer-full-detail__section-title">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
+                  </svg>
+                  <span>문서</span>
+                  {documentCount > 0 && (
+                    <span className="customer-full-detail__section-count">{documentCount}</span>
+                  )}
+                  {/* 🍎 파일명 검색 */}
+                  <div className="customer-full-detail__section-search">
+                    <SFSymbol
+                      name="magnifyingglass"
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      className="section-search-icon"
+                      decorative={true}
                     />
-                  </div>
-                </section>
-
-                {/* 🍎 리사이즈 핸들 - 문서 ↔ Annual Report */}
-                <div
-                  className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal ${isDragging === 'bottom-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
-                  onMouseDown={handleBottomHorizontalResize}
-                  role="separator"
-                  aria-orientation="vertical"
-                  aria-label="문서와 Annual Report 사이 크기 조절"
-                />
-
-                {/* 🍎 Annual Report 섹션 */}
-                <section className="customer-full-detail__section">
-                  <h2 className="customer-full-detail__section-title">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--color-success-overlay-bg)"/>
-                      <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                      <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                      <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                    </svg>
-                    <span>Annual Report</span>
-                    {annualReportCount > 0 && (
-                      <span className="customer-full-detail__section-count">{annualReportCount}</span>
-                    )}
-                    {/* 🍎 Annual Report 검색 */}
-                    <div className="customer-full-detail__section-search">
-                      <SFSymbol
-                        name="magnifyingglass"
-                        size={SFSymbolSize.CAPTION_2}
-                        weight={SFSymbolWeight.MEDIUM}
-                        className="section-search-icon"
-                        decorative={true}
-                      />
-                      <input
-                        type="text"
-                        value={annualReportSearchTerm}
-                        onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
-                        placeholder="검색"
-                        className="section-search-input"
-                      />
-                      {annualReportSearchTerm && (
-                        <button
-                          type="button"
-                          className="section-search-clear"
-                          onClick={() => setAnnualReportSearchTerm('')}
-                          aria-label="검색어 지우기"
-                        >
-                          <SFSymbol
-                            name="xmark.circle.fill"
-                            size={SFSymbolSize.CAPTION_2}
-                            weight={SFSymbolWeight.REGULAR}
-                            decorative={true}
-                          />
-                        </button>
-                      )}
-                    </div>
-                  </h2>
-                  <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
-                    <AnnualReportTab
-                      customer={customer}
-                      onAnnualReportCountChange={setAnnualReportCount}
-                      refreshTrigger={annualReportRefreshTrigger}
-                      searchTerm={annualReportSearchTerm}
-                      onSearchChange={setAnnualReportSearchTerm}
+                    <input
+                      type="text"
+                      value={documentSearchTerm}
+                      onChange={(e) => setDocumentSearchTerm(e.target.value)}
+                      placeholder="파일명 검색"
+                      className="section-search-input"
                     />
+                    {documentSearchTerm && (
+                      <button
+                        type="button"
+                        className="section-search-clear"
+                        onClick={() => setDocumentSearchTerm('')}
+                        aria-label="검색어 지우기"
+                      >
+                        <SFSymbol
+                          name="xmark.circle.fill"
+                          size={SFSymbolSize.CAPTION_2}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      </button>
+                    )}
                   </div>
-                </section>
-              </div>
+                </h2>
+                <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
+                  <DocumentsTab
+                    customer={customer}
+                    onDocumentCountChange={setDocumentCount}
+                    onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
+                    searchTerm={documentSearchTerm}
+                    onSearchChange={setDocumentSearchTerm}
+                  />
+                </div>
+              </section>
+
+              {/* 🍎 리사이즈 핸들 - 문서 ↔ Annual Report (3행 2열) */}
+              <div
+                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal customer-full-detail__resize-handle--bottom-h ${isDragging === 'bottom-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                onMouseDown={(e) => handleHorizontalResize(e, 'bottom-h')}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="문서와 Annual Report 사이 크기 조절"
+              />
+
+              {/* 🍎 Annual Report 섹션 (3행 3열) */}
+              <section className="customer-full-detail__section customer-full-detail__section--annual-report">
+                <h2 className="customer-full-detail__section-title">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--color-success-overlay-bg)"/>
+                    <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                    <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                    <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                  </svg>
+                  <span>Annual Report</span>
+                  {annualReportCount > 0 && (
+                    <span className="customer-full-detail__section-count">{annualReportCount}</span>
+                  )}
+                  {/* 🍎 Annual Report 검색 */}
+                  <div className="customer-full-detail__section-search">
+                    <SFSymbol
+                      name="magnifyingglass"
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      className="section-search-icon"
+                      decorative={true}
+                    />
+                    <input
+                      type="text"
+                      value={annualReportSearchTerm}
+                      onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
+                      placeholder="검색"
+                      className="section-search-input"
+                    />
+                    {annualReportSearchTerm && (
+                      <button
+                        type="button"
+                        className="section-search-clear"
+                        onClick={() => setAnnualReportSearchTerm('')}
+                        aria-label="검색어 지우기"
+                      >
+                        <SFSymbol
+                          name="xmark.circle.fill"
+                          size={SFSymbolSize.CAPTION_2}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      </button>
+                    )}
+                  </div>
+                </h2>
+                <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
+                  <AnnualReportTab
+                    customer={customer}
+                    onAnnualReportCountChange={setAnnualReportCount}
+                    refreshTrigger={annualReportRefreshTrigger}
+                    searchTerm={annualReportSearchTerm}
+                    onSearchChange={setAnnualReportSearchTerm}
+                  />
+                </div>
+              </section>
             </div>
           </>
         )}
