@@ -1,312 +1,81 @@
-/* 메모 탭 - Apple 스타일 */
+/* 메모 필드 - 단일 메모 Apple 스타일 */
 
-.memos-tab {
+.memo-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-1);
 }
 
 /* 헤더 */
-.memos-header {
+.memo-field__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.memos-header__title {
+.memo-field__title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   font-size: var(--font-caption);
   font-weight: 600;
   color: var(--color-text-secondary);
 }
 
-.memos-header__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 9px;
-  background-color: var(--color-layout-accent-light);
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-/* 상태 표시 */
-.memos-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
-  font-size: var(--font-caption);
-  color: var(--color-text-secondary);
-  text-align: center;
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-[data-theme="dark"] .memos-state {
-  background-color: rgba(255, 255, 255, 0.04);
-}
-
-.memos-state--error {
-  color: var(--color-icon-red);
-}
-
-.memos-state--empty {
-  color: var(--color-text-tertiary);
-}
-
-.memos-state__spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.memos-retry {
-  margin-left: var(--spacing-2);
+/* 저장 버튼 */
+.memo-field__save {
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid var(--color-primary-200);
-  background-color: transparent;
-  color: var(--color-primary-600);
-  font-size: var(--font-caption);
-  cursor: pointer;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.memos-retry:hover {
-  background-color: var(--color-primary-100);
-}
-
-/* 메모 입력 */
-.memos-input {
-  display: flex;
-  gap: var(--spacing-2);
-  align-items: flex-end;
-}
-
-.memos-input__textarea {
-  flex: 1;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background-color: var(--color-layout-primary);
-  font-size: var(--font-caption);
-  font-family: inherit;
-  color: var(--color-text-primary);
-  resize: none;
-  transition: border-color var(--duration-micro-quick) var(--easing-ease-out),
-    box-shadow var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.memos-input__textarea:focus {
-  outline: none;
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
-}
-
-.memos-input__textarea::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-[data-theme="dark"] .memos-input__textarea {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.memos-input__button {
-  padding: var(--spacing-2) var(--spacing-3);
   border: none;
-  border-radius: 8px;
   background-color: var(--color-primary-600);
   color: white;
-  font-size: var(--font-caption);
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--duration-micro-quick) var(--easing-ease-out),
     opacity var(--duration-micro-quick) var(--easing-ease-out);
 }
 
-.memos-input__button:hover:not(:disabled) {
+.memo-field__save:hover:not(:disabled) {
   background-color: var(--color-primary-700);
 }
 
-.memos-input__button:disabled {
+.memo-field__save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* 메모 목록 */
-.memos-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-/* 메모 아이템 */
-.memos-item {
-  padding: var(--spacing-3);
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-[data-theme="dark"] .memos-item {
-  background-color: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.memos-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .memos-item:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-.memos-item__content {
-  font-size: var(--font-caption);
-  color: var(--color-text-primary);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.memos-item__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--spacing-2);
-  padding-top: var(--spacing-2);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .memos-item__footer {
-  border-top-color: rgba(255, 255, 255, 0.08);
-}
-
-.memos-item__date {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-}
-
-.memos-item__edited {
-  font-style: italic;
-}
-
-.memos-item__actions {
-  display: flex;
-  gap: var(--spacing-1);
-}
-
-.memos-item__action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: color var(--duration-micro-quick) var(--easing-ease-out),
-    background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.memos-item__action:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: var(--color-text-secondary);
-}
-
-[data-theme="dark"] .memos-item__action:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.memos-item__action--danger:hover {
-  background-color: rgba(255, 59, 48, 0.1);
-  color: var(--color-icon-red);
-}
-
-/* 수정 모드 */
-.memos-item__edit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.memos-item__edit-textarea {
+/* 텍스트영역 */
+.memo-field__textarea {
+  width: 100%;
   padding: var(--spacing-2);
-  border: 1px solid var(--color-primary-300);
-  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
   background-color: var(--color-layout-primary);
   font-size: var(--font-caption);
   font-family: inherit;
   color: var(--color-text-primary);
-  resize: none;
+  resize: vertical;
+  min-height: 36px;
+  transition: border-color var(--duration-micro-quick) var(--easing-ease-out),
+    box-shadow var(--duration-micro-quick) var(--easing-ease-out);
 }
 
-.memos-item__edit-textarea:focus {
+.memo-field__textarea:focus {
   outline: none;
   border-color: var(--color-primary-500);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
 }
 
-.memos-item__edit-actions {
-  display: flex;
-  gap: var(--spacing-2);
-  justify-content: flex-end;
+.memo-field__textarea::placeholder {
+  color: var(--color-text-tertiary);
 }
 
-.memos-item__edit-button {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: var(--font-caption);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-.memos-item__edit-button--save {
-  border: none;
-  background-color: var(--color-primary-600);
-  color: white;
-}
-
-.memos-item__edit-button--save:hover:not(:disabled) {
-  background-color: var(--color-primary-700);
-}
-
-.memos-item__edit-button--save:disabled {
-  opacity: 0.5;
+.memo-field__textarea:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.memos-item__edit-button--cancel {
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background-color: transparent;
-  color: var(--color-text-secondary);
-}
-
-.memos-item__edit-button--cancel:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .memos-item__edit-button--cancel {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-[data-theme="dark"] .memos-item__edit-button--cancel:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+[data-theme="dark"] .memo-field__textarea {
+  border-color: rgba(255, 255, 255, 0.1);
 }

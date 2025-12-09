@@ -199,11 +199,27 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
       <div className="customer-edit-modal-content">
         {/* 기본 정보 탭 */}
         {activeTab === 'info' && (
-          <BasicInfoSection
-            formData={basicInfoData}
-            errors={errors}
-            onChange={handleBasicInfoChange}
-          />
+          <>
+            <BasicInfoSection
+              formData={basicInfoData}
+              errors={errors}
+              onChange={handleBasicInfoChange}
+            />
+            {/* 메모 필드 */}
+            <div className="customer-edit-modal-memo">
+              <label className="customer-edit-modal-memo__label" htmlFor="customer-memo">
+                메모
+              </label>
+              <textarea
+                id="customer-memo"
+                className="customer-edit-modal-memo__textarea"
+                placeholder="메모를 입력하세요..."
+                value={formData.memo ?? ''}
+                onChange={(e) => handleFieldChange('memo', e.target.value)}
+                rows={3}
+              />
+            </div>
+          </>
         )}
 
         {/* 연락처 정보 탭 */}

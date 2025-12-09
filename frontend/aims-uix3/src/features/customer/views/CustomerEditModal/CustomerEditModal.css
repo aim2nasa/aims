@@ -424,3 +424,55 @@ html[data-theme="dark"] .customer-edit-modal-button--primary:hover:not(:disabled
     padding-right: 20px;
   }
 }
+
+/* ===== 메모 필드 ===== */
+.customer-edit-modal-memo {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--color-layout-border);
+}
+
+.customer-edit-modal-memo__label {
+  display: block;
+  font-size: var(--font-size-footnote);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-text);
+  margin-bottom: 8px;
+}
+
+.customer-edit-modal-memo__textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-layout-border);
+  border-radius: 8px;
+  background-color: var(--color-layout-secondary-light);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-footnote);
+  font-family: var(--font-family-text);
+  resize: vertical;
+  min-height: 60px;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  outline: none;
+}
+
+html[data-theme="dark"] .customer-edit-modal-memo__textarea {
+  background-color: var(--color-layout-secondary-dark);
+  border-color: var(--color-layout-accent-dark);
+}
+
+.customer-edit-modal-memo__textarea:focus {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-layout-content-light);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha-light);
+}
+
+html[data-theme="dark"] .customer-edit-modal-memo__textarea:focus {
+  border-color: var(--color-primary-400);
+  background-color: var(--color-layout-content-dark);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha-medium);
+}
+
+.customer-edit-modal-memo__textarea::placeholder {
+  color: var(--color-text-tertiary);
+}

@@ -164,6 +164,23 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
         </div>
       </div>
 
+      {/* 🍎 메모 섹션 */}
+      <div className="form-section">
+        <h3 className="form-section__title form-section__title--memo">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2.5 1A1.5 1.5 0 001 2.5v11A1.5 1.5 0 002.5 15h11a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0013.5 1h-11zM4 4h8v1H4V4zm0 3h8v1H4V7zm0 3h5v1H4v-1z"/>
+          </svg>
+          <span>메모</span>
+        </h3>
+        <div className="form-section__content">
+          <div className="form-row form-row--memo">
+            <div className="form-row__value form-row__value--memo">
+              {customer.memo || <span className="form-row__placeholder">메모 없음 (정보 수정에서 추가 가능)</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 🍎 주소 보관소 모달 */}
       <AddressArchiveModal
         isOpen={addressArchiveController.isOpen}

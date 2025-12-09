@@ -202,6 +202,10 @@
   color: var(--color-menu-icon-team); /* 관계별 보기와 동일 - purple */
 }
 
+.customer-detail-view .form-section__title--memo svg {
+  color: var(--color-icon-teal);
+}
+
 /* Section Content */
 .customer-detail-view .form-section__content {
   flex: 1;
@@ -267,6 +271,23 @@
 
 [data-theme="dark"] .customer-detail-view .form-row__value {
   color: var(--color-text-primary);
+}
+
+/* 🍎 메모 행 스타일 */
+.customer-detail-view .form-row--memo {
+  display: block;
+  padding: 8px 0;
+}
+
+.customer-detail-view .form-row__value--memo {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.customer-detail-view .form-row__placeholder {
+  color: var(--color-text-tertiary);
+  font-style: italic;
 }
 
 /* Responsive */

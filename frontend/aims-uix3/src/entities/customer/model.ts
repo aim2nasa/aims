@@ -89,6 +89,8 @@ export const CustomerSchema = z.object({
   // ⭐ Soft Delete 필드
   deleted_at: z.string().datetime().nullable().optional(),
   deleted_by: z.string().nullable().optional(),
+  // ⭐ 고객 메모 (단일 필드)
+  memo: z.string().nullable().optional(),
 });
 
 /**
@@ -105,12 +107,13 @@ export const CreateCustomerSchema = z.object({
 /**
  * 고객 업데이트 요청 스키마
  *
- * 업데이트는 personal_info와 insurance_info만 가능
+ * 업데이트는 personal_info, insurance_info, memo 가능
  * _id, meta, contracts, documents, consultations는 업데이트 대상이 아님
  */
 export const UpdateCustomerSchema = z.object({
   personal_info: PersonalInfoSchema.partial().optional(),
   insurance_info: InsuranceInfoSchema.partial().optional(),
+  memo: z.string().nullable().optional(),
 });
 
 /**

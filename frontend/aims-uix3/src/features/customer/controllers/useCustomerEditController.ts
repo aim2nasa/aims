@@ -37,6 +37,7 @@ export const useCustomerEditController = (customer: Customer) => {
   const [formData, setFormData] = useState<UpdateCustomerData>({
     personal_info: { ...customer.personal_info },
     insurance_info: customer.insurance_info ? { ...customer.insurance_info } : undefined,
+    memo: customer.memo ?? '',
   });
 
   // 2. UI 상태
@@ -49,6 +50,7 @@ export const useCustomerEditController = (customer: Customer) => {
     setFormData({
       personal_info: { ...customer.personal_info },
       insurance_info: customer.insurance_info ? { ...customer.insurance_info } : undefined,
+      memo: customer.memo ?? '',
     });
   }, [customer]);
 
@@ -163,10 +165,11 @@ export const useCustomerEditController = (customer: Customer) => {
           }
         });
       }
-      // 백엔드로 전송할 데이터 (personal_info와 insurance_info만)
+      // 백엔드로 전송할 데이터 (personal_info, insurance_info, memo)
       const updatePayload: UpdateCustomerData = {
         personal_info: cleanPersonalInfo,
         insurance_info: formData.insurance_info,
+        memo: formData.memo,
       };
 
       // Document-View 패턴: CustomerDocument를 통해 업데이트
