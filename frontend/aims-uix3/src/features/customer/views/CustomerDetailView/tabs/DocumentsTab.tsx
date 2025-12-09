@@ -67,7 +67,7 @@ const ITEMS_PER_PAGE_OPTIONS_BASE = [
 
 // 🍎 행 높이 상수 (CSS와 동일하게 유지)
 const ROW_HEIGHT = 32   // CSS height: 32px
-const ROW_GAP = 0       // CSS gap: 0 (문서 행 사이 간격 없음)
+const ROW_GAP = 2       // CSS gap: 2px (행 사이 간격)
 // 🍎 기본 높이값 (실제 DOM 측정이 안될 때 fallback)
 const DEFAULT_LIST_HEADER_HEIGHT = 32
 const DEFAULT_PAGINATION_HEIGHT = 26

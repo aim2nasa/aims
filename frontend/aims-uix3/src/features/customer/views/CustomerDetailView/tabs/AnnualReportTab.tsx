@@ -85,6 +85,7 @@ const ITEMS_PER_PAGE_OPTIONS_BASE = [
 
 // 🍎 행 높이 상수 (CSS와 동일하게 유지)
 const ROW_HEIGHT = 32;   // CSS height: 32px
+const ROW_GAP = 2;       // CSS gap: 2px (행 사이 간격)
 // 🍎 기본 높이값 (실제 DOM 측정이 안될 때 fallback)
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
@@ -164,24 +165,48 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산 (DocumentsTab과 동일한 단순 상수 방식)
+  // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산 (ContractsTab/DocumentsTab과 동일한 DOM 측정 방식)
+  // ⚠️ CustomerFullDetailView에서는 일부 요소가 display:none으로 숨겨지므로 실제 DOM 요소 높이를 측정해야 함.
   const autoCalculatedItems = useMemo(() => {
     if (containerHeight <= 0) return 10; // 기본값
 
-    // CustomerFullDetailView에서는:
-    // - annual-report-table-header: 32px
-    // - annual-report-pagination: 26px (고정)
-    // - annual-report-tab__header, annual-report-actions: display:none
-    const fixedHeight = DEFAULT_TABLE_HEADER_HEIGHT + DEFAULT_PAGINATION_HEIGHT; // 32 + 26 = 58px
+    const container = sectionContainerRef.current;
+    if (!container) return 10;
+
+    // 요약 헤더 높이 측정 (CustomerFullDetailView에서는 display:none → 0)
+    const summaryHeader = container.querySelector('.annual-report-tab__header') as HTMLElement | null;
+    const summaryHeight = summaryHeader ? summaryHeader.getBoundingClientRect().height : 0;
+
+    // 테이블 헤더 높이 측정 (⚠️ 0이면 기본값 사용 - 렌더링 전 상태 대응)
+    const tableHeader = container.querySelector('.annual-report-table-header') as HTMLElement | null;
+    const measuredTableHeaderHeight = tableHeader ? tableHeader.getBoundingClientRect().height : 0;
+    const tableHeaderHeight = measuredTableHeaderHeight > 0 ? measuredTableHeaderHeight : DEFAULT_TABLE_HEADER_HEIGHT;
+
+    // 페이지네이션 높이 측정 (⚠️ 0이면 기본값 사용 - 렌더링 전 상태 대응)
+    const pagination = container.querySelector('.annual-report-pagination') as HTMLElement | null;
+    const measuredPaginationHeight = pagination ? pagination.getBoundingClientRect().height : 0;
+    const paginationHeight = measuredPaginationHeight > 0 ? measuredPaginationHeight : DEFAULT_PAGINATION_HEIGHT;
+
+    // 컨테이너 gap 측정 (요약 헤더가 보일 때만 적용)
+    const containerStyle = getComputedStyle(container);
+    const gap = parseFloat(containerStyle.gap) || 0;
+
+    // fixedHeight 계산: 실제 보이는 요소들의 높이 합
+    const fixedHeight = summaryHeight + (summaryHeight > 0 ? gap : 0) + tableHeaderHeight + paginationHeight;
     const availableHeight = containerHeight - fixedHeight;
 
-    // 가용 높이를 행 높이로 나눠서 최대 항목 수 계산 (최소 1개)
-    const maxItems = Math.max(1, Math.floor(availableHeight / ROW_HEIGHT));
+    // N개 행의 총 높이 = N * ROW_HEIGHT + (N-1) * ROW_GAP
+    // 이를 풀면: N <= (availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)
+    const maxItems = Math.max(1, Math.floor((availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)));
 
     // 디버그 로그 (개발 모드에서만)
     if (import.meta.env.DEV) {
       console.log('[AnnualReportTab] 자동 페이지네이션 계산:', {
         containerHeight,
+        summaryHeight,
+        tableHeaderHeight: `${measuredTableHeaderHeight} → ${tableHeaderHeight}`,
+        paginationHeight: `${measuredPaginationHeight} → ${paginationHeight}`,
+        gap,
         fixedHeight,
         availableHeight,
         maxItems
