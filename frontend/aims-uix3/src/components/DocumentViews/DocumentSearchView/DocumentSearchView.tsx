@@ -7,7 +7,7 @@
  * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
@@ -155,6 +155,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [recentSearchQueries, setRecentSearchQueries] = useState<RecentSearchQuery[]>([])
   // 🍎 검색어 입력 필드 포커스 상태
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
+  // 🍎 검색 입력 필드 ref (자동 포커스용)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | 'similarity' | null
@@ -172,6 +174,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setSortOrder('asc')
     }
   }, [lastSearchMode, results.length])
+
+  // 🍎 페이지 표시 시 검색 입력창에 자동 포커스
+  useEffect(() => {
+    if (!visible) return
+
+    // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 포커스
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [visible])
 
   // 🍎 Context의 customerId가 설정되면 해당 고객 자동 선택 (상세 문서 검색 이동 시)
   useEffect(() => {
@@ -659,6 +672,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               🔍
             </button>
             <input
+              ref={searchInputRef}
               type="text"
               className="search-input"
               value={query}

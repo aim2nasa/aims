@@ -242,14 +242,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     // 🍎 고객을 최근 고객 목록에 추가 (문서 검색 페이지에서 자동 선택용)
     addRecentCustomer(customer)
 
-    // DocumentSearchContext에 검색어와 고객 ID 설정
-    documentSearch.handleQueryChange(simpleSearchQuery.trim())
+    // 🍎 검색 상태 초기화 후 고객만 설정 (바로 타이핑 가능하도록)
+    documentSearch.handleReset()
     documentSearch.handleCustomerIdChange(customer._id)
-    documentSearch.handleSearchModeChange('keyword')
 
     // 문서 검색 페이지로 이동
     onNavigate('documents-search')
-  }, [simpleSearchQuery, onNavigate, documentSearch, customer, addRecentCustomer])
+  }, [onNavigate, documentSearch, customer, addRecentCustomer])
 
   // 🍎 간편 문서검색 Enter 키 핸들러
   const handleSimpleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
