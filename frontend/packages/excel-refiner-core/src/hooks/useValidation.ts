@@ -543,17 +543,16 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
           // 정확히 일치하는지, 변형된 이름인지 체크
           const isExactMatch = req.patterns.some(p => p.toLowerCase() === matchedColumn.toLowerCase())
 
-          columnChecks.push({
+          const columnCheck: typeof columnChecks[number] = {
             name: req.name,
             patterns: req.patterns,
-            found: true,
-            foundAs: isExactMatch ? undefined : matchedColumn
-          })
-
-          // 변형된 이름으로 찾은 경우 경고
+            found: true
+          }
           if (!isExactMatch) {
+            columnCheck.foundAs = matchedColumn
             hasWarning = true
           }
+          columnChecks.push(columnCheck)
         } else {
           // 필수 컬럼 누락 → 오류
           columnChecks.push({
@@ -588,14 +587,19 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
 
     const hasAllRequired = found && columnChecks.every(c => c.found)
 
-    sheetChecks.push({
+    const sheetCheck: typeof sheetChecks[number] = {
       name: sheetName,
       found,
       requiredColumns: columnChecks,
-      hasAllRequired,
-      missingOptionalColumns: sheetMissingOptional.length > 0 ? sheetMissingOptional : undefined,
-      extraColumns: sheetExtraColumns.length > 0 ? sheetExtraColumns : undefined
-    })
+      hasAllRequired
+    }
+    if (sheetMissingOptional.length > 0) {
+      sheetCheck.missingOptionalColumns = sheetMissingOptional
+    }
+    if (sheetExtraColumns.length > 0) {
+      sheetCheck.extraColumns = sheetExtraColumns
+    }
+    sheetChecks.push(sheetCheck)
   }
 
   // 최소 1개 시트 필요 검사
@@ -654,11 +658,16 @@ export function checkFormatCompliance(sheets: SheetData[]): FormatComplianceResu
     .filter(s => s.missingOptionalColumns && s.missingOptionalColumns.length > 0)
     .flatMap(s => s.missingOptionalColumns!)
 
-  return {
+  const result: FormatComplianceResult = {
     status,
     sheets: sheetChecks,
-    message,
-    missingOptionalColumns: allMissingOptional.length > 0 ? allMissingOptional : undefined,
-    extraColumns: allExtraColumns.length > 0 ? allExtraColumns : undefined
+    message
   }
+  if (allMissingOptional.length > 0) {
+    result.missingOptionalColumns = allMissingOptional
+  }
+  if (allExtraColumns.length > 0) {
+    result.extraColumns = allExtraColumns
+  }
+  return result
 }

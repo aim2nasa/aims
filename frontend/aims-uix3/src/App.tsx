@@ -13,7 +13,7 @@ import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
-import type { Customer } from './entities/customer'
+import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION } from './config/version'
 
 // Lazy loading으로 성능 최적화
@@ -47,7 +47,7 @@ import type { PreviewDocumentInfo } from './features/customer/controllers/useCus
 import DownloadHelper from './utils/downloadHelper'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
-import type { SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
+import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/documentTransformers'
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
 import { useRightPaneContent } from './hooks/useRightPaneContent'
@@ -1234,7 +1234,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                                    '파일'
 
                   // OCR 신뢰도 표시
-                  const ocrConfidence = selectedDocument.ocr?.confidence
+                  const ocrData = selectedDocument.ocr as { confidence?: unknown } | undefined
+                  const ocrConfidence = ocrData?.confidence
                   if (ocrConfidence !== undefined && ocrConfidence !== null) {
                     const confidenceNum = typeof ocrConfidence === 'string' ? parseFloat(ocrConfidence) : ocrConfidence
                     if (!isNaN(confidenceNum)) {

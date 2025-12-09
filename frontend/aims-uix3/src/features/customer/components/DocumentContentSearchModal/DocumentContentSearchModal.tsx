@@ -10,7 +10,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import DraggableModal from '@/shared/ui/DraggableModal'
 import { SearchService } from '@/services/searchService'
-import { resolveFileUrl } from '../../../../utils/documentTransformers'
+import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import './DocumentContentSearchModal.css'
@@ -226,10 +226,19 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     return { label: '문서', className: 'doc-search-badge--other' }
   }
 
-  // 🍎 파일 URL 생성 (tars.giize.com/files/...)
+  // 🍎 파일 URL 생성
+  // PDF: 메타데이터 수정 프록시 경유 (tars.giize.com/pdf/...)
+  // 기타: 일반 파일 서버 (tars.giize.com/files/...)
   const getFileUrl = (item: SearchResultItem): string | null => {
     const filePath = SearchService.getFilePath(item)
     if (!filePath) return null
+
+    // PDF 파일은 프록시 경유 (한글 깨짐 방지)
+    if (isPdf(item)) {
+      const originalName = getFileName(item)
+      return resolvePdfUrl(filePath, originalName) || null
+    }
+
     return resolveFileUrl(filePath) || null
   }
 

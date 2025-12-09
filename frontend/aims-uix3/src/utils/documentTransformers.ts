@@ -93,6 +93,39 @@ export const resolveFileUrl = (destPath?: string): string | undefined => {
 }
 
 /**
+ * PDF 파일용 URL 생성 (메타데이터 수정 프록시 경유)
+ * @param destPath 파일 저장 경로
+ * @param originalName 원본 파일명 (PDF 제목으로 사용)
+ */
+export const resolvePdfUrl = (destPath?: string, originalName?: string): string | undefined => {
+  const normalized = normalizeDestPath(destPath)
+  if (!normalized) return undefined
+
+  // /data/files/... -> users/... (PDF 프록시는 /data/files 기준 상대경로 사용)
+  let pdfPath = normalized
+  if (pdfPath.startsWith('/data/files/')) {
+    pdfPath = pdfPath.replace('/data/files/', '')
+  } else if (pdfPath.startsWith('/data/')) {
+    pdfPath = pdfPath.replace('/data/', '')
+  } else if (pdfPath.startsWith('/files/')) {
+    pdfPath = pdfPath.replace('/files/', '')
+  }
+  if (pdfPath.startsWith('/')) {
+    pdfPath = pdfPath.substring(1)
+  }
+
+  // PDF 프록시 URL 생성
+  let url = `https://tars.giize.com/pdf/${pdfPath}`
+
+  // 원본 파일명을 쿼리 파라미터로 추가 (PDF 제목으로 사용)
+  if (originalName) {
+    url += `?title=${encodeURIComponent(originalName)}`
+  }
+
+  return url
+}
+
+/**
  * unknown 값을 SmartSearchDocumentResponse로 변환
  */
 export const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocumentResponse | null => {
