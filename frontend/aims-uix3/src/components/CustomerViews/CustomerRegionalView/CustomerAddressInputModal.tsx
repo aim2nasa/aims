@@ -1,6 +1,7 @@
 /**
  * Customer Address Input Modal
  * @since 2025-11-24
+ * @updated 2025-12-09 - Apple 스타일 디자인 개선
  *
  * 주소가 없는 고객의 주소를 입력하기 위한 모달
  * 지역별 보기에서 "주소 미입력" 고객 클릭 시 사용
@@ -48,14 +49,15 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
   const customerName = customer?.personal_info?.name || '이름 없음';
   const currentAddress = customer?.personal_info?.address?.address1;
 
-  // 모달 제목과 설명 메시지
+  // 모달 제목
   const modalTitle = isGeocodingFailure
     ? `주소 수정 - ${customerName}`
     : `주소 입력 - ${customerName}`;
 
+  // 설명 메시지
   const descriptionMessage = isGeocodingFailure
-    ? `현재 입력된 주소 "${currentAddress}"가 지도에서 인식되지 않습니다. 올바른 주소로 수정해주세요.`
-    : `${customerName} 님의 주소를 입력해주세요.`;
+    ? `현재 주소를 인식할 수 없습니다. 새로운 주소를 검색하여 선택해주세요.`
+    : `지도에 표시하려면 주소를 입력해주세요.`;
 
   const handleAddressSelect = (address: FormattedAddress) => {
     setSelectedAddress(address);
@@ -102,32 +104,56 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
         size="md"
       >
         <div className="customer-address-input-modal">
-          <div className="address-input-section">
-            {isGeocodingFailure && (
-              <div className="geocoding-error-notice">
-                <span className="notice-icon">⚠️</span>
-                <span className="notice-text">주소 형식 오류로 지도에 표시되지 않습니다</span>
-              </div>
-            )}
+          {/* 헤더 섹션 - 아이콘과 설명 */}
+          <div className="address-modal-header">
+            <div className={`address-modal-icon ${isGeocodingFailure ? 'warning' : ''}`}>
+              {isGeocodingFailure ? '📍' : '🏠'}
+            </div>
             <p className="address-input-description">
               {descriptionMessage}
             </p>
+          </div>
 
-            {/* 주소 검색 버튼 */}
-            <div className="address-search-trigger">
-              <Button
-                variant="secondary"
-                size="md"
+          <div className="address-input-section">
+            {/* Geocoding 오류 알림 */}
+            {isGeocodingFailure && currentAddress && (
+              <div className="geocoding-error-notice">
+                <span className="notice-icon">⚠️</span>
+                <span className="notice-text">
+                  현재 주소 "{currentAddress}"가 지도에서 인식되지 않습니다
+                </span>
+              </div>
+            )}
+
+            {/* 주소 검색 카드 */}
+            {!selectedAddress && (
+              <div
+                className="address-search-card"
                 onClick={() => setIsAddressSearchOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setIsAddressSearchOpen(true);
+                  }
+                }}
               >
-                🔍 주소 검색
-              </Button>
-            </div>
+                <div className="search-card-icon">🔍</div>
+                <div className="search-card-content">
+                  <div className="search-card-title">주소 검색</div>
+                  <div className="search-card-subtitle">도로명 또는 지번 주소로 검색</div>
+                </div>
+                <span className="search-card-arrow">›</span>
+              </div>
+            )}
 
             {/* 선택된 주소 표시 및 상세주소 입력 */}
             {selectedAddress && (
               <div className="selected-address-display">
-                <h4>선택된 주소</h4>
+                <div className="selected-address-header">
+                  <span className="check-icon">✓</span>
+                  <h4>주소가 선택되었습니다</h4>
+                </div>
                 <div className="address-fields">
                   <div className="address-field">
                     <span className="address-label">우편번호</span>
@@ -137,19 +163,30 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
                     <span className="address-label">기본주소</span>
                     <span className="address-value">{selectedAddress.address1}</span>
                   </div>
-                  <div className="address-field">
+                  <div className="address-field address-field--input">
                     <label className="address-label" htmlFor="address2-input">
-                      상세주소
+                      상세주소 (선택)
                     </label>
                     <input
                       id="address2-input"
                       type="text"
                       className="address-input"
-                      placeholder="상세주소를 입력하세요 (예: 101동 202호)"
+                      placeholder="동, 호수 등 상세주소 입력"
                       value={address2Input}
                       onChange={(e) => setAddress2Input(e.target.value)}
                     />
                   </div>
+                </div>
+
+                {/* 다시 검색 버튼 */}
+                <div className="address-change-button-wrapper">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddressSearchOpen(true)}
+                  >
+                    다른 주소 검색
+                  </Button>
                 </div>
               </div>
             )}
