@@ -10,6 +10,7 @@
 
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
 import { Tooltip, Button } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
@@ -76,6 +77,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
   const confirmController = useAppleConfirmController()
+  const { isDevMode } = useDevModeStore()
   const {
     documents,
     documentCount,
@@ -627,27 +629,29 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     <div ref={sectionContainerRef} className={`customer-documents ${isDeleteMode ? 'customer-documents--delete-mode' : ''}`}>
       <div className="customer-documents__header">
         <div className="customer-documents__summary">
-          {/* 🍎 삭제 버튼 */}
-          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
-            <button
-              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-              onClick={handleToggleDeleteMode}
-              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-            >
-              {isDeleteMode ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-              )}
-            </button>
-          </Tooltip>
+          {/* 🍎 삭제 버튼 (DEV 모드에서만 표시) */}
+          {isDevMode && (
+            <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+              <button
+                className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                onClick={handleToggleDeleteMode}
+                aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+              >
+                {isDeleteMode ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <SFSymbol
+                    name="trash"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                )}
+              </button>
+            </Tooltip>
+          )}
 
           <span className="customer-documents__count">
             총 <strong>{documentCount}</strong>건 연결됨

@@ -35,6 +35,7 @@ import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetail
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
@@ -132,6 +133,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   onClose,
   onDocumentClick,
 }) => {
+  // 개발자 모드 상태
+  const { isDevMode } = useDevModeStore()
+
   const [items, setItems] = useState<PersonalFileItem[]>([]) // 좌측 트리용
   const [currentFolderItems, setCurrentFolderItems] = useState<PersonalFileItem[]>([]) // 우측 목록용
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
@@ -1787,30 +1791,33 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </button>
               </Tooltip>
 
-              {/* 삭제 버튼 */}
-              <Tooltip key={`delete-mode-${isDeleteMode}`} content={isDeleteMode ? '삭제 완료' : '삭제'}>
-                <button
-                  className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-                  onClick={handleToggleDeleteMode}
-                  aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-                >
-                  {isDeleteMode ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <SFSymbol
-                      name="trash"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                      decorative={true}
-                    />
-                  )}
-                </button>
-              </Tooltip>
+              {/* 삭제 버튼 (개발자 모드에서만 표시) */}
+              {isDevMode && (
+                <Tooltip key={`delete-mode-${isDeleteMode}`} content={isDeleteMode ? '삭제 완료' : '삭제'}>
+                  <button
+                    type="button"
+                    className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                    onClick={handleToggleDeleteMode}
+                    aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+                  >
+                    {isDeleteMode ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <SFSymbol
+                        name="trash"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                </Tooltip>
+              )}
 
-              {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
-              {isDeleteMode && (
+              {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 (개발자 모드에서만) */}
+              {isDevMode && isDeleteMode && (
                 <>
                   <span className="selected-count-inline">
                     {selectedDocumentIds.size}개 선택됨
@@ -2370,8 +2377,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               <DocumentIcon />
                             </button>
                           </Tooltip>
-                          {/* 내 보관함(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
-                          {!(item.document.ownerId && item.document.customerId && item.document.ownerId === item.document.customerId) && (
+                          {/* 내 보관함(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 (개발자 모드에서만) */}
+                          {isDevMode && !(item.document.ownerId && item.document.customerId && item.document.ownerId === item.document.customerId) && (
                             <Tooltip content="고객에게 연결">
                               <button
                                 type="button"

@@ -28,6 +28,7 @@ import { api, ApiError } from '@/shared/lib/api'
 import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
@@ -74,6 +75,9 @@ const DocumentLibraryContent: React.FC<{
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
 }> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose }) => {
+  // 개발자 모드 상태
+  const { isDevMode } = useDevModeStore()
+
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
@@ -191,54 +195,60 @@ const DocumentLibraryContent: React.FC<{
       <div className="library-unified-header">
         {/* 왼쪽: 고객 일괄 연결 버튼 + 삭제 버튼 + 총 문서 개수 */}
         <div className="header-left-section">
-          {/* 고객 일괄 연결 버튼 */}
-          <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
-            <button
-              className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
-              onClick={onToggleBulkLinkMode}
-              disabled={isDeleteMode}
-              aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
-            >
-              {isBulkLinkMode ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <LinkIcon width={13} height={13} />
-              )}
-            </button>
-          </Tooltip>
+          {/* 고객 일괄 연결 버튼 (개발자 모드에서만 표시) */}
+          {isDevMode && (
+            <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
+              <button
+                type="button"
+                className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
+                onClick={onToggleBulkLinkMode}
+                disabled={isDeleteMode}
+                aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
+              >
+                {isBulkLinkMode ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <LinkIcon width={13} height={13} />
+                )}
+              </button>
+            </Tooltip>
+          )}
 
-          {/* 삭제 버튼 */}
-          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
-            <button
-              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-              onClick={onToggleDeleteMode}
-              disabled={isBulkLinkMode}
-              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-            >
-              {isDeleteMode ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-              )}
-            </button>
-          </Tooltip>
+          {/* 삭제 버튼 (개발자 모드에서만 표시) */}
+          {isDevMode && (
+            <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+              <button
+                type="button"
+                className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                onClick={onToggleDeleteMode}
+                disabled={isBulkLinkMode}
+                aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+              >
+                {isDeleteMode ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <SFSymbol
+                    name="trash"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                )}
+              </button>
+            </Tooltip>
+          )}
 
           {/* 총 문서 개수 */}
           <span className="result-count">
             총 {controller.totalCount}개의 문서
           </span>
 
-          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
-          {isDeleteMode && (
+          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 (개발자 모드에서만) */}
+          {isDevMode && isDeleteMode && (
             <>
               <span className="selected-count-inline">
                 {selectedDocumentIds.size}개 선택됨

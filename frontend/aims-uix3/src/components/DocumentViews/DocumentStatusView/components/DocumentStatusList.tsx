@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -128,6 +129,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
+  const { isDevMode } = useDevModeStore()
 
   // 현재 로그인한 사용자 ID (내 파일 기능용)
   const { userId } = useUserStore()
@@ -735,8 +737,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   <DocumentIcon />
                 </button>
               </Tooltip>
-              {/* 내 파일(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
-              {!isMyFile && (
+              {/* 내 파일(ownerId === customerId)이 아니고, DEV 모드일 때만 "고객에게 연결" 버튼 표시 */}
+              {isDevMode && !isMyFile && (
                 <Tooltip content={linkTooltip}>
                   <button
                     type="button"
