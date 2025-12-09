@@ -485,16 +485,19 @@ html[data-theme="dark"] .doc-search-right__tab:hover {
 
 /* 키워드 하이라이트 */
 .doc-search-highlight {
-  background: var(--color-warning-100);
-  color: var(--color-warning-800);
-  padding: 1px 3px;
-  border-radius: 2px;
+  background: #fef08a; /* 밝은 노란색 */
+  color: #1a1a1a; /* 거의 검정 */
+  padding: 2px 4px;
+  border-radius: 3px;
   font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.3);
 }
 
 html[data-theme="dark"] .doc-search-highlight {
-  background: var(--color-warning-900);
-  color: var(--color-warning-200);
+  /* 🍎 다크 테마: 강렬한 노란색 하이라이트 */
+  background: #facc15; /* 더 진한 노란색 */
+  color: #0a0a0a; /* 검정 */
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.5), 0 0 8px rgba(250, 204, 21, 0.3);
 }
 
 /* ============================================
