@@ -2,15 +2,15 @@
  * AIMS UIX-3 Document Content Search Modal
  * @since 2025-12-09
  *
- * 🍎 문서 내용 검색 모달 컴포넌트
- * - 고객의 문서 내용(OCR 텍스트) 키워드 검색
- * - AND 모드 기본, 검색어 하이라이트 표시
- * - 검색 결과에서 문서 뷰어로 바로 이동
+ * 🍎 문서 내용 검색 모달 컴포넌트 (2-pane 레이아웃)
+ * - 왼쪽: 검색창 + 간결한 결과 목록
+ * - 오른쪽: 문서 미리보기
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import Modal from '@/shared/ui/Modal'
 import { SearchService } from '@/services/searchService'
+import { resolveFileUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import './DocumentContentSearchModal.css'
@@ -24,16 +24,13 @@ interface DocumentContentSearchModalProps {
   customerId: string
   /** 고객 이름 */
   customerName: string
-  /** 문서 뷰어 열기 핸들러 */
-  onOpenDocument?: (documentId: string) => void
 }
 
 export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProps> = ({
   isOpen,
   onClose,
   customerId,
-  customerName,
-  onOpenDocument
+  customerName
 }) => {
   // 🍎 상태
   const [searchQuery, setSearchQuery] = useState('')
@@ -41,6 +38,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null)
 
   // 🍎 검색 입력 ref
   const inputRef = useRef<HTMLInputElement>(null)
@@ -59,6 +57,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       setResults([])
       setError(null)
       setHasSearched(false)
+      setSelectedItem(null)
     }
   }, [isOpen])
 
@@ -72,6 +71,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     setIsLoading(true)
     setError(null)
     setHasSearched(true)
+    setSelectedItem(null)
 
     try {
       const response = await SearchService.searchDocuments({
@@ -82,6 +82,10 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       })
 
       setResults(response.search_results || [])
+      // 첫 번째 결과 자동 선택
+      if (response.search_results && response.search_results.length > 0) {
+        setSelectedItem(response.search_results[0])
+      }
     } catch (err) {
       console.error('[DocumentContentSearchModal] 검색 실패:', err)
       setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
@@ -109,7 +113,51 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     return SearchService.getDocumentId(item)
   }
 
-  // 🍎 텍스트 스니펫 추출 (검색어 하이라이트)
+  // 🍎 MIME 타입 추출
+  const getMimeType = (item: SearchResultItem): string => {
+    return SearchService.getMimeType(item) || ''
+  }
+
+  // 🍎 파일 타입 배지 정보
+  const getFileTypeBadge = (item: SearchResultItem): { label: string; className: string } => {
+    const mimeType = getMimeType(item)
+    const fileName = getFileName(item).toLowerCase()
+
+    if (mimeType.includes('pdf') || fileName.endsWith('.pdf')) {
+      return { label: 'PDF', className: 'doc-search-badge--pdf' }
+    }
+    if (mimeType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {
+      return { label: '이미지', className: 'doc-search-badge--image' }
+    }
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || fileName.match(/\.(xlsx|xls)$/)) {
+      return { label: 'Excel', className: 'doc-search-badge--excel' }
+    }
+    if (mimeType.includes('word') || fileName.match(/\.(docx|doc)$/)) {
+      return { label: 'Word', className: 'doc-search-badge--word' }
+    }
+    return { label: '문서', className: 'doc-search-badge--other' }
+  }
+
+  // 🍎 파일 URL 생성 (tars.giize.com/files/...)
+  const getFileUrl = (item: SearchResultItem): string | null => {
+    const filePath = SearchService.getFilePath(item)
+    if (!filePath) return null
+    return resolveFileUrl(filePath) || null
+  }
+
+  // 🍎 PDF 여부 확인
+  const isPdf = (item: SearchResultItem): boolean => {
+    const mimeType = getMimeType(item)
+    const fileName = getFileName(item).toLowerCase()
+    return mimeType.includes('pdf') || fileName.endsWith('.pdf')
+  }
+
+  // 🍎 요약 텍스트 추출
+  const getSummary = (item: SearchResultItem): string => {
+    return SearchService.getSummary(item)
+  }
+
+  // 🍎 텍스트 스니펫 추출
   const getTextSnippet = (item: SearchResultItem): string => {
     const fullText = (item as any).ocr?.full_text ||
                      (item as any).meta?.full_text ||
@@ -118,40 +166,33 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
 
     if (!fullText) return '텍스트를 찾을 수 없습니다.'
 
-    // 검색어 위치 찾기
-    const keywords = searchQuery.trim().toLowerCase().split(/\s+/)
-    let bestIndex = 0
-    let bestScore = -1
+    const keywords = searchQuery.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return fullText.substring(0, 150) + '...'
 
-    // 가장 많은 키워드가 포함된 위치 찾기
-    for (let i = 0; i < fullText.length - 100; i += 50) {
-      const chunk = fullText.substring(i, i + 200).toLowerCase()
-      const score = keywords.filter(kw => chunk.includes(kw)).length
-      if (score > bestScore) {
-        bestScore = score
-        bestIndex = i
-      }
-    }
+    // 첫 번째 키워드 기준으로 앞뒤 context 추출
+    const searchLower = fullText.toLowerCase()
+    const keywordLower = keywords[0].toLowerCase()
+    const idx = searchLower.indexOf(keywordLower)
 
-    // 스니펫 추출 (최대 150자)
-    const start = Math.max(0, bestIndex - 20)
-    const end = Math.min(fullText.length, start + 150)
+    if (idx === -1) return fullText.substring(0, 150) + '...'
+
+    const start = Math.max(0, idx - 50)
+    const end = Math.min(fullText.length, idx + keywordLower.length + 100)
     let snippet = fullText.substring(start, end)
 
-    // 앞뒤 말줄임
     if (start > 0) snippet = '...' + snippet
     if (end < fullText.length) snippet = snippet + '...'
 
     return snippet
   }
 
-  // 🍎 검색어 하이라이트
+  // 🍎 키워드 하이라이트
   const highlightKeywords = (text: string): React.ReactNode => {
-    if (!searchQuery.trim()) return text
+    const keywords = searchQuery.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return text
 
-    const keywords = searchQuery.trim().split(/\s+/)
-    const regex = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi')
-    const parts = text.split(regex)
+    const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi')
+    const parts = text.split(pattern)
 
     return parts.map((part, index) => {
       const isMatch = keywords.some(kw => part.toLowerCase() === kw.toLowerCase())
@@ -163,219 +204,241 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     })
   }
 
-  // 🍎 문서 열기
-  const handleOpenDocument = useCallback((docId: string) => {
-    if (onOpenDocument) {
-      onOpenDocument(docId)
-      onClose()
-    }
-  }, [onOpenDocument, onClose])
-
   return (
     <Modal
       visible={isOpen}
       onClose={onClose}
-      size="lg"
+      size="xl"
       showHeader={false}
       backdropClosable={true}
       className="doc-content-search-modal"
     >
-      {/* 🍎 Header */}
-      <div className="doc-content-search-modal__header">
-        <h2 className="doc-content-search-modal__title">
-          <SFSymbol
-            name="doc.text.magnifyingglass"
-            size={SFSymbolSize.BODY}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-          <span>문서 내용 검색</span>
-        </h2>
-        <button
-          className="doc-content-search-modal__close"
-          onClick={onClose}
-          aria-label="닫기"
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M12 4L4 12M4 4L12 12"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* 🍎 고객 정보 */}
-      <div className="doc-content-search-modal__customer-info">
-        <span className="doc-content-search-modal__customer-label">검색 대상:</span>
-        <span className="doc-content-search-modal__customer-name">{customerName}</span>
-        <span className="doc-content-search-modal__customer-badge">자동 선택</span>
-      </div>
-
-      {/* 🍎 검색 입력 */}
-      <div className="doc-content-search-modal__search-bar">
-        <div className="doc-content-search-modal__search-input-wrapper">
-          <SFSymbol
-            name="magnifyingglass"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-            className="doc-content-search-modal__search-icon"
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="검색어 입력 (예: 보험료, 갱신)"
-            className="doc-content-search-modal__search-input"
-            disabled={isLoading}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="doc-content-search-modal__search-clear"
-              onClick={() => setSearchQuery('')}
-              aria-label="검색어 지우기"
-            >
+      {/* 🍎 2-Pane 레이아웃 */}
+      <div className="doc-search-split">
+        {/* 🍎 왼쪽: 검색 + 결과 목록 */}
+        <div className="doc-search-left">
+          {/* Header */}
+          <div className="doc-search-left__header">
+            <h2 className="doc-search-left__title">
               <SFSymbol
-                name="xmark.circle.fill"
+                name="doc.text.magnifyingglass"
+                size={SFSymbolSize.BODY}
+                weight={SFSymbolWeight.MEDIUM}
+              />
+              <span>문서 내용 검색</span>
+            </h2>
+            <span className="doc-search-left__customer">{customerName}</span>
+          </div>
+
+          {/* 검색창 */}
+          <div className="doc-search-left__search">
+            <div className="doc-search-left__search-input-wrap">
+              <SFSymbol
+                name="magnifyingglass"
                 size={SFSymbolSize.CAPTION_1}
                 weight={SFSymbolWeight.REGULAR}
+                className="doc-search-left__search-icon"
               />
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          className="doc-content-search-modal__search-btn"
-          onClick={() => void handleSearch()}
-          disabled={isLoading || !searchQuery.trim()}
-        >
-          {isLoading ? (
-            <SFSymbol
-              name="arrow.clockwise"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              animation={SFSymbolAnimation.ROTATE}
-            />
-          ) : '검색'}
-        </button>
-      </div>
-
-      {/* 🍎 검색 옵션 안내 */}
-      <div className="doc-content-search-modal__options">
-        <span className="doc-content-search-modal__option-badge">AND 검색</span>
-        <span className="doc-content-search-modal__option-hint">모든 키워드가 포함된 문서를 검색합니다</span>
-      </div>
-
-      {/* 🍎 Content */}
-      <div className="doc-content-search-modal__content">
-        {/* 에러 표시 */}
-        {error && (
-          <div className="doc-content-search-modal__error">
-            <SFSymbol
-              name="exclamationmark.triangle.fill"
-              size={SFSymbolSize.BODY}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* 로딩 표시 */}
-        {isLoading && (
-          <div className="doc-content-search-modal__loading">
-            <SFSymbol
-              name="arrow.clockwise"
-              size={SFSymbolSize.TITLE_2}
-              weight={SFSymbolWeight.MEDIUM}
-              animation={SFSymbolAnimation.ROTATE}
-            />
-            <span>문서를 검색하는 중...</span>
-          </div>
-        )}
-
-        {/* 초기 상태 */}
-        {!isLoading && !hasSearched && !error && (
-          <div className="doc-content-search-modal__initial">
-            <SFSymbol
-              name="doc.text.magnifyingglass"
-              size={SFSymbolSize.LARGE_TITLE}
-              weight={SFSymbolWeight.LIGHT}
-              className="doc-content-search-modal__initial-icon"
-            />
-            <p className="doc-content-search-modal__initial-text">
-              검색어를 입력하고 Enter를 누르세요
-            </p>
-            <p className="doc-content-search-modal__initial-hint">
-              문서 내용(OCR 텍스트)에서 키워드를 검색합니다
-            </p>
-          </div>
-        )}
-
-        {/* 검색 결과 없음 */}
-        {!isLoading && hasSearched && !error && results.length === 0 && (
-          <div className="doc-content-search-modal__empty">
-            <SFSymbol
-              name="doc.text"
-              size={SFSymbolSize.TITLE_1}
-              weight={SFSymbolWeight.LIGHT}
-            />
-            <span>검색 결과가 없습니다</span>
-            <p className="doc-content-search-modal__empty-hint">
-              다른 검색어로 시도해 보세요
-            </p>
-          </div>
-        )}
-
-        {/* 검색 결과 목록 */}
-        {!isLoading && results.length > 0 && (
-          <>
-            <div className="doc-content-search-modal__results-header">
-              검색 결과 <strong>{results.length}건</strong>
+              <input
+                ref={inputRef}
+                type="text"
+                className="doc-search-left__search-input"
+                placeholder="검색어 입력..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="doc-search-left__search-clear"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="검색어 지우기"
+                >
+                  <SFSymbol
+                    name="xmark.circle.fill"
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.REGULAR}
+                  />
+                </button>
+              )}
             </div>
-            <div className="doc-content-search-modal__results">
-              {results.map((item, index) => (
-                <div key={getDocumentId(item) || index} className="doc-search-result-item">
-                  <div className="doc-search-result-item__header">
-                    <div className="doc-search-result-item__icon">
-                      <SFSymbol
-                        name="doc.fill"
-                        size={SFSymbolSize.BODY}
-                        weight={SFSymbolWeight.MEDIUM}
-                      />
-                    </div>
-                    <span className="doc-search-result-item__filename">
-                      {getFileName(item)}
-                    </span>
-                  </div>
-                  <div className="doc-search-result-item__snippet">
-                    {highlightKeywords(getTextSnippet(item))}
-                  </div>
-                  <div className="doc-search-result-item__actions">
-                    {onOpenDocument && (
+            <button
+              type="button"
+              className="doc-search-left__search-btn"
+              onClick={() => void handleSearch()}
+              disabled={isLoading || !searchQuery.trim()}
+            >
+              {isLoading ? (
+                <SFSymbol
+                  name="arrow.trianglehead.2.clockwise"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  animation={SFSymbolAnimation.ROTATE}
+                />
+              ) : '검색'}
+            </button>
+          </div>
+
+          {/* 결과 영역 */}
+          <div className="doc-search-left__results">
+            {/* 에러 */}
+            {error && (
+              <div className="doc-search-left__error">
+                <SFSymbol name="exclamationmark.triangle" size={SFSymbolSize.CAPTION_1} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* 로딩 */}
+            {isLoading && (
+              <div className="doc-search-left__loading">
+                <SFSymbol
+                  name="arrow.trianglehead.2.clockwise"
+                  size={SFSymbolSize.TITLE_3}
+                  animation={SFSymbolAnimation.ROTATE}
+                />
+                <span>검색 중...</span>
+              </div>
+            )}
+
+            {/* 초기 상태 */}
+            {!isLoading && !hasSearched && !error && (
+              <div className="doc-search-left__empty">
+                <SFSymbol
+                  name="magnifyingglass"
+                  size={SFSymbolSize.TITLE_2}
+                  weight={SFSymbolWeight.LIGHT}
+                />
+                <p>검색어를 입력하세요</p>
+              </div>
+            )}
+
+            {/* 결과 없음 */}
+            {!isLoading && hasSearched && results.length === 0 && !error && (
+              <div className="doc-search-left__empty">
+                <SFSymbol
+                  name="doc.questionmark"
+                  size={SFSymbolSize.TITLE_2}
+                  weight={SFSymbolWeight.LIGHT}
+                />
+                <p>검색 결과가 없습니다</p>
+              </div>
+            )}
+
+            {/* 결과 목록 */}
+            {!isLoading && results.length > 0 && (
+              <>
+                <div className="doc-search-left__results-count">
+                  {results.length}건
+                </div>
+                <div className="doc-search-left__results-list">
+                  {results.map((item, index) => {
+                    const badge = getFileTypeBadge(item)
+                    const isSelected = selectedItem && getDocumentId(item) === getDocumentId(selectedItem)
+
+                    return (
                       <button
+                        key={getDocumentId(item) || index}
                         type="button"
-                        className="doc-search-result-item__action-btn"
-                        onClick={() => handleOpenDocument(getDocumentId(item))}
+                        className={`doc-search-item ${isSelected ? 'doc-search-item--selected' : ''}`}
+                        onClick={() => setSelectedItem(item)}
                       >
-                        <SFSymbol
-                          name="eye"
-                          size={SFSymbolSize.CAPTION_1}
-                          weight={SFSymbolWeight.MEDIUM}
-                        />
-                        <span>문서 보기</span>
+                        <span className={`doc-search-item__badge ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                        <span className="doc-search-item__name">
+                          {getFileName(item)}
+                        </span>
                       </button>
-                    )}
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 🍎 오른쪽: 문서 정보 + PDF 미리보기 */}
+        <div className="doc-search-right">
+          {!selectedItem ? (
+            <div className="doc-search-right__empty">
+              <SFSymbol
+                name="doc.richtext"
+                size={SFSymbolSize.LARGETITLE}
+                weight={SFSymbolWeight.ULTRALIGHT}
+              />
+              <p>문서를 선택하면<br />상세 정보가 표시됩니다</p>
+            </div>
+          ) : (
+            <>
+              {/* 문서 헤더 */}
+              <div className="doc-search-right__header">
+                <span className={`doc-search-right__badge ${getFileTypeBadge(selectedItem).className}`}>
+                  {getFileTypeBadge(selectedItem).label}
+                </span>
+                <div className="doc-search-right__title">
+                  {getFileName(selectedItem)}
+                </div>
+                {getFileUrl(selectedItem) && (
+                  <a
+                    href={getFileUrl(selectedItem) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="doc-search-right__open-btn"
+                  >
+                    <SFSymbol
+                      name="arrow.up.right.square"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                    <span>열기</span>
+                  </a>
+                )}
+              </div>
+
+              {/* PDF 미리보기 또는 정보 영역 */}
+              {isPdf(selectedItem) && getFileUrl(selectedItem) ? (
+                <div className="doc-search-right__preview">
+                  <iframe
+                    src={getFileUrl(selectedItem) || ''}
+                    className="doc-search-right__preview-iframe"
+                    title={getFileName(selectedItem)}
+                  />
+                </div>
+              ) : (
+                <div className="doc-search-right__info">
+                  {/* 요약 */}
+                  <div className="doc-search-right__section">
+                    <span className="doc-search-right__label">요약</span>
+                    <p className="doc-search-right__text">{getSummary(selectedItem)}</p>
+                  </div>
+
+                  {/* 검색어 위치 */}
+                  <div className="doc-search-right__section doc-search-right__section--snippet">
+                    <span className="doc-search-right__label">검색어 위치</span>
+                    <p className="doc-search-right__text">{highlightKeywords(getTextSnippet(selectedItem))}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* 🍎 닫기 버튼 (우측 상단) */}
+      <button
+        type="button"
+        className="doc-search-close"
+        onClick={onClose}
+        aria-label="닫기"
+      >
+        <SFSymbol
+          name="xmark"
+          size={SFSymbolSize.BODY}
+          weight={SFSymbolWeight.MEDIUM}
+        />
+      </button>
     </Modal>
   )
 }
