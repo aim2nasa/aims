@@ -35,6 +35,7 @@ import type { Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -92,6 +93,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
+
+  // 🍎 DEV 모드 상태
+  const isDevMode = useDevModeStore((state) => state.isDevMode)
 
   const {
     query,
@@ -1185,24 +1189,27 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       </button>
                     </Tooltip>
 
-                    {/* 🍎 고객에게 연결 버튼 */}
-                    <Tooltip content={linkTooltip}>
-                          <button
-                            className="action-button action-button--link"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (canLink) {
-                                handleLinkClickInternal(item)
-                              }
-                            }}
+                    {/* 🍎 고객에게 연결 버튼 (DEV 모드에서만 표시) */}
+                    {isDevMode && (
+                      <Tooltip content={linkTooltip}>
+                        <button
+                          type="button"
+                          className="action-button action-button--link"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (canLink) {
+                              handleLinkClickInternal(item)
+                            }
+                          }}
                           aria-label={linkTooltip}
-                          aria-disabled={!canLink}
+                          disabled={!canLink}
                           data-disabled={!canLink}
                           tabIndex={canLink ? 0 : -1}
-                      >
-                        <LinkIcon />
-                      </button>
-                    </Tooltip>
+                        >
+                          <LinkIcon />
+                        </button>
+                      </Tooltip>
+                    )}
                       </div>
                     </div>
                   )
