@@ -69,6 +69,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 문서 검색 상태
   const [documentSearchTerm, setDocumentSearchTerm] = useState('')
 
+  // 🍎 Annual Report 검색 상태
+  const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
+
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
 
@@ -876,12 +879,46 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     {annualReportCount > 0 && (
                       <span className="customer-full-detail__section-count">{annualReportCount}</span>
                     )}
+                    {/* 🍎 Annual Report 검색 */}
+                    <div className="customer-full-detail__section-search">
+                      <SFSymbol
+                        name="magnifyingglass"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.MEDIUM}
+                        className="section-search-icon"
+                        decorative={true}
+                      />
+                      <input
+                        type="text"
+                        value={annualReportSearchTerm}
+                        onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
+                        placeholder="검색"
+                        className="section-search-input"
+                      />
+                      {annualReportSearchTerm && (
+                        <button
+                          type="button"
+                          className="section-search-clear"
+                          onClick={() => setAnnualReportSearchTerm('')}
+                          aria-label="검색어 지우기"
+                        >
+                          <SFSymbol
+                            name="xmark.circle.fill"
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.REGULAR}
+                            decorative={true}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
                     <AnnualReportTab
                       customer={customer}
                       onAnnualReportCountChange={setAnnualReportCount}
                       refreshTrigger={annualReportRefreshTrigger}
+                      searchTerm={annualReportSearchTerm}
+                      onSearchChange={setAnnualReportSearchTerm}
                     />
                   </div>
                 </section>

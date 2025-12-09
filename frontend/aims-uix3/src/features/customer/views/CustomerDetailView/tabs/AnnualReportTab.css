@@ -10,8 +10,8 @@
 /* ==================== Container ==================== */
 
 .annual-report-tab {
-  padding: 20px;
-  min-height: 400px;
+  padding: 8px 12px;
+  min-height: 200px;
 }
 
 /* ==================== Parsing Notice ==================== */
@@ -19,12 +19,12 @@
 .annual-report-parsing-notice {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   background: var(--color-ios-bg-tertiary-light);
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: 12px;
+  border-radius: 8px;
   animation: noticeSlideIn 0.3s ease-out;
 }
 
@@ -49,14 +49,14 @@ html[data-theme="dark"] .annual-report-parsing-notice {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
 }
 
 .parsing-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2.5px solid var(--color-ios-separator-light);
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-ios-separator-light);
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -73,10 +73,10 @@ html[data-theme="dark"] .parsing-spinner {
 }
 
 .parsing-notice-title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-ios-text-primary-light);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 html[data-theme="dark"] .parsing-notice-title {
@@ -84,10 +84,10 @@ html[data-theme="dark"] .parsing-notice-title {
 }
 
 .parsing-notice-description {
-  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
+  font-size: 11px;
   color: var(--color-ios-text-secondary-light);
-  line-height: 1.5;
-  margin-bottom: 12px;
+  line-height: 1.4;
+  margin-bottom: 6px;
 }
 
 html[data-theme="dark"] .parsing-notice-description {
@@ -97,11 +97,11 @@ html[data-theme="dark"] .parsing-notice-description {
 .parsing-notice-files {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 4px;
+  padding: 6px 8px;
   background: var(--color-ios-bg-primary-light);
-  border-radius: 8px;
-  max-height: 150px;
+  border-radius: 6px;
+  max-height: 80px;
   overflow-y: auto;
 }
 
@@ -113,10 +113,10 @@ html[data-theme="dark"] .parsing-notice-files {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 4px 8px;
   background: var(--color-ios-bg-secondary-light);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 html[data-theme="dark"] .parsing-file-item {
@@ -124,7 +124,7 @@ html[data-theme="dark"] .parsing-file-item {
 }
 
 .parsing-file-name {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
+  font-size: 11px;
   font-weight: 500;
   color: var(--color-ios-text-primary-light);
   overflow: hidden;
@@ -137,13 +137,13 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .parsing-file-status {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
+  font-size: 10px;
   font-weight: 500;
   color: var(--color-primary);
   white-space: nowrap;
-  padding: 2px 8px;
+  padding: 1px 6px;
   background: rgba(59, 130, 246, 0.1);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 /* ==================== Actions (Delete Button) ==================== */

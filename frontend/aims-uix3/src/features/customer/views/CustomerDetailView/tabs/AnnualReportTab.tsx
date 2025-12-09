@@ -68,6 +68,10 @@ interface AnnualReportTabProps {
   customer: Customer;
   onAnnualReportCountChange?: (count: number) => void;
   refreshTrigger?: number;
+  /** 🍎 외부에서 제공하는 검색어 (CustomerFullDetailView에서 사용) */
+  searchTerm?: string;
+  /** 🍎 외부 검색어 변경 핸들러 */
+  onSearchChange?: (term: string) => void;
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -85,12 +89,23 @@ const ROW_HEIGHT = 32;   // CSS height: 32px
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
 
-export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange, refreshTrigger }) => {
+export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
+  customer,
+  onAnnualReportCountChange,
+  refreshTrigger,
+  searchTerm: externalSearchTerm,
+  onSearchChange
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reports, setReports] = useState<AnnualReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 🍎 검색어 상태 (외부/내부)
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const searchTerm = externalSearchTerm ?? internalSearchTerm;
+  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm;
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto');
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,6 +158,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       setSelectedIndices(new Set());
     }
   }, [isDevMode]);
+
+  // 🍎 검색어 변경 시 첫 페이지로 이동
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산 (DocumentsTab과 동일한 단순 상수 방식)
   const autoCalculatedItems = useMemo(() => {
@@ -485,9 +505,26 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     }
   };
 
+  // 🍎 검색어로 필터링된 리포트 목록
+  const filteredReports = useMemo(() => {
+    if (!searchTerm.trim()) return reports;
+
+    const term = searchTerm.toLowerCase().trim();
+    return reports.filter(report => {
+      // 소유주(customer_name), 발행일(issue_date), 파싱일시(parsed_at)로 검색
+      const customerName = (report.customer_name || '').toLowerCase();
+      const issueDate = formatDate(report.issue_date).toLowerCase();
+      const parsedAt = AnnualReportApi.formatDateTime(report.parsed_at).toLowerCase();
+
+      return customerName.includes(term) ||
+             issueDate.includes(term) ||
+             parsedAt.includes(term);
+    });
+  }, [reports, searchTerm]);
+
   // 🍎 정렬된 리포트 목록 (hooks는 조건부 반환 이전에 호출해야 함)
   const sortedReports = useMemo(() => {
-    return [...reports].sort((a, b) => {
+    return [...filteredReports].sort((a, b) => {
       let comparison = 0;
       const aIndex = reports.indexOf(a);
       const bIndex = reports.indexOf(b);
@@ -516,7 +553,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [reports, sortField, sortDirection]);
+  }, [filteredReports, reports, sortField, sortDirection]);
 
   // 🍎 페이지네이션 계산 (hooks 이후에 배치)
   const itemsPerPageNumber = itemsPerPage;
