@@ -813,30 +813,22 @@
 
 /* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */
 
-/* === SMOOTH SCROLLING === */
+/* === 🍎 macOS STYLE SCROLLING === */
 .custom-menu {
-  scroll-behavior: smooth;
   overflow-y: auto;
   max-height: 93vh; /* 최적화: 100vh - 120px ≈ 93vh (120px ≈ 7vh) */
+
+  /* 🍎 macOS 스타일: 스크롤바 완전 숨김 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+
+  /* 🍎 스크롤 체이닝 방지 - 메뉴 영역 내에서만 스크롤 */
+  overscroll-behavior: contain;
 }
 
-/* 애플 스타일 스크롤바 */
+/* 🍎 macOS 스타일: 스크롤바 완전 숨김 (Chrome/Safari) */
 .custom-menu::-webkit-scrollbar {
-  width: var(--scrollbar-width); /* 🍎 iOS/macOS 표준 스크롤바 */
-}
-
-.custom-menu::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-menu::-webkit-scrollbar-thumb {
-  background: var(--color-border-primary);
-  border-radius: 2px;
-  opacity: 0.3;
-}
-
-.custom-menu::-webkit-scrollbar-thumb:hover {
-  opacity: 0.6;
+  display: none;
 }
 
 /* === SF Symbol 아이콘 크기 통일 (계약 가져오기 기준 1.3배) === */
