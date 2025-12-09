@@ -637,7 +637,6 @@ const CustomMenu = ({
   return (
     <div
       className="custom-menu"
-      onWheel={navigation.onWheel}
       onKeyDown={navigation.onKeyDown}
       onClick={handleMenuContainerClick}
       onMouseEnter={handleMenuContainerMouseEnter}
