@@ -115,7 +115,7 @@ export default function MappingPreview({
 
   // controlled 또는 uncontrolled 모드 지원
   const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths
-  const setExpandedPaths = onExpandedPathsChange ?? setInternalExpandedPaths
+  const setExpandedPaths = (onExpandedPathsChange ?? setInternalExpandedPaths) as React.Dispatch<React.SetStateAction<Set<string>>>
 
   // 선택된 폴더 상태 (기본값: 모든 매칭된 폴더 선택)
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(() => {
@@ -201,7 +201,7 @@ export default function MappingPreview({
   const allExpanded = expandedPaths.size === allFolderPaths.length
 
   const togglePath = useCallback((path: string) => {
-    setExpandedPaths(prev => {
+    setExpandedPaths((prev: Set<string>) => {
       const next = new Set(prev)
       if (next.has(path)) {
         next.delete(path)

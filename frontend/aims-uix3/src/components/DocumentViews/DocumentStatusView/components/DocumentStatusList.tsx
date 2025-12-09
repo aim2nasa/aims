@@ -593,7 +593,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                 const confidence = getOcrConfidence(document)
                 if (confidence === null) {
                   // OCR 뱃지가 없는 경우, TXT 또는 BIN 타입 표시
-                  const typeLabel = DocumentUtils.getDocumentTypeLabel(document);
+                  const typeLabel = DocumentUtils.getDocumentTypeLabel(document as any);
                   if (typeLabel === 'TXT') {
                     return (
                       <Tooltip content="TXT 기반 문서">

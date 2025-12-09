@@ -479,7 +479,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
             <div className="doc-search-right__empty">
               <SFSymbol
                 name="doc.richtext"
-                size={SFSymbolSize.LARGETITLE}
+                size={SFSymbolSize.LARGE_TITLE}
                 weight={SFSymbolWeight.ULTRALIGHT}
               />
               <p>문서를 선택하면<br />상세 정보가 표시됩니다</p>

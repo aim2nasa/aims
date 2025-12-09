@@ -67,7 +67,7 @@ const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
     updatedAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
     isDeleted: false,
     isLibraryDocument: true, // 문서 라이브러리 파일임을 표시
-    document: doc // 🍎 원본 Document 저장 (뱃지 표시용)
+    document: doc as any // 🍎 원본 Document 저장 (뱃지 표시용)
   }
 
   // mimeType이 있을 때만 추가 (exactOptionalPropertyTypes 대응)
@@ -2174,7 +2174,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                         if (item.type === 'folder') {
                           handleFolderClick(item._id)
                         } else if (item.type === 'file' && item.document?._id && onDocumentClick) {
-                          onDocumentClick(item.document._id)
+                          onDocumentClick(item.document._id!)
                         }
                       }}
                       onContextMenu={(e) => handleContextMenu(e, item)}
@@ -2236,7 +2236,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               const backendBadgeType = (item.document as any).badgeType
                               if (backendBadgeType) {
                                 if (backendBadgeType === 'OCR') {
-                                  const confidence = getOcrConfidence(item.document)
+                                  const confidence = getOcrConfidence(item.document as any)
                                   if (confidence !== null) {
                                     const level = getOcrConfidenceLevel(confidence)
                                     return (
@@ -2276,9 +2276,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               }
 
                               // 하위 호환성
-                              const confidence = getOcrConfidence(item.document)
+                              const confidence = getOcrConfidence(item.document as any)
                               if (confidence === null) {
-                                const typeLabel = DocumentUtils.getDocumentTypeLabel(item.document)
+                                const typeLabel = DocumentUtils.getDocumentTypeLabel(item.document as any)
                                 if (typeLabel === 'TXT') {
                                   return (
                                     <Tooltip content="TXT 기반 문서">
@@ -2321,8 +2321,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     </div>
                     <div className="row-status">
                       {item.type === 'file' && item.document ? (() => {
-                        const status = DocumentStatusService.extractStatus(item.document)
-                        const progress = DocumentStatusService.extractProgress(item.document)
+                        const status = DocumentStatusService.extractStatus(item.document as any)
+                        const progress = DocumentStatusService.extractProgress(item.document as any)
                         const statusLabel = DocumentStatusService.getStatusLabel(status)
                         const statusIcon = DocumentStatusService.getStatusIcon(status)
 
@@ -2351,7 +2351,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             <button
                               type="button"
                               className="action-btn action-btn--detail"
-                              onClick={(e) => handleDetailClick(item.document!, e)}
+                              onClick={(e) => handleDetailClick(item.document as any, e)}
                               aria-label="상세 보기"
                             >
                               <EyeIcon />
@@ -2361,7 +2361,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             <button
                               type="button"
                               className="action-btn action-btn--summary"
-                              onClick={(e) => handleSummaryClick(item.document!, e)}
+                              onClick={(e) => handleSummaryClick(item.document as any, e)}
                               aria-label="요약 보기"
                             >
                               <SummaryIcon />
@@ -2371,7 +2371,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             <button
                               type="button"
                               className="action-btn action-btn--full"
-                              onClick={(e) => handleFullTextClick(item.document!, e)}
+                              onClick={(e) => handleFullTextClick(item.document as any, e)}
                               aria-label="전체 텍스트 보기"
                             >
                               <DocumentIcon />
@@ -2383,7 +2383,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               <button
                                 type="button"
                                 className="action-btn action-btn--link"
-                                onClick={(e) => handleLinkClick(item.document!, e)}
+                                onClick={(e) => handleLinkClick(item.document as any, e)}
                                 aria-label="고객에게 연결"
                               >
                                 <LinkIcon />
@@ -2408,7 +2408,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       if (item.type === 'folder') {
                         handleFolderClick(item._id)
                       } else if (item.type === 'file' && item.document && onDocumentClick) {
-                        onDocumentClick(item.document._id)
+                        onDocumentClick(item.document._id!)
                       }
                     }}
                     onContextMenu={(e) => handleContextMenu(e, item)}

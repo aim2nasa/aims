@@ -85,7 +85,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     if (document.ocr && typeof document.ocr !== 'string') {
       const directConfidence = document.ocr.confidence
       if (directConfidence) {
-        const parsed = parseFloat(directConfidence)
+        const parsed = parseFloat(String(directConfidence))
         if (!isNaN(parsed)) return parsed
       }
     }
@@ -238,7 +238,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     }
 
     return allDocuments.documents.filter((doc) => {
-      const docDate = getDocumentDate(doc);
+      const docDate = getDocumentDate(doc as any);
       if (!docDate) return false;
       return docDate >= cutoff;
     }).length;
@@ -274,15 +274,15 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
 
     // 기간 내 문서 필터링 및 정렬 (최신순)
     const filtered = allDocuments.documents.filter((doc) => {
-      const docDate = getDocumentDate(doc);
+      const docDate = getDocumentDate(doc as any);
       if (!docDate) return false;
       return docDate >= cutoffDate;
     });
 
     // 날짜 기준 내림차순 정렬 (최신이 위로)
     return filtered.sort((a, b) => {
-      const dateA = getDocumentDate(a);
-      const dateB = getDocumentDate(b);
+      const dateA = getDocumentDate(a as any);
+      const dateB = getDocumentDate(b as any);
       if (!dateA || !dateB) return 0;
       return dateB.getTime() - dateA.getTime();
     });
@@ -689,7 +689,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                   const fileTypeClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.filename || doc.originalName);
                   const activityInfo = getActivityInfo(doc.status || 'pending');
                   const fileType = getFileTypeCategory(doc.mimeType, doc.filename || doc.originalName);
-                  const timestamp = getDocumentDate(doc) || new Date();
+                  const timestamp = getDocumentDate(doc as any) || new Date();
 
                   // 파일 크기 추출 (여러 소스에서 시도)
                   const fileSize = doc.size || doc.fileSize || doc.file_size;
@@ -701,9 +701,9 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                   const isAnnualReport = doc.is_annual_report === true;
 
                   // OCR/TXT/BIN 뱃지 확인
-                  const ocrConfidence = getOcrConfidence(doc);
+                  const ocrConfidence = getOcrConfidence(doc as any);
                   const ocrLevel = ocrConfidence !== null ? getOcrConfidenceLevel(ocrConfidence) : null;
-                  const typeLabel = ocrConfidence === null ? DocumentUtils.getDocumentTypeLabel(doc) : null;
+                  const typeLabel = ocrConfidence === null ? DocumentUtils.getDocumentTypeLabel(doc as any) : null;
                   const showTxtBadge = typeLabel === 'TXT';
                   const showBinBadge = typeLabel === 'BIN';
 

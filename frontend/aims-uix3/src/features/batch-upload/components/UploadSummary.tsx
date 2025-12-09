@@ -93,7 +93,7 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
     <div className="upload-summary">
       {/* 상태 아이콘 */}
       <div className={`upload-summary-icon ${status.iconClass}`}>
-        <SFSymbol name={status.icon} size={SFSymbolSize.TITLE1} weight={SFSymbolWeight.MEDIUM} />
+        <SFSymbol name={status.icon} size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />
       </div>
 
       {/* 제목 및 설명 */}

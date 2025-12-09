@@ -164,12 +164,12 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
       // statusFilter === 'all'이면 필터링하지 않음
 
-      // 유형 필터링
-      if (customerTypeFilter === 'personal') {
-        customers = customers.filter(c => c.insurance_info?.customer_type === '개인');
-      } else if (customerTypeFilter === 'corporate') {
-        customers = customers.filter(c => c.insurance_info?.customer_type === '법인');
-      }
+      // 유형 필터링 (현재 customerTypeFilter는 'all'로 고정됨)
+      // if (customerTypeFilter === 'personal') {
+      //   customers = customers.filter(c => c.insurance_info?.customer_type === '개인');
+      // } else if (customerTypeFilter === 'corporate') {
+      //   customers = customers.filter(c => c.insurance_info?.customer_type === '법인');
+      // }
 
       // 검색 필터링
       if (searchValue.trim()) {
@@ -417,10 +417,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
     };
 
-    const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
-      setCustomerTypeFilter(filter);
-      setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-    };
+    // handleTypeFilterChange는 현재 사용되지 않음 (customerTypeFilter가 'all'로 고정)
+    // const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
+    //   setCustomerTypeFilter(filter);
+    //   setCurrentPage(1);
+    // };
 
     const handleStatusFilterChange = (filter: 'all' | 'active' | 'inactive') => {
       setStatusFilter(filter);

@@ -40,6 +40,15 @@ export interface PersonalFileDocument {
   docembed?: {
     text_source?: string;
   };
+  // PersonalFilesView에서 사용하는 추가 속성들
+  status?: string;
+  overallStatus?: string;
+  progress?: number;
+  is_annual_report?: boolean;
+  ownerId?: string;
+  customerId?: string;
+  // 추가 속성 허용을 위한 인덱스 시그니처
+  [key: string]: unknown;
 }
 
 /**

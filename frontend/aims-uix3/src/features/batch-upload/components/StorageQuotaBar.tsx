@@ -88,7 +88,7 @@ export default function StorageQuotaBar({
           <span className="storage-quota-warning">
             <SFSymbol
               name="exclamationmark-triangle-fill"
-              size={SFSymbolSize.CAPTION2}
+              size={SFSymbolSize.CAPTION_2}
               weight={SFSymbolWeight.MEDIUM}
             />
             <span>용량 부족 주의</span>
@@ -99,7 +99,7 @@ export default function StorageQuotaBar({
           <span className="storage-quota-danger">
             <SFSymbol
               name="exclamationmark-circle-fill"
-              size={SFSymbolSize.CAPTION2}
+              size={SFSymbolSize.CAPTION_2}
               weight={SFSymbolWeight.MEDIUM}
             />
             <span>용량 초과 위험</span>

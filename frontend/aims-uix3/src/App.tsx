@@ -1237,7 +1237,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const ocrData = selectedDocument.ocr as { confidence?: unknown } | undefined
                   const ocrConfidence = ocrData?.confidence
                   if (ocrConfidence !== undefined && ocrConfidence !== null) {
-                    const confidenceNum = typeof ocrConfidence === 'string' ? parseFloat(ocrConfidence) : ocrConfidence
+                    const rawNum = typeof ocrConfidence === 'string' ? parseFloat(ocrConfidence) : Number(ocrConfidence)
+                    const confidenceNum = typeof rawNum === 'number' ? rawNum : NaN
                     if (!isNaN(confidenceNum)) {
                       // 신뢰도 레벨 계산
                       let label = '매우 낮음'

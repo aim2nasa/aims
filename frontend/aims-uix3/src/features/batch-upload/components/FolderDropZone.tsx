@@ -215,15 +215,15 @@ export default function FolderDropZone({
 
         <div className="folder-guide-tips">
           <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION1} weight={SFSymbolWeight.MEDIUM} />
+            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
             <span>상위 폴더 또는 고객 폴더 직접 선택 가능</span>
           </div>
           <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION1} weight={SFSymbolWeight.MEDIUM} />
+            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
             <span>폴더명 = 고객명이면 자동 매칭</span>
           </div>
           <div className="guide-tip">
-            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION1} weight={SFSymbolWeight.MEDIUM} />
+            <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
             <span>하위 폴더의 파일도 모두 등록</span>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function FolderDropZone({
         <div className="folder-drop-zone-icon">
           <SFSymbol
             name="folder-fill-badge-plus"
-            size={SFSymbolSize.TITLE1}
+            size={SFSymbolSize.TITLE_1}
             weight={SFSymbolWeight.MEDIUM}
           />
         </div>

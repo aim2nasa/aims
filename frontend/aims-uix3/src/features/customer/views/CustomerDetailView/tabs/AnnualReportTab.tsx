@@ -318,8 +318,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             console.log(`[AnnualReportTab] 자동 중복 정리 시작: ${arDocuments.length}개 AR 문서 발견`);
 
             for (const doc of arDocuments) {
-              const issueDate = doc.ar_metadata.issue_date.split('T')[0];
-              const customerName = doc.ar_metadata.customer_name;
+              const issueDate = doc.ar_metadata?.issue_date?.split('T')[0];
+              const customerName = doc.ar_metadata?.customer_name;
+
+              if (!issueDate || !doc.linkedAt) continue;
 
               console.log(`[AnnualReportTab] AR 중복 정리: issue_date=${issueDate}, customer_name=${customerName}, linkedAt=${doc.linkedAt}`);
 

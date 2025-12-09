@@ -30,7 +30,8 @@
       "@/widgets/*": ["src/widgets/*"],
       "@/pages/*": ["src/pages/*"],
       "@/hooks/*": ["src/hooks/*"],
-      "@/stores/*": ["src/stores/*"]
+      "@/stores/*": ["src/stores/*"],
+      "@/types/*": ["src/types/*"]
     },
 
     /* Linting */

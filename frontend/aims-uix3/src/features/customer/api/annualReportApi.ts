@@ -303,7 +303,7 @@ export class AnnualReportApi {
         // 백엔드 응답: { success: true, data: { report_date, parsed_data: {...} } }
         return {
           success: true,
-          data: data.data || null,
+          data: (data.data || undefined) as { customer_id: string; report: AnnualReport | null; } | undefined,
         };
       }
 
