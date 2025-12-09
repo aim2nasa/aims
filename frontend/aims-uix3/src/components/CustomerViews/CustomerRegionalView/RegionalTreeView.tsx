@@ -1045,7 +1045,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
             {node.type === 'city' || node.type === 'district'
               ? (isExpanded ? '📂' : '📁')
               : node.type === 'no-address'
-              ? '⚠️'
+              ? (
+                <Tooltip content="주소가 입력되지 않은 고객 목록">
+                  <span>⚠️</span>
+                </Tooltip>
+              )
               : ''}
           </span>
 
@@ -1070,23 +1074,41 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <div className="tree-node-customers">
             {node.customers!.map(customer => {
               const isGeocodingFailed = customer._id ? geocodingFailedCustomers.has(customer._id) : false
-              return (
+              const hasNoAddress = !customer.personal_info?.address?.address1
+
+              // 상황별 툴팁 내용 결정
+              const tooltipContent = isGeocodingFailed
+                ? '주소 형식 오류로 지도에 표시되지 않습니다. 클릭하여 수정하세요.'
+                : hasNoAddress
+                ? '주소를 입력하려면 클릭하세요'
+                : '' // 정상 고객은 툴팁 없음
+
+              const customerElement = (
                 <div
-                  key={customer._id}
                   className={`tree-customer-item tree-customer-item-level-${level + 1} ${(localSelectedCustomerId || selectedCustomerId) === customer._id ? 'selected' : ''} ${isGeocodingFailed ? 'geocoding-failed' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleCustomerClick(customer)
                   }}
-                  title={isGeocodingFailed ? '주소 형식 오류로 지도에 표시되지 않습니다' : undefined}
                 >
                   {getCustomerTypeIcon(customer)}
                   <span className="tree-customer-name">
                     {customer?.personal_info?.name ?? '이름 없음'}
                   </span>
                   {isGeocodingFailed && (
-                    <span className="geocoding-failed-badge" title="주소 형식 오류">⚠️</span>
+                    <span className="geocoding-failed-badge">⚠️</span>
                   )}
+                </div>
+              )
+
+              // 툴팁이 필요한 경우에만 Tooltip으로 감싸기
+              return tooltipContent ? (
+                <Tooltip key={customer._id} content={tooltipContent}>
+                  {customerElement}
+                </Tooltip>
+              ) : (
+                <div key={customer._id}>
+                  {customerElement}
                 </div>
               )
             })}
@@ -1165,14 +1187,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               aria-label="지역 선택"
               minWidth={120}
             />
-            <label className="stat-checkbox" title="고객 없는 지역도 표시">
-              <input
-                type="checkbox"
-                checked={showAllRegions}
-                onChange={(e) => setShowAllRegions(e.target.checked)}
-              />
-              <span className="stat-checkbox-label">빈 지역</span>
-            </label>
+            <Tooltip content="고객 없는 지역도 표시">
+              <label className="stat-checkbox">
+                <input
+                  type="checkbox"
+                  checked={showAllRegions}
+                  onChange={(e) => setShowAllRegions(e.target.checked)}
+                />
+                <span className="stat-checkbox-label">빈 지역</span>
+              </label>
+            </Tooltip>
           </div>
         </div>
         <span className="stat-divider">·</span>
@@ -1187,14 +1211,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               aria-label="구/군 선택"
               minWidth={110}
             />
-            <label className="stat-checkbox" title="고객 없는 구/군도 표시">
-              <input
-                type="checkbox"
-                checked={showAllDistricts}
-                onChange={(e) => setShowAllDistricts(e.target.checked)}
-              />
-              <span className="stat-checkbox-label">빈 구/군</span>
-            </label>
+            <Tooltip content="고객 없는 구/군도 표시">
+              <label className="stat-checkbox">
+                <input
+                  type="checkbox"
+                  checked={showAllDistricts}
+                  onChange={(e) => setShowAllDistricts(e.target.checked)}
+                />
+                <span className="stat-checkbox-label">빈 구/군</span>
+              </label>
+            </Tooltip>
           </div>
         </div>
 
