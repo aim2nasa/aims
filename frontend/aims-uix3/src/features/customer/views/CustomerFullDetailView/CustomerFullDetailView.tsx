@@ -66,6 +66,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [documentCount, setDocumentCount] = useState(0)
   const [annualReportCount, setAnnualReportCount] = useState(0)
 
+  // 🍎 계약 검색 상태
+  const [contractSearchTerm, setContractSearchTerm] = useState('')
+
   // 🍎 문서 검색 상태
   const [documentSearchTerm, setDocumentSearchTerm] = useState('')
 
@@ -776,11 +779,45 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   {contractCount > 0 && (
                     <span className="customer-full-detail__section-count">{contractCount}</span>
                   )}
+                  {/* 🍎 계약 검색 */}
+                  <div className="customer-full-detail__section-search">
+                    <SFSymbol
+                      name="magnifyingglass"
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      className="section-search-icon"
+                      decorative={true}
+                    />
+                    <input
+                      type="text"
+                      value={contractSearchTerm}
+                      onChange={(e) => setContractSearchTerm(e.target.value)}
+                      placeholder="상품명, 증권번호 검색"
+                      className="section-search-input"
+                    />
+                    {contractSearchTerm && (
+                      <button
+                        type="button"
+                        className="section-search-clear"
+                        onClick={() => setContractSearchTerm('')}
+                        aria-label="검색어 지우기"
+                      >
+                        <SFSymbol
+                          name="xmark.circle.fill"
+                          size={SFSymbolSize.CAPTION_2}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      </button>
+                    )}
+                  </div>
                 </h2>
                 <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
                   <ContractsTab
                     customer={customer}
                     onContractCountChange={setContractCount}
+                    searchTerm={contractSearchTerm}
+                    onSearchChange={setContractSearchTerm}
                   />
                 </div>
               </section>

@@ -373,6 +373,12 @@ html[data-theme="dark"] .customer-full-detail__section-search .section-search-in
   border-color: var(--color-border);
 }
 
+/* 🍎 보험계약 섹션 검색창 - 더 넓게 */
+.customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+  width: 180px;
+  max-width: 180px;
+}
+
 /* === 섹션 컨텐츠 === */
 .customer-full-detail__section-content {
   padding: 0;

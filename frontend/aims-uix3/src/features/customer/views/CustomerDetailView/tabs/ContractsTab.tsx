@@ -24,6 +24,10 @@ import './ContractsTab.css'
 interface ContractsTabProps {
   customer: Customer
   onContractCountChange?: (count: number) => void
+  /** 외부에서 전달받는 검색어 (CustomerFullDetailView에서 사용) */
+  searchTerm?: string
+  /** 검색어 변경 핸들러 */
+  onSearchChange?: (term: string) => void
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -65,12 +69,19 @@ const calculateTextWidth = (text: string): number => {
 
 export const ContractsTab: React.FC<ContractsTabProps> = ({
   customer,
-  onContractCountChange
+  onContractCountChange,
+  searchTerm: externalSearchTerm,
+  onSearchChange
 }) => {
   // 🍎 상태 관리
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 🍎 검색어 상태 (외부/내부)
+  const [internalSearchTerm, setInternalSearchTerm] = useState('')
+  const searchTerm = externalSearchTerm ?? internalSearchTerm
+  const _setSearchTerm = onSearchChange ?? setInternalSearchTerm
 
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
@@ -216,9 +227,28 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     setCurrentPage(1)
   }, [sortField])
 
+  // 🍎 검색어 변경 시 첫 페이지로 이동
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
+  // 🍎 검색어로 필터링된 계약 목록
+  const filteredContracts = useMemo(() => {
+    if (!searchTerm.trim()) return contracts
+
+    const term = searchTerm.toLowerCase().trim()
+    return contracts.filter(contract => {
+      // 상품명, 증권번호로 검색
+      const productName = (contract.product_name ?? '').toLowerCase()
+      const policyNumber = (contract.policy_number ?? '').toLowerCase()
+
+      return productName.includes(term) || policyNumber.includes(term)
+    })
+  }, [contracts, searchTerm])
+
   // 🍎 정렬된 계약 목록
   const sortedContracts = useMemo(() => {
-    return [...contracts].sort((a, b) => {
+    return [...filteredContracts].sort((a, b) => {
       let aValue: string | number | null
       let bValue: string | number | null
 
@@ -259,7 +289,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [contracts, sortField, sortDirection])
+  }, [filteredContracts, sortField, sortDirection])
 
   // 🍎 페이지네이션 계산
   const totalPages = Math.ceil(sortedContracts.length / itemsPerPage)
