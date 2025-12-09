@@ -1157,41 +1157,45 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         <div className="stat-item">
           <span className="stat-icon">🗺️</span>
           <span className="stat-label">지역</span>
-          <Dropdown
-            value={selectedRegion}
-            options={availableRegions}
-            onChange={handleRegionChange}
-            aria-label="지역 선택"
-            minWidth={150}
-          />
-          <label className="stat-checkbox">
-            <input
-              type="checkbox"
-              checked={showAllRegions}
-              onChange={(e) => setShowAllRegions(e.target.checked)}
+          <div className="stat-dropdown-group">
+            <Dropdown
+              value={selectedRegion}
+              options={availableRegions}
+              onChange={handleRegionChange}
+              aria-label="지역 선택"
+              minWidth={120}
             />
-            <span className="stat-checkbox-label">고객 없는 지역 표시</span>
-          </label>
+            <label className="stat-checkbox" title="고객 없는 지역도 표시">
+              <input
+                type="checkbox"
+                checked={showAllRegions}
+                onChange={(e) => setShowAllRegions(e.target.checked)}
+              />
+              <span className="stat-checkbox-label">빈 지역</span>
+            </label>
+          </div>
         </div>
         <span className="stat-divider">·</span>
         <div className="stat-item">
           <span className="stat-icon">📍</span>
           <span className="stat-label">구/군</span>
-          <Dropdown
-            value={selectedDistrict}
-            options={availableDistricts}
-            onChange={handleDistrictChange}
-            aria-label="구/군 선택"
-            minWidth={130}
-          />
-          <label className="stat-checkbox">
-            <input
-              type="checkbox"
-              checked={showAllDistricts}
-              onChange={(e) => setShowAllDistricts(e.target.checked)}
+          <div className="stat-dropdown-group">
+            <Dropdown
+              value={selectedDistrict}
+              options={availableDistricts}
+              onChange={handleDistrictChange}
+              aria-label="구/군 선택"
+              minWidth={110}
             />
-            <span className="stat-checkbox-label">고객 없는 구/군 표시</span>
-          </label>
+            <label className="stat-checkbox" title="고객 없는 구/군도 표시">
+              <input
+                type="checkbox"
+                checked={showAllDistricts}
+                onChange={(e) => setShowAllDistricts(e.target.checked)}
+              />
+              <span className="stat-checkbox-label">빈 구/군</span>
+            </label>
+          </div>
         </div>
 
         {/* 전체 보기 버튼 */}

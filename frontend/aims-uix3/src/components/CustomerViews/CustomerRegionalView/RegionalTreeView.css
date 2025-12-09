@@ -65,7 +65,9 @@ html[data-theme="dark"] .regional-tree-stats {
 .stat-item {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: var(--spacing-xs);
+  min-height: 26px; /* 모든 stat-item 동일 높이 */
 }
 
 /* 폭이 좁을 때 (RightPane 열림): 첫 번째 stat-item이 전체 폭 차지 */
@@ -86,16 +88,30 @@ html[data-theme="dark"] .regional-tree-stats {
   gap: 4px;
 }
 
+/* 드롭다운 + 체크박스 그룹 (한 줄 유지) */
+.stat-dropdown-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .stat-icon {
   font-size: 13px;
   opacity: 0.7;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  height: 16px; /* 아이콘 높이 고정 */
 }
 
 .stat-label {
   color: var(--color-text-secondary);
   font-weight: 400;
   font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .stat-value {
@@ -106,6 +122,9 @@ html[data-theme="dark"] .regional-tree-stats {
 .stat-divider {
   color: var(--color-border);
   font-weight: 300;
+  display: flex;
+  align-items: center;
+  align-self: center;
 }
 
 /* 드롭다운 컴팩트 스타일 (통계 영역용) */
@@ -527,9 +546,9 @@ html[data-theme="dark"] .type-filter-separator {
 .stat-checkbox {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 3px;
-  margin-left: 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   cursor: pointer;
