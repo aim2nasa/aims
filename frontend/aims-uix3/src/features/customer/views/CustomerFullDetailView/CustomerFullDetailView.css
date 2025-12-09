@@ -1143,6 +1143,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
+/* 🍎 DEV 모드: 체크박스 칼럼 추가 시 grid 레이아웃 조정 */
+.customer-full-detail__section-content--annual-report .annual-report-table-header:has(.header-checkbox) {
+  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
+}
+
 /* 테이블 바디 */
 .customer-full-detail__section-content--annual-report .annual-report-table-body {
   gap: 0;
@@ -1168,6 +1173,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 
 html[data-theme="dark"] .customer-full-detail__section-content--annual-report .annual-report-row {
   border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* 🍎 DEV 모드: 체크박스 칼럼 추가 시 grid 레이아웃 조정 */
+.customer-full-detail__section-content--annual-report .annual-report-row:has(.row-checkbox) {
+  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-row:last-child {
