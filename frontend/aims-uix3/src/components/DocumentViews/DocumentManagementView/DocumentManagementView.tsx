@@ -497,7 +497,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           style={{ color: 'var(--color-icon-doc-search)' }}
         />
       ),
-      title: '문서 검색',
+      title: '상세 문서검색',
       description: '키워드, 태그, 고객, 문서 유형 등 다양한 조건으로 문서를 검색합니다. AI 기반 시맨틱 검색으로 정확한 문서를 빠르게 찾을 수 있습니다.',
       ...(onNavigate && { onClick: () => onNavigate('documents-search') }),
     },

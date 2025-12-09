@@ -508,8 +508,8 @@ const CustomMenu = ({
         {
           key: 'documents-search',
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
-          label: '문서 검색',
-          tooltipTitle: '문서를 검색합니다',
+          label: '상세 문서검색',
+          tooltipTitle: '상세 문서검색 페이지로 이동합니다',
         }
       ]
     },
@@ -526,7 +526,7 @@ const CustomMenu = ({
         key: 'documents-search',
         icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
         label: '',
-        tooltipTitle: '문서를 검색합니다',
+        tooltipTitle: '상세 문서검색',
       }
     ] : []),
 

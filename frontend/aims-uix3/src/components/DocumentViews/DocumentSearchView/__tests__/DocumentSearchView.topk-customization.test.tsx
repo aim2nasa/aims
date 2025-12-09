@@ -389,7 +389,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       await user.click(topK15Option)
 
       // 검색어 입력
-      const searchInput = screen.getByPlaceholderText(/문서 검색/i)
+      const searchInput = screen.getByPlaceholderText(/상세 문서검색/i)
       await user.type(searchInput, 'AI 검색 테스트')
       await user.keyboard('{Enter}')
 
@@ -410,7 +410,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       renderComponent()
 
       // 검색어 입력 (기본 키워드 검색 모드)
-      const searchInput = screen.getByPlaceholderText(/문서 검색/i)
+      const searchInput = screen.getByPlaceholderText(/상세 문서검색/i)
       await user.type(searchInput, '키워드 검색 테스트')
       await user.keyboard('{Enter}')
 

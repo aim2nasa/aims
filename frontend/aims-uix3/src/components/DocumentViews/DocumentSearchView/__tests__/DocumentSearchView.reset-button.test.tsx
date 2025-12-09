@@ -103,7 +103,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
 
     // 초기화 버튼이 나타나야 함
@@ -128,7 +128,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색 실행 (검색어가 남아있음)
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
     await user.keyboard('{Enter}')
 
@@ -153,7 +153,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력
-    const searchInput = screen.getByPlaceholderText('문서 검색') as HTMLInputElement
+    const searchInput = screen.getByPlaceholderText('상세 문서검색') as HTMLInputElement
     await user.clear(searchInput)
     await user.type(searchInput, '테스트 검색어')
     expect(searchInput.value).toBe('테스트 검색어')
@@ -183,7 +183,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력
-    const searchInput = screen.getByPlaceholderText('문서 검색') as HTMLInputElement
+    const searchInput = screen.getByPlaceholderText('상세 문서검색') as HTMLInputElement
     await user.clear(searchInput)
     await user.type(searchInput, '테스트 검색어')
     expect(searchInput.value).toBe('테스트 검색어')
@@ -197,7 +197,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
 
     // 초기 상태 가이드가 표시되어야 함
     await waitFor(() => {
-      expect(screen.getByText('문서 검색 사용 방법')).toBeInTheDocument()
+      expect(screen.getByText('상세 문서검색 사용 방법')).toBeInTheDocument()
     })
   })
 
@@ -218,7 +218,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
 
     // 초기화 버튼이 나타남
@@ -252,7 +252,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력하여 초기화 버튼 표시
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
 
     // 초기화 버튼 접근성 확인
@@ -278,7 +278,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력하여 초기화 버튼 표시
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
 
     // 초기화 버튼 CSS 클래스 확인
@@ -303,7 +303,7 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     )
 
     // 검색어 입력하여 초기화 버튼 표시
-    const searchInput = screen.getByPlaceholderText('문서 검색')
+    const searchInput = screen.getByPlaceholderText('상세 문서검색')
     await user.type(searchInput, '테스트 검색어')
 
     // Tab 키로 초기화 버튼으로 이동

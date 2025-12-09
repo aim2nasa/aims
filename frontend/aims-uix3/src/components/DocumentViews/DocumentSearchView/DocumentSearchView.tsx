@@ -644,7 +644,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
-      title="문서 검색"
+      title="상세 문서검색"
       titleIcon={<SFSymbol name="search-bold" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-search)' }} />}
       titleAccessory={
         <Tooltip content="이전 페이지로 돌아가기">
@@ -747,8 +747,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 // 드롭다운 클릭 시간을 주기 위해 지연
                 setTimeout(() => setIsSearchInputFocused(false), 200)
               }}
-              placeholder="문서 검색"
-              aria-label="문서 검색"
+              placeholder="상세 문서검색"
+              aria-label="상세 문서검색"
             />
             {/* 🍎 검색어 지우기 버튼 (Progressive Disclosure) */}
             {query.trim() && (
@@ -1364,7 +1364,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                           <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <h3 className="guide-title">문서 검색 사용 방법</h3>
+                      <h3 className="guide-title">상세 문서검색 사용 방법</h3>
                     </div>
 
                     <div className="guide-content">
