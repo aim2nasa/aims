@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import Modal from '@/shared/ui/Modal'
+import DraggableModal from '@/shared/ui/DraggableModal'
 import { SearchService } from '@/services/searchService'
 import { resolveFileUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
@@ -204,31 +204,35 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     })
   }
 
+  // 🍎 모달 타이틀 구성
+  const modalTitle = (
+    <div className="doc-search-modal-title">
+      <SFSymbol
+        name="doc.text.magnifyingglass"
+        size={SFSymbolSize.BODY}
+        weight={SFSymbolWeight.MEDIUM}
+      />
+      <span>문서 내용 검색</span>
+      <span className="doc-search-modal-title__customer">{customerName}</span>
+    </div>
+  )
+
   return (
-    <Modal
+    <DraggableModal
       visible={isOpen}
       onClose={onClose}
-      size="xl"
-      showHeader={false}
-      backdropClosable={true}
+      title={modalTitle}
+      backdropClosable={false}
+      initialWidth={1100}
+      initialHeight={600}
+      minWidth={800}
+      minHeight={400}
       className="doc-content-search-modal"
     >
       {/* 🍎 2-Pane 레이아웃 */}
       <div className="doc-search-split">
         {/* 🍎 왼쪽: 검색 + 결과 목록 */}
         <div className="doc-search-left">
-          {/* Header */}
-          <div className="doc-search-left__header">
-            <h2 className="doc-search-left__title">
-              <SFSymbol
-                name="doc.text.magnifyingglass"
-                size={SFSymbolSize.BODY}
-                weight={SFSymbolWeight.MEDIUM}
-              />
-              <span>문서 내용 검색</span>
-            </h2>
-            <span className="doc-search-left__customer">{customerName}</span>
-          </div>
 
           {/* 검색창 */}
           <div className="doc-search-left__search">
@@ -426,20 +430,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
         </div>
       </div>
 
-      {/* 🍎 닫기 버튼 (우측 상단) */}
-      <button
-        type="button"
-        className="doc-search-close"
-        onClick={onClose}
-        aria-label="닫기"
-      >
-        <SFSymbol
-          name="xmark"
-          size={SFSymbolSize.BODY}
-          weight={SFSymbolWeight.MEDIUM}
-        />
-      </button>
-    </Modal>
+    </DraggableModal>
   )
 }
 

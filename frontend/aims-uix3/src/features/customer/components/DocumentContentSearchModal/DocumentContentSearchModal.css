@@ -6,58 +6,41 @@
  */
 
 /* ============================================
-   🍎 Modal Container
+   🍎 Modal Title (DraggableModal Header)
    ============================================ */
 
-.doc-content-search-modal {
-  max-width: 1100px;
-  width: 95vw;
-  max-height: 80vh;
-  height: 600px;
-  padding: 0 !important;
-  overflow: hidden;
-  position: relative;
-}
-
-/* ============================================
-   🍎 닫기 버튼
-   ============================================ */
-
-.doc-search-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
-  width: 28px;
-  height: 28px;
+.doc-search-modal-title {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border: none;
-  background: var(--color-ios-bg-tertiary-light);
+  gap: 6px;
+}
+
+.doc-search-modal-title .sf-symbol {
+  color: var(--color-primary-500);
+}
+
+.doc-search-modal-title__customer {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
   color: var(--color-text-tertiary);
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: all 0.15s ease;
+  background: var(--color-ios-bg-tertiary-light);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
-.doc-search-close:hover {
-  opacity: 1;
-  background: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .doc-search-close {
+html[data-theme="dark"] .doc-search-modal-title__customer {
   background: var(--color-ios-bg-tertiary-dark);
-}
-
-html[data-theme="dark"] .doc-search-close:hover {
-  background: var(--color-ios-bg-secondary-dark);
 }
 
 /* ============================================
    🍎 Split Layout
    ============================================ */
+
+.doc-content-search-modal .draggable-modal__content {
+  padding: 0;
+  overflow: hidden;
+}
 
 .doc-search-split {
   display: grid;
@@ -81,46 +64,6 @@ html[data-theme="dark"] .doc-search-close:hover {
 html[data-theme="dark"] .doc-search-left {
   border-right-color: var(--color-ios-separator-dark);
   background: var(--color-ios-bg-secondary-dark);
-}
-
-/* Header */
-.doc-search-left__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .doc-search-left__header {
-  border-bottom-color: var(--color-ios-separator-dark);
-}
-
-.doc-search-left__title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.doc-search-left__title .sf-symbol {
-  color: var(--color-primary-500);
-}
-
-.doc-search-left__customer {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  background: var(--color-ios-bg-tertiary-light);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-html[data-theme="dark"] .doc-search-left__customer {
-  background: var(--color-ios-bg-tertiary-dark);
 }
 
 /* 검색창 */
@@ -486,11 +429,6 @@ html[data-theme="dark"] .doc-search-highlight {
    ============================================ */
 
 @media (max-width: 768px) {
-  .doc-content-search-modal {
-    max-width: 95%;
-    height: 90vh;
-  }
-
   .doc-search-split {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
