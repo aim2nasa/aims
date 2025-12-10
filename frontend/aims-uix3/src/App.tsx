@@ -10,6 +10,7 @@ import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
+import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
@@ -65,6 +66,45 @@ const STORAGE_KEYS = {
 const DEFAULT_CENTER_PANE_RATIO = 0.5
 const DEFAULT_CENTER_WIDTH_PERCENT = DEFAULT_CENTER_PANE_RATIO * 100
 const DEFAULT_RIGHT_WIDTH_PERCENT = 100 - DEFAULT_CENTER_WIDTH_PERCENT
+
+// 첫 방문자 가이드 투어 스텝
+const ONBOARDING_STEPS: TourStep[] = [
+  {
+    target: '.header-quick-search-container',
+    title: '빠른 검색',
+    description: '고객명을 입력하면 즉시 검색 결과가 표시됩니다. 원하는 고객을 클릭하면 바로 상세 정보로 이동합니다.',
+    placement: 'bottom',
+    icon: 'magnifyingglass'
+  },
+  {
+    target: '[data-menu-key="documents-register"]',
+    title: '문서 등록',
+    description: '보험 문서(증권, 청약서 등)를 업로드하면 AI가 자동으로 분석하여 고객 정보를 추출합니다.',
+    placement: 'right',
+    icon: 'doc-badge-plus'
+  },
+  {
+    target: '[data-menu-key="customers-register"]',
+    title: '고객 등록',
+    description: '새로운 고객을 직접 등록할 수 있습니다. 문서 없이도 고객 정보를 먼저 입력할 수 있습니다.',
+    placement: 'right',
+    icon: 'person-fill-badge-plus'
+  },
+  {
+    target: '[data-menu-key="documents-library"]',
+    title: '문서 보관함',
+    description: '등록된 모든 문서를 한눈에 확인하고 관리할 수 있습니다. 고객별로 필터링도 가능합니다.',
+    placement: 'right',
+    icon: 'folder'
+  },
+  {
+    target: '.header-user-profile',
+    title: '계정 설정',
+    description: '프로필을 클릭하면 계정 설정, 보안, 알림 등 다양한 설정을 변경할 수 있습니다.',
+    placement: 'bottom',
+    icon: 'gearshape'
+  }
+]
 
 const persistentState = {
   layoutControlModalOpen: false,
@@ -1488,6 +1528,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       {/* 개발자 도구 패널 (DEV 모드에서만 표시) */}
       <DevToolsPanel />
+
+      {/* 첫 방문자 가이드 투어 */}
+      <OnboardingTour
+        steps={ONBOARDING_STEPS}
+        onComplete={() => {
+          // 투어 완료 후 문서 등록 화면으로 이동
+          handleMenuClick('documents-register')
+        }}
+      />
 
     </div>
   )
