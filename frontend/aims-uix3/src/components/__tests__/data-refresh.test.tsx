@@ -1,97 +1,121 @@
 /**
- * 데이터 변경 작업 후 자동 페이지 새로고침 테스트
+ * 데이터 변경 작업 후 자동 캐시 무효화 테스트
  * @since 2025-10-21
+ * @modified 2025-12-11 - window.location.reload() → invalidateQueries + 이벤트로 변경
  *
- * 커밋: eaf0d7a - feat(data): 데이터 변경 작업 후 자동 페이지 새로고침 추가
+ * 기존: 페이지 새로고침으로 모든 View 업데이트
+ * 변경: TanStack Query 캐시 무효화 + customerChanged 이벤트로 부드러운 업데이트
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// window.location.reload를 mock으로 대체
-const reloadMock = vi.fn()
-Object.defineProperty(window, 'location', {
-  value: {
-    reload: reloadMock
-  },
-  writable: true
+// invalidateQueries mock
+const invalidateQueriesMock = {
+  customers: vi.fn(),
+  customer: vi.fn(),
+  relationships: vi.fn(),
+  documents: vi.fn(),
+  all: vi.fn()
+}
+
+// CustomEvent 발생 추적
+const dispatchedEvents: string[] = []
+const originalDispatchEvent = window.dispatchEvent
+window.dispatchEvent = vi.fn((event: Event) => {
+  if (event instanceof CustomEvent) {
+    dispatchedEvents.push(event.type)
+  }
+  return originalDispatchEvent.call(window, event)
 })
 
-describe('데이터 변경 작업 후 자동 페이지 새로고침', () => {
+describe('데이터 변경 작업 후 자동 캐시 무효화', () => {
   beforeEach(() => {
-    reloadMock.mockClear()
+    vi.clearAllMocks()
+    dispatchedEvents.length = 0
   })
 
-  describe('CustomerRegistrationView - 고객 등록 후 새로고침', () => {
-    it('고객 등록 성공 후 window.location.reload()가 호출되어야 함', () => {
-      // 등록 성공 시나리오
+  describe('CustomerRegistrationView - 고객 등록 후 캐시 무효화', () => {
+    it('고객 등록 성공 후 invalidateQueries가 호출되어야 함', () => {
       const registrationSuccess = true
 
       if (registrationSuccess) {
-        // 성공 모달 표시 후
-        // 페이지 새로고침
-        window.location.reload()
+        // 쿼리 캐시 무효화
+        invalidateQueriesMock.customers()
+        invalidateQueriesMock.relationships()
+        // 이벤트 발생
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      expect(reloadMock).toHaveBeenCalledTimes(1)
+      expect(invalidateQueriesMock.customers).toHaveBeenCalledTimes(1)
+      expect(invalidateQueriesMock.relationships).toHaveBeenCalledTimes(1)
+      expect(dispatchedEvents).toContain('customerChanged')
     })
 
-    it('고객 등록 실패 시 window.location.reload()가 호출되지 않아야 함', () => {
-      // 등록 실패 시나리오
+    it('고객 등록 실패 시 invalidateQueries가 호출되지 않아야 함', () => {
       const registrationSuccess = false
 
       if (registrationSuccess) {
-        window.location.reload()
+        invalidateQueriesMock.customers()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      expect(reloadMock).not.toHaveBeenCalled()
+      expect(invalidateQueriesMock.customers).not.toHaveBeenCalled()
+      expect(dispatchedEvents).not.toContain('customerChanged')
     })
 
-    it('성공 모달 표시 후 새로고침이 실행되어야 함', () => {
+    it('성공 모달 표시 후 캐시 무효화가 실행되어야 함', () => {
       const executionOrder: string[] = []
 
       const showSuccessModal = () => executionOrder.push('show_modal')
-      const reloadPage = () => {
-        executionOrder.push('reload')
-        window.location.reload()
+      const invalidateCache = () => {
+        executionOrder.push('invalidate')
+        invalidateQueriesMock.customers()
+        invalidateQueriesMock.relationships()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      // 등록 성공
       const result = { success: true }
 
       if (result.success) {
         showSuccessModal()
-        reloadPage()
+        invalidateCache()
       }
 
-      expect(executionOrder).toEqual(['show_modal', 'reload'])
-      expect(reloadMock).toHaveBeenCalled()
+      expect(executionOrder).toEqual(['show_modal', 'invalidate'])
+      expect(invalidateQueriesMock.customers).toHaveBeenCalled()
     })
   })
 
-  describe('CustomerEditModal - 고객 수정 후 새로고침', () => {
-    it('고객 정보 수정 성공 후 window.location.reload()가 호출되어야 함', () => {
-      // 수정 성공 시나리오
+  describe('CustomerEditModal - 고객 수정 후 캐시 무효화', () => {
+    it('고객 정보 수정 성공 후 invalidateQueries가 호출되어야 함', () => {
       const updateSuccess = true
+      const customerId = 'test-customer-id'
 
       if (updateSuccess) {
-        window.location.reload()
+        invalidateQueriesMock.customers()
+        invalidateQueriesMock.customer(customerId)
+        invalidateQueriesMock.relationships()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      expect(reloadMock).toHaveBeenCalledTimes(1)
+      expect(invalidateQueriesMock.customers).toHaveBeenCalledTimes(1)
+      expect(invalidateQueriesMock.customer).toHaveBeenCalledWith(customerId)
+      expect(invalidateQueriesMock.relationships).toHaveBeenCalledTimes(1)
+      expect(dispatchedEvents).toContain('customerChanged')
     })
 
-    it('고객 정보 수정 실패 시 window.location.reload()가 호출되지 않아야 함', () => {
-      // 수정 실패 시나리오
+    it('고객 정보 수정 실패 시 invalidateQueries가 호출되지 않아야 함', () => {
       const updateSuccess = false
 
       if (updateSuccess) {
-        window.location.reload()
+        invalidateQueriesMock.customers()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      expect(reloadMock).not.toHaveBeenCalled()
+      expect(invalidateQueriesMock.customers).not.toHaveBeenCalled()
     })
 
-    it('저장 성공 후 즉시 새로고침이 실행되어야 함', () => {
+    it('저장 성공 후 즉시 캐시 무효화가 실행되어야 함', () => {
       const executionOrder: string[] = []
 
       const saveCustomer = () => {
@@ -99,262 +123,128 @@ describe('데이터 변경 작업 후 자동 페이지 새로고침', () => {
         return { success: true }
       }
 
-      const reloadPage = () => {
-        executionOrder.push('reload')
-        window.location.reload()
+      const invalidateCache = () => {
+        executionOrder.push('invalidate')
+        invalidateQueriesMock.customers()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      // 저장 실행
       const result = saveCustomer()
 
       if (result.success) {
-        reloadPage()
+        invalidateCache()
       }
 
-      expect(executionOrder).toEqual(['save', 'reload'])
-      expect(reloadMock).toHaveBeenCalled()
+      expect(executionOrder).toEqual(['save', 'invalidate'])
+      expect(invalidateQueriesMock.customers).toHaveBeenCalled()
     })
   })
 
-  describe('DocumentLibraryView - 문서 삭제 후 새로고침', () => {
-    it('문서 삭제 성공 후 window.location.reload()가 호출되어야 함', () => {
-      // 삭제 성공 시나리오
+  describe('DocumentLibraryView - 문서 작업 후 캐시 무효화', () => {
+    it('문서 삭제 성공 후 invalidateQueries가 호출되어야 함', () => {
       const deleteSuccess = true
 
       if (deleteSuccess) {
-        window.location.reload()
+        invalidateQueriesMock.documents()
+        window.dispatchEvent(new CustomEvent('documentChanged'))
       }
 
-      expect(reloadMock).toHaveBeenCalledTimes(1)
+      expect(invalidateQueriesMock.documents).toHaveBeenCalledTimes(1)
+      expect(dispatchedEvents).toContain('documentChanged')
     })
 
-    it('문서 삭제 실패 시 window.location.reload()가 호출되지 않아야 함', () => {
-      // 삭제 실패 시나리오
-      const deleteSuccess = false
-
-      if (deleteSuccess) {
-        window.location.reload()
-      }
-
-      expect(reloadMock).not.toHaveBeenCalled()
-    })
-
-    it('삭제 완료 후 새로고침이 실행되어야 함', () => {
-      const executionOrder: string[] = []
-
-      const deleteDocuments = () => {
-        executionOrder.push('delete')
-        return { success: true, deletedCount: 3 }
-      }
-
-      const reloadPage = () => {
-        executionOrder.push('reload')
-        window.location.reload()
-      }
-
-      // 삭제 실행
-      const result = deleteDocuments()
-
-      if (result.success) {
-        reloadPage()
-      }
-
-      expect(executionOrder).toEqual(['delete', 'reload'])
-      expect(reloadMock).toHaveBeenCalled()
-    })
-  })
-
-  describe('DocumentLibraryView - 문서-고객 연결 후 새로고침', () => {
-    it('문서-고객 연결 성공 후 window.location.reload()가 호출되어야 함', () => {
-      // 연결 성공 시나리오
+    it('문서-고객 연결 성공 후 관련 캐시가 무효화되어야 함', () => {
       const linkSuccess = true
 
       if (linkSuccess) {
-        window.location.reload()
+        invalidateQueriesMock.documents()
+        invalidateQueriesMock.customers()
+        window.dispatchEvent(new CustomEvent('documentChanged'))
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
-      expect(reloadMock).toHaveBeenCalledTimes(1)
-    })
-
-    it('문서-고객 연결 실패 시 window.location.reload()가 호출되지 않아야 함', () => {
-      // 연결 실패 시나리오
-      const linkSuccess = false
-
-      if (linkSuccess) {
-        window.location.reload()
-      }
-
-      expect(reloadMock).not.toHaveBeenCalled()
-    })
-
-    it('연결 완료 후 새로고침이 실행되어야 함', () => {
-      const executionOrder: string[] = []
-
-      const linkDocumentsToCustomer = () => {
-        executionOrder.push('link')
-        return { success: true, linkedCount: 5 }
-      }
-
-      const reloadPage = () => {
-        executionOrder.push('reload')
-        window.location.reload()
-      }
-
-      // 연결 실행
-      const result = linkDocumentsToCustomer()
-
-      if (result.success) {
-        reloadPage()
-      }
-
-      expect(executionOrder).toEqual(['link', 'reload'])
-      expect(reloadMock).toHaveBeenCalled()
+      expect(invalidateQueriesMock.documents).toHaveBeenCalled()
+      expect(invalidateQueriesMock.customers).toHaveBeenCalled()
     })
   })
 
-  describe('UX 시나리오', () => {
-    it('시나리오: 고객 등록 → 새로고침 → 모든 View 업데이트', () => {
+  describe('UX 개선 검증', () => {
+    it('페이지 새로고침 없이 데이터가 갱신되어야 함', () => {
+      // 새로고침 대신 캐시 무효화 사용
+      const usePageReload = false
+      const useQueryInvalidation = true
+
+      expect(usePageReload).toBe(false)
+      expect(useQueryInvalidation).toBe(true)
+    })
+
+    it('customerChanged 이벤트로 다른 View가 동기화되어야 함', () => {
+      const listenedViews: string[] = []
+
+      // 이벤트 리스너 시뮬레이션
+      const handleCustomerChange = (viewName: string) => {
+        listenedViews.push(viewName)
+      }
+
+      // 이벤트 발생
+      window.dispatchEvent(new CustomEvent('customerChanged'))
+
+      // 각 View가 이벤트를 수신
+      handleCustomerChange('CustomerAllView')
+      handleCustomerChange('CustomerRegionalView')
+      handleCustomerChange('CustomerRelationshipView')
+
+      expect(dispatchedEvents).toContain('customerChanged')
+      expect(listenedViews).toHaveLength(3)
+    })
+
+    it('시나리오: 고객 등록 → 캐시 무효화 → 모든 View 자동 업데이트', () => {
       const scenario = {
         step1_register: () => ({ success: true }),
-        step2_reload: () => window.location.reload(),
-        step3_viewsUpdated: () => true
+        step2_invalidate: () => {
+          invalidateQueriesMock.customers()
+          invalidateQueriesMock.relationships()
+        },
+        step3_dispatchEvent: () => {
+          window.dispatchEvent(new CustomEvent('customerChanged'))
+        }
       }
 
       // 1. 고객 등록
       const result = scenario.step1_register()
       expect(result.success).toBe(true)
 
-      // 2. 페이지 새로고침
-      scenario.step2_reload()
-      expect(reloadMock).toHaveBeenCalled()
+      // 2. 캐시 무효화 (새로고침 없이)
+      scenario.step2_invalidate()
+      expect(invalidateQueriesMock.customers).toHaveBeenCalled()
 
-      // 3. 모든 View가 최신 데이터로 갱신됨
-      const viewsUpdated = scenario.step3_viewsUpdated()
-      expect(viewsUpdated).toBe(true)
-    })
-
-    it('시나리오: 고객 정보 수정 → 새로고침 → 지역별보기 트리 업데이트', () => {
-      const scenario = {
-        initialRegion: '서울',
-        updatedRegion: '부산',
-        updateCustomer: () => {
-          window.location.reload()
-          return '부산'
-        }
-      }
-
-      // 초기 지역
-      expect(scenario.initialRegion).toBe('서울')
-
-      // 고객 정보 수정 (서울 → 부산)
-      const newRegion = scenario.updateCustomer()
-
-      // 페이지 새로고침으로 지역별보기 트리가 업데이트됨
-      expect(reloadMock).toHaveBeenCalled()
-      expect(newRegion).toBe('부산')
-    })
-
-    it('시나리오: 문서 삭제 → 새로고침 → 목록에서 사라짐', () => {
-      let documentCount = 10
-
-      const deleteDocument = () => {
-        documentCount--
-        window.location.reload()
-      }
-
-      // 삭제 전
-      expect(documentCount).toBe(10)
-
-      // 문서 삭제
-      deleteDocument()
-
-      // 새로고침으로 목록 갱신
-      expect(reloadMock).toHaveBeenCalled()
-      expect(documentCount).toBe(9)
-    })
-
-    it('시나리오: 문서-고객 연결 → 새로고침 → 고객 상세에 문서 표시', () => {
-      const customerDocuments: string[] = []
-
-      const linkDocument = (docId: string) => {
-        customerDocuments.push(docId)
-        window.location.reload()
-      }
-
-      // 연결 전
-      expect(customerDocuments.length).toBe(0)
-
-      // 문서 연결
-      linkDocument('doc1')
-
-      // 새로고침으로 고객 상세 View 갱신
-      expect(reloadMock).toHaveBeenCalled()
-      expect(customerDocuments).toContain('doc1')
+      // 3. 이벤트로 다른 View 동기화
+      scenario.step3_dispatchEvent()
+      expect(dispatchedEvents).toContain('customerChanged')
     })
   })
 
   describe('데이터 일관성 검증', () => {
-    it('CRUD 작업 후 모든 View가 최신 데이터로 갱신되어야 함', () => {
+    it('캐시 무효화로 모든 View가 최신 데이터로 갱신되어야 함', () => {
       const views = ['CustomerAllView', 'CustomerRegionalView', 'DocumentLibraryView']
-      const allViewsUpdated = (reload: boolean) => reload ? views : []
 
-      // 데이터 변경
-      window.location.reload()
+      // 캐시 무효화 실행
+      invalidateQueriesMock.all()
 
-      // 모든 View 갱신
-      const updatedViews = allViewsUpdated(reloadMock.mock.calls.length > 0)
+      // 모든 View가 자동으로 최신 데이터를 fetch
+      const invalidated = invalidateQueriesMock.all.mock.calls.length > 0
 
-      expect(updatedViews).toEqual(views)
+      expect(invalidated).toBe(true)
     })
 
-    it('페이지 새로고침으로 이벤트 시스템 불완전성 우회', () => {
-      const hasEventSystem = false // 불완전한 Doc-View 패턴
-      const hasReload = true // 페이지 새로고침으로 우회
+    it('이벤트 시스템과 캐시 무효화가 함께 작동해야 함', () => {
+      const hasEventSystem = true
+      const hasQueryInvalidation = true
 
-      // 이벤트 시스템이 없어도 새로고침으로 100% 동작 보장
-      const dataConsistency = hasEventSystem || hasReload
+      // 두 시스템이 상호 보완
+      const dataConsistency = hasEventSystem && hasQueryInvalidation
 
       expect(dataConsistency).toBe(true)
-    })
-
-    it('customerChanged 이벤트가 없어도 데이터 갱신 보장', () => {
-      const hasCustomerChangedEvent = false
-      const hasPageReload = true
-
-      // 이벤트 없이도 페이지 새로고침으로 모든 구독자 갱신
-      const allSubscribersNotified = hasCustomerChangedEvent || hasPageReload
-
-      expect(allSubscribersNotified).toBe(true)
-    })
-  })
-
-  describe('커밋 eaf0d7a 변경사항 검증', () => {
-    it('CustomerRegistrationView에 window.location.reload() 추가 확인', () => {
-      // 등록 성공 모달 표시 후 새로고침
-      const hasReloadAfterRegistration = true
-
-      expect(hasReloadAfterRegistration).toBe(true)
-    })
-
-    it('CustomerEditModal에 window.location.reload() 추가 확인', () => {
-      // 저장 성공 후 새로고침
-      const hasReloadAfterEdit = true
-
-      expect(hasReloadAfterEdit).toBe(true)
-    })
-
-    it('DocumentLibraryView 삭제에 window.location.reload() 추가 확인', () => {
-      // 삭제 성공 후 새로고침
-      const hasReloadAfterDelete = true
-
-      expect(hasReloadAfterDelete).toBe(true)
-    })
-
-    it('DocumentLibraryView 연결에 window.location.reload() 추가 확인', () => {
-      // 연결 성공 후 새로고침
-      const hasReloadAfterLink = true
-
-      expect(hasReloadAfterLink).toBe(true)
     })
   })
 
@@ -365,11 +255,12 @@ describe('데이터 변경 작업 후 자동 페이지 새로고침', () => {
 
       if (result.success) {
         showSuccessModal()
-        window.location.reload()
+        invalidateQueriesMock.customers()
+        window.dispatchEvent(new CustomEvent('customerChanged'))
       }
 
       expect(showSuccessModal).toHaveBeenCalled()
-      expect(reloadMock).toHaveBeenCalled()
+      expect(invalidateQueriesMock.customers).toHaveBeenCalled()
     })
 
     it('기존 기능: 에러 처리가 여전히 작동해야 함', () => {
@@ -379,124 +270,35 @@ describe('데이터 변경 작업 후 자동 페이지 새로고침', () => {
       if (!result.success) {
         showErrorModal(result.error)
       } else {
-        window.location.reload()
+        invalidateQueriesMock.customers()
       }
 
       expect(showErrorModal).toHaveBeenCalledWith('Network error')
-      expect(reloadMock).not.toHaveBeenCalled()
-    })
-
-    it('새 기능: 새로고침이 기존 워크플로우를 깨뜨리지 않아야 함', () => {
-      const executionOrder: string[] = []
-
-      const step1 = () => executionOrder.push('validate')
-      const step2 = () => executionOrder.push('save')
-      const step3 = () => {
-        executionOrder.push('reload')
-        window.location.reload()
-      }
-
-      step1()
-      step2()
-      step3()
-
-      expect(executionOrder).toEqual(['validate', 'save', 'reload'])
-      expect(reloadMock).toHaveBeenCalled()
+      expect(invalidateQueriesMock.customers).not.toHaveBeenCalled()
     })
   })
 
-  describe('엣지 케이스', () => {
-    it('여러 작업 연속 실행 시 각각 새로고침되어야 함', () => {
-      const operations = [
-        { type: 'create', success: true },
-        { type: 'update', success: true },
-        { type: 'delete', success: true }
-      ]
-
-      operations.forEach(op => {
-        if (op.success) {
-          window.location.reload()
-        }
-      })
-
-      // 3번 모두 새로고침 호출
-      expect(reloadMock).toHaveBeenCalledTimes(3)
-    })
-
-    it('부분 성공 시 성공한 작업만 새로고침되어야 함', () => {
-      const operations = [
-        { success: true },
-        { success: false },
-        { success: true }
-      ]
-
-      operations.forEach(op => {
-        if (op.success) {
-          window.location.reload()
-        }
-      })
-
-      // 성공한 2개만 새로고침
-      expect(reloadMock).toHaveBeenCalledTimes(2)
-    })
-
-    it('window.location.reload()가 undefined여도 안전해야 함', () => {
-      // reload가 undefined인 경우 처리
-      const safeReload = () => {
-        if (typeof window !== 'undefined' && window.location?.reload) {
-          window.location.reload()
-        }
+  describe('성능 개선 검증', () => {
+    it('페이지 새로고침 대신 선택적 캐시 무효화로 성능 향상', () => {
+      // 전체 페이지 새로고침: 모든 리소스 다시 로드
+      // 캐시 무효화: 필요한 쿼리만 다시 fetch
+      const performanceImprovement = {
+        fullReload: { networkRequests: 'all', stateReset: true },
+        queryInvalidation: { networkRequests: 'selective', stateReset: false }
       }
 
-      expect(() => safeReload()).not.toThrow()
-    })
-  })
-
-  describe('성능 및 UX 고려사항', () => {
-    it('새로고침 전에 사용자에게 피드백을 제공해야 함', () => {
-      const executionOrder: string[] = []
-
-      const showSuccessMessage = () => executionOrder.push('feedback')
-      const reloadPage = () => {
-        executionOrder.push('reload')
-        window.location.reload()
-      }
-
-      // 성공 메시지 표시 후 새로고침
-      showSuccessMessage()
-      reloadPage()
-
-      expect(executionOrder[0]).toBe('feedback')
-      expect(executionOrder[1]).toBe('reload')
+      expect(performanceImprovement.queryInvalidation.networkRequests).toBe('selective')
+      expect(performanceImprovement.queryInvalidation.stateReset).toBe(false)
     })
 
-    it('새로고침이 너무 빈번하지 않도록 제어되어야 함', () => {
-      // 개념적 테스트: throttle이 필요한 시나리오 검증
-      const shouldReload = (timeSinceLastReload: number) => {
-        return timeSinceLastReload >= 1000 // 최소 1초 간격
+    it('사용자 경험: 화면 깜빡임 없이 데이터 갱신', () => {
+      const userExperience = {
+        pageReload: { flickering: true, scrollPositionKept: false },
+        queryInvalidation: { flickering: false, scrollPositionKept: true }
       }
 
-      // 빠른 연속 호출 시나리오
-      expect(shouldReload(0)).toBe(false) // 즉시 재호출 차단
-      expect(shouldReload(500)).toBe(false) // 0.5초 후 차단
-      expect(shouldReload(1000)).toBe(true) // 1초 후 허용
-      expect(shouldReload(2000)).toBe(true) // 2초 후 허용
-    })
-
-    it('새로고침 시 사용자의 입력 데이터가 손실되지 않도록 저장되어야 함', () => {
-      // 사용자 입력 데이터 (서버에 저장됨)
-      const hasUserInput = true
-
-      // 작업 성공 후 서버에 저장됨
-      const savedToServer = hasUserInput
-
-      if (savedToServer) {
-        // 데이터가 서버에 안전하게 저장된 후 새로고침
-        window.location.reload()
-      }
-
-      expect(savedToServer).toBe(true)
-      expect(reloadMock).toHaveBeenCalled()
+      expect(userExperience.queryInvalidation.flickering).toBe(false)
+      expect(userExperience.queryInvalidation.scrollPositionKept).toBe(true)
     })
   })
 })

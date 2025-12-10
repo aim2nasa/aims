@@ -27,6 +27,7 @@ import { AddressSection } from '../CustomerRegistrationView/components/AddressSe
 import type { AddressFormData } from '../CustomerRegistrationView/components/AddressSection';
 import { InsuranceInfoSection } from '../CustomerRegistrationView/components/InsuranceInfoSection';
 import type { InsuranceFormData } from '../CustomerRegistrationView/components/InsuranceInfoSection';
+import { invalidateQueries } from '@/app/queryClient';
 import './CustomerEditModal.css';
 
 interface CustomerEditModalProps {
@@ -81,10 +82,14 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     if (success) {
       onSuccess?.();
       onClose();
-      // 페이지 새로고침으로 모든 View 업데이트
-      window.location.reload();
+      // 쿼리 캐시 무효화로 모든 View 업데이트 (새로고침 없이)
+      invalidateQueries.customers();
+      invalidateQueries.customer(customer._id);
+      invalidateQueries.relationships();
+      // 다른 View 동기화를 위한 이벤트 발생
+      window.dispatchEvent(new CustomEvent('customerChanged'));
     }
-  }, [handleSave, onSuccess, onClose]);
+  }, [handleSave, onSuccess, onClose, customer._id]);
 
   const handleBasicInfoChange = useCallback(
     (field: keyof BasicInfoFormData, value: BasicInfoFormData[keyof BasicInfoFormData]) => {

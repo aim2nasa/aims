@@ -16,6 +16,7 @@ import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
 import { AddressSection } from './components/AddressSection';
 import { InsuranceInfoSection } from './components/InsuranceInfoSection';
+import { invalidateQueries } from '../../../../app/queryClient';
 import './CustomerRegistrationView.css';
 
 export const CustomerRegistrationView: React.FC = () => {
@@ -40,8 +41,11 @@ export const CustomerRegistrationView: React.FC = () => {
         showCancel: false,
         iconType: 'success'
       });
-      // 페이지 새로고침으로 모든 View 업데이트
-      window.location.reload();
+      // 쿼리 캐시 무효화로 모든 View 업데이트 (새로고침 없이)
+      invalidateQueries.customers();
+      invalidateQueries.relationships();
+      // 다른 View 동기화를 위한 이벤트 발생
+      window.dispatchEvent(new CustomEvent('customerChanged'));
     },
     onError: async (error) => {
       // 애플 스타일 에러 모달 표시 (취소 버튼 없이)
