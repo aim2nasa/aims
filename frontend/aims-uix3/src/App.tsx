@@ -9,6 +9,7 @@ import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
+import { DevToolsPanel } from './shared/ui/DevToolsPanel'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
@@ -1461,6 +1462,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           } : {})}
         />
       </Suspense>
+
+      {/* 개발자 도구 패널 (DEV 모드에서만 표시) */}
+      <DevToolsPanel />
 
     </div>
   )
