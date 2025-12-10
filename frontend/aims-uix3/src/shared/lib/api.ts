@@ -32,19 +32,29 @@ const API_DEBUG = false;
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {}
 
+  const headers: Record<string, string> = {}
+
+  // x-user-id 헤더 추가 (개발자 모드 계정 전환 지원)
+  const currentUserId = localStorage.getItem('aims-current-user-id')
+  if (currentUserId) {
+    headers['x-user-id'] = currentUserId
+  }
+
+  // Authorization 헤더 추가
   try {
     const authStorage = localStorage.getItem('auth-storage')
     if (authStorage) {
       const parsed = JSON.parse(authStorage)
       const token = parsed?.state?.token
       if (token) {
-        return { 'Authorization': `Bearer ${token}` }
+        headers['Authorization'] = `Bearer ${token}`
       }
     }
   } catch {
     // 파싱 실패 시 무시
   }
-  return {}
+
+  return headers
 }
 
 // API 설정

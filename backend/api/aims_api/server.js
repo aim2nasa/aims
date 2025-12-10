@@ -2064,7 +2064,7 @@ app.get('/api/customers', authenticateJWT, async (req, res) => {
 
     // ⭐ created_by 필터 추가 (사용자 계정 기능)
     let filter = {
-      // 'meta.created_by': userId  // TEMP DISABLED
+      'meta.created_by': userId
     };
 
     // 기본 검색 (이름, 전화번호, 이메일)

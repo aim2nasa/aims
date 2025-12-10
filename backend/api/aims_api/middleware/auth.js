@@ -50,6 +50,17 @@ function authenticateJWT(req, res, next) {
     }
 
     req.user = decoded;
+
+    // ⭐ 개발 환경 전용: x-user-id 헤더로 사용자 ID 오버라이드 (개발자 모드 계정 전환)
+    // 프로덕션에서는 무시됨 (보안)
+    if (process.env.NODE_ENV === 'development') {
+      const devUserId = req.headers['x-user-id'];
+      if (devUserId && devUserId !== decoded.id) {
+        console.log(`[DEV] 사용자 ID 오버라이드: ${decoded.id} → ${devUserId}`);
+        req.user = { ...decoded, id: devUserId };
+      }
+    }
+
     next();
   });
 }
