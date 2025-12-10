@@ -292,6 +292,19 @@
   transform: none;
 }
 
+/* === 빠른 검색 컨테이너 === */
+
+.header-quick-search-container {
+  /* 항상 표시 */
+  opacity: 1;
+  transform: translateY(0);
+
+  /* 전환 */
+  transition:
+    opacity var(--duration-fast) var(--easing-ease-out),
+    transform var(--duration-fast) var(--easing-ease-out);
+}
+
 /* === 테마 토글 컨테이너 === */
 
 .header-theme-container {

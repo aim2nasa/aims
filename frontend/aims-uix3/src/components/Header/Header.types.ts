@@ -6,6 +6,8 @@
  * ARCHITECTURE.md 준수: 예측 가능한 Props 인터페이스
  */
 
+import type { Customer } from '@/entities/customer/model';
+
 export interface HeaderProps {
   /** 헤더 표시 여부 */
   visible: boolean;
@@ -17,6 +19,8 @@ export interface HeaderProps {
   onThemeToggle: () => void;
   /** 메뉴 클릭 핸들러 */
   onMenuClick?: (menuKey: string) => void;
+  /** 빠른검색 고객 클릭 핸들러 */
+  onQuickSearchCustomerClick?: (customerId: string, customer: Customer) => void;
   /** 추가 CSS 클래스명 */
   className?: string;
 }

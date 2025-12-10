@@ -42,6 +42,9 @@
 - **호버**: opacity + scale만 (배경색 변경 금지)
 - SFSymbol 미정의 시 → 직접 SVG 사용 (`fill="currentColor"`)
 - **캐싱 문제**: `rm -rf node_modules/.vite && npm run dev` → Ctrl+Shift+R
+- **고객 타입 아이콘**: `AllCustomersView.tsx`에 정의된 custom SVG 아이콘 사용
+  - 개인: 블루(파랑) 사람 아이콘 `.customer-icon--personal`
+  - 법인: 오렌지 건물 아이콘 `.customer-icon--corporate`
 
 ### 6. 백엔드 API 연동
 - **추측 금지**, 실제 API 호출로 응답 구조 확인 필수

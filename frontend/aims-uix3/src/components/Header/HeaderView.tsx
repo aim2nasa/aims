@@ -7,7 +7,7 @@
  * CLAUDE.md 준수: 애플 디자인 철학 "Progressive Disclosure" UI 구현
  */
 
-import React, { useEffect, memo, useState, useRef } from 'react'
+import React, { useEffect, memo, useState, useRef, useCallback } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -19,6 +19,7 @@ import { useDevModeStore } from '../../shared/store/useDevModeStore'
 import { useUserStore } from '../../stores/user'
 import { useAuthStore } from '../../shared/stores/authStore'
 import { UserProfileMenu } from './UserProfileMenu'
+import { QuickSearch } from '../QuickSearch'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -40,6 +41,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   onLayoutControlOpen,
   onThemeToggle,
   onMenuClick,
+  onQuickSearchCustomerClick,
   className = '',
   controller
 }) => {
@@ -126,6 +128,17 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     onLayoutControlOpen()
   }
 
+  // 빠른검색 네비게이션 핸들러
+  const handleQuickSearchNavigate = useCallback((type: 'customer' | 'document', id: string) => {
+    if (type === 'document' && id === 'search') {
+      // 고급 검색으로 이동
+      onMenuClick?.('documents-search')
+    } else if (type === 'customer') {
+      // 고객 전체보기로 이동
+      onMenuClick?.('customers-full-detail')
+    }
+  }, [onMenuClick])
+
   return (
     <header
       className={headerClasses}
@@ -204,6 +217,15 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             </button>
           </Tooltip>
         )}
+
+        {/* 빠른 검색 - 항상 표시 */}
+        <div className="header-quick-search-container">
+          <QuickSearch
+            onNavigate={handleQuickSearchNavigate}
+            onCustomerClick={onQuickSearchCustomerClick}
+            placeholder="고객 검색..."
+          />
+        </div>
 
         {/* 테마 토글 - 항상 표시 */}
         <div className="header-theme-container">

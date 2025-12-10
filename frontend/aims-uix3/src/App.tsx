@@ -846,6 +846,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onLayoutControlOpen={handleModalOpen}
         onThemeToggle={toggleTheme}
         onMenuClick={handleMenuClick}
+        onQuickSearchCustomerClick={(customerId, customer) => {
+          // 빠른검색에서 고객 선택 시 customers-full-detail로 이동
+          setActiveDocumentView('customers-full-detail')
+          setFullDetailCustomerId(customerId)
+
+          // RightPane 닫기
+          setSelectedDocument(null)
+          setSelectedCustomer(null)
+          setRightPaneContentType(null)
+          setRightPaneVisible(false)
+
+          // URL 업데이트
+          updateURLParams({ view: 'customers-full-detail', customerId, documentId: null })
+
+          // 최근 검색 고객 목록에 추가
+          addRecentCustomer(customer)
+        }}
       />
 
       {/* LeftPane - 독립 레이어 */}
