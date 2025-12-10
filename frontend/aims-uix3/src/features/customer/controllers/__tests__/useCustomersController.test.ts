@@ -8,11 +8,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCustomersController } from '../useCustomersController';
 
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const { mockApiGet } = vi.hoisted(() => ({
+  mockApiGet: vi.fn(),
+}));
+
 // api 모듈 mock
-const mockApiGet = vi.fn();
 vi.mock('@/shared/lib/api', () => ({
   api: {
-    get: (...args: unknown[]) => mockApiGet(...args),
+    get: mockApiGet,
     post: vi.fn(),
     put: vi.fn(),
     patch: vi.fn(),

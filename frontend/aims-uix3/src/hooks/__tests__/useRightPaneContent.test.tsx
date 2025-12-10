@@ -15,11 +15,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useRightPaneContent, type UseRightPaneContentOptions } from '../useRightPaneContent'
 
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const { mockApiGet, mockGetCustomer } = vi.hoisted(() => ({
+  mockApiGet: vi.fn(),
+  mockGetCustomer: vi.fn(),
+}))
+
 // api 모듈 mock
-const mockApiGet = vi.fn()
 vi.mock('@/shared/lib/api', () => ({
   api: {
-    get: (...args: unknown[]) => mockApiGet(...args),
+    get: mockApiGet,
     post: vi.fn(),
     put: vi.fn(),
     patch: vi.fn(),
@@ -28,10 +33,9 @@ vi.mock('@/shared/lib/api', () => ({
 }))
 
 // CustomerService mock
-const mockGetCustomer = vi.fn()
 vi.mock('@/services/customerService', () => ({
   CustomerService: {
-    getCustomer: (...args: unknown[]) => mockGetCustomer(...args),
+    getCustomer: mockGetCustomer,
   },
 }))
 
@@ -264,13 +268,15 @@ describe('useRightPaneContent', () => {
   })
 
   describe('handleOpenFullDetail', () => {
-    it('전체 정보 페이지를 열어야 한다', () => {
+    it('전체 정보 페이지를 열어야 한다', async () => {
       const options = createDefaultOptions()
+      // CustomerService.getCustomer mock 설정
+      mockGetCustomer.mockResolvedValue({ _id: 'customer123', personal_info: { name: '테스트' } })
 
       const { result } = renderHook(() => useRightPaneContent(options))
 
-      act(() => {
-        result.current.handleOpenFullDetail('customer123')
+      await act(async () => {
+        await result.current.handleOpenFullDetail('customer123')
       })
 
       expect(options.setFullDetailCustomerId).toHaveBeenCalledWith('customer123')
@@ -279,13 +285,15 @@ describe('useRightPaneContent', () => {
       expect(result.current.selectedCustomer).toBeNull()
     })
 
-    it('URL을 업데이트해야 한다', () => {
+    it('URL을 업데이트해야 한다', async () => {
       const options = createDefaultOptions()
+      // CustomerService.getCustomer mock 설정
+      mockGetCustomer.mockResolvedValue({ _id: 'customer123', personal_info: { name: '테스트' } })
 
       const { result } = renderHook(() => useRightPaneContent(options))
 
-      act(() => {
-        result.current.handleOpenFullDetail('customer123')
+      await act(async () => {
+        await result.current.handleOpenFullDetail('customer123')
       })
 
       expect(options.updateURLParams).toHaveBeenCalledWith({

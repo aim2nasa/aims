@@ -256,6 +256,19 @@ vi.mock('../../SFSymbol', () => ({
   SFSymbolWeight: { regular: 'regular' },
 }))
 
+// Mock stores
+vi.mock('@/shared/store/useDevModeStore', () => ({
+  useDevModeStore: () => ({
+    isDevMode: true,
+  }),
+}))
+
+vi.mock('@/shared/store/useUserStore', () => ({
+  useUserStore: () => ({
+    userId: 'test-user-123',
+  }),
+}))
+
 describe('DocumentLibraryView - 고객 연결 버튼 테스트', () => {
   beforeEach(() => {
     vi.clearAllMocks()

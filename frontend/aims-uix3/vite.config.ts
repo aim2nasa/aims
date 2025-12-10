@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import cssReloadPlugin from './vite-plugins/css-reload-plugin.js'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,6 +12,12 @@ export default defineConfig({
     tsconfigPaths(),
     cssReloadPlugin()  // CSS 변경 시 전체 리로드 강제 (Windows 안정성)
   ],
+  // vi.mock에서 @/ 경로 별칭 해석을 위한 resolve 설정
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     // 개발 서버 포트 고정 (카카오 OAuth 콜백 URL과 일치해야 함)
     port: 5177,

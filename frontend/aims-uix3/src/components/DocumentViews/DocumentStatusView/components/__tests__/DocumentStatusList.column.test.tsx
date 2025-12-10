@@ -61,6 +61,32 @@ vi.mock('../../components/DocumentActionIcons', () => ({
   LinkIcon: () => <span data-testid="link-icon">link</span>,
 }))
 
+// Mock stores
+vi.mock('@/shared/store/useDevModeStore', () => ({
+  useDevModeStore: () => ({
+    isDevMode: true,  // DEV 모드 활성화 - 링크 버튼 표시
+  }),
+}))
+
+vi.mock('@/shared/store/useUserStore', () => ({
+  useUserStore: () => ({
+    userId: 'test-user-123',  // 현재 로그인 사용자
+  }),
+}))
+
+// Mock useAppleConfirm
+vi.mock('@/controllers/useAppleConfirmController', () => ({
+  useAppleConfirm: () => ({
+    showAlert: vi.fn(),
+    showConfirm: vi.fn(),
+    isVisible: false,
+    alertMessage: '',
+    confirmMessage: '',
+    onConfirm: null,
+    hide: vi.fn(),
+  }),
+}))
+
 describe('DocumentStatusList - 칼럼 레이아웃 최적화 테스트 (커밋 b03247e)', () => {
   beforeEach(() => {
     vi.clearAllMocks()

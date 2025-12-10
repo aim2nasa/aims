@@ -15,14 +15,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnnualReportTab } from '../AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 
-// api 모듈 mock 설정
-const mockApiGet = vi.fn();
-const mockApiPost = vi.fn();
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const { mockApiGet, mockApiPost } = vi.hoisted(() => ({
+  mockApiGet: vi.fn(),
+  mockApiPost: vi.fn(),
+}));
 
+// api 모듈 mock 설정
 vi.mock('@/shared/lib/api', () => ({
   api: {
-    get: (...args: unknown[]) => mockApiGet(...args),
-    post: (...args: unknown[]) => mockApiPost(...args),
+    get: mockApiGet,
+    post: mockApiPost,
     patch: vi.fn(),
     delete: vi.fn()
   },

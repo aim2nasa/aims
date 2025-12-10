@@ -6,11 +6,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AddressService } from '../addressService';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const { mockApiGet } = vi.hoisted(() => ({
+  mockApiGet: vi.fn(),
+}));
+
 // api 모듈 mock 설정
-const mockApiGet = vi.fn();
 vi.mock('@/shared/lib/api', () => ({
   api: {
-    get: (...args: unknown[]) => mockApiGet(...args),
+    get: mockApiGet,
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn()

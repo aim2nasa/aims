@@ -12,42 +12,56 @@ import userEvent from '@testing-library/user-event'
 import { PersonalFilesView } from '../PersonalFilesView'
 import type { PersonalFileItem, FolderContents } from '@/services/personalFilesService'
 
-// personalFilesService 모킹
-const mockGetFolderContents = vi.fn()
-const mockCreateFolder = vi.fn()
-const mockUploadFile = vi.fn()
-const mockRenameItem = vi.fn()
-const mockDeleteItem = vi.fn()
-const mockMoveItem = vi.fn()
-const mockGetDownloadUrl = vi.fn()
-const mockDownloadFile = vi.fn()
-const mockSearchFiles = vi.fn()
-const mockMoveDocument = vi.fn()
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const {
+  mockGetFolderContents,
+  mockCreateFolder,
+  mockUploadFile,
+  mockRenameItem,
+  mockDeleteItem,
+  mockMoveItem,
+  mockGetDownloadUrl,
+  mockDownloadFile,
+  mockSearchFiles,
+  mockMoveDocument,
+} = vi.hoisted(() => ({
+  mockGetFolderContents: vi.fn(),
+  mockCreateFolder: vi.fn(),
+  mockUploadFile: vi.fn(),
+  mockRenameItem: vi.fn(),
+  mockDeleteItem: vi.fn(),
+  mockMoveItem: vi.fn(),
+  mockGetDownloadUrl: vi.fn(),
+  mockDownloadFile: vi.fn(),
+  mockSearchFiles: vi.fn(),
+  mockMoveDocument: vi.fn(),
+}))
 
+// personalFilesService 모킹
 vi.mock('@/services/personalFilesService', () => ({
   default: {
-    getFolderContents: (...args: any[]) => mockGetFolderContents(...args),
-    createFolder: (...args: any[]) => mockCreateFolder(...args),
-    uploadFile: (...args: any[]) => mockUploadFile(...args),
-    renameItem: (...args: any[]) => mockRenameItem(...args),
-    deleteItem: (...args: any[]) => mockDeleteItem(...args),
-    moveItem: (...args: any[]) => mockMoveItem(...args),
-    getDownloadUrl: (...args: any[]) => mockGetDownloadUrl(...args),
-    downloadFile: (...args: any[]) => mockDownloadFile(...args),
-    searchFiles: (...args: any[]) => mockSearchFiles(...args),
-    moveDocument: (...args: any[]) => mockMoveDocument(...args),
+    getFolderContents: mockGetFolderContents,
+    createFolder: mockCreateFolder,
+    uploadFile: mockUploadFile,
+    renameItem: mockRenameItem,
+    deleteItem: mockDeleteItem,
+    moveItem: mockMoveItem,
+    getDownloadUrl: mockGetDownloadUrl,
+    downloadFile: mockDownloadFile,
+    searchFiles: mockSearchFiles,
+    moveDocument: mockMoveDocument,
   },
   personalFilesService: {
-    getFolderContents: (...args: any[]) => mockGetFolderContents(...args),
-    createFolder: (...args: any[]) => mockCreateFolder(...args),
-    uploadFile: (...args: any[]) => mockUploadFile(...args),
-    renameItem: (...args: any[]) => mockRenameItem(...args),
-    deleteItem: (...args: any[]) => mockDeleteItem(...args),
-    moveItem: (...args: any[]) => mockMoveItem(...args),
-    getDownloadUrl: (...args: any[]) => mockGetDownloadUrl(...args),
-    downloadFile: (...args: any[]) => mockDownloadFile(...args),
-    searchFiles: (...args: any[]) => mockSearchFiles(...args),
-    moveDocument: (...args: any[]) => mockMoveDocument(...args),
+    getFolderContents: mockGetFolderContents,
+    createFolder: mockCreateFolder,
+    uploadFile: mockUploadFile,
+    renameItem: mockRenameItem,
+    deleteItem: mockDeleteItem,
+    moveItem: mockMoveItem,
+    getDownloadUrl: mockGetDownloadUrl,
+    downloadFile: mockDownloadFile,
+    searchFiles: mockSearchFiles,
+    moveDocument: mockMoveDocument,
   },
 }))
 

@@ -11,13 +11,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AnnualReportApi } from '../annualReportApi';
 
-// api 모듈 mock 설정
-const mockApiPost = vi.fn();
+// vi.hoisted를 사용하여 mock 함수들이 vi.mock과 함께 호이스팅되도록 함
+const { mockApiPost } = vi.hoisted(() => ({
+  mockApiPost: vi.fn(),
+}));
 
+// api 모듈 mock 설정
 vi.mock('@/shared/lib/api', () => ({
   api: {
     get: vi.fn(),
-    post: (...args: unknown[]) => mockApiPost(...args),
+    post: mockApiPost,
     put: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn()

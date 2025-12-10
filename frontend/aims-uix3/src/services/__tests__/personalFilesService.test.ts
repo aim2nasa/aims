@@ -8,34 +8,52 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { PersonalFileItem, FolderContents } from '../personalFilesService'
 
-// api 모듈 mock 설정
-const mockApiGet = vi.fn()
-const mockApiPost = vi.fn()
-const mockApiPut = vi.fn()
-const mockApiDelete = vi.fn()
+// vi.hoisted로 mock 함수들 선언 (vi.mock factory 내에서 사용 가능)
+const { mockApiGet, mockApiPost, mockApiPut, mockApiDelete } = vi.hoisted(() => ({
+  mockApiGet: vi.fn(),
+  mockApiPost: vi.fn(),
+  mockApiPut: vi.fn(),
+  mockApiDelete: vi.fn(),
+}))
 
+const { mockAxiosPost, mockAxiosGet } = vi.hoisted(() => ({
+  mockAxiosPost: vi.fn(),
+  mockAxiosGet: vi.fn(),
+}))
+
+// api 모듈 mock - 호이스팅됨
 vi.mock('@/shared/lib/api', () => ({
   api: {
-    get: (...args: unknown[]) => mockApiGet(...args),
-    post: (...args: unknown[]) => mockApiPost(...args),
-    put: (...args: unknown[]) => mockApiPut(...args),
-    delete: (...args: unknown[]) => mockApiDelete(...args),
+    get: mockApiGet,
+    post: mockApiPost,
+    put: mockApiPut,
+    patch: vi.fn(),
+    delete: mockApiDelete,
   },
+  apiRequest: vi.fn(),
   API_CONFIG: {
     BASE_URL: 'http://localhost:3010',
+    TIMEOUT: 30000,
+    DEFAULT_HEADERS: { 'Content-Type': 'application/json' },
+  },
+  ApiError: class ApiError extends Error {
+    constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
+      super(message)
+      this.name = 'ApiError'
+    }
   },
 }))
 
-// axios mock 설정
-const mockAxiosPost = vi.fn()
-const mockAxiosGet = vi.fn()
-
+// axios mock - 호이스팅됨
 vi.mock('axios', () => ({
   default: {
-    post: (...args: unknown[]) => mockAxiosPost(...args),
-    get: (...args: unknown[]) => mockAxiosGet(...args),
+    post: mockAxiosPost,
+    get: mockAxiosGet,
   },
 }))
+
+// vi.mock 후에 서비스 임포트 (호이스팅으로 인해 mock이 먼저 적용됨)
+import { personalFilesService } from '../personalFilesService'
 
 // localStorage mock
 const localStorageMock = {
@@ -103,14 +121,8 @@ function createMockFolderContents(overrides: Partial<FolderContents> = {}): Fold
 }
 
 describe('PersonalFilesService', () => {
-  // 매 테스트마다 동적으로 import
-  let personalFilesService: typeof import('../personalFilesService').personalFilesService
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    // 동적 import로 모킹된 모듈 사용
-    const module = await import('../personalFilesService')
-    personalFilesService = module.personalFilesService
   })
 
   afterEach(() => {
