@@ -45,7 +45,7 @@ describe('Cascading Delete 테스트', () => {
   });
 
   afterEach(async () => {
-    // 테스트 데이터 정리
+    // 테스트 데이터 정리 (ID 기반으로만 삭제 - regex 삭제는 afterAll로 이동)
     if (createdCustomerIds.length > 0) {
       await customersCollection.deleteMany({ _id: { $in: createdCustomerIds } });
     }
@@ -58,11 +58,11 @@ describe('Cascading Delete 테스트', () => {
     if (createdRelationshipIds.length > 0) {
       await relationshipsCollection.deleteMany({ _id: { $in: createdRelationshipIds } });
     }
-    // 혹시 모를 테스트 데이터 정리
-    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트고객_캐스케이드/ } });
   });
 
   afterAll(async () => {
+    // 혹시 모를 테스트 데이터 정리 (최종 정리)
+    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트고객_캐스케이드/ } });
     await client.close();
   });
 
@@ -244,12 +244,15 @@ describe('Cascading Delete 테스트', () => {
       const contract1Id = new ObjectId();
       const contract2Id = new ObjectId();
 
+      // 테스트 격리를 위한 고유 접미사
+      const testSuffix = `_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
       createdCustomerIds.push(customerId);
       createdContractIds.push(contract1Id, contract2Id);
 
-      await customersCollection.insertOne({
+      const insertResult = await customersCollection.insertOne({
         _id: customerId,
-        personal_info: { name: '테스트고객_캐스케이드4' },
+        personal_info: { name: `테스트고객_캐스케이드4${testSuffix}` },
         contracts: [
           { contract_id: contract1Id, policy_number: '10001' },
           { contract_id: contract2Id, policy_number: '10002' }
@@ -257,10 +260,17 @@ describe('Cascading Delete 테스트', () => {
         meta: { created_at: new Date(), updated_at: new Date() }
       });
 
+      // 삽입 확인
+      expect(insertResult.acknowledged).toBe(true);
+
       await contractsCollection.insertMany([
         { _id: contract1Id, customer_id: customerId.toString(), product_name: '상품1' },
         { _id: contract2Id, customer_id: customerId.toString(), product_name: '상품2' }
       ]);
+
+      // 삽입 직후 검증
+      const verifyCustomer = await customersCollection.findOne({ _id: customerId });
+      expect(verifyCustomer).not.toBeNull();
 
       // When: contract1 삭제 로직 실행 (고객 역참조 정리 포함)
       await customersCollection.updateOne(
@@ -275,6 +285,9 @@ describe('Cascading Delete 테스트', () => {
 
       // Then: 검증
       const customer = await customersCollection.findOne({ _id: customerId });
+
+      // 고객이 존재하는지 확인
+      expect(customer).not.toBeNull();
 
       // 1. contracts 배열에 contract2만 남음
       expect(customer.contracts).toHaveLength(1);
@@ -298,13 +311,16 @@ describe('Cascading Delete 테스트', () => {
       const contract3Id = new ObjectId();
       const contract4Id = new ObjectId();
 
+      // 테스트 격리를 위한 고유 접미사 (timestamp + random)
+      const testSuffix = `_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
       createdCustomerIds.push(customer1Id, customer2Id);
       createdContractIds.push(contract1Id, contract2Id, contract3Id, contract4Id);
 
-      await customersCollection.insertMany([
+      const customersInsertResult = await customersCollection.insertMany([
         {
           _id: customer1Id,
-          personal_info: { name: '테스트고객_캐스케이드5A' },
+          personal_info: { name: `테스트고객_캐스케이드5A${testSuffix}` },
           contracts: [
             { contract_id: contract1Id, policy_number: '20001' },
             { contract_id: contract2Id, policy_number: '20002' }
@@ -313,7 +329,7 @@ describe('Cascading Delete 테스트', () => {
         },
         {
           _id: customer2Id,
-          personal_info: { name: '테스트고객_캐스케이드5B' },
+          personal_info: { name: `테스트고객_캐스케이드5B${testSuffix}` },
           contracts: [
             { contract_id: contract3Id, policy_number: '20003' },
             { contract_id: contract4Id, policy_number: '20004' }
@@ -322,12 +338,24 @@ describe('Cascading Delete 테스트', () => {
         }
       ]);
 
-      await contractsCollection.insertMany([
+      // 고객 삽입 성공 확인
+      expect(customersInsertResult.insertedCount).toBe(2);
+
+      // 삽입 직후 검증 - 데이터가 실제로 저장되었는지 확인
+      const verifyCustomer1 = await customersCollection.findOne({ _id: customer1Id });
+      const verifyCustomer2 = await customersCollection.findOne({ _id: customer2Id });
+      expect(verifyCustomer1).not.toBeNull();
+      expect(verifyCustomer2).not.toBeNull();
+
+      const contractsInsertResult = await contractsCollection.insertMany([
         { _id: contract1Id, customer_id: customer1Id.toString(), product_name: '상품1' },
         { _id: contract2Id, customer_id: customer1Id.toString(), product_name: '상품2' },
         { _id: contract3Id, customer_id: customer2Id.toString(), product_name: '상품3' },
         { _id: contract4Id, customer_id: customer2Id.toString(), product_name: '상품4' }
       ]);
+
+      // 계약 삽입 성공 확인
+      expect(contractsInsertResult.insertedCount).toBe(4);
 
       // When: contract1, contract3 벌크 삭제 (고객 역참조 정리 포함)
       const deleteIds = [contract1Id, contract3Id];
