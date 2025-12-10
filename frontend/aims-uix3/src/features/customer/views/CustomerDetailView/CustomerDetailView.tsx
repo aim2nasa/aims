@@ -25,6 +25,7 @@ import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { Tooltip } from '@/shared/ui/Tooltip';
 import './CustomerDetailView.css';
 
 interface CustomerDetailViewProps {
@@ -380,24 +381,25 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       <span className="customer-detail-name">{customer.personal_info?.name || '고객 정보'}</span>
       {/* 전체보기 전환 버튼 */}
       {onOpenFullDetail && (
-        <button
-          type="button"
-          className="view-switch-button view-switch-button--full"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenFullDetail(customer._id);
-          }}
-          title="전체 보기로 전환"
-          aria-label="전체 보기"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            {/* 그리드 아이콘 (전체 보기) */}
-            <rect x="1" y="1" width="6" height="6" rx="1" />
-            <rect x="9" y="1" width="6" height="6" rx="1" />
-            <rect x="1" y="9" width="6" height="6" rx="1" />
-            <rect x="9" y="9" width="6" height="6" rx="1" />
-          </svg>
-        </button>
+        <Tooltip content="전체 보기로 전환">
+          <button
+            type="button"
+            className="view-switch-button view-switch-button--full"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenFullDetail(customer._id);
+            }}
+            aria-label="전체 보기"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              {/* 그리드 아이콘 (전체 보기) */}
+              <rect x="1" y="1" width="6" height="6" rx="1" />
+              <rect x="9" y="1" width="6" height="6" rx="1" />
+              <rect x="1" y="9" width="6" height="6" rx="1" />
+              <rect x="9" y="9" width="6" height="6" rx="1" />
+            </svg>
+          </button>
+        </Tooltip>
       )}
     </span>
   );

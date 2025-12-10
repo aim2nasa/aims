@@ -554,13 +554,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
               aria-label="간략 보기"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                {/* 리스트 아이콘 (간략 보기) */}
-                <rect x="1" y="2" width="3" height="3" rx="0.5" />
-                <rect x="6" y="2" width="9" height="3" rx="0.5" />
-                <rect x="1" y="6.5" width="3" height="3" rx="0.5" />
-                <rect x="6" y="6.5" width="9" height="3" rx="0.5" />
-                <rect x="1" y="11" width="3" height="3" rx="0.5" />
-                <rect x="6" y="11" width="9" height="3" rx="0.5" />
+                {/* 단일 박스 아이콘 (간략 보기) - 전체보기 사각형 하나와 동일 크기 */}
+                <rect x="5" y="5" width="6" height="6" rx="1" />
               </svg>
             </button>
           </Tooltip>
