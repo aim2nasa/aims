@@ -1,10 +1,12 @@
 /**
  * AIMS UIX-3 Customer Registration View
  * @since 2025-10-03
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 고객 등록 페이지
  * iOS Settings 스타일의 카드형 레이아웃
+ *
+ * @modified 2025-12-11 - Draft(임시저장) 기능 추가
  */
 
 import React from 'react';
@@ -28,8 +30,10 @@ export const CustomerRegistrationView: React.FC = () => {
     formData,
     errors,
     isSubmitting,
+    hasDraft,
     handleChange,
     handleSubmit,
+    clearDraft,
   } = useCustomerRegistrationController({
     onSuccess: async (_customerId, customerName) => {
       // 애플 스타일 성공 모달 표시 (취소 버튼 없이)
@@ -103,6 +107,20 @@ export const CustomerRegistrationView: React.FC = () => {
 
             {/* Actions */}
             <div className="customer-registration__actions">
+              {/* Draft 표시 */}
+              {hasDraft && (
+                <div className="customer-registration__draft-indicator">
+                  <span className="customer-registration__draft-badge">임시저장됨</span>
+                  <button
+                    type="button"
+                    className="customer-registration__draft-clear"
+                    onClick={clearDraft}
+                    aria-label="임시저장 삭제"
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
               <Button
                 type="submit"
                 variant="primary"

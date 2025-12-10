@@ -411,3 +411,39 @@
 [data-theme="dark"] .address-disabled-message {
   background-color: var(--color-layout-main-dark);
 }
+
+/* === Draft Indicator === */
+.customer-registration__draft-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.customer-registration__draft-badge {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-icon-orange);
+  opacity: 0.8;
+}
+
+.customer-registration__draft-clear {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.customer-registration__draft-clear:hover {
+  color: var(--color-error-light);
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+[data-theme="dark"] .customer-registration__draft-clear:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}

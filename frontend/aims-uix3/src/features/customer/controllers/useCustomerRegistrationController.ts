@@ -1,15 +1,22 @@
 /**
  * AIMS UIX-3 Customer Registration Controller
  * @since 2025-10-03
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 고객 등록 폼의 비즈니스 로직 담당
  * 폼 상태 관리, 검증, API 통신 처리
+ *
+ * @modified 2025-12-11 - Draft(임시저장) 기능 추가
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { CreateCustomerSchema, type CreateCustomerData } from '@/entities/customer/model';
 import { api } from '@/shared/lib/api';
+
+// Draft 저장 키
+const DRAFT_STORAGE_KEY = 'aims_customer_registration_draft';
+// Debounce 시간 (ms)
+const DRAFT_SAVE_DELAY = 1000;
 
 interface UseCustomerRegistrationControllerProps {
   /** 등록 성공 시 콜백 */
@@ -49,17 +56,130 @@ interface FormErrors {
  *   onError: (error) => console.error('등록 실패:', error),
  * });
  */
+/**
+ * localStorage에서 Draft 로드
+ */
+const loadDraftFromStorage = (): CustomerRegistrationFormData | null => {
+  try {
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // 유효한 데이터인지 확인
+      if (parsed && typeof parsed.name === 'string') {
+        return parsed as CustomerRegistrationFormData;
+      }
+    }
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn('[Draft] localStorage 읽기 실패:', e);
+    }
+  }
+  return null;
+};
+
+/**
+ * localStorage에 Draft 저장
+ */
+const saveDraftToStorage = (data: CustomerRegistrationFormData): void => {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn('[Draft] localStorage 저장 실패:', e);
+    }
+  }
+};
+
+/**
+ * localStorage에서 Draft 삭제
+ */
+const clearDraftFromStorage = (): void => {
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn('[Draft] localStorage 삭제 실패:', e);
+    }
+  }
+};
+
+/**
+ * 폼 데이터가 비어있는지 확인
+ */
+const isFormEmpty = (data: CustomerRegistrationFormData): boolean => {
+  return (
+    !data.name.trim() &&
+    !data.name_en?.trim() &&
+    !data.birth_date &&
+    !data.mobile_phone?.trim() &&
+    !data.home_phone?.trim() &&
+    !data.work_phone?.trim() &&
+    !data.email?.trim() &&
+    !data.postal_code?.trim() &&
+    !data.address1?.trim() &&
+    !data.address2?.trim()
+  );
+};
+
 export const useCustomerRegistrationController = ({
   onSuccess,
   onError,
 }: UseCustomerRegistrationControllerProps = {}) => {
-  const [formData, setFormData] = useState<CustomerRegistrationFormData>({
-    name: '',
-    customer_type: '개인',
+  // Draft에서 초기값 로드 (한 번만 실행)
+  const [formData, setFormData] = useState<CustomerRegistrationFormData>(() => {
+    const draft = loadDraftFromStorage();
+    if (draft) {
+      if (import.meta.env.DEV) {
+        console.log('[Draft] 임시저장 데이터 복원:', draft.name || '(이름 없음)');
+      }
+      return draft;
+    }
+    return {
+      name: '',
+      customer_type: '개인',
+    };
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasDraft, setHasDraft] = useState<boolean>(() => loadDraftFromStorage() !== null);
+
+  // Debounce 타이머 ref
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
+
+  /**
+   * Draft 저장 (debounced)
+   */
+  const saveDraft = useCallback((data: CustomerRegistrationFormData) => {
+    // 기존 타이머 취소
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    // 새 타이머 설정
+    saveTimerRef.current = setTimeout(() => {
+      if (isFormEmpty(data)) {
+        // 폼이 비어있으면 draft 삭제
+        clearDraftFromStorage();
+        setHasDraft(false);
+      } else {
+        saveDraftToStorage(data);
+        setHasDraft(true);
+        if (import.meta.env.DEV) {
+          console.log('[Draft] 자동 저장:', data.name || '(이름 없음)');
+        }
+      }
+    }, DRAFT_SAVE_DELAY);
+  }, []);
 
   /**
    * 폼 필드 값 변경 핸들러
@@ -68,10 +188,15 @@ export const useCustomerRegistrationController = ({
     field: Field,
     value: CustomerRegistrationFormData[Field]
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      // Draft 자동 저장 (debounced)
+      saveDraft(newData);
+      return newData;
+    });
 
     // 필드 변경 시 해당 필드의 에러 제거
     const fieldKey = String(field);
@@ -187,6 +312,10 @@ export const useCustomerRegistrationController = ({
         await onSuccess(customerId, customerName);
       }
 
+      // Draft 삭제 (등록 성공 시)
+      clearDraftFromStorage();
+      setHasDraft(false);
+
       // 폼 초기화
       setFormData({
         name: '',
@@ -234,15 +363,35 @@ export const useCustomerRegistrationController = ({
       customer_type: '개인',
     });
     setErrors({});
+    // Draft도 함께 삭제
+    clearDraftFromStorage();
+    setHasDraft(false);
   };
+
+  /**
+   * Draft 수동 삭제 (사용자가 "임시저장 삭제" 버튼 클릭 시)
+   */
+  const clearDraft = useCallback(() => {
+    clearDraftFromStorage();
+    setHasDraft(false);
+    setFormData({
+      name: '',
+      customer_type: '개인',
+    });
+    setErrors({});
+  }, []);
 
   return {
     formData,
     errors,
     isSubmitting,
+    /** Draft 존재 여부 */
+    hasDraft,
     handleChange,
     handleSubmit,
     handleReset,
+    /** Draft 수동 삭제 */
+    clearDraft,
   };
 };
 
