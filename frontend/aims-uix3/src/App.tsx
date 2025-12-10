@@ -19,6 +19,7 @@ import { APP_VERSION } from './config/version'
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
 const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
+const RecentCustomers = lazy(() => import('./components/RecentCustomers'))
 const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
 const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
@@ -848,6 +849,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onMenuClick={handleMenuClick}
               onCustomerClick={handleRecentCustomerClick}
               selectedKey={activeDocumentView || 'dsd'}
+            />
+          </Suspense>
+
+          {/* 최근 검색 고객 - 컴팩트 리스트 */}
+          <Suspense fallback={null}>
+            <RecentCustomers
+              collapsed={leftPaneCollapsed}
+              onCustomerClick={handleRecentCustomerClick}
             />
           </Suspense>
 

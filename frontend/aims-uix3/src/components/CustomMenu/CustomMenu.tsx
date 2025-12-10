@@ -3,7 +3,7 @@ import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
-import { useRecentCustomersStore } from '../../shared/store/useRecentCustomersStore'
+// useRecentCustomersStore는 LeftPane의 RecentCustomers 컴포넌트로 이동됨
 import './CustomMenu.css'
 import './CustomMenuTooltip.css'
 
@@ -290,8 +290,7 @@ const CustomMenu = ({
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
-  // 최근 검색 고객 목록 가져오기
-  const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
+  // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨 (useRecentCustomersStore 제거)
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
   useEffect(() => {
@@ -333,14 +332,6 @@ const CustomMenu = ({
         }
         setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents'])
       }, 800)
-
-      // 5단계: 1000ms 후 최근 검색 고객도 펼침
-      setTimeout(() => {
-        if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 5단계 - 최근 검색 고객 추가 펼침')
-        }
-        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents', 'recent-customers'])
-      }, 1000)
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
@@ -530,22 +521,8 @@ const CustomMenu = ({
       }
     ] : []),
 
-    // ━━━ 최근 검색 고객 ━━━ (고객 목록이 있을 때만 표시, collapsed 상태에서는 숨김)
-    ...(recentCustomers.length > 0 && !collapsed ? [{
-      key: 'recent-customers',
-      icon: <span className="menu-icon-teal"><MenuIcons.Clock /></span>,
-      label: '최근 검색 고객',
-      tooltipTitle: '최근 검색한 고객',
-      children: recentCustomers.slice(0, 5).map(customer => ({
-        key: `recent-customer-${customer._id}`,
-        icon: customer.customerType === '법인'
-          ? <MenuIcons.BuildingSmall />
-          : <MenuIcons.PersonSmall />,
-        label: customer.name,
-        tooltipTitle: `${customer.name} (${customer.customerType})`,
-      }))
-    }] : [])
-  ], [collapsed, hasSearchResults, searchResultsCount, recentCustomers])
+    // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
+  ], [collapsed, hasSearchResults, searchResultsCount])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>

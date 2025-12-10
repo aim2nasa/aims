@@ -1,0 +1,88 @@
+import { memo } from 'react'
+import { useRecentCustomersStore } from '../../shared/store/useRecentCustomersStore'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+import Tooltip from '../../shared/ui/Tooltip'
+import './RecentCustomers.css'
+
+interface RecentCustomersProps {
+  collapsed?: boolean
+  onCustomerClick?: (customerId: string) => void
+}
+
+// 개인/법인 고객 아이콘
+const PersonIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" className="recent-customer-icon--personal">
+    <circle cx="10" cy="7" r="3" />
+    <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+  </svg>
+)
+
+const BuildingIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" className="recent-customer-icon--corporate">
+    <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+  </svg>
+)
+
+const RecentCustomers = memo(({ collapsed = false, onCustomerClick }: RecentCustomersProps) => {
+  const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
+
+  // 고객이 없거나 collapsed 상태면 숨김
+  if (recentCustomers.length === 0 || collapsed) {
+    return null
+  }
+
+  const handleClick = (customerId: string) => {
+    if (onCustomerClick) {
+      onCustomerClick(customerId)
+    }
+  }
+
+  return (
+    <div className="recent-customers">
+      {/* 섹션 헤더 */}
+      <div className="recent-customers__header">
+        <span className="recent-customers__icon">
+          <SFSymbol
+            name="clock"
+            size={SFSymbolSize.FOOTNOTE}
+            weight={SFSymbolWeight.MEDIUM}
+          />
+        </span>
+        <span className="recent-customers__title">최근 검색</span>
+      </div>
+
+      {/* 고객 리스트 */}
+      <div className="recent-customers__list">
+        {recentCustomers.slice(0, 5).map((customer) => (
+          <Tooltip
+            key={customer._id}
+            content={`${customer.name} (${customer.customerType})`}
+            placement="right"
+          >
+            <div
+              className="recent-customers__item"
+              onClick={() => handleClick(customer._id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleClick(customer._id)
+                }
+              }}
+            >
+              <span className="recent-customers__item-icon">
+                {customer.customerType === '법인' ? <BuildingIcon /> : <PersonIcon />}
+              </span>
+              <span className="recent-customers__item-name">{customer.name}</span>
+            </div>
+          </Tooltip>
+        ))}
+      </div>
+    </div>
+  )
+})
+
+RecentCustomers.displayName = 'RecentCustomers'
+
+export default RecentCustomers
