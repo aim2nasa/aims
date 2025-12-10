@@ -41,3 +41,6 @@ export type { RecentActivityListProps, RecentActivityItem } from './RecentActivi
 
 export { UsageGuide } from './UsageGuide';
 export type { UsageGuideProps, GuideSection } from './UsageGuide';
+
+export { Breadcrumb } from './Breadcrumb';
+export type { BreadcrumbItem } from './Breadcrumb';

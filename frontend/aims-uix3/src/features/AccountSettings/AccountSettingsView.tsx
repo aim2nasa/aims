@@ -864,7 +864,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
             vip: { name: 'VIP', color: 'var(--color-accent-orange)', icon: 'crown' },
             admin: { name: '관리자', color: 'var(--color-accent-red)', icon: 'shield' }
           }
-          return tiers[tier] || tiers.standard
+          return tiers[tier] || tiers['standard']
         }
 
         const getUsagePercent = () => {

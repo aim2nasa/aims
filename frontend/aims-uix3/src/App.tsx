@@ -1024,6 +1024,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomerRegistrationView
               visible={activeDocumentView === 'customers-register'}
               onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 

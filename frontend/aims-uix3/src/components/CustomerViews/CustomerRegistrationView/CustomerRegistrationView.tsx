@@ -7,16 +7,19 @@
  * iOS Settings 스타일의 폼 기반 구현
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { CustomerRegistrationView as RegistrationForm } from '@/features/customer/views/CustomerRegistrationView/CustomerRegistrationView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils';
 
 interface CustomerRegistrationViewProps {
   /** View 표시 여부 */
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void;
 }
 
 /**
@@ -36,7 +39,11 @@ interface CustomerRegistrationViewProps {
 export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
+  // Breadcrumb 항목 생성
+  const breadcrumbItems = useMemo(() => getBreadcrumbItems('customers-register'), []);
+
   return (
     <CenterPaneView
       visible={visible}
@@ -48,6 +55,8 @@ export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> =
       marginLeft={3}
       marginRight={3}
       className="customer-registration-view"
+      breadcrumbItems={breadcrumbItems}
+      onBreadcrumbClick={onNavigate}
     >
       <RegistrationForm />
     </CenterPaneView>

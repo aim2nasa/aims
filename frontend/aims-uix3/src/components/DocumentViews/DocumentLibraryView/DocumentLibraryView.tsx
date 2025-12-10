@@ -7,8 +7,9 @@
  * /api/documents/status API를 사용하여 문서 리스트 표시 (DocumentStatusView와 동일)
  */
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, Button } from '@/shared/ui'
@@ -610,6 +611,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     clearError,
   } = useDocumentsController()
 
+  // Breadcrumb 항목 생성
+  const breadcrumbItems = useMemo(() => getBreadcrumbItems('documents-library'), [])
+
   // 🍎 Optimistic Update 함수를 저장할 ref
   const removeDocumentsFnRef = React.useRef<((docIds: Set<string>) => void) | null>(null)
 
@@ -765,7 +769,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
 
   return (
-    <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}>
+    <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
       <div className="document-library-view">
         {/* Error 표시 */}
         {error && (

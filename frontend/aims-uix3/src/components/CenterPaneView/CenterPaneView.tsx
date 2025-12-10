@@ -9,6 +9,7 @@
 
 import React from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+import { Breadcrumb, type BreadcrumbItem } from '@/shared/ui/Breadcrumb'
 import './CenterPaneView.css'
 
 interface CenterPaneViewProps {
@@ -42,6 +43,10 @@ interface CenterPaneViewProps {
   placeholderIcon?: string
   /** 플레이스홀더 메시지 */
   placeholderMessage?: string
+  /** Breadcrumb 항목들 */
+  breadcrumbItems?: BreadcrumbItem[]
+  /** Breadcrumb 항목 클릭 핸들러 */
+  onBreadcrumbClick?: (key: string) => void
 }
 
 /**
@@ -108,7 +113,9 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   className = '',
   children,
   placeholderIcon = 'doc.text',
-  placeholderMessage
+  placeholderMessage,
+  breadcrumbItems,
+  onBreadcrumbClick
 }) => {
   if (!visible) return null
 
@@ -125,6 +132,15 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
       aria-label={title}
       aria-modal="true"
     >
+      {/* Breadcrumb 네비게이션 */}
+      {breadcrumbItems && breadcrumbItems.length > 0 && (
+        <Breadcrumb
+          items={breadcrumbItems}
+          onItemClick={onBreadcrumbClick}
+          className="center-pane-view__breadcrumb"
+        />
+      )}
+
       {/* 헤더 영역 - 애플 스타일 적용 */}
       <div className="center-pane-view__header">
         {/* 왼쪽 액세서리 (돌아가기 버튼 등) */}

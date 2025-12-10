@@ -50,6 +50,12 @@ html[data-theme="dark"] .center-pane-view__header {
   border-bottom-color: var(--color-layout-accent-dark);
 }
 
+/* Breadcrumb 영역 */
+.center-pane-view__breadcrumb {
+  padding: 8px 24px 0;
+  flex-shrink: 0;
+}
+
 /* 왼쪽 액세서리 (돌아가기 버튼 등) */
 .center-pane-view__title-left-accessory {
   display: flex;

@@ -7,11 +7,12 @@
  * iOS 스타일의 그리드 레이아웃 구현
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { AllCustomersView, AllCustomersViewRef } from '@/features/customer/views/AllCustomersView/AllCustomersView';
 import type { Customer } from '@/entities/customer/model';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
+import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils';
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */
@@ -52,6 +53,9 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
 }) => {
   const allCustomersViewRef = React.useRef<AllCustomersViewRef | null>(null);
 
+  // Breadcrumb 항목 생성
+  const breadcrumbItems = useMemo(() => getBreadcrumbItems('customers-all'), []);
+
   // refresh 함수를 부모에게 노출
   React.useEffect(() => {
     if (onRefreshExpose && allCustomersViewRef.current?.refresh) {
@@ -70,6 +74,8 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
       marginLeft={4}
       marginRight={4}
       className="customer-all-view"
+      breadcrumbItems={breadcrumbItems}
+      onBreadcrumbClick={onNavigate}
     >
       <AllCustomersView
         ref={allCustomersViewRef}

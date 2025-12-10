@@ -74,8 +74,8 @@ export const MemosTab: React.FC<MemosTabProps> = ({
         <div className="memo-field__title">
           <SFSymbol
             name="note.text"
-            size={SFSymbolSize.Caption1}
-            weight={SFSymbolWeight.Regular}
+            size={SFSymbolSize.CAPTION_1}
+            weight={SFSymbolWeight.REGULAR}
           />
           <span>메모</span>
         </div>
