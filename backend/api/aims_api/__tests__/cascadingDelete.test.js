@@ -355,6 +355,10 @@ describe('Cascading Delete 테스트', () => {
       const customer1 = await customersCollection.findOne({ _id: customer1Id });
       const customer2 = await customersCollection.findOne({ _id: customer2Id });
 
+      // 고객이 존재하는지 확인 (디버깅용)
+      expect(customer1).not.toBeNull();
+      expect(customer2).not.toBeNull();
+
       // 1. customer1의 contracts 배열에 contract2만 남음
       expect(customer1.contracts).toHaveLength(1);
       expect(customer1.contracts[0].contract_id.toString()).toBe(contract2Id.toString());
