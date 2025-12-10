@@ -403,6 +403,48 @@ export class CustomerService {
     // 병렬로 복원 처리
     return Promise.all(ids.map(id => CustomerService.restoreCustomer(id)));
   }
+
+  /**
+   * 고객명 중복 체크 (실시간 검사용)
+   * @since 2025-12-11
+   */
+  static async checkDuplicateName(name: string): Promise<{
+    exists: boolean;
+    customer: {
+      _id: string;
+      name: string;
+      customer_type: string;
+      status: string;
+    } | null;
+  }> {
+    if (!name || !name.trim()) {
+      return { exists: false, customer: null };
+    }
+
+    try {
+      const response = await api.get<{
+        success: boolean;
+        exists: boolean;
+        customer: {
+          _id: string;
+          name: string;
+          customer_type: string;
+          status: string;
+        } | null;
+      }>(`/api/customers/check-name?name=${encodeURIComponent(name.trim())}`);
+
+      return {
+        exists: response.exists,
+        customer: response.customer
+      };
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn('[CustomerService.checkDuplicateName] 중복 체크 실패:', error);
+      }
+      // 에러 시 false 반환 (등록은 백엔드에서 최종 검증)
+      return { exists: false, customer: null };
+    }
+  }
 }
 
 /**
@@ -474,6 +516,7 @@ export const {
   exportCustomers,
   importCustomers,
   bulkImportCustomers,
+  checkDuplicateName,
 } = CustomerService;
 
 /**

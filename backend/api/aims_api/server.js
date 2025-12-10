@@ -2620,6 +2620,58 @@ app.post('/api/customers/validate-names', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 고객명 중복 체크 API (실시간 검사용)
+ * @since 2025-12-11
+ *
+ * GET /api/customers/check-name?name=홍길동
+ *
+ * Response:
+ * - exists: true/false
+ * - customer: 기존 고객 정보 (exists인 경우)
+ */
+app.get('/api/customers/check-name', authenticateJWT, async (req, res) => {
+  try {
+    const { name } = req.query;
+    const userId = req.user.id;
+
+    if (!name || !name.trim()) {
+      return res.json({
+        success: true,
+        exists: false,
+        customer: null
+      });
+    }
+
+    const trimmedName = name.trim();
+
+    // 대소문자 무시하여 중복 체크 (CLAUDE.md 규칙)
+    const existing = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({
+        'meta.created_by': userId,
+        'personal_info.name': { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+      });
+
+    res.json({
+      success: true,
+      exists: !!existing,
+      customer: existing ? {
+        _id: existing._id.toString(),
+        name: existing.personal_info?.name,
+        customer_type: existing.insurance_info?.customer_type,
+        status: existing.meta?.status || 'active'
+      } : null
+    });
+
+  } catch (error) {
+    console.error('고객명 중복 체크 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객명 중복 체크에 실패했습니다.'
+    });
+  }
+});
+
+/**
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */

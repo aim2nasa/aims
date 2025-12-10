@@ -213,6 +213,63 @@
   opacity: 0.8;
 }
 
+/* Warning Message (중복 검사) */
+.form-row__warning {
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.2;
+  color: var(--color-icon-orange);
+  margin: 2px 0 0 80px;
+  padding: 0;
+  opacity: 0.85;
+}
+
+/* Warning Row State */
+.form-row--warning {
+  border-bottom-color: var(--color-icon-orange) !important;
+}
+
+/* Input with Status Indicator */
+.form-row__input--with-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-row__input--with-status input {
+  flex: 1;
+}
+
+/* Status Indicator */
+.form-row__status {
+  flex-shrink: 0;
+  font-size: 12px;
+  width: 16px;
+  text-align: center;
+  line-height: 1;
+}
+
+.form-row__status--checking {
+  opacity: 0.6;
+  animation: pulse 1s infinite;
+}
+
+.form-row__status--available {
+  color: var(--color-icon-green);
+  font-weight: 600;
+}
+
+.form-row__status--duplicate {
+  color: var(--color-icon-orange);
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
 /* Radio Group */
 .radio-group {
   display: flex;
