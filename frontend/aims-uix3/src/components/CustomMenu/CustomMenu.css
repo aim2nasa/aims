@@ -49,8 +49,8 @@
 .custom-menu-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  margin: 3px 0;
+  padding: 6px 16px;
+  margin: 1px 0;
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-primary);
@@ -107,12 +107,12 @@
 
 /* === COLLAPSED STATE === */
 .custom-menu-item.collapsed {
-  padding: 12px;
+  padding: 8px;
   justify-content: center;
 }
 
 .custom-menu-item.collapsed.sub-menu {
-  padding: 10px;
+  padding: 6px;
 }
 
 /* === VECTOR ICONS SYSTEM (하드코딩 금지 원칙 준수) === */
@@ -709,7 +709,7 @@
 /* === RESPONSIVE DESIGN === */
 @media (max-width: 768px) {
   .custom-menu-item {
-    padding: 12px 16px;
+    padding: 8px 16px;
   }
 
   .custom-menu-item.sub-menu {
