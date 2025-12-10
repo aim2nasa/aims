@@ -54,129 +54,6 @@ describe('pdfParser', () => {
     } as any)
   })
 
-  describe('Annual Report 판단', () => {
-    // File.arrayBuffer() 모킹 이슈로 인해 skip
-    it.skip('정상적인 Annual Report PDF를 인식해야 함', async () => {
-      // Annual Report 텍스트 모킹
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' },
-          { str: '안영미 고객님을 위한' },
-          { str: '보유계약 현황' },
-          { str: 'MetLife' },
-          { str: '2025년 8월 27일' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'annual-report.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.is_annual_report).toBe(true)
-      expect(result.confidence).toBe(1.0)
-      expect(result.metadata).not.toBeNull()
-      expect(result.metadata?.report_title).toBe('Annual Review Report')
-      expect(result.metadata?.issue_date).toBe('2025-08-27')
-    })
-
-    it.skip('필수 키워드가 없으면 Annual Report로 판단하지 않아야 함', async () => {
-      const mockText = {
-        items: [
-          { str: '일반 문서' },
-          { str: '보험 계약서' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'regular.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.is_annual_report).toBe(false)
-      expect(result.confidence).toBe(0)
-      expect(result.metadata).toBeNull()
-    })
-
-    it.skip('필수 키워드만 있고 선택 키워드가 없으면 Annual Report로 판단하지 않아야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' }
-          // 선택 키워드 없음
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'incomplete.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.is_annual_report).toBe(false)
-    })
-
-    // 고객명 추출 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
-
-    it.skip('다양한 날짜 형식을 파싱해야 함', async () => {
-      const testCases = [
-        { input: '2025년 1월 5일', expected: '2025-01-05' },
-        { input: '2024년 12월 31일', expected: '2024-12-31' },
-        { input: '2023년 3월 15일', expected: '2023-03-15' }
-      ]
-
-      for (const testCase of testCases) {
-        const mockText = {
-          items: [
-            { str: 'Annual Review Report' },
-            { str: 'MetLife' },
-            { str: testCase.input }
-          ]
-        }
-
-        mockPage.getTextContent.mockResolvedValue(mockText)
-
-        const file = new File(['pdf content'], 'date-test.pdf', {
-          type: 'application/pdf'
-        })
-
-        const result = await checkAnnualReportFromPDF(file)
-
-        expect(result.metadata?.issue_date).toBe(testCase.expected)
-      }
-    })
-
-    it.skip('선택 키워드 중 하나만 있어도 인식해야 함', async () => {
-      const optionalKeywords = ['보유계약 현황', 'MetLife', '고객님을 위한', '메트라이프생명']
-
-      for (const keyword of optionalKeywords) {
-        const mockText = {
-          items: [
-            { str: 'Annual Review Report' },
-            { str: keyword }
-          ]
-        }
-
-        mockPage.getTextContent.mockResolvedValue(mockText)
-
-        const file = new File(['pdf content'], `test-${keyword}.pdf`, {
-          type: 'application/pdf'
-        })
-
-        const result = await checkAnnualReportFromPDF(file)
-
-        expect(result.is_annual_report).toBe(true)
-      }
-    })
-  })
-
   describe('에러 처리', () => {
     it('PDF 읽기 실패 시 false를 반환해야 함', async () => {
       mockPdf.getPage.mockRejectedValue(new Error('PDF 읽기 실패'))
@@ -325,26 +202,6 @@ describe('pdfParser', () => {
       // 에러 없이 처리되어야 함
       expect(result).toBeDefined()
     })
-
-    it.skip('공백으로 텍스트를 연결해야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' },
-          { str: 'MetLife' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'separated.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      // "Annual Review Report"가 매칭되어야 함
-      expect(result.is_annual_report).toBe(true)
-    })
   })
 
   describe('대소문자 및 특수 케이스', () => {
@@ -366,27 +223,6 @@ describe('pdfParser', () => {
 
       // 대소문자가 다르므로 매칭 실패
       expect(result.is_annual_report).toBe(false)
-    })
-
-    it.skip('특수문자가 포함된 경우에도 처리해야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report!' },
-          { str: '박영수 고객님을 위한' },
-          { str: 'MetLife™' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'special-chars.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      // "Annual Review Report"와 "고객님을 위한"이 모두 포함되어 있으므로 성공
-      expect(result.is_annual_report).toBe(true)
     })
   })
 })

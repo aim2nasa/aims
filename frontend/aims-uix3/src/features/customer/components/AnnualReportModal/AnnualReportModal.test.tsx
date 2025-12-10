@@ -269,13 +269,6 @@ describe('AnnualReportModal', () => {
     });
   });
 
-  describe('배경 클릭으로 닫기', () => {
-    it.skip('DraggableModal은 기본적으로 backdrop 클릭 닫기가 비활성화됨', async () => {
-      // DraggableModal의 backdropClosable은 기본값이 false
-      // 이 테스트는 DraggableModal 마이그레이션 후 불필요
-    });
-  });
-
   describe('닫기 버튼', () => {
     it('닫기 버튼 클릭 시 onClose가 호출되어야 한다', async () => {
       const handleClose = vi.fn();

@@ -225,57 +225,6 @@ describe('DocumentStatusList - 뱃지 색상 시스템 Regression', () => {
   })
 
   describe('TXT 뱃지 표시 로직', () => {
-    it.skip('TXT 확장자 문서는 TXT 뱃지 표시 (향후 구현 예정)', () => {
-      const doc = createMockDocument({
-        originalName: 'document.txt',
-        mimeType: 'text/plain'
-      })
-
-      const { container } = render(
-        <DocumentStatusList
-          documents={[doc]}
-          isLoading={false}
-          isEmpty={false}
-          error={null}
-        />
-      )
-
-      const txtBadge = container.querySelector('.document-txt-badge')
-      expect(txtBadge).toBeTruthy()
-      expect(txtBadge?.textContent).toContain('TXT')
-    })
-
-    it.skip('TXT 파일에 OCR 뱃지는 표시 안 함 (향후 구현 예정)', () => {
-      const doc = createMockDocument({
-        originalName: 'document.txt',
-        mimeType: 'text/plain',
-        stages: {
-          ocr: {
-            name: 'OCR 처리',
-            status: 'completed',
-            message: 'OCR 완료 (신뢰도: 0.95)',
-            timestamp: '2025-01-01T00:00:00.000Z'
-          }
-        }
-      })
-
-      const { container } = render(
-        <DocumentStatusList
-          documents={[doc]}
-          isLoading={false}
-          isEmpty={false}
-          error={null}
-        />
-      )
-
-      const ocrBadge = container.querySelector('.document-ocr-badge')
-      const txtBadge = container.querySelector('.document-txt-badge')
-
-      expect(txtBadge).toBeTruthy()
-      // TXT 파일은 OCR이 필요없으므로 OCR 뱃지 표시 안 함
-      expect(ocrBadge).toBeFalsy()
-    })
-
     it('PDF + OCR 100%도 TXT 뱃지 표시 안 함 (OCR 뱃지만)', () => {
       const doc = createMockDocument({
         originalName: 'document.pdf',
@@ -522,32 +471,6 @@ describe('DocumentStatusList - 뱃지 색상 시스템 Regression', () => {
 
       const badge = container.querySelector('.document-ocr-badge')
       expect(badge?.classList.contains('ocr-excellent')).toBe(true)
-    })
-
-    it.skip('신뢰도 메시지에 백분율 형식인 경우도 파싱 (향후 지원 예정)', () => {
-      const doc = createMockDocument({
-        stages: {
-          ocr: {
-            name: 'OCR 처리',
-            status: 'completed',
-            message: 'OCR 완료 (신뢰도: 87%)',
-            timestamp: '2025-01-01T00:00:00.000Z'
-          }
-        }
-      })
-
-      const { container } = render(
-        <DocumentStatusList
-          documents={[doc]}
-          isLoading={false}
-          isEmpty={false}
-          error={null}
-        />
-      )
-
-      const badge = container.querySelector('.document-ocr-badge')
-      // 87%는 85~95% 범위이므로 high
-      expect(badge?.classList.contains('ocr-high')).toBe(true)
     })
   })
 })
