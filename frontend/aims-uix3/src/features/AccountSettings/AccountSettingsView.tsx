@@ -18,7 +18,7 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { deleteAccount } from '@/entities/auth/api'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
-import StorageQuotaBar from '@/features/batch-upload/components/StorageQuotaBar'
+import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import './AccountSettingsView.css'
@@ -645,21 +645,57 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         return (
           <div className="account-settings-view__content">
             <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">비밀번호</h3>
-              <button className="account-settings-view__link">
-                <SFSymbol name="key" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                <span>비밀번호 변경</span>
-                <span className="account-settings-view__badge">준비중</span>
-              </button>
+              <h3 className="account-settings-view__section-title">계정 보안</h3>
+              <div className="settings-card-grid">
+                <button type="button" className="settings-action-card" disabled>
+                  <div className="settings-action-card__icon settings-action-card__icon--purple">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                  </div>
+                  <div className="settings-action-card__content">
+                    <span className="settings-action-card__title">비밀번호 변경</span>
+                    <span className="settings-action-card__desc">계정 비밀번호를 변경합니다</span>
+                  </div>
+                  <span className="settings-action-card__badge">준비중</span>
+                </button>
+
+                <button type="button" className="settings-action-card" disabled>
+                  <div className="settings-action-card__icon settings-action-card__icon--blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                  </div>
+                  <div className="settings-action-card__content">
+                    <span className="settings-action-card__title">2단계 인증</span>
+                    <span className="settings-action-card__desc">추가 보안 인증을 설정합니다</span>
+                  </div>
+                  <span className="settings-action-card__badge">준비중</span>
+                </button>
+              </div>
             </section>
 
             <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">2단계 인증</h3>
-              <button className="account-settings-view__link">
-                <SFSymbol name="lock.shield" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                <span>2단계 인증 설정</span>
-                <span className="account-settings-view__badge">준비중</span>
-              </button>
+              <h3 className="account-settings-view__section-title">로그인 기록</h3>
+              <div className="settings-card-grid">
+                <button type="button" className="settings-action-card" disabled>
+                  <div className="settings-action-card__icon settings-action-card__icon--green">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                  </div>
+                  <div className="settings-action-card__content">
+                    <span className="settings-action-card__title">로그인 기록 보기</span>
+                    <span className="settings-action-card__desc">최근 로그인 기록을 확인합니다</span>
+                  </div>
+                  <span className="settings-action-card__badge">준비중</span>
+                </button>
+              </div>
             </section>
           </div>
         )
@@ -668,57 +704,73 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         return (
           <div className="account-settings-view__content">
             <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">기본 알림</h3>
-
-              <div className="account-settings-view__toggle-group">
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="envelope" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>이메일 알림</span>
+              <h3 className="account-settings-view__section-title">알림 채널</h3>
+              <div className="settings-toggle-card">
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--orange">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">이메일 알림</span>
+                    <span className="settings-toggle-card__desc">중요 알림을 이메일로 받습니다</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.email ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.email ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('email')}
                     role="switch"
                     aria-checked={notifications.email}
+                    aria-label="이메일 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
 
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="bell" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>푸시 알림</span>
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">푸시 알림</span>
+                    <span className="settings-toggle-card__desc">브라우저 푸시 알림을 받습니다</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.push ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.push ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('push')}
                     role="switch"
                     aria-checked={notifications.push}
+                    aria-label="푸시 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
 
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="message" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>SMS 알림</span>
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--green">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">SMS 알림</span>
+                    <span className="settings-toggle-card__desc">긴급 알림을 문자로 받습니다</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.sms ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.sms ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('sms')}
                     role="switch"
                     aria-checked={notifications.sms}
+                    aria-label="SMS 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
               </div>
@@ -726,56 +778,76 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
             <section className="account-settings-view__section">
               <h3 className="account-settings-view__section-title">이벤트 알림</h3>
-
-              <div className="account-settings-view__toggle-group">
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="doc.badge.plus" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>문서 업로드 알림</span>
+              <div className="settings-toggle-card">
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--purple">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="12" y1="18" x2="12" y2="12"/>
+                      <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">문서 업로드</span>
+                    <span className="settings-toggle-card__desc">새 문서가 업로드되면 알림</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.documentUpload ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.documentUpload ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('documentUpload')}
                     role="switch"
                     aria-checked={notifications.documentUpload}
+                    aria-label="문서 업로드 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
 
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="doc.badge.clock" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>문서 처리 완료 알림</span>
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--cyan">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                      <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">처리 완료</span>
+                    <span className="settings-toggle-card__desc">문서 처리가 완료되면 알림</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.documentProcessed ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.documentProcessed ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('documentProcessed')}
                     role="switch"
                     aria-checked={notifications.documentProcessed}
+                    aria-label="문서 처리 완료 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
 
-                <div className="account-settings-view__toggle-item">
-                  <div className="account-settings-view__toggle-label">
-                    <SFSymbol name="chart.bar" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                    <span>주간 리포트</span>
+                <div className="settings-toggle-card__item">
+                  <div className="settings-toggle-card__icon settings-toggle-card__icon--pink">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="20" x2="18" y2="10"/>
+                      <line x1="12" y1="20" x2="12" y2="4"/>
+                      <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                  </div>
+                  <div className="settings-toggle-card__content">
+                    <span className="settings-toggle-card__title">주간 리포트</span>
+                    <span className="settings-toggle-card__desc">매주 활동 요약을 받습니다</span>
                   </div>
                   <button
-                    className={`account-settings-view__toggle ${
-                      notifications.weeklyReport ? 'account-settings-view__toggle--active' : ''
-                    }`}
+                    type="button"
+                    className={`settings-toggle ${notifications.weeklyReport ? 'settings-toggle--active' : ''}`}
                     onClick={handleNotificationToggle('weeklyReport')}
                     role="switch"
                     aria-checked={notifications.weeklyReport}
+                    aria-label="주간 리포트 알림"
                   >
-                    <span className="account-settings-view__toggle-slider" />
+                    <span className="settings-toggle__slider" />
                   </button>
                 </div>
               </div>
@@ -784,52 +856,189 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         )
 
       case 'data':
+        const getTierInfo = (tier: string) => {
+          const tiers: Record<string, { name: string; color: string; icon: string }> = {
+            free_trial: { name: '무료체험', color: 'var(--color-text-tertiary)', icon: 'gift' },
+            standard: { name: '일반', color: 'var(--color-accent-blue)', icon: 'person' },
+            premium: { name: '프리미엄', color: 'var(--color-accent-purple)', icon: 'star' },
+            vip: { name: 'VIP', color: 'var(--color-accent-orange)', icon: 'crown' },
+            admin: { name: '관리자', color: 'var(--color-accent-red)', icon: 'shield' }
+          }
+          return tiers[tier] || tiers.standard
+        }
+
+        const getUsagePercent = () => {
+          if (!storageInfo || storageInfo.quota_bytes <= 0) return 0
+          return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
+        }
+
+        const getWarningLevel = () => {
+          const percent = getUsagePercent()
+          if (percent >= 95) return 'danger'
+          if (percent >= 80) return 'warning'
+          return 'normal'
+        }
+
         return (
           <div className="account-settings-view__content">
-            {/* 스토리지 사용량 섹션 */}
+            {/* 저장공간 섹션 */}
             <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">저장 공간</h3>
+              <h3 className="account-settings-view__section-title">저장공간</h3>
+              <div className="storage-card">
               {storageLoading ? (
-                <div className="account-settings-view__storage-loading">
-                  스토리지 정보를 불러오는 중...
+                <div className="storage-card__loading">
+                  <div className="storage-card__loading-spinner" />
+                  <span>스토리지 정보를 불러오는 중...</span>
                 </div>
               ) : storageInfo ? (
-                <StorageQuotaBar
-                  usedBytes={storageInfo.used_bytes}
-                  maxBytes={storageInfo.quota_bytes}
-                  tierName={storageInfo.tier === 'admin' ? '관리자 (무제한)' :
-                    storageInfo.tier === 'standard' ? '일반' :
-                    storageInfo.tier === 'premium' ? '프리미엄' :
-                    storageInfo.tier === 'vip' ? 'VIP' :
-                    storageInfo.tier === 'free_trial' ? '무료체험' : storageInfo.tier}
-                />
+                <>
+                  {/* 헤더: 티어 정보 */}
+                  <div className="storage-card__header">
+                    <div className="storage-card__tier">
+                      <div
+                        className="storage-card__tier-icon"
+                        style={{ background: getTierInfo(storageInfo.tier).color }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
+                          <path d="M8 1C4.1 1 1 4.1 1 8s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/>
+                          <path d="M8 4v4l3 2" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div className="storage-card__tier-info">
+                        <span className="storage-card__tier-label">요금제</span>
+                        <span
+                          className="storage-card__tier-name"
+                          style={{ color: getTierInfo(storageInfo.tier).color }}
+                        >
+                          {getTierInfo(storageInfo.tier).name}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="storage-card__quota">
+                      {storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)}
+                    </div>
+                  </div>
+
+                  {/* 사용량 표시 */}
+                  <div className="storage-card__usage">
+                    <div className="storage-card__usage-header">
+                      <span className="storage-card__usage-label">사용 중</span>
+                      <span className="storage-card__usage-value">
+                        <strong>{formatFileSize(storageInfo.used_bytes)}</strong>
+                        {!storageInfo.is_unlimited && (
+                          <span className="storage-card__usage-percent">
+                            ({getUsagePercent().toFixed(1)}%)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* 프로그레스 바 */}
+                    {!storageInfo.is_unlimited && (
+                      <div className={`storage-card__progress storage-card__progress--${getWarningLevel()}`}>
+                        <div
+                          className="storage-card__progress-bar"
+                          style={{ width: `${getUsagePercent()}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {/* 남은 용량 */}
+                    <div className="storage-card__remaining">
+                      {storageInfo.is_unlimited ? (
+                        <span className="storage-card__unlimited">
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-accent-green)">
+                            <path d="M8 1l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/>
+                          </svg>
+                          무제한 사용 가능
+                        </span>
+                      ) : (
+                        <>
+                          <span className="storage-card__remaining-label">남은 용량</span>
+                          <span className={`storage-card__remaining-value storage-card__remaining-value--${getWarningLevel()}`}>
+                            {formatFileSize(storageInfo.remaining_bytes)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 경고 메시지 */}
+                  {getWarningLevel() === 'warning' && (
+                    <div className="storage-card__warning storage-card__warning--yellow">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1L1 14h14L8 1zm0 4v4m0 2v1"/>
+                      </svg>
+                      <span>저장 공간이 80%를 초과했습니다. 불필요한 파일을 정리해주세요.</span>
+                    </div>
+                  )}
+                  {getWarningLevel() === 'danger' && (
+                    <div className="storage-card__warning storage-card__warning--red">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3v5m0 2v1"/>
+                      </svg>
+                      <span>저장 공간이 거의 가득 찼습니다! 파일 업로드가 제한될 수 있습니다.</span>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="account-settings-view__storage-error">
-                  스토리지 정보를 불러올 수 없습니다
+                <div className="storage-card__error">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4m0 4h.01"/>
+                  </svg>
+                  <span>스토리지 정보를 불러올 수 없습니다</span>
                 </div>
               )}
+              </div>
             </section>
 
+            {/* 데이터 관리 섹션 */}
             <section className="account-settings-view__section">
               <h3 className="account-settings-view__section-title">데이터 관리</h3>
-              <button className="account-settings-view__link">
-                <SFSymbol name="square.and.arrow.down" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                <span>내 데이터 내보내기</span>
-                <span className="account-settings-view__badge">준비중</span>
-              </button>
+              <div className="data-management-grid">
+                <button type="button" className="data-management-card" disabled>
+                  <div className="data-management-card__icon data-management-card__icon--blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                      <polyline points="7,10 12,15 17,10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </div>
+                  <div className="data-management-card__content">
+                    <span className="data-management-card__title">데이터 내보내기</span>
+                    <span className="data-management-card__desc">내 데이터를 백업합니다</span>
+                  </div>
+                  <span className="data-management-card__badge">준비중</span>
+                </button>
+              </div>
             </section>
 
+            {/* 위험 영역 */}
             <section className="account-settings-view__section account-settings-view__section--danger">
               <h3 className="account-settings-view__section-title">위험 영역</h3>
               <Tooltip content="계정과 모든 데이터가 영구적으로 삭제됩니다" placement="top">
                 <button
                   type="button"
-                  className="account-settings-view__link account-settings-view__link--danger"
+                  className="danger-action-card"
                   onClick={() => setShowDeleteModal(true)}
                   aria-label="계정 삭제"
                 >
-                  <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                  <span>계정 삭제</span>
+                  <div className="danger-action-card__icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3,6 5,6 21,6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                  </div>
+                  <div className="danger-action-card__content">
+                    <span className="danger-action-card__title">계정 삭제</span>
+                    <span className="danger-action-card__desc">계정과 모든 데이터가 영구 삭제됩니다</span>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="danger-action-card__arrow">
+                    <polyline points="9,18 15,12 9,6"/>
+                  </svg>
                 </button>
               </Tooltip>
             </section>
