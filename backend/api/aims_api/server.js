@@ -349,8 +349,13 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     // }
 
     // ⭐ ownerId 필터 추가 (사용자 계정 기능)
+    // ⭐ 전체 문서 보기: 고객 문서만 표시 (설계사 개인 파일 제외)
+    // customerId가 ownerId와 같으면 개인 파일이므로 제외
+    // customerId는 ObjectId, ownerId는 string이므로 $expr + $toString 사용
     let query = {
-      ownerId: userId
+      ownerId: userId,
+      customerId: { $exists: true, $ne: null },
+      $expr: { $ne: [{ $toString: '$customerId' }, userId] }  // customerId !== ownerId
     };
 
     // 검색 조건 추가
@@ -623,21 +628,27 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // 필터 조건 구성 - ownerId 필터 추가
+    // ⭐ 기본적으로 고객 문서만 표시 (설계사 개인 파일 제외)
+    // customerId가 ownerId와 같으면 개인 파일이므로 제외
     let filter = {
-      ownerId: userId
+      ownerId: userId,
+      customerId: { $exists: true, $ne: null },
+      $expr: { $ne: [{ $toString: '$customerId' }, userId] }  // customerId !== ownerId (타입 변환 필요)
     };
 
     // 🍎 파일 범위 필터 추가
     if (fileScope === 'excludeMyFiles') {
-      // 내 파일 제외: ownerId !== customerId 또는 customerId 없음
-      filter.$or = [
-        { customerId: { $exists: false } },
-        { customerId: null },
-        { $expr: { $ne: ['$ownerId', '$customerId'] } }
-      ];
+      // 내 파일 제외: 기본 필터와 동일 (이미 적용됨)
+      // 추가 조건 없음
     } else if (fileScope === 'onlyMyFiles') {
-      // 내 파일만: ownerId === customerId
-      filter.$expr = { $eq: ['$ownerId', '$customerId'] };
+      // 내 파일만: customerId === ownerId (개인 파일만)
+      filter = {
+        ownerId: userId,
+        $expr: { $eq: [{ $toString: '$customerId' }, userId] }
+      };
+    } else if (fileScope === 'all') {
+      // 모든 파일: 개인 파일 포함
+      filter = { ownerId: userId };
     }
 
     // 🍎 고객 연결 필터 추가
@@ -651,9 +662,14 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       filter['upload.originalName'] = { $regex: search, $options: 'i' };
     }
 
+    // 🔍 필터 디버깅
+    console.log(`\n🔍 [/api/documents/status] fileScope=${fileScope}, userId=${userId}`);
+    console.log(`🔍 Filter: ${JSON.stringify(filter, null, 2)}`);
+
     // 문서 조회 및 정렬
     let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
+    console.log(`🔍 Total count: ${totalCount}`);
 
     // fileSize, mimeType, customer 정렬은 aggregation 사용
     if (sort === 'customer_asc' || sort === 'customer_desc') {
