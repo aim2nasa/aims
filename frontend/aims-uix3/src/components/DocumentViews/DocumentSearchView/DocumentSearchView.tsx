@@ -933,7 +933,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               )}
 
               {/* 🍎 컬럼 헤더 */}
-              <div className="search-results-column-header">
+              <div className="search-results-column-header" data-search-mode={searchMode}>
                 <div className="header-index">#</div>
                 <div
                   className={`header-filename sortable ${sortField === 'filename' ? 'sorted' : ''}`}
@@ -1023,7 +1023,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   )}
                 </div>
                 {/* 🍎 유사도 헤더 (시맨틱 검색 시만 표시) */}
-                {searchMode === 'semantic' ? (
+                {searchMode === 'semantic' && (
                   <div
                     className={`header-similarity sortable ${sortField === 'similarity' ? 'sorted' : ''}`}
                     onClick={() => handleSort('similarity')}
@@ -1052,10 +1052,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <span className="sort-arrow">▼</span>
                       </span>
                     )}
-                  </div>
-                ) : (
-                  <div className="header-similarity">
-                    {/* 키워드 검색 시 빈 칸 */}
                   </div>
                 )}
                 <div className="header-actions">
@@ -1086,6 +1082,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <div
                       key={index}
                       className="search-result-row"
+                      data-search-mode={searchMode}
                       onClick={() => handleItemClick(item)}
                       role="listitem"
                       tabIndex={0}
@@ -1235,20 +1232,22 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       </div>
 
                       {/* 🍎 유사도 (시맨틱 검색 시만 표시) */}
-                      <div className="row-similarity">
-                        {score !== null && (
-                          <Tooltip content={`유사도: ${getSimilarityLevel(score).percentage} - ${getSimilarityLevel(score).label}`}>
-                            <div
-                              className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
-                              aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
-                            >
-                              <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
-                              <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
-                              <span className="similarity-label">{getSimilarityLevel(score).label}</span>
-                            </div>
-                          </Tooltip>
-                        )}
-                      </div>
+                      {searchMode === 'semantic' && (
+                        <div className="row-similarity">
+                          {score !== null && (
+                            <Tooltip content={`유사도: ${getSimilarityLevel(score).percentage} - ${getSimilarityLevel(score).label}`}>
+                              <div
+                                className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
+                                aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
+                              >
+                                <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
+                                <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
+                                <span className="similarity-label">{getSimilarityLevel(score).label}</span>
+                              </div>
+                            </Tooltip>
+                          )}
+                        </div>
+                      )}
 
                       {/* 🍎 액션 버튼들 */}
                       <div className="row-actions">

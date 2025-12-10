@@ -557,6 +557,16 @@ html[data-theme="dark"] .search-results-header {
   box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
 }
 
+/* 🍎 키워드 검색 시 유사도 칼럼 제거 */
+.search-results-column-header[data-search-mode="keyword"] {
+  grid-template-columns:
+    50px           /* 인덱스 (#) */
+    minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
+    110px          /* 연결된 고객 */
+    60px           /* 상태 */
+    140px;         /* 액션 버튼 */
+}
+
 html[data-theme="dark"] .search-results-column-header {
   background: var(--color-neutral-700);
   color: var(--color-ios-text-secondary-dark);
@@ -685,6 +695,16 @@ html[data-theme="dark"] .search-results-column-header .sortable.sorted {
   transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
   animation: fadeInUp var(--duration-ios-quick) var(--easing-ease-out);
   animation-fill-mode: both;
+}
+
+/* 🍎 키워드 검색 시 유사도 칼럼 제거 */
+.search-result-row[data-search-mode="keyword"] {
+  grid-template-columns:
+    50px           /* 인덱스 (#) */
+    minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
+    110px          /* 연결된 고객 */
+    60px           /* 상태 */
+    140px;         /* 액션 버튼 */
 }
 
 /* Row 컬럼별 스타일 */
