@@ -8,6 +8,16 @@ import type { ReactNode } from 'react'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
+// Global fetch stub - Node.js에서 상대 URL 파싱 에러 방지
+// 테스트에서 fetch를 mock하지 않은 경우 기본 성공 응답 반환
+// 테스트에서 vi.spyOn(global, 'fetch')로 mock하면 해당 mock이 우선됨
+vi.stubGlobal('fetch', vi.fn(() =>
+  Promise.resolve(new Response(JSON.stringify({ success: true, data: [] }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  }))
+))
+
 // useAppleConfirm hook mock (AppleConfirmProvider 없이도 테스트 가능)
 vi.mock('@/contexts/AppleConfirmProvider', () => ({
   useAppleConfirm: () => ({
