@@ -17,6 +17,8 @@ import Modal from '@/shared/ui/Modal/Modal'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { deleteAccount } from '@/entities/auth/api'
+import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import StorageQuotaBar from '@/features/batch-upload/components/StorageQuotaBar'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import './AccountSettingsView.css'
@@ -99,6 +101,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 계정 삭제 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // 스토리지 정보 상태
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
+  const [storageLoading, setStorageLoading] = useState(false)
 
   // 아바타 이미지 상태
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
@@ -187,6 +193,26 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     })
     setAvatarPreview(currentUser.avatarUrl)
   }, [currentUser, visible, isEditing])
+
+  // 스토리지 정보 로드 (데이터 탭 선택 시)
+  useEffect(() => {
+    if (!visible || activeTab !== 'data') return
+
+    const loadStorageInfo = async () => {
+      try {
+        setStorageLoading(true)
+        const info = await getMyStorageInfo()
+        setStorageInfo(info)
+      } catch (error) {
+        console.error('스토리지 정보 로드 실패:', error)
+        setStorageInfo(null)
+      } finally {
+        setStorageLoading(false)
+      }
+    }
+
+    loadStorageInfo()
+  }, [visible, activeTab])
 
   // 입력 핸들러
   const handleInputChange = (field: keyof typeof formData) => (
@@ -760,6 +786,30 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       case 'data':
         return (
           <div className="account-settings-view__content">
+            {/* 스토리지 사용량 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">저장 공간</h3>
+              {storageLoading ? (
+                <div className="account-settings-view__storage-loading">
+                  스토리지 정보를 불러오는 중...
+                </div>
+              ) : storageInfo ? (
+                <StorageQuotaBar
+                  usedBytes={storageInfo.used_bytes}
+                  maxBytes={storageInfo.quota_bytes}
+                  tierName={storageInfo.tier === 'admin' ? '관리자 (무제한)' :
+                    storageInfo.tier === 'standard' ? '일반' :
+                    storageInfo.tier === 'premium' ? '프리미엄' :
+                    storageInfo.tier === 'vip' ? 'VIP' :
+                    storageInfo.tier === 'free_trial' ? '무료체험' : storageInfo.tier}
+                />
+              ) : (
+                <div className="account-settings-view__storage-error">
+                  스토리지 정보를 불러올 수 없습니다
+                </div>
+              )}
+            </section>
+
             <section className="account-settings-view__section">
               <h3 className="account-settings-view__section-title">데이터 관리</h3>
               <button className="account-settings-view__link">

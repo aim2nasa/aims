@@ -3527,11 +3527,39 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
       db.collection('users').countDocuments(filter)
     ]);
 
-    // ObjectId를 문자열로 변환
-    const usersWithStringId = users.map(u => ({
-      ...u,
-      _id: u._id.toString()
-    }));
+    // 각 사용자의 스토리지 사용량 계산
+    const userIds = users.map(u => u._id.toString());
+    const storageAgg = await db.collection('files').aggregate([
+      { $match: { ownerId: { $in: userIds } } },
+      { $group: {
+        _id: '$ownerId',
+        used_bytes: { $sum: { $toDouble: { $ifNull: ['$meta.size_bytes', '0'] } } }
+      }}
+    ]).toArray();
+
+    const storageMap = {};
+    storageAgg.forEach(item => {
+      storageMap[item._id] = item.used_bytes;
+    });
+
+    // ObjectId를 문자열로 변환 및 스토리지 정보 추가
+    const usersWithStringId = users.map(u => {
+      const userId = u._id.toString();
+      const tier = u.storage?.tier || 'standard';
+      const quota_bytes = u.storage?.quota_bytes || (tier === 'admin' ? -1 : 30 * 1024 * 1024 * 1024);
+      const used_bytes = storageMap[userId] || 0;
+
+      return {
+        ...u,
+        _id: userId,
+        storage: {
+          tier,
+          quota_bytes,
+          used_bytes,
+          usage_percent: quota_bytes > 0 ? Math.round((used_bytes / quota_bytes) * 100) : 0
+        }
+      };
+    });
 
     res.json({
       success: true,
@@ -6215,6 +6243,11 @@ MongoClient.connect(MONGO_URI)
 
     // 개인 파일 관리 라우트 설정
     app.use('/api/personal-files', personalFilesRoutes);
+
+    // 스토리지 쿼터 라우트 설정
+    const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', storageRoutes);
+
     registerFallbackHandlers();
   })
   .catch(error => {

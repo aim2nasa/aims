@@ -722,4 +722,21 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
   font-size: 13px;
 }
 
+/* === STORAGE INFO === */
+
+.account-settings-view__storage-loading,
+.account-settings-view__storage-error {
+  padding: var(--spacing-4);
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+  text-align: center;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.account-settings-view__storage-error {
+  color: var(--color-text-error);
+  background: var(--color-error-translucent);
+}
+
 /* Real test 1 - 1762508478 */

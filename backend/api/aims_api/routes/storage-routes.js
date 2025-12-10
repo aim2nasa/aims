@@ -1,0 +1,178 @@
+/**
+ * Storage Quota API Routes
+ * @since 1.0.0
+ *
+ * 설계사별 디스크 할당량 관리 API
+ */
+
+const express = require('express');
+const router = express.Router();
+const {
+  getUserStorageInfo,
+  updateUserTier,
+  getSystemStorageOverview,
+  formatBytes
+} = require('../lib/storageQuotaService');
+
+/**
+ * 라우트 설정 함수
+ * @param {Db} db - MongoDB 인스턴스
+ * @param {Function} authenticateJWT - JWT 인증 미들웨어
+ * @param {Function} requireRole - 역할 검증 미들웨어
+ */
+module.exports = function(db, authenticateJWT, requireRole) {
+
+  /**
+   * GET /api/users/me/storage
+   * 내 스토리지 정보 조회
+   */
+  router.get('/users/me/storage', authenticateJWT, async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: '사용자 ID가 필요합니다.'
+        });
+      }
+
+      const storageInfo = await getUserStorageInfo(db, userId);
+
+      res.json({
+        success: true,
+        data: {
+          ...storageInfo,
+          formatted: {
+            quota: formatBytes(storageInfo.quota_bytes),
+            used: formatBytes(storageInfo.used_bytes),
+            remaining: formatBytes(storageInfo.remaining_bytes)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('스토리지 정보 조회 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '스토리지 정보 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/users/:id/storage
+   * 특정 사용자 스토리지 정보 조회 (관리자용)
+   */
+  router.get('/admin/users/:id/storage', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          error: '사용자 ID가 필요합니다.'
+        });
+      }
+
+      const storageInfo = await getUserStorageInfo(db, id);
+
+      res.json({
+        success: true,
+        data: {
+          userId: id,
+          ...storageInfo,
+          formatted: {
+            quota: formatBytes(storageInfo.quota_bytes),
+            used: formatBytes(storageInfo.used_bytes),
+            remaining: formatBytes(storageInfo.remaining_bytes)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('사용자 스토리지 정보 조회 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '사용자 스토리지 정보 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * PUT /api/admin/users/:id/quota
+   * 사용자 티어/할당량 변경 (관리자용)
+   */
+  router.put('/admin/users/:id/quota', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { tier } = req.body;
+
+      if (!id || !tier) {
+        return res.status(400).json({
+          success: false,
+          error: '사용자 ID와 티어가 필요합니다.'
+        });
+      }
+
+      const result = await updateUserTier(db, id, tier);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: '티어 변경에 실패했습니다.'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `티어가 ${tier}로 변경되었습니다.`,
+        data: {
+          userId: id,
+          tier: result.tier,
+          quota_bytes: result.quota_bytes,
+          formatted_quota: formatBytes(result.quota_bytes)
+        }
+      });
+
+    } catch (error) {
+      console.error('티어 변경 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || '티어 변경에 실패했습니다.'
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/storage/overview
+   * 시스템 전체 스토리지 통계 (관리자용)
+   */
+  router.get('/admin/storage/overview', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const overview = await getSystemStorageOverview(db);
+
+      res.json({
+        success: true,
+        data: {
+          ...overview,
+          formatted: {
+            total_used: formatBytes(overview.total_used_bytes)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('시스템 스토리지 통계 조회 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '시스템 스토리지 통계 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  return router;
+};

@@ -4,6 +4,14 @@ import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './DashboardPage.css';
 
+const TIER_LABELS: Record<string, string> = {
+  free_trial: '무료체험',
+  standard: '일반',
+  premium: '프리미엄',
+  vip: 'VIP',
+  admin: '관리자',
+};
+
 interface HealthCardProps {
   service: string;
   status: 'healthy' | 'unhealthy';
@@ -38,6 +46,12 @@ export const DashboardPage = () => {
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
     refetchInterval: 10000, // 10초마다 갱신
+  });
+
+  const { data: storageData, isLoading: storageLoading } = useQuery({
+    queryKey: ['admin', 'storage', 'overview'],
+    queryFn: dashboardApi.getStorageOverview,
+    refetchInterval: 30000, // 30초마다 갱신
   });
 
   if (isLoading) {
@@ -90,6 +104,46 @@ export const DashboardPage = () => {
             subtitle="재처리 필요"
           />
         </div>
+      </section>
+
+      {/* 스토리지 현황 */}
+      <section className="dashboard-page__section">
+        <h2 className="dashboard-page__section-title">스토리지 현황</h2>
+        {storageLoading ? (
+          <div className="dashboard-page__loading-inline">스토리지 정보를 불러오는 중...</div>
+        ) : storageData ? (
+          <div className="dashboard-page__stats-grid">
+            <StatCard
+              title="전체 사용량"
+              value={storageData.formatted.total_used}
+              subtitle={`${storageData.total_users}명 사용자`}
+            />
+            <StatCard
+              title="용량 경고"
+              value={storageData.users_over_80_percent}
+              subtitle="80% 이상 사용"
+            />
+            <StatCard
+              title="용량 위험"
+              value={storageData.users_over_95_percent}
+              subtitle="95% 이상 사용"
+            />
+          </div>
+        ) : (
+          <div className="dashboard-page__error-inline">스토리지 정보를 불러올 수 없습니다</div>
+        )}
+        {storageData?.tier_distribution && Object.keys(storageData.tier_distribution).length > 0 && (
+          <div className="dashboard-page__tier-distribution">
+            <h3 className="dashboard-page__subsection-title">티어별 사용자</h3>
+            <div className="dashboard-page__tier-badges">
+              {Object.entries(storageData.tier_distribution).map(([tier, count]) => (
+                <span key={tier} className={`tier-badge tier-badge--${tier}`}>
+                  {TIER_LABELS[tier] || tier}: {count}명
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 시스템 상태 */}

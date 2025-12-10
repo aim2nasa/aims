@@ -13,6 +13,23 @@ const ROLE_LABELS: Record<string, string> = {
   system: '시스템',
 };
 
+const TIER_LABELS: Record<string, string> = {
+  free_trial: '무료체험',
+  standard: '일반',
+  premium: '프리미엄',
+  vip: 'VIP',
+  admin: '관리자',
+};
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  if (bytes < 0) return '무제한';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return '-';
   const date = new Date(dateString);
@@ -147,6 +164,28 @@ export const UsersPage = () => {
                     {user.hasOcrPermission ? '있음' : '없음'}
                   </span>
                 ),
+              },
+              {
+                key: 'storage',
+                label: '스토리지',
+                render: (user: User) => {
+                  if (!user.storage) return '-';
+                  const { used_bytes, quota_bytes, usage_percent, tier } = user.storage;
+                  const isUnlimited = quota_bytes < 0;
+                  const warningClass = usage_percent >= 95 ? 'storage--danger' :
+                    usage_percent >= 80 ? 'storage--warning' : '';
+                  return (
+                    <div className={`storage-cell ${warningClass}`}>
+                      <span className="storage-cell__usage">
+                        {formatBytes(used_bytes)}
+                        {!isUnlimited && ` / ${formatBytes(quota_bytes)}`}
+                      </span>
+                      <span className={`tier-badge tier-badge--${tier}`}>
+                        {TIER_LABELS[tier] || tier}
+                      </span>
+                    </div>
+                  );
+                },
               },
               {
                 key: 'createdAt',

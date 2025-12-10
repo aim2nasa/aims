@@ -1,3 +1,10 @@
+export interface UserStorage {
+  tier: string;
+  quota_bytes: number;
+  used_bytes: number;
+  usage_percent: number;
+}
+
 export interface User {
   _id: string;
   name: string | null;
@@ -7,6 +14,7 @@ export interface User {
   hasOcrPermission?: boolean;
   profileCompleted?: boolean;
   authProvider?: string;
+  storage?: UserStorage;
 }
 
 export interface AuthResponse {

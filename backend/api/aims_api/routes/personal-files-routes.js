@@ -15,6 +15,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const axios = require('axios');
+const { checkUploadAllowed } = require('../lib/storageQuotaService');
 
 // MongoDB 설정
 const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
@@ -289,6 +290,25 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 
     const { parentId } = req.body;
     const userId = req.user.userId;
+
+    // 쿼터 체크 (하드 리밋)
+    const quotaCheck = await checkUploadAllowed(db, userId, req.file.size);
+    if (!quotaCheck.allowed) {
+      // 업로드된 임시 파일 삭제
+      try {
+        await fs.unlink(req.file.path);
+      } catch (unlinkErr) {
+        console.error('임시 파일 삭제 실패:', unlinkErr);
+      }
+      return res.status(413).json({
+        success: false,
+        message: quotaCheck.message,
+        error: 'QUOTA_EXCEEDED',
+        quota: quotaCheck.quota,
+        current_usage: quotaCheck.current_usage,
+        required: quotaCheck.required
+      });
+    }
 
     // 파일명 UTF-8 인코딩 변환 (한글 깨짐 방지)
     const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');

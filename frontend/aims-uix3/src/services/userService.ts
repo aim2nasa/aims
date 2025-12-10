@@ -95,6 +95,43 @@ export async function getUser(_userId: string): Promise<User> {
 }
 
 /**
+ * 스토리지 정보 타입
+ */
+export interface StorageInfo {
+  tier: string
+  quota_bytes: number
+  used_bytes: number
+  remaining_bytes: number
+  usage_percent: number
+  formatted: {
+    quota: string
+    used: string
+    remaining: string
+  }
+}
+
+/**
+ * 스토리지 API 응답 타입
+ */
+interface StorageResponse {
+  success: boolean
+  data: StorageInfo
+}
+
+/**
+ * 현재 사용자의 스토리지 사용량 조회
+ */
+export async function getMyStorageInfo(): Promise<StorageInfo> {
+  const response = await api.get<StorageResponse>('/api/users/me/storage')
+
+  if (!response.success) {
+    throw new Error('스토리지 정보 조회 실패')
+  }
+
+  return response.data
+}
+
+/**
  * 사용자 정보 업데이트
  * @param _userId 사용자 ID (미사용, JWT에서 추출)
  * @param updates 업데이트할 필드
