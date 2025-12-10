@@ -619,7 +619,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
  */
 app.get('/api/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'all' } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles' } = req.query;
     const skip = (page - 1) * limit;
 
     // 🔍 정렬 파라미터 디버깅
