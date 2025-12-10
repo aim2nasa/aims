@@ -1,9 +1,10 @@
 /**
  * 최근 검색어 관리 유틸리티
  * @since 1.0.0
+ * @modified 2025-12-10 - 계정별 데이터 격리 적용 (userId 기반 동적 키)
  */
 
-const STORAGE_KEY = 'aims_recent_search_queries'
+const STORAGE_KEY_PREFIX = 'aims_recent_search_queries'
 const MAX_RECENT_QUERIES = 10
 
 export interface RecentSearchQuery {
@@ -12,11 +13,23 @@ export interface RecentSearchQuery {
 }
 
 /**
+ * 현재 사용자 ID 기반 storage key 생성
+ * 개발자 모드 계정 전환 지원
+ */
+function getStorageKey(): string {
+  const userId = localStorage.getItem('aims-current-user-id')
+  if (userId) {
+    return `${STORAGE_KEY_PREFIX}_${userId}`
+  }
+  return STORAGE_KEY_PREFIX
+}
+
+/**
  * 최근 검색어 목록 가져오기
  */
 export function getRecentSearchQueries(): RecentSearchQuery[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(getStorageKey())
     if (!stored) return []
 
     const queries = JSON.parse(stored) as RecentSearchQuery[]
@@ -54,7 +67,7 @@ export function addRecentSearchQuery(query: string): void {
     // 최대 10개까지만 유지
     const trimmed = updated.slice(0, MAX_RECENT_QUERIES)
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
+    localStorage.setItem(getStorageKey(), JSON.stringify(trimmed))
     console.log('[addRecentSearchQuery] 저장됨:', trimmed)
   } catch (error) {
     console.error('Failed to save recent search query:', error)
@@ -66,7 +79,7 @@ export function addRecentSearchQuery(query: string): void {
  */
 export function clearRecentSearchQueries(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(getStorageKey())
   } catch (error) {
     console.error('Failed to clear recent search queries:', error)
   }

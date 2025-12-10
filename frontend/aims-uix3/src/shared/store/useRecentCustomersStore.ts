@@ -1,14 +1,46 @@
 /**
  * Recent Customers Store
  * @since 2025-11-12
+ * @modified 2025-12-10 - 계정별 데이터 격리 적용 (userId 기반 동적 키)
  *
  * 최근 선택한 고객 전역 상태 관리 (Zustand + localStorage)
  * aims-uix3 전체에서 고객 선택 기록을 공유
  */
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 import type { Customer } from '@/entities/customer'
+
+const STORAGE_KEY_PREFIX = 'aims-recent-customers'
+
+/**
+ * 현재 사용자 ID 기반 storage key 생성
+ * 개발자 모드 계정 전환 지원
+ */
+function getStorageKey(): string {
+  const userId = localStorage.getItem('aims-current-user-id')
+  if (userId) {
+    return `${STORAGE_KEY_PREFIX}_${userId}`
+  }
+  return STORAGE_KEY_PREFIX
+}
+
+/**
+ * 사용자별 격리된 localStorage 스토리지
+ * 동적으로 userId 기반 키를 사용
+ */
+const userIsolatedStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    // name은 무시하고 동적 키 사용
+    return localStorage.getItem(getStorageKey())
+  },
+  setItem: (name: string, value: string): void => {
+    localStorage.setItem(getStorageKey(), value)
+  },
+  removeItem: (name: string): void => {
+    localStorage.removeItem(getStorageKey())
+  },
+}
 
 export interface RecentCustomer {
   _id: string
@@ -97,8 +129,9 @@ export const useRecentCustomersStore = create<RecentCustomersState>()(
       }
     }),
     {
-      name: 'aims-recent-customers', // localStorage key
-      version: 2  // v2: customerType 필드 추가
+      name: 'aims-recent-customers', // 기본 key (userIsolatedStorage에서 동적 키로 대체됨)
+      version: 2,  // v2: customerType 필드 추가
+      storage: createJSONStorage(() => userIsolatedStorage),
     }
   )
 )
