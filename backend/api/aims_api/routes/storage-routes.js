@@ -11,7 +11,9 @@ const {
   getUserStorageInfo,
   updateUserTier,
   getSystemStorageOverview,
-  formatBytes
+  formatBytes,
+  getTierDefinitions,
+  updateTierDefinition
 } = require('../lib/storageQuotaService');
 
 /**
@@ -170,6 +172,86 @@ module.exports = function(db, authenticateJWT, requireRole) {
         success: false,
         error: '시스템 스토리지 통계 조회에 실패했습니다.',
         details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/tiers
+   * 티어 정의 목록 조회 (관리자용)
+   */
+  router.get('/admin/tiers', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const tiers = await getTierDefinitions(db);
+
+      // 객체를 배열로 변환하고 formatted 추가
+      const tierList = Object.entries(tiers).map(([id, tier]) => ({
+        id,
+        ...tier,
+        formatted_quota: formatBytes(tier.quota_bytes)
+      }));
+
+      res.json({
+        success: true,
+        data: tierList
+      });
+
+    } catch (error) {
+      console.error('티어 정의 조회 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '티어 정의 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * PUT /api/admin/tiers/:tierId
+   * 티어 정의 수정 (관리자용)
+   */
+  router.put('/admin/tiers/:tierId', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { tierId } = req.params;
+      const { name, quota_bytes, description } = req.body;
+
+      if (!tierId) {
+        return res.status(400).json({
+          success: false,
+          error: '티어 ID가 필요합니다.'
+        });
+      }
+
+      // admin 티어는 할당량 변경 불가
+      if (tierId === 'admin' && quota_bytes !== undefined && quota_bytes !== -1) {
+        return res.status(400).json({
+          success: false,
+          error: '관리자 티어의 할당량은 변경할 수 없습니다.'
+        });
+      }
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (quota_bytes !== undefined) updates.quota_bytes = quota_bytes;
+      if (description !== undefined) updates.description = description;
+
+      const updatedTier = await updateTierDefinition(db, tierId, updates);
+
+      res.json({
+        success: true,
+        message: `티어 "${updatedTier.name}"이(가) 수정되었습니다.`,
+        data: {
+          id: tierId,
+          ...updatedTier,
+          formatted_quota: formatBytes(updatedTier.quota_bytes)
+        }
+      });
+
+    } catch (error) {
+      console.error('티어 정의 수정 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || '티어 정의 수정에 실패했습니다.'
       });
     }
   });

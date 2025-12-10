@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { dashboardApi } from '@/features/dashboard/api';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { dashboardApi, type TierDefinition } from '@/features/dashboard/api';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './DashboardPage.css';
+
+const GB = 1024 * 1024 * 1024;
 
 const TIER_LABELS: Record<string, string> = {
   free_trial: '무료체험',
@@ -11,6 +14,8 @@ const TIER_LABELS: Record<string, string> = {
   vip: 'VIP',
   admin: '관리자',
 };
+
+const TIER_ORDER = ['free_trial', 'standard', 'premium', 'vip', 'admin'];
 
 interface HealthCardProps {
   service: string;
@@ -42,6 +47,10 @@ const HealthCard = ({ service, status }: HealthCardProps) => {
 };
 
 export const DashboardPage = () => {
+  const queryClient = useQueryClient();
+  const [editingTier, setEditingTier] = useState<string | null>(null);
+  const [editQuota, setEditQuota] = useState<string>('');
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
@@ -53,6 +62,50 @@ export const DashboardPage = () => {
     queryFn: dashboardApi.getStorageOverview,
     refetchInterval: 30000, // 30초마다 갱신
   });
+
+  const { data: tiersData, isLoading: tiersLoading } = useQuery({
+    queryKey: ['admin', 'tiers'],
+    queryFn: dashboardApi.getTiers,
+  });
+
+  const updateTierMutation = useMutation({
+    mutationFn: ({ tierId, quota_bytes }: { tierId: string; quota_bytes: number }) =>
+      dashboardApi.updateTier(tierId, { quota_bytes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'tiers'] });
+      setEditingTier(null);
+      setEditQuota('');
+    },
+    onError: (error) => {
+      console.error('티어 수정 실패:', error);
+      alert('티어 수정에 실패했습니다.');
+    },
+  });
+
+  const handleEditStart = (tier: TierDefinition) => {
+    if (tier.id === 'admin') return; // admin은 편집 불가
+    setEditingTier(tier.id);
+    setEditQuota((tier.quota_bytes / GB).toString());
+  };
+
+  const handleEditSave = (tierId: string) => {
+    const quotaGB = parseFloat(editQuota);
+    if (isNaN(quotaGB) || quotaGB <= 0) {
+      alert('유효한 용량을 입력하세요.');
+      return;
+    }
+    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB) });
+  };
+
+  const handleEditCancel = () => {
+    setEditingTier(null);
+    setEditQuota('');
+  };
+
+  // 티어 정렬
+  const sortedTiers = tiersData
+    ? [...tiersData].sort((a, b) => TIER_ORDER.indexOf(a.id) - TIER_ORDER.indexOf(b.id))
+    : [];
 
   if (isLoading) {
     return <div className="dashboard-page__loading">데이터를 불러오는 중...</div>;
@@ -143,6 +196,92 @@ export const DashboardPage = () => {
               ))}
             </div>
           </div>
+        )}
+      </section>
+
+      {/* 티어 정의 */}
+      <section className="dashboard-page__section">
+        <h2 className="dashboard-page__section-title">티어 정의</h2>
+        {tiersLoading ? (
+          <div className="dashboard-page__loading-inline">티어 정보를 불러오는 중...</div>
+        ) : sortedTiers.length > 0 ? (
+          <table className="tier-definition-table">
+            <thead>
+              <tr>
+                <th>티어</th>
+                <th>설명</th>
+                <th>할당량</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedTiers.map((tier) => (
+                <tr key={tier.id}>
+                  <td>
+                    <div className="tier-definition-table__name">
+                      <span className={`tier-definition-table__color tier-definition-table__color--${tier.id}`} />
+                      {tier.name}
+                    </div>
+                  </td>
+                  <td>{tier.description}</td>
+                  <td>
+                    {editingTier === tier.id ? (
+                      <div className="tier-edit-input">
+                        <input
+                          type="number"
+                          value={editQuota}
+                          onChange={(e) => setEditQuota(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="tier-edit-input__field"
+                          aria-label="할당량 (GB)"
+                        />
+                        <span className="tier-edit-input__unit">GB</span>
+                      </div>
+                    ) : (
+                      <span className={tier.quota_bytes === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
+                        {tier.formatted_quota}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {tier.id === 'admin' ? (
+                      <span className="tier-action-disabled">-</span>
+                    ) : editingTier === tier.id ? (
+                      <div className="tier-action-buttons">
+                        <button
+                          type="button"
+                          className="tier-action-button tier-action-button--save"
+                          onClick={() => handleEditSave(tier.id)}
+                          disabled={updateTierMutation.isPending}
+                        >
+                          {updateTierMutation.isPending ? '저장중...' : '저장'}
+                        </button>
+                        <button
+                          type="button"
+                          className="tier-action-button tier-action-button--cancel"
+                          onClick={handleEditCancel}
+                          disabled={updateTierMutation.isPending}
+                        >
+                          취소
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="tier-action-button tier-action-button--edit"
+                        onClick={() => handleEditStart(tier)}
+                      >
+                        수정
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="dashboard-page__error-inline">티어 정보를 불러올 수 없습니다</div>
         )}
       </section>
 

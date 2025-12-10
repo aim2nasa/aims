@@ -4,16 +4,114 @@
  * @since 1.0.0
  */
 
-// 티어별 할당량 (bytes)
-const TIER_QUOTAS = {
-  free_trial: 5 * 1024 * 1024 * 1024,    // 5GB
-  standard: 30 * 1024 * 1024 * 1024,     // 30GB
-  premium: 50 * 1024 * 1024 * 1024,      // 50GB
-  vip: 100 * 1024 * 1024 * 1024,         // 100GB
-  admin: -1                               // 무제한
+const GB = 1024 * 1024 * 1024;
+
+// 기본 티어 정의 (DB에 없을 때 사용)
+const DEFAULT_TIER_DEFINITIONS = {
+  free_trial: { name: '무료체험', quota_bytes: 5 * GB, description: '체험 사용자' },
+  standard: { name: '일반', quota_bytes: 30 * GB, description: '기본 등급' },
+  premium: { name: '프리미엄', quota_bytes: 50 * GB, description: '프리미엄 구독자' },
+  vip: { name: 'VIP', quota_bytes: 100 * GB, description: 'VIP 고객' },
+  admin: { name: '관리자', quota_bytes: -1, description: '무제한' }
 };
 
+// 캐싱된 티어 정의 (성능 최적화)
+let cachedTierDefinitions = null;
+let cacheExpiry = 0;
+const CACHE_TTL = 60000; // 1분 캐시
+
 const DEFAULT_TIER = 'standard';
+
+/**
+ * DB에서 티어 정의 로드 (캐싱 적용)
+ */
+async function loadTierDefinitions(db) {
+  const now = Date.now();
+  if (cachedTierDefinitions && cacheExpiry > now) {
+    return cachedTierDefinitions;
+  }
+
+  const settingsCollection = db.collection('settings');
+  const tierSettings = await settingsCollection.findOne({ key: 'tier_definitions' });
+
+  if (tierSettings && tierSettings.tiers) {
+    cachedTierDefinitions = tierSettings.tiers;
+  } else {
+    // DB에 없으면 기본값 저장
+    cachedTierDefinitions = DEFAULT_TIER_DEFINITIONS;
+    await settingsCollection.updateOne(
+      { key: 'tier_definitions' },
+      {
+        $set: {
+          key: 'tier_definitions',
+          tiers: DEFAULT_TIER_DEFINITIONS,
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+  }
+
+  cacheExpiry = now + CACHE_TTL;
+  return cachedTierDefinitions;
+}
+
+/**
+ * 티어별 할당량 조회 (하위 호환성)
+ */
+async function getTierQuota(db, tier) {
+  const tiers = await loadTierDefinitions(db);
+  return tiers[tier]?.quota_bytes ?? DEFAULT_TIER_DEFINITIONS.standard.quota_bytes;
+}
+
+/**
+ * 티어 정의 전체 조회 (관리자용)
+ */
+async function getTierDefinitions(db) {
+  return loadTierDefinitions(db);
+}
+
+/**
+ * 티어 정의 수정 (관리자용)
+ */
+async function updateTierDefinition(db, tierId, updates) {
+  const settingsCollection = db.collection('settings');
+  const tiers = await loadTierDefinitions(db);
+
+  if (!tiers[tierId]) {
+    throw new Error(`존재하지 않는 티어: ${tierId}`);
+  }
+
+  // admin 티어는 무제한 유지
+  if (tierId === 'admin') {
+    updates.quota_bytes = -1;
+  }
+
+  const updatedTiers = {
+    ...tiers,
+    [tierId]: {
+      ...tiers[tierId],
+      ...updates,
+      updatedAt: new Date()
+    }
+  };
+
+  await settingsCollection.updateOne(
+    { key: 'tier_definitions' },
+    {
+      $set: {
+        tiers: updatedTiers,
+        updatedAt: new Date()
+      }
+    }
+  );
+
+  // 캐시 무효화
+  cachedTierDefinitions = null;
+  cacheExpiry = 0;
+
+  return updatedTiers[tierId];
+}
 
 /**
  * 사용자의 파일 사용량 계산
@@ -51,16 +149,20 @@ async function getUserStorageInfo(db, userId) {
   // 관리자 체크
   const isAdmin = user?.role === 'admin';
 
+  // 티어 정의 로드
+  const tierDefinitions = await loadTierDefinitions(db);
+
   // 스토리지 정보 기본값
   const tier = isAdmin ? 'admin' : (user?.storage?.tier || DEFAULT_TIER);
-  const quotaBytes = isAdmin ? -1 : (user?.storage?.quota_bytes || TIER_QUOTAS[tier]);
+  const tierDef = tierDefinitions[tier] || tierDefinitions[DEFAULT_TIER];
+  const quotaBytes = isAdmin ? -1 : (user?.storage?.quota_bytes || tierDef.quota_bytes);
 
   // 실시간 사용량 계산
   const usedBytes = await calculateUserStorageUsage(db, userId);
 
   return {
     tier,
-    tierName: getTierDisplayName(tier),
+    tierName: tierDef.name,
     quota_bytes: quotaBytes,
     used_bytes: usedBytes,
     remaining_bytes: quotaBytes === -1 ? -1 : Math.max(0, quotaBytes - usedBytes),
@@ -133,12 +235,15 @@ function formatBytes(bytes) {
  * @returns {Promise<Object>} 업데이트 결과
  */
 async function updateUserTier(db, userId, tier) {
-  if (!TIER_QUOTAS.hasOwnProperty(tier)) {
+  // 티어 정의 로드
+  const tierDefinitions = await loadTierDefinitions(db);
+
+  if (!tierDefinitions[tier]) {
     throw new Error(`유효하지 않은 티어: ${tier}`);
   }
 
   const usersCollection = db.collection('users');
-  const quotaBytes = TIER_QUOTAS[tier];
+  const quotaBytes = tierDefinitions[tier].quota_bytes;
 
   const result = await usersCollection.updateOne(
     { _id: userId },
@@ -220,7 +325,6 @@ async function getSystemStorageOverview(db) {
 }
 
 module.exports = {
-  TIER_QUOTAS,
   DEFAULT_TIER,
   calculateUserStorageUsage,
   getUserStorageInfo,
@@ -228,5 +332,8 @@ module.exports = {
   getTierDisplayName,
   formatBytes,
   updateUserTier,
-  getSystemStorageOverview
+  getSystemStorageOverview,
+  getTierDefinitions,
+  updateTierDefinition,
+  getTierQuota
 };

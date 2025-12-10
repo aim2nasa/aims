@@ -22,6 +22,12 @@ export interface GetUsersResponse {
   pagination: PaginationInfo;
 }
 
+export interface UpdateUserTierResponse {
+  success: boolean;
+  tier: string;
+  quota_bytes: number;
+}
+
 export const usersApi = {
   getUsers: (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     const queryParams = new URLSearchParams();
@@ -38,5 +44,9 @@ export const usersApi = {
     const endpoint = queryString ? `/api/admin/users?${queryString}` : '/api/admin/users';
 
     return apiClient.get<GetUsersResponse>(endpoint);
+  },
+
+  updateUserTier: (userId: string, tier: string): Promise<UpdateUserTierResponse> => {
+    return apiClient.put<UpdateUserTierResponse>(`/api/admin/users/${userId}/quota`, { tier });
   },
 };

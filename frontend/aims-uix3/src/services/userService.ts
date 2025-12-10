@@ -99,11 +99,13 @@ export async function getUser(_userId: string): Promise<User> {
  */
 export interface StorageInfo {
   tier: string
+  tierName: string
   quota_bytes: number
   used_bytes: number
   remaining_bytes: number
   usage_percent: number
-  formatted: {
+  is_unlimited: boolean
+  formatted?: {
     quota: string
     used: string
     remaining: string

@@ -43,6 +43,26 @@ export interface StorageOverviewResponse {
   data: StorageOverview;
 }
 
+export interface TierDefinition {
+  id: string;
+  name: string;
+  quota_bytes: number;
+  description: string;
+  formatted_quota: string;
+  updatedAt?: string;
+}
+
+export interface TiersResponse {
+  success: boolean;
+  data: TierDefinition[];
+}
+
+export interface UpdateTierResponse {
+  success: boolean;
+  message: string;
+  data: TierDefinition;
+}
+
 export const dashboardApi = {
   getDashboard: (): Promise<DashboardData> => {
     return apiClient.get<DashboardData>('/api/admin/dashboard');
@@ -50,6 +70,16 @@ export const dashboardApi = {
 
   getStorageOverview: (): Promise<StorageOverview> => {
     return apiClient.get<StorageOverviewResponse>('/api/admin/storage/overview')
+      .then((res) => res.data);
+  },
+
+  getTiers: (): Promise<TierDefinition[]> => {
+    return apiClient.get<TiersResponse>('/api/admin/tiers')
+      .then((res) => res.data);
+  },
+
+  updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'description'>>): Promise<TierDefinition> => {
+    return apiClient.put<UpdateTierResponse>(`/api/admin/tiers/${tierId}`, updates)
       .then((res) => res.data);
   },
 };

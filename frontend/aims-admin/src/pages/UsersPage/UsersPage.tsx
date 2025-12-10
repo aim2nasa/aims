@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/features/users/api';
 import { Table } from '@/shared/ui/Table/Table';
 import { Button } from '@/shared/ui/Button/Button';
 import type { User } from '@/features/auth/types';
 import './UsersPage.css';
+
+const TIER_OPTIONS = [
+  { value: 'free_trial', label: '무료체험' },
+  { value: 'standard', label: '일반' },
+  { value: 'premium', label: '프리미엄' },
+  { value: 'vip', label: 'VIP' },
+] as const;
 
 const ROLE_LABELS: Record<string, string> = {
   admin: '관리자',
@@ -45,10 +52,12 @@ const formatDate = (dateString?: string | null) => {
 };
 
 export const UsersPage = () => {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [ocrFilter, setOcrFilter] = useState<string>('');
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'users', page, search, roleFilter, ocrFilter],
@@ -61,6 +70,28 @@ export const UsersPage = () => {
         hasOcrPermission: ocrFilter === '' ? undefined : ocrFilter === 'true',
       }),
   });
+
+  const updateTierMutation = useMutation({
+    mutationFn: ({ userId, tier }: { userId: string; tier: string }) =>
+      usersApi.updateUserTier(userId, tier),
+    onMutate: ({ userId }) => {
+      setUpdatingUserId(userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onSettled: () => {
+      setUpdatingUserId(null);
+    },
+    onError: (error) => {
+      console.error('티어 변경 실패:', error);
+      alert('티어 변경에 실패했습니다.');
+    },
+  });
+
+  const handleTierChange = (userId: string, newTier: string) => {
+    updateTierMutation.mutate({ userId, tier: newTier });
+  };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -172,17 +203,36 @@ export const UsersPage = () => {
                   if (!user.storage) return '-';
                   const { used_bytes, quota_bytes, usage_percent, tier } = user.storage;
                   const isUnlimited = quota_bytes < 0;
+                  const isAdmin = tier === 'admin';
                   const warningClass = usage_percent >= 95 ? 'storage--danger' :
                     usage_percent >= 80 ? 'storage--warning' : '';
+                  const isUpdating = updatingUserId === user._id;
                   return (
                     <div className={`storage-cell ${warningClass}`}>
                       <span className="storage-cell__usage">
                         {formatBytes(used_bytes)}
                         {!isUnlimited && ` / ${formatBytes(quota_bytes)}`}
                       </span>
-                      <span className={`tier-badge tier-badge--${tier}`}>
-                        {TIER_LABELS[tier] || tier}
-                      </span>
+                      {isAdmin ? (
+                        <span className={`tier-badge tier-badge--${tier}`}>
+                          {TIER_LABELS[tier] || tier}
+                        </span>
+                      ) : (
+                        <select
+                          className={`tier-select tier-select--${tier}`}
+                          value={tier}
+                          onChange={(e) => handleTierChange(user._id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={isUpdating}
+                          aria-label="등급 변경"
+                        >
+                          {TIER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   );
                 },
