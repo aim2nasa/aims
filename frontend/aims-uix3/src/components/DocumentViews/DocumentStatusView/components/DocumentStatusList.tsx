@@ -9,6 +9,7 @@ import React, { useState, useCallback } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip } from '@/shared/ui'
+import Button from '@/shared/ui/Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
@@ -49,6 +50,8 @@ export interface DocumentStatusListProps {
   onCustomerClick?: (customerId: string) => void
   // 🍎 Refresh handler
   onRefresh?: () => Promise<void>
+  // 🍎 Navigation handler
+  onNavigate?: (viewKey: string) => void
 }
 
 /**
@@ -125,7 +128,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSelectAll,
   onSelectDocument,
   onCustomerClick,
-  onRefresh
+  onRefresh,
+  onNavigate
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -244,6 +248,15 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         <div className="list-empty">
           <span className="empty-icon">📄</span>
           <p className="empty-message">문서가 없습니다.</p>
+          {onNavigate && (
+            <Button
+              variant="primary"
+              onClick={() => onNavigate('documents-register')}
+              style={{ marginTop: '16px' }}
+            >
+              문서 등록하기
+            </Button>
+          )}
         </div>
       </div>
     )

@@ -26,6 +26,8 @@ interface AllCustomersViewProps {
   onCustomerClick?: (customerId: string, customer: Customer) => void;
   /** 고객 더블클릭 핸들러 (전체 보기로 이동) */
   onCustomerDoubleClick?: (customerId: string, customer: Customer) => void;
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void;
 }
 
 export interface AllCustomersViewRef {
@@ -44,7 +46,7 @@ type SortField = 'name' | 'birth' | 'gender' | 'phone' | 'email' | 'address' | '
 type SortDirection = 'asc' | 'desc';
 
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
-  function AllCustomersView({ onCustomerClick, onCustomerDoubleClick }, ref) {
+  function AllCustomersView({ onCustomerClick, onCustomerDoubleClick, onNavigate }, ref) {
     // 🍎 애플 스타일 알림 모달
     const { showAlert } = useAppleConfirm();
 
@@ -902,6 +904,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               <p className="empty-message">
                 {searchValue ? `"${searchValue}"에 대한 검색 결과가 없습니다.` : '고객이 없습니다.'}
               </p>
+              {!searchValue && onNavigate && (
+                <Button
+                  variant="primary"
+                  onClick={() => onNavigate('customers-register')}
+                  style={{ marginTop: '16px' }}
+                >
+                  새 고객 등록
+                </Button>
+              )}
             </div>
           )}
 

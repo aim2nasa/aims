@@ -45,6 +45,8 @@ interface DocumentLibraryViewProps {
   onCustomerClick?: (customerId: string) => void
   /** 새로고침 함수 expose */
   onRefreshExpose?: (refreshFn: () => Promise<void>) => void
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -74,7 +76,8 @@ const DocumentLibraryContent: React.FC<{
   onCustomerClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose }) => {
+  onNavigate?: (viewKey: string) => void
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -493,6 +496,7 @@ const DocumentLibraryContent: React.FC<{
         onSelectAll={handleSelectAll}
         onSelectDocument={onSelectDocument}
         {...(onCustomerClick ? { onCustomerClick } : {})}
+        {...(onNavigate ? { onNavigate } : {})}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
@@ -596,6 +600,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   onDocumentDeleted,
   onCustomerClick,
   onRefreshExpose,
+  onNavigate,
 }) => {
   const {
     error,
@@ -791,6 +796,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             }}
             {...(onDocumentClick && { onDocumentClick })}
             {...(onCustomerClick && { onCustomerClick })}
+            {...(onNavigate && { onNavigate })}
           />
         </DocumentStatusProvider>
       </div>

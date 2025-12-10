@@ -988,6 +988,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onRefreshExpose={(refreshFn) => {
                 documentLibraryRefreshRef.current = refreshFn
               }}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 
@@ -1035,6 +1036,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onRefreshExpose={(refreshFn) => {
                 customerAllViewRefreshRef.current = refreshFn
               }}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 
@@ -1044,6 +1046,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onCustomerClick={handleCustomerClick}
               selectedCustomer={selectedCustomer}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 
@@ -1052,6 +1055,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-relationship'}
               onClose={closeDocumentView}
               onCustomerSelect={handleCustomerClick}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 
@@ -1096,6 +1100,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onCustomerClick={(customerId) => handleCustomerClick(customerId, undefined, 'contracts')}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 

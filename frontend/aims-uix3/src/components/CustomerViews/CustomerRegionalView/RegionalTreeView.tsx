@@ -18,6 +18,7 @@ import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import Tooltip from '@/shared/ui/Tooltip'
+import Button from '@/shared/ui/Button'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import './RegionalTreeView.css'
 import NaverMap from '../../NaverMap/NaverMap'
@@ -423,6 +424,8 @@ interface RegionalTreeViewProps {
   loading?: boolean
   /** 새로고침 핸들러 */
   onRefresh?: () => void | Promise<void>
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void
 }
 
 /**
@@ -454,7 +457,8 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   onCustomerSelect,
   onCustomerClickFromMap,
   loading = false,
-  onRefresh
+  onRefresh,
+  onNavigate
 }) => {
   // F5 이후에도 트리 확장 상태 유지
   const [expandedKeys, setExpandedKeys] = usePersistedState<string[]>('customer-regional-expanded', ['no-address'])
@@ -1138,6 +1142,15 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <SFSymbol name="person-3" size={SFSymbolSize.LARGE_TITLE} weight={SFSymbolWeight.LIGHT} />
           <h3 className="empty-title">등록된 고객이 없습니다</h3>
           <p className="empty-message">고객을 추가하면 지역별로 자동 분류됩니다.</p>
+          {onNavigate && (
+            <Button
+              variant="primary"
+              onClick={() => onNavigate('customers-register')}
+              style={{ marginTop: '16px' }}
+            >
+              새 고객 등록
+            </Button>
+          )}
         </div>
       </div>
     )

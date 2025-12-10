@@ -29,6 +29,8 @@ interface ContractAllViewProps {
   onCustomerClick?: (customerId: string, customer: Customer) => void
   /** 고객 더블클릭 핸들러 - 전체 정보 뷰로 이동 */
   onCustomerDoubleClick?: (customerId: string) => void
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void
 }
 
 type SortField = 'customer_type' | 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
@@ -46,7 +48,8 @@ export default function ContractAllView({
   visible,
   onClose,
   onCustomerClick,
-  onCustomerDoubleClick
+  onCustomerDoubleClick,
+  onNavigate
 }: ContractAllViewProps) {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -661,6 +664,15 @@ export default function ContractAllView({
               />
               <p>등록된 계약이 없습니다.</p>
               <p className="contract-empty-hint">고객·계약 일괄등록에서 엑셀 파일을 업로드하세요.</p>
+              {onNavigate && (
+                <Button
+                  variant="primary"
+                  onClick={() => onNavigate('contracts-import')}
+                  style={{ marginTop: '16px' }}
+                >
+                  고객·계약 일괄등록
+                </Button>
+              )}
             </div>
           )}
 

@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import Tooltip from '@/shared/ui/Tooltip';
+import Button from '@/shared/ui/Button';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
@@ -32,6 +33,8 @@ interface CustomerRelationshipViewProps {
   onClose: () => void;
   /** 고객 선택 핸들러 (null이면 RightPane 닫기) */
   onCustomerSelect?: (customerId: string | null, customer?: Customer) => void;
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void;
 }
 
 interface FamilyGroup {
@@ -71,7 +74,8 @@ interface PopulatedRelationship extends Omit<Relationship, 'from_customer' | 're
 export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> = ({
   visible,
   onClose,
-  onCustomerSelect
+  onCustomerSelect,
+  onNavigate
 }) => {
   // Document-View 패턴: CustomerDocument 구독
   const {
@@ -848,6 +852,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
           </svg>
           <div>등록된 고객 관계가 없습니다</div>
+          {onNavigate && (
+            <Button variant="primary" onClick={() => onNavigate('customers-register')} style={{ marginTop: '16px' }}>
+              새 고객 등록
+            </Button>
+          )}
         </div>
       ) : (
         <div className="relationship-view__content">

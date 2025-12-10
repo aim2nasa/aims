@@ -22,6 +22,8 @@ interface CustomerRegionalViewProps {
   onCustomerClick?: (customerId: string, customer: Customer) => void
   /** RightPane에 표시 중인 선택된 고객 (App.tsx로부터 전달) */
   selectedCustomer?: Customer | null
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void
 }
 
 /**
@@ -45,7 +47,8 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   visible,
   onClose,
   onCustomerClick,
-  selectedCustomer
+  selectedCustomer,
+  onNavigate
 }) => {
   // Document-View 패턴: CustomerDocument 구독
   const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
@@ -114,6 +117,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
         onRefresh={async () => {
           await refresh({ limit: 10000 })
         }}
+        {...(onNavigate && { onNavigate })}
       />
     </CenterPaneView>
   )

@@ -24,6 +24,8 @@ interface CustomerAllViewProps {
   onCustomerDoubleClick?: (customerId: string, customer: Customer) => void;
   /** 새로고침 함수를 노출하는 콜백 */
   onRefreshExpose?: (refreshFn: () => void) => void;
+  /** 뷰 이동 핸들러 */
+  onNavigate?: (viewKey: string) => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   onCustomerClick,
   onCustomerDoubleClick,
   onRefreshExpose,
+  onNavigate,
 }) => {
   const allCustomersViewRef = React.useRef<AllCustomersViewRef | null>(null);
 
@@ -72,6 +75,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
         ref={allCustomersViewRef}
         {...(onCustomerClick && { onCustomerClick })}
         {...(onCustomerDoubleClick && { onCustomerDoubleClick })}
+        {...(onNavigate && { onNavigate })}
       />
     </CenterPaneView>
   );
