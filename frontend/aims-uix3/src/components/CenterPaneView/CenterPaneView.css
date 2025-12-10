@@ -22,8 +22,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* 애플 스타일 애니메이션 - Progressive Disclosure */
-  animation: centerPaneViewFadeIn var(--duration-fast) var(--easing-ease-out);
+  /* 🍎 iOS 스타일 뷰 전환 애니메이션 */
+  animation: centerPaneViewSlideIn var(--duration-ios-standard, 300ms) var(--easing-ios-default, cubic-bezier(0.25, 0.1, 0.25, 1));
 }
 
 /* 다크 테마 지원 */
@@ -171,17 +171,27 @@ html[data-theme="dark"] .center-pane-view__header {
   max-width: 240px; /* 적절한 줄바꿈 */
 }
 
-/* 애니메이션 정의 - 애플 스타일 Progressive Disclosure */
+/* 🍎 iOS 스타일 뷰 전환 애니메이션 */
+@keyframes centerPaneViewSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* 기존 FadeIn 애니메이션 (하위 호환성) */
 @keyframes centerPaneViewFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.98) translateY(-8px); /* 더 서브틀한 스케일과 이동 */
-    backdrop-filter: blur(0px);
+    transform: scale(0.98) translateY(-8px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
-    backdrop-filter: blur(10px);
   }
 }
 
