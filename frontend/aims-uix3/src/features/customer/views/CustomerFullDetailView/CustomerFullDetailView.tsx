@@ -43,6 +43,8 @@ interface CustomerFullDetailViewProps {
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void
   /** 메뉴 네비게이션 핸들러 (문서 검색 등) */
   onNavigate?: (menuKey: string) => void
+  /** 간략 보기로 전환 (customers-all + customerId 유지) */
+  onSwitchToCompactView?: (customerId: string) => void
 }
 
 export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
@@ -51,7 +53,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   onClose,
   onCustomerDeleted,
   onSelectCustomer,
-  onNavigate
+  onNavigate,
+  onSwitchToCompactView
 }) => {
   // 🍎 상태 관리
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -541,6 +544,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       visible={visible}
       title={customer?.personal_info?.name || '고객 정보'}
       titleIcon={customer ? getCustomerTypeIcon() : undefined}
+      titleAction={
+        onSwitchToCompactView && customerId ? (
+          <Tooltip content="간략 보기로 전환">
+            <button
+              type="button"
+              className="view-switch-button view-switch-button--compact"
+              onClick={() => onSwitchToCompactView(customerId)}
+              aria-label="간략 보기"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                {/* 리스트 아이콘 (간략 보기) */}
+                <rect x="1" y="2" width="3" height="3" rx="0.5" />
+                <rect x="6" y="2" width="9" height="3" rx="0.5" />
+                <rect x="1" y="6.5" width="3" height="3" rx="0.5" />
+                <rect x="6" y="6.5" width="9" height="3" rx="0.5" />
+                <rect x="1" y="11" width="3" height="3" rx="0.5" />
+                <rect x="6" y="11" width="9" height="3" rx="0.5" />
+              </svg>
+            </button>
+          </Tooltip>
+        ) : undefined
+      }
       titleAccessory={
         <Tooltip content="이전 페이지로 돌아가기">
           <button

@@ -573,6 +573,28 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [updateURLParams, addRecentCustomer])
 
+  // 🍎 전체보기 → 간략보기 전환 핸들러 (customers-all + customerId 유지)
+  const handleSwitchToCompactView = useCallback(async (customerId: string) => {
+    // customers-all 뷰로 전환
+    setActiveDocumentView('customers-all')
+    setFullDetailCustomerId(null)
+
+    // 고객 정보 로드 후 RightPane에 직접 표시
+    // (handleCustomerClick은 activeDocumentView 체크로 인해 동작하지 않을 수 있음)
+    try {
+      const customer = await CustomerService.getCustomer(customerId)
+      setSelectedCustomer(customer)
+      setSelectedDocument(null)
+      setRightPaneContentType('customer')
+      setRightPaneVisible(true)
+    } catch (error) {
+      console.error('[App] 간략보기 전환 실패:', error)
+    }
+
+    // URL 업데이트
+    updateURLParams({ view: 'customers-all', customerId, documentId: null })
+  }, [updateURLParams])
+
   // 계정 설정 Store에 모든 setter 등록
   useEffect(() => {
     registerSetters({
@@ -1045,6 +1067,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               }}
               onSelectCustomer={handleCustomerClick}
               onNavigate={handleMenuClick}
+              onSwitchToCompactView={handleSwitchToCompactView}
             />
           </Suspense>
 

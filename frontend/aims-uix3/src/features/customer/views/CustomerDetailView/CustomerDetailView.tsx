@@ -373,11 +373,32 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     );
   };
 
-  // 아이콘과 이름을 조합한 타이틀
+  // 아이콘과 이름을 조합한 타이틀 (전체보기 버튼 포함)
   const customerTitle = (
     <span className="customer-detail-title">
       {getCustomerTypeIcon()}
       <span className="customer-detail-name">{customer.personal_info?.name || '고객 정보'}</span>
+      {/* 전체보기 전환 버튼 */}
+      {onOpenFullDetail && (
+        <button
+          type="button"
+          className="view-switch-button view-switch-button--full"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenFullDetail(customer._id);
+          }}
+          title="전체 보기로 전환"
+          aria-label="전체 보기"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            {/* 그리드 아이콘 (전체 보기) */}
+            <rect x="1" y="1" width="6" height="6" rx="1" />
+            <rect x="9" y="1" width="6" height="6" rx="1" />
+            <rect x="1" y="9" width="6" height="6" rx="1" />
+            <rect x="9" y="9" width="6" height="6" rx="1" />
+          </svg>
+        </button>
+      )}
     </span>
   );
 
@@ -606,18 +627,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 영구 삭제
               </Button>
             )}
-            {onOpenFullDetail && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="button--full-view"
-                onClick={() => onOpenFullDetail(customer._id)}
-                leftIcon={<span>📋</span>}
-                title="전체 화면에서 모든 정보를 한눈에 봅니다"
-              >
-                전체 보기
-              </Button>
-            )}
+            {/* 전체 보기 버튼은 제목 옆으로 이동됨 */}
           </div>
 
           {/* 🍎 탭 네비게이션 */}

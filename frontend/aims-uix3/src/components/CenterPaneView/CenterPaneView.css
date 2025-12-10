@@ -76,6 +76,41 @@ html[data-theme="dark"] .center-pane-view__header {
 /* X 버튼 관련 스타일 완전 제거 - 애플 미니멀 디자인 적용 */
 /* .center-pane-view__close-button 관련 스타일 모두 삭제됨 */
 
+/* 제목 바로 뒤 액션 버튼 (뷰 전환 등) */
+.center-pane-view__title-action {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.center-pane-view__title-action .view-switch-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.center-pane-view__title-action .view-switch-button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-primary-600);
+}
+
+.center-pane-view__title-action .view-switch-button:active {
+  transform: scale(0.92);
+}
+
+.center-pane-view__title-action .view-switch-button svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* 콘텐츠 영역 - 애플 표준 패딩 시스템 */
 .center-pane-view__content {
   flex: 1;

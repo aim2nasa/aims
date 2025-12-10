@@ -1541,3 +1541,5 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   font-size: var(--font-body);
   font-weight: var(--weight-normal);
 }
+
+/* 뷰 전환 버튼 스타일은 CenterPaneView.css로 이동됨 */

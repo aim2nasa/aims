@@ -442,3 +442,40 @@
 [data-theme="dark"] .customer-detail-view .address-archive-badge {
   border-color: var(--color-layout-main-dark);
 }
+
+/* === 🍎 제목 옆 전체보기 전환 버튼 === */
+.customer-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.customer-detail-title .view-switch-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  flex-shrink: 0;
+}
+
+.customer-detail-title .view-switch-button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-primary-600);
+}
+
+.customer-detail-title .view-switch-button:active {
+  transform: scale(0.92);
+}
+
+.customer-detail-title .view-switch-button svg {
+  width: 14px;
+  height: 14px;
+}
