@@ -1,12 +1,29 @@
 # UX 개선 로드맵
 
 > 2025.12.10 | 테스트 오픈 전 사용자 관점 개선사항
+> **완료일: 2025.12.11** | 모든 태스크 구현 완료
+
+---
+
+## 완료 현황
+
+| # | 태스크 | 우선순위 | 상태 | 커밋 |
+|---|--------|----------|------|------|
+| 1 | Empty State CTA 버튼 | P0 | ✅ 완료 | `244e0e3f` |
+| 2 | 고객명 실시간 중복검사 | P0 | ✅ 완료 | `de4dfa40` |
+| 3 | 성공 피드백 개선 (reload 제거) | P0 | ✅ 완료 | `f07369cc` |
+| 4 | 폼 임시저장 (Draft) | P1 | ✅ 완료 | `556f0d90` |
+| 5 | 고객↔문서 크로스링크 | P1 | ⏭️ 스킵 | - |
+| 6 | Breadcrumb 네비게이션 | P1 | ✅ 완료 | `f611ca53` |
+| 7 | 첫 방문 가이드 투어 | P2 | ✅ 완료 | `7504a1ba` |
+| 8 | 뷰 전환 애니메이션 | P2 | ✅ 완료 | `6e40aad6` |
+| 9 | 빠른검색 분리 (QuickSearch) | P2 | ✅ 완료 | `3bbf4de1` |
 
 ---
 
 ## P0: 즉시 (사용자가 막히는 부분)
 
-### 1. Empty State에 CTA 버튼 추가
+### 1. Empty State에 CTA 버튼 추가 ✅
 
 **현재**: 빈 화면에 텍스트만 표시, 다음 행동 유도 없음
 
@@ -46,7 +63,7 @@ interface EmptyTabProps {
 
 ---
 
-### 2. 고객명 실시간 중복 검사
+### 2. 고객명 실시간 중복 검사 ✅
 
 **현재**: 폼 제출 시점에만 중복 체크 → 전체 폼 작성 후 실패하면 사용자 짜증
 
@@ -83,7 +100,7 @@ useEffect(() => {
 
 ---
 
-### 3. 성공 피드백 개선 (reload 제거)
+### 3. 성공 피드백 개선 (reload 제거) ✅
 
 **현재**: 성공 시 `window.location.reload()` 호출 → 사용자 문맥 손실
 
@@ -115,7 +132,7 @@ onSuccess: (newCustomer) => {
 
 ## P1: 단기 (효율성)
 
-### 4. 폼 임시저장 (Draft)
+### 4. 폼 임시저장 (Draft) ✅
 
 **현재**: 폼 작성 중 실수로 뒤로가면 데이터 전체 손실
 
@@ -169,7 +186,7 @@ useEffect(() => {
 
 ---
 
-### 5. 고객 ↔ 문서 크로스링크
+### 5. 고객 ↔ 문서 크로스링크 ⏭️ (스킵)
 
 **현재**: CustomerDetailView에서 해당 고객의 문서로 바로 이동 어려움
 
@@ -194,7 +211,7 @@ const { customerId } = useSearchParams();
 
 ---
 
-### 6. Breadcrumb 경로 표시
+### 6. Breadcrumb 경로 표시 ✅
 
 **현재**: 깊은 뷰(예: 고객 > 상세 > 계약)에서 현재 위치 파악 어려움
 
@@ -221,9 +238,9 @@ interface BreadcrumbItem {
 
 ## P2: 중기 (완성도)
 
-### 7. 첫 방문 가이드 투어
+### 7. 첫 방문 가이드 투어 ✅
 
-**구현 위치**: `App.tsx` 또는 `shared/components/OnboardingTour/`
+**구현 위치**: `App.tsx` 및 `shared/components/OnboardingTour/`
 
 **구현 방식**:
 - localStorage로 `hasCompletedOnboarding` 체크
@@ -241,9 +258,9 @@ localStorage.setItem('hasCompletedOnboarding', 'true');
 
 ---
 
-### 8. 뷰 전환 애니메이션
+### 8. 뷰 전환 애니메이션 ✅
 
-**구현 위치**: `App.tsx` 또는 CenterPane 래퍼
+**구현 위치**: `App.tsx` 및 `styles/layout.css`
 
 **구현 방식**:
 - framer-motion: `AnimatePresence` + `motion.div`
@@ -266,7 +283,7 @@ localStorage.setItem('hasCompletedOnboarding', 'true');
 
 ---
 
-### 9. 빠른검색 vs AI검색 분리
+### 9. 빠른검색 vs AI검색 분리 ✅
 
 **현재**: DocumentSearchView가 AI/의미론적 검색 중심 → 신규 사용자에게 복잡
 
