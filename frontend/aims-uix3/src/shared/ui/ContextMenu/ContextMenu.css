@@ -1,0 +1,230 @@
+/**
+ * ContextMenu Styles
+ * @description Apple Human Interface Guidelines 기반 컨텍스트 메뉴 스타일
+ *
+ * CSS 변수 기반 - 하드코딩 금지 (CLAUDE.md 규칙 준수)
+ */
+
+/* ===== 메뉴 컨테이너 ===== */
+.context-menu {
+  /* 크기 */
+  min-width: 180px;
+  max-width: 280px;
+
+  /* 배경 */
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  /* 그림자 + 블러 (macOS 스타일) */
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  /* 레이아웃 */
+  padding: var(--spacing-1);
+
+  /* 애니메이션 */
+  opacity: 0;
+  transform: scale(0.95);
+  transform-origin: top left;
+  animation: contextMenuFadeIn var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out) forwards;
+}
+
+@keyframes contextMenuFadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== 섹션 ===== */
+.context-menu__section {
+  /* 섹션 간 여백 제거 (구분선으로 분리) */
+}
+
+.context-menu__section-title {
+  font-size: var(--font-size-caption-2, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--spacing-1) var(--spacing-3);
+  user-select: none;
+}
+
+/* ===== 구분선 ===== */
+.context-menu__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--spacing-1) var(--spacing-2);
+}
+
+/* ===== 메뉴 아이템 ===== */
+.context-menu-item {
+  /* 레이아웃 */
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+
+  /* 스타일 초기화 */
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  /* 타이포그래피 */
+  font-family: inherit;
+  font-size: var(--font-size-footnote, 13px);
+  font-weight: var(--font-weight-regular, 400);
+  color: var(--color-text-primary);
+  text-align: left;
+  white-space: nowrap;
+
+  /* 전환 */
+  transition: background var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out),
+              color var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
+}
+
+.context-menu-item:hover:not(:disabled) {
+  background: var(--color-bg-active);
+}
+
+.context-menu-item:active:not(:disabled) {
+  background: var(--color-primary-alpha-20, rgba(0, 122, 255, 0.2));
+}
+
+.context-menu-item:focus {
+  outline: none;
+  background: var(--color-bg-active);
+}
+
+.context-menu-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* 비활성화 */
+.context-menu-item--disabled,
+.context-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== 아이콘 ===== */
+.context-menu-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
+}
+
+.context-menu-item:hover:not(:disabled) .context-menu-item__icon {
+  color: var(--color-text-primary);
+}
+
+.context-menu-item__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== 레이블 ===== */
+.context-menu-item__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== 단축키 ===== */
+.context-menu-item__shortcut {
+  font-size: var(--font-size-caption-2, 11px);
+  color: var(--color-text-quaternary);
+  margin-left: auto;
+  padding-left: var(--spacing-4);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== 위험 액션 (삭제 등) ===== */
+.context-menu-item--danger {
+  color: var(--color-error);
+}
+
+.context-menu-item--danger .context-menu-item__icon {
+  color: var(--color-error);
+}
+
+.context-menu-item--danger:hover:not(:disabled) {
+  background: var(--color-error);
+  color: var(--color-button-destructive-text, #fff);
+}
+
+.context-menu-item--danger:hover:not(:disabled) .context-menu-item__icon {
+  color: var(--color-button-destructive-text, #fff);
+}
+
+.context-menu-item--danger:hover:not(:disabled) .context-menu-item__shortcut {
+  color: var(--color-button-destructive-text, #fff);
+  opacity: 0.7;
+}
+
+/* ===== Help 버튼 ===== */
+.context-menu__help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+
+  width: 100%;
+  padding: var(--spacing-2);
+  margin-top: var(--spacing-1);
+
+  background: var(--color-bg-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
+
+  font-family: inherit;
+  font-size: var(--font-size-caption-1, 12px);
+  color: var(--color-primary);
+
+  cursor: pointer;
+  transition: background var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
+}
+
+.context-menu__help:hover {
+  background: var(--color-primary-alpha-10, rgba(0, 122, 255, 0.1));
+}
+
+.context-menu__help:focus {
+  outline: none;
+  background: var(--color-primary-alpha-10, rgba(0, 122, 255, 0.1));
+}
+
+.context-menu__help:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.context-menu__help svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== 다크 테마 ===== */
+[data-theme="dark"] .context-menu {
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .context-menu__help {
+  background: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] .context-menu__help:hover {
+  background: var(--color-primary-alpha-10);
+}

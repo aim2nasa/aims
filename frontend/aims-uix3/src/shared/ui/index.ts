@@ -44,3 +44,12 @@ export type { UsageGuideProps, GuideSection } from './UsageGuide';
 
 export { Breadcrumb } from './Breadcrumb';
 export type { BreadcrumbItem } from './Breadcrumb';
+
+export { ContextMenu, ContextMenuItem, ContextMenuDivider, useContextMenu } from './ContextMenu';
+export type {
+  ContextMenuProps,
+  ContextMenuSection,
+  ContextMenuItemType,
+  ContextMenuPosition,
+  UseContextMenuReturn
+} from './ContextMenu';
