@@ -197,8 +197,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
             return `${id}:${status}:${progress}:${customerRelation}`
           }
 
-          const prevFingerprints = prevDocs.map(createDocFingerprint).sort().join('|')
-          const newFingerprints = finalDocs.map(createDocFingerprint).sort().join('|')
+          // 🔧 정렬 순서도 반영하기 위해 sort() 제거
+          const prevFingerprints = prevDocs.map(createDocFingerprint).join('|')
+          const newFingerprints = finalDocs.map(createDocFingerprint).join('|')
 
           // ID + 상태가 모두 동일하면 기존 배열 유지 (참조 동일 → 리렌더링 없음)
           if (prevFingerprints === newFingerprints) {
