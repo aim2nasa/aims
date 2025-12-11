@@ -6,7 +6,7 @@ interface ResourceGaugeProps {
   value: number; // 0-100 퍼센트
   total?: string; // 전체 크기 (예: "16 GB")
   used?: string; // 사용량 (예: "10.2 GB")
-  color?: 'cpu' | 'memory' | 'disk';
+  color?: 'cpu' | 'memory' | 'disk' | 'disk-data';
 }
 
 export const ResourceGauge = ({

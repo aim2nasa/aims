@@ -62,13 +62,22 @@ function getMemoryUsage() {
 }
 
 /**
- * 디스크 사용량 조회 (Linux)
+ * 특정 마운트 포인트의 디스크 사용량 조회 (Linux)
+ * @param {string} mountPoint 마운트 포인트 (예: '/', '/data')
  * @returns {Object} 디스크 정보
  */
-function getDiskUsage() {
+function getDiskUsageByMount(mountPoint) {
+  const defaultResult = {
+    total: 0,
+    used: 0,
+    available: 0,
+    usagePercent: 0,
+    mountPoint
+  };
+
   try {
-    // Linux df 명령으로 루트 파티션 정보 조회
-    const output = execSync("df -B1 / 2>/dev/null | tail -1", { encoding: 'utf8' });
+    // Linux df 명령으로 특정 마운트 포인트 정보 조회
+    const output = execSync(`df -B1 ${mountPoint} 2>/dev/null | tail -1`, { encoding: 'utf8' });
     const parts = output.trim().split(/\s+/);
 
     if (parts.length >= 5) {
@@ -81,18 +90,37 @@ function getDiskUsage() {
         total,
         used,
         available,
-        usagePercent
+        usagePercent,
+        mountPoint
       };
     }
   } catch (err) {
-    console.error('[MetricsCollector] 디스크 정보 조회 실패:', err.message);
+    console.error(`[MetricsCollector] 디스크 정보 조회 실패 (${mountPoint}):`, err.message);
   }
 
+  return defaultResult;
+}
+
+/**
+ * 디스크 사용량 조회 (Linux) - 하위 호환성 유지
+ * @returns {Object} 루트 파티션 디스크 정보
+ */
+function getDiskUsage() {
+  const result = getDiskUsageByMount('/');
+  // 하위 호환성: mountPoint 필드 제거
+  const { mountPoint, ...diskInfo } = result;
+  return diskInfo;
+}
+
+/**
+ * 모든 파티션 디스크 사용량 조회
+ * @returns {Object} 파티션별 디스크 정보
+ */
+function getAllDisksUsage() {
   return {
-    total: 0,
-    used: 0,
-    available: 0,
-    usagePercent: 0
+    root: getDiskUsageByMount('/'),
+    // Docker 컨테이너에서는 /data가 /data/files로 마운트됨
+    data: getDiskUsageByMount('/data/files')
   };
 }
 
@@ -130,7 +158,8 @@ function collectMetrics() {
     timestamp: new Date(),
     cpu: getCpuUsage(),
     memory: getMemoryUsage(),
-    disk: getDiskUsage(),
+    disk: getDiskUsage(),        // 하위 호환성 (루트 파티션)
+    disks: getAllDisksUsage(),   // 파티션별 디스크 정보
     process: getProcessMemory(),
     uptime: getUptimeInfo(),
     hostname: os.hostname(),
@@ -156,6 +185,8 @@ module.exports = {
   getCpuUsage,
   getMemoryUsage,
   getDiskUsage,
+  getDiskUsageByMount,
+  getAllDisksUsage,
   getProcessMemory,
   getUptimeInfo,
   collectMetrics,

@@ -15,6 +15,8 @@ interface MetricsDataPoint {
   cpu: number;
   memory: number;
   disk?: number;
+  diskRoot?: number;
+  diskData?: number;
 }
 
 interface MetricsLineChartProps {
@@ -116,15 +118,26 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200 }: Metri
             activeDot={{ r: 4 }}
           />
           {showDisk && (
-            <Line
-              type="monotone"
-              dataKey="disk"
-              name="Disk"
-              stroke="var(--chart-color-disk)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
+            <>
+              <Line
+                type="monotone"
+                dataKey="diskRoot"
+                name="Disk (/)"
+                stroke="var(--chart-color-disk)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="diskData"
+                name="Disk (/data)"
+                stroke="var(--chart-color-disk-data)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            </>
           )}
         </LineChart>
       </ResponsiveContainer>

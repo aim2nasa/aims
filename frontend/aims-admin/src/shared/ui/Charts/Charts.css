@@ -3,6 +3,7 @@
   --chart-color-cpu: #007AFF;
   --chart-color-memory: #34C759;
   --chart-color-disk: #FF9500;
+  --chart-color-disk-data: #AF52DE;
 }
 
 /* Resource Gauge (도넛 차트) */

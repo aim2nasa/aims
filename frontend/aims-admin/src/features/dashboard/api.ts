@@ -115,6 +115,12 @@ export interface DiskMetrics {
   used: number;
   available: number;
   usagePercent: number;
+  mountPoint?: string;
+}
+
+export interface DisksMetrics {
+  root: DiskMetrics;
+  data: DiskMetrics;
 }
 
 export interface ProcessMetrics {
@@ -134,7 +140,8 @@ export interface SystemMetrics {
   timestamp: string;
   cpu: CpuMetrics;
   memory: MemoryMetrics;
-  disk: DiskMetrics;
+  disk: DiskMetrics;           // 하위 호환성 (루트 파티션)
+  disks?: DisksMetrics;        // 파티션별 디스크 정보
   process: ProcessMetrics;
   uptime: UptimeMetrics;
   hostname: string;

@@ -178,6 +178,8 @@ const ServerResourcesSection = () => {
     cpu: m.cpu.usage,
     memory: m.memory.usagePercent,
     disk: m.disk.usagePercent,
+    diskRoot: m.disks?.root?.usagePercent ?? m.disk.usagePercent,
+    diskData: m.disks?.data?.usagePercent ?? 0,
   })) || [];
 
   return (
@@ -221,13 +223,33 @@ const ServerResourcesSection = () => {
                 total={formatBytes(currentMetrics.memory.total)}
                 color="memory"
               />
-              <ResourceGauge
-                label="Disk"
-                value={currentMetrics.disk.usagePercent}
-                used={formatBytes(currentMetrics.disk.used)}
-                total={formatBytes(currentMetrics.disk.total)}
-                color="disk"
-              />
+              {/* 파티션별 디스크 표시 */}
+              {currentMetrics.disks ? (
+                <>
+                  <ResourceGauge
+                    label="Disk (/)"
+                    value={currentMetrics.disks.root.usagePercent}
+                    used={formatBytes(currentMetrics.disks.root.used)}
+                    total={formatBytes(currentMetrics.disks.root.total)}
+                    color="disk"
+                  />
+                  <ResourceGauge
+                    label="Disk (/data)"
+                    value={currentMetrics.disks.data.usagePercent}
+                    used={formatBytes(currentMetrics.disks.data.used)}
+                    total={formatBytes(currentMetrics.disks.data.total)}
+                    color="disk-data"
+                  />
+                </>
+              ) : (
+                <ResourceGauge
+                  label="Disk"
+                  value={currentMetrics.disk.usagePercent}
+                  used={formatBytes(currentMetrics.disk.used)}
+                  total={formatBytes(currentMetrics.disk.total)}
+                  color="disk"
+                />
+              )}
             </>
           ) : (
             <div className="server-resources__loading">메트릭 데이터 없음</div>
