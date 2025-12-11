@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/authStore';
 import { Button } from '@/shared/ui/Button/Button';
@@ -10,16 +10,68 @@ interface NavItem {
   children?: NavItem[];
 }
 
+const SIDEBAR_MIN_WIDTH = 180;
+const SIDEBAR_MAX_WIDTH = 400;
+const SIDEBAR_DEFAULT_WIDTH = 240;
+const SIDEBAR_WIDTH_KEY = 'aims_admin_sidebar_width';
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['/dashboard']);
 
+  // 사이드바 리사이즈 상태
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    return saved ? parseInt(saved, 10) : SIDEBAR_DEFAULT_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  // 리사이즈 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeRef.current = { startX: e.clientX, startWidth: sidebarWidth };
+  }, [sidebarWidth]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizeRef.current) return;
+    const delta = e.clientX - resizeRef.current.startX;
+    const newWidth = Math.min(
+      SIDEBAR_MAX_WIDTH,
+      Math.max(SIDEBAR_MIN_WIDTH, resizeRef.current.startWidth + delta)
+    );
+    setSidebarWidth(newWidth);
+  }, []);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+    resizeRef.current = null;
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  // 리사이즈 이벤트 리스너
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   const navItems: NavItem[] = [
     {
@@ -100,11 +152,22 @@ function App() {
 
       <div className="app__body">
         {/* Sidebar */}
-        <aside className="app__sidebar">
+        <aside className="app__sidebar" style={{ width: sidebarWidth }}>
           <nav className="app__nav">
             {navItems.map((item) => renderNavItem(item))}
           </nav>
         </aside>
+
+        {/* Resize Handle */}
+        <div
+          className={`app__resize-handle ${isResizing ? 'app__resize-handle--active' : ''}`}
+          onMouseDown={handleResizeStart}
+          onDoubleClick={() => {
+            setSidebarWidth(SIDEBAR_DEFAULT_WIDTH);
+            localStorage.setItem(SIDEBAR_WIDTH_KEY, SIDEBAR_DEFAULT_WIDTH.toString());
+          }}
+          title="더블클릭으로 기본 너비 복원"
+        />
 
         {/* Main Content */}
         <main className="app__main">

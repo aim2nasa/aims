@@ -49,11 +49,40 @@
 
 /* Sidebar */
 .app__sidebar {
-  width: 240px;
+  flex-shrink: 0;
+  min-width: 180px;
+  max-width: 400px;
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
   padding: var(--spacing-lg) 0;
   overflow-y: auto;
+}
+
+/* Resize Handle */
+.app__resize-handle {
+  flex-shrink: 0;
+  width: 4px;
+  cursor: ew-resize;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+.app__resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  right: -3px;
+  bottom: 0;
+}
+
+.app__resize-handle:hover {
+  background-color: var(--color-primary);
+}
+
+.app__resize-handle--active {
+  background-color: var(--color-primary);
 }
 
 .app__nav {
