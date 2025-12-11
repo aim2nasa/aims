@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type WorkflowStatus } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import './SystemHealthPage.css';
 
@@ -106,6 +106,40 @@ const HealthCard = ({ service, health, description }: HealthCardProps) => {
           <span className="health-card__error-text">{health.error}</span>
         </div>
       )}
+    </div>
+  );
+};
+
+interface WorkflowCardProps {
+  workflow: WorkflowStatus;
+}
+
+const formatWorkflowDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  return date.toLocaleString('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
+  return (
+    <div className={`workflow-card ${workflow.active ? '' : 'workflow-card--inactive'}`}>
+      <div className="workflow-card__header">
+        <span className="workflow-card__name">{workflow.name}</span>
+        <span className={`workflow-card__status ${workflow.active ? 'workflow-card__status--active' : 'workflow-card__status--inactive'}`}>
+          <span className={`workflow-card__indicator ${workflow.active ? 'workflow-card__indicator--active' : 'workflow-card__indicator--inactive'}`} />
+          {workflow.active ? 'Active' : 'Inactive'}
+        </span>
+      </div>
+      <div className="workflow-card__footer">
+        <span className="workflow-card__updated">
+          수정: {formatWorkflowDate(workflow.updatedAt)}
+        </span>
+      </div>
     </div>
   );
 };
@@ -255,6 +289,23 @@ export const SystemHealthPage = () => {
           </div>
         </section>
       ))}
+
+      {/* n8n 워크플로우 상태 */}
+      {data?.workflows && data.workflows.length > 0 && (
+        <section className="system-health-page__section">
+          <div className="system-health-page__tier-header">
+            <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
+            <span className="system-health-page__tier-description">
+              {data.workflows.filter(w => w.active).length}/{data.workflows.length} 활성화
+            </span>
+          </div>
+          <div className="system-health-page__workflow-grid">
+            {data.workflows.map((workflow) => (
+              <WorkflowCard key={workflow.id} workflow={workflow} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

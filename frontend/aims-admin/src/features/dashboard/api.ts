@@ -42,11 +42,19 @@ export interface OcrStats {
   totalProcessed: number;
 }
 
+export interface WorkflowStatus {
+  id: string;
+  name: string;
+  active: boolean;
+  updatedAt: string;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   processing: ProcessingStatus;
   health: HealthStatus;
   ocr?: OcrStats;
+  workflows?: WorkflowStatus[];
 }
 
 export interface StorageOverview {

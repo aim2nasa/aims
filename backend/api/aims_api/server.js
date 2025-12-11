@@ -1,6 +1,8 @@
 // server.js - 문서 상태 모니터링 API 서버
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
 const axios = require('axios');
@@ -3651,6 +3653,33 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       }
     };
 
+    // n8n 워크플로우 상태 읽기 (AIMS 핵심 워크플로우만 필터링)
+    const AIMS_CORE_WORKFLOWS = [
+      'DocUpload', 'DocMeta', 'DocPrepMain', 'DocOCR',
+      'OCRWorker', 'SmartSearch', 'DocSummary'
+    ];
+    let workflows = [];
+    try {
+      const workflowsPath = path.join(__dirname, 'n8n_workflows.json');
+      if (fs.existsSync(workflowsPath)) {
+        const workflowsData = JSON.parse(fs.readFileSync(workflowsPath, 'utf8'));
+        const allWorkflows = workflowsData.workflows || [];
+        // 핵심 워크플로우만 필터링 (정확히 일치하는 이름만)
+        const filtered = allWorkflows.filter(w => AIMS_CORE_WORKFLOWS.includes(w.name));
+        // 같은 이름의 워크플로우가 여러 개면 최신 것만 유지
+        const workflowMap = new Map();
+        for (const wf of filtered) {
+          const existing = workflowMap.get(wf.name);
+          if (!existing || new Date(wf.updatedAt) > new Date(existing.updatedAt)) {
+            workflowMap.set(wf.name, wf);
+          }
+        }
+        workflows = Array.from(workflowMap.values());
+      }
+    } catch (wfError) {
+      console.error('[Admin] n8n 워크플로우 상태 읽기 오류:', wfError.message);
+    }
+
     res.json({
       success: true,
       stats: {
@@ -3669,7 +3698,8 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       ocr: {
         usedThisMonth: ocrUsedThisMonth,
         totalProcessed: ocrTotalProcessed
-      }
+      },
+      workflows
     });
   } catch (error) {
     console.error('[Admin] 대시보드 통계 조회 오류:', error);
