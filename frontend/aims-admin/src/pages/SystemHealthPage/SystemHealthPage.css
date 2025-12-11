@@ -35,7 +35,19 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0;
+}
+
+.system-health-page__tier-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.system-health-page__tier-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
 }
 
 .system-health-page__loading,

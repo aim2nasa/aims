@@ -25,10 +25,16 @@ export interface ServiceHealth {
 }
 
 export interface HealthStatus {
-  nodeApi: ServiceHealth;
-  pythonApi: ServiceHealth;
+  // Tier 1: Infrastructure
   mongodb: ServiceHealth;
   qdrant: ServiceHealth;
+  // Tier 2: Backend APIs
+  nodeApi: ServiceHealth;
+  aimsRagApi: ServiceHealth;
+  annualReportApi: ServiceHealth;
+  pdfProxy: ServiceHealth;
+  // Tier 3: Workflow
+  n8n: ServiceHealth;
 }
 
 export interface OcrStats {

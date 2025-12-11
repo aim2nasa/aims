@@ -144,28 +144,65 @@ export const SystemHealthPage = () => {
     return h;
   };
 
-  const services = [
+  // Tier별 서비스 구성
+  const serviceTiers = [
     {
-      service: 'Node.js API',
-      health: normalizeHealth(health?.nodeApi),
-      description: 'AIMS 메인 백엔드 API 서버',
+      tier: 'Tier 1: Infrastructure',
+      description: '핵심 인프라 - 장애 시 전체 서비스 중단',
+      services: [
+        {
+          service: 'MongoDB',
+          health: normalizeHealth(health?.mongodb),
+          description: '데이터베이스 서버',
+        },
+        {
+          service: 'Qdrant',
+          health: normalizeHealth(health?.qdrant),
+          description: '벡터 데이터베이스 (AI 검색용)',
+        },
+      ],
     },
     {
-      service: 'Python API',
-      health: normalizeHealth(health?.pythonApi),
-      description: 'RAG 검색 및 문서 처리 API 서버',
+      tier: 'Tier 2: Backend APIs',
+      description: '백엔드 API - 장애 시 주요 기능 제한',
+      services: [
+        {
+          service: 'aims_api',
+          health: normalizeHealth(health?.nodeApi),
+          description: 'AIMS 메인 백엔드 API 서버',
+        },
+        {
+          service: 'aims_rag_api',
+          health: normalizeHealth(health?.aimsRagApi),
+          description: 'RAG 검색 및 문서 처리 API 서버',
+        },
+        {
+          service: 'annual_report_api',
+          health: normalizeHealth(health?.annualReportApi),
+          description: '연간보고서 분석 API',
+        },
+        {
+          service: 'pdf_proxy',
+          health: normalizeHealth(health?.pdfProxy),
+          description: 'PDF 프록시 서버',
+        },
+      ],
     },
     {
-      service: 'MongoDB',
-      health: normalizeHealth(health?.mongodb),
-      description: '데이터베이스 서버',
-    },
-    {
-      service: 'Qdrant',
-      health: normalizeHealth(health?.qdrant),
-      description: '벡터 데이터베이스 (AI 검색용)',
+      tier: 'Tier 3: Workflow',
+      description: '워크플로우 - 장애 시 자동화 기능 제한',
+      services: [
+        {
+          service: 'n8n',
+          health: normalizeHealth(health?.n8n),
+          description: '워크플로우 자동화 엔진',
+        },
+      ],
     },
   ];
+
+  // 모든 서비스 평탄화 (전체 상태 계산용)
+  const services = serviceTiers.flatMap((tier) => tier.services);
 
   const healthyCount = services.filter((s) => s.health.status === 'healthy').length;
   const allHealthy = healthyCount === services.length;
@@ -200,49 +237,24 @@ export const SystemHealthPage = () => {
         </div>
       </section>
 
-      <section className="system-health-page__section">
-        <h2 className="system-health-page__section-title">서비스 상태</h2>
-        <div className="system-health-page__health-grid">
-          {services.map((service) => (
-            <HealthCard
-              key={service.service}
-              service={service.service}
-              health={service.health}
-              description={service.description}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="system-health-page__section">
-        <h2 className="system-health-page__section-title">서비스 설명</h2>
-        <div className="system-health-page__info-cards">
-          <div className="info-card">
-            <h3 className="info-card__title">Node.js API</h3>
-            <p className="info-card__description">
-              사용자 인증, 고객 관리, 문서 메타데이터 등 핵심 비즈니스 로직을 처리합니다.
-            </p>
+      {serviceTiers.map((tierGroup) => (
+        <section key={tierGroup.tier} className="system-health-page__section">
+          <div className="system-health-page__tier-header">
+            <h2 className="system-health-page__section-title">{tierGroup.tier}</h2>
+            <span className="system-health-page__tier-description">{tierGroup.description}</span>
           </div>
-          <div className="info-card">
-            <h3 className="info-card__title">Python API</h3>
-            <p className="info-card__description">
-              OCR, 텍스트 추출, AI 기반 검색 등 문서 처리 기능을 담당합니다.
-            </p>
+          <div className="system-health-page__health-grid">
+            {tierGroup.services.map((service) => (
+              <HealthCard
+                key={service.service}
+                service={service.service}
+                health={service.health}
+                description={service.description}
+              />
+            ))}
           </div>
-          <div className="info-card">
-            <h3 className="info-card__title">MongoDB</h3>
-            <p className="info-card__description">
-              모든 데이터(사용자, 고객, 문서, 계약 등)를 저장하는 데이터베이스입니다.
-            </p>
-          </div>
-          <div className="info-card">
-            <h3 className="info-card__title">Qdrant</h3>
-            <p className="info-card__description">
-              문서 벡터를 저장하여 의미 기반 검색을 가능하게 하는 벡터 DB입니다.
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      ))}
     </div>
   );
 };

@@ -3546,18 +3546,18 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
 
     // 시스템 상태 - 실제 연결 체크
     const healthChecks = await Promise.allSettled([
-      // Node.js API (자기 자신)
+      // [0] Node.js API (aims_api - 자기 자신)
       (async () => {
         const start = Date.now();
         return { latency: Date.now() - start, version: process.version };
       })(),
-      // Python API (RAG 검색 서버)
+      // [1] AIMS RAG API (aims_rag_api - 포트 8000)
       (async () => {
         const start = Date.now();
         const response = await axios.get(`${PYTHON_API_URL}/openapi.json`, { timeout: 5000 });
         return { latency: Date.now() - start, version: response.data?.info?.version || null };
       })(),
-      // MongoDB
+      // [2] MongoDB
       (async () => {
         const start = Date.now();
         const result = await db.admin().ping();
@@ -3568,7 +3568,7 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
           uptime: serverStatus.uptime
         };
       })(),
-      // Qdrant
+      // [3] Qdrant
       (async () => {
         const start = Date.now();
         const collections = await qdrantClient.getCollections();
@@ -3576,24 +3576,30 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
           latency: Date.now() - start,
           collections: collections.collections?.length || 0
         };
+      })(),
+      // [4] n8n (워크플로우 엔진 - 포트 5678)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get('http://localhost:5678/healthz', { timeout: 5000 });
+        return { latency: Date.now() - start, status: response.data?.status || 'ok' };
+      })(),
+      // [5] Annual Report API (포트 8004)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get('http://localhost:8004/openapi.json', { timeout: 5000 });
+        return { latency: Date.now() - start, version: response.data?.info?.version || null };
+      })(),
+      // [6] PDF Proxy (포트 8002)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get('http://localhost:8002/health', { timeout: 5000 });
+        return { latency: Date.now() - start };
       })()
     ]);
 
     const checkTime = utcNowISO();
     const health = {
-      nodeApi: {
-        status: 'healthy',
-        latency: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.latency : null,
-        version: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.version : null,
-        checkedAt: checkTime
-      },
-      pythonApi: {
-        status: healthChecks[1].status === 'fulfilled' ? 'healthy' : 'unhealthy',
-        latency: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.latency : null,
-        version: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.version : null,
-        error: healthChecks[1].status === 'rejected' ? healthChecks[1].reason?.message : null,
-        checkedAt: checkTime
-      },
+      // Tier 1: Infrastructure
       mongodb: {
         status: healthChecks[2].status === 'fulfilled' ? 'healthy' : 'unhealthy',
         latency: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value.latency : null,
@@ -3607,6 +3613,40 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         latency: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value.latency : null,
         collections: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value.collections : null,
         error: healthChecks[3].status === 'rejected' ? healthChecks[3].reason?.message : null,
+        checkedAt: checkTime
+      },
+      // Tier 2: Backend APIs
+      nodeApi: {
+        status: 'healthy',
+        latency: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.latency : null,
+        version: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.version : null,
+        checkedAt: checkTime
+      },
+      aimsRagApi: {
+        status: healthChecks[1].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.latency : null,
+        version: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.version : null,
+        error: healthChecks[1].status === 'rejected' ? healthChecks[1].reason?.message : null,
+        checkedAt: checkTime
+      },
+      annualReportApi: {
+        status: healthChecks[5].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[5].status === 'fulfilled' ? healthChecks[5].value.latency : null,
+        version: healthChecks[5].status === 'fulfilled' ? healthChecks[5].value.version : null,
+        error: healthChecks[5].status === 'rejected' ? healthChecks[5].reason?.message : null,
+        checkedAt: checkTime
+      },
+      pdfProxy: {
+        status: healthChecks[6].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[6].status === 'fulfilled' ? healthChecks[6].value.latency : null,
+        error: healthChecks[6].status === 'rejected' ? healthChecks[6].reason?.message : null,
+        checkedAt: checkTime
+      },
+      // Tier 3: Workflow
+      n8n: {
+        status: healthChecks[4].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[4].status === 'fulfilled' ? healthChecks[4].value.latency : null,
+        error: healthChecks[4].status === 'rejected' ? healthChecks[4].reason?.message : null,
         checkedAt: checkTime
       }
     };
