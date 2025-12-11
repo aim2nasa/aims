@@ -6,11 +6,11 @@
  * 고객 문서 일괄등록을 위한 API 클라이언트
  */
 
-import { api, ApiError } from '../../../shared/lib/api'
+import { api, ApiError, API_CONFIG, getAuthHeaders } from '../../../shared/lib/api'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 
-// 업로드 엔드포인트 (기존 문서 업로드와 동일)
-const UPLOAD_ENDPOINT = 'https://n8nd.giize.com/webhook/docprep-main'
+// n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
+const UPLOAD_ENDPOINT = `${API_CONFIG.BASE_URL}/api/n8n/docprep`
 
 // ==================== 타입 정의 ====================
 
@@ -195,6 +195,12 @@ export class BatchUploadApi {
       // 요청 설정
       xhr.open('POST', UPLOAD_ENDPOINT)
       xhr.timeout = 5 * 60 * 1000 // 5분 타임아웃
+
+      // JWT 인증 헤더 설정
+      const authHeaders = getAuthHeaders()
+      Object.entries(authHeaders).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value)
+      })
 
       // 업로드 시작
       xhr.send(formData)

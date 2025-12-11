@@ -55,6 +55,7 @@ import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/do
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
 import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
+import { API_CONFIG, getAuthHeaders } from './shared/lib/api'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -385,10 +386,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // 문서 ID가 URL에 있으면 문서 정보 로드
     if (urlDocumentId && !urlCustomerId) {
       // handleDocumentClick 로직 재사용
-      fetch('https://n8nd.giize.com/webhook/smartsearch', {
+      // n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
+      fetch(`${API_CONFIG.BASE_URL}/api/n8n/smartsearch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),  // JWT 인증 헤더 추가
         },
         body: JSON.stringify({ id: urlDocumentId })
       })

@@ -7,6 +7,7 @@
  */
 
 import { UploadContext, UserIdentifierType } from '../types/uploadTypes'
+import { API_CONFIG } from '@/shared/lib/api'
 
 type UploadMetadataValue = string | number | boolean | null | undefined
 
@@ -162,9 +163,9 @@ export class UserContextService {
  * 🔮 미래 확장: 설정 파일로 분리 예정
  */
 export const uploadConfig = {
-  // 현재 설정
+  // 현재 설정 - n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
   endpoints: {
-    upload: 'https://n8nd.giize.com/webhook/docprep-main'
+    upload: `${API_CONFIG.BASE_URL}/api/n8n/docprep`
   },
 
   // 🔮 미래 확장 설정 (현재는 비활성화)

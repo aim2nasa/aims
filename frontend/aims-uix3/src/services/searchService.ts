@@ -11,9 +11,11 @@ import type {
   SearchResultItem,
   SemanticSearchResultItem
 } from '@/entities/search'
+import { API_CONFIG, getAuthHeaders } from '@/shared/lib/api'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
-const SMARTSEARCH_API_URL = 'https://n8nd.giize.com/webhook/smartsearch'
+// n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
+const SMARTSEARCH_API_URL = `${API_CONFIG.BASE_URL}/api/n8n/smartsearch`
 
 /**
  * SearchService 클래스
@@ -301,6 +303,7 @@ export class SearchService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),  // JWT 인증 헤더 추가
         },
         body: JSON.stringify({ id: docId }),
       })

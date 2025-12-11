@@ -6686,6 +6686,74 @@ process.on('SIGINT', () => {
   }
 });
 
+// =============================================================================
+// n8n Webhook 프록시 엔드포인트 (보안: 내부망에서만 n8n 접근 가능)
+// =============================================================================
+
+const N8N_INTERNAL_URL = 'http://localhost:5678';
+
+/**
+ * 스마트 검색 프록시 - n8n smartsearch webhook
+ * 외부에서 직접 n8n에 접근하지 못하도록 aims_api를 통해 프록시
+ */
+app.post('/api/n8n/smartsearch', authenticateJWT, async (req, res) => {
+  try {
+    console.log(`[n8n Proxy] smartsearch 요청 - userId: ${req.user.userId}`);
+
+    const response = await axios.post(
+      `${N8N_INTERNAL_URL}/webhook/smartsearch`,
+      {
+        ...req.body,
+        userId: req.user.userId  // 인증된 사용자 정보 주입
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000  // 60초 타임아웃 (AI 검색은 시간이 걸릴 수 있음)
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[n8n Proxy] smartsearch 오류:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Search service unavailable' });
+    }
+  }
+});
+
+/**
+ * 문서 업로드 프록시 - n8n docprep-main webhook
+ * 외부에서 직접 n8n에 접근하지 못하도록 aims_api를 통해 프록시
+ */
+app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
+  try {
+    console.log(`[n8n Proxy] docprep 요청 - userId: ${req.user.userId}`);
+
+    const response = await axios.post(
+      `${N8N_INTERNAL_URL}/webhook/docprep-main`,
+      {
+        ...req.body,
+        userId: req.user.userId  // 인증된 사용자 정보 주입
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 120000  // 120초 타임아웃 (파일 업로드는 시간이 걸릴 수 있음)
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[n8n Proxy] docprep 오류:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Upload service unavailable' });
+    }
+  }
+});
+
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', async () => {
   console.log('\n🚀🚀🚀 ================================');
