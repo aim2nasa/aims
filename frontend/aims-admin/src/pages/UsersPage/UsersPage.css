@@ -276,3 +276,76 @@
   background-color: rgba(255, 59, 48, 0.15);
   color: var(--color-error);
 }
+
+/* OCR Toggle Button */
+.ocr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ocr-toggle:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.ocr-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.ocr-toggle--enabled {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.ocr-toggle--enabled:hover:not(:disabled) {
+  background-color: #2db257;
+}
+
+.ocr-toggle--disabled {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-tertiary);
+}
+
+.ocr-toggle--disabled:hover:not(:disabled) {
+  background-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.ocr-toggle--updating {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.ocr-toggle__indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.6;
+}
+
+.ocr-toggle--enabled .ocr-toggle__indicator {
+  background-color: white;
+  opacity: 1;
+}
+
+.ocr-toggle--updating .ocr-toggle__indicator {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.ocr-toggle__label {
+  white-space: nowrap;
+}

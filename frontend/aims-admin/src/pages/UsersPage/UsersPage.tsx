@@ -89,8 +89,30 @@ export const UsersPage = () => {
     },
   });
 
+  const updateOcrMutation = useMutation({
+    mutationFn: ({ userId, hasOcrPermission }: { userId: string; hasOcrPermission: boolean }) =>
+      usersApi.updateOcrPermission(userId, hasOcrPermission),
+    onMutate: ({ userId }) => {
+      setUpdatingUserId(userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onSettled: () => {
+      setUpdatingUserId(null);
+    },
+    onError: (error) => {
+      console.error('OCR 권한 변경 실패:', error);
+      alert('OCR 권한 변경에 실패했습니다.');
+    },
+  });
+
   const handleTierChange = (userId: string, newTier: string) => {
     updateTierMutation.mutate({ userId, tier: newTier });
+  };
+
+  const handleOcrToggle = (userId: string, currentPermission: boolean) => {
+    updateOcrMutation.mutate({ userId, hasOcrPermission: !currentPermission });
   };
 
   const handlePageChange = (newPage: number) => {
@@ -190,11 +212,28 @@ export const UsersPage = () => {
               {
                 key: 'hasOcrPermission',
                 label: 'OCR 권한',
-                render: (user: User) => (
-                  <span className={`badge ${user.hasOcrPermission ? 'badge--enabled' : 'badge--disabled'}`}>
-                    {user.hasOcrPermission ? '있음' : '없음'}
-                  </span>
-                ),
+                render: (user: User) => {
+                  const isUpdating = updatingUserId === user._id;
+                  return (
+                    <button
+                      type="button"
+                      className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isUpdating) {
+                          handleOcrToggle(user._id, user.hasOcrPermission);
+                        }
+                      }}
+                      disabled={isUpdating}
+                      title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
+                    >
+                      <span className="ocr-toggle__indicator" />
+                      <span className="ocr-toggle__label">
+                        {isUpdating ? '변경중...' : user.hasOcrPermission ? '있음' : '없음'}
+                      </span>
+                    </button>
+                  );
+                },
               },
               {
                 key: 'storage',

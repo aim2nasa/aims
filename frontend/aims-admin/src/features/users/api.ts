@@ -28,6 +28,13 @@ export interface UpdateUserTierResponse {
   quota_bytes: number;
 }
 
+export interface UpdateOcrPermissionResponse {
+  success: boolean;
+  userId: string;
+  hasOcrPermission: boolean;
+  message: string;
+}
+
 export const usersApi = {
   getUsers: (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     const queryParams = new URLSearchParams();
@@ -48,5 +55,9 @@ export const usersApi = {
 
   updateUserTier: (userId: string, tier: string): Promise<UpdateUserTierResponse> => {
     return apiClient.put<UpdateUserTierResponse>(`/api/admin/users/${userId}/quota`, { tier });
+  },
+
+  updateOcrPermission: (userId: string, hasOcrPermission: boolean): Promise<UpdateOcrPermissionResponse> => {
+    return apiClient.put<UpdateOcrPermissionResponse>(`/api/admin/users/${userId}/ocr-permission`, { hasOcrPermission });
   },
 };
