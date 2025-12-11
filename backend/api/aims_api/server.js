@@ -15,6 +15,7 @@ const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
 const { getTierDefinitions } = require('./lib/storageQuotaService');
+const metricsCollector = require('./lib/metricsCollector');
 
 const app = express();
 
@@ -3711,6 +3712,60 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
   }
 });
 
+// ==================== 시스템 메트릭 API ====================
+
+/**
+ * 관리자: 현재 시스템 메트릭 조회 (파이 차트용)
+ */
+app.get('/api/admin/metrics/current', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const metrics = metricsCollector.collectMetrics();
+    res.json({
+      success: true,
+      data: metrics
+    });
+  } catch (error) {
+    console.error('[Admin] 시스템 메트릭 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '시스템 메트릭 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 시스템 메트릭 히스토리 조회 (시계열 그래프용)
+ */
+app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const { hours = 24 } = req.query;
+    const hoursNum = Math.min(Math.max(parseInt(hours, 10) || 24, 1), 168); // 1~168시간 (7일)
+    const since = new Date(Date.now() - hoursNum * 60 * 60 * 1000);
+
+    const metrics = await db.collection('system_metrics')
+      .find({ timestamp: { $gte: since } })
+      .sort({ timestamp: 1 })
+      .toArray();
+
+    res.json({
+      success: true,
+      data: {
+        hours: hoursNum,
+        count: metrics.length,
+        metrics
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 메트릭 히스토리 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '메트릭 히스토리 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
 /**
  * 관리자: 사용자 목록 조회 (페이징, 검색, 필터)
  */
@@ -6569,20 +6624,85 @@ process.on('SIGTERM', () => {
   }
 });
 
+// 메트릭 수집 인터벌
+let metricsCollectionInterval = null;
+
+/**
+ * 시스템 메트릭 수집 및 저장
+ */
+async function collectAndSaveMetrics() {
+  try {
+    const metrics = metricsCollector.collectMetrics();
+    await db.collection('system_metrics').insertOne(metrics);
+    console.log(`[Metrics] 시스템 메트릭 수집 완료 - CPU: ${metrics.cpu.usage}%, Mem: ${metrics.memory.usagePercent}%, Disk: ${metrics.disk.usagePercent}%`);
+  } catch (error) {
+    console.error('[Metrics] 메트릭 수집 실패:', error.message);
+  }
+}
+
+/**
+ * 메트릭 컬렉션 TTL 인덱스 설정 (7일 후 자동 삭제)
+ */
+async function setupMetricsCollection() {
+  try {
+    const collections = await db.listCollections({ name: 'system_metrics' }).toArray();
+    if (collections.length === 0) {
+      await db.createCollection('system_metrics');
+      console.log('[Metrics] system_metrics 컬렉션 생성됨');
+    }
+
+    // TTL 인덱스 설정 (이미 있으면 무시됨)
+    await db.collection('system_metrics').createIndex(
+      { timestamp: 1 },
+      { expireAfterSeconds: 604800 } // 7일
+    );
+    console.log('[Metrics] TTL 인덱스 설정 완료 (7일 보관)');
+  } catch (error) {
+    // 인덱스가 이미 있으면 무시
+    if (!error.message.includes('already exists')) {
+      console.error('[Metrics] 인덱스 설정 실패:', error.message);
+    }
+  }
+}
+
 process.on('SIGINT', () => {
   if (ocrPermissionCheckInterval) {
     clearInterval(ocrPermissionCheckInterval);
     console.log('[OCR Permission Check] Interval 정리 완료');
   }
+  if (metricsCollectionInterval) {
+    clearInterval(metricsCollectionInterval);
+    console.log('[Metrics] Interval 정리 완료');
+  }
 });
 
 const PORT = process.env.PORT || 3010;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log('\n🚀🚀🚀 ================================');
   console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
   console.log(`🚀 서버 시간: ${utcNowISO()}`);
   console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
   console.log('🚀🚀🚀 ================================\n');
+
+  // MongoDB 연결 대기 (최대 30초)
+  let dbWaitCount = 0;
+  while (!db && dbWaitCount < 30) {
+    console.log('[Metrics] MongoDB 연결 대기 중...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    dbWaitCount++;
+  }
+
+  if (!db) {
+    console.error('[Metrics] MongoDB 연결 실패 - 메트릭 수집 비활성화');
+  } else {
+    // 메트릭 수집 설정
+    await setupMetricsCollection();
+
+    // 즉시 1회 수집 후, 5분마다 수집
+    await collectAndSaveMetrics();
+    metricsCollectionInterval = setInterval(collectAndSaveMetrics, 5 * 60 * 1000);
+    console.log('[Metrics] 시스템 메트릭 수집 시작 (5분 간격)');
+  }
 
   console.log(`📋 API 엔드포인트:`);
   console.log(`  GET  /api/documents - 모든 문서 목록 조회 (검색, 정렬, 페이징)`);

@@ -1,0 +1,193 @@
+/* Chart Colors */
+:root {
+  --chart-color-cpu: #007AFF;
+  --chart-color-memory: #34C759;
+  --chart-color-disk: #FF9500;
+}
+
+/* Resource Gauge (도넛 차트) */
+.resource-gauge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 160px;
+}
+
+.resource-gauge__chart {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
+.resource-gauge__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.resource-gauge__value {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.resource-gauge__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.resource-gauge__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.resource-gauge__detail {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.resource-gauge__used {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.resource-gauge__total {
+  color: var(--color-text-tertiary);
+}
+
+/* Metrics Line Chart */
+.metrics-line-chart {
+  width: 100%;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.metrics-line-chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* Tooltip */
+.metrics-tooltip {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.metrics-tooltip__time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0 0 4px 0;
+  font-weight: var(--font-weight-medium);
+}
+
+.metrics-tooltip__item {
+  font-size: var(--font-size-xs);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Resource Grid */
+.resource-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+/* Server Resources Section */
+.server-resources {
+  margin-bottom: var(--spacing-lg);
+}
+
+.server-resources__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.server-resources__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.server-resources__subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.server-resources__content {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: stretch;
+}
+
+.server-resources__gauges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.server-resources__chart {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-resources__time-range {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.server-resources__time-btn {
+  padding: 2px 6px;
+  font-size: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.server-resources__time-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.server-resources__time-btn--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+/* Loading State */
+.server-resources__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}

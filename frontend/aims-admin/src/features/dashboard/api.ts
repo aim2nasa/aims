@@ -95,6 +95,67 @@ export interface UpdateTierResponse {
   data: TierDefinition;
 }
 
+// 시스템 메트릭 타입
+export interface CpuMetrics {
+  usage: number;
+  cores: number;
+  model: string;
+  loadAvg: number[];
+}
+
+export interface MemoryMetrics {
+  total: number;
+  free: number;
+  used: number;
+  usagePercent: number;
+}
+
+export interface DiskMetrics {
+  total: number;
+  used: number;
+  available: number;
+  usagePercent: number;
+}
+
+export interface ProcessMetrics {
+  heapUsed: number;
+  heapTotal: number;
+  rss: number;
+  external: number;
+}
+
+export interface UptimeMetrics {
+  system: number;
+  process: number;
+}
+
+export interface SystemMetrics {
+  _id?: string;
+  timestamp: string;
+  cpu: CpuMetrics;
+  memory: MemoryMetrics;
+  disk: DiskMetrics;
+  process: ProcessMetrics;
+  uptime: UptimeMetrics;
+  hostname: string;
+  platform: string;
+  arch: string;
+}
+
+export interface MetricsCurrentResponse {
+  success: boolean;
+  data: SystemMetrics;
+}
+
+export interface MetricsHistoryResponse {
+  success: boolean;
+  data: {
+    hours: number;
+    count: number;
+    metrics: SystemMetrics[];
+  };
+}
+
 export const dashboardApi = {
   getDashboard: (): Promise<DashboardData> => {
     return apiClient.get<DashboardData>('/api/admin/dashboard');
@@ -112,6 +173,17 @@ export const dashboardApi = {
 
   updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'ocr_quota' | 'description'>>): Promise<TierDefinition> => {
     return apiClient.put<UpdateTierResponse>(`/api/admin/tiers/${tierId}`, updates)
+      .then((res) => res.data);
+  },
+
+  // 시스템 메트릭 API
+  getMetricsCurrent: (): Promise<SystemMetrics> => {
+    return apiClient.get<MetricsCurrentResponse>('/api/admin/metrics/current')
+      .then((res) => res.data);
+  },
+
+  getMetricsHistory: (hours: number = 24): Promise<{ hours: number; count: number; metrics: SystemMetrics[] }> => {
+    return apiClient.get<MetricsHistoryResponse>(`/api/admin/metrics/history?hours=${hours}`)
       .then((res) => res.data);
   },
 };

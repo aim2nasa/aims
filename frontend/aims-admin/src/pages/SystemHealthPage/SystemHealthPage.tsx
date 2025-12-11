@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type WorkflowStatus } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type WorkflowStatus, type SystemMetrics } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
+import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
 
 interface HealthCardProps {
@@ -40,6 +42,14 @@ const getLatencyClass = (latency: number | null): string => {
   if (latency < 50) return 'health-card__latency--fast';
   if (latency < 200) return 'health-card__latency--normal';
   return 'health-card__latency--slow';
+};
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
 const HealthCard = ({ service, health, description }: HealthCardProps) => {
@@ -141,6 +151,99 @@ const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
         </span>
       </div>
     </div>
+  );
+};
+
+// 서버 리소스 섹션 컴포넌트
+const ServerResourcesSection = () => {
+  const [timeRange, setTimeRange] = useState<number>(24);
+
+  // 현재 메트릭
+  const { data: currentMetrics, isLoading: isCurrentLoading } = useQuery({
+    queryKey: ['admin', 'metrics', 'current'],
+    queryFn: dashboardApi.getMetricsCurrent,
+    refetchInterval: 10000,
+  });
+
+  // 히스토리 메트릭
+  const { data: historyData, isLoading: isHistoryLoading } = useQuery({
+    queryKey: ['admin', 'metrics', 'history', timeRange],
+    queryFn: () => dashboardApi.getMetricsHistory(timeRange),
+    refetchInterval: 60000, // 1분마다 갱신
+  });
+
+  // 라인 차트용 데이터 변환
+  const chartData = historyData?.metrics?.map((m: SystemMetrics) => ({
+    timestamp: m.timestamp,
+    cpu: m.cpu.usage,
+    memory: m.memory.usagePercent,
+    disk: m.disk.usagePercent,
+  })) || [];
+
+  return (
+    <section className="server-resources">
+      <div className="server-resources__header">
+        <h2 className="server-resources__title">서버 리소스</h2>
+        <span className="server-resources__subtitle">
+          {currentMetrics?.hostname || 'tars.giize.com'}
+        </span>
+        <div className="server-resources__time-range">
+          {[1, 6, 24, 72, 168].map((hours) => (
+            <button
+              key={hours}
+              type="button"
+              className={`server-resources__time-btn ${timeRange === hours ? 'server-resources__time-btn--active' : ''}`}
+              onClick={() => setTimeRange(hours)}
+            >
+              {hours < 24 ? `${hours}h` : `${hours / 24}d`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="server-resources__content">
+        {/* 게이지 차트 (현재 상태) */}
+        <div className="server-resources__gauges">
+          {isCurrentLoading ? (
+            <div className="server-resources__loading">로딩 중...</div>
+          ) : currentMetrics ? (
+            <>
+              <ResourceGauge
+                label="CPU"
+                value={currentMetrics.cpu.usage}
+                total={`${currentMetrics.cpu.cores} cores`}
+                color="cpu"
+              />
+              <ResourceGauge
+                label="Memory"
+                value={currentMetrics.memory.usagePercent}
+                used={formatBytes(currentMetrics.memory.used)}
+                total={formatBytes(currentMetrics.memory.total)}
+                color="memory"
+              />
+              <ResourceGauge
+                label="Disk"
+                value={currentMetrics.disk.usagePercent}
+                used={formatBytes(currentMetrics.disk.used)}
+                total={formatBytes(currentMetrics.disk.total)}
+                color="disk"
+              />
+            </>
+          ) : (
+            <div className="server-resources__loading">메트릭 데이터 없음</div>
+          )}
+        </div>
+
+        {/* 시계열 차트 */}
+        <div className="server-resources__chart">
+          {isHistoryLoading ? (
+            <div className="server-resources__loading">차트 로딩 중...</div>
+          ) : (
+            <MetricsLineChart data={chartData} showDisk={true} height={140} />
+          )}
+        </div>
+      </div>
+    </section>
   );
 };
 
@@ -270,6 +373,9 @@ export const SystemHealthPage = () => {
           </div>
         </div>
       </section>
+
+      {/* 서버 리소스 섹션 */}
+      <ServerResourcesSection />
 
       {serviceTiers.map((tierGroup) => (
         <section key={tierGroup.tier} className="system-health-page__section">
