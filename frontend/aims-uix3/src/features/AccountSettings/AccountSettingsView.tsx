@@ -67,8 +67,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 소셜 로그인 사용자 정보 (authStore)
   const { user: authUser, isAuthenticated, setUser: setAuthUser, token, logout } = useAuthStore()
 
-  // 현재 탭
-  const [activeTab, setActiveTab] = useState<TabId>('profile')
+  // 현재 탭 (sessionStorage에서 복원)
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const saved = sessionStorage.getItem('accountSettings_activeTab')
+    return (saved as TabId) || 'profile'
+  })
 
   // 사용자 정보 상태
   const [user, setUser] = useState<User | null>(null)
@@ -109,6 +112,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 아바타 이미지 상태
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  // 탭 변경 시 sessionStorage에 저장
+  useEffect(() => {
+    sessionStorage.setItem('accountSettings_activeTab', activeTab)
+  }, [activeTab])
 
   // 사용자 정보 로드 (authStore 우선, 없으면 레거시 currentUser, 없으면 API 호출)
   useEffect(() => {
