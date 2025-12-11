@@ -2109,6 +2109,32 @@ html[data-theme="dark"] .recent-search-icon {
   color: var(--color-icon-orange);
 }
 
+/* 🆕 내 보관함 - 노란색 폴더 (Windows Explorer 스타일) */
+.customer-icon--storage {
+  color: var(--color-folder-yellow);
+  margin-right: 6px;
+}
+
+/* 내 보관함 라벨 (클릭 불가) */
+.customer-name-label--storage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: default;
+  opacity: 0.85;
+}
+
+.customer-name-label--storage .customer-name-text {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+html[data-theme="dark"] .customer-name-label--storage .customer-name-text {
+  color: var(--color-ios-text-secondary-dark);
+}
+
 /* 고객 이름 버튼 - 아이콘과 텍스트를 같은 줄에 배치 */
 .customer-name-button {
   display: inline-flex;

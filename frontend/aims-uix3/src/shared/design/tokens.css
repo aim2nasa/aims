@@ -866,6 +866,7 @@
   --color-icon-orange: #ff9500;    /* iOS systemOrange */
   --color-icon-purple: #af52de;    /* iOS systemPurple */
   --color-icon-red: #ff3b30;       /* iOS systemRed */
+  --color-icon-yellow: #ffcc00;    /* iOS systemYellow */
   
   /* Document Menu Icon Colors - iOS System Colors */
   --color-icon-doc-register: #ff9500;  /* iOS systemOrange - 문서 등록 */

@@ -17,6 +17,30 @@ const SEARCH_API_URL = 'https://tars.giize.com/search_api'
 // n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
 const SMARTSEARCH_API_URL = `${API_CONFIG.BASE_URL}/api/n8n/smartsearch`
 
+// 설계사 본인 문서용 상수 (고객과 연결되지 않은 문서)
+export const MY_STORAGE_MARKER = '__MY_STORAGE__'
+export const MY_STORAGE_DISPLAY_NAME = '내 보관함'
+
+/**
+ * customerId가 유효한지 검사
+ * - 플레이스홀더 ID (모두 0인 ObjectId 등) 제외
+ * - 빈 문자열, null, undefined 제외
+ */
+function isValidCustomerId(customerId: string | undefined | null): boolean {
+  if (!customerId) return false
+
+  // 플레이스홀더 패턴: 모두 0이거나 0과 단일 숫자로 구성된 ID
+  // 예: 000000000000000000000001, 000000000000000000000000
+  const placeholderPattern = /^0{20,}[0-9]?$/
+  if (placeholderPattern.test(customerId)) return false
+
+  // MongoDB ObjectId 형식 검증 (24자리 16진수)
+  const objectIdPattern = /^[a-fA-F0-9]{24}$/
+  if (!objectIdPattern.test(customerId)) return false
+
+  return true
+}
+
 /**
  * SearchService 클래스
  *
@@ -108,15 +132,21 @@ export class SearchService {
         )
 
         // customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+        // ⭐ 유효한 customerId만 API 조회 (플레이스홀더 ID 제외)
         const customerIds = new Set<string>()
+        const invalidCustomerIds = new Set<string>()  // 🆕 내 보관함용
         enrichedResults.forEach((item) => {
           if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
             const customerId = String(item.customer_relation.customer_id)
-            customerIds.add(customerId)
+            if (isValidCustomerId(customerId)) {
+              customerIds.add(customerId)
+            } else {
+              invalidCustomerIds.add(customerId)  // 플레이스홀더 ID → 내 보관함
+            }
           }
         })
 
-        // customer_name + customer_type 일괄 조회
+        // customer_name + customer_type 일괄 조회 (유효한 ID만)
         const customerMap: Record<string, { name: string | null; type: string | null }> = {}
         if (customerIds.size > 0) {
           await Promise.all(
@@ -147,6 +177,14 @@ export class SearchService {
             })
           )
         }
+
+        // 🆕 유효하지 않은 customerId는 "내 보관함"으로 표시
+        invalidCustomerIds.forEach((customerId) => {
+          customerMap[customerId] = {
+            name: MY_STORAGE_DISPLAY_NAME,
+            type: MY_STORAGE_MARKER
+          }
+        })
 
         // 검색 결과에 customer_name + customer_type 추가
         const finalResults = enrichedResults.map((item) => {
@@ -213,15 +251,21 @@ export class SearchService {
         )
 
         // 2단계: customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+        // ⭐ 유효한 customerId만 API 조회 (플레이스홀더 ID 제외)
         const customerIds = new Set<string>()
+        const invalidCustomerIds = new Set<string>()  // 🆕 내 보관함용
         enrichedWithRelation.forEach((item) => {
           if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
             const customerId = String(item.customer_relation.customer_id)
-            customerIds.add(customerId)
+            if (isValidCustomerId(customerId)) {
+              customerIds.add(customerId)
+            } else {
+              invalidCustomerIds.add(customerId)  // 플레이스홀더 ID → 내 보관함
+            }
           }
         })
 
-        // customer_name + customer_type 일괄 조회 (효율적!)
+        // customer_name + customer_type 일괄 조회 (효율적! 유효한 ID만)
         const customerMap: Record<string, { name: string | null; type: string | null }> = {}
         if (customerIds.size > 0) {
           await Promise.all(
@@ -252,6 +296,14 @@ export class SearchService {
             })
           )
         }
+
+        // 🆕 유효하지 않은 customerId는 "내 보관함"으로 표시
+        invalidCustomerIds.forEach((customerId) => {
+          customerMap[customerId] = {
+            name: MY_STORAGE_DISPLAY_NAME,
+            type: MY_STORAGE_MARKER
+          }
+        })
 
         // 검색 결과에 customer_name + customer_type 추가
         const enrichedResults = enrichedWithRelation.map((item) => {
