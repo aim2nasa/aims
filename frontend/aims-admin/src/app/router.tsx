@@ -3,6 +3,10 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage/DashboardPage';
+import { DocumentProcessingPage } from '@/pages/DocumentProcessingPage';
+import { StoragePage } from '@/pages/StoragePage';
+import { TierManagementPage } from '@/pages/TierManagementPage';
+import { SystemHealthPage } from '@/pages/SystemHealthPage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import App from '../App';
 
@@ -30,6 +34,22 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <DashboardPage />,
+      },
+      {
+        path: 'dashboard/documents',
+        element: <DocumentProcessingPage />,
+      },
+      {
+        path: 'dashboard/storage',
+        element: <StoragePage />,
+      },
+      {
+        path: 'dashboard/tiers',
+        element: <TierManagementPage />,
+      },
+      {
+        path: 'dashboard/system',
+        element: <SystemHealthPage />,
       },
       {
         path: 'users',

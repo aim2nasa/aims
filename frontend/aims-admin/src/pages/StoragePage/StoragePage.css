@@ -1,0 +1,153 @@
+.storage-page {
+  max-width: 1400px;
+}
+
+.storage-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xl) 0;
+}
+
+.storage-page__section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.storage-page__section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.storage-page__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.storage-page__loading,
+.storage-page__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.storage-page__error {
+  flex-direction: column;
+  gap: var(--spacing-md);
+  color: var(--color-error);
+}
+
+/* Tier Distribution */
+.storage-page__tier-distribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.tier-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.tier-card__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.tier-card__count {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.tier-card--free_trial {
+  border-color: #8e8e93;
+}
+
+.tier-card--free_trial .tier-card__count {
+  color: #8e8e93;
+}
+
+.tier-card--standard {
+  border-color: #007aff;
+}
+
+.tier-card--standard .tier-card__count {
+  color: #007aff;
+}
+
+.tier-card--premium {
+  border-color: #af52de;
+}
+
+.tier-card--premium .tier-card__count {
+  color: #af52de;
+}
+
+.tier-card--vip {
+  border-color: #ff9500;
+}
+
+.tier-card--vip .tier-card__count {
+  color: #ff9500;
+}
+
+.tier-card--admin {
+  border-color: #ff3b30;
+}
+
+.tier-card--admin .tier-card__count {
+  color: #ff3b30;
+}
+
+/* Info Cards */
+.storage-page__info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.info-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.info-card--warning {
+  border-color: var(--color-warning);
+  background-color: rgba(255, 149, 0, 0.05);
+}
+
+.info-card--danger {
+  border-color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+.info-card__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.info-card__description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}

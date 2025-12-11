@@ -1,0 +1,1 @@
+export { DocumentProcessingPage } from './DocumentProcessingPage';

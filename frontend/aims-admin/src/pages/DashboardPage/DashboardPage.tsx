@@ -1,111 +1,24 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dashboardApi, type TierDefinition } from '@/features/dashboard/api';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardApi } from '@/features/dashboard/api';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './DashboardPage.css';
 
-const GB = 1024 * 1024 * 1024;
-
-const TIER_LABELS: Record<string, string> = {
-  free_trial: '무료체험',
-  standard: '일반',
-  premium: '프리미엄',
-  vip: 'VIP',
-  admin: '관리자',
-};
-
-const TIER_ORDER = ['free_trial', 'standard', 'premium', 'vip', 'admin'];
-
-interface HealthCardProps {
-  service: string;
-  status: 'healthy' | 'unhealthy';
-}
-
-const HealthCard = ({ service, status }: HealthCardProps) => {
-  const isHealthy = status === 'healthy';
-
-  return (
-    <div className="health-card">
-      <div className="health-card__header">
-        <span className="health-card__service">{service}</span>
-        <span
-          className={`health-card__status ${
-            isHealthy ? 'health-card__status--healthy' : 'health-card__status--unhealthy'
-          }`}
-        >
-          <span
-            className={`health-card__indicator ${
-              isHealthy ? 'health-card__indicator--healthy' : 'health-card__indicator--unhealthy'
-            }`}
-          />
-          {isHealthy ? 'Healthy' : 'Unhealthy'}
-        </span>
-      </div>
-    </div>
-  );
-};
-
 export const DashboardPage = () => {
-  const queryClient = useQueryClient();
-  const [editingTier, setEditingTier] = useState<string | null>(null);
-  const [editQuota, setEditQuota] = useState<string>('');
+  const navigate = useNavigate();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
-    refetchInterval: 10000, // 10초마다 갱신
+    refetchInterval: 10000,
   });
 
-  const { data: storageData, isLoading: storageLoading } = useQuery({
+  const { data: storageData } = useQuery({
     queryKey: ['admin', 'storage', 'overview'],
     queryFn: dashboardApi.getStorageOverview,
-    refetchInterval: 30000, // 30초마다 갱신
+    refetchInterval: 30000,
   });
-
-  const { data: tiersData, isLoading: tiersLoading } = useQuery({
-    queryKey: ['admin', 'tiers'],
-    queryFn: dashboardApi.getTiers,
-  });
-
-  const updateTierMutation = useMutation({
-    mutationFn: ({ tierId, quota_bytes }: { tierId: string; quota_bytes: number }) =>
-      dashboardApi.updateTier(tierId, { quota_bytes }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'tiers'] });
-      setEditingTier(null);
-      setEditQuota('');
-    },
-    onError: (error) => {
-      console.error('티어 수정 실패:', error);
-      alert('티어 수정에 실패했습니다.');
-    },
-  });
-
-  const handleEditStart = (tier: TierDefinition) => {
-    if (tier.id === 'admin') return; // admin은 편집 불가
-    setEditingTier(tier.id);
-    setEditQuota((tier.quota_bytes / GB).toString());
-  };
-
-  const handleEditSave = (tierId: string) => {
-    const quotaGB = parseFloat(editQuota);
-    if (isNaN(quotaGB) || quotaGB <= 0) {
-      alert('유효한 용량을 입력하세요.');
-      return;
-    }
-    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB) });
-  };
-
-  const handleEditCancel = () => {
-    setEditingTier(null);
-    setEditQuota('');
-  };
-
-  // 티어 정렬
-  const sortedTiers = tiersData
-    ? [...tiersData].sort((a, b) => TIER_ORDER.indexOf(a.id) - TIER_ORDER.indexOf(b.id))
-    : [];
 
   if (isLoading) {
     return <div className="dashboard-page__loading">데이터를 불러오는 중...</div>;
@@ -121,11 +34,21 @@ export const DashboardPage = () => {
     );
   }
 
+  // 알림 계산
+  const failedDocs = data?.processing.failedDocuments || 0;
+  const storageWarnings = (storageData?.users_over_80_percent || 0) + (storageData?.users_over_95_percent || 0);
+  const unhealthyServices = [
+    data?.health.nodeApi,
+    data?.health.pythonApi,
+    data?.health.mongodb,
+    data?.health.qdrant,
+  ].filter((s) => s === 'unhealthy').length;
+
   return (
     <div className="dashboard-page">
       <h1 className="dashboard-page__title">대시보드</h1>
 
-      {/* 통계 섹션 */}
+      {/* 시스템 통계 */}
       <section className="dashboard-page__section">
         <h2 className="dashboard-page__section-title">시스템 통계</h2>
         <div className="dashboard-page__stats-grid">
@@ -137,162 +60,93 @@ export const DashboardPage = () => {
         </div>
       </section>
 
-      {/* 문서 처리 현황 */}
+      {/* 주요 알림 */}
       <section className="dashboard-page__section">
-        <h2 className="dashboard-page__section-title">문서 처리 현황</h2>
-        <div className="dashboard-page__stats-grid">
-          <StatCard
-            title="OCR 대기"
-            value={data?.processing.ocrQueue || 0}
-            subtitle="처리 대기중인 문서"
-          />
-          <StatCard
-            title="임베딩 대기"
-            value={data?.processing.embedQueue || 0}
-            subtitle="벡터화 대기중인 문서"
-          />
-          <StatCard
-            title="처리 실패"
-            value={data?.processing.failedDocuments || 0}
-            subtitle="재처리 필요"
-          />
+        <h2 className="dashboard-page__section-title">주요 알림</h2>
+        <div className="dashboard-page__alerts-grid">
+          <button
+            type="button"
+            className={`alert-card ${failedDocs > 0 ? 'alert-card--warning' : 'alert-card--ok'}`}
+            onClick={() => navigate('/dashboard/documents')}
+          >
+            <div className="alert-card__icon">{failedDocs > 0 ? '!' : '✓'}</div>
+            <div className="alert-card__content">
+              <span className="alert-card__title">문서 처리</span>
+              <span className="alert-card__value">
+                {failedDocs > 0 ? `처리 실패 ${failedDocs}건` : '정상'}
+              </span>
+            </div>
+            <span className="alert-card__arrow">›</span>
+          </button>
+
+          <button
+            type="button"
+            className={`alert-card ${storageWarnings > 0 ? 'alert-card--warning' : 'alert-card--ok'}`}
+            onClick={() => navigate('/dashboard/storage')}
+          >
+            <div className="alert-card__icon">{storageWarnings > 0 ? '!' : '✓'}</div>
+            <div className="alert-card__content">
+              <span className="alert-card__title">스토리지</span>
+              <span className="alert-card__value">
+                {storageWarnings > 0 ? `용량 주의 ${storageWarnings}명` : '정상'}
+              </span>
+            </div>
+            <span className="alert-card__arrow">›</span>
+          </button>
+
+          <button
+            type="button"
+            className={`alert-card ${unhealthyServices > 0 ? 'alert-card--error' : 'alert-card--ok'}`}
+            onClick={() => navigate('/dashboard/system')}
+          >
+            <div className="alert-card__icon">{unhealthyServices > 0 ? '!' : '✓'}</div>
+            <div className="alert-card__content">
+              <span className="alert-card__title">시스템 상태</span>
+              <span className="alert-card__value">
+                {unhealthyServices > 0 ? `이상 ${unhealthyServices}건` : '모두 정상'}
+              </span>
+            </div>
+            <span className="alert-card__arrow">›</span>
+          </button>
         </div>
       </section>
 
-      {/* 스토리지 현황 */}
+      {/* 빠른 이동 */}
       <section className="dashboard-page__section">
-        <h2 className="dashboard-page__section-title">스토리지 현황</h2>
-        {storageLoading ? (
-          <div className="dashboard-page__loading-inline">스토리지 정보를 불러오는 중...</div>
-        ) : storageData ? (
-          <div className="dashboard-page__stats-grid">
-            <StatCard
-              title="전체 사용량"
-              value={storageData.formatted.total_used}
-              subtitle={`${storageData.total_users}명 사용자`}
-            />
-            <StatCard
-              title="용량 경고"
-              value={storageData.users_over_80_percent}
-              subtitle="80% 이상 사용"
-            />
-            <StatCard
-              title="용량 위험"
-              value={storageData.users_over_95_percent}
-              subtitle="95% 이상 사용"
-            />
-          </div>
-        ) : (
-          <div className="dashboard-page__error-inline">스토리지 정보를 불러올 수 없습니다</div>
-        )}
-        {storageData?.tier_distribution && Object.keys(storageData.tier_distribution).length > 0 && (
-          <div className="dashboard-page__tier-distribution">
-            <h3 className="dashboard-page__subsection-title">티어별 사용자</h3>
-            <div className="dashboard-page__tier-badges">
-              {Object.entries(storageData.tier_distribution).map(([tier, count]) => (
-                <span key={tier} className={`tier-badge tier-badge--${tier}`}>
-                  {TIER_LABELS[tier] || tier}: {count}명
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* 티어 정의 */}
-      <section className="dashboard-page__section">
-        <h2 className="dashboard-page__section-title">티어 정의</h2>
-        {tiersLoading ? (
-          <div className="dashboard-page__loading-inline">티어 정보를 불러오는 중...</div>
-        ) : sortedTiers.length > 0 ? (
-          <table className="tier-definition-table">
-            <thead>
-              <tr>
-                <th>티어</th>
-                <th>설명</th>
-                <th>할당량</th>
-                <th>작업</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTiers.map((tier) => (
-                <tr key={tier.id}>
-                  <td>
-                    <div className="tier-definition-table__name">
-                      <span className={`tier-definition-table__color tier-definition-table__color--${tier.id}`} />
-                      {tier.name}
-                    </div>
-                  </td>
-                  <td>{tier.description}</td>
-                  <td>
-                    {editingTier === tier.id ? (
-                      <div className="tier-edit-input">
-                        <input
-                          type="number"
-                          value={editQuota}
-                          onChange={(e) => setEditQuota(e.target.value)}
-                          min="1"
-                          step="1"
-                          className="tier-edit-input__field"
-                          aria-label="할당량 (GB)"
-                        />
-                        <span className="tier-edit-input__unit">GB</span>
-                      </div>
-                    ) : (
-                      <span className={tier.quota_bytes === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
-                        {tier.formatted_quota}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {tier.id === 'admin' ? (
-                      <span className="tier-action-disabled">-</span>
-                    ) : editingTier === tier.id ? (
-                      <div className="tier-action-buttons">
-                        <button
-                          type="button"
-                          className="tier-action-button tier-action-button--save"
-                          onClick={() => handleEditSave(tier.id)}
-                          disabled={updateTierMutation.isPending}
-                        >
-                          {updateTierMutation.isPending ? '저장중...' : '저장'}
-                        </button>
-                        <button
-                          type="button"
-                          className="tier-action-button tier-action-button--cancel"
-                          onClick={handleEditCancel}
-                          disabled={updateTierMutation.isPending}
-                        >
-                          취소
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="tier-action-button tier-action-button--edit"
-                        onClick={() => handleEditStart(tier)}
-                      >
-                        수정
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="dashboard-page__error-inline">티어 정보를 불러올 수 없습니다</div>
-        )}
-      </section>
-
-      {/* 시스템 상태 */}
-      <section className="dashboard-page__section">
-        <h2 className="dashboard-page__section-title">시스템 상태</h2>
-        <div className="dashboard-page__health-grid">
-          <HealthCard service="Node.js API" status={data?.health.nodeApi || 'unhealthy'} />
-          <HealthCard service="Python API" status={data?.health.pythonApi || 'unhealthy'} />
-          <HealthCard service="MongoDB" status={data?.health.mongodb || 'unhealthy'} />
-          <HealthCard service="Qdrant" status={data?.health.qdrant || 'unhealthy'} />
+        <h2 className="dashboard-page__section-title">빠른 이동</h2>
+        <div className="dashboard-page__quick-links">
+          <button
+            type="button"
+            className="quick-link-card"
+            onClick={() => navigate('/dashboard/documents')}
+          >
+            <span className="quick-link-card__title">문서 처리</span>
+            <span className="quick-link-card__subtitle">OCR/임베딩 대기열 관리</span>
+          </button>
+          <button
+            type="button"
+            className="quick-link-card"
+            onClick={() => navigate('/dashboard/storage')}
+          >
+            <span className="quick-link-card__title">스토리지</span>
+            <span className="quick-link-card__subtitle">용량 현황 및 관리</span>
+          </button>
+          <button
+            type="button"
+            className="quick-link-card"
+            onClick={() => navigate('/dashboard/tiers')}
+          >
+            <span className="quick-link-card__title">티어 관리</span>
+            <span className="quick-link-card__subtitle">구독 등급 설정</span>
+          </button>
+          <button
+            type="button"
+            className="quick-link-card"
+            onClick={() => navigate('/dashboard/system')}
+          >
+            <span className="quick-link-card__title">시스템 상태</span>
+            <span className="quick-link-card__subtitle">서비스 모니터링</span>
+          </button>
         </div>
       </section>
     </div>
