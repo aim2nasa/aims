@@ -16,6 +16,9 @@ const { getTierDefinitions } = require('./lib/storageQuotaService');
 
 const app = express();
 
+// Python API URL (RAG/문서처리 서버)
+const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000';
+
 // CORS 허용 origin 목록
 const ALLOWED_ORIGINS = [
   'https://aims.giize.com',
@@ -3541,12 +3544,71 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       })
     ]);
 
-    // 시스템 상태 (간단한 버전 - 실제로는 ping 필요)
+    // 시스템 상태 - 실제 연결 체크
+    const healthChecks = await Promise.allSettled([
+      // Node.js API (자기 자신)
+      (async () => {
+        const start = Date.now();
+        return { latency: Date.now() - start, version: process.version };
+      })(),
+      // Python API (RAG 검색 서버)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get(`${PYTHON_API_URL}/openapi.json`, { timeout: 5000 });
+        return { latency: Date.now() - start, version: response.data?.info?.version || null };
+      })(),
+      // MongoDB
+      (async () => {
+        const start = Date.now();
+        const result = await db.admin().ping();
+        const serverStatus = await db.admin().serverStatus();
+        return {
+          latency: Date.now() - start,
+          version: serverStatus.version,
+          uptime: serverStatus.uptime
+        };
+      })(),
+      // Qdrant
+      (async () => {
+        const start = Date.now();
+        const collections = await qdrantClient.getCollections();
+        return {
+          latency: Date.now() - start,
+          collections: collections.collections?.length || 0
+        };
+      })()
+    ]);
+
+    const checkTime = utcNowISO();
     const health = {
-      nodeApi: 'healthy',
-      pythonApi: 'healthy', // TODO: axios.get(PYTHON_API_URL + '/health') 호출
-      mongodb: 'healthy',
-      qdrant: 'healthy' // TODO: qdrantClient.getCollections() 호출
+      nodeApi: {
+        status: 'healthy',
+        latency: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.latency : null,
+        version: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.version : null,
+        checkedAt: checkTime
+      },
+      pythonApi: {
+        status: healthChecks[1].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.latency : null,
+        version: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.version : null,
+        error: healthChecks[1].status === 'rejected' ? healthChecks[1].reason?.message : null,
+        checkedAt: checkTime
+      },
+      mongodb: {
+        status: healthChecks[2].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value.latency : null,
+        version: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value.version : null,
+        uptime: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value.uptime : null,
+        error: healthChecks[2].status === 'rejected' ? healthChecks[2].reason?.message : null,
+        checkedAt: checkTime
+      },
+      qdrant: {
+        status: healthChecks[3].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value.latency : null,
+        collections: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value.collections : null,
+        error: healthChecks[3].status === 'rejected' ? healthChecks[3].reason?.message : null,
+        checkedAt: checkTime
+      }
     };
 
     res.json({

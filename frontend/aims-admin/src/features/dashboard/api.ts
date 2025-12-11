@@ -14,11 +14,21 @@ export interface ProcessingStatus {
   failedDocuments: number;
 }
 
+export interface ServiceHealth {
+  status: 'healthy' | 'unhealthy';
+  latency: number | null;
+  version?: string | null;
+  uptime?: number | null;
+  collections?: number | null;
+  error?: string | null;
+  checkedAt: string;
+}
+
 export interface HealthStatus {
-  nodeApi: 'healthy' | 'unhealthy';
-  pythonApi: 'healthy' | 'unhealthy';
-  mongodb: 'healthy' | 'unhealthy';
-  qdrant: 'healthy' | 'unhealthy';
+  nodeApi: ServiceHealth;
+  pythonApi: ServiceHealth;
+  mongodb: ServiceHealth;
+  qdrant: ServiceHealth;
 }
 
 export interface OcrStats {
