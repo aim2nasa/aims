@@ -3654,31 +3654,41 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       }
     };
 
-    // n8n 워크플로우 상태 읽기 (AIMS 핵심 워크플로우만 필터링)
+    // n8n API에서 워크플로우 상태 직접 조회 (AIMS 핵심 워크플로우만 필터링)
     const AIMS_CORE_WORKFLOWS = [
       'DocUpload', 'DocMeta', 'DocPrepMain', 'DocOCR',
       'OCRWorker', 'SmartSearch', 'DocSummary'
     ];
     let workflows = [];
     try {
-      const workflowsPath = path.join(__dirname, 'n8n_workflows.json');
-      if (fs.existsSync(workflowsPath)) {
-        const workflowsData = JSON.parse(fs.readFileSync(workflowsPath, 'utf8'));
-        const allWorkflows = workflowsData.workflows || [];
-        // 핵심 워크플로우만 필터링 (정확히 일치하는 이름만)
-        const filtered = allWorkflows.filter(w => AIMS_CORE_WORKFLOWS.includes(w.name));
+      // n8n SQLite 데이터베이스에서 워크플로우 조회
+      const n8nDbPath = '/n8n_data/database.sqlite';
+      const { execSync } = require('child_process');
+      const dbExists = require('fs').existsSync(n8nDbPath);
+
+      if (dbExists) {
+        const query = `SELECT id, name, active, updatedAt FROM workflow_entity WHERE name IN (${AIMS_CORE_WORKFLOWS.map(n => `'${n}'`).join(',')});`;
+        const output = execSync(`sqlite3 "${n8nDbPath}" "${query}"`, { encoding: 'utf8' });
+        const lines = output.trim().split('\n').filter(l => l);
+
         // 같은 이름의 워크플로우가 여러 개면 최신 것만 유지
         const workflowMap = new Map();
-        for (const wf of filtered) {
-          const existing = workflowMap.get(wf.name);
-          if (!existing || new Date(wf.updatedAt) > new Date(existing.updatedAt)) {
-            workflowMap.set(wf.name, wf);
+        for (const line of lines) {
+          const [id, name, active, updatedAt] = line.split('|');
+          const existing = workflowMap.get(name);
+          if (!existing || new Date(updatedAt) > new Date(existing.updatedAt)) {
+            workflowMap.set(name, {
+              id,
+              name,
+              active: active === '1',
+              updatedAt: new Date(updatedAt + 'Z').toISOString()
+            });
           }
         }
         workflows = Array.from(workflowMap.values());
       }
     } catch (wfError) {
-      console.error('[Admin] n8n 워크플로우 상태 읽기 오류:', wfError.message);
+      console.error('[Admin] n8n 워크플로우 상태 조회 오류:', wfError.message);
     }
 
     res.json({

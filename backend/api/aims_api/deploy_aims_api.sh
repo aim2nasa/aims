@@ -39,6 +39,7 @@ docker run -d --network host \
   -e FRONTEND_URL="${FRONTEND_URL}" \
   -e N8N_API_KEY="${N8N_API_KEY}" \
   -v /data/files:/data/files \
+  -v /home/rossi/n8n-docker/n8n_data:/n8n_data:ro \
   --name $CONTAINER_NAME \
   $IMAGE_NAME
 
