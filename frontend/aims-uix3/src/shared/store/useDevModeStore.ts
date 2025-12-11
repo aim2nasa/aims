@@ -2,7 +2,7 @@
  * Developer Mode Global Store
  *
  * 개발자 모드 전역 상태 관리
- * - Ctrl+Shift+D 단축키로 토글
+ * - Ctrl+Alt+Shift+D 단축키로 토글
  * - localStorage에 저장하여 영구 보관
  * - 전체 앱에서 사용 가능
  */

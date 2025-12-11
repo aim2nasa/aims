@@ -307,10 +307,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [activeDocumentView, selectedDocument, selectedCustomer])
 
-  // Developer Mode - Global Keyboard Handler (Ctrl+Shift+D)
+  // Developer Mode - Global Keyboard Handler (Ctrl+Alt+Shift+D)
   useEffect(() => {
     const handleDevMode = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
         e.preventDefault()
         toggleDevMode()
       }
@@ -591,6 +591,48 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       updateURLParams({ view: menuKey, customerId: null, documentId: null })
     }
   }, [updateURLParams])
+
+  // 🎹 전역 단축키 핸들러
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // 입력 필드에서는 단축키 비활성화
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      // Ctrl+K: 고객 검색 (검색창 포커스)
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === 'k') {
+        e.preventDefault()
+        const searchInput = document.querySelector<HTMLInputElement>('.quick-search__input')
+        searchInput?.focus()
+        return
+      }
+
+      // Ctrl+Shift+F: 문서 검색
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'F') {
+        e.preventDefault()
+        handleMenuClick('documents-search')
+        return
+      }
+
+      // Ctrl+Shift+U: 문서 등록
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'U') {
+        e.preventDefault()
+        handleMenuClick('documents-register')
+        return
+      }
+
+      // Ctrl+Shift+C: 고객 등록
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'C') {
+        e.preventDefault()
+        handleMenuClick('customers-register')
+        return
+      }
+    }
+    window.addEventListener('keydown', handleGlobalShortcuts)
+    return () => window.removeEventListener('keydown', handleGlobalShortcuts)
+  }, [handleMenuClick])
 
   // 최근 검색 고객 스토어
   const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
@@ -932,7 +974,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <path d="M9 15h6" />
             </svg>
           ),
-          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+D`,
+          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+U`,
           onClick: () => handleMenuClick('documents-register')
         },
         {

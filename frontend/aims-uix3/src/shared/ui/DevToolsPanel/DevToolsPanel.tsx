@@ -86,7 +86,7 @@ export function DevToolsPanel() {
           </div>
 
           <div className="dev-tools-info">
-            Ctrl+Shift+D: 개발모드 토글
+            Ctrl+Alt+Shift+D: 개발모드 토글
           </div>
         </div>
       )}
