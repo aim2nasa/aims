@@ -1,6 +1,9 @@
 /* AIMS Admin CSS Variables - Apple Design System */
+/* Light/Dark Theme Support via data-theme attribute */
 
-:root {
+/* === LIGHT THEME (기본) === */
+:root,
+[data-theme="light"] {
   /* Colors - Light Mode */
   --color-background: #ffffff;
   --color-background-secondary: #f5f5f7;
@@ -16,17 +19,67 @@
   --color-primary: #0071e3;
   --color-primary-hover: #0077ed;
   --color-primary-active: #006edb;
+  --color-primary-bg: rgba(0, 113, 227, 0.1);
 
   --color-success: #34c759;
   --color-warning: #ff9500;
   --color-error: #ff3b30;
   --color-info: #5ac8fa;
 
+  /* Hover states */
+  --color-background-hover: #f3f4f6;
+
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
 
+  /* Card/Panel backgrounds */
+  --color-card-bg: #ffffff;
+  --color-sidebar-bg: #f5f5f7;
+  --color-header-bg: #ffffff;
+}
+
+/* === DARK THEME === */
+[data-theme="dark"] {
+  /* Colors - Dark Mode */
+  --color-background: #000000;
+  --color-background-secondary: #1c1c1e;
+  --color-background-tertiary: #2c2c2e;
+
+  --color-text-primary: #f5f5f7;
+  --color-text-secondary: #98989d;
+  --color-text-tertiary: #6e6e73;
+
+  --color-border: #38383a;
+  --color-border-hover: #545456;
+
+  --color-primary: #0a84ff;
+  --color-primary-hover: #409cff;
+  --color-primary-active: #0077ed;
+  --color-primary-bg: rgba(10, 132, 255, 0.15);
+
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-error: #ff453a;
+  --color-info: #64d2ff;
+
+  /* Hover states */
+  --color-background-hover: #2c2c2e;
+
+  /* Shadows - darker in dark mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.4);
+
+  /* Card/Panel backgrounds */
+  --color-card-bg: #1c1c1e;
+  --color-sidebar-bg: #1c1c1e;
+  --color-header-bg: #1c1c1e;
+}
+
+/* === COMMON (Theme-independent) === */
+:root {
   /* Border Radius */
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -70,22 +123,23 @@
   --z-tooltip: 1050;
 }
 
-/* Dark Mode (선택적) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #000000;
-    --color-background-secondary: #1c1c1e;
-    --color-background-tertiary: #2c2c2e;
+/* === THEME TRANSITIONS === */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
 
-    --color-text-primary: #f5f5f7;
-    --color-text-secondary: #98989d;
-    --color-text-tertiary: #6e6e73;
-
-    --color-border: #38383a;
-    --color-border-hover: #545456;
-
-    --color-primary: #0a84ff;
-    --color-primary-hover: #409cff;
-    --color-primary-active: #0077ed;
+/* === REDUCED MOTION SUPPORT === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

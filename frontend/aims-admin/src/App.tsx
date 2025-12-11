@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/authStore';
 import { Button } from '@/shared/ui/Button/Button';
+import { ThemeToggle } from '@/shared/ui/ThemeToggle';
+import { usePersistentTheme } from '@/hooks/usePersistentTheme';
 import './App.css';
 
 interface NavItem {
@@ -19,6 +21,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { theme, toggleTheme } = usePersistentTheme();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['/dashboard']);
 
   // 사이드바 리사이즈 상태
@@ -143,6 +146,7 @@ function App() {
           <h1 className="app__logo">AIMS Admin</h1>
         </div>
         <div className="app__header-right">
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <span className="app__user-name">{user?.name || user?.email || '관리자'}</span>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             로그아웃
