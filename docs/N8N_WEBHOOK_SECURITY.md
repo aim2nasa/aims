@@ -2,7 +2,7 @@
 
 > 작성일: 2025.12.11
 > 최종 수정: 2025.12.11
-> 상태: **검토 필요**
+> 상태: **✅ 적용 완료**
 
 ## 1. 현재 상황
 
@@ -288,9 +288,116 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
+## 7. ✅ 적용 완료 (2025.12.11)
+
+### 7.1 적용된 보안 체계 (3중 방어)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     외부 접근 시도                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [공격자] → n8nd.giize.com/webhook/* → ❌ 403 Forbidden     │
+│            (nginx 차단)                                     │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                     정상 사용 경로                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [브라우저] → aims_api (/api/n8n/*) → n8n (localhost:5678)  │
+│              │                                              │
+│              └─ ✅ JWT 인증 필수 (authenticateJWT)          │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                     내부 서비스 경로                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [aims_rag_api] → localhost:5678/webhook/* → n8n           │
+│                   (tars 서버 내부, --network=host)          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 적용된 조치
+
+| 레이어 | 조치 | 파일 |
+|--------|------|------|
+| **nginx** | `/webhook/` 경로 `allow 127.0.0.1; deny all;` | `/etc/nginx/sites-enabled/n8n` |
+| **aims_api** | `/api/n8n/*` 프록시 + `authenticateJWT` | `backend/api/aims_api/server.js:6693-6755` |
+| **프론트엔드** | aims_api 프록시 URL 사용 | `frontend/aims-uix3/src/services/searchService.ts` |
+| **aims_rag_api** | `localhost:5678` 내부 URL | `backend/api/aims_rag_api/rag_search.py:57` |
+
+### 7.3 aims_api 프록시 구현
+
+```javascript
+// backend/api/aims_api/server.js
+const N8N_INTERNAL_URL = 'http://localhost:5678';
+
+// 스마트 검색 프록시 (JWT 인증 필수)
+app.post('/api/n8n/smartsearch', authenticateJWT, async (req, res) => {
+  const response = await axios.post(
+    `${N8N_INTERNAL_URL}/webhook/smartsearch`,
+    { ...req.body, userId: req.user.userId }
+  );
+  res.json(response.data);
+});
+
+// 문서 업로드 프록시 (JWT 인증 필수)
+app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
+  const response = await axios.post(
+    `${N8N_INTERNAL_URL}/webhook/docprep-main`,
+    { ...req.body, userId: req.user.userId }
+  );
+  res.json(response.data);
+});
+```
+
+### 7.4 프론트엔드 URL 변경
+
+```typescript
+// frontend/aims-uix3/src/services/searchService.ts
+const SMARTSEARCH_API_URL = `${API_CONFIG.BASE_URL}/api/n8n/smartsearch`
+
+// frontend/aims-uix3/src/features/batch-upload/api/batchUploadApi.ts
+const UPLOAD_ENDPOINT = `${API_CONFIG.BASE_URL}/api/n8n/docprep`
+```
+
+### 7.5 검증 결과
+
+```bash
+# 외부에서 n8n webhook 직접 접근 시도
+$ curl -X POST "https://n8nd.giize.com/webhook/smartsearch" \
+    -H "Content-Type: application/json" \
+    -d '{"query": "test"}'
+
+# 결과: 403 Forbidden ✅ (차단됨)
+
+# 내부 서비스에서 접근 (aims_rag_api)
+$ ssh tars.giize.com 'curl -s -X POST "http://localhost:8000/search" \
+    -H "Content-Type: application/json" \
+    -d "{\"query\": \"보험\", \"user_id\": \"test\"}"'
+
+# 결과: {"search_mode":"semantic","answer":"..."} ✅ (정상)
+```
+
+### 7.6 결론
+
+| 항목 | 상태 |
+|------|------|
+| 외부 → n8n webhook 직접 접근 | ❌ **원천 차단됨** (403 Forbidden) |
+| 프론트엔드 → aims_api → n8n | ✅ JWT 인증 필수 |
+| 내부 서비스 → n8n | ✅ localhost로만 접근 가능 |
+| AI 검색 기능 | ✅ 정상 동작 |
+| 문서 업로드 기능 | ✅ 정상 동작 |
+
+**외부에서 n8n webhook을 직접 호출할 방법이 없습니다. 근본적으로 해결됨!**
+
+---
+
 ## 변경 이력
 
 | 날짜 | 내용 |
 |------|------|
 | 2025.12.11 | 최초 작성, 현재 인프라 구성 분석 |
 | 2025.12.11 | 내부망 제한 방식을 최우선 권장안으로 변경 |
+| 2025.12.11 | **✅ 적용 완료** - 3중 방어 체계 구축, 검증 완료 |
