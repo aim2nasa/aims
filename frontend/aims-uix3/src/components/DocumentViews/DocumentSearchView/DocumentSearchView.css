@@ -2113,6 +2113,12 @@ html[data-theme="dark"] .recent-search-icon {
 .customer-icon--storage {
   color: var(--color-folder-yellow);
   margin-right: 6px;
+  width: 17px;
+  height: 17px;
+}
+
+.customer-icon--storage .sf-symbol__shape {
+  font-size: 16.9px;
 }
 
 /* 내 보관함 라벨 (클릭 불가) */

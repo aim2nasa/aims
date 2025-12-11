@@ -1196,8 +1196,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <span className="customer-name-label customer-name-label--storage">
                               <SFSymbol
                                 name="folder"
-                                size={SFSymbolSize.FOOTNOTE}
-                                weight={SFSymbolWeight.MEDIUM}
+                                size={SFSymbolSize.CALLOUT}
+                                weight={SFSymbolWeight.SEMIBOLD}
                                 decorative={true}
                                 className="customer-icon--storage"
                               />
