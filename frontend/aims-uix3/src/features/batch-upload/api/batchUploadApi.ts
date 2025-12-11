@@ -9,8 +9,8 @@
 import { api, ApiError, API_CONFIG, getAuthHeaders } from '../../../shared/lib/api'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 
-// n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
-const UPLOAD_ENDPOINT = `${API_CONFIG.BASE_URL}/api/n8n/docprep`
+// n8n webhook 직접 호출
+const UPLOAD_ENDPOINT = 'https://n8nd.giize.com/webhook/docprep-main'
 
 // ==================== 타입 정의 ====================
 
