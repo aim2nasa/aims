@@ -19,7 +19,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
-import { formatDateTime, formatDateTimeCompact } from '@/shared/lib/timeUtils'
+import { formatDateTime, formatDateTimeCompact, formatDate } from '@/shared/lib/timeUtils'
 import { api, ApiError } from '@/shared/lib/api'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
@@ -802,6 +802,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
               </div>
+              <div className="header-type">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M5 5h2M5 8h4M5 11h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                <span>타입</span>
+              </div>
               <div
                 className="header-date header-sortable"
                 onClick={() => handleSort('linkedAt')}
@@ -948,6 +955,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   {/* 크기 */}
                   <span className="document-size">
                     {sizeLabel}
+                  </span>
+
+                  {/* 타입 */}
+                  <span className="document-type">
+                    {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
                   </span>
 
                   {/* 연결일 */}

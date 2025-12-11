@@ -934,9 +934,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 /* 문서 리스트 헤더 - A행 높이 32px */
 .customer-full-detail__section-content--documents .customer-documents-list-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: CSS 변수 사용 (DocumentsTab에서 계산) */
-  grid-template-columns: 20px var(--filename-column-width, 1fr) var(--size-column-width, 60px) var(--date-column-width, 120px) 44px;
-  gap: 6px;
+  /* 🍎 6칼럼: 아이콘 | 파일명 | 크기(+10%) | 타입(+15%) | 연결일 | 작업 */
+  grid-template-columns: 20px minmax(50px, 0.7fr) 55px 40px 115px 28px;
+  gap: 4px 10px; /* row-gap: 4px, column-gap: 10px */
   padding: 0 10px;
   height: var(--row-height);
   min-height: var(--row-height);
@@ -961,8 +961,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
 /* 문서 아이템 - A행 높이 32px */
 .customer-full-detail__section-content--documents .customer-documents-item {
   display: grid;
-  grid-template-columns: 20px var(--filename-column-width, 1fr) var(--size-column-width, 60px) var(--date-column-width, 120px) 44px;
-  gap: 6px;
+  /* 🍎 6칼럼: 아이콘 | 파일명 | 크기(+10%) | 타입(+15%) | 연결일 | 작업 */
+  grid-template-columns: 20px minmax(50px, 0.7fr) 55px 40px 115px 28px;
+  gap: 4px 10px; /* row-gap: 4px, column-gap: 10px */
   padding: 0 10px;
   height: var(--row-height);
   min-height: var(--row-height);
@@ -1411,10 +1412,26 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 /* 🍎 문서 - 텍스트 셀만 (아이콘/뱃지 제외) */
 .customer-full-detail .customer-full-detail__section-content--documents .status-filename,
 .customer-full-detail .customer-full-detail__section-content--documents .document-size,
+.customer-full-detail .customer-full-detail__section-content--documents .document-type,
 .customer-full-detail .customer-full-detail__section-content--documents .status-date {
   font-size: var(--font-body);
   font-weight: var(--weight-normal);
   color: var(--text-color);
+}
+
+/* 🍎 타입 컬럼 스타일 */
+.customer-full-detail__section-content--documents .document-type {
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* 🍎 연결일 컬럼 스타일 - 날짜+시간 한 줄 표시 */
+.customer-full-detail__section-content--documents .status-date {
+  text-align: center;
+  white-space: nowrap;
+  font-size: 10px;
 }
 
 /* 🍎 Annual Report - 모든 데이터 셀 */
@@ -1527,6 +1544,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 /* 🍎 문서 데이터 셀 */
 .customer-full-detail .customer-full-detail__section-content--documents .status-filename,
 .customer-full-detail .customer-full-detail__section-content--documents .document-size,
+.customer-full-detail .customer-full-detail__section-content--documents .document-type,
 .customer-full-detail .customer-full-detail__section-content--documents .status-date {
   font-size: var(--font-body);
   font-weight: var(--weight-normal);

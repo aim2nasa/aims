@@ -88,14 +88,14 @@
 /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
 .customer-documents-list-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
   grid-template-columns:
-    24px              /* 파일 타입 아이콘 */
-    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
-    var(--size-column-width, 70px)  /* 크기 (동적) */
-    var(--date-column-width, 130px)  /* 연결일 (동적) */
-    52px;             /* 액션 버튼 (2개) */
-  gap: 12px;
+    28px              /* 유형 아이콘 */
+    minmax(80px, 1fr) /* 파일명 */
+    55px              /* 크기 */
+    38px              /* 타입 */
+    135px             /* 연결일 (날짜+시간) */
+    28px;             /* 액션 버튼 */
+  gap: 4px;
   align-items: center;
   padding: 8px 10px;
   background: var(--color-neutral-100);
@@ -128,6 +128,11 @@
 }
 
 /* === 🍎 COLUMN HEADER ALIGNMENT: 중앙 정렬 === */
+.customer-documents-list-header .header-badge-type {
+  justify-content: center;
+  text-align: center;
+}
+
 .customer-documents-list-header .header-size {
   justify-content: center;
   text-align: center;
@@ -136,6 +141,12 @@
 .customer-documents-list-header .header-date {
   justify-content: center;
   text-align: center;
+}
+
+.customer-documents-list-header .header-type {
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .customer-documents-list-header .header-actions {
@@ -150,6 +161,10 @@
 
 .header-size .header-icon-svg {
   color: var(--color-icon-purple);  /* 크기 - 보라색 */
+}
+
+.header-type .header-icon-svg {
+  color: var(--color-icon-orange);  /* 타입 - 오렌지색 */
 }
 
 .header-date .header-icon-svg {
@@ -228,14 +243,14 @@
 /* === 🍎 LIST ITEM: 문서 아이템 === */
 .customer-documents-item {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
   grid-template-columns:
-    24px              /* 파일 타입 아이콘 */
-    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
-    var(--size-column-width, 70px)  /* 크기 (동적) */
-    var(--date-column-width, 130px)  /* 연결일 (동적) */
-    52px;             /* 액션 버튼 (2개) */
-  gap: 12px;
+    28px              /* 유형 아이콘 */
+    minmax(80px, 1fr) /* 파일명 */
+    55px              /* 크기 */
+    38px              /* 타입 */
+    135px             /* 연결일 (날짜+시간) */
+    28px;             /* 액션 버튼 */
+  gap: 4px;
   align-items: center;
   padding: 8px 10px;
   border-radius: 4px;
@@ -342,11 +357,20 @@
   font-variant-numeric: tabular-nums;
 }
 
+.document-type {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
 /* === 연결일 === */
 .status-date {
   text-align: center;
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 11px;
 }
 
 /* === 액션 버튼 === */
@@ -979,25 +1003,27 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
 
 /* 삭제 모드일 때 그리드 레이아웃 변경 */
 .customer-documents--delete-mode .customer-documents-list-header {
-  /* 🍎 동적 칼럼 폭: 삭제 모드에서도 동일한 CSS 변수 사용 */
   grid-template-columns:
-    24px              /* 체크박스 */
-    24px              /* 파일 타입 아이콘 */
-    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
-    var(--size-column-width, 70px)  /* 크기 (동적) */
-    var(--date-column-width, 130px)  /* 연결일 (동적) */
-    52px;             /* 액션 버튼 (2개) */
+    20px              /* 체크박스 */
+    28px              /* 유형 아이콘 */
+    minmax(80px, 1fr) /* 파일명 */
+    55px              /* 크기 */
+    38px              /* 타입 */
+    135px             /* 연결일 (날짜+시간) */
+    28px;             /* 액션 버튼 */
+  gap: 4px;
 }
 
 .customer-documents--delete-mode .customer-documents-item {
-  /* 🍎 동적 칼럼 폭: 삭제 모드에서도 동일한 CSS 변수 사용 */
   grid-template-columns:
-    24px              /* 체크박스 */
-    24px              /* 파일 타입 아이콘 */
-    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
-    var(--size-column-width, 70px)  /* 크기 (동적) */
-    var(--date-column-width, 130px)  /* 연결일 (동적) */
-    52px;             /* 액션 버튼 (2개) */
+    20px              /* 체크박스 */
+    28px              /* 유형 아이콘 */
+    minmax(80px, 1fr) /* 파일명 */
+    55px              /* 크기 */
+    38px              /* 타입 */
+    135px             /* 연결일 (날짜+시간) */
+    28px;             /* 액션 버튼 */
+  gap: 4px;
 }
 
 /* 선택된 문서 하이라이트 */
