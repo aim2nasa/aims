@@ -829,6 +829,19 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
 
+  // 🖥️ 플랫폼 감지 (Mac vs Windows/Linux)
+  const isMac = useMemo(() => {
+    return navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+           navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
+  }, [])
+
+  // 단축키 표시 헬퍼
+  const shortcutKey = useMemo(() => ({
+    mod: isMac ? '⌘' : 'Ctrl',
+    shift: isMac ? '⇧' : 'Shift',
+    alt: isMac ? '⌥' : 'Alt'
+  }), [isMac])
+
   // 기본 컨텍스트 메뉴 섹션
   const defaultContextMenuSections: ContextMenuSection[] = useMemo(() => [
     {
@@ -866,7 +879,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
             </svg>
           ),
-          shortcut: '⌘+R',
+          shortcut: `${shortcutKey.mod}+R`,
           onClick: () => window.location.reload()
         }
       ]
@@ -875,15 +888,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       id: 'quick-actions',
       items: [
         {
-          id: 'quick-search',
-          label: '빠른 검색',
+          id: 'customer-search',
+          label: '고객 검색',
           icon: (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <circle cx="19" cy="11" r="3" />
+              <path d="M22 14l-2-2" />
             </svg>
           ),
-          shortcut: '⌘+K',
+          shortcut: `${shortcutKey.mod}+K`,
           onClick: () => {
             // 메뉴 닫힌 후 검색창에 포커스
             setTimeout(() => {
@@ -891,6 +906,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               searchInput?.focus()
             }, 100)
           }
+        },
+        {
+          id: 'document-search',
+          label: '문서 검색',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+              <circle cx="11" cy="14" r="3" />
+              <path d="M14 17l2 2" />
+            </svg>
+          ),
+          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+F`,
+          onClick: () => handleMenuClick('documents-search')
         },
         {
           id: 'new-document',
@@ -903,7 +932,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <path d="M9 15h6" />
             </svg>
           ),
-          shortcut: '⌘+⇧+D',
+          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+D`,
           onClick: () => handleMenuClick('documents-register')
         },
         {
@@ -917,12 +946,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <path d="M22 11h-6" />
             </svg>
           ),
-          shortcut: '⌘+⇧+C',
+          shortcut: `${shortcutKey.mod}+${shortcutKey.shift}+C`,
           onClick: () => handleMenuClick('customers-register')
         }
       ]
     }
-  ], [handleMenuClick])
+  ], [handleMenuClick, shortcutKey])
 
   // 전역 컨텍스트 메뉴 핸들러
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
