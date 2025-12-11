@@ -163,9 +163,9 @@ export class UserContextService {
  * 🔮 미래 확장: 설정 파일로 분리 예정
  */
 export const uploadConfig = {
-  // 현재 설정 - n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
+  // 현재 설정 - n8n webhook 직접 호출
   endpoints: {
-    upload: `${API_CONFIG.BASE_URL}/api/n8n/docprep`
+    upload: 'https://n8nd.giize.com/webhook/docprep-main'
   },
 
   // 🔮 미래 확장 설정 (현재는 비활성화)
