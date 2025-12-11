@@ -821,9 +821,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.layoutControlModalOpen = false
   }, [])
 
+  // 🍎 전역 컨텍스트 메뉴 비활성화 (입력 필드 예외)
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    const tagName = target.tagName.toLowerCase()
+
+    // 입력 필드는 기본 컨텍스트 메뉴 허용 (복사/붙여넣기 필요)
+    const isInputField =
+      tagName === 'input' ||
+      tagName === 'textarea' ||
+      target.isContentEditable ||
+      target.closest('[contenteditable="true"]')
+
+    if (!isInputField) {
+      e.preventDefault()
+    }
+  }, [])
+
   return (
     <div
       className="layout-main"
+      onContextMenu={handleContextMenu}
       style={{
         width: '100vw',
         height: '100vh',
