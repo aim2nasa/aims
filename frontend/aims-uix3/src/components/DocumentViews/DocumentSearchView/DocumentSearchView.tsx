@@ -148,6 +148,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 검색어 위치 모달 상태 (키워드 검색 전용)
   const [keywordLocationModalVisible, setKeywordLocationModalVisible] = useState(false)
   const [selectedDocumentForKeywordLocation, setSelectedDocumentForKeywordLocation] = useState<SearchResultItem | null>(null)
+  // 🍎 검색어 위치 탐색 상태
+  const [keywordMatchIndex, setKeywordMatchIndex] = useState(0)  // 현재 보고 있는 매칭 인덱스
 
   // 🍎 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
@@ -619,6 +621,72 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
     return snippet
   }, [query])
+
+  /**
+   * 🍎 모든 키워드 매칭 위치 찾기 (검색어 위치 탐색용)
+   * 문서에서 검색어가 나타나는 모든 위치 인덱스를 반환
+   */
+  const getAllKeywordMatches = useCallback((item: SearchResultItem): number[] => {
+    const fullText = (item as any).ocr?.full_text ||
+                     (item as any).meta?.full_text ||
+                     (item as any).text?.full_text ||
+                     ''
+
+    if (!fullText) return []
+
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return []
+
+    const searchLower = fullText.toLowerCase()
+    const matches: number[] = []
+
+    // 모든 키워드의 모든 위치를 찾기
+    keywords.forEach(keyword => {
+      const keywordLower = keyword.toLowerCase()
+      let startIndex = 0
+      let idx = searchLower.indexOf(keywordLower, startIndex)
+
+      while (idx !== -1) {
+        matches.push(idx)
+        startIndex = idx + 1
+        idx = searchLower.indexOf(keywordLower, startIndex)
+      }
+    })
+
+    // 위치 순으로 정렬하고 중복 제거
+    return [...new Set(matches)].sort((a, b) => a - b)
+  }, [query])
+
+  /**
+   * 🍎 특정 매칭 인덱스의 스니펫 추출 (검색어 위치 탐색용)
+   * matchIdx번째 매칭 위치 주변 텍스트를 반환
+   */
+  const getTextSnippetAtIndex = useCallback((item: SearchResultItem, matchIdx: number): string => {
+    const fullText = (item as any).ocr?.full_text ||
+                     (item as any).meta?.full_text ||
+                     (item as any).text?.full_text ||
+                     ''
+
+    if (!fullText) return '텍스트를 찾을 수 없습니다.'
+
+    const matches = getAllKeywordMatches(item)
+    if (matches.length === 0 || matchIdx >= matches.length) {
+      return fullText.substring(0, 300) + '...'
+    }
+
+    const idx = matches[matchIdx]
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    const keywordLength = keywords[0]?.length || 0
+
+    const start = Math.max(0, idx - 100)
+    const end = Math.min(fullText.length, idx + keywordLength + 200)
+    let snippet = fullText.substring(start, end)
+
+    if (start > 0) snippet = '...' + snippet
+    if (end < fullText.length) snippet = snippet + '...'
+
+    return snippet
+  }, [query, getAllKeywordMatches])
 
   /**
    * 🍎 키워드 하이라이트 (키워드 검색용)
@@ -1317,6 +1385,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                           onClick={(e) => {
                             e.stopPropagation()
                             setSelectedDocumentForKeywordLocation(item)
+                            setKeywordMatchIndex(0)  // 인덱스 초기화
                             setKeywordLocationModalVisible(true)
                           }}
                           aria-label="검색어 위치 보기"
@@ -1521,41 +1590,89 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       />
 
       {/* 🍎 검색어 위치 모달 (키워드 검색 전용) */}
-      {selectedDocumentForKeywordLocation && (
-        <DraggableModal
-          visible={keywordLocationModalVisible}
-          onClose={() => {
-            setKeywordLocationModalVisible(false)
-            setSelectedDocumentForKeywordLocation(null)
-          }}
-          title={
-            <div className="keyword-location-modal-title">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-              </svg>
-              <span>검색어 위치</span>
+      {selectedDocumentForKeywordLocation && (() => {
+        const totalMatches = getAllKeywordMatches(selectedDocumentForKeywordLocation).length
+        const currentIndex = keywordMatchIndex
+        const hasPrev = currentIndex > 0
+        const hasNext = currentIndex < totalMatches - 1
+
+        return (
+          <DraggableModal
+            visible={keywordLocationModalVisible}
+            onClose={() => {
+              setKeywordLocationModalVisible(false)
+              setSelectedDocumentForKeywordLocation(null)
+              setKeywordMatchIndex(0)
+            }}
+            title={
+              <div className="keyword-location-modal-title">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <span>검색어 위치</span>
+              </div>
+            }
+            initialWidth={600}
+            initialHeight={400}
+            minWidth={400}
+            minHeight={300}
+          >
+            <div className="keyword-location-modal-content">
+              <div className="keyword-location-modal-header">
+                <span className="keyword-location-filename">
+                  {SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
+                </span>
+                <span className="keyword-location-query">
+                  검색어: <strong>{query}</strong>
+                </span>
+              </div>
+
+              {/* 🍎 검색 결과 개수 및 탐색 UI */}
+              <div className="keyword-location-nav">
+                <button
+                  type="button"
+                  className="keyword-location-nav-btn"
+                  onClick={() => setKeywordMatchIndex(prev => Math.max(0, prev - 1))}
+                  disabled={!hasPrev}
+                  aria-label="이전 결과"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+
+                <span className="keyword-location-counter">
+                  {totalMatches > 0 ? (
+                    <>
+                      <strong>{currentIndex + 1}</strong>
+                      <span className="keyword-location-separator">/</span>
+                      <span>{totalMatches}</span>
+                    </>
+                  ) : (
+                    <span className="keyword-location-no-match">발견된 결과 없음</span>
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  className="keyword-location-nav-btn"
+                  onClick={() => setKeywordMatchIndex(prev => Math.min(totalMatches - 1, prev + 1))}
+                  disabled={!hasNext}
+                  aria-label="다음 결과"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div className="keyword-location-text">
+                {highlightKeywords(getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex))}
+              </div>
             </div>
-          }
-          initialWidth={600}
-          initialHeight={400}
-          minWidth={400}
-          minHeight={300}
-        >
-          <div className="keyword-location-modal-content">
-            <div className="keyword-location-modal-header">
-              <span className="keyword-location-filename">
-                {SearchService.getOriginalName(selectedDocumentForKeywordLocation)}
-              </span>
-              <span className="keyword-location-query">
-                검색어: <strong>{query}</strong>
-              </span>
-            </div>
-            <div className="keyword-location-text">
-              {highlightKeywords(getTextSnippet(selectedDocumentForKeywordLocation))}
-            </div>
-          </div>
-        </DraggableModal>
-      )}
+          </DraggableModal>
+        )
+      })()}
     </CenterPaneView>
   )
 }

@@ -2267,6 +2267,92 @@ html[data-theme="dark"] .keyword-location-text {
   color: var(--color-ios-text-primary-dark);
 }
 
+/* 🍎 검색어 위치 탐색 UI */
+.keyword-location-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .keyword-location-nav {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.keyword-location-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-ios-bg-secondary-light);
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="dark"] .keyword-location-nav-btn {
+  background: var(--color-ios-bg-secondary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.keyword-location-nav-btn:hover:not(:disabled) {
+  background: var(--color-ios-fill-tertiary-light);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .keyword-location-nav-btn:hover:not(:disabled) {
+  background: var(--color-ios-fill-tertiary-dark);
+}
+
+.keyword-location-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.keyword-location-counter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 80px;
+  justify-content: center;
+}
+
+html[data-theme="dark"] .keyword-location-counter {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.keyword-location-counter strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ios-blue);
+}
+
+.keyword-location-separator {
+  color: var(--color-ios-text-tertiary-light);
+  margin: 0 2px;
+}
+
+html[data-theme="dark"] .keyword-location-separator {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.keyword-location-no-match {
+  font-size: 13px;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .keyword-location-no-match {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* 검색어 하이라이트 스타일 */
 .doc-search-highlight {
   background: #fef08a;
