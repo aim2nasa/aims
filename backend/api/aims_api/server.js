@@ -6698,10 +6698,10 @@ app.listen(PORT, '0.0.0.0', async () => {
     // 메트릭 수집 설정
     await setupMetricsCollection();
 
-    // 즉시 1회 수집 후, 5분마다 수집
+    // 즉시 1회 수집 후, 1분마다 수집
     await collectAndSaveMetrics();
-    metricsCollectionInterval = setInterval(collectAndSaveMetrics, 5 * 60 * 1000);
-    console.log('[Metrics] 시스템 메트릭 수집 시작 (5분 간격)');
+    metricsCollectionInterval = setInterval(collectAndSaveMetrics, 60 * 1000);
+    console.log('[Metrics] 시스템 메트릭 수집 시작 (1분 간격)');
   }
 
   console.log(`📋 API 엔드포인트:`);
