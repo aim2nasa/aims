@@ -12,7 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, Tooltip, Button } from '@/shared/ui'
+import { Dropdown, Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
@@ -134,6 +134,120 @@ const DocumentLibraryContent: React.FC<{
     if (!date) return ''
     return formatDateTime(date)
   }, [])
+
+  // 🍎 문서 컨텍스트 메뉴
+  const documentContextMenu = useContextMenu()
+  const [contextMenuDocument, setContextMenuDocument] = React.useState<Document | null>(null)
+
+  // 🍎 문서 컨텍스트 메뉴 핸들러
+  const handleDocumentContextMenu = React.useCallback((document: Document, event: React.MouseEvent) => {
+    setContextMenuDocument(document)
+    documentContextMenu.open(event)
+  }, [documentContextMenu])
+
+  // 🍎 문서 컨텍스트 메뉴 섹션
+  const documentContextMenuSections: ContextMenuSection[] = React.useMemo(() => {
+    if (!contextMenuDocument) return []
+
+    const documentId = contextMenuDocument._id || contextMenuDocument.id || ''
+    const isLinked = Boolean(contextMenuDocument.customer_relation)
+    const status = DocumentStatusService.extractStatus(contextMenuDocument)
+    const canLink = status === 'completed' && !isLinked
+
+    return [
+      {
+        id: 'view',
+        items: [
+          {
+            id: 'preview',
+            label: '미리보기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            ),
+            shortcut: 'Space',
+            onClick: () => controller.handleDocumentClick(contextMenuDocument)
+          },
+          {
+            id: 'summary',
+            label: 'AI 요약',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+            ),
+            onClick: () => controller.handleDocumentSummary(contextMenuDocument)
+          }
+        ]
+      },
+      {
+        id: 'actions',
+        items: [
+          {
+            id: 'download',
+            label: '다운로드',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ),
+            shortcut: '⌘+D',
+            onClick: () => {
+              const fileUrl = contextMenuDocument.fileUrl || contextMenuDocument.file_url
+              if (fileUrl) {
+                window.open(fileUrl, '_blank')
+              }
+            }
+          },
+          {
+            id: 'link-customer',
+            label: '고객 연결',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            ),
+            disabled: !canLink,
+            onClick: () => controller.handleDocumentLink(contextMenuDocument)
+          }
+        ]
+      },
+      ...(isDevMode ? [{
+        id: 'danger',
+        items: [
+          {
+            id: 'delete',
+            label: '삭제',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            ),
+            danger: true,
+            onClick: () => {
+              // 삭제 모드 활성화 후 해당 문서 선택
+              if (!isDeleteMode) {
+                onToggleDeleteMode()
+              }
+              if (documentId) {
+                onSelectDocument(documentId, { ctrlKey: false, metaKey: false } as React.MouseEvent)
+              }
+            }
+          }
+        ]
+      }] : [])
+    ]
+  }, [contextMenuDocument, controller, isDevMode, isDeleteMode, onToggleDeleteMode, onSelectDocument])
 
   // 🍎 외부에서 새로고침 이벤트 받기
   React.useEffect(() => {
@@ -496,6 +610,7 @@ const DocumentLibraryContent: React.FC<{
         selectedDocumentIds={selectedDocumentIds}
         onSelectAll={handleSelectAll}
         onSelectDocument={onSelectDocument}
+        onRowContextMenu={handleDocumentContextMenu}
         {...(onCustomerClick ? { onCustomerClick } : {})}
         {...(onNavigate ? { onNavigate } : {})}
       />
@@ -574,6 +689,20 @@ const DocumentLibraryContent: React.FC<{
         document={controller.selectedDocumentForLink}
         onFetchCustomerDocuments={controller.fetchCustomerDocuments}
         onLink={controller.linkDocumentToCustomer}
+      />
+
+      {/* 🍎 문서 컨텍스트 메뉴 */}
+      <ContextMenu
+        visible={documentContextMenu.isOpen}
+        position={documentContextMenu.position}
+        sections={documentContextMenuSections}
+        onClose={documentContextMenu.close}
+        showHelp
+        helpContext="documents"
+        onHelpClick={(context) => {
+          // TODO: Help 시스템 연동
+          console.log('Help requested for:', context)
+        }}
       />
     </>
   )

@@ -52,6 +52,8 @@ export interface DocumentStatusListProps {
   onRefresh?: () => Promise<void>
   // 🍎 Navigation handler
   onNavigate?: (viewKey: string) => void
+  // 🍎 Context menu handler
+  onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
 }
 
 /**
@@ -129,7 +131,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSelectDocument,
   onCustomerClick,
   onRefresh,
-  onNavigate
+  onNavigate,
+  onRowContextMenu
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -482,9 +485,17 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           <div
             key={key}
             className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
+            data-context-menu="document"
             onClick={() => {
               if (documentId && onDocumentClick && !isDeleteMode) {
                 onDocumentClick(documentId)
+              }
+            }}
+            onContextMenu={(e) => {
+              if (onRowContextMenu) {
+                e.preventDefault()
+                e.stopPropagation()
+                onRowContextMenu(document, e)
               }
             }}
             role="button"

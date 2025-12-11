@@ -56,6 +56,7 @@ import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/doc
 import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
 import { API_CONFIG, getAuthHeaders } from './shared/lib/api'
+import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -821,7 +822,103 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.layoutControlModalOpen = false
   }, [])
 
-  // 🍎 전역 컨텍스트 메뉴 비활성화 (입력 필드 예외)
+  // 🍎 전역 컨텍스트 메뉴
+  const globalContextMenu = useContextMenu()
+
+  // 기본 컨텍스트 메뉴 섹션
+  const defaultContextMenuSections: ContextMenuSection[] = useMemo(() => [
+    {
+      id: 'navigation',
+      items: [
+        {
+          id: 'back',
+          label: '뒤로 가기',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          ),
+          shortcut: 'Alt+←',
+          onClick: () => window.history.back()
+        },
+        {
+          id: 'forward',
+          label: '앞으로 가기',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          ),
+          shortcut: 'Alt+→',
+          onClick: () => window.history.forward()
+        },
+        {
+          id: 'refresh',
+          label: '새로고침',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+            </svg>
+          ),
+          shortcut: '⌘+R',
+          onClick: () => window.location.reload()
+        }
+      ]
+    },
+    {
+      id: 'quick-actions',
+      items: [
+        {
+          id: 'quick-search',
+          label: '빠른 검색',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          ),
+          shortcut: '⌘+K',
+          onClick: () => {
+            // 검색창에 포커스
+            const searchInput = document.querySelector<HTMLInputElement>('.header-quick-search input')
+            searchInput?.focus()
+          }
+        },
+        {
+          id: 'new-document',
+          label: '문서 등록',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+              <path d="M12 18v-6" />
+              <path d="M9 15h6" />
+            </svg>
+          ),
+          shortcut: '⌘+⇧+D',
+          onClick: () => handleMenuClick('documents-register')
+        },
+        {
+          id: 'new-customer',
+          label: '고객 등록',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M19 8v6" />
+              <path d="M22 11h-6" />
+            </svg>
+          ),
+          shortcut: '⌘+⇧+C',
+          onClick: () => handleMenuClick('customers-register')
+        }
+      ]
+    }
+  ], [handleMenuClick])
+
+  // 전역 컨텍스트 메뉴 핸들러
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     const tagName = target.tagName.toLowerCase()
@@ -833,10 +930,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       target.isContentEditable ||
       target.closest('[contenteditable="true"]')
 
-    if (!isInputField) {
+    // 커스텀 컨텍스트 메뉴가 있는 영역은 제외 (각 컴포넌트에서 처리)
+    const hasCustomContextMenu = target.closest('[data-context-menu]')
+
+    if (!isInputField && !hasCustomContextMenu) {
       e.preventDefault()
+      e.stopPropagation()
+      globalContextMenu.open(e)
     }
-  }, [])
+  }, [globalContextMenu])
 
   return (
     <div
@@ -1556,6 +1658,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onComplete={() => {
           // 투어 완료 후 문서 등록 화면으로 이동
           handleMenuClick('documents-register')
+        }}
+      />
+
+      {/* 🍎 전역 컨텍스트 메뉴 */}
+      <ContextMenu
+        visible={globalContextMenu.isOpen}
+        position={globalContextMenu.position}
+        sections={defaultContextMenuSections}
+        onClose={globalContextMenu.close}
+        showHelp
+        helpContext="general"
+        onHelpClick={(context) => {
+          // TODO: Help 시스템 연동
+          console.log('Help requested for:', context)
         }}
       />
 

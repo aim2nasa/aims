@@ -11,7 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, u
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
-import { Dropdown, Tooltip, Modal } from '@/shared/ui';
+import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -112,6 +112,16 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       isOpen: boolean;
       totalCount: number;
     }>({ isOpen: false, totalCount: 0 });
+
+    // 🍎 고객 컨텍스트 메뉴
+    const customerContextMenu = useContextMenu();
+    const [contextMenuCustomer, setContextMenuCustomer] = useState<Customer | null>(null);
+
+    // 🍎 고객 컨텍스트 메뉴 핸들러
+    const handleCustomerContextMenu = useCallback((customer: Customer, event: React.MouseEvent) => {
+      setContextMenuCustomer(customer);
+      customerContextMenu.open(event);
+    }, [customerContextMenu]);
 
     // Document-View 패턴: CustomerDocument 구독
     const {
@@ -308,6 +318,159 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       const offset = (currentPageForView - 1) * itemsPerPageNumber;
       return sortedCustomers.slice(offset, offset + itemsPerPageNumber);
     }, [sortedCustomers, currentPageForView, itemsPerPageNumber]);
+
+    // 🍎 고객 컨텍스트 메뉴 섹션
+    const customerContextMenuSections: ContextMenuSection[] = useMemo(() => {
+      if (!contextMenuCustomer) return [];
+
+      const customerId = contextMenuCustomer._id;
+      const customerName = contextMenuCustomer.personal_info?.name || '고객';
+      const customerPhone = contextMenuCustomer.personal_info?.mobile_phone;
+      const isInactive = contextMenuCustomer.meta?.status === 'inactive';
+
+      return [
+        {
+          id: 'view',
+          items: [
+            {
+              id: 'detail',
+              label: '상세 보기',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              ),
+              shortcut: 'Enter',
+              onClick: () => onCustomerClick?.(customerId, contextMenuCustomer)
+            },
+            {
+              id: 'full-detail',
+              label: '전체 정보',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M16 13H8" />
+                  <path d="M16 17H8" />
+                  <path d="M10 9H8" />
+                </svg>
+              ),
+              shortcut: '⌘+Enter',
+              onClick: () => onCustomerDoubleClick?.(customerId, contextMenuCustomer)
+            }
+          ]
+        },
+        {
+          id: 'contact',
+          items: [
+            {
+              id: 'call',
+              label: '전화하기',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              ),
+              disabled: !customerPhone,
+              onClick: () => {
+                if (customerPhone) {
+                  window.open(`tel:${customerPhone.replace(/-/g, '')}`, '_blank');
+                }
+              }
+            },
+            {
+              id: 'message',
+              label: '문자 보내기',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              ),
+              disabled: !customerPhone,
+              onClick: () => {
+                if (customerPhone) {
+                  window.open(`sms:${customerPhone.replace(/-/g, '')}`, '_blank');
+                }
+              }
+            }
+          ]
+        },
+        {
+          id: 'documents',
+          items: [
+            {
+              id: 'view-documents',
+              label: '연결된 문서 보기',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                </svg>
+              ),
+              onClick: () => {
+                // 고객 상세 보기 → 문서 탭으로 이동
+                onCustomerDoubleClick?.(customerId, contextMenuCustomer);
+              }
+            }
+          ]
+        },
+        ...(isDevMode ? [{
+          id: 'danger',
+          items: [
+            {
+              id: 'toggle-status',
+              label: isInactive ? '활성화' : '휴면 처리',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {isInactive ? (
+                    <>
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </>
+                  ) : (
+                    <>
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M4.93 4.93l14.14 14.14" />
+                    </>
+                  )}
+                </svg>
+              ),
+              onClick: async () => {
+                try {
+                  const newStatus = isInactive ? 'active' : 'inactive';
+                  await CustomerService.updateCustomerStatus(customerId, newStatus);
+                  showAlert(`${customerName} 고객이 ${isInactive ? '활성화' : '휴면 처리'}되었습니다.`, 'success');
+                  refresh();
+                } catch (err) {
+                  showAlert('상태 변경에 실패했습니다.', 'error');
+                }
+              }
+            },
+            {
+              id: 'delete',
+              label: '삭제',
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              ),
+              danger: true,
+              onClick: () => {
+                // 삭제 모드 활성화 후 해당 고객 선택
+                if (!isDeleteMode) {
+                  setIsDeleteMode(true);
+                }
+                setSelectedCustomerIds(new Set([customerId]));
+              }
+            }
+          ]
+        }] : [])
+      ];
+    }, [contextMenuCustomer, onCustomerClick, onCustomerDoubleClick, isDevMode, isDeleteMode, showAlert, refresh]);
 
     // 개인/법인 고객 수 계산 (활성/휴면/전체 모두)
     // 초기 로드가 완료된 후에만 계산 (lastUpdated > 0)
@@ -922,6 +1085,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               <div
                 key={customer._id}
                 className={`customer-item ${isDeleteMode && selectedCustomerIds.has(customer._id) ? 'customer-item--selected' : ''}`}
+                data-context-menu="customer"
                 onClick={() => {
                   if (isDeleteMode) {
                     // 삭제 모드에서는 체크박스 토글
@@ -936,6 +1100,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                     // 🍎 더블클릭 시 싱글클릭 타이머 취소
                     handleRowDoubleClick(customer._id, customer);
                   }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCustomerContextMenu(customer, e);
                 }}
               >
                 {/* 삭제 모드일 때 체크박스 */}
@@ -1072,6 +1241,20 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             </div>
           </div>
         </Modal>
+
+        {/* 🍎 고객 컨텍스트 메뉴 */}
+        <ContextMenu
+          visible={customerContextMenu.isOpen}
+          position={customerContextMenu.position}
+          sections={customerContextMenuSections}
+          onClose={customerContextMenu.close}
+          showHelp
+          helpContext="customers"
+          onHelpClick={(context) => {
+            // TODO: Help 시스템 연동
+            console.log('Help requested for:', context);
+          }}
+        />
       </div>
     );
   }
