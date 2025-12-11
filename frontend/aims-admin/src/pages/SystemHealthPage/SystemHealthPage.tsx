@@ -173,13 +173,14 @@ const ServerResourcesSection = () => {
   });
 
   // 라인 차트용 데이터 변환
+  // disks.data가 없는 레코드(이전 형식)는 null로 처리하여 차트에서 건너뜀
   const chartData = historyData?.metrics?.map((m: SystemMetrics) => ({
     timestamp: m.timestamp,
     cpu: m.cpu.usage,
     memory: m.memory.usagePercent,
     disk: m.disk.usagePercent,
     diskRoot: m.disks?.root?.usagePercent ?? m.disk.usagePercent,
-    diskData: m.disks?.data?.usagePercent ?? 0,
+    diskData: m.disks?.data?.usagePercent ?? null,
   })) || [];
 
   return (

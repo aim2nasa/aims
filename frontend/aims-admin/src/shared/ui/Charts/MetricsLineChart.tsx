@@ -16,7 +16,7 @@ interface MetricsDataPoint {
   memory: number;
   disk?: number;
   diskRoot?: number;
-  diskData?: number;
+  diskData?: number | null;  // null when data is missing (old format records)
 }
 
 interface MetricsLineChartProps {
@@ -136,6 +136,7 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200 }: Metri
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
+                connectNulls={true}
               />
             </>
           )}
