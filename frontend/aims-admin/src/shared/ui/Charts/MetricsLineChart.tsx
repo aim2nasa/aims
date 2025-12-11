@@ -22,7 +22,7 @@ interface MetricsDataPoint {
 interface MetricsLineChartProps {
   data: MetricsDataPoint[];
   showDisk?: boolean;
-  height?: number;
+  height?: number | string;
 }
 
 const formatTime = (timestamp: string) => {

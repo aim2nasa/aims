@@ -261,7 +261,7 @@ const ServerResourcesSection = () => {
           {isHistoryLoading ? (
             <div className="server-resources__loading">차트 로딩 중...</div>
           ) : (
-            <MetricsLineChart data={chartData} showDisk={true} height={140} />
+            <MetricsLineChart data={chartData} showDisk={true} height="100%" />
           )}
         </div>
       </div>
