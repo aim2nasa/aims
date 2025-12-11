@@ -268,3 +268,63 @@ Time:        2.159 s
 **관련 파일**:
 - `backend/api/aims_api/__tests__/customer-isolation.test.js` (수정 완료)
 - `backend/api/aims_api/middleware/auth.js` (검증 대상)
+
+---
+
+## 2025.12.11 - n8n Webhook 내부망 제한 적용
+
+### 배경
+n8n webhook 엔드포인트가 인증 없이 외부에 노출되어 있어 보안 취약점이 발견됨.
+
+### 문제점
+- `https://n8nd.giize.com/webhook/smartsearch` - 누구나 접근 가능
+- `https://n8nd.giize.com/webhook/docprep-main` - 누구나 접근 가능
+- DoS 공격, 악성 데이터 주입, 리소스 남용 위험
+
+### 조치 내용
+
+#### 1. nginx에서 webhook 외부 접근 차단
+```nginx
+# /etc/nginx/sites-enabled/n8n
+location /webhook/ {
+    allow 127.0.0.1;
+    deny all;
+    proxy_pass http://localhost:5678;
+}
+```
+
+#### 2. aims_rag_api URL 변경
+```python
+# backend/api/aims_rag_api/rag_search.py
+# 변경 전
+SMARTSEARCH_API_URL = "https://n8nd.giize.com/webhook/smartsearch"
+
+# 변경 후
+SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
+```
+
+aims_rag_api 컨테이너가 `--network=host` 모드로 실행되므로 localhost로 직접 접근 가능.
+
+### 결과
+| 테스트 | 결과 |
+|--------|------|
+| 외부 → n8n webhook | ❌ 403 Forbidden (차단됨) |
+| 내부 → n8n webhook | ✅ 정상 동작 |
+| AI 검색 기능 | ✅ 정상 동작 |
+
+### 아키텍처
+```
+[변경 전]
+인터넷 → n8nd.giize.com/webhook/* → n8n (누구나 접근 가능)
+
+[변경 후]
+인터넷 → n8nd.giize.com/webhook/* → 403 Forbidden
+tars 내부 → localhost:5678/webhook/* → n8n (정상 동작)
+```
+
+### 관련 파일
+- `backend/api/aims_rag_api/rag_search.py` - URL 변경
+- `/etc/nginx/sites-enabled/n8n` (서버) - 접근 제한 설정
+
+### 참고 문서
+- [N8N_WEBHOOK_SECURITY.md](./N8N_WEBHOOK_SECURITY.md) - 상세 분석 및 권장안

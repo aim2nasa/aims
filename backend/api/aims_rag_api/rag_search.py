@@ -53,7 +53,8 @@ class UnifiedSearchResponse(BaseModel):
     answer: Optional[str] = None
     search_results: List[Dict[str, Any]]
 
-SMARTSEARCH_API_URL = "https://n8nd.giize.com/webhook/smartsearch"
+# 보안: 내부망에서만 n8n 접근 (host 네트워크 모드로 localhost 직접 접근)
+SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
 # 💡 T11 변경 사항 끝
 
 # 1. 쿼리 임베딩 함수 (이전 단계와 동일)
