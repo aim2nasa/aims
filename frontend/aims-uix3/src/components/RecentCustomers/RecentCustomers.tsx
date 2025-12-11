@@ -48,7 +48,7 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick }: RecentCust
             weight={SFSymbolWeight.MEDIUM}
           />
         </span>
-        <span className="recent-customers__title">최근 검색</span>
+        <span className="recent-customers__title">최근 검색 고객</span>
       </div>
 
       {/* 고객 리스트 */}
