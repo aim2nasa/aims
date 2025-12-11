@@ -117,6 +117,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const customerContextMenu = useContextMenu();
     const [contextMenuCustomer, setContextMenuCustomer] = useState<Customer | null>(null);
 
+    // 🍎 도움말 모달
+    const [helpModalVisible, setHelpModalVisible] = useState(false);
+
     // 🍎 고객 컨텍스트 메뉴 핸들러
     const handleCustomerContextMenu = useCallback((customer: Customer, event: React.MouseEvent) => {
       setContextMenuCustomer(customer);
@@ -1250,11 +1253,58 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           onClose={customerContextMenu.close}
           showHelp
           helpContext="customers"
-          onHelpClick={(context) => {
-            // TODO: Help 시스템 연동
-            console.log('Help requested for:', context);
-          }}
+          onHelpClick={() => setHelpModalVisible(true)}
         />
+
+        {/* 🍎 도움말 모달 */}
+        <Modal
+          visible={helpModalVisible}
+          onClose={() => setHelpModalVisible(false)}
+          title="👤 고객 전체보기 사용법"
+          size="md"
+        >
+          <div className="help-modal-content">
+            <div className="help-modal-section">
+              <p><strong>🔍 고객 검색하기</strong></p>
+              <ul>
+                <li>검색창에 <strong>"홍길동"</strong> → 이름에 "홍길동" 포함된 고객</li>
+                <li><strong>"010-1234"</strong> → 전화번호로 검색</li>
+                <li><strong>"ㅎㄱㄷ"</strong> → 한글 초성으로도 검색 가능! (홍길동 찾기)</li>
+              </ul>
+            </div>
+            <div className="help-modal-section">
+              <p><strong>🏷️ 활성/휴면 고객 필터</strong></p>
+              <ul>
+                <li><strong>"활성"</strong> 필터: 현재 관리 중인 고객만 표시</li>
+                <li><strong>"휴면"</strong> 필터: 휴면 처리된 고객만 표시</li>
+                <li><strong>"전체"</strong>: 모든 고객 표시</li>
+              </ul>
+            </div>
+            <div className="help-modal-section">
+              <p><strong>📋 고객 정보 확인</strong></p>
+              <ul>
+                <li>고객 행 <strong>클릭</strong> → 오른쪽에 기본 정보, 연락처 표시</li>
+                <li>고객 행 <strong>더블클릭</strong> → 전체 화면에서 문서, 계약, 가족관계 모두 확인</li>
+              </ul>
+            </div>
+            <div className="help-modal-section">
+              <p><strong>📞 고객에게 연락하기</strong></p>
+              <ul>
+                <li>고객 행에서 <strong>마우스 우클릭</strong></li>
+                <li><strong>"전화하기"</strong> → 바로 전화 연결</li>
+                <li><strong>"문자 보내기"</strong> → 문자 앱 열기</li>
+              </ul>
+            </div>
+            <div className="help-modal-section">
+              <p><strong>😴 휴면 처리하기</strong></p>
+              <ul>
+                <li>연락이 뜸한 고객 → 우클릭 → <strong>"휴면 처리"</strong></li>
+                <li>목록에서 숨겨지고 "휴면" 필터에서만 표시</li>
+                <li>나중에 다시 "휴면 해제"로 복원 가능</li>
+              </ul>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }

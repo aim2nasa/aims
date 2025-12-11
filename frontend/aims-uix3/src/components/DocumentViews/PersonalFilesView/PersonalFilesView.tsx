@@ -182,6 +182,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 컨텍스트 메뉴 상태
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
+
+  // 🍎 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false)
   const [selectedItem, setSelectedItem] = useState<PersonalFileItem | null>(null)
 
   // 이름 변경 모달 상태
@@ -1751,6 +1754,23 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
             {/* 검색 및 뷰 모드 */}
             <div className="toolbar-actions">
+              {/* 🍎 도움말 버튼 */}
+              <Tooltip content="도움말">
+                <button
+                  type="button"
+                  className="help-icon-button"
+                  onClick={() => setHelpModalVisible(true)}
+                  aria-label="도움말"
+                >
+                  <SFSymbol
+                    name="questionmark.circle"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+
               {/* 파일 업로드 */}
               <input
                 ref={fileInputRef}
@@ -2691,6 +2711,46 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         })}
         onLink={async () => undefined}
       />
+
+      {/* 🍎 도움말 모달 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title="📁 내 보관함"
+        size="sm"
+      >
+        <div className="help-modal-content">
+          <p><strong>이 화면에서 할 수 있는 일</strong></p>
+          <ul>
+            <li>개인 폴더를 만들어 문서를 정리</li>
+            <li>파일을 직접 업로드하여 보관</li>
+            <li>문서 라이브러리 파일을 폴더로 이동</li>
+          </ul>
+          <div className="help-modal-section">
+            <p><strong>폴더 관리</strong></p>
+            <ul>
+              <li><strong>새 폴더</strong>: 상단 도구 모음에서 생성</li>
+              <li><strong>폴더 이동</strong>: 우클릭 → "이동" 메뉴</li>
+              <li><strong>이름 변경</strong>: 우클릭 → "이름 변경"</li>
+            </ul>
+          </div>
+          <div className="help-modal-section">
+            <p><strong>파일 관리</strong></p>
+            <ul>
+              <li><strong>업로드</strong>: 상단 "업로드" 버튼 또는 드래그 앤 드롭</li>
+              <li><strong>다운로드</strong>: 파일 우클릭 → "다운로드"</li>
+              <li><strong>미리보기</strong>: 파일 클릭 또는 우클릭 → "미리보기"</li>
+            </ul>
+          </div>
+          <div className="help-modal-section">
+            <p><strong>팁</strong></p>
+            <ul>
+              <li>문서 라이브러리에서 가져온 파일은 원본과 동기화됩니다</li>
+              <li>폴더 구조로 계약서, 청구서 등을 체계적으로 분류하세요</li>
+            </ul>
+          </div>
+        </div>
+      </Modal>
     </CenterPaneView>
 
     {/* Apple Confirm Modal */}

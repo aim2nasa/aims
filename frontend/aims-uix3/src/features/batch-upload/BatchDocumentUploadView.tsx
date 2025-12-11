@@ -13,6 +13,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
+import { Modal, Tooltip } from '@/shared/ui'
 import FolderDropZone from './components/FolderDropZone'
 import MappingPreview from './components/MappingPreview'
 import UploadProgress from './components/UploadProgress'
@@ -140,6 +141,9 @@ export default function BatchDocumentUploadView({
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const isInitializedRef = useRef(false)
+
+  // 🍎 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false)
 
   // 업로드 훅
   const {
@@ -386,6 +390,25 @@ export default function BatchDocumentUploadView({
       placeholderIcon="archivebox"
       placeholderMessage="폴더별로 정리된 문서를 고객에게 일괄 등록합니다."
     >
+      {/* 🍎 도움말 버튼 */}
+      <div className="batch-upload-header">
+        <Tooltip content="도움말">
+          <button
+            type="button"
+            className="help-icon-button"
+            onClick={() => setHelpModalVisible(true)}
+            aria-label="도움말"
+          >
+            <SFSymbol
+              name="questionmark.circle"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+          </button>
+        </Tooltip>
+      </div>
+
       {renderContent()}
 
       {/* 중복 파일 다이얼로그 */}
@@ -397,6 +420,49 @@ export default function BatchDocumentUploadView({
           remainingCount={remainingDuplicates}
         />
       )}
+
+      {/* 🍎 도움말 모달 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title="📦 문서 일괄등록 사용법"
+        size="md"
+      >
+        <div className="help-modal-content">
+          <div className="help-modal-section">
+            <p><strong>📂 폴더 준비</strong></p>
+            <ul>
+              <li>폴더명 = <strong>고객 이름</strong>으로 설정</li>
+              <li>예: "홍길동" 폴더 → 홍길동 고객에게 <strong>자동 연결</strong></li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>🔄 업로드 순서</strong></p>
+            <ul>
+              <li><strong>1</strong>: 폴더 드래그 또는 선택</li>
+              <li><strong>2</strong>: 폴더명-고객명 매칭 확인</li>
+              <li><strong>3</strong>: "업로드 시작" 클릭</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>⚠️ 매칭 실패 시</strong></p>
+            <ul>
+              <li><strong>✗ 표시</strong> 폴더: 드롭다운에서 고객 수동 선택</li>
+              <li>또는 폴더명을 고객명과 일치하게 수정</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>💡 팁</strong></p>
+            <ul>
+              <li>중복 파일: <strong>덮어쓰기/건너뛰기</strong> 선택</li>
+              <li>업로드 중 <strong>일시정지/재개</strong> 가능</li>
+            </ul>
+          </div>
+        </div>
+      </Modal>
     </CenterPaneView>
   )
 }

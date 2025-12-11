@@ -12,7 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { Dropdown, Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, Modal } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
@@ -138,6 +138,9 @@ const DocumentLibraryContent: React.FC<{
   // 🍎 문서 컨텍스트 메뉴
   const documentContextMenu = useContextMenu()
   const [contextMenuDocument, setContextMenuDocument] = React.useState<Document | null>(null)
+
+  // 🍎 도움말 모달
+  const [helpModalVisible, setHelpModalVisible] = React.useState(false)
 
   // 🍎 문서 컨텍스트 메뉴 핸들러
   const handleDocumentContextMenu = React.useCallback((document: Document, event: React.MouseEvent) => {
@@ -699,11 +702,41 @@ const DocumentLibraryContent: React.FC<{
         onClose={documentContextMenu.close}
         showHelp
         helpContext="documents"
-        onHelpClick={(context) => {
-          // TODO: Help 시스템 연동
-          console.log('Help requested for:', context)
-        }}
+        onHelpClick={() => setHelpModalVisible(true)}
       />
+
+      {/* 🍎 문서 보관함 도움말 모달 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title="📄 문서 보관함 사용법"
+        size="md"
+      >
+        <div className="help-modal-content">
+          <div className="help-modal-section">
+            <p><strong>🔍 문서 찾기</strong></p>
+            <ul>
+              <li><strong>"홍길동"</strong> 검색 → 해당 고객의 문서만 표시</li>
+              <li><strong>"계약서"</strong> 검색 → 파일명에 포함된 문서</li>
+              <li>필터로 <strong>처리 상태별</strong> 분류 가능</li>
+            </ul>
+          </div>
+          <div className="help-modal-section">
+            <p><strong>👁️ 문서 미리보기</strong></p>
+            <ul>
+              <li>문서 <strong>클릭</strong> → 오른쪽에 미리보기</li>
+              <li>문서 <strong>우클릭</strong> → AI 요약, 다운로드 메뉴</li>
+            </ul>
+          </div>
+          <div className="help-modal-section">
+            <p><strong>📎 고객 연결 안내</strong></p>
+            <ul>
+              <li>문서-고객 연결은 <strong>등록 시 자동 처리</strong>됩니다</li>
+              <li>새 문서 등록 메뉴에서 고객 선택 후 업로드</li>
+            </ul>
+          </div>
+        </div>
+      </Modal>
     </>
   )
 }

@@ -57,6 +57,7 @@ import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
 import { API_CONFIG, getAuthHeaders } from './shared/lib/api'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
+import { Modal } from './shared/ui'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -825,6 +826,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 🍎 전역 컨텍스트 메뉴
   const globalContextMenu = useContextMenu()
 
+  // 🍎 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false)
+
   // 기본 컨텍스트 메뉴 섹션
   const defaultContextMenuSections: ContextMenuSection[] = useMemo(() => [
     {
@@ -881,9 +885,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           ),
           shortcut: '⌘+K',
           onClick: () => {
-            // 검색창에 포커스
-            const searchInput = document.querySelector<HTMLInputElement>('.header-quick-search input')
-            searchInput?.focus()
+            // 메뉴 닫힌 후 검색창에 포커스
+            setTimeout(() => {
+              const searchInput = document.querySelector<HTMLInputElement>('.quick-search__input')
+              searchInput?.focus()
+            }, 100)
           }
         },
         {
@@ -1669,11 +1675,345 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onClose={globalContextMenu.close}
         showHelp
         helpContext="general"
-        onHelpClick={(context) => {
-          // TODO: Help 시스템 연동
-          console.log('Help requested for:', context)
-        }}
+        onHelpClick={() => setHelpModalVisible(true)}
       />
+
+      {/* 🍎 도움말 모달 - activeDocumentView에 따라 맥락별 도움말 표시 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title={
+          activeDocumentView === 'customers-regional' ? '📍 지역별 고객 보기 사용법' :
+          activeDocumentView === 'customers-relationship' ? '💕 관계별 고객 보기 사용법' :
+          activeDocumentView === 'customers-all' ? '👤 고객 전체보기 사용법' :
+          activeDocumentView === 'contracts-all' ? '📋 전체 계약 보기 사용법' :
+          activeDocumentView === 'contracts-import' ? '📥 고객·계약 일괄등록 사용법' :
+          activeDocumentView === 'documents-library' ? '📄 문서 보관함 사용법' :
+          activeDocumentView === 'documents-search' ? '🔍 상세 문서검색 사용법' :
+          activeDocumentView === 'documents-register' ? '📄 새 문서 등록 사용법' :
+          activeDocumentView === 'batch-document-upload' ? '📦 문서 일괄등록 사용법' :
+          activeDocumentView === 'documents-my-files' ? '📁 내 보관함 사용법' :
+          '🚀 AIMS 시작하기'
+        }
+        size="md"
+      >
+        <div className="help-modal-content">
+          {/* 지역별 고객 보기 */}
+          {activeDocumentView === 'customers-regional' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>🗺️ 지역으로 고객 찾기</strong></p>
+                <ul>
+                  <li>왼쪽 트리에서 <strong>"서울"</strong> 클릭 → 서울에 사는 고객만 표시</li>
+                  <li><strong>시/도 → 시/군/구</strong> 순으로 펼쳐서 세부 지역 선택</li>
+                  <li>지역명 옆 숫자는 해당 지역의 <strong>고객 수</strong></li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📋 고객 목록 활용</strong></p>
+                <ul>
+                  <li>지역 선택 후 오른쪽에 <strong>고객 목록</strong> 표시</li>
+                  <li>고객 이름 클릭 → <strong>상세 정보</strong> 패널 열기</li>
+                  <li>전화/문자 아이콘으로 <strong>바로 연락</strong> 가능</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li>주소 미등록 고객은 <strong>"기타"</strong> 항목에 표시</li>
+                  <li>지역별 고객 분포 파악 → <strong>방문 계획</strong> 수립</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 관계별 고객 보기 */}
+          {activeDocumentView === 'customers-relationship' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>👨‍👩‍👧‍👦 가족 관계 보기</strong></p>
+                <ul>
+                  <li><strong>가족 폴더</strong> 클릭 → 가족 그룹 목록 표시</li>
+                  <li><strong>👑 표시</strong>는 가족 대표 (계약 관리 담당자)</li>
+                  <li>🔗 아이콘 클릭 → <strong>가족 간 관계</strong> (배우자, 자녀 등) 표시</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>🏢 법인 관계 보기</strong></p>
+                <ul>
+                  <li><strong>법인 폴더</strong> 클릭 → 법인 고객 목록 표시</li>
+                  <li>직원 이름 옆 괄호 안에 <strong>직책</strong> 표시 (대표, 임원, 직원)</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li>미설정 고객 클릭 → <strong>빠른 등록 패널</strong>에서 바로 관계 설정</li>
+                  <li>가족 단위 보험 설계 시 → <strong>가족 그룹</strong>에서 한 번에 확인</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 고객 전체보기 */}
+          {activeDocumentView === 'customers-all' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>🔍 고객 검색하기</strong></p>
+                <ul>
+                  <li>검색창에 <strong>"홍길동"</strong> → 이름에 "홍길동" 포함된 고객</li>
+                  <li><strong>"ㅎㄱㄷ"</strong> → 한글 초성으로도 검색 가능!</li>
+                  <li><strong>"010-1234"</strong> → 전화번호로 검색</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📋 고객 정보 확인</strong></p>
+                <ul>
+                  <li>고객 행 <strong>클릭</strong> → 오른쪽에 기본 정보 표시</li>
+                  <li>고객 행 <strong>더블클릭</strong> → 전체 화면에서 문서, 계약 모두 확인</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li>고객 행 <strong>우클릭</strong> → 전화하기, 문자 보내기 바로 가능</li>
+                  <li><strong>"휴면"</strong> 필터로 휴면 고객만 따로 확인</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 전체 계약 보기 */}
+          {activeDocumentView === 'contracts-all' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>🔍 계약 검색하기</strong></p>
+                <ul>
+                  <li>검색창에 <strong>"홍길동"</strong> 입력 → 홍길동 고객의 계약만 표시</li>
+                  <li><strong>"종신보험"</strong> 입력 → 상품명으로 검색</li>
+                  <li><strong>"1234567890"</strong> 입력 → 증권번호로 검색</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📊 정렬하기</strong></p>
+                <ul>
+                  <li>칼럼 헤더 클릭 → <strong>오름차순/내림차순</strong> 정렬 변경</li>
+                  <li><strong>"계약일"</strong> 클릭 → 최신순/오래된순 정렬</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li><strong>고객명 클릭</strong> → 오른쪽에 고객 상세 정보 표시</li>
+                  <li>새 계약 등록은 <strong>"고객·계약 일괄등록"</strong> 메뉴에서</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 고객·계약 일괄등록 */}
+          {activeDocumentView === 'contracts-import' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>📥 엑셀 파일 업로드</strong></p>
+                <ul>
+                  <li>엑셀 파일을 <strong>드래그</strong>하거나 "파일 선택" 클릭</li>
+                  <li>엑셀 양식 다운로드 → 형식에 맞게 데이터 입력</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📋 필수 칼럼</strong></p>
+                <ul>
+                  <li><strong>고객명</strong>: 계약자 이름 (필수)</li>
+                  <li><strong>상품명</strong>: 보험 상품명</li>
+                  <li><strong>증권번호</strong>: 10자리 숫자</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li>기존 고객에 계약 추가 시 <strong>고객명 정확히</strong> 입력</li>
+                  <li>신규 고객은 자동으로 생성됩니다</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 문서 보관함 */}
+          {activeDocumentView === 'documents-library' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>🔍 문서 찾기</strong></p>
+                <ul>
+                  <li><strong>"홍길동"</strong> 검색 → 해당 고객의 문서만 표시</li>
+                  <li><strong>"계약서"</strong> 검색 → 파일명에 포함된 문서만</li>
+                  <li>필터로 <strong>처리 상태별</strong> 문서 분류</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>👁️ 문서 미리보기</strong></p>
+                <ul>
+                  <li>문서 <strong>클릭</strong> → 오른쪽에 미리보기 표시</li>
+                  <li>문서 <strong>우클릭</strong> → AI 요약, 다운로드 메뉴</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📎 고객 연결 방식</strong></p>
+                <ul>
+                  <li>문서 등록 시 <strong>고객 선택 → 자동 연결</strong></li>
+                  <li>문서-고객 연결은 <strong>등록 시점에 자동 처리</strong>됩니다</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 상세 문서검색 */}
+          {activeDocumentView === 'documents-search' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>🔍 검색 조건 설정</strong></p>
+                <ul>
+                  <li><strong>고객 선택</strong>: 특정 고객의 문서만 검색</li>
+                  <li><strong>키워드</strong>: 파일명, AI 요약에서 검색</li>
+                  <li><strong>기간 설정</strong>: 등록일 범위 지정</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📋 검색 결과</strong></p>
+                <ul>
+                  <li>문서 클릭 → 오른쪽에 <strong>상세 정보</strong></li>
+                  <li>AI가 분석한 <strong>요약</strong>도 검색 대상</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 새 문서 등록 */}
+          {activeDocumentView === 'documents-register' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>📋 등록 방법</strong></p>
+                <ul>
+                  <li><strong>1단계</strong>: 고객을 먼저 선택</li>
+                  <li><strong>2단계</strong>: 파일을 드래그하거나 클릭해서 업로드</li>
+                  <li>문서는 선택한 고객에게 <strong>자동 연결</strong>됩니다</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📎 지원 형식</strong></p>
+                <ul>
+                  <li><strong>문서</strong>: PDF, DOCX, XLSX, HWP</li>
+                  <li><strong>이미지</strong>: JPG, PNG</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>🤖 AR 자동 분석</strong></p>
+                <ul>
+                  <li>보험 연간보고서(AR) PDF는 AI가 자동 분석</li>
+                  <li>고객명 감지 시 해당 고객에게 자동 연결</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 문서 일괄등록 */}
+          {activeDocumentView === 'batch-document-upload' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>📂 폴더 준비</strong></p>
+                <ul>
+                  <li>폴더명 = <strong>고객 이름</strong>으로 설정</li>
+                  <li>예: "홍길동" 폴더 → 홍길동 고객에게 <strong>자동 연결</strong></li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>🔄 업로드 순서</strong></p>
+                <ul>
+                  <li><strong>1</strong>: 폴더 드래그 또는 선택</li>
+                  <li><strong>2</strong>: 폴더명-고객명 매칭 확인</li>
+                  <li><strong>3</strong>: "업로드 시작" 클릭</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>⚠️ 매칭 실패 시</strong></p>
+                <ul>
+                  <li><strong>✗ 표시</strong> 폴더: 드롭다운에서 고객 수동 선택</li>
+                  <li>또는 폴더명을 고객명과 일치하게 수정</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 내 보관함 */}
+          {activeDocumentView === 'documents-my-files' && (
+            <>
+              <div className="help-modal-section">
+                <p><strong>📁 폴더 관리</strong></p>
+                <ul>
+                  <li><strong>새 폴더</strong> 버튼으로 폴더 생성</li>
+                  <li>폴더 <strong>우클릭</strong> → 이름 변경, 삭제</li>
+                  <li>폴더끼리 <strong>드래그</strong>로 이동</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>📄 파일 관리</strong></p>
+                <ul>
+                  <li>파일을 폴더로 <strong>드래그</strong>해서 정리</li>
+                  <li>파일 <strong>우클릭</strong> → 미리보기, 다운로드, 삭제</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>💡 팁</strong></p>
+                <ul>
+                  <li>개인 작업 공간으로 자유롭게 문서 정리</li>
+                  <li>고객에게 연결되지 않은 개인 파일 보관용</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* 기본 도움말 (AIMS 시작하기) */}
+          {!activeDocumentView || ![
+            'customers-regional', 'customers-relationship', 'customers-all',
+            'contracts-all', 'contracts-import',
+            'documents-library', 'documents-search', 'documents-register',
+            'batch-document-upload', 'documents-my-files'
+          ].includes(activeDocumentView) && (
+            <>
+              <p><strong>AIMS는 보험 설계사를 위한 지능형 문서 관리 시스템입니다.</strong></p>
+              <div className="help-modal-section">
+                <p><strong>문서 관리</strong></p>
+                <ul>
+                  <li><strong>문서 등록</strong>: 보험 문서 업로드 → AI가 고객명, 계약정보 자동 추출</li>
+                  <li><strong>문서 보관함</strong>: 모든 업로드된 문서 확인 및 고객 연결</li>
+                  <li><strong>내 보관함</strong>: 개인 폴더로 문서 정리</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>고객 관리</strong></p>
+                <ul>
+                  <li><strong>고객 등록</strong>: 신규 고객 정보 입력</li>
+                  <li><strong>고객 전체보기</strong>: 등록된 모든 고객 확인 및 상세 정보 조회</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>계약 관리</strong></p>
+                <ul>
+                  <li><strong>고객·계약 일괄등록</strong>: 엑셀로 계약 정보 일괄 업로드</li>
+                  <li><strong>전체 계약 보기</strong>: 모든 계약 현황 확인</li>
+                </ul>
+              </div>
+              <div className="help-modal-section">
+                <p><strong>팁</strong></p>
+                <ul>
+                  <li>각 화면에서 우클릭하면 빠른 작업 메뉴가 나타납니다</li>
+                  <li>상단 검색창으로 문서, 고객을 빠르게 찾을 수 있습니다</li>
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
 
     </div>
   )

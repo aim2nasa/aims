@@ -1219,3 +1219,118 @@
 html[data-theme='dark'] .focus-ring:focus-visible {
   box-shadow: 0 0 0 3px var(--color-ios-blue-dark);
 }
+
+/* === HELP MODAL === */
+/* 🍎 Apple 스타일 도움말 모달 */
+
+.help-modal-content {
+  line-height: 1.7;
+  font-size: var(--font-size-footnote, 13px);
+  color: var(--color-text-primary);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: var(--spacing-2);
+}
+
+.help-modal-content p {
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.help-modal-content ul {
+  padding-left: 0;
+  margin: var(--spacing-1) 0 0 0;
+  list-style-type: none;
+}
+
+.help-modal-content li {
+  margin-bottom: var(--spacing-1);
+  color: var(--color-text-secondary);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.6;
+}
+
+.help-modal-content li::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  color: var(--color-text-tertiary);
+}
+
+.help-modal-content strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+/* 섹션 카드 스타일 */
+.help-modal-section {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.help-modal-section:first-child {
+  margin-top: 0;
+}
+
+/* 섹션 제목 */
+.help-modal-section > p:first-child {
+  font-size: var(--font-size-subheadline, 14px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* 다크 테마 */
+html[data-theme='dark'] .help-modal-section {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+}
+
+/* 스크롤바 스타일 */
+.help-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.help-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.help-modal-content::-webkit-scrollbar-thumb {
+  background: var(--color-text-quaternary);
+  border-radius: 3px;
+}
+
+.help-modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* 도움말 아이콘 버튼 */
+.help-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--duration-fast, 0.15s) var(--easing-ease-out, ease-out);
+  margin-left: var(--spacing-2, 8px);
+}
+
+.help-icon-button:hover {
+  background: var(--color-bg-active);
+  color: var(--color-primary);
+}
+
+.help-icon-button:active {
+  transform: scale(0.95);
+}

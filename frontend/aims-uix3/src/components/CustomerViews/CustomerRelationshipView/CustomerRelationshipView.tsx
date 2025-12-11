@@ -14,6 +14,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import Tooltip from '@/shared/ui/Tooltip';
 import Button from '@/shared/ui/Button';
+import { Modal } from '@/shared/ui';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
@@ -99,6 +100,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   // 빠른 구성원 등록 패널용 상태 (법인)
   const [selectedUnassignedCorporate, setSelectedUnassignedCorporate] = useState<Customer | null>(null);
+
+  // 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
 
   // LocalStorage에서 트리 확장 상태 복원
   // 기본 viewMode가 'representative'이므로 'no-family-relationship'은 닫힌 상태
@@ -834,6 +838,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const hasNoData = familyGroupsByConsonant.size === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0;
 
   return (
+    <>
     <CenterPaneView
       visible={visible}
       title="관계별 고객 보기"
@@ -844,6 +849,18 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       marginLeft={7}
       marginRight={7}
       className="customer-relationship-view"
+      titleAccessory={
+        <Tooltip content="도움말">
+          <button
+            type="button"
+            className="help-icon-button"
+            onClick={() => setHelpModalVisible(true)}
+            aria-label="도움말"
+          >
+            <SFSymbol name="questionmark.circle" size={SFSymbolSize.BODY} weight={SFSymbolWeight.REGULAR} />
+          </button>
+        </Tooltip>
+      }
     >
       {hasNoData ? (
         <div className="relationship-empty">
@@ -1365,6 +1382,50 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         </div>
       )}
     </CenterPaneView>
+
+    {/* 도움말 모달 */}
+    <Modal
+      visible={helpModalVisible}
+      onClose={() => setHelpModalVisible(false)}
+      title="💕 관계별 고객 보기 사용법"
+      size="md"
+    >
+      <div className="help-modal-content">
+        <div className="help-modal-section">
+          <p><strong>👨‍👩‍👧‍👦 가족 관계</strong></p>
+          <ul>
+            <li>가족 폴더 클릭 → 가족 그룹 표시</li>
+            <li><strong>👑 표시</strong> = 가족 대표</li>
+            <li>이름 클릭 → <strong>상세 정보</strong></li>
+          </ul>
+        </div>
+
+        <div className="help-modal-section">
+          <p><strong>🏢 법인 관계</strong></p>
+          <ul>
+            <li>법인 폴더 클릭 → 소속 <strong>직원/임원</strong> 표시</li>
+            <li>괄호 안에 <strong>직책</strong> (대표, 임원, 직원)</li>
+          </ul>
+        </div>
+
+        <div className="help-modal-section">
+          <p><strong>⚠️ 미설정 고객</strong></p>
+          <ul>
+            <li>가족/법인 관계가 없는 고객 목록</li>
+            <li>클릭 → <strong>빠른 등록 패널</strong>에서 관계 설정</li>
+          </ul>
+        </div>
+
+        <div className="help-modal-section">
+          <p><strong>💡 활용</strong></p>
+          <ul>
+            <li>가족 보험 설계 → <strong>가족 그룹</strong>에서 확인</li>
+            <li>법인 단체보험 → <strong>법인 폴더</strong>에서 파악</li>
+          </ul>
+        </div>
+      </div>
+    </Modal>
+    </>
   );
 };
 

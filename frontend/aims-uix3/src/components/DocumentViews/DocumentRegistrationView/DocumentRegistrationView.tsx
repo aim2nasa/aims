@@ -12,6 +12,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
 import ProcessingLog from './ProcessingLog/ProcessingLog'
+import { Modal, Tooltip } from '@/shared/ui'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
@@ -60,6 +61,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
+
+  // 🍎 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false)
 
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
@@ -1033,6 +1037,18 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       className="document-registration-view"
       placeholderIcon="doc.badge.plus"
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
+      titleAccessory={
+        <Tooltip content="도움말">
+          <button
+            type="button"
+            className="help-icon-button"
+            onClick={() => setHelpModalVisible(true)}
+            aria-label="도움말"
+          >
+            <SFSymbol name="questionmark.circle" size={SFSymbolSize.BODY} weight={SFSymbolWeight.REGULAR} />
+          </button>
+        </Tooltip>
+      }
     >
       <div className="document-registration-content">
         {/* 🍎 등록 방법 안내 (접기/펼치기 가능) */}
@@ -1129,6 +1145,49 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         )}
 
       </div>
+
+      {/* 🍎 도움말 모달 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title="📄 새 문서 등록 사용법"
+        size="md"
+      >
+        <div className="help-modal-content">
+          <div className="help-modal-section">
+            <p><strong>📋 등록 방법</strong></p>
+            <ul>
+              <li><strong>1단계</strong>: 고객을 먼저 선택</li>
+              <li><strong>2단계</strong>: 파일 드래그 또는 클릭</li>
+              <li>문서는 선택한 고객에게 <strong>자동 연결</strong>됩니다</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>📎 지원 형식</strong></p>
+            <ul>
+              <li><strong>문서</strong>: PDF, DOCX, XLSX, HWP</li>
+              <li><strong>이미지</strong>: JPG, PNG</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>🤖 AR 자동 분석</strong></p>
+            <ul>
+              <li>보험 연간보고서(AR) PDF → AI가 자동 분석</li>
+              <li>고객명 감지 시 해당 고객에게 자동 연결</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>💡 팁</strong></p>
+            <ul>
+              <li>여러 파일 동시 업로드 가능</li>
+              <li>대량 등록은 <strong>"문서 일괄등록"</strong> 활용</li>
+            </ul>
+          </div>
+        </div>
+      </Modal>
     </CenterPaneView>
   )
 }

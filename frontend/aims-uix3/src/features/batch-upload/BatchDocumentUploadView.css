@@ -3,6 +3,12 @@
  * @since 2025-12-05
  */
 
+.batch-upload-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-xs) var(--spacing-md) 0;
+}
+
 .batch-upload-content {
   display: flex;
   flex-direction: column;

@@ -99,6 +99,9 @@ export default function ContractAllView({
     totalCount: number
   }>({ isOpen: false, totalCount: 0 })
 
+  // 🍎 도움말 모달 상태
+  const [helpModalVisible, setHelpModalVisible] = useState(false)
+
   // 미등록 고객 알림 모달 상태
   const [notRegisteredModal, setNotRegisteredModal] = useState<{
     isOpen: boolean
@@ -613,6 +616,23 @@ export default function ContractAllView({
                 <span className="search-result-info"> (전체 {contracts.length}건 중)</span>
               )}
 
+              {/* 🍎 도움말 버튼 */}
+              <Tooltip content="도움말">
+                <button
+                  type="button"
+                  className="help-icon-button"
+                  onClick={() => setHelpModalVisible(true)}
+                  aria-label="도움말"
+                >
+                  <SFSymbol
+                    name="questionmark.circle"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+
               {/* 삭제 모드일 때 선택 수 및 삭제 버튼 */}
               {isDeleteMode && (
                 <>
@@ -982,6 +1002,49 @@ export default function ContractAllView({
             >
               확인
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 🍎 도움말 모달 */}
+      <Modal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+        title="📋 전체 계약 보기 사용법"
+        size="md"
+      >
+        <div className="help-modal-content">
+          <div className="help-modal-section">
+            <p><strong>🔍 계약 검색</strong></p>
+            <ul>
+              <li><strong>"홍길동"</strong> → 해당 고객의 계약만</li>
+              <li><strong>"종신보험"</strong> → 상품명으로 검색</li>
+              <li><strong>증권번호</strong>로도 검색 가능</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>👤 고객 정보</strong></p>
+            <ul>
+              <li>고객명 <strong>클릭</strong> → 오른쪽에 상세 정보</li>
+              <li>고객명 <strong>더블클릭</strong> → 전체 정보 화면</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>📊 정렬/필터</strong></p>
+            <ul>
+              <li>칼럼 헤더 클릭 → 오름차순/내림차순</li>
+              <li>계약일, 보험료 등으로 정렬</li>
+            </ul>
+          </div>
+
+          <div className="help-modal-section">
+            <p><strong>💡 팁</strong></p>
+            <ul>
+              <li>새 계약: <strong>"고객·계약 일괄등록"</strong>에서 엑셀 업로드</li>
+              <li>기존 고객에 추가 시 <strong>고객명 정확히</strong> 입력</li>
+            </ul>
           </div>
         </div>
       </Modal>
