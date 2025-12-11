@@ -659,34 +659,104 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   /**
    * 🍎 특정 매칭 인덱스의 스니펫 추출 (검색어 위치 탐색용)
-   * matchIdx번째 매칭 위치 주변 텍스트를 반환
+   * matchIdx번째 매칭 위치 주변 텍스트와 현재 키워드의 스니펫 내 위치를 반환
    */
-  const getTextSnippetAtIndex = useCallback((item: SearchResultItem, matchIdx: number): string => {
+  const getTextSnippetAtIndex = useCallback((item: SearchResultItem, matchIdx: number): {
+    snippet: string
+    currentKeywordOffset: number  // 스니펫 내에서 현재 키워드의 시작 위치
+    currentKeywordLength: number  // 현재 키워드의 길이
+  } => {
     const fullText = (item as any).ocr?.full_text ||
                      (item as any).meta?.full_text ||
                      (item as any).text?.full_text ||
                      ''
 
-    if (!fullText) return '텍스트를 찾을 수 없습니다.'
+    if (!fullText) return { snippet: '텍스트를 찾을 수 없습니다.', currentKeywordOffset: -1, currentKeywordLength: 0 }
 
     const matches = getAllKeywordMatches(item)
     if (matches.length === 0 || matchIdx >= matches.length) {
-      return fullText.substring(0, 300) + '...'
+      return { snippet: fullText.substring(0, 300) + '...', currentKeywordOffset: -1, currentKeywordLength: 0 }
     }
 
     const idx = matches[matchIdx]
     const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
-    const keywordLength = keywords[0]?.length || 0
+
+    // 현재 위치에서 실제로 매칭된 키워드 찾기
+    const fullTextLower = fullText.toLowerCase()
+    let matchedKeyword = keywords[0] || ''
+    let matchedLength = matchedKeyword.length
+    for (const kw of keywords) {
+      if (fullTextLower.substring(idx, idx + kw.length).toLowerCase() === kw.toLowerCase()) {
+        matchedKeyword = fullText.substring(idx, idx + kw.length)
+        matchedLength = kw.length
+        break
+      }
+    }
 
     const start = Math.max(0, idx - 100)
-    const end = Math.min(fullText.length, idx + keywordLength + 200)
+    const end = Math.min(fullText.length, idx + matchedLength + 200)
     let snippet = fullText.substring(start, end)
 
-    if (start > 0) snippet = '...' + snippet
+    // "..." prefix 추가 여부에 따른 오프셋 계산
+    let currentKeywordOffset = idx - start
+    if (start > 0) {
+      snippet = '...' + snippet
+      currentKeywordOffset += 3  // "..." 길이
+    }
     if (end < fullText.length) snippet = snippet + '...'
 
-    return snippet
+    return { snippet, currentKeywordOffset, currentKeywordLength: matchedLength }
   }, [query, getAllKeywordMatches])
+
+  /**
+   * 🍎 현재 키워드를 특별히 강조하는 하이라이트 (검색어 위치 탐색용)
+   * 현재 보고 있는 키워드는 다른 스타일로 표시
+   */
+  const highlightKeywordsWithCurrent = useCallback((
+    text: string,
+    currentOffset: number,
+    currentLength: number
+  ): React.ReactNode => {
+    const keywords = query.trim().split(/\s+/).filter(k => k.length > 0)
+    if (keywords.length === 0) return text
+
+    // 현재 키워드 위치가 유효한 경우, 특별 처리
+    if (currentOffset >= 0 && currentLength > 0) {
+      const before = text.substring(0, currentOffset)
+      const current = text.substring(currentOffset, currentOffset + currentLength)
+      const after = text.substring(currentOffset + currentLength)
+
+      // 앞부분과 뒷부분은 일반 하이라이트, 현재 키워드는 특별 하이라이트
+      return (
+        <>
+          {highlightKeywordsNormal(before, keywords)}
+          <mark className="doc-search-highlight doc-search-highlight--current">{current}</mark>
+          {highlightKeywordsNormal(after, keywords)}
+        </>
+      )
+    }
+
+    return highlightKeywordsNormal(text, keywords)
+  }, [query])
+
+  /**
+   * 🍎 일반 키워드 하이라이트 (내부 헬퍼)
+   */
+  const highlightKeywordsNormal = (text: string, keywords: string[]): React.ReactNode => {
+    if (!text || keywords.length === 0) return text
+
+    const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi')
+    const parts = text.split(pattern)
+
+    return parts.map((part, index) => {
+      const isMatch = keywords.some(kw => part.toLowerCase() === kw.toLowerCase())
+      return isMatch ? (
+        <mark key={index} className="doc-search-highlight">{part}</mark>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    })
+  }
 
   /**
    * 🍎 키워드 하이라이트 (키워드 검색용)
@@ -1667,7 +1737,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               </div>
 
               <div className="keyword-location-text">
-                {highlightKeywords(getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex))}
+                {(() => {
+                  const { snippet, currentKeywordOffset, currentKeywordLength } = getTextSnippetAtIndex(selectedDocumentForKeywordLocation, currentIndex)
+                  return highlightKeywordsWithCurrent(snippet, currentKeywordOffset, currentKeywordLength)
+                })()}
               </div>
             </div>
           </DraggableModal>

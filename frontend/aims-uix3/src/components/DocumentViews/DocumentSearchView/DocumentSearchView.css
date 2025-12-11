@@ -2368,3 +2368,27 @@ html[data-theme="dark"] .doc-search-highlight {
   color: #0a0a0a;
   box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.5), 0 0 8px rgba(250, 204, 21, 0.3);
 }
+
+/* 🍎 현재 보고 있는 검색어 (강조) */
+.doc-search-highlight--current {
+  background: #f97316;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5), 0 0 12px rgba(249, 115, 22, 0.4);
+  animation: pulse-highlight 1.5s ease-in-out infinite;
+}
+
+html[data-theme="dark"] .doc-search-highlight--current {
+  background: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.6), 0 0 16px rgba(234, 88, 12, 0.5);
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5), 0 0 12px rgba(249, 115, 22, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.7), 0 0 20px rgba(249, 115, 22, 0.6);
+  }
+}
