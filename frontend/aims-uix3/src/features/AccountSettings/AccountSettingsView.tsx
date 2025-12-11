@@ -993,6 +993,116 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
               </div>
             </section>
 
+            {/* OCR 사용량 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">OCR 사용량</h3>
+              <div className="storage-card">
+              {storageLoading ? (
+                <div className="storage-card__loading">
+                  <div className="storage-card__loading-spinner" />
+                  <span>OCR 정보를 불러오는 중...</span>
+                </div>
+              ) : storageInfo ? (
+                <>
+                  {/* OCR 권한 상태 */}
+                  <div className="storage-card__header">
+                    <div className="storage-card__tier">
+                      <div
+                        className="storage-card__tier-icon"
+                        style={{ background: storageInfo.has_ocr_permission ? 'var(--color-accent-green)' : 'var(--color-text-tertiary)' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
+                          <path d="M8 2C4.7 2 2 4.7 2 8s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 10c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z"/>
+                          <path d="M8 5c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3zm0 4c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1z"/>
+                        </svg>
+                      </div>
+                      <div className="storage-card__tier-info">
+                        <span className="storage-card__tier-label">OCR 권한</span>
+                        <span
+                          className="storage-card__tier-name"
+                          style={{ color: storageInfo.has_ocr_permission ? 'var(--color-accent-green)' : 'var(--color-text-tertiary)' }}
+                        >
+                          {storageInfo.has_ocr_permission ? '사용 가능' : '사용 불가'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="storage-card__quota">
+                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회/월`}
+                    </div>
+                  </div>
+
+                  {/* OCR 사용량 표시 (권한 상관없이 항상 표시) */}
+                  <div className="storage-card__usage">
+                    <div className="storage-card__usage-header">
+                      <span className="storage-card__usage-label">이번 달 사용</span>
+                      <span className="storage-card__usage-value">
+                        <strong>{storageInfo.ocr_used_this_month}회</strong>
+                        {!storageInfo.ocr_is_unlimited && (
+                          <span className="storage-card__usage-percent">
+                            ({Math.round((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100)}%)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* 프로그레스 바 */}
+                    {!storageInfo.ocr_is_unlimited && (
+                      <div className={`storage-card__progress ${
+                        (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.95 ? 'storage-card__progress--danger' :
+                        (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.80 ? 'storage-card__progress--warning' : ''
+                      }`}>
+                        <div
+                          className="storage-card__progress-bar"
+                          style={{ width: `${Math.min((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100, 100)}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {/* 남은 횟수 */}
+                    <div className="storage-card__remaining">
+                      {storageInfo.ocr_is_unlimited ? (
+                        <span className="storage-card__unlimited">
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-accent-green)">
+                            <path d="M8 1l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/>
+                          </svg>
+                          무제한 사용 가능
+                        </span>
+                      ) : (
+                        <>
+                          <span className="storage-card__remaining-label">남은 횟수</span>
+                          <span className={`storage-card__remaining-value ${
+                            (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.95 ? 'storage-card__remaining-value--danger' :
+                            (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.80 ? 'storage-card__remaining-value--warning' : ''
+                          }`}>
+                            {storageInfo.ocr_remaining}회
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* OCR 권한 없음 메시지 */}
+                  {!storageInfo.has_ocr_permission && (
+                    <div className="storage-card__warning storage-card__warning--gray">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3v5m0 2v1"/>
+                      </svg>
+                      <span>OCR 기능을 사용하려면 관리자에게 문의하세요.</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="storage-card__error">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4m0 4h.01"/>
+                  </svg>
+                  <span>OCR 정보를 불러올 수 없습니다</span>
+                </div>
+              )}
+              </div>
+            </section>
+
             {/* 데이터 관리 섹션 */}
             <section className="account-settings-view__section">
               <h3 className="account-settings-view__section-title">데이터 관리</h3>

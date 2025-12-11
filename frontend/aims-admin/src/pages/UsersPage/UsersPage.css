@@ -286,9 +286,18 @@
 }
 
 .ocr-cell__usage {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
+}
+
+.ocr-cell.ocr--warning .ocr-cell__usage {
+  color: #ff9500;
+}
+
+.ocr-cell.ocr--danger .ocr-cell__usage {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* OCR Toggle Button */

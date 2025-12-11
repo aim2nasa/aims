@@ -217,15 +217,17 @@ export const UsersPage = () => {
                   const ocrUsed = user.storage?.ocr_used_this_month ?? 0;
                   const ocrQuota = user.storage?.ocr_quota ?? 0;
                   const isUnlimited = ocrQuota < 0;
-                  const usageText = user.hasOcrPermission
-                    ? isUnlimited ? '무제한' : `${ocrUsed}/${ocrQuota}`
-                    : '-';
+                  const usagePercent = ocrQuota > 0 ? (ocrUsed / ocrQuota) * 100 : 0;
+                  const warningClass = usagePercent >= 95 ? 'ocr--danger' :
+                    usagePercent >= 80 ? 'ocr--warning' : '';
 
                   return (
-                    <div className="ocr-cell">
-                      {user.hasOcrPermission && (
-                        <span className="ocr-cell__usage">{usageText}</span>
-                      )}
+                    <div className={`ocr-cell ${warningClass}`}>
+                      <span className="ocr-cell__usage">
+                        {user.hasOcrPermission
+                          ? isUnlimited ? '무제한' : `${ocrUsed}/${ocrQuota}회`
+                          : '-'}
+                      </span>
                       <button
                         type="button"
                         className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}

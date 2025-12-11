@@ -110,6 +110,12 @@ export interface StorageInfo {
     used: string
     remaining: string
   }
+  // OCR 정보
+  has_ocr_permission: boolean
+  ocr_quota: number
+  ocr_used_this_month: number
+  ocr_remaining: number
+  ocr_is_unlimited: boolean
 }
 
 /**

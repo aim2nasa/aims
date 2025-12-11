@@ -4,7 +4,20 @@
  * @since 1.0.0
  */
 
+const { ObjectId } = require('mongodb');
+
 const GB = 1024 * 1024 * 1024;
+
+/**
+ * 사용자 ID를 쿼리용 형식으로 변환
+ * ObjectId 형식(24자리 hex)이면 ObjectId로, 아니면 문자열 그대로
+ */
+function toUserIdQuery(userId) {
+  if (!userId) return null;
+  const idStr = typeof userId === 'object' ? userId.toString() : userId;
+  const isObjectId = /^[a-fA-F0-9]{24}$/.test(idStr);
+  return isObjectId ? new ObjectId(idStr) : idStr;
+}
 
 // 기본 티어 정의 (DB에 없을 때 사용)
 const DEFAULT_TIER_DEFINITIONS = {
@@ -142,9 +155,10 @@ async function calculateUserStorageUsage(db, userId) {
  */
 async function getUserStorageInfo(db, userId) {
   const usersCollection = db.collection('users');
+  const userIdQuery = toUserIdQuery(userId);
   const user = await usersCollection.findOne(
-    { _id: userId },
-    { projection: { storage: 1, role: 1 } }
+    { _id: userIdQuery },
+    { projection: { storage: 1, role: 1, hasOcrPermission: 1, ocr_used_this_month: 1 } }
   );
 
   // 관리자 체크
@@ -161,6 +175,11 @@ async function getUserStorageInfo(db, userId) {
   // 실시간 사용량 계산
   const usedBytes = await calculateUserStorageUsage(db, userId);
 
+  // OCR 정보 (관리자가 수동 제어, 티어에서 할당량만 상속)
+  const ocrQuota = isAdmin ? -1 : (tierDef.ocr_quota ?? 100);
+  const hasOcrPermission = isAdmin ? true : (user?.hasOcrPermission ?? false);
+  const ocrUsedThisMonth = user?.ocr_used_this_month ?? 0;
+
   return {
     tier,
     tierName: tierDef.name,
@@ -168,7 +187,13 @@ async function getUserStorageInfo(db, userId) {
     used_bytes: usedBytes,
     remaining_bytes: quotaBytes === -1 ? -1 : Math.max(0, quotaBytes - usedBytes),
     usage_percent: quotaBytes === -1 ? 0 : Math.round((usedBytes / quotaBytes) * 100),
-    is_unlimited: quotaBytes === -1
+    is_unlimited: quotaBytes === -1,
+    // OCR 정보
+    has_ocr_permission: hasOcrPermission,
+    ocr_quota: ocrQuota,
+    ocr_used_this_month: ocrUsedThisMonth,
+    ocr_remaining: ocrQuota === -1 ? -1 : Math.max(0, ocrQuota - ocrUsedThisMonth),
+    ocr_is_unlimited: ocrQuota === -1
   };
 }
 

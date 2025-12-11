@@ -12,6 +12,7 @@ const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils')
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
+const { getTierDefinitions } = require('./lib/storageQuotaService');
 
 const app = express();
 
@@ -3414,8 +3415,12 @@ app.put('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
   }
 
   try {
+    // ID가 ObjectId 형식인지 확인 (24자리 hex string)
+    const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
+    const query = isObjectId ? { _id: new ObjectId(id) } : { _id: id };
+
     const result = await db.collection('users').updateOne(
-      { _id: new ObjectId(id) },
+      query,
       { $set: { hasOcrPermission } }
     );
 
@@ -3451,8 +3456,12 @@ app.get('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
   const { id } = req.params;
 
   try {
+    // ID가 ObjectId 형식인지 확인 (24자리 hex string)
+    const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
+    const query = isObjectId ? { _id: new ObjectId(id) } : { _id: id };
+
     const user = await db.collection('users').findOne(
-      { _id: new ObjectId(id) },
+      query,
       { projection: { hasOcrPermission: 1 } }
     );
 
@@ -3633,12 +3642,21 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
       storageMap[item._id] = item.used_bytes;
     });
 
+    // 티어 정의 로드 (OCR 할당량 포함)
+    const tierDefinitions = await getTierDefinitions(db);
+
     // ObjectId를 문자열로 변환 및 스토리지 정보 추가
     const usersWithStringId = users.map(u => {
       const userId = u._id.toString();
-      const tier = u.storage?.tier || 'standard';
-      const quota_bytes = u.storage?.quota_bytes || (tier === 'admin' ? -1 : 30 * 1024 * 1024 * 1024);
+      const isAdmin = u.role === 'admin';
+      const tier = isAdmin ? 'admin' : (u.storage?.tier || 'standard');
+      const tierDef = tierDefinitions[tier] || tierDefinitions['standard'];
+      const quota_bytes = u.storage?.quota_bytes || tierDef?.quota_bytes || 30 * 1024 * 1024 * 1024;
       const used_bytes = storageMap[userId] || 0;
+
+      // OCR 할당량 계산
+      const ocr_quota = isAdmin ? -1 : (tierDef?.ocr_quota ?? 100);
+      const ocr_used_this_month = u.ocr_used_this_month ?? 0;
 
       return {
         ...u,
@@ -3647,7 +3665,9 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
           tier,
           quota_bytes,
           used_bytes,
-          usage_percent: quota_bytes > 0 ? Math.round((used_bytes / quota_bytes) * 100) : 0
+          usage_percent: quota_bytes > 0 ? Math.round((used_bytes / quota_bytes) * 100) : 0,
+          ocr_quota,
+          ocr_used_this_month
         }
       };
     });

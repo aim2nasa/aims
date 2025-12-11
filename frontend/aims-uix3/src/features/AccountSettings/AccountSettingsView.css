@@ -928,6 +928,11 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
   color: var(--color-accent-red);
 }
 
+.storage-card__warning--gray {
+  background: var(--color-bg-tertiary, rgba(142, 142, 147, 0.1));
+  color: var(--color-text-tertiary);
+}
+
 .storage-card__warning svg {
   flex-shrink: 0;
   margin-top: 1px;
