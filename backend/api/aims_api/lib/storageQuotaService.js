@@ -8,11 +8,11 @@ const GB = 1024 * 1024 * 1024;
 
 // 기본 티어 정의 (DB에 없을 때 사용)
 const DEFAULT_TIER_DEFINITIONS = {
-  free_trial: { name: '무료체험', quota_bytes: 5 * GB, description: '체험 사용자' },
-  standard: { name: '일반', quota_bytes: 30 * GB, description: '기본 등급' },
-  premium: { name: '프리미엄', quota_bytes: 50 * GB, description: '프리미엄 구독자' },
-  vip: { name: 'VIP', quota_bytes: 100 * GB, description: 'VIP 고객' },
-  admin: { name: '관리자', quota_bytes: -1, description: '무제한' }
+  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, description: '체험 사용자' },
+  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, description: '기본 등급' },
+  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, description: '프리미엄 구독자' },
+  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, description: 'VIP 고객' },
+  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, description: '무제한' }
 };
 
 // 캐싱된 티어 정의 (성능 최적화)
@@ -85,6 +85,7 @@ async function updateTierDefinition(db, tierId, updates) {
   // admin 티어는 무제한 유지
   if (tierId === 'admin') {
     updates.quota_bytes = -1;
+    updates.ocr_quota = -1;
   }
 
   const updatedTiers = {

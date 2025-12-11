@@ -177,6 +177,14 @@ module.exports = function(db, authenticateJWT, requireRole) {
   });
 
   /**
+   * OCR 할당량 포맷팅
+   */
+  function formatOcrQuota(quota) {
+    if (quota === -1) return '무제한';
+    return `${quota}회`;
+  }
+
+  /**
    * GET /api/admin/tiers
    * 티어 정의 목록 조회 (관리자용)
    */
@@ -188,7 +196,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const tierList = Object.entries(tiers).map(([id, tier]) => ({
         id,
         ...tier,
-        formatted_quota: formatBytes(tier.quota_bytes)
+        formatted_quota: formatBytes(tier.quota_bytes),
+        formatted_ocr_quota: formatOcrQuota(tier.ocr_quota ?? 100)
       }));
 
       res.json({
@@ -213,7 +222,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
   router.put('/admin/tiers/:tierId', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const { tierId } = req.params;
-      const { name, quota_bytes, description } = req.body;
+      const { name, quota_bytes, ocr_quota, description } = req.body;
 
       if (!tierId) {
         return res.status(400).json({
@@ -233,6 +242,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const updates = {};
       if (name !== undefined) updates.name = name;
       if (quota_bytes !== undefined) updates.quota_bytes = quota_bytes;
+      if (ocr_quota !== undefined) updates.ocr_quota = ocr_quota;
       if (description !== undefined) updates.description = description;
 
       const updatedTier = await updateTierDefinition(db, tierId, updates);
@@ -243,7 +253,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
         data: {
           id: tierId,
           ...updatedTier,
-          formatted_quota: formatBytes(updatedTier.quota_bytes)
+          formatted_quota: formatBytes(updatedTier.quota_bytes),
+          formatted_ocr_quota: formatOcrQuota(updatedTier.ocr_quota ?? 100)
         }
       });
 

@@ -12,6 +12,7 @@ export const TierManagementPage = () => {
   const queryClient = useQueryClient();
   const [editingTier, setEditingTier] = useState<string | null>(null);
   const [editQuota, setEditQuota] = useState<string>('');
+  const [editOcrQuota, setEditOcrQuota] = useState<string>('');
 
   const { data: tiersData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'tiers'],
@@ -19,12 +20,13 @@ export const TierManagementPage = () => {
   });
 
   const updateTierMutation = useMutation({
-    mutationFn: ({ tierId, quota_bytes }: { tierId: string; quota_bytes: number }) =>
-      dashboardApi.updateTier(tierId, { quota_bytes }),
+    mutationFn: ({ tierId, quota_bytes, ocr_quota }: { tierId: string; quota_bytes: number; ocr_quota: number }) =>
+      dashboardApi.updateTier(tierId, { quota_bytes, ocr_quota }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'tiers'] });
       setEditingTier(null);
       setEditQuota('');
+      setEditOcrQuota('');
     },
     onError: (error) => {
       console.error('티어 수정 실패:', error);
@@ -36,20 +38,27 @@ export const TierManagementPage = () => {
     if (tier.id === 'admin') return;
     setEditingTier(tier.id);
     setEditQuota((tier.quota_bytes / GB).toString());
+    setEditOcrQuota((tier.ocr_quota ?? 100).toString());
   };
 
   const handleEditSave = (tierId: string) => {
     const quotaGB = parseFloat(editQuota);
+    const ocrQuota = parseInt(editOcrQuota, 10);
     if (isNaN(quotaGB) || quotaGB <= 0) {
-      alert('유효한 용량을 입력하세요.');
+      alert('유효한 스토리지 용량을 입력하세요.');
       return;
     }
-    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB) });
+    if (isNaN(ocrQuota) || ocrQuota <= 0) {
+      alert('유효한 OCR 횟수를 입력하세요.');
+      return;
+    }
+    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB), ocr_quota: ocrQuota });
   };
 
   const handleEditCancel = () => {
     setEditingTier(null);
     setEditQuota('');
+    setEditOcrQuota('');
   };
 
   const sortedTiers = tiersData
@@ -82,7 +91,8 @@ export const TierManagementPage = () => {
               <tr>
                 <th>티어</th>
                 <th>설명</th>
-                <th>할당량</th>
+                <th>스토리지</th>
+                <th>OCR 횟수</th>
                 <th>작업</th>
               </tr>
             </thead>
@@ -106,13 +116,33 @@ export const TierManagementPage = () => {
                           min="1"
                           step="1"
                           className="tier-edit-input__field"
-                          aria-label="할당량 (GB)"
+                          aria-label="스토리지 (GB)"
                         />
                         <span className="tier-edit-input__unit">GB</span>
                       </div>
                     ) : (
                       <span className={tier.quota_bytes === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
                         {tier.formatted_quota}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {editingTier === tier.id ? (
+                      <div className="tier-edit-input">
+                        <input
+                          type="number"
+                          value={editOcrQuota}
+                          onChange={(e) => setEditOcrQuota(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="tier-edit-input__field tier-edit-input__field--ocr"
+                          aria-label="OCR 횟수"
+                        />
+                        <span className="tier-edit-input__unit">회/월</span>
+                      </div>
+                    ) : (
+                      <span className={tier.ocr_quota === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
+                        {tier.formatted_ocr_quota}
                       </span>
                     )}
                   </td>

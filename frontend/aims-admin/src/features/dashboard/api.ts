@@ -21,10 +21,16 @@ export interface HealthStatus {
   qdrant: 'healthy' | 'unhealthy';
 }
 
+export interface OcrStats {
+  usedThisMonth: number;
+  totalProcessed: number;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   processing: ProcessingStatus;
   health: HealthStatus;
+  ocr?: OcrStats;
 }
 
 export interface StorageOverview {
@@ -47,8 +53,10 @@ export interface TierDefinition {
   id: string;
   name: string;
   quota_bytes: number;
+  ocr_quota: number;
   description: string;
   formatted_quota: string;
+  formatted_ocr_quota: string;
   updatedAt?: string;
 }
 
@@ -78,7 +86,7 @@ export const dashboardApi = {
       .then((res) => res.data);
   },
 
-  updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'description'>>): Promise<TierDefinition> => {
+  updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'ocr_quota' | 'description'>>): Promise<TierDefinition> => {
     return apiClient.put<UpdateTierResponse>(`/api/admin/tiers/${tierId}`, updates)
       .then((res) => res.data);
   },

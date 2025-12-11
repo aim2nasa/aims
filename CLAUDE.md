@@ -101,7 +101,7 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 |------|------|
 | Backend Server | `tars.giize.com` (`/home/rossi/aims`) |
 | Frontend | `D:\aims` (Windows) |
-| Database | MongoDB `tars:27017` |
+| Database | MongoDB `tars:27017/docupload` |
 
 ### 백엔드 수정 절차
 1. **로컬에서 파일 수정** (D:\aims)

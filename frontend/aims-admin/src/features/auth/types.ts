@@ -3,6 +3,8 @@ export interface UserStorage {
   quota_bytes: number;
   used_bytes: number;
   usage_percent: number;
+  ocr_quota?: number;
+  ocr_used_this_month?: number;
 }
 
 export interface User {

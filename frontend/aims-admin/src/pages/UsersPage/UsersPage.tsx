@@ -211,27 +211,39 @@ export const UsersPage = () => {
               },
               {
                 key: 'hasOcrPermission',
-                label: 'OCR 권한',
+                label: 'OCR',
                 render: (user: User) => {
                   const isUpdating = updatingUserId === user._id;
+                  const ocrUsed = user.storage?.ocr_used_this_month ?? 0;
+                  const ocrQuota = user.storage?.ocr_quota ?? 0;
+                  const isUnlimited = ocrQuota < 0;
+                  const usageText = user.hasOcrPermission
+                    ? isUnlimited ? '무제한' : `${ocrUsed}/${ocrQuota}`
+                    : '-';
+
                   return (
-                    <button
-                      type="button"
-                      className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isUpdating) {
-                          handleOcrToggle(user._id, user.hasOcrPermission);
-                        }
-                      }}
-                      disabled={isUpdating}
-                      title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
-                    >
-                      <span className="ocr-toggle__indicator" />
-                      <span className="ocr-toggle__label">
-                        {isUpdating ? '변경중...' : user.hasOcrPermission ? '있음' : '없음'}
-                      </span>
-                    </button>
+                    <div className="ocr-cell">
+                      {user.hasOcrPermission && (
+                        <span className="ocr-cell__usage">{usageText}</span>
+                      )}
+                      <button
+                        type="button"
+                        className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isUpdating) {
+                            handleOcrToggle(user._id, user.hasOcrPermission);
+                          }
+                        }}
+                        disabled={isUpdating}
+                        title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
+                      >
+                        <span className="ocr-toggle__indicator" />
+                        <span className="ocr-toggle__label">
+                          {isUpdating ? '변경중...' : user.hasOcrPermission ? 'ON' : 'OFF'}
+                        </span>
+                      </button>
+                    </div>
                   );
                 },
               },

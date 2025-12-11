@@ -57,6 +57,7 @@ export const DashboardPage = () => {
           <StatCard title="고객 수" value={data?.stats.totalCustomers || 0} />
           <StatCard title="문서 수" value={data?.stats.totalDocuments || 0} />
           <StatCard title="계약 수" value={data?.stats.totalContracts || 0} />
+          <StatCard title="이번 달 OCR" value={data?.ocr?.usedThisMonth || 0} subtitle={`누적 ${data?.ocr?.totalProcessed || 0}건`} />
         </div>
       </section>
 

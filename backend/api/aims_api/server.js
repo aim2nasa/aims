@@ -3513,6 +3513,25 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
     // 임베딩 대기 (임베딩이 없는 문서 - 간단하게)
     const embedPending = 0; // TODO: Redis 큐 조회 필요
 
+    // OCR 통계 (이번 달)
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [ocrUsedThisMonth, ocrTotalProcessed] = await Promise.all([
+      // 이번 달 OCR 처리 완료 수
+      db.collection('files').countDocuments({
+        'ocr.done_at': { $gte: startOfMonth }
+      }),
+      // 전체 OCR 처리 완료 수
+      db.collection('files').countDocuments({
+        $or: [
+          { 'ocr.status': 'done' },
+          { 'meta.full_text': { $ne: null, $exists: true } }
+        ]
+      })
+    ]);
+
     // 시스템 상태 (간단한 버전 - 실제로는 ping 필요)
     const health = {
       nodeApi: 'healthy',
@@ -3535,7 +3554,11 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         embedQueue: embedPending,
         failedDocuments: ocrFailed + embedFailed
       },
-      health
+      health,
+      ocr: {
+        usedThisMonth: ocrUsedThisMonth,
+        totalProcessed: ocrTotalProcessed
+      }
     });
   } catch (error) {
     console.error('[Admin] 대시보드 통계 조회 오류:', error);
