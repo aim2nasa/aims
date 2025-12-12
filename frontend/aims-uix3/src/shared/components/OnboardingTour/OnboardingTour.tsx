@@ -1,9 +1,10 @@
 /**
  * OnboardingTour Component
  * @since 1.0.0
+ * @version 2.0.0
  *
  * 첫 방문 사용자를 위한 가이드 투어
- * 애플 디자인 철학: 서브틀하고 방해하지 않는 안내
+ * Apple 디자인 철학: Clarity, Deference, Depth
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
@@ -147,7 +148,14 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
     onComplete?.()
   }, [onComplete])
 
+  // 건너뛰기 (이번에만 닫기)
   const handleSkip = useCallback(() => {
+    setIsActive(false)
+    onSkip?.()
+  }, [onSkip])
+
+  // 다시 보지 않기 (영구 숨김)
+  const handleNeverShow = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, 'true')
     setIsActive(false)
     onSkip?.()
@@ -159,8 +167,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
     const step = steps[currentStep]
     const placement = step.placement || 'bottom'
-    const padding = 16
-    const tooltipWidth = 320
+    const padding = 20
+    const tooltipWidth = 360
 
     let top = 0
     let left = 0
@@ -199,10 +207,11 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
   const step = steps[currentStep]
   const isLastStep = currentStep === steps.length - 1
+  const isFirstStep = currentStep === 0
 
   return createPortal(
     <div className="onboarding-tour" role="dialog" aria-modal="true" aria-label="사용 가이드">
-      {/* 오버레이 (타겟 영역 제외) */}
+      {/* 오버레이 */}
       <div className="onboarding-tour__overlay" onClick={handleSkip}>
         {targetRect && (
           <div
@@ -223,6 +232,26 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
         className={`onboarding-tour__tooltip onboarding-tour__tooltip--${step.placement || 'bottom'}`}
         style={getTooltipStyle()}
       >
+        {/* 스텝 카운터 + 닫기 버튼 */}
+        <div className="onboarding-tour__step-counter">
+          <span className="onboarding-tour__step-number">
+            {currentStep + 1} / {steps.length}
+          </span>
+          <button
+            type="button"
+            className="onboarding-tour__step-close"
+            onClick={handleSkip}
+            aria-label="닫기"
+          >
+            <SFSymbol
+              name="xmark"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.SEMIBOLD}
+              decorative
+            />
+          </button>
+        </div>
+
         {/* 헤더 */}
         <div className="onboarding-tour__header">
           {step.icon && (
@@ -240,7 +269,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
         {/* 본문 */}
         <p className="onboarding-tour__description">{step.description}</p>
 
-        {/* 진행 상태 */}
+        {/* 진행 상태 도트 */}
         <div className="onboarding-tour__progress">
           {steps.map((_, index) => (
             <span
@@ -250,17 +279,17 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
           ))}
         </div>
 
-        {/* 버튼 */}
+        {/* 액션 버튼 */}
         <div className="onboarding-tour__actions">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            type="button"
+            className="onboarding-tour__skip"
             onClick={handleSkip}
           >
             건너뛰기
-          </Button>
+          </button>
           <div className="onboarding-tour__nav">
-            {currentStep > 0 && (
+            {!isFirstStep && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -279,9 +308,16 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
           </div>
         </div>
 
-        {/* 키보드 힌트 */}
-        <div className="onboarding-tour__keyboard-hint">
-          <kbd>←</kbd> <kbd>→</kbd> 이동 · <kbd>ESC</kbd> 닫기
+        {/* 다시 보지 않기 */}
+        <div className="onboarding-tour__footer">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNeverShow}
+            className="onboarding-tour__never-show"
+          >
+            다시 표시 안 함
+          </Button>
         </div>
       </div>
     </div>,
