@@ -3848,7 +3848,8 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
       const isAdmin = u.role === 'admin';
       const tier = isAdmin ? 'admin' : (u.storage?.tier || 'standard');
       const tierDef = tierDefinitions[tier] || tierDefinitions['standard'];
-      const quota_bytes = u.storage?.quota_bytes || tierDef?.quota_bytes || 30 * 1024 * 1024 * 1024;
+      // 항상 티어 정의의 quota_bytes 사용 (관리자가 티어 용량 변경 시 즉시 반영)
+      const quota_bytes = isAdmin ? -1 : (tierDef?.quota_bytes || 30 * 1024 * 1024 * 1024);
       const used_bytes = storageMap[userId] || 0;
 
       // OCR 할당량 계산

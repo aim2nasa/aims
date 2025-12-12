@@ -170,7 +170,8 @@ async function getUserStorageInfo(db, userId) {
   // 스토리지 정보 기본값
   const tier = isAdmin ? 'admin' : (user?.storage?.tier || DEFAULT_TIER);
   const tierDef = tierDefinitions[tier] || tierDefinitions[DEFAULT_TIER];
-  const quotaBytes = isAdmin ? -1 : (user?.storage?.quota_bytes || tierDef.quota_bytes);
+  // 항상 티어 정의의 quota_bytes 사용 (관리자가 티어 용량 변경 시 즉시 반영)
+  const quotaBytes = isAdmin ? -1 : tierDef.quota_bytes;
 
   // 실시간 사용량 계산
   const usedBytes = await calculateUserStorageUsage(db, userId);
