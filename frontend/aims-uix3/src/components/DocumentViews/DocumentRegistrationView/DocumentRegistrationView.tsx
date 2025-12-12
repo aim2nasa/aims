@@ -1025,14 +1025,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       handleStatusChangeRef.current(fileId, status, error)
     }
 
-    uploadService.setProgressCallback(stableProgressCallback)
-    uploadService.setStatusCallback(stableStatusCallback)
+    const unsubscribeProgress = uploadService.setProgressCallback(stableProgressCallback, 'DocumentRegistrationView')
+    const unsubscribeStatus = uploadService.setStatusCallback(stableStatusCallback, 'DocumentRegistrationView')
 
-    // 컴포넌트 언마운트 시에도 업로드 중단하지 않음
     return () => {
-      // cleanup 호출하지 않음 - 브라우저 크기 변경 등으로 업로드 취소 방지
+      unsubscribeProgress()
+      unsubscribeStatus()
     }
-  }, []) // 빈 배열로 한 번만 실행, 재렌더링 시 cleanup 방지
+  }, [])
 
   /**
    * 개발 환경에서 업로드 중 페이지 이탈 경고

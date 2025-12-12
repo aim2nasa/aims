@@ -41,41 +41,48 @@ export class UploadService {
   private uploadQueue: UploadFile[] = []
   private isProcessing = false
 
-  private progressCallbacks = new Set<ProgressCallback>()
-  private statusCallbacks = new Set<StatusCallback>()
+  // Map<owner, callback>: owner별로 하나의 콜백만 유지 (HMR/StrictMode 중복 등록 방지)
+  private progressCallbacks = new Map<string, ProgressCallback>()
+  private statusCallbacks = new Map<string, StatusCallback>()
 
   /**
-   * 진행률 콜백 등록 (다중 구독자 지원)
+   * 진행률 콜백 등록 (owner별 단일 콜백)
+   * 동일 owner로 재등록 시 기존 콜백을 교체
    * @returns unsubscribe 함수
    */
-  setProgressCallback(callback: ProgressCallback, owner?: string): () => void {
-    this.progressCallbacks.add(callback)
+  setProgressCallback(callback: ProgressCallback, owner: string = 'default'): () => void {
+    // 기존 콜백이 있으면 교체 (중복 방지)
+    const hadPrevious = this.progressCallbacks.has(owner)
+    this.progressCallbacks.set(owner, callback)
     if (import.meta.env.DEV) {
-      console.log(`✅ [UploadService] progressCallback 등록 (${owner || 'unknown'}) - 총 ${this.progressCallbacks.size}개`)
+      console.log(`✅ [UploadService] progressCallback ${hadPrevious ? '교체' : '등록'} (${owner}) - 총 ${this.progressCallbacks.size}개`)
     }
     // unsubscribe 함수 반환
     return () => {
-      this.progressCallbacks.delete(callback)
+      this.progressCallbacks.delete(owner)
       if (import.meta.env.DEV) {
-        console.log(`❌ [UploadService] progressCallback 제거 (${owner || 'unknown'}) - 남은 ${this.progressCallbacks.size}개`)
+        console.log(`❌ [UploadService] progressCallback 제거 (${owner}) - 남은 ${this.progressCallbacks.size}개`)
       }
     }
   }
 
   /**
-   * 상태 변경 콜백 등록 (다중 구독자 지원)
+   * 상태 변경 콜백 등록 (owner별 단일 콜백)
+   * 동일 owner로 재등록 시 기존 콜백을 교체
    * @returns unsubscribe 함수
    */
-  setStatusCallback(callback: StatusCallback, owner?: string): () => void {
-    this.statusCallbacks.add(callback)
+  setStatusCallback(callback: StatusCallback, owner: string = 'default'): () => void {
+    // 기존 콜백이 있으면 교체 (중복 방지)
+    const hadPrevious = this.statusCallbacks.has(owner)
+    this.statusCallbacks.set(owner, callback)
     if (import.meta.env.DEV) {
-      console.log(`✅ [UploadService] statusCallback 등록 (${owner || 'unknown'}) - 총 ${this.statusCallbacks.size}개`)
+      console.log(`✅ [UploadService] statusCallback ${hadPrevious ? '교체' : '등록'} (${owner}) - 총 ${this.statusCallbacks.size}개`)
     }
     // unsubscribe 함수 반환
     return () => {
-      this.statusCallbacks.delete(callback)
+      this.statusCallbacks.delete(owner)
       if (import.meta.env.DEV) {
-        console.log(`❌ [UploadService] statusCallback 제거 (${owner || 'unknown'}) - 남은 ${this.statusCallbacks.size}개`)
+        console.log(`❌ [UploadService] statusCallback 제거 (${owner}) - 남은 ${this.statusCallbacks.size}개`)
       }
     }
   }

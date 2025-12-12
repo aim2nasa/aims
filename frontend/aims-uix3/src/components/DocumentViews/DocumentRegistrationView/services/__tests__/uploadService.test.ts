@@ -124,39 +124,39 @@ describe('UploadService', () => {
   describe('콜백 설정', () => {
     it('진행률 콜백을 설정할 수 있어야 함', () => {
       const progressCallback = vi.fn()
-      uploadService.setProgressCallback(progressCallback)
+      uploadService.setProgressCallback(progressCallback, 'test-owner')
 
-      expect(uploadService['progressCallbacks'].has(progressCallback)).toBe(true)
+      expect(uploadService['progressCallbacks'].has('test-owner')).toBe(true)
     })
 
     it('상태 콜백을 설정할 수 있어야 함', () => {
       const statusCallback = vi.fn()
-      uploadService.setStatusCallback(statusCallback)
+      uploadService.setStatusCallback(statusCallback, 'test-owner')
 
-      expect(uploadService['statusCallbacks'].has(statusCallback)).toBe(true)
+      expect(uploadService['statusCallbacks'].has('test-owner')).toBe(true)
     })
 
     it('다중 구독자를 지원해야 함', () => {
       const callback1 = vi.fn()
       const callback2 = vi.fn()
 
-      uploadService.setProgressCallback(callback1)
-      uploadService.setProgressCallback(callback2)
+      uploadService.setProgressCallback(callback1, 'owner1')
+      uploadService.setProgressCallback(callback2, 'owner2')
 
       expect(uploadService['progressCallbacks'].size).toBe(2)
-      expect(uploadService['progressCallbacks'].has(callback1)).toBe(true)
-      expect(uploadService['progressCallbacks'].has(callback2)).toBe(true)
+      expect(uploadService['progressCallbacks'].has('owner1')).toBe(true)
+      expect(uploadService['progressCallbacks'].has('owner2')).toBe(true)
     })
 
     it('unsubscribe 함수를 반환해야 함', () => {
       const callback = vi.fn()
-      const unsubscribe = uploadService.setStatusCallback(callback)
+      const unsubscribe = uploadService.setStatusCallback(callback, 'test-owner')
 
-      expect(uploadService['statusCallbacks'].has(callback)).toBe(true)
+      expect(uploadService['statusCallbacks'].has('test-owner')).toBe(true)
 
       unsubscribe()
 
-      expect(uploadService['statusCallbacks'].has(callback)).toBe(false)
+      expect(uploadService['statusCallbacks'].has('test-owner')).toBe(false)
     })
   })
 
