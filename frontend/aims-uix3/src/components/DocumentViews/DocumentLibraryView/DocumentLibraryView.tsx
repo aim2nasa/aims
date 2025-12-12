@@ -171,7 +171,14 @@ const DocumentLibraryContent: React.FC<{
               </svg>
             ),
             shortcut: 'Space',
-            onClick: () => controller.handleDocumentClick(contextMenuDocument)
+            onClick: () => {
+              // onDocumentClick이 있으면 Right Pane 프리뷰, 없으면 상세 모달
+              if (onDocumentClick && documentId) {
+                onDocumentClick(documentId)
+              } else {
+                controller.handleDocumentClick(contextMenuDocument)
+              }
+            }
           },
           {
             id: 'summary',
@@ -250,7 +257,7 @@ const DocumentLibraryContent: React.FC<{
         ]
       }
     ]
-  }, [contextMenuDocument, controller, isDeleteMode, onToggleDeleteMode, onSelectDocument])
+  }, [contextMenuDocument, controller, isDeleteMode, onToggleDeleteMode, onSelectDocument, onDocumentClick])
 
   // 🍎 외부에서 새로고침 이벤트 받기
   React.useEffect(() => {
