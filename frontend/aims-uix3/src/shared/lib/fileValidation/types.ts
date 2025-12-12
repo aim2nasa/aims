@@ -73,14 +73,18 @@ export interface MimeValidationResult {
  * 바이러스 검사 결과
  */
 export interface VirusScanResult {
-  /** 클린 여부 (바이러스 미감지) */
-  clean: boolean
   /** 검사 완료 여부 */
   scanned: boolean
+  /** 바이러스 감염 여부 */
+  infected: boolean
   /** 감지된 바이러스명 */
   virusName?: string
+  /** 검사 건너뜀 여부 (ClamAV 비활성화 등) */
+  skipped?: boolean
   /** 메시지 */
   message?: string
+  /** 에러 메시지 */
+  error?: string
 }
 
 /**

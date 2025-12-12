@@ -250,19 +250,119 @@ defaultPipeline.unregister('mime')
 ---
 
 ### Phase 6: ClamAV 바이러스 검사 (마지막)
-- **시작일시**: -
-- **상태**: 예정
+- **시작일시**: 2025-12-13
+- **상태**: 구현 완료 (배포 대기)
 - **구현 내용**:
-  - [ ] 서버에 ClamAV 설치
-  - [ ] security-routes.js 백엔드 API 구현
-  - [ ] virusScanApi.ts 프론트엔드 연동
-  - [ ] 파이프라인에 바이러스 검사 추가
+  - [x] 서버에 ClamAV 설치 (tars.giize.com)
+    - ClamAV 1.4.3/27848 설치 완료
+    - clamav-daemon 정상 실행 중
+  - [x] security-routes.js 백엔드 API 구현
+    - GET /api/security/scan-status: ClamAV 상태 확인
+    - POST /api/security/scan-file: 파일 바이러스 검사 (multipart/form-data)
+    - POST /api/security/scan-buffer: Base64 인코딩 파일 검사
+  - [x] virusScanApi.ts 프론트엔드 연동
+    - getScanStatus(): ClamAV 상태 확인 (1분 캐시)
+    - isScanAvailable(): 사용 가능 여부 확인
+    - scanFile(): 단일 파일 스캔
+    - scanFiles(): 배치 파일 스캔
+  - [x] virusScanUtils.ts 유틸리티 함수
+    - getInfectedFiles(): 감염 파일 필터링
+    - getScanSummary(): 스캔 결과 요약
 - **테스트 결과**:
-  - [ ] virusScanApi.test.ts 통과
-  - [ ] EICAR 테스트 파일로 감지 테스트
-  - [ ] 전체 회귀 테스트
-- **커밋 해시**: -
+  - [x] virusScanApi.test.ts 통과 (10개 테스트)
+  - [ ] EICAR 테스트 파일로 감지 테스트 (배포 후 테스트)
+  - [x] 전체 회귀 테스트 통과 (123개)
+- **커밋 해시**: (배포 후 커밋)
 - **완료일시**: -
+
+---
+
+## 6. ClamAV 설치 및 운용 가이드
+
+### 6.1 설치 (Ubuntu/Debian)
+
+```bash
+# ClamAV 및 데몬 설치
+sudo apt-get update
+sudo apt-get install clamav clamav-daemon
+
+# 바이러스 DB 수동 업데이트 (최초 1회)
+# freshclam 서비스가 자동 실행되므로 수동 실행은 선택사항
+sudo systemctl stop clamav-freshclam  # 서비스 중지 후
+sudo freshclam                         # 수동 업데이트
+sudo systemctl start clamav-freshclam # 서비스 재시작
+```
+
+### 6.2 서비스 관리
+
+```bash
+# 데몬 시작/중지/상태
+sudo systemctl start clamav-daemon
+sudo systemctl stop clamav-daemon
+sudo systemctl status clamav-daemon
+
+# DB 업데이트 서비스 (자동 실행됨)
+sudo systemctl status clamav-freshclam
+```
+
+### 6.3 설치 확인
+
+```bash
+# ClamAV 버전 및 DB 버전 확인
+clamscan --version
+# 출력 예: ClamAV 1.4.3/27848/Fri Dec 12 18:26:04 2025
+#         버전/DB버전/DB빌드날짜
+
+# DB 파일 확인
+ls -la /var/lib/clamav/
+# 필수 파일: daily.cvd, main.cvd, bytecode.cvd
+```
+
+### 6.4 명령줄 스캔 테스트
+
+```bash
+# 단일 파일 스캔
+clamscan /path/to/file.pdf
+
+# 디렉토리 스캔
+clamscan -r /path/to/directory/
+
+# 감염 파일만 출력 (빠른 확인)
+clamscan --infected /path/to/file
+```
+
+### 6.5 EICAR 테스트 파일
+
+바이러스 검사 기능 테스트용 무해한 테스트 파일:
+
+```bash
+# EICAR 테스트 파일 생성
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > /tmp/eicar.txt
+
+# 스캔 테스트 (감염으로 탐지되어야 함)
+clamscan /tmp/eicar.txt
+# 예상 출력: /tmp/eicar.txt: Eicar-Signature FOUND
+
+# 테스트 후 삭제
+rm /tmp/eicar.txt
+```
+
+### 6.6 트러블슈팅
+
+| 문제 | 원인 | 해결 |
+|------|------|------|
+| `freshclam` 실행 시 lock 에러 | freshclam 서비스가 이미 실행 중 | 서비스가 DB를 업데이트 중이므로 기다리거나, 서비스 중지 후 수동 실행 |
+| `clamav-daemon` 시작 안됨 | DB 파일 미존재 | `freshclam`으로 DB 다운로드 후 재시도 |
+| DB 버전이 0으로 표시 | DB 로드 실패 | `/var/lib/clamav/` 권한 확인 및 DB 파일 존재 확인 |
+
+### 6.7 운영 권장사항
+
+1. **DB 자동 업데이트**: `clamav-freshclam` 서비스가 자동으로 DB를 업데이트함 (기본 1시간마다)
+2. **메모리 사용량**: clamd 데몬은 약 1GB 메모리 사용 (DB 로드 시)
+3. **로그 위치**: `/var/log/clamav/`
+4. **설정 파일**:
+   - clamd: `/etc/clamav/clamd.conf`
+   - freshclam: `/etc/clamav/freshclam.conf`
 
 ---
 
@@ -276,7 +376,7 @@ defaultPipeline.unregister('mime')
 | mimeTypeValidator.test.ts | ✅ 완료 | 24/24 |
 | storageChecker.test.ts | ✅ 완료 | 14/14 |
 | ValidationPipeline.test.ts | ✅ 완료 | 17/17 |
-| virusScanApi.test.ts | 예정 | - |
+| virusScanApi.test.ts | ✅ 완료 | 10/10 |
 
 ### 4.2 통합테스트 결과
 | 테스트 파일 | 상태 | 통과/실패 |
@@ -291,8 +391,8 @@ defaultPipeline.unregister('mime')
 | npm run build | ✅ 통과 |
 
 ### 4.4 총 테스트 현황
-- **총 테스트**: 113개
-- **통과**: 113개
+- **총 테스트**: 123개
+- **통과**: 123개
 - **실패**: 0개
 
 ---

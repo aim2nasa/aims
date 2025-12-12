@@ -6561,6 +6561,10 @@ MongoClient.connect(MONGO_URI)
     const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
     app.use('/api', storageRoutes);
 
+    // 보안 라우트 설정 (바이러스 검사)
+    const securityRoutes = require('./routes/security-routes')(db, authenticateJWT);
+    app.use('/api', securityRoutes);
+
     registerFallbackHandlers();
   })
   .catch(error => {

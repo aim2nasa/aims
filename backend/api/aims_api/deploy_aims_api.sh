@@ -38,8 +38,11 @@ docker run -d --network host \
   -e KAKAO_CALLBACK_URL="${KAKAO_CALLBACK_URL}" \
   -e FRONTEND_URL="${FRONTEND_URL}" \
   -e N8N_API_KEY="${N8N_API_KEY}" \
+  -e CLAMAV_ENABLED="${CLAMAV_ENABLED:-true}" \
   -v /data/files:/data/files \
   -v /home/rossi/n8n-docker/n8n_data:/n8n_data:ro \
+  -v /var/run/clamav:/var/run/clamav:ro \
+  -v /var/lib/clamav:/var/lib/clamav:ro \
   --name $CONTAINER_NAME \
   $IMAGE_NAME
 

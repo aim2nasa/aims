@@ -2,8 +2,12 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# sqlite3 설치 (n8n 워크플로우 조회용)
-RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+# sqlite3 및 ClamAV 설치
+# clamdscan은 호스트의 clamd 데몬에 소켓으로 연결하여 스캔
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    clamav \
+    && rm -rf /var/lib/apt/lists/*
 
 # 환경변수 기본값 설정
 ENV PORT=3010

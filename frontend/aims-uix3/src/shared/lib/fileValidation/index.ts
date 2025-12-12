@@ -92,6 +92,14 @@ export {
   formatStorageCheckMessage,
 } from './storageChecker'
 
+// Virus Scan Utilities (API-independent functions only)
+// For full virus scan API (getScanStatus, isScanAvailable, scanFile, scanFiles),
+// import directly from '@/shared/lib/fileValidation/virusScanApi'
+export {
+  getInfectedFiles,
+  getScanSummary,
+} from './virusScanUtils'
+
 // Types from userService for convenience
 export type { StorageInfo } from '@/services/userService'
 
