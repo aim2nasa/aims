@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAndSetup } from './fixtures';
 
 /**
  * LeftPane 메뉴 아이콘 색상 회귀 테스트
@@ -12,10 +13,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('LeftPane 메뉴 아이콘 색상 테스트', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173');
-
-    // 페이지 로드 대기
-    await page.waitForLoadState('networkidle');
+    // baseURL 활용 (playwright.config.ts에서 설정됨)
+    await loginAndSetup(page);
 
     // LeftPane이 렌더링될 때까지 대기
     await page.waitForSelector('.left-pane', { timeout: 10000 });
