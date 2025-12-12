@@ -25,6 +25,7 @@ import { BatchUploadApi } from './api/batchUploadApi'
 import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import { checkStorageWithInfo, calculatePartialUpload } from '@/shared/lib/fileValidation'
 import type { FolderMapping, DuplicateAction } from './types'
 import { TIER_LIMITS } from './types'
 import './BatchDocumentUploadView.css'
@@ -233,26 +234,7 @@ export default function BatchDocumentUploadView({
     }
   }, [progress.state])
 
-  /**
-   * 일부 업로드 가능 파일 계산 (크기 작은 순)
-   */
-  const calculatePartialUpload = useCallback((
-    files: File[],
-    remainingBytes: number
-  ): { fileCount: number; totalSize: number } | null => {
-    const sorted = [...files].sort((a, b) => a.size - b.size)
-    let count = 0
-    let size = 0
-
-    for (const file of sorted) {
-      if (size + file.size <= remainingBytes) {
-        count++
-        size += file.size
-      }
-    }
-
-    return count > 0 ? { fileCount: count, totalSize: size } : null
-  }, [])
+  // calculatePartialUpload는 공통 모듈에서 import (@/shared/lib/fileValidation)
 
   /**
    * 용량 내 파일만 필터링하여 mappings 생성
@@ -300,35 +282,29 @@ export default function BatchDocumentUploadView({
     // 3. 폴더-고객 매핑 생성
     const mappings = createFolderMappings(fileGroups, customers)
 
-    // 4. 스토리지 용량 체크 (신규)
+    // 4. 스토리지 용량 체크 (공통 모듈 사용)
     try {
       const storage = await getMyStorageInfo()
       console.log('[BatchUpload] Storage info:', storage)
       setStorageInfo(storage)
 
-      // 선택한 파일 총 크기 계산
-      const totalSelectedSize = allFiles.reduce((sum, f) => sum + f.size, 0)
-      const remainingBytes = storage.remaining_bytes
-      console.log('[BatchUpload] Size check:', {
-        totalSelectedSize,
-        remainingBytes,
-        is_unlimited: storage.is_unlimited,
-        shouldShowDialog: totalSelectedSize > remainingBytes && !storage.is_unlimited
-      })
+      // 공통 모듈로 스토리지 검사
+      const storageCheck = checkStorageWithInfo(allFiles, storage)
 
-      // 용량 초과 체크 (무제한 사용자 제외)
-      if (totalSelectedSize > remainingBytes && !storage.is_unlimited) {
-        // 일부 업로드 가능한 파일 계산
-        const partialInfo = calculatePartialUpload(allFiles, remainingBytes)
+      // 용량 초과 시 다이얼로그 표시
+      if (!storageCheck.canUpload) {
+        console.log('[BatchUpload] Storage exceeded, showing dialog')
 
         // 상태 저장 (나중에 일부만 업로드 시 사용)
         setPendingFiles(allFiles)
         setPendingMappings(mappings)
 
         setStorageExceededInfo({
-          selectedFilesSize: totalSelectedSize,
+          selectedFilesSize: storageCheck.requestedBytes,
           selectedFilesCount: allFiles.length,
-          partialUploadInfo: partialInfo
+          partialUploadInfo: storageCheck.partialUploadInfo
+            ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
+            : null
         })
         setShowStorageExceededDialog(true)
         return // preview 단계로 이동하지 않음
@@ -348,7 +324,7 @@ export default function BatchDocumentUploadView({
     if (mappings.length > 0) {
       setStep('preview')
     }
-  }, [tierLimit, customers, calculatePartialUpload])
+  }, [tierLimit, customers])
 
   const handleBack = useCallback(() => {
     setStep('select')
