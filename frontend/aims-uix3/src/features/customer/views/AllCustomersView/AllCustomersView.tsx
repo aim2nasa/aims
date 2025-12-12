@@ -443,12 +443,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               ),
               onClick: async () => {
                 try {
-                  const newStatus = isInactive ? 'active' : 'inactive';
-                  await CustomerService.updateCustomerStatus(customerId, newStatus);
-                  showAlert(`${customerName} 고객이 ${isInactive ? '활성화' : '휴면 처리'}되었습니다.`, 'success');
+                  if (isInactive) {
+                    await CustomerService.restoreCustomer(customerId);
+                  } else {
+                    await CustomerService.deleteCustomer(customerId);
+                  }
+                  showAlert({ message: `${customerName} 고객이 ${isInactive ? '활성화' : '휴면 처리'}되었습니다.`, iconType: 'success' });
                   refresh();
                 } catch (err) {
-                  showAlert('상태 변경에 실패했습니다.', 'error');
+                  showAlert({ message: '상태 변경에 실패했습니다.', iconType: 'error' });
                 }
               }
             },

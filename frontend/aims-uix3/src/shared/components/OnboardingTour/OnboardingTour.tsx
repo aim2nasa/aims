@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
 import './OnboardingTour.css'
 
@@ -61,7 +61,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
   useEffect(() => {
     if (forceShow) {
       setIsActive(true)
-      return
+      return undefined
     }
 
     const hasCompleted = localStorage.getItem(STORAGE_KEY)
@@ -72,6 +72,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
       }, 1000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [forceShow])
 
   // 현재 스텝의 타겟 요소 위치 계산

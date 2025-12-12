@@ -28,7 +28,7 @@ import type { ContextMenuPosition } from '../types'
  */
 export function useContextMenuPosition(
   position: ContextMenuPosition,
-  menuRef: RefObject<HTMLDivElement>
+  menuRef: RefObject<HTMLDivElement | null>
 ): ContextMenuPosition {
   const [adjustedPosition, setAdjustedPosition] = useState<ContextMenuPosition>(position)
   const hasAdjusted = useRef(false)

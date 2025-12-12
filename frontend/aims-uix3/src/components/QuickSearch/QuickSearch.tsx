@@ -86,7 +86,7 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
         results.push({
           id: customer._id,
           type: 'customer',
-          title: customer.name,
+          title: customer.personal_info?.name || '이름 없음',
           subtitle: customerType,
           customerType: customerType as '개인' | '법인'
         })
