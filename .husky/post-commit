@@ -28,8 +28,8 @@ if ! git diff HEAD~1 --name-only | grep -q "^frontend/aims-uix3/"; then
   exit 0
 fi
 
-# feat: 또는 fix: 커밋인지 확인
-if echo "$COMMIT_MSG" | grep -q "^feat:"; then
+# feat 또는 fix 커밋인지 확인 (스코프 포함: feat(scope): 또는 feat: 형식)
+if echo "$COMMIT_MSG" | grep -qE "^feat(\([^)]+\))?:"; then
   echo "🔼 Auto-bumping minor version (feat commit)..."
   # 락 파일 생성 (amend 후 재실행 방지)
   echo "$CURRENT_SHA" > "$LOCK_FILE"
@@ -37,7 +37,7 @@ if echo "$COMMIT_MSG" | grep -q "^feat:"; then
   git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json frontend/package-lock.json
   git commit --amend --no-edit --no-verify
   echo "✅ Minor version bumped!"
-elif echo "$COMMIT_MSG" | grep -q "^fix:"; then
+elif echo "$COMMIT_MSG" | grep -qE "^fix(\([^)]+\))?:"; then
   echo "🔼 Auto-bumping patch version (fix commit)..."
   # 락 파일 생성 (amend 후 재실행 방지)
   echo "$CURRENT_SHA" > "$LOCK_FILE"
