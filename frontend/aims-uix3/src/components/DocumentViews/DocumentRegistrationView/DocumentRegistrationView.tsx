@@ -16,7 +16,7 @@ import { Modal, Tooltip } from '@/shared/ui'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
-import { uploadService, fileValidator } from './services/uploadService'
+import { uploadService } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
 import { api } from '@/shared/lib/api'
 import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
@@ -25,6 +25,10 @@ import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument } from './utils/annualReportProcessor'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import {
+  validateFile,
+  checkStorageWithInfo,
+} from '@/shared/lib/fileValidation'
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
 import './DocumentRegistrationView.css'
 
@@ -300,41 +304,27 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const handleFilesSelected = useCallback(async (files: File[]) => {
     console.log('🚨🚨🚨 handleFilesSelected 실행! files:', files.length);
 
-    // 🍎 스토리지 용량 체크 (신규)
+    // 🍎 스토리지 용량 체크 (공통 모듈 사용)
     try {
       const storage = await getMyStorageInfo()
       console.log('[DocumentRegistration] Storage info:', storage)
       setStorageInfo(storage)
 
-      // 선택한 파일 총 크기 계산
-      const totalSelectedSize = files.reduce((sum, f) => sum + f.size, 0)
-      const remainingBytes = storage.remaining_bytes
+      // 공통 모듈로 스토리지 검사
+      const storageCheck = checkStorageWithInfo(files, storage)
 
       // 용량 초과 시 다이얼로그 표시
-      if (totalSelectedSize > remainingBytes && !storage.is_unlimited) {
+      if (!storageCheck.canUpload) {
         console.log('[DocumentRegistration] Storage exceeded, showing dialog')
-
-        // 일부 업로드 가능한 파일 계산 (크기 작은 순)
-        const sortedFiles = [...files].sort((a, b) => a.size - b.size)
-        let partialCount = 0
-        let partialSize = 0
-        for (const file of sortedFiles) {
-          if (partialSize + file.size <= remainingBytes) {
-            partialCount++
-            partialSize += file.size
-          }
-        }
-
-        const partialInfo = partialCount > 0
-          ? { fileCount: partialCount, totalSize: partialSize }
-          : null
 
         // 다이얼로그 상태 설정
         setPendingFilesForUpload(files)
         setStorageExceededInfo({
-          selectedFilesSize: totalSelectedSize,
+          selectedFilesSize: storageCheck.requestedBytes,
           selectedFilesCount: files.length,
-          partialUploadInfo: partialInfo
+          partialUploadInfo: storageCheck.partialUploadInfo
+            ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
+            : null
         })
         setShowStorageExceededDialog(true)
         return // 업로드 진행하지 않음
@@ -348,8 +338,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     // 🔍 PDF 파일 중 Annual Report 체크 (파일 선택 직후, 업로드 전!)
     for (const file of files) {
-      // 파일 검증
-      const validation = fileValidator.validateFile(file)
+      // 파일 검증 (공통 모듈 사용: 확장자, 크기, MIME 검증)
+      const validation = validateFile(file)
 
       if (validation.valid) {
         // PDF 파일이면 Annual Report 체크
@@ -454,30 +444,28 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           fileSize: file.size,
           status: 'error',
           progress: 0,
-          error: validation.errors.join(', ')
+          error: validation.message || '파일 검증 실패'
         }
         newUploadFiles.push(errorFile)
       }
     }
 
-    // 크기 초과 파일 개수 확인 및 팝업 표시
-    const oversizedFiles = newUploadFiles.filter(f =>
-      f.status === 'error' && f.error?.includes('MB 초과')
-    )
+    // 검증 실패한 파일 개수 확인 및 팝업 표시 (크기 초과, 차단 확장자, MIME 불일치 등)
+    const invalidFiles = newUploadFiles.filter(f => f.status === 'error')
 
-    if (oversizedFiles.length > 0) {
-      const oversizedCount = oversizedFiles.length
+    if (invalidFiles.length > 0) {
+      const invalidCount = invalidFiles.length
       const sizeLimitMB = Math.round(uploadConfig.limits.maxFileSize / (1024 * 1024))
 
-      // 🍎 애플 스타일 확인 모달 - 새로운 메시지 형식과 클릭 가능한 링크
+      // 🍎 애플 스타일 확인 모달 - 검증 실패 파일 안내
       const confirmed = await showAppleConfirm(
-        `총 ${newUploadFiles.length}개의 파일들중에 ${oversizedCount}개의 파일이 ${sizeLimitMB}MB의 사이즈 제한을 초과합니다. 사이즈 제한 초과 파일들은 업로드에서 제외됩니다.`,
-        undefined, // 타이틀 없음 - "확인" 문구 제거
+        `총 ${newUploadFiles.length}개의 파일 중 ${invalidCount}개의 파일이 검증에 실패했습니다 (크기 초과 ${sizeLimitMB}MB, 차단된 확장자, 위조 파일 등). 해당 파일들은 업로드에서 제외됩니다.`,
+        undefined, // 타이틀 없음
         {
-          linkText: '사이즈 제한 초과 파일들',
+          linkText: '검증 실패 파일들',
           onLinkClick: async () => {
             // 파일 정보를 올바른 형식으로 변환
-            const fileList = oversizedFiles.map(uploadFile => ({
+            const fileList = invalidFiles.map((uploadFile: UploadFile) => ({
               name: uploadFile.file.name,
               size: uploadFile.fileSize
             }))
