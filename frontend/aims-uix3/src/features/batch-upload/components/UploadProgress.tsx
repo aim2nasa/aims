@@ -26,10 +26,13 @@ export default function UploadProgress({
   onCancel,
   onViewDocuments,
 }: UploadProgressProps) {
-  const { state, totalFiles, completedFiles, failedFiles, overallProgress, folders, currentFile } =
+  const { state, totalFiles, completedFiles, failedFiles, overallProgress, folders, currentFile, files } =
     progress
 
   const isUploading = state === 'uploading'
+
+  // 실패한 파일 목록 (실시간 표시용)
+  const failedFilesList = files.filter((f) => f.status === 'failed')
   const isPaused = state === 'paused'
   const isCompleted = state === 'completed'
   const isCancelled = state === 'cancelled'
@@ -186,6 +189,30 @@ export default function UploadProgress({
         <div className="upload-current-file">
           <span className="upload-current-file-label">현재 파일:</span>
           <span className="upload-current-file-name">{currentFile}</span>
+        </div>
+      )}
+
+      {/* 실시간 실패 파일 목록 (업로드 중에도 표시) */}
+      {failedFilesList.length > 0 && (
+        <div className="upload-failed-files">
+          <div className="upload-failed-files-header">
+            <SFSymbol
+              name="exclamationmark-triangle-fill"
+              size={SFSymbolSize.FOOTNOTE}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+            <span>실패한 파일 ({failedFilesList.length})</span>
+          </div>
+          <div className="upload-failed-files-list">
+            {failedFilesList.map((file) => (
+              <div key={file.fileId} className="upload-failed-file-item">
+                <span className="upload-failed-file-name">{file.fileName}</span>
+                {file.error && (
+                  <span className="upload-failed-file-error">{file.error}</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
