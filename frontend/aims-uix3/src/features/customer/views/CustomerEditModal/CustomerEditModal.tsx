@@ -18,6 +18,7 @@ import React, { useCallback } from 'react';
 import { Customer } from '@/entities/customer';
 import Modal from '@/shared/ui/Modal';
 import Button from '@/shared/ui/Button';
+import { CloseButton } from '@/shared/ui/CloseButton';
 import { useCustomerEditController } from '../../controllers/useCustomerEditController';
 import { BasicInfoSection } from '../CustomerRegistrationView/components/BasicInfoSection';
 import type { BasicInfoFormData } from '../CustomerRegistrationView/components/BasicInfoSection';
@@ -151,21 +152,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
         <h2 id="customer-edit-modal-title" className="customer-edit-modal-title">
           고객 정보 수정
         </h2>
-        <button
-          type="button"
-          className="customer-edit-modal-close-button"
-          onClick={onClose}
-          aria-label="모달 닫기"
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M12 4L4 12M4 4L12 12"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        <CloseButton onClick={onClose} ariaLabel="모달 닫기" />
       </div>
 
       {/* 🍎 탭 네비게이션 - 고객 등록과 동일한 4개 탭 */}

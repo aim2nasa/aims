@@ -8,7 +8,7 @@
  */
 
 import React from 'react'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import './BaseViewer.css'
 
 interface BaseViewerProps {
@@ -88,20 +88,8 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
           </h2>
         )}
 
-        {/* 🍎 닫기 버튼 - iOS 스타일 */}
-        <button
-          className="base-viewer__close-button"
-          onClick={onClose}
-          aria-label="뷰어 닫기"
-          type="button"
-        >
-          <SFSymbol
-            name="xmark"
-            size={SFSymbolSize.BODY}
-            weight={SFSymbolWeight.MEDIUM}
-            decorative={true}
-          />
-        </button>
+        {/* 🍎 닫기 버튼 - CloseButton 공통 컴포넌트 */}
+        <CloseButton onClick={onClose} ariaLabel="뷰어 닫기" />
       </div>
 
       {/* 콘텐츠 영역 - 실제 뷰어 렌더링 */}

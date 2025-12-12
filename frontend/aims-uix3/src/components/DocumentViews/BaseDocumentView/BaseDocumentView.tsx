@@ -8,6 +8,7 @@
 
 import React from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import './BaseDocumentView.css'
 
 interface BaseDocumentViewProps {
@@ -83,19 +84,7 @@ export const BaseDocumentView: React.FC<BaseDocumentViewProps> = ({
         <h2 className="base-document-view__title">
           {title}
         </h2>
-        <button
-          className="base-document-view__close-button"
-          onClick={onClose}
-          aria-label={`${title} 창 닫기`}
-          type="button"
-        >
-          <SFSymbol
-            name="xmark"
-            size={SFSymbolSize.CALLOUT}
-            weight={SFSymbolWeight.MEDIUM}
-            decorative={true}
-          />
-        </button>
+        <CloseButton onClick={onClose} ariaLabel={`${title} 창 닫기`} size="lg" />
       </div>
 
       {/* 콘텐츠 영역 */}

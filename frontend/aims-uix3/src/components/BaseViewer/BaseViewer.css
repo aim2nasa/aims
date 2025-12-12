@@ -67,49 +67,7 @@ html[data-theme="dark"] .base-viewer__header {
   white-space: nowrap;
 }
 
-/* 🍎 닫기 버튼 - iOS 스타일 */
-.base-viewer__close-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background-color: transparent;
-  color: var(--color-ios-text-secondary-light);
-  cursor: pointer;
-  outline: none;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .base-viewer__close-button {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 호버 상태 - Progressive Disclosure */
-.base-viewer__close-button:hover {
-  background-color: var(--color-ios-bg-hover-light);
-  color: var(--color-ios-text-primary-light);
-  transform: scale(1.1);
-}
-
-html[data-theme="dark"] .base-viewer__close-button:hover {
-  background-color: var(--color-ios-bg-hover-dark);
-  color: var(--color-ios-text-primary-dark);
-}
-
-/* 활성 상태 */
-.base-viewer__close-button:active {
-  transform: scale(0.95);
-}
-
-/* 포커스 상태 - 접근성 */
-.base-viewer__close-button:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
+/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
 /* 콘텐츠 영역 - 실제 뷰어 렌더링 */
 .base-viewer__content {

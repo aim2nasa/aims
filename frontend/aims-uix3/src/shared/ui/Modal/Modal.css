@@ -97,35 +97,7 @@
   flex: 1;
 }
 
-.modal__close-button {
-  background: transparent;
-  border: none;
-  padding: var(--spacing-2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--color-neutral-700);
-  opacity: 0.85;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.modal__close-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.modal__close-button:hover {
-  background: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.modal__close-button:active {
-  transform: scale(0.95);
-}
+/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
 /* === CONTENT === */
 

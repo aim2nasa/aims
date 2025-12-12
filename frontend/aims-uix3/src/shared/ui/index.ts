@@ -53,3 +53,6 @@ export type {
   ContextMenuPosition,
   UseContextMenuReturn
 } from './ContextMenu';
+
+export { CloseButton } from './CloseButton';
+export type { CloseButtonProps, CloseButtonSize } from './CloseButton';

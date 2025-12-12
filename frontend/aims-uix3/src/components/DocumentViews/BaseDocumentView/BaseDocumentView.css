@@ -58,40 +58,7 @@ html[data-theme="dark"] .base-document-view__header {
   line-height: var(--line-height-tight);
 }
 
-/* 닫기 버튼 - 애플 스타일 인터랙션 */
-.base-document-view__close-button {
-  background: none;
-  border: none;
-  padding: var(--spacing-2);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--spacing-8);
-  height: var(--spacing-8);
-}
-
-.base-document-view__close-button:hover {
-  background-color: var(--color-layout-accent-light);
-  color: var(--color-text-primary);
-  transform: scale(1.05);
-}
-
-html[data-theme="dark"] .base-document-view__close-button:hover {
-  background-color: var(--color-layout-accent-dark);
-}
-
-.base-document-view__close-button:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.base-document-view__close-button:active {
-  transform: scale(0.95);
-}
+/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
 /* 콘텐츠 영역 */
 .base-document-view__content {

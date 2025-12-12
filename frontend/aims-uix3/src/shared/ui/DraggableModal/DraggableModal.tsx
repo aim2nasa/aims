@@ -14,6 +14,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
 import { useEscapeKey, useBodyOverflow, useBackdropClick } from '../Modal/hooks/useModalCore'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import Tooltip from '../Tooltip'
 import './DraggableModal.css'
 
@@ -202,24 +203,13 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
                   </button>
                 </Tooltip>
               )}
-              <button
-                className="draggable-modal__close-button"
+              <CloseButton
                 onClick={(e) => {
                   e.stopPropagation()
                   onClose()
                 }}
-                aria-label="모달 닫기"
-                type="button"
-              >
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M12 4L4 12M4 4L12 12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
+                ariaLabel="모달 닫기"
+              />
             </div>
           </header>
         )}

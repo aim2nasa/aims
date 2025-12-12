@@ -1,0 +1,63 @@
+/**
+ * CloseButton Styles
+ * @since 2025-12-12
+ * @version 1.0.0
+ *
+ * 모든 모달/뷰어의 X 닫기 버튼 공통 스타일
+ * CSS 변수는 modal-variables.css에서 정의
+ */
+
+/* === 베이스 스타일 === */
+
+.close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--close-button-color, var(--color-neutral-700));
+  cursor: pointer;
+  opacity: var(--close-button-opacity, 0.85);
+  transition: var(--close-button-transition, all 0.2s ease);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.close-button:hover {
+  background: transparent;
+  opacity: var(--close-button-opacity-hover, 1);
+  transform: scale(var(--close-button-scale-hover, 1.1));
+}
+
+.close-button:active {
+  transform: scale(var(--close-button-scale-active, 0.95));
+}
+
+.close-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* === 크기 변형 === */
+
+.close-button--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.close-button--md {
+  width: 28px;
+  height: 28px;
+}
+
+.close-button--lg {
+  width: 32px;
+  height: 32px;
+}
+
+/* === 다크 테마 === */
+
+html[data-theme="dark"] .close-button {
+  color: var(--close-button-color-dark, var(--color-neutral-300));
+}

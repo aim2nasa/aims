@@ -24,6 +24,14 @@
   /* Modal Header/Footer */
   --color-modal-header-border: var(--color-ios-separator-light);
   --color-modal-footer-border: var(--color-ios-separator-light);
+
+  /* Close Button System */
+  --close-button-color: var(--color-neutral-700);
+  --close-button-opacity: 0.85;
+  --close-button-opacity-hover: 1;
+  --close-button-scale-hover: 1.1;
+  --close-button-scale-active: 0.95;
+  --close-button-transition: all 0.2s ease;
 }
 
 /* === DARK THEME === */
@@ -43,4 +51,8 @@
   /* Modal Header/Footer */
   --color-modal-header-border: var(--color-ios-separator-dark);
   --color-modal-footer-border: var(--color-ios-separator-dark);
+
+  /* Close Button System */
+  --close-button-color: var(--color-neutral-300);
+  --close-button-color-dark: var(--color-neutral-300);
 }

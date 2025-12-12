@@ -12,6 +12,7 @@
 
 import React from 'react';
 import Modal from '@/shared/ui/Modal';
+import { CloseButton } from '@/shared/ui/CloseButton';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
 import './AddressArchiveModal.css';
@@ -59,16 +60,7 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
         <h2 className="address-archive-modal__title">
           🏠 {customerName}님의 주소 보관소
         </h2>
-        <button className="address-archive-modal__close" onClick={onClose} aria-label="닫기">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M12 4L4 12M4 4L12 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        <CloseButton onClick={onClose} ariaLabel="닫기" />
       </div>
 
       {/* Info */}

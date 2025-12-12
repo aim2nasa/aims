@@ -92,32 +92,7 @@ html[data-theme="dark"] .customer-edit-modal-header {
   flex: 1;
 }
 
-.customer-edit-modal-close-button {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 닫기 버튼 */
-  opacity: 0.25;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.customer-edit-modal-close-button:hover {
-  background-color: transparent;
-  opacity: 0.8;
-  transform: scale(1.1);
-}
-
-.customer-edit-modal-close-button:active {
-  transform: scale(0.95);
-}
+/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
 /* ===== 탭 네비게이션 ===== */
 .customer-edit-modal-tabs {

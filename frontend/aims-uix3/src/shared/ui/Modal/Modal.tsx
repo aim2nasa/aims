@@ -15,6 +15,7 @@
 import React, { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeKey, useBodyOverflow, useBackdropClick } from './hooks/useModalCore'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import './Modal.css'
 
 export interface ModalProps {
@@ -102,21 +103,7 @@ export const Modal: React.FC<ModalProps> = ({
         {showHeader && title && (
           <header className="modal__header">
             <h2 className="modal__title">{title}</h2>
-            <button
-              className="modal__close-button"
-              onClick={onClose}
-              aria-label="모달 닫기"
-              type="button"
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M12 4L4 12M4 4L12 12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
+            <CloseButton onClick={onClose} ariaLabel="모달 닫기" />
           </header>
         )}
 

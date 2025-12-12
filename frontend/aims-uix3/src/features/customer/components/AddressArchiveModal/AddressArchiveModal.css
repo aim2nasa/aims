@@ -89,30 +89,7 @@
   color: var(--color-text-primary);
 }
 
-.address-archive-modal__close {
-  background: transparent;
-  border: none;
-  font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 */
-  color: var(--color-neutral-700);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.85;
-  transition: all 0.2s ease;
-}
-
-.address-archive-modal__close:hover {
-  background-color: transparent;
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.address-archive-modal__close:active {
-  transform: scale(0.95);
-}
+/* CloseButton 컴포넌트 사용 - 스타일은 CloseButton.css에서 정의 */
 
 /* Info Section */
 .address-archive-modal__info {

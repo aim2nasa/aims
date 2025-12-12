@@ -73,33 +73,10 @@ html[data-theme="dark"] .address-search-modal__header {
   flex-shrink: 0;
 }
 
+/* CloseButton 컴포넌트 사용 - 위치만 지정 */
 .address-search-modal__close {
   position: absolute;
   right: 12px;
-  background: none;
-  border: none;
-  font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 (22px → 24px) */
-  font-weight: 300;
-  color: var(--color-neutral-700);
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.85;
-  transition: all 0.2s ease;
-}
-
-.address-search-modal__close:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.address-search-modal__close:active {
-  transform: scale(0.95);
 }
 
 /* 검색 영역 - 컴팩트 */

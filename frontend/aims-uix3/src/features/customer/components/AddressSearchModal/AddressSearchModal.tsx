@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Modal from '@/shared/ui/Modal';
 import Button from '@/shared/ui/Button';
+import { CloseButton } from '@/shared/ui/CloseButton';
 import { AddressApi, AddressSearchResult, FormattedAddress } from '../../api/addressApi';
 import './AddressSearchModal.css';
 
@@ -144,20 +145,7 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
             </svg>
             주소 검색
           </h2>
-          <button
-            className="address-search-modal__close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M12 4L4 12M4 4L12 12"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          <CloseButton onClick={onClose} ariaLabel="닫기" className="address-search-modal__close" />
         </div>
 
         {/* 검색 입력 */}
