@@ -153,9 +153,6 @@ const DocumentLibraryContent: React.FC<{
     if (!contextMenuDocument) return []
 
     const documentId = contextMenuDocument._id || contextMenuDocument.id || ''
-    const isLinked = Boolean(contextMenuDocument.customer_relation)
-    const status = DocumentStatusService.extractStatus(contextMenuDocument)
-    const canLink = status === 'completed' && !isLinked
 
     return [
       {
@@ -216,18 +213,6 @@ const DocumentLibraryContent: React.FC<{
                 window.open(fileUrl, '_blank')
               }
             }
-          },
-          {
-            id: 'link-customer',
-            label: '고객 연결',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-            ),
-            disabled: !canLink,
-            onClick: () => controller.handleDocumentLink(contextMenuDocument)
           }
         ]
       },
@@ -734,10 +719,10 @@ const DocumentLibraryContent: React.FC<{
             </ul>
           </div>
           <div className="help-modal-section">
-            <p><strong>📎 고객 연결 안내</strong></p>
+            <p><strong>🗑️ 문서 삭제</strong></p>
             <ul>
-              <li>문서-고객 연결은 <strong>등록 시 자동 처리</strong>됩니다</li>
-              <li>새 문서 등록 메뉴에서 고객 선택 후 업로드</li>
+              <li>상단의 <strong>삭제 버튼</strong> 클릭 → 삭제 모드 활성화</li>
+              <li>삭제할 문서 선택 후 <strong>삭제 버튼</strong> 클릭</li>
             </ul>
           </div>
         </div>
