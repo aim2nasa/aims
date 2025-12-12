@@ -30,6 +30,7 @@ import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import DownloadHelper from '@/utils/downloadHelper'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
@@ -167,7 +168,6 @@ const DocumentLibraryContent: React.FC<{
                 <circle cx="12" cy="12" r="3" />
               </svg>
             ),
-            shortcut: 'Space',
             onClick: () => {
               // onDocumentClick이 있으면 Right Pane 프리뷰, 없으면 상세 모달
               if (onDocumentClick && documentId) {
@@ -206,11 +206,23 @@ const DocumentLibraryContent: React.FC<{
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             ),
-            shortcut: '⌘+D',
-            onClick: () => {
-              const fileUrl = contextMenuDocument.fileUrl || contextMenuDocument.file_url
-              if (fileUrl) {
-                window.open(fileUrl, '_blank')
+            onClick: async () => {
+              try {
+                // 문서 상세 조회하여 다운로드 경로 획득
+                const response = await DocumentStatusService.getDocumentDetailViaWebhook(documentId)
+                if (response) {
+                  // API 응답 구조: { data: { raw: { upload: { destPath } } } }
+                  const apiResponse = response as Record<string, unknown>
+                  const data = apiResponse['data'] as Record<string, unknown> | undefined
+                  const raw = (data?.['raw'] || apiResponse['raw'] || response) as Record<string, unknown>
+
+                  await DownloadHelper.downloadDocument({
+                    _id: documentId,
+                    ...raw
+                  })
+                }
+              } catch (error) {
+                console.error('다운로드 실패:', error)
               }
             }
           }
