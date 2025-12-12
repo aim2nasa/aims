@@ -10,14 +10,38 @@ test.describe('고객 CRUD 간단 테스트', () => {
   const timestamp = Date.now();
   const testCustomerName = `테스트고객_${timestamp}`;
 
+  // 각 테스트 전에 로그인 처리
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+
+    // 로그인 페이지인지 확인 후 개발용 로그인 건너뛰기
+    const skipLoginButton = page.locator('button:has-text("개발용 로그인 건너뛰기")');
+    if (await skipLoginButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipLoginButton.click();
+      await page.waitForTimeout(2000);
+    }
+
+    // 온보딩 가이드가 표시되면 닫기
+    const onboardingTour = page.locator('.onboarding-tour');
+    if (await onboardingTour.isVisible({ timeout: 2000 }).catch(() => false)) {
+      // 닫기 버튼 또는 건너뛰기 버튼 클릭
+      const closeButton = page.locator('.onboarding-tour button:has-text("건너뛰기"), .onboarding-tour button:has-text("닫기"), .onboarding-tour [aria-label="닫기"]');
+      if (await closeButton.first().isVisible({ timeout: 1000 }).catch(() => false)) {
+        await closeButton.first().click();
+        await page.waitForTimeout(500);
+      } else {
+        // ESC 키로 닫기 시도
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(500);
+      }
+    }
+  });
+
   test('1. 고객 생성 테스트', async ({ page }) => {
     console.log('\n=== 고객 생성 테스트 ===');
     console.log('생성할 고객명:', testCustomerName);
 
-    await page.goto('http://localhost:5173');
-    await page.waitForTimeout(2000);
-
-    // 햄버거 메뉴 → 고객 등록
+    // 햄버거 메뉴 클릭
     await page.locator('button.hamburger-button').first().click();
     await page.waitForTimeout(500);
     const menuItems = await page.locator('[class*="menu-item"]').all();
@@ -48,9 +72,6 @@ test.describe('고객 CRUD 간단 테스트', () => {
   test('2. 고객 조회 테스트', async ({ page }) => {
     console.log('\n=== 고객 조회 테스트 ===');
 
-    await page.goto('http://localhost:5173');
-    await page.waitForTimeout(2000);
-
     // 햄버거 메뉴 → 고객 전체보기
     await page.locator('button.hamburger-button').first().click();
     await page.waitForTimeout(500);
@@ -74,9 +95,6 @@ test.describe('고객 CRUD 간단 테스트', () => {
     console.log('5. "저장" 버튼 클릭');
     console.log('6. 변경 사항이 반영되었는지 확인');
 
-    await page.goto('http://localhost:5173');
-    await page.waitForTimeout(2000);
-
     await page.screenshot({ path: 'test-results/crud-simple-04-edit-instructions.png' });
 
     console.log('✅ 테스트 준비 완료');
@@ -89,9 +107,6 @@ test.describe('고객 CRUD 간단 테스트', () => {
     console.log('2. 삭제 버튼 클릭');
     console.log('3. 확인 버튼 클릭');
     console.log('4. 고객이 목록에서 사라졌는지 확인');
-
-    await page.goto('http://localhost:5173');
-    await page.waitForTimeout(2000);
 
     await page.screenshot({ path: 'test-results/crud-simple-05-delete-instructions.png' });
 

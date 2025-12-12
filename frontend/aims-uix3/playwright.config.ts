@@ -33,7 +33,7 @@ export default defineConfig({
   // 모든 프로젝트에 공통으로 적용되는 설정
   use: {
     // 기본 URL
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5177',
 
     // 각 액션 실행 전 대기 시간 (밀리초)
     actionTimeout: 30000,
