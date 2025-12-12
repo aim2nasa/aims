@@ -1,6 +1,7 @@
 /**
  * AIMS UIX3 버전 정보
  * package.json에서 자동으로 버전을 가져옵니다.
+ * @since 2025-12-13
  */
 
 import packageJson from '../../package.json'
