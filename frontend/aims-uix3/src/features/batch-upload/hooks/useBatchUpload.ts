@@ -539,13 +539,21 @@ export function useBatchUpload(): UseBatchUploadReturn {
             uploadedAt: new Date().toISOString(),
           })
         } else {
-          nextFile.retryCount++
-          if (nextFile.retryCount < MAX_RETRY_COUNT) {
-            nextFile.status = 'pending'
-            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-          } else {
+          // 바이러스 감지 에러는 재시도 없이 즉시 실패 처리
+          const isVirusError = result.error?.includes('바이러스 감지')
+          if (isVirusError) {
             nextFile.status = 'failed'
             nextFile.error = result.error
+            console.warn(`[useBatchUpload] 🛡️ 바이러스 감지로 즉시 실패: ${nextFile.fileName}`)
+          } else {
+            nextFile.retryCount++
+            if (nextFile.retryCount < MAX_RETRY_COUNT) {
+              nextFile.status = 'pending'
+              await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+            } else {
+              nextFile.status = 'failed'
+              nextFile.error = result.error
+            }
           }
         }
 

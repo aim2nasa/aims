@@ -403,7 +403,8 @@ export const FileList: React.FC<FileListProps> = ({
                 />
               )}
 
-              {uploadFile.status === 'error' && onRetryFile && (
+              {/* 바이러스 감지 에러는 재시도 불가 */}
+              {uploadFile.status === 'error' && onRetryFile && !uploadFile.error?.includes('바이러스 감지') && (
                 <button
                   type="button"
                   className="file-item__retry-compact"

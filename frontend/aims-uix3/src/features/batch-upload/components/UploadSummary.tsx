@@ -89,6 +89,15 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
   // 실패한 폴더 목록
   const failedFolders = folders.filter((f) => f.status === 'failed' || f.status === 'partial')
 
+  // 바이러스 감지로 실패한 파일이 있는지 확인 (재시도 불가)
+  const hasVirusFailures = progress.files.some(
+    (f) => f.status === 'failed' && f.error?.includes('바이러스 감지')
+  )
+  // 재시도 가능한 실패 파일이 있는지 확인
+  const hasRetryableFailures = progress.files.some(
+    (f) => f.status === 'failed' && !f.error?.includes('바이러스 감지')
+  )
+
   return (
     <div className="upload-summary">
       {/* 상태 아이콘 */}
@@ -127,21 +136,43 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         <div className="upload-summary-failures">
           <h3 className="upload-summary-failures-title">실패한 항목</h3>
           <div className="upload-summary-failures-list">
-            {failedFolders.map((folder) => (
-              <div key={folder.folderName} className="upload-summary-failure-item">
-                <span className="upload-summary-failure-folder">{folder.folderName}</span>
-                <span className="upload-summary-failure-count">
-                  {folder.failedFiles}개 실패
-                </span>
-              </div>
-            ))}
+            {failedFolders.map((folder) => {
+              // 해당 폴더의 실패한 파일 목록
+              const failedFilesInFolder = progress.files.filter(
+                (f) => f.folderName === folder.folderName && f.status === 'failed'
+              )
+              return (
+                <div key={folder.folderName} className="upload-summary-failure-item">
+                  <div className="upload-summary-failure-header">
+                    <span className="upload-summary-failure-folder">{folder.folderName}</span>
+                    <span className="upload-summary-failure-count">
+                      {folder.failedFiles}개 실패
+                    </span>
+                  </div>
+                  {/* 실패한 파일 상세 목록 */}
+                  {failedFilesInFolder.length > 0 && (
+                    <div className="upload-summary-failure-files">
+                      {failedFilesInFolder.map((file) => (
+                        <div key={file.fileId} className="upload-summary-failure-file">
+                          <span className="upload-summary-failure-filename">{file.fileName}</span>
+                          {file.error && (
+                            <span className="upload-summary-failure-reason">{file.error}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
 
       {/* 버튼 */}
       <div className="upload-summary-actions">
-        {failedFiles > 0 && onRetryFailed && (
+        {/* 바이러스 감지 외의 실패 항목만 재시도 가능 */}
+        {hasRetryableFailures && onRetryFailed && (
           <button className="upload-summary-btn secondary" onClick={onRetryFailed}>
             <SFSymbol
               name="arrow-clockwise"

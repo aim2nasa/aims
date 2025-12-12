@@ -441,12 +441,17 @@ describe('UploadSummary', () => {
       expect(mockOnClose).toHaveBeenCalled()
     })
 
-    it('실패가 있을 때 재시도 버튼 표시', () => {
+    it('실패가 있을 때 재시도 버튼 표시 (바이러스 외 에러)', () => {
       render(
         <UploadSummary
           progress={createMockProgress({
             state: 'completed',
             failedFiles: 3,
+            files: [
+              { fileId: 'f1', fileName: 'file1.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '네트워크 오류' },
+              { fileId: 'f2', fileName: 'file2.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '서버 오류' },
+              { fileId: 'f3', fileName: 'file3.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 3, error: '타임아웃' },
+            ],
           })}
           onClose={mockOnClose}
           onRetryFailed={mockOnRetryFailed}
@@ -457,6 +462,25 @@ describe('UploadSummary', () => {
 
       fireEvent.click(screen.getByText('실패 항목 재시도'))
       expect(mockOnRetryFailed).toHaveBeenCalled()
+    })
+
+    it('바이러스 감지 에러만 있을 때 재시도 버튼 숨김', () => {
+      render(
+        <UploadSummary
+          progress={createMockProgress({
+            state: 'completed',
+            failedFiles: 1,
+            files: [
+              { fileId: 'f1', fileName: 'virus.txt', folderName: '홍길동', customerId: 'c1', customerName: '홍길동', status: 'failed', progress: 0, retryCount: 0, error: '🛡️ 바이러스 감지: Eicar-Signature' },
+            ],
+          })}
+          onClose={mockOnClose}
+          onRetryFailed={mockOnRetryFailed}
+        />
+      )
+
+      // 바이러스 감지 에러만 있으면 재시도 버튼이 표시되지 않음
+      expect(screen.queryByText('실패 항목 재시도')).not.toBeInTheDocument()
     })
 
     it('처리 상태 보기 버튼 클릭 시 onViewDocuments 호출', () => {
