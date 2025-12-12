@@ -4337,13 +4337,17 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
         badgeType = 'OCR';
       }
 
+      // AR 문서 여부 판단: doc.is_annual_report 또는 customer.annual_reports에 source_file_id로 존재하는지 확인
+      const isAR = doc.is_annual_report === true ||
+        (customer.annual_reports || []).some(ar => ar.source_file_id?.equals(doc._id));
+
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
         uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
-        relationship: customerDoc?.relationship,
+        relationship: isAR ? 'annual_report' : (customerDoc?.relationship || null),
         notes: customerDoc?.notes,
         linkedAt: normalizeTimestamp(customerDoc?.upload_date),
         ar_metadata: doc.ar_metadata,
