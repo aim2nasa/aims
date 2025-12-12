@@ -30,7 +30,7 @@ import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
-import DownloadHelper from '@/utils/downloadHelper'
+import DownloadHelper from '../../../utils/downloadHelper'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
