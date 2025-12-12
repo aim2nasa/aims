@@ -304,6 +304,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const handleFilesSelected = useCallback(async (files: File[]) => {
     console.log('🚨🚨🚨 handleFilesSelected 실행! files:', files.length);
 
+    // 🧹 새 업로드 시작 시 기존 로그 클리어
+    setProcessingLogs([])
+    logCounterRef.current = 0
+
     // 🍎 스토리지 용량 체크 (공통 모듈 사용)
     try {
       const storage = await getMyStorageInfo()
