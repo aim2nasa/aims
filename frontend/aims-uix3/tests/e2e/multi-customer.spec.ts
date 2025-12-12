@@ -24,15 +24,20 @@ test.describe('다중 고객 E2E 테스트', () => {
     console.log('\n=== 다중 고객 생성 테스트 ===');
     console.log(`생성할 고객: ${customers.length}명`);
 
-    for (const customer of customers) {
-      console.log(`\n생성 중: ${customer.name} (${customer.customerType})`);
+    for (let i = 0; i < customers.length; i++) {
+      const customer = customers[i];
+      console.log(`\n생성 중 (${i + 1}/${customers.length}): ${customer.name} (${customer.customerType})`);
 
-      // 햄버거 메뉴 → 고객 등록
-      await page.locator('button.hamburger-button').first().click();
-      await page.waitForTimeout(500);
-      const menuItems = await page.locator('[class*="menu-item"]').all();
-      await menuItems[1].click(); // 고객 등록
-      await page.waitForTimeout(1500);
+      // 고객 등록 화면으로 이동 (이름 입력란이 없으면 메뉴 통해 이동)
+      const nameInput = page.locator('input[aria-label="이름"]');
+      if (!(await nameInput.isVisible({ timeout: 1000 }).catch(() => false))) {
+        // 햄버거 메뉴 → 고객 등록
+        await page.locator('button.hamburger-button').first().click();
+        await page.waitForTimeout(500);
+        const menuItems = await page.locator('[class*="menu-item"]').all();
+        await menuItems[1].click(); // 고객 등록
+        await page.waitForTimeout(1500);
+      }
 
       // 고객 정보 입력
       await page.locator('input[aria-label="이름"]').fill(customer.name);
