@@ -2485,21 +2485,41 @@ export function ExcelRefiner() {
           statusText = '일괄등록 실패'
         }
 
-        // 액션 로그용 간결한 메시지 (신규/수정 구분)
-        const totalCreated = customerCreatedCount + contractResult.createdCount
-        const totalUpdated = customerUpdatedCount + contractResult.updatedCount
+        // 개인/법인별 통계를 위해 먼저 분류 (P2-2: 헬퍼 함수 사용)
+        const customerPartitioned = partitionBulkResultByType({
+          created: customerBulkResult?.created || [],
+          updated: customerBulkResult?.updated || [],
+          skipped: customerBulkResult?.skipped || [],
+          errors: customerBulkResult?.errors || []
+        }, customers)
 
-        // 변경 내역 문구 생성
-        const changeParts: string[] = []
-        if (totalCreated > 0) changeParts.push(`신규 ${totalCreated}건`)
-        if (totalUpdated > 0) changeParts.push(`업데이트 ${totalUpdated}건`)
-        const changeText = changeParts.join(', ')
+        const 개인NewCount = customerPartitioned.개인고객.created.length
+        const 법인NewCount = customerPartitioned.법인고객.created.length
+        const 계약NewCount = contractResult.createdCount
+
+        // 액션 로그용 상세 메시지 (개인/법인/계약 각각 표시)
+        const resultParts: string[] = []
+        if (개인NewCount > 0) resultParts.push(`개인 ${개인NewCount}명`)
+        if (법인NewCount > 0) resultParts.push(`법인 ${법인NewCount}명`)
+        if (계약NewCount > 0) resultParts.push(`계약 ${계약NewCount}건`)
+
+        // 확인 안내 메시지
+        const hasCustomerChanges = 개인NewCount > 0 || 법인NewCount > 0
+        const hasContractChanges = 계약NewCount > 0
+        const guideParts: string[] = []
+        if (hasCustomerChanges) guideParts.push('전체 고객 보기')
+        if (hasContractChanges) guideParts.push('전체 계약 보기')
+        const guideText = guideParts.length > 0 ? ` | ${guideParts.join(', ')}에서 확인하세요` : ''
 
         let actionLogMessage: string
         if (hasSuccess && !hasFailure) {
-          actionLogMessage = `✓ ${changeText} 완료`
+          actionLogMessage = resultParts.length > 0
+            ? `✓ ${resultParts.join(', ')} 등록 완료${guideText}`
+            : '변경사항 없음'
         } else if (hasSuccess && hasFailure) {
-          actionLogMessage = `⚠️ ${changeText} 완료, 일부 건너뜀`
+          actionLogMessage = resultParts.length > 0
+            ? `⚠️ ${resultParts.join(', ')} 등록 완료 (일부 건너뜀)${guideText}`
+            : '⚠️ 일부 건너뜀'
         } else if (totalErrors > 0) {
           actionLogMessage = `✗ 등록 중 오류 발생 (${totalErrors}건)`
         } else {
@@ -2517,15 +2537,7 @@ export function ExcelRefiner() {
           계약: { total: contracts.length, success: contractSuccessCount }
         })
 
-        // 상세 결과 저장 - P2-2: 헬퍼 함수 사용
-        const customerPartitioned = partitionBulkResultByType({
-          created: customerBulkResult?.created || [],
-          updated: customerBulkResult?.updated || [],
-          skipped: customerBulkResult?.skipped || [],
-          errors: customerBulkResult?.errors || []
-        }, customers)
-
-        // 계약 상세 결과 - API에서 직접 반환된 배열 사용
+        // 계약 상세 결과 - API에서 직접 반환된 배열 사용 (customerPartitioned는 위에서 이미 계산됨)
         const 계약Created = (contractResult.created || []).map(c => ({
           customer_name: c.customer_name || '',
           product_name: c.product_name || '',
