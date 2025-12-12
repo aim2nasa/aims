@@ -270,9 +270,10 @@ async function updateUserTier(db, userId, tier) {
 
   const usersCollection = db.collection('users');
   const quotaBytes = tierDefinitions[tier].quota_bytes;
+  const userIdQuery = toUserIdQuery(userId);
 
   const result = await usersCollection.updateOne(
-    { _id: userId },
+    { _id: userIdQuery },
     {
       $set: {
         'storage.tier': tier,
