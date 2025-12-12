@@ -124,13 +124,14 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 type="button"
                 className="progress-indicator__cancel"
                 onClick={onCancel}
-                aria-label="Cancel upload"
+                aria-label="전체 업로드 취소"
               >
                 <SFSymbol
                   name="xmark"
                   size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
                 />
+                <span className="progress-indicator__cancel-text">전체 취소</span>
               </button>
             )}
           </div>

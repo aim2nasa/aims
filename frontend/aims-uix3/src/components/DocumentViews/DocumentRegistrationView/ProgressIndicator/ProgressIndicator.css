@@ -103,25 +103,44 @@ html[data-theme="dark"] .progress-indicator__current {
 }
 
 .progress-indicator__cancel {
-  background: none;
+  background: rgba(255, 59, 48, 0.08);
   border: none;
-  padding: 2px;
+  padding: 3px 8px;
   cursor: pointer;
-  color: var(--color-error);
-  border-radius: 2px;
-  display: flex;
+  color: #ff3b30;
+  border-radius: 10px;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
+  margin-left: 8px;
+}
+
+.progress-indicator__cancel-text {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  white-space: nowrap;
+  letter-spacing: -0.1px;
 }
 
 .progress-indicator__cancel:hover {
-  color: var(--color-error-600);
-  background: var(--color-neutral-100);
+  background: rgba(255, 59, 48, 0.15);
+}
+
+.progress-indicator__cancel:active {
+  background: rgba(255, 59, 48, 0.25);
+  transform: scale(0.96);
+}
+
+html[data-theme="dark"] .progress-indicator__cancel {
+  background: rgba(255, 59, 48, 0.12);
 }
 
 html[data-theme="dark"] .progress-indicator__cancel:hover {
-  background: var(--color-neutral-800);
+  background: rgba(255, 59, 48, 0.2);
 }
 
 /* 🍎 COMPLETION: Barely visible */
