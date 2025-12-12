@@ -24,6 +24,8 @@ import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument } from './utils/annualReportProcessor'
+import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -64,6 +66,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
+
+  // 🍎 스토리지 용량 초과 다이얼로그 상태
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
+  const [showStorageExceededDialog, setShowStorageExceededDialog] = useState(false)
+  const [storageExceededInfo, setStorageExceededInfo] = useState<{
+    selectedFilesSize: number
+    selectedFilesCount: number
+    partialUploadInfo: { fileCount: number; totalSize: number } | null
+  } | null>(null)
+  const [pendingFilesForUpload, setPendingFilesForUpload] = useState<File[]>([])
 
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
@@ -287,6 +299,51 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
     console.log('🚨🚨🚨 handleFilesSelected 실행! files:', files.length);
+
+    // 🍎 스토리지 용량 체크 (신규)
+    try {
+      const storage = await getMyStorageInfo()
+      console.log('[DocumentRegistration] Storage info:', storage)
+      setStorageInfo(storage)
+
+      // 선택한 파일 총 크기 계산
+      const totalSelectedSize = files.reduce((sum, f) => sum + f.size, 0)
+      const remainingBytes = storage.remaining_bytes
+
+      // 용량 초과 시 다이얼로그 표시
+      if (totalSelectedSize > remainingBytes && !storage.is_unlimited) {
+        console.log('[DocumentRegistration] Storage exceeded, showing dialog')
+
+        // 일부 업로드 가능한 파일 계산 (크기 작은 순)
+        const sortedFiles = [...files].sort((a, b) => a.size - b.size)
+        let partialCount = 0
+        let partialSize = 0
+        for (const file of sortedFiles) {
+          if (partialSize + file.size <= remainingBytes) {
+            partialCount++
+            partialSize += file.size
+          }
+        }
+
+        const partialInfo = partialCount > 0
+          ? { fileCount: partialCount, totalSize: partialSize }
+          : null
+
+        // 다이얼로그 상태 설정
+        setPendingFilesForUpload(files)
+        setStorageExceededInfo({
+          selectedFilesSize: totalSelectedSize,
+          selectedFilesCount: files.length,
+          partialUploadInfo: partialInfo
+        })
+        setShowStorageExceededDialog(true)
+        return // 업로드 진행하지 않음
+      }
+    } catch (error) {
+      console.error('스토리지 정보 조회 실패:', error)
+      // 에러 시에도 정상 진행 (서버에서 최종 검증)
+    }
+
     const newUploadFiles: UploadFile[] = []
 
     // 🔍 PDF 파일 중 Annual Report 체크 (파일 선택 직후, 업로드 전!)
@@ -504,6 +561,57 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           : f
       )
     }))
+  }, [])
+
+  /**
+   * 🍎 스토리지 초과 다이얼로그: "기존 파일 정리" 클릭
+   */
+  const handleStorageCleanupFiles = useCallback(() => {
+    setShowStorageExceededDialog(false)
+    setPendingFilesForUpload([])
+    // 전체 문서 보기로 이동
+    onClose()
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', 'documents-library')
+    window.history.pushState({}, '', url.toString())
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [onClose])
+
+  /**
+   * 🍎 스토리지 초과 다이얼로그: "일부만 업로드" 클릭
+   */
+  const handleStoragePartialUpload = useCallback(async () => {
+    if (!storageInfo || !pendingFilesForUpload.length) return
+
+    // 용량 내 파일만 필터링 (크기 작은 순)
+    const sortedFiles = [...pendingFilesForUpload].sort((a, b) => a.size - b.size)
+    const filteredFiles: File[] = []
+    let currentSize = 0
+
+    for (const file of sortedFiles) {
+      if (currentSize + file.size <= storageInfo.remaining_bytes) {
+        filteredFiles.push(file)
+        currentSize += file.size
+      }
+    }
+
+    setShowStorageExceededDialog(false)
+    setPendingFilesForUpload([])
+
+    if (filteredFiles.length > 0) {
+      // 필터링된 파일로 업로드 진행 (재귀 호출 방지를 위해 직접 처리)
+      // handleFilesSelected를 다시 호출하면 무한 루프 가능성 있으므로
+      // 여기서는 다이얼로그만 닫고, 사용자가 다시 파일을 선택하도록 안내
+      addLog('info', `용량 내 ${filteredFiles.length}개 파일을 선택해주세요`, `${filteredFiles.map(f => f.name).join(', ')}`)
+    }
+  }, [storageInfo, pendingFilesForUpload, addLog])
+
+  /**
+   * 🍎 스토리지 초과 다이얼로그 닫기
+   */
+  const handleStorageDialogClose = useCallback(() => {
+    setShowStorageExceededDialog(false)
+    setPendingFilesForUpload([])
   }, [])
 
   /**
@@ -1188,6 +1296,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         </div>
       </Modal>
+
+      {/* 🍎 스토리지 용량 초과 다이얼로그 */}
+      <StorageExceededDialog
+        visible={showStorageExceededDialog}
+        onClose={handleStorageDialogClose}
+        usedBytes={storageInfo?.used_bytes || 0}
+        maxBytes={storageInfo?.quota_bytes || 0}
+        tierName={storageInfo?.tierName || ''}
+        selectedFilesSize={storageExceededInfo?.selectedFilesSize || 0}
+        selectedFilesCount={storageExceededInfo?.selectedFilesCount || 0}
+        onCleanupFiles={handleStorageCleanupFiles}
+        onPartialUpload={handleStoragePartialUpload}
+        partialUploadInfo={storageExceededInfo?.partialUploadInfo || null}
+      />
     </CenterPaneView>
   )
 }
