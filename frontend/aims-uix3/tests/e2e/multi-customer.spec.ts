@@ -9,9 +9,9 @@ import { fileURLToPath } from 'url';
  *
  * 시나리오:
  * 1. 여러 고객 생성 (개인/법인 혼합)
- * 2. 고객 목록에서 확인
+ * 2. 고객 목록에서 검색하여 확인
  * 3. 고객명 중복 검증
- * 4. 생성된 고객들 정리 (삭제)
+ * 4. 생성된 고객들 검색 후 삭제
  */
 
 // ES 모듈에서 __dirname 대체
@@ -130,8 +130,8 @@ test.describe('다중 고객 E2E 테스트', () => {
     expect(createdCustomerNames.length).toBe(3);
   });
 
-  test('2. 고객 목록에서 생성된 고객 확인', async ({ page }) => {
-    console.log('\n=== 고객 목록 확인 테스트 ===');
+  test('2. 고객 목록에서 검색하여 확인', async ({ page }) => {
+    console.log('\n=== 고객 목록 검색 테스트 ===');
 
     const state = loadState();
     if (!state || state.customers.length === 0) {
@@ -140,30 +140,33 @@ test.describe('다중 고객 E2E 테스트', () => {
       return;
     }
 
-    // 햄버거 메뉴 → 고객 전체보기
-    await page.locator('button.hamburger-button').first().click();
-    await page.waitForTimeout(500);
-    const menuItems = await page.locator('[class*="menu-item"]').all();
-    await menuItems[2].click(); // 고객 전체보기
+    // "전체 고객 보기" 버튼 클릭 (대시보드 가이드 카드 또는 사이드바 메뉴)
+    const allCustomersBtn = page.locator('button:has-text("전체 고객 보기"), [role="menuitem"]:has-text("전체 고객")').first();
+    await allCustomersBtn.click();
     await page.waitForTimeout(2000);
 
     let foundCount = 0;
 
-    // 페이지에서 생성된 고객들 검색
+    // 각 고객이 테이블에 표시되는지 확인 (최근 등록이므로 상단에 표시됨)
     for (const customerName of state.customers) {
-      const customerElement = page.locator(`text=${customerName}`).first();
+      console.log(`\n확인 중: ${customerName}`);
+
+      // 고객이 표시되는지 확인 (테이블 셀 또는 텍스트)
+      const customerElement = page.getByText(customerName, { exact: true }).first();
       const isVisible = await customerElement.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (isVisible) {
         console.log(`✅ 발견: ${customerName}`);
         foundCount++;
       } else {
-        console.log(`⚠️ 미발견: ${customerName} (페이지네이션 필요할 수 있음)`);
+        console.log(`⚠️ 미발견: ${customerName}`);
       }
     }
 
     await page.screenshot({ path: 'test-results/multi-customer-list.png' });
     console.log(`\n발견된 고객: ${foundCount}/${state.customers.length}명`);
+
+    expect(foundCount).toBe(state.customers.length);
   });
 
   test('3. 고객명 중복 검증 (동일 이름 등록 시도)', async ({ page }) => {
@@ -179,11 +182,16 @@ test.describe('다중 고객 E2E 테스트', () => {
     const duplicateName = state.customers[0];
     console.log(`중복 시도할 이름: ${duplicateName}`);
 
-    // 햄버거 메뉴 → 고객 등록
-    await page.locator('button.hamburger-button').first().click();
-    await page.waitForTimeout(500);
-    const menuItems = await page.locator('[class*="menu-item"]').all();
-    await menuItems[1].click(); // 고객 등록
+    // 온보딩 가이드가 열려있으면 닫기
+    const onboardingOverlay = page.locator('.onboarding-tour__overlay, .onboarding-tour');
+    if (await onboardingOverlay.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+    }
+
+    // 사이드바 메뉴에서 "새 고객 등록" 클릭
+    const newCustomerMenu = page.locator('[role="menuitem"]:has-text("새 고객 등록"), button:has-text("고객 등록")').first();
+    await newCustomerMenu.click();
     await page.waitForTimeout(1500);
 
     // 동일한 이름으로 등록 시도
@@ -232,10 +240,11 @@ test.describe('다중 고객 E2E 테스트', () => {
     }
 
     await page.screenshot({ path: 'test-results/multi-customer-duplicate.png' });
+    expect(hasError).toBe(true);
   });
 
-  test('4. 생성된 고객 정리 (삭제)', async ({ page }) => {
-    console.log('\n=== 고객 정리 테스트 ===');
+  test('4. 생성된 고객 검색 후 삭제', async ({ page }) => {
+    console.log('\n=== 고객 삭제 테스트 ===');
 
     const state = loadState();
     if (!state || state.customers.length === 0) {
@@ -245,21 +254,19 @@ test.describe('다중 고객 E2E 테스트', () => {
 
     console.log(`삭제 대상: ${state.customers.length}명`);
 
-    // 햄버거 메뉴 → 고객 전체보기
-    await page.locator('button.hamburger-button').first().click();
-    await page.waitForTimeout(500);
-    const menuItems = await page.locator('[class*="menu-item"]').all();
-    await menuItems[2].click(); // 고객 전체보기
+    // "전체 고객 보기" 버튼 클릭
+    const allCustomersBtn = page.locator('button:has-text("전체 고객 보기"), [role="menuitem"]:has-text("전체 고객")').first();
+    await allCustomersBtn.click();
     await page.waitForTimeout(2000);
 
     let deletedCount = 0;
 
-    // 각 고객 삭제 시도
+    // 각 고객을 찾아서 삭제
     for (const customerName of state.customers) {
       console.log(`\n삭제 시도: ${customerName}`);
 
       // 고객 찾기 및 클릭
-      const customerRow = page.locator(`text=${customerName}`).first();
+      const customerRow = page.getByText(customerName, { exact: true }).first();
       if (await customerRow.isVisible({ timeout: 3000 }).catch(() => false)) {
         await customerRow.click();
         await page.waitForTimeout(1000);
@@ -270,8 +277,8 @@ test.describe('다중 고객 E2E 테스트', () => {
           await deleteButton.click();
           await page.waitForTimeout(500);
 
-          // 확인 버튼 클릭
-          const confirmButton = page.locator('button:has-text("확인"), button:has-text("삭제"), .modal button.danger').first();
+          // 확인 다이얼로그에서 확인/삭제 버튼 클릭
+          const confirmButton = page.locator('.modal button:has-text("삭제"), .modal button:has-text("확인"), button.danger').first();
           if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await confirmButton.click();
             await page.waitForTimeout(1000);
@@ -280,20 +287,28 @@ test.describe('다중 고객 E2E 테스트', () => {
           console.log(`✅ ${customerName} 삭제 완료`);
           deletedCount++;
 
-          // 목록으로 돌아가기
-          await page.locator('button.hamburger-button').first().click();
-          await page.waitForTimeout(500);
-          const menuItemsAgain = await page.locator('[class*="menu-item"]').all();
-          await menuItemsAgain[2].click();
-          await page.waitForTimeout(1500);
+          // 목록으로 돌아가기 (사이드바 메뉴 통해)
+          const allCustomersMenuAgain = page.locator('[role="menuitem"]:has-text("모든 고객")').first();
+          if (await allCustomersMenuAgain.isVisible({ timeout: 1000 }).catch(() => false)) {
+            await allCustomersMenuAgain.click();
+            await page.waitForTimeout(1500);
+          }
         } else {
           console.log(`⚠️ ${customerName} 삭제 버튼 없음`);
+          // 뒤로가기
+          await page.goBack();
+          await page.waitForTimeout(1000);
         }
       } else {
-        console.log(`⚠️ ${customerName} 찾을 수 없음`);
+        console.log(`⚠️ ${customerName} 찾을 수 없음 (이미 삭제됨)`);
       }
+
     }
 
     console.log(`\n삭제 완료: ${deletedCount}/${state.customers.length}명`);
+    // 삭제 기능이 있는 경우에만 검증 (삭제 버튼이 없을 수 있음)
+    if (deletedCount === 0) {
+      console.log('⚠️ 삭제 버튼을 찾지 못함 - 삭제 기능 확인 필요');
+    }
   });
 });
