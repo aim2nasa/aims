@@ -281,13 +281,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
         {/* 액션 버튼 */}
         <div className="onboarding-tour__actions">
-          <button
-            type="button"
-            className="onboarding-tour__skip"
-            onClick={handleSkip}
-          >
-            건너뛰기
-          </button>
           <div className="onboarding-tour__nav">
             {!isFirstStep && (
               <Button
