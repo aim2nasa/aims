@@ -74,12 +74,13 @@ const DocumentLibraryContent: React.FC<{
   onToggleBulkLinkMode: () => void
   onDocumentClick?: (documentId: string) => void
   onDeleteSelected: () => void
+  onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -241,20 +242,17 @@ const DocumentLibraryContent: React.FC<{
               </svg>
             ),
             danger: true,
-            onClick: () => {
-              // 삭제 모드 활성화 후 해당 문서 선택
-              if (!isDeleteMode) {
-                onToggleDeleteMode()
-              }
+            onClick: async () => {
               if (documentId) {
-                onSelectDocument(documentId, { ctrlKey: false, metaKey: false } as React.MouseEvent)
+                const documentName = DocumentStatusService.extractFilename(contextMenuDocument) || '이 문서'
+                await onDeleteSingleDocument(documentId, documentName)
               }
             }
           }
         ]
       }
     ]
-  }, [contextMenuDocument, controller, isDeleteMode, onToggleDeleteMode, onSelectDocument, onDocumentClick])
+  }, [contextMenuDocument, controller, onDocumentClick, onDeleteSingleDocument])
 
   // 🍎 외부에서 새로고침 이벤트 받기
   React.useEffect(() => {
@@ -932,6 +930,56 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
 
+  // 🍎 단일 문서 삭제 핸들러 (컨텍스트 메뉴용)
+  const handleDeleteSingleDocument = React.useCallback(async (documentId: string, documentName: string) => {
+    // 확인 모달 표시
+    const confirmed = await confirmModal.actions.openModal({
+      title: '문서 삭제',
+      message: `"${documentName}"을(를) 삭제하시겠습니까?\n\n삭제된 문서는 복구할 수 없습니다.`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      showCancel: true,
+      confirmStyle: 'destructive',
+      iconType: 'warning',
+    })
+
+    if (!confirmed) return
+
+    try {
+      setIsDeleting(true)
+
+      // Optimistic Update: UI에서 먼저 제거
+      if (removeDocumentsFnRef.current) {
+        removeDocumentsFnRef.current(new Set([documentId]))
+      }
+
+      // API 호출하여 삭제
+      await api.delete(`/api/documents/${documentId}`)
+
+      // 삭제 완료 콜백
+      onDocumentDeleted?.()
+
+      // 삭제 모드 해제
+      setIsDeleteMode(false)
+      setSelectedDocumentIds(new Set())
+      setIsDeleting(false)
+
+    } catch (error) {
+      console.error('Error in handleDeleteSingleDocument:', error)
+      setIsDeleting(false)
+
+      // 삭제 실패 시 목록 다시 로드
+      await loadDocuments(searchParams)
+
+      await confirmModal.actions.openModal({
+        title: '삭제 실패',
+        message: '문서 삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+      })
+    }
+  }, [confirmModal, onDocumentDeleted, loadDocuments, searchParams])
+
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
       <div className="document-library-view">
@@ -954,6 +1002,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onToggleDeleteMode={handleToggleDeleteMode}
             onToggleBulkLinkMode={handleToggleBulkLinkMode}
             onDeleteSelected={handleDeleteSelected}
+            onDeleteSingleDocument={handleDeleteSingleDocument}
             isDeleting={isDeleting}
             onBulkLinkClick={(documents) => {
               setSelectedDocumentsForLink(documents)
