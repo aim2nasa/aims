@@ -35,7 +35,7 @@ export const LOG_CONFIG = {
     bgColor: 'transparent'
   },
   error: {
-    icon: '●',
+    icon: '!',
     color: 'rgba(255, 59, 48, 1)',
     bgColor: 'transparent'
   },

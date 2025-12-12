@@ -147,6 +147,7 @@
   width: 1em;
   height: 1em;
   position: relative;
+  color: inherit;
 }
 
 /* === GEAR SYMBOL === */
@@ -1315,33 +1316,47 @@
   opacity: 0.8;
 }
 
-/* EXCLAMATIONMARK (Error) SYMBOL - 애플 스타일 느낌표 */
+/* EXCLAMATIONMARK (Error) SYMBOL - 애플 스타일 느낌표 (!) */
 .sf-symbol--exclamationmark .sf-symbol__shape::before {
   content: '';
   position: absolute;
-  top: 40%;
+  top: 35%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 0.1em;
-  height: 0.4em;
+  width: 0.15em;
+  height: 0.45em;
 
-  /* 애플 스타일 느낌표 - 선과 점 */
+  /* 애플 스타일 느낌표 - 막대 부분 */
   background: currentColor;
-  border-radius: 0.05em;
-  opacity: 0.8;
+  border-radius: 0.08em;
 }
 
 .sf-symbol--exclamationmark .sf-symbol__shape::after {
   content: '';
   position: absolute;
-  bottom: 25%;
+  bottom: 18%;
   left: 50%;
   transform: translate(-50%, 0);
-  width: 0.12em;
-  height: 0.12em;
+  width: 0.15em;
+  height: 0.15em;
   background: currentColor;
   border-radius: 50%;
-  opacity: 0.8;
+}
+
+/* EXCLAMATIONMARK CIRCLE FILL SYMBOL - 애플 스타일 경고 (원형 배경 + 느낌표) */
+.sf-symbol--exclamationmark-circle-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9em;
+  height: 0.9em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='white'/%3E%3Crect x='10.5' y='5' width='3' height='9' rx='1.5' fill='black'/%3E%3Ccircle cx='12' cy='17.5' r='1.8' fill='black'/%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='white'/%3E%3Crect x='10.5' y='5' width='3' height='9' rx='1.5' fill='black'/%3E%3Ccircle cx='12' cy='17.5' r='1.8' fill='black'/%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
 }
 
 /* XMARK CIRCLE FILL SYMBOL - 애플 스타일 닫기 */

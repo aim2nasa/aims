@@ -316,8 +316,8 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
   font-weight: 500;
-  color: var(--color-ios-red);
-  background: var(--color-error-bg);
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.15);
   padding: 2px 6px;
   border-radius: 10px;
 }
@@ -359,6 +359,26 @@
 
 .file-summary__section-icon--error {
   color: var(--color-ios-red);
+}
+
+.file-summary__section-title--error {
+  color: #ff3b30;
+  font-weight: 600;
+}
+
+/* 빨간색 느낌표 아이콘 */
+.file-summary__error-icon {
+  color: #ff3b30;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.file-item__error-icon {
+  color: #ff3b30;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .file-summary__list {
@@ -471,7 +491,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
+  max-width: 300px;  /* 150px → 300px: 바이러스 감지 메시지 표시 공간 확대 */
+  margin-left: auto;  /* 우측 정렬 */
+  text-align: right;
 }
 
 .file-item__retry {

@@ -149,7 +149,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         case 'warning':
           return <SFSymbol name="checkmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--success" />
         case 'error':
-          return <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--error" />
+          return <span className="file-item__error-icon">!</span>
         case 'uploading':
           return <span className="file-item__spinner" />
         default:
@@ -251,8 +251,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
               {errorFiles.length > 0 && (
                 <div className="file-summary__section">
                   <div className="file-summary__section-header">
-                    <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-summary__section-icon file-summary__section-icon--error" />
-                    <span>실패 ({errorFiles.length})</span>
+                    <span className="file-summary__error-icon">!</span>
+                    <span className="file-summary__section-title--error">실패 ({errorFiles.length})</span>
                   </div>
                   <div className="file-summary__list">
                     {errorFiles.map(renderFileItem)}
