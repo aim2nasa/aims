@@ -302,15 +302,20 @@ html[data-theme="dark"] .draggable-modal--immersive .viewer-controls {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  opacity: 0.25;
+  color: var(--color-neutral-700);
+  opacity: 0.85;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
+.draggable-modal__close-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 .draggable-modal__close-button:hover {
   background: transparent;
-  opacity: 0.8;
+  opacity: 1;
   transform: scale(1.1);
 }
 

@@ -80,7 +80,7 @@ html[data-theme="dark"] .address-search-modal__header {
   border: none;
   font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 (22px → 24px) */
   font-weight: 300;
-  color: var(--color-text-secondary);
+  color: var(--color-neutral-700);
   cursor: pointer;
   padding: 0;
   line-height: 1;
@@ -89,12 +89,12 @@ html[data-theme="dark"] .address-search-modal__header {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.25;
+  opacity: 0.85;
   transition: all 0.2s ease;
 }
 
 .address-search-modal__close:hover {
-  opacity: 0.8;
+  opacity: 1;
   transform: scale(1.1);
 }
 

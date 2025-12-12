@@ -60,11 +60,11 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
           🏠 {customerName}님의 주소 보관소
         </h2>
         <button className="address-archive-modal__close" onClick={onClose} aria-label="닫기">
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
               d="M12 4L4 12M4 4L12 12"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="2"
               strokeLinecap="round"
             />
           </svg>
