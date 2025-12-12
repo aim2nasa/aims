@@ -888,15 +888,44 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
   height: 100%;
 }
 
-/* 페이지네이션 버튼 크기 축소 */
-.customer-full-detail__section-content--contracts .pagination-button {
-  width: 18px;
-  height: 18px;
+/* 🍎 페이지네이션 버튼 공통 스타일 (3개 섹션 통일) */
+.customer-full-detail__section-content--contracts .pagination-button,
+.customer-full-detail__section-content--documents .pagination-button,
+.customer-full-detail__section-content--annual-report .pagination-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-neutral-700);
+  font-weight: 600;
 }
 
-/* 페이지네이션 화살표 크기 축소 */
-.customer-full-detail__section-content--contracts .pagination-arrow {
-  font-size: var(--font-micro);
+.customer-full-detail__section-content--contracts .pagination-button:hover,
+.customer-full-detail__section-content--documents .pagination-button:hover,
+.customer-full-detail__section-content--annual-report .pagination-button:hover {
+  opacity: 0.6;
+}
+
+/* 클릭/포커스 시 배경 제거 (3개 섹션 통일) */
+.customer-full-detail__section-content--contracts .pagination-button:active,
+.customer-full-detail__section-content--contracts .pagination-button:focus,
+.customer-full-detail__section-content--documents .pagination-button:active,
+.customer-full-detail__section-content--documents .pagination-button:focus,
+.customer-full-detail__section-content--annual-report .pagination-button:active,
+.customer-full-detail__section-content--annual-report .pagination-button:focus {
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+/* 🍎 페이지네이션 화살표 공통 스타일 */
+.customer-full-detail__section-content--contracts .pagination-arrow,
+.customer-full-detail__section-content--documents .pagination-arrow,
+.customer-full-detail__section-content--annual-report .pagination-arrow {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-neutral-700);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
@@ -1083,17 +1112,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   gap: 4px;
   align-items: center;
   height: 100%;
-}
-
-/* 페이지네이션 버튼 크기 축소 */
-.customer-full-detail__section-content--documents .pagination-button {
-  width: 18px;
-  height: 18px;
-}
-
-/* 페이지네이션 화살표 크기 축소 */
-.customer-full-detail__section-content--documents .pagination-arrow {
-  font-size: var(--font-micro);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
@@ -1321,17 +1339,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   gap: 4px;
   align-items: center;
   height: 100%;
-}
-
-/* 페이지네이션 버튼 크기 축소 */
-.customer-full-detail__section-content--annual-report .pagination-button {
-  width: 18px;
-  height: 18px;
-}
-
-/* 페이지네이션 화살표 크기 축소 */
-.customer-full-detail__section-content--annual-report .pagination-arrow {
-  font-size: var(--font-micro);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
