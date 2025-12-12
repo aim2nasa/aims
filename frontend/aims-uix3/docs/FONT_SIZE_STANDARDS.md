@@ -105,6 +105,22 @@
 
 ---
 
+### 6️⃣ 온보딩 투어 (OnboardingTour)
+
+**첫 방문 사용자 가이드 오버레이 전용 규격**
+
+| 요소 | 폰트 사이즈 | CSS 변수 | 비고 |
+|------|----------|---------|------|
+| **제목** | **17px** | `var(--font-size-headline)` | 콘텐츠 헤드라인 크기 |
+| **설명** | **15px** | `var(--font-size-body)` | 본문 텍스트 |
+| **스텝 번호** (1/5) | **12px** | `var(--font-size-caption-1)` | 보조 정보 |
+| **다시 표시 안함** | **13px** | `var(--font-size-footnote)` | 버튼 텍스트 |
+| **아이콘** | **28px** | - | SF Symbol 강제 크기 |
+
+**참조 파일**: `src/shared/components/OnboardingTour/OnboardingTour.css`
+
+---
+
 ## 🚫 금지 사항
 
 ### 1. 하드코딩 절대 금지
@@ -143,10 +159,10 @@
 |----------|------------|---------|----------|
 | **15px** | 페이지 메인 타이틀 | `var(--font-size-subheadline)` | AccountSettingsView 페이지 제목, DocumentLibraryView 상단 타이틀 |
 | **16px** | 모달 헤더 제목 | `var(--font-size-callout)` | DraggableModal 제목, 확인 다이얼로그 제목 |
-| **17px** | 콘텐츠 영역 헤드라인 | `var(--font-size-headline)` | 대시보드 섹션 제목, 리포트 헤더 |
+| **17px** | 콘텐츠 영역 헤드라인 | `var(--font-size-headline)` | 대시보드 섹션 제목, 리포트 헤더, 온보딩 투어 제목 |
 | **20px** | 중요 섹션 구분 제목 | `var(--font-size-title-3)` | 설정 그룹 타이틀, 위젯 헤더 |
 | **22px** | 대형 컨테이너 헤더 | `var(--font-size-title-2)` | 풀페이지 리포트 제목, 전체화면 대시보드 헤더 |
-| **28px** | 랜딩/웰컴 페이지 타이틀 | `var(--font-size-title-1)` | 로그인 페이지 제목, 온보딩 헤더 |
+| **28px** | 랜딩/웰컴 페이지 타이틀 | `var(--font-size-title-1)` | 로그인 페이지 제목 |
 | **34px** | 특수 목적 초대형 제목 | `var(--font-size-large-title)` | 마케팅 랜딩, Empty State 메시지 |
 
 **절대 규칙**:
