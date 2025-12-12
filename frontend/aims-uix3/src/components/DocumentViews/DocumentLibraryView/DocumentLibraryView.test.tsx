@@ -204,6 +204,19 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  CloseButton: ({ onClick }: any) => (
+    <button data-testid="close-button" onClick={onClick}>×</button>
+  ),
+  useContextMenu: () => ({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    openMenu: vi.fn(),
+    closeMenu: vi.fn(),
+  }),
+  ContextMenu: ({ children }: any) => <div data-testid="context-menu">{children}</div>,
+  ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+  ContextMenuDivider: () => <hr />,
+  Modal: ({ children, visible }: any) => visible ? <div data-testid="modal">{children}</div> : null,
 }))
 
 vi.mock('../components/DocumentActionIcons', () => ({
@@ -252,8 +265,17 @@ vi.mock('@/controllers/useAppleConfirmController', () => ({
 
 vi.mock('../../SFSymbol', () => ({
   SFSymbol: ({ name }: any) => <span data-testid="sf-symbol">{name}</span>,
-  SFSymbolSize: { medium: 'medium' },
-  SFSymbolWeight: { regular: 'regular' },
+  SFSymbolSize: {
+    CAPTION_2: 'caption-2', CAPTION_1: 'caption-1', FOOTNOTE: 'footnote',
+    CALLOUT: 'callout', BODY: 'body', SUBHEADLINE: 'subheadline',
+    HEADLINE: 'headline', TITLE_3: 'title-3', TITLE_2: 'title-2',
+    TITLE_1: 'title-1', LARGE_TITLE: 'large-title', medium: 'medium',
+  },
+  SFSymbolWeight: {
+    ULTRALIGHT: 'ultralight', THIN: 'thin', LIGHT: 'light',
+    REGULAR: 'regular', MEDIUM: 'medium', SEMIBOLD: 'semibold',
+    BOLD: 'bold', HEAVY: 'heavy', BLACK: 'black', regular: 'regular',
+  },
 }))
 
 // Mock stores

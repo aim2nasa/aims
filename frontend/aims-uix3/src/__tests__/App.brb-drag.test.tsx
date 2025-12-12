@@ -33,6 +33,9 @@ vi.mock('@tanstack/react-query', () => ({
     clear: vi.fn(),
   })),
   QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  useQuery: () => ({ data: null, isLoading: false, error: null }),
+  useMutation: () => ({ mutate: vi.fn(), isLoading: false }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn() }),
 }))
 
 // WebSocket Mock

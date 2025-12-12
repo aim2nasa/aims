@@ -88,8 +88,13 @@ describe('getAuthHeaders', () => {
     })
 
     test('localStorage.getItem 에러 시 빈 객체 반환', () => {
-      mockLocalStorage.getItem = vi.fn(() => {
-        throw new Error('localStorage access denied')
+      // auth-storage 접근 시에만 에러 발생하도록 설정
+      // (aims-current-user-id는 try-catch 외부에서 호출되므로 정상 반환 필요)
+      mockLocalStorage.getItem = vi.fn((key: string) => {
+        if (key === 'auth-storage') {
+          throw new Error('localStorage access denied')
+        }
+        return null
       })
 
       const headers = getAuthHeaders()

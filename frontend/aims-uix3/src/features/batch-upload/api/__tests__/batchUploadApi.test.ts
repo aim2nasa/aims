@@ -27,6 +27,7 @@ vi.mock('@/shared/lib/api', () => ({
       this.name = 'ApiError'
     }
   },
+  getAuthHeaders: vi.fn(() => ({ 'Authorization': 'Bearer test-token' })),
 }))
 
 // ==================== XMLHttpRequest Mock ====================
@@ -35,6 +36,7 @@ interface MockXHRInstance {
   open: ReturnType<typeof vi.fn>
   send: ReturnType<typeof vi.fn>
   abort: ReturnType<typeof vi.fn>
+  setRequestHeader: ReturnType<typeof vi.fn>
   upload: {
     addEventListener: ReturnType<typeof vi.fn>
   }
@@ -58,6 +60,7 @@ function createMockXHR(): MockXHRInstance {
     open: vi.fn(),
     send: vi.fn(),
     abort: vi.fn(),
+    setRequestHeader: vi.fn(),
     upload: {
       addEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
         uploadEventHandlers[event] = handler

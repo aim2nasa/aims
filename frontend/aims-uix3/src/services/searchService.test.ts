@@ -724,7 +724,7 @@ describe('SearchService.getDocumentDetails', () => {
     const result = await SearchService.getDocumentDetails('doc123');
 
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://n8nd.giize.com/webhook/smartsearch',
+      '/api/n8n/smartsearch',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

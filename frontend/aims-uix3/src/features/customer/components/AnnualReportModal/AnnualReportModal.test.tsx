@@ -20,15 +20,17 @@ import type { AnnualReport } from '../../api/annualReportApi';
 // Mock dependencies
 vi.mock('../../../../components/SFSymbol', () => ({
   default: ({ name }: { name: string }) => <span data-testid="sf-symbol" data-icon={name}>{name}</span>,
+  SFSymbol: ({ name }: { name: string }) => <span data-testid="sf-symbol" data-icon={name}>{name}</span>,
   SFSymbolSize: {
-    BODY: 17,
-    CAPTION_2: 11,
-    TITLE_3: 20
+    CAPTION_2: 'caption-2', CAPTION_1: 'caption-1', FOOTNOTE: 'footnote',
+    CALLOUT: 'callout', BODY: 'body', SUBHEADLINE: 'subheadline',
+    HEADLINE: 'headline', TITLE_3: 'title-3', TITLE_2: 'title-2',
+    TITLE_1: 'title-1', LARGE_TITLE: 'large-title',
   },
   SFSymbolWeight: {
-    REGULAR: 'regular',
-    MEDIUM: 'medium',
-    SEMIBOLD: 'semibold'
+    ULTRALIGHT: 'ultralight', THIN: 'thin', LIGHT: 'light',
+    REGULAR: 'regular', MEDIUM: 'medium', SEMIBOLD: 'semibold',
+    BOLD: 'bold', HEAVY: 'heavy', BLACK: 'black',
   }
 }));
 

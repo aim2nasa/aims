@@ -38,6 +38,9 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
   });
 
   it('시맨틱 검색 결과에 customer_relation이 포함되어야 한다', async () => {
+    // 유효한 MongoDB ObjectId 사용 (24자리 16진수)
+    const validCustomerId = '507f1f77bcf86cd799439011';
+
     const mockSearchResponse = {
       search_results: [
         {
@@ -60,7 +63,8 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
           meta: { summary: 'Test summary' },
           ocr: null,
           customer_relation: {
-            customer_id: 'customer456',
+            customer_id: validCustomerId,
+            customer_name: '홍길동',  // customer_name 포함하여 추가 API 호출 방지
             linked_at: '2025-11-01T00:00:00Z'
           }
         },
@@ -87,7 +91,8 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
 
     // customer_relation이 결과에 포함되어야 함
     expect((result.search_results[0] as any).customer_relation).toEqual({
-      customer_id: 'customer456',
+      customer_id: validCustomerId,
+      customer_name: '홍길동',
       linked_at: '2025-11-01T00:00:00Z'
     });
   });
@@ -190,6 +195,9 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
   });
 
   it('고객이 연결된 문서와 미연결 문서가 섞여있어도 정상 처리된다', async () => {
+    // 유효한 MongoDB ObjectId 사용 (24자리 16진수)
+    const validCustomerId = '507f1f77bcf86cd799439022';
+
     const mockSearchResponse = {
       search_results: [
         { id: 's1', score: 0.95, payload: { doc_id: 'doc1' } },
@@ -203,7 +211,11 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
       data: {
         raw: {
           meta: {},
-          customer_relation: { customer_id: 'customerA', linked_at: '2025-01-01T00:00:00Z' }
+          customer_relation: {
+            customer_id: validCustomerId,
+            customer_name: '김영희',  // customer_name 포함하여 추가 API 호출 방지
+            linked_at: '2025-01-01T00:00:00Z'
+          }
         },
         computed: { overallStatus: 'completed' }
       }
@@ -245,7 +257,8 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
 
     // 첫 번째: 고객 연결됨
     expect((result.search_results[0] as any).customer_relation).toEqual({
-      customer_id: 'customerA',
+      customer_id: validCustomerId,
+      customer_name: '김영희',
       linked_at: '2025-01-01T00:00:00Z'
     });
 
@@ -254,7 +267,8 @@ describe('SearchService - 고객 표시 기능 (e953cd4c)', () => {
 
     // 세 번째: 고객 연결됨
     expect((result.search_results[2] as any).customer_relation).toEqual({
-      customer_id: 'customerA',
+      customer_id: validCustomerId,
+      customer_name: '김영희',
       linked_at: '2025-01-01T00:00:00Z'
     });
   });

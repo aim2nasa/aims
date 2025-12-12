@@ -4,6 +4,7 @@
  */
 
 import '@testing-library/jest-dom'
+import { createElement } from 'react'
 import type { ReactNode } from 'react'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
@@ -25,6 +26,39 @@ vi.mock('@/contexts/AppleConfirmProvider', () => ({
     showConfirm: vi.fn().mockResolvedValue(true)
   }),
   AppleConfirmProvider: ({ children }: { children: ReactNode }) => children
+}))
+
+// SFSymbol 컴포넌트 글로벌 mock (CloseButton 등에서 사용)
+// React.createElement를 사용 (.ts 파일에서 JSX 미지원)
+vi.mock('@/components/SFSymbol', () => ({
+  SFSymbol: ({ name, size, weight }: { name: string; size?: string; weight?: string }) =>
+    createElement('span', { 'data-testid': 'sf-symbol', 'data-name': name, 'data-size': size, 'data-weight': weight }, name),
+  SFSymbolSize: {
+    CAPTION_2: 'caption-2',
+    CAPTION_1: 'caption-1',
+    FOOTNOTE: 'footnote',
+    CALLOUT: 'callout',
+    BODY: 'body',
+    SUBHEADLINE: 'subheadline',
+    HEADLINE: 'headline',
+    TITLE_3: 'title-3',
+    TITLE_2: 'title-2',
+    TITLE_1: 'title-1',
+    LARGE_TITLE: 'large-title',
+  },
+  SFSymbolWeight: {
+    ULTRALIGHT: 'ultralight',
+    THIN: 'thin',
+    LIGHT: 'light',
+    REGULAR: 'regular',
+    MEDIUM: 'medium',
+    SEMIBOLD: 'semibold',
+    BOLD: 'bold',
+    HEAVY: 'heavy',
+    BLACK: 'black',
+  },
+  default: ({ name }: { name: string }) =>
+    createElement('span', { 'data-testid': 'sf-symbol' }, name),
 }))
 
 // 각 테스트 후 자동 cleanup

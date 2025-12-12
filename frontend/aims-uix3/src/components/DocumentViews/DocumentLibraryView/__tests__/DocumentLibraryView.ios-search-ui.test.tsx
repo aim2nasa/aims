@@ -154,6 +154,104 @@ vi.mock('../../../../controllers/useAppleConfirmController', () => ({
   })
 }))
 
+// Mock @/shared/ui
+vi.mock('@/shared/ui', () => ({
+  Button: ({ children, onClick }: any) => (
+    <button onClick={onClick}>{children}</button>
+  ),
+  Dropdown: ({ value, onChange }: any) => (
+    <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="10">10개씩</option>
+    </select>
+  ),
+  Tooltip: ({ children }: any) => <div>{children}</div>,
+  CloseButton: ({ onClick }: any) => (
+    <button data-testid="close-button" onClick={onClick}>×</button>
+  ),
+  useContextMenu: () => ({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    openMenu: vi.fn(),
+    closeMenu: vi.fn(),
+  }),
+  ContextMenu: ({ children }: any) => <div data-testid="context-menu">{children}</div>,
+  ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+  ContextMenuDivider: () => <hr />,
+  Modal: ({ children, visible }: any) => visible ? <div data-testid="modal">{children}</div> : null,
+}))
+
+// Mock SFSymbol - using @/components path alias
+vi.mock('@/components/SFSymbol', () => ({
+  SFSymbol: ({ name, className }: any) => (
+    <span data-testid="sf-symbol" className={className}>{name}</span>
+  ),
+  SFSymbolSize: {
+    CAPTION_2: 'caption-2', CAPTION_1: 'caption-1', FOOTNOTE: 'footnote',
+    CALLOUT: 'callout', BODY: 'body', SUBHEADLINE: 'subheadline',
+    HEADLINE: 'headline', TITLE_3: 'title-3', TITLE_2: 'title-2',
+    TITLE_1: 'title-1', LARGE_TITLE: 'large-title',
+  },
+  SFSymbolWeight: {
+    ULTRALIGHT: 'ultralight', THIN: 'thin', LIGHT: 'light',
+    REGULAR: 'regular', MEDIUM: 'medium', SEMIBOLD: 'semibold',
+    BOLD: 'bold', HEAVY: 'heavy', BLACK: 'black',
+  },
+}))
+
+// Mock SFSymbol - relative path used by component
+vi.mock('../../SFSymbol', () => ({
+  SFSymbol: ({ name, className }: any) => (
+    <span data-testid="sf-symbol" className={className}>{name}</span>
+  ),
+  SFSymbolSize: {
+    CAPTION_2: 'caption-2', CAPTION_1: 'caption-1', FOOTNOTE: 'footnote',
+    CALLOUT: 'callout', BODY: 'body', SUBHEADLINE: 'subheadline',
+    HEADLINE: 'headline', TITLE_3: 'title-3', TITLE_2: 'title-2',
+    TITLE_1: 'title-1', LARGE_TITLE: 'large-title',
+  },
+  SFSymbolWeight: {
+    ULTRALIGHT: 'ultralight', THIN: 'thin', LIGHT: 'light',
+    REGULAR: 'regular', MEDIUM: 'medium', SEMIBOLD: 'semibold',
+    BOLD: 'bold', HEAVY: 'heavy', BLACK: 'black',
+  },
+}))
+
+// Mock CenterPaneView
+vi.mock('../../CenterPaneView/CenterPaneView', () => ({
+  default: ({ children }: any) => <div data-testid="center-pane-view">{children}</div>,
+}))
+
+// Mock DocumentStatusHeader
+vi.mock('../DocumentStatusView/components/DocumentStatusHeader', () => ({
+  default: () => <div data-testid="document-status-header">Header</div>,
+}))
+
+// Mock DocumentStatusList
+vi.mock('../DocumentStatusView/components/DocumentStatusList', () => ({
+  default: () => <div data-testid="document-status-list">List</div>,
+}))
+
+// Mock modals
+vi.mock('../DocumentStatusView/components/DocumentDetailModal', () => ({
+  default: () => null,
+}))
+
+vi.mock('../DocumentStatusView/components/DocumentSummaryModal', () => ({
+  default: () => null,
+}))
+
+vi.mock('../DocumentStatusView/components/DocumentFullTextModal', () => ({
+  default: () => null,
+}))
+
+vi.mock('../DocumentStatusView/components/DocumentLinkModal', () => ({
+  default: () => null,
+}))
+
+vi.mock('../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal', () => ({
+  AppleConfirmModal: () => null,
+}))
+
 describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9c)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
