@@ -2082,6 +2082,21 @@ html[data-theme="dark"] .excel-refiner__td--customer-error {
   text-decoration: underline;
 }
 
+/* === 액션 로그 내 클릭 가능한 링크 === */
+
+.excel-refiner__action-link {
+  color: var(--color-primary-600);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__action-link:hover {
+  color: var(--color-primary-700);
+  text-decoration-thickness: 2px;
+}
+
 /* === 일괄등록 상세 결과 모달 === */
 
 /* 모달 content를 flex로 확장 */

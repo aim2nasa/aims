@@ -3213,7 +3213,51 @@ export function ExcelRefiner() {
                 {/* 액션 로그 메시지 */}
                 {actionLog && !importProgress && (
                   <div className="excel-refiner__action-log">
-                    <span>{actionLog}</span>
+                    <span>
+                      {(() => {
+                        // "전체 고객 보기", "전체 계약 보기"를 클릭 가능한 링크로 변환
+                        const parts = actionLog.split(/(전체 고객 보기|전체 계약 보기)/g)
+                        return parts.map((part, index) => {
+                          if (part === '전체 고객 보기') {
+                            return (
+                              <a
+                                key={index}
+                                className="excel-refiner__action-link"
+                                onClick={() => {
+                                  const url = new URL(window.location.href)
+                                  url.searchParams.set('view', 'customers-all')
+                                  url.searchParams.delete('customerId')
+                                  url.searchParams.delete('documentId')
+                                  window.history.pushState({}, '', url.toString())
+                                  window.dispatchEvent(new PopStateEvent('popstate'))
+                                }}
+                              >
+                                {part}
+                              </a>
+                            )
+                          }
+                          if (part === '전체 계약 보기') {
+                            return (
+                              <a
+                                key={index}
+                                className="excel-refiner__action-link"
+                                onClick={() => {
+                                  const url = new URL(window.location.href)
+                                  url.searchParams.set('view', 'contracts-all')
+                                  url.searchParams.delete('customerId')
+                                  url.searchParams.delete('documentId')
+                                  window.history.pushState({}, '', url.toString())
+                                  window.dispatchEvent(new PopStateEvent('popstate'))
+                                }}
+                              >
+                                {part}
+                              </a>
+                            )
+                          }
+                          return part
+                        })
+                      })()}
+                    </span>
                   </div>
                 )}
               </div>
