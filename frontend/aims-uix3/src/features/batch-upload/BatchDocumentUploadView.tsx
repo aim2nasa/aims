@@ -19,10 +19,12 @@ import MappingPreview from './components/MappingPreview'
 import UploadProgress from './components/UploadProgress'
 import UploadSummary from './components/UploadSummary'
 import DuplicateDialog, { type DuplicateFile } from './components/DuplicateDialog'
+import StorageExceededDialog from './components/StorageExceededDialog'
 import { useBatchUpload } from './hooks/useBatchUpload'
 import { BatchUploadApi } from './api/batchUploadApi'
 import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
+import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import type { FolderMapping, DuplicateAction } from './types'
 import { TIER_LIMITS } from './types'
 import './BatchDocumentUploadView.css'
@@ -145,6 +147,18 @@ export default function BatchDocumentUploadView({
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
 
+  // 스토리지 용량 초과 다이얼로그 상태
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
+  const [showStorageExceededDialog, setShowStorageExceededDialog] = useState(false)
+  const [storageExceededInfo, setStorageExceededInfo] = useState<{
+    selectedFilesSize: number
+    selectedFilesCount: number
+    partialUploadInfo: { fileCount: number; totalSize: number } | null
+  } | null>(null)
+  // 용량 초과로 필터링 대기 중인 파일들
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [pendingMappings, setPendingMappings] = useState<FolderMapping[]>([])
+
   // 업로드 훅
   const {
     progress,
@@ -219,7 +233,49 @@ export default function BatchDocumentUploadView({
     }
   }, [progress.state])
 
-  const handleFilesSelected = useCallback((files: File[]) => {
+  /**
+   * 일부 업로드 가능 파일 계산 (크기 작은 순)
+   */
+  const calculatePartialUpload = useCallback((
+    files: File[],
+    remainingBytes: number
+  ): { fileCount: number; totalSize: number } | null => {
+    const sorted = [...files].sort((a, b) => a.size - b.size)
+    let count = 0
+    let size = 0
+
+    for (const file of sorted) {
+      if (size + file.size <= remainingBytes) {
+        count++
+        size += file.size
+      }
+    }
+
+    return count > 0 ? { fileCount: count, totalSize: size } : null
+  }, [])
+
+  /**
+   * 용량 내 파일만 필터링하여 mappings 생성
+   */
+  const filterMappingsToFitStorage = useCallback((
+    files: File[],
+    remainingBytes: number
+  ): File[] => {
+    const sorted = [...files].sort((a, b) => a.size - b.size)
+    const filtered: File[] = []
+    let totalSize = 0
+
+    for (const file of sorted) {
+      if (totalSize + file.size <= remainingBytes) {
+        filtered.push(file)
+        totalSize += file.size
+      }
+    }
+
+    return filtered
+  }, [])
+
+  const handleFilesSelected = useCallback(async (files: File[]) => {
     // 1. 파일을 폴더별로 그룹화
     const fileGroups = groupFilesByFolder(files)
 
@@ -243,22 +299,114 @@ export default function BatchDocumentUploadView({
 
     // 3. 폴더-고객 매핑 생성
     const mappings = createFolderMappings(fileGroups, customers)
+
+    // 4. 스토리지 용량 체크 (신규)
+    try {
+      const storage = await getMyStorageInfo()
+      console.log('[BatchUpload] Storage info:', storage)
+      setStorageInfo(storage)
+
+      // 선택한 파일 총 크기 계산
+      const totalSelectedSize = allFiles.reduce((sum, f) => sum + f.size, 0)
+      const remainingBytes = storage.remaining_bytes
+      console.log('[BatchUpload] Size check:', {
+        totalSelectedSize,
+        remainingBytes,
+        is_unlimited: storage.is_unlimited,
+        shouldShowDialog: totalSelectedSize > remainingBytes && !storage.is_unlimited
+      })
+
+      // 용량 초과 체크 (무제한 사용자 제외)
+      if (totalSelectedSize > remainingBytes && !storage.is_unlimited) {
+        // 일부 업로드 가능한 파일 계산
+        const partialInfo = calculatePartialUpload(allFiles, remainingBytes)
+
+        // 상태 저장 (나중에 일부만 업로드 시 사용)
+        setPendingFiles(allFiles)
+        setPendingMappings(mappings)
+
+        setStorageExceededInfo({
+          selectedFilesSize: totalSelectedSize,
+          selectedFilesCount: allFiles.length,
+          partialUploadInfo: partialInfo
+        })
+        setShowStorageExceededDialog(true)
+        return // preview 단계로 이동하지 않음
+      }
+    } catch (error) {
+      console.error('스토리지 정보 조회 실패:', error)
+      // 에러 시에도 정상 진행 (서버에서 최종 검증)
+    }
+
+    // 5. 정상 진행
     setFolderMappings(mappings)
 
-    // 4. 기본 펼침 상태 설정 (루트 폴더들만)
+    // 6. 기본 펼침 상태 설정 (루트 폴더들만)
     setExpandedPaths(new Set(mappings.map(m => m.folderName)))
 
-    // 5. 미리보기 단계로 이동
+    // 7. 미리보기 단계로 이동
     if (mappings.length > 0) {
       setStep('preview')
     }
-  }, [tierLimit, customers])
+  }, [tierLimit, customers, calculatePartialUpload])
 
   const handleBack = useCallback(() => {
     setStep('select')
     setFolderMappings([])
     setValidationErrors([])
     setExpandedPaths(new Set())
+  }, [])
+
+  // 스토리지 초과 다이얼로그: "기존 파일 정리" 클릭
+  const handleCleanupFiles = useCallback(() => {
+    setShowStorageExceededDialog(false)
+    setPendingFiles([])
+    setPendingMappings([])
+    // 일괄등록 뷰 닫기
+    onClose()
+    // 전체 문서 보기로 이동
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', 'documents-library')
+    url.searchParams.delete('customerId')
+    url.searchParams.delete('documentId')
+    window.history.pushState({}, '', url.toString())
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [onClose])
+
+  // 스토리지 초과 다이얼로그: "일부만 업로드" 클릭
+  const handlePartialUpload = useCallback(() => {
+    if (!storageInfo || !pendingFiles.length) return
+
+    // 용량 내 파일만 필터링
+    const filteredFiles = filterMappingsToFitStorage(pendingFiles, storageInfo.remaining_bytes)
+
+    if (filteredFiles.length === 0) {
+      setShowStorageExceededDialog(false)
+      setPendingFiles([])
+      setPendingMappings([])
+      return
+    }
+
+    // 필터링된 파일로 새 mappings 생성
+    const fileGroups = groupFilesByFolder(filteredFiles)
+    const mappings = createFolderMappings(fileGroups, customers)
+
+    setFolderMappings(mappings)
+    setExpandedPaths(new Set(mappings.map(m => m.folderName)))
+    setShowStorageExceededDialog(false)
+    setPendingFiles([])
+    setPendingMappings([])
+
+    if (mappings.length > 0) {
+      setStep('preview')
+    }
+  }, [storageInfo, pendingFiles, customers, filterMappingsToFitStorage])
+
+  // 스토리지 초과 다이얼로그 닫기
+  const handleStorageDialogClose = useCallback(() => {
+    setShowStorageExceededDialog(false)
+    setPendingFiles([])
+    setPendingMappings([])
   }, [])
 
   const handleStartUpload = useCallback(async (selectedMappings: FolderMapping[]) => {
@@ -418,6 +566,22 @@ export default function BatchDocumentUploadView({
           onAction={handleDuplicateAction}
           onCancel={handleDuplicateCancel}
           remainingCount={remainingDuplicates}
+        />
+      )}
+
+      {/* 스토리지 용량 초과 다이얼로그 */}
+      {storageInfo && storageExceededInfo && (
+        <StorageExceededDialog
+          visible={showStorageExceededDialog}
+          onClose={handleStorageDialogClose}
+          usedBytes={storageInfo.used_bytes}
+          maxBytes={storageInfo.quota_bytes}
+          tierName={storageInfo.tierName}
+          selectedFilesSize={storageExceededInfo.selectedFilesSize}
+          selectedFilesCount={storageExceededInfo.selectedFilesCount}
+          onCleanupFiles={handleCleanupFiles}
+          onPartialUpload={handlePartialUpload}
+          partialUploadInfo={storageExceededInfo.partialUploadInfo}
         />
       )}
 

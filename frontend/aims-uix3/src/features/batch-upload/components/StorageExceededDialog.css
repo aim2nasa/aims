@@ -1,0 +1,260 @@
+/**
+ * StorageExceededDialog Component Styles
+ * @since 2025-12-13
+ */
+
+.storage-exceeded-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: storageExceeded-fadeIn 0.15s ease;
+}
+
+@keyframes storageExceeded-fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.storage-exceeded-dialog {
+  background: var(--color-bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 520px;
+  max-width: 90vw;
+  animation: storageExceeded-slideUp 0.2s ease;
+}
+
+@keyframes storageExceeded-slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 헤더 */
+.storage-exceeded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border-secondary);
+  background: var(--color-bg-secondary);
+  border-radius: 12px 12px 0 0;
+}
+
+.storage-exceeded-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.storage-exceeded-title h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+/* 경고 아이콘 */
+.storage-exceeded-icon-warning {
+  color: var(--color-warning-500);
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.storage-exceeded-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.storage-exceeded-close:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+/* 콘텐츠 */
+.storage-exceeded-content {
+  padding: 20px 24px;
+}
+
+/* 용량 정보 */
+.storage-exceeded-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-secondary);
+}
+
+.storage-exceeded-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.storage-exceeded-label {
+  color: var(--color-text-secondary);
+}
+
+.storage-exceeded-value {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.storage-exceeded-info-row.exceeded .storage-exceeded-label,
+.storage-exceeded-info-row.exceeded .storage-exceeded-value.exceeded {
+  color: var(--color-error-500);
+  font-weight: 600;
+}
+
+/* 스토리지 바 래퍼 */
+.storage-exceeded-bar {
+  margin-bottom: 20px;
+}
+
+/* 일부 업로드 가능 안내 */
+.storage-exceeded-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--color-success-50);
+  border: 1px solid var(--color-success-200);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--color-success-700);
+  font-weight: 500;
+}
+
+.storage-exceeded-hint .sf-symbol,
+.storage-exceeded-icon-hint {
+  color: var(--color-success-500);
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* 버튼 */
+.storage-exceeded-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--color-border-secondary);
+  background: var(--color-bg-secondary);
+  border-radius: 0 0 12px 12px;
+}
+
+.storage-exceeded-btn svg,
+.storage-exceeded-btn .sf-symbol {
+  flex-shrink: 0;
+}
+
+.storage-exceeded-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+/* 버튼 아이콘 색상 */
+.storage-exceeded-btn svg {
+  color: currentColor;
+  fill: currentColor;
+}
+
+.storage-exceeded-btn .sf-symbol {
+  color: currentColor;
+}
+
+.storage-exceeded-btn:hover {
+  background: var(--color-bg-secondary);
+}
+
+.storage-exceeded-btn:active {
+  transform: scale(0.98);
+}
+
+.storage-exceeded-btn.secondary {
+  border-color: var(--color-border-secondary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.storage-exceeded-btn.secondary:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+}
+
+.storage-exceeded-btn.secondary.disabled,
+.storage-exceeded-btn.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--color-bg-secondary);
+}
+
+.storage-exceeded-btn.secondary.disabled:hover,
+.storage-exceeded-btn.secondary:disabled:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+.storage-exceeded-btn.primary {
+  border-color: var(--color-ios-blue, #007aff);
+  background: var(--color-ios-blue, #007aff);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.storage-exceeded-btn.primary:hover {
+  background: var(--color-ios-blue-hover, #0066d6);
+  border-color: var(--color-ios-blue-hover, #0066d6);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+}
+
+.storage-exceeded-btn.primary svg,
+.storage-exceeded-btn.primary .sf-symbol {
+  color: white;
+}
