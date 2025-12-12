@@ -123,33 +123,40 @@ html[data-theme="dark"] .onboarding-tour__step-close:hover {
 /* 헤더 - 아이콘과 제목 */
 .onboarding-tour__header {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-/* 아이콘 - 더 세련된 배경 */
+/* 아이콘 - 투명 배경, 제목과 어울리는 크기 */
 .onboarding-tour__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, var(--color-primary-50, #eff6ff) 0%, var(--color-primary-100, #dbeafe) 100%);
-  border-radius: var(--radius-lg, 12px);
-  color: var(--color-primary-600, #2563eb);
+  color: var(--color-primary-500, #3b82f6);
   flex-shrink: 0;
 }
 
+/* SF Symbol 아이콘 강제 크기 조정 */
+.onboarding-tour__icon .sf-symbol {
+  font-size: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.onboarding-tour__icon .sf-symbol .sf-symbol__shape::before {
+  width: 1em !important;
+  height: 1em !important;
+}
+
 html[data-theme="dark"] .onboarding-tour__icon {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
   color: var(--color-primary-400);
 }
 
 /* 제목 */
 .onboarding-tour__title {
   margin: 0;
-  font-size: var(--font-size-headline, 17px);
+  font-size: 18px;
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-primary);
   line-height: 1.35;
@@ -216,38 +223,67 @@ html[data-theme="dark"] .onboarding-tour__dot--completed {
   gap: 8px;
 }
 
-/* 건너뛰기 링크 - 단일 텍스트 링크 */
+/* 건너뛰기 버튼 - 명확한 버튼 스타일 */
 .onboarding-tour__skip {
   font-size: var(--font-size-footnote, 13px);
-  color: var(--color-text-tertiary);
-  background: none;
-  border: none;
-  padding: 4px 0;
+  color: var(--color-text-secondary, #666);
+  background: var(--color-bg-secondary, #f5f5f7);
+  border: 1px solid var(--color-border-medium, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-md, 8px);
+  padding: 8px 16px;
   cursor: pointer;
-  transition: color 150ms ease;
+  transition: all 150ms ease;
 }
 
 .onboarding-tour__skip:hover {
-  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary, #e8e8ed);
+  color: var(--color-text-primary, #1d1d1f);
+  border-color: var(--color-border-dark, rgba(0, 0, 0, 0.2));
+}
+
+html[data-theme="dark"] .onboarding-tour__skip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+html[data-theme="dark"] .onboarding-tour__skip:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* 푸터 - 다시 보지 않기 옵션 */
 .onboarding-tour__footer {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+  border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.08));
   text-align: center;
 }
 
 .onboarding-tour__never-show {
-  font-size: var(--font-size-caption-1, 12px) !important;
-  color: var(--color-text-quaternary) !important;
-  opacity: 0.8;
+  font-size: var(--font-size-footnote, 13px) !important;
+  color: var(--color-text-tertiary, #888) !important;
+  background: transparent !important;
+  border: 1px dashed var(--color-border-medium, rgba(0, 0, 0, 0.2)) !important;
+  border-radius: var(--radius-md, 8px) !important;
+  padding: 8px 16px !important;
 }
 
 .onboarding-tour__never-show:hover {
-  color: var(--color-text-tertiary) !important;
-  opacity: 1;
+  color: var(--color-text-secondary, #555) !important;
+  border-color: var(--color-border-dark, rgba(0, 0, 0, 0.35)) !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+html[data-theme="dark"] .onboarding-tour__never-show {
+  color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+html[data-theme="dark"] .onboarding-tour__never-show:hover {
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* 애니메이션 감소 모드 */

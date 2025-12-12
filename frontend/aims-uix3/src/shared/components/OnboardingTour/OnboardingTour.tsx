@@ -258,8 +258,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             <span className="onboarding-tour__icon">
               <SFSymbol
                 name={step.icon}
-                size={SFSymbolSize.TITLE_3}
-                weight={SFSymbolWeight.MEDIUM}
+                size={SFSymbolSize.LARGE_TITLE}
+                weight={SFSymbolWeight.SEMIBOLD}
               />
             </span>
           )}
