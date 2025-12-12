@@ -224,7 +224,7 @@ const DocumentLibraryContent: React.FC<{
           }
         ]
       },
-      ...(isDevMode ? [{
+      {
         id: 'danger',
         items: [
           {
@@ -248,9 +248,9 @@ const DocumentLibraryContent: React.FC<{
             }
           }
         ]
-      }] : [])
+      }
     ]
-  }, [contextMenuDocument, controller, isDevMode, isDeleteMode, onToggleDeleteMode, onSelectDocument])
+  }, [contextMenuDocument, controller, isDeleteMode, onToggleDeleteMode, onSelectDocument])
 
   // 🍎 외부에서 새로고침 이벤트 받기
   React.useEffect(() => {
@@ -337,39 +337,37 @@ const DocumentLibraryContent: React.FC<{
             </Tooltip>
           )}
 
-          {/* 삭제 버튼 (개발자 모드에서만 표시) */}
-          {isDevMode && (
-            <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
-              <button
-                type="button"
-                className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
-                onClick={onToggleDeleteMode}
-                disabled={isBulkLinkMode}
-                aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
-              >
-                {isDeleteMode ? (
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : (
-                  <SFSymbol
-                    name="trash"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                )}
-              </button>
-            </Tooltip>
-          )}
+          {/* 삭제 버튼 */}
+          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+            <button
+              type="button"
+              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+              onClick={onToggleDeleteMode}
+              disabled={isBulkLinkMode}
+              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+            >
+              {isDeleteMode ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+              )}
+            </button>
+          </Tooltip>
 
           {/* 총 문서 개수 */}
           <span className="result-count">
             총 {controller.totalCount}개의 문서
           </span>
 
-          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 (개발자 모드에서만) */}
-          {isDevMode && isDeleteMode && (
+          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+          {isDeleteMode && (
             <>
               <span className="selected-count-inline">
                 {selectedDocumentIds.size}개 선택됨
