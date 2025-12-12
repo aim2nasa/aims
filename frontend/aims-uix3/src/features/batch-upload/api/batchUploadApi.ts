@@ -1,13 +1,15 @@
 /**
  * Batch Upload API
  * @since 2025-12-05
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 고객 문서 일괄등록을 위한 API 클라이언트
+ * 바이러스 검사 통합 (ClamAV)
  */
 
 import { api, ApiError, API_CONFIG, getAuthHeaders } from '../../../shared/lib/api'
 import type { CustomerForMatching } from '../utils/customerMatcher'
+import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 
 // n8n webhook 직접 호출
 const UPLOAD_ENDPOINT = 'https://n8nd.giize.com/webhook/docprep-main'
@@ -96,7 +98,7 @@ export class BatchUploadApi {
   }
 
   /**
-   * 단일 파일 업로드 (진행률 추적)
+   * 단일 파일 업로드 (바이러스 검사 + 진행률 추적)
    * XMLHttpRequest를 사용하여 진행률을 추적합니다
    *
    * @param file - 업로드할 파일
@@ -112,6 +114,29 @@ export class BatchUploadApi {
     signal?: AbortSignal,
     options?: UploadOptions
   ): Promise<FileUploadResult> {
+    // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
+    const scanAvailable = await isScanAvailable()
+    if (scanAvailable) {
+      console.log(`[BatchUploadApi] 🔍 바이러스 검사 중: ${file.name}`)
+      const scanResult = await scanFile(file)
+
+      if (scanResult.infected) {
+        // 바이러스 감지됨 - 업로드 차단
+        const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`
+        console.warn(`[BatchUploadApi] ⚠️ ${errorMessage} - 파일: ${file.name}`)
+        return {
+          success: false,
+          fileName: file.name,
+          customerId,
+          error: errorMessage,
+        }
+      }
+
+      if (scanResult.scanned) {
+        console.log(`[BatchUploadApi] ✅ 바이러스 검사 통과: ${file.name}`)
+      }
+    }
+
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest()
 

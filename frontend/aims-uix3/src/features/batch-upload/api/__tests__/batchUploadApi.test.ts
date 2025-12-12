@@ -30,6 +30,12 @@ vi.mock('@/shared/lib/api', () => ({
   getAuthHeaders: vi.fn(() => ({ 'Authorization': 'Bearer test-token' })),
 }))
 
+// 바이러스 검사 API 모킹 (테스트에서는 비활성화)
+vi.mock('@/shared/lib/fileValidation/virusScanApi', () => ({
+  isScanAvailable: vi.fn(() => Promise.resolve(false)),
+  scanFile: vi.fn(() => Promise.resolve({ scanned: false, infected: false, skipped: true })),
+}))
+
 // ==================== XMLHttpRequest Mock ====================
 
 interface MockXHRInstance {
@@ -250,6 +256,9 @@ describe('BatchUploadApi', () => {
 
         const uploadPromise = BatchUploadApi.uploadFile(file, 'cust-001', onProgress)
 
+        // 비동기 바이러스 검사 대기 후 XHR 이벤트 트리거
+        await new Promise(resolve => setTimeout(resolve, 0))
+
         // progress 이벤트 트리거
         mockXHR._triggerUploadEvent('progress', {
           lengthComputable: true,
@@ -381,6 +390,9 @@ describe('BatchUploadApi', () => {
         const file = createMockFile('check-timeout.pdf')
 
         BatchUploadApi.uploadFile(file, 'cust-001')
+
+        // 비동기 바이러스 검사 대기 후 XHR 속성 확인
+        await new Promise(resolve => setTimeout(resolve, 0))
 
         expect(mockXHR.timeout).toBe(5 * 60 * 1000)
       })

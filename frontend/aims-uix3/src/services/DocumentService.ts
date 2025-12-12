@@ -1,14 +1,16 @@
 /**
  * AIMS UIX-3 Document Service Layer
  * @since 2025-09-30
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 문서 관련 비즈니스 로직 및 API 호출을 담당하는 서비스 레이어
  * ARCHITECTURE.md의 Service Layer 패턴을 따름
+ * 바이러스 검사 통합 (ClamAV)
  */
 
 import { api } from '@/shared/lib/api';
 import { utcNowISO } from '@/shared/lib/timeUtils';
+import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
 import {
   Document,
   CreateDocumentData,
@@ -603,11 +605,29 @@ export class DocumentService {
   }
 
   /**
-   * 문서 업로드
+   * 문서 업로드 (바이러스 검사 포함)
    */
   static async uploadDocument(file: File, metadata?: Partial<CreateDocumentData>): Promise<UploadDocumentResult> {
     if (!file) {
       throw new Error('파일이 필요합니다');
+    }
+
+    // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
+    const scanAvailable = await isScanAvailable();
+    if (scanAvailable) {
+      console.log(`[DocumentService] 🔍 바이러스 검사 중: ${file.name}`);
+      const scanResult = await scanFile(file);
+
+      if (scanResult.infected) {
+        // 바이러스 감지됨 - 업로드 차단
+        const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`;
+        console.warn(`[DocumentService] ⚠️ ${errorMessage} - 파일: ${file.name}`);
+        throw new Error(errorMessage);
+      }
+
+      if (scanResult.scanned) {
+        console.log(`[DocumentService] ✅ 바이러스 검사 통과: ${file.name}`);
+      }
     }
 
     const formData = new FormData();

@@ -4,6 +4,7 @@
  *
  * 파일 업로드를 위한 백엔드 통신 서비스
  * 병렬 업로드, 진행률 추적, 에러 처리 지원
+ * 바이러스 검사 통합 (ClamAV)
  */
 
 import {
@@ -13,6 +14,7 @@ import {
   DocPrepResponse
 } from '../types/uploadTypes'
 import { UserContextService, uploadConfig } from './userContextService'
+import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 
 /**
  * 업로드 진행률 콜백 타입
@@ -150,7 +152,7 @@ export class UploadService {
   }
 
   /**
-   * 개별 파일 업로드 (자동 재시도 지원)
+   * 개별 파일 업로드 (바이러스 검사 + 자동 재시도 지원)
    */
   private async uploadFile(uploadFile: UploadFile): Promise<void> {
     const { id, file, customerId } = uploadFile
@@ -162,6 +164,30 @@ export class UploadService {
 
       // 상태를 업로딩으로 변경
       this.statusCallbacks.forEach(callback => callback(id, 'uploading'))
+
+      // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
+      const scanAvailable = await isScanAvailable()
+      if (scanAvailable) {
+        if (import.meta.env.DEV) {
+          console.log(`[UploadService] 🔍 바이러스 검사 중: ${file.name}`)
+        }
+        const scanResult = await scanFile(file)
+
+        if (scanResult.infected) {
+          // 바이러스 감지됨 - 업로드 차단
+          this.activeUploads.delete(id)
+          const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`
+          console.warn(`[UploadService] ⚠️ ${errorMessage} - 파일: ${file.name}`)
+          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
+          return
+        }
+
+        if (scanResult.scanned) {
+          if (import.meta.env.DEV) {
+            console.log(`[UploadService] ✅ 바이러스 검사 통과: ${file.name}`)
+          }
+        }
+      }
 
       // FormData 생성 (사용자 컨텍스트 포함)
       const formData = UserContextService.createFormData(file)

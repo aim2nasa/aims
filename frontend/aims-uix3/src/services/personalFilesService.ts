@@ -3,10 +3,12 @@
  * @since 2.0.0
  *
  * Google Drive 스타일의 개인 파일 관리 API 서비스
+ * 바이러스 검사 통합 (ClamAV)
  */
 
 import axios from 'axios';
 import { api, API_CONFIG } from '@/shared/lib/api';
+import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
 
 const API_BASE = '/api/personal-files';
 
@@ -130,7 +132,7 @@ export const personalFilesService = {
   },
 
   /**
-   * 파일 업로드
+   * 파일 업로드 (바이러스 검사 포함)
    * @param file - 업로드할 파일
    * @param parentId - 부모 폴더 ID
    * @param onProgress - 업로드 진행률 콜백
@@ -140,6 +142,24 @@ export const personalFilesService = {
     parentId?: string | null,
     onProgress?: (progress: number) => void
   ): Promise<PersonalFileItem> {
+    // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
+    const scanAvailable = await isScanAvailable();
+    if (scanAvailable) {
+      console.log(`[PersonalFilesService] 🔍 바이러스 검사 중: ${file.name}`);
+      const scanResult = await scanFile(file);
+
+      if (scanResult.infected) {
+        // 바이러스 감지됨 - 업로드 차단
+        const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`;
+        console.warn(`[PersonalFilesService] ⚠️ ${errorMessage} - 파일: ${file.name}`);
+        throw new Error(errorMessage);
+      }
+
+      if (scanResult.scanned) {
+        console.log(`[PersonalFilesService] ✅ 바이러스 검사 통과: ${file.name}`);
+      }
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     if (parentId) {
