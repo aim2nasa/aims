@@ -1,11 +1,18 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
+type ProgressStage = 'upload' | 'convert' | 'finalize'
 
 interface ConversionResult {
   pdfUrl: string
   fileName: string
   conversionTime: number
+}
+
+interface ProgressInfo {
+  stage: ProgressStage
+  percent: number
+  message: string
 }
 
 function FileConverter() {
@@ -15,7 +22,9 @@ function FileConverter() {
   const [result, setResult] = useState<ConversionResult | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [progress, setProgress] = useState<ProgressInfo>({ stage: 'upload', percent: 0, message: '' })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const progressIntervalRef = useRef<number | null>(null)
 
   const allowedExtensions = [
     '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
@@ -74,12 +83,73 @@ function FileConverter() {
     }
   }
 
+  // 프로그레스 시뮬레이션 정리
+  const clearProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current)
+      progressIntervalRef.current = null
+    }
+  }, [])
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => clearProgressInterval()
+  }, [clearProgressInterval])
+
+  // 프로그레스 시뮬레이션 시작
+  const startProgressSimulation = useCallback(() => {
+    setProgress({ stage: 'upload', percent: 0, message: '파일 업로드 중...' })
+
+    let currentPercent = 0
+    let currentStage: ProgressStage = 'upload'
+
+    progressIntervalRef.current = window.setInterval(() => {
+      // 단계별 진행 속도 조절
+      let increment = 0
+      if (currentStage === 'upload') {
+        increment = Math.random() * 8 + 2 // 2-10%씩 증가
+        if (currentPercent >= 30) {
+          currentStage = 'convert'
+          setProgress({ stage: 'convert', percent: 30, message: 'PDF 변환 중...' })
+        }
+      } else if (currentStage === 'convert') {
+        increment = Math.random() * 3 + 1 // 1-4%씩 증가 (변환은 느리게)
+        if (currentPercent >= 85) {
+          currentStage = 'finalize'
+          setProgress({ stage: 'finalize', percent: 85, message: '마무리 중...' })
+        }
+      } else {
+        increment = Math.random() * 2 + 0.5 // 0.5-2.5%씩 증가
+        if (currentPercent >= 95) {
+          // 95%에서 멈춤 (실제 완료 시 100%로)
+          increment = 0
+        }
+      }
+
+      currentPercent = Math.min(currentPercent + increment, 95)
+
+      const messages: Record<ProgressStage, string> = {
+        upload: '파일 업로드 중...',
+        convert: 'PDF 변환 중...',
+        finalize: '마무리 중...'
+      }
+
+      setProgress(prev => ({
+        ...prev,
+        stage: currentStage,
+        percent: Math.round(currentPercent),
+        message: messages[currentStage]
+      }))
+    }, 200)
+  }, [])
+
   const handleConvert = async () => {
     if (!selectedFile) return
 
     setStatus('loading')
     setError('')
     setResult(null)
+    startProgressSimulation()
 
     const formData = new FormData()
     formData.append('file', selectedFile)
@@ -91,10 +161,15 @@ function FileConverter() {
         body: formData
       })
 
+      clearProgressInterval()
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || '변환 실패')
       }
+
+      // 완료 시 100%로 설정
+      setProgress({ stage: 'finalize', percent: 100, message: '완료!' })
 
       const blob = await response.blob()
       const pdfUrl = URL.createObjectURL(blob)
@@ -109,6 +184,8 @@ function FileConverter() {
       })
       setStatus('success')
     } catch (err) {
+      clearProgressInterval()
+      setProgress({ stage: 'upload', percent: 0, message: '' })
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
       setStatus('error')
     }
@@ -229,9 +306,31 @@ function FileConverter() {
       </button>
 
       {status === 'loading' && (
-        <div className="status loading">
-          <span className="spinner" />
-          파일을 변환하고 있습니다. 잠시만 기다려주세요...
+        <div className="progress-section">
+          <div className="progress-header">
+            <span className="progress-message">{progress.message}</span>
+            <span className="progress-percent">{progress.percent}%</span>
+          </div>
+          <div className="progress-bar-container">
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${progress.percent}%` }}
+            />
+          </div>
+          <div className="progress-stages">
+            <div className={`progress-stage ${progress.stage === 'upload' ? 'active' : ''} ${progress.percent >= 30 ? 'completed' : ''}`}>
+              <span className="stage-dot" />
+              <span className="stage-label">업로드</span>
+            </div>
+            <div className={`progress-stage ${progress.stage === 'convert' ? 'active' : ''} ${progress.percent >= 85 ? 'completed' : ''}`}>
+              <span className="stage-dot" />
+              <span className="stage-label">변환</span>
+            </div>
+            <div className={`progress-stage ${progress.stage === 'finalize' ? 'active' : ''} ${progress.percent >= 100 ? 'completed' : ''}`}>
+              <span className="stage-dot" />
+              <span className="stage-label">완료</span>
+            </div>
+          </div>
         </div>
       )}
 
