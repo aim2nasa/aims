@@ -7,6 +7,7 @@ import { DocumentProcessingPage } from '@/pages/DocumentProcessingPage';
 import { StoragePage } from '@/pages/StoragePage';
 import { TierManagementPage } from '@/pages/TierManagementPage';
 import { SystemHealthPage } from '@/pages/SystemHealthPage';
+import { FileValidationPage } from '@/pages/FileValidationPage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import App from '../App';
 
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/system',
         element: <SystemHealthPage />,
+      },
+      {
+        path: 'dashboard/file-validation',
+        element: <FileValidationPage />,
       },
       {
         path: 'users',

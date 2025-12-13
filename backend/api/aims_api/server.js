@@ -6565,6 +6565,10 @@ MongoClient.connect(MONGO_URI)
     const securityRoutes = require('./routes/security-routes')(db, authenticateJWT);
     app.use('/api', securityRoutes);
 
+    // 시스템 설정 라우트 설정 (파일 검증 설정 등)
+    const systemSettingsRoutes = require('./routes/system-settings-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', systemSettingsRoutes);
+
     registerFallbackHandlers();
   })
   .catch(error => {

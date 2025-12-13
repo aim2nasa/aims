@@ -15,6 +15,19 @@ import { UploadService, fileValidator } from '../uploadService'
 import { UserContextService, uploadConfig } from '../userContextService'
 import type { UploadFile, UploadStatus } from '../../types/uploadTypes'
 
+// virusScanApi 모킹 (설정 로드 문제 방지)
+vi.mock('@/shared/lib/fileValidation/virusScanApi', () => ({
+  scanFile: vi.fn().mockResolvedValue({ scanned: false, infected: false, skipped: true }),
+  isScanAvailable: vi.fn().mockResolvedValue(false),
+}))
+
+// settingsAdapter 모킹
+vi.mock('@/shared/lib/fileValidation/settingsAdapter', () => ({
+  isVirusScanEnabled: vi.fn().mockReturnValue(false),
+  loadFileValidationSettings: vi.fn().mockResolvedValue({}),
+  isSettingsLoaded: vi.fn().mockReturnValue(true),
+}))
+
 // XMLHttpRequest 모킹을 위한 타입
 interface MockXHR {
   open: ReturnType<typeof vi.fn>

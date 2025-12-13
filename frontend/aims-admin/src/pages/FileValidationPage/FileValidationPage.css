@@ -1,0 +1,307 @@
+/**
+ * 파일 검증 설정 페이지 스타일
+ * @since 2025-12-13
+ */
+
+.file-validation-page {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.file-validation-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.file-validation-page__header-left {
+  flex: 1;
+}
+
+.file-validation-page__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+}
+
+.file-validation-page__subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.file-validation-page__loading,
+.file-validation-page__error {
+  padding: 48px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.file-validation-page__error p {
+  margin: 0 0 16px 0;
+}
+
+.file-validation-page__alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.file-validation-page__alert--error {
+  background-color: var(--color-error-subtle, rgba(220, 38, 38, 0.1));
+  color: var(--color-error, #dc2626);
+  border: 1px solid var(--color-error-border, rgba(220, 38, 38, 0.2));
+}
+
+.file-validation-page__alert--success {
+  background-color: var(--color-success-subtle, rgba(34, 197, 94, 0.1));
+  color: var(--color-success, #16a34a);
+  border: 1px solid var(--color-success-border, rgba(34, 197, 94, 0.2));
+}
+
+.file-validation-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 16px;
+}
+
+/* ============================================
+   Setting Card
+   ============================================ */
+
+.setting-card {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: opacity 0.2s;
+}
+
+.setting-card--disabled {
+  opacity: 0.6;
+}
+
+.setting-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.setting-card__info {
+  flex: 1;
+}
+
+.setting-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+}
+
+.setting-card__description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.setting-card__content {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.setting-card__field {
+  margin-bottom: 12px;
+}
+
+.setting-card__field:last-child {
+  margin-bottom: 0;
+}
+
+.setting-card__field--inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.setting-card__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.setting-card__field--inline .setting-card__label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.setting-card__input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-card__input {
+  width: 80px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.setting-card__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-subtle, rgba(59, 130, 246, 0.2));
+}
+
+.setting-card__input-suffix {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.setting-card__value-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.setting-card__extensions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.setting-card__extension-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  background-color: var(--color-bg-tertiary, rgba(0, 0, 0, 0.05));
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+}
+
+.setting-card__extension-more {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.setting-card__edit-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-card__textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.setting-card__textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-subtle, rgba(59, 130, 246, 0.2));
+}
+
+.setting-card__edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ============================================
+   Toggle Switch
+   ============================================ */
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-switch--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle-switch__track {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-tertiary, rgba(0, 0, 0, 0.1));
+  border-radius: 12px;
+  transition: background-color 0.2s;
+}
+
+.toggle-switch--enabled .toggle-switch__track {
+  background-color: var(--color-primary, #3b82f6);
+}
+
+.toggle-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.toggle-switch--enabled .toggle-switch__thumb {
+  transform: translateX(20px);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .file-validation-page {
+    padding: 16px;
+  }
+
+  .file-validation-page__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-validation-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .setting-card__field--inline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

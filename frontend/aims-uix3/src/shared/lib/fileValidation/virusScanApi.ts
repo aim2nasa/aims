@@ -1,13 +1,25 @@
 /**
  * ClamAV 바이러스 검사 API 클라이언트
  * @since 2025-12-13
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 서버에서 ClamAV를 사용한 바이러스 검사 수행
+ * Admin 설정에서 바이러스 검사 비활성화 가능
  */
 
 import { api } from '@/shared/lib/api'
 import type { VirusScanResult } from './types'
+import { isVirusScanEnabled, loadFileValidationSettings, isSettingsLoaded } from './settingsAdapter'
+
+/**
+ * 설정이 로드되었는지 확인하고, 안 되었으면 로드
+ * @returns Promise<void>
+ */
+async function ensureSettingsLoaded(): Promise<void> {
+  if (!isSettingsLoaded()) {
+    await loadFileValidationSettings()
+  }
+}
 
 // Re-export utility functions
 export { getInfectedFiles, getScanSummary } from './virusScanUtils'
@@ -77,9 +89,20 @@ export async function getScanStatus(): Promise<ScanStatusResponse> {
 
 /**
  * ClamAV 사용 가능 여부 확인
+ * Admin 설정에서 비활성화된 경우 false 반환
  * @returns Promise<boolean>
  */
 export async function isScanAvailable(): Promise<boolean> {
+  // 0. 설정 로드 확인
+  await ensureSettingsLoaded()
+
+  // 1. Admin 설정에서 비활성화된 경우 바로 false 반환
+  if (!isVirusScanEnabled()) {
+    console.log('[VirusScan] Admin 설정에서 바이러스 검사 비활성화됨')
+    return false
+  }
+
+  // 2. ClamAV 서버 상태 확인
   const status = await getScanStatus()
   return status.enabled && status.available
 }
@@ -91,7 +114,20 @@ export async function isScanAvailable(): Promise<boolean> {
  */
 export async function scanFile(file: File): Promise<VirusScanResult> {
   try {
-    // 먼저 ClamAV 상태 확인
+    // 0. 설정 로드 확인
+    await ensureSettingsLoaded()
+
+    // 1. Admin 설정에서 비활성화된 경우 스킵
+    if (!isVirusScanEnabled()) {
+      return {
+        scanned: false,
+        infected: false,
+        skipped: true,
+        message: 'Admin 설정에서 바이러스 검사가 비활성화되어 있습니다.',
+      }
+    }
+
+    // 2. ClamAV 서버 상태 확인
     const status = await getScanStatus()
 
     if (!status.enabled) {
@@ -174,7 +210,23 @@ export async function scanFiles(
 ): Promise<Map<File, VirusScanResult>> {
   const results = new Map<File, VirusScanResult>()
 
-  // ClamAV 상태 확인
+  // 0. 설정 로드 확인
+  await ensureSettingsLoaded()
+
+  // 1. Admin 설정에서 비활성화된 경우 모든 파일 스킵
+  if (!isVirusScanEnabled()) {
+    for (const file of files) {
+      results.set(file, {
+        scanned: false,
+        infected: false,
+        skipped: true,
+        message: 'Admin 설정에서 바이러스 검사가 비활성화되어 있습니다.',
+      })
+    }
+    return results
+  }
+
+  // 2. ClamAV 서버 상태 확인
   const status = await getScanStatus()
 
   if (!status.enabled || !status.available) {
