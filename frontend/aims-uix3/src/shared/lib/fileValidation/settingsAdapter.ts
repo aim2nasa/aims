@@ -43,15 +43,17 @@ const DEFAULT_SETTINGS: FileValidationSettings = {
     description: '중복 파일 검사',
   },
   virusScanValidation: {
-    enabled: true,
-    timeoutMs: 10000,
-    description: '바이러스 검사',
+    enabled: false,
+    timeoutMs: 30000,
+    description: '바이러스 검사 (현재 비활성화)',
   },
 }
 
 // 로컬 캐시
 let localSettings: FileValidationSettings = { ...DEFAULT_SETTINGS }
 let settingsLoaded = false
+let settingsLoadedAt = 0
+const SETTINGS_CACHE_TTL = 60000 // 1분 - 설정 캐시 유효 시간
 
 // ============================================
 // 설정 로드 함수
@@ -66,7 +68,10 @@ export async function loadFileValidationSettings(): Promise<FileValidationSettin
     const settings = await getCachedFileValidationSettings()
     localSettings = settings
     settingsLoaded = true
-    console.log('[FileValidation] 설정 로드 완료')
+    settingsLoadedAt = Date.now()
+    console.log('[FileValidation] 설정 로드 완료:', {
+      virusScan: settings.virusScanValidation.enabled,
+    })
     return settings
   } catch (error) {
     console.warn('[FileValidation] 설정 로드 실패, 기본값 사용:', error)
@@ -157,8 +162,23 @@ export function getVirusScanTimeout(): number {
 }
 
 /**
- * 설정이 로드되었는지 여부
+ * 설정이 로드되었고 캐시가 유효한지 여부
+ * TTL(1분) 초과 시 false 반환하여 재로드 유도
  */
 export function isSettingsLoaded(): boolean {
-  return settingsLoaded
+  if (!settingsLoaded) {
+    return false
+  }
+
+  // TTL 체크 - 1분 초과 시 재로드 필요
+  const now = Date.now()
+  if (now - settingsLoadedAt > SETTINGS_CACHE_TTL) {
+    console.log('[FileValidation] 설정 캐시 만료, 재로드 필요')
+    // settingsService 캐시도 무효화
+    invalidateSettingsCache()
+    settingsLoaded = false
+    return false
+  }
+
+  return true
 }

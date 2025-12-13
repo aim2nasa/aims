@@ -9,16 +9,14 @@
 
 import { api } from '@/shared/lib/api'
 import type { VirusScanResult } from './types'
-import { isVirusScanEnabled, loadFileValidationSettings, isSettingsLoaded } from './settingsAdapter'
+import { isVirusScanEnabled, refreshFileValidationSettings } from './settingsAdapter'
 
 /**
- * 설정이 로드되었는지 확인하고, 안 되었으면 로드
+ * 항상 최신 설정 로드 (Admin 설정 실시간 반영)
  * @returns Promise<void>
  */
-async function ensureSettingsLoaded(): Promise<void> {
-  if (!isSettingsLoaded()) {
-    await loadFileValidationSettings()
-  }
+async function loadFreshSettings(): Promise<void> {
+  await refreshFileValidationSettings()
 }
 
 // Re-export utility functions
@@ -94,7 +92,7 @@ export async function getScanStatus(): Promise<ScanStatusResponse> {
  */
 export async function isScanAvailable(): Promise<boolean> {
   // 0. 설정 로드 확인
-  await ensureSettingsLoaded()
+  await loadFreshSettings()
 
   // 1. Admin 설정에서 비활성화된 경우 바로 false 반환
   if (!isVirusScanEnabled()) {
@@ -115,7 +113,7 @@ export async function isScanAvailable(): Promise<boolean> {
 export async function scanFile(file: File): Promise<VirusScanResult> {
   try {
     // 0. 설정 로드 확인
-    await ensureSettingsLoaded()
+    await loadFreshSettings()
 
     // 1. Admin 설정에서 비활성화된 경우 스킵
     if (!isVirusScanEnabled()) {
@@ -159,7 +157,7 @@ export async function scanFile(file: File): Promise<VirusScanResult> {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 10000, // 10초 타임아웃 (응답 없으면 건너뛰기)
+        timeout: 30000, // 30초 타임아웃 (ClamAV 검사 시간 고려)
       }
     )
 
@@ -211,7 +209,7 @@ export async function scanFiles(
   const results = new Map<File, VirusScanResult>()
 
   // 0. 설정 로드 확인
-  await ensureSettingsLoaded()
+  await loadFreshSettings()
 
   // 1. Admin 설정에서 비활성화된 경우 모든 파일 스킵
   if (!isVirusScanEnabled()) {

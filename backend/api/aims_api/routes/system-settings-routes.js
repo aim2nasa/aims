@@ -50,11 +50,11 @@ const DEFAULT_FILE_VALIDATION_SETTINGS = {
     description: '동일 파일 중복 업로드 방지'
   },
 
-  // 6. 바이러스 검사
+  // 6. 바이러스 검사 (ClamAV 불안정으로 기본 비활성화)
   virusScanValidation: {
-    enabled: true,
-    timeoutMs: 10000, // 10초
-    description: 'ClamAV 바이러스 검사'
+    enabled: false,
+    timeoutMs: 30000, // 30초
+    description: 'ClamAV 바이러스 검사 (현재 비활성화)'
   }
 };
 
