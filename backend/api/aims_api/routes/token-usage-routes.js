@@ -12,6 +12,7 @@ const {
   getDailyUsage,
   getSystemOverview,
   getTopUsers,
+  getHourlyUsageBySource,
   formatCost,
   formatTokens,
   ensureIndexes
@@ -301,6 +302,35 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: 'Top 사용자 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/ai-usage/hourly
+   * 시간별 AI 토큰 사용량 (소스별 분리, 라인 차트용)
+   *
+   * Query:
+   * - hours: number (기본값: 24, 최대: 168 = 7일)
+   */
+  router.get('/admin/ai-usage/hourly', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      let hours = parseInt(req.query.hours) || 24;
+      hours = Math.min(hours, 168); // 최대 7일
+
+      const hourlyData = await getHourlyUsageBySource(analyticsDb, hours);
+
+      res.json({
+        success: true,
+        data: hourlyData
+      });
+
+    } catch (error) {
+      console.error('[GET /api/admin/ai-usage/hourly] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '시간별 AI 사용량 조회에 실패했습니다.',
         details: error.message
       });
     }

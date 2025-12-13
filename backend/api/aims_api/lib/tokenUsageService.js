@@ -278,6 +278,68 @@ async function getSystemOverview(analyticsDb, days = 30) {
 }
 
 /**
+ * 시간별 AI 토큰 사용량 조회 (소스별 분리, 라인 차트용)
+ * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
+ * @param {number} hours - 조회 기간 (시간)
+ * @returns {Promise<Array>} 시간별 사용량 (소스별)
+ */
+async function getHourlyUsageBySource(analyticsDb, hours = 24) {
+  const collection = analyticsDb.collection('ai_token_usage');
+  const since = new Date();
+  since.setHours(since.getHours() - hours);
+
+  const pipeline = [
+    { $match: { timestamp: { $gte: since } } },
+    {
+      $group: {
+        _id: {
+          timestamp: {
+            $dateToString: {
+              format: '%Y-%m-%dT%H:00:00',
+              date: '$timestamp',
+              timezone: 'Asia/Seoul'
+            }
+          },
+          source: '$source'
+        },
+        total_tokens: { $sum: '$total_tokens' },
+        request_count: { $sum: 1 }
+      }
+    },
+    { $sort: { '_id.timestamp': 1 } }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+
+  // 시간별로 그룹화하여 소스별 데이터 포함
+  const hourlyMap = new Map();
+
+  for (const r of results) {
+    const ts = r._id.timestamp;
+    const source = r._id.source;
+
+    if (!hourlyMap.has(ts)) {
+      hourlyMap.set(ts, {
+        timestamp: ts,
+        rag_api: 0,
+        n8n_docsummary: 0,
+        total: 0
+      });
+    }
+
+    const entry = hourlyMap.get(ts);
+    if (source === 'rag_api') {
+      entry.rag_api = r.total_tokens;
+    } else if (source === 'n8n_docsummary') {
+      entry.n8n_docsummary = r.total_tokens;
+    }
+    entry.total += r.total_tokens;
+  }
+
+  return Array.from(hourlyMap.values());
+}
+
+/**
  * Top 사용자 목록 조회 (관리자용)
  * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
  * @param {number} days - 조회 기간 (일)
@@ -360,6 +422,7 @@ module.exports = {
   getDailyUsage,
   getSystemOverview,
   getTopUsers,
+  getHourlyUsageBySource,
   formatCost,
   formatTokens,
   ensureIndexes,

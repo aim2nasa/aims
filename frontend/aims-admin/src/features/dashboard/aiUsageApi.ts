@@ -28,6 +28,13 @@ export interface DailyUsagePoint {
   request_count: number;
 }
 
+export interface HourlyUsagePoint {
+  timestamp: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  total: number;
+}
+
 export interface TopUser {
   user_id: string;
   total_tokens: number;
@@ -53,6 +60,11 @@ export interface TopUsersResponse {
 export interface UserAIUsageResponse {
   success: boolean;
   data: AIUsageOverview;
+}
+
+export interface HourlyUsageResponse {
+  success: boolean;
+  data: HourlyUsagePoint[];
 }
 
 // 숫자 포맷팅 함수들
@@ -110,6 +122,16 @@ export const aiUsageApi = {
   getUserUsage: async (userId: string, days: number = 30): Promise<AIUsageOverview> => {
     const res = await apiClient.get<UserAIUsageResponse>(
       `/api/admin/users/${userId}/ai-usage?days=${days}`
+    );
+    return res.data;
+  },
+
+  /**
+   * 시간별 사용량 (소스별 분리, 라인 차트용)
+   */
+  getHourlyUsage: async (hours: number = 24): Promise<HourlyUsagePoint[]> => {
+    const res = await apiClient.get<HourlyUsageResponse>(
+      `/api/admin/ai-usage/hourly?hours=${hours}`
     );
     return res.data;
   },
