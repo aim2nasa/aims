@@ -170,18 +170,26 @@ const ServerResourcesSection = () => {
     queryKey: ['admin', 'metrics', 'history', timeRange],
     queryFn: () => dashboardApi.getMetricsHistory(timeRange),
     refetchInterval: 60000, // 1분마다 갱신
+    gcTime: 5 * 60 * 1000, // 5분 후 캐시 정리 (메모리 절약)
+    staleTime: 30000, // 30초간 fresh 상태 유지
   });
 
   // 라인 차트용 데이터 변환
   // disks.data가 없는 레코드(이전 형식)는 null로 처리하여 차트에서 건너뜀
-  const chartData = historyData?.metrics?.map((m: SystemMetrics) => ({
-    timestamp: m.timestamp,
-    cpu: m.cpu.usage,
-    memory: m.memory.usagePercent,
-    disk: m.disk.usagePercent,
-    diskRoot: m.disks?.root?.usagePercent ?? m.disk.usagePercent,
-    diskData: m.disks?.data?.usagePercent ?? null,
-  })) || [];
+  // 메모리 절약을 위해 최대 300개 데이터 포인트로 제한 (다운샘플링)
+  const rawMetrics = historyData?.metrics || [];
+  const maxPoints = 300;
+  const step = rawMetrics.length > maxPoints ? Math.ceil(rawMetrics.length / maxPoints) : 1;
+  const chartData = rawMetrics
+    .filter((_: SystemMetrics, i: number) => i % step === 0)
+    .map((m: SystemMetrics) => ({
+      timestamp: m.timestamp,
+      cpu: m.cpu.usage,
+      memory: m.memory.usagePercent,
+      disk: m.disk.usagePercent,
+      diskRoot: m.disks?.root?.usagePercent ?? m.disk.usagePercent,
+      diskData: m.disks?.data?.usagePercent ?? null,
+    }));
 
   return (
     <section className="server-resources">
