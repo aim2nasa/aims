@@ -201,8 +201,12 @@ const personalFilesRoutes = require('./routes/personal-files-routes');
 let db;
 let fallbackHandlersRegistered = false;
 
-// Qdrant 클라이언트 인스턴스
-const qdrantClient = new QdrantClient({ host: QDRANT_HOST, port: QDRANT_PORT });
+// Qdrant 클라이언트 인스턴스 (서버 1.9.0과 클라이언트 1.15.x 호환성 문제 해결)
+const qdrantClient = new QdrantClient({
+  host: QDRANT_HOST,
+  port: QDRANT_PORT,
+  checkCompatibility: false
+});
 
 const registerFallbackHandlers = () => {
   if (fallbackHandlersRegistered) {
