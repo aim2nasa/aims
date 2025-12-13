@@ -267,6 +267,24 @@
   color: var(--color-text-tertiary);
 }
 
+.ai-usage-page__table-user {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+}
+
+.ai-usage-page__user-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.ai-usage-page__user-id {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+}
+
 /* Line Chart */
 .ai-usage-page__chart-header {
   display: flex;

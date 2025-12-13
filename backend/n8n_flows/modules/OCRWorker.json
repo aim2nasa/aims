@@ -13,6 +13,14 @@
               "parameterType": "formBinaryData",
               "name": "file",
               "inputDataFieldName": "data"
+            },
+            {
+              "name": "owner_id",
+              "value": "={{ $('Pasre').item.json.owner_id }}"
+            },
+            {
+              "name": "document_id",
+              "value": "={{ $('Pasre').item.json.doc_id }}"
             }
           ]
         },
@@ -97,7 +105,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse Stream Message에서 온 값을 그대로 정리해서 반환\nreturn [\n  {\n    file_id: $json.file_id,\n    file_path: $json.file_path,\n    doc_id: $json.doc_id,\n    queued_at: $json.queued_at,\n    message_id: $json.message_id\n  }\n];\n"
+        "jsCode": "// Parse Stream Message에서 온 값을 그대로 정리해서 반환\nreturn [\n  {\n    file_id: $json.file_id,\n    file_path: $json.file_path,\n    doc_id: $json.doc_id,\n    owner_id: $json.owner_id,\n    queued_at: $json.queued_at,\n    message_id: $json.message_id\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

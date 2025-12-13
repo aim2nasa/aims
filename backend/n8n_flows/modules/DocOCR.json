@@ -219,6 +219,14 @@
             {
               "name": "full_text",
               "value": "={{ $json.full_text }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $('Webhook').first().json.body.owner_id }}"
+            },
+            {
+              "name": "document_id",
+              "value": "={{ $('Webhook').first().json.body.document_id }}"
             }
           ]
         },

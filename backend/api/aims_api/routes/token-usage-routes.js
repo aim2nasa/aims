@@ -292,9 +292,43 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
       const topUsersList = await getTopUsers(analyticsDb, days, 10);
 
+      // 사용자 이름 조회
+      const { ObjectId } = require('mongodb');
+      const userIds = topUsersList
+        .map(u => {
+          try {
+            return ObjectId.isValid(u.user_id) ? new ObjectId(u.user_id) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const usersCollection = db.collection('users');
+      const users = await usersCollection.find(
+        { _id: { $in: userIds } },
+        { projection: { _id: 1, name: 1 } }
+      ).toArray();
+
+      // user_id → name 맵 생성
+      const userNameMap = {};
+      for (const user of users) {
+        userNameMap[user._id.toString()] = user.name;
+      }
+
+      // 이름 추가
+      const enrichedList = topUsersList.map(u => ({
+        ...u,
+        user_name: userNameMap[u.user_id] || u.user_id
+      }));
+
+      console.log('[top-users] userIds:', userIds.map(id => id.toString()));
+      console.log('[top-users] users found:', users.length, users.map(u => ({ id: u._id.toString(), name: u.name })));
+      console.log('[top-users] enrichedList:', enrichedList.map(u => ({ user_id: u.user_id, user_name: u.user_name })));
+
       res.json({
         success: true,
-        data: topUsersList
+        data: enrichedList
       });
 
     } catch (error) {

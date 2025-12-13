@@ -69,7 +69,7 @@
         "url": "https://n8nd.giize.com/webhook/docmeta",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"path\": \"{{ $json.upload.destPath }}\",\n  \"saved_name\": \"{{ $json.upload.saveName }}\",\n  \"original\": \"{{ $json.upload.originalName }}\"\n}",
+        "jsonBody": "={\n  \"path\": \"{{ $json.upload.destPath }}\",\n  \"saved_name\": \"{{ $json.upload.saveName }}\",\n  \"original\": \"{{ $json.upload.originalName }}\",\n  \"owner_id\": \"{{ $('Save OwnerId').item.json.ownerId }}\",\n  \"document_id\": \"{{ $('Save OwnerId').item.json._id }}\"\n}",
         "options": {
           "response": {
             "response": {
@@ -411,7 +411,7 @@
     },
     {
       "parameters": {
-        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.body.path }}\" \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  queued_at \"{{ $json.queued_at }}\"\n"
+        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.body.path }}\" \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  owner_id \"{{ $('Save OwnerId').item.json.ownerId }}\" \\\n  queued_at \"{{ $json.queued_at }}\"\n"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,

@@ -37,6 +37,7 @@ export interface HourlyUsagePoint {
 
 export interface TopUser {
   user_id: string;
+  user_name: string;
   total_tokens: number;
   request_count: number;
   estimated_cost_usd: number;

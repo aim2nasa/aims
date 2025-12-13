@@ -257,7 +257,7 @@ export const AIUsagePage = () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>사용자 ID</th>
+                <th>사용자</th>
                 <th>토큰</th>
                 <th>요청 수</th>
                 <th>예상 비용</th>
@@ -274,7 +274,10 @@ export const AIUsagePage = () => {
                 topUsers.map((user, index) => (
                   <tr key={user.user_id}>
                     <td className="ai-usage-page__table-rank">{index + 1}</td>
-                    <td>{user.user_id}</td>
+                    <td className="ai-usage-page__table-user">
+                      <span className="ai-usage-page__user-name">{user.user_name}</span>
+                      <span className="ai-usage-page__user-id">({user.user_id})</span>
+                    </td>
                     <td className="ai-usage-page__table-tokens">
                       {formatTokens(user.total_tokens)}
                     </td>
