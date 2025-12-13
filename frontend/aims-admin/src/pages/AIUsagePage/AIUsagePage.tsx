@@ -87,7 +87,7 @@ export const AIUsagePage = () => {
     refetchInterval: 60000, // 1분마다 갱신
   });
 
-  const { data: hourlyUsageRaw } = useQuery({
+  const { data: hourlyUsageRaw, refetch: refetchHourly } = useQuery({
     queryKey: ['admin', 'ai-usage', 'hourly', chartHours],
     queryFn: () => aiUsageApi.getHourlyUsage(chartHours),
     refetchInterval: 60000, // 1분마다 갱신
@@ -129,6 +129,7 @@ export const AIUsagePage = () => {
   // 모든 데이터 새로고침
   const handleRefreshAll = () => {
     refetchOverview();
+    refetchHourly();
   };
 
   return (
