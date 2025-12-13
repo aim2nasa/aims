@@ -57,7 +57,8 @@ export async function getScanStatus(): Promise<ScanStatusResponse> {
 
   try {
     const response = await api.get<{ success: boolean; data: ScanStatusResponse }>(
-      '/api/security/scan-status'
+      '/api/security/scan-status',
+      { timeout: 5000 } // 5초 타임아웃 - 서버 응답 없으면 검사 건너뛰기
     )
 
     if (response.success) {
@@ -68,7 +69,8 @@ export async function getScanStatus(): Promise<ScanStatusResponse> {
 
     return { enabled: false, available: false, error: 'API 응답 실패' }
   } catch (error) {
-    console.error('ClamAV 상태 확인 실패:', error)
+    // 서버 응답 없으면 검사 비활성화로 처리 (업로드 진행)
+    console.warn('[VirusScan] 서버 응답 없음 - 검사 건너뛰기:', error)
     return { enabled: false, available: false, error: String(error) }
   }
 }
@@ -121,7 +123,7 @@ export async function scanFile(file: File): Promise<VirusScanResult> {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 60000, // 60초 타임아웃
+        timeout: 10000, // 10초 타임아웃 (응답 없으면 건너뛰기)
       }
     )
 

@@ -37,6 +37,10 @@ export default function UploadProgress({
   const isCompleted = state === 'completed'
   const isCancelled = state === 'cancelled'
 
+  // 검증 중인 파일 (바이러스 검사 / 중복 검사)
+  const checkingFiles = files.filter((f) => f.status === 'checking')
+  const isChecking = checkingFiles.length > 0
+
   // 경과 시간 계산
   const getElapsedTime = (): string => {
     if (!progress.startedAt) return '-'
@@ -116,8 +120,10 @@ export default function UploadProgress({
         <div className="upload-progress-title">
           {isCompleted && '업로드 완료'}
           {isCancelled && '업로드 취소됨'}
-          {isPaused && '일시 정지'}
-          {isUploading && '업로드 중...'}
+          {isPaused && !isChecking && '일시 정지'}
+          {isPaused && isChecking && '중복 파일 확인 중...'}
+          {isUploading && isChecking && '파일 검증 중...'}
+          {isUploading && !isChecking && '업로드 중...'}
           {state === 'idle' && '대기 중'}
         </div>
 
@@ -185,10 +191,14 @@ export default function UploadProgress({
       </div>
 
       {/* 현재 파일 */}
-      {currentFile && (isUploading || isPaused) && (
+      {(currentFile || isChecking) && (isUploading || isPaused) && (
         <div className="upload-current-file">
-          <span className="upload-current-file-label">현재 파일:</span>
-          <span className="upload-current-file-name">{currentFile}</span>
+          <span className="upload-current-file-label">
+            {isChecking ? '검증 중:' : '현재 파일:'}
+          </span>
+          <span className="upload-current-file-name">
+            {isChecking && checkingFiles[0] ? checkingFiles[0].fileName : currentFile}
+          </span>
         </div>
       )}
 
