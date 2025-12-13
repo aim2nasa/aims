@@ -312,8 +312,8 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
                     ]
                   }
                 }
-              },
-              timezone: 'Asia/Seoul'
+              }
+              // timezone 제거: $dateFromParts가 이미 KST 구성요소로 생성했으므로 추가 변환 불필요
             }
           },
           source: '$source'
@@ -350,16 +350,20 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
   const totalSlots = Math.ceil(hours * 60 / intervalMinutes);
   const usageData = [];
 
+  // KST 타임스탬프 포맷팅 함수
+  const formatKSTTimestamp = (date) => {
+    const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    const year = kstDate.getUTCFullYear();
+    const month = String(kstDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(kstDate.getUTCDate()).padStart(2, '0');
+    const hour = String(kstDate.getUTCHours()).padStart(2, '0');
+    const minute = String(Math.floor(kstDate.getUTCMinutes() / 10) * 10).padStart(2, '0');
+    return `${year}-${month}-${day}T${hour}:${minute}:00`;
+  };
+
   for (let i = totalSlots; i >= 0; i--) {
     const slotTime = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-    // KST로 변환
-    const kstTime = new Date(slotTime.getTime() + 9 * 60 * 60 * 1000);
-    // 10분 단위로 반올림
-    const minutes = Math.floor(kstTime.getMinutes() / 10) * 10;
-    kstTime.setMinutes(minutes, 0, 0);
-
-    // timestamp 형식: YYYY-MM-DDTHH:MM:00
-    const ts = kstTime.toISOString().slice(0, 16) + ':00';
+    const ts = formatKSTTimestamp(slotTime);
 
     const data = dataMap.get(ts) || { rag_api: 0, n8n_docsummary: 0 };
 
