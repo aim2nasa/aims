@@ -233,6 +233,16 @@
   justify-content: flex-end;
 }
 
+.setting-card__warning {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--color-warning, #d97706);
+  background-color: var(--color-warning-subtle, rgba(217, 119, 6, 0.1));
+  border: 1px solid var(--color-warning-border, rgba(217, 119, 6, 0.2));
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
 /* ============================================
    Toggle Switch
    ============================================ */

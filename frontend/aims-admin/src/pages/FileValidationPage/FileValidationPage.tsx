@@ -120,9 +120,10 @@ interface SettingCardProps {
   onToggle: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
+  alwaysShowContent?: boolean;
 }
 
-const SettingCard = ({ title, description, enabled, onToggle, children, disabled }: SettingCardProps) => (
+const SettingCard = ({ title, description, enabled, onToggle, children, disabled, alwaysShowContent }: SettingCardProps) => (
   <div className={`setting-card ${!enabled ? 'setting-card--disabled' : ''}`}>
     <div className="setting-card__header">
       <div className="setting-card__info">
@@ -131,7 +132,7 @@ const SettingCard = ({ title, description, enabled, onToggle, children, disabled
       </div>
       <ToggleSwitch enabled={enabled} onToggle={onToggle} disabled={disabled} />
     </div>
-    {enabled && children && (
+    {(enabled || alwaysShowContent) && children && (
       <div className="setting-card__content">
         {children}
       </div>
@@ -144,7 +145,6 @@ export const FileValidationPage = () => {
   const [editingExtensions, setEditingExtensions] = useState(false);
   const [extensionsText, setExtensionsText] = useState('');
   const [maxSizeMB, setMaxSizeMB] = useState<number>(50);
-  const [virusScanTimeout, setVirusScanTimeout] = useState<number>(10);
 
   // 설정 조회
   const { data: settings, isLoading, isError, error, refetch } = useQuery({
@@ -219,24 +219,9 @@ export const FileValidationPage = () => {
     });
   };
 
-  // 바이러스 검사 타임아웃 업데이트
-  const updateVirusScanTimeout = () => {
-    if (!settings) return;
-    updateMutation.mutate({
-      ...settings,
-      virusScanValidation: {
-        ...settings.virusScanValidation,
-        timeoutMs: virusScanTimeout * 1000,
-      },
-    });
-  };
-
   // 설정 로드 시 로컬 상태 업데이트
   if (settings && maxSizeMB !== settings.fileSizeValidation.maxSizeMB) {
     setMaxSizeMB(settings.fileSizeValidation.maxSizeMB);
-  }
-  if (settings && virusScanTimeout !== settings.virusScanValidation.timeoutMs / 1000) {
-    setVirusScanTimeout(settings.virusScanValidation.timeoutMs / 1000);
   }
 
   if (isLoading) {
@@ -393,30 +378,17 @@ export const FileValidationPage = () => {
           disabled={isPending}
         />
 
-        {/* 바이러스 검사 */}
+        {/* 바이러스 검사 - ClamAV 불안정으로 비활성화 */}
         <SettingCard
           title="바이러스 검사"
-          description={settings.virusScanValidation.description}
-          enabled={settings.virusScanValidation.enabled}
-          onToggle={() => handleToggle('virusScanValidation')}
-          disabled={isPending}
+          description="ClamAV 서비스 불안정으로 일시 비활성화됨"
+          enabled={false}
+          onToggle={() => {}}
+          disabled={true}
+          alwaysShowContent={true}
         >
-          <div className="setting-card__field setting-card__field--inline">
-            <label className="setting-card__label">검사 타임아웃</label>
-            <div className="setting-card__input-group">
-              <input
-                type="number"
-                className="setting-card__input"
-                value={virusScanTimeout}
-                onChange={(e) => setVirusScanTimeout(Number(e.target.value))}
-                min={1}
-                max={60}
-              />
-              <span className="setting-card__input-suffix">초</span>
-              <Button size="sm" onClick={updateVirusScanTimeout} disabled={isPending || virusScanTimeout === settings.virusScanValidation.timeoutMs / 1000}>
-                적용
-              </Button>
-            </div>
+          <div className="setting-card__warning">
+            ⚠️ ClamAV 서비스가 서버 리소스 과부하를 일으켜 현재 비활성화되어 있습니다.
           </div>
         </SettingCard>
       </div>
