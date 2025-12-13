@@ -57,6 +57,35 @@ function prepareDocumentResponse(doc) {
     customerId: doc.customerId || null  // 🆕 내 파일 기능
   };
 
+  // ========================
+  // PDF 변환 및 프리뷰 관련 계산 (모든 반환 지점에서 사용)
+  // ========================
+  const destPath = doc.upload?.destPath;
+  const convPdfPath = doc.upload?.convPdfPath;
+  const conversionStatus = doc.upload?.conversion_status || null;
+
+  // 프리뷰 가능 여부 및 경로 결정
+  let canPreview = false;
+  let previewFilePath = null;
+
+  // 1. 변환된 PDF가 있으면 사용
+  if (convPdfPath && conversionStatus === 'completed') {
+    canPreview = true;
+    previewFilePath = convPdfPath;
+  }
+  // 2. 원본이 PDF/이미지면 원본 사용
+  else if (destPath) {
+    const ext = (destPath.split('.').pop() || '').toLowerCase();
+    const previewableExts = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    if (previewableExts.includes(ext)) {
+      canPreview = true;
+      previewFilePath = destPath;
+    }
+  }
+
+  // PDF 관련 필드 (모든 computed 반환에 포함)
+  const pdfFields = { canPreview, previewFilePath, conversionStatus };
+
   // 🧮 2. 계산된 UI 값
   const hasMetaText = doc.meta && doc.meta.full_text;
   const isUnsupported = isUnsupportedMimeType(doc.meta?.mime);
@@ -106,7 +135,7 @@ function prepareDocumentResponse(doc) {
       overallStatus = 'completed';
       return {
         raw,
-        computed: { uiStages, currentStage, overallStatus, progress, displayMessages }
+        computed: { uiStages, currentStage, overallStatus, progress, displayMessages, ...pdfFields }
       };
     }
 
@@ -119,7 +148,7 @@ function prepareDocumentResponse(doc) {
     overallStatus = 'error';
     return {
       raw,
-      computed: { uiStages, currentStage: 1, overallStatus, progress, displayMessages }
+      computed: { uiStages, currentStage: 1, overallStatus, progress, displayMessages, ...pdfFields }
     };
   } else if (doc.meta && doc.meta.meta_status === null) {
     // ✅ NEW: meta_status가 null이면 meta 단계 스킵 (OCR로 직접 처리)
@@ -187,7 +216,7 @@ function prepareDocumentResponse(doc) {
       progress = 60; // OCR 단계에서 실패
       return {
         raw,
-        computed: { uiStages, currentStage, overallStatus, progress, displayMessages }
+        computed: { uiStages, currentStage, overallStatus, progress, displayMessages, ...pdfFields }
       };
     }
   }
@@ -231,32 +260,6 @@ function prepareDocumentResponse(doc) {
     overallStatus = 'processing';
   }
 
-  // ========================
-  // PDF 변환 및 프리뷰 관련 계산
-  // ========================
-  const destPath = doc.upload?.destPath;
-  const convPdfPath = doc.upload?.convPdfPath;
-  const conversionStatus = doc.upload?.conversion_status || null;
-
-  // 프리뷰 가능 여부 및 경로 결정
-  let canPreview = false;
-  let previewFilePath = null;
-
-  // 1. 변환된 PDF가 있으면 사용
-  if (convPdfPath && conversionStatus === 'completed') {
-    canPreview = true;
-    previewFilePath = convPdfPath;
-  }
-  // 2. 원본이 PDF/이미지면 원본 사용
-  else if (destPath) {
-    const ext = (destPath.split('.').pop() || '').toLowerCase();
-    const previewableExts = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-    if (previewableExts.includes(ext)) {
-      canPreview = true;
-      previewFilePath = destPath;
-    }
-  }
-
   return {
     raw,
     computed: {
@@ -266,10 +269,7 @@ function prepareDocumentResponse(doc) {
       progress,
       displayMessages,
       processingPath: hasMetaText ? 'meta_fulltext' : 'ocr_normal',
-      // PDF 변환 관련 (새로 추가)
-      canPreview,
-      previewFilePath,
-      conversionStatus
+      ...pdfFields
     }
   };
 }

@@ -816,7 +816,43 @@ else → DownloadOnlyViewer
 5. App.tsx에서 previewUrl 기준으로 뷰어 선택
 ```
 
+### 10.11 OCR 에러 시에도 PDF 프리뷰 지원 (2025-12-14)
+
+#### 문제
+
+PPTX, DOCX 등 일부 문서는 OCR 처리가 실패하더라도 PDF 변환은 성공한 경우가 있음.
+그러나 기존 `documentStatusHelper.js`는 OCR 에러 시 early return하면서 `previewFilePath`를 포함하지 않아 프리뷰가 불가능했음.
+
+#### 해결
+
+`documentStatusHelper.js`에서 PDF 관련 필드(`canPreview`, `previewFilePath`, `conversionStatus`)를 함수 시작 부분에서 계산하고, 모든 return 지점에 포함되도록 수정.
+
+```javascript
+// 함수 시작 부분에서 PDF 필드 계산
+const pdfFields = { canPreview, previewFilePath, conversionStatus };
+
+// 모든 return 지점에 포함
+return {
+  raw,
+  computed: { uiStages, currentStage, overallStatus, progress, displayMessages, ...pdfFields }
+};
+```
+
+#### 수정된 return 지점
+
+| 위치 | 케이스 |
+|------|--------|
+| 라인 138 | 비지원 MIME 타입 완료 시 |
+| 라인 151 | 메타데이터 추출 실패 시 |
+| 라인 219 | OCR 실패 시 |
+| 라인 272 | 정상 완료 시 |
+
+#### 결과
+
+- OCR 처리 결과와 관계없이 PDF 변환이 완료된 문서는 프리뷰 가능
+- XLS, PPTX, DOCX 등 Office 문서의 PDF 프리뷰 지원 완료
+
 ---
 
 *문서 작성일: 2025-12-13*
-*최종 수정일: 2025-12-14 (프론트엔드 프리뷰 구현 완료)*
+*최종 수정일: 2025-12-14 (OCR 에러 시에도 PDF 프리뷰 지원)*
