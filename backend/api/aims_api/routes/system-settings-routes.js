@@ -1,27 +1,26 @@
 /**
  * System Settings Routes - 시스템 설정 API
  * @since 2025-12-13
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 파일 검증 설정 등 시스템 전역 설정 관리
  */
 
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+
+// 공유 상수 로드 (프론트엔드와 동일한 소스 사용)
+// 원본: shared/file-validation-constants.json (Docker 빌드 시 복사됨)
+const sharedConstants = require(path.join(__dirname, '../file-validation-constants.json'));
 
 // 기본 파일 검증 설정
 const DEFAULT_FILE_VALIDATION_SETTINGS = {
   // 1. 확장자 검증
   extensionValidation: {
     enabled: true,
-    blockedExtensions: [
-      'exe', 'bat', 'cmd', 'com', 'msi', 'scr', 'pif',
-      'dll', 'sys', 'drv',
-      'vbs', 'vbe', 'js', 'jse', 'ws', 'wsf', 'wsc', 'wsh',
-      'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2',
-      'reg', 'inf', 'scf', 'lnk', 'hta'
-    ],
-    description: '위험한 확장자(exe, bat, dll, ps1 등) 차단'
+    blockedExtensions: sharedConstants.blockedExtensions,
+    description: '위험한 확장자(exe, bat, dll, ps1, sh, elf 등) 차단'
   },
 
   // 2. 파일 크기 검증

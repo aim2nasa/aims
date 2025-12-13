@@ -1,37 +1,17 @@
 /**
  * 파일 검증 상수 정의
  * @since 2025-12-13
- * @version 1.0.0
+ * @version 1.1.0
  */
+
+import sharedConstants from '../../../../../../shared/file-validation-constants.json'
 
 /**
  * 차단 확장자 목록
  * 보안 위험이 있는 실행 파일, 스크립트, 라이브러리 등
+ * @see shared/file-validation-constants.json
  */
-export const BLOCKED_EXTENSIONS = [
-  // === Windows 실행 파일 ===
-  'exe', 'com', 'bat', 'cmd', 'msi', 'scr',
-  // === Windows 스크립트 ===
-  'vbs', 'vbe', 'js', 'jse', 'ws', 'wsf', 'wsc', 'wsh',
-  'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2',
-  // === Windows 라이브러리 ===
-  'dll', 'sys', 'drv',
-  // === Windows 기타 ===
-  'lnk', 'pif', 'application', 'gadget', 'hta', 'cpl',
-  'msc', 'jar', 'reg', 'inf', 'scf',
-  // === Linux 쉘 스크립트 ===
-  'sh', 'bash', 'zsh', 'csh', 'ksh', 'fish',
-  // === Linux 실행 파일 ===
-  'elf', 'bin', 'run', 'appimage',
-  // === Linux 패키지 ===
-  'deb', 'rpm',
-  // === Linux 공유 라이브러리 ===
-  'so',
-  // === Linux 기타 ===
-  'desktop',
-  // === 크로스플랫폼 스크립트 ===
-  'pl', 'rb', 'py', 'pyc', 'pyo',
-] as const
+export const BLOCKED_EXTENSIONS = sharedConstants.blockedExtensions as readonly string[]
 
 /**
  * 허용되는 일반 문서 확장자 (참고용)
@@ -111,42 +91,6 @@ export const EXTENSION_MIME_MAP: Record<string, string[]> = {
 /**
  * 위험한 MIME 타입 목록
  * 이 MIME 타입의 파일은 확장자와 관계없이 차단
+ * @see shared/file-validation-constants.json
  */
-export const DANGEROUS_MIME_TYPES = [
-  // === Windows 실행 파일 ===
-  'application/x-msdownload',
-  'application/x-msdos-program',
-  'application/x-dosexec',
-  'application/x-ms-dos-executable',
-  'application/vnd.microsoft.portable-executable',
-  'application/x-msi',
-  // === Linux 실행 파일 ===
-  'application/x-executable',
-  'application/x-elf',
-  'application/x-pie-executable',
-  // === 쉘 스크립트 ===
-  'application/x-sh',
-  'application/x-shellscript',
-  'application/x-bash',
-  'application/x-csh',
-  'application/x-zsh',
-  'text/x-shellscript',
-  // === Linux 패키지 ===
-  'application/x-debian-package',
-  'application/x-deb',
-  'application/x-rpm',
-  'application/x-redhat-package-manager',
-  // === 공유 라이브러리 ===
-  'application/x-sharedlib',
-  // === Java ===
-  'application/java-archive',
-  'application/x-java-archive',
-  // === 크로스플랫폼 스크립트 ===
-  'application/x-bat',
-  'text/x-python',
-  'application/x-python-code',
-  'text/x-perl',
-  'application/x-perl',
-  'text/x-ruby',
-  'application/x-ruby',
-] as const
+export const DANGEROUS_MIME_TYPES = sharedConstants.dangerousMimeTypes as readonly string[]
