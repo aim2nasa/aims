@@ -19,7 +19,7 @@ import {
   checkDuplicateFile,
   getUniqueFileName,
   type ExistingFileHash,
-} from '../utils/duplicateChecker'
+} from '@/shared/lib/fileValidation'
 
 // ==================== 타입 정의 ====================
 

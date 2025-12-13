@@ -100,6 +100,16 @@ export {
   getScanSummary,
 } from './virusScanUtils'
 
+// Duplicate Checker
+export {
+  getCustomerFileHashes,
+  checkDuplicateFile,
+  checkDuplicateFiles,
+  getUniqueFileName,
+  type ExistingFileHash,
+  type DuplicateCheckResult,
+} from './duplicateChecker'
+
 // Types from userService for convenience
 export type { StorageInfo } from '@/services/userService'
 

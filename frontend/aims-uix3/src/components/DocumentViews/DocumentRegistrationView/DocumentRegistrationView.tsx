@@ -28,6 +28,9 @@ import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import {
   validateFile,
   checkStorageWithInfo,
+  getCustomerFileHashes,
+  checkDuplicateFile,
+  type ExistingFileHash,
 } from '@/shared/lib/fileValidation'
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
 import './DocumentRegistrationView.css'
@@ -338,6 +341,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 에러 시에도 정상 진행 (서버에서 최종 검증)
     }
 
+    // 🔴 중복 파일 검사 (고객이 선택된 경우에만)
+    let existingHashes: ExistingFileHash[] = []
+    if (customerFileCustomer) {
+      try {
+        console.log('[DocumentRegistration] 🔍 중복 파일 검사 시작:', customerFileCustomer._id)
+        existingHashes = await getCustomerFileHashes(customerFileCustomer._id)
+        console.log('[DocumentRegistration] 기존 파일 해시 조회 완료:', existingHashes.length, '개')
+      } catch (error) {
+        console.error('[DocumentRegistration] 중복 검사용 해시 조회 실패:', error)
+        // 에러 시에도 정상 진행 (중복 검사 건너뜀)
+      }
+    }
+
     const newUploadFiles: UploadFile[] = []
 
     // 🔍 PDF 파일 중 Annual Report 체크 (파일 선택 직후, 업로드 전!)
@@ -426,6 +442,28 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         } else {
           // 이미지 등 PDF가 아닌 일반 파일
           addLog('info', `[1/4] 일반 파일 감지: ${file.name}`, file.type || '알 수 없는 형식')
+        }
+
+        // 🔴 중복 파일 검사 (일반 문서용)
+        if (existingHashes.length > 0) {
+          try {
+            const duplicateResult = await checkDuplicateFile(file, existingHashes)
+            if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
+              const existingDate = duplicateResult.existingDoc.uploadedAt
+                ? new Date(duplicateResult.existingDoc.uploadedAt).toLocaleString('ko-KR')
+                : '알 수 없음'
+              addLog(
+                'warning',
+                `중복 파일 감지: ${file.name}`,
+                `이미 등록된 파일입니다 (등록일: ${existingDate}). 업로드를 건너뜁니다.`
+              )
+              console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
+              continue // 중복 파일은 건너뜀
+            }
+          } catch (error) {
+            console.error('[DocumentRegistration] 중복 검사 실패:', error)
+            // 중복 검사 실패 시에도 업로드 진행
+          }
         }
 
         // 일반 문서 또는 Annual Report가 아닌 PDF

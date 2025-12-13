@@ -418,6 +418,202 @@ rm /tmp/eicar.txt
 
 ---
 
+---
+
+## 7. 🔴 Phase 7: 검증 로직 불일치 버그 수정
+
+### 7.1 발견 일시
+- **발견일**: 2025-12-14
+- **발견 경위**: 사용자가 동일 파일 재업로드 시 중복 체크가 되지 않음을 보고
+
+### 7.2 정밀 비교표: 새 문서 등록 vs 문서 일괄등록
+
+| 검증 단계 | 새 문서 등록 | 문서 일괄등록 | 비고 |
+|-----------|:------------:|:------------:|------|
+| **1. 확장자 검증** (위험 확장자 차단) | ✅ `shared/lib/fileValidation` | ✅ `batch-upload/utils/fileValidation` | **둘 다 있음** (다른 모듈) |
+| **2. 파일 크기 검증** (50MB) | ✅ | ✅ | **둘 다 있음** |
+| **3. MIME 타입 검증** (확장자 위조 탐지) | ✅ | ❌ **없음** | **일괄등록에 누락!** |
+| **4. 스토리지 용량 검사** | ✅ `checkStorageWithInfo` | ✅ `checkStorageWithInfo` | **둘 다 있음** (동일 모듈) |
+| **5. 바이러스 검사** (ClamAV) | ✅ `uploadService.ts` | ✅ `batchUploadApi.ts` | **둘 다 있음** |
+| **6. 중복 파일 검사** (SHA-256 해시) | ❌ **없음** | ✅ `duplicateChecker.ts` | **새 문서 등록에 누락!** |
+
+### 7.3 발견된 버그 2건
+
+| # | 기능 | 누락된 검증 | 파일 |
+|---|------|------------|------|
+| **1** | 새 문서 등록 | 중복 파일 검사 | `DocumentRegistrationView.tsx` |
+| **2** | 문서 일괄등록 | MIME 타입 검증 | `batch-upload/utils/fileValidation.ts` (자체 모듈 사용 중) |
+
+### 7.4 원인 분석
+
+**일괄등록**은 `shared/lib/fileValidation` 공통 모듈이 **아닌** 자체 `batch-upload/utils/fileValidation.ts`를 사용 중:
+- 공통 모듈: 확장자 + 크기 + **MIME**
+- 자체 모듈: 확장자 + 크기만 (MIME 없음)
+
+두 기능이 **서로 다른 검증 모듈**을 사용하고 있어서 검증 로직이 불일치함.
+
+### 7.5 수정 계획
+
+| # | 대상 | 수정 내용 |
+|---|------|----------|
+| 1 | `DocumentRegistrationView.tsx` | 중복 파일 검사 추가 (`duplicateChecker.ts` 재사용) |
+| 2 | `BatchDocumentUploadView.tsx` | 공통 모듈 `validateFiles()` 사용으로 전환 (MIME 검증 포함) |
+
+### 7.6 수정 상태
+- **시작일시**: 2025-12-14
+- **상태**: ✅ 완료
+- **구현 내용**:
+  - [x] 새 문서 등록에 중복 파일 검사 추가 (`DocumentRegistrationView.tsx`)
+    - `duplicateChecker.ts` 재사용 (SHA-256 해시 기반)
+    - 고객 선택 시 기존 파일 해시 조회 후 중복 검사
+    - 중복 발견 시 경고 로그 + 업로드 건너뜀
+  - [x] 문서 일괄등록에 MIME 타입 검증 추가 (`batch-upload/utils/fileValidation.ts`)
+    - 자체 모듈 → 공통 모듈(`@/shared/lib/fileValidation`) 사용으로 전환
+    - 하위 호환성 유지 (기존 export 그대로)
+- **테스트 결과**:
+  - [x] typecheck 통과
+- **커밋 해시**: (사용자 승인 후 커밋)
+- **완료일시**: 2025-12-14
+
+### 7.7 수정 후 비교표
+
+| 검증 단계 | 새 문서 등록 | 문서 일괄등록 |
+|-----------|:------------:|:------------:|
+| **1. 확장자 검증** | ✅ | ✅ |
+| **2. 파일 크기 검증** (50MB) | ✅ | ✅ |
+| **3. MIME 타입 검증** | ✅ | ✅ ← 추가됨 |
+| **4. 스토리지 용량 검사** | ✅ | ✅ |
+| **5. 바이러스 검사** (ClamAV) | ✅ | ✅ |
+| **6. 중복 파일 검사** (SHA-256) | ✅ ← 추가됨 | ✅ |
+
+---
+
+## 8. Phase 8: 파일 검증 로직 완전 통합
+
+### 8.1 배경
+Phase 7에서 버그를 수정했으나, 여전히 두 기능이 **서로 다른 모듈**을 사용하고 있어 100% 동일한 검증 결과를 보장할 수 없는 구조적 문제가 있었음.
+
+### 8.2 목표
+**같은 파일 → 100% 동일한 검증 결과** (바이러스 검사 제외)
+
+### 8.3 개선 전 구조
+
+```
+새 문서 등록 (DocumentRegistrationView)
+├── @/shared/lib/fileValidation (확장자, 크기, MIME)
+├── @/shared/lib/fileValidation/storageChecker (스토리지)
+└── @/features/batch-upload/utils/duplicateChecker (중복) ← 별도 모듈
+
+문서 일괄등록 (BatchDocumentUploadView)
+├── batch-upload/utils/fileValidation (re-export) ← 별도 모듈
+├── @/shared/lib/fileValidation/storageChecker (스토리지)
+└── @/features/batch-upload/utils/duplicateChecker (중복) ← 별도 모듈
+```
+
+### 8.4 개선 후 구조
+
+```
+공통 검증 모듈 (@/shared/lib/fileValidation)
+├── validateFile() - 확장자, 크기, MIME
+├── checkStorageWithInfo() - 스토리지
+└── checkDuplicateFile() - 중복 ← 이동 완료!
+
+새 문서 등록 → @/shared/lib/fileValidation 직접 사용
+문서 일괄등록 → @/shared/lib/fileValidation 직접 사용
+batch-upload/utils/* → 하위 호환성 re-export만
+```
+
+### 8.5 수정 파일
+
+| # | 파일 | 작업 |
+|---|------|------|
+| 1 | `@/shared/lib/fileValidation/duplicateChecker.ts` | 신규 생성 (기존 코드 이동) |
+| 2 | `@/shared/lib/fileValidation/index.ts` | duplicateChecker export 추가 |
+| 3 | `batch-upload/utils/duplicateChecker.ts` | 공통 모듈 re-export로 변경 |
+| 4 | `batch-upload/hooks/useBatchUpload.ts` | 공통 모듈 직접 import |
+| 5 | `DocumentRegistrationView.tsx` | 공통 모듈 직접 import |
+
+### 8.6 동일성 테스트 결과
+
+테스트 파일: `@/shared/lib/fileValidation/__tests__/validationParity.test.ts`
+
+```
+✓ 파일 검증 동일성 테스트 (38 tests) 7ms
+  ✓ 상수 동일성
+    ✓ BLOCKED_EXTENSIONS가 완전히 동일해야 함
+    ✓ ALLOWED_DOCUMENT_EXTENSIONS가 완전히 동일해야 함
+  ✓ 유틸리티 함수 동일성
+    ✓ getFileExtension 결과가 동일해야 함 (7 cases)
+    ✓ isBlockedExtension 결과가 동일해야 함 (7 cases)
+    ✓ isFileSizeValid 결과가 동일해야 함 (5 cases)
+  ✓ validateFile 결과 동일성
+    ✓ 유효한 파일: 양쪽 모두 valid=true (4 cases)
+    ✓ 차단 확장자: 양쪽 모두 valid=false (3 cases)
+    ✓ 크기 초과: 양쪽 모두 valid=false (2 cases)
+  ✓ duplicateChecker 함수 동일성
+    ✓ getUniqueFileName이 동일한 함수여야 함
+    ✓ getUniqueFileName 결과 동일 (4 cases)
+  ✓ 통합 시나리오 동일성
+    ✓ 동일한 파일 세트에 대해 validateFiles 결과가 동일해야 함
+    ✓ MIME 타입 불일치 파일에 대해 양쪽 모두 동일하게 처리해야 함
+  ✓ 모듈 참조 동일성
+    ✓ batch-upload/duplicateChecker는 shared 모듈을 re-export해야 함
+
+Test Files  1 passed (1)
+     Tests  38 passed (38)
+```
+
+### 8.7 최종 비교표
+
+| 검증 단계 | 새 문서 등록 | 문서 일괄등록 | 사용 모듈 | 동일성 |
+|-----------|:------------:|:------------:|-----------|:------:|
+| **1. 확장자 검증** (위험 확장자 차단) | ✅ | ✅ | `@/shared/lib/fileValidation` | ✅ 동일 |
+| **2. 파일 크기 검증** (50MB) | ✅ | ✅ | `@/shared/lib/fileValidation` | ✅ 동일 |
+| **3. MIME 타입 검증** (확장자 위조 탐지) | ✅ | ✅ | `@/shared/lib/fileValidation` | ✅ 동일 |
+| **4. 스토리지 용량 검사** | ✅ | ✅ | `@/shared/lib/fileValidation` | ✅ 동일 |
+| **5. 바이러스 검사** (ClamAV) | ✅ | ✅ | 각 View 업로드 서비스 | ⚠️ 별도 |
+| **6. 중복 파일 검사** (SHA-256 해시) | ✅ | ✅ | `@/shared/lib/fileValidation` | ✅ 동일 |
+
+### 8.8 Import 경로 비교
+
+| 함수 | 새 문서 등록 | 문서 일괄등록 |
+|------|-------------|---------------|
+| `validateFile` | `@/shared/lib/fileValidation` | `@/shared/lib/fileValidation` |
+| `checkStorageWithInfo` | `@/shared/lib/fileValidation` | `@/shared/lib/fileValidation` |
+| `checkDuplicateFile` | `@/shared/lib/fileValidation` | `@/shared/lib/fileValidation` |
+| `getCustomerFileHashes` | `@/shared/lib/fileValidation` | `@/shared/lib/fileValidation` |
+
+### 8.9 동일성 테스트 상세 결과
+
+```
+✓ 38 tests passed
+
+상수 동일성:
+  ✅ BLOCKED_EXTENSIONS === (참조 동일)
+  ✅ ALLOWED_DOCUMENT_EXTENSIONS === (참조 동일)
+
+함수 동일성:
+  ✅ getFileExtension === (참조 동일)
+  ✅ isBlockedExtension === (참조 동일)
+  ✅ isFileSizeValid === (참조 동일)
+  ✅ checkDuplicateFile === (참조 동일)
+  ✅ getUniqueFileName === (참조 동일)
+
+검증 결과 동일성:
+  ✅ 유효한 파일 → 양쪽 valid=true
+  ✅ 차단 확장자 → 양쪽 valid=false, reason=blocked_extension
+  ✅ 크기 초과 → 양쪽 valid=false, reason=size_exceeded
+  ✅ MIME 불일치 → 양쪽 동일 처리
+```
+
+### 8.10 결론
+
+**같은 파일 → 100% 동일한 검증 결과** (바이러스 검사 제외)
+
+바이러스 검사를 제외한 모든 검증이 **동일한 공통 모듈**(`@/shared/lib/fileValidation`)을 사용하여 100% 동일한 결과를 보장합니다.
+
+---
+
 ## 변경 이력
 
 | 날짜 | 내용 | 작성자 |
@@ -426,3 +622,5 @@ rm /tmp/eicar.txt
 | 2025-12-13 | Phase 1-3.5 완료 (acdec6a0) | Claude Code |
 | 2025-12-13 | Phase 4 완료 (0890b2b8) | Claude Code |
 | 2025-12-13 | Phase 5 완료 (140699a0) | Claude Code |
+| 2025-12-14 | Phase 7 버그 발견 및 문서화 | Claude Code |
+| 2025-12-14 | Phase 8 모듈 통합 및 동일성 테스트 완료 | Claude Code |

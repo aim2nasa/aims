@@ -1,74 +1,29 @@
 /**
  * 파일 검증 유틸리티
  * @since 2025-12-05
- * @version 1.0.0
+ * @version 2.0.0 - 공통 모듈 사용으로 전환 (2025-12-14)
+ *
+ * 🔴 버그 수정: MIME 타입 검증 누락
+ * - 기존: 확장자 + 크기만 검증 (MIME 검증 없음)
+ * - 수정: 공통 모듈 사용으로 확장자 + 크기 + MIME 검증 포함
  */
 
 import { FILE_SIZE_LIMITS, type FileValidationResult } from '../types'
+import {
+  validateFile as validateFileCommon,
+  BLOCKED_EXTENSIONS as BLOCKED_EXTENSIONS_COMMON,
+  ALLOWED_DOCUMENT_EXTENSIONS as ALLOWED_DOCUMENT_EXTENSIONS_COMMON,
+  getFileExtension as getFileExtensionCommon,
+  isBlockedExtension as isBlockedExtensionCommon,
+  isFileSizeValid as isFileSizeValidCommon,
+} from '@/shared/lib/fileValidation'
 
-/**
- * 차단 확장자 목록
- * 보안 위험이 있는 실행 파일, 스크립트, 라이브러리 등
- */
-export const BLOCKED_EXTENSIONS = [
-  // 실행 파일
-  'exe', 'com', 'bat', 'cmd', 'msi', 'scr',
-  // 스크립트
-  'vbs', 'vbe', 'js', 'jse', 'ws', 'wsf', 'wsc', 'wsh',
-  'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2',
-  // 라이브러리
-  'dll', 'sys', 'drv',
-  // 기타 위험 파일
-  'lnk', 'pif', 'application', 'gadget', 'hta', 'cpl',
-  'msc', 'jar', 'reg',
-] as const
-
-/**
- * 허용되는 일반 문서 확장자 (참고용)
- */
-export const ALLOWED_DOCUMENT_EXTENSIONS = [
-  // 문서
-  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-  'hwp', 'hwpx', 'txt', 'rtf', 'odt', 'ods', 'odp',
-  // 이미지
-  'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp', 'svg',
-  // 압축 파일
-  'zip', 'rar', '7z', 'tar', 'gz',
-] as const
-
-/**
- * 파일명에서 확장자 추출
- * @param filename 파일명
- * @returns 소문자 확장자 (확장자 없으면 빈 문자열)
- */
-export function getFileExtension(filename: string): string {
-  const trimmed = filename.trim()
-  const lastDot = trimmed.lastIndexOf('.')
-  if (lastDot === -1 || lastDot === trimmed.length - 1) {
-    return ''
-  }
-  return trimmed.slice(lastDot + 1).toLowerCase()
-}
-
-/**
- * 차단된 확장자인지 확인
- * @param filename 파일명
- * @returns 차단된 확장자면 true
- */
-export function isBlockedExtension(filename: string): boolean {
-  const ext = getFileExtension(filename)
-  if (!ext) return false
-  return (BLOCKED_EXTENSIONS as readonly string[]).includes(ext)
-}
-
-/**
- * 파일 크기가 유효한지 확인 (50MB 제한)
- * @param sizeInBytes 파일 크기 (바이트)
- * @returns 유효하면 true
- */
-export function isFileSizeValid(sizeInBytes: number): boolean {
-  return sizeInBytes > 0 && sizeInBytes <= FILE_SIZE_LIMITS.MAX_SINGLE_FILE
-}
+// 공통 모듈에서 re-export (하위 호환성 유지)
+export const BLOCKED_EXTENSIONS = BLOCKED_EXTENSIONS_COMMON
+export const ALLOWED_DOCUMENT_EXTENSIONS = ALLOWED_DOCUMENT_EXTENSIONS_COMMON
+export const getFileExtension = getFileExtensionCommon
+export const isBlockedExtension = isBlockedExtensionCommon
+export const isFileSizeValid = isFileSizeValidCommon
 
 /**
  * 배치 총 크기가 등급별 한도 내인지 확인
@@ -81,35 +36,29 @@ export function isBatchSizeValid(totalBytes: number, tierLimit: number): boolean
 }
 
 /**
- * 단일 파일 검증
+ * 단일 파일 검증 (공통 모듈 사용)
+ * - 확장자 검증 (위험 확장자 차단)
+ * - 파일 크기 검증 (50MB)
+ * - MIME 타입 검증 (확장자 위조 탐지) ← 추가됨!
+ *
  * @param file File 객체
  * @returns FileValidationResult
  */
 export function validateFile(file: File): FileValidationResult {
-  // 1. 차단 확장자 검사
-  if (isBlockedExtension(file.name)) {
-    const ext = getFileExtension(file.name)
+  // 공통 모듈 사용 (확장자 + 크기 + MIME 검증 포함)
+  const result = validateFileCommon(file)
+
+  // 타입 변환 (공통 모듈의 reason 타입이 더 넓음)
+  if (!result.valid) {
     return {
       valid: false,
-      file,
-      reason: 'blocked_extension',
-      message: `차단된 확장자입니다: .${ext}`,
+      file: result.file,
+      reason: result.reason as FileValidationResult['reason'],
+      message: result.message,
     }
   }
 
-  // 2. 파일 크기 검사 (50MB)
-  if (!isFileSizeValid(file.size)) {
-    const maxSizeMB = FILE_SIZE_LIMITS.MAX_SINGLE_FILE / (1024 * 1024)
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
-    return {
-      valid: false,
-      file,
-      reason: 'size_exceeded',
-      message: `파일 크기(${fileSizeMB}MB)가 제한(${maxSizeMB}MB)을 초과합니다`,
-    }
-  }
-
-  return { valid: true, file }
+  return { valid: true, file: result.file }
 }
 
 /**

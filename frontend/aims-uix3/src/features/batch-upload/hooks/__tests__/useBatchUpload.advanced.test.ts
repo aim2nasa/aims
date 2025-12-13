@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useBatchUpload } from '../useBatchUpload'
 import { BatchUploadApi } from '../../api/batchUploadApi'
-import * as duplicateChecker from '../../utils/duplicateChecker'
+import * as duplicateChecker from '@/shared/lib/fileValidation'
 import type { FolderMapping } from '../../types'
 
 // Mock modules
@@ -25,11 +25,15 @@ vi.mock('../../api/batchUploadApi', () => ({
   },
 }))
 
-vi.mock('../../utils/duplicateChecker', () => ({
-  getCustomerFileHashes: vi.fn(),
-  checkDuplicateFile: vi.fn(),
-  getUniqueFileName: vi.fn(),
-}))
+vi.mock('@/shared/lib/fileValidation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/fileValidation')>()
+  return {
+    ...actual,
+    getCustomerFileHashes: vi.fn(),
+    checkDuplicateFile: vi.fn(),
+    getUniqueFileName: vi.fn(),
+  }
+})
 
 const mockUploadFile = vi.mocked(BatchUploadApi.uploadFile)
 const mockGetCustomerFileHashes = vi.mocked(duplicateChecker.getCustomerFileHashes)
