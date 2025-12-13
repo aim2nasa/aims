@@ -1,5 +1,7 @@
 # t8_full_pipeline.py
 import os
+import uuid
+import requests
 from typing import List, Dict
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -8,6 +10,67 @@ from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
 from create_embeddings import create_embeddings_for_chunks
 from save_to_qdrant import save_chunks_to_qdrant
+
+# aims_api 토큰 로깅 설정
+AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
+
+
+def log_token_usage(user_id: str, doc_id: str, token_usage: Dict) -> bool:
+    """
+    aims_api에 토큰 사용량을 로깅합니다.
+
+    Args:
+        user_id: 문서 소유자 ID
+        doc_id: 문서 ID
+        token_usage: 토큰 사용량 정보
+
+    Returns:
+        bool: 로깅 성공 여부
+    """
+    try:
+        payload = {
+            "user_id": user_id or "system",
+            "source": "doc_embedding",
+            "model": token_usage.get("model", "text-embedding-3-small"),
+            "prompt_tokens": token_usage.get("prompt_tokens", 0),
+            "completion_tokens": token_usage.get("completion_tokens", 0),
+            "total_tokens": token_usage.get("total_tokens", 0),
+            "request_id": str(uuid.uuid4()),
+            "metadata": {
+                "document_id": doc_id,
+                "workflow": "full_pipeline"
+            }
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": INTERNAL_API_KEY
+        }
+
+        response = requests.post(
+            TOKEN_LOGGING_URL,
+            json=payload,
+            headers=headers,
+            timeout=5
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            if result.get("success"):
+                print(f"[TokenLog] 임베딩 토큰 로깅 완료: {token_usage.get('total_tokens', 0)} tokens")
+                return True
+
+        print(f"[TokenLog] 토큰 로깅 실패: {response.status_code}")
+        return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"[TokenLog] API 호출 오류: {e}")
+        return False
+    except Exception as e:
+        print(f"[TokenLog] 예상치 못한 오류: {e}")
+        return False
 
 def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = 'docupload', collection_name: str = 'files'):
     """
@@ -68,8 +131,13 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     'text_source': text_source  # 텍스트 소스 정보 추가
                 })
 
-                # 2단계: 임베딩 생성
-                embedded_chunks = create_embeddings_for_chunks(chunks)
+                # 2단계: 임베딩 생성 (토큰 사용량 포함)
+                owner_id = doc_data.get('ownerId')
+                embedded_chunks, token_usage = create_embeddings_for_chunks(chunks)
+
+                # 토큰 사용량 로깅
+                if token_usage.get('total_tokens', 0) > 0:
+                    log_token_usage(owner_id, doc_id, token_usage)
 
                 # 3단계: Qdrant에 저장
                 if embedded_chunks:

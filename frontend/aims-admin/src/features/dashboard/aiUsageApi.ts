@@ -16,6 +16,7 @@ export interface AIUsageOverview {
   by_source: {
     rag_api?: number;
     n8n_docsummary?: number;
+    doc_embedding?: number;
   };
 }
 
@@ -32,6 +33,7 @@ export interface HourlyUsagePoint {
   timestamp: string;
   rag_api: number;
   n8n_docsummary: number;
+  doc_embedding: number;
   total: number;
 }
 

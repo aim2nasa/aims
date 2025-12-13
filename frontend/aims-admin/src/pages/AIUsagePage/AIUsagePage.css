@@ -135,6 +135,10 @@
   border-color: #34c759;
 }
 
+.source-card--embedding {
+  border-color: #ff9500;
+}
+
 .source-card__label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -153,6 +157,10 @@
 
 .source-card--n8n .source-card__value {
   color: #34c759;
+}
+
+.source-card--embedding .source-card__value {
+  color: #ff9500;
 }
 
 .source-card__percent {

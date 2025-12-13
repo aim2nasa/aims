@@ -273,32 +273,34 @@ async def search_endpoint(request: SearchRequest):
             except Exception as log_error:
                 print(f"⚠️ 로그 저장 실패 (검색은 정상 진행): {log_error}")
 
-            # 🔥 Phase 4: AI 토큰 사용량 추적
+            # 🔥 Phase 4: AI 토큰 사용량 추적 (항상 추적)
             try:
-                if request.user_id:
-                    # 임베딩 토큰 사용량 추적
-                    embedding_usage = None
-                    if hybrid_engine.last_embedding_response:
-                        embedding_usage = token_tracker.track_embedding(hybrid_engine.last_embedding_response)
+                # user_id가 없으면 anonymous 사용
+                tracking_user_id = request.user_id or "anonymous"
 
-                    # LLM 토큰 사용량 추적
-                    chat_usage = None
-                    if llm_response:
-                        chat_usage = token_tracker.track_chat_completion(llm_response)
+                # 임베딩 토큰 사용량 추적
+                embedding_usage = None
+                if hybrid_engine.last_embedding_response:
+                    embedding_usage = token_tracker.track_embedding(hybrid_engine.last_embedding_response)
 
-                    # 사용량 저장 (임베딩 또는 LLM 토큰이 있는 경우)
-                    if embedding_usage or chat_usage:
-                        token_tracker.save_usage(
-                            user_id=request.user_id,
-                            embedding_usage=embedding_usage,
-                            chat_usage=chat_usage,
-                            metadata={
-                                "query": request.query[:200],  # 쿼리 앞 200자
-                                "customer_id": request.customer_id,
-                                "results_count": len(top_results)
-                            },
-                            search_log_id=str(log_id) if log_id else None
-                        )
+                # LLM 토큰 사용량 추적
+                chat_usage = None
+                if llm_response:
+                    chat_usage = token_tracker.track_chat_completion(llm_response)
+
+                # 사용량 저장 (임베딩 또는 LLM 토큰이 있는 경우)
+                if embedding_usage or chat_usage:
+                    token_tracker.save_usage(
+                        user_id=tracking_user_id,
+                        embedding_usage=embedding_usage,
+                        chat_usage=chat_usage,
+                        metadata={
+                            "query": request.query[:200],  # 쿼리 앞 200자
+                            "customer_id": request.customer_id,
+                            "results_count": len(top_results)
+                        },
+                        search_log_id=str(log_id) if log_id else None
+                    )
             except Exception as token_error:
                 print(f"⚠️ 토큰 사용량 저장 실패 (검색은 정상 진행): {token_error}")
 

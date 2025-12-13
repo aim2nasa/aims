@@ -121,9 +121,10 @@ export const AIUsagePage = () => {
   }
 
   // 소스별 퍼센트 계산
-  const totalBySource = (overview?.by_source?.rag_api || 0) + (overview?.by_source?.n8n_docsummary || 0);
+  const totalBySource = (overview?.by_source?.rag_api || 0) + (overview?.by_source?.n8n_docsummary || 0) + (overview?.by_source?.doc_embedding || 0);
   const ragPercent = totalBySource > 0 ? ((overview?.by_source?.rag_api || 0) / totalBySource * 100).toFixed(1) : '0';
   const n8nPercent = totalBySource > 0 ? ((overview?.by_source?.n8n_docsummary || 0) / totalBySource * 100).toFixed(1) : '0';
+  const embeddingPercent = totalBySource > 0 ? ((overview?.by_source?.doc_embedding || 0) / totalBySource * 100).toFixed(1) : '0';
 
   // 모든 데이터 새로고침
   const handleRefreshAll = () => {
@@ -188,7 +189,7 @@ export const AIUsagePage = () => {
       {/* 소스별 분포 */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">소스별 사용량</h2>
-        <div className="ai-usage-page__source-grid">
+        <div className="ai-usage-page__source-grid ai-usage-page__source-grid--three">
           <div className="source-card source-card--rag">
             <span className="source-card__label">RAG API</span>
             <span className="source-card__value">
@@ -202,6 +203,13 @@ export const AIUsagePage = () => {
               {formatTokens(overview?.by_source?.n8n_docsummary || 0)}
             </span>
             <span className="source-card__percent">{n8nPercent}%</span>
+          </div>
+          <div className="source-card source-card--embedding">
+            <span className="source-card__label">문서 임베딩</span>
+            <span className="source-card__value">
+              {formatTokens(overview?.by_source?.doc_embedding || 0)}
+            </span>
+            <span className="source-card__percent">{embeddingPercent}%</span>
           </div>
         </div>
       </section>
@@ -262,6 +270,15 @@ export const AIUsagePage = () => {
                   dataKey="n8n_docsummary"
                   name="DocSummary"
                   stroke="#34C759"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="doc_embedding"
+                  name="문서 임베딩"
+                  stroke="#FF9500"
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 4 }}
