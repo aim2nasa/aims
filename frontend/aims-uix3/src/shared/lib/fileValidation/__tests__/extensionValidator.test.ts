@@ -42,7 +42,7 @@ describe('getFileExtension', () => {
 })
 
 describe('isBlockedExtension', () => {
-  it('차단 확장자 거부 (exe, bat, dll, ps1...)', () => {
+  it('차단 확장자 거부 - Windows (exe, bat, dll, ps1...)', () => {
     expect(isBlockedExtension('malware.exe')).toBe(true)
     expect(isBlockedExtension('script.bat')).toBe(true)
     expect(isBlockedExtension('library.dll')).toBe(true)
@@ -50,6 +50,20 @@ describe('isBlockedExtension', () => {
     expect(isBlockedExtension('installer.msi')).toBe(true)
     expect(isBlockedExtension('script.vbs')).toBe(true)
     expect(isBlockedExtension('archive.jar')).toBe(true)
+  })
+
+  it('차단 확장자 거부 - Linux (sh, elf, deb, so...)', () => {
+    expect(isBlockedExtension('script.sh')).toBe(true)
+    expect(isBlockedExtension('script.bash')).toBe(true)
+    expect(isBlockedExtension('script.zsh')).toBe(true)
+    expect(isBlockedExtension('binary.elf')).toBe(true)
+    expect(isBlockedExtension('installer.bin')).toBe(true)
+    expect(isBlockedExtension('package.deb')).toBe(true)
+    expect(isBlockedExtension('package.rpm')).toBe(true)
+    expect(isBlockedExtension('library.so')).toBe(true)
+    expect(isBlockedExtension('launcher.desktop')).toBe(true)
+    expect(isBlockedExtension('script.pl')).toBe(true)
+    expect(isBlockedExtension('script.py')).toBe(true)
   })
 
   it('허용 확장자 통과 (pdf, jpg, docx...)', () => {

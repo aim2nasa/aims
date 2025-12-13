@@ -12,11 +12,26 @@ import {
 import { DANGEROUS_MIME_TYPES } from '../constants'
 
 describe('isDangerousMimeType', () => {
-  it('위험한 MIME 타입 감지', () => {
+  it('위험한 MIME 타입 감지 - Windows', () => {
     expect(isDangerousMimeType('application/x-msdownload')).toBe(true)
-    expect(isDangerousMimeType('application/x-executable')).toBe(true)
     expect(isDangerousMimeType('application/x-msi')).toBe(true)
+    expect(isDangerousMimeType('application/vnd.microsoft.portable-executable')).toBe(true)
+  })
+
+  it('위험한 MIME 타입 감지 - Linux', () => {
+    expect(isDangerousMimeType('application/x-executable')).toBe(true)
+    expect(isDangerousMimeType('application/x-elf')).toBe(true)
+    expect(isDangerousMimeType('application/x-shellscript')).toBe(true)
+    expect(isDangerousMimeType('application/x-debian-package')).toBe(true)
+    expect(isDangerousMimeType('application/x-rpm')).toBe(true)
+    expect(isDangerousMimeType('application/x-sharedlib')).toBe(true)
+  })
+
+  it('위험한 MIME 타입 감지 - 크로스플랫폼', () => {
     expect(isDangerousMimeType('application/java-archive')).toBe(true)
+    expect(isDangerousMimeType('text/x-python')).toBe(true)
+    expect(isDangerousMimeType('text/x-perl')).toBe(true)
+    expect(isDangerousMimeType('text/x-ruby')).toBe(true)
   })
 
   it('안전한 MIME 타입 통과', () => {

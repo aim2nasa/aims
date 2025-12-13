@@ -9,16 +9,28 @@
  * 보안 위험이 있는 실행 파일, 스크립트, 라이브러리 등
  */
 export const BLOCKED_EXTENSIONS = [
-  // 실행 파일
+  // === Windows 실행 파일 ===
   'exe', 'com', 'bat', 'cmd', 'msi', 'scr',
-  // 스크립트
+  // === Windows 스크립트 ===
   'vbs', 'vbe', 'js', 'jse', 'ws', 'wsf', 'wsc', 'wsh',
   'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2',
-  // 라이브러리
+  // === Windows 라이브러리 ===
   'dll', 'sys', 'drv',
-  // 기타 위험 파일
+  // === Windows 기타 ===
   'lnk', 'pif', 'application', 'gadget', 'hta', 'cpl',
-  'msc', 'jar', 'reg',
+  'msc', 'jar', 'reg', 'inf', 'scf',
+  // === Linux 쉘 스크립트 ===
+  'sh', 'bash', 'zsh', 'csh', 'ksh', 'fish',
+  // === Linux 실행 파일 ===
+  'elf', 'bin', 'run', 'appimage',
+  // === Linux 패키지 ===
+  'deb', 'rpm',
+  // === Linux 공유 라이브러리 ===
+  'so',
+  // === Linux 기타 ===
+  'desktop',
+  // === 크로스플랫폼 스크립트 ===
+  'pl', 'rb', 'py', 'pyc', 'pyo',
 ] as const
 
 /**
@@ -101,21 +113,40 @@ export const EXTENSION_MIME_MAP: Record<string, string[]> = {
  * 이 MIME 타입의 파일은 확장자와 관계없이 차단
  */
 export const DANGEROUS_MIME_TYPES = [
-  // 실행 파일
+  // === Windows 실행 파일 ===
   'application/x-msdownload',
   'application/x-msdos-program',
-  'application/x-executable',
   'application/x-dosexec',
   'application/x-ms-dos-executable',
   'application/vnd.microsoft.portable-executable',
-  // 스크립트
   'application/x-msi',
-  'application/x-bat',
+  // === Linux 실행 파일 ===
+  'application/x-executable',
+  'application/x-elf',
+  'application/x-pie-executable',
+  // === 쉘 스크립트 ===
   'application/x-sh',
+  'application/x-shellscript',
+  'application/x-bash',
   'application/x-csh',
-  // Java
+  'application/x-zsh',
+  'text/x-shellscript',
+  // === Linux 패키지 ===
+  'application/x-debian-package',
+  'application/x-deb',
+  'application/x-rpm',
+  'application/x-redhat-package-manager',
+  // === 공유 라이브러리 ===
+  'application/x-sharedlib',
+  // === Java ===
   'application/java-archive',
   'application/x-java-archive',
-  // DLL/라이브러리
-  'application/x-sharedlib',
+  // === 크로스플랫폼 스크립트 ===
+  'application/x-bat',
+  'text/x-python',
+  'application/x-python-code',
+  'text/x-perl',
+  'application/x-perl',
+  'text/x-ruby',
+  'application/x-ruby',
 ] as const
