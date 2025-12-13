@@ -37,6 +37,10 @@ export interface PreviewDocumentInfo {
   conversionStatus?: string | null
   /** 프리뷰 가능 여부 */
   canPreview?: boolean
+  /** 변환된 PDF로 프리뷰하는지 여부 */
+  isConverted?: boolean
+  /** 원본 파일 확장자 (예: 'xlsx', 'pptx') */
+  originalExtension?: string
   document: CustomerDocumentItem
   rawDetail: Record<string, unknown> | null
 }
@@ -125,17 +129,33 @@ const extractPreviewInfo = (
     fallback.uploadedAt ??
     fallback.linkedAt
 
+  const fileUrl = buildFileUrl(destPath)
+  const previewFileUrl = buildFileUrl(previewFilePath) ?? fileUrl
+
+  // 변환된 PDF로 프리뷰하는지 여부 (previewFileUrl이 fileUrl과 다르고 .pdf로 끝나면 변환된 것)
+  const isConverted = !!(
+    previewFileUrl &&
+    fileUrl &&
+    previewFileUrl !== fileUrl &&
+    previewFileUrl.toLowerCase().endsWith('.pdf')
+  )
+
+  // 원본 파일 확장자 추출
+  const extMatch = originalName.match(/\.([^.]+)$/)
+  const originalExtension = extMatch ? extMatch[1].toLowerCase() : undefined
+
   return {
     id: fallback._id,
     originalName,
-    fileUrl: buildFileUrl(destPath),
-    // 프리뷰용 URL: previewFilePath 우선, 없으면 원본 destPath 사용
-    previewFileUrl: buildFileUrl(previewFilePath) ?? buildFileUrl(destPath),
+    fileUrl,
+    previewFileUrl,
     mimeType,
     sizeBytes,
     uploadedAt: uploadedAt ?? undefined,
     conversionStatus,
-    canPreview
+    canPreview,
+    isConverted,
+    originalExtension
   }
 }
 

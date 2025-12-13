@@ -117,6 +117,51 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [containerHeight, setContainerHeight] = useState(0)
   const sectionContainerRef = useRef<HTMLDivElement>(null)
 
+  // PDF 변환 재시도 중인 문서 ID
+  const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+
+  /**
+   * PDF 변환 재시도 핸들러
+   */
+  const handleRetryPdfConversion = useCallback(async (documentId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 이벤트 버블링 방지
+
+    if (retryingDocumentId) return // 이미 재시도 중이면 무시
+
+    setRetryingDocumentId(documentId)
+    try {
+      const result = await api.post<{ success: boolean; message?: string; error?: string }>(
+        `/api/documents/${documentId}/retry`,
+        { stage: 'pdf_conversion' }
+      )
+
+      if (result.success) {
+        await showAlert({
+          title: '재시도 시작',
+          message: 'PDF 변환을 다시 시도하고 있습니다.',
+          confirmText: '확인'
+        })
+        // 목록 새로고침
+        await refresh()
+      } else {
+        await showAlert({
+          title: '재시도 실패',
+          message: result.error || '재시도에 실패했습니다.',
+          confirmText: '확인'
+        })
+      }
+    } catch (error) {
+      console.error('[DocumentsTab] PDF 변환 재시도 오류:', error)
+      await showAlert({
+        title: '오류',
+        message: '재시도 중 오류가 발생했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setRetryingDocumentId(null)
+    }
+  }, [retryingDocumentId, refresh, showAlert])
+
   // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
   // ⚠️ CustomerFullDetailView에서는 .customer-documents__header가 display:none으로 숨겨지고
   //    페이지네이션 높이도 26px로 오버라이드됨. 따라서 실제 DOM 요소 높이를 측정해야 함.
@@ -911,6 +956,80 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         );
                       }
                       return null;
+                    })()}
+                    {/* 🍎 PDF 변환 상태 배지 */}
+                    {(() => {
+                      const conversionStatus = document.conversionStatus
+                      const isConvertible = document.isConvertible
+
+                      // 변환 대상 파일만 배지 표시
+                      if (!isConvertible) return null
+
+                      if (conversionStatus === 'completed') {
+                        return (
+                          <Tooltip content="PDF로 변환 완료">
+                            <div className="document-conversion-badge document-conversion-badge--completed">
+                              <SFSymbol
+                                name="doc.richtext"
+                                size={SFSymbolSize.CAPTION_2}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </div>
+                          </Tooltip>
+                        )
+                      }
+                      if (conversionStatus === 'processing') {
+                        return (
+                          <Tooltip content="PDF 변환 중...">
+                            <div className="document-conversion-badge document-conversion-badge--processing">
+                              <SFSymbol
+                                name="arrow.triangle.2.circlepath"
+                                size={SFSymbolSize.CAPTION_2}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </div>
+                          </Tooltip>
+                        )
+                      }
+                      if (conversionStatus === 'pending') {
+                        return (
+                          <Tooltip content="PDF 변환 대기 중">
+                            <div className="document-conversion-badge document-conversion-badge--pending">
+                              <SFSymbol
+                                name="clock"
+                                size={SFSymbolSize.CAPTION_2}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </div>
+                          </Tooltip>
+                        )
+                      }
+                      if (conversionStatus === 'failed') {
+                        const docId = document._id
+                        const isRetrying = retryingDocumentId === docId
+                        return (
+                          <Tooltip content={isRetrying ? 'PDF 재변환 중...' : 'PDF 변환 실패 - 클릭하여 재시도'}>
+                            <button
+                              type="button"
+                              className={`document-conversion-badge document-conversion-badge--failed ${isRetrying ? 'document-conversion-badge--retrying' : ''}`}
+                              onClick={(e) => docId && handleRetryPdfConversion(docId, e)}
+                              disabled={isRetrying || !docId}
+                              aria-label="PDF 변환 재시도"
+                            >
+                              <SFSymbol
+                                name={isRetrying ? 'arrow.triangle.2.circlepath' : 'exclamationmark.triangle'}
+                                size={SFSymbolSize.CAPTION_2}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </button>
+                          </Tooltip>
+                        )
+                      }
+                      return null
                     })()}
                   </div>
 

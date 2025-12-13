@@ -19,6 +19,39 @@ const UNSUPPORTED_MIMES = [
 ];
 
 /**
+ * PDF 변환 대상 확장자 목록
+ */
+const CONVERTIBLE_EXTENSIONS = [
+  'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+  'odt', 'ods', 'odp', 'rtf', 'txt', 'csv', 'html', 'hwp'
+];
+
+/**
+ * 네이티브 프리뷰 가능 확장자 (변환 불필요)
+ */
+const NATIVE_PREVIEW_EXTENSIONS = [
+  'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico', 'tif', 'tiff'
+];
+
+/**
+ * 파일이 PDF 변환 대상인지 확인
+ */
+function isConvertibleFile(filePath) {
+  if (!filePath) return false;
+  const ext = (filePath.split('.').pop() || '').toLowerCase();
+  return CONVERTIBLE_EXTENSIONS.includes(ext);
+}
+
+/**
+ * 파일이 네이티브 프리뷰 가능한지 확인
+ */
+function isNativePreviewable(filePath) {
+  if (!filePath) return false;
+  const ext = (filePath.split('.').pop() || '').toLowerCase();
+  return NATIVE_PREVIEW_EXTENSIONS.includes(ext);
+}
+
+/**
  * MIME 타입이 지원되지 않는지 확인
  */
 function isUnsupportedMimeType(mimeType) {
@@ -83,8 +116,11 @@ function prepareDocumentResponse(doc) {
     }
   }
 
+  // PDF 변환 대상 여부 (변환 대상 확장자인지 확인)
+  const isConvertible = isConvertibleFile(destPath);
+
   // PDF 관련 필드 (모든 computed 반환에 포함)
-  const pdfFields = { canPreview, previewFilePath, conversionStatus };
+  const pdfFields = { canPreview, previewFilePath, conversionStatus, isConvertible };
 
   // 🧮 2. 계산된 UI 값
   const hasMetaText = doc.meta && doc.meta.full_text;
@@ -276,5 +312,8 @@ function prepareDocumentResponse(doc) {
 
 module.exports = {
   prepareDocumentResponse,
-  formatBytes
+  formatBytes,
+  isConvertibleFile,
+  isNativePreviewable,
+  CONVERTIBLE_EXTENSIONS
 };

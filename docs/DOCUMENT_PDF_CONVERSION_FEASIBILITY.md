@@ -854,5 +854,195 @@ return {
 
 ---
 
+---
+
+## 11. PDF 변환 상태 UI 표시 개선 (2025-12-14)
+
+### 11.1 구현 배경
+
+사용자 요청:
+1. PDF 변환 로직이 현재 동작 중인지 파악 불가 → 진행 상태 표시 필요
+2. 파일이 PDF 변환 대상인지 아닌지 구분 불가
+3. 변환 대상 파일의 현재 상태 (대기중, 변환됨 등) 알 수 없음
+4. 변환된 PDF로 프리뷰되는 파일 표시 필요
+
+### 11.2 수정 내용
+
+#### 백엔드 (`server.js`)
+
+**문제**: `isConvertible` 계산 시 `destPath`가 없으면 항상 `false` 반환
+
+```javascript
+// 수정 전
+isConvertible: isConvertibleFile(doc.upload?.destPath)
+
+// 수정 후: destPath 없으면 originalName으로 확장자 확인
+isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName)
+```
+
+#### 프론트엔드 (`DocumentStatusList.tsx`)
+
+**문제**: `conversionStatus`가 null인 경우 변환 대상 파일에도 배지 미표시
+
+**해결**: 변환 대상이지만 변환 미시작 파일에 "변환 가능" 배지 추가
+
+```tsx
+// 변환 대상이지만 아직 변환이 시작되지 않은 파일
+return (
+  <Tooltip content="PDF 변환 가능 (고객 연결 시 자동 변환)">
+    <div className="document-conversion-badge document-conversion-badge--convertible">
+      <SFSymbol name="doc.badge.arrow.up" ... />
+    </div>
+  </Tooltip>
+)
+```
+
+#### CSS (`DocumentStatusList.css`)
+
+```css
+/* 변환 가능 상태 (아직 변환 시작되지 않음) */
+.document-conversion-badge--convertible {
+  background: var(--color-ios-teal-light);
+  color: white;
+}
+```
+
+### 11.3 PDF 변환 배지 상태
+
+| 상태 | 색상 | 아이콘 | 설명 |
+|------|------|--------|------|
+| convertible | Teal | doc.badge.arrow.up | 변환 가능 (고객 연결 시 자동 변환) |
+| pending | Yellow | clock | 변환 대기 중 |
+| processing | Orange | arrow.triangle.2.circlepath (회전) | 변환 중 |
+| completed | Green | doc.richtext | 변환 완료 |
+| failed | Red | exclamationmark.triangle | 변환 실패 (클릭하여 재시도) |
+
+### 11.4 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/api/aims_api/server.js` | `isConvertible` 계산 시 `originalName` fallback 추가 |
+| `frontend/.../DocumentStatusList.tsx` | "변환 가능" 배지 추가 |
+| `frontend/.../DocumentStatusList.css` | 배지 스타일 추가 |
+
+---
+
+## 12. PDF 변환 배지 디자인 개선 및 안정성 수정 (2025-12-14)
+
+### 12.1 PDF 변환 배지 디자인 변경
+
+#### 기존 → 새 디자인
+
+| 항목 | 기존 | 변경 |
+|------|------|------|
+| 형태 | SFSymbol 아이콘만 | 아이콘 + "pdf" 텍스트 |
+| 크기 | 아이콘 12px | 아이콘 10px + 텍스트 10px |
+| 색상 | CSS 변수 (미정의 문제) | iOS 시스템 색상 직접 사용 |
+
+#### 새 배지 구성
+
+```
+┌──────────────────────┐
+│  [아이콘] pdf        │  ← 인라인 배지
+└──────────────────────┘
+```
+
+#### 상태별 아이콘 및 색상
+
+| 상태 | 배경색 | 아이콘 | 설명 |
+|------|--------|--------|------|
+| completed | #007aff (파랑) | 초록 원 + 체크마크 | PDF 변환 완료 |
+| processing | #ff9500 (주황) | 회전 스피너 | 변환 중 |
+| pending | #8e8e93 (회색) | 점 3개 | 대기 중 |
+| failed | #ff3b30 (빨강) | 흰 원 + 빨간 X | 실패 (클릭하여 재시도) |
+
+#### 아이콘 SVG 구현
+
+```tsx
+// 상태별 아이콘 (굵고 선명한 SVG)
+const statusIcons = {
+  completed: (
+    <svg viewBox="0 0 12 12">
+      <circle cx="6" cy="6" r="5.5" fill="#34c759"/>
+      <path d="M3.5 6l2 2 3-4" fill="none" stroke="#fff" strokeWidth="1.8"/>
+    </svg>
+  ),
+  processing: (
+    <svg className="pdf-badge-icon--spin" viewBox="0 0 12 12">
+      <circle cx="6" cy="6" r="5" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="16 8"/>
+    </svg>
+  ),
+  // ...
+}
+```
+
+#### CSS 스타일
+
+```css
+.pdf-conversion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 3px;
+  font-size: 0;
+}
+
+.pdf-badge-icon { width: 10px; height: 10px; }
+.pdf-badge-text { font-size: 10px; font-weight: 600; }
+
+/* 하드코딩된 iOS 색상 (CSS 변수 미정의 문제 해결) */
+.pdf-conversion-badge--completed { background: #007aff; }
+.pdf-conversion-badge--processing { background: #ff9500; }
+.pdf-conversion-badge--pending { background: #8e8e93; }
+button.pdf-conversion-badge--failed { background: #ff3b30; }
+```
+
+### 12.2 PDF 변환 서버 안정성 개선
+
+#### 문제
+
+변환 서버 시작 시 `temp` 폴더가 생성되지만, 운영 중 폴더가 삭제되면 `ENOENT` 에러 발생:
+
+```
+ENOENT: no such file or directory, open '/home/rossi/aims/tools/convert/temp/...'
+```
+
+#### 해결
+
+`server.js`의 multer destination 콜백에서 매 요청마다 디렉토리 존재 확인:
+
+```javascript
+// 수정 전
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, TEMP_DIR);
+  },
+  // ...
+});
+
+// 수정 후
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // 매 요청마다 디렉토리 존재 확인 (운영 중 삭제 대비)
+    if (!fs.existsSync(TEMP_DIR)) {
+      fs.mkdirSync(TEMP_DIR, { recursive: true });
+    }
+    cb(null, TEMP_DIR);
+  },
+  // ...
+});
+```
+
+### 12.3 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `frontend/.../DocumentStatusList.tsx` | PDF 배지에 SVG 아이콘 + "pdf" 텍스트 추가 |
+| `frontend/.../DocumentStatusList.css` | 배지 스타일 (iOS 색상 직접 사용) |
+| `tools/convert/server.js` | multer에서 temp 폴더 자동 생성 |
+
+---
+
 *문서 작성일: 2025-12-13*
-*최종 수정일: 2025-12-14 (OCR 에러 시에도 PDF 프리뷰 지원)*
+*최종 수정일: 2025-12-14 (PDF 변환 배지 디자인 개선 및 안정성 수정)*

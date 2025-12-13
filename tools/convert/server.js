@@ -33,6 +33,10 @@ app.use(express.json());
 // Multer 설정 (파일 업로드)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // 매 요청마다 디렉토리 존재 확인 (운영 중 삭제 대비)
+    if (!fs.existsSync(TEMP_DIR)) {
+      fs.mkdirSync(TEMP_DIR, { recursive: true });
+    }
     cb(null, TEMP_DIR);
   },
   filename: (req, file, cb) => {

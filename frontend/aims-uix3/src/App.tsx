@@ -1567,35 +1567,65 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                                    selectedDocument.meta?.originalName ||
                                    '파일'
 
-                  // OCR 신뢰도 표시
+                  // OCR 신뢰도 계산
                   const ocrData = selectedDocument.ocr as { confidence?: unknown } | undefined
                   const ocrConfidence = ocrData?.confidence
+                  let ocrInfo: { percent: string; label: string } | null = null
                   if (ocrConfidence !== undefined && ocrConfidence !== null) {
                     const rawNum = typeof ocrConfidence === 'string' ? parseFloat(ocrConfidence) : Number(ocrConfidence)
                     const confidenceNum = typeof rawNum === 'number' ? rawNum : NaN
                     if (!isNaN(confidenceNum)) {
-                      // 신뢰도 레벨 계산
                       let label = '매우 낮음'
                       if (confidenceNum >= 0.95) label = '매우 높음'
                       else if (confidenceNum >= 0.85) label = '높음'
                       else if (confidenceNum >= 0.70) label = '보통'
                       else if (confidenceNum >= 0.50) label = '낮음'
-
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <div>{fileName}</div>
-                          <div style={{
-                            fontSize: '11px',
-                            fontWeight: '400',
-                            color: 'var(--color-text-tertiary)',
-                            opacity: 0.7
-                          }}>
-                            OCR {(confidenceNum * 100).toFixed(1)}% · {label}
-                          </div>
-                        </div>
-                      )
+                      ocrInfo = { percent: (confidenceNum * 100).toFixed(1), label }
                     }
                   }
+
+                  // PDF 변환 여부 및 원본 확장자
+                  const isConverted = selectedDocument.isConverted
+                  const originalExt = selectedDocument.originalExtension?.toUpperCase()
+
+                  // 부가 정보가 있으면 서브타이틀로 표시
+                  if (ocrInfo || isConverted) {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div>{fileName}</div>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: '400',
+                          color: 'var(--color-text-tertiary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          {isConverted && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              padding: '1px 5px',
+                              backgroundColor: 'var(--color-accent-blue-subtle)',
+                              color: 'var(--color-accent-blue)',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '500'
+                            }}>
+                              PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
+                            </span>
+                          )}
+                          {ocrInfo && (
+                            <span style={{ opacity: 0.7 }}>
+                              OCR {ocrInfo.percent}% · {ocrInfo.label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return fileName
                 })()}
                 onClose={() => {

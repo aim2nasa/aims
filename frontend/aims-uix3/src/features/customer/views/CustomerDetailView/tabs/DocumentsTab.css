@@ -865,6 +865,109 @@ html[data-theme="dark"] .customer-documents-item:hover .document-txt-badge {
   box-shadow: 0 0 8px var(--color-badge-txt-glow-dark);
 }
 
+/* === 🍎 PDF 변환 상태 배지 === */
+.document-conversion-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 2;
+}
+
+html[data-theme="dark"] .document-conversion-badge {
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+/* 완료: 파란색 */
+.document-conversion-badge--completed {
+  background: var(--color-accent-blue);
+  color: white;
+}
+
+.customer-documents-item:hover .document-conversion-badge--completed {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px var(--color-accent-blue);
+}
+
+/* 처리 중: 오렌지 + 회전 애니메이션 */
+.document-conversion-badge--processing {
+  background: var(--color-ios-orange-light);
+  color: white;
+  animation: conversion-spin 1.5s linear infinite;
+}
+
+html[data-theme="dark"] .document-conversion-badge--processing {
+  background: var(--color-ios-orange-dark);
+}
+
+@keyframes conversion-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 대기 중: 회색 */
+.document-conversion-badge--pending {
+  background: var(--color-neutral-400);
+  color: white;
+}
+
+html[data-theme="dark"] .document-conversion-badge--pending {
+  background: var(--color-neutral-500);
+}
+
+/* 실패: 빨간색 */
+.document-conversion-badge--failed {
+  background: var(--color-ios-red-light);
+  color: white;
+}
+
+html[data-theme="dark"] .document-conversion-badge--failed {
+  background: var(--color-ios-red-dark);
+}
+
+.customer-documents-item:hover .document-conversion-badge--failed {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px var(--color-ios-red-light);
+}
+
+/* 재시도 버튼 스타일 */
+button.document-conversion-badge--failed {
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+button.document-conversion-badge--failed:hover:not(:disabled) {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--color-ios-red-light);
+}
+
+button.document-conversion-badge--failed:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 재시도 중 상태 */
+.document-conversion-badge--retrying {
+  background: var(--color-ios-orange-light) !important;
+  animation: conversion-spin 1s linear infinite;
+}
+
+html[data-theme="dark"] .document-conversion-badge--retrying {
+  background: var(--color-ios-orange-dark) !important;
+}
+
 /* === MEMO BUTTON === */
 
 .document-notes-btn {

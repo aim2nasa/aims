@@ -166,6 +166,11 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
               {formatDateTime(previewDocument?.uploadedAt)}
               {sizeLabel && ` · ${sizeLabel}`}
             </p>
+            {previewDocument?.isConverted && (
+              <span className="customer-document-preview__conversion-badge">
+                PDF 변환됨{previewDocument.originalExtension ? ` · 원본 ${previewDocument.originalExtension.toUpperCase()}` : ''}
+              </span>
+            )}
           </div>
         </div>
       }

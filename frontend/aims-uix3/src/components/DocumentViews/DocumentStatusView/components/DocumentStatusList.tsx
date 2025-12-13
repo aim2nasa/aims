@@ -14,6 +14,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { DocumentService } from '../../../../services/DocumentService'
+import { api } from '@/shared/lib/api'
 import type { Document } from '../../../../types/documentStatus'
 import {
   DocumentIcon,
@@ -150,6 +151,53 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
     documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  // PDF 변환 재시도 중인 문서 ID
+  const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+
+  /**
+   * PDF 변환 재시도 핸들러
+   */
+  const handleRetryPdfConversion = useCallback(async (documentId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 이벤트 버블링 방지
+
+    if (retryingDocumentId) return // 이미 재시도 중이면 무시
+
+    setRetryingDocumentId(documentId)
+    try {
+      const result = await api.post<{ success: boolean; message?: string; error?: string }>(
+        `/api/documents/${documentId}/retry`,
+        { stage: 'pdf_conversion' }
+      )
+
+      if (result.success) {
+        await showAlert({
+          title: '재시도 시작',
+          message: 'PDF 변환을 다시 시도하고 있습니다.',
+          confirmText: '확인'
+        })
+        // 목록 새로고침
+        if (onRefresh) {
+          await onRefresh()
+        }
+      } else {
+        await showAlert({
+          title: '재시도 실패',
+          message: result.error || '재시도에 실패했습니다.',
+          confirmText: '확인'
+        })
+      }
+    } catch (error) {
+      console.error('[DocumentStatusList] PDF 변환 재시도 오류:', error)
+      await showAlert({
+        title: '오류',
+        message: '재시도 중 오류가 발생했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setRetryingDocumentId(null)
+    }
+  }, [retryingDocumentId, onRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -649,9 +697,101 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               })()}
             </div>
 
-            {/* 파일명 */}
+            {/* 파일명 + PDF 변환 상태 아이콘 */}
             <div className="status-filename">
-              {DocumentStatusService.extractFilename(document)}
+              <span className="status-filename-text">
+                {DocumentStatusService.extractFilename(document)}
+              </span>
+              {/* PDF 변환 상태 배지 (변환 대상 파일에만 표시) */}
+              {(() => {
+                const uploadData = typeof document.upload === 'object' ? document.upload : null
+
+                // 파일명에서 확장자 추출하여 변환 대상 여부 판단
+                const filename = DocumentStatusService.extractFilename(document) || ''
+                const extMatch = filename.match(/\.([^.]+)$/i)
+                const ext = extMatch ? extMatch[1].toLowerCase() : ''
+                const convertibleExts = ['pptx', 'ppt', 'xlsx', 'xls', 'docx', 'doc', 'hwp', 'txt']
+                const isConvertible = document.isConvertible ?? convertibleExts.includes(ext)
+
+                // 변환 대상이 아니면 배지 안 보임
+                if (!isConvertible) return null
+
+                // 변환 상태: API 값 우선, 없으면 변환 대상 파일은 "pending" 기본값
+                const rawStatus = document.conversionStatus || uploadData?.conversion_status
+                if (rawStatus === 'not_required') return null
+                const conversionStatus = rawStatus || 'pending'
+
+                const docId = document._id || document.id
+                const isRetrying = retryingDocumentId === docId
+
+                // 상태별 툴팁
+                const tooltips: Record<string, string> = {
+                  completed: 'PDF 변환 완료',
+                  processing: 'PDF 변환 중...',
+                  pending: 'PDF 변환 대기 중',
+                  failed: 'PDF 변환 실패 - 클릭하여 재시도'
+                }
+
+                const tooltip = isRetrying ? 'PDF 재변환 중...' : tooltips[conversionStatus] || ''
+
+                // 상태별 아이콘 (굵고 선명한 SVG)
+                const statusIcons: Record<string, React.ReactNode> = {
+                  completed: (
+                    <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                      <circle cx="6" cy="6" r="5.5" fill="#34c759"/>
+                      <path d="M3.5 6l2 2 3-4" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ),
+                  processing: (
+                    <svg className="pdf-badge-icon pdf-badge-icon--spin" viewBox="0 0 12 12">
+                      <circle cx="6" cy="6" r="5" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="16 8" opacity="0.9"/>
+                    </svg>
+                  ),
+                  pending: (
+                    <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                      <circle cx="3" cy="6" r="1.5" fill="#fff"/>
+                      <circle cx="6" cy="6" r="1.5" fill="#fff"/>
+                      <circle cx="9" cy="6" r="1.5" fill="#fff"/>
+                    </svg>
+                  ),
+                  failed: (
+                    <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                      <circle cx="6" cy="6" r="5.5" fill="#fff"/>
+                      <path d="M4 4l4 4M8 4l-4 4" stroke="#ff3b30" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  )
+                }
+
+                const icon = statusIcons[conversionStatus] || statusIcons['pending']
+
+                // failed 상태: 클릭 가능한 버튼
+                if (conversionStatus === 'failed') {
+                  return (
+                    <Tooltip content={tooltip}>
+                      <button
+                        type="button"
+                        className={`pdf-conversion-badge pdf-conversion-badge--failed ${isRetrying ? 'pdf-conversion-badge--retrying' : ''}`}
+                        onClick={(e) => docId && handleRetryPdfConversion(docId, e)}
+                        disabled={isRetrying || !docId}
+                        aria-label="PDF 변환 재시도"
+                      >
+                        {isRetrying ? statusIcons['processing'] : icon}
+                        <span className="pdf-badge-text">pdf</span>
+                      </button>
+                    </Tooltip>
+                  )
+                }
+
+                // 그 외 상태: 일반 span
+                return (
+                  <Tooltip content={tooltip}>
+                    <span className={`pdf-conversion-badge pdf-conversion-badge--${conversionStatus}`}>
+                      {icon}
+                      <span className="pdf-badge-text">pdf</span>
+                    </span>
+                  </Tooltip>
+                )
+              })()}
             </div>
 
             {/* 크기 */}

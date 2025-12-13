@@ -64,6 +64,9 @@ export interface UploadData {
   size?: number
   file_size?: number
   mimeType?: string
+  // PDF 변환 관련 필드
+  convPdfPath?: string
+  conversion_status?: 'pending' | 'processing' | 'completed' | 'failed' | null
 }
 
 /**
@@ -184,6 +187,12 @@ export interface Document {
 
   // Badge Type (TXT, OCR, BIN)
   badgeType?: 'TXT' | 'OCR' | 'BIN'
+
+  // PDF 변환 상태 (computed에서 가져옴)
+  conversionStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'not_required' | null
+  isConvertible?: boolean
+  canPreview?: boolean
+  previewFilePath?: string
 }
 
 /**

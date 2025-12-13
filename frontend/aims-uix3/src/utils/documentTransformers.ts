@@ -62,6 +62,9 @@ export interface SelectedDocumentMeta {
   originalName?: string
 }
 
+/** PDF 변환 상태 타입 */
+export type ConversionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'not_required' | null
+
 export interface SelectedDocument {
   _id: string
   fileUrl?: string
@@ -71,6 +74,12 @@ export interface SelectedDocument {
   payload?: SelectedDocumentPayload
   meta: SelectedDocumentMeta
   ocr?: unknown
+  /** PDF 변환 상태 */
+  conversionStatus?: ConversionStatus
+  /** 변환된 PDF로 프리뷰하는지 여부 (previewFileUrl ≠ fileUrl) */
+  isConverted?: boolean
+  /** 원본 파일 확장자 (예: 'xlsx', 'pptx') */
+  originalExtension?: string
 }
 
 /**
@@ -243,6 +252,25 @@ export const buildSelectedDocument = (
     selected.previewFileUrl = resolveFileUrl(computed.previewFilePath)
   } else if (fileUrl) {
     selected.previewFileUrl = fileUrl
+  }
+
+  // PDF 변환 상태 설정
+  if (computed?.conversionStatus) {
+    selected.conversionStatus = computed.conversionStatus as ConversionStatus
+  }
+
+  // 변환된 PDF로 프리뷰하는지 여부 (previewFileUrl이 fileUrl과 다르면 변환된 것)
+  selected.isConverted = !!(
+    selected.previewFileUrl &&
+    selected.fileUrl &&
+    selected.previewFileUrl !== selected.fileUrl &&
+    selected.previewFileUrl.toLowerCase().endsWith('.pdf')
+  )
+
+  // 원본 파일 확장자 추출
+  const extMatch = originalName.match(/\.([^.]+)$/)
+  if (extMatch) {
+    selected.originalExtension = extMatch[1].toLowerCase()
   }
 
   return selected

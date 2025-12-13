@@ -58,5 +58,16 @@ export const convertToPreviewDocumentInfo = (doc: SelectedDocument): PreviewDocu
     result.sizeBytes = sizeBytes
   }
 
+  // PDF 변환 관련 필드
+  if (doc.isConverted !== undefined) {
+    result.isConverted = doc.isConverted
+  }
+  if (doc.originalExtension !== undefined) {
+    result.originalExtension = doc.originalExtension
+  }
+  if (doc.conversionStatus !== undefined) {
+    result.conversionStatus = doc.conversionStatus
+  }
+
   return result
 }

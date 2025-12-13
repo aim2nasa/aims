@@ -9,7 +9,7 @@ const axios = require('axios');
 const multer = require('multer');
 const FormData = require('form-data');
 const { QdrantClient } = require('@qdrant/js-client-rest');
-const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
+const { prepareDocumentResponse, formatBytes, isConvertibleFile } = require('./lib/documentStatusHelper');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
@@ -1081,6 +1081,8 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         is_annual_report: doc.is_annual_report,
         customer_relation: customerRelation,
         badgeType: badgeType,  // 🔥 항상 badgeType 포함
+        conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
+        isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),   // 🔥 PDF 변환 가능 여부 (destPath 없으면 originalName으로 확인)
         meta: doc.meta,
         ocr: doc.ocr,
         docembed: doc.docembed,
@@ -1370,21 +1372,70 @@ app.post('/api/documents/:id/retry', authenticateJWT, async (req, res) => {
           'ocr.queue_at': utcNowISO()
         }
       };
-      
+
       // Redis 큐에 다시 추가하는 로직 필요
       // 실제로는 Redis XADD 명령어 실행
-      
+
     } else if (stage === 'docembed') {
       // DocEmbed 재처리: docembed 필드 초기화
       updateFields = {
-        $unset: { 
-          'docembed.status': '', 
-          'docembed.error_message': '', 
-          'docembed.updated_at': '' 
+        $unset: {
+          'docembed.status': '',
+          'docembed.error_message': '',
+          'docembed.updated_at': ''
         }
       };
-      
+
       // Python 스크립트 재실행 트리거 필요
+    } else if (stage === 'pdf_conversion') {
+      // PDF 변환 재시도: 실패한 경우에만 1회 재시도 허용
+      const currentStatus = document.upload?.conversion_status;
+      const retryCount = document.upload?.conversion_retry_count || 0;
+
+      if (currentStatus !== 'failed') {
+        return res.status(400).json({
+          success: false,
+          error: 'PDF 변환이 실패 상태일 때만 재시도할 수 있습니다.'
+        });
+      }
+
+      if (retryCount >= 1) {
+        return res.status(400).json({
+          success: false,
+          error: 'PDF 변환 재시도는 1회만 가능합니다.'
+        });
+      }
+
+      const destPath = document.upload?.destPath;
+      if (!destPath) {
+        return res.status(400).json({
+          success: false,
+          error: '파일 경로를 찾을 수 없습니다.'
+        });
+      }
+
+      // 재시도 카운트 증가 및 상태 초기화
+      await db.collection(COLLECTION_NAME).updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            'upload.conversion_status': 'pending',
+            'upload.conversion_retry_count': retryCount + 1
+          },
+          $unset: {
+            'upload.conversion_error': ''
+          }
+        }
+      );
+
+      // 비동기로 변환 시작
+      convertDocumentInBackground(new ObjectId(id), destPath);
+
+      return res.json({
+        success: true,
+        message: 'PDF 변환 재시도가 시작되었습니다.',
+        retry_count: retryCount + 1
+      });
     }
 
     await db.collection(COLLECTION_NAME)
@@ -4475,6 +4526,8 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
         linkedAt: normalizeTimestamp(customerDoc?.upload_date),
         ar_metadata: doc.ar_metadata,
         badgeType: badgeType,  // 🔥 TXT/OCR/BIN 뱃지 타입 추가
+        conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
+        isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),   // 🔥 PDF 변환 가능 여부 (destPath 없으면 originalName으로 확인)
         ...statusInfo
       };
     });

@@ -95,6 +95,9 @@ export interface CustomerDocumentItem {
     fsr_name?: string | null;
     report_title?: string;
   };
+  // PDF 변환 상태 필드
+  conversionStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'not_required' | null;
+  isConvertible?: boolean;
 }
 
 export interface CustomerDocumentsResult {
