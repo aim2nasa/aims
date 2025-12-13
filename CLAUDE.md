@@ -75,6 +75,18 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 - ❌ 설계사A: "홍길동 개인" + 설계사A: "홍길동 법인" (동일 설계사 내 불가)
 - ❌ 설계사A: "홍길동 활성" + 설계사A: "홍길동 휴면" (동일 설계사 내 불가)
 
+### 9. 백엔드 배포 규칙
+- 백엔드 파일 수정 후 **반드시** 각 서비스의 배포 스크립트 사용
+- `pm2 restart`, `npm start`, `uvicorn` 직접 실행 등 **절대 금지**
+- 절차: 로컬 수정 → `scp` → 배포 스크립트 실행
+
+| 서비스 | 배포 스크립트 |
+|--------|---------------|
+| aims_api | `./deploy_aims_api.sh` |
+| aims_rag_api | `./deploy_aims_rag_api.sh` |
+| annual_report_api | `./deploy_annual_report_api.sh` |
+| pdf_proxy | `./start.sh` |
+
 ---
 
 ## System Overview
