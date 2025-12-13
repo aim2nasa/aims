@@ -1,8 +1,17 @@
 import os
-from openai import OpenAI
+from openai import OpenAI, APIError, RateLimitError, APIConnectionError
 from typing import List, Dict, Tuple
 from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
+
+
+class EmbeddingError(Exception):
+    """임베딩 처리 중 발생한 에러를 위한 커스텀 예외"""
+    def __init__(self, message: str, error_code: str = "UNKNOWN"):
+        self.message = message
+        self.error_code = error_code
+        super().__init__(self.message)
+
 
 def create_embeddings_for_chunks(chunks: List[Dict]) -> Tuple[List[Dict], Dict]:
     """
@@ -10,6 +19,7 @@ def create_embeddings_for_chunks(chunks: List[Dict]) -> Tuple[List[Dict], Dict]:
 
     :param chunks: 메타데이터와 텍스트를 포함한 청크 리스트.
     :return: (임베딩 벡터가 추가된 청크 리스트, 토큰 사용량 정보)
+    :raises EmbeddingError: API 크레딧 소진 등 치명적 에러 발생 시
     """
     token_usage = {
         "model": "text-embedding-3-small",
@@ -23,6 +33,7 @@ def create_embeddings_for_chunks(chunks: List[Dict]) -> Tuple[List[Dict], Dict]:
 
     client = OpenAI()
     total_prompt_tokens = 0
+    quota_error_detected = False
 
     for chunk in chunks:
         try:
@@ -41,6 +52,20 @@ def create_embeddings_for_chunks(chunks: List[Dict]) -> Tuple[List[Dict], Dict]:
                 total_prompt_tokens += response.usage.prompt_tokens
 
             print(f"청크 '{chunk['chunk_id']}'의 임베딩 생성 완료!")
+        except RateLimitError as e:
+            # OpenAI 크레딧 소진 또는 Rate Limit
+            error_str = str(e)
+            print(f"청크 '{chunk['chunk_id']}' 임베딩 중 오류 발생: {e}")
+            chunk['embedding'] = None
+
+            if 'insufficient_quota' in error_str or 'exceeded your current quota' in error_str:
+                quota_error_detected = True
+        except APIError as e:
+            print(f"청크 '{chunk['chunk_id']}' 임베딩 중 API 오류 발생: {e}")
+            chunk['embedding'] = None
+        except APIConnectionError as e:
+            print(f"청크 '{chunk['chunk_id']}' 임베딩 중 연결 오류 발생: {e}")
+            chunk['embedding'] = None
         except Exception as e:
             print(f"청크 '{chunk['chunk_id']}' 임베딩 중 오류 발생: {e}")
             chunk['embedding'] = None
@@ -55,7 +80,21 @@ def create_embeddings_for_chunks(chunks: List[Dict]) -> Tuple[List[Dict], Dict]:
 
     print(f"임베딩 완료: 총 {total_prompt_tokens} 토큰 사용")
 
-    return chunks, token_usage
+    # None 임베딩 필터링 (Qdrant 저장 시 에러 방지)
+    valid_chunks = [c for c in chunks if c.get('embedding') is not None]
+    failed_count = len(chunks) - len(valid_chunks)
+
+    if failed_count > 0:
+        print(f"⚠️ {failed_count}개 청크의 임베딩 생성 실패 (스킵됨)")
+
+    # 크레딧 소진 에러가 감지되었고 모든 청크가 실패한 경우
+    if quota_error_detected and len(valid_chunks) == 0:
+        raise EmbeddingError(
+            "OpenAI API 크레딧이 소진되었습니다. https://platform.openai.com/account/billing 에서 크레딧을 충전해주세요.",
+            error_code="OPENAI_QUOTA_EXCEEDED"
+        )
+
+    return valid_chunks, token_usage
 
 if __name__ == '__main__':
     # 1단계 코드 실행 (MongoDB에서 텍스트 로딩 및 청크 분할)

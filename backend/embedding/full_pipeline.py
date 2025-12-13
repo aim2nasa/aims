@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 from datetime import datetime, timezone
 from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
-from create_embeddings import create_embeddings_for_chunks
+from create_embeddings import create_embeddings_for_chunks, EmbeddingError
 from save_to_qdrant import save_chunks_to_qdrant
 
 # aims_api 토큰 로깅 설정
@@ -157,6 +157,25 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     }}
                 )
                 print(f"--- 문서 ID: {doc_id} 처리 완료 및 MongoDB 상태 업데이트 ---")
+            except EmbeddingError as e:
+                # OpenAI API 크레딧 소진 등 명확한 임베딩 에러
+                print(f"!!! 문서 ID: {doc_id} 임베딩 에러: [{e.error_code}] {e.message} !!!")
+                collection.update_one(
+                    {'_id': ObjectId(doc_id)},
+                    {'$set': {
+                        'docembed': {
+                            'status': 'failed',
+                            'error_code': e.error_code,
+                            'error_message': e.message,
+                            'failed_at': datetime.now(timezone.utc).isoformat()
+                        }
+                    }}
+                )
+                # 크레딧 소진 시 전체 파이프라인 중단
+                if e.error_code == 'OPENAI_QUOTA_EXCEEDED':
+                    print(f"\n⚠️ OpenAI 크레딧 소진! 파이프라인을 중단합니다.")
+                    print(f"   충전 페이지: https://platform.openai.com/account/billing")
+                    break
             except Exception as e:
                 print(f"!!! 문서 ID: {doc_id} 처리 중 오류 발생: {e} !!!")
                 # 오류 발생 시 MongoDB에 상태 기록
@@ -165,6 +184,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     {'$set': {
                         'docembed': {
                             'status': 'failed',
+                            'error_code': 'UNKNOWN',
                             'error_message': str(e),
                             'failed_at': datetime.now(timezone.utc).isoformat()
                         }
