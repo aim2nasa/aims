@@ -20,6 +20,43 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3010/api/ai-usage/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "aims-internal-token-logging-key-2024"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ user_id: $('Summary Request').first().json.body.user_id || 'n8n_docsummary', source: 'n8n_docsummary', model: 'gpt-4.1-mini', prompt_tokens: Math.ceil(($('LimitText').first().json.limitedText || '').length / 4), completion_tokens: Math.ceil(($json.output || '').length / 4), metadata: { document_id: $('Summary Request').first().json.body.document_id || null, workflow: 'DocSummary' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        424,
+        -24
+      ],
+      "id": "token-log-node",
+      "name": "Log Token Usage"
+    },
+    {
+      "parameters": {
         "model": {
           "__rl": true,
           "value": "gpt-4.1-mini",
@@ -107,6 +144,11 @@
     "AI Agent": {
       "main": [
         [
+          {
+            "node": "Log Token Usage",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Code",
             "type": "main",

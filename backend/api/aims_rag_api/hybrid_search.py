@@ -30,6 +30,9 @@ class HybridSearchEngine:
         # OpenAI 클라이언트
         self.openai_client = OpenAI()
 
+        # 🔥 Phase 4: 마지막 임베딩 응답 저장 (토큰 추적용)
+        self.last_embedding_response = None
+
     def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, top_k: int = 5) -> List[Dict]:
         """
         쿼리 의도에 따라 적절한 검색 수행
@@ -165,8 +168,11 @@ class HybridSearchEngine:
                 model="text-embedding-3-small"
             )
             query_vector = response.data[0].embedding
+            # 🔥 Phase 4: 임베딩 응답 저장 (토큰 추적용)
+            self.last_embedding_response = response
         except Exception as e:
             print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
+            self.last_embedding_response = None
             return []
 
         # Qdrant 검색

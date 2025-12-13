@@ -182,6 +182,7 @@ app.use((req, res, next) => {
 // MongoDB 연결 설정
 const MONGO_URI = 'mongodb://tars:27017/';
 const DB_NAME = 'docupload';
+const ANALYTICS_DB_NAME = 'aims_analytics';
 const COLLECTION_NAME = 'files';
 const CUSTOMERS_COLLECTION = 'customers';
 const AGENTS_COLLECTION = 'agents';
@@ -6542,6 +6543,7 @@ MongoClient.connect(MONGO_URI)
   .then(client => {
     console.log('MongoDB 연결 성공');
     db = client.db(DB_NAME);
+    const analyticsDb = client.db(ANALYTICS_DB_NAME);
 
     // Passport 초기화
     require('./config/passport')(db);
@@ -6557,9 +6559,21 @@ MongoClient.connect(MONGO_URI)
     // 개인 파일 관리 라우트 설정
     app.use('/api/personal-files', personalFilesRoutes);
 
+    // AI 토큰 사용량 라우트 설정 (가장 먼저 등록)
+    console.log('[Server] fallbackHandlersRegistered BEFORE token routes:', fallbackHandlersRegistered);
+    const tokenUsageRoutes = require('./routes/token-usage-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    console.log('[Server] tokenUsageRoutes type:', typeof tokenUsageRoutes, 'stack:', tokenUsageRoutes.stack?.length);
+    app.use('/api', tokenUsageRoutes);
+    console.log('[Server] tokenUsageRoutes 등록 완료');
+
     // 스토리지 쿼터 라우트 설정
     const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
     app.use('/api', storageRoutes);
+
+    // 테스트: storage routes 바로 다음에 직접 라우트 등록
+    app.get('/api/storage-test', (req, res) => {
+      res.json({ success: true, message: 'Direct route after storage works!' });
+    });
 
     // 보안 라우트 설정 (바이러스 검사)
     const securityRoutes = require('./routes/security-routes')(db, authenticateJWT);
@@ -6569,6 +6583,7 @@ MongoClient.connect(MONGO_URI)
     const systemSettingsRoutes = require('./routes/system-settings-routes')(db, authenticateJWT, requireRole);
     app.use('/api', systemSettingsRoutes);
 
+    console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })
   .catch(error => {

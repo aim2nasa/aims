@@ -18,6 +18,8 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { deleteAccount } from '@/entities/auth/api'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import { getMyAIUsage, getMyDailyUsage, formatTokens, formatCost, type AIUsageData, type DailyUsagePoint } from '@/services/aiUsageService'
+import { AIUsageChart } from '@/shared/ui/AIUsageChart'
 import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
@@ -108,6 +110,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 스토리지 정보 상태
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
   const [storageLoading, setStorageLoading] = useState(false)
+
+  // AI 사용량 상태
+  const [aiUsage, setAIUsage] = useState<AIUsageData | null>(null)
+  const [dailyUsage, setDailyUsage] = useState<DailyUsagePoint[]>([])
+  const [aiUsageLoading, setAIUsageLoading] = useState(false)
 
   // 아바타 이미지 상태
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
@@ -220,6 +227,31 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     }
 
     loadStorageInfo()
+  }, [visible, activeTab])
+
+  // AI 사용량 로드 (데이터 탭 선택 시)
+  useEffect(() => {
+    if (!visible || activeTab !== 'data') return
+
+    const loadAIUsage = async () => {
+      try {
+        setAIUsageLoading(true)
+        const [usage, daily] = await Promise.all([
+          getMyAIUsage(30),
+          getMyDailyUsage(30)
+        ])
+        setAIUsage(usage)
+        setDailyUsage(daily)
+      } catch (error) {
+        console.error('AI 사용량 로드 실패:', error)
+        setAIUsage(null)
+        setDailyUsage([])
+      } finally {
+        setAIUsageLoading(false)
+      }
+    }
+
+    loadAIUsage()
   }, [visible, activeTab])
 
   // 입력 핸들러
@@ -1106,6 +1138,101 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     <path d="M12 8v4m0 4h.01"/>
                   </svg>
                   <span>OCR 정보를 불러올 수 없습니다</span>
+                </div>
+              )}
+              </div>
+            </section>
+
+            {/* AI 사용량 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">AI 사용량</h3>
+              <div className="storage-card">
+              {aiUsageLoading ? (
+                <div className="storage-card__loading">
+                  <div className="storage-card__loading-spinner" />
+                  <span>AI 사용량 정보를 불러오는 중...</span>
+                </div>
+              ) : aiUsage ? (
+                <>
+                  {/* 요약 정보 */}
+                  <div className="ai-usage-summary">
+                    <div className="ai-usage-summary__item">
+                      <div className="ai-usage-summary__icon ai-usage-summary__icon--blue">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </div>
+                      <div className="ai-usage-summary__content">
+                        <span className="ai-usage-summary__label">총 토큰 (30일)</span>
+                        <span className="ai-usage-summary__value">{formatTokens(aiUsage.total_tokens)}</span>
+                      </div>
+                    </div>
+                    <div className="ai-usage-summary__item">
+                      <div className="ai-usage-summary__icon ai-usage-summary__icon--green">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="12" y1="1" x2="12" y2="23"/>
+                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                      </div>
+                      <div className="ai-usage-summary__content">
+                        <span className="ai-usage-summary__label">예상 비용</span>
+                        <span className="ai-usage-summary__value">{formatCost(aiUsage.estimated_cost_usd)}</span>
+                      </div>
+                    </div>
+                    <div className="ai-usage-summary__item">
+                      <div className="ai-usage-summary__icon ai-usage-summary__icon--purple">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                          <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                      </div>
+                      <div className="ai-usage-summary__content">
+                        <span className="ai-usage-summary__label">요청 횟수</span>
+                        <span className="ai-usage-summary__value">{aiUsage.request_count}회</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 소스별 사용량 */}
+                  <div className="ai-usage-sources">
+                    <div className="ai-usage-sources__title">소스별 토큰 사용량</div>
+                    <div className="ai-usage-sources__list">
+                      <div className="ai-usage-sources__item">
+                        <span className="ai-usage-sources__name">
+                          <span className="ai-usage-sources__dot ai-usage-sources__dot--blue" />
+                          RAG 검색
+                        </span>
+                        <span className="ai-usage-sources__value">
+                          {formatTokens(aiUsage.by_source?.rag_api || 0)}
+                        </span>
+                      </div>
+                      <div className="ai-usage-sources__item">
+                        <span className="ai-usage-sources__name">
+                          <span className="ai-usage-sources__dot ai-usage-sources__dot--orange" />
+                          문서 요약
+                        </span>
+                        <span className="ai-usage-sources__value">
+                          {formatTokens(aiUsage.by_source?.n8n_docsummary || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 일별 사용량 그래프 */}
+                  {dailyUsage.length > 0 && (
+                    <div className="ai-usage-chart-wrapper">
+                      <div className="ai-usage-chart-title">일별 토큰 사용량</div>
+                      <AIUsageChart data={dailyUsage} height={160} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="storage-card__error">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4m0 4h.01"/>
+                  </svg>
+                  <span>AI 사용량 정보를 불러올 수 없습니다</span>
                 </div>
               )}
               </div>

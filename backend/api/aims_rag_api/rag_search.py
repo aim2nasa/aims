@@ -22,6 +22,9 @@ from search_logger import SearchLogger
 from quality_analyzer import QualityAnalyzer
 from alert_system import AlertSystem
 
+# 🔥 Phase 4: AI 토큰 사용량 추적 추가
+from token_tracker import TokenTracker
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
@@ -38,6 +41,9 @@ reranker = SearchReranker()
 search_logger = SearchLogger()
 quality_analyzer = QualityAnalyzer()
 alert_system = AlertSystem()
+
+# 🔥 Phase 4: AI 토큰 사용량 추적기 초기화
+token_tracker = TokenTracker()
 
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
@@ -57,8 +63,17 @@ class UnifiedSearchResponse(BaseModel):
 SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
 # 💡 T11 변경 사항 끝
 
-# 1. 쿼리 임베딩 함수 (이전 단계와 동일)
-def embed_query(query_text: str) -> List[float]:
+# 1. 쿼리 임베딩 함수 (토큰 추적 추가)
+def embed_query(query_text: str) -> tuple:
+    """
+    쿼리 텍스트를 임베딩 벡터로 변환
+
+    Args:
+        query_text: 임베딩할 쿼리 텍스트
+
+    Returns:
+        tuple: (embedding_vector, openai_response) - 벡터와 응답 객체 (토큰 추적용)
+    """
     client = OpenAI()
     try:
         response = client.embeddings.create(
@@ -66,10 +81,10 @@ def embed_query(query_text: str) -> List[float]:
             model="text-embedding-3-small",
             encoding_format="float"
         )
-        return response.data[0].embedding
+        return response.data[0].embedding, response
     except Exception as e:
         print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
-        return None
+        return None, None
 
 # 2. Qdrant 유사도 검색 함수 (사용자 필터 추가)
 def search_qdrant(query_vector: List[float], user_id: Optional[str] = None, collection_name: str = "docembed", top_k: int = 5):
@@ -135,10 +150,20 @@ def deduplicate_by_document(search_results: List) -> List[Dict]:
 
     return results
 
-# 4. LLM을 사용하여 답변 생성하는 함수 (새로운 기능)
-def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
+# 4. LLM을 사용하여 답변 생성하는 함수 (토큰 추적 추가)
+def generate_answer_with_llm(query: str, search_results: List[Dict]) -> tuple:
+    """
+    검색 결과를 바탕으로 LLM 답변 생성
+
+    Args:
+        query: 사용자 질문
+        search_results: 검색 결과 리스트
+
+    Returns:
+        tuple: (answer_text, openai_response) - 답변과 응답 객체 (토큰 추적용)
+    """
     if not search_results:
-        return "관련 문서를 찾을 수 없습니다."
+        return "관련 문서를 찾을 수 없습니다.", None
 
     # 검색 결과를 바탕으로 컨텍스트 생성
     context = ""
@@ -163,9 +188,9 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
             max_tokens=500,
             temperature=0.1
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content, response
     except Exception as e:
-        return f"❌ LLM 답변 생성 중 오류 발생: {e}"
+        return f"❌ LLM 답변 생성 중 오류 발생: {e}", None
 
 @app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):
@@ -223,13 +248,14 @@ async def search_endpoint(request: SearchRequest):
 
             # 4단계: LLM 답변 생성
             llm_start = time.time()
-            final_answer = generate_answer_with_llm(request.query, top_results)
+            final_answer, llm_response = generate_answer_with_llm(request.query, top_results)
             timing["llm_time"] = time.time() - llm_start
 
             # 전체 시간 계산
             timing["total_time"] = time.time() - total_start_time
 
             # 🔥 Phase 3: 검색 로그 저장
+            log_id = None
             try:
                 log_id = search_logger.log_search(
                     query=request.query,
@@ -246,6 +272,35 @@ async def search_endpoint(request: SearchRequest):
                 print(f"📝 검색 로그 저장 완료: {log_id}")
             except Exception as log_error:
                 print(f"⚠️ 로그 저장 실패 (검색은 정상 진행): {log_error}")
+
+            # 🔥 Phase 4: AI 토큰 사용량 추적
+            try:
+                if request.user_id:
+                    # 임베딩 토큰 사용량 추적
+                    embedding_usage = None
+                    if hybrid_engine.last_embedding_response:
+                        embedding_usage = token_tracker.track_embedding(hybrid_engine.last_embedding_response)
+
+                    # LLM 토큰 사용량 추적
+                    chat_usage = None
+                    if llm_response:
+                        chat_usage = token_tracker.track_chat_completion(llm_response)
+
+                    # 사용량 저장 (임베딩 또는 LLM 토큰이 있는 경우)
+                    if embedding_usage or chat_usage:
+                        token_tracker.save_usage(
+                            user_id=request.user_id,
+                            embedding_usage=embedding_usage,
+                            chat_usage=chat_usage,
+                            metadata={
+                                "query": request.query[:200],  # 쿼리 앞 200자
+                                "customer_id": request.customer_id,
+                                "results_count": len(top_results)
+                            },
+                            search_log_id=str(log_id) if log_id else None
+                        )
+            except Exception as token_error:
+                print(f"⚠️ 토큰 사용량 저장 실패 (검색은 정상 진행): {token_error}")
 
             # 응답 구조를 통일된 형식으로 변경
             return UnifiedSearchResponse(
@@ -482,13 +537,17 @@ if __name__ == '__main__':
     print(f"🔎 질문: '{test_query}'")
 
     # 1단계: 쿼리 임베딩
-    query_vector = embed_query(test_query)
+    query_vector, embed_response = embed_query(test_query)
+    if embed_response:
+        print(f"📊 임베딩 토큰: {embed_response.usage.total_tokens}")
 
     # 2단계: Qdrant 유사도 검색
     search_results = search_qdrant(query_vector)
 
     # 3단계: 검색 결과와 LLM을 사용해 답변 생성
-    final_answer = generate_answer_with_llm(test_query, search_results)
+    final_answer, llm_response = generate_answer_with_llm(test_query, search_results)
+    if llm_response:
+        print(f"📊 LLM 토큰: prompt={llm_response.usage.prompt_tokens}, completion={llm_response.usage.completion_tokens}")
 
     print("\n--- 최종 답변 ---")
     print(final_answer)
