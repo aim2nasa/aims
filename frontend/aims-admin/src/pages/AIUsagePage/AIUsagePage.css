@@ -55,6 +55,12 @@
   margin-bottom: var(--spacing-xl);
 }
 
+.ai-usage-page__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
 .ai-usage-page__period-selector {
   display: flex;
   gap: var(--spacing-xs);
@@ -62,6 +68,17 @@
   padding: var(--spacing-xs);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
+}
+
+.ai-usage-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.ai-usage-page__refresh-info {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .ai-usage-page__period-btn {

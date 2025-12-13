@@ -84,7 +84,7 @@ export const AIUsagePage = () => {
   const { data: overview, isLoading: overviewLoading, isError: overviewError, refetch: refetchOverview } = useQuery({
     queryKey: ['admin', 'ai-usage', 'overview', days],
     queryFn: () => aiUsageApi.getOverview(days),
-    refetchInterval: 120000, // 2분
+    refetchInterval: 60000, // 1분마다 갱신
   });
 
   const { data: hourlyUsageRaw } = useQuery({
@@ -125,21 +125,36 @@ export const AIUsagePage = () => {
   const ragPercent = totalBySource > 0 ? ((overview?.by_source?.rag_api || 0) / totalBySource * 100).toFixed(1) : '0';
   const n8nPercent = totalBySource > 0 ? ((overview?.by_source?.n8n_docsummary || 0) / totalBySource * 100).toFixed(1) : '0';
 
+  // 모든 데이터 새로고침
+  const handleRefreshAll = () => {
+    refetchOverview();
+  };
+
   return (
     <div className="ai-usage-page">
       <div className="ai-usage-page__header">
         <h1 className="ai-usage-page__title">AI 사용량 현황</h1>
-        <div className="ai-usage-page__period-selector">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              className={`ai-usage-page__period-btn ${days === opt.value ? 'ai-usage-page__period-btn--active' : ''}`}
-              onClick={() => setDays(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="ai-usage-page__header-right">
+          <div className="ai-usage-page__period-selector">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`ai-usage-page__period-btn ${days === opt.value ? 'ai-usage-page__period-btn--active' : ''}`}
+                onClick={() => setDays(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="ai-usage-page__actions">
+            <span className="ai-usage-page__refresh-info">
+              1분마다 자동 갱신
+            </span>
+            <Button variant="secondary" size="sm" onClick={handleRefreshAll}>
+              지금 새로고침
+            </Button>
+          </div>
         </div>
       </div>
 
