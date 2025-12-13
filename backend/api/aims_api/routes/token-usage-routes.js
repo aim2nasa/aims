@@ -11,6 +11,7 @@ const {
   getUserTokenUsage,
   getDailyUsage,
   getSystemOverview,
+  getTopUsers,
   formatCost,
   formatTokens,
   ensureIndexes
@@ -272,6 +273,34 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: '시스템 일별 AI 사용량 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/ai-usage/top-users
+   * Top 10 AI 사용자 목록 (관리자용)
+   *
+   * Query:
+   * - days: number (기본값: 30)
+   */
+  router.get('/admin/ai-usage/top-users', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const days = parseInt(req.query.days) || 30;
+
+      const topUsersList = await getTopUsers(analyticsDb, days, 10);
+
+      res.json({
+        success: true,
+        data: topUsersList
+      });
+
+    } catch (error) {
+      console.error('[GET /api/admin/ai-usage/top-users] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Top 사용자 조회에 실패했습니다.',
         details: error.message
       });
     }

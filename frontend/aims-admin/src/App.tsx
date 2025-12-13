@@ -86,6 +86,7 @@ function App() {
         { path: '/dashboard/tiers', label: '티어 관리' },
         { path: '/dashboard/system', label: '시스템 상태' },
         { path: '/dashboard/file-validation', label: '파일 검증' },
+        { path: '/dashboard/ai-usage', label: 'AI 사용량' },
       ],
     },
     { path: '/users', label: '사용자 관리' },

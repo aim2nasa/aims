@@ -8,6 +8,7 @@ import { StoragePage } from '@/pages/StoragePage';
 import { TierManagementPage } from '@/pages/TierManagementPage';
 import { SystemHealthPage } from '@/pages/SystemHealthPage';
 import { FileValidationPage } from '@/pages/FileValidationPage';
+import { AIUsagePage } from '@/pages/AIUsagePage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import App from '../App';
 
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/file-validation',
         element: <FileValidationPage />,
+      },
+      {
+        path: 'dashboard/ai-usage',
+        element: <AIUsagePage />,
       },
       {
         path: 'users',

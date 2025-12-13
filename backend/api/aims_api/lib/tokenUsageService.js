@@ -253,13 +253,10 @@ async function getSystemOverview(analyticsDb, days = 30) {
     request_count: 0
   };
 
+  // by_source는 토큰 수만 반환 (프론트엔드 호환)
   const bySource = {};
   for (const result of bySourceResult) {
-    bySource[result._id] = {
-      total_tokens: result.total_tokens,
-      estimated_cost_usd: Math.round(result.estimated_cost_usd * 1000000) / 1000000,
-      request_count: result.request_count
-    };
+    bySource[result._id] = result.total_tokens;
   }
 
   return {
@@ -278,6 +275,42 @@ async function getSystemOverview(analyticsDb, days = 30) {
       request_count: u.request_count
     }))
   };
+}
+
+/**
+ * Top 사용자 목록 조회 (관리자용)
+ * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
+ * @param {number} days - 조회 기간 (일)
+ * @param {number} limit - 사용자 수 제한
+ * @returns {Promise<Array>} Top 사용자 목록
+ */
+async function getTopUsers(analyticsDb, days = 30, limit = 10) {
+  const collection = analyticsDb.collection('ai_token_usage');
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const pipeline = [
+    { $match: { timestamp: { $gte: since } } },
+    {
+      $group: {
+        _id: '$user_id',
+        total_tokens: { $sum: '$total_tokens' },
+        estimated_cost_usd: { $sum: '$estimated_cost_usd' },
+        request_count: { $sum: 1 }
+      }
+    },
+    { $sort: { total_tokens: -1 } },
+    { $limit: limit }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+
+  return results.map(u => ({
+    user_id: u._id,
+    total_tokens: u.total_tokens,
+    estimated_cost_usd: Math.round(u.estimated_cost_usd * 1000000) / 1000000,
+    request_count: u.request_count
+  }));
 }
 
 /**
@@ -326,6 +359,7 @@ module.exports = {
   getUserTokenUsage,
   getDailyUsage,
   getSystemOverview,
+  getTopUsers,
   formatCost,
   formatTokens,
   ensureIndexes,
