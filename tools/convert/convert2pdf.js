@@ -41,11 +41,31 @@ class ConvertQueue {
 const convertQueue = new ConvertQueue(1);
 
 // ========================
+// LibreOffice 경로 (OS별)
+// ========================
+function getLibreOfficePath() {
+  if (process.platform === "win32") {
+    // Windows
+    const paths = [
+      "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
+      "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe"
+    ];
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
+    }
+    throw new Error("LibreOffice를 찾을 수 없습니다. 설치되어 있는지 확인하세요.");
+  }
+  // Linux/Mac
+  return "libreoffice";
+}
+
+// ========================
 // LibreOffice 실행 (spawn)
 // ========================
 function runLibreOffice(inputPath, outputDir) {
   return new Promise((resolve, reject) => {
-    const proc = spawn("libreoffice", [
+    const soffice = getLibreOfficePath();
+    const proc = spawn(soffice, [
       "--headless",
       "--convert-to", "pdf",
       inputPath,
@@ -95,21 +115,28 @@ async function convertToPDF(inputPath, outputDir = ".") {
 }
 
 // ========================
-// CLI 실행
+// 모듈 내보내기
 // ========================
-(async () => {
-  const [,, inputFile, outputDir = "."] = process.argv;
+module.exports = { convertToPDF, ConvertQueue };
 
-  if (!inputFile) {
-    console.error("사용법: node convert2pdf.js <inputFile> [outputDir]");
-    process.exit(1);
-  }
+// ========================
+// CLI 실행 (직접 실행 시에만)
+// ========================
+if (require.main === module) {
+  (async () => {
+    const [,, inputFile, outputDir = "."] = process.argv;
 
-  try {
-    const pdfPath = await convertToPDF(inputFile, outputDir);
-    console.log(`✅ 변환 완료: ${pdfPath}`);
-  } catch (err) {
-    console.error(`❌ 오류: ${err.message}`);
-    process.exit(1);
-  }
-})();
+    if (!inputFile) {
+      console.error("사용법: node convert2pdf.js <inputFile> [outputDir]");
+      process.exit(1);
+    }
+
+    try {
+      const pdfPath = await convertToPDF(inputFile, outputDir);
+      console.log(`✅ 변환 완료: ${pdfPath}`);
+    } catch (err) {
+      console.error(`❌ 오류: ${err.message}`);
+      process.exit(1);
+    }
+  })();
+}

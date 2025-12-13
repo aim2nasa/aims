@@ -1,0 +1,190 @@
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
+const { convertToPDF } = require("./convert2pdf");
+
+const app = express();
+const PORT = 3011;
+
+// 임시 파일 저장 디렉토리
+const TEMP_DIR = path.join(__dirname, "temp");
+const OUTPUT_DIR = path.join(__dirname, "output");
+
+// 디렉토리 생성
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
+
+// CORS 설정
+app.use(cors({
+  origin: ["http://localhost:5179", "http://127.0.0.1:5179"],
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Multer 설정 (파일 업로드)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, TEMP_DIR);
+  },
+  filename: (req, file, cb) => {
+    // 원본 파일명 유지 (한글 지원)
+    const originalName = Buffer.from(file.originalname, "latin1").toString("utf8");
+    const timestamp = Date.now();
+    const ext = path.extname(originalName);
+    const base = path.basename(originalName, ext);
+    cb(null, `${timestamp}_${base}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB 제한
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = [
+      ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+      ".odt", ".ods", ".odp", ".rtf", ".txt", ".csv", ".html"
+    ];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedExtensions.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`지원하지 않는 파일 형식입니다: ${ext}`));
+    }
+  }
+});
+
+// 헬스 체크
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    service: "pdf-converter"
+  });
+});
+
+// 지원 형식 목록
+app.get("/formats", (req, res) => {
+  res.json({
+    supported: [
+      { ext: ".docx", name: "Word 문서", status: "stable" },
+      { ext: ".doc", name: "Word 97-2003", status: "stable" },
+      { ext: ".xlsx", name: "Excel 스프레드시트", status: "stable" },
+      { ext: ".xls", name: "Excel 97-2003", status: "stable" },
+      { ext: ".pptx", name: "PowerPoint 프레젠테이션", status: "stable" },
+      { ext: ".ppt", name: "PowerPoint 97-2003", status: "stable" },
+      { ext: ".csv", name: "CSV 파일", status: "stable" },
+      { ext: ".odt", name: "OpenDocument 텍스트", status: "stable" },
+      { ext: ".ods", name: "OpenDocument 스프레드시트", status: "stable" },
+      { ext: ".odp", name: "OpenDocument 프레젠테이션", status: "stable" },
+      { ext: ".rtf", name: "서식 있는 텍스트", status: "stable" },
+      { ext: ".txt", name: "텍스트 파일", status: "stable" },
+      { ext: ".html", name: "HTML 문서", status: "stable" }
+    ],
+    unsupported: [
+      { ext: ".hwp", name: "한글 문서", reason: "LibreOffice 미지원" }
+    ]
+  });
+});
+
+// PDF 변환
+app.post("/convert", upload.single("file"), async (req, res) => {
+  const startTime = Date.now();
+  let tempFilePath = null;
+  let pdfPath = null;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "파일이 업로드되지 않았습니다."
+      });
+    }
+
+    tempFilePath = req.file.path;
+    const originalName = Buffer.from(req.file.originalname, "latin1").toString("utf8");
+
+    console.log(`[변환 시작] ${originalName}`);
+
+    // PDF 변환
+    pdfPath = await convertToPDF(tempFilePath, OUTPUT_DIR);
+
+    const duration = Date.now() - startTime;
+    console.log(`[변환 완료] ${originalName} (${duration}ms)`);
+
+    // PDF 파일 전송
+    const pdfFileName = path.basename(originalName, path.extname(originalName)) + ".pdf";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(pdfFileName)}`);
+    res.setHeader("X-Conversion-Time", duration.toString());
+
+    const pdfStream = fs.createReadStream(pdfPath);
+    pdfStream.pipe(res);
+
+    // 스트림 완료 후 임시 파일 정리
+    pdfStream.on("end", () => {
+      cleanup(tempFilePath, pdfPath);
+    });
+
+    pdfStream.on("error", (err) => {
+      console.error("[스트림 에러]", err);
+      cleanup(tempFilePath, pdfPath);
+    });
+
+  } catch (err) {
+    console.error(`[변환 실패] ${err.message}`);
+    cleanup(tempFilePath, pdfPath);
+
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      duration: Date.now() - startTime
+    });
+  }
+});
+
+// 임시 파일 정리
+function cleanup(...files) {
+  for (const file of files) {
+    if (file && fs.existsSync(file)) {
+      try {
+        fs.unlinkSync(file);
+      } catch (e) {
+        console.error(`[정리 실패] ${file}: ${e.message}`);
+      }
+    }
+  }
+}
+
+// 에러 핸들러
+app.use((err, req, res, next) => {
+  console.error("[서버 에러]", err);
+  res.status(500).json({
+    success: false,
+    error: err.message || "서버 내부 오류"
+  });
+});
+
+// 서버 시작
+app.listen(PORT, () => {
+  console.log(`
+╔════════════════════════════════════════════╗
+║     PDF Converter API Server               ║
+╠════════════════════════════════════════════╣
+║  Port: ${PORT}                               ║
+║  Health: http://localhost:${PORT}/health     ║
+║  Formats: http://localhost:${PORT}/formats   ║
+║  Convert: POST http://localhost:${PORT}/convert
+╚════════════════════════════════════════════╝
+  `);
+});
