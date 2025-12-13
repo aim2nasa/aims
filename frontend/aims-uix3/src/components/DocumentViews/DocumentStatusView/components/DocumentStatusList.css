@@ -398,6 +398,14 @@ html[data-theme="dark"] .status-item--selected:hover {
   gap: 8px;
 }
 
+/* 에러 상태: 아이콘+텍스트 전체 툴팁용 래퍼 */
+.status-cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: help;
+}
+
 /* === 상태 아이콘 === */
 .status-icon {
   display: flex;

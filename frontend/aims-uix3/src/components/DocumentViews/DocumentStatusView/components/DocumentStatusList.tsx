@@ -79,6 +79,114 @@ const getOcrConfidenceLevel = (confidence: number): {
 }
 
 /**
+ * 에러 코드를 한글 메시지로 변환
+ */
+const ERROR_CODE_LABELS: Record<string, string> = {
+  'OPENAI_QUOTA_EXCEEDED': 'OpenAI 크레딧 소진\n크레딧을 충전해주세요',
+  'UNKNOWN': '알 수 없는 오류',
+  'TIMEOUT': '처리 시간 초과',
+  'CONNECTION_ERROR': '서버 연결 오류',
+  'RATE_LIMIT': 'API 요청 한도 초과'
+}
+
+/**
+ * 에러 메시지 정리 (URL 제거, 핵심만 추출)
+ */
+const formatErrorMessage = (message: string): string => {
+  // URL 제거
+  let formatted = message.replace(/https?:\/\/[^\s]+/g, '').trim()
+
+  // 특정 패턴 처리
+  // "6 validation errors for..." → "Qdrant 저장 오류 (6개 필드)"
+  const validationMatch = formatted.match(/(\d+)\s*validation\s*errors?\s*for/i)
+  if (validationMatch) {
+    return `Qdrant 저장 오류\n(${validationMatch[1]}개 유효성 검사 실패)`
+  }
+
+  // "insufficient_quota" 패턴
+  if (formatted.includes('insufficient_quota') || formatted.includes('exceeded your current quota')) {
+    return 'OpenAI 크레딧 소진\n크레딧을 충전해주세요'
+  }
+
+  // 너무 긴 경우 첫 문장만
+  if (formatted.length > 60) {
+    const firstSentence = formatted.match(/^[^.!]+[.!]?/)
+    if (firstSentence) {
+      formatted = firstSentence[0].trim()
+    }
+    if (formatted.length > 60) {
+      formatted = formatted.slice(0, 57) + '...'
+    }
+  }
+
+  return formatted || '처리 오류'
+}
+
+/**
+ * Document에서 에러 메시지 추출
+ */
+const getErrorMessage = (document: Document): string | null => {
+  // 1. docembed 에러
+  if (document.docembed && typeof document.docembed !== 'string') {
+    const docembed = document.docembed as Record<string, unknown>
+    // error_code가 있으면 해당 라벨 사용
+    if (docembed['error_code'] && typeof docembed['error_code'] === 'string') {
+      const label = ERROR_CODE_LABELS[docembed['error_code']]
+      if (label) return label
+    }
+    // error_message 사용
+    if (docembed['error_message'] && typeof docembed['error_message'] === 'string') {
+      return formatErrorMessage(docembed['error_message'])
+    }
+    // error_code만 있는 경우 (라벨 없음)
+    if (docembed['error_code'] && typeof docembed['error_code'] === 'string') {
+      return docembed['error_code']
+    }
+  }
+
+  // 2. stages.docembed 에러
+  if (document.stages?.docembed && typeof document.stages.docembed !== 'string') {
+    const stageDocembed = document.stages.docembed as Record<string, unknown>
+    if (stageDocembed['error_code'] && typeof stageDocembed['error_code'] === 'string') {
+      const label = ERROR_CODE_LABELS[stageDocembed['error_code']]
+      if (label) return label
+    }
+    if (stageDocembed['error_message'] && typeof stageDocembed['error_message'] === 'string') {
+      return formatErrorMessage(stageDocembed['error_message'])
+    }
+    if (stageDocembed['error_code'] && typeof stageDocembed['error_code'] === 'string') {
+      return stageDocembed['error_code']
+    }
+  }
+
+  // 3. OCR 에러
+  if (document.ocr && typeof document.ocr !== 'string') {
+    const ocr = document.ocr as Record<string, unknown>
+    if (ocr['status'] === 'error' && ocr['message'] && typeof ocr['message'] === 'string') {
+      return formatErrorMessage(ocr['message'])
+    }
+  }
+
+  // 4. stages.ocr 에러
+  if (document.stages?.ocr && typeof document.stages.ocr !== 'string') {
+    const stageOcr = document.stages.ocr as Record<string, unknown>
+    if (stageOcr['status'] === 'error' && stageOcr['message'] && typeof stageOcr['message'] === 'string') {
+      return formatErrorMessage(stageOcr['message'])
+    }
+  }
+
+  // 5. meta 에러
+  if (document.meta && typeof document.meta !== 'string') {
+    const meta = document.meta as Record<string, unknown>
+    if (meta['meta_status'] === 'error' && meta['message'] && typeof meta['message'] === 'string') {
+      return formatErrorMessage(meta['message'])
+    }
+  }
+
+  return null
+}
+
+/**
  * Document에서 OCR confidence 추출
  *
  * 두 가지 소스에서 시도:
@@ -813,18 +921,35 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 상태 (아이콘 + 텍스트) */}
             <div className="status-cell">
-              <Tooltip content={statusLabel}>
-                <div className={"status-icon status-" + status}>
-                  {statusIcon}
-                </div>
-              </Tooltip>
-              <div className="status-text">
-                {status === 'processing' && progress ? (
-                  <span className="progress-text">{progress}%</span>
-                ) : (
-                  <span className="status-label">{statusLabel}</span>
-                )}
-              </div>
+              {status === 'error' ? (
+                // 에러 상태: 아이콘 + 텍스트 전체에 툴팁
+                <Tooltip content={getErrorMessage(document) || statusLabel}>
+                  <div className="status-cell-inner">
+                    <div className={"status-icon status-" + status}>
+                      {statusIcon}
+                    </div>
+                    <div className="status-text">
+                      <span className="status-label">{statusLabel}</span>
+                    </div>
+                  </div>
+                </Tooltip>
+              ) : (
+                // 일반 상태: 아이콘만 툴팁
+                <>
+                  <Tooltip content={statusLabel}>
+                    <div className={"status-icon status-" + status}>
+                      {statusIcon}
+                    </div>
+                  </Tooltip>
+                  <div className="status-text">
+                    {status === 'processing' && progress ? (
+                      <span className="progress-text">{progress}%</span>
+                    ) : (
+                      <span className="status-label">{statusLabel}</span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 연결된 고객 */}
