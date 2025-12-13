@@ -349,9 +349,9 @@ fc-cache -fv
 ### 7.3 다음 단계
 
 1. ✅ 기술 검토 완료 (본 문서)
-2. ⏳ POC 프론트엔드 구현 (`frontend/pdf-converter-poc/`)
-3. ⏳ pdf_converter_api 백엔드 구현
-4. ⏳ 변환 품질 테스트
+2. ✅ POC 프론트엔드 구현 (`frontend/pdf-converter-poc/`)
+3. ✅ pdf_converter_api 백엔드 구현 (`tools/convert/server.js`)
+4. ✅ 변환 품질 테스트
 5. ⏳ aims-uix3 통합
 
 ---
@@ -523,5 +523,142 @@ async function convertHwpToPdf(hwpPath, outputDir) {
 
 ---
 
+## 9. 구현 완료 내역 (POC)
+
+### 9.1 구현 현황
+
+| 단계 | 상태 | 완료일 |
+|------|------|--------|
+| Phase 1: POC 백엔드 | ✅ 완료 | 2025-12-13 |
+| Phase 1: POC 프론트엔드 | ✅ 완료 | 2025-12-13 |
+| HWP 변환 지원 | ✅ 완료 (베타) | 2025-12-14 |
+| Phase 2: aims-uix3 통합 | ⏳ 예정 | - |
+
+### 9.2 구현된 파일 구조
+
+```
+aims/
+├── tools/convert/
+│   ├── convert2pdf.js      # 핵심 변환 모듈 (LibreOffice + HWP)
+│   ├── server.js           # Express API 서버 (포트 3011)
+│   └── package.json        # 의존성 (express, multer, cors)
+│
+└── frontend/pdf-converter-poc/
+    ├── src/
+    │   ├── App.tsx         # 메인 앱
+    │   ├── App.css         # 스타일
+    │   └── components/
+    │       └── FileConverter.tsx  # 파일 업로드/변환 컴포넌트
+    ├── vite.config.ts      # Vite 설정 (프록시)
+    └── package.json
+```
+
+### 9.3 변환 테스트 결과
+
+| 형식 | 테스트 결과 | 비고 |
+|------|------------|------|
+| DOCX | ✅ 성공 | 서식 유지 양호 |
+| XLSX | ✅ 성공 | 다중 시트 지원 |
+| PPTX | ✅ 성공 | 슬라이드 변환 양호 |
+| CSV | ✅ 성공 | - |
+| ODT | ✅ 성공 | - |
+| RTF | ✅ 성공 | - |
+| TXT | ✅ 성공 | - |
+| HTML | ✅ 성공 | - |
+| **HWP** | ✅ 성공 (베타) | HWP v5만 지원, 복잡한 서식 손실 가능 |
+
+### 9.4 백엔드 API (server.js)
+
+**엔드포인트:**
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/health` | 서버 상태 확인 |
+| GET | `/formats` | 지원 형식 목록 |
+| POST | `/convert` | 파일 업로드 → PDF 변환 |
+
+**사용 예시:**
+```bash
+# 변환 요청
+curl -X POST http://localhost:3011/convert \
+  -F "file=@document.docx" \
+  -o output.pdf
+```
+
+### 9.5 HWP 변환 구현 상세
+
+**파이프라인:**
+```
+HWP 파일 → [pyhwp/hwp5odt] → ODT → [LibreOffice] → PDF
+```
+
+**구현 코드 (convert2pdf.js):**
+```javascript
+// HWP → ODT → PDF 2단계 파이프라인
+async function convertHwpToPdf(hwpPath, outputDir) {
+  const tempOdt = path.join(outputDir, baseName + '.odt');
+
+  // 1단계: HWP → ODT (pyhwp)
+  await convertHwpToOdt(hwpPath, tempOdt);
+
+  // 2단계: ODT → PDF (LibreOffice)
+  await runLibreOffice(tempOdt, outputDir);
+
+  // 임시 파일 정리
+  fs.unlinkSync(tempOdt);
+
+  return pdfPath;
+}
+```
+
+**서버 설정 (Linux):**
+```bash
+# pyhwp 설치 (가상환경)
+python3 -m venv ~/pyhwp-venv
+~/pyhwp-venv/bin/pip install pyhwp six
+
+# RelaxNG 검증 패치 (strict validation 건너뛰기)
+# ~/pyhwp-venv/lib/python3.12/site-packages/hwp5/plat/_lxml.py 수정
+```
+
+**주의사항:**
+- HWP v5 형식만 지원 (v3 미지원)
+- 복잡한 표, 수식, 특수 서식은 손실 가능
+- 변환 시간: 일반 문서 대비 약 2배
+
+### 9.6 프론트엔드 (pdf-converter-poc)
+
+**주요 기능:**
+- 드래그 앤 드롭 파일 업로드
+- 실시간 변환 진행 상태 표시
+- PDF 프리뷰 (iframe)
+- PDF 다운로드
+
+**실행 방법:**
+```bash
+# 프론트엔드 (Windows)
+cd frontend/pdf-converter-poc
+npm run dev  # http://localhost:5179
+
+# 백엔드 (Linux 서버)
+ssh tars.giize.com
+cd ~/aims/tools/convert
+node server.js  # 포트 3011
+```
+
+**연결 설정:**
+- SSH 터널 사용: `ssh -N -L 3011:localhost:3011 tars.giize.com`
+- 또는 nginx 프록시 설정
+
+### 9.7 관련 커밋
+
+| 커밋 | 내용 |
+|------|------|
+| `74398bb9` | feat: PDF 변환 POC 프론트엔드 및 API 서버 구현 |
+| `a11cc127` | fix: LibreOffice 좀비 프로세스 문제 해결 |
+| `5f6406f9` | feat: HWP 문서 PDF 변환 지원 추가 (베타) |
+
+---
+
 *문서 작성일: 2025-12-13*
-*최종 수정일: 2025-12-13 (구현 언어 선택 검토 추가)*
+*최종 수정일: 2025-12-14 (POC 구현 완료 내역 추가)*
