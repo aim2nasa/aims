@@ -19,7 +19,8 @@ function FileConverter() {
 
   const allowedExtensions = [
     '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-    '.odt', '.ods', '.odp', '.rtf', '.txt', '.csv', '.html'
+    '.odt', '.ods', '.odp', '.rtf', '.txt', '.csv', '.html',
+    '.hwp'  // HWP 지원 (베타)
   ]
 
   const validateFile = (file: File): boolean => {
@@ -165,6 +166,8 @@ function FileConverter() {
         return '📄'
       case 'html':
         return '🌐'
+      case 'hwp':
+        return '📃'
       default:
         return '📁'
     }
@@ -184,7 +187,7 @@ function FileConverter() {
           파일을 여기에 드래그하거나 클릭하여 선택하세요
         </div>
         <div className="drop-zone-hint">
-          DOCX, XLSX, PPTX, CSV, ODT, RTF, TXT, HTML (최대 50MB)
+          DOCX, XLSX, PPTX, HWP, CSV, ODT, RTF, TXT, HTML (최대 50MB)
         </div>
         <input
           ref={fileInputRef}

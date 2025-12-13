@@ -20,11 +20,12 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
-// CORS 설정
+// CORS 설정 (POC 테스트용 - 모든 origin 허용)
 app.use(cors({
-  origin: ["http://localhost:5179", "http://127.0.0.1:5179"],
+  origin: true,
   methods: ["GET", "POST"],
-  credentials: true
+  credentials: true,
+  exposedHeaders: ["X-Conversion-Time"]
 }));
 
 app.use(express.json());
@@ -52,7 +53,8 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedExtensions = [
       ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-      ".odt", ".ods", ".odp", ".rtf", ".txt", ".csv", ".html"
+      ".odt", ".ods", ".odp", ".rtf", ".txt", ".csv", ".html",
+      ".hwp"  // HWP 지원 (pyhwp 필요)
     ];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedExtensions.includes(ext)) {
@@ -88,11 +90,10 @@ app.get("/formats", (req, res) => {
       { ext: ".odp", name: "OpenDocument 프레젠테이션", status: "stable" },
       { ext: ".rtf", name: "서식 있는 텍스트", status: "stable" },
       { ext: ".txt", name: "텍스트 파일", status: "stable" },
-      { ext: ".html", name: "HTML 문서", status: "stable" }
+      { ext: ".html", name: "HTML 문서", status: "stable" },
+      { ext: ".hwp", name: "한글 문서", status: "beta", note: "HWP v5만 지원, 복잡한 서식 손실 가능" }
     ],
-    unsupported: [
-      { ext: ".hwp", name: "한글 문서", reason: "LibreOffice 미지원" }
-    ]
+    unsupported: []
   });
 });
 
@@ -175,13 +176,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 서버 시작
-app.listen(PORT, () => {
+// 서버 시작 (0.0.0.0으로 외부 접속 허용)
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔════════════════════════════════════════════╗
 ║     PDF Converter API Server               ║
 ╠════════════════════════════════════════════╣
 ║  Port: ${PORT}                               ║
+║  Host: 0.0.0.0 (외부 접속 가능)            ║
 ║  Health: http://localhost:${PORT}/health     ║
 ║  Formats: http://localhost:${PORT}/formats   ║
 ║  Convert: POST http://localhost:${PORT}/convert

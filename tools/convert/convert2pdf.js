@@ -184,6 +184,124 @@ function runLibreOffice(inputPath, outputDir) {
 }
 
 // ========================
+// HWP 파일 감지
+// ========================
+function isHwpFile(filePath) {
+  return filePath.toLowerCase().endsWith('.hwp');
+}
+
+// ========================
+// hwp5odt 경로 (OS별)
+// ========================
+function getHwp5odtPath() {
+  if (process.platform === "win32") {
+    // Windows: PATH에서 찾기
+    return "hwp5odt";
+  }
+  // Linux: 가상환경 경로
+  const venvPath = path.join(process.env.HOME || "/home/rossi", "pyhwp-venv", "bin", "hwp5odt");
+  if (fs.existsSync(venvPath)) {
+    return venvPath;
+  }
+  // fallback: PATH에서 찾기
+  return "hwp5odt";
+}
+
+// ========================
+// HWP → ODT 변환 (pyhwp 호출)
+// ========================
+const HWP_CONVERT_TIMEOUT_MS = 60000; // HWP 변환 1분 타임아웃
+
+function convertHwpToOdt(hwpPath, odtPath) {
+  return new Promise((resolve, reject) => {
+    let killed = false;
+    let stderr = "";
+
+    const hwp5odt = getHwp5odtPath();
+    console.log(`[convert2pdf] hwp5odt 경로: ${hwp5odt}`);
+    const proc = spawn(hwp5odt, ['--output', odtPath, hwpPath]);
+
+    const timeout = setTimeout(() => {
+      killed = true;
+      console.error(`[convert2pdf] HWP 변환 타임아웃 (${HWP_CONVERT_TIMEOUT_MS / 1000}초)`);
+      proc.kill('SIGKILL');
+    }, HWP_CONVERT_TIMEOUT_MS);
+
+    proc.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    proc.on("error", (err) => {
+      clearTimeout(timeout);
+      reject(new Error(`hwp5odt 실행 실패: ${err.message}. pyhwp가 설치되어 있는지 확인하세요.`));
+    });
+
+    proc.on("close", (code) => {
+      clearTimeout(timeout);
+
+      if (killed) {
+        return reject(new Error("HWP 변환 타임아웃 - 파일이 너무 크거나 복잡합니다"));
+      }
+
+      if (code !== 0) {
+        const errMsg = stderr ? `: ${stderr.trim()}` : "";
+        return reject(new Error(`HWP → ODT 변환 실패 (code: ${code})${errMsg}`));
+      }
+
+      if (!fs.existsSync(odtPath)) {
+        return reject(new Error("HWP → ODT 변환 실패: 출력 파일 없음"));
+      }
+
+      resolve(odtPath);
+    });
+  });
+}
+
+// ========================
+// HWP → PDF 변환 (2단계 파이프라인)
+// ========================
+async function convertHwpToPdf(hwpPath, outputDir) {
+  const baseName = path.basename(hwpPath, '.hwp');
+  const tempOdt = path.join(outputDir, baseName + '.odt');
+  const pdfPath = path.join(outputDir, baseName + '.pdf');
+
+  try {
+    console.log(`[convert2pdf] HWP 변환 시작: ${hwpPath}`);
+
+    // 1단계: HWP → ODT
+    console.log(`[convert2pdf] 1/2 HWP → ODT 변환 중...`);
+    await convertHwpToOdt(hwpPath, tempOdt);
+
+    // 2단계: ODT → PDF
+    console.log(`[convert2pdf] 2/2 ODT → PDF 변환 중...`);
+    await runLibreOffice(tempOdt, outputDir);
+
+    // 임시 ODT 파일 삭제
+    if (fs.existsSync(tempOdt)) {
+      fs.unlinkSync(tempOdt);
+      console.log(`[convert2pdf] 임시 파일 삭제: ${tempOdt}`);
+    }
+
+    if (!fs.existsSync(pdfPath)) {
+      throw new Error("PDF 변환 실패: 출력 파일 없음");
+    }
+
+    console.log(`[convert2pdf] HWP 변환 완료: ${pdfPath}`);
+    return pdfPath;
+  } catch (err) {
+    // 실패 시 임시 파일 정리
+    if (fs.existsSync(tempOdt)) {
+      try {
+        fs.unlinkSync(tempOdt);
+      } catch (e) {
+        // 무시
+      }
+    }
+    throw err;
+  }
+}
+
+// ========================
 // 외부에서 호출하는 메인 함수
 // ========================
 async function convertToPDF(inputPath, outputDir = ".", options = {}) {
@@ -206,6 +324,12 @@ async function convertToPDF(inputPath, outputDir = ".", options = {}) {
       safeCleanup();
     }
 
+    // HWP 파일인 경우 별도 파이프라인 사용
+    if (isHwpFile(absInput)) {
+      return await convertHwpToPdf(absInput, absOutputDir);
+    }
+
+    // 일반 문서: LibreOffice 직접 변환
     await runLibreOffice(absInput, absOutputDir);
 
     const pdfPath = path.join(
@@ -224,7 +348,15 @@ async function convertToPDF(inputPath, outputDir = ".", options = {}) {
 // ========================
 // 모듈 내보내기
 // ========================
-module.exports = { convertToPDF, ConvertQueue, killZombieProcesses, safeCleanup, isSofficeRunning };
+module.exports = {
+  convertToPDF,
+  ConvertQueue,
+  killZombieProcesses,
+  safeCleanup,
+  isSofficeRunning,
+  isHwpFile,
+  convertHwpToPdf
+};
 
 // ========================
 // CLI 실행 (직접 실행 시에만)

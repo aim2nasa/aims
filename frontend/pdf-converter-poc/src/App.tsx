@@ -11,8 +11,8 @@ function App() {
         <FileConverter />
       </main>
       <footer className="app-footer">
-        <p>지원 형식: DOCX, XLSX, PPTX, CSV, ODT, RTF, TXT, HTML</p>
-        <p className="warning">HWP는 현재 지원되지 않습니다.</p>
+        <p>지원 형식: DOCX, XLSX, PPTX, HWP, CSV, ODT, RTF, TXT, HTML</p>
+        <p className="warning">HWP는 베타 지원입니다 (일부 서식 손실 가능)</p>
       </footer>
     </div>
   )
