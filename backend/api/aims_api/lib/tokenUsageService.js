@@ -279,15 +279,18 @@ async function getSystemOverview(analyticsDb, days = 30) {
 
 /**
  * 시간별 AI 토큰 사용량 조회 (소스별 분리, 라인 차트용)
+ * 10분 단위로 집계하여 더 세밀한 추이 표시
  * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
  * @param {number} hours - 조회 기간 (시간)
  * @returns {Promise<Array>} 시간별 사용량 (소스별)
  */
 async function getHourlyUsageBySource(analyticsDb, hours = 24) {
   const collection = analyticsDb.collection('ai_token_usage');
-  const since = new Date();
+  const now = new Date();
+  const since = new Date(now);
   since.setHours(since.getHours() - hours);
 
+  // 10분 단위로 집계 (HH:M0 형식 - 분의 십의 자리만)
   const pipeline = [
     { $match: { timestamp: { $gte: since } } },
     {
@@ -295,8 +298,21 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
         _id: {
           timestamp: {
             $dateToString: {
-              format: '%Y-%m-%dT%H:00:00',
-              date: '$timestamp',
+              format: '%Y-%m-%dT%H:%M',
+              date: {
+                $dateFromParts: {
+                  year: { $year: { date: '$timestamp', timezone: 'Asia/Seoul' } },
+                  month: { $month: { date: '$timestamp', timezone: 'Asia/Seoul' } },
+                  day: { $dayOfMonth: { date: '$timestamp', timezone: 'Asia/Seoul' } },
+                  hour: { $hour: { date: '$timestamp', timezone: 'Asia/Seoul' } },
+                  minute: {
+                    $multiply: [
+                      { $floor: { $divide: [{ $minute: { date: '$timestamp', timezone: 'Asia/Seoul' } }, 10] } },
+                      10
+                    ]
+                  }
+                }
+              },
               timezone: 'Asia/Seoul'
             }
           },
@@ -311,32 +327,61 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
 
   const results = await collection.aggregate(pipeline).toArray();
 
-  // 시간별로 그룹화하여 소스별 데이터 포함
-  const hourlyMap = new Map();
-
+  // 실제 데이터를 맵에 저장
+  const dataMap = new Map();
   for (const r of results) {
-    const ts = r._id.timestamp;
+    const ts = r._id.timestamp + ':00'; // HH:MM:00 형식으로
     const source = r._id.source;
 
-    if (!hourlyMap.has(ts)) {
-      hourlyMap.set(ts, {
-        timestamp: ts,
-        rag_api: 0,
-        n8n_docsummary: 0,
-        total: 0
-      });
+    if (!dataMap.has(ts)) {
+      dataMap.set(ts, { rag_api: 0, n8n_docsummary: 0 });
     }
 
-    const entry = hourlyMap.get(ts);
+    const entry = dataMap.get(ts);
     if (source === 'rag_api') {
       entry.rag_api = r.total_tokens;
     } else if (source === 'n8n_docsummary') {
       entry.n8n_docsummary = r.total_tokens;
     }
-    entry.total += r.total_tokens;
   }
 
-  return Array.from(hourlyMap.values());
+  // 모든 10분 단위 슬롯 생성 (KST 기준)
+  const intervalMinutes = 10;
+  const totalSlots = Math.ceil(hours * 60 / intervalMinutes);
+  const usageData = [];
+
+  for (let i = totalSlots; i >= 0; i--) {
+    const slotTime = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
+    // KST로 변환
+    const kstTime = new Date(slotTime.getTime() + 9 * 60 * 60 * 1000);
+    // 10분 단위로 반올림
+    const minutes = Math.floor(kstTime.getMinutes() / 10) * 10;
+    kstTime.setMinutes(minutes, 0, 0);
+
+    // timestamp 형식: YYYY-MM-DDTHH:MM:00
+    const ts = kstTime.toISOString().slice(0, 16) + ':00';
+
+    const data = dataMap.get(ts) || { rag_api: 0, n8n_docsummary: 0 };
+
+    usageData.push({
+      timestamp: ts,
+      rag_api: data.rag_api,
+      n8n_docsummary: data.n8n_docsummary,
+      total: data.rag_api + data.n8n_docsummary
+    });
+  }
+
+  // 중복 제거
+  const uniqueMap = new Map();
+  for (const item of usageData) {
+    if (!uniqueMap.has(item.timestamp)) {
+      uniqueMap.set(item.timestamp, item);
+    }
+  }
+
+  return Array.from(uniqueMap.values()).sort((a, b) =>
+    a.timestamp.localeCompare(b.timestamp)
+  );
 }
 
 /**

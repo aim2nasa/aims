@@ -87,11 +87,19 @@ export const AIUsagePage = () => {
     refetchInterval: 120000, // 2분
   });
 
-  const { data: hourlyUsage } = useQuery({
+  const { data: hourlyUsageRaw } = useQuery({
     queryKey: ['admin', 'ai-usage', 'hourly', chartHours],
     queryFn: () => aiUsageApi.getHourlyUsage(chartHours),
-    refetchInterval: 120000, // 2분
+    refetchInterval: 60000, // 1분마다 갱신
+    gcTime: 5 * 60 * 1000, // 5분 후 캐시 정리 (메모리 절약)
+    staleTime: 30000, // 30초간 fresh 상태 유지
   });
+
+  // 메모리 절약을 위해 최대 300개 데이터 포인트로 제한 (다운샘플링)
+  const maxPoints = 300;
+  const hourlyUsage = hourlyUsageRaw && hourlyUsageRaw.length > maxPoints
+    ? hourlyUsageRaw.filter((_, i) => i % Math.ceil(hourlyUsageRaw.length / maxPoints) === 0)
+    : hourlyUsageRaw;
 
   const { data: topUsers } = useQuery({
     queryKey: ['admin', 'ai-usage', 'top-users', days],
