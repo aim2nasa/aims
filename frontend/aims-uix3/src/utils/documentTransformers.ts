@@ -65,6 +65,8 @@ export interface SelectedDocumentMeta {
 export interface SelectedDocument {
   _id: string
   fileUrl?: string
+  /** 프리뷰용 URL (변환된 PDF가 있으면 해당 URL, 없으면 원본) */
+  previewFileUrl?: string
   upload: SelectedDocumentUpload
   payload?: SelectedDocumentPayload
   meta: SelectedDocumentMeta
@@ -149,10 +151,24 @@ export const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocume
   return { upload, payload, meta, ocr }
 }
 
+/** API computed 응답 타입 */
+export interface DocumentComputedData {
+  previewFilePath?: string | null
+  canPreview?: boolean
+  conversionStatus?: string | null
+}
+
 /**
  * SmartSearch 응답을 SelectedDocument로 변환
+ * @param documentId 문서 ID
+ * @param raw API raw 응답
+ * @param computed API computed 응답 (PDF 변환 정보 포함)
  */
-export const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentResponse): SelectedDocument => {
+export const buildSelectedDocument = (
+  documentId: string,
+  raw: SmartSearchDocumentResponse,
+  computed?: DocumentComputedData | null
+): SelectedDocument => {
   const originalName =
     firstNonEmptyString(raw.upload?.['originalName'], raw.payload?.['originalName']) ??
     '문서'
@@ -220,6 +236,13 @@ export const buildSelectedDocument = (documentId: string, raw: SmartSearchDocume
 
   if (raw.ocr) {
     selected.ocr = raw.ocr
+  }
+
+  // 프리뷰용 URL 설정: 변환된 PDF가 있으면 해당 URL, 없으면 원본 fileUrl 사용
+  if (computed?.previewFilePath) {
+    selected.previewFileUrl = resolveFileUrl(computed.previewFilePath)
+  } else if (fileUrl) {
+    selected.previewFileUrl = fileUrl
   }
 
   return selected

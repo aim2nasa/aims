@@ -532,7 +532,7 @@ async function convertHwpToPdf(hwpPath, outputDir) {
 | Phase 1: POC 백엔드 | ✅ 완료 | 2025-12-13 |
 | Phase 1: POC 프론트엔드 | ✅ 완료 | 2025-12-13 |
 | HWP 변환 지원 | ✅ 완료 (베타) | 2025-12-14 |
-| Phase 2: aims-uix3 통합 | ⏳ 예정 | - |
+| Phase 2: aims-uix3 통합 | ✅ 완료 | 2025-12-14 |
 
 ### 9.2 구현된 파일 구조
 
@@ -674,5 +674,149 @@ node server.js  # 포트 3011
 
 ---
 
+## 10. Phase 2: aims-uix3 통합 완료
+
+### 10.1 구현 개요
+
+aims-uix3에서 Office 문서(DOCX, XLSX, PPTX, HWP 등) 업로드 시 백그라운드에서 PDF로 변환하고, 프리뷰에서 변환된 PDF를 표시하는 기능 통합 완료.
+
+### 10.2 핵심 설계 원칙
+
+| 원칙 | 구현 |
+|------|------|
+| **변환 대상 제한** | PDF Converter가 지원하는 확장자만 변환 |
+| **이미 프리뷰 가능한 파일 제외** | PDF, 이미지(.jpg, .png 등)는 변환하지 않음 |
+| **비동기 변환** | 업로드 응답은 즉시 반환, 변환은 백그라운드 |
+| **원본 보존** | 변환 실패해도 원본 다운로드 가능 |
+
+### 10.3 수정된 파일 목록
+
+#### 백엔드
+
+| 파일 | 작업 | 설명 |
+|------|------|------|
+| `backend/api/aims_api/lib/pdfConversionService.js` | 새로 생성 | PDF 변환 서비스 모듈 |
+| `backend/api/aims_api/server.js` | 수정 | 문서 연결 시 변환 트리거, 상태 API 확장 |
+| `backend/api/aims_api/lib/documentStatusHelper.js` | 수정 | `canPreview`, `previewFilePath`, `conversionStatus` 추가 |
+
+#### 프론트엔드
+
+| 파일 | 작업 | 설명 |
+|------|------|------|
+| `frontend/aims-uix3/src/features/customer/controllers/useCustomerDocumentsController.ts` | 수정 | `extractPreviewInfo`에 computed 파라미터 추가 |
+
+### 10.4 데이터베이스 스키마 확장
+
+```javascript
+// files 컬렉션 upload 서브도큐먼트
+upload: {
+  originalName: "문서.pptx",
+  destPath: "/data/files/users/.../문서.pptx",
+
+  // 새로 추가된 필드
+  convPdfPath: "/data/files/users/.../문서.pdf",     // 변환된 PDF 경로
+  converted_at: ISODate("2025-12-14T..."),           // 변환 완료 시간
+  conversion_status: "completed"                     // pending | processing | completed | failed | not_required
+}
+```
+
+### 10.5 변환 대상 확장자
+
+```javascript
+// 변환 대상 (CONVERTIBLE_EXTENSIONS)
+['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+ '.odt', '.ods', '.odp', '.rtf', '.txt', '.csv', '.html', '.hwp']
+
+// 변환 불필요 - 이미 프리뷰 가능 (PREVIEW_NATIVE)
+['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tif', '.tiff']
+```
+
+### 10.6 API 응답 확장
+
+**GET /api/documents/:id/status**
+
+```javascript
+{
+  raw: { /* 원본 문서 데이터 */ },
+  computed: {
+    // 기존 필드들...
+    canPreview: true,                    // 프리뷰 가능 여부
+    previewFilePath: "/data/.../doc.pdf", // 프리뷰용 파일 경로
+    conversionStatus: "completed"         // 변환 상태
+  },
+  previewFilePath: "/data/.../doc.pdf"   // 최상위에도 노출
+}
+```
+
+### 10.7 프리뷰 URL 결정 로직
+
+```
+1. computed.previewFilePath가 있으면 사용 (변환된 PDF)
+2. 원본이 PDF/이미지면 원본 destPath 사용
+3. 그 외: 프리뷰 불가 (DownloadOnlyViewer)
+```
+
+### 10.8 변환 워크플로우
+
+```
+1. 문서가 고객에게 연결됨 (POST /api/customers/:id/documents)
+2. pdfConversionService.isConvertible() 확인
+3. 변환 대상이면:
+   a. conversion_status = 'pending' 설정
+   b. convertDocumentInBackground() 비동기 호출
+4. 백그라운드에서:
+   a. conversion_status = 'processing'
+   b. PDF 변환 서버(3011) 호출
+   c. 성공: convPdfPath, conversion_status = 'completed' 저장
+   d. 실패: conversion_status = 'failed', conversion_error 저장
+5. 프론트엔드 프리뷰 시 previewFilePath 사용
+```
+
+### 10.9 주의사항
+
+1. **기존 문서**: 이미 업로드된 문서는 변환되지 않음 (새로 연결해야 변환 트리거)
+2. **변환 시간**: HWP는 2단계 파이프라인으로 약 2배 소요
+3. **변환 실패**: 원본 다운로드는 항상 가능
+4. **PDF Converter 서버**: `tools/convert/server.js`가 포트 3011에서 실행 중이어야 함
+
+### 10.10 프론트엔드 프리뷰 구현 (2025-12-14)
+
+#### 핵심 변경사항
+
+PDF 변환된 문서가 PDF 뷰어로 프리뷰되도록 프론트엔드 로직 수정.
+
+#### 수정된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `utils/documentTransformers.ts` | `SelectedDocument`에 `previewFileUrl` 필드 추가, `buildSelectedDocument`에 `computed` 파라미터 추가 |
+| `hooks/useRightPaneContent.ts` | API 응답의 `computed` 데이터 추출하여 `buildSelectedDocument`에 전달 |
+| `App.tsx` | 문서 프리뷰 시 `previewFileUrl` 우선 사용 |
+| `CustomerDocumentPreviewModal.tsx` | 고객 문서 프리뷰 모달에서도 `previewFileUrl` 우선 사용 |
+
+#### 프리뷰 URL 결정 로직
+
+```javascript
+// 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
+const previewUrl = selectedDocument.previewFileUrl ?? selectedDocument.fileUrl
+
+// previewUrl 기준으로 뷰어 결정
+if (previewUrl.endsWith('.pdf')) → PDFViewer
+else if (isImage) → ImageViewer
+else → DownloadOnlyViewer
+```
+
+#### 데이터 흐름
+
+```
+1. 문서 클릭 → /api/documents/:id/status 호출
+2. API 응답: { data: { raw: {...}, computed: { previewFilePath, canPreview, ... } } }
+3. buildSelectedDocument(id, raw, computed) 호출
+4. computed.previewFilePath가 있으면 → previewFileUrl = resolveFileUrl(previewFilePath)
+5. App.tsx에서 previewUrl 기준으로 뷰어 선택
+```
+
+---
+
 *문서 작성일: 2025-12-13*
-*최종 수정일: 2025-12-14 (프로그레스바 UI 추가)*
+*최종 수정일: 2025-12-14 (프론트엔드 프리뷰 구현 완료)*

@@ -1615,8 +1615,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     DownloadHelper.downloadDocument(adaptToDownloadHelper({ ...selectedDocument, fileUrl: selectedDocument.fileUrl ?? '' } as typeof selectedDocument & { fileUrl: string }))
                   }
 
-                  const fileUrl = selectedDocument.fileUrl
-                  if (!fileUrl) {
+                  // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
+                  const previewUrl = selectedDocument.previewFileUrl ?? selectedDocument.fileUrl
+                  if (!previewUrl) {
                     const fileName =
                       selectedDocument.upload?.originalName ||
                       selectedDocument.payload?.originalName ||
@@ -1630,14 +1631,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     )
                   }
 
-                  const normalizedUrl = fileUrl.toLowerCase()
+                  const normalizedUrl = previewUrl.toLowerCase()
                   const isPdf = normalizedUrl.endsWith('.pdf')
                   const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
 
                   if (isPdf) {
                     return (
                       <PDFViewer
-                        file={fileUrl}
+                        file={previewUrl}
                         onDownload={download}
                       />
                     )
@@ -1646,7 +1647,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   if (isImage) {
                     return (
                       <ImageViewer
-                        file={fileUrl}
+                        file={previewUrl}
                         onDownload={download}
                       />
                     )

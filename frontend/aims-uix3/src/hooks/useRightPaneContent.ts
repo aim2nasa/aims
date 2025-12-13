@@ -12,7 +12,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import type { Customer } from '@/entities/customer'
-import type { SelectedDocument } from '../utils/documentTransformers'
+import type { SelectedDocument, DocumentComputedData } from '../utils/documentTransformers'
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from '../utils/documentTransformers'
 import { CustomerService } from '@/services/customerService'
 import { api } from '@/shared/lib/api'
@@ -144,9 +144,13 @@ export function useRightPaneContent(
 
     try {
       // /api/documents/:id/status API로 문서 상세 정보 조회
-      const result = await api.get<{ success: boolean; data?: { raw?: unknown } }>(
-        `/api/documents/${documentId}/status`
-      )
+      const result = await api.get<{
+        success: boolean
+        data?: {
+          raw?: unknown
+          computed?: DocumentComputedData
+        }
+      }>(`/api/documents/${documentId}/status`)
       if (import.meta.env.DEV) {
         console.log('[useRightPaneContent] API 응답:', result)
       }
@@ -161,6 +165,7 @@ export function useRightPaneContent(
       // result.data.raw를 SmartSearchDocumentResponse로 변환
       if (import.meta.env.DEV) {
         console.log('[useRightPaneContent] result.data.raw:', result.data.raw)
+        console.log('[useRightPaneContent] result.data.computed:', result.data.computed)
         console.log(
           '[useRightPaneContent] result.data.raw.ocr:',
           (result.data.raw as Record<string, unknown>)?.['ocr']
@@ -178,17 +183,21 @@ export function useRightPaneContent(
         return
       }
 
+      // computed 데이터 추출 (PDF 변환 정보 포함)
+      const computed = result.data.computed ?? null
+
       if (import.meta.env.DEV) {
         console.log('[useRightPaneContent] rawDocument after conversion:', rawDocument)
         console.log('[useRightPaneContent] rawDocument.ocr:', rawDocument.ocr)
       }
 
-      const selected = buildSelectedDocument(documentId, rawDocument)
+      const selected = buildSelectedDocument(documentId, rawDocument, computed)
 
       if (import.meta.env.DEV) {
         console.log('[useRightPaneContent] 구성된 document 객체:', selected)
         console.log('[useRightPaneContent] selected.ocr:', selected.ocr)
         console.log('[useRightPaneContent] fileUrl:', selected.fileUrl)
+        console.log('[useRightPaneContent] previewFileUrl:', selected.previewFileUrl)
       }
 
       setSelectedDocument(selected)

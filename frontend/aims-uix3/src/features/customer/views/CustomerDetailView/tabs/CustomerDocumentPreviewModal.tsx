@@ -54,11 +54,14 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   // Fit to page를 위한 scale 계산 (DraggableModal에서 크기 변경 이벤트 받지 않으므로 고정값 사용)
   const [fitScale] = useState<number>(0.9)
 
-  const fileUrl = previewDocument?.fileUrl ?? null
+  // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
+  const previewUrl = previewDocument?.previewFileUrl ?? previewDocument?.fileUrl ?? null
+  // 다운로드용 URL: 항상 원본 파일
+  const downloadUrl = previewDocument?.fileUrl ?? null
 
-  // App.tsx와 완전히 동일한 방식
-  const isPdf = fileUrl ? isPdfFile(fileUrl) : false
-  const isImage = fileUrl && !isPdf ? isImageFile(fileUrl) : false
+  // 프리뷰 URL 기준으로 뷰어 타입 결정
+  const isPdf = previewUrl ? isPdfFile(previewUrl) : false
+  const isImage = previewUrl && !isPdf ? isImageFile(previewUrl) : false
 
   const sizeLabel = previewDocument?.sizeBytes ? DocumentUtils.formatFileSize(previewDocument.sizeBytes) : null
 
@@ -108,20 +111,20 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       )
     }
 
-    if (isPdf && fileUrl) {
+    if (isPdf && previewUrl) {
       return (
         <PDFViewer
-          file={fileUrl}
+          file={previewUrl}
           initialScale={fitScale}
           {...(onDownload ? { onDownload } : {})}
         />
       )
     }
 
-    if (isImage && fileUrl) {
+    if (isImage && previewUrl) {
       return (
         <ImageViewer
-          file={fileUrl}
+          file={previewUrl}
           alt={previewDocument.originalName}
           initialScale={fitScale}
           {...(onDownload ? { onDownload } : {})}

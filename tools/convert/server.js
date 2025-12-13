@@ -126,7 +126,7 @@ app.post("/convert", upload.single("file"), async (req, res) => {
     const pdfFileName = path.basename(originalName, path.extname(originalName)) + ".pdf";
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(pdfFileName)}`);
+    res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(pdfFileName)}`);
     res.setHeader("X-Conversion-Time", duration.toString());
 
     const pdfStream = fs.createReadStream(pdfPath);

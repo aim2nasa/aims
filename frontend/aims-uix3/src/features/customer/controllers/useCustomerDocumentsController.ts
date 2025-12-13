@@ -28,9 +28,15 @@ export interface PreviewDocumentInfo {
   id: string
   originalName: string
   fileUrl: string | null
+  /** 프리뷰용 URL (변환된 PDF 또는 원본) */
+  previewFileUrl: string | null
   mimeType?: string
   uploadedAt?: string
   sizeBytes?: number | null
+  /** PDF 변환 상태 */
+  conversionStatus?: string | null
+  /** 프리뷰 가능 여부 */
+  canPreview?: boolean
   document: CustomerDocumentItem
   rawDetail: Record<string, unknown> | null
 }
@@ -59,9 +65,13 @@ const buildFileUrl = (path?: string | null): string | null => {
 
 /**
  * 문서 상세 응답에서 파일 메타데이터 추출 (원본 방식 복원)
+ * @param detail - API 응답의 raw 데이터
+ * @param computed - API 응답의 computed 데이터 (PDF 변환 정보 포함)
+ * @param fallback - 폴백용 문서 정보
  */
 const extractPreviewInfo = (
   detail: Record<string, any> | null,
+  computed: Record<string, any> | null,
   fallback: CustomerDocumentItem
 ): Omit<PreviewDocumentInfo, 'document' | 'rawDetail'> => {
   const upload = detail?.['upload']
@@ -83,6 +93,11 @@ const extractPreviewInfo = (
     meta?.destPath ??
     detail?.['destPath'] ??
     null
+
+  // PDF 변환 관련 정보 (computed에서 추출)
+  const previewFilePath = computed?.['previewFilePath'] ?? null
+  const conversionStatus = computed?.['conversionStatus'] ?? upload?.['conversion_status'] ?? null
+  const canPreview = computed?.['canPreview'] ?? false
 
   const mimeType =
     upload?.mimeType ??
@@ -114,9 +129,13 @@ const extractPreviewInfo = (
     id: fallback._id,
     originalName,
     fileUrl: buildFileUrl(destPath),
+    // 프리뷰용 URL: previewFilePath 우선, 없으면 원본 destPath 사용
+    previewFileUrl: buildFileUrl(previewFilePath) ?? buildFileUrl(destPath),
     mimeType,
     sizeBytes,
-    uploadedAt: uploadedAt ?? undefined
+    uploadedAt: uploadedAt ?? undefined,
+    conversionStatus,
+    canPreview
   }
 }
 
@@ -255,12 +274,13 @@ export const useCustomerDocumentsController = (
           return
         }
 
-        // API 응답 구조: { success: true, data: { raw: {...} } }
+        // API 응답 구조: { success: true, data: { raw: {...}, computed: {...} } }
         const apiResponse = response as Record<string, any>
         const raw = apiResponse['data']?.['raw'] || apiResponse['raw'] || response
+        const computed = apiResponse['data']?.['computed'] || apiResponse['computed'] || null
 
-        // raw 데이터에서 메타데이터 추출
-        const metadata = extractPreviewInfo(raw, document)
+        // raw + computed 데이터에서 메타데이터 추출
+        const metadata = extractPreviewInfo(raw, computed, document)
 
         setPreviewState({
           isOpen: true,

@@ -35,11 +35,15 @@ export const convertToPreviewDocumentInfo = (doc: SelectedDocument): PreviewDocu
   const uploadedAt = doc.upload?.uploadedAt || doc.payload?.uploadedAt
   const sizeBytes = doc.meta?.sizeBytes ?? doc.payload?.sizeBytes ?? null
 
+  // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
+  const previewFileUrl = doc.previewFileUrl || fileUrl
+
   // exactOptionalPropertyTypes 대응: undefined가 아닌 경우에만 프로퍼티 포함
   const result: PreviewDocumentInfo = {
     id: doc._id,
     originalName,
     fileUrl,
+    previewFileUrl,
     document: doc as unknown as PreviewDocumentInfo['document'],
     rawDetail: doc as unknown as PreviewDocumentInfo['rawDetail']
   }

@@ -171,7 +171,9 @@ function FileConverter() {
       // 완료 시 100%로 설정
       setProgress({ stage: 'finalize', percent: 100, message: '완료!' })
 
-      const blob = await response.blob()
+      // PDF blob 생성 (명시적 type 지정으로 프리뷰 호환성 향상)
+      const arrayBuffer = await response.arrayBuffer()
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' })
       const pdfUrl = URL.createObjectURL(blob)
       const conversionTime = parseInt(response.headers.get('X-Conversion-Time') || '0', 10) || (Date.now() - startTime)
 

@@ -197,9 +197,114 @@ const QDRANT_COLLECTION = 'docembed';
 const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
 // 개인 파일 관리 라우트 import
 const personalFilesRoutes = require('./routes/personal-files-routes');
+// PDF 변환 서비스 import
+const pdfConversionService = require('./lib/pdfConversionService');
 
 let db;
 let fallbackHandlersRegistered = false;
+
+// ========================
+// PDF 변환 백그라운드 처리
+// ========================
+
+/**
+ * 문서를 백그라운드에서 PDF로 변환
+ * @param {ObjectId|string} fileId - 파일 ID
+ * @param {string} inputPath - 원본 파일 경로
+ */
+async function convertDocumentInBackground(fileId, inputPath) {
+  const fileIdStr = fileId.toString();
+
+  try {
+    // 1. 상태를 processing으로 업데이트
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(fileIdStr) },
+      { $set: { 'upload.conversion_status': 'processing' } }
+    );
+
+    console.log(`[PDF변환] 변환 시작: ${inputPath}`);
+
+    // 2. PDF 변환 실행
+    const pdfPath = await pdfConversionService.convertDocument(inputPath);
+
+    // 3. 성공 시 DB 업데이트
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(fileIdStr) },
+      {
+        $set: {
+          'upload.convPdfPath': pdfPath,
+          'upload.converted_at': utcNowDate(),
+          'upload.conversion_status': 'completed'
+        }
+      }
+    );
+
+    console.log(`[PDF변환] 변환 완료: ${pdfPath}`);
+  } catch (error) {
+    console.error(`[PDF변환] 변환 실패 (${fileIdStr}): ${error.message}`);
+
+    // 4. 실패 시 에러 기록
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(fileIdStr) },
+      {
+        $set: {
+          'upload.conversion_status': 'failed',
+          'upload.conversion_error': error.message
+        }
+      }
+    );
+  }
+}
+
+/**
+ * 문서의 PDF 변환이 필요한지 확인하고 트리거
+ * @param {Object} document - 문서 객체
+ * @returns {string} 'triggered' | 'not_required' | 'already_done' | 'already_processing'
+ */
+async function triggerPdfConversionIfNeeded(document) {
+  const originalName = document.upload?.originalName;
+  const destPath = document.upload?.destPath;
+  const conversionStatus = document.upload?.conversion_status;
+
+  // 이미 변환 완료
+  if (conversionStatus === 'completed') {
+    return 'already_done';
+  }
+
+  // 이미 변환 중
+  if (conversionStatus === 'processing' || conversionStatus === 'pending') {
+    return 'already_processing';
+  }
+
+  // 변환 가능 여부 체크
+  if (!pdfConversionService.isConvertible(originalName)) {
+    // 이미 프리뷰 가능하거나 지원하지 않는 형식
+    if (!conversionStatus) {
+      await db.collection(COLLECTION_NAME).updateOne(
+        { _id: document._id },
+        { $set: { 'upload.conversion_status': 'not_required' } }
+      );
+    }
+    return 'not_required';
+  }
+
+  // 파일 경로가 없으면 변환 불가
+  if (!destPath) {
+    console.warn(`[PDF변환] 파일 경로 없음: ${document._id}`);
+    return 'not_required';
+  }
+
+  // 변환 상태를 pending으로 설정 후 백그라운드 변환 시작
+  await db.collection(COLLECTION_NAME).updateOne(
+    { _id: document._id },
+    { $set: { 'upload.conversion_status': 'pending' } }
+  );
+
+  // 비동기로 변환 시작 (await 없음)
+  convertDocumentInBackground(document._id, destPath);
+
+  return 'triggered';
+}
 
 // Qdrant 클라이언트 인스턴스 (서버 1.9.0과 클라이언트 1.15.x 호환성 문제 해결)
 const qdrantClient = new QdrantClient({
@@ -1083,6 +1188,7 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
         fileSize: document.meta?.size_bytes,
         mimeType: document.meta?.mime,
         filePath: document.upload?.destPath,
+        previewFilePath: response.computed?.previewFilePath || null,  // 📄 프리뷰용 경로 (변환 PDF 또는 원본)
         customer_relation: customerRelation  // 🆕 하위 호환성용 추가
       }
     });
@@ -4040,6 +4146,16 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
     const qdrantResult = await syncQdrantCustomerRelation(document_id, id);
     console.log(`📊 [Qdrant 동기화 결과] ${qdrantResult.message}, 업데이트된 청크: ${qdrantResult.chunksUpdated || 0}개`);
 
+    // 📄 PDF 변환 트리거 (Office 문서인 경우)
+    let pdfConversionResult = 'not_triggered';
+    try {
+      pdfConversionResult = await triggerPdfConversionIfNeeded(document);
+      console.log(`📄 [PDF변환] 문서 ${document_id}: ${pdfConversionResult}`);
+    } catch (convError) {
+      console.error(`📄 [PDF변환] 트리거 실패 (${document_id}): ${convError.message}`);
+      // PDF 변환 실패는 치명적이지 않으므로 계속 진행
+    }
+
     // 📋 AR 문서인 경우 파싱 큐에 추가
     if (document.is_annual_report === true) {
       try {
@@ -4075,7 +4191,8 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
     res.json({
       success: true,
       message: '문서가 고객에게 성공적으로 연결되었습니다.',
-      qdrant_sync: qdrantResult
+      qdrant_sync: qdrantResult,
+      pdf_conversion: pdfConversionResult
     });
   } catch (error) {
     console.error('문서 연결 오류:', error);
