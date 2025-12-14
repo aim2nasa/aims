@@ -91,6 +91,22 @@
   fill: var(--color-text-secondary);
 }
 
+/* 다른 계정으로 로그인 링크 */
+.switch-account-button {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.2s ease;
+}
+
+.switch-account-button:hover {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
 /* 개발용 로그인 건너뛰기 버튼 */
 .dev-login-button {
   margin-top: 16px;

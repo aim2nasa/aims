@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { startKakaoLogin } from '@/entities/auth/api';
+import { startKakaoLogin, startKakaoLoginSwitch } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { syncUserIdFromStorage } from '@/stores/user';
@@ -166,7 +166,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-content">
-          {/* 카카오 로그인 (매번 로그인 화면 표시) */}
+          {/* 카카오 로그인 (기존 세션 유지) */}
           <button
             type="button"
             className="kakao-login-button"
@@ -182,6 +182,16 @@ export default function LoginPage() {
               />
             </svg>
             <span>카카오 로그인</span>
+          </button>
+
+          {/* 다른 계정으로 로그인 */}
+          <button
+            type="button"
+            className="switch-account-button"
+            onClick={startKakaoLoginSwitch}
+            aria-label="다른 계정으로 로그인"
+          >
+            다른 계정으로 로그인
           </button>
 
           {/* 개발 환경 전용: 로그인 건너뛰기 */}
