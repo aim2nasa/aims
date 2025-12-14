@@ -16,13 +16,24 @@ const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 400;
 const SIDEBAR_DEFAULT_WIDTH = 240;
 const SIDEBAR_WIDTH_KEY = 'aims_admin_sidebar_width';
+const EXPANDED_MENUS_KEY = 'aims_admin_expanded_menus';
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = usePersistentTheme();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['/dashboard']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
+    const saved = localStorage.getItem(EXPANDED_MENUS_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return ['/dashboard'];
+      }
+    }
+    return ['/dashboard'];
+  });
 
   // 사이드바 리사이즈 상태
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -101,9 +112,11 @@ function App() {
   ];
 
   const toggleMenu = (path: string) => {
-    setExpandedMenus((prev) =>
-      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
-    );
+    setExpandedMenus((prev) => {
+      const next = prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path];
+      localStorage.setItem(EXPANDED_MENUS_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
   const isActive = (path: string) => location.pathname === path;
