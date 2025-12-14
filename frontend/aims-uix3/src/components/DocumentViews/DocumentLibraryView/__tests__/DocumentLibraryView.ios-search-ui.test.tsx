@@ -48,7 +48,6 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       paginatedDocuments: [],
       sortField: null,
       sortDirection: 'desc',
-      customerLinkFilter: 'all',
     },
     actions: {
       setSearchTerm: vi.fn(),
@@ -72,7 +71,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       setSortField: vi.fn(),
       setSortDirection: vi.fn(),
       handleColumnSort: vi.fn(),
-      setCustomerLinkFilter: vi.fn(),
+      removeDocuments: vi.fn(),
     }
   })
 }))
