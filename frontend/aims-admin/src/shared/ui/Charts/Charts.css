@@ -115,7 +115,7 @@
 
 /* Server Resources Section */
 .server-resources {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 
 .server-resources__header {

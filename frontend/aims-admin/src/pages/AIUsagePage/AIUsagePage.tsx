@@ -16,7 +16,6 @@ import {
   Legend,
 } from 'recharts';
 import { aiUsageApi, formatTokens, formatCost } from '@/features/dashboard/aiUsageApi';
-import type { HourlyUsagePoint } from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -154,7 +153,7 @@ export const AIUsagePage = () => {
               1분마다 자동 갱신
             </span>
             <Button variant="secondary" size="sm" onClick={handleRefreshAll}>
-              지금 새로고침
+              새로고침
             </Button>
           </div>
         </div>
@@ -175,14 +174,9 @@ export const AIUsagePage = () => {
             subtitle={`최근 ${days}일`}
           />
           <StatCard
-            title="요청 수"
-            value={(overview?.request_count || 0).toLocaleString()}
-            subtitle="API 호출"
-          />
-          <StatCard
             title="활성 사용자"
             value={overview?.unique_users || 0}
-            subtitle="AI 사용"
+            subtitle={`요청 ${(overview?.request_count || 0).toLocaleString()}건`}
           />
         </div>
       </section>
@@ -190,26 +184,20 @@ export const AIUsagePage = () => {
       {/* 소스별 분포 */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">소스별 사용량</h2>
-        <div className="ai-usage-page__source-grid ai-usage-page__source-grid--three">
+        <div className="ai-usage-page__source-grid">
           <div className="source-card source-card--rag">
             <span className="source-card__label">RAG API</span>
-            <span className="source-card__value">
-              {formatTokens(overview?.by_source?.rag_api || 0)}
-            </span>
+            <span className="source-card__value">{formatTokens(overview?.by_source?.rag_api || 0)}</span>
             <span className="source-card__percent">{ragPercent}%</span>
           </div>
           <div className="source-card source-card--n8n">
-            <span className="source-card__label">n8n DocSummary</span>
-            <span className="source-card__value">
-              {formatTokens(overview?.by_source?.n8n_docsummary || 0)}
-            </span>
+            <span className="source-card__label">DocSummary</span>
+            <span className="source-card__value">{formatTokens(overview?.by_source?.n8n_docsummary || 0)}</span>
             <span className="source-card__percent">{n8nPercent}%</span>
           </div>
           <div className="source-card source-card--embedding">
-            <span className="source-card__label">문서 임베딩</span>
-            <span className="source-card__value">
-              {formatTokens(overview?.by_source?.doc_embedding || 0)}
-            </span>
+            <span className="source-card__label">임베딩</span>
+            <span className="source-card__value">{formatTokens(overview?.by_source?.doc_embedding || 0)}</span>
             <span className="source-card__percent">{embeddingPercent}%</span>
           </div>
         </div>
@@ -236,8 +224,8 @@ export const AIUsagePage = () => {
           {!hourlyUsage || hourlyUsage.length === 0 ? (
             <div className="ai-usage-page__chart-empty">사용 데이터가 없습니다</div>
           ) : (
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={hourlyUsage} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={150}>
+              <LineChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis
                   dataKey="timestamp"
@@ -254,36 +242,14 @@ export const AIUsagePage = () => {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
+                  verticalAlign="top"
+                  height={24}
                   wrapperStyle={{ fontSize: '11px' }}
                   iconType="plainline"
                 />
-                <Line
-                  type="monotone"
-                  dataKey="rag_api"
-                  name="RAG API"
-                  stroke="#007AFF"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="n8n_docsummary"
-                  name="DocSummary"
-                  stroke="#34C759"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="doc_embedding"
-                  name="문서 임베딩"
-                  stroke="#FF9500"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
+                <Line type="monotone" dataKey="rag_api" name="RAG" stroke="#007AFF" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="n8n_docsummary" name="Summary" stroke="#34C759" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="doc_embedding" name="Embed" stroke="#FF9500" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           )}

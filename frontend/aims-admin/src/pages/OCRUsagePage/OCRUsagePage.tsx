@@ -214,8 +214,8 @@ export const OCRUsagePage = () => {
           {!hourlyUsage || hourlyUsage.length === 0 ? (
             <div className="ocr-usage-page__chart-empty">사용 데이터가 없습니다</div>
           ) : (
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={hourlyUsage} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis
                   dataKey="timestamp"
@@ -232,8 +232,8 @@ export const OCRUsagePage = () => {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
                   verticalAlign="top"
-                  height={36}
-                  wrapperStyle={{ fontSize: '12px' }}
+                  height={24}
+                  wrapperStyle={{ fontSize: '11px' }}
                 />
                 <Area
                   type="monotone"
