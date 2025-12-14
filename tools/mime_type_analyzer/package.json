@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "exif-parser": "^0.1.12",
-    "mime-types": "^3.0.1", 
+    "mammoth": "^1.6.0",
+    "mime-types": "^3.0.1",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^2.14.305",
-    "mammoth": "^1.6.0",
+    "word-extractor": "^1.0.4",
     "xlsx": "^0.18.5",
-    "yauzl": "^2.10.0",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "yauzl": "^2.10.0"
   }
 }

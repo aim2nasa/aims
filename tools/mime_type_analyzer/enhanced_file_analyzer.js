@@ -59,6 +59,7 @@ const { getDocument } = pdfjsLib;
 
 // 오피스 문서 처리를 위한 라이브러리들
 const mammoth = require('mammoth'); // DOCX
+const WordExtractor = require('word-extractor'); // DOC (구형 Word 97-2003)
 const XLSX = require('xlsx'); // Excel
 const yauzl = require('yauzl'); // ZIP 파일 처리 (PPTX용)
 const xml2js = require('xml2js'); // XML 파싱
@@ -170,6 +171,19 @@ async function extractDocxText(filePath) {
     return result.value;
   } catch (error) {
     throw new Error(`DOCX 텍스트 추출 오류: ${error.message}`);
+  }
+}
+
+/**
+ * DOC에서 텍스트 추출 (구형 Word 97-2003 포맷)
+ */
+async function extractDocText(filePath) {
+  try {
+    const extractor = new WordExtractor();
+    const extracted = await extractor.extract(filePath);
+    return extracted.getBody();
+  } catch (error) {
+    throw new Error(`DOC 텍스트 추출 오류: ${error.message}`);
   }
 }
 
@@ -364,7 +378,10 @@ async function extractTextFromFile(filePath, mimeType) {
       
     case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
       return await extractDocxText(filePath);
-      
+
+    case 'application/msword':
+      return await extractDocText(filePath);
+
     case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
     case 'application/vnd.ms-excel':
       return extractXlsxText(filePath);
