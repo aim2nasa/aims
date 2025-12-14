@@ -44,14 +44,16 @@ async function migrate() {
     );
     console.log(`✅ Updated ${statusResult.modifiedCount} customers with status field`);
 
-    // Step 3: Create unique index on (name, customer_type)
-    console.log('🔄 Creating unique index on (name, customer_type)...');
+    // Step 3: Create unique index on (created_by, name, customer_type)
+    // 사용자(설계사)별로 고객명 중복 체크 - 다른 사용자는 같은 이름 사용 가능
+    console.log('🔄 Creating unique index on (created_by, name, customer_type)...');
 
     // First, check for duplicates that would violate the unique constraint
     const duplicates = await customersCollection.aggregate([
       {
         $group: {
           _id: {
+            created_by: '$meta.created_by',  // 사용자별 격리
             name: { $trim: { input: '$personal_info.name' } },
             customer_type: '$insurance_info.customer_type'
           },
@@ -65,22 +67,23 @@ async function migrate() {
     if (duplicates.length > 0) {
       console.warn('⚠️  Found duplicate customer names:');
       duplicates.forEach(dup => {
-        console.warn(`  - "${dup._id.name}" (${dup._id.customer_type}): ${dup.count} records`);
+        console.warn(`  - User: ${dup._id.created_by}, "${dup._id.name}" (${dup._id.customer_type}): ${dup.count} records`);
         console.warn(`    IDs: ${dup.ids.join(', ')}`);
       });
       console.error('❌ Cannot create unique index with duplicates. Please resolve manually.');
       process.exit(1);
     }
 
-    // Create the unique index
+    // Create the unique index (사용자별 격리)
     const indexResult = await customersCollection.createIndex(
       {
+        'meta.created_by': 1,  // 사용자별 격리
         'personal_info.name': 1,
         'insurance_info.customer_type': 1
       },
       {
         unique: true,
-        name: 'unique_customer_name_type',
+        name: 'unique_customer_name_per_user',
         collation: { locale: 'ko', strength: 2 } // Case-insensitive Korean
       }
     );
