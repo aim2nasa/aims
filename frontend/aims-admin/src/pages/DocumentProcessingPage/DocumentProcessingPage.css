@@ -3,27 +3,33 @@
 }
 
 .document-processing-page__title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xl) 0;
-}
-
-.document-processing-page__section {
-  margin-bottom: var(--spacing-2xl);
-}
-
-.document-processing-page__section-title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-md) 0;
 }
 
+.document-processing-page__section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.document-processing-page__section-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.document-processing-page__section-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
 .document-processing-page__stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
 }
 
 .document-processing-page__loading,
@@ -42,18 +48,99 @@
   color: var(--color-error);
 }
 
-/* Info Cards */
+/* Status Grid */
+.document-processing-page__status-grid {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Status Cards - Compact */
+.status-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.status-card__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.status-card__value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Status Card Variants */
+.status-card--completed {
+  border-color: #34C759;
+}
+
+.status-card--completed .status-card__value {
+  color: #34C759;
+}
+
+.status-card--done {
+  border-color: #34C759;
+}
+
+.status-card--done .status-card__value {
+  color: #34C759;
+}
+
+.status-card--pending {
+  border-color: #ff9500;
+}
+
+.status-card--pending .status-card__value {
+  color: #ff9500;
+}
+
+.status-card--processing {
+  border-color: #007aff;
+}
+
+.status-card--processing .status-card__value {
+  color: #007aff;
+}
+
+.status-card--failed {
+  border-color: #ff3b30;
+}
+
+.status-card--failed .status-card__value {
+  color: #ff3b30;
+}
+
+.status-card--error {
+  border-color: #ff3b30;
+}
+
+.status-card--error .status-card__value {
+  color: #ff3b30;
+}
+
+/* Info Cards - Compact */
 .document-processing-page__info-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
 }
 
 .info-card {
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .info-card--warning {
@@ -62,15 +149,32 @@
 }
 
 .info-card__title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .info-card__description {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+/* Compact StatCard override for this page */
+.document-processing-page .stat-card {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.document-processing-page .stat-card__value {
+  font-size: var(--font-size-xl);
+}
+
+.document-processing-page .stat-card__title {
+  font-size: var(--font-size-xs);
+}
+
+.document-processing-page .stat-card__subtitle {
+  font-size: 10px;
 }

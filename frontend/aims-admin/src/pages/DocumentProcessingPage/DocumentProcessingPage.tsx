@@ -25,71 +25,128 @@ export const DocumentProcessingPage = () => {
     );
   }
 
-  const processing = data?.processing;
-  const ocr = data?.ocr;
+  const docs = data?.documents;
+  const stats = data?.stats;
 
   return (
     <div className="document-processing-page">
       <h1 className="document-processing-page__title">문서 처리 현황</h1>
 
+      {/* 전체 문서 현황 */}
       <section className="document-processing-page__section">
-        <h2 className="document-processing-page__section-title">OCR 사용량</h2>
+        <h2 className="document-processing-page__section-title">전체 문서 현황</h2>
         <div className="document-processing-page__stats-grid">
           <StatCard
-            title="이번 달 OCR"
-            value={ocr?.usedThisMonth || 0}
-            subtitle="처리 완료된 문서"
+            title="전체 문서"
+            value={stats?.totalDocuments || 0}
+            subtitle="등록된 문서"
           />
           <StatCard
-            title="전체 OCR"
-            value={ocr?.totalProcessed || 0}
-            subtitle="누적 처리 문서"
+            title="OCR 대상"
+            value={docs?.ocr?.target || 0}
+            subtitle="텍스트 추출 필요"
+          />
+          <StatCard
+            title="OCR 비대상"
+            value={docs?.ocr?.nonTarget || 0}
+            subtitle="OCR 불필요 문서"
           />
         </div>
       </section>
 
+      {/* 전체 처리 상태 */}
       <section className="document-processing-page__section">
-        <h2 className="document-processing-page__section-title">처리 대기열</h2>
-        <div className="document-processing-page__stats-grid">
-          <StatCard
-            title="OCR 대기"
-            value={processing?.ocrQueue || 0}
-            subtitle="처리 대기중인 문서"
-          />
-          <StatCard
-            title="임베딩 대기"
-            value={processing?.embedQueue || 0}
-            subtitle="벡터화 대기중인 문서"
-          />
-          <StatCard
-            title="처리 실패"
-            value={processing?.failedDocuments || 0}
-            subtitle="재처리 필요"
-          />
+        <h2 className="document-processing-page__section-title">전체 처리 상태</h2>
+        <div className="document-processing-page__status-grid">
+          <div className="status-card status-card--completed">
+            <span className="status-card__label">완료</span>
+            <span className="status-card__value">{docs?.overall?.completed || 0}</span>
+          </div>
+          <div className="status-card status-card--processing">
+            <span className="status-card__label">처리 중</span>
+            <span className="status-card__value">{docs?.overall?.processing || 0}</span>
+          </div>
+          <div className="status-card status-card--error">
+            <span className="status-card__label">오류</span>
+            <span className="status-card__value">{docs?.overall?.error || 0}</span>
+          </div>
         </div>
       </section>
 
+      {/* OCR 처리 상태 */}
+      <section className="document-processing-page__section">
+        <h2 className="document-processing-page__section-title">OCR 처리 상태</h2>
+        <p className="document-processing-page__section-desc">
+          OCR 대상 문서 중 텍스트 추출 진행 상태
+        </p>
+        <div className="document-processing-page__status-grid">
+          <div className="status-card status-card--done">
+            <span className="status-card__label">완료</span>
+            <span className="status-card__value">{docs?.ocr?.done || 0}</span>
+          </div>
+          <div className="status-card status-card--pending">
+            <span className="status-card__label">대기</span>
+            <span className="status-card__value">{docs?.ocr?.pending || 0}</span>
+          </div>
+          <div className="status-card status-card--processing">
+            <span className="status-card__label">처리 중</span>
+            <span className="status-card__value">{docs?.ocr?.processing || 0}</span>
+          </div>
+          <div className="status-card status-card--failed">
+            <span className="status-card__label">실패</span>
+            <span className="status-card__value">{docs?.ocr?.failed || 0}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 임베딩 처리 상태 */}
+      <section className="document-processing-page__section">
+        <h2 className="document-processing-page__section-title">임베딩 처리 상태</h2>
+        <p className="document-processing-page__section-desc">
+          벡터 임베딩 생성 진행 상태 (AI 검색용)
+        </p>
+        <div className="document-processing-page__status-grid">
+          <div className="status-card status-card--done">
+            <span className="status-card__label">완료</span>
+            <span className="status-card__value">{docs?.embed?.done || 0}</span>
+          </div>
+          <div className="status-card status-card--pending">
+            <span className="status-card__label">대기</span>
+            <span className="status-card__value">{docs?.embed?.pending || 0}</span>
+          </div>
+          <div className="status-card status-card--processing">
+            <span className="status-card__label">처리 중</span>
+            <span className="status-card__value">{docs?.embed?.processing || 0}</span>
+          </div>
+          <div className="status-card status-card--failed">
+            <span className="status-card__label">실패</span>
+            <span className="status-card__value">{docs?.embed?.failed || 0}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 처리 상태 설명 */}
       <section className="document-processing-page__section">
         <h2 className="document-processing-page__section-title">처리 상태 설명</h2>
         <div className="document-processing-page__info-cards">
           <div className="info-card">
-            <h3 className="info-card__title">OCR 대기</h3>
+            <h3 className="info-card__title">OCR 대상 / 비대상</h3>
             <p className="info-card__description">
-              문서가 업로드되어 텍스트 추출(OCR)을 기다리는 상태입니다.
-              일반적으로 수 분 내에 처리됩니다.
+              PDF, 이미지 등 텍스트 추출이 필요한 문서는 OCR 대상입니다.
+              텍스트 파일이나 이미 텍스트가 있는 문서는 OCR 비대상입니다.
             </p>
           </div>
           <div className="info-card">
-            <h3 className="info-card__title">임베딩 대기</h3>
+            <h3 className="info-card__title">임베딩 처리</h3>
             <p className="info-card__description">
-              OCR 완료 후 벡터 임베딩 생성을 기다리는 상태입니다.
+              문서 내용을 벡터로 변환하는 과정입니다.
               이 단계를 거쳐야 AI 검색이 가능합니다.
             </p>
           </div>
           <div className="info-card info-card--warning">
-            <h3 className="info-card__title">처리 실패</h3>
+            <h3 className="info-card__title">오류 발생 시</h3>
             <p className="info-card__description">
-              처리 중 오류가 발생한 문서입니다.
+              OCR 또는 임베딩 처리 중 오류가 발생한 문서입니다.
               시스템 관리자의 확인이 필요할 수 있습니다.
             </p>
           </div>

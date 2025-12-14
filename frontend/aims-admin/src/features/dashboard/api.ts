@@ -42,6 +42,36 @@ export interface OcrStats {
   totalProcessed: number;
 }
 
+// 문서 처리 현황 (상세)
+export interface DocumentOcrStatus {
+  target: number;       // OCR 대상 (ocr 서브도큐먼트 있음)
+  nonTarget: number;    // OCR 비대상 (ocr 서브도큐먼트 없음)
+  done: number;
+  pending: number;
+  processing: number;
+  failed: number;
+}
+
+export interface DocumentEmbedStatus {
+  done: number;
+  pending: number;
+  processing: number;
+  failed: number;
+}
+
+export interface DocumentOverallStatus {
+  completed: number;
+  processing: number;
+  error: number;
+}
+
+export interface DocumentsStatus {
+  total: number;
+  ocr: DocumentOcrStatus;
+  embed: DocumentEmbedStatus;
+  overall: DocumentOverallStatus;
+}
+
 export interface WorkflowStatus {
   id: string;
   name: string;
@@ -51,6 +81,7 @@ export interface WorkflowStatus {
 
 export interface DashboardData {
   stats: DashboardStats;
+  documents?: DocumentsStatus;  // 문서 처리 현황 (상세)
   processing: ProcessingStatus;
   health: HealthStatus;
   ocr?: OcrStats;

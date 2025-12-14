@@ -3674,20 +3674,62 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       lastLogin: { $gte: thirtyDaysAgo }
     });
 
-    // 문서 처리 상태
-    const [ocrPending, ocrProcessing, ocrFailed, embedPending, embedProcessing, embedFailed] = await Promise.all([
-      // OCR 대기: stages.ocr.status가 pending이거나, overallStatus가 processing이면서 OCR이 없는 문서
+    // 문서 분류 및 처리 상태 (상세)
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfMonthISO = startOfMonth.toISOString();
+
+    const [
+      // OCR 대상 문서 (ocr 서브도큐먼트가 있는 문서)
+      ocrTargetDocs,
+      // OCR 비대상 문서 (ocr 서브도큐먼트가 없는 문서)
+      ocrNonTargetDocs,
+      // OCR 완료
+      ocrDone,
+      // OCR 대기
+      ocrPending,
+      // OCR 처리중
+      ocrProcessing,
+      // OCR 실패
+      ocrFailed,
+      // 임베딩 완료
+      embedDone,
+      // 임베딩 대기
+      embedPending,
+      // 임베딩 처리중
+      embedProcessing,
+      // 임베딩 실패
+      embedFailed,
+      // 전체 완료
+      overallCompleted,
+      // 전체 처리중
+      overallProcessing,
+      // 전체 실패
+      overallError,
+      // 이번 달 OCR 완료 (ocr 서브도큐먼트가 있는 문서 중)
+      ocrUsedThisMonth,
+      // 전체 OCR 완료 (ocr 서브도큐먼트가 있는 문서 중)
+      ocrTotalProcessed
+    ] = await Promise.all([
+      // OCR 대상 문서 (ocr 서브도큐먼트 존재)
+      db.collection('files').countDocuments({ 'ocr': { $exists: true } }),
+      // OCR 비대상 문서 (ocr 서브도큐먼트 없음)
+      db.collection('files').countDocuments({ 'ocr': { $exists: false } }),
+      // OCR 완료
+      db.collection('files').countDocuments({ 'ocr.status': 'done' }),
+      // OCR 대기
       db.collection('files').countDocuments({
         $or: [
-          { 'stages.ocr.status': 'pending' },
-          { 'overallStatus': 'processing', 'ocr.status': { $exists: false }, 'meta.full_text': { $exists: false } }
+          { 'ocr.status': 'pending' },
+          { 'stages.ocr.status': 'pending' }
         ]
       }),
       // OCR 처리중
       db.collection('files').countDocuments({
         $or: [
-          { 'stages.ocr.status': 'processing' },
-          { 'ocr.status': 'processing' }
+          { 'ocr.status': 'processing' },
+          { 'stages.ocr.status': 'processing' }
         ]
       }),
       // OCR 실패
@@ -3697,6 +3739,8 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
           { 'stages.ocr.status': 'error' }
         ]
       }),
+      // 임베딩 완료
+      db.collection('files').countDocuments({ 'docembed.status': 'done' }),
       // 임베딩 대기
       db.collection('files').countDocuments({
         $or: [
@@ -3715,40 +3759,30 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       db.collection('files').countDocuments({
         $or: [
           { 'docembed.status': 'failed' },
+          { 'docembed.status': 'error' },
           { 'stages.docembed.status': 'failed' },
           { 'stages.docembed.status': 'error' }
         ]
-      })
-    ]);
-
-    // OCR 통계 (이번 달)
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const [ocrUsedThisMonth, ocrTotalProcessed] = await Promise.all([
-      // 이번 달 OCR 처리 완료 수 (ocr.done_at 또는 created_at 기준)
+      }),
+      // 전체 완료
+      db.collection('files').countDocuments({ 'overallStatus': 'completed' }),
+      // 전체 처리중
+      db.collection('files').countDocuments({ 'overallStatus': 'processing' }),
+      // 전체 실패
+      db.collection('files').countDocuments({ 'overallStatus': 'error' }),
+      // 이번 달 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
       db.collection('files').countDocuments({
+        'ocr.status': { $in: ['done', 'error'] },
         $or: [
           { 'ocr.done_at': { $gte: startOfMonth } },
-          { 'ocr.done_at': { $gte: startOfMonth.toISOString() } },
-          // OCR 완료된 문서 중 이번 달에 생성된 문서
-          {
-            'meta.created_at': { $gte: startOfMonth.toISOString() },
-            $or: [
-              { 'ocr.status': 'done' },
-              { 'meta.full_text': { $ne: null, $exists: true } }
-            ]
-          }
+          { 'ocr.done_at': { $gte: startOfMonthISO } },
+          { 'ocr.failed_at': { $gte: startOfMonth } },
+          { 'ocr.failed_at': { $gte: startOfMonthISO } }
         ]
       }),
-      // 전체 OCR 처리 완료 수
+      // 전체 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
       db.collection('files').countDocuments({
-        $or: [
-          { 'ocr.status': 'done' },
-          { 'ocr.full_text': { $ne: null, $exists: true } },
-          { 'meta.full_text': { $ne: null, $exists: true } }
-        ]
+        'ocr.status': { $in: ['done', 'error'] }
       })
     ]);
 
@@ -3905,6 +3939,33 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         totalDocuments,
         totalContracts
       },
+      // 문서 처리 현황 (상세)
+      documents: {
+        total: totalDocuments,
+        // OCR 분류
+        ocr: {
+          target: ocrTargetDocs,       // OCR 대상 (ocr 서브도큐먼트 있음)
+          nonTarget: ocrNonTargetDocs, // OCR 비대상 (ocr 서브도큐먼트 없음)
+          done: ocrDone,
+          pending: ocrPending,
+          processing: ocrProcessing,
+          failed: ocrFailed
+        },
+        // 임베딩 분류
+        embed: {
+          done: embedDone,
+          pending: embedPending,
+          processing: embedProcessing,
+          failed: embedFailed
+        },
+        // 전체 상태
+        overall: {
+          completed: overallCompleted,
+          processing: overallProcessing,
+          error: overallError
+        }
+      },
+      // 레거시 호환 (기존 processing 필드)
       processing: {
         ocrQueue: ocrPending + ocrProcessing,
         embedQueue: embedPending + embedProcessing,
