@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import { usersApi } from '@/features/users/api';
-import { Table } from '@/shared/ui/Table/Table';
 import { Button } from '@/shared/ui/Button/Button';
 import type { User } from '@/features/auth/types';
 import './UsersPage.css';
@@ -25,6 +25,9 @@ const TIER_LABELS: Record<string, string> = {
   vip: 'VIP',
 };
 
+type SortKey = 'name' | 'email' | 'role' | 'hasOcrPermission' | 'tier' | 'createdAt' | 'lastLogin';
+type SortOrder = 'asc' | 'desc';
+
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return '-';
   const date = new Date(dateString);
@@ -46,14 +49,20 @@ export const UsersPage = () => {
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [ocrFilter, setOcrFilter] = useState<string>('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const limit = 10;
+
+  // 검색어 debounce (300ms)
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'users', page, search, roleFilter, ocrFilter],
+    queryKey: ['admin', 'users', page, debouncedSearch, roleFilter, ocrFilter],
     queryFn: () =>
       usersApi.getUsers({
         page,
-        limit: 50,
-        search: search || undefined,
+        limit,
+        search: debouncedSearch || undefined,
         role: roleFilter || undefined,
         hasOcrPermission: ocrFilter === '' ? undefined : ocrFilter === 'true',
       }),
@@ -105,7 +114,76 @@ export const UsersPage = () => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  // 정렬된 사용자 목록
+  const sortedUsers = useMemo(() => {
+    const users = data?.users || [];
+    return [...users].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+
+      switch (sortKey) {
+        case 'name':
+          aVal = a.name || '';
+          bVal = b.name || '';
+          break;
+        case 'email':
+          aVal = a.email || '';
+          bVal = b.email || '';
+          break;
+        case 'role':
+          aVal = a.role || '';
+          bVal = b.role || '';
+          break;
+        case 'hasOcrPermission':
+          aVal = a.hasOcrPermission ? 1 : 0;
+          bVal = b.hasOcrPermission ? 1 : 0;
+          break;
+        case 'tier':
+          aVal = a.storage?.tier || 'free_trial';
+          bVal = b.storage?.tier || 'free_trial';
+          break;
+        case 'createdAt':
+          aVal = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+          bVal = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+          break;
+        case 'lastLogin':
+          aVal = (a as any).lastLogin ? new Date((a as any).lastLogin).getTime() : 0;
+          bVal = (b as any).lastLogin ? new Date((b as any).lastLogin).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aVal === 'string') {
+        const cmp = aVal.localeCompare(bVal);
+        return sortOrder === 'asc' ? cmp : -cmp;
+      }
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }, [data?.users, sortKey, sortOrder]);
+
+  const pagination = data?.pagination;
+
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortKey !== columnKey) {
+      return <span className="sort-icon sort-icon--inactive">⇅</span>;
+    }
+    return (
+      <span className="sort-icon sort-icon--active">
+        {sortOrder === 'asc' ? '↑' : '↓'}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -122,12 +200,18 @@ export const UsersPage = () => {
     );
   }
 
-  const users = data?.users || [];
-  const pagination = data?.pagination;
-
   return (
     <div className="users-page">
-      <h1 className="users-page__title">사용자 관리</h1>
+      <div className="users-page__header">
+        <h1 className="users-page__title">사용자 관리</h1>
+        {pagination && (
+          <span className="users-page__count">
+            {debouncedSearch || roleFilter || ocrFilter
+              ? `검색 결과 ${pagination.total}명`
+              : `전체 ${pagination.total}명`}
+          </span>
+        )}
+      </div>
 
       {/* Filters */}
       <div className="users-page__filters">
@@ -169,148 +253,174 @@ export const UsersPage = () => {
         </select>
       </div>
 
-      {/* Table */}
-      {users.length === 0 ? (
-        <div className="users-page__empty">검색 결과가 없습니다.</div>
-      ) : (
-        <>
-          <Table
-            columns={[
-              {
-                key: 'name',
-                label: '이름',
-                render: (user: User) => user.name || '-',
-              },
-              {
-                key: 'email',
-                label: '이메일',
-                render: (user: User) => user.email || '-',
-              },
-              {
-                key: 'role',
-                label: '역할',
-                render: (user: User) => (
-                  <span className={`badge badge--${user.role}`}>
-                    {ROLE_LABELS[user.role] || user.role}
-                  </span>
-                ),
-              },
-              {
-                key: 'hasOcrPermission',
-                label: 'OCR 권한',
-                render: (user: User) => {
-                  const isUpdating = updatingUserId === user._id;
-                  return (
-                    <button
-                      type="button"
-                      className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isUpdating) {
-                          handleOcrToggle(user._id, user.hasOcrPermission);
-                        }
-                      }}
-                      disabled={isUpdating}
-                      title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
-                    >
-                      <span className="ocr-toggle__indicator" />
-                      <span className="ocr-toggle__label">
-                        {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
-                      </span>
-                    </button>
-                  );
-                },
-              },
-              {
-                key: 'tier',
-                label: '등급',
-                render: (user: User) => {
-                  const tier = user.storage?.tier || 'free_trial';
-                  const isRoleAdmin = user.role === 'admin';
-                  const isUpdating = updatingUserId === user._id;
+      {/* Table Container */}
+      <div className="users-page__table-container">
+        {sortedUsers.length === 0 ? (
+          <div className="users-page__empty">검색 결과가 없습니다.</div>
+        ) : (
+          <table className="users-table">
+            <thead className="users-table__head">
+              <tr>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('name')}>
+                  이름 <SortIcon columnKey="name" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('email')}>
+                  이메일 <SortIcon columnKey="email" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('role')}>
+                  역할 <SortIcon columnKey="role" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('hasOcrPermission')}>
+                  OCR 권한 <SortIcon columnKey="hasOcrPermission" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('tier')}>
+                  등급 <SortIcon columnKey="tier" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('createdAt')}>
+                  가입일 <SortIcon columnKey="createdAt" />
+                </th>
+                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('lastLogin')}>
+                  최근 로그인 <SortIcon columnKey="lastLogin" />
+                </th>
+              </tr>
+            </thead>
+            <tbody className="users-table__body">
+              {sortedUsers.map((user) => {
+                const isRoleAdmin = user.role === 'admin';
+                const isUpdating = updatingUserId === user._id;
+                const tier = user.storage?.tier || 'free_trial';
 
-                  // 역할이 관리자인 경우 등급 개념 없음
-                  if (isRoleAdmin) {
-                    return <span className="tier-na">-</span>;
-                  }
-
-                  // 설계사/일반 사용자는 등급 선택 가능
-                  return (
-                    <select
-                      className={`tier-select tier-select--${tier}`}
-                      value={tier}
-                      onChange={(e) => handleTierChange(user._id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={isUpdating}
-                      aria-label="등급 변경"
-                    >
-                      {TIER_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  );
-                },
-              },
-              {
-                key: 'createdAt',
-                label: '가입일',
-                render: (user: User) => formatDate((user as any).createdAt),
-              },
-              {
-                key: 'lastLogin',
-                label: '최근 로그인',
-                render: (user: User) => formatDate((user as any).lastLogin),
-              },
-            ]}
-            data={users}
-            onRowClick={(user) => console.log('사용자 상세 (Phase 2 구현 예정):', user)}
-          />
-
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="users-page__pagination">
-              <button
-                type="button"
-                className="users-page__pagination-button"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-              >
-                이전
-              </button>
-
-              {Array.from({ length: Math.min(10, pagination.totalPages) }, (_, i) => {
-                const pageNum = i + 1;
                 return (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    className={`users-page__pagination-button ${
-                      page === pageNum ? 'users-page__pagination-button--active' : ''
-                    }`}
-                    onClick={() => handlePageChange(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
+                  <tr key={user._id} className="users-table__row">
+                    <td className="users-table__td">{user.name || '-'}</td>
+                    <td className="users-table__td">{user.email || '-'}</td>
+                    <td className="users-table__td">
+                      <span className={`badge badge--${user.role}`}>
+                        {ROLE_LABELS[user.role] || user.role}
+                      </span>
+                    </td>
+                    <td className="users-table__td">
+                      {isRoleAdmin ? (
+                        <span className="ocr-na">-</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isUpdating) {
+                              handleOcrToggle(user._id, user.hasOcrPermission);
+                            }
+                          }}
+                          disabled={isUpdating}
+                          title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
+                        >
+                          <span className="ocr-toggle__indicator" />
+                          <span className="ocr-toggle__label">
+                            {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
+                          </span>
+                        </button>
+                      )}
+                    </td>
+                    <td className="users-table__td">
+                      {isRoleAdmin ? (
+                        <span className="tier-na">-</span>
+                      ) : (
+                        <select
+                          className={`tier-select tier-select--${tier}`}
+                          value={tier}
+                          onChange={(e) => handleTierChange(user._id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={isUpdating}
+                          aria-label="등급 변경"
+                        >
+                          {TIER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                    <td className="users-table__td">{formatDate((user as any).createdAt)}</td>
+                    <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
+                  </tr>
                 );
               })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="users-page__pagination">
+          <button
+            type="button"
+            className="users-page__pagination-button"
+            onClick={() => handlePageChange(1)}
+            disabled={page === 1}
+          >
+            «
+          </button>
+          <button
+            type="button"
+            className="users-page__pagination-button"
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+          >
+            ‹
+          </button>
+
+          {(() => {
+            const pages: number[] = [];
+            const maxVisible = 5;
+            let start = Math.max(1, page - Math.floor(maxVisible / 2));
+            let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+
+            if (end - start + 1 < maxVisible) {
+              start = Math.max(1, end - maxVisible + 1);
+            }
+
+            for (let i = start; i <= end; i++) {
+              pages.push(i);
+            }
+
+            return pages.map((pageNum) => (
               <button
+                key={pageNum}
                 type="button"
-                className="users-page__pagination-button"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === pagination.totalPages}
+                className={`users-page__pagination-button ${
+                  page === pageNum ? 'users-page__pagination-button--active' : ''
+                }`}
+                onClick={() => handlePageChange(pageNum)}
               >
-                다음
+                {pageNum}
               </button>
+            ));
+          })()}
 
-              <span className="users-page__pagination-info">
-                전체 {pagination.total}명 (페이지 {page}/{pagination.totalPages})
-              </span>
-            </div>
-          )}
-        </>
+          <button
+            type="button"
+            className="users-page__pagination-button"
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === pagination.totalPages}
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            className="users-page__pagination-button"
+            onClick={() => handlePageChange(pagination.totalPages)}
+            disabled={page === pagination.totalPages}
+          >
+            »
+          </button>
+
+          <span className="users-page__pagination-info">
+            페이지 {page}/{pagination.totalPages}
+          </span>
+        </div>
       )}
     </div>
   );

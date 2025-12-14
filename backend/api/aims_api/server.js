@@ -4370,12 +4370,16 @@ app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), asy
 app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, res) => {
   const { page = 1, limit = 50, search = '', role = '', hasOcrPermission } = req.query;
 
+  console.log('[Admin Users API] 요청 파라미터:', { page, limit, search, role, hasOcrPermission });
+
   try {
     // 검색 필터 구성
     const filter = {};
 
     if (search) {
-      const searchRegex = new RegExp(escapeRegex(search), 'i');
+      const escapedSearch = escapeRegex(search);
+      console.log('[Admin Users API] 검색어:', search, '-> 이스케이프:', escapedSearch);
+      const searchRegex = new RegExp(escapedSearch, 'i');
       filter.$or = [
         { name: searchRegex },
         { email: searchRegex }
@@ -4394,6 +4398,8 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const limitNum = parseInt(limit);
 
+    console.log('[Admin Users API] 필터:', JSON.stringify(filter));
+
     // 병렬로 사용자 목록과 전체 개수 조회
     const [users, total] = await Promise.all([
       db.collection('users')
@@ -4411,6 +4417,8 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
         .toArray(),
       db.collection('users').countDocuments(filter)
     ]);
+
+    console.log('[Admin Users API] 결과:', { total, returnedCount: users.length });
 
     // 각 사용자의 스토리지 사용량 계산
     const userIds = users.map(u => u._id.toString());
