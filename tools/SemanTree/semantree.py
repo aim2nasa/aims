@@ -324,7 +324,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.6.6 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.7.0 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -369,6 +369,11 @@ class DocumentViewer:
             "customers": {"field": "personal_info.name", "pattern": "테스트고객*"},
             "files": {"field": "upload.destPath", "pattern": "/tmp/test-*"}
         }
+
+        # 검색 관련 상태
+        self.search_results: List[Dict[str, Any]] = []  # 검색 결과 문서 목록
+        self.search_index: int = 0  # 현재 검색 결과 인덱스
+        self.search_mode: bool = False  # 검색 모드 활성화 여부
 
         # 기타 분류 최소 기준
         self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
@@ -580,6 +585,30 @@ class DocumentViewer:
 
         # MongoDB 컬렉션 초기화 버튼
         ttk.Button(collection_row, text="🔥 초기화", command=self.clear_mongodb_collection).pack(side=tk.LEFT, padx=10)
+
+        # 검색 프레임
+        search_row = ttk.Frame(raw_data_tab, padding="10")
+        search_row.pack(fill=tk.X)
+
+        ttk.Label(search_row, text="🔍 검색:", width=10).pack(side=tk.LEFT)
+        self.search_text_var = tk.StringVar()
+        self.search_entry = tk.Entry(search_row, textvariable=self.search_text_var, width=30, font=("Arial", 9), state=tk.DISABLED)
+        self.search_entry.pack(side=tk.LEFT, padx=5, ipady=2)
+        self.search_entry.bind('<Return>', lambda e: self.search_documents())
+
+        self.search_btn = ttk.Button(search_row, text="검색", command=self.search_documents, state=tk.DISABLED)
+        self.search_btn.pack(side=tk.LEFT, padx=5)
+        self.search_reset_btn = ttk.Button(search_row, text="초기화", command=self.clear_search, state=tk.DISABLED)
+        self.search_reset_btn.pack(side=tk.LEFT, padx=5)
+
+        # 검색 결과 네비게이션
+        ttk.Separator(search_row, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        self.search_prev_btn = ttk.Button(search_row, text="◀ 이전", command=self.prev_search_result, state=tk.DISABLED)
+        self.search_prev_btn.pack(side=tk.LEFT, padx=5)
+        self.search_result_label = ttk.Label(search_row, text="", font=("Arial", 10))
+        self.search_result_label.pack(side=tk.LEFT, padx=5)
+        self.search_next_btn = ttk.Button(search_row, text="다음 ▶", command=self.next_search_result, state=tk.DISABLED)
+        self.search_next_btn.pack(side=tk.LEFT, padx=5)
 
         # Raw 데이터 네비게이션 프레임
         raw_nav_frame = ttk.Frame(raw_data_tab, padding="10")
@@ -1411,12 +1440,22 @@ class DocumentViewer:
 
     def update_raw_viewer(self):
         """Raw 데이터 뷰어 업데이트"""
-        # Raw 탭 데이터가 명시적으로 로드된 경우 raw_documents만 사용 (빈 리스트도 유효)
-        # 그렇지 않으면 documents 사용 (초기 상태 또는 문서 트리 탭에서 전환 시)
-        if self.raw_documents_loaded:
-            docs_to_use = self.raw_documents
-        else:
-            docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        # Raw 탭 데이터가 명시적으로 로드되지 않은 경우 영역을 비움
+        if not self.raw_documents_loaded:
+            self.raw_text_area.delete(1.0, tk.END)
+            self.raw_doc_label.config(text="0 / 0")
+            self.raw_prev_button.config(state=tk.DISABLED)
+            self.raw_next_button.config(state=tk.DISABLED)
+            # 검색 UI 비활성화
+            self.search_entry.config(state=tk.DISABLED)
+            self.search_btn.config(state=tk.DISABLED)
+            self.search_reset_btn.config(state=tk.DISABLED)
+            self.search_prev_btn.config(state=tk.DISABLED)
+            self.search_next_btn.config(state=tk.DISABLED)
+            self.stop_raw_auto_refresh()
+            return
+
+        docs_to_use = self.raw_documents
 
         if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             self.raw_text_area.delete(1.0, tk.END)
@@ -1441,6 +1480,12 @@ class DocumentViewer:
         # 텍스트 영역 업데이트
         self.raw_text_area.delete(1.0, tk.END)
         self.raw_text_area.insert(1.0, raw_json)
+
+        # 검색 모드일 때 하이라이트 적용
+        if self.search_mode:
+            search_text = self.search_text_var.get().strip()
+            if search_text:
+                self.highlight_search_keyword(search_text)
 
         # 버튼 상태 업데이트
         self.raw_prev_button.config(state=tk.NORMAL if len(docs_to_use) > 1 else tk.DISABLED)
@@ -1584,6 +1629,12 @@ class DocumentViewer:
             self.raw_documents_loaded = True  # 로드 완료 플래그 설정
             self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}/{total_count}개")
 
+            # 검색 UI 활성화 및 이전 검색 초기화
+            self.search_entry.config(state=tk.NORMAL)
+            self.search_btn.config(state=tk.NORMAL)
+            self.search_reset_btn.config(state=tk.NORMAL)
+            self.clear_search()  # 이전 검색 결과 초기화
+
             # 첫 문서로 이동
             self.current_raw_index = 0
             self.update_raw_viewer()
@@ -1595,6 +1646,188 @@ class DocumentViewer:
 
         except Exception as e:
             messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
+
+    def search_documents(self):
+        """컬렉션 내에서 특정 문구가 포함된 문서들을 검색"""
+        search_text = self.search_text_var.get().strip()
+        if not search_text:
+            messagebox.showwarning("검색", "검색어를 입력해주세요.")
+            return
+
+        selected_db = self.current_db.get()
+        selected_collection = self.current_collection.get()
+
+        if not selected_db or not selected_collection:
+            messagebox.showwarning("검색", "DB와 Collection을 먼저 선택해주세요.")
+            return
+
+        try:
+            # 이미 로드된 문서 목록에서 검색 (순서 유지)
+            if not self.raw_documents_loaded or not self.raw_documents:
+                messagebox.showwarning("검색", "먼저 '로드' 버튼을 눌러 문서를 로드해주세요.")
+                return
+
+            # 로드된 문서 목록에서 검색 (인덱스와 함께 저장하여 순서 보장)
+            self.search_results = []  # (원본_인덱스, 문서) 튜플 리스트
+            search_lower = search_text.lower()
+
+            for idx, doc in enumerate(self.raw_documents):
+                # 문서를 JSON 문자열로 변환하여 검색
+                doc_str = json.dumps(doc, default=str, ensure_ascii=False)
+                if search_lower in doc_str.lower():
+                    self.search_results.append((idx, doc))  # 인덱스와 함께 저장
+
+            if not self.search_results:
+                messagebox.showinfo("검색 결과", f"'{search_text}'를 포함하는 문서가 없습니다.")
+                self.search_result_label.config(text="결과 없음")
+                self.search_prev_btn.config(state=tk.DISABLED)
+                self.search_next_btn.config(state=tk.DISABLED)
+                self.search_mode = False
+                return
+
+            # 검색 모드 활성화
+            self.search_mode = True
+            self.search_index = 0
+
+            # 네비게이션 버튼 상태 업데이트
+            self.update_search_nav_buttons()
+
+            # 첫 번째 검색 결과 표시
+            self.show_current_search_result()
+
+            print(f"검색 완료: '{search_text}' - {len(self.search_results)}개 문서 발견")
+
+        except Exception as e:
+            messagebox.showerror("검색 실패", f"검색 중 오류 발생: {e}")
+
+    def show_current_search_result(self):
+        """현재 검색 결과 문서를 뷰어에 표시"""
+        if not self.search_results or self.search_index >= len(self.search_results):
+            return
+
+        # 검색 결과는 (원본_인덱스, 문서) 튜플
+        original_idx, doc = self.search_results[self.search_index]
+
+        # 검색 결과 레이블 업데이트 (우측에 [검색] n/m 표시)
+        self.search_result_label.config(
+            text=f"[검색] {self.search_index + 1}/{len(self.search_results)}"
+        )
+
+        # 검색 키워드
+        search_text = self.search_text_var.get().strip()
+
+        # Raw 뷰어에 표시
+        self.raw_text_area.delete(1.0, tk.END)
+
+        # 먼저 현재 모드(요약/전체)로 포맷
+        raw_json = self.format_raw_json(doc)
+
+        # 요약 모드에서 키워드가 잘렸는지 확인
+        if search_text and not self.raw_full_text_mode:
+            # 요약된 텍스트에 키워드가 없으면 전체 모드로 표시
+            if search_text.lower() not in raw_json.lower():
+                # 임시로 전체 모드로 전환하여 포맷
+                original_mode = self.raw_full_text_mode
+                self.raw_full_text_mode = True
+                raw_json = self.format_raw_json(doc)
+                self.raw_full_text_mode = original_mode  # 원래 모드 복원
+
+        self.raw_text_area.insert(tk.END, raw_json)
+
+        # 검색 키워드 하이라이트
+        if search_text:
+            self.highlight_search_keyword(search_text)
+
+        # 문서 번호 레이블 (저장된 원본 인덱스 사용)
+        self.current_raw_index = original_idx
+        total_docs = len(self.raw_documents) if self.raw_documents_loaded else len(self.documents)
+        self.raw_doc_label.config(text=f"{original_idx + 1} / {total_docs}")
+        self.raw_doc_number_var.set(str(original_idx + 1))
+
+    def highlight_search_keyword(self, keyword: str):
+        """검색 키워드를 하이라이트"""
+        # 하이라이트 태그 설정 (노란 배경)
+        self.raw_text_area.tag_configure("highlight", background="#FFFF00", foreground="#000000")
+
+        # 기존 하이라이트 제거
+        self.raw_text_area.tag_remove("highlight", "1.0", tk.END)
+
+        # 대소문자 구분 없이 검색
+        start_pos = "1.0"
+        first_match = None
+
+        while True:
+            # nocase=True로 대소문자 구분 없이 검색
+            pos = self.raw_text_area.search(keyword, start_pos, tk.END, nocase=True)
+            if not pos:
+                break
+
+            # 첫 번째 매칭 위치 저장
+            if first_match is None:
+                first_match = pos
+
+            # 끝 위치 계산
+            end_pos = f"{pos}+{len(keyword)}c"
+
+            # 하이라이트 태그 적용
+            self.raw_text_area.tag_add("highlight", pos, end_pos)
+
+            # 다음 검색 시작 위치
+            start_pos = end_pos
+
+        # 첫 번째 매칭 위치로 스크롤
+        if first_match:
+            self.raw_text_area.see(first_match)
+
+    def update_search_nav_buttons(self):
+        """검색 결과 네비게이션 버튼 상태 업데이트 (wrap around 지원)"""
+        if not self.search_results:
+            self.search_prev_btn.config(state=tk.DISABLED)
+            self.search_next_btn.config(state=tk.DISABLED)
+            return
+
+        # wrap around 지원으로 검색 결과가 있으면 항상 활성화
+        self.search_prev_btn.config(state=tk.NORMAL)
+        self.search_next_btn.config(state=tk.NORMAL)
+
+    def prev_search_result(self):
+        """이전 검색 결과로 이동 (wrap around)"""
+        if not self.search_mode or not self.search_results:
+            return
+        if self.search_index > 0:
+            self.search_index -= 1
+        else:
+            # 처음에서 이전 → 마지막으로 이동
+            self.search_index = len(self.search_results) - 1
+        self.show_current_search_result()
+        self.update_search_nav_buttons()
+
+    def next_search_result(self):
+        """다음 검색 결과로 이동 (wrap around)"""
+        if not self.search_mode or not self.search_results:
+            return
+        if self.search_index < len(self.search_results) - 1:
+            self.search_index += 1
+        else:
+            # 마지막에서 다음 → 처음으로 이동
+            self.search_index = 0
+        self.show_current_search_result()
+        self.update_search_nav_buttons()
+
+    def clear_search(self):
+        """검색 결과 초기화"""
+        self.search_results = []
+        self.search_index = 0
+        self.search_mode = False
+        self.search_text_var.set("")
+        self.search_result_label.config(text="")
+        self.search_prev_btn.config(state=tk.DISABLED)
+        self.search_next_btn.config(state=tk.DISABLED)
+
+        # 기존 Raw 뷰어 상태 복원
+        if self.raw_documents_loaded and self.raw_documents:
+            self.update_raw_viewer()
+            self.raw_doc_label.config(text=f"{self.current_raw_index + 1} / {len(self.raw_documents)}")
 
     def initialize_raw_selectors(self):
         """Raw 탭의 DB/Collection 선택기 초기화"""
@@ -1624,15 +1857,25 @@ class DocumentViewer:
 
     def refresh_current_raw_document(self):
         """현재 표시 중인 Raw 문서를 DB에서 다시 조회"""
-        docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
-        if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+        # Raw 탭 데이터가 명시적으로 로드되지 않은 경우 건너뜀
+        if not self.raw_documents_loaded:
             return
 
-        try:
-            # 현재 문서의 _id 가져오기
+        # 검색 모드일 때는 검색 결과 문서를 새로고침
+        if self.search_mode and self.search_results:
+            if self.search_index < 0 or self.search_index >= len(self.search_results):
+                return
+            # 검색 결과는 (원본_인덱스, 문서) 튜플
+            original_idx, current_doc = self.search_results[self.search_index]
+        else:
+            original_idx = None
+            docs_to_use = self.raw_documents
+            if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+                return
             current_doc = docs_to_use[self.current_raw_index]
-            doc_id = current_doc.get("_id")
 
+        try:
+            doc_id = current_doc.get("_id")
             if not doc_id:
                 return
 
@@ -1654,8 +1897,12 @@ class DocumentViewer:
             refreshed_doc = collection.find_one({"_id": doc_id})
 
             if refreshed_doc:
-                # 로컬 목록 업데이트
-                docs_to_use[self.current_raw_index] = refreshed_doc
+                # 검색 모드일 때는 검색 결과 업데이트 (튜플 형태 유지)
+                if self.search_mode and self.search_results and original_idx is not None:
+                    self.search_results[self.search_index] = (original_idx, refreshed_doc)
+                else:
+                    if self.raw_documents:
+                        self.raw_documents[self.current_raw_index] = refreshed_doc
                 # 화면 업데이트 (자동 새로고침 스케줄링 제외)
                 self.update_raw_viewer_without_scheduling()
 
@@ -1664,29 +1911,58 @@ class DocumentViewer:
 
     def update_raw_viewer_without_scheduling(self):
         """Raw 데이터 뷰어 업데이트 (자동 새로고침 스케줄링 제외)"""
-        # Raw 탭 데이터가 명시적으로 로드된 경우 raw_documents만 사용 (빈 리스트도 유효)
-        if self.raw_documents_loaded:
-            docs_to_use = self.raw_documents
-        else:
-            docs_to_use = self.raw_documents if self.raw_documents else self.documents
-
-        if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+        # Raw 탭 데이터가 명시적으로 로드되지 않은 경우 영역을 비움
+        if not self.raw_documents_loaded:
+            self.raw_text_area.delete(1.0, tk.END)
+            self.raw_doc_label.config(text="0 / 0")
             return
+
+        # 검색 모드일 때는 검색 결과 문서를 표시
+        if self.search_mode and self.search_results:
+            # 검색 결과는 (원본_인덱스, 문서) 튜플
+            _, doc = self.search_results[self.search_index]
+        else:
+            docs_to_use = self.raw_documents
+
+            if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+                return
+
+            doc = docs_to_use[self.current_raw_index]
 
         # 현재 스크롤 위치 저장
         scroll_position = self.raw_text_area.yview()
 
-        # 현재 문서
-        doc = docs_to_use[self.current_raw_index]
+        # 검색 키워드 (검색 모드일 때)
+        search_text = self.search_text_var.get().strip() if self.search_mode else ""
 
         # Raw JSON 데이터 포맷팅
         raw_json = self.format_raw_json(doc)
 
-        # 텍스트 영역 업데이트
-        self.raw_text_area.delete(1.0, tk.END)
-        self.raw_text_area.insert(1.0, raw_json)
+        # 검색 모드에서 요약 모드일 때 키워드가 잘렸는지 확인
+        if self.search_mode and search_text and not self.raw_full_text_mode:
+            if search_text.lower() not in raw_json.lower():
+                # 임시로 전체 모드로 전환하여 포맷
+                original_mode = self.raw_full_text_mode
+                self.raw_full_text_mode = True
+                raw_json = self.format_raw_json(doc)
+                self.raw_full_text_mode = original_mode
 
-        # 스크롤 위치 복원
+        # 텍스트 영역 업데이트 (스크롤 점프 방지를 위해 각 작업 후 즉시 복원)
+        self.raw_text_area.delete(1.0, tk.END)
+        self.raw_text_area.yview_moveto(scroll_position[0])
+
+        self.raw_text_area.insert(1.0, raw_json)
+        self.raw_text_area.yview_moveto(scroll_position[0])
+
+        # 검색 모드일 때 하이라이트 적용
+        if self.search_mode:
+            search_text = self.search_text_var.get().strip()
+            if search_text:
+                self.highlight_search_keyword(search_text)
+                self.raw_text_area.yview_moveto(scroll_position[0])
+
+        # 최종 스크롤 위치 확정
+        self.raw_text_area.update_idletasks()
         self.raw_text_area.yview_moveto(scroll_position[0])
 
     def toggle_raw_auto_refresh(self):
