@@ -13,19 +13,7 @@ const TIER_OPTIONS = [
   { value: 'vip', label: 'VIP' },
 ] as const;
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: '관리자',
-  agent: '설계사',
-};
-
-const TIER_LABELS: Record<string, string> = {
-  free_trial: '무료체험',
-  standard: '일반',
-  premium: '프리미엄',
-  vip: 'VIP',
-};
-
-type SortKey = 'name' | 'email' | 'role' | 'hasOcrPermission' | 'tier' | 'createdAt' | 'lastLogin';
+type SortKey = 'name' | 'email' | 'hasOcrPermission' | 'tier' | 'createdAt' | 'lastLogin';
 type SortOrder = 'asc' | 'desc';
 
 const formatDate = (dateString?: string | null) => {
@@ -46,8 +34,6 @@ export const UsersPage = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('');
-  const [ocrFilter, setOcrFilter] = useState<string>('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -57,14 +43,13 @@ export const UsersPage = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'users', page, debouncedSearch, roleFilter, ocrFilter],
+    queryKey: ['admin', 'users', page, debouncedSearch],
     queryFn: () =>
       usersApi.getUsers({
         page,
         limit,
         search: debouncedSearch || undefined,
-        role: roleFilter || undefined,
-        hasOcrPermission: ocrFilter === '' ? undefined : ocrFilter === 'true',
+        role: 'agent',  // 설계사만 조회 (관리자 제외)
       }),
   });
 
@@ -141,10 +126,6 @@ export const UsersPage = () => {
           aVal = a.email || '';
           bVal = b.email || '';
           break;
-        case 'role':
-          aVal = a.role || '';
-          bVal = b.role || '';
-          break;
         case 'hasOcrPermission':
           aVal = a.hasOcrPermission ? 1 : 0;
           bVal = b.hasOcrPermission ? 1 : 0;
@@ -206,14 +187,14 @@ export const UsersPage = () => {
         <h1 className="users-page__title">사용자 관리</h1>
         {pagination && (
           <span className="users-page__count">
-            {debouncedSearch || roleFilter || ocrFilter
+            {debouncedSearch
               ? `검색 결과 ${pagination.total}명`
               : `전체 ${pagination.total}명`}
           </span>
         )}
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <div className="users-page__filters">
         <input
           type="text"
@@ -225,32 +206,6 @@ export const UsersPage = () => {
             setPage(1);
           }}
         />
-        <select
-          className="users-page__select"
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value);
-            setPage(1);
-          }}
-          aria-label="역할 필터"
-        >
-          <option value="">전체 역할</option>
-          <option value="admin">관리자</option>
-          <option value="agent">설계사</option>
-        </select>
-        <select
-          className="users-page__select"
-          value={ocrFilter}
-          onChange={(e) => {
-            setOcrFilter(e.target.value);
-            setPage(1);
-          }}
-          aria-label="OCR 권한 필터"
-        >
-          <option value="">전체 OCR 권한</option>
-          <option value="true">권한 있음</option>
-          <option value="false">권한 없음</option>
-        </select>
       </div>
 
       {/* Table Container */}
@@ -266,9 +221,6 @@ export const UsersPage = () => {
                 </th>
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('email')}>
                   이메일 <SortIcon columnKey="email" />
-                </th>
-                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('role')}>
-                  역할 <SortIcon columnKey="role" />
                 </th>
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('hasOcrPermission')}>
                   OCR 권한 <SortIcon columnKey="hasOcrPermission" />
@@ -286,7 +238,6 @@ export const UsersPage = () => {
             </thead>
             <tbody className="users-table__body">
               {sortedUsers.map((user) => {
-                const isRoleAdmin = user.role === 'admin';
                 const isUpdating = updatingUserId === user._id;
                 const tier = user.storage?.tier || 'free_trial';
 
@@ -295,52 +246,39 @@ export const UsersPage = () => {
                     <td className="users-table__td">{user.name || '-'}</td>
                     <td className="users-table__td">{user.email || '-'}</td>
                     <td className="users-table__td">
-                      <span className={`badge badge--${user.role}`}>
-                        {ROLE_LABELS[user.role] || user.role}
-                      </span>
+                      <button
+                        type="button"
+                        className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isUpdating) {
+                            handleOcrToggle(user._id, user.hasOcrPermission);
+                          }
+                        }}
+                        disabled={isUpdating}
+                        title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
+                      >
+                        <span className="ocr-toggle__indicator" />
+                        <span className="ocr-toggle__label">
+                          {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
+                        </span>
+                      </button>
                     </td>
                     <td className="users-table__td">
-                      {isRoleAdmin ? (
-                        <span className="ocr-na">-</span>
-                      ) : (
-                        <button
-                          type="button"
-                          className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isUpdating) {
-                              handleOcrToggle(user._id, user.hasOcrPermission);
-                            }
-                          }}
-                          disabled={isUpdating}
-                          title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
-                        >
-                          <span className="ocr-toggle__indicator" />
-                          <span className="ocr-toggle__label">
-                            {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
-                          </span>
-                        </button>
-                      )}
-                    </td>
-                    <td className="users-table__td">
-                      {isRoleAdmin ? (
-                        <span className="tier-na">-</span>
-                      ) : (
-                        <select
-                          className={`tier-select tier-select--${tier}`}
-                          value={tier}
-                          onChange={(e) => handleTierChange(user._id, e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          disabled={isUpdating}
-                          aria-label="등급 변경"
-                        >
-                          {TIER_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      <select
+                        className={`tier-select tier-select--${tier}`}
+                        value={tier}
+                        onChange={(e) => handleTierChange(user._id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isUpdating}
+                        aria-label="등급 변경"
+                      >
+                        {TIER_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="users-table__td">{formatDate((user as any).createdAt)}</td>
                     <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
