@@ -7,6 +7,18 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const Redis = require('ioredis');
+
+// Redis 클라이언트 (host network 모드이므로 localhost 사용)
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379,
+  lazyConnect: true,
+  retryStrategy: (times) => {
+    if (times > 3) return null; // 3회 초과 시 재시도 중지
+    return Math.min(times * 200, 2000);
+  }
+});
 
 /**
  * 라우트 설정 함수
@@ -496,6 +508,122 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: 'OCR 실패 문서 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/admin/ocr/reprocess
+   * OCR 실패 문서 재처리
+   *
+   * Body:
+   * - document_id: string (필수)
+   *
+   * 처리 로직:
+   * 1. files 컬렉션에서 해당 문서 조회
+   * 2. ocr.status가 'error'인지 확인
+   * 3. Redis XADD로 ocr_stream에 재등록
+   * 4. ocr 상태 업데이트
+   */
+  router.post('/admin/ocr/reprocess', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { document_id } = req.body;
+
+      if (!document_id || !ObjectId.isValid(document_id)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효한 document_id가 필요합니다.'
+        });
+      }
+
+      const filesCollection = db.collection('files');
+
+      // 문서 조회
+      const document = await filesCollection.findOne({
+        _id: new ObjectId(document_id)
+      });
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: '문서를 찾을 수 없습니다.'
+        });
+      }
+
+      // OCR 실패 상태 확인
+      if (document.ocr?.status !== 'error') {
+        return res.status(400).json({
+          success: false,
+          error: 'OCR 실패 상태인 문서만 재처리할 수 있습니다.',
+          current_status: document.ocr?.status
+        });
+      }
+
+      // 파일 경로 확인
+      const filePath = document.upload?.destPath;
+      if (!filePath) {
+        return res.status(400).json({
+          success: false,
+          error: '문서의 파일 경로를 찾을 수 없습니다.'
+        });
+      }
+
+      // Redis XADD 실행
+      const now = new Date().toISOString();
+      try {
+        await redis.connect().catch(() => {}); // 이미 연결되어 있으면 무시
+        const messageId = await redis.xadd(
+          'ocr_stream',
+          '*',
+          'file_id', document_id,
+          'file_path', filePath,
+          'doc_id', document_id,
+          'owner_id', document.ownerId || '',
+          'queued_at', now
+        );
+        console.log('[OCR Reprocess] Redis XADD 성공:', messageId);
+      } catch (redisError) {
+        console.error('[OCR Reprocess] Redis XADD 오류:', redisError.message);
+        throw new Error(`Redis XADD 실패: ${redisError.message}`);
+      }
+
+      // MongoDB 상태 업데이트
+      const retryCount = (document.ocr?.retry_count || 0) + 1;
+      await filesCollection.updateOne(
+        { _id: new ObjectId(document_id) },
+        {
+          $set: {
+            'ocr.status': 'queued',
+            'ocr.queued_at': now,
+            'ocr.retry_count': retryCount,
+            'ocr.last_retry_at': now
+          },
+          $unset: {
+            'ocr.failed_at': '',
+            'ocr.statusCode': '',
+            'ocr.statusMessage': '',
+            'ocr.errorBody': ''
+          }
+        }
+      );
+
+      console.log(`[OCR Reprocess] 문서 ${document_id} 재처리 큐 등록 완료 (재시도 ${retryCount}회)`);
+
+      res.json({
+        success: true,
+        message: 'OCR 재처리가 요청되었습니다.',
+        data: {
+          document_id,
+          retry_count: retryCount,
+          queued_at: now
+        }
+      });
+    } catch (error) {
+      console.error('[POST /api/admin/ocr/reprocess] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: 'OCR 재처리 요청에 실패했습니다.',
         details: error.message
       });
     }

@@ -68,6 +68,18 @@ interface FailedOCRDocumentsResponse {
   data: FailedOCRDocumentsData;
 }
 
+export interface OCRReprocessResult {
+  document_id: string;
+  retry_count: number;
+  queued_at: string;
+}
+
+interface OCRReprocessResponse {
+  success: boolean;
+  message: string;
+  data: OCRReprocessResult;
+}
+
 // 숫자 포맷팅 함수
 export function formatOCRCount(count: number): string {
   if (count >= 1000000) {
@@ -121,6 +133,17 @@ export const ocrUsageApi = {
     const query = params.toString();
     const res = await apiClient.get<FailedOCRDocumentsResponse>(
       `/api/admin/ocr-usage/failed-documents${query ? `?${query}` : ''}`
+    );
+    return res.data;
+  },
+
+  /**
+   * OCR 실패 문서 재처리
+   */
+  reprocessDocument: async (documentId: string): Promise<OCRReprocessResult> => {
+    const res = await apiClient.post<OCRReprocessResponse>(
+      '/api/admin/ocr/reprocess',
+      { document_id: documentId }
     );
     return res.data;
   },

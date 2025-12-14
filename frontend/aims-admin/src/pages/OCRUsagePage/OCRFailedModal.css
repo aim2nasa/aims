@@ -151,3 +151,30 @@
   word-break: break-all;
   margin: 0;
 }
+
+/* 액션 컬럼 */
+.ocr-failed-modal__action {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ocr-failed-modal__reprocess-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-white, #fff);
+  background-color: var(--color-primary, #007aff);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.ocr-failed-modal__reprocess-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover, #0056b3);
+}
+
+.ocr-failed-modal__reprocess-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

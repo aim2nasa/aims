@@ -277,6 +277,20 @@
     },
     {
       "parameters": {
+        "amount": 1,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -128
+      ],
+      "id": "wait-1s-before-ocr-001",
+      "name": "Wait 1s Before OCR"
+    },
+    {
+      "parameters": {
         "operation": "findOneAndUpdate",
         "collection": "files",
         "updateKey": "_id",
@@ -611,6 +625,17 @@
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Wait 1s Before OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1s Before OCR": {
+      "main": [
+        [
           {
             "node": "DocOCR Request",
             "type": "main",
