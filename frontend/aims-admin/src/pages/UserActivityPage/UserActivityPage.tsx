@@ -45,8 +45,16 @@ const SORT_OPTIONS = [
   { value: 'name', label: '이름순' },
 ];
 
+const LIMIT_OPTIONS = [
+  { value: 10, label: '10개씩' },
+  { value: 20, label: '20개씩' },
+  { value: 50, label: '50개씩' },
+  { value: 100, label: '100개씩' },
+];
+
 export const UserActivityPage = () => {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState('');
   const [sortBy, setSortBy] = useState('last_activity_at');
@@ -54,11 +62,11 @@ export const UserActivityPage = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'user-activity', 'list', page, search, tierFilter, sortBy, sortOrder],
+    queryKey: ['admin', 'user-activity', 'list', page, limit, search, tierFilter, sortBy, sortOrder],
     queryFn: () =>
       userActivityApi.getList({
         page,
-        limit: 50,
+        limit,
         search: search || undefined,
         tier: tierFilter || undefined,
         sortBy,
@@ -83,6 +91,11 @@ export const UserActivityPage = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     setSelectedUserId(null);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
   };
 
   if (isLoading) {
@@ -166,156 +179,178 @@ export const UserActivityPage = () => {
         </button>
       </div>
 
-      {/* Table */}
-      {users.length === 0 ? (
-        <div className="user-activity-page__empty">검색 결과가 없습니다.</div>
-      ) : (
-        <>
-          <div className="user-activity-page__table-container">
-            <table className="user-activity-page__table">
-              <thead>
-                <tr>
-                  <th onClick={() => handleSort('name')}>
-                    이름 {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('tier')}>
-                    등급 {sortBy === 'tier' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('document_count')}>
-                    문서 {sortBy === 'document_count' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('customer_count')}>
-                    고객 {sortBy === 'customer_count' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('ai_tokens_30d')}>
-                    AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('ocr_count_30d')}>
-                    OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('storage_used_bytes')}>
-                    스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('error_count_7d')}>
-                    오류 {sortBy === 'error_count_7d' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('last_activity_at')}>
-                    최근활동 {sortBy === 'last_activity_at' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => {
-                  const storagePercent =
-                    user.storage_quota_bytes > 0
-                      ? (user.storage_used_bytes / user.storage_quota_bytes) * 100
-                      : 0;
-                  const storageWarning = storagePercent >= 80;
-                  const hasErrors = user.error_count_7d > 0;
-                  const isSelected = selectedUserId === user.user_id;
-
-                  return (
-                    <tr
-                      key={user.user_id}
-                      className={`user-activity-page__row ${isSelected ? 'user-activity-page__row--selected' : ''} ${hasErrors ? 'user-activity-page__row--has-errors' : ''}`}
-                      onClick={() => handleRowClick(user)}
-                    >
-                      <td className="user-activity-page__cell-user">
-                        <span className="user-activity-page__user-name">{user.name}</span>
-                        <span className="user-activity-page__user-email">{user.email}</span>
-                      </td>
-                      <td>
-                        <span className={`tier-badge tier-badge--${user.tier}`}>
-                          {TIER_LABELS[user.tier] || user.tier}
-                        </span>
-                      </td>
-                      <td className="user-activity-page__cell-number">
-                        {user.document_count.toLocaleString()}
-                      </td>
-                      <td className="user-activity-page__cell-number">
-                        {user.customer_count.toLocaleString()}
-                      </td>
-                      <td className="user-activity-page__cell-number">
-                        {formatTokens(user.ai_tokens_30d)}
-                      </td>
-                      <td className="user-activity-page__cell-number">{user.ocr_count_30d}</td>
-                      <td
-                        className={`user-activity-page__cell-storage ${storageWarning ? 'user-activity-page__cell-storage--warning' : ''}`}
-                      >
-                        <span className="storage-used">{formatBytes(user.storage_used_bytes)}</span>
-                        <span className="storage-quota">
-                          /{' '}
-                          {user.storage_quota_bytes < 0
-                            ? '무제한'
-                            : formatBytes(user.storage_quota_bytes)}
-                        </span>
-                      </td>
-                      <td
-                        className={`user-activity-page__cell-error ${hasErrors ? 'user-activity-page__cell-error--has-errors' : ''}`}
-                      >
-                        {user.error_count_7d}
-                        {hasErrors && <span className="error-indicator">!</span>}
-                      </td>
-                      <td className="user-activity-page__cell-time">
-                        {formatRelativeTime(user.last_activity_at)}
-                      </td>
+      {/* Content: Table + Detail Panel (마스터-디테일 레이아웃) */}
+      <div className="user-activity-page__content">
+        {/* Main: Table + Pagination */}
+        <div className="user-activity-page__main">
+          {users.length === 0 ? (
+            <div className="user-activity-page__empty">검색 결과가 없습니다.</div>
+          ) : (
+            <>
+              <div className="user-activity-page__table-container">
+                <table className="user-activity-page__table">
+                  <thead>
+                    <tr>
+                      <th onClick={() => handleSort('name')}>
+                        이름 {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('tier')}>
+                        등급 {sortBy === 'tier' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('document_count')}>
+                        문서 {sortBy === 'document_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('customer_count')}>
+                        고객 {sortBy === 'customer_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('ai_tokens_30d')}>
+                        AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('ocr_count_30d')}>
+                        OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('storage_used_bytes')}>
+                        스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('error_count_7d')}>
+                        오류 {sortBy === 'error_count_7d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th onClick={() => handleSort('last_activity_at')}>
+                        최근활동 {sortBy === 'last_activity_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => {
+                      const storagePercent =
+                        user.storage_quota_bytes > 0
+                          ? (user.storage_used_bytes / user.storage_quota_bytes) * 100
+                          : 0;
+                      const storageWarning = storagePercent >= 80;
+                      const hasErrors = user.error_count_7d > 0;
+                      const isSelected = selectedUserId === user.user_id;
 
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="user-activity-page__pagination">
-              <button
-                type="button"
-                className="user-activity-page__pagination-button"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-              >
-                이전
-              </button>
+                      return (
+                        <tr
+                          key={user.user_id}
+                          className={`user-activity-page__row ${isSelected ? 'user-activity-page__row--selected' : ''} ${hasErrors ? 'user-activity-page__row--has-errors' : ''}`}
+                          onClick={() => handleRowClick(user)}
+                        >
+                          <td className="user-activity-page__cell-user">
+                            <span className="user-activity-page__user-name">{user.name}</span>
+                            <span className="user-activity-page__user-email">{user.email}</span>
+                          </td>
+                          <td>
+                            <span className={`tier-badge tier-badge--${user.tier}`}>
+                              {TIER_LABELS[user.tier] || user.tier}
+                            </span>
+                          </td>
+                          <td className="user-activity-page__cell-number">
+                            {user.document_count.toLocaleString()}
+                          </td>
+                          <td className="user-activity-page__cell-number">
+                            {user.customer_count.toLocaleString()}
+                          </td>
+                          <td className="user-activity-page__cell-number">
+                            {formatTokens(user.ai_tokens_30d)}
+                          </td>
+                          <td className="user-activity-page__cell-number">{user.ocr_count_30d}</td>
+                          <td
+                            className={`user-activity-page__cell-storage ${storageWarning ? 'user-activity-page__cell-storage--warning' : ''}`}
+                          >
+                            <span className="storage-used">{formatBytes(user.storage_used_bytes)}</span>
+                            <span className="storage-quota">
+                              /{' '}
+                              {user.storage_quota_bytes < 0
+                                ? '무제한'
+                                : formatBytes(user.storage_quota_bytes)}
+                            </span>
+                          </td>
+                          <td
+                            className={`user-activity-page__cell-error ${hasErrors ? 'user-activity-page__cell-error--has-errors' : ''}`}
+                          >
+                            {user.error_count_7d}
+                            {hasErrors && <span className="error-indicator">!</span>}
+                          </td>
+                          <td className="user-activity-page__cell-time">
+                            {formatRelativeTime(user.last_activity_at)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-              {Array.from({ length: Math.min(10, pagination.totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    className={`user-activity-page__pagination-button ${page === pageNum ? 'user-activity-page__pagination-button--active' : ''}`}
-                    onClick={() => handlePageChange(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
+              {/* Pagination */}
+              <div className="user-activity-page__pagination">
+                <select
+                  className="user-activity-page__limit-select"
+                  value={limit}
+                  onChange={(e) => handleLimitChange(Number(e.target.value))}
+                  aria-label="페이지당 항목 수"
+                >
+                  {LIMIT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
 
-              <button
-                type="button"
-                className="user-activity-page__pagination-button"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === pagination.totalPages}
-              >
-                다음
-              </button>
+                {pagination && pagination.totalPages > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="user-activity-page__pagination-button"
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 1}
+                    >
+                      이전
+                    </button>
 
-              <span className="user-activity-page__pagination-info">
-                전체 {pagination.total}명 (페이지 {page}/{pagination.totalPages})
-              </span>
-            </div>
+                    {Array.from({ length: Math.min(10, pagination.totalPages) }, (_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          className={`user-activity-page__pagination-button ${page === pageNum ? 'user-activity-page__pagination-button--active' : ''}`}
+                          onClick={() => handlePageChange(pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      className="user-activity-page__pagination-button"
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page === pagination.totalPages}
+                    >
+                      다음
+                    </button>
+                  </>
+                )}
+
+                {pagination && (
+                  <span className="user-activity-page__pagination-info">
+                    전체 {pagination.total}명 {pagination.totalPages > 1 && `(페이지 ${page}/${pagination.totalPages})`}
+                  </span>
+                )}
+              </div>
+            </>
           )}
-        </>
-      )}
+        </div>
 
-      {/* Detail Panel */}
-      {selectedUserId && (
-        <UserDetailPanel
-          userId={selectedUserId}
-          onClose={() => setSelectedUserId(null)}
-        />
-      )}
+        {/* Detail Panel (우측) */}
+        {selectedUserId && (
+          <UserDetailPanel
+            userId={selectedUserId}
+            onClose={() => setSelectedUserId(null)}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -4,7 +4,28 @@
  */
 
 .user-activity-page {
-  max-width: 1400px;
+  max-width: 1600px;
+  height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Content: 마스터-디테일 레이아웃 */
+.user-activity-page__content {
+  display: flex;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.user-activity-page__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .user-activity-page__title {
@@ -19,6 +40,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .user-activity-page__actions {
@@ -61,6 +83,7 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .user-activity-page__search {
@@ -110,8 +133,10 @@
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  overflow: hidden;
-  margin-bottom: var(--spacing-md);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-sm);
 }
 
 .user-activity-page__table {
@@ -121,10 +146,31 @@
 
 .user-activity-page__table th,
 .user-activity-page__table td {
-  padding: 6px var(--spacing-sm);
+  padding: 6px 8px;
   text-align: left;
   border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
+
+/* 컬럼 너비 최적화 */
+.user-activity-page__table th:nth-child(1),
+.user-activity-page__table td:nth-child(1) { min-width: 180px; } /* 이름 */
+.user-activity-page__table th:nth-child(2),
+.user-activity-page__table td:nth-child(2) { width: 70px; } /* 등급 */
+.user-activity-page__table th:nth-child(3),
+.user-activity-page__table td:nth-child(3) { width: 50px; text-align: right; } /* 문서 */
+.user-activity-page__table th:nth-child(4),
+.user-activity-page__table td:nth-child(4) { width: 50px; text-align: right; } /* 고객 */
+.user-activity-page__table th:nth-child(5),
+.user-activity-page__table td:nth-child(5) { width: 60px; text-align: right; } /* AI */
+.user-activity-page__table th:nth-child(6),
+.user-activity-page__table td:nth-child(6) { width: 50px; text-align: right; } /* OCR */
+.user-activity-page__table th:nth-child(7),
+.user-activity-page__table td:nth-child(7) { width: 110px; } /* 스토리지 */
+.user-activity-page__table th:nth-child(8),
+.user-activity-page__table td:nth-child(8) { width: 50px; text-align: center; } /* 오류 */
+.user-activity-page__table th:nth-child(9),
+.user-activity-page__table td:nth-child(9) { width: 70px; text-align: right; } /* 최근활동 */
 
 .user-activity-page__table th {
   background: var(--color-surface);
@@ -173,8 +219,9 @@
 /* Cell styles */
 .user-activity-page__cell-user {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
 }
 
 .user-activity-page__user-name {
@@ -184,6 +231,8 @@
 .user-activity-page__user-email {
   font-size: 10px;
   color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-activity-page__cell-number {
@@ -269,7 +318,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  flex-shrink: 0;
 }
 
 .user-activity-page__pagination-button {
@@ -305,16 +355,43 @@
   color: var(--color-text-tertiary);
 }
 
+.user-activity-page__limit-select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  margin-right: var(--spacing-sm);
+}
+
 /* ============================================================
-   User Detail Panel
+   User Detail Panel (우측 사이드 패널)
    ============================================================ */
 
 .user-detail-panel {
-  margin-top: var(--spacing-md);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 반응형: 좁은 화면에서는 하단 배치 */
+@media (max-width: 1200px) {
+  .user-activity-page__content {
+    flex-direction: column;
+  }
+
+  .user-detail-panel {
+    width: 100%;
+    flex: 1;
+  }
 }
 
 .user-detail-panel__header {
@@ -391,8 +468,8 @@
 /* Content */
 .user-detail-panel__content {
   padding: var(--spacing-md);
-  max-height: calc(100vh - 400px);
-  min-height: 200px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 

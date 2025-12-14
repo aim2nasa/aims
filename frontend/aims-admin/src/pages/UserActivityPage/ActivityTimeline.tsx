@@ -60,17 +60,6 @@ const formatTime = (dateString: string): string => {
 // 날짜 포맷 (MM.DD)
 const formatShortDate = (dateString: string): string => {
   const date = new Date(dateString);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const dateOnly = date.toISOString().split('T')[0];
-  const todayOnly = today.toISOString().split('T')[0];
-  const yesterdayOnly = yesterday.toISOString().split('T')[0];
-
-  if (dateOnly === todayOnly) return '오늘';
-  if (dateOnly === yesterdayOnly) return '어제';
-
   return `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
 };
 
