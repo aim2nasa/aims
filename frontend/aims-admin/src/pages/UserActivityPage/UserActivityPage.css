@@ -150,6 +150,8 @@
   text-align: left;
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
+  height: 36px;
+  vertical-align: middle;
 }
 
 /* 컬럼 너비 최적화 */
