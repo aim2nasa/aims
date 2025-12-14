@@ -324,7 +324,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.6.5 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.6.6 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -1722,10 +1722,43 @@ class DocumentViewer:
 
     def auto_refresh_callback(self):
         """자동 새로고침 콜백"""
+        # 컬렉션 목록 새로고침
+        self.refresh_collection_list()
         # 현재 문서 새로고침
         self.refresh_current_raw_document()
         # 다음 새로고침 스케줄링
         self.schedule_raw_auto_refresh()
+
+    def refresh_collection_list(self):
+        """컬렉션 목록 새로고침 (삭제된 컬렉션 반영)"""
+        try:
+            selected_db = self.current_db.get()
+            if not selected_db:
+                return
+
+            # 현재 컬렉션 목록 가져오기
+            current_collections = list(self.collection_combo['values'])
+            new_collections = self.mongo.get_collection_list(selected_db)
+
+            # 컬렉션 목록이 변경되었으면 업데이트
+            if current_collections != new_collections:
+                self.collection_combo['values'] = new_collections
+
+                # 현재 선택된 컬렉션이 삭제되었으면 처리
+                selected_collection = self.current_collection.get()
+                if selected_collection and selected_collection not in new_collections:
+                    if new_collections:
+                        self.current_collection.set(new_collections[0])
+                    else:
+                        self.current_collection.set("")
+                    # 문서 목록 초기화
+                    self.raw_documents = []
+                    self.raw_documents_loaded = False
+                    self.current_raw_index = 0
+                    self.update_raw_viewer()
+                    self.raw_count_label.config(text="문서: 0개 (컬렉션 삭제됨)")
+        except Exception as e:
+            print(f"컬렉션 목록 새로고침 실패: {e}")
 
     def delete_by_pattern(self):
         """패턴 기반 문서 일괄 삭제"""
