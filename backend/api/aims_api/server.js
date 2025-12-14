@@ -3675,20 +3675,51 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
     });
 
     // 문서 처리 상태
-    const [ocrPending, ocrFailed, embedFailed] = await Promise.all([
-      // OCR 대기: full_text가 없고 OCR 상태도 없는 문서
+    const [ocrPending, ocrProcessing, ocrFailed, embedPending, embedProcessing, embedFailed] = await Promise.all([
+      // OCR 대기: stages.ocr.status가 pending이거나, overallStatus가 processing이면서 OCR이 없는 문서
       db.collection('files').countDocuments({
-        'meta.full_text': null,
-        'ocr.status': null
+        $or: [
+          { 'stages.ocr.status': 'pending' },
+          { 'overallStatus': 'processing', 'ocr.status': { $exists: false }, 'meta.full_text': { $exists: false } }
+        ]
+      }),
+      // OCR 처리중
+      db.collection('files').countDocuments({
+        $or: [
+          { 'stages.ocr.status': 'processing' },
+          { 'ocr.status': 'processing' }
+        ]
       }),
       // OCR 실패
-      db.collection('files').countDocuments({ 'ocr.status': 'error' }),
+      db.collection('files').countDocuments({
+        $or: [
+          { 'ocr.status': 'error' },
+          { 'stages.ocr.status': 'error' }
+        ]
+      }),
+      // 임베딩 대기
+      db.collection('files').countDocuments({
+        $or: [
+          { 'docembed.status': 'pending' },
+          { 'stages.docembed.status': 'pending' }
+        ]
+      }),
+      // 임베딩 처리중
+      db.collection('files').countDocuments({
+        $or: [
+          { 'docembed.status': 'processing' },
+          { 'stages.docembed.status': 'processing' }
+        ]
+      }),
       // 임베딩 실패
-      db.collection('files').countDocuments({ 'docembed.status': 'failed' })
+      db.collection('files').countDocuments({
+        $or: [
+          { 'docembed.status': 'failed' },
+          { 'stages.docembed.status': 'failed' },
+          { 'stages.docembed.status': 'error' }
+        ]
+      })
     ]);
-
-    // 임베딩 대기 (임베딩이 없는 문서 - 간단하게)
-    const embedPending = 0; // TODO: Redis 큐 조회 필요
 
     // OCR 통계 (이번 달)
     const startOfMonth = new Date();
@@ -3696,14 +3727,26 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
     startOfMonth.setHours(0, 0, 0, 0);
 
     const [ocrUsedThisMonth, ocrTotalProcessed] = await Promise.all([
-      // 이번 달 OCR 처리 완료 수
+      // 이번 달 OCR 처리 완료 수 (ocr.done_at 또는 created_at 기준)
       db.collection('files').countDocuments({
-        'ocr.done_at': { $gte: startOfMonth }
+        $or: [
+          { 'ocr.done_at': { $gte: startOfMonth } },
+          { 'ocr.done_at': { $gte: startOfMonth.toISOString() } },
+          // OCR 완료된 문서 중 이번 달에 생성된 문서
+          {
+            'meta.created_at': { $gte: startOfMonth.toISOString() },
+            $or: [
+              { 'ocr.status': 'done' },
+              { 'meta.full_text': { $ne: null, $exists: true } }
+            ]
+          }
+        ]
       }),
       // 전체 OCR 처리 완료 수
       db.collection('files').countDocuments({
         $or: [
           { 'ocr.status': 'done' },
+          { 'ocr.full_text': { $ne: null, $exists: true } },
           { 'meta.full_text': { $ne: null, $exists: true } }
         ]
       })
@@ -3863,8 +3906,8 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         totalContracts
       },
       processing: {
-        ocrQueue: ocrPending,
-        embedQueue: embedPending,
+        ocrQueue: ocrPending + ocrProcessing,
+        embedQueue: embedPending + embedProcessing,
         failedDocuments: ocrFailed + embedFailed
       },
       health,
@@ -4001,6 +4044,44 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
       storageMap[item._id] = item.used_bytes;
     });
 
+    // 각 사용자의 이번 달 OCR 사용량 계산 (files 컬렉션에서 실제 집계)
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfMonthISO = startOfMonth.toISOString();
+
+    const ocrAgg = await db.collection('files').aggregate([
+      {
+        $match: {
+          ownerId: { $in: userIds },
+          $or: [
+            // ocr.done_at이 이번 달인 경우 (Date 또는 ISO string)
+            { 'ocr.done_at': { $gte: startOfMonth } },
+            { 'ocr.done_at': { $gte: startOfMonthISO } },
+            // 이번 달에 생성된 문서 중 OCR 완료된 것
+            {
+              'meta.created_at': { $gte: startOfMonthISO },
+              $or: [
+                { 'ocr.status': 'done' },
+                { 'meta.full_text': { $ne: null, $exists: true } }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: '$ownerId',
+          ocr_count: { $sum: 1 }
+        }
+      }
+    ]).toArray();
+
+    const ocrMap = {};
+    ocrAgg.forEach(item => {
+      ocrMap[item._id] = item.ocr_count;
+    });
+
     // 티어 정의 로드 (OCR 할당량 포함)
     const tierDefinitions = await getTierDefinitions(db);
 
@@ -4014,9 +4095,9 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
       const quota_bytes = isAdmin ? -1 : (tierDef?.quota_bytes || 30 * 1024 * 1024 * 1024);
       const used_bytes = storageMap[userId] || 0;
 
-      // OCR 할당량 계산
+      // OCR 할당량 계산 (ocrMap에서 실제 사용량 가져오기)
       const ocr_quota = isAdmin ? -1 : (tierDef?.ocr_quota ?? 100);
-      const ocr_used_this_month = u.ocr_used_this_month ?? 0;
+      const ocr_used_this_month = ocrMap[userId] ?? 0;
 
       return {
         ...u,

@@ -26,10 +26,27 @@ export const DocumentProcessingPage = () => {
   }
 
   const processing = data?.processing;
+  const ocr = data?.ocr;
 
   return (
     <div className="document-processing-page">
       <h1 className="document-processing-page__title">문서 처리 현황</h1>
+
+      <section className="document-processing-page__section">
+        <h2 className="document-processing-page__section-title">OCR 사용량</h2>
+        <div className="document-processing-page__stats-grid">
+          <StatCard
+            title="이번 달 OCR"
+            value={ocr?.usedThisMonth || 0}
+            subtitle="처리 완료된 문서"
+          />
+          <StatCard
+            title="전체 OCR"
+            value={ocr?.totalProcessed || 0}
+            subtitle="누적 처리 문서"
+          />
+        </div>
+      </section>
 
       <section className="document-processing-page__section">
         <h2 className="document-processing-page__section-title">처리 대기열</h2>
