@@ -26,7 +26,26 @@ export interface TopOCRUser {
   user_id: string;
   user_name: string;
   ocr_count: number;
+  error_count: number;
   last_ocr_at: string;
+}
+
+export interface FailedOCRDocument {
+  _id: string;
+  originalName: string;
+  ownerId: string;
+  ownerName: string;
+  customerId: string;
+  customerName: string;
+  statusCode: string;
+  statusMessage: string;
+  errorBody: string;
+  failed_at: string;
+}
+
+export interface FailedOCRDocumentsData {
+  total_count: number;
+  documents: FailedOCRDocument[];
 }
 
 interface OCRUsageOverviewResponse {
@@ -42,6 +61,11 @@ interface HourlyOCRResponse {
 interface TopOCRUsersResponse {
   success: boolean;
   data: TopOCRUser[];
+}
+
+interface FailedOCRDocumentsResponse {
+  success: boolean;
+  data: FailedOCRDocumentsData;
 }
 
 // 숫자 포맷팅 함수
@@ -82,6 +106,21 @@ export const ocrUsageApi = {
   getTopUsers: async (days: number = 30): Promise<TopOCRUser[]> => {
     const res = await apiClient.get<TopOCRUsersResponse>(
       `/api/admin/ocr-usage/top-users?days=${days}`
+    );
+    return res.data;
+  },
+
+  /**
+   * OCR 실패 문서 목록
+   */
+  getFailedDocuments: async (userId?: string): Promise<FailedOCRDocumentsData> => {
+    const params = new URLSearchParams();
+    if (userId) {
+      params.append('userId', userId);
+    }
+    const query = params.toString();
+    const res = await apiClient.get<FailedOCRDocumentsResponse>(
+      `/api/admin/ocr-usage/failed-documents${query ? `?${query}` : ''}`
     );
     return res.data;
   },

@@ -286,14 +286,15 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - days);
 
-      // 사용자별 OCR 집계
-      const pipeline = [
+      // 사용자별 OCR 성공 집계
+      const successPipeline = [
         {
           $match: {
             $or: [
               { 'ocr.done_at': { $gte: daysAgo } },
               { 'ocr.done_at': { $gte: daysAgo.toISOString() } }
             ],
+            'ocr.status': 'done',
             ownerId: { $exists: true, $ne: null }
           }
         },
@@ -308,7 +309,32 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         { $limit: limit }
       ];
 
-      const topUsers = await filesCollection.aggregate(pipeline).toArray();
+      // 사용자별 OCR 실패 집계
+      const errorPipeline = [
+        {
+          $match: {
+            'ocr.status': 'error',
+            ownerId: { $exists: true, $ne: null }
+          }
+        },
+        {
+          $group: {
+            _id: '$ownerId',
+            error_count: { $sum: 1 }
+          }
+        }
+      ];
+
+      const [topUsers, errorCounts] = await Promise.all([
+        filesCollection.aggregate(successPipeline).toArray(),
+        filesCollection.aggregate(errorPipeline).toArray()
+      ]);
+
+      // 에러 카운트 맵 생성
+      const errorCountMap = {};
+      for (const e of errorCounts) {
+        errorCountMap[e._id] = e.error_count;
+      }
 
       // 사용자 이름 조회
       const userIds = topUsers
@@ -336,6 +362,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         user_id: u._id,
         user_name: userNameMap[u._id] || u._id,
         ocr_count: u.ocr_count,
+        error_count: errorCountMap[u._id] || 0,
         last_ocr_at: u.last_ocr_at
       }));
 
@@ -348,6 +375,127 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: 'Top 사용자 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/ocr-usage/failed-documents
+   * OCR 실패 문서 목록
+   *
+   * Query:
+   * - userId: string (선택, 특정 사용자 필터링)
+   * - limit: number (기본값: 100)
+   */
+  router.get('/admin/ocr-usage/failed-documents', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const userId = req.query.userId;
+      const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+
+      const filesCollection = db.collection('files');
+      const usersCollection = db.collection('users');
+      const customersCollection = db.collection('customers');
+
+      // 쿼리 조건
+      const matchCondition = {
+        'ocr.status': 'error'
+      };
+      if (userId) {
+        matchCondition.ownerId = userId;
+      }
+
+      // 실패 문서 조회
+      const failedDocs = await filesCollection.find(matchCondition)
+        .sort({ 'ocr.failed_at': -1 })
+        .limit(limit)
+        .project({
+          _id: 1,
+          'upload.originalName': 1,
+          ownerId: 1,
+          customerId: 1,
+          'ocr.statusCode': 1,
+          'ocr.statusMessage': 1,
+          'ocr.errorBody': 1,
+          'ocr.failed_at': 1
+        })
+        .toArray();
+
+      // 소유자/고객 ID 수집
+      const ownerIds = [...new Set(failedDocs.map(d => d.ownerId).filter(Boolean))];
+      const customerIds = [...new Set(failedDocs.map(d => d.customerId).filter(Boolean))];
+
+      // 소유자 이름 조회
+      const ownerObjectIds = ownerIds
+        .map(id => {
+          try {
+            return ObjectId.isValid(id) ? new ObjectId(id) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const owners = await usersCollection.find(
+        { _id: { $in: ownerObjectIds } },
+        { projection: { _id: 1, name: 1 } }
+      ).toArray();
+
+      const ownerNameMap = {};
+      for (const owner of owners) {
+        ownerNameMap[owner._id.toString()] = owner.name;
+      }
+
+      // 고객 이름 조회
+      const customerObjectIds = customerIds
+        .map(id => {
+          try {
+            return ObjectId.isValid(id) ? new ObjectId(id) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const customers = await customersCollection.find(
+        { _id: { $in: customerObjectIds } },
+        { projection: { _id: 1, 'personal_info.name': 1 } }
+      ).toArray();
+
+      const customerNameMap = {};
+      for (const customer of customers) {
+        customerNameMap[customer._id.toString()] = customer.personal_info?.name;
+      }
+
+      // 응답 데이터 구성
+      const documents = failedDocs.map(doc => ({
+        _id: doc._id.toString(),
+        originalName: doc.upload?.originalName || '(이름 없음)',
+        ownerId: doc.ownerId || '',
+        ownerName: ownerNameMap[doc.ownerId] || doc.ownerId || '(알 수 없음)',
+        customerId: doc.customerId?.toString() || '',
+        customerName: customerNameMap[doc.customerId?.toString()] || '(알 수 없음)',
+        statusCode: doc.ocr?.statusCode || '',
+        statusMessage: doc.ocr?.statusMessage || '',
+        errorBody: doc.ocr?.errorBody || '',
+        failed_at: doc.ocr?.failed_at || ''
+      }));
+
+      // 전체 실패 문서 수 (필터 적용)
+      const totalCount = await filesCollection.countDocuments(matchCondition);
+
+      res.json({
+        success: true,
+        data: {
+          total_count: totalCount,
+          documents
+        }
+      });
+    } catch (error) {
+      console.error('[GET /api/admin/ocr-usage/failed-documents] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: 'OCR 실패 문서 조회에 실패했습니다.',
         details: error.message
       });
     }

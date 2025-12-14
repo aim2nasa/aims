@@ -19,6 +19,7 @@ import { ocrUsageApi, formatOCRCount } from '@/features/dashboard/ocrUsageApi';
 import type { HourlyOCRPoint } from '@/features/dashboard/ocrUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
+import { OCRFailedModal } from './OCRFailedModal';
 import './OCRUsagePage.css';
 
 const PERIOD_OPTIONS = [
@@ -83,6 +84,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export const OCRUsagePage = () => {
   const [days, setDays] = useState(30);
   const [chartHours, setChartHours] = useState(24);
+  const [isFailedModalOpen, setIsFailedModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
 
   const { data: overview, isLoading, isError, refetch: refetchOverview } = useQuery({
     queryKey: ['admin', 'ocr-usage', 'overview', days],
@@ -124,6 +128,18 @@ export const OCRUsagePage = () => {
   const handleRefreshAll = () => {
     refetchOverview();
     refetchHourly();
+  };
+
+  const handleOpenFailedModal = (userId?: string, userName?: string) => {
+    setSelectedUserId(userId || null);
+    setSelectedUserName(userName || null);
+    setIsFailedModalOpen(true);
+  };
+
+  const handleCloseFailedModal = () => {
+    setIsFailedModalOpen(false);
+    setSelectedUserId(null);
+    setSelectedUserName(null);
   };
 
   return (
@@ -186,7 +202,13 @@ export const OCRUsagePage = () => {
             <span className="status-card__label">처리 중</span>
             <span className="status-card__value">{overview?.ocr_processing || 0}</span>
           </div>
-          <div className="status-card status-card--failed">
+          <div
+            className="status-card status-card--failed status-card--clickable"
+            onClick={() => handleOpenFailedModal()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleOpenFailedModal()}
+          >
             <span className="status-card__label">실패</span>
             <span className="status-card__value">{overview?.ocr_failed || 0}</span>
           </div>
@@ -254,13 +276,14 @@ export const OCRUsagePage = () => {
                 <th>#</th>
                 <th>사용자</th>
                 <th>OCR 처리</th>
+                <th>실패</th>
                 <th>마지막 처리</th>
               </tr>
             </thead>
             <tbody>
               {!topUsers || topUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="ocr-usage-page__table-empty">
+                  <td colSpan={5} className="ocr-usage-page__table-empty">
                     사용자 데이터가 없습니다
                   </td>
                 </tr>
@@ -274,6 +297,21 @@ export const OCRUsagePage = () => {
                     <td className="ocr-usage-page__table-count">
                       {user.ocr_count.toLocaleString()}건
                     </td>
+                    <td className="ocr-usage-page__table-error">
+                      {user.error_count > 0 ? (
+                        <span
+                          className="ocr-usage-page__table-error-count"
+                          onClick={() => handleOpenFailedModal(user.user_id, user.user_name)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && handleOpenFailedModal(user.user_id, user.user_name)}
+                        >
+                          {user.error_count}건
+                        </span>
+                      ) : (
+                        <span className="ocr-usage-page__table-no-error">-</span>
+                      )}
+                    </td>
                     <td className="ocr-usage-page__table-time">
                       {new Date(user.last_ocr_at).toLocaleString('ko-KR')}
                     </td>
@@ -284,6 +322,14 @@ export const OCRUsagePage = () => {
           </table>
         </div>
       </section>
+
+      {/* OCR 실패 문서 모달 */}
+      <OCRFailedModal
+        isOpen={isFailedModalOpen}
+        onClose={handleCloseFailedModal}
+        userId={selectedUserId}
+        userName={selectedUserName}
+      />
     </div>
   );
 };

@@ -163,6 +163,21 @@
   color: #ff3b30;
 }
 
+/* Clickable Status Card */
+.status-card--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.status-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-card--clickable:active {
+  transform: translateY(0);
+}
+
 /* Chart */
 .ocr-usage-page__chart-header {
   display: flex;
@@ -328,6 +343,30 @@
 .ocr-usage-page__user-id {
   font-size: 10px;
   font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+}
+
+/* Error count column */
+.ocr-usage-page__table-error {
+  text-align: center;
+}
+
+.ocr-usage-page__table-error-count {
+  cursor: pointer;
+  color: #ff3b30;
+  font-family: var(--font-family-mono, monospace);
+  font-weight: var(--font-weight-medium);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.ocr-usage-page__table-error-count:hover {
+  background-color: rgba(255, 59, 48, 0.1);
+  text-decoration: underline;
+}
+
+.ocr-usage-page__table-no-error {
   color: var(--color-text-tertiary);
 }
 
