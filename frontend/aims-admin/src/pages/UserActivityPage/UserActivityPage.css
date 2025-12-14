@@ -621,6 +621,109 @@
   color: var(--color-text-secondary);
 }
 
+/* ============================================================
+   Error Table (오류 목록 탭) - 테이블 형식
+   ============================================================ */
+
+.error-table {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+}
+
+.error-table__header {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+/* 정렬 가능한 헤더 */
+.error-table__col--sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.error-table__col--sortable:hover {
+  color: var(--color-primary);
+}
+
+.error-table__row {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.15s;
+  background: rgba(255, 59, 48, 0.03);
+}
+
+.error-table__row:hover {
+  background: rgba(255, 59, 48, 0.08);
+}
+
+.error-table__row:last-child {
+  border-bottom: none;
+}
+
+.error-table__col {
+  flex-shrink: 0;
+}
+
+.error-table__col--datetime {
+  width: 130px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.error-table__col--type {
+  width: 80px;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+}
+
+.error-table__col--document {
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  padding-right: 8px;
+}
+
+.error-table__col--message {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+/* 오류 유형 색상 */
+.error-type--ocr_failed {
+  color: #ff9500;
+}
+
+.error-type--embed_failed {
+  color: #af52de;
+}
+
+.error-type--processing_failed {
+  color: var(--color-error);
+}
+
+.error-type--unknown {
+  color: var(--color-text-tertiary);
+}
+
 /* Activity List */
 .activity-list {
   display: flex;
@@ -709,6 +812,18 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   font-size: 10px;
+}
+
+/* 정렬 가능한 헤더 */
+.document-table__col--sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.document-table__col--sortable:hover {
+  color: var(--color-primary);
 }
 
 .document-table__row {

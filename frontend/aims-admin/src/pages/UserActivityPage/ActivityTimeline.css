@@ -109,6 +109,18 @@
   font-size: 10px;
 }
 
+/* 정렬 가능한 헤더 */
+.activity-log-table__col--sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.activity-log-table__col--sortable:hover {
+  color: var(--color-accent);
+}
+
 .activity-log-table__row {
   display: flex;
   align-items: center;

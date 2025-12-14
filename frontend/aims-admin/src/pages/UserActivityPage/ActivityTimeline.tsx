@@ -70,10 +70,15 @@ const formatShortDate = (dateString: string): string => {
   return `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
 };
 
+type SortKey = 'timestamp' | 'actor' | 'category' | 'target' | 'action' | 'result';
+type SortOrder = 'asc' | 'desc';
+
 export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
   const [page, setPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [successFilter, setSuccessFilter] = useState<string>('');
+  const [sortKey, setSortKey] = useState<SortKey>('timestamp');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const limit = 50;
 
   const { data, isLoading, isError } = useQuery({
@@ -99,6 +104,61 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
   const logs = data?.logs || [];
   const pagination = data?.pagination;
   const summary = data?.summary;
+
+  // 정렬 핸들러
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('desc');
+    }
+  };
+
+  // 정렬된 로그
+  const sortedLogs = [...logs].sort((a, b) => {
+    let aValue: string | number | boolean;
+    let bValue: string | number | boolean;
+
+    switch (sortKey) {
+      case 'timestamp':
+        aValue = new Date(a.timestamp).getTime();
+        bValue = new Date(b.timestamp).getTime();
+        break;
+      case 'actor':
+        aValue = a.actor.name || a.actor.role || '';
+        bValue = b.actor.name || b.actor.role || '';
+        break;
+      case 'category':
+        aValue = a.action.category || '';
+        bValue = b.action.category || '';
+        break;
+      case 'target':
+        aValue = a.action.target?.entity_name || a.action.target?.parent_name || '';
+        bValue = b.action.target?.entity_name || b.action.target?.parent_name || '';
+        break;
+      case 'action':
+        aValue = a.action.type || '';
+        bValue = b.action.type || '';
+        break;
+      case 'result':
+        aValue = a.result.success ? 1 : 0;
+        bValue = b.result.success ? 1 : 0;
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // 정렬 아이콘
+  const getSortIcon = (key: SortKey) => {
+    if (sortKey !== key) return '';
+    return sortOrder === 'asc' ? ' ↑' : ' ↓';
+  };
 
   return (
     <div className="activity-timeline">
@@ -156,14 +216,44 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
       ) : (
         <div className="activity-log-table">
           <div className="activity-log-table__header">
-            <span className="activity-log-table__col activity-log-table__col--datetime">일시</span>
-            <span className="activity-log-table__col activity-log-table__col--actor">호출자</span>
-            <span className="activity-log-table__col activity-log-table__col--category">분류</span>
-            <span className="activity-log-table__col activity-log-table__col--target">대상</span>
-            <span className="activity-log-table__col activity-log-table__col--action">액션</span>
-            <span className="activity-log-table__col activity-log-table__col--result">결과</span>
+            <span
+              className="activity-log-table__col activity-log-table__col--datetime activity-log-table__col--sortable"
+              onClick={() => handleSort('timestamp')}
+            >
+              일시{getSortIcon('timestamp')}
+            </span>
+            <span
+              className="activity-log-table__col activity-log-table__col--actor activity-log-table__col--sortable"
+              onClick={() => handleSort('actor')}
+            >
+              호출자{getSortIcon('actor')}
+            </span>
+            <span
+              className="activity-log-table__col activity-log-table__col--category activity-log-table__col--sortable"
+              onClick={() => handleSort('category')}
+            >
+              분류{getSortIcon('category')}
+            </span>
+            <span
+              className="activity-log-table__col activity-log-table__col--target activity-log-table__col--sortable"
+              onClick={() => handleSort('target')}
+            >
+              대상{getSortIcon('target')}
+            </span>
+            <span
+              className="activity-log-table__col activity-log-table__col--action activity-log-table__col--sortable"
+              onClick={() => handleSort('action')}
+            >
+              액션{getSortIcon('action')}
+            </span>
+            <span
+              className="activity-log-table__col activity-log-table__col--result activity-log-table__col--sortable"
+              onClick={() => handleSort('result')}
+            >
+              결과{getSortIcon('result')}
+            </span>
           </div>
-          {logs.map((log) => {
+          {sortedLogs.map((log) => {
             const category = log.action.category || 'file';
             const categoryLabel = CATEGORY_LABELS[category] || category;
             const actionLabel = ACTION_TYPE_LABELS[log.action.type] || log.action.type;

@@ -47,8 +47,21 @@ const STATUS_LABELS: Record<string, string> = {
 
 type TabType = 'summary' | 'logs' | 'errors' | 'documents';
 
+// 정렬 타입
+type ErrorSortKey = 'occurred_at' | 'type' | 'document_name';
+type DocSortKey = 'embed_completed_at' | 'document_name' | 'status' | 'ocr_status' | 'embed_status';
+type SortOrder = 'asc' | 'desc';
+
 export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
+
+  // 오류 목록 정렬
+  const [errorSortKey, setErrorSortKey] = useState<ErrorSortKey>('occurred_at');
+  const [errorSortOrder, setErrorSortOrder] = useState<SortOrder>('desc');
+
+  // 최근 문서 정렬
+  const [docSortKey, setDocSortKey] = useState<DocSortKey>('embed_completed_at');
+  const [docSortOrder, setDocSortOrder] = useState<SortOrder>('desc');
 
   const {
     data: detailData,
@@ -225,30 +238,102 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
     </div>
   );
 
-  const renderErrorsTab = () => (
-    <div className="user-detail-panel__errors">
-      {errorsLoading ? (
-        <div className="user-detail-panel__loading">오류 목록 로딩 중...</div>
-      ) : !errorsData?.errors?.length ? (
-        <div className="user-detail-panel__empty">최근 7일간 오류가 없습니다.</div>
-      ) : (
-        <div className="error-list">
-          {errorsData.errors.map((error: UserError, index: number) => (
-            <div key={index} className="error-item">
-              <div className="error-item__header">
-                <span className={`error-type error-type--${error.type}`}>
+  const renderErrorsTab = () => {
+    // 오류 정렬 핸들러
+    const handleErrorSort = (key: ErrorSortKey) => {
+      if (errorSortKey === key) {
+        setErrorSortOrder(errorSortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        setErrorSortKey(key);
+        setErrorSortOrder('desc');
+      }
+    };
+
+    // 정렬 아이콘
+    const getErrorSortIcon = (key: ErrorSortKey) => {
+      if (errorSortKey !== key) return '';
+      return errorSortOrder === 'asc' ? ' ↑' : ' ↓';
+    };
+
+    // 정렬된 오류 목록
+    const sortedErrors = [...(errorsData?.errors || [])].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (errorSortKey) {
+        case 'occurred_at':
+          aValue = new Date(a.occurred_at).getTime();
+          bValue = new Date(b.occurred_at).getTime();
+          break;
+        case 'type':
+          aValue = a.type || '';
+          bValue = b.type || '';
+          break;
+        case 'document_name':
+          aValue = a.document_name || '';
+          bValue = b.document_name || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return errorSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return errorSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return (
+      <div className="user-detail-panel__errors">
+        {errorsLoading ? (
+          <div className="user-detail-panel__loading">오류 목록 로딩 중...</div>
+        ) : !errorsData?.errors?.length ? (
+          <div className="user-detail-panel__empty">최근 7일간 오류가 없습니다.</div>
+        ) : (
+          <div className="error-table">
+            <div className="error-table__header">
+              <span
+                className="error-table__col error-table__col--datetime error-table__col--sortable"
+                onClick={() => handleErrorSort('occurred_at')}
+              >
+                일시{getErrorSortIcon('occurred_at')}
+              </span>
+              <span
+                className="error-table__col error-table__col--type error-table__col--sortable"
+                onClick={() => handleErrorSort('type')}
+              >
+                유형{getErrorSortIcon('type')}
+              </span>
+              <span
+                className="error-table__col error-table__col--document error-table__col--sortable"
+                onClick={() => handleErrorSort('document_name')}
+              >
+                문서명{getErrorSortIcon('document_name')}
+              </span>
+              <span className="error-table__col error-table__col--message">
+                오류 메시지
+              </span>
+            </div>
+            {sortedErrors.map((error: UserError, index: number) => (
+              <div key={index} className="error-table__row">
+                <span className="error-table__col error-table__col--datetime">
+                  {formatDateTime(error.occurred_at)}
+                </span>
+                <span className={`error-table__col error-table__col--type error-type--${error.type}`}>
                   {ERROR_TYPE_LABELS[error.type] || error.type}
                 </span>
-                <span className="error-time">{formatRelativeTime(error.occurred_at)}</span>
+                <span className="error-table__col error-table__col--document" title={error.document_name}>
+                  {error.document_name}
+                </span>
+                <span className="error-table__col error-table__col--message" title={error.error_message}>
+                  {error.error_message}
+                </span>
               </div>
-              <div className="error-item__document">{error.document_name}</div>
-              <div className="error-item__message">{error.error_message}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderLogsTab = () => (
     <div className="user-detail-panel__logs">
@@ -257,6 +342,22 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
   );
 
   const renderDocumentsTab = () => {
+    // 문서 정렬 핸들러
+    const handleDocSort = (key: DocSortKey) => {
+      if (docSortKey === key) {
+        setDocSortOrder(docSortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        setDocSortKey(key);
+        setDocSortOrder('desc');
+      }
+    };
+
+    // 정렬 아이콘
+    const getDocSortIcon = (key: DocSortKey) => {
+      if (docSortKey !== key) return '';
+      return docSortOrder === 'asc' ? ' ↑' : ' ↓';
+    };
+
     // 전체 상태 결과
     const getOverallResult = (status: string) => {
       if (status === 'completed') return { label: '성공', color: 'success' };
@@ -265,6 +366,41 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
       return { label: '대기', color: 'pending' };
     };
 
+    // 정렬된 문서 목록
+    const sortedDocs = [...(recent_activity || [])].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (docSortKey) {
+        case 'embed_completed_at':
+          aValue = a.embed_completed_at ? new Date(a.embed_completed_at).getTime() : 0;
+          bValue = b.embed_completed_at ? new Date(b.embed_completed_at).getTime() : 0;
+          break;
+        case 'document_name':
+          aValue = a.document_name || '';
+          bValue = b.document_name || '';
+          break;
+        case 'status':
+          aValue = a.status || '';
+          bValue = b.status || '';
+          break;
+        case 'ocr_status':
+          aValue = a.ocr_status || '';
+          bValue = b.ocr_status || '';
+          break;
+        case 'embed_status':
+          aValue = a.embed_status || '';
+          bValue = b.embed_status || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return docSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return docSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
     return (
       <div className="user-detail-panel__documents">
         {!recent_activity?.length ? (
@@ -272,13 +408,38 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         ) : (
           <div className="document-table">
             <div className="document-table__header">
-              <span className="document-table__col document-table__col--datetime">임베딩 일시</span>
-              <span className="document-table__col document-table__col--name">문서명</span>
-              <span className="document-table__col document-table__col--result">결과</span>
-              <span className="document-table__col document-table__col--ocr">OCR</span>
-              <span className="document-table__col document-table__col--embed">임베딩</span>
+              <span
+                className="document-table__col document-table__col--datetime document-table__col--sortable"
+                onClick={() => handleDocSort('embed_completed_at')}
+              >
+                임베딩 일시{getDocSortIcon('embed_completed_at')}
+              </span>
+              <span
+                className="document-table__col document-table__col--name document-table__col--sortable"
+                onClick={() => handleDocSort('document_name')}
+              >
+                문서명{getDocSortIcon('document_name')}
+              </span>
+              <span
+                className="document-table__col document-table__col--result document-table__col--sortable"
+                onClick={() => handleDocSort('status')}
+              >
+                결과{getDocSortIcon('status')}
+              </span>
+              <span
+                className="document-table__col document-table__col--ocr document-table__col--sortable"
+                onClick={() => handleDocSort('ocr_status')}
+              >
+                OCR{getDocSortIcon('ocr_status')}
+              </span>
+              <span
+                className="document-table__col document-table__col--embed document-table__col--sortable"
+                onClick={() => handleDocSort('embed_status')}
+              >
+                임베딩{getDocSortIcon('embed_status')}
+              </span>
             </div>
-            {recent_activity.map((doc, index) => {
+            {sortedDocs.map((doc, index) => {
               const result = getOverallResult(doc.status);
               const docName = doc.document_name || `문서_${doc.document_id?.slice(-6) || index}`;
 
