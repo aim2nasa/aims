@@ -82,6 +82,8 @@ export interface RecentActivity {
   status: string;
   ocr_status?: string;
   embed_status?: string;
+  ocr_completed_at?: string;
+  embed_completed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -366,6 +368,7 @@ export const formatDateTime = (dateString?: string | null): string => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false,
   }).replace(/\. /g, '.').replace(/:/g, ':');
 };

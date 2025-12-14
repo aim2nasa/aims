@@ -358,8 +358,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           'meta.filename': 1,
           overallStatus: 1,
           'ocr.status': 1,
+          'ocr.updated_at': 1,
           'stages.embed.status': 1,
           'docembed.status': 1,
+          'docembed.updated_at': 1,
           createdAt: 1,
           updatedAt: 1
         })
@@ -371,6 +373,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         status: doc.overallStatus,
         ocr_status: doc.ocr?.status,
         embed_status: doc.stages?.embed?.status || doc.docembed?.status,
+        ocr_completed_at: doc.ocr?.updated_at || null,
+        embed_completed_at: doc.docembed?.updated_at || null,
         created_at: doc.createdAt,
         updated_at: doc.updatedAt
       }));

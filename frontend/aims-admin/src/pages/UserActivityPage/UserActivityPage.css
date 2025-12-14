@@ -729,6 +729,13 @@
   flex-shrink: 0;
 }
 
+.document-table__col--datetime {
+  width: 130px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
 .document-table__col--name {
   flex: 1;
   min-width: 0;
@@ -747,13 +754,6 @@
   text-align: center;
   font-size: 10px;
   font-weight: var(--font-weight-medium);
-}
-
-.document-table__col--date {
-  width: 70px;
-  text-align: right;
-  color: var(--color-text-tertiary);
-  font-size: 10px;
 }
 
 /* 상태 색상 */

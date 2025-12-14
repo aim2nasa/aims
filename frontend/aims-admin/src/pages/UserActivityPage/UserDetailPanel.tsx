@@ -264,11 +264,11 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         ) : (
           <div className="document-table">
             <div className="document-table__header">
+              <span className="document-table__col document-table__col--datetime">임베딩 일시</span>
               <span className="document-table__col document-table__col--name">문서명</span>
               <span className="document-table__col document-table__col--result">결과</span>
               <span className="document-table__col document-table__col--ocr">OCR</span>
               <span className="document-table__col document-table__col--embed">임베딩</span>
-              <span className="document-table__col document-table__col--date">수정일</span>
             </div>
             {recent_activity.map((doc, index) => {
               const result = getOverallResult(doc.status);
@@ -276,6 +276,9 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
 
               return (
                 <div key={index} className="document-table__row">
+                  <span className="document-table__col document-table__col--datetime">
+                    {doc.embed_completed_at ? formatDateTime(doc.embed_completed_at) : '-'}
+                  </span>
                   <span className="document-table__col document-table__col--name" title={docName}>
                     {docName}
                   </span>
@@ -287,9 +290,6 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
                   </span>
                   <span className={`document-table__col document-table__col--embed document-table__badge--${doc.embed_status === 'done' ? 'success' : doc.embed_status === 'failed' ? 'error' : 'neutral'}`}>
                     {doc.embed_status === 'done' ? '완료' : doc.embed_status === 'failed' ? '실패' : doc.embed_status || '-'}
-                  </span>
-                  <span className="document-table__col document-table__col--date">
-                    {doc.updated_at ? formatRelativeTime(doc.updated_at) : '-'}
                   </span>
                 </div>
               );
