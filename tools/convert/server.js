@@ -69,6 +69,19 @@ const upload = multer({
   }
 });
 
+// 모든 요청 전에 디렉토리 확인/생성 (다른 프로세스가 삭제했을 경우 대비)
+app.use((req, res, next) => {
+  if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
+    console.log(`[디렉토리 재생성] ${TEMP_DIR}`);
+  }
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    console.log(`[디렉토리 재생성] ${OUTPUT_DIR}`);
+  }
+  next();
+});
+
 // 헬스 체크
 app.get("/health", (req, res) => {
   res.json({

@@ -248,3 +248,31 @@ ssh tars.giize.com "cd /home/rossi/aims/tools/mime_type_analyzer && npm install 
 
 - OCR 단계 완전히 생략됨 (ocr_prep, ocr 없음)
 - 메타데이터에서 직접 텍스트 추출 및 요약/태그 생성 완료
+
+### 2025.12.14 14:20 - PDF 변환 서버 temp 디렉토리 자동 생성 개선
+
+**문제:** `.doc` 파일 PDF 변환 실패 (`conversionStatus: "failed"`)
+
+**원인:**
+- PDF 변환 서버의 temp 디렉토리가 없음
+- `git clean -fd` 등 다른 프로세스가 temp 폴더 삭제
+
+**해결:**
+`tools/convert/server.js`에 미들웨어 추가 - 모든 요청 전 temp/output 디렉토리 확인/생성
+
+```javascript
+// 모든 요청 전에 디렉토리 확인/생성 (다른 프로세스가 삭제했을 경우 대비)
+app.use((req, res, next) => {
+  if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
+    console.log(`[디렉토리 재생성] ${TEMP_DIR}`);
+  }
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    console.log(`[디렉토리 재생성] ${OUTPUT_DIR}`);
+  }
+  next();
+});
+```
+
+**테스트:** temp 폴더 삭제 후 PDF 변환 → 자동 생성되어 정상 동작 확인
