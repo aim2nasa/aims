@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { startKakaoLogin, startKakaoLoginSwitch } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
+import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { syncUserIdFromStorage } from '@/stores/user';
 import './LoginPage.css';
@@ -14,8 +15,21 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setToken, setUser } = useAuthStore();
+  const { isDevMode, toggleDevMode } = useDevModeStore();
   const { showAlert } = useAppleConfirm();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 개발자 모드 단축키 핸들러 (Ctrl+Alt+Shift+D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        toggleDevMode();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleDevMode]);
 
   /**
    * OAuth 콜백 처리: URL에서 token 파라미터 추출 및 저장
@@ -194,8 +208,8 @@ export default function LoginPage() {
             다른 계정으로 로그인
           </button>
 
-          {/* 개발 환경 전용: 로그인 건너뛰기 */}
-          {import.meta.env.DEV && (
+          {/* 개발자 모드 전용: 로그인 건너뛰기 (Ctrl+Alt+Shift+D로 활성화) */}
+          {isDevMode && (
             <button
               type="button"
               className="kakao-login-button dev-login-button"
