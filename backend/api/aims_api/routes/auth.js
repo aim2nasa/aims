@@ -402,6 +402,85 @@ module.exports = function(db) {
   });
 
   /**
+   * POST /api/auth/admin-login
+   * Admin 직접 로그인 (카카오 없이)
+   * 현재는 비밀번호 없이 접근, 추후 비밀번호 인증 추가 예정
+   */
+  router.post('/admin-login', async (req, res) => {
+    try {
+      const { ObjectId } = require('mongodb');
+      const usersCollection = db.collection('users');
+
+      // TODO: 추후 비밀번호 인증 추가
+      // const { password } = req.body;
+
+      // 시스템 Admin 계정 조회
+      const admin = await usersCollection.findOne({
+        role: 'admin',
+        authProvider: 'system'  // 카카오가 아닌 시스템 계정
+      });
+
+      if (!admin) {
+        return res.status(401).json({
+          success: false,
+          message: 'Admin 계정이 존재하지 않습니다'
+        });
+      }
+
+      // JWT 토큰 생성
+      const token = generateToken(admin);
+
+      // 마지막 로그인 시간 업데이트
+      await usersCollection.updateOne(
+        { _id: admin._id },
+        { $set: { lastLogin: new Date() } }
+      );
+
+      // 로그인 로그
+      activityLogger.log({
+        actor: {
+          user_id: admin._id.toString(),
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent']
+        },
+        action: {
+          type: 'login',
+          category: 'auth',
+          description: 'Admin 직접 로그인'
+        },
+        result: {
+          success: true,
+          statusCode: 200
+        },
+        meta: {
+          endpoint: '/api/auth/admin-login',
+          method: 'POST'
+        }
+      });
+
+      res.json({
+        success: true,
+        token,
+        user: {
+          _id: admin._id.toString(),
+          name: admin.name,
+          email: admin.email,
+          role: admin.role
+        }
+      });
+    } catch (error) {
+      console.error('Admin login error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Admin 로그인에 실패했습니다'
+      });
+    }
+  });
+
+  /**
    * POST /api/auth/refresh
    * JWT 토큰 갱신
    */

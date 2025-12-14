@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { useAuthStore } from '@/shared/store/authStore';
 import type { User } from '@/features/auth/types';
@@ -9,35 +9,44 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { setAuth } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // URL에서 token 추출 (카카오 콜백 후)
-    const token = searchParams.get('token');
+  const handleAdminLogin = async () => {
+    setIsLoading(true);
+    setError(null);
 
-    if (token) {
-      try {
-        // JWT에서 사용자 정보 추출
-        const decoded = jwtDecode<User>(token);
-        setAuth(token, decoded);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-        // 관리자 권한 확인
-        if (decoded.role === 'admin') {
-          navigate('/dashboard', { replace: true });
-        } else {
-          navigate('/unauthorized', { replace: true });
-        }
-      } catch (error) {
-        console.error('토큰 디코딩 실패:', error);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || '로그인에 실패했습니다');
       }
-    }
-  }, [searchParams, setAuth, navigate]);
 
-  const handleKakaoLogin = () => {
-    // aims-uix3와 동일한 카카오 로그인 사용
-    const redirectOrigin = encodeURIComponent(window.location.origin);
-    window.location.href = `${API_BASE_URL}/api/auth/kakao?redirect=${redirectOrigin}`;
+      // JWT에서 사용자 정보 추출
+      const decoded = jwtDecode<User>(data.token);
+      setAuth(data.token, decoded);
+
+      // 관리자 권한 확인
+      if (decoded.role === 'admin') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/unauthorized', { replace: true });
+      }
+    } catch (err) {
+      console.error('Admin 로그인 실패:', err);
+      setError(err instanceof Error ? err.message : '로그인에 실패했습니다');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,11 +56,16 @@ export const LoginPage = () => {
           <h1>AIMS Admin</h1>
           <p>관리자 전용 대시보드</p>
         </div>
-        <button className="login-card__button" onClick={handleKakaoLogin}>
-          카카오 로그인
+        {error && <p className="login-card__error">{error}</p>}
+        <button
+          className="login-card__button login-card__button--admin"
+          onClick={handleAdminLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? '로그인 중...' : '관리자 로그인'}
         </button>
         <p className="login-card__note">
-          관리자 권한이 있는 계정만 접근 가능합니다
+          시스템 관리자 전용
         </p>
       </div>
     </div>
