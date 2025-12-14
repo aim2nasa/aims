@@ -11,6 +11,7 @@ import { FileValidationPage } from '@/pages/FileValidationPage';
 import { AIUsagePage } from '@/pages/AIUsagePage';
 import { OCRUsagePage } from '@/pages/OCRUsagePage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
+import { UserActivityPage } from '@/pages/UserActivityPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -69,6 +70,10 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: <UsersPage />,
+      },
+      {
+        path: 'users/activity',
+        element: <UserActivityPage />,
       },
     ],
   },

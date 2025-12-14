@@ -28,15 +28,6 @@ const TIER_LABELS: Record<string, string> = {
   admin: '관리자',
 };
 
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
-  if (bytes < 0) return '무제한';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return '-';
   const date = new Date(dateString);
@@ -211,82 +202,61 @@ export const UsersPage = () => {
               },
               {
                 key: 'hasOcrPermission',
-                label: 'OCR',
+                label: 'OCR 권한',
                 render: (user: User) => {
                   const isUpdating = updatingUserId === user._id;
-                  const ocrUsed = user.storage?.ocr_used_this_month ?? 0;
-                  const ocrQuota = user.storage?.ocr_quota ?? 0;
-                  const isUnlimited = ocrQuota < 0;
-                  const usagePercent = ocrQuota > 0 ? (ocrUsed / ocrQuota) * 100 : 0;
-                  const warningClass = usagePercent >= 95 ? 'ocr--danger' :
-                    usagePercent >= 80 ? 'ocr--warning' : '';
-
                   return (
-                    <div className={`ocr-cell ${warningClass}`}>
-                      <span className="ocr-cell__usage">
-                        {user.hasOcrPermission
-                          ? isUnlimited ? '무제한' : `${ocrUsed}/${ocrQuota}회`
-                          : '-'}
+                    <button
+                      type="button"
+                      className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isUpdating) {
+                          handleOcrToggle(user._id, user.hasOcrPermission);
+                        }
+                      }}
+                      disabled={isUpdating}
+                      title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
+                    >
+                      <span className="ocr-toggle__indicator" />
+                      <span className="ocr-toggle__label">
+                        {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
                       </span>
-                      <button
-                        type="button"
-                        className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isUpdating) {
-                            handleOcrToggle(user._id, user.hasOcrPermission);
-                          }
-                        }}
-                        disabled={isUpdating}
-                        title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
-                      >
-                        <span className="ocr-toggle__indicator" />
-                        <span className="ocr-toggle__label">
-                          {isUpdating ? '변경중...' : user.hasOcrPermission ? 'ON' : 'OFF'}
-                        </span>
-                      </button>
-                    </div>
+                    </button>
                   );
                 },
               },
               {
-                key: 'storage',
-                label: '스토리지',
+                key: 'tier',
+                label: '등급',
                 render: (user: User) => {
-                  if (!user.storage) return '-';
-                  const { used_bytes, quota_bytes, usage_percent, tier } = user.storage;
-                  const isUnlimited = quota_bytes < 0;
+                  const tier = user.storage?.tier || 'free_trial';
                   const isAdmin = tier === 'admin';
-                  const warningClass = usage_percent >= 95 ? 'storage--danger' :
-                    usage_percent >= 80 ? 'storage--warning' : '';
                   const isUpdating = updatingUserId === user._id;
-                  return (
-                    <div className={`storage-cell ${warningClass}`}>
-                      <span className="storage-cell__usage">
-                        {formatBytes(used_bytes)}
-                        {!isUnlimited && ` / ${formatBytes(quota_bytes)}`}
+
+                  if (isAdmin) {
+                    return (
+                      <span className={`tier-badge tier-badge--${tier}`}>
+                        {TIER_LABELS[tier] || tier}
                       </span>
-                      {isAdmin ? (
-                        <span className={`tier-badge tier-badge--${tier}`}>
-                          {TIER_LABELS[tier] || tier}
-                        </span>
-                      ) : (
-                        <select
-                          className={`tier-select tier-select--${tier}`}
-                          value={tier}
-                          onChange={(e) => handleTierChange(user._id, e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          disabled={isUpdating}
-                          aria-label="등급 변경"
-                        >
-                          {TIER_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
+                    );
+                  }
+
+                  return (
+                    <select
+                      className={`tier-select tier-select--${tier}`}
+                      value={tier}
+                      onChange={(e) => handleTierChange(user._id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      disabled={isUpdating}
+                      aria-label="등급 변경"
+                    >
+                      {TIER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   );
                 },
               },

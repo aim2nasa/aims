@@ -90,7 +90,14 @@ function App() {
         { path: '/dashboard/ocr-usage', label: 'OCR 사용량' },
       ],
     },
-    { path: '/users', label: '사용자 관리' },
+    {
+      path: '/users',
+      label: '사용자 관리',
+      children: [
+        { path: '/users', label: '사용자 목록' },
+        { path: '/users/activity', label: '사용자 활동' },
+      ],
+    },
   ];
 
   const toggleMenu = (path: string) => {

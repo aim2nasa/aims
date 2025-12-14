@@ -6887,6 +6887,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', ocrUsageRoutes);
     console.log('[Server] ocrUsageRoutes 등록 완료');
 
+    // 사용자 활동 라우트 설정
+    const userActivityRoutes = require('./routes/user-activity-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    app.use('/api', userActivityRoutes);
+    console.log('[Server] userActivityRoutes 등록 완료');
+
     // 스토리지 쿼터 라우트 설정
     const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
     app.use('/api', storageRoutes);

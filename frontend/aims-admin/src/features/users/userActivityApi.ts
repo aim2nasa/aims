@@ -1,0 +1,235 @@
+/**
+ * User Activity API
+ * 사용자 활동 현황 API 모듈
+ * @since 2025-12-14
+ */
+
+import { apiClient } from '@/shared/api/apiClient';
+
+// ============================================================
+// Types
+// ============================================================
+
+export interface UserActivitySummary {
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+  tier: string;
+  document_count: number;
+  customer_count: number;
+  ai_tokens_30d: number;
+  ocr_count_30d: number;
+  storage_used_bytes: number;
+  storage_quota_bytes: number;
+  error_count_7d: number;
+  last_activity_at: string | null;
+  created_at: string;
+}
+
+export interface UserActivityListResponse {
+  success: boolean;
+  data: {
+    users: UserActivitySummary[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface UserDetail {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  tier: string;
+  storage: {
+    used_bytes: number;
+    quota_bytes: number;
+    usage_percent: number;
+  };
+  created_at: string;
+  last_login: string | null;
+}
+
+export interface ActivitySummary {
+  documents: {
+    total: number;
+    this_month: number;
+    by_status: Record<string, number>;
+  };
+  customers: {
+    total: number;
+    active: number;
+    dormant: number;
+  };
+  ai_usage: {
+    total_tokens: number;
+    by_source: Record<string, number>;
+  };
+  ocr_usage: {
+    total: number;
+    this_month: number;
+  };
+}
+
+export interface RecentActivity {
+  document_id: string;
+  document_name: string;
+  status: string;
+  ocr_status?: string;
+  embed_status?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserDetailResponse {
+  success: boolean;
+  data: {
+    user: UserDetail;
+    activity_summary: ActivitySummary;
+    recent_activity: RecentActivity[];
+  };
+}
+
+export interface UserError {
+  type: 'ocr_failed' | 'embed_failed' | 'processing_failed' | 'unknown';
+  document_id: string;
+  document_name: string;
+  error_message: string;
+  occurred_at: string;
+}
+
+export interface UserErrorsResponse {
+  success: boolean;
+  data: {
+    user_id: string;
+    period_days: number;
+    error_count: number;
+    errors: UserError[];
+  };
+}
+
+export interface GetUserActivityListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  tier?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+// ============================================================
+// API Functions
+// ============================================================
+
+export const userActivityApi = {
+  /**
+   * 전체 사용자 활동 요약 목록 조회
+   */
+  getList: async (params: GetUserActivityListParams = {}): Promise<UserActivityListResponse['data']> => {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.tier) queryParams.append('tier', params.tier);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/api/admin/user-activity/list?${queryString}`
+      : '/api/admin/user-activity/list';
+
+    const response = await apiClient.get<UserActivityListResponse>(endpoint);
+    return response.data;
+  },
+
+  /**
+   * 특정 사용자 상세 활동 정보 조회
+   */
+  getDetail: async (userId: string): Promise<UserDetailResponse['data']> => {
+    const response = await apiClient.get<UserDetailResponse>(
+      `/api/admin/user-activity/${userId}/detail`
+    );
+    return response.data;
+  },
+
+  /**
+   * 특정 사용자의 오류 목록 조회
+   */
+  getErrors: async (userId: string, days: number = 7): Promise<UserErrorsResponse['data']> => {
+    const response = await apiClient.get<UserErrorsResponse>(
+      `/api/admin/user-activity/${userId}/errors?days=${days}`
+    );
+    return response.data;
+  },
+};
+
+// ============================================================
+// Utility Functions
+// ============================================================
+
+/**
+ * 바이트를 읽기 쉬운 형식으로 변환
+ */
+export const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  if (bytes < 0) return '무제한';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+/**
+ * 토큰 수를 읽기 쉬운 형식으로 변환
+ */
+export const formatTokens = (tokens: number): string => {
+  if (tokens >= 1000000) {
+    return (tokens / 1000000).toFixed(1) + 'M';
+  }
+  if (tokens >= 1000) {
+    return (tokens / 1000).toFixed(1) + 'K';
+  }
+  return tokens.toString();
+};
+
+/**
+ * 날짜를 읽기 쉬운 형식으로 변환
+ */
+export const formatDateTime = (dateString?: string | null): string => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).replace(/\. /g, '.').replace(/:/g, ':');
+};
+
+/**
+ * 상대 시간 표시 (예: "3시간 전")
+ */
+export const formatRelativeTime = (dateString?: string | null): string => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return '방금 전';
+  if (diffMins < 60) return `${diffMins}분 전`;
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  if (diffDays < 7) return `${diffDays}일 전`;
+  return formatDateTime(dateString);
+};
