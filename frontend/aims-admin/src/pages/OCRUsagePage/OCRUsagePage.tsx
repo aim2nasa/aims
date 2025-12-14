@@ -275,8 +275,8 @@ export const OCRUsagePage = () => {
               <tr>
                 <th>#</th>
                 <th>사용자</th>
-                <th>OCR 처리</th>
-                <th>실패</th>
+                <th>OCR 성공</th>
+                <th>OCR 실패</th>
                 <th>마지막 처리</th>
               </tr>
             </thead>
