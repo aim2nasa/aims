@@ -6821,6 +6821,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', tokenUsageRoutes);
     console.log('[Server] tokenUsageRoutes 등록 완료');
 
+    // OCR 사용량 라우트 설정
+    const ocrUsageRoutes = require('./routes/ocr-usage-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    app.use('/api', ocrUsageRoutes);
+    console.log('[Server] ocrUsageRoutes 등록 완료');
+
     // 스토리지 쿼터 라우트 설정
     const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
     app.use('/api', storageRoutes);

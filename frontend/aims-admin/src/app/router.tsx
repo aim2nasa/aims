@@ -9,6 +9,7 @@ import { TierManagementPage } from '@/pages/TierManagementPage';
 import { SystemHealthPage } from '@/pages/SystemHealthPage';
 import { FileValidationPage } from '@/pages/FileValidationPage';
 import { AIUsagePage } from '@/pages/AIUsagePage';
+import { OCRUsagePage } from '@/pages/OCRUsagePage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import App from '../App';
 
@@ -60,6 +61,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/ai-usage',
         element: <AIUsagePage />,
+      },
+      {
+        path: 'dashboard/ocr-usage',
+        element: <OCRUsagePage />,
       },
       {
         path: 'users',
