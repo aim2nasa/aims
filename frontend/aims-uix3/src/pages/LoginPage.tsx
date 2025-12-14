@@ -2,8 +2,9 @@
  * 로그인 페이지
  */
 
-import { useNavigate } from 'react-router-dom';
-import { startKakaoLogin, startKakaoLoginSwitch } from '@/entities/auth/api';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { startKakaoLogin } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { syncUserIdFromStorage } from '@/stores/user';
@@ -11,8 +12,78 @@ import './LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setToken, setUser } = useAuthStore();
   const { showAlert } = useAppleConfirm();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  /**
+   * OAuth 콜백 처리: URL에서 token 파라미터 추출 및 저장
+   * - 토큰 저장 후 /api/auth/me 호출하여 정확한 사용자 정보 가져오기
+   */
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token || isProcessing) return;
+
+    setIsProcessing(true);
+
+    const processToken = async () => {
+      try {
+        // 1. 먼저 토큰 저장
+        setToken(token);
+
+        // 2. /api/auth/me API 호출하여 정확한 사용자 정보 가져오기
+        // (JWT atob 디코딩은 UTF-8 한글이 깨지므로 API 사용)
+        const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('사용자 정보 조회 실패');
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.user) {
+          throw new Error('사용자 정보 없음');
+        }
+
+        const user = {
+          _id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          avatarUrl: data.user.avatarUrl || null,
+          role: data.user.role,
+          authProvider: data.user.authProvider || 'kakao',
+          profileCompleted: data.user.profileCompleted ?? true,
+        };
+
+        // 3. Zustand store에 사용자 정보 저장
+        setUser(user);
+
+        // 4. 레거시 API용 사용자 ID 저장
+        localStorage.setItem('aims-current-user-id', user._id);
+        syncUserIdFromStorage();
+
+        console.log('[LoginPage] 카카오 로그인 성공:', user.name);
+
+        // 5. 메인 페이지로 이동 (URL 파라미터 제거)
+        navigate('/', { replace: true });
+      } catch (error) {
+        console.error('[LoginPage] 토큰 처리 실패:', error);
+        showAlert({
+          title: '로그인 실패',
+          message: '인증 토큰 처리에 실패했습니다. 다시 시도해주세요.',
+          iconType: 'error'
+        });
+        setIsProcessing(false);
+      }
+    };
+
+    processToken();
+  }, [searchParams, isProcessing, setToken, setUser, navigate, showAlert]);
 
   /**
    * 개발 환경 전용: 로그인 건너뛰기
@@ -72,6 +143,20 @@ export default function LoginPage() {
     }
   };
 
+  // 토큰 처리 중일 때 로딩 표시
+  if (isProcessing) {
+    return (
+      <div className="login-page">
+        <div className="login-container">
+          <div className="login-header">
+            <h1>AIMS</h1>
+            <p>로그인 처리 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="login-page">
       <div className="login-container">
@@ -81,7 +166,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-content">
-          {/* 기존 계정으로 빠른 로그인 */}
+          {/* 카카오 로그인 (매번 로그인 화면 표시) */}
           <button
             type="button"
             className="kakao-login-button"
@@ -97,24 +182,6 @@ export default function LoginPage() {
               />
             </svg>
             <span>카카오 로그인</span>
-          </button>
-
-          {/* 다른 계정으로 로그인 */}
-          <button
-            type="button"
-            className="kakao-login-button kakao-login-button--secondary"
-            onClick={startKakaoLoginSwitch}
-            aria-label="다른 계정으로 로그인"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M9 0C4.029 0 0 3.285 0 7.333c0 2.627 1.727 4.929 4.318 6.209-.178.656-.657 2.432-.748 2.828 0 0-.055.44.23.606.285.166.625.024.625.024 1.023-.131 4.715-3.083 5.471-3.585.368.048.743.074 1.125.074 4.971 0 9-3.285 9-7.333S13.971 0 9 0z"
-                fill="#371D1E"
-              />
-            </svg>
-            <span>다른 계정으로 로그인</span>
           </button>
 
           {/* 개발 환경 전용: 로그인 건너뛰기 */}

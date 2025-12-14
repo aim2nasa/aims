@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import { useAuthStore } from '@/shared/store/authStore';
-import type { User } from '@/features/auth/types';
 import './LoginPage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -31,12 +29,17 @@ export const LoginPage = () => {
         throw new Error(data.message || '로그인에 실패했습니다');
       }
 
-      // JWT에서 사용자 정보 추출
-      const decoded = jwtDecode<User>(data.token);
-      setAuth(data.token, decoded);
+      // API 응답에서 직접 사용자 정보 사용 (JWT 디코딩 대신 - UTF-8 인코딩 문제 방지)
+      const user = {
+        _id: data.user._id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role as 'admin' | 'user' | 'agent' | 'system',
+      };
+      setAuth(data.token, user);
 
       // 관리자 권한 확인
-      if (decoded.role === 'admin') {
+      if (user.role === 'admin') {
         navigate('/dashboard', { replace: true });
       } else {
         navigate('/unauthorized', { replace: true });

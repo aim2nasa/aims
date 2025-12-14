@@ -25,12 +25,14 @@ export interface AuthResponse {
 }
 
 /**
- * 카카오 로그인 시작 - 기존 계정으로 빠른 로그인
+ * 카카오 로그인 시작 - 매번 로그인 화면 표시
+ * prompt=login으로 항상 카카오 로그인 화면을 표시하여 사용자가 계정 선택 가능
  * 현재 origin을 redirect 파라미터로 전달하여 개발/상용 서버 모두 지원
  */
 export const startKakaoLogin = () => {
   const redirectOrigin = encodeURIComponent(window.location.origin);
-  window.location.href = `${API_BASE_URL}/api/auth/kakao?redirect=${redirectOrigin}`;
+  // prompt=login 엔드포인트 사용하여 매번 카카오 로그인 화면 표시
+  window.location.href = `${API_BASE_URL}/api/auth/kakao/switch?redirect=${redirectOrigin}`;
 };
 
 /**
