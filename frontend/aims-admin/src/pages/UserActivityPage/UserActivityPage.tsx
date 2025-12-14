@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   userActivityApi,
   formatBytes,
@@ -61,13 +62,16 @@ export const UserActivityPage = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
+  // 검색어 debounce (300ms)
+  const debouncedSearch = useDebounce(search, 300);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'user-activity', 'list', page, limit, search, tierFilter, sortBy, sortOrder],
+    queryKey: ['admin', 'user-activity', 'list', page, limit, debouncedSearch, tierFilter, sortBy, sortOrder],
     queryFn: () =>
       userActivityApi.getList({
         page,
         limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         tier: tierFilter || undefined,
         role: 'agent',  // 설계사만 조회 (관리자 제외)
         sortBy,
