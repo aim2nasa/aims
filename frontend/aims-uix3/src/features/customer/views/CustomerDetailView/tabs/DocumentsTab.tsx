@@ -957,80 +957,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       }
                       return null;
                     })()}
-                    {/* 🍎 PDF 변환 상태 배지 */}
-                    {(() => {
-                      const conversionStatus = document.conversionStatus
-                      const isConvertible = document.isConvertible
-
-                      // 변환 대상 파일만 배지 표시
-                      if (!isConvertible) return null
-
-                      if (conversionStatus === 'completed') {
-                        return (
-                          <Tooltip content="PDF로 변환 완료">
-                            <div className="document-conversion-badge document-conversion-badge--completed">
-                              <SFSymbol
-                                name="doc.richtext"
-                                size={SFSymbolSize.CAPTION_2}
-                                weight={SFSymbolWeight.REGULAR}
-                                decorative={true}
-                              />
-                            </div>
-                          </Tooltip>
-                        )
-                      }
-                      if (conversionStatus === 'processing') {
-                        return (
-                          <Tooltip content="PDF 변환 중...">
-                            <div className="document-conversion-badge document-conversion-badge--processing">
-                              <SFSymbol
-                                name="arrow.triangle.2.circlepath"
-                                size={SFSymbolSize.CAPTION_2}
-                                weight={SFSymbolWeight.REGULAR}
-                                decorative={true}
-                              />
-                            </div>
-                          </Tooltip>
-                        )
-                      }
-                      if (conversionStatus === 'pending') {
-                        return (
-                          <Tooltip content="PDF 변환 대기 중">
-                            <div className="document-conversion-badge document-conversion-badge--pending">
-                              <SFSymbol
-                                name="clock"
-                                size={SFSymbolSize.CAPTION_2}
-                                weight={SFSymbolWeight.REGULAR}
-                                decorative={true}
-                              />
-                            </div>
-                          </Tooltip>
-                        )
-                      }
-                      if (conversionStatus === 'failed') {
-                        const docId = document._id
-                        const isRetrying = retryingDocumentId === docId
-                        return (
-                          <Tooltip content={isRetrying ? 'PDF 재변환 중...' : 'PDF 변환 실패 - 클릭하여 재시도'}>
-                            <button
-                              type="button"
-                              className={`document-conversion-badge document-conversion-badge--failed ${isRetrying ? 'document-conversion-badge--retrying' : ''}`}
-                              onClick={(e) => docId && handleRetryPdfConversion(docId, e)}
-                              disabled={isRetrying || !docId}
-                              aria-label="PDF 변환 재시도"
-                            >
-                              <SFSymbol
-                                name={isRetrying ? 'arrow.triangle.2.circlepath' : 'exclamationmark.triangle'}
-                                size={SFSymbolSize.CAPTION_2}
-                                weight={SFSymbolWeight.REGULAR}
-                                decorative={true}
-                              />
-                            </button>
-                          </Tooltip>
-                        )
-                      }
-                      return null
-                    })()}
                   </div>
 
                   {/* 파일명 */}
@@ -1047,6 +973,69 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     }}
                   >
                     {document.originalName ?? '이름 없는 문서'}
+                    {/* 🍎 PDF 변환 배지 - DocumentStatusList.tsx와 동일 */}
+                    {(() => {
+                      // 파일명에서 확장자 추출하여 변환 대상 여부 판단
+                      const filename = document.originalName || ''
+                      const extMatch = filename.match(/\.([^.]+)$/i)
+                      const ext = extMatch ? extMatch[1].toLowerCase() : ''
+                      const convertibleExts = ['pptx', 'ppt', 'xlsx', 'xls', 'docx', 'doc', 'hwp', 'txt']
+                      const isConvertible = document.isConvertible ?? convertibleExts.includes(ext)
+
+                      // 변환 대상이 아니면 배지 안 보임
+                      if (!isConvertible) return null
+
+                      // 변환 상태: API 값 우선
+                      const conversionStatus = document.conversionStatus
+                      if (!conversionStatus || conversionStatus === 'not_required') return null
+
+                      // 상태별 툴팁
+                      const tooltips: Record<string, string> = {
+                        completed: 'PDF 변환 완료',
+                        processing: 'PDF 변환 중...',
+                        pending: 'PDF 변환 대기 중',
+                        failed: 'PDF 변환 실패'
+                      }
+                      const tooltip = tooltips[conversionStatus] || ''
+
+                      // 상태별 아이콘 (DocumentStatusList.tsx와 동일)
+                      const statusIcons: Record<string, React.ReactNode> = {
+                        completed: (
+                          <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                            <circle cx="6" cy="6" r="5.5" fill="#34c759"/>
+                            <path d="M3.5 6l2 2 3-4" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        ),
+                        processing: (
+                          <svg className="pdf-badge-icon pdf-badge-icon--spin" viewBox="0 0 12 12">
+                            <circle cx="6" cy="6" r="5" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="16 8" opacity="0.9"/>
+                          </svg>
+                        ),
+                        pending: (
+                          <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                            <circle cx="3" cy="6" r="1.5" fill="#fff"/>
+                            <circle cx="6" cy="6" r="1.5" fill="#fff"/>
+                            <circle cx="9" cy="6" r="1.5" fill="#fff"/>
+                          </svg>
+                        ),
+                        failed: (
+                          <svg className="pdf-badge-icon" viewBox="0 0 12 12">
+                            <circle cx="6" cy="6" r="5.5" fill="#fff"/>
+                            <path d="M4 4l4 4M8 4l-4 4" stroke="#ff3b30" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        )
+                      }
+                      const icon = statusIcons[conversionStatus] || statusIcons['pending']
+
+                      return (
+                        <Tooltip content={tooltip}>
+                          <span className={`pdf-conversion-badge pdf-conversion-badge--${conversionStatus}`}>
+                            {icon}
+                            <span className="pdf-badge-text">pdf</span>
+                          </span>
+                        </Tooltip>
+                      )
+                    })()}
                     {document.notes && typeof document.notes === 'string' && document.notes.trim() !== '' && (
                       <Tooltip
                         content={document.notes.length > 50 ? `${document.notes.substring(0, 50)}...` : document.notes}

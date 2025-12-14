@@ -350,6 +350,61 @@
   color: var(--color-primary-400);
 }
 
+/* === 🍎 PDF 변환 배지 (파일명 옆 인라인) === */
+.pdf-conversion-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 2px 4px;
+  margin-left: 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  line-height: 1;
+  transition: all 0.2s ease-out;
+  vertical-align: middle;
+}
+
+.pdf-badge-text {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+/* 배지 내 아이콘 (DocumentStatusList.css와 동일) */
+.pdf-badge-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.pdf-badge-icon--spin {
+  animation: pdf-badge-spin 1s linear infinite;
+}
+
+@keyframes pdf-badge-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 완료: 파란색 */
+.pdf-conversion-badge--completed {
+  background: #007aff;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .pdf-conversion-badge--completed {
+  background: #0a84ff;
+}
+
+.customer-documents-item:hover .pdf-conversion-badge--completed {
+  transform: scale(1.05);
+  box-shadow: 0 0 6px #007aff;
+}
+
 /* === 크기 === */
 .document-size {
   text-align: center;

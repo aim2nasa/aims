@@ -422,6 +422,10 @@ export class DocumentService {
           // badgeType 추출
           const badgeType = toString(item['badgeType']) as 'TXT' | 'OCR' | 'BIN' | undefined;
 
+          // 🍎 PDF 변환 관련 필드 추출 (git 748bb43e 참조)
+          const conversionStatus = toString(item['conversionStatus']) as CustomerDocumentItem['conversionStatus'];
+          const isConvertible = item['isConvertible'] === true;
+
           const result: CustomerDocumentItem = {
             _id: id
           };
@@ -439,6 +443,8 @@ export class DocumentService {
           if (typeof ocrConfidence === 'number') result.ocrConfidence = ocrConfidence;
           if (stages) result.stages = stages as any;
           if (badgeType) result.badgeType = badgeType;  // 🔥 백엔드 badgeType 추가
+          if (conversionStatus) result.conversionStatus = conversionStatus;  // 🍎 PDF 변환 상태
+          if (isConvertible) result.isConvertible = isConvertible;  // 🍎 PDF 변환 대상 여부
 
           return result;
         })
