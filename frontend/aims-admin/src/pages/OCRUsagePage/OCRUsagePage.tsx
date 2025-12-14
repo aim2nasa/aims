@@ -6,8 +6,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -214,9 +214,9 @@ export const OCRUsagePage = () => {
           {!hourlyUsage || hourlyUsage.length === 0 ? (
             <div className="ocr-usage-page__chart-empty">사용 데이터가 없습니다</div>
           ) : (
-            <ResponsiveContainer width="100%" height={150}>
-              <AreaChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
                   tickFormatter={formatTime}
@@ -228,6 +228,7 @@ export const OCRUsagePage = () => {
                 <YAxis
                   tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
                   stroke="var(--color-border)"
+                  allowDecimals={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
@@ -235,23 +236,9 @@ export const OCRUsagePage = () => {
                   height={24}
                   wrapperStyle={{ fontSize: '11px' }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="done"
-                  name="성공"
-                  stroke="#34C759"
-                  fill="rgba(52, 199, 89, 0.3)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="error"
-                  name="실패"
-                  stroke="#FF3B30"
-                  fill="rgba(255, 59, 48, 0.3)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
+                <Bar dataKey="done" name="성공" fill="#34C759" stackId="stack" />
+                <Bar dataKey="error" name="실패" fill="#FF3B30" stackId="stack" />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </div>

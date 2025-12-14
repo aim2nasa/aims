@@ -6,8 +6,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -224,9 +224,9 @@ export const AIUsagePage = () => {
           {!hourlyUsage || hourlyUsage.length === 0 ? (
             <div className="ai-usage-page__chart-empty">사용 데이터가 없습니다</div>
           ) : (
-            <ResponsiveContainer width="100%" height={150}>
-              <LineChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
                   tickFormatter={formatTime}
@@ -245,12 +245,11 @@ export const AIUsagePage = () => {
                   verticalAlign="top"
                   height={24}
                   wrapperStyle={{ fontSize: '11px' }}
-                  iconType="plainline"
                 />
-                <Line type="monotone" dataKey="rag_api" name="RAG" stroke="#007AFF" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="n8n_docsummary" name="Summary" stroke="#34C759" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="doc_embedding" name="Embed" stroke="#FF9500" strokeWidth={2} dot={false} />
-              </LineChart>
+                <Bar dataKey="doc_embedding" name="Embed" fill="#FF9500" stackId="stack" />
+                <Bar dataKey="n8n_docsummary" name="Summary" fill="#34C759" stackId="stack" />
+                <Bar dataKey="rag_api" name="RAG" fill="#007AFF" stackId="stack" />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </div>
