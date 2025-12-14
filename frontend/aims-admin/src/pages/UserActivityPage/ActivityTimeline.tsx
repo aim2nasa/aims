@@ -149,8 +149,7 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
       ) : (
         <div className="activity-log-table">
           <div className="activity-log-table__header">
-            <span className="activity-log-table__col activity-log-table__col--date">날짜</span>
-            <span className="activity-log-table__col activity-log-table__col--time">시간</span>
+            <span className="activity-log-table__col activity-log-table__col--datetime">일시</span>
             <span className="activity-log-table__col activity-log-table__col--category">분류</span>
             <span className="activity-log-table__col activity-log-table__col--action">액션</span>
             <span className="activity-log-table__col activity-log-table__col--target">대상</span>
@@ -185,13 +184,9 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
               <div
                 key={log._id}
                 className={`activity-log-table__row ${!isSuccess ? 'activity-log-table__row--error' : ''}`}
-                title={formatDateTime(log.timestamp)}
               >
-                <span className="activity-log-table__col activity-log-table__col--date">
-                  {formatShortDate(log.timestamp)}
-                </span>
-                <span className="activity-log-table__col activity-log-table__col--time">
-                  {formatTime(log.timestamp)}
+                <span className="activity-log-table__col activity-log-table__col--datetime">
+                  {formatDateTime(log.timestamp)}
                 </span>
                 <span className={`activity-log-table__col activity-log-table__col--category activity-log-table__category--${category}`}>
                   {categoryLabel}

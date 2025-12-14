@@ -137,15 +137,8 @@
   flex-shrink: 0;
 }
 
-.activity-log-table__col--date {
-  width: 40px;
-  color: var(--color-text-tertiary);
-  font-size: 10px;
-}
-
-.activity-log-table__col--time {
-  width: 65px;
-  font-family: var(--font-mono);
+.activity-log-table__col--datetime {
+  width: 130px;
   color: var(--color-text-secondary);
   font-size: 10px;
 }
