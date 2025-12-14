@@ -16,8 +16,6 @@ const TIER_OPTIONS = [
 const ROLE_LABELS: Record<string, string> = {
   admin: '관리자',
   agent: '설계사',
-  user: '일반',
-  system: '시스템',
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -25,7 +23,6 @@ const TIER_LABELS: Record<string, string> = {
   standard: '일반',
   premium: '프리미엄',
   vip: 'VIP',
-  admin: '관리자',
 };
 
 const formatDate = (dateString?: string | null) => {
@@ -156,8 +153,6 @@ export const UsersPage = () => {
           <option value="">전체 역할</option>
           <option value="admin">관리자</option>
           <option value="agent">설계사</option>
-          <option value="user">일반</option>
-          <option value="system">시스템</option>
         </select>
         <select
           className="users-page__select"
@@ -231,17 +226,15 @@ export const UsersPage = () => {
                 label: '등급',
                 render: (user: User) => {
                   const tier = user.storage?.tier || 'free_trial';
-                  const isAdmin = tier === 'admin';
+                  const isRoleAdmin = user.role === 'admin';
                   const isUpdating = updatingUserId === user._id;
 
-                  if (isAdmin) {
-                    return (
-                      <span className={`tier-badge tier-badge--${tier}`}>
-                        {TIER_LABELS[tier] || tier}
-                      </span>
-                    );
+                  // 역할이 관리자인 경우 등급 개념 없음
+                  if (isRoleAdmin) {
+                    return <span className="tier-na">-</span>;
                   }
 
+                  // 설계사/일반 사용자는 등급 선택 가능
                   return (
                     <select
                       className={`tier-select tier-select--${tier}`}

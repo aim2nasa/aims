@@ -212,9 +212,8 @@
   color: #ff9500;
 }
 
-.tier-badge--admin {
-  background-color: rgba(255, 59, 48, 0.15);
-  color: var(--color-error);
+.tier-na {
+  color: var(--color-text-tertiary);
 }
 
 /* Tier Select Dropdown */
@@ -270,11 +269,6 @@
 .tier-select--vip {
   background-color: rgba(255, 149, 0, 0.15);
   color: #ff9500;
-}
-
-.tier-select--admin {
-  background-color: rgba(255, 59, 48, 0.15);
-  color: var(--color-error);
 }
 
 /* OCR Cell */
