@@ -1151,7 +1151,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={null}>
             <RecentCustomers
               collapsed={leftPaneCollapsed}
-              onCustomerClick={handleRecentCustomerClick}
+              onCustomerClick={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
           </Suspense>
 
@@ -1328,6 +1329,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-relationship'}
               onClose={closeDocumentView}
               onCustomerSelect={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               onNavigate={handleMenuClick}
             />
           </Suspense>

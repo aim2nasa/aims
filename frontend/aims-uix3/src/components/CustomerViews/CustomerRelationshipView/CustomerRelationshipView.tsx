@@ -9,7 +9,7 @@
  * - 트리 구조로 가족/법인 관계 표시
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import Tooltip from '@/shared/ui/Tooltip';
@@ -34,6 +34,8 @@ interface CustomerRelationshipViewProps {
   onClose: () => void;
   /** 고객 선택 핸들러 (null이면 RightPane 닫기) */
   onCustomerSelect?: (customerId: string | null, customer?: Customer) => void;
+  /** 고객 더블클릭 핸들러 (전체보기) */
+  onCustomerDoubleClick?: (customerId: string) => void;
   /** 뷰 이동 핸들러 */
   onNavigate?: (viewKey: string) => void;
 }
@@ -76,6 +78,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   visible,
   onClose,
   onCustomerSelect,
+  onCustomerDoubleClick,
   onNavigate
 }) => {
   // Document-View 패턴: CustomerDocument 구독
@@ -87,6 +90,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const [relationships, setRelationships] = useState<PopulatedRelationship[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
+
+  // 클릭/더블클릭 구분을 위한 타이머 ref
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 검색어 상태
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -776,16 +782,36 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     setExpandedNodes(newExpandedNodes);
   }, [viewMode, structuredData, familyGroupsByConsonant]);
 
+  // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const customer = resolvedCustomerMap.get(customerId);
     if (customer) {
-      // 빠른 등록 패널 모두 닫기 (상호 배타적)
-      setSelectedUnassignedCustomer(null);
-      setSelectedUnassignedCorporate(null);
-      onCustomerSelect?.(customerId, customer);
+      // 기존 타이머가 있으면 취소
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+      // 300ms 후에 싱글클릭 실행 (더블클릭이면 취소됨)
+      clickTimerRef.current = setTimeout(() => {
+        // 빠른 등록 패널 모두 닫기 (상호 배타적)
+        setSelectedUnassignedCustomer(null);
+        setSelectedUnassignedCorporate(null);
+        onCustomerSelect?.(customerId, customer);
+        clickTimerRef.current = null;
+      }, 300);
     }
   }, [resolvedCustomerMap, onCustomerSelect]);
+
+  // 더블클릭 핸들러 (싱글클릭 타이머 취소 후 전체보기)
+  const handleCustomerDoubleClick = useCallback((customerId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // 싱글클릭 타이머 취소
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    onCustomerDoubleClick?.(customerId);
+  }, [onCustomerDoubleClick]);
 
   // 검색어 하이라이트 함수
   const highlightText = useCallback((text: string) => {
@@ -1118,6 +1144,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                       <span
                                         className="tree-node__label tree-node__label--clickable"
                                         onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
+                                        onDoubleClick={(e) => handleCustomerDoubleClick(groupData.representative._id, e)}
                                       >
                                         👑 {highlightText(representativeName)} (대표)
                                       </span>
@@ -1156,6 +1183,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                             <span
                                               className="tree-node__label tree-node__label--clickable"
                                               onClick={(e) => handleCustomerClick(member._id, e)}
+                                              onDoubleClick={(e) => handleCustomerDoubleClick(member._id, e)}
                                             >
                                               {highlightText(member.personal_info?.name || '이름없음')}
                                               {(() => {
@@ -1309,6 +1337,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               <span
                                 className="tree-node__label tree-node__label--clickable"
                                 onClick={(e) => handleCustomerClick(groupData.company._id, e)}
+                                onDoubleClick={(e) => handleCustomerDoubleClick(groupData.company._id, e)}
                               >
                                 {highlightText(companyName)}
                               </span>
@@ -1332,6 +1361,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                     <span
                                       className="tree-node__label tree-node__label--clickable"
                                       onClick={(e) => handleCustomerClick(employee._id, e)}
+                                      onDoubleClick={(e) => handleCustomerDoubleClick(employee._id, e)}
                                     >
                                       {highlightText(employee.personal_info?.name || '이름없음')}
                                       {(() => {

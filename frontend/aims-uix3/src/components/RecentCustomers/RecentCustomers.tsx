@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useRef, useCallback } from 'react'
 import { useRecentCustomersStore } from '../../shared/store/useRecentCustomersStore'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
@@ -7,6 +7,7 @@ import './RecentCustomers.css'
 interface RecentCustomersProps {
   collapsed?: boolean
   onCustomerClick?: (customerId: string) => void
+  onCustomerDoubleClick?: (customerId: string) => void
 }
 
 // 개인/법인 고객 아이콘
@@ -23,19 +24,36 @@ const BuildingIcon = () => (
   </svg>
 )
 
-const RecentCustomers = memo(({ collapsed = false, onCustomerClick }: RecentCustomersProps) => {
+const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDoubleClick }: RecentCustomersProps) => {
   const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
+
+  // 클릭/더블클릭 구분을 위한 타이머 ref
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 고객이 없거나 collapsed 상태면 숨김
   if (recentCustomers.length === 0 || collapsed) {
     return null
   }
 
-  const handleClick = (customerId: string) => {
-    if (onCustomerClick) {
-      onCustomerClick(customerId)
+  // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
+  const handleClick = useCallback((customerId: string) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
     }
-  }
+    clickTimerRef.current = setTimeout(() => {
+      onCustomerClick?.(customerId)
+      clickTimerRef.current = null
+    }, 300)
+  }, [onCustomerClick])
+
+  // 더블클릭 핸들러 (싱글클릭 타이머 취소)
+  const handleDoubleClick = useCallback((customerId: string) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+    onCustomerDoubleClick?.(customerId)
+  }, [onCustomerDoubleClick])
 
   return (
     <div className="recent-customers">
@@ -62,6 +80,7 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick }: RecentCust
             <div
               className="recent-customers__item"
               onClick={() => handleClick(customer._id)}
+              onDoubleClick={() => handleDoubleClick(customer._id)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
