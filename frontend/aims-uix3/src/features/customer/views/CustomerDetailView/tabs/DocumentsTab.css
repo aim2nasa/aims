@@ -91,9 +91,9 @@
   grid-template-columns:
     28px              /* 유형 아이콘 */
     minmax(80px, 1fr) /* 파일명 */
-    55px              /* 크기 */
-    38px              /* 타입 */
-    135px             /* 연결일 (날짜+시간) */
+    45px              /* 크기 (-10px) */
+    32px              /* 타입 (-6px) */
+    95px              /* 연결일 (-40px) */
     28px;             /* 액션 버튼 */
   gap: 4px;
   align-items: center;
@@ -246,9 +246,9 @@
   grid-template-columns:
     28px              /* 유형 아이콘 */
     minmax(80px, 1fr) /* 파일명 */
-    55px              /* 크기 */
-    38px              /* 타입 */
-    135px             /* 연결일 (날짜+시간) */
+    45px              /* 크기 (-10px) */
+    32px              /* 타입 (-6px) */
+    95px              /* 연결일 (-40px) */
     28px;             /* 액션 버튼 */
   gap: 4px;
   align-items: center;
@@ -1110,9 +1110,9 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
     20px              /* 체크박스 */
     28px              /* 유형 아이콘 */
     minmax(80px, 1fr) /* 파일명 */
-    55px              /* 크기 */
-    38px              /* 타입 */
-    135px             /* 연결일 (날짜+시간) */
+    45px              /* 크기 (-10px) */
+    32px              /* 타입 (-6px) */
+    95px              /* 연결일 (-40px) */
     28px;             /* 액션 버튼 */
   gap: 4px;
 }
@@ -1122,9 +1122,9 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
     20px              /* 체크박스 */
     28px              /* 유형 아이콘 */
     minmax(80px, 1fr) /* 파일명 */
-    55px              /* 크기 */
-    38px              /* 타입 */
-    135px             /* 연결일 (날짜+시간) */
+    45px              /* 크기 (-10px) */
+    32px              /* 타입 (-6px) */
+    95px              /* 연결일 (-40px) */
     28px;             /* 액션 버튼 */
   gap: 4px;
 }
