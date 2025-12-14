@@ -227,6 +227,7 @@ export interface GetUserActivityListParams {
   limit?: number;
   search?: string;
   tier?: string;
+  role?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -246,6 +247,7 @@ export const userActivityApi = {
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.search) queryParams.append('search', params.search);
     if (params.tier) queryParams.append('tier', params.tier);
+    if (params.role) queryParams.append('role', params.role);
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 

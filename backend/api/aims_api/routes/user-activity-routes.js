@@ -36,6 +36,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const skip = (page - 1) * limit;
       const search = req.query.search || '';
       const tierFilter = req.query.tier || '';
+      const roleFilter = req.query.role || '';
       const sortBy = req.query.sortBy || 'last_activity_at';
       const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
 
@@ -50,6 +51,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
       // 사용자 필터 쿼리
       const userQuery = { role: { $ne: 'system' } };
+      if (roleFilter) {
+        userQuery.role = roleFilter;  // 특정 역할만 조회
+      }
       if (search) {
         userQuery.$or = [
           { name: { $regex: search, $options: 'i' } },

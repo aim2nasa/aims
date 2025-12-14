@@ -69,6 +69,7 @@ export const UserActivityPage = () => {
         limit,
         search: search || undefined,
         tier: tierFilter || undefined,
+        role: 'agent',  // 설계사만 조회 (관리자 제외)
         sortBy,
         sortOrder,
       }),
