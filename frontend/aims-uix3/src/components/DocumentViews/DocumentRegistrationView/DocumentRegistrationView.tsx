@@ -717,16 +717,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 👤 고객명 가져오기
               const customerName = customerNameMappingRef.current.get(customerId);
 
-              console.log(`🔗 [AR 자동 연결] 문서 처리 완료 확인, 연결 시작`);
-              addLog('info', `[5/5] 문서-고객 자동 연결 시작: ${fileName}`, undefined, customerName);
-
-              await DocumentService.linkDocumentToCustomer(customerId, {
-                document_id: documentId,
-                relationship_type: 'annual_report'
-              });
-
-              console.log(`✅ [AR 자동 연결] 완료`);
-              addLog('success', `[5/5] 문서-고객 자동 연결 완료 - AR 처리 최종 완료: ${fileName}`, undefined, customerName);
+              // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
+              console.log(`✅ [AR 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
+              addLog('success', `[5/5] AR 처리 최종 완료: ${fileName}`, undefined, customerName);
 
               // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
               try {
@@ -820,39 +813,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           if (response.success && response.data?.computed?.overallStatus === 'completed') {
             clearInterval(checkAndLink);
 
-            console.log(`🔗 [고객 파일 자동 연결] 문서 처리 완료, 연결 시작`);
-            addLog('info', `[4/4] 문서-고객 자동 연결 시작: ${fileName}`, undefined, customerFileInfo.customerName);
+            // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
+            console.log(`✅ [고객 파일 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
+            addLog('success', `[4/4] 문서 처리 완료: ${fileName}`, undefined, customerFileInfo.customerName);
 
-            // 3. 고객에게 문서 연결
-            try {
-              // notes가 있을 때만 포함 (exactOptionalPropertyTypes 준수)
-              const linkPayload = {
-                document_id: documentId,
-                relationship_type: customerFileInfo.documentType,
-                assigned_by: UserContextService.getContext().identifierValue,
-                ...(customerFileInfo.notes ? { notes: customerFileInfo.notes } : {})
-              };
-
-              console.log(`📤 [고객 파일 자동 연결] API 호출 시작:`, {
-                customerId: customerFileInfo.customerId,
-                customerName: customerFileInfo.customerName,
-                documentId,
-                fileName,
-                payload: linkPayload
-              });
-
-              await DocumentService.linkDocumentToCustomer(customerFileInfo.customerId, linkPayload);
-
-              console.log(`✅ [고객 파일 자동 연결] API 호출 성공`);
-              addLog('success', `[4/4] 문서-고객 자동 연결 완료: ${fileName}`, undefined, customerFileInfo.customerName);
-
-              // 추적 목록에서 제거
-              customerFileUploadMappingRef.current.delete(fileName);
-            } catch (linkError) {
-              console.error(`❌ [고객 파일 자동 연결] API 호출 실패:`, linkError);
-              addLog('error', `문서 자동 연결 실패: ${fileName}`, linkError instanceof Error ? linkError.message : String(linkError), customerFileInfo.customerName);
-              customerFileUploadMappingRef.current.delete(fileName);
-            }
+            // 추적 목록에서 제거
+            customerFileUploadMappingRef.current.delete(fileName);
           } else if (attempts >= maxAttempts) {
             clearInterval(checkAndLink);
             console.warn(`⚠️ [고객 파일 자동 연결] 문서 처리 대기 시간 초과: ${fileName}`);

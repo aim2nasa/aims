@@ -4593,12 +4593,41 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
  * 🔑 JWT 또는 API Key 인증 지원 (n8n 웹훅용)
  */
 app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, res) => {
+  // 🔑 활동 로그용 actor 정보 (try 블록 밖에서 정의하여 catch에서도 사용 가능)
+  let actorInfo = {
+    user_id: req.user?.id,
+    name: req.user?.name,
+    email: req.user?.email,
+    role: req.user?.role
+  };
+
   try {
     const { id } = req.params;
     const { document_id, notes } = req.body;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+
+    // 🔑 API Key 인증 시 실제 사용자 정보 조회 (활동 로그용)
+    if (req.user.authMethod === 'apiKey' && userId) {
+      try {
+        const actualUser = await db.collection('users').findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { name: 1, email: 1, role: 1 } }
+        );
+        if (actualUser) {
+          actorInfo = {
+            user_id: userId,
+            name: actualUser.name,
+            email: actualUser.email,
+            role: actualUser.role || 'agent'
+          };
+        }
+      } catch (e) {
+        console.warn('[문서연결] 사용자 정보 조회 실패:', e.message);
+      }
+    }
+
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
         success: false,
@@ -4703,13 +4732,10 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       }
     }
 
-    // 문서 업로드 성공 로그
+    // 문서 업로드 성공 로그 (actorInfo 사용 - API Key 인증 시 실제 사용자 정보 포함)
     activityLogger.log({
       actor: {
-        user_id: req.user.id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
+        ...actorInfo,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
@@ -4744,11 +4770,10 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
   } catch (error) {
     console.error('문서 연결 오류:', error);
 
-    // 문서 업로드 실패 로그
+    // 문서 업로드 실패 로그 (actorInfo 사용)
     activityLogger.log({
       actor: {
-        user_id: req.user?.id,
-        name: req.user?.name,
+        ...actorInfo,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },

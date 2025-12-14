@@ -46,6 +46,13 @@ const ACTION_TYPE_LABELS: Record<string, string> = {
   parse: '파싱',
 };
 
+// 호출자 라벨 (actor 정보 기반)
+const getActorLabel = (actor: { name: string | null; role: string }): string => {
+  if (actor.name) return actor.name;
+  if (actor.role === 'system') return '시스템';
+  return '사용자';
+};
+
 // 시간 포맷 (HH:mm:ss)
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
@@ -150,9 +157,10 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
         <div className="activity-log-table">
           <div className="activity-log-table__header">
             <span className="activity-log-table__col activity-log-table__col--datetime">일시</span>
+            <span className="activity-log-table__col activity-log-table__col--actor">호출자</span>
             <span className="activity-log-table__col activity-log-table__col--category">분류</span>
-            <span className="activity-log-table__col activity-log-table__col--action">액션</span>
             <span className="activity-log-table__col activity-log-table__col--target">대상</span>
+            <span className="activity-log-table__col activity-log-table__col--action">액션</span>
             <span className="activity-log-table__col activity-log-table__col--result">결과</span>
           </div>
           {logs.map((log) => {
@@ -188,17 +196,20 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
                 <span className="activity-log-table__col activity-log-table__col--datetime">
                   {formatDateTime(log.timestamp)}
                 </span>
+                <span className="activity-log-table__col activity-log-table__col--actor" title={log.actor.name || log.actor.role}>
+                  {getActorLabel(log.actor)}
+                </span>
                 <span className={`activity-log-table__col activity-log-table__col--category activity-log-table__category--${category}`}>
                   {categoryLabel}
+                </span>
+                <span className="activity-log-table__col activity-log-table__col--target" title={targetName}>
+                  {targetName}
                 </span>
                 <span className="activity-log-table__col activity-log-table__col--action">
                   {actionLabel}
                   {bulkCount && bulkCount > 1 && (
                     <span className="activity-log-table__bulk">x{bulkCount}</span>
                   )}
-                </span>
-                <span className="activity-log-table__col activity-log-table__col--target" title={targetName}>
-                  {targetName}
                 </span>
                 <span className={`activity-log-table__col activity-log-table__col--result ${isSuccess ? 'activity-log-table__result--success' : 'activity-log-table__result--error'}`}>
                   {isSuccess ? '성공' : '실패'}

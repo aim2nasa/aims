@@ -165,6 +165,15 @@
   padding-right: 8px;
 }
 
+.activity-log-table__col--actor {
+  width: 70px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .activity-log-table__col--result {
   width: 40px;
   text-align: center;
