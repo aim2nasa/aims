@@ -324,7 +324,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.7.0 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.7.1 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -358,6 +358,7 @@ class DocumentViewer:
         self.current_collection: tk.StringVar = tk.StringVar(value="files")  # 현재 선택된 Collection
         self.raw_documents: List[Dict[str, Any]] = []  # Raw 탭 전용 문서 목록
         self.raw_documents_loaded: bool = False  # Raw 탭 데이터가 명시적으로 로드되었는지 여부
+        self.loaded_collection_name: str = ""  # 현재 로드된 컬렉션 이름 (db.collection)
 
         # Raw 데이터 자동 새로고침 상태
         self.raw_auto_refresh_enabled: bool = True  # 기본값: 자동 새로고침 활성화
@@ -1627,7 +1628,8 @@ class DocumentViewer:
             # 문서 로드 (최대 10000개)
             self.raw_documents = list(collection.find().sort("_id", -1).limit(10000))
             self.raw_documents_loaded = True  # 로드 완료 플래그 설정
-            self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}/{total_count}개")
+            self.loaded_collection_name = f"{selected_db}.{selected_collection}"  # 로드된 컬렉션 저장
+            self.raw_count_label.config(text=f"[{self.loaded_collection_name}] 문서: {len(self.raw_documents)}/{total_count}개")
 
             # 검색 UI 활성화 및 이전 검색 초기화
             self.search_entry.config(state=tk.NORMAL)
@@ -2030,6 +2032,7 @@ class DocumentViewer:
                     # 문서 목록 초기화
                     self.raw_documents = []
                     self.raw_documents_loaded = False
+                    self.loaded_collection_name = ""
                     self.current_raw_index = 0
                     self.update_raw_viewer()
                     self.raw_count_label.config(text="문서: 0개 (컬렉션 삭제됨)")
@@ -2245,7 +2248,7 @@ class DocumentViewer:
 
             # 문서 개수 업데이트
             if self.raw_documents:
-                self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}개")
+                self.raw_count_label.config(text=f"[{self.loaded_collection_name}] 문서: {len(self.raw_documents)}개")
             else:
                 self.count_label.config(text=f"문서: {len(self.documents)}개")
 

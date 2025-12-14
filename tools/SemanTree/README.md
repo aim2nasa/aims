@@ -1,4 +1,4 @@
-# SemanTree v0.7.0 - AIMS Document Viewer
+# SemanTree v0.7.1 - AIMS Document Viewer
 
 AIMS MongoDB 문서 뷰어 및 시맨틱 트리 분석 도구
 
@@ -142,6 +142,9 @@ SemanTree/
 ```
 
 ## 버전 히스토리
+
+### v0.7.1 (2025-12-14)
+- 📋 로드된 컬렉션 이름 표시 ([db.collection] 형식)
 
 ### v0.7.0 (2025-12-14)
 - ✨ 문서 텍스트 검색 기능 추가
