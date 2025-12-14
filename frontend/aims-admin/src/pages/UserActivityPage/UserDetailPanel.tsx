@@ -30,6 +30,14 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
   unknown: '알 수 없음',
 };
 
+const TIER_LABELS: Record<string, string> = {
+  free_trial: '무료체험',
+  standard: '일반',
+  premium: '프리미엄',
+  vip: 'VIP',
+  admin: '관리자',
+};
+
 const STATUS_LABELS: Record<string, string> = {
   completed: '완료',
   processing: '처리중',
@@ -107,7 +115,7 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
           </div>
           <div className="info-item">
             <span className="info-label">등급</span>
-            <span className="info-value">{user.tier}</span>
+            <span className="info-value">{TIER_LABELS[user.tier] || user.tier}</span>
           </div>
           <div className="info-item">
             <span className="info-label">가입일</span>
