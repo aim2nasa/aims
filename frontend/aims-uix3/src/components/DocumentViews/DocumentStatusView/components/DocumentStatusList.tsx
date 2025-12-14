@@ -81,7 +81,7 @@ const getOcrConfidenceLevel = (confidence: number): {
 /**
  * 에러 코드를 한글 메시지로 변환
  */
-const ERROR_CODE_LABELS: Record<string, string> = {
+export const ERROR_CODE_LABELS: Record<string, string> = {
   'OPENAI_QUOTA_EXCEEDED': 'OpenAI 크레딧 소진\n크레딧을 충전해주세요',
   'UNKNOWN': '알 수 없는 오류',
   'TIMEOUT': '처리 시간 초과',
@@ -92,7 +92,7 @@ const ERROR_CODE_LABELS: Record<string, string> = {
 /**
  * 에러 메시지 정리 (URL 제거, 핵심만 추출)
  */
-const formatErrorMessage = (message: string): string => {
+export const formatErrorMessage = (message: string): string => {
   // URL 제거
   let formatted = message.replace(/https?:\/\/[^\s]+/g, '').trim()
 
@@ -125,7 +125,7 @@ const formatErrorMessage = (message: string): string => {
 /**
  * Document에서 에러 메시지 추출
  */
-const getErrorMessage = (document: Document): string | null => {
+export const getErrorMessage = (document: Document): string | null => {
   // 1. docembed 에러
   if (document.docembed && typeof document.docembed !== 'string') {
     const docembed = document.docembed as Record<string, unknown>
