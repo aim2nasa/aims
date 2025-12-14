@@ -348,16 +348,18 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         }
       }
 
-      // 최근 활동 (최근 10개 문서)
+      // 최근 활동 (최근 50개 문서)
       const recentDocs = await filesCollection.find({ ownerId: userId })
         .sort({ updatedAt: -1 })
-        .limit(10)
+        .limit(50)
         .project({
           _id: 1,
-          originalName: 1,
+          'upload.originalName': 1,
+          'meta.filename': 1,
           overallStatus: 1,
           'ocr.status': 1,
           'stages.embed.status': 1,
+          'docembed.status': 1,
           createdAt: 1,
           updatedAt: 1
         })
@@ -365,10 +367,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
       const recentActivity = recentDocs.map(doc => ({
         document_id: doc._id.toString(),
-        document_name: doc.originalName,
+        document_name: doc.upload?.originalName || doc.meta?.filename || null,
         status: doc.overallStatus,
         ocr_status: doc.ocr?.status,
-        embed_status: doc.stages?.embed?.status,
+        embed_status: doc.stages?.embed?.status || doc.docembed?.status,
         created_at: doc.createdAt,
         updated_at: doc.updatedAt
       }));
@@ -524,6 +526,240 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: '사용자 오류 목록 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/activity-logs
+   * 전체 활동 로그 조회
+   *
+   * Query:
+   * - page: number (기본값: 1)
+   * - limit: number (기본값: 50)
+   * - userId: string (특정 사용자 필터)
+   * - category: string (카테고리 필터: auth, customer, document, contract)
+   * - success: boolean (성공/실패 필터)
+   * - startDate: ISO string (시작일)
+   * - endDate: ISO string (종료일)
+   */
+  router.get('/admin/activity-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+      const skip = (page - 1) * limit;
+
+      const query = {};
+
+      // 필터 적용
+      if (req.query.userId) {
+        query['actor.user_id'] = req.query.userId;
+      }
+      if (req.query.category) {
+        query['action.category'] = req.query.category;
+      }
+      if (req.query.success !== undefined) {
+        query['result.success'] = req.query.success === 'true';
+      }
+      if (req.query.startDate || req.query.endDate) {
+        query.timestamp = {};
+        if (req.query.startDate) {
+          query.timestamp.$gte = new Date(req.query.startDate);
+        }
+        if (req.query.endDate) {
+          query.timestamp.$lte = new Date(req.query.endDate);
+        }
+      }
+
+      const activityLogsCollection = analyticsDb.collection('activity_logs');
+
+      const [logs, total] = await Promise.all([
+        activityLogsCollection
+          .find(query)
+          .sort({ timestamp: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
+        activityLogsCollection.countDocuments(query)
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          logs,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('[GET /api/admin/activity-logs] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '활동 로그 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/admin/activity-logs/:userId
+   * 특정 사용자의 활동 로그 조회
+   *
+   * Query:
+   * - page: number (기본값: 1)
+   * - limit: number (기본값: 50)
+   * - category: string (카테고리 필터)
+   * - success: boolean (성공/실패 필터)
+   * - days: number (최근 N일, 기본값: 30)
+   */
+  router.get('/admin/activity-logs/:userId', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+      const skip = (page - 1) * limit;
+      const days = Math.min(90, Math.max(1, parseInt(req.query.days) || 30));
+
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const query = {
+        'actor.user_id': userId,
+        timestamp: { $gte: startDate }
+      };
+
+      if (req.query.category) {
+        query['action.category'] = req.query.category;
+      }
+      if (req.query.success !== undefined) {
+        query['result.success'] = req.query.success === 'true';
+      }
+
+      const activityLogsCollection = analyticsDb.collection('activity_logs');
+
+      const [logs, total] = await Promise.all([
+        activityLogsCollection
+          .find(query)
+          .sort({ timestamp: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
+        activityLogsCollection.countDocuments(query)
+      ]);
+
+      // 문서 로그의 경우 실제 문서명 조회
+      const documentIds = logs
+        .filter(log => log.action?.category === 'document' && log.action?.target?.entity_id)
+        .map(log => {
+          try {
+            return new ObjectId(log.action.target.entity_id);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      let documentNames = {};
+      if (documentIds.length > 0) {
+        const filesCollection = db.collection('files');
+        const docs = await filesCollection.find(
+          { _id: { $in: documentIds } },
+          { projection: { _id: 1, 'upload.originalName': 1, 'meta.filename': 1 } }
+        ).toArray();
+
+        docs.forEach(doc => {
+          documentNames[doc._id.toString()] = doc.upload?.originalName || doc.meta?.filename || null;
+        });
+      }
+
+      // 로그에 실제 문서명 추가
+      const enrichedLogs = logs.map(log => {
+        if (log.action?.category === 'document' && log.action?.target?.entity_id) {
+          const docName = documentNames[log.action.target.entity_id];
+          if (docName && log.action.target) {
+            return {
+              ...log,
+              action: {
+                ...log.action,
+                target: {
+                  ...log.action.target,
+                  entity_name: docName
+                }
+              }
+            };
+          }
+        }
+        return log;
+      });
+
+      // 통계 계산
+      const stats = await activityLogsCollection.aggregate([
+        { $match: { 'actor.user_id': userId, timestamp: { $gte: startDate } } },
+        {
+          $group: {
+            _id: {
+              category: '$action.category',
+              success: '$result.success'
+            },
+            count: { $sum: 1 }
+          }
+        }
+      ]).toArray();
+
+      // 통계 정리
+      const summary = {
+        total: 0,
+        success: 0,
+        failure: 0,
+        by_category: {}
+      };
+
+      for (const stat of stats) {
+        const category = stat._id.category || 'unknown';
+        const count = stat.count;
+
+        summary.total += count;
+        if (stat._id.success) {
+          summary.success += count;
+        } else {
+          summary.failure += count;
+        }
+
+        if (!summary.by_category[category]) {
+          summary.by_category[category] = { success: 0, failure: 0 };
+        }
+        if (stat._id.success) {
+          summary.by_category[category].success += count;
+        } else {
+          summary.by_category[category].failure += count;
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          user_id: userId,
+          period_days: days,
+          summary,
+          logs: enrichedLogs,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('[GET /api/admin/activity-logs/:userId] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '사용자 활동 로그 조회에 실패했습니다.',
         details: error.message
       });
     }

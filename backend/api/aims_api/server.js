@@ -16,6 +16,7 @@ const cookieParser = require('cookie-parser');
 const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
 const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
+const activityLogger = require('./lib/activityLogger');
 
 const app = express();
 
@@ -1701,12 +1702,73 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
       // Qdrant 삭제 실패해도 문서는 이미 삭제됨
     }
 
+    // 문서 삭제 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'document',
+        description: '문서 삭제',
+        target: {
+          entity_type: 'document',
+          entity_id: id,
+          entity_name: document.upload?.originalName || document.meta?.filename || document.filename,
+          parent_id: document.customerId?.toString(),
+          parent_name: null
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: `/api/documents/${id}`,
+        method: 'DELETE'
+      }
+    });
+
     res.json({
       success: true,
       message: '문서가 성공적으로 삭제되었습니다.'
     });
   } catch (error) {
     console.error('문서 삭제 오류:', error);
+
+    // 문서 삭제 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'document',
+        description: '문서 삭제 실패',
+        target: {
+          entity_type: 'document',
+          entity_id: req.params?.id
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: `/api/documents/${req.params?.id}`,
+        method: 'DELETE'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '문서 삭제에 실패했습니다.',
@@ -2449,12 +2511,71 @@ app.post('/api/customers', authenticateJWT, async (req, res) => {
       ...newCustomer
     };
 
+    // 고객 등록 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'create',
+        category: 'customer',
+        description: '고객 등록',
+        target: {
+          entity_type: 'customer',
+          entity_id: result.insertedId.toString(),
+          entity_name: originalName
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: '/api/customers',
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       data: createdCustomer
     });
   } catch (error) {
     console.error('고객 등록 오류:', error);
+
+    // 고객 등록 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'create',
+        category: 'customer',
+        description: '고객 등록 실패',
+        target: {
+          entity_type: 'customer',
+          entity_name: req.body?.personal_info?.name
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: '/api/customers',
+        method: 'POST'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '고객 등록에 실패했습니다.',
@@ -2643,6 +2764,33 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
       }
     }
 
+    // 고객 일괄등록 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'bulk_create',
+        category: 'customer',
+        description: '고객 일괄 등록',
+        bulkCount: created.length + updated.length
+      },
+      result: {
+        success: true,
+        statusCode: 200,
+        affectedCount: created.length + updated.length
+      },
+      meta: {
+        endpoint: '/api/customers/bulk',
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       message: `${created.length}건 등록, ${updated.length}건 업데이트, ${skipped.length}건 건너뜀`,
@@ -2660,6 +2808,31 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('고객 일괄 등록 오류:', error);
+
+    // 고객 일괄등록 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'bulk_create',
+        category: 'customer',
+        description: '고객 일괄 등록 실패'
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: '/api/customers/bulk',
+        method: 'POST'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '고객 일괄 등록에 실패했습니다.',
@@ -2974,6 +3147,36 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
       });
     }
 
+    // 고객 수정 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'update',
+        category: 'customer',
+        description: '고객 정보 수정',
+        target: {
+          entity_type: 'customer',
+          entity_id: id,
+          entity_name: existingCustomer.personal_info?.name
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: `/api/customers/${id}`,
+        method: 'PUT'
+      }
+    });
+
     res.json({
       success: true,
       message: '고객 정보가 성공적으로 수정되었습니다.',
@@ -2981,6 +3184,35 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('고객 수정 오류:', error);
+
+    // 고객 수정 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'update',
+        category: 'customer',
+        description: '고객 정보 수정 실패',
+        target: {
+          entity_type: 'customer',
+          entity_id: req.params?.id
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: `/api/customers/${req.params?.id}`,
+        method: 'PUT'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '고객 정보 수정에 실패했습니다.',
@@ -3054,6 +3286,36 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
 
       const updatedCustomer = result.value || result;
       console.log(`🗂️ [Soft Delete] 고객 ${id} 휴면 처리 완료 (by ${userId})`);
+
+      // 고객 삭제(휴면) 성공 로그
+      activityLogger.log({
+        actor: {
+          user_id: req.user.id,
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent']
+        },
+        action: {
+          type: 'delete',
+          category: 'customer',
+          description: '고객 휴면 처리',
+          target: {
+            entity_type: 'customer',
+            entity_id: id,
+            entity_name: existingCustomer.personal_info?.name
+          }
+        },
+        result: {
+          success: true,
+          statusCode: 200
+        },
+        meta: {
+          endpoint: `/api/customers/${id}`,
+          method: 'DELETE'
+        }
+      });
 
       return res.json({
         success: true,
@@ -3164,6 +3426,37 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
 
     console.log(`🗑️ [Hard Delete] 고객 ${id} 영구 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서=${filesUpdateCount}`);
 
+    // 고객 영구 삭제 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'customer',
+        description: '고객 영구 삭제',
+        target: {
+          entity_type: 'customer',
+          entity_id: id,
+          entity_name: existingCustomer.personal_info?.name
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200,
+        affectedCount: 1 + relationshipsDeleteCount + contractsDeleteCount + filesUpdateCount
+      },
+      meta: {
+        endpoint: `/api/customers/${id}?permanent=true`,
+        method: 'DELETE'
+      }
+    });
+
     res.json({
       success: true,
       message: '고객이 영구적으로 삭제되었습니다.',
@@ -3175,6 +3468,35 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('고객 삭제 오류:', error);
+
+    // 고객 삭제 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'customer',
+        description: '고객 삭제 실패',
+        target: {
+          entity_type: 'customer',
+          entity_id: req.params?.id
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: `/api/customers/${req.params?.id}`,
+        method: 'DELETE'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '고객 삭제에 실패했습니다.',
@@ -4381,6 +4703,38 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       }
     }
 
+    // 문서 업로드 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'upload',
+        category: 'document',
+        description: '문서 업로드',
+        target: {
+          entity_type: 'document',
+          entity_id: document_id,
+          entity_name: document.upload?.originalName || document.meta?.filename || document.filename,
+          parent_id: id,
+          parent_name: customer.personal_info?.name
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: `/api/customers/${id}/documents`,
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       message: '문서가 고객에게 성공적으로 연결되었습니다.',
@@ -4389,6 +4743,36 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
     });
   } catch (error) {
     console.error('문서 연결 오류:', error);
+
+    // 문서 업로드 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.user?.id,
+        name: req.user?.name,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'upload',
+        category: 'document',
+        description: '문서 업로드 실패',
+        target: {
+          entity_type: 'document',
+          entity_id: req.body?.document_id,
+          parent_id: req.params?.id
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: `/api/customers/${req.params?.id}/documents`,
+        method: 'POST'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '문서 연결에 실패했습니다.',
@@ -6378,6 +6762,35 @@ app.post('/api/contracts', async (req, res) => {
 
     const result = await db.collection(CONTRACTS_COLLECTION).insertOne(newContract);
 
+    // 계약 등록 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: contract.agent_id,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'create',
+        category: 'contract',
+        description: '계약 등록',
+        target: {
+          entity_type: 'contract',
+          entity_id: result.insertedId.toString(),
+          entity_name: contract.policy_number,
+          parent_id: contract.customer_id,
+          parent_name: contract.customer_name
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: '/api/contracts',
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       message: '계약이 등록되었습니다.',
@@ -6386,6 +6799,34 @@ app.post('/api/contracts', async (req, res) => {
 
   } catch (error) {
     console.error('계약 등록 오류:', error);
+
+    // 계약 등록 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.body?.agent_id,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'create',
+        category: 'contract',
+        description: '계약 등록 실패',
+        target: {
+          entity_type: 'contract',
+          entity_name: req.body?.policy_number
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: '/api/contracts',
+        method: 'POST'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '계약 등록에 실패했습니다.',
@@ -6636,6 +7077,30 @@ app.post('/api/contracts/bulk', async (req, res) => {
       }
     }
 
+    // 계약 일괄등록 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: agent_id,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'bulk_create',
+        category: 'contract',
+        description: '계약 일괄 등록',
+        bulkCount: created.length + updated.length
+      },
+      result: {
+        success: true,
+        statusCode: 200,
+        affectedCount: created.length + updated.length
+      },
+      meta: {
+        endpoint: '/api/contracts/bulk',
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       message: `${created.length}건 등록, ${updated.length}건 업데이트, ${skipped.length}건 건너뜀`,
@@ -6653,6 +7118,30 @@ app.post('/api/contracts/bulk', async (req, res) => {
 
   } catch (error) {
     console.error('계약 일괄 등록 오류:', error);
+
+    // 계약 일괄등록 실패 로그
+    activityLogger.log({
+      actor: {
+        user_id: req.body?.agent_id,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'bulk_create',
+        category: 'contract',
+        description: '계약 일괄 등록 실패'
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: '/api/contracts/bulk',
+        method: 'POST'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '계약 일괄 등록에 실패했습니다.',
@@ -6768,6 +7257,35 @@ app.delete('/api/contracts/:id', async (req, res) => {
       _id: new ObjectId(id)
     });
 
+    // 계약 삭제 성공 로그
+    activityLogger.log({
+      actor: {
+        user_id: contract.agent_id?.toString(),
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'contract',
+        description: '계약 삭제',
+        target: {
+          entity_type: 'contract',
+          entity_id: id,
+          entity_name: contract.policy_number,
+          parent_id: contract.customer_id?.toString(),
+          parent_name: contract.customer_name
+        }
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: `/api/contracts/${id}`,
+        method: 'DELETE'
+      }
+    });
+
     res.json({
       success: true,
       message: '계약이 삭제되었습니다.'
@@ -6775,6 +7293,33 @@ app.delete('/api/contracts/:id', async (req, res) => {
 
   } catch (error) {
     console.error('계약 삭제 오류:', error);
+
+    // 계약 삭제 실패 로그
+    activityLogger.log({
+      actor: {
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'delete',
+        category: 'contract',
+        description: '계약 삭제 실패',
+        target: {
+          entity_type: 'contract',
+          entity_id: req.params?.id
+        }
+      },
+      result: {
+        success: false,
+        statusCode: 500,
+        error: { message: error.message }
+      },
+      meta: {
+        endpoint: `/api/contracts/${req.params?.id}`,
+        method: 'DELETE'
+      }
+    });
+
     res.status(500).json({
       success: false,
       error: '계약 삭제에 실패했습니다.',
@@ -6860,6 +7405,11 @@ MongoClient.connect(MONGO_URI)
     console.log('MongoDB 연결 성공');
     db = client.db(DB_NAME);
     const analyticsDb = client.db(ANALYTICS_DB_NAME);
+
+    // ActivityLogger 초기화
+    activityLogger.initialize(analyticsDb).catch(err => {
+      console.error('[Server] ActivityLogger 초기화 실패:', err.message);
+    });
 
     // Passport 초기화
     require('./config/passport')(db);

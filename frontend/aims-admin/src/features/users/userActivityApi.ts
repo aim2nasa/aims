@@ -113,6 +113,113 @@ export interface UserErrorsResponse {
   };
 }
 
+// ============================================================
+// Activity Log Types
+// ============================================================
+
+export interface ActivityLogActor {
+  user_id: string | null;
+  name: string | null;
+  email: string | null;
+  role: string;
+  ip_address: string | null;
+  user_agent: string | null;
+}
+
+export interface ActivityLogLocation {
+  endpoint: string | null;
+  method: string | null;
+  feature: string | null;
+  menu_path: string | null;
+}
+
+export interface ActivityLogAction {
+  type: string;
+  category: string;
+  description: string;
+  target: {
+    entity_type: string | null;
+    entity_id: string | null;
+    entity_name: string | null;
+    parent_id: string | null;
+    parent_name: string | null;
+  } | null;
+  changes: {
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+    changed_fields?: string[];
+  } | null;
+  bulk_count: number | null;
+}
+
+export interface ActivityLogResult {
+  success: boolean;
+  status_code: number | null;
+  error: {
+    code: string | null;
+    message: string | null;
+  } | null;
+  affected_count: number | null;
+  duration_ms: number | null;
+}
+
+export interface ActivityLog {
+  _id: string;
+  actor: ActivityLogActor;
+  timestamp: string;
+  location: ActivityLogLocation;
+  action: ActivityLogAction;
+  result: ActivityLogResult;
+  meta: {
+    request_id: string;
+    session_id: string | null;
+    correlation_id: string | null;
+  };
+}
+
+export interface ActivityLogListResponse {
+  success: boolean;
+  data: {
+    logs: ActivityLog[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface UserActivityLogsResponse {
+  success: boolean;
+  data: {
+    user_id: string;
+    logs: ActivityLog[];
+    summary: {
+      total: number;
+      success: number;
+      failure: number;
+      byCategory: Record<string, { success: number; failure: number }>;
+    };
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface GetActivityLogsParams {
+  page?: number;
+  limit?: number;
+  userId?: string;
+  category?: string;
+  success?: boolean;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface GetUserActivityListParams {
   page?: number;
   limit?: number;
@@ -166,6 +273,54 @@ export const userActivityApi = {
     const response = await apiClient.get<UserErrorsResponse>(
       `/api/admin/user-activity/${userId}/errors?days=${days}`
     );
+    return response.data;
+  },
+
+  /**
+   * 전체 활동 로그 조회 (관리자용)
+   */
+  getActivityLogs: async (params: GetActivityLogsParams = {}): Promise<ActivityLogListResponse['data']> => {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.userId) queryParams.append('userId', params.userId);
+    if (params.category) queryParams.append('category', params.category);
+    if (params.success !== undefined) queryParams.append('success', params.success.toString());
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/api/admin/activity-logs?${queryString}`
+      : '/api/admin/activity-logs';
+
+    const response = await apiClient.get<ActivityLogListResponse>(endpoint);
+    return response.data;
+  },
+
+  /**
+   * 특정 사용자의 활동 로그 조회
+   */
+  getUserActivityLogs: async (
+    userId: string,
+    params: Omit<GetActivityLogsParams, 'userId'> = {}
+  ): Promise<UserActivityLogsResponse['data']> => {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.category) queryParams.append('category', params.category);
+    if (params.success !== undefined) queryParams.append('success', params.success.toString());
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/api/admin/activity-logs/${userId}?${queryString}`
+      : `/api/admin/activity-logs/${userId}`;
+
+    const response = await apiClient.get<UserActivityLogsResponse>(endpoint);
     return response.data;
   },
 };

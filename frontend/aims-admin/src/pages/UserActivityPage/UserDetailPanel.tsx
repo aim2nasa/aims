@@ -15,6 +15,7 @@ import {
   type UserError,
 } from '@/features/users/userActivityApi';
 import { Button } from '@/shared/ui/Button/Button';
+import { ActivityTimeline } from './ActivityTimeline';
 import './UserActivityPage.css';
 
 interface UserDetailPanelProps {
@@ -36,7 +37,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: '대기',
 };
 
-type TabType = 'summary' | 'errors' | 'activity';
+type TabType = 'summary' | 'logs' | 'errors' | 'documents';
 
 export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
@@ -241,35 +242,63 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
     </div>
   );
 
-  const renderActivityTab = () => (
-    <div className="user-detail-panel__activity">
-      {!recent_activity?.length ? (
-        <div className="user-detail-panel__empty">최근 활동이 없습니다.</div>
-      ) : (
-        <div className="activity-list">
-          {recent_activity.map((activity, index) => (
-            <div key={index} className="activity-item">
-              <div className="activity-item__header">
-                <span className={`activity-status activity-status--${activity.status}`}>
-                  {STATUS_LABELS[activity.status] || activity.status}
-                </span>
-                <span className="activity-time">{formatRelativeTime(activity.updated_at)}</span>
-              </div>
-              <div className="activity-item__document">{activity.document_name}</div>
-              <div className="activity-item__details">
-                {activity.ocr_status && (
-                  <span className="activity-detail">OCR: {activity.ocr_status}</span>
-                )}
-                {activity.embed_status && (
-                  <span className="activity-detail">임베딩: {activity.embed_status}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+  const renderLogsTab = () => (
+    <div className="user-detail-panel__logs">
+      <ActivityTimeline userId={userId} />
     </div>
   );
+
+  const renderDocumentsTab = () => {
+    // 전체 상태 결과
+    const getOverallResult = (status: string) => {
+      if (status === 'completed') return { label: '성공', color: 'success' };
+      if (status === 'error') return { label: '실패', color: 'error' };
+      if (status === 'processing') return { label: '처리중', color: 'processing' };
+      return { label: '대기', color: 'pending' };
+    };
+
+    return (
+      <div className="user-detail-panel__documents">
+        {!recent_activity?.length ? (
+          <div className="user-detail-panel__empty">최근 문서가 없습니다.</div>
+        ) : (
+          <div className="document-table">
+            <div className="document-table__header">
+              <span className="document-table__col document-table__col--name">문서명</span>
+              <span className="document-table__col document-table__col--result">결과</span>
+              <span className="document-table__col document-table__col--ocr">OCR</span>
+              <span className="document-table__col document-table__col--embed">임베딩</span>
+              <span className="document-table__col document-table__col--date">수정일</span>
+            </div>
+            {recent_activity.map((doc, index) => {
+              const result = getOverallResult(doc.status);
+              const docName = doc.document_name || `문서_${doc.document_id?.slice(-6) || index}`;
+
+              return (
+                <div key={index} className="document-table__row">
+                  <span className="document-table__col document-table__col--name" title={docName}>
+                    {docName}
+                  </span>
+                  <span className={`document-table__col document-table__col--result document-table__badge--${result.color}`}>
+                    {result.label}
+                  </span>
+                  <span className={`document-table__col document-table__col--ocr document-table__badge--${doc.ocr_status === 'done' ? 'success' : doc.ocr_status === 'failed' ? 'error' : 'neutral'}`}>
+                    {doc.ocr_status === 'done' ? '완료' : doc.ocr_status === 'failed' ? '실패' : doc.ocr_status || '-'}
+                  </span>
+                  <span className={`document-table__col document-table__col--embed document-table__badge--${doc.embed_status === 'done' ? 'success' : doc.embed_status === 'failed' ? 'error' : 'neutral'}`}>
+                    {doc.embed_status === 'done' ? '완료' : doc.embed_status === 'failed' ? '실패' : doc.embed_status || '-'}
+                  </span>
+                  <span className="document-table__col document-table__col--date">
+                    {doc.updated_at ? formatRelativeTime(doc.updated_at) : '-'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="user-detail-panel">
@@ -292,6 +321,13 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         </button>
         <button
           type="button"
+          className={`user-detail-panel__tab ${activeTab === 'logs' ? 'user-detail-panel__tab--active' : ''}`}
+          onClick={() => setActiveTab('logs')}
+        >
+          활동 로그
+        </button>
+        <button
+          type="button"
           className={`user-detail-panel__tab ${activeTab === 'errors' ? 'user-detail-panel__tab--active' : ''}`}
           onClick={() => setActiveTab('errors')}
         >
@@ -302,17 +338,18 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         </button>
         <button
           type="button"
-          className={`user-detail-panel__tab ${activeTab === 'activity' ? 'user-detail-panel__tab--active' : ''}`}
-          onClick={() => setActiveTab('activity')}
+          className={`user-detail-panel__tab ${activeTab === 'documents' ? 'user-detail-panel__tab--active' : ''}`}
+          onClick={() => setActiveTab('documents')}
         >
-          최근 활동
+          최근 문서
         </button>
       </div>
 
       <div className="user-detail-panel__content">
         {activeTab === 'summary' && renderSummaryTab()}
+        {activeTab === 'logs' && renderLogsTab()}
         {activeTab === 'errors' && renderErrorsTab()}
-        {activeTab === 'activity' && renderActivityTab()}
+        {activeTab === 'documents' && renderDocumentsTab()}
       </div>
     </div>
   );

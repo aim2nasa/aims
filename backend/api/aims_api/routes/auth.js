@@ -5,6 +5,7 @@
 const express = require('express');
 const passport = require('passport');
 const { generateToken, authenticateJWT } = require('../middleware/auth');
+const activityLogger = require('../lib/activityLogger');
 
 // 허용된 리다이렉트 도메인 목록 (보안)
 const ALLOWED_REDIRECT_ORIGINS = [
@@ -98,10 +99,58 @@ module.exports = function(db) {
           }
         }
 
+        // 로그인 성공 로그
+        activityLogger.log({
+          actor: {
+            user_id: req.user._id.toString(),
+            name: req.user.name,
+            email: req.user.email,
+            role: req.user.role,
+            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            userAgent: req.headers['user-agent']
+          },
+          action: {
+            type: 'login',
+            category: 'auth',
+            description: '카카오 로그인'
+          },
+          result: {
+            success: true,
+            statusCode: 302
+          },
+          meta: {
+            endpoint: '/api/auth/kakao/callback',
+            method: 'GET'
+          }
+        });
+
         // 프론트엔드로 리다이렉트 (토큰 포함)
         res.redirect(`${frontendUrl}/login?token=${token}`);
       } catch (error) {
         console.error('Token generation error:', error);
+
+        // 로그인 실패 로그
+        activityLogger.log({
+          actor: {
+            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            userAgent: req.headers['user-agent']
+          },
+          action: {
+            type: 'login',
+            category: 'auth',
+            description: '카카오 로그인 실패'
+          },
+          result: {
+            success: false,
+            statusCode: 500,
+            error: { message: error.message }
+          },
+          meta: {
+            endpoint: '/api/auth/kakao/callback',
+            method: 'GET'
+          }
+        });
+
         res.redirect(`${process.env.FRONTEND_URL}/login?error=token_generation_failed`);
       }
     }
@@ -264,6 +313,44 @@ module.exports = function(db) {
    * 로그아웃 (클라이언트에서 토큰 삭제)
    */
   router.post('/logout', (req, res) => {
+    // 토큰에서 사용자 정보 추출 시도 (로깅용)
+    let user = null;
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        const jwt = require('jsonwebtoken');
+        user = jwt.verify(token, process.env.JWT_SECRET);
+      }
+    } catch (e) {
+      // 토큰 검증 실패해도 로그아웃은 진행
+    }
+
+    // 로그아웃 로그
+    activityLogger.log({
+      actor: {
+        user_id: user?.id || null,
+        name: user?.name || null,
+        email: user?.email || null,
+        role: user?.role || null,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      },
+      action: {
+        type: 'logout',
+        category: 'auth',
+        description: '로그아웃'
+      },
+      result: {
+        success: true,
+        statusCode: 200
+      },
+      meta: {
+        endpoint: '/api/auth/logout',
+        method: 'POST'
+      }
+    });
+
     res.json({
       success: true,
       message: 'Logged out successfully'

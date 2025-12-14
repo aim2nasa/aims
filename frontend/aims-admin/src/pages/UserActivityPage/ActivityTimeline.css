@@ -1,0 +1,260 @@
+/**
+ * Activity Timeline Styles
+ * 사용자 활동 로그 테이블 스타일
+ */
+
+.activity-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-timeline__loading,
+.activity-timeline__error,
+.activity-timeline__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+/* Summary */
+.activity-timeline__summary {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-background-secondary);
+  border-radius: 8px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.summary-stat__value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.summary-stat__label {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.summary-stat--success .summary-stat__value {
+  color: var(--color-success);
+}
+
+.summary-stat--failure .summary-stat__value {
+  color: var(--color-error);
+}
+
+/* Filters */
+.activity-timeline__filters {
+  display: flex;
+  gap: 8px;
+}
+
+.activity-timeline__filter {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+.activity-timeline__filter:hover {
+  border-color: var(--color-border-secondary);
+}
+
+.activity-timeline__filter:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ============================================================
+   Activity Log Table (한 줄 테이블 형식)
+   ============================================================ */
+
+.activity-log-table {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.activity-log-table__header {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.activity-log-table__row {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-border-primary);
+  transition: background 0.15s;
+}
+
+.activity-log-table__row:hover {
+  background: var(--color-background-secondary);
+}
+
+.activity-log-table__row:last-child {
+  border-bottom: none;
+}
+
+.activity-log-table__row--error {
+  background: rgba(255, 59, 48, 0.03);
+}
+
+.activity-log-table__row--error:hover {
+  background: rgba(255, 59, 48, 0.08);
+}
+
+.activity-log-table__col {
+  flex-shrink: 0;
+}
+
+.activity-log-table__col--date {
+  width: 40px;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+
+.activity-log-table__col--time {
+  width: 65px;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.activity-log-table__col--category {
+  width: 50px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.activity-log-table__col--action {
+  width: 70px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.activity-log-table__col--target {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-primary);
+  padding-right: 8px;
+}
+
+.activity-log-table__col--result {
+  width: 40px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* 카테고리 색상 */
+.activity-log-table__category--auth {
+  color: var(--color-success);
+}
+
+.activity-log-table__category--customer {
+  color: var(--color-accent);
+}
+
+.activity-log-table__category--document {
+  color: #ff9500;
+}
+
+.activity-log-table__category--contract {
+  color: #af52de;
+}
+
+.activity-log-table__category--ai {
+  color: #5ac8fa;
+}
+
+.activity-log-table__category--file {
+  color: var(--color-text-secondary);
+}
+
+/* 결과 색상 */
+.activity-log-table__result--success {
+  color: var(--color-success);
+}
+
+.activity-log-table__result--error {
+  color: var(--color-error);
+}
+
+/* Bulk count badge */
+.activity-log-table__bulk {
+  margin-left: 4px;
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+  background: var(--color-background-secondary);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+/* Pagination */
+.activity-timeline__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.pagination-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 4px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-background-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
