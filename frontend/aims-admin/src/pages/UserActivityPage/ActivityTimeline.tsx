@@ -73,20 +73,28 @@ const formatShortDate = (dateString: string): string => {
 type SortKey = 'timestamp' | 'actor' | 'category' | 'target' | 'action' | 'result';
 type SortOrder = 'asc' | 'desc';
 
+const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 50];
+const STORAGE_KEY_PAGE_SIZE = 'activityTimeline_pageSize';
+
+const getStoredPageSize = (): number => {
+  const stored = localStorage.getItem(STORAGE_KEY_PAGE_SIZE);
+  return stored ? Number(stored) : 10;
+};
+
 export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(getStoredPageSize);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [successFilter, setSuccessFilter] = useState<string>('');
   const [sortKey, setSortKey] = useState<SortKey>('timestamp');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const limit = 50;
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin', 'activity-logs', userId, page, categoryFilter, successFilter],
+    queryKey: ['admin', 'activity-logs', userId, page, pageSize, categoryFilter, successFilter],
     queryFn: () =>
       userActivityApi.getUserActivityLogs(userId, {
         page,
-        limit,
+        limit: pageSize,
         category: categoryFilter || undefined,
         success: successFilter === '' ? undefined : successFilter === 'true',
       }),
@@ -189,6 +197,7 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
             setCategoryFilter(e.target.value);
             setPage(1);
           }}
+          aria-label="카테고리 필터"
         >
           <option value="">모든 카테고리</option>
           <option value="auth">인증</option>
@@ -203,6 +212,7 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
             setSuccessFilter(e.target.value);
             setPage(1);
           }}
+          aria-label="결과 필터"
         >
           <option value="">모든 결과</option>
           <option value="true">성공</option>
@@ -253,6 +263,7 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
               결과{getSortIcon('result')}
             </span>
           </div>
+          <div className="activity-log-table__body">
           {sortedLogs.map((log) => {
             const category = log.action.category || 'file';
             const categoryLabel = CATEGORY_LABELS[category] || category;
@@ -307,12 +318,28 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
-      {/* 페이지네이션 */}
-      {pagination && pagination.totalPages > 1 && (
+      {/* 페이지네이션 - 항상 표시 */}
+      {pagination && (
         <div className="activity-timeline__pagination">
+          <select
+            className="pagination-size-select"
+            value={pageSize}
+            onChange={(e) => {
+              const newSize = Number(e.target.value);
+              setPageSize(newSize);
+              setPage(1);
+              localStorage.setItem(STORAGE_KEY_PAGE_SIZE, String(newSize));
+            }}
+            aria-label="페이지 크기"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>{size}개</option>
+            ))}
+          </select>
           <button
             type="button"
             className="pagination-btn"
@@ -322,16 +349,19 @@ export const ActivityTimeline = ({ userId }: ActivityTimelineProps) => {
             이전
           </button>
           <span className="pagination-info">
-            {page} / {pagination.totalPages}
+            {page} / {pagination.totalPages || 1}
           </span>
           <button
             type="button"
             className="pagination-btn"
-            disabled={page >= pagination.totalPages}
+            disabled={page >= (pagination.totalPages || 1)}
             onClick={() => setPage(p => p + 1)}
           >
             다음
           </button>
+          <span className="pagination-total">
+            전체 {pagination.total}건
+          </span>
         </div>
       )}
     </div>

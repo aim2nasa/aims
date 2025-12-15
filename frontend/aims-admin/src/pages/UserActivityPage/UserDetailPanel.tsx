@@ -4,7 +4,7 @@
  * @since 2025-12-14
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   userActivityApi,
@@ -52,16 +52,34 @@ type ErrorSortKey = 'occurred_at' | 'type' | 'document_name';
 type DocSortKey = 'embed_completed_at' | 'document_name' | 'status' | 'ocr_status' | 'embed_status';
 type SortOrder = 'asc' | 'desc';
 
+const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 50];
+const STORAGE_KEY_ERROR_PAGE_SIZE = 'userDetail_errorPageSize';
+const STORAGE_KEY_DOC_PAGE_SIZE = 'userDetail_docPageSize';
+
+const getStoredErrorPageSize = (): number => {
+  const stored = localStorage.getItem(STORAGE_KEY_ERROR_PAGE_SIZE);
+  return stored ? Number(stored) : 10;
+};
+
+const getStoredDocPageSize = (): number => {
+  const stored = localStorage.getItem(STORAGE_KEY_DOC_PAGE_SIZE);
+  return stored ? Number(stored) : 10;
+};
+
 export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
 
-  // 오류 목록 정렬
+  // 오류 목록 정렬 및 페이지네이션
   const [errorSortKey, setErrorSortKey] = useState<ErrorSortKey>('occurred_at');
   const [errorSortOrder, setErrorSortOrder] = useState<SortOrder>('desc');
+  const [errorPage, setErrorPage] = useState(1);
+  const [errorPageSize, setErrorPageSize] = useState(getStoredErrorPageSize);
 
-  // 최근 문서 정렬
+  // 최근 문서 정렬 및 페이지네이션
   const [docSortKey, setDocSortKey] = useState<DocSortKey>('embed_completed_at');
   const [docSortOrder, setDocSortOrder] = useState<SortOrder>('desc');
+  const [docPage, setDocPage] = useState(1);
+  const [docPageSize, setDocPageSize] = useState(getStoredDocPageSize);
 
   const {
     data: detailData,
@@ -81,6 +99,12 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
     queryFn: () => userActivityApi.getErrors(userId, 7),
     enabled: !!userId && activeTab === 'errors',
   });
+
+  // userId 변경 시 페이지 리셋
+  useEffect(() => {
+    setErrorPage(1);
+    setDocPage(1);
+  }, [userId]);
 
   if (detailLoading) {
     return (
@@ -247,6 +271,7 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         setErrorSortKey(key);
         setErrorSortOrder('desc');
       }
+      setErrorPage(1); // 정렬 변경 시 첫 페이지로
     };
 
     // 정렬 아이콘
@@ -282,6 +307,12 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
       return 0;
     });
 
+    // 페이지네이션 계산
+    const totalErrors = sortedErrors.length;
+    const totalErrorPages = Math.ceil(totalErrors / errorPageSize);
+    const errorStartIndex = (errorPage - 1) * errorPageSize;
+    const paginatedErrors = sortedErrors.slice(errorStartIndex, errorStartIndex + errorPageSize);
+
     return (
       <div className="user-detail-panel__errors">
         {errorsLoading ? (
@@ -313,22 +344,84 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
                 오류 메시지
               </span>
             </div>
-            {sortedErrors.map((error: UserError, index: number) => (
-              <div key={index} className="error-table__row">
-                <span className="error-table__col error-table__col--datetime">
-                  {formatDateTime(error.occurred_at)}
-                </span>
-                <span className={`error-table__col error-table__col--type error-type--${error.type}`}>
-                  {ERROR_TYPE_LABELS[error.type] || error.type}
-                </span>
-                <span className="error-table__col error-table__col--document" title={error.document_name}>
-                  {error.document_name}
-                </span>
-                <span className="error-table__col error-table__col--message" title={error.error_message}>
-                  {error.error_message}
-                </span>
-              </div>
-            ))}
+            <div className="error-table__body">
+              {paginatedErrors.map((error: UserError, index: number) => (
+                <div key={errorStartIndex + index} className="error-table__row">
+                  <span className="error-table__col error-table__col--datetime">
+                    {formatDateTime(error.occurred_at)}
+                  </span>
+                  <span className={`error-table__col error-table__col--type error-type--${error.type}`}>
+                    {ERROR_TYPE_LABELS[error.type] || error.type}
+                  </span>
+                  <span className="error-table__col error-table__col--document" title={error.document_name}>
+                    {error.document_name}
+                  </span>
+                  <span className="error-table__col error-table__col--message" title={error.error_message}>
+                    {error.error_message}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* 페이지네이션 */}
+            <div className="error-table__pagination">
+              <select
+                className="pagination-size-select"
+                value={errorPageSize}
+                onChange={(e) => {
+                  const newSize = Number(e.target.value);
+                  setErrorPageSize(newSize);
+                  setErrorPage(1);
+                  localStorage.setItem(STORAGE_KEY_ERROR_PAGE_SIZE, String(newSize));
+                }}
+                aria-label="페이지 크기"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size}개</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="error-table__pagination-button"
+                onClick={() => setErrorPage(p => Math.max(1, p - 1))}
+                disabled={errorPage === 1}
+              >
+                이전
+              </button>
+              {Array.from({ length: Math.min(5, totalErrorPages || 1) }, (_, i) => {
+                let pageNum: number;
+                const tp = totalErrorPages || 1;
+                if (tp <= 5) {
+                  pageNum = i + 1;
+                } else if (errorPage <= 3) {
+                  pageNum = i + 1;
+                } else if (errorPage >= tp - 2) {
+                  pageNum = tp - 4 + i;
+                } else {
+                  pageNum = errorPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    className={`error-table__pagination-button ${errorPage === pageNum ? 'error-table__pagination-button--active' : ''}`}
+                    onClick={() => setErrorPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="error-table__pagination-button"
+                onClick={() => setErrorPage(p => Math.min(totalErrorPages || 1, p + 1))}
+                disabled={errorPage === (totalErrorPages || 1)}
+              >
+                다음
+              </button>
+              <span className="error-table__pagination-info">
+                전체 {totalErrors}건
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -350,6 +443,7 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         setDocSortKey(key);
         setDocSortOrder('desc');
       }
+      setDocPage(1); // 정렬 변경 시 첫 페이지로
     };
 
     // 정렬 아이콘
@@ -401,6 +495,12 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
       return 0;
     });
 
+    // 페이지네이션 계산
+    const totalDocs = sortedDocs.length;
+    const totalDocPages = Math.ceil(totalDocs / docPageSize);
+    const docStartIndex = (docPage - 1) * docPageSize;
+    const paginatedDocs = sortedDocs.slice(docStartIndex, docStartIndex + docPageSize);
+
     return (
       <div className="user-detail-panel__documents">
         {!recent_activity?.length ? (
@@ -439,30 +539,92 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
                 임베딩{getDocSortIcon('embed_status')}
               </span>
             </div>
-            {sortedDocs.map((doc, index) => {
-              const result = getOverallResult(doc.status);
-              const docName = doc.document_name || `문서_${doc.document_id?.slice(-6) || index}`;
+            <div className="document-table__body">
+              {paginatedDocs.map((doc, index) => {
+                const result = getOverallResult(doc.status);
+                const docName = doc.document_name || `문서_${doc.document_id?.slice(-6) || index}`;
 
-              return (
-                <div key={index} className="document-table__row">
-                  <span className="document-table__col document-table__col--datetime">
-                    {doc.embed_completed_at ? formatDateTime(doc.embed_completed_at) : '-'}
-                  </span>
-                  <span className="document-table__col document-table__col--name" title={docName}>
-                    {docName}
-                  </span>
-                  <span className={`document-table__col document-table__col--result document-table__badge--${result.color}`}>
-                    {result.label}
-                  </span>
-                  <span className={`document-table__col document-table__col--ocr document-table__badge--${doc.ocr_status === 'done' ? 'success' : doc.ocr_status === 'failed' ? 'error' : 'neutral'}`}>
-                    {doc.ocr_status === 'done' ? '완료' : doc.ocr_status === 'failed' ? '실패' : doc.ocr_status || '-'}
-                  </span>
-                  <span className={`document-table__col document-table__col--embed document-table__badge--${doc.embed_status === 'done' ? 'success' : doc.embed_status === 'failed' ? 'error' : 'neutral'}`}>
-                    {doc.embed_status === 'done' ? '완료' : doc.embed_status === 'failed' ? '실패' : doc.embed_status || '-'}
-                  </span>
-                </div>
-              );
-            })}
+                return (
+                  <div key={docStartIndex + index} className="document-table__row">
+                    <span className="document-table__col document-table__col--datetime">
+                      {doc.embed_completed_at ? formatDateTime(doc.embed_completed_at) : '-'}
+                    </span>
+                    <span className="document-table__col document-table__col--name" title={docName}>
+                      {docName}
+                    </span>
+                    <span className={`document-table__col document-table__col--result document-table__badge--${result.color}`}>
+                      {result.label}
+                    </span>
+                    <span className={`document-table__col document-table__col--ocr document-table__badge--${doc.ocr_status === 'done' ? 'success' : doc.ocr_status === 'failed' ? 'error' : 'neutral'}`}>
+                      {doc.ocr_status === 'done' ? '완료' : doc.ocr_status === 'failed' ? '실패' : doc.ocr_status || '-'}
+                    </span>
+                    <span className={`document-table__col document-table__col--embed document-table__badge--${doc.embed_status === 'done' ? 'success' : doc.embed_status === 'failed' ? 'error' : 'neutral'}`}>
+                      {doc.embed_status === 'done' ? '완료' : doc.embed_status === 'failed' ? '실패' : doc.embed_status || '-'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* 페이지네이션 */}
+            <div className="document-table__pagination">
+              <select
+                className="pagination-size-select"
+                value={docPageSize}
+                onChange={(e) => {
+                  const newSize = Number(e.target.value);
+                  setDocPageSize(newSize);
+                  setDocPage(1);
+                  localStorage.setItem(STORAGE_KEY_DOC_PAGE_SIZE, String(newSize));
+                }}
+                aria-label="페이지 크기"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size}개</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="document-table__pagination-button"
+                onClick={() => setDocPage(p => Math.max(1, p - 1))}
+                disabled={docPage === 1}
+              >
+                이전
+              </button>
+              {Array.from({ length: Math.min(5, totalDocPages || 1) }, (_, i) => {
+                let pageNum: number;
+                const tp = totalDocPages || 1;
+                if (tp <= 5) {
+                  pageNum = i + 1;
+                } else if (docPage <= 3) {
+                  pageNum = i + 1;
+                } else if (docPage >= tp - 2) {
+                  pageNum = tp - 4 + i;
+                } else {
+                  pageNum = docPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    className={`document-table__pagination-button ${docPage === pageNum ? 'document-table__pagination-button--active' : ''}`}
+                    onClick={() => setDocPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="document-table__pagination-button"
+                onClick={() => setDocPage(p => Math.min(totalDocPages || 1, p + 1))}
+                disabled={docPage === (totalDocPages || 1)}
+              >
+                다음
+              </button>
+              <span className="document-table__pagination-info">
+                전체 {totalDocs}건
+              </span>
+            </div>
           </div>
         )}
       </div>

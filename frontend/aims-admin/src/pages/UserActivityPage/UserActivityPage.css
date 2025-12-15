@@ -666,6 +666,8 @@
   display: flex;
   flex-direction: column;
   font-size: 11px;
+  flex: 1;
+  min-height: 0;
 }
 
 .error-table__header {
@@ -677,6 +679,15 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   font-size: 10px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+/* 오류 목록 스크롤 영역 */
+.error-table__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* 정렬 가능한 헤더 */
@@ -759,6 +770,51 @@
 
 .error-type--unknown {
   color: var(--color-text-tertiary);
+}
+
+/* Error Table 페이지네이션 */
+.error-table__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.error-table__pagination-button {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.error-table__pagination-button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.error-table__pagination-button--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.error-table__pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-table__pagination-info {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-left: var(--spacing-xs);
 }
 
 /* Activity List */
@@ -929,4 +985,55 @@
 
 .document-table__badge--neutral {
   color: var(--color-text-tertiary);
+}
+
+/* Document Table Body */
+.document-table__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Document Table Pagination */
+.document-table__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.document-table__pagination-button {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.document-table__pagination-button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.document-table__pagination-button--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.document-table__pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.document-table__pagination-info {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-left: var(--spacing-xs);
 }

@@ -6,7 +6,9 @@
 .activity-timeline {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 .activity-timeline__loading,
@@ -96,6 +98,8 @@
   border: 1px solid var(--color-border-primary);
   border-radius: 6px;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .activity-log-table__header {
@@ -107,6 +111,15 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   font-size: 10px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+/* 테이블 본문 - 스크롤 영역 */
+.activity-log-table__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* 정렬 가능한 헤더 */
@@ -242,14 +255,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-top: 1px solid var(--color-border-primary);
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--color-background-secondary);
+  border-radius: 0 0 6px 6px;
+  flex-shrink: 0;
 }
 
 .pagination-btn {
-  padding: 4px 12px;
-  font-size: 11px;
+  padding: 2px 8px;
+  font-size: 10px;
   border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   background: var(--color-background-primary);
@@ -260,7 +275,8 @@
 
 .pagination-btn:hover:not(:disabled) {
   background: var(--color-background-secondary);
-  border-color: var(--color-border-secondary);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .pagination-btn:disabled {
@@ -269,6 +285,37 @@
 }
 
 .pagination-info {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-text-tertiary);
+}
+
+.pagination-total {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-left: 4px;
+}
+
+/* Page size select */
+.pagination-size-select {
+  padding: 2px 6px;
+  font-size: 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 4px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  padding-right: 18px;
+}
+
+.pagination-size-select:hover {
+  border-color: var(--color-accent);
+}
+
+.pagination-size-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
