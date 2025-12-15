@@ -1,10 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:  # 수동 실행만 가능
 
 jobs:
   # Job 1: 프론트엔드 테스트 (MongoDB 불필요)
