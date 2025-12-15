@@ -140,12 +140,13 @@
 .user-activity-page__table-container {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: auto;
 }
 
 .user-activity-page__table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .user-activity-page__table th,
@@ -156,6 +157,8 @@
   white-space: nowrap;
   height: 36px;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 컬럼 너비 최적화 */
@@ -179,6 +182,7 @@
 .user-activity-page__table td:nth-child(9) { width: 70px; text-align: right; } /* 최근활동 */
 
 .user-activity-page__table th {
+  position: relative;
   background: var(--color-surface);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
@@ -190,6 +194,33 @@
 
 .user-activity-page__table th:hover {
   background: var(--color-border);
+}
+
+/* Resize Handle */
+.user-activity-page__table th .th-content {
+  display: block;
+  padding-right: 8px;
+}
+
+.user-activity-page__table th .resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 1;
+}
+
+.user-activity-page__table th .resize-handle:hover {
+  background: var(--color-primary);
+  opacity: 0.3;
+}
+
+.user-activity-page__table th .resize-handle:active {
+  background: var(--color-primary);
+  opacity: 0.5;
 }
 
 .user-activity-page__table td {

@@ -4,7 +4,7 @@
  * @since 2025-12-14
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
@@ -17,6 +17,26 @@ import {
 import { Button } from '@/shared/ui/Button/Button';
 import { UserDetailPanel } from './UserDetailPanel';
 import './UserActivityPage.css';
+
+// 컬럼 폭 localStorage 키
+const COLUMN_WIDTHS_KEY = 'userActivityPage_columnWidths';
+
+// 기본 컬럼 폭
+const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
+  name: 180,
+  tier: 70,
+  document: 50,
+  customer: 50,
+  ai: 60,
+  ocr: 50,
+  storage: 110,
+  error: 50,
+  lastActivity: 70,
+};
+
+// 컬럼 최소/최대 폭
+const MIN_COLUMN_WIDTH = 40;
+const MAX_COLUMN_WIDTH = 400;
 
 const TIER_OPTIONS = [
   { value: '', label: '전체 등급' },
@@ -61,6 +81,60 @@ export const UserActivityPage = () => {
   const [sortBy, setSortBy] = useState('last_activity_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // 컬럼 리사이즈 상태
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem(COLUMN_WIDTHS_KEY);
+      return saved ? { ...DEFAULT_COLUMN_WIDTHS, ...JSON.parse(saved) } : DEFAULT_COLUMN_WIDTHS;
+    } catch {
+      return DEFAULT_COLUMN_WIDTHS;
+    }
+  });
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(0);
+
+  // 컬럼 폭 localStorage 저장
+  useEffect(() => {
+    localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths));
+  }, [columnWidths]);
+
+  // 리사이즈 핸들러
+  const handleResizeStart = useCallback((columnKey: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnKey);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = columnWidths[columnKey] || DEFAULT_COLUMN_WIDTHS[columnKey];
+  }, [columnWidths]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizingColumn) return;
+    const diff = e.clientX - resizeStartX.current;
+    const newWidth = Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, resizeStartWidth.current + diff));
+    setColumnWidths(prev => ({ ...prev, [resizingColumn]: newWidth }));
+  }, [resizingColumn]);
+
+  const handleResizeEnd = useCallback(() => {
+    setResizingColumn(null);
+  }, []);
+
+  // 리사이즈 이벤트 리스너
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 
   // 검색어 debounce (300ms)
   const debouncedSearch = useDebounce(search, 300);
@@ -194,34 +268,53 @@ export const UserActivityPage = () => {
             <>
               <div className="user-activity-page__table-container">
                 <table className="user-activity-page__table">
+                  <colgroup>
+                    <col style={{ width: columnWidths.name }} />
+                    <col style={{ width: columnWidths.tier }} />
+                    <col style={{ width: columnWidths.document }} />
+                    <col style={{ width: columnWidths.customer }} />
+                    <col style={{ width: columnWidths.ai }} />
+                    <col style={{ width: columnWidths.ocr }} />
+                    <col style={{ width: columnWidths.storage }} />
+                    <col style={{ width: columnWidths.error }} />
+                    <col style={{ width: columnWidths.lastActivity }} />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th onClick={() => handleSort('name')}>
-                        이름 {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">이름 {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('name', e)} />
                       </th>
                       <th onClick={() => handleSort('tier')}>
-                        등급 {sortBy === 'tier' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">등급 {sortBy === 'tier' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('tier', e)} />
                       </th>
                       <th onClick={() => handleSort('document_count')}>
-                        문서 {sortBy === 'document_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">문서 {sortBy === 'document_count' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('document', e)} />
                       </th>
                       <th onClick={() => handleSort('customer_count')}>
-                        고객 {sortBy === 'customer_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">고객 {sortBy === 'customer_count' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('customer', e)} />
                       </th>
                       <th onClick={() => handleSort('ai_tokens_30d')}>
-                        AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ai', e)} />
                       </th>
                       <th onClick={() => handleSort('ocr_count_30d')}>
-                        OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ocr', e)} />
                       </th>
                       <th onClick={() => handleSort('storage_used_bytes')}>
-                        스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('storage', e)} />
                       </th>
                       <th onClick={() => handleSort('error_count_7d')}>
-                        오류 {sortBy === 'error_count_7d' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">오류 {sortBy === 'error_count_7d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('error', e)} />
                       </th>
                       <th onClick={() => handleSort('last_activity_at')}>
-                        최근활동 {sortBy === 'last_activity_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <span className="th-content">최근활동 {sortBy === 'last_activity_at' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
                       </th>
                     </tr>
                   </thead>
