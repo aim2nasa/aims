@@ -196,6 +196,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
               formData={basicInfoData}
               errors={errors}
               onChange={handleBasicInfoChange}
+              editingCustomerId={customer._id}
             />
             {/* 메모 필드 */}
             <div className="customer-edit-modal-memo">

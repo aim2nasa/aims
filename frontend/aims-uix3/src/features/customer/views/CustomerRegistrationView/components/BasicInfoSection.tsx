@@ -27,12 +27,15 @@ interface BasicInfoSectionProps {
   formData: BasicInfoFormData;
   errors: Record<string, string>;
   onChange: (field: keyof BasicInfoFormData, value: BasicInfoFormData[keyof BasicInfoFormData]) => void;
+  /** 수정 모드일 때 현재 고객 ID (자기 자신은 중복으로 표시하지 않음) */
+  editingCustomerId?: string;
 }
 
 export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   formData,
   errors,
   onChange,
+  editingCustomerId,
 }) => {
   // 중복 검사 상태
   const [duplicateStatus, setDuplicateStatus] = useState<DuplicateCheckStatus>('idle');
@@ -77,7 +80,10 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
       try {
         const result = await checkDuplicateName(name);
 
-        if (result.exists && result.customer) {
+        // 수정 모드에서 자기 자신은 중복으로 표시하지 않음
+        const isSelf = editingCustomerId && result.customer?._id === editingCustomerId;
+
+        if (result.exists && result.customer && !isSelf) {
           setDuplicateStatus('duplicate');
           setDuplicateCustomer(result.customer);
         } else {
@@ -97,7 +103,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         clearTimeout(checkTimerRef.current);
       }
     };
-  }, [formData.name]);
+  }, [formData.name, editingCustomerId]);
 
   // 중복 상태에 따른 클래스
   const getNameFieldClass = () => {
