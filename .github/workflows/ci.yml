@@ -45,7 +45,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend/aims-uix3
-          npm ci
+          npm install
 
       - name: Type check frontend
         run: |
