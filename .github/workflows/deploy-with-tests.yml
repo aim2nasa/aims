@@ -1,0 +1,168 @@
+name: Deploy with Full Tests
+
+on:
+  workflow_dispatch:  # 수동 실행만 가능
+
+jobs:
+  # Job 1: 프론트엔드 테스트
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend/aims-uix3
+          rm -rf node_modules package-lock.json
+          npm install
+          npm install @rollup/rollup-linux-x64-gnu
+
+      - name: Type check frontend
+        run: |
+          cd frontend/aims-uix3
+          npm run typecheck
+
+      - name: Run frontend tests
+        run: |
+          cd frontend/aims-uix3
+          npm test -- --run
+
+  # Job 2: 백엔드 Node.js 테스트
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend/api/aims_api
+          npm ci
+
+      - name: Run backend tests
+        run: |
+          cd backend/api/aims_api
+          npm run test:ci
+
+  # Job 3: Python API 테스트
+  python-test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies (all APIs)
+        run: |
+          pip install --no-cache-dir -r backend/api/doc_status_api/requirements.txt
+          pip install --no-cache-dir -r backend/api/annual_report_api/requirements.txt
+          pip install --no-cache-dir -r backend/api/aims_rag_api/requirements.txt
+
+      - name: Run doc_status_api tests
+        env:
+          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
+        run: |
+          cd backend/api/doc_status_api && python -m pytest -v
+
+      - name: Run annual_report_api tests
+        env:
+          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
+        run: |
+          cd backend/api/annual_report_api && python -m pytest -v
+
+      - name: Run aims_rag_api tests
+        env:
+          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
+        run: |
+          cd backend/api/aims_rag_api && python -m pytest -v
+
+  # Job 4: 배포 (모든 테스트 통과 후에만 실행)
+  deploy:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test, python-test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: frontend/aims-uix3
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+          npm install @rollup/rollup-linux-x64-gnu
+
+      - name: Build
+        working-directory: frontend/aims-uix3
+        run: npm run build
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          rsync -avz --delete \
+            frontend/aims-uix3/dist/ \
+            ${{ vars.SERVER_USER }}@${{ vars.SERVER_HOST }}:/home/rossi/aims/frontend/aims-uix3/dist/
+
+      - name: Notify completion
+        run: echo "✅ Frontend deployed successfully after all tests passed!"
