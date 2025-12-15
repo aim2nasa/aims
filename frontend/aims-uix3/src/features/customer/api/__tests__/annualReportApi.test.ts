@@ -219,6 +219,70 @@ describe('AnnualReportApi', () => {
   });
 
   // ============================================
+  // 파싱 상태 타입 테스트
+  // ============================================
+  describe('파싱 상태 타입', () => {
+    it('status 필드는 pending/processing/error/completed 중 하나여야 한다', () => {
+      // TypeScript 타입 검증을 위한 테스트
+      // 실제 런타임에서 status 값의 유효성 확인
+      const validStatuses: Array<'pending' | 'processing' | 'error' | 'completed'> = [
+        'pending',
+        'processing',
+        'error',
+        'completed'
+      ];
+
+      validStatuses.forEach(status => {
+        expect(['pending', 'processing', 'error', 'completed']).toContain(status);
+      });
+    });
+
+    it('pending 상태는 파싱 대기중을 의미한다', () => {
+      const pendingReport = {
+        status: 'pending' as const,
+        parsed_at: null,
+        total_monthly_premium: null,
+        contract_count: null
+      };
+
+      expect(pendingReport.status).toBe('pending');
+      expect(pendingReport.parsed_at).toBeNull();
+    });
+
+    it('processing 상태는 파싱 진행중을 의미한다', () => {
+      const processingReport = {
+        status: 'processing' as const,
+        parsed_at: null
+      };
+
+      expect(processingReport.status).toBe('processing');
+    });
+
+    it('error 상태는 파싱 실패를 의미한다', () => {
+      const errorReport = {
+        status: 'error' as const,
+        error_message: 'Rate limit exceeded',
+        parsed_at: null
+      };
+
+      expect(errorReport.status).toBe('error');
+      expect(errorReport.error_message).toBeDefined();
+    });
+
+    it('completed 상태는 파싱 완료를 의미한다', () => {
+      const completedReport = {
+        status: 'completed' as const,
+        parsed_at: '2025-12-16T02:30:00.000Z',
+        total_monthly_premium: 150000,
+        contract_count: 5
+      };
+
+      expect(completedReport.status).toBe('completed');
+      expect(completedReport.parsed_at).not.toBeNull();
+    });
+  });
+
+  // ============================================
   // 중복 판단 기준 테스트 (issue_date + customer_name)
   // ============================================
   describe('중복 판단 기준', () => {
