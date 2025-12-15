@@ -12,7 +12,9 @@ from services.queue_manager import ARParseQueueManager, QueueStatus, MAX_RETRY_C
 @pytest.fixture
 def test_db():
     """테스트용 MongoDB 연결"""
-    client = MongoClient("mongodb://tars:27017/")
+    import os
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+    client = MongoClient(mongo_uri)
     db = client["test_ar_queue"]
     yield db
     # 테스트 후 정리
