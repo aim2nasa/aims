@@ -398,7 +398,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           return {
             report_id: rawData.file_id || rawData.source_file_id || `report_${rawData.parsed_at}`,
             issue_date: rawData.issue_date || '',
-            customer_name: rawData.customer_name || customer.personal_info?.name || '',
+            // ⚠️ customer_name이 없으면 고객명으로 fallback하지 않음
+            // AR 문서의 소유주는 고객과 다를 수 있음 (예: 가족의 AR 문서)
+            customer_name: rawData.customer_name || '',
             // 실패/진행중 문서는 null 유지, 완료된 문서는 0으로 fallback
             total_monthly_premium: isFailedOrProcessing ? rawData.total_monthly_premium : (rawData.total_monthly_premium || 0),
             total_coverage: rawData.total_coverage || 0,

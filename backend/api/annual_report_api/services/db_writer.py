@@ -304,11 +304,19 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             filename = upload_info.get("originalName", "")
             customer_name_from_filename = None
             if filename:
-                # "홍길동보유계약현황202508.pdf" → "홍길동"
                 import re
-                match = re.match(r'^(.+?)보유계약현황', filename)
-                if match:
-                    customer_name_from_filename = match.group(1)
+                # 패턴 1: "홍길동보유계약현황202508.pdf" → "홍길동"
+                # 패턴 2: "안영미annual report202508.pdf" → "안영미"
+                # 패턴 3: "김철수Annual Report202508.pdf" → "김철수" (대소문자 무관)
+                patterns = [
+                    r'^(.+?)보유계약현황',
+                    r'^(.+?)[Aa]nnual\s*[Rr]eport',
+                ]
+                for pattern in patterns:
+                    match = re.match(pattern, filename, re.IGNORECASE)
+                    if match:
+                        customer_name_from_filename = match.group(1).strip()
+                        break
 
             # ar_parsing_status가 없으면 "pending"으로 처리
             ar_status = file_doc.get("ar_parsing_status") or "pending"
