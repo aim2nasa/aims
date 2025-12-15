@@ -369,6 +369,12 @@
               "name": "_id",
               "value": "={{ $('Pasre').item.json.file_id }}",
               "type": "string"
+            },
+            {
+              "id": "ocr-page-count-field-001",
+              "name": "ocr.page_count",
+              "value": "={{ $json.body.num_pages ?? 1 }}",
+              "type": "number"
             }
           ]
         },

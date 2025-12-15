@@ -134,6 +134,12 @@
               "name": "full_text",
               "value": "={{ $('Normalize DocOCR Response').item.json.full_text }}",
               "type": "string"
+            },
+            {
+              "id": "page-count-field-001",
+              "name": "num_pages",
+              "value": "={{ $('Normalize DocOCR Response').item.json.num_pages ?? 1 }}",
+              "type": "number"
             }
           ]
         },

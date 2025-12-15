@@ -13,6 +13,10 @@ export interface OCRUsageOverview {
   ocr_pending: number;
   ocr_processing: number;
   ocr_failed: number;
+  pages_this_month: number;
+  pages_total: number;
+  estimated_cost_usd: number;
+  estimated_cost_krw: number;
 }
 
 export interface HourlyOCRPoint {
@@ -26,6 +30,8 @@ export interface TopOCRUser {
   user_id: string;
   user_name: string;
   ocr_count: number;
+  page_count: number;
+  estimated_cost_usd: number;
   error_count: number;
   last_ocr_at: string;
 }

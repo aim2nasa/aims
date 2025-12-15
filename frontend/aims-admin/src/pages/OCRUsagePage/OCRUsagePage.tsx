@@ -178,9 +178,14 @@ export const OCRUsagePage = () => {
             subtitle="처리 완료"
           />
           <StatCard
-            title="전체 OCR"
-            value={formatOCRCount(overview?.ocr_total || 0)}
-            subtitle="누적 처리"
+            title="이번 달 페이지"
+            value={formatOCRCount(overview?.pages_this_month || 0)}
+            subtitle="페이지 처리"
+          />
+          <StatCard
+            title="예상 비용"
+            value={`$${(overview?.estimated_cost_usd || 0).toFixed(2)}`}
+            subtitle={`₩${(overview?.estimated_cost_krw || 0).toLocaleString()}`}
           />
           <StatCard
             title="활성 사용자"
@@ -276,6 +281,8 @@ export const OCRUsagePage = () => {
                 <th>#</th>
                 <th>사용자</th>
                 <th>OCR 성공</th>
+                <th>페이지 수</th>
+                <th>예상 비용</th>
                 <th>OCR 실패</th>
                 <th>마지막 처리</th>
               </tr>
@@ -283,7 +290,7 @@ export const OCRUsagePage = () => {
             <tbody>
               {!topUsers || topUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="ocr-usage-page__table-empty">
+                  <td colSpan={7} className="ocr-usage-page__table-empty">
                     사용자 데이터가 없습니다
                   </td>
                 </tr>
@@ -296,6 +303,12 @@ export const OCRUsagePage = () => {
                     </td>
                     <td className="ocr-usage-page__table-count">
                       {user.ocr_count.toLocaleString()}건
+                    </td>
+                    <td className="ocr-usage-page__table-count">
+                      {user.page_count.toLocaleString()}p
+                    </td>
+                    <td className="ocr-usage-page__table-cost">
+                      ${user.estimated_cost_usd.toFixed(2)}
                     </td>
                     <td className="ocr-usage-page__table-error">
                       {user.error_count > 0 ? (

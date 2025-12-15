@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const Redis = require('ioredis');
+const { calculateOCRCost } = require('../lib/ocrPricing');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -50,7 +51,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - days);
 
-      const [ocrThisMonth, ocrTotal, ocrPending, ocrProcessing, ocrFailed, activeUsersResult] = await Promise.all([
+      const [ocrThisMonth, ocrTotal, ocrPending, ocrProcessing, ocrFailed, activeUsersResult, pagesThisMonthResult, pagesTotalResult] = await Promise.all([
         // 이번 달 OCR 처리 수 (성공+실패)
         filesCollection.countDocuments({
           $and: [
@@ -104,8 +105,45 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           },
           { $group: { _id: '$ownerId' } },
           { $count: 'count' }
+        ]).toArray(),
+        // 이번 달 페이지 수 (성공한 OCR만)
+        filesCollection.aggregate([
+          {
+            $match: {
+              'ocr.status': 'done',
+              $or: [
+                { 'ocr.done_at': { $gte: startOfMonth } },
+                { 'ocr.done_at': { $gte: startOfMonthISO } }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
+            }
+          }
+        ]).toArray(),
+        // 전체 페이지 수 (성공한 OCR만)
+        filesCollection.aggregate([
+          {
+            $match: {
+              'ocr.status': 'done'
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
+            }
+          }
         ]).toArray()
       ]);
+
+      // 페이지 수 및 예상 비용 계산
+      const pagesThisMonth = pagesThisMonthResult[0]?.total || 0;
+      const pagesTotal = pagesTotalResult[0]?.total || 0;
+      const costThisMonth = calculateOCRCost(pagesThisMonth);
 
       res.json({
         success: true,
@@ -116,7 +154,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           active_users: activeUsersResult[0]?.count || 0,
           ocr_pending: ocrPending,
           ocr_processing: ocrProcessing,
-          ocr_failed: ocrFailed
+          ocr_failed: ocrFailed,
+          pages_this_month: pagesThisMonth,
+          pages_total: pagesTotal,
+          estimated_cost_usd: costThisMonth.usd,
+          estimated_cost_krw: costThisMonth.krw
         }
       });
     } catch (error) {
@@ -298,7 +340,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - days);
 
-      // 사용자별 OCR 성공 집계
+      // 사용자별 OCR 성공 집계 (페이지 수 포함)
       const successPipeline = [
         {
           $match: {
@@ -314,6 +356,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           $group: {
             _id: '$ownerId',
             ocr_count: { $sum: 1 },
+            page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } },
             last_ocr_at: { $max: '$ocr.done_at' }
           }
         },
@@ -369,14 +412,20 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         userNameMap[user._id.toString()] = user.name;
       }
 
-      const enrichedList = topUsers.map((u, index) => ({
-        rank: index + 1,
-        user_id: u._id,
-        user_name: userNameMap[u._id] || u._id,
-        ocr_count: u.ocr_count,
-        error_count: errorCountMap[u._id] || 0,
-        last_ocr_at: u.last_ocr_at
-      }));
+      const enrichedList = topUsers.map((u, index) => {
+        const pageCount = u.page_count || 0;
+        const cost = calculateOCRCost(pageCount);
+        return {
+          rank: index + 1,
+          user_id: u._id,
+          user_name: userNameMap[u._id] || u._id,
+          ocr_count: u.ocr_count,
+          page_count: pageCount,
+          estimated_cost_usd: cost.usd,
+          error_count: errorCountMap[u._id] || 0,
+          last_ocr_at: u.last_ocr_at
+        };
+      });
 
       res.json({
         success: true,
