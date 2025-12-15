@@ -1509,11 +1509,11 @@ app.get('/api/documents/status/live', authenticateJWT, async (req, res) => {
  */
 app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) => {
   try {
-    const { filename, metadata } = req.body;
+    const { filename, metadata, customer_id } = req.body;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
-    console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}, metadata:`, metadata);
+    console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}, customer_id: ${customer_id}, metadata:`, metadata);
 
     if (!filename) {
       return res.status(400).json({
@@ -1541,6 +1541,16 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
     // is_annual_report 필드 및 메타데이터 설정
     const updateFields = { is_annual_report: true };
 
+    // 🔗 고객 ID가 제공된 경우 customerId 설정 (고객 문서함에서 보이도록)
+    if (customer_id && ObjectId.isValid(customer_id)) {
+      updateFields.customerId = new ObjectId(customer_id);
+      console.log(`🔗 [Set AR Flag] customerId 설정: ${customer_id}`);
+    }
+
+    // 📊 초기 overallStatus 설정 (전체문서보기에서 진행 상태 표시)
+    updateFields.overallStatus = 'processing';
+    updateFields.overallStatusUpdatedAt = new Date();
+
     // 메타데이터가 제공된 경우 추가
     if (metadata) {
       updateFields.ar_metadata = {
@@ -1560,6 +1570,40 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
       );
 
     console.log(`✅ [Set AR Flag] is_annual_report=true 설정 완료: ${document._id}`, updateFields);
+
+    // 🔗 고객의 documents 배열에도 추가 (고객 문서함에서 보이도록)
+    if (customer_id && ObjectId.isValid(customer_id)) {
+      try {
+        // 이미 있는지 확인 후 추가 (중복 방지)
+        const customerObjectId = new ObjectId(customer_id);
+        const customer = await db.collection('customers').findOne({
+          _id: customerObjectId,
+          'documents.document_id': document._id
+        });
+
+        if (!customer) {
+          // documents 배열에 추가
+          await db.collection('customers').updateOne(
+            { _id: customerObjectId },
+            {
+              $push: {
+                documents: {
+                  document_id: document._id,
+                  linked_at: new Date(),
+                  link_type: 'auto'
+                }
+              }
+            }
+          );
+          console.log(`🔗 [Set AR Flag] 고객 documents 배열에 추가: ${customer_id}`);
+        } else {
+          console.log(`ℹ️ [Set AR Flag] 이미 고객 documents 배열에 존재: ${customer_id}`);
+        }
+      } catch (linkError) {
+        console.error(`⚠️ [Set AR Flag] 고객 documents 연결 실패:`, linkError);
+        // 연결 실패해도 AR 플래그 설정은 성공으로 처리
+      }
+    }
 
     res.json({
       success: true,
@@ -5033,34 +5077,25 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
       });
     }
 
-    // 고객에 연결된 문서들 조회
-    const documentIds = customer.documents?.map(doc => doc.document_id) || [];
-
-    if (documentIds.length === 0) {
-      return res.json({
-        success: true,
-        data: {
-          customer_id: id,
-          documents: [],
-          total: 0
-        }
-      });
-    }
-
-    // ⭐ ownerId 필터 추가 (사용자별 문서 격리)
-    const query = { _id: { $in: documentIds } };
+    // 🔥 Single Source of Truth: files.customerId로 직접 조회 (customers.documents[] 의존성 제거)
+    // 이제 AR 문서와 일반 문서가 동일한 방식으로 조회됨
+    const query = { customerId: new ObjectId(id) };
     if (userId) {
       query.ownerId = userId;
     }
 
     const documents = await db.collection(COLLECTION_NAME)
       .find(query)
+      .sort({ 'upload.uploaded_at': -1 })
       .toArray();
 
     // 문서에 상태 정보 추가
     const documentsWithStatus = documents.map(doc => {
       const statusInfo = analyzeDocumentStatus(doc);
-      const customerDoc = customer.documents.find(d => d.document_id.equals(doc._id));
+
+      // 🔥 Single Source of Truth: files 컬렉션 데이터 우선 사용
+      // 기존 customers.documents[] 데이터는 fallback으로만 사용 (점진적 마이그레이션)
+      const customerDoc = customer.documents?.find(d => d.document_id?.equals(doc._id));
 
       // badgeType 계산 (FILE_BADGE_SYSTEM.md 기준)
       let badgeType = 'BIN';
@@ -5080,13 +5115,14 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
         uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
-        relationship: isAR ? 'annual_report' : (customerDoc?.relationship || null),
-        notes: customerDoc?.notes,
-        linkedAt: normalizeTimestamp(customerDoc?.upload_date),
+        // 🔥 files 데이터 우선, customers.documents fallback
+        relationship: isAR ? 'annual_report' : (doc.customer_relationship || customerDoc?.relationship || null),
+        notes: doc.customer_notes ?? customerDoc?.notes ?? null,
+        linkedAt: normalizeTimestamp(doc.customer_linked_at || customerDoc?.upload_date || doc.upload?.uploaded_at),
         ar_metadata: doc.ar_metadata,
-        badgeType: badgeType,  // 🔥 TXT/OCR/BIN 뱃지 타입 추가
-        conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
-        isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),   // 🔥 PDF 변환 가능 여부 (destPath 없으면 originalName으로 확인)
+        badgeType: badgeType,
+        conversionStatus: doc.upload?.conversion_status || null,
+        isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),
         ...statusInfo
       };
     });

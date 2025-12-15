@@ -87,6 +87,22 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 | annual_report_api | `./deploy_annual_report_api.sh` |
 | pdf_proxy | `./start.sh` |
 
+### 10. 🔴 데이터 중복 금지 (Single Source of Truth)
+**동일한 관계/데이터를 두 곳에 저장하지 않는다!**
+
+| 원칙 | 설명 |
+|------|------|
+| 단일 소스 | 관계 데이터는 한 곳에만 저장 |
+| 중복 저장 금지 | 동기화 실패로 데이터 불일치 발생 |
+| 리팩토링 우선 | 잘못된 설계는 band-aid 수정 대신 근본적 리팩토링 |
+
+**예시:**
+- ✅ 문서-고객 관계: `files.customerId`만 사용
+- ❌ 문서-고객 관계: `files.customerId` + `customers.documents[]` 이중 저장
+
+> "중복된 코드/데이터는 가장 나쁜 디자인의 첫번째 증상이다."
+> "본질적으로 잘못된 디자인이면 리팩토링하며 개선해야 한다. 순간을 모면하는 디자인은 최악이다."
+
 ---
 
 ## System Overview

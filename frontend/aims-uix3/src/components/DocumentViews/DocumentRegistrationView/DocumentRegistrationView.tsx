@@ -680,15 +680,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 매핑된 metadata 가져오기
       const metadata = arMetadataMappingRef.current.get(fileName);
 
+      // 🔗 고객 ID 가져오기 (AR 문서가 처음부터 고객에 연결되도록)
+      const customerId = arCustomerMappingRef.current.get(fileName);
+
       // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
       const responseData = await api.patch<{ success: boolean; document_id?: string }>(
         '/api/documents/set-annual-report',
-        { filename: fileName, metadata }
+        { filename: fileName, metadata, customer_id: customerId }
       );
       console.log(`✅ [AR] is_annual_report=true 설정 완료 (metadata 포함):`, responseData);
 
       // 🔗 문서 처리 완료 대기 후 자동 연결
-      const customerId = arCustomerMappingRef.current.get(fileName);
       const documentId = responseData.document_id;
 
       console.log(`🔍 [AR] 매핑 조회: fileName="${fileName}", customerId="${customerId}", documentId="${documentId}"`);
