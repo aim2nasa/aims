@@ -384,10 +384,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 중복 문서 체크
               const processResult = await processAnnualReportFile(file, customerId);
               if (processResult.isDuplicateDoc) {
+                // 🍎 중복 감지 시 로그 영역 표시 (사용자에게 피드백 필수!)
+                setIsLogVisible(true)
                 addLog(
                   'warning',
-                  `중복 문서 감지: ${file.name}`,
-                  `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
+                  `🔴 중복 파일 건너뜀: ${file.name}`,
+                  `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
                 );
                 continue;
               }
@@ -452,9 +454,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const existingDate = duplicateResult.existingDoc.uploadedAt
                 ? new Date(duplicateResult.existingDoc.uploadedAt).toLocaleString('ko-KR')
                 : '알 수 없음'
+              // 🍎 중복 감지 시 로그 영역 표시 (사용자에게 피드백 필수!)
+              setIsLogVisible(true)
               addLog(
                 'warning',
-                `중복 파일 감지: ${file.name}`,
+                `🔴 중복 파일 건너뜀: ${file.name}`,
                 `이미 등록된 파일입니다 (등록일: ${existingDate}). 업로드를 건너뜁니다.`
               )
               console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
