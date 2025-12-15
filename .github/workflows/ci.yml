@@ -45,6 +45,7 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend/aims-uix3
+          rm -rf node_modules package-lock.json
           npm install
 
       - name: Type check frontend
