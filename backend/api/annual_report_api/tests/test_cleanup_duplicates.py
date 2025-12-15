@@ -326,7 +326,7 @@ class TestCleanupDuplicatesEndpoint:
         mock_db.customers = mock_customers
         mock_db.__getitem__.return_value = mock_customers  # db["customers"] 지원
 
-        # 고객 소유권 확인
+        # 고객 소유권 확인 (customer_name 필수 - 동일해야 중복!)
         mock_customers.find_one.side_effect = [
             {  # 첫 번째 호출: 소유권 확인 (endpoint)
                 "_id": ObjectId(customer_id),
@@ -338,12 +338,12 @@ class TestCleanupDuplicatesEndpoint:
                     {
                         "issue_date": "2025-08-29T00:00:00Z",
                         "parsed_at": "2025-11-03T06:20:00.000Z",
-                        "customer_name": "테스트1"
+                        "customer_name": "테스트고객"
                     },
                     {
                         "issue_date": "2025-08-29T00:00:00Z",
                         "parsed_at": "2025-11-03T06:25:00.000Z",
-                        "customer_name": "테스트2"
+                        "customer_name": "테스트고객"
                     }
                 ]
             }
@@ -351,12 +351,13 @@ class TestCleanupDuplicatesEndpoint:
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # API 요청
+        # API 요청 (customer_name 필수!)
         response = client.post(
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
             json={
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:30.000Z"
+                "reference_linked_at": "2025-11-03T06:25:30.000Z",
+                "customer_name": "테스트고객"
             },
             headers={"x-user-id": user_id}
         )
