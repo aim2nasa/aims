@@ -285,7 +285,7 @@ html[data-theme="dark"] .parsing-file-name {
 .annual-report-table-header {
   display: grid;
   /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
-  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
+  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -305,7 +305,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-table-header:not(:has(.header-checkbox)) {
-  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
+  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
 }
 
 html[data-theme="dark"] .annual-report-table-header {
@@ -364,7 +364,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 .annual-report-row {
   display: grid;
   /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
-  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
+  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -379,7 +379,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-row:not(:has(.row-checkbox)) {
-  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
+  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
 }
 
 /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
@@ -968,37 +968,43 @@ html[data-theme="dark"] .annual-report-row--processing {
   animation: spin 0.8s linear infinite;
 }
 
-/* 재시도 버튼 */
-.retry-button {
+/* 재시도 버튼 - .row-status 내부에서만 적용 (PDFViewer와 충돌 방지) */
+.row-status .retry-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 2px 8px;
-  margin-left: 6px;
+  margin-left: 4px;
   border: none;
   border-radius: 4px;
   background: var(--color-primary);
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 42px;
+  height: 20px;
+  line-height: 1;
 }
 
-.retry-button:hover {
+.row-status .retry-button:hover {
   background: var(--color-primary-700);
   transform: scale(1.05);
 }
 
-.retry-button:active {
+.row-status .retry-button:active {
   transform: scale(0.95);
 }
 
-html[data-theme="dark"] .retry-button {
+html[data-theme="dark"] .row-status .retry-button {
   background: var(--color-primary-400);
+  color: white;
 }
 
-html[data-theme="dark"] .retry-button:hover {
+html[data-theme="dark"] .row-status .retry-button:hover {
   background: var(--color-primary-300);
 }
 
@@ -1006,7 +1012,7 @@ html[data-theme="dark"] .retry-button:hover {
 .row-status {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   flex-wrap: nowrap;
 }

@@ -963,31 +963,20 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                   {report.contract_count != null ? `${report.contract_count}건` : '-'}
                 </div>
                 <div className="row-status">
-                  {/* 에러 상태: 실패 배지 + 에러 원인 + 재시도 버튼 */}
+                  {/* 에러 상태: 실패 배지 + 재시도 버튼 */}
                   {isError && (
                     <>
-                      <span className="status-badge status-badge--error">
+                      <span
+                        className="status-badge status-badge--error"
+                        title={report.error_message || '파싱 실패'}
+                      >
                         실패
-                      </span>
-                      <span className="error-reason" title={report.error_message || '파싱 실패'}>
-                        {(() => {
-                          const msg = report.error_message || '알 수 없는 오류';
-                          // 에러 원인 요약
-                          if (msg.includes('Rate limit') || msg.includes('429')) return 'API 한도';
-                          if (msg.includes('timeout') || msg.includes('Timeout')) return '시간 초과';
-                          if (msg.includes('파일') && msg.includes('없')) return '파일 없음';
-                          if (msg.includes('JSON') || msg.includes('파싱')) return '파싱 실패';
-                          if (msg.includes('DB') || msg.includes('저장')) return 'DB 오류';
-                          if (msg.includes('PDF')) return 'PDF 오류';
-                          // 기본: 첫 10자
-                          return msg.length > 10 ? msg.slice(0, 10) + '...' : msg;
-                        })()}
                       </span>
                       <button
                         type="button"
                         className="retry-button"
                         onClick={(e) => handleRetryParsing(report, e)}
-                        title="AR 파싱 재시도"
+                        title={`AR 파싱 재시도\n${report.error_message || ''}`}
                       >
                         재시도
                       </button>

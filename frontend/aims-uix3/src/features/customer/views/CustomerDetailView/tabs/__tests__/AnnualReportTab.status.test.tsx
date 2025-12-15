@@ -280,7 +280,7 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
       });
     });
 
-    it('error 상태인 AR은 에러 원인 요약을 표시해야 한다', async () => {
+    it('error 상태인 AR은 에러 메시지를 tooltip으로 표시해야 한다', async () => {
       const errorReport = createMockARReport({
         status: 'error',
         error_message: 'Rate limit exceeded',
@@ -296,8 +296,9 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
       );
 
       await waitFor(() => {
-        // Rate limit -> "API 한도"로 요약됨
-        expect(screen.getByText('API 한도')).toBeInTheDocument();
+        // 에러 메시지가 "실패" 배지의 title 속성에 표시됨
+        const badge = screen.getByText('실패');
+        expect(badge).toHaveAttribute('title', 'Rate limit exceeded');
       });
     });
   });
@@ -512,21 +513,11 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
     });
   });
 
-  describe('에러 원인 요약 표시', () => {
-    it.each([
-      ['Rate limit exceeded', 'API 한도'],
-      ['429 Too Many Requests', 'API 한도'],
-      ['timeout error', '시간 초과'],
-      ['Timeout waiting for response', '시간 초과'],
-      ['파일을 찾을 수 없습니다', '파일 없음'],
-      ['JSON parsing error', '파싱 실패'],
-      ['DB connection failed', 'DB 오류'],
-      ['저장 실패', 'DB 오류'],
-      ['PDF extraction failed', 'PDF 오류'],
-    ])('에러 메시지 "%s"는 "%s"로 요약되어야 한다', async (errorMessage, expectedSummary) => {
+  describe('에러 원인 tooltip 표시', () => {
+    it('에러 메시지가 실패 배지의 title 속성에 표시되어야 한다', async () => {
       const errorReport = createMockARReport({
         status: 'error',
-        error_message: errorMessage,
+        error_message: 'Rate limit exceeded',
         parsed_at: null
       });
 
@@ -539,28 +530,8 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(expectedSummary)).toBeInTheDocument();
-      });
-    });
-
-    it('10자 이상의 알 수 없는 에러는 잘려서 표시되어야 한다', async () => {
-      const errorReport = createMockARReport({
-        status: 'error',
-        error_message: 'Unknown error occurred in system',
-        parsed_at: null
-      });
-
-      mockAnnualReportsApi([errorReport]);
-
-      render(
-        <Wrapper>
-          <AnnualReportTab customer={mockCustomer} />
-        </Wrapper>
-      );
-
-      await waitFor(() => {
-        // 10자 + "..."로 잘림
-        expect(screen.getByText('Unknown er...')).toBeInTheDocument();
+        const badge = screen.getByText('실패');
+        expect(badge).toHaveAttribute('title', 'Rate limit exceeded');
       });
     });
   });
