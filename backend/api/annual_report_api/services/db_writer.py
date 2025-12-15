@@ -321,18 +321,25 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             reports.append(failed_report)
 
         # 최신순 정렬 (uploaded_at 기준)
+        # 🔥 모든 datetime을 UTC timezone-aware로 통일
         def get_uploaded_at(r):
             uploaded_at = r.get("uploaded_at")
+            # 기본값: UTC timezone-aware datetime.min
+            min_dt = datetime.min.replace(tzinfo=timezone.utc)
+
             if uploaded_at is None:
-                return datetime.min
+                return min_dt
             if isinstance(uploaded_at, datetime):
+                # timezone-naive면 UTC로 가정
+                if uploaded_at.tzinfo is None:
+                    return uploaded_at.replace(tzinfo=timezone.utc)
                 return uploaded_at
             if isinstance(uploaded_at, str):
                 try:
                     return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
                 except:
-                    return datetime.min
-            return datetime.min
+                    return min_dt
+            return min_dt
 
         sorted_reports = sorted(
             reports,

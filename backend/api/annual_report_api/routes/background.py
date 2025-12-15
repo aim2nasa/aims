@@ -61,12 +61,30 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         # 2. 파일 경로 확인
         file_path = doc.get("upload", {}).get("destPath")
         if not file_path:
-            return {"success": False, "error": "파일 경로 없음"}
+            # 🔥 파일 경로 없음 → error 상태로 업데이트 (결과 보장)
+            error_msg = "파일 경로 없음"
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {
+                    "ar_parsing_status": "error",
+                    "ar_parsing_error": error_msg
+                }}
+            )
+            return {"success": False, "error": error_msg}
 
         import os
         # file_path는 이미 절대 경로 (/data/files/users/...)
         if not os.path.exists(file_path):
-            return {"success": False, "error": f"파일이 존재하지 않음: {file_path}"}
+            # 🔥 파일 존재하지 않음 → error 상태로 업데이트 (결과 보장)
+            error_msg = f"파일이 존재하지 않음: {file_path}"
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {
+                    "ar_parsing_status": "error",
+                    "ar_parsing_error": error_msg
+                }}
+            )
+            return {"success": False, "error": error_msg}
 
         # 3. AR 파싱 실행
         logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")

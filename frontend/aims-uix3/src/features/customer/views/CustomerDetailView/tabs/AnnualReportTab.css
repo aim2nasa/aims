@@ -999,3 +999,18 @@ html[data-theme="dark"] .retry-button:hover {
   gap: 4px;
   flex-wrap: nowrap;
 }
+
+/* 에러 원인 텍스트 */
+.error-reason {
+  font-size: 10px;
+  color: var(--color-danger, #ef4444);
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+html[data-theme="dark"] .error-reason {
+  color: var(--color-danger-400, #f87171);
+}
