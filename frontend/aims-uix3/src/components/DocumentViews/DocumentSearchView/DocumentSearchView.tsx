@@ -15,7 +15,9 @@ import { SearchService, MY_STORAGE_MARKER, MY_STORAGE_DISPLAY_NAME } from '@/ser
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import { Dropdown, Tooltip, type DropdownOption, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { api } from '@/shared/lib/api'
+import DownloadHelper from '../../../utils/downloadHelper'
 import DraggableModal from '@/shared/ui/DraggableModal'
 import {
   DocumentIcon,
@@ -164,6 +166,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
   // 🍎 검색 입력 필드 ref (자동 포커스용)
   const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // 🍎 문서 컨텍스트 메뉴 상태
+  const documentContextMenu = useContextMenu()
+  const [contextMenuDocument, setContextMenuDocument] = useState<SearchResultItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | 'similarity' | null
@@ -544,6 +551,155 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     },
     []
   )
+
+  // 🍎 문서 컨텍스트 메뉴 핸들러
+  const handleDocumentContextMenu = useCallback((item: SearchResultItem, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setContextMenuDocument(item)
+    documentContextMenu.open(event)
+  }, [documentContextMenu])
+
+  // 🍎 단일 문서 삭제 핸들러 (컨텍스트 메뉴용)
+  const handleDeleteSingleDocument = useCallback(async (documentId: string, documentName: string) => {
+    // 확인 모달 표시
+    const confirmed = await showAlert({
+      title: '문서 삭제',
+      message: `"${documentName}"을(를) 삭제하시겠습니까?\n\n삭제된 문서는 복구할 수 없습니다.`,
+      iconType: 'warning',
+      showCancel: true,
+      confirmText: '삭제',
+      cancelText: '취소',
+    })
+
+    if (!confirmed) return
+
+    try {
+      setIsDeleting(true)
+
+      // API 호출하여 삭제
+      await api.delete(`/api/documents/${documentId}`)
+
+      // 검색 결과 새로고침
+      await handleSearch()
+
+      setIsDeleting(false)
+    } catch (error) {
+      console.error('[DocumentSearchView] 문서 삭제 실패:', error)
+      setIsDeleting(false)
+
+      void showAlert({
+        title: '삭제 실패',
+        message: '문서 삭제 중 오류가 발생했습니다.',
+        iconType: 'error',
+      })
+    }
+  }, [showAlert, handleSearch])
+
+  // 🍎 문서 컨텍스트 메뉴 섹션
+  const documentContextMenuSections: ContextMenuSection[] = useMemo(() => {
+    if (!contextMenuDocument) return []
+
+    const documentId = SearchService.getDocumentId(contextMenuDocument)
+    const documentName = SearchService.getOriginalName(contextMenuDocument)
+
+    return [
+      {
+        id: 'view',
+        items: [
+          {
+            id: 'preview',
+            label: '미리보기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            ),
+            onClick: () => {
+              if (onDocumentClick && documentId) {
+                onDocumentClick(documentId)
+              } else {
+                handleItemClick(contextMenuDocument)
+              }
+            }
+          },
+          {
+            id: 'summary',
+            label: 'AI 요약',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+            ),
+            onClick: () => {
+              setSelectedDocumentForSummary(contextMenuDocument)
+              setSummaryModalVisible(true)
+            }
+          }
+        ]
+      },
+      {
+        id: 'actions',
+        items: [
+          {
+            id: 'download',
+            label: '다운로드',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ),
+            onClick: async () => {
+              try {
+                if (!documentId) return
+                const response = await DocumentStatusService.getDocumentDetailViaWebhook(documentId)
+                if (response) {
+                  const apiResponse = response as Record<string, unknown>
+                  const data = apiResponse['data'] as Record<string, unknown> | undefined
+                  const raw = (data?.['raw'] || apiResponse['raw'] || response) as Record<string, unknown>
+
+                  await DownloadHelper.downloadDocument({
+                    _id: documentId,
+                    ...raw
+                  })
+                }
+              } catch (error) {
+                console.error('다운로드 실패:', error)
+              }
+            }
+          }
+        ]
+      },
+      {
+        id: 'danger',
+        items: [
+          {
+            id: 'delete',
+            label: '삭제',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            ),
+            danger: true,
+            onClick: async () => {
+              if (documentId) {
+                await handleDeleteSingleDocument(documentId, documentName)
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }, [contextMenuDocument, onDocumentClick, handleDeleteSingleDocument])
 
   /**
    * 유사도 점수를 5단계로 분류
@@ -1222,6 +1378,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       className="search-result-row"
                       data-search-mode={searchMode}
                       onClick={() => handleItemClick(item)}
+                      onContextMenu={(e) => handleDocumentContextMenu(item, e)}
                       role="listitem"
                       tabIndex={0}
                       onKeyPress={(e) => {
@@ -1746,6 +1903,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           </DraggableModal>
         )
       })()}
+
+      {/* 🍎 문서 컨텍스트 메뉴 */}
+      <ContextMenu
+        visible={documentContextMenu.isOpen}
+        position={documentContextMenu.position}
+        sections={documentContextMenuSections}
+        onClose={documentContextMenu.close}
+      />
     </CenterPaneView>
   )
 }

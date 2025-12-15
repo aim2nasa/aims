@@ -12,8 +12,9 @@ import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
-import { Tooltip, Button } from '@/shared/ui'
+import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
@@ -34,6 +35,7 @@ import {
   LinkIcon
 } from '../../../../../components/DocumentViews/components/DocumentActionIcons'
 import { DocumentNotesModal } from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentNotesModal'
+import DocumentSummaryModal from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
@@ -119,6 +121,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+
+  // 🍎 문서 컨텍스트 메뉴 상태
+  const documentContextMenu = useContextMenu()
+  const [contextMenuDocument, setContextMenuDocument] = useState<CustomerDocumentItem | null>(null)
+
+  // 🍎 AI 요약 모달 상태
+  const [isSummaryModalVisible, setIsSummaryModalVisible] = useState(false)
+  const [summaryDocument, setSummaryDocument] = useState<CustomerDocumentItem | null>(null)
 
   /**
    * PDF 변환 재시도 핸들러
@@ -485,6 +495,141 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       ...(preview.rawDetail as Record<string, unknown>)
     })
   }, [previewState.data])
+
+  // 🍎 문서 컨텍스트 메뉴 핸들러
+  const handleDocumentContextMenu = useCallback((document: CustomerDocumentItem, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setContextMenuDocument(document)
+    documentContextMenu.open(event)
+  }, [documentContextMenu])
+
+  // 🍎 문서 컨텍스트 메뉴 섹션
+  const documentContextMenuSections: ContextMenuSection[] = useMemo(() => {
+    if (!contextMenuDocument) return []
+
+    const documentId = contextMenuDocument._id
+    const documentName = contextMenuDocument.originalName ?? '문서'
+
+    return [
+      {
+        id: 'view',
+        items: [
+          {
+            id: 'preview',
+            label: '미리보기',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            ),
+            onClick: () => {
+              handlePreview(contextMenuDocument)
+            }
+          },
+          {
+            id: 'summary',
+            label: 'AI 요약',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+            ),
+            onClick: () => {
+              // AI 요약 모달 열기
+              setSummaryDocument(contextMenuDocument)
+              setIsSummaryModalVisible(true)
+            }
+          }
+        ]
+      },
+      {
+        id: 'actions',
+        items: [
+          {
+            id: 'download',
+            label: '다운로드',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ),
+            onClick: async () => {
+              try {
+                if (!documentId) return
+                const response = await DocumentStatusService.getDocumentDetailViaWebhook(documentId)
+                if (response) {
+                  const apiResponse = response as Record<string, unknown>
+                  const data = apiResponse['data'] as Record<string, unknown> | undefined
+                  const raw = (data?.['raw'] || apiResponse['raw'] || response) as Record<string, unknown>
+
+                  await DownloadHelper.downloadDocument({
+                    _id: documentId,
+                    ...raw
+                  })
+                }
+              } catch (error) {
+                console.error('다운로드 실패:', error)
+              }
+            }
+          }
+        ]
+      },
+      {
+        id: 'danger',
+        items: [
+          {
+            id: 'delete',
+            label: '삭제',
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            ),
+            danger: true,
+            onClick: async () => {
+              if (!documentId) return
+              // 삭제 확인
+              const confirmed = await confirmController.actions.openModal({
+                title: '문서 삭제',
+                message: `"${documentName}"을(를) 삭제하시겠습니까?\n\n삭제된 문서는 복구할 수 없습니다.`,
+                confirmText: '삭제',
+                cancelText: '취소',
+                confirmStyle: 'destructive',
+                showCancel: true,
+                iconType: 'warning'
+              })
+              if (!confirmed) return
+
+              try {
+                await api.delete(`/api/documents/${documentId}`)
+                await refresh()
+                onRefresh?.()
+                if (onDocumentLibraryRefresh) {
+                  await onDocumentLibraryRefresh()
+                }
+              } catch (error) {
+                console.error('[DocumentsTab] 문서 삭제 실패:', error)
+                showAlert({
+                  title: '삭제 실패',
+                  message: '문서 삭제 중 오류가 발생했습니다.',
+                  iconType: 'error'
+                })
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }, [contextMenuDocument, handlePreview, confirmController.actions, refresh, onRefresh, onDocumentLibraryRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -890,6 +1035,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 <div
                   key={documentId}
                   className={`customer-documents-item ${selectedDocumentIds.has(document._id ?? '') ? 'customer-documents-item--selected' : ''}`}
+                  onContextMenu={(e) => handleDocumentContextMenu(document, e)}
                 >
                   {/* 🍎 삭제 모드일 때만 체크박스 표시 */}
                   {isDeleteMode && document._id && (
@@ -1251,6 +1397,24 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         customerId={customer._id}
         customerName={customer.personal_info?.name ?? ''}
         initialQuery={simpleSearchQuery}
+      />
+
+      {/* 🍎 문서 컨텍스트 메뉴 */}
+      <ContextMenu
+        visible={documentContextMenu.isOpen}
+        position={documentContextMenu.position}
+        sections={documentContextMenuSections}
+        onClose={documentContextMenu.close}
+      />
+
+      {/* 🍎 AI 요약 모달 */}
+      <DocumentSummaryModal
+        visible={isSummaryModalVisible}
+        onClose={() => {
+          setIsSummaryModalVisible(false)
+          setSummaryDocument(null)
+        }}
+        document={summaryDocument as any}
       />
     </div>
   )
