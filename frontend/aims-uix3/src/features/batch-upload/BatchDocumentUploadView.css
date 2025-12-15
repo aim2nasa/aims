@@ -3,6 +3,12 @@
  * @since 2025-12-05
  */
 
+/* 문서 일괄등록 뷰에서는 스크롤 제거 */
+.center-pane-view__content:has(.batch-upload-content) {
+  overflow: hidden;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
 .batch-upload-header {
   display: flex;
   justify-content: flex-end;
@@ -15,6 +21,7 @@
   height: 100%;
   min-height: 0; /* flexbox 스크롤 활성화 */
   padding: var(--spacing-md);
+  padding-bottom: 56px; /* footer 영역 - header 높이와 동일 */
   gap: var(--spacing-md);
 }
 
