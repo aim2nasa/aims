@@ -1076,13 +1076,13 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
 
 .customer-full-detail__section-content--documents .simple-document-search__label,
 .customer-full-detail__section-content--documents .simple-document-search__detail-label {
-  font-size: var(--font-micro);
+  font-size: var(--font-body);
 }
 
 .customer-full-detail__section-content--documents .simple-document-search__input {
   height: 18px;
-  min-width: 80px;
-  max-width: 100px;
+  min-width: 104px;
+  max-width: 130px;
   font-size: var(--font-micro);
 }
 
