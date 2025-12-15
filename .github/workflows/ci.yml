@@ -43,6 +43,7 @@ jobs:
           cd frontend/aims-uix3
           rm -rf node_modules package-lock.json
           npm install
+          npm install @rollup/rollup-linux-x64-gnu
 
       - name: Type check frontend
         run: |
