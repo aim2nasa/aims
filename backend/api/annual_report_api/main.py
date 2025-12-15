@@ -43,6 +43,54 @@ queue_manager: ARParseQueueManager = None
 # 백그라운드 태스크 실행 중 플래그
 background_task_running = False
 
+async def scan_pending_ar_documents():
+    """
+    files 컬렉션에서 ar_parsing_status='pending'인 문서를 찾아 큐에 추가
+    """
+    try:
+        from bson import ObjectId
+
+        # ar_parsing_status가 pending이고 큐에 없는 문서 조회
+        pending_docs = list(db["files"].find({
+            "is_annual_report": True,
+            "ar_parsing_status": "pending",
+            "customerId": {"$exists": True}  # customerId가 있어야 파싱 가능
+        }).limit(10))  # 한 번에 최대 10개
+
+        enqueued_count = 0
+        for doc in pending_docs:
+            file_id = doc["_id"]
+            customer_id = doc.get("customerId")
+
+            if not customer_id:
+                logger.warning(f"⚠️  AR 문서에 customerId 없음: {file_id}")
+                continue
+
+            # 큐에 이미 있는지 확인
+            existing = db["ar_parse_queue"].find_one({"file_id": file_id})
+            if existing:
+                continue
+
+            # 큐에 추가
+            success = queue_manager.enqueue(file_id, customer_id, {
+                "filename": doc.get("upload", {}).get("originalName"),
+                "auto_enqueued": True
+            })
+
+            if success:
+                enqueued_count += 1
+                logger.info(f"📥 AR 파싱 큐에 자동 등록: {doc.get('upload', {}).get('originalName')}")
+
+        if enqueued_count > 0:
+            logger.info(f"✅ AR 파싱 큐에 {enqueued_count}건 자동 등록 완료")
+
+        return enqueued_count
+
+    except Exception as e:
+        logger.error(f"❌ pending AR 문서 스캔 오류: {e}", exc_info=True)
+        return 0
+
+
 async def queue_worker():
     """큐 기반 AR 파싱 워커 (1초마다 폴링)"""
     global background_task_running
@@ -59,8 +107,21 @@ async def queue_worker():
     if reset_count > 0:
         logger.info(f"🔧 좀비 작업 {reset_count}건 복구 완료")
 
+    # 시작 시 pending AR 문서 스캔
+    scan_count = await scan_pending_ar_documents()
+    if scan_count > 0:
+        logger.info(f"📥 시작 시 {scan_count}건 AR 문서 큐 등록")
+
+    scan_interval = 0  # 5초마다 스캔
+
     while background_task_running:
         try:
+            # 5초마다 pending AR 문서 스캔 (큐가 비어있을 때)
+            scan_interval += 1
+            if scan_interval >= 5:
+                scan_interval = 0
+                await scan_pending_ar_documents()
+
             # 큐에서 작업 하나 가져오기
             task = await asyncio.to_thread(queue_manager.dequeue)
 

@@ -270,13 +270,19 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
         # files 컬렉션 참조
         files_collection = db["files"]
 
-        # 🔥 파싱 실패/진행중인 AR 문서도 조회 (files 컬렉션에서)
+        # 🔥 파싱 미완료 AR 문서 조회 (files 컬렉션에서)
         # customerId 필드로 조회 (Single Source of Truth)
-        failed_or_processing_files = list(files_collection.find(
+        # ⭐ AR 문서가 등록되면 바로 Annual Report 탭에 표시되어야 함
+        # - ar_parsing_status가 없거나 pending/processing/error인 문서 모두 포함
+        # - completed가 아닌 모든 AR 문서
+        not_completed_ar_files = list(files_collection.find(
             {
                 "customerId": customer_obj_id,
                 "is_annual_report": True,
-                "ar_parsing_status": {"$in": ["error", "processing"]}
+                "$or": [
+                    {"ar_parsing_status": {"$exists": False}},  # 상태 미설정
+                    {"ar_parsing_status": {"$in": ["pending", "processing", "error"]}}
+                ]
             },
             {
                 "_id": 1,
@@ -289,8 +295,8 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             }
         ))
 
-        # 실패/진행중 문서를 annual_reports 형식으로 변환
-        for file_doc in failed_or_processing_files:
+        # 파싱 미완료 문서를 annual_reports 형식으로 변환
+        for file_doc in not_completed_ar_files:
             ar_metadata = file_doc.get("ar_metadata", {}) or {}
             upload_info = file_doc.get("upload", {}) or {}
 
@@ -304,21 +310,24 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 if match:
                     customer_name_from_filename = match.group(1)
 
-            failed_report = {
+            # ar_parsing_status가 없으면 "pending"으로 처리
+            ar_status = file_doc.get("ar_parsing_status") or "pending"
+
+            pending_report = {
                 "source_file_id": str(file_doc["_id"]),
                 "file_id": str(file_doc["_id"]),
                 "customer_name": ar_metadata.get("customer_name") or customer_name_from_filename,
                 "issue_date": ar_metadata.get("issue_date"),
                 "uploaded_at": upload_info.get("uploaded_at"),
-                "parsed_at": None,  # 파싱 실패/진행중이므로 None
+                "parsed_at": None,  # 파싱 미완료이므로 None
                 "total_monthly_premium": None,
                 "total_contracts": None,
                 "contracts": [],
-                "status": file_doc.get("ar_parsing_status"),  # "error" or "processing"
+                "status": ar_status,  # "pending", "processing", or "error"
                 "error_message": file_doc.get("ar_parsing_error"),
                 "file_hash": file_doc.get("meta", {}).get("file_hash")
             }
-            reports.append(failed_report)
+            reports.append(pending_report)
 
         # 최신순 정렬 (uploaded_at 기준)
         # 🔥 모든 datetime을 UTC timezone-aware로 통일
@@ -397,7 +406,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             if "parsed_at" in report and isinstance(report["parsed_at"], datetime):
                 report["parsed_at"] = report["parsed_at"].isoformat()
 
-        logger.info(f"✅ Annual Reports 조회 완료: {len(limited_reports)}건 (실패/진행중 {len(failed_or_processing_files)}건 포함)")
+        logger.info(f"✅ Annual Reports 조회 완료: {len(limited_reports)}건 (미완료 AR {len(not_completed_ar_files)}건 포함)")
 
         return {
             "success": True,

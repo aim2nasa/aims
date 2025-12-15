@@ -42,7 +42,7 @@ interface RawAnnualReportData {
   file_hash?: string;
   file_id?: string;
   source_file_id?: string;  // 파일 ID (재시도용)
-  status?: 'completed' | 'error' | 'processing';  // 파싱 상태
+  status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;  // 에러 메시지
   contracts?: Array<{
     '증권번호': string;
@@ -930,12 +930,13 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             const isSelected = selectedIndices.has(globalIndex);
             const isError = report.status === 'error';
             const isProcessing = report.status === 'processing';
-            const isFailedOrProcessing = isError || isProcessing;
+            const isPending = report.status === 'pending';
+            const isNotCompleted = isError || isProcessing || isPending;
 
             return (
               <div
                 key={report.report_id}
-                className={`annual-report-row ${isLatestCompleted && !isFailedOrProcessing ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''}`}
+                className={`annual-report-row ${isLatestCompleted && !isNotCompleted ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
                 onClick={() => handleViewReport(report)}
               >
                 {isDevMode && (
@@ -997,8 +998,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                       처리중
                     </span>
                   )}
+                  {/* 대기중 상태: 대기중 배지 */}
+                  {isPending && (
+                    <span className="status-badge status-badge--pending">
+                      대기중
+                    </span>
+                  )}
                   {/* 완료 상태 중 최신 */}
-                  {!isFailedOrProcessing && isLatestCompleted && (
+                  {!isNotCompleted && isLatestCompleted && (
                     <span className="status-badge">최신</span>
                   )}
                 </div>

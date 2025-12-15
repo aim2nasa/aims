@@ -44,7 +44,7 @@ export interface AnnualReport {
   source_file_id?: string;         // 원본 파일 ID
   created_at?: string;             // 생성일시 (ISO 8601)
   parsed_at?: string | null;       // 파싱일시 (ISO 8601) - 실패/진행중 시 null
-  status?: 'completed' | 'error' | 'processing';  // 파싱 상태
+  status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;          // 에러 메시지 (실패 시)
 }
 
