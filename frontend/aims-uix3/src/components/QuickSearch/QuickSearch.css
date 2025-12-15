@@ -9,7 +9,7 @@
 /* 메인 컨테이너 */
 .quick-search {
   position: relative;
-  width: 240px;
+  width: 320px;
   max-width: 100%;
 }
 
@@ -316,7 +316,7 @@ html[data-theme="dark"] .quick-search__advanced-link:hover {
 /* 반응형 */
 @media (max-width: 768px) {
   .quick-search {
-    width: 200px;
+    width: 240px;
   }
 
   .quick-search__input-wrapper {
