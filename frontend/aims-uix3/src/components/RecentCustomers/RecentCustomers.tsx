@@ -30,12 +30,8 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDo
   // 클릭/더블클릭 구분을 위한 타이머 ref
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 고객이 없거나 collapsed 상태면 숨김
-  if (recentCustomers.length === 0 || collapsed) {
-    return null
-  }
-
   // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
+  // React hooks는 반드시 조건부 return 전에 호출해야 함 (Rules of Hooks)
   const handleClick = useCallback((customerId: string) => {
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current)
@@ -54,6 +50,11 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDo
     }
     onCustomerDoubleClick?.(customerId)
   }, [onCustomerDoubleClick])
+
+  // 고객이 없거나 collapsed 상태면 숨김 (hooks 호출 후에 조건부 return)
+  if (recentCustomers.length === 0 || collapsed) {
+    return null
+  }
 
   return (
     <div className="recent-customers">
