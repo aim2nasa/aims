@@ -29,7 +29,6 @@ with patch('pymongo.MongoClient'):
 client = TestClient(app)
 
 
-@pytest.mark.skip(reason="cleanup 함수 구현과 테스트 불일치 - 추후 수정 필요")
 class TestCleanupDuplicatesFunction:
     """cleanup_duplicate_annual_reports() 함수 유닛 테스트"""
 
@@ -75,12 +74,13 @@ class TestCleanupDuplicatesFunction:
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # 함수 실행
+        # 함수 실행 (customer_name 필수!)
         result = cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer_id,
             issue_date=issue_date,
-            reference_linked_at=reference_linked_at
+            reference_linked_at=reference_linked_at,
+            customer_name="테스트고객"
         )
 
         # 검증
@@ -120,12 +120,13 @@ class TestCleanupDuplicatesFunction:
             "annual_reports": reports
         }
 
-        # 함수 실행
+        # 함수 실행 (customer_name 필수!)
         result = cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer_id,
             issue_date=issue_date,
-            reference_linked_at=reference_linked_at
+            reference_linked_at=reference_linked_at,
+            customer_name="테스트고객"
         )
 
         # 검증
@@ -178,12 +179,13 @@ class TestCleanupDuplicatesFunction:
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # 함수 실행
+        # 함수 실행 (customer_name 필수!)
         result = cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer_id,
             issue_date=issue_date,
-            reference_linked_at=reference_linked_at
+            reference_linked_at=reference_linked_at,
+            customer_name="테스트고객"
         )
 
         # 검증
@@ -249,18 +251,19 @@ class TestCleanupDuplicatesFunction:
         mock_customers.find_one.return_value = {
             "_id": ObjectId(customer_id),
             "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z"},
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z"}  # 중복 추가
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"}  # 중복 추가
             ]
         }
 
-        # 유효하지 않은 날짜 형식
+        # 유효하지 않은 날짜 형식 (customer_name 필수!)
         with pytest.raises(ValueError, match="유효하지 않은 reference_linked_at"):
             cleanup_duplicate_annual_reports(
                 db=mock_db,
                 customer_id=customer_id,
                 issue_date="2025-08-29",
-                reference_linked_at="invalid-date"
+                reference_linked_at="invalid-date",
+                customer_name="테스트고객"
             )
 
     def test_cleanup_no_parsed_at_keeps_first(self):
@@ -268,16 +271,16 @@ class TestCleanupDuplicatesFunction:
         customer_id = str(ObjectId())
         issue_date = "2025-08-29"
 
-        # parsed_at이 없는 중복 AR
+        # parsed_at이 없는 중복 AR (동일 customer_name 필수!)
         reports = [
             {
                 "issue_date": "2025-08-29T00:00:00Z",
-                "customer_name": "테스트고객1",
+                "customer_name": "테스트고객",
                 "fsr_name": "첫번째"
             },
             {
                 "issue_date": "2025-08-29T00:00:00Z",
-                "customer_name": "테스트고객2",
+                "customer_name": "테스트고객",
                 "fsr_name": "두번째"
             }
         ]
@@ -294,12 +297,13 @@ class TestCleanupDuplicatesFunction:
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # 함수 실행
+        # 함수 실행 (customer_name 필수!)
         result = cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer_id,
             issue_date=issue_date,
-            reference_linked_at="2025-11-03T06:25:30.000Z"
+            reference_linked_at="2025-11-03T06:25:30.000Z",
+            customer_name="테스트고객"
         )
 
         # 검증
@@ -308,7 +312,6 @@ class TestCleanupDuplicatesFunction:
         assert result["kept_report"]["fsr_name"] == "첫번째"
 
 
-@pytest.mark.skip(reason="cleanup 함수 구현과 테스트 불일치 - 추후 수정 필요")
 class TestCleanupDuplicatesEndpoint:
     """POST /customers/{customer_id}/annual-reports/cleanup-duplicates 엔드포인트 테스트"""
 
@@ -445,7 +448,6 @@ class TestCleanupDuplicatesEndpoint:
         assert response.status_code == 400
 
 
-@pytest.mark.skip(reason="cleanup 함수 구현과 테스트 불일치 - 추후 수정 필요")
 class TestCleanupRegressionTests:
     """데이터 무결성 회귀 테스트"""
 
@@ -459,23 +461,24 @@ class TestCleanupRegressionTests:
         mock_customers = MagicMock()
         mock_db.__getitem__.return_value = mock_customers
 
-        # Customer 1 데이터
+        # Customer 1 데이터 (customer_name 필수!)
         mock_customers.find_one.return_value = {
             "_id": ObjectId(customer1_id),
             "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z"},
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z"}
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"}
             ]
         }
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # Customer 1 정리
+        # Customer 1 정리 (customer_name 필수!)
         cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer1_id,
             issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z"
+            reference_linked_at="2025-11-03T06:25:30.000Z",
+            customer_name="테스트고객"
         )
 
         # update_one이 customer1_id만 대상으로 호출되었는지 확인
@@ -491,14 +494,14 @@ class TestCleanupRegressionTests:
         mock_customers = MagicMock()
         mock_db.__getitem__.return_value = mock_customers
 
-        # 첫 번째 정리: 2025-08-29
+        # 첫 번째 정리: 2025-08-29 (customer_name 필수!)
         mock_customers.find_one.return_value = {
             "_id": ObjectId(customer_id),
             "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z"},
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z"}
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z", "customer_name": "테스트고객"}
             ]
         }
 
@@ -508,18 +511,19 @@ class TestCleanupRegressionTests:
             db=mock_db,
             customer_id=customer_id,
             issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z"
+            reference_linked_at="2025-11-03T06:25:30.000Z",
+            customer_name="테스트고객"
         )
 
         assert result1["deleted_count"] == 1
 
-        # 두 번째 정리: 2025-07-15
+        # 두 번째 정리: 2025-07-15 (customer_name 필수!)
         mock_customers.find_one.return_value = {
             "_id": ObjectId(customer_id),
             "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z"},
-                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z"}
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:00:00.000Z", "customer_name": "테스트고객"},
+                {"issue_date": "2025-07-15", "parsed_at": "2025-11-01T10:30:00.000Z", "customer_name": "테스트고객"}
             ]
         }
 
@@ -527,7 +531,8 @@ class TestCleanupRegressionTests:
             db=mock_db,
             customer_id=customer_id,
             issue_date="2025-07-15",
-            reference_linked_at="2025-11-01T10:15:00.000Z"
+            reference_linked_at="2025-11-01T10:15:00.000Z",
+            customer_name="테스트고객"
         )
 
         assert result2["deleted_count"] == 1
@@ -554,10 +559,12 @@ class TestCleanupRegressionTests:
             }
         }
 
+        # 두 리포트 모두 동일한 customer_name 필수!
         reports = [
             {
                 "issue_date": "2025-08-29T00:00:00Z",
-                "parsed_at": "2025-11-03T06:20:00.000Z"
+                "parsed_at": "2025-11-03T06:20:00.000Z",
+                "customer_name": "테스트고객"
             },
             complete_report
         ]
@@ -574,12 +581,13 @@ class TestCleanupRegressionTests:
 
         mock_customers.update_one.return_value = Mock(modified_count=1)
 
-        # 정리 실행
+        # 정리 실행 (customer_name 필수!)
         cleanup_duplicate_annual_reports(
             db=mock_db,
             customer_id=customer_id,
             issue_date="2025-08-29",
-            reference_linked_at="2025-11-03T06:25:30.000Z"
+            reference_linked_at="2025-11-03T06:25:30.000Z",
+            customer_name="테스트고객"
         )
 
         # 유지된 리포트 확인

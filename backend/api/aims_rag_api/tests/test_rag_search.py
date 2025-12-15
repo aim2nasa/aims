@@ -61,7 +61,6 @@ class TestHealthAndBasics:
         assert len(response.search_results) == 1
 
 
-@pytest.mark.skip(reason="함수 반환값 구조 변경 - 추후 테스트 업데이트 필요")
 class TestEmbedQueryFunction:
     """쿼리 임베딩 함수 테스트"""
 
@@ -75,11 +74,12 @@ class TestEmbedQueryFunction:
         mock_response.data = [MagicMock(embedding=[0.1, 0.2, 0.3])]
         mock_client.embeddings.create.return_value = mock_response
 
-        # 함수 실행
-        result = embed_query("test query")
+        # 함수 실행 (튜플 반환: vector, response)
+        result, response = embed_query("test query")
 
         # 검증
         assert result == [0.1, 0.2, 0.3]
+        assert response is not None
         mock_client.embeddings.create.assert_called_once()
         call_args = mock_client.embeddings.create.call_args
         assert call_args.kwargs['input'] == "test query"
@@ -93,11 +93,12 @@ class TestEmbedQueryFunction:
         mock_openai.return_value = mock_client
         mock_client.embeddings.create.side_effect = Exception("API Error")
 
-        # 함수 실행
-        result = embed_query("test query")
+        # 함수 실행 (튜플 반환: vector, response)
+        result, response = embed_query("test query")
 
         # 검증
         assert result is None
+        assert response is None
 
 
 class TestSearchQdrantFunction:
@@ -153,14 +154,14 @@ class TestSearchQdrantFunction:
         assert result == []
 
 
-@pytest.mark.skip(reason="함수 반환값 구조 변경 - 추후 테스트 업데이트 필요")
 class TestGenerateAnswerFunction:
     """LLM 답변 생성 함수 테스트"""
 
     def test_generate_answer_no_results(self):
         """검색 결과가 없을 때 기본 메시지를 반환해야 함"""
-        result = generate_answer_with_llm("test query", [])
+        result, response = generate_answer_with_llm("test query", [])
         assert result == "관련 문서를 찾을 수 없습니다."
+        assert response is None
 
     @patch('rag_search.OpenAI')
     def test_generate_answer_success(self, mock_openai):
@@ -172,23 +173,24 @@ class TestGenerateAnswerFunction:
         mock_response.choices = [MagicMock(message=MagicMock(content="AI generated answer"))]
         mock_client.chat.completions.create.return_value = mock_response
 
-        # 검색 결과 Mock
+        # 검색 결과 Mock (Dict 형태 - 하이브리드 검색 결과)
         search_results = [
-            MagicMock(
-                payload={"preview": "테스트 내용 1", "original_name": "문서1.pdf"},
-                score=0.95
-            ),
-            MagicMock(
-                payload={"preview": "테스트 내용 2", "original_name": "문서2.pdf"},
-                score=0.85
-            )
+            {
+                "payload": {"preview": "테스트 내용 1", "original_name": "문서1.pdf"},
+                "score": 0.95
+            },
+            {
+                "payload": {"preview": "테스트 내용 2", "original_name": "문서2.pdf"},
+                "score": 0.85
+            }
         ]
 
-        # 함수 실행
-        result = generate_answer_with_llm("test query", search_results)
+        # 함수 실행 (튜플 반환: answer, response)
+        result, response = generate_answer_with_llm("test query", search_results)
 
         # 검증
         assert result == "AI generated answer"
+        assert response is not None
         mock_client.chat.completions.create.assert_called_once()
         call_args = mock_client.chat.completions.create.call_args
         assert call_args.kwargs['model'] == "gpt-3.5-turbo"
@@ -203,19 +205,20 @@ class TestGenerateAnswerFunction:
         mock_openai.return_value = mock_client
         mock_client.chat.completions.create.side_effect = Exception("API rate limit")
 
-        # 검색 결과 Mock
+        # 검색 결과 Mock (Dict 형태 - 하이브리드 검색 결과)
         search_results = [
-            MagicMock(
-                payload={"preview": "테스트 내용", "original_name": "문서.pdf"},
-                score=0.95
-            )
+            {
+                "payload": {"preview": "테스트 내용", "original_name": "문서.pdf"},
+                "score": 0.95
+            }
         ]
 
-        # 함수 실행
-        result = generate_answer_with_llm("test query", search_results)
+        # 함수 실행 (튜플 반환: answer, response)
+        result, response = generate_answer_with_llm("test query", search_results)
 
         # 검증
         assert "❌ LLM 답변 생성 중 오류 발생" in result
+        assert response is None
 
 
 class TestSearchEndpoint:
@@ -262,7 +265,6 @@ class TestSearchEndpoint:
         assert response.status_code == 500
         assert "SmartSearch API 호출 오류" in response.json()["detail"]
 
-    @pytest.mark.skip(reason="함수 반환값 구조 변경 - 추후 테스트 업데이트 필요")
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
@@ -295,9 +297,9 @@ class TestSearchEndpoint:
             }
         ]
 
-        # Mock LLM answer generation
+        # Mock LLM answer generation (튜플 반환: answer, response)
         with patch('rag_search.generate_answer_with_llm') as mock_generate:
-            mock_generate.return_value = "AI generated answer"
+            mock_generate.return_value = ("AI generated answer", MagicMock())
 
             # API 호출
             response = client.post(
@@ -354,7 +356,6 @@ class TestEdgeCases:
         # 422 또는 500 응답이 예상됨 (실제 동작에 따라 다름)
         assert response.status_code in [200, 422, 500]
 
-    @pytest.mark.skip(reason="함수 반환값 구조 변경 - 추후 테스트 업데이트 필요")
     @patch('rag_search.reranker')
     @patch('rag_search.hybrid_engine')
     @patch('rag_search.query_analyzer')
@@ -374,9 +375,9 @@ class TestEdgeCases:
         # Mock reranker - 결과 없음
         mock_reranker.rerank.return_value = []
 
-        # Mock LLM answer generation
+        # Mock LLM answer generation (튜플 반환: answer, response - 결과 없을 때 response는 None)
         with patch('rag_search.generate_answer_with_llm') as mock_generate:
-            mock_generate.return_value = "관련 문서를 찾을 수 없습니다."
+            mock_generate.return_value = ("관련 문서를 찾을 수 없습니다.", None)
 
             # API 호출
             response = client.post(
