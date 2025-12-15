@@ -1015,7 +1015,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             options={itemsPerPageOptions}
             onChange={handleItemsPerPageChange}
             aria-label="페이지당 항목 수"
-            width={100}
+            width={70}
           />
         </div>
 
