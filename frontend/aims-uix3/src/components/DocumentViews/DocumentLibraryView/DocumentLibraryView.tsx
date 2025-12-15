@@ -45,6 +45,8 @@ interface DocumentLibraryViewProps {
   onDocumentDeleted?: () => void
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string) => void
+  /** 고객 더블클릭 핸들러 (전체보기 페이지로 이동) */
+  onCustomerDoubleClick?: (customerId: string) => void
   /** 새로고침 함수 expose */
   onRefreshExpose?: (refreshFn: () => Promise<void>) => void
   /** 뷰 이동 핸들러 */
@@ -77,10 +79,11 @@ const DocumentLibraryContent: React.FC<{
   onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
+  onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -472,6 +475,7 @@ const DocumentLibraryContent: React.FC<{
         onSelectDocument={onSelectDocument}
         onRowContextMenu={handleDocumentContextMenu}
         {...(onCustomerClick ? { onCustomerClick } : {})}
+        {...(onCustomerDoubleClick ? { onCustomerDoubleClick } : {})}
         {...(onNavigate ? { onNavigate } : {})}
       />
 
@@ -619,6 +623,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   onDocumentClick,
   onDocumentDeleted,
   onCustomerClick,
+  onCustomerDoubleClick,
   onRefreshExpose,
   onNavigate,
 }) => {
@@ -870,6 +875,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             }}
             {...(onDocumentClick && { onDocumentClick })}
             {...(onCustomerClick && { onCustomerClick })}
+            {...(onCustomerDoubleClick && { onCustomerDoubleClick })}
             {...(onNavigate && { onNavigate })}
           />
         </DocumentStatusProvider>

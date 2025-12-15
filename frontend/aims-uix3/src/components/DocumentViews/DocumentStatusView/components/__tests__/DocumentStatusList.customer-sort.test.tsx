@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DocumentStatusList from '../DocumentStatusList'
 import type { Document } from '../../../../../types/documentStatus'
@@ -474,7 +474,10 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       const customerButton = screen.getByRole('button', { name: /김보성 상세 보기/ })
       await user.click(customerButton)
 
-      expect(onCustomerClick).toHaveBeenCalledTimes(1)
+      // 싱글클릭은 250ms 타이머 후 호출됨
+      await waitFor(() => {
+        expect(onCustomerClick).toHaveBeenCalledTimes(1)
+      }, { timeout: 500 })
       expect(onCustomerClick).toHaveBeenCalledWith('customer-1')
     })
 
@@ -504,7 +507,10 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       const customerButton = screen.getByRole('button', { name: /김보성 상세 보기/ })
       await user.click(customerButton)
 
-      expect(onCustomerClick).toHaveBeenCalledTimes(1)
+      // 싱글클릭은 250ms 타이머 후 호출됨
+      await waitFor(() => {
+        expect(onCustomerClick).toHaveBeenCalledTimes(1)
+      }, { timeout: 500 })
       // onDocumentClick should NOT be called due to stopPropagation
       expect(onDocumentClick).not.toHaveBeenCalled()
     })
@@ -771,7 +777,10 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
       // Step 4: Click customer name
       const customerButton = screen.getByRole('button', { name: /김보성 상세 보기/ })
       customerButton.click()
-      expect(onCustomerClick).toHaveBeenCalledWith('customer-1')
+      // 싱글클릭은 250ms 타이머 후 호출됨
+      await waitFor(() => {
+        expect(onCustomerClick).toHaveBeenCalledWith('customer-1')
+      }, { timeout: 500 })
     })
   })
 })

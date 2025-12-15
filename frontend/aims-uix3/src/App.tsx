@@ -1258,6 +1258,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentClick={handleDocumentClick}
               onDocumentDeleted={() => setRightPaneVisible(false)}
               onCustomerClick={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               onRefreshExpose={(refreshFn) => {
                 documentLibraryRefreshRef.current = refreshFn
               }}

@@ -5,7 +5,7 @@
  * 공간 효율적인 리스트 레이아웃
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip } from '@/shared/ui'
@@ -49,6 +49,8 @@ export interface DocumentStatusListProps {
   isBulkLinkMode?: boolean
   // 🍎 Customer click handler
   onCustomerClick?: (customerId: string) => void
+  // 🍎 Customer double click handler (전체보기 페이지로 이동)
+  onCustomerDoubleClick?: (customerId: string) => void
   // 🍎 Refresh handler
   onRefresh?: () => Promise<void>
   // 🍎 Navigation handler
@@ -239,6 +241,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSelectAll,
   onSelectDocument,
   onCustomerClick,
+  onCustomerDoubleClick,
   onRefresh,
   onNavigate,
   onRowContextMenu
@@ -262,6 +265,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+
+  // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
+  const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   /**
    * PDF 변환 재시도 핸들러
@@ -957,10 +963,39 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {document.customer_relation?.customer_name ? (
                 <button
                   className="customer-name customer-name-button"
+                  onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (onCustomerClick && document.customer_relation?.customer_id) {
-                      onCustomerClick(document.customer_relation.customer_id)
+                    e.preventDefault()
+                    const customerId = document.customer_relation?.customer_id
+                    if (!customerId) return
+
+                    // 더블클릭 대기 (250ms)
+                    if (customerClickTimer.current) {
+                      clearTimeout(customerClickTimer.current)
+                    }
+                    customerClickTimer.current = setTimeout(() => {
+                      // 싱글클릭: RightPane에 고객 정보 표시
+                      if (onCustomerClick) {
+                        onCustomerClick(customerId)
+                      }
+                      customerClickTimer.current = null
+                    }, 250)
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    const customerId = document.customer_relation?.customer_id
+                    if (!customerId) return
+
+                    // 싱글클릭 타이머 취소
+                    if (customerClickTimer.current) {
+                      clearTimeout(customerClickTimer.current)
+                      customerClickTimer.current = null
+                    }
+                    // 더블클릭: 고객 전체보기 페이지로 이동
+                    if (onCustomerDoubleClick) {
+                      onCustomerDoubleClick(customerId)
                     }
                   }}
                   aria-label={`${document.customer_relation.customer_name} 상세 보기`}
