@@ -5,6 +5,7 @@ Annual Report Background Parsing Routes
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
@@ -113,12 +114,18 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
         if save_result["success"]:
             logger.info(f"✅ [Queue Parsing] 파싱 완료: {result.get('metadata', {}).get('issue_date', 'unknown')}")
+            update_fields = {
+                "ar_parsing_status": "completed",
+                "ar_parsing_completed_at": datetime.now(timezone.utc),
+                "overallStatus": "completed",  # 🔧 전체 문서 보기에서 표시되도록
+                "overallStatusUpdatedAt": datetime.now(timezone.utc)
+            }
+            # customer_id가 있으면 customerId도 업데이트
+            if customer_id:
+                update_fields["customerId"] = ObjectId(customer_id)
             db["files"].update_one(
                 {"_id": doc["_id"]},
-                {"$set": {
-                    "ar_parsing_status": "completed",
-                    "ar_parsing_completed_at": {"$currentDate": True}
-                }}
+                {"$set": update_fields}
             )
             return {"success": True, "message": "파싱 완료"}
         else:
@@ -177,8 +184,9 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
         # 특정 파일만 파싱
         if specific_file_id:
             query["_id"] = ObjectId(specific_file_id)
-            # 특정 파일 지정 시 파싱 상태 필터 제거 (강제 재파싱 가능)
+            # 특정 파일 지정 시 파싱 상태 필터 및 customer 필터 제거 (강제 재파싱 가능)
             query.pop("$or", None)
+            query.pop("customer_relation.customer_id", None)  # 🔧 파일 ID로 직접 조회 시 customer 필터 불필요
 
         ar_documents = list(db["files"].find(query).sort("upload.uploaded_at", -1))
 
@@ -191,7 +199,17 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
         for doc in ar_documents:
             try:
                 # 문서의 customer_id 가져오기 (customer_relation 안에 중첩되어 있을 수 있음)
-                doc_customer_id = doc.get("customer_id") or doc.get("customer_relation", {}).get("customer_id")
+                # ⭐ 1. 먼저 문서에서 가져오기
+                doc_customer_id = doc.get("customerId") or doc.get("customer_id") or doc.get("customer_relation", {}).get("customer_id")
+                # ⭐ 2. 문서에 없으면 파라미터로 전달된 customer_id 사용
+                if not doc_customer_id and customer_id:
+                    doc_customer_id = customer_id
+                    logger.info(f"📝 [BG Parsing] 파라미터 customer_id 사용: {customer_id}")
+                    # 문서에 customerId 업데이트
+                    db["files"].update_one(
+                        {"_id": doc["_id"]},
+                        {"$set": {"customerId": ObjectId(customer_id)}}
+                    )
                 if not doc_customer_id:
                     logger.warning(f"⚠️  [BG Parsing] customer_id 없음: {doc.get('_id')}")
                     skipped_count += 1
@@ -297,7 +315,9 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                         {"_id": doc["_id"]},
                         {"$set": {
                             "ar_parsing_status": "completed",
-                            "ar_parsing_completed_at": {"$currentDate": True}
+                            "ar_parsing_completed_at": datetime.now(timezone.utc),
+                            "overallStatus": "completed",  # 🔧 전체 문서 보기에서 표시되도록
+                            "overallStatusUpdatedAt": datetime.now(timezone.utc)
                         }}
                     )
                     processing_count += 1
