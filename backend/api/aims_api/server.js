@@ -7845,4 +7845,54 @@ app.post("/api/ar-background/trigger-parsing", authenticateJWT, async (req, res)
   }
 });
 
+/**
+ * AR 파싱 재시도 프록시 엔드포인트
+ * 파싱 실패한 AR 문서를 다시 파싱 요청
+ */
+app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) => {
+  try {
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    const { file_id } = req.body;
+    if (!file_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'file_id required'
+      });
+    }
+
+    console.log("🔄 [AR 파싱 재시도 프록시] 요청 수신, file_id:", file_id, "userId:", userId);
+
+    // localhost:8004로 요청 전달
+    const response = await axios.post(
+      "http://localhost:8004/ar-background/retry-parsing",
+      req.body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId
+        },
+        timeout: 5000
+      }
+    );
+
+    console.log("✅ [AR 파싱 재시도 프록시] 성공:", response.data);
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [AR 파싱 재시도 프록시] 실패:", error.message);
+    res.status(500).json({
+      success: false,
+      error: "파싱 재시도 트리거 실패",
+      details: error.message
+    });
+  }
+});
+
 module.exports = app;

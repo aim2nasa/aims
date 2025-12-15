@@ -30,17 +30,20 @@ type SortDirection = 'asc' | 'desc';
 // 백엔드 원시 응답 타입 정의
 interface RawAnnualReportData {
   report_id?: string;
-  issue_date: string;
-  customer_name: string;
-  total_monthly_premium: number;
-  total_coverage: number;
-  contract_count: number;
-  total_contracts?: number;
+  issue_date?: string;  // 실패 문서는 null일 수 있음
+  customer_name?: string;  // 실패 문서는 null일 수 있음
+  total_monthly_premium?: number | null;  // 실패 문서는 null
+  total_coverage?: number;
+  contract_count?: number | null;  // 실패 문서는 null
+  total_contracts?: number | null;  // 실패 문서는 null
   created_at?: string;
   uploaded_at?: string;
-  parsed_at?: string;
+  parsed_at?: string | null;  // 실패/진행중 문서는 null
   file_hash?: string;
   file_id?: string;
+  source_file_id?: string;  // 파일 ID (재시도용)
+  status?: 'completed' | 'error' | 'processing';  // 파싱 상태
+  error_message?: string;  // 에러 메시지
   contracts?: Array<{
     '증권번호': string;
     '보험상품': string;
@@ -388,17 +391,24 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             status: contract['계약상태'] || ''
           }));
 
+          // 🔥 status 필드 처리: error/processing 상태는 null 값 유지
+          const status = rawData.status || 'completed';
+          const isFailedOrProcessing = status === 'error' || status === 'processing';
+
           return {
-            report_id: rawData.file_id || `report_${rawData.parsed_at}`,
+            report_id: rawData.file_id || rawData.source_file_id || `report_${rawData.parsed_at}`,
             issue_date: rawData.issue_date || '',
             customer_name: rawData.customer_name || customer.personal_info?.name || '',
-            total_monthly_premium: rawData.total_monthly_premium || 0,
+            // 실패/진행중 문서는 null 유지, 완료된 문서는 0으로 fallback
+            total_monthly_premium: isFailedOrProcessing ? rawData.total_monthly_premium : (rawData.total_monthly_premium || 0),
             total_coverage: rawData.total_coverage || 0,
-            contract_count: rawData.total_contracts || rawData.contract_count || 0,
+            contract_count: isFailedOrProcessing ? (rawData.total_contracts ?? rawData.contract_count) : (rawData.total_contracts || rawData.contract_count || 0),
             contracts: transformedContracts,
-            source_file_id: rawData.file_id || '',
+            source_file_id: rawData.source_file_id || rawData.file_id || '',
             created_at: rawData.uploaded_at || '',
-            parsed_at: rawData.parsed_at || ''
+            parsed_at: isFailedOrProcessing ? rawData.parsed_at : (rawData.parsed_at || ''),
+            status: status,
+            error_message: rawData.error_message
           };
         });
 
@@ -414,8 +424,64 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   };
 
   const handleViewReport = (report: AnnualReport) => {
+    // 실패/진행중 문서는 모달 열지 않음
+    if (report.status === 'error' || report.status === 'processing') {
+      return;
+    }
     setSelectedReport(report);
     setIsModalOpen(true);
+  };
+
+  // 🔄 AR 파싱 재시도 핸들러
+  const handleRetryParsing = async (report: AnnualReport, event: React.MouseEvent) => {
+    event.stopPropagation();  // 행 클릭 이벤트 방지
+
+    const fileId = report.source_file_id;
+    if (!fileId) {
+      console.error('[AnnualReportTab] 재시도 불가: file_id 없음');
+      await confirmModal.actions.openModal({
+        title: '재시도 불가',
+        message: '파일 정보를 찾을 수 없습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error'
+      });
+      return;
+    }
+
+    try {
+      const result = await AnnualReportApi.retryParsing(fileId);
+
+      if (result.success) {
+        await confirmModal.actions.openModal({
+          title: '재시도 시작',
+          message: 'AR 파싱 재시도가 시작되었습니다.\n잠시 후 목록이 업데이트됩니다.',
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'success'
+        });
+        // 목록 새로고침
+        loadAnnualReports();
+        loadPendingDocuments();
+      } else {
+        await confirmModal.actions.openModal({
+          title: '재시도 실패',
+          message: result.message,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'error'
+        });
+      }
+    } catch (err) {
+      console.error('[AnnualReportTab] 재시도 오류:', err);
+      await confirmModal.actions.openModal({
+        title: '오류',
+        message: '재시도 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error'
+      });
+    }
   };
 
   // 🍎 정렬 핸들러
@@ -561,7 +627,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           comparison = (a.customer_name || '').localeCompare(b.customer_name || '', 'ko');
           break;
         case 'issue_date':
-          comparison = new Date(a.issue_date).getTime() - new Date(b.issue_date).getTime();
+          comparison = new Date(a.issue_date || 0).getTime() - new Date(b.issue_date || 0).getTime();
           break;
         case 'parsed_at':
           comparison = new Date(a.parsed_at || 0).getTime() - new Date(b.parsed_at || 0).getTime();
@@ -857,14 +923,19 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         <div className="annual-report-table-body">
           {visibleReports.map((report) => {
             const globalIndex = reports.indexOf(report);
-            const isLatest = globalIndex === 0;
+            // 완료된 보고서 중에서만 최신 판단
+            const completedReports = reports.filter(r => r.status === 'completed' || !r.status);
+            const isLatestCompleted = completedReports.length > 0 && completedReports[0].report_id === report.report_id;
             const formattedDate = formatDate(report.issue_date);
             const isSelected = selectedIndices.has(globalIndex);
+            const isError = report.status === 'error';
+            const isProcessing = report.status === 'processing';
+            const isFailedOrProcessing = isError || isProcessing;
 
             return (
               <div
                 key={report.report_id}
-                className={`annual-report-row ${isLatest ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''}`}
+                className={`annual-report-row ${isLatestCompleted && !isFailedOrProcessing ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''}`}
                 onClick={() => handleViewReport(report)}
               >
                 {isDevMode && (
@@ -878,12 +949,44 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                   </div>
                 )}
                 <div className="row-owner">{report.customer_name || '-'}</div>
-                <div className="row-issue-date">{formattedDate}</div>
-                <div className="row-parsed-at">{AnnualReportApi.formatDateTime(report.parsed_at)}</div>
-                <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>
-                <div className="row-count">{report.contract_count}건</div>
+                <div className="row-issue-date">{formattedDate || '-'}</div>
+                <div className="row-parsed-at">
+                  {report.parsed_at ? AnnualReportApi.formatDateTime(report.parsed_at) : '-'}
+                </div>
+                <div className="row-premium">
+                  {report.total_monthly_premium != null ? AnnualReportApi.formatCurrency(report.total_monthly_premium) : '-'}
+                </div>
+                <div className="row-count">
+                  {report.contract_count != null ? `${report.contract_count}건` : '-'}
+                </div>
                 <div className="row-status">
-                  {isLatest && <span className="status-badge">최신</span>}
+                  {/* 에러 상태: 실패 배지 + 재시도 버튼 */}
+                  {isError && (
+                    <>
+                      <span className="status-badge status-badge--error" title={report.error_message || '파싱 실패'}>
+                        실패
+                      </span>
+                      <button
+                        type="button"
+                        className="retry-button"
+                        onClick={(e) => handleRetryParsing(report, e)}
+                        title="AR 파싱 재시도"
+                      >
+                        재시도
+                      </button>
+                    </>
+                  )}
+                  {/* 처리중 상태: 스피너 + 처리중 배지 */}
+                  {isProcessing && (
+                    <span className="status-badge status-badge--processing">
+                      <span className="status-spinner"></span>
+                      처리중
+                    </span>
+                  )}
+                  {/* 완료 상태 중 최신 */}
+                  {!isFailedOrProcessing && isLatestCompleted && (
+                    <span className="status-badge">최신</span>
+                  )}
                 </div>
               </div>
             );

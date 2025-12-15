@@ -35,15 +35,17 @@ export interface InsuranceContract {
  */
 export interface AnnualReport {
   report_id: string;               // Report ID (ObjectId)
-  issue_date: string;              // 발행일 (YYYY-MM-DD)
-  customer_name: string;           // 고객명
-  total_monthly_premium: number;   // 총 월 보험료
-  total_coverage: number;          // 총 보장금액
-  contract_count: number;          // 계약 건수
+  issue_date?: string;             // 발행일 (YYYY-MM-DD) - 실패 시 null 가능
+  customer_name?: string;          // 고객명 - 실패 시 null 가능
+  total_monthly_premium?: number | null;  // 총 월 보험료 - 실패 시 null
+  total_coverage?: number;         // 총 보장금액
+  contract_count?: number | null;  // 계약 건수 - 실패 시 null
   contracts: InsuranceContract[];  // 계약 목록
   source_file_id?: string;         // 원본 파일 ID
-  created_at: string;              // 생성일시 (ISO 8601)
-  parsed_at?: string;              // 파싱일시 (ISO 8601)
+  created_at?: string;             // 생성일시 (ISO 8601)
+  parsed_at?: string | null;       // 파싱일시 (ISO 8601) - 실패/진행중 시 null
+  status?: 'completed' | 'error' | 'processing';  // 파싱 상태
+  error_message?: string;          // 에러 메시지 (실패 시)
 }
 
 /**
@@ -161,6 +163,14 @@ export interface CustomerIdentificationResult {
 }
 
 // ==================== API 클래스 ====================
+
+/**
+ * AR 파싱 재시도 응답
+ */
+export interface RetryParsingResponse {
+  success: boolean;
+  message: string;
+}
 
 export class AnnualReportApi {
   /**
@@ -590,6 +600,39 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : '중복 Annual Reports 정리 중 오류가 발생했습니다');
+      return { success: false, message };
+    }
+  }
+
+  /**
+   * AR 파싱 재시도 요청
+   *
+   * @param fileId 재시도할 파일 ID
+   * @returns 재시도 요청 응답
+   */
+  static async retryParsing(fileId: string): Promise<RetryParsingResponse> {
+    try {
+      const data = await api.post<{
+        success?: boolean;
+        message?: string;
+        error?: string;
+      }>(
+        `${ANNUAL_REPORT_API_URL}/ar-background/retry-parsing`,
+        { file_id: fileId }
+      );
+
+      if (data.success !== false) {
+        return {
+          success: true,
+          message: data.message || 'AR 파싱 재시도가 시작되었습니다',
+        };
+      }
+
+      throw new Error(data.message || data.error || 'AR 파싱 재시도에 실패했습니다');
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'AR 파싱 재시도 중 오류가 발생했습니다');
       return { success: false, message };
     }
   }

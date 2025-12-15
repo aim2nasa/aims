@@ -224,6 +224,9 @@ def save_annual_report(
 def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
     """
     고객의 Annual Reports 조회 (최신순)
+    - 파싱 완료된 AR (customers.annual_reports[])
+    - 파싱 실패한 AR (files.ar_parsing_status: error)
+    - 파싱 진행중인 AR (files.ar_parsing_status: processing)
 
     Args:
         db: MongoDB database 객체
@@ -233,7 +236,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
     Returns:
         dict: {
             "success": bool,
-            "data": list,  # annual_reports 배열
+            "data": list,  # annual_reports 배열 (status 필드 포함)
             "count": int
         }
     """
@@ -261,34 +264,101 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 "data": []
             }
 
-        # annual_reports 배열 가져오기
+        # annual_reports 배열 가져오기 (파싱 완료된 것들)
         reports = customer.get("annual_reports", [])
 
+        # files 컬렉션 참조
+        files_collection = db["files"]
+
+        # 🔥 파싱 실패/진행중인 AR 문서도 조회 (files 컬렉션에서)
+        # customerId 필드로 조회 (Single Source of Truth)
+        failed_or_processing_files = list(files_collection.find(
+            {
+                "customerId": customer_obj_id,
+                "is_annual_report": True,
+                "ar_parsing_status": {"$in": ["error", "processing"]}
+            },
+            {
+                "_id": 1,
+                "upload.originalName": 1,
+                "upload.uploaded_at": 1,
+                "ar_parsing_status": 1,
+                "ar_parsing_error": 1,
+                "ar_metadata": 1,
+                "meta.file_hash": 1
+            }
+        ))
+
+        # 실패/진행중 문서를 annual_reports 형식으로 변환
+        for file_doc in failed_or_processing_files:
+            ar_metadata = file_doc.get("ar_metadata", {}) or {}
+            upload_info = file_doc.get("upload", {}) or {}
+
+            # 파일명에서 고객명 추출 (fallback)
+            filename = upload_info.get("originalName", "")
+            customer_name_from_filename = None
+            if filename:
+                # "홍길동보유계약현황202508.pdf" → "홍길동"
+                import re
+                match = re.match(r'^(.+?)보유계약현황', filename)
+                if match:
+                    customer_name_from_filename = match.group(1)
+
+            failed_report = {
+                "source_file_id": str(file_doc["_id"]),
+                "file_id": str(file_doc["_id"]),
+                "customer_name": ar_metadata.get("customer_name") or customer_name_from_filename,
+                "issue_date": ar_metadata.get("issue_date"),
+                "uploaded_at": upload_info.get("uploaded_at"),
+                "parsed_at": None,  # 파싱 실패/진행중이므로 None
+                "total_monthly_premium": None,
+                "total_contracts": None,
+                "contracts": [],
+                "status": file_doc.get("ar_parsing_status"),  # "error" or "processing"
+                "error_message": file_doc.get("ar_parsing_error"),
+                "file_hash": file_doc.get("meta", {}).get("file_hash")
+            }
+            reports.append(failed_report)
+
         # 최신순 정렬 (uploaded_at 기준)
+        def get_uploaded_at(r):
+            uploaded_at = r.get("uploaded_at")
+            if uploaded_at is None:
+                return datetime.min
+            if isinstance(uploaded_at, datetime):
+                return uploaded_at
+            if isinstance(uploaded_at, str):
+                try:
+                    return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                except:
+                    return datetime.min
+            return datetime.min
+
         sorted_reports = sorted(
             reports,
-            key=lambda r: r.get("uploaded_at", datetime.min),
+            key=get_uploaded_at,
             reverse=True
         )
 
         # limit 적용
         limited_reports = sorted_reports[:limit]
 
-        # files 컬렉션 참조 (file_hash 조회용)
-        files_collection = db["files"]
-
-        # ObjectId를 문자열로 변환 (JSON 직렬화를 위해)
+        # ObjectId를 문자열로 변환 및 상태 정보 추가 (JSON 직렬화를 위해)
         for report in limited_reports:
             source_file_id = None
             if "source_file_id" in report and isinstance(report["source_file_id"], ObjectId):
                 source_file_id = report["source_file_id"]
                 report["source_file_id"] = str(source_file_id)
 
-            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회
-            if source_file_id:
+            # 파싱 완료된 리포트에는 status: "completed" 추가
+            if "status" not in report:
+                report["status"] = "completed"
+
+            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회 (이미 있으면 스킵)
+            if source_file_id and "file_hash" not in report:
                 try:
                     file_doc = files_collection.find_one(
-                        {"_id": source_file_id},
+                        {"_id": source_file_id if isinstance(source_file_id, ObjectId) else ObjectId(source_file_id)},
                         {"meta.file_hash": 1}
                     )
                     if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
@@ -297,7 +367,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                     logger.warning(f"file_hash 조회 실패: source_file_id={source_file_id}, 오류={e}")
 
             # source_file_id가 없으면 customer_id로 files 조회 (Annual Report 파일 찾기)
-            else:
+            elif not source_file_id and "file_hash" not in report:
                 try:
                     file_doc = files_collection.find_one(
                         {
@@ -320,7 +390,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             if "parsed_at" in report and isinstance(report["parsed_at"], datetime):
                 report["parsed_at"] = report["parsed_at"].isoformat()
 
-        logger.info(f"✅ Annual Reports 조회 완료: {len(limited_reports)}건")
+        logger.info(f"✅ Annual Reports 조회 완료: {len(limited_reports)}건 (실패/진행중 {len(failed_or_processing_files)}건 포함)")
 
         return {
             "success": True,

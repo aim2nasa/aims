@@ -429,3 +429,129 @@ async def trigger_ar_parsing(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
         )
+
+
+class RetryParsingRequest(BaseModel):
+    """AR 파싱 재시도 요청"""
+    file_id: str  # 재시도할 파일 ID
+
+
+class RetryParsingResponse(BaseModel):
+    """AR 파싱 재시도 응답"""
+    success: bool
+    message: str
+
+
+@router.post("/retry-parsing", response_model=RetryParsingResponse)
+async def retry_ar_parsing(
+    request: RetryParsingRequest,
+    background_tasks: BackgroundTasks,
+    user_id: str = Header(None, alias="x-user-id")
+):
+    """
+    파싱 실패한 AR 문서를 재시도
+
+    - ar_parsing_status: error 인 문서만 재시도 가능
+    - ar_parsing_status를 초기화하고 백그라운드 파싱 트리거
+
+    Args:
+        request: RetryParsingRequest (file_id)
+        background_tasks: FastAPI BackgroundTasks
+        user_id: 설계사 userId (x-user-id 헤더)
+    """
+    try:
+        # ⭐ userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        # MongoDB 연결 확인
+        from main import db
+        if db is None:
+            raise HTTPException(
+                status_code=500,
+                detail="데이터베이스 연결 오류"
+            )
+
+        # file_id 유효성 검증
+        try:
+            file_obj_id = ObjectId(request.file_id)
+        except InvalidId:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file_id format"
+            )
+
+        # 파일 조회
+        file_doc = db["files"].find_one({"_id": file_obj_id})
+
+        if not file_doc:
+            raise HTTPException(
+                status_code=404,
+                detail="파일을 찾을 수 없습니다"
+            )
+
+        # AR 문서인지 확인
+        if not file_doc.get("is_annual_report"):
+            raise HTTPException(
+                status_code=400,
+                detail="AR 문서가 아닙니다"
+            )
+
+        # 현재 상태 확인
+        current_status = file_doc.get("ar_parsing_status")
+        if current_status == "processing":
+            raise HTTPException(
+                status_code=400,
+                detail="이미 파싱 진행 중입니다"
+            )
+
+        # ⭐ 소유권 검증: customerId로 고객 찾고, 그 고객의 created_by 확인
+        customer_id = file_doc.get("customerId")
+        if customer_id:
+            customer = db["customers"].find_one({
+                "_id": customer_id,
+                "meta.created_by": user_id
+            })
+            if not customer:
+                raise HTTPException(
+                    status_code=403,
+                    detail="파일에 접근 권한이 없습니다"
+                )
+
+        # ar_parsing_status를 초기화 (재파싱 가능하도록)
+        db["files"].update_one(
+            {"_id": file_obj_id},
+            {
+                "$set": {
+                    "ar_parsing_status": "pending",
+                    "ar_parsing_error": None,
+                    "ar_parsing_retry_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+
+        logger.info(f"🔄 [Retry] AR 파싱 재시도 준비: file_id={request.file_id}, user_id={user_id}")
+
+        # 백그라운드 작업 등록
+        background_tasks.add_task(
+            process_ar_documents_background,
+            db,
+            str(customer_id) if customer_id else None,
+            request.file_id
+        )
+
+        logger.info(f"✅ [Retry] 백그라운드 파싱 재시도 작업 등록: file_id={request.file_id}")
+
+        return RetryParsingResponse(
+            success=True,
+            message="AR 파싱 재시도가 시작되었습니다."
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [Retry] 오류: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"서버 오류: {str(e)}"
+        )
