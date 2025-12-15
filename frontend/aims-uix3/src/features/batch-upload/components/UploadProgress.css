@@ -303,7 +303,7 @@
   margin-left: var(--spacing-xs);
 }
 
-/* 전체 문서 보기 버튼 */
+/* 처리 상태 보기 버튼 */
 .upload-view-documents {
   display: flex;
   justify-content: center;

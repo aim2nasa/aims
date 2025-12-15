@@ -420,6 +420,37 @@ html[data-theme="dark"] .customer-info-toggle-icon {
   padding: 0;
 }
 
+/* 🍎 처리 상태 보기 버튼 */
+.view-status-button-container {
+  display: flex;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.view-status-button {
+  padding: 8px 20px;
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  color: var(--color-ios-blue);
+  background: transparent;
+  border: 1px solid var(--color-ios-blue);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-status-button:hover {
+  background: var(--color-ios-blue);
+  color: white;
+}
+
+.view-status-button:active {
+  transform: scale(0.98);
+}
+
 /* 🍎 RESPONSIVE: Minimal changes */
 @media (max-width: 768px) {
   .document-registration-content {

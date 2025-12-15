@@ -1252,6 +1252,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
+        {/* 🍎 처리 상태 보기 버튼 (업로드 진행/완료 후 표시) */}
+        {isLogVisible && uploadState.files.length > 0 && (
+          <div className="view-status-button-container">
+            <button
+              type="button"
+              className="view-status-button"
+              onClick={() => {
+                onClose()
+                const url = new URL(window.location.href)
+                url.searchParams.set('view', 'documents-library')
+                window.history.pushState({}, '', url.toString())
+                window.dispatchEvent(new PopStateEvent('popstate'))
+              }}
+            >
+              처리 상태 보기
+            </button>
+          </div>
+        )}
+
       </div>
 
       {/* 🍎 도움말 모달 */}
