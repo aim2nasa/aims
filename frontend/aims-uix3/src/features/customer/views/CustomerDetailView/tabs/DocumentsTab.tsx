@@ -609,12 +609,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               })
               if (!confirmed) return
 
+              // 🍎 AR 문서인지 먼저 확인 (삭제 전에)
+              const isArDocument = contextMenuDocument?.isAnnualReport
+
               try {
                 await api.delete(`/api/documents/${documentId}`)
                 await refresh()
                 onRefresh?.()
                 if (onDocumentLibraryRefresh) {
                   await onDocumentLibraryRefresh()
+                }
+                // 🍎 AR 문서 삭제 시 Annual Report 탭 즉시 새로고침
+                if (isArDocument) {
+                  onAnnualReportNeedRefresh?.()
                 }
               } catch (error) {
                 console.error('[DocumentsTab] 문서 삭제 실패:', error)
@@ -629,7 +636,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         ]
       }
     ]
-  }, [contextMenuDocument, handlePreview, confirmController.actions, refresh, onRefresh, onDocumentLibraryRefresh, showAlert])
+  }, [contextMenuDocument, handlePreview, confirmController.actions, refresh, onRefresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -818,7 +825,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         showCancel: false,
       })
     }
-  }, [selectedDocumentIds, confirmController, onRefresh, refresh, onDocumentLibraryRefresh])
+  }, [selectedDocumentIds, documents, confirmController, onRefresh, refresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh])
 
   const renderState = () => {
     if (isLoading && documents.length === 0) {

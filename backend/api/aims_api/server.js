@@ -1671,34 +1671,52 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
     // ========================================
 
     // ========== Annual Report 파싱 데이터 삭제 ==========
+    // 매칭 조건: customer_name + issue_date가 같으면 한 쌍
     if (document.is_annual_report) {
       try {
         console.log(`🗑️  [AR 삭제] Annual Report 문서 삭제 감지: file_id=${id}`);
 
-        // 1. 고객 ID 및 발행일 추출
+        // 1. 고객 ID 및 AR 메타데이터 추출
         const customerId = document.customerId;
+        const fileObjectId = document._id;  // ObjectId
+        const customerName = document.ar_metadata?.customer_name;
         const issueDate = document.ar_metadata?.issue_date;
 
         if (!customerId) {
           console.warn('⚠️ [AR 삭제] customerId를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
-        } else if (!issueDate) {
-          console.warn('⚠️ [AR 삭제] issue_date를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
         } else {
-          // 2. 해당 고객의 annual_reports에서 동일한 발행일을 가진 모든 항목 제거
-          console.log(`🗓️  [AR 삭제] 발행일: ${issueDate} - 동일 발행일의 모든 AR 파싱 삭제`);
+          // 2. source_file_id (ObjectId)로 정확히 매칭하여 삭제
+          console.log(`🗓️  [AR 삭제] source_file_id=${fileObjectId}로 AR 파싱 삭제 시도`);
 
           const arDeleteResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
             { '_id': customerId },
             {
-              $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+              $pull: { annual_reports: { source_file_id: fileObjectId } },
               $set: { 'meta.updated_at': utcNowDate() }
             }
           );
 
           if (arDeleteResult.modifiedCount > 0) {
-            console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료: customer_id=${customerId}, issue_date=${issueDate}`);
+            console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료 (source_file_id 매칭): customer_id=${customerId}`);
           } else {
-            console.log(`ℹ️  [AR 삭제] 삭제할 AR 파싱 데이터 없음 (issue_date로 매칭 실패)`);
+            // fallback: customer_name + issue_date로 매칭 (한 쌍 조건)
+            if (customerName && issueDate) {
+              console.log(`🗓️  [AR 삭제] source_file_id 매칭 실패, customer_name=${customerName} + issue_date=${issueDate}로 fallback 삭제 시도`);
+              const fallbackResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+                { '_id': customerId },
+                {
+                  $pull: { annual_reports: { customer_name: customerName, issue_date: new Date(issueDate) } },
+                  $set: { 'meta.updated_at': utcNowDate() }
+                }
+              );
+              if (fallbackResult.modifiedCount > 0) {
+                console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료 (customer_name + issue_date 매칭)`);
+              } else {
+                console.log(`ℹ️  [AR 삭제] 삭제할 AR 파싱 데이터 없음`);
+              }
+            } else {
+              console.log(`ℹ️  [AR 삭제] 삭제할 AR 파싱 데이터 없음 (source_file_id 매칭 실패, customer_name 또는 issue_date 없음)`);
+            }
           }
         }
       } catch (arError) {
@@ -1899,23 +1917,39 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
           continue;
         }
 
-        // AR 파싱 데이터 삭제
+        // ========== Annual Report 파싱 데이터 삭제 ==========
+        // 매칭 조건: customer_name + issue_date가 같으면 한 쌍
         if (document.is_annual_report) {
           try {
             const customerId = document.customerId;
+            const fileObjectId = document._id;  // ObjectId
+            const customerName = document.ar_metadata?.customer_name;
             const issueDate = document.ar_metadata?.issue_date;
 
-            if (customerId && issueDate) {
+            if (customerId) {
+              // 1차: source_file_id로 정확히 매칭하여 삭제
               const arDeleteResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
                 { '_id': customerId },
                 {
-                  $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+                  $pull: { annual_reports: { source_file_id: fileObjectId } },
                   $set: { 'meta.updated_at': utcNowDate() }
                 }
               );
 
               if (arDeleteResult.modifiedCount > 0) {
-                console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료: customer_id=${customerId}, issue_date=${issueDate}`);
+                console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료 (source_file_id 매칭): customer_id=${customerId}`);
+              } else if (customerName && issueDate) {
+                // 2차 fallback: customer_name + issue_date로 매칭 (레거시 데이터 지원)
+                const fallbackResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+                  { '_id': customerId },
+                  {
+                    $pull: { annual_reports: { customer_name: customerName, issue_date: new Date(issueDate) } },
+                    $set: { 'meta.updated_at': utcNowDate() }
+                  }
+                );
+                if (fallbackResult.modifiedCount > 0) {
+                  console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료 (customer_name + issue_date fallback): ${customerName}, ${issueDate}`);
+                }
               }
             }
           } catch (arError) {
