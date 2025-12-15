@@ -13,7 +13,7 @@ const TIER_OPTIONS = [
   { value: 'vip', label: 'VIP' },
 ] as const;
 
-type SortKey = 'name' | 'email' | 'hasOcrPermission' | 'tier' | 'createdAt' | 'lastLogin';
+type SortKey = 'name' | 'email' | 'tier' | 'createdAt' | 'lastLogin';
 type SortOrder = 'asc' | 'desc';
 
 const formatDate = (dateString?: string | null) => {
@@ -71,30 +71,8 @@ export const UsersPage = () => {
     },
   });
 
-  const updateOcrMutation = useMutation({
-    mutationFn: ({ userId, hasOcrPermission }: { userId: string; hasOcrPermission: boolean }) =>
-      usersApi.updateOcrPermission(userId, hasOcrPermission),
-    onMutate: ({ userId }) => {
-      setUpdatingUserId(userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    },
-    onSettled: () => {
-      setUpdatingUserId(null);
-    },
-    onError: (error) => {
-      console.error('OCR 권한 변경 실패:', error);
-      alert('OCR 권한 변경에 실패했습니다.');
-    },
-  });
-
   const handleTierChange = (userId: string, newTier: string) => {
     updateTierMutation.mutate({ userId, tier: newTier });
-  };
-
-  const handleOcrToggle = (userId: string, currentPermission: boolean) => {
-    updateOcrMutation.mutate({ userId, hasOcrPermission: !currentPermission });
   };
 
   const handlePageChange = (newPage: number) => {
@@ -125,10 +103,6 @@ export const UsersPage = () => {
         case 'email':
           aVal = a.email || '';
           bVal = b.email || '';
-          break;
-        case 'hasOcrPermission':
-          aVal = a.hasOcrPermission ? 1 : 0;
-          bVal = b.hasOcrPermission ? 1 : 0;
           break;
         case 'tier':
           aVal = a.storage?.tier || 'free_trial';
@@ -222,9 +196,6 @@ export const UsersPage = () => {
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('email')}>
                   이메일 <SortIcon columnKey="email" />
                 </th>
-                <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('hasOcrPermission')}>
-                  OCR 권한 <SortIcon columnKey="hasOcrPermission" />
-                </th>
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('tier')}>
                   등급 <SortIcon columnKey="tier" />
                 </th>
@@ -245,25 +216,6 @@ export const UsersPage = () => {
                   <tr key={user._id} className="users-table__row">
                     <td className="users-table__td">{user.name || '-'}</td>
                     <td className="users-table__td">{user.email || '-'}</td>
-                    <td className="users-table__td">
-                      <button
-                        type="button"
-                        className={`ocr-toggle ${user.hasOcrPermission ? 'ocr-toggle--enabled' : 'ocr-toggle--disabled'} ${isUpdating ? 'ocr-toggle--updating' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isUpdating) {
-                            handleOcrToggle(user._id, user.hasOcrPermission);
-                          }
-                        }}
-                        disabled={isUpdating}
-                        title={user.hasOcrPermission ? 'OCR 권한 해제' : 'OCR 권한 부여'}
-                      >
-                        <span className="ocr-toggle__indicator" />
-                        <span className="ocr-toggle__label">
-                          {isUpdating ? '...' : user.hasOcrPermission ? 'ON' : 'OFF'}
-                        </span>
-                      </button>
-                    </td>
                     <td className="users-table__td">
                       <select
                         className={`tier-select tier-select--${tier}`}
