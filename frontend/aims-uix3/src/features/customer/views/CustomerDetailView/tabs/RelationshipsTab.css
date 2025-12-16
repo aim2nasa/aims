@@ -209,8 +209,16 @@
   color: var(--color-icon-red);
 }
 
+/* ghost 버튼 스타일 오버라이드 - 호버 시 배경 투명 유지 */
+.button--ghost.relationships-action--danger,
+.button--ghost.relationships-action--danger:hover:not(:disabled),
+.button--ghost.relationships-action--danger:active:not(:disabled) {
+  background-color: transparent;
+  border-color: transparent;
+}
+
 .relationships-action--danger:hover {
-  transform: scale(1.05);
+  opacity: 0.6;
 }
 
 .relationships-action:focus-visible {

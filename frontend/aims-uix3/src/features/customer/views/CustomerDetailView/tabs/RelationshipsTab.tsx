@@ -315,7 +315,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                       <td>
                         <Tooltip content="관계 삭제">
                           <Button
-                            variant="destructive"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(row.key)}
                             className="relationships-action relationships-action--danger"
@@ -325,6 +325,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                               name="trash"
                               size={SFSymbolSize.TITLE_3}
                               weight={SFSymbolWeight.SEMIBOLD}
+                              decorative
                             />
                           </Button>
                         </Tooltip>
