@@ -1,0 +1,41 @@
+name: CI Backend
+
+on:
+  workflow_dispatch:  # 수동 실행
+  workflow_call:      # 다른 워크플로우에서 호출
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend/api/aims_api
+          npm ci
+
+      - name: Run backend tests
+        run: |
+          cd backend/api/aims_api
+          npm run test:ci
