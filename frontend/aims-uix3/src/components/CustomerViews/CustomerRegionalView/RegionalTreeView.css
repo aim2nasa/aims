@@ -278,6 +278,8 @@ html[data-theme="dark"] .badge-no-address {
 
 .tree-node-children,
 .tree-node-customers {
+  display: flex;
+  flex-direction: column;
   padding-left: 20px;
   margin-left: 8px;
 }
