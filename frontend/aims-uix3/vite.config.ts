@@ -4,9 +4,24 @@ import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import cssReloadPlugin from './vite-plugins/css-reload-plugin.js'
 import path from 'path'
+import { execSync } from 'child_process'
+
+// Git hash 가져오기 (빌드 시점에 실행)
+const getGitHash = (): string => {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // 빌드 시점에 환경변수 정의
+  define: {
+    __GIT_HASH__: JSON.stringify(getGitHash()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),  // React Fast Refresh 기본 활성화
     tsconfigPaths(),
