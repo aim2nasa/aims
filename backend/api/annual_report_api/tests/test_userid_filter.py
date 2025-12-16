@@ -341,7 +341,7 @@ class TestTriggerParsingUserId:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] == True
-        assert "파싱이 시작되었습니다" in data["message"]
+        assert "큐에 등록되었습니다" in data["message"]
 
     @patch('main.db')
     def test_trigger_parsing_with_userid_and_invalid_customer_returns_404(self, mock_db):
