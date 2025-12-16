@@ -128,6 +128,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   const [sortField, setSortField] = useState<SortField>('issue_date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // 🍎 processing/pending 상태 AR이 있는지 확인 (폴링 조건용)
+  const hasProcessingReports = useMemo(() => {
+    return reports.some(r => r.status === 'processing' || r.status === 'pending');
+  }, [reports]);
+
   // 개발자 모드 - 전역 상태 사용
   const { isDevMode } = useDevModeStore();
 
@@ -293,14 +298,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     if (!isPageVisible) return; // 백그라운드 탭에서는 폴링 중지
 
     const interval = setInterval(() => {
-      if (pendingCount > 0) {
-        loadPendingDocuments();
-        loadAnnualReports(); // 파싱 완료된 것이 있을 수 있으므로
+      // 항상 pending 문서 확인 (업로드 직후에도 감지하기 위해)
+      loadPendingDocuments();
+      // pending 또는 processing 상태가 있으면 AR 목록도 새로고침
+      if (pendingCount > 0 || hasProcessingReports) {
+        loadAnnualReports();
       }
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [pendingCount, customer._id, isPageVisible]);
+  }, [pendingCount, customer._id, isPageVisible, hasProcessingReports]);
 
   // 🍎 Annual Report 개수 변경 시 부모에게 알림
   useEffect(() => {
