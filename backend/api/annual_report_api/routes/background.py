@@ -98,6 +98,11 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
                 {"_id": doc["_id"]},
                 {"$set": {"ar_parsing_status": "completed"}}
             )
+            # 🔧 완료된 작업은 큐에서 삭제
+            try:
+                db["ar_parse_queue"].delete_one({"file_id": doc["_id"]})
+            except Exception:
+                pass  # 무시
             return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
 
         # 3. AR 파싱 실행
@@ -159,6 +164,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
                 {"_id": doc["_id"]},
                 {"$set": update_fields}
             )
+
+            # 🔧 완료된 작업은 큐에서 삭제
+            try:
+                db["ar_parse_queue"].delete_one({"file_id": doc["_id"]})
+                logger.info(f"🗑️ ar_parse_queue에서 완료 작업 삭제: file_id={doc['_id']}")
+            except Exception as queue_delete_error:
+                logger.warning(f"⚠️ ar_parse_queue 삭제 실패 (무시): {queue_delete_error}")
+
             return {"success": True, "message": "파싱 완료"}
         else:
             error_msg = save_result.get("message", "DB 저장 실패")
@@ -388,7 +401,6 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 @router.post("/trigger-parsing", response_model=TriggerParsingResponse)
 async def trigger_ar_parsing(
     request: TriggerParsingRequest,
-    background_tasks: BackgroundTasks,
     user_id: str = Header(None, alias="x-user-id")
 ):
     """
@@ -438,19 +450,43 @@ async def trigger_ar_parsing(
                     detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
                 )
 
-        # 백그라운드 작업 등록
-        background_tasks.add_task(
-            process_ar_documents_background,
-            db,
-            request.customer_id,
-            request.file_id
-        )
+        # 🔧 큐 시스템으로 통합 (Rate limit 방지)
+        from main import queue_manager
 
-        logger.info(f"✅ [Trigger] 백그라운드 파싱 작업 등록: user_id={user_id}, customer_id={request.customer_id or 'ALL'}")
+        enqueued_count = 0
+
+        if request.file_id:
+            # 특정 파일만 큐에 추가
+            try:
+                file_obj_id = ObjectId(request.file_id)
+                file_doc = db.files.find_one({"_id": file_obj_id})
+                if file_doc:
+                    customer_id = file_doc.get("customerId") or (ObjectId(request.customer_id) if request.customer_id else None)
+                    if customer_id:
+                        queue_manager.enqueue(file_obj_id, customer_id, {"trigger": True, "user_id": user_id})
+                        enqueued_count = 1
+            except InvalidId:
+                pass
+        elif request.customer_id:
+            # 해당 고객의 pending AR 문서들을 큐에 추가
+            pending_docs = list(db.files.find({
+                "customerId": ObjectId(request.customer_id),
+                "is_annual_report": True,
+                "ar_parsing_status": {"$in": ["pending", None]}
+            }).limit(20))
+
+            for doc in pending_docs:
+                # 이미 큐에 있는지 확인
+                existing = db.ar_parse_queue.find_one({"file_id": doc["_id"]})
+                if not existing:
+                    queue_manager.enqueue(doc["_id"], ObjectId(request.customer_id), {"trigger": True, "user_id": user_id})
+                    enqueued_count += 1
+
+        logger.info(f"✅ [Trigger] 큐에 {enqueued_count}건 등록: user_id={user_id}, customer_id={request.customer_id or 'ALL'}")
 
         return TriggerParsingResponse(
             success=True,
-            message="AR 백그라운드 파싱이 시작되었습니다."
+            message=f"AR 파싱 작업 {enqueued_count}건이 큐에 등록되었습니다."
         )
 
     except HTTPException:

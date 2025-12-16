@@ -9,6 +9,7 @@ from pymongo.errors import ConnectionFailure
 import logging
 import asyncio
 import re
+from datetime import datetime, timezone
 
 from config import settings
 from services.queue_manager import ARParseQueueManager
@@ -155,8 +156,13 @@ async def queue_worker():
                     )
 
                     if result and result.get("success"):
-                        # 성공: completed 상태로 변경
-                        await asyncio.to_thread(queue_manager.mark_completed, task_id)
+                        # 성공: 큐에서 삭제 (background.py에서 이미 삭제했을 수 있으므로 무시)
+                        try:
+                            await asyncio.to_thread(
+                                lambda: queue_manager.queue.delete_one({"_id": task_id})
+                            )
+                        except Exception:
+                            pass  # 이미 삭제됨
                         logger.info(f"✅ AR 파싱 완료: file_id={file_id}")
                     else:
                         # 실패: 재시도 (retry=True)
@@ -242,6 +248,27 @@ async def startup_event():
         stats = queue_manager.get_stats()
         logger.info(f"📊 큐 통계: pending={stats['pending']}, processing={stats['processing']}, "
                    f"completed={stats['completed']}, failed={stats['failed']}")
+
+        # 🔧 불일치 데이터 정리: files.ar_parsing_status=completed인데 ar_parse_queue에 남아있는 경우 삭제
+        try:
+            from bson import ObjectId
+            # processing/pending 상태인 큐 항목 확인
+            inconsistent_count = 0
+            for q in db["ar_parse_queue"].find({"status": {"$in": ["pending", "processing"]}}):
+                file_doc = db["files"].find_one({"_id": q["file_id"]})
+                if file_doc and file_doc.get("ar_parsing_status") == "completed":
+                    # 불일치 발견 → 큐에서 삭제
+                    db["ar_parse_queue"].delete_one({"_id": q["_id"]})
+                    inconsistent_count += 1
+            if inconsistent_count > 0:
+                logger.info(f"🔧 불일치 데이터 {inconsistent_count}건 큐에서 삭제 완료")
+
+            # 🗑️ 기존 completed 레코드도 정리
+            cleanup_result = db["ar_parse_queue"].delete_many({"status": "completed"})
+            if cleanup_result.deleted_count > 0:
+                logger.info(f"🗑️ 완료된 큐 레코드 {cleanup_result.deleted_count}건 정리 완료")
+        except Exception as e:
+            logger.warning(f"⚠️ 큐 정리 중 오류 (무시): {e}")
 
         # 백그라운드 큐 워커 시작
         asyncio.create_task(queue_worker())

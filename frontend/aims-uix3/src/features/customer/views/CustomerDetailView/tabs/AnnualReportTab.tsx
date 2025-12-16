@@ -418,7 +418,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             created_at: rawData.uploaded_at || '',
             parsed_at: isFailedOrProcessing ? rawData.parsed_at : (rawData.parsed_at || ''),
             status: status,
-            error_message: rawData.error_message
+            error_message: rawData.error_message,
+            retry_count: rawData.retry_count  // 재시도 횟수
           };
         });
 
