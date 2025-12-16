@@ -55,7 +55,8 @@ import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/do
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
 import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
-import { API_CONFIG, getAuthHeaders } from './shared/lib/api'
+import { API_CONFIG, getAuthHeaders, api } from './shared/lib/api'
+import type { Document as StatusDocument } from './types/documentStatus'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
 import { Modal } from './shared/ui'
 import Tooltip from './shared/ui/Tooltip'
@@ -750,6 +751,36 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }, 600);
     }
   }, [rightPaneContentType, selectedDocument, updateURLParams]);
+
+  // 문서 리스트에서 더블클릭 시 프리뷰 모달 열기
+  const handleDocumentPreviewModal = useCallback(async (document: StatusDocument) => {
+    const docId = document._id || document.id || ''
+    if (!docId) return
+
+    try {
+      const result = await api.get<{
+        success: boolean
+        data?: {
+          raw?: unknown
+          computed?: { previewFilePath?: string | null; conversionStatus?: string | null }
+        }
+      }>(`/api/documents/${docId}/status`)
+
+      if (!result.success || !result.data) return
+
+      const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
+      if (!rawDocument) return
+
+      const selected = buildSelectedDocument(docId, rawDocument, result.data.computed ?? null)
+      const previewDoc = convertToPreviewDocumentInfo(selected)
+
+      setPreviewModalDocument(previewDoc)
+      setPreviewModalVisible(true)
+    } catch (error) {
+      console.error('[handleDocumentPreviewModal] 문서 로드 오류:', error)
+    }
+  }, [])
+
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -1280,6 +1311,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'documents-library'}
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
+              onDocumentDoubleClick={handleDocumentPreviewModal}
               onDocumentDeleted={() => setRightPaneVisible(false)}
               onCustomerClick={handleCustomerClick}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}

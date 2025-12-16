@@ -41,6 +41,8 @@ interface DocumentLibraryViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 */
   onDocumentClick?: (documentId: string) => void
+  /** 문서 더블클릭 핸들러 (모달 프리뷰) */
+  onDocumentDoubleClick?: (document: Document) => void
   /** 문서 삭제 완료 핸들러 */
   onDocumentDeleted?: () => void
   /** 고객 클릭 핸들러 */
@@ -75,6 +77,7 @@ const DocumentLibraryContent: React.FC<{
   onToggleDeleteMode: () => void
   onToggleBulkLinkMode: () => void
   onDocumentClick?: (documentId: string) => void
+  onDocumentDoubleClick?: (document: Document) => void
   onDeleteSelected: () => void
   onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
   isDeleting: boolean
@@ -83,7 +86,7 @@ const DocumentLibraryContent: React.FC<{
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -461,6 +464,7 @@ const DocumentLibraryContent: React.FC<{
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
+        {...(onDocumentDoubleClick ? { onDocumentDoubleClick } : {})}
         onDetailClick={controller.handleDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
@@ -621,6 +625,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
   onDocumentClick,
+  onDocumentDoubleClick,
   onDocumentDeleted,
   onCustomerClick,
   onCustomerDoubleClick,
@@ -874,6 +879,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               removeDocumentsFnRef.current = fn
             }}
             {...(onDocumentClick && { onDocumentClick })}
+            {...(onDocumentDoubleClick && { onDocumentDoubleClick })}
             {...(onCustomerClick && { onCustomerClick })}
             {...(onCustomerDoubleClick && { onCustomerDoubleClick })}
             {...(onNavigate && { onNavigate })}

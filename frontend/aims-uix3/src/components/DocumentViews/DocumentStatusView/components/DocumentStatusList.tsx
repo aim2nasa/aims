@@ -32,6 +32,7 @@ export interface DocumentStatusListProps {
   isEmpty: boolean
   error: string | null
   onDocumentClick?: (documentId: string) => void
+  onDocumentDoubleClick?: (document: Document) => void
   onDetailClick?: (document: Document) => void
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
@@ -228,6 +229,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   isEmpty,
   error,
   onDocumentClick,
+  onDocumentDoubleClick,
   onDetailClick,
   onSummaryClick,
   onFullTextClick,
@@ -268,6 +270,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
   // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
   const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 🍎 문서 행 싱글클릭/더블클릭 구분용 타이머
+  const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   /**
    * PDF 변환 재시도 핸들러
@@ -649,8 +653,26 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
             data-context-menu="document"
             onClick={() => {
-              if (documentId && onDocumentClick && !isDeleteMode) {
-                onDocumentClick(documentId)
+              if (isDeleteMode || isBulkLinkMode) return
+              if (!documentId) return
+              if (documentClickTimer.current) {
+                clearTimeout(documentClickTimer.current)
+              }
+              documentClickTimer.current = setTimeout(() => {
+                if (onDocumentClick) {
+                  onDocumentClick(documentId)
+                }
+                documentClickTimer.current = null
+              }, 250)
+            }}
+            onDoubleClick={() => {
+              if (isDeleteMode || isBulkLinkMode) return
+              if (documentClickTimer.current) {
+                clearTimeout(documentClickTimer.current)
+                documentClickTimer.current = null
+              }
+              if (onDocumentDoubleClick) {
+                onDocumentDoubleClick(document)
               }
             }}
             onContextMenu={(e) => {
@@ -665,7 +687,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                if (documentId && onDocumentClick && !isDeleteMode) {
+                if (documentId && onDocumentClick && !isDeleteMode && !isBulkLinkMode) {
                   onDocumentClick(documentId)
                 }
               }

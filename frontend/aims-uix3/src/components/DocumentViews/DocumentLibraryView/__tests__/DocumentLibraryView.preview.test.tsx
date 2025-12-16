@@ -246,6 +246,7 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
     })
 
     it('문서를 클릭하면 onDocumentClick이 호출되어야 함', () => {
+      vi.useFakeTimers()
       const handleDocumentClick = vi.fn()
 
       render(
@@ -259,8 +260,10 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
       const documentItem = document.querySelector('.status-item') as HTMLElement
       if (documentItem) {
         fireEvent.click(documentItem)
+        vi.advanceTimersByTime(250) // 싱글/더블클릭 구분 타이머 대기
         expect(handleDocumentClick).toHaveBeenCalled()
       }
+      vi.useRealTimers()
     })
 
     it('onDocumentClick이 없으면 클릭해도 에러가 발생하지 않아야 함', () => {
@@ -325,6 +328,7 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
 
   describe('조건부 prop 전달 (exactOptionalPropertyTypes)', () => {
     it('onDocumentClick이 있을 때 prop이 전달되어야 함', () => {
+      vi.useFakeTimers()
       const handleDocumentClick = vi.fn()
 
       render(
@@ -342,8 +346,10 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
       const documentItem = document.querySelector('.status-item') as HTMLElement
       if (documentItem) {
         fireEvent.click(documentItem)
+        vi.advanceTimersByTime(250) // 싱글/더블클릭 구분 타이머 대기
         expect(handleDocumentClick).toHaveBeenCalled()
       }
+      vi.useRealTimers()
     })
 
     it('onDocumentClick이 없을 때 prop이 전달되지 않아야 함', () => {
@@ -369,6 +375,7 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
 
   describe('다른 props와의 상호작용', () => {
     it('onClose와 함께 작동해야 함', () => {
+      vi.useFakeTimers()
       const handleClose = vi.fn()
       const handleDocumentClick = vi.fn()
 
@@ -383,12 +390,15 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
       const documentItem = document.querySelector('.status-item') as HTMLElement
       if (documentItem) {
         fireEvent.click(documentItem)
+        vi.advanceTimersByTime(250) // 싱글/더블클릭 구분 타이머 대기
         expect(handleDocumentClick).toHaveBeenCalled()
       }
       expect(handleClose).not.toHaveBeenCalled()
+      vi.useRealTimers()
     })
 
     it('onDocumentDeleted와 함께 작동해야 함', () => {
+      vi.useFakeTimers()
       const handleDocumentDeleted = vi.fn()
       const handleDocumentClick = vi.fn()
 
@@ -404,8 +414,10 @@ describe('DocumentLibraryView - 문서 미리보기 기능 테스트 (커밋 fc0
       const documentItem = document.querySelector('.status-item') as HTMLElement
       if (documentItem) {
         fireEvent.click(documentItem)
+        vi.advanceTimersByTime(250) // 싱글/더블클릭 구분 타이머 대기
         expect(handleDocumentClick).toHaveBeenCalled()
       }
+      vi.useRealTimers()
     })
   })
 

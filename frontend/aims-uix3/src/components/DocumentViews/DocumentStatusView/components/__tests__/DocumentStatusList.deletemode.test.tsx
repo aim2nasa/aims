@@ -290,6 +290,7 @@ describe('DocumentStatusList - 삭제 모드 테스트 (커밋 963fa65)', () => 
 
   describe('삭제 모드에서 문서 클릭 동작', () => {
     it('삭제 모드가 아닐 때 문서 클릭 시 onDocumentClick이 호출되어야 함', () => {
+      vi.useFakeTimers()
       const handleDocumentClick = vi.fn()
       const { container } = render(
         <DocumentStatusList
@@ -301,7 +302,9 @@ describe('DocumentStatusList - 삭제 모드 테스트 (커밋 963fa65)', () => 
 
       const items = container.querySelectorAll('.status-item')
       fireEvent.click(items[0]!)
+      vi.advanceTimersByTime(250) // 싱글/더블클릭 구분 타이머 대기
       expect(handleDocumentClick).toHaveBeenCalledWith('doc-1')
+      vi.useRealTimers()
     })
 
     it('삭제 모드일 때 문서 클릭 시 onDocumentClick이 호출되지 않아야 함', () => {
