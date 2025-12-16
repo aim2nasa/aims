@@ -44,6 +44,7 @@ interface RawAnnualReportData {
   source_file_id?: string;  // 파일 ID (재시도용)
   status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;  // 에러 메시지
+  retry_count?: number;  // 재시도 횟수 (1~3)
   contracts?: Array<{
     '증권번호': string;
     '보험상품': string;
@@ -977,7 +978,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                         className="status-badge status-badge--error"
                         title={report.error_message || '파싱 실패'}
                       >
-                        실패
+                        실패{report.retry_count ? ` (${report.retry_count}/3)` : ''}
                       </span>
                       <button
                         type="button"

@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import logging
 import asyncio
+import re
 
 from config import settings
 from services.queue_manager import ARParseQueueManager
@@ -42,6 +43,18 @@ queue_manager: ARParseQueueManager = None
 
 # 백그라운드 태스크 실행 중 플래그
 background_task_running = False
+
+
+def parse_rate_limit_wait_time(error_message: str) -> float:
+    """
+    Rate limit 에러 메시지에서 대기 시간 파싱
+    예: "Please try again in 34.386s" → 34.386
+    """
+    match = re.search(r'try again in (\d+\.?\d*)s', error_message, re.IGNORECASE)
+    if match:
+        return float(match.group(1))
+    return 0
+
 
 async def scan_pending_ar_documents():
     """
@@ -148,20 +161,44 @@ async def queue_worker():
                     else:
                         # 실패: 재시도 (retry=True)
                         error_msg = result.get("error", "Unknown error") if result else "Parsing failed"
+                        retry_count = task["retry_count"] + 1  # 다음 재시도 횟수
+
+                        # files 컬렉션에 retry_count 저장 (UI 표시용)
+                        db["files"].update_one(
+                            {"_id": file_id},
+                            {"$set": {"ar_retry_count": retry_count}}
+                        )
+
+                        # Rate limit 에러인 경우 OpenAI가 알려준 시간만큼 대기
+                        if "rate_limit" in error_msg.lower() or "429" in error_msg:
+                            wait_time = parse_rate_limit_wait_time(error_msg)
+                            if wait_time > 0:
+                                logger.info(f"⏳ Rate limit 감지, {wait_time + 5:.1f}초 대기 후 재시도...")
+                                await asyncio.sleep(wait_time + 5)  # 여유분 5초 추가
+
                         await asyncio.to_thread(
                             queue_manager.mark_failed,
                             task_id,
                             error_msg,
                             retry=True
                         )
-                        logger.warning(f"⚠️  AR 파싱 실패 (재시도 예약): file_id={file_id}, error={error_msg}")
+                        logger.warning(f"⚠️  AR 파싱 실패 ({retry_count}/3 재시도): file_id={file_id}, error={error_msg}")
 
                 except Exception as parse_error:
+                    error_str = str(parse_error)
+
+                    # Rate limit 에러인 경우 OpenAI가 알려준 시간만큼 대기
+                    if "rate_limit" in error_str.lower() or "429" in error_str:
+                        wait_time = parse_rate_limit_wait_time(error_str)
+                        if wait_time > 0:
+                            logger.info(f"⏳ Rate limit 감지, {wait_time + 5:.1f}초 대기 후 재시도...")
+                            await asyncio.sleep(wait_time + 5)
+
                     # 예외 발생: 재시도
                     await asyncio.to_thread(
                         queue_manager.mark_failed,
                         task_id,
-                        str(parse_error),
+                        error_str,
                         retry=True
                     )
                     logger.error(f"❌ AR 파싱 예외: file_id={file_id}, error={parse_error}", exc_info=True)

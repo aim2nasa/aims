@@ -46,6 +46,7 @@ export interface AnnualReport {
   parsed_at?: string | null;       // 파싱일시 (ISO 8601) - 실패/진행중 시 null
   status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;          // 에러 메시지 (실패 시)
+  retry_count?: number;            // 재시도 횟수 (실패 시)
 }
 
 /**

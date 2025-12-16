@@ -267,29 +267,43 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
         # annual_reports 배열 가져오기 (파싱 완료된 것들)
         reports = customer.get("annual_reports", [])
 
+        # 🔧 이미 완료된 source_file_id 수집 (중복 방지)
+        # ⚠️ source_file_id는 String, files._id는 ObjectId → ObjectId로 변환 필수!
+        completed_file_ids = set()
+        for ar in reports:
+            source_id = ar.get("source_file_id")
+            if source_id:
+                try:
+                    completed_file_ids.add(ObjectId(source_id))
+                except:
+                    pass  # 유효하지 않은 ID는 무시
+
         # files 컬렉션 참조
         files_collection = db["files"]
 
         # 🔥 파싱 미완료 AR 문서 조회 (files 컬렉션에서)
-        # customerId 필드로 조회 (Single Source of Truth)
-        # ⭐ AR 문서가 등록되면 바로 Annual Report 탭에 표시되어야 함
-        # - ar_parsing_status가 없거나 pending/processing/error인 문서 모두 포함
-        # - completed가 아닌 모든 AR 문서
+        # 🔧 이미 완료된 source_file_id는 제외!
+        query = {
+            "customerId": customer_obj_id,
+            "is_annual_report": True,
+            "$or": [
+                {"ar_parsing_status": {"$exists": False}},  # 상태 미설정
+                {"ar_parsing_status": {"$in": ["pending", "processing", "error"]}}
+            ]
+        }
+        # 이미 완료된 파일은 제외
+        if completed_file_ids:
+            query["_id"] = {"$nin": list(completed_file_ids)}
+
         not_completed_ar_files = list(files_collection.find(
-            {
-                "customerId": customer_obj_id,
-                "is_annual_report": True,
-                "$or": [
-                    {"ar_parsing_status": {"$exists": False}},  # 상태 미설정
-                    {"ar_parsing_status": {"$in": ["pending", "processing", "error"]}}
-                ]
-            },
+            query,
             {
                 "_id": 1,
                 "upload.originalName": 1,
                 "upload.uploaded_at": 1,
                 "ar_parsing_status": 1,
                 "ar_parsing_error": 1,
+                "ar_retry_count": 1,
                 "ar_metadata": 1,
                 "meta.file_hash": 1
             }
@@ -333,6 +347,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 "contracts": [],
                 "status": ar_status,  # "pending", "processing", or "error"
                 "error_message": file_doc.get("ar_parsing_error"),
+                "retry_count": file_doc.get("ar_retry_count"),  # 재시도 횟수
                 "file_hash": file_doc.get("meta", {}).get("file_hash")
             }
             reports.append(pending_report)

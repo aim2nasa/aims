@@ -86,6 +86,20 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             )
             return {"success": False, "error": error_msg}
 
+        # 2.5 🍎 중복 파싱 방지: 같은 source_file_id로 이미 AR이 있는지 확인
+        existing_ar = db["customers"].find_one({
+            "_id": ObjectId(customer_id),
+            "annual_reports.source_file_id": ObjectId(file_id)
+        })
+        if existing_ar:
+            logger.info(f"⏭️ [Queue Parsing] 이미 파싱 완료된 AR 건너뛰기: file_id={file_id}")
+            # files 상태도 completed로 업데이트
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"ar_parsing_status": "completed"}}
+            )
+            return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
+
         # 3. AR 파싱 실행
         logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")
 
@@ -550,15 +564,20 @@ async def retry_ar_parsing(
 
         logger.info(f"🔄 [Retry] AR 파싱 재시도 준비: file_id={request.file_id}, user_id={user_id}")
 
-        # 백그라운드 작업 등록
-        background_tasks.add_task(
-            process_ar_documents_background,
-            db,
-            str(customer_id) if customer_id else None,
-            request.file_id
+        # 🔧 큐 시스템으로 통합 (Rate limit 방지)
+        from main import queue_manager
+
+        # 기존 큐에서 해당 파일 제거 (중복 방지)
+        queue_manager.queue.delete_one({"file_id": file_obj_id})
+
+        # 큐에 새로 추가 (순차 처리 보장)
+        queue_manager.enqueue(
+            file_id=file_obj_id,
+            customer_id=customer_id,
+            metadata={"retry": True, "user_id": user_id}
         )
 
-        logger.info(f"✅ [Retry] 백그라운드 파싱 재시도 작업 등록: file_id={request.file_id}")
+        logger.info(f"✅ [Retry] 큐에 재시도 작업 등록: file_id={request.file_id}")
 
         return RetryParsingResponse(
             success=True,
