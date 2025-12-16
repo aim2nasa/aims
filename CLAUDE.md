@@ -85,7 +85,7 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 | aims_api | `./deploy_aims_api.sh` |
 | aims_rag_api | `./deploy_aims_rag_api.sh` |
 | annual_report_api | `./deploy_annual_report_api.sh` |
-| pdf_proxy | `./start.sh` |
+| pdf_proxy | `./deploy_pdf_proxy.sh` |
 
 ### 10. 🔴 데이터 중복 금지 (Single Source of Truth)
 **동일한 관계/데이터를 두 곳에 저장하지 않는다!**
