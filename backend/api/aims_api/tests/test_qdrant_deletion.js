@@ -173,8 +173,9 @@ if (bulkDeleteStartIndex === -1) {
   console.log(`${RED}✗ Could not find bulk document deletion API${RESET}`);
   testsFailed++;
 } else {
-  const bulkDeleteBlock = serverContent.slice(bulkDeleteStartIndex, bulkDeleteStartIndex + 4000);
-  console.log(`${BLUE}ℹ Found bulk document deletion block${RESET}\n`);
+  // Qdrant 삭제 코드가 endpoint 시작에서 약 130줄 뒤에 있으므로 8000자 추출
+  const bulkDeleteBlock = serverContent.slice(bulkDeleteStartIndex, bulkDeleteStartIndex + 8000);
+  console.log(`${BLUE}ℹ Found bulk document deletion block (${bulkDeleteBlock.length} chars)${RESET}\n`);
 
   // 9. 반복문 내 Qdrant 삭제
   assertIncludes(
