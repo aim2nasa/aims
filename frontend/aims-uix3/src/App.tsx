@@ -1360,6 +1360,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentClick={handleDocumentClick}
               onDocumentDoubleClick={handleDocumentPreviewModalFromSearch}
               onCustomerClick={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
           </Suspense>
 

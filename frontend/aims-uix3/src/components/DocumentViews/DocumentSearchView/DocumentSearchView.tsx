@@ -50,8 +50,10 @@ interface DocumentSearchViewProps {
   onDocumentClick?: (documentId: string) => void
   /** 문서 더블클릭 핸들러 (모달 프리뷰) */
   onDocumentDoubleClick?: (document: SearchResultItem) => void
-  /** 고객 클릭 핸들러 */
+  /** 고객 클릭 핸들러 (RightPane) */
   onCustomerClick?: (customerId: string) => void
+  /** 고객 더블클릭 핸들러 (전체 정보 페이지) */
+  onCustomerDoubleClick?: (customerId: string) => void
 }
 
 /**
@@ -95,7 +97,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   onClose,
   onDocumentClick,
   onDocumentDoubleClick,
-  onCustomerClick
+  onCustomerClick,
+  onCustomerDoubleClick
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -171,6 +174,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null)
   // 🍎 문서 행 싱글클릭/더블클릭 구분용 타이머
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
+  const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
@@ -382,6 +387,35 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }
     if (onDocumentDoubleClick) {
       onDocumentDoubleClick(item)
+    }
+  }
+
+  /**
+   * 고객명 클릭 핸들러 (250ms 타이머로 더블클릭 구분)
+   */
+  const handleCustomerNameClick = (customerId: string) => {
+    if (!customerId) return
+    if (customerClickTimer.current) {
+      clearTimeout(customerClickTimer.current)
+    }
+    customerClickTimer.current = setTimeout(() => {
+      if (onCustomerClick) {
+        onCustomerClick(customerId)
+      }
+      customerClickTimer.current = null
+    }, 250)
+  }
+
+  /**
+   * 고객명 더블클릭 핸들러 (전체 정보 페이지)
+   */
+  const handleCustomerNameDoubleClick = (customerId: string) => {
+    if (customerClickTimer.current) {
+      clearTimeout(customerClickTimer.current)
+      customerClickTimer.current = null
+    }
+    if (onCustomerDoubleClick) {
+      onCustomerDoubleClick(customerId)
     }
   }
 
@@ -1530,8 +1564,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                               className="customer-name-button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (onCustomerClick && item.customer_relation?.customer_id) {
-                                  onCustomerClick(item.customer_relation.customer_id)
+                                if (item.customer_relation?.customer_id) {
+                                  handleCustomerNameClick(item.customer_relation.customer_id)
+                                }
+                              }}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation()
+                                if (item.customer_relation?.customer_id) {
+                                  handleCustomerNameDoubleClick(item.customer_relation.customer_id)
                                 }
                               }}
                               aria-label={`${item.customer_relation.customer_name} 상세 보기`}
