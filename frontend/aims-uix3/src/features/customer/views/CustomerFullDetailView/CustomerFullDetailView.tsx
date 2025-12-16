@@ -40,7 +40,10 @@ interface CustomerFullDetailViewProps {
   customerId: string | null
   onClose: () => void
   onCustomerDeleted?: () => void
+  /** 싱글클릭: RightPane에 고객 요약보기 표시 */
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void
+  /** 더블클릭: 고객 전체보기로 화면 이동 */
+  onNavigateToFullDetail?: (customerId: string, customerData?: Customer) => void
   /** 메뉴 네비게이션 핸들러 (문서 검색 등) */
   onNavigate?: (menuKey: string) => void
   /** 간략 보기로 전환 (customers-all + customerId 유지) */
@@ -53,6 +56,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   onClose,
   onCustomerDeleted,
   onSelectCustomer,
+  onNavigateToFullDetail,
   onNavigate,
   onSwitchToCompactView
 }) => {
@@ -797,6 +801,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     <RelationshipsTab
                       customer={customer}
                       {...(onSelectCustomer ? { onSelectCustomer } : {})}
+                      {...(onNavigateToFullDetail ? { onNavigateToFullDetail } : {})}
                     />
                   </div>
                   {/* 메모 영역 */}

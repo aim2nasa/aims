@@ -1347,6 +1347,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 }
               }}
               onSelectCustomer={handleCustomerClick}
+              onNavigateToFullDetail={(customerId) => handleOpenFullDetail(customerId)}
               onNavigate={handleMenuClick}
               onSwitchToCompactView={handleSwitchToCompactView}
             />

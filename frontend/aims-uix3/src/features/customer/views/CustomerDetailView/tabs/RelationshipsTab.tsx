@@ -34,7 +34,10 @@ type ExtendedRelationship = Relationship & {
 
 interface RelationshipsTabProps {
   customer: Customer;
+  /** 싱글클릭: RightPane에 고객 요약보기 표시 */
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
+  /** 더블클릭: 고객 전체보기로 화면 이동 */
+  onNavigateToFullDetail?: (customerId: string, customerData?: Customer) => void;
   onRelationshipsUpdated?: () => void;
   onRelationshipsCountChange?: (count: number) => void;
 }
@@ -46,6 +49,7 @@ type SortDirection = 'asc' | 'desc';
 export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   customer,
   onSelectCustomer,
+  onNavigateToFullDetail,
   onRelationshipsUpdated,
   onRelationshipsCountChange,
 }) => {
@@ -72,6 +76,14 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       onSelectCustomer?.(relatedCustomer._id, relatedCustomer);
     },
     [onSelectCustomer],
+  );
+
+  const handleCustomerDoubleClick = useCallback(
+    (relatedCustomer?: Customer) => {
+      if (!relatedCustomer?._id) return;
+      onNavigateToFullDetail?.(relatedCustomer._id, relatedCustomer);
+    },
+    [onNavigateToFullDetail],
   );
 
   // 🍎 정렬 핸들러
@@ -303,6 +315,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                             variant="link"
                             size="sm"
                             onClick={() => handleCustomerSelect(row.relatedCustomer)}
+                            onDoubleClick={() => handleCustomerDoubleClick(row.relatedCustomer)}
                             className="relationships-link"
                           >
                             {row.relatedCustomer.personal_info?.name || '이름 없음'}

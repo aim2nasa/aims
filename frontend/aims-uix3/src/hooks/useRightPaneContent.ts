@@ -222,19 +222,14 @@ export function useRightPaneContent(
         console.log('[useRightPaneContent] 고객 클릭:', customerId, customerData, initialTab)
       }
 
-      // customers-full-detail 뷰에서는 RightPane 열지 않음 (race condition 방지)
-      if (activeDocumentView === 'customers-full-detail') {
-        if (import.meta.env.DEV) {
-          console.log('[useRightPaneContent] customers-full-detail 뷰에서는 RightPane 열지 않음')
-        }
-        return
-      }
-
       // customerId가 null이면 RightPane 닫기
       if (!customerId) {
         setSelectedCustomer(null)
         setRightPaneVisible(false)
-        updateURLParams({ customerId: null, documentId: null, tab: null })
+        // customers-full-detail 뷰에서는 URL 파라미터 변경하지 않음 (전체보기 대상 고객 ID 유지)
+        if (activeDocumentView !== 'customers-full-detail') {
+          updateURLParams({ customerId: null, documentId: null, tab: null })
+        }
         return
       }
 
@@ -254,10 +249,12 @@ export function useRightPaneContent(
       // RightPane이 숨겨져 있으면 표시
       setRightPaneVisible(true)
 
-      // URL에 고객 ID와 탭 저장
-      updateURLParams({ customerId, documentId: null, tab: initialTab || null })
+      // URL에 고객 ID와 탭 저장 (customers-full-detail 뷰에서는 URL 변경하지 않음)
+      if (activeDocumentView !== 'customers-full-detail') {
+        updateURLParams({ customerId, documentId: null, tab: initialTab || null })
+      }
     },
-    [updateURLParams, activeDocumentView, addRecentCustomer]
+    [updateURLParams, addRecentCustomer, activeDocumentView]
   )
 
   // 고객 전체 정보 페이지 열기 핸들러

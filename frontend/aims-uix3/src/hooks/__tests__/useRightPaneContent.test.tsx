@@ -234,7 +234,7 @@ describe('useRightPaneContent', () => {
       expect(result.current.selectedCustomer).toBeNull()
     })
 
-    it('customers-full-detail 뷰에서는 RightPane을 열지 않아야 한다', async () => {
+    it('customers-full-detail 뷰에서는 RightPane을 열지만 URL을 변경하지 않아야 한다', async () => {
       const options = createDefaultOptions()
       options.activeDocumentView = 'customers-full-detail'
 
@@ -244,8 +244,11 @@ describe('useRightPaneContent', () => {
         await result.current.handleCustomerClick('customer123', mockCustomer as any)
       })
 
-      expect(result.current.rightPaneVisible).toBe(false)
-      expect(result.current.selectedCustomer).toBeNull()
+      // RightPane은 열림 (관계 고객 싱글클릭으로 요약보기 표시)
+      expect(result.current.rightPaneVisible).toBe(true)
+      expect(result.current.selectedCustomer).toEqual(mockCustomer)
+      // URL 파라미터는 변경하지 않음 (전체보기 대상 고객 ID 보호)
+      expect(options.updateURLParams).not.toHaveBeenCalled()
     })
 
     it('initialTab 파라미터가 URL에 전달되어야 한다', async () => {
