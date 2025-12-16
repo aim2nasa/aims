@@ -48,6 +48,8 @@ const AccountSettingsView = lazy(() => import('./features/AccountSettings/Accoun
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
+import { SearchService } from './services/searchService'
+import type { SearchResultItem } from './entities/search'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
 import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
@@ -781,6 +783,35 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [])
 
+  // 검색 결과에서 더블클릭 시 프리뷰 모달 열기
+  const handleDocumentPreviewModalFromSearch = useCallback(async (item: SearchResultItem) => {
+    const docId = SearchService.getDocumentId(item)
+    if (!docId) return
+
+    try {
+      const result = await api.get<{
+        success: boolean
+        data?: {
+          raw?: unknown
+          computed?: { previewFilePath?: string | null; conversionStatus?: string | null }
+        }
+      }>(`/api/documents/${docId}/status`)
+
+      if (!result.success || !result.data) return
+
+      const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
+      if (!rawDocument) return
+
+      const selected = buildSelectedDocument(docId, rawDocument, result.data.computed ?? null)
+      const previewDoc = convertToPreviewDocumentInfo(selected)
+
+      setPreviewModalDocument(previewDoc)
+      setPreviewModalVisible(true)
+    } catch (error) {
+      console.error('[handleDocumentPreviewModalFromSearch] 문서 로드 오류:', error)
+    }
+  }, [])
+
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -1327,6 +1358,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'documents-search'}
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
+              onDocumentDoubleClick={handleDocumentPreviewModalFromSearch}
               onCustomerClick={handleCustomerClick}
             />
           </Suspense>

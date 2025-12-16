@@ -48,6 +48,8 @@ interface DocumentSearchViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 (RightPane 프리뷰) */
   onDocumentClick?: (documentId: string) => void
+  /** 문서 더블클릭 핸들러 (모달 프리뷰) */
+  onDocumentDoubleClick?: (document: SearchResultItem) => void
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string) => void
 }
@@ -92,6 +94,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
   onClose,
   onDocumentClick,
+  onDocumentDoubleClick,
   onCustomerClick
 }) => {
   // 🍎 애플 스타일 알림 모달
@@ -166,6 +169,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
   // 🍎 검색 입력 필드 ref (자동 포커스용)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  // 🍎 문서 행 싱글클릭/더블클릭 구분용 타이머
+  const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
@@ -351,12 +356,32 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }, [getRecentCustomers, handleCustomerIdChange])
 
   /**
-   * 문서 클릭 핸들러
+   * 문서 클릭 핸들러 (250ms 타이머로 더블클릭 구분)
    */
   const handleItemClick = (item: SearchResultItem) => {
     const docId = SearchService.getDocumentId(item)
-    if (docId && onDocumentClick) {
-      onDocumentClick(docId)
+    if (!docId) return
+    if (documentClickTimer.current) {
+      clearTimeout(documentClickTimer.current)
+    }
+    documentClickTimer.current = setTimeout(() => {
+      if (onDocumentClick) {
+        onDocumentClick(docId)
+      }
+      documentClickTimer.current = null
+    }, 250)
+  }
+
+  /**
+   * 문서 더블클릭 핸들러 (모달 프리뷰)
+   */
+  const handleItemDoubleClick = (item: SearchResultItem) => {
+    if (documentClickTimer.current) {
+      clearTimeout(documentClickTimer.current)
+      documentClickTimer.current = null
+    }
+    if (onDocumentDoubleClick) {
+      onDocumentDoubleClick(item)
     }
   }
 
@@ -1378,6 +1403,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       className="search-result-row"
                       data-search-mode={searchMode}
                       onClick={() => handleItemClick(item)}
+                      onDoubleClick={() => handleItemDoubleClick(item)}
                       onContextMenu={(e) => handleDocumentContextMenu(item, e)}
                       role="listitem"
                       tabIndex={0}
