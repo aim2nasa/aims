@@ -461,10 +461,14 @@ async def trigger_ar_parsing(
                 file_obj_id = ObjectId(request.file_id)
                 file_doc = db.files.find_one({"_id": file_obj_id})
                 if file_doc:
-                    customer_id = file_doc.get("customerId") or (ObjectId(request.customer_id) if request.customer_id else None)
-                    if customer_id:
-                        queue_manager.enqueue(file_obj_id, customer_id, {"trigger": True, "user_id": user_id})
-                        enqueued_count = 1
+                    # 🔧 이미 완료된 AR은 큐에 추가하지 않음
+                    if file_doc.get("ar_parsing_status") == "completed":
+                        logger.info(f"⏭️ [Trigger] 이미 완료된 AR 건너뛰기: file_id={request.file_id}")
+                    else:
+                        customer_id = file_doc.get("customerId") or (ObjectId(request.customer_id) if request.customer_id else None)
+                        if customer_id:
+                            queue_manager.enqueue(file_obj_id, customer_id, {"trigger": True, "user_id": user_id})
+                            enqueued_count = 1
             except InvalidId:
                 pass
         elif request.customer_id:
@@ -571,6 +575,13 @@ async def retry_ar_parsing(
             raise HTTPException(
                 status_code=400,
                 detail="이미 파싱 진행 중입니다"
+            )
+
+        # 🔧 이미 완료된 AR은 재시도하지 않음
+        if current_status == "completed":
+            raise HTTPException(
+                status_code=400,
+                detail="이미 파싱이 완료된 문서입니다"
             )
 
         # ⭐ 소유권 검증: customerId로 고객 찾고, 그 고객의 created_by 확인

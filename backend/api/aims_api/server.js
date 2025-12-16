@@ -5727,19 +5727,34 @@ app.get('/api/customers/:customerId/annual-reports/pending', authenticateJWT, as
       status: { $in: ['pending', 'processing'] }
     }).toArray();
 
-    // 파일 정보 가져오기
+    // 파일 정보 가져오기 (ar_parsing_status 포함)
     const fileIds = pendingQueue.map(q => q.file_id);
     const files = await db.collection(COLLECTION_NAME).find({
       _id: { $in: fileIds }
     }).project({
       _id: 1,
       'upload.originalName': 1,
-      'upload.uploaded_at': 1
+      'upload.uploaded_at': 1,
+      ar_parsing_status: 1  // 🔧 파싱 상태 확인용
     }).toArray();
 
     // 파일 정보와 큐 정보 매핑
     const fileMap = new Map(files.map(f => [f._id.toString(), f]));
-    const pendingDocs = pendingQueue.map(queue => {
+
+    // 🔧 불일치 데이터 필터링: files.ar_parsing_status=completed인데 큐에 남아있는 경우 제외 + 삭제
+    const validQueue = [];
+    for (const queue of pendingQueue) {
+      const file = fileMap.get(queue.file_id.toString());
+      if (file && file.ar_parsing_status === 'completed') {
+        // 불일치 발견 → 큐에서 삭제 (비동기로 처리, 에러 무시)
+        db.collection('ar_parse_queue').deleteOne({ _id: queue._id }).catch(() => {});
+        console.log(`🔧 [Annual Report] 불일치 큐 레코드 삭제: file_id=${queue.file_id} (이미 완료됨)`);
+      } else {
+        validQueue.push(queue);
+      }
+    }
+
+    const pendingDocs = validQueue.map(queue => {
       const file = fileMap.get(queue.file_id.toString());
       return {
         file_id: queue.file_id.toString(),
