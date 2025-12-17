@@ -111,31 +111,7 @@ describe('DuplicateDialog', () => {
       expect(mockOnAction).toHaveBeenCalledWith('skip', false)
     })
 
-    test('둘 다 유지 버튼 클릭 시 keep_both 액션 전달', () => {
-      render(
-        <DuplicateDialog
-          file={createMockDuplicateFile()}
-          onAction={mockOnAction}
-          onCancel={mockOnCancel}
-        />
-      )
-
-      fireEvent.click(screen.getByText('둘 다 유지'))
-      expect(mockOnAction).toHaveBeenCalledWith('keep_both', false)
-    })
-
-    test('덮어쓰기 버튼 클릭 시 overwrite 액션 전달', () => {
-      render(
-        <DuplicateDialog
-          file={createMockDuplicateFile()}
-          onAction={mockOnAction}
-          onCancel={mockOnCancel}
-        />
-      )
-
-      fireEvent.click(screen.getByText('덮어쓰기'))
-      expect(mockOnAction).toHaveBeenCalledWith('overwrite', false)
-    })
+    // Note: 덮어쓰기/둘다유지 버튼은 hash 기반 중복 검사에서 무의미하므로 제거됨
   })
 
   describe('일괄 적용', () => {
@@ -166,9 +142,9 @@ describe('DuplicateDialog', () => {
       // 체크박스 클릭
       fireEvent.click(screen.getByRole('checkbox'))
 
-      // 덮어쓰기 클릭
-      fireEvent.click(screen.getByText('덮어쓰기'))
-      expect(mockOnAction).toHaveBeenCalledWith('overwrite', true)
+      // 건너뛰기 클릭
+      fireEvent.click(screen.getByText('건너뛰기'))
+      expect(mockOnAction).toHaveBeenCalledWith('skip', true)
     })
   })
 })

@@ -216,31 +216,7 @@ describe('BatchDocumentUploadView - Duplicate Dialog Integration', () => {
       expect(mockHandleDuplicateAction).toHaveBeenCalledWith('skip', false)
     })
 
-    it('덮어쓰기 버튼 클릭 시 handleDuplicateAction 호출', () => {
-      render(
-        <BatchDocumentUploadView
-          visible={true}
-          onClose={vi.fn()}
-        />
-      )
-
-      fireEvent.click(screen.getByText('덮어쓰기'))
-
-      expect(mockHandleDuplicateAction).toHaveBeenCalledWith('overwrite', false)
-    })
-
-    it('둘 다 유지 버튼 클릭 시 handleDuplicateAction 호출', () => {
-      render(
-        <BatchDocumentUploadView
-          visible={true}
-          onClose={vi.fn()}
-        />
-      )
-
-      fireEvent.click(screen.getByText('둘 다 유지'))
-
-      expect(mockHandleDuplicateAction).toHaveBeenCalledWith('keep_both', false)
-    })
+    // Note: 덮어쓰기/둘다유지 테스트는 hash 기반 중복 검사에서 무의미하므로 제거됨
 
     it('취소 버튼 클릭 시 cancelUpload 호출', () => {
       render(

@@ -533,6 +533,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 customerName
               )
 
+              // hash 기반 중복 검사: skip만 가능 (동일 파일이므로 덮어쓰기/둘다유지 무의미)
               if (action === 'skip') {
                 addLog(
                   'warning',
@@ -541,51 +542,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 )
                 console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
                 continue
-              } else if (action === 'overwrite') {
-                addLog(
-                  'info',
-                  `덮어쓰기 선택: ${file.name}`,
-                  `기존 파일을 덮어씁니다.`
-                )
-                // 덮어쓰기: 기존 파일 삭제 후 업로드
-                if (duplicateResult.existingDoc.documentId) {
-                  try {
-                    await DocumentService.deleteDocument(duplicateResult.existingDoc.documentId)
-                    console.log(`[DocumentRegistration] ✅ 기존 파일 삭제 완료: ${file.name}`)
-                  } catch (deleteError) {
-                    console.error('[DocumentRegistration] 기존 파일 삭제 실패:', deleteError)
-                    addLog('error', `기존 파일 삭제 실패: ${file.name}`, '덮어쓰기를 진행할 수 없습니다.')
-                    continue
-                  }
-                }
-                // 삭제 후 업로드 진행 (아래 코드로 계속)
-              } else if (action === 'keep_both') {
-                addLog(
-                  'info',
-                  `둘 다 유지 선택: ${file.name}`,
-                  `새 파일명으로 업로드합니다.`
-                )
-                // 둘 다 유지: 파일명에 타임스탬프 추가
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-                const ext = file.name.lastIndexOf('.') > 0 ? file.name.slice(file.name.lastIndexOf('.')) : ''
-                const baseName = file.name.lastIndexOf('.') > 0 ? file.name.slice(0, file.name.lastIndexOf('.')) : file.name
-                const newFileName = `${baseName}_${timestamp}${ext}`
-
-                // 새 파일명으로 File 객체 재생성
-                const renamedFile = new File([file], newFileName, { type: file.type, lastModified: file.lastModified })
-
-                newUploadFiles.push({
-                  id: generateFileId(),
-                  file: renamedFile,
-                  fileSize: renamedFile.size,
-                  status: 'pending',
-                  progress: 0,
-                  error: undefined,
-                  completedAt: undefined,
-                  relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
-                  customerId: customerFileCustomer._id
-                })
-                continue // 이미 추가했으므로 아래 코드 건너뜀
               }
             }
           } catch (error) {

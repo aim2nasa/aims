@@ -17,7 +17,6 @@ import type { FolderMapping, DuplicateAction, DuplicateFileInfo } from '../types
 import {
   getCustomerFileHashes,
   checkDuplicateFile,
-  getUniqueFileName,
   type ExistingFileHash,
 } from '@/shared/lib/fileValidation'
 
@@ -43,7 +42,6 @@ export interface FileUploadState {
   retryCount: number
   fileHash?: string
   duplicateAction?: DuplicateAction
-  existingDocId?: string // 덮어쓰기 시 기존 문서 ID
 }
 
 /**
@@ -226,8 +224,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
   const uploadSingleFile = useCallback(
     async (
       fileState: FileUploadState,
-      file: File,
-      options?: { overwrite?: boolean; existingDocId?: string }
+      file: File
     ): Promise<FileUploadResult> => {
       const controller = new AbortController()
       abortControllersRef.current.set(fileState.fileId, controller)
@@ -253,8 +250,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
             }
           })
         },
-        controller.signal,
-        options
+        controller.signal
       )
 
       abortControllersRef.current.delete(fileState.fileId)
@@ -292,9 +288,6 @@ export function useBatchUpload(): UseBatchUploadReturn {
     const initialFiles: FileUploadState[] = []
     fileMapRef.current.clear()
     customerHashCacheRef.current.clear()
-
-    // 고객별로 기존 파일명 목록 (둘 다 유지 옵션용)
-    const customerFileNames = new Map<string, string[]>()
 
     mappings.forEach((mapping) => {
       if (!mapping.matched || !mapping.customerId) return
@@ -346,8 +339,6 @@ export function useBatchUpload(): UseBatchUploadReturn {
       customerIds.map(async (customerId) => {
         const hashes = await getCustomerFileHashes(customerId)
         customerHashCacheRef.current.set(customerId, hashes)
-        // 기존 파일명 목록도 저장
-        customerFileNames.set(customerId, hashes.map((h) => h.fileName))
       })
     )
 
@@ -468,29 +459,8 @@ export function useBatchUpload(): UseBatchUploadReturn {
             continue
           }
 
-          if (action === 'overwrite') {
-            // 덮어쓰기: 기존 문서 ID 저장
-            nextFile.existingDocId = duplicateResult.existingDoc.documentId
-          }
-
-          if (action === 'keep_both') {
-            // 파일명 변경
-            const existingNames = customerFileNames.get(nextFile.customerId) || []
-            const newFileName = getUniqueFileName(file.name, existingNames)
-
-            // 새 파일명으로 File 객체 생성
-            const renamedFile = new File([file], newFileName, {
-              type: file.type,
-              lastModified: file.lastModified,
-            })
-            fileMapRef.current.set(nextFile.fileId, renamedFile)
-            nextFile.fileName = newFileName
-
-            // 파일명 목록에 추가
-            existingNames.push(newFileName)
-          }
-
-          // overwrite 또는 keep_both: 업로드 진행
+          // hash 기반 중복: skip만 가능 (동일 파일이므로 덮어쓰기/둘다유지 무의미)
+          // skip이 아닌 경우는 이미 위에서 처리됨 (continue 또는 cancel)
         }
 
         // 상태 업데이트 - 업로드 시작
@@ -517,13 +487,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
           continue
         }
 
-        // 덮어쓰기 옵션 설정
-        const uploadOptions =
-          nextFile.duplicateAction === 'overwrite' && nextFile.existingDocId
-            ? { overwrite: true, existingDocId: nextFile.existingDocId }
-            : undefined
-
-        const result = await uploadSingleFile(nextFile, uploadFile, uploadOptions)
+        const result = await uploadSingleFile(nextFile, uploadFile)
 
         if (result.success) {
           nextFile.status = 'completed'

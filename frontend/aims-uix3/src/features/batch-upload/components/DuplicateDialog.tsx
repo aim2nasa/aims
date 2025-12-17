@@ -13,8 +13,12 @@ import './DuplicateDialog.css'
 
 /**
  * 중복 처리 옵션
+ * - skip: 이미 동일한 파일이 존재하므로 업로드 건너뛰기
+ *
+ * Note: hash 기반 중복 검사이므로 덮어쓰기/둘다유지는 무의미함
+ * (동일한 내용의 파일을 교체하거나 복제하는 것은 낭비)
  */
-export type DuplicateAction = 'overwrite' | 'skip' | 'keep_both'
+export type DuplicateAction = 'skip'
 
 /**
  * 중복 파일 정보
@@ -107,22 +111,10 @@ export default function DuplicateDialog({
             취소
           </button>
           <button
-            className="duplicate-dialog-btn"
+            className="duplicate-dialog-btn primary"
             onClick={() => handleAction('skip')}
           >
             건너뛰기
-          </button>
-          <button
-            className="duplicate-dialog-btn"
-            onClick={() => handleAction('keep_both')}
-          >
-            둘 다 유지
-          </button>
-          <button
-            className="duplicate-dialog-btn primary"
-            onClick={() => handleAction('overwrite')}
-          >
-            덮어쓰기
           </button>
         </div>
       </div>

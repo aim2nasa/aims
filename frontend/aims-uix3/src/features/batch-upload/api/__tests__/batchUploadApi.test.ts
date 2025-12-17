@@ -292,46 +292,7 @@ describe('BatchUploadApi', () => {
       })
     })
 
-    describe('덮어쓰기 옵션', () => {
-      it('overwrite 옵션이 FormData에 포함되어야 함', async () => {
-        const file = createMockFile('update.pdf')
-        mockXHR.status = 200
-
-        const uploadPromise = BatchUploadApi.uploadFile(
-          file,
-          'cust-001',
-          undefined,
-          undefined,
-          { overwrite: true, existingDocId: 'doc-123' }
-        )
-
-        setTimeout(() => mockXHR._triggerEvent('load'), 0)
-        await uploadPromise
-
-        const sentData = mockXHR.send.mock.calls[0][0] as FormData
-        expect(sentData.get('overwrite')).toBe('true')
-        expect(sentData.get('existingDocId')).toBe('doc-123')
-      })
-
-      it('overwrite가 true이지만 existingDocId가 없으면 덮어쓰기 필드가 추가되지 않아야 함', async () => {
-        const file = createMockFile('new.pdf')
-        mockXHR.status = 200
-
-        const uploadPromise = BatchUploadApi.uploadFile(
-          file,
-          'cust-001',
-          undefined,
-          undefined,
-          { overwrite: true }
-        )
-
-        setTimeout(() => mockXHR._triggerEvent('load'), 0)
-        await uploadPromise
-
-        const sentData = mockXHR.send.mock.calls[0][0] as FormData
-        expect(sentData.get('overwrite')).toBeNull()
-      })
-    })
+    // Note: 덮어쓰기 옵션은 hash 기반 중복 검사에서 무의미하므로 제거됨
 
     describe('에러 처리', () => {
       it('HTTP 404 에러를 처리해야 함', async () => {

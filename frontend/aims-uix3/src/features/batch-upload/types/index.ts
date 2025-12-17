@@ -133,8 +133,11 @@ export interface UploadBatch {
 
 /**
  * 중복 파일 처리 옵션
+ * - skip: 이미 동일한 파일이 존재하므로 업로드 건너뛰기
+ *
+ * Note: hash 기반 중복 검사이므로 덮어쓰기/둘다유지는 무의미함
  */
-export type DuplicateAction = 'overwrite' | 'skip' | 'keep_both'
+export type DuplicateAction = 'skip'
 
 /**
  * 중복 파일 정보 (배치 업로드용)
