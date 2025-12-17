@@ -33,6 +33,7 @@ import {
   type ExistingFileHash,
 } from '@/shared/lib/fileValidation'
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
+import DuplicateDialog, { type DuplicateAction, type DuplicateFile } from '@/features/batch-upload/components/DuplicateDialog'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -83,6 +84,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     partialUploadInfo: { fileCount: number; totalSize: number } | null
   } | null>(null)
   const [pendingFilesForUpload, setPendingFilesForUpload] = useState<File[]>([])
+
+  // 🔴 중복 파일 처리 다이얼로그 상태
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [currentDuplicateFile, setCurrentDuplicateFile] = useState<DuplicateFile | null>(null)
+  const duplicateResolverRef = useRef<((action: DuplicateAction) => void) | null>(null)
+  const duplicateApplyAllRef = useRef<{ action: DuplicateAction } | null>(null)
 
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
@@ -302,6 +309,66 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
+   * 🔴 중복 파일 처리 다이얼로그 핸들러
+   */
+  const handleDuplicateAction = useCallback((action: DuplicateAction, applyToAll: boolean) => {
+    if (applyToAll) {
+      duplicateApplyAllRef.current = { action }
+    }
+    if (duplicateResolverRef.current) {
+      duplicateResolverRef.current(action)
+      duplicateResolverRef.current = null
+    }
+    setShowDuplicateDialog(false)
+    setCurrentDuplicateFile(null)
+  }, [])
+
+  /**
+   * 🔴 중복 파일 처리 다이얼로그 취소 핸들러
+   */
+  const handleDuplicateCancel = useCallback(() => {
+    duplicateResolverRef.current = null
+    duplicateApplyAllRef.current = null
+    setShowDuplicateDialog(false)
+    setCurrentDuplicateFile(null)
+  }, [])
+
+  /**
+   * 🔴 중복 파일 발견 시 다이얼로그 표시 및 사용자 액션 대기
+   */
+  const promptDuplicateAction = useCallback((
+    file: File,
+    existingDoc: { uploadedAt?: string; size?: number },
+    customerName: string
+  ): Promise<DuplicateAction | 'cancel'> => {
+    return new Promise((resolve) => {
+      // 이미 일괄 적용 설정이 있으면 바로 반환
+      if (duplicateApplyAllRef.current) {
+        resolve(duplicateApplyAllRef.current.action)
+        return
+      }
+
+      const duplicateFile: DuplicateFile = {
+        fileName: file.name,
+        folderName: '',
+        customerName,
+        existingFileDate: existingDoc.uploadedAt
+          ? new Date(existingDoc.uploadedAt).toLocaleString('ko-KR')
+          : undefined,
+        newFileSize: file.size,
+        existingFileSize: existingDoc.size
+      }
+
+      setCurrentDuplicateFile(duplicateFile)
+      setShowDuplicateDialog(true)
+
+      duplicateResolverRef.current = (action: DuplicateAction) => {
+        resolve(action)
+      }
+    })
+  }, [])
+
+  /**
    * 파일 선택 핸들러
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
@@ -310,6 +377,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🧹 새 업로드 시작 시 기존 로그 클리어
     setProcessingLogs([])
     logCounterRef.current = 0
+
+    // 🔴 중복 처리 일괄 적용 설정 초기화
+    duplicateApplyAllRef.current = null
 
     // 🍎 스토리지 용량 체크 (공통 모듈 사용)
     try {
@@ -446,23 +516,77 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           addLog('info', `[1/4] 일반 파일 감지: ${file.name}`, file.type || '알 수 없는 형식')
         }
 
-        // 🔴 중복 파일 검사 (일반 문서용)
-        if (existingHashes.length > 0) {
+        // 🔴 중복 파일 검사 (일반 문서용) - 모달로 사용자에게 선택권 제공
+        if (existingHashes.length > 0 && customerFileCustomer) {
           try {
             const duplicateResult = await checkDuplicateFile(file, existingHashes)
             if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
-              const existingDate = duplicateResult.existingDoc.uploadedAt
-                ? new Date(duplicateResult.existingDoc.uploadedAt).toLocaleString('ko-KR')
-                : '알 수 없음'
-              // 🍎 중복 감지 시 로그 영역 표시 (사용자에게 피드백 필수!)
+              const customerName = customerFileCustomer.personal_info?.name || '알 수 없음'
+
+              // 🍎 중복 감지 시 로그 영역 표시
               setIsLogVisible(true)
-              addLog(
-                'warning',
-                `🔴 중복 파일 건너뜀: ${file.name}`,
-                `이미 등록된 파일입니다 (등록일: ${existingDate}). 업로드를 건너뜁니다.`
+
+              // 🔴 사용자에게 중복 처리 방법 선택 요청 (모달)
+              const action = await promptDuplicateAction(
+                file,
+                duplicateResult.existingDoc,
+                customerName
               )
-              console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
-              continue // 중복 파일은 건너뜀
+
+              if (action === 'skip') {
+                addLog(
+                  'warning',
+                  `🔴 중복 파일 건너뜀: ${file.name}`,
+                  `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
+                )
+                console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
+                continue
+              } else if (action === 'overwrite') {
+                addLog(
+                  'info',
+                  `덮어쓰기 선택: ${file.name}`,
+                  `기존 파일을 덮어씁니다.`
+                )
+                // 덮어쓰기: 기존 파일 삭제 후 업로드
+                if (duplicateResult.existingDoc.documentId) {
+                  try {
+                    await DocumentService.deleteDocument(duplicateResult.existingDoc.documentId)
+                    console.log(`[DocumentRegistration] ✅ 기존 파일 삭제 완료: ${file.name}`)
+                  } catch (deleteError) {
+                    console.error('[DocumentRegistration] 기존 파일 삭제 실패:', deleteError)
+                    addLog('error', `기존 파일 삭제 실패: ${file.name}`, '덮어쓰기를 진행할 수 없습니다.')
+                    continue
+                  }
+                }
+                // 삭제 후 업로드 진행 (아래 코드로 계속)
+              } else if (action === 'keep_both') {
+                addLog(
+                  'info',
+                  `둘 다 유지 선택: ${file.name}`,
+                  `새 파일명으로 업로드합니다.`
+                )
+                // 둘 다 유지: 파일명에 타임스탬프 추가
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+                const ext = file.name.lastIndexOf('.') > 0 ? file.name.slice(file.name.lastIndexOf('.')) : ''
+                const baseName = file.name.lastIndexOf('.') > 0 ? file.name.slice(0, file.name.lastIndexOf('.')) : file.name
+                const newFileName = `${baseName}_${timestamp}${ext}`
+
+                // 새 파일명으로 File 객체 재생성
+                const renamedFile = new File([file], newFileName, { type: file.type, lastModified: file.lastModified })
+
+                newUploadFiles.push({
+                  id: generateFileId(),
+                  file: renamedFile,
+                  fileSize: renamedFile.size,
+                  status: 'pending',
+                  progress: 0,
+                  error: undefined,
+                  completedAt: undefined,
+                  relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
+                  customerId: customerFileCustomer._id
+                })
+                continue // 이미 추가했으므로 아래 코드 건너뜀
+              }
             }
           } catch (error) {
             console.error('[DocumentRegistration] 중복 검사 실패:', error)
@@ -560,7 +684,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     }
 
-  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, customerFileNotes])
+  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, customerFileNotes, promptDuplicateAction])
 
   /**
    * 파일 재시도 핸들러
@@ -1331,6 +1455,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         onPartialUpload={handleStoragePartialUpload}
         partialUploadInfo={storageExceededInfo?.partialUploadInfo || null}
       />
+
+      {/* 🔴 중복 파일 처리 다이얼로그 */}
+      {showDuplicateDialog && currentDuplicateFile && (
+        <DuplicateDialog
+          file={currentDuplicateFile}
+          onAction={handleDuplicateAction}
+          onCancel={handleDuplicateCancel}
+        />
+      )}
     </CenterPaneView>
   )
 }
