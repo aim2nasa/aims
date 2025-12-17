@@ -224,7 +224,7 @@ describe('MappingPreview', () => {
       expect(uploadButton.closest('button')).toBeDisabled()
     })
 
-    test('업로드 버튼에 매칭된 폴더 수가 표시된다', () => {
+    test('업로드 버튼에 선택된 폴더 수가 표시된다', () => {
       render(
         <MappingPreview
           mappings={[
