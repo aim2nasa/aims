@@ -94,8 +94,7 @@ export const InquiriesPage = () => {
             <div className="inquiries-page__stats">
               <span className="stat-badge stat-badge--pending">대기 {stats.pending}</span>
               <span className="stat-badge stat-badge--in-progress">처리중 {stats.inProgress}</span>
-              <span className="stat-badge stat-badge--resolved">해결 {stats.resolved}</span>
-              <span className="stat-badge stat-badge--closed">종료 {stats.closed}</span>
+              <span className="stat-badge stat-badge--resolved">해결 {stats.resolved + stats.closed}</span>
             </div>
           )}
         </div>
@@ -116,10 +115,9 @@ export const InquiriesPage = () => {
           onChange={(e) => setStatusFilter(e.target.value as InquiryStatus | '')}
         >
           <option value="">전체 상태</option>
-          <option value="pending">대기중</option>
+          <option value="pending">대기</option>
           <option value="in_progress">처리중</option>
-          <option value="resolved">해결됨</option>
-          <option value="closed">종료</option>
+          <option value="resolved">해결</option>
         </select>
         <select
           className="inquiries-page__select"

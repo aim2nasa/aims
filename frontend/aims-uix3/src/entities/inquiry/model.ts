@@ -82,10 +82,10 @@ export const CATEGORY_LABELS: Record<InquiryCategory, string> = {
 
 /** 상태 라벨 */
 export const STATUS_LABELS: Record<InquiryStatus, string> = {
-  pending: '대기중',
+  pending: '대기',
   in_progress: '처리중',
-  resolved: '해결됨',
-  closed: '종료',
+  resolved: '해결',
+  closed: '해결',
 };
 
 /** 카테고리 색상 */

@@ -349,7 +349,7 @@ export const InquiryDetailPage = () => {
                 onClick={() => handleStatusChange('pending')}
                 disabled={statusMutation.isPending || inquiry.status === 'pending'}
               >
-                대기중
+                대기
               </button>
               <button
                 className={`status-button status-button--in_progress ${inquiry.status === 'in_progress' ? 'status-button--active' : ''}`}
@@ -359,18 +359,11 @@ export const InquiryDetailPage = () => {
                 처리중
               </button>
               <button
-                className={`status-button status-button--resolved ${inquiry.status === 'resolved' ? 'status-button--active' : ''}`}
+                className={`status-button status-button--resolved ${inquiry.status === 'resolved' || inquiry.status === 'closed' ? 'status-button--active' : ''}`}
                 onClick={() => handleStatusChange('resolved')}
-                disabled={statusMutation.isPending || inquiry.status === 'resolved'}
+                disabled={statusMutation.isPending || inquiry.status === 'resolved' || inquiry.status === 'closed'}
               >
-                해결됨
-              </button>
-              <button
-                className={`status-button status-button--closed ${inquiry.status === 'closed' ? 'status-button--active' : ''}`}
-                onClick={() => handleStatusChange('closed')}
-                disabled={statusMutation.isPending || inquiry.status === 'closed'}
-              >
-                종료
+                해결
               </button>
             </div>
           </div>
