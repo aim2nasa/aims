@@ -63,6 +63,12 @@ const WordExtractor = require('word-extractor'); // DOC (구형 Word 97-2003)
 const XLSX = require('xlsx'); // Excel
 const yauzl = require('yauzl'); // ZIP 파일 처리 (PPTX용)
 const xml2js = require('xml2js'); // XML 파싱
+const http = require('http');
+const FormData = require('form-data');
+
+// PDF Converter 서비스 (Docker 환경에서 호스트 접근)
+const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || '172.17.0.1';
+const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 3011;
 
 // HWP 확장자 매핑
 const EXTENSION_MIME_MAP = {
@@ -348,22 +354,49 @@ async function extractPptxText(filePath) {
 }
 
 /**
- * HWP에서 텍스트 추출 (향후 확장 가능)
+ * HWP에서 텍스트 추출
+ * HWP → PDF 변환 후 PDF에서 텍스트 추출
  */
-function extractHwpText(filePath) {
-  const stat = fs.statSync(filePath);
-  const fileSize = (stat.size / 1024).toFixed(2);
-  
-  throw new Error(`HWP 파일 정보:
-- 파일 크기: ${fileSize} KB
-- HWP 텍스트 추출은 현재 개발 중입니다.
+async function extractHwpText(filePath) {
+  const outputDir = path.dirname(filePath);
+  const baseName = path.basename(filePath, '.hwp');
+  const pdfPath = path.join(outputDir, baseName + '.pdf');
 
-추천 방법:
-1. 한글 프로그램에서 TXT로 내보내기
-2. 온라인 HWP 변환 도구 사용
-3. hwp2txt 같은 외부 도구 활용
+  // PDF Converter 서비스로 HWP → PDF 변환
+  await new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', fs.createReadStream(filePath));
 
-향후 업데이트에서 지원 예정입니다.`);
+    const options = {
+      hostname: PDF_CONVERTER_HOST,
+      port: PDF_CONVERTER_PORT,
+      path: '/convert',
+      method: 'POST',
+      headers: form.getHeaders(),
+      timeout: 120000
+    };
+
+    const req = http.request(options, (res) => {
+      if (res.statusCode !== 200) {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => reject(new Error(`HWP 변환 실패 (${res.statusCode}): ${body}`)));
+        return;
+      }
+
+      const writeStream = fs.createWriteStream(pdfPath);
+      res.pipe(writeStream);
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+    req.on('error', (err) => reject(new Error(`HWP 변환 요청 실패: ${err.message}`)));
+    req.on('timeout', () => { req.destroy(); reject(new Error('HWP 변환 타임아웃')); });
+    form.pipe(req);
+  });
+
+  // 변환된 PDF에서 텍스트 추출
+  return await extractPdfText(pdfPath);
 }
 
 /**
@@ -390,7 +423,7 @@ async function extractTextFromFile(filePath, mimeType) {
       return await extractPptxText(filePath);
       
     case 'application/x-hwp':
-      return extractHwpText(filePath);
+      return await extractHwpText(filePath);
       
     case 'text/plain':
       try {
