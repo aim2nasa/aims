@@ -1306,13 +1306,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         </div>
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 후 활성화 */}
-        <FileUploadArea
-          onFilesSelected={handleFilesSelected}
-          options={fileSelectionOptions}
-          uploading={uploadState.uploading}
-          disabled={!customerFileCustomer || uploadState.uploading}
-        />
+        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시에만 표시 */}
+        {customerFileCustomer && (
+          <FileUploadArea
+            onFilesSelected={handleFilesSelected}
+            options={fileSelectionOptions}
+            uploading={uploadState.uploading}
+            disabled={uploadState.uploading}
+          />
+        )}
 
         {/* 🍎 처리 로그 (업로드 시작 후에만 표시) */}
         {isLogVisible && (
