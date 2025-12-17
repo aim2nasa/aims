@@ -192,23 +192,34 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
 
   // 문의 읽음 처리
   const markAsRead = useCallback(async (inquiryId: string) => {
+    // 이미 읽음 처리된 경우 무시 (중복 호출 방지)
+    if (!processedEventIdsRef.current.has(inquiryId)) {
+      console.log('[AdminInquiryNotifications] 이미 읽음 처리됨:', inquiryId);
+      return;
+    }
+
+    // 즉시 처리됨으로 표시 (await 전에 삭제해야 중복 호출 방지)
+    processedEventIdsRef.current.delete(inquiryId);
+
+    // 로컬 상태 먼저 업데이트 (낙관적 업데이트)
+    setUnreadIds((prev) => {
+      const next = new Set(prev);
+      next.delete(inquiryId);
+      return next;
+    });
+    setUnreadCount((c) => Math.max(0, c - 1));
+
     try {
       await markAsReadApi(inquiryId);
-
-      // 처리된 이벤트 목록에서 제거 (새 메시지 오면 다시 미확인 처리 가능하도록)
-      processedEventIdsRef.current.delete(inquiryId);
-
-      // 로컬 상태 업데이트 (카운트는 실제로 제거될 때만 감소)
+    } catch (error) {
+      // API 실패 시 상태 복구
+      processedEventIdsRef.current.add(inquiryId);
       setUnreadIds((prev) => {
-        if (!prev.has(inquiryId)) {
-          return prev; // 이미 없으면 변경 없음
-        }
         const next = new Set(prev);
-        next.delete(inquiryId);
-        setUnreadCount((c) => Math.max(0, c - 1));
+        next.add(inquiryId);
         return next;
       });
-    } catch (error) {
+      setUnreadCount((c) => c + 1);
       console.error('[AdminInquiryNotifications] 읽음 처리 실패:', error);
     }
   }, []);
