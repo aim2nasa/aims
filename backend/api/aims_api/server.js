@@ -1014,8 +1014,23 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
           console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, meta.full_text=${hasMetaFullText}, ocr.full_text=${hasOcrFullText}, ocr.confidence=${doc.ocr?.confidence}`);
         });
       }
+    } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
+      // 🔧 uploadDate 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
+      const sortOrder = sort === 'uploadDate_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            uploaded_at_normalized: { $toDate: '$upload.uploaded_at' }
+          }
+        },
+        { $sort: { uploaded_at_normalized: sortOrder } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        { $project: { uploaded_at_normalized: 0 } }
+      ]).toArray();
     } else {
-      // 일반 정렬 조건 구성
+      // 일반 정렬 조건 구성 (status, filename)
       let sortCriteria = { 'upload.uploaded_at': -1 }; // 기본: 최신순
       if (sort === 'status_asc') {
         sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
@@ -1025,10 +1040,6 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         sortCriteria = { 'upload.originalName': 1, 'upload.uploaded_at': -1 };
       } else if (sort === 'filename_desc') {
         sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
-      } else if (sort === 'uploadDate_asc') {
-        sortCriteria = { 'upload.uploaded_at': 1 };
-      } else if (sort === 'uploadDate_desc') {
-        sortCriteria = { 'upload.uploaded_at': -1 };
       }
 
       documents = await db.collection(COLLECTION_NAME)
