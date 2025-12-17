@@ -182,7 +182,7 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
             <span>실패 항목 재시도</span>
           </button>
         )}
-        {onViewDocuments && (
+        {onViewDocuments && !isCancelled && (
           <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
             처리 상태 보기
           </button>
