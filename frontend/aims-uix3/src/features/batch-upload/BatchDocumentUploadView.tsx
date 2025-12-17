@@ -258,8 +258,8 @@ export default function BatchDocumentUploadView({
   }, [])
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
-    // 1. 파일을 폴더별로 그룹화
-    const fileGroups = groupFilesByFolder(files)
+    // 1. 파일을 폴더별로 그룹화 (고객명 확인을 위해 customers 전달)
+    const fileGroups = groupFilesByFolder(files, customers)
 
     if (fileGroups.size === 0) {
       setValidationErrors(['폴더 구조가 없는 파일입니다. 폴더를 선택해주세요.'])
@@ -363,8 +363,8 @@ export default function BatchDocumentUploadView({
       return
     }
 
-    // 필터링된 파일로 새 mappings 생성
-    const fileGroups = groupFilesByFolder(filteredFiles)
+    // 필터링된 파일로 새 mappings 생성 (고객명 확인을 위해 customers 전달)
+    const fileGroups = groupFilesByFolder(filteredFiles, customers)
     const mappings = createFolderMappings(fileGroups, customers)
 
     setFolderMappings(mappings)

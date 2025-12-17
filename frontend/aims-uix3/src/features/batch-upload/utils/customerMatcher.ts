@@ -126,11 +126,16 @@ export function calculateMatchingStats(
  * - "temp/한승우/file.pdf" → "한승우" 폴더로 그룹화
  * - "한승우/file.pdf" → "한승우" 폴더로 그룹화
  *
+ * 단, 선택한 폴더 자체가 고객명과 일치하면 하위 폴더 분석 없이 해당 폴더를 고객 폴더로 사용:
+ * - "곽승철/하위폴더/file.pdf" → "곽승철"이 고객명이면 하위폴더 무시, "곽승철"로 그룹화
+ *
  * @param files File 객체 배열 (webkitRelativePath 포함)
+ * @param customers 고객 목록 (선택적) - 제공 시 최상위 폴더가 고객명인지 확인
  * @returns 폴더명 -> File 배열 맵
  */
 export function groupFilesByFolder(
-  files: File[]
+  files: File[],
+  customers?: CustomerForMatching[]
 ): Map<string, File[]> {
   // 1단계: 일단 최상위 폴더로 그룹화하여 구조 분석
   const topLevelGroups = new Map<string, File[]>()
@@ -147,12 +152,17 @@ export function groupFilesByFolder(
     topLevelGroups.set(topFolder, existing)
   }
 
-  // 2단계: 최상위 폴더가 하나이고, 그 안에 하위 폴더들이 있는지 확인
-  // 이 경우 상위 폴더를 드래그한 것이므로 하위 폴더를 고객 폴더로 사용
+  // 2단계: 최상위 폴더가 하나인 경우 처리
   if (topLevelGroups.size === 1) {
     const [parentFolderName, parentFiles] = [...topLevelGroups.entries()][0]
 
-    // 하위 폴더가 있는지 확인 (path parts가 3개 이상: parent/child/file.ext)
+    // 2-1: 최상위 폴더가 고객명과 일치하면 하위 폴더 분석 없이 바로 반환
+    // (사용자가 고객 폴더를 직접 선택한 경우)
+    if (customers && matchFolderToCustomer(parentFolderName, customers)) {
+      return topLevelGroups
+    }
+
+    // 2-2: 하위 폴더가 있는지 확인 (path parts가 3개 이상: parent/child/file.ext)
     const hasSubfolders = parentFiles.some(file => {
       const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
       const parts = relativePath.split('/')
