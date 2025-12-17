@@ -130,11 +130,15 @@ export default function MappingPreview({
   const stats = useMemo(() => {
     const matched = mappings.filter(m => m.matched).length
     const unmatched = mappings.length - matched
-    const totalFiles = mappings.reduce((sum, m) => sum + m.fileCount, 0)
-    const totalSize = mappings.reduce((sum, m) => sum + m.totalSize, 0)
     const hasPlaceholder = mappings.some(m => m.isPlaceholder)
-    return { matched, unmatched, totalFiles, totalSize, hasPlaceholder }
-  }, [mappings])
+
+    // 선택된 폴더만의 파일 수와 크기 (실시간 업데이트)
+    const selectedMappings = mappings.filter(m => m.matched && selectedFolders.has(m.folderName))
+    const selectedFiles = selectedMappings.reduce((sum, m) => sum + m.fileCount, 0)
+    const selectedSize = selectedMappings.reduce((sum, m) => sum + m.totalSize, 0)
+
+    return { matched, unmatched, selectedFiles, selectedSize, hasPlaceholder }
+  }, [mappings, selectedFolders])
 
   // 선택된 매칭 폴더 수
   const selectedCount = useMemo(() => {
@@ -272,12 +276,12 @@ export default function MappingPreview({
         </div>
         <div className="stat-divider" />
         <div className="stat-item">
-          <span className="stat-value">{stats.totalFiles}</span>
+          <span className="stat-value">{stats.selectedFiles}</span>
           <span className="stat-label">파일</span>
         </div>
         <div className="stat-divider" />
         <div className="stat-item">
-          <span className="stat-value">{formatFileSize(stats.totalSize)}</span>
+          <span className="stat-value">{formatFileSize(stats.selectedSize)}</span>
           <span className="stat-label">총 크기</span>
         </div>
       </div>
