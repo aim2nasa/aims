@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useInquiryNotificationContext } from '@/App';
@@ -32,6 +32,7 @@ const formatDate = (dateString: string) => {
 
 export const InquiriesPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { unreadIds } = useInquiryNotificationContext();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -40,6 +41,21 @@ export const InquiriesPage = () => {
   const limit = 20;
 
   const debouncedSearch = useDebounce(search, 300);
+
+  // 문의 삭제
+  const deleteMutation = useMutation({
+    mutationFn: inquiriesApi.deleteInquiry,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'inquiries'] });
+    },
+  });
+
+  const handleDelete = (e: React.MouseEvent, inquiryId: string, title: string) => {
+    e.stopPropagation();
+    if (window.confirm(`"${title}" 문의를 삭제하시겠습니까?`)) {
+      deleteMutation.mutate(inquiryId);
+    }
+  };
 
   // 문의 목록 조회
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -150,6 +166,7 @@ export const InquiriesPage = () => {
                 <th className="inquiries-table__th">메시지</th>
                 <th className="inquiries-table__th">등록일</th>
                 <th className="inquiries-table__th">최근 활동</th>
+                <th className="inquiries-table__th inquiries-table__th--action">삭제</th>
               </tr>
             </thead>
             <tbody>
@@ -189,6 +206,17 @@ export const InquiriesPage = () => {
                     </td>
                     <td className="inquiries-table__td">
                       {formatDate(inquiry.updatedAt)}
+                    </td>
+                    <td className="inquiries-table__td inquiries-table__td--action">
+                      <button
+                        type="button"
+                        className="inquiries-table__delete-btn"
+                        onClick={(e) => handleDelete(e, inquiry._id, inquiry.title)}
+                        disabled={deleteMutation.isPending}
+                        title="삭제"
+                      >
+                        ✕
+                      </button>
                     </td>
                   </tr>
                 );

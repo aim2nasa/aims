@@ -166,6 +166,13 @@ export async function getInquiryStats(): Promise<InquiryStats> {
 }
 
 /**
+ * 문의 삭제
+ */
+export async function deleteInquiry(inquiryId: string): Promise<void> {
+  await apiClient.delete(`/api/admin/inquiries/${inquiryId}`);
+}
+
+/**
  * 첨부파일 URL 생성
  * 이미지 태그 등에서 직접 접근할 수 있도록 토큰을 쿼리 파라미터로 포함
  */
@@ -229,6 +236,7 @@ export const inquiriesApi = {
   addReply,
   updateStatus,
   getInquiryStats,
+  deleteInquiry,
   getAttachmentUrl,
   getUnreadCount,
   getUnreadIds,

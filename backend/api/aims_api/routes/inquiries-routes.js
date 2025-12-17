@@ -1225,5 +1225,45 @@ module.exports = (db, authenticateJWT, requireRole) => {
     }
   });
 
+  /**
+   * 문의 삭제 (관리자 전용)
+   * DELETE /api/admin/inquiries/:id
+   */
+  router.delete('/admin/inquiries/:id', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: '유효하지 않은 문의 ID입니다'
+        });
+      }
+
+      const inquiry = await inquiriesCollection.findOne({ _id: new ObjectId(id) });
+
+      if (!inquiry) {
+        return res.status(404).json({
+          success: false,
+          message: '문의를 찾을 수 없습니다'
+        });
+      }
+
+      // 문의 삭제
+      await inquiriesCollection.deleteOne({ _id: new ObjectId(id) });
+
+      res.json({
+        success: true,
+        message: '문의가 삭제되었습니다'
+      });
+    } catch (error) {
+      console.error('문의 삭제 오류:', error);
+      res.status(500).json({
+        success: false,
+        message: '서버 오류가 발생했습니다'
+      });
+    }
+  });
+
   return router;
 };
