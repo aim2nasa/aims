@@ -27,11 +27,20 @@ import './InquiryView.css';
 interface InquiryViewProps {
   visible: boolean;
   onClose: () => void;
+  /** 미확인 문의 ID Set */
+  unreadIds?: Set<string>;
+  /** 읽음 처리 함수 */
+  onMarkAsRead?: (inquiryId: string) => Promise<void>;
 }
 
 type ViewMode = 'list' | 'create' | 'detail';
 
-export default function InquiryView({ visible, onClose }: InquiryViewProps) {
+export default function InquiryView({
+  visible,
+  onClose,
+  unreadIds = new Set(),
+  onMarkAsRead,
+}: InquiryViewProps) {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
@@ -91,6 +100,13 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [inquiryDetail?.messages, viewMode]);
+
+  // 상세 화면 진입 시 읽음 처리
+  useEffect(() => {
+    if (viewMode === 'detail' && selectedInquiryId && unreadIds.has(selectedInquiryId) && onMarkAsRead) {
+      onMarkAsRead(selectedInquiryId);
+    }
+  }, [viewMode, selectedInquiryId, unreadIds, onMarkAsRead]);
 
   const resetCreateForm = () => {
     setCategory('question');
@@ -261,27 +277,33 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
             <span>메시지</span>
           </div>
           {/* 행들 */}
-          {inquiriesData?.inquiries.map((inquiry) => (
-            <button
-              key={inquiry._id}
-              type="button"
-              className="inquiry-row"
-              onClick={() => handleInquiryClick(inquiry._id)}
-            >
-              <span className={`inquiry-status-badge inquiry-status-badge--${inquiry.status}`}>
-                {STATUS_LABELS[inquiry.status]}
-              </span>
-              <span className={`inquiry-category-badge inquiry-category-badge--${inquiry.category}`}>
-                {CATEGORY_LABELS[inquiry.category]}
-              </span>
-              <span className="inquiry-row-title">{inquiry.title}</span>
-              <span className="inquiry-row-date">{formatDateTime(inquiry.createdAt)}</span>
-              <span className="inquiry-row-messages">
-                <SFSymbol name="message" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                {inquiry.messages?.length || 0}
-              </span>
-            </button>
-          ))}
+          {inquiriesData?.inquiries.map((inquiry) => {
+            const isUnread = unreadIds.has(inquiry._id);
+            return (
+              <button
+                key={inquiry._id}
+                type="button"
+                className={`inquiry-row ${isUnread ? 'inquiry-row--unread' : ''}`}
+                onClick={() => handleInquiryClick(inquiry._id)}
+              >
+                <span className={`inquiry-status-badge inquiry-status-badge--${inquiry.status}`}>
+                  {STATUS_LABELS[inquiry.status]}
+                </span>
+                <span className={`inquiry-category-badge inquiry-category-badge--${inquiry.category}`}>
+                  {CATEGORY_LABELS[inquiry.category]}
+                </span>
+                <span className="inquiry-row-title">
+                  {isUnread && <span className="inquiry-row-unread-dot" />}
+                  {inquiry.title}
+                </span>
+                <span className="inquiry-row-date">{formatDateTime(inquiry.createdAt)}</span>
+                <span className="inquiry-row-messages">
+                  <SFSymbol name="message" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                  {inquiry.messages?.length || 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

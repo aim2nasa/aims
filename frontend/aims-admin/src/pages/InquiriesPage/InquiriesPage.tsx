@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/shared/hooks/useDebounce';
+import { useInquiryNotificationContext } from '@/App';
 import {
   inquiriesApi,
   CATEGORY_LABELS,
@@ -31,6 +32,7 @@ const formatDate = (dateString: string) => {
 
 export const InquiriesPage = () => {
   const navigate = useNavigate();
+  const { unreadIds } = useInquiryNotificationContext();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | ''>('');
@@ -151,42 +153,46 @@ export const InquiriesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {inquiries.map((inquiry) => (
-                <tr
-                  key={inquiry._id}
-                  className="inquiries-table__row"
-                  onClick={() => handleRowClick(inquiry._id)}
-                >
-                  <td className="inquiries-table__td">
-                    <span className={`status-badge status-badge--${inquiry.status}`}>
-                      {STATUS_LABELS[inquiry.status]}
-                    </span>
-                  </td>
-                  <td className="inquiries-table__td">
-                    <span className={`category-badge category-badge--${inquiry.category}`}>
-                      {CATEGORY_LABELS[inquiry.category]}
-                    </span>
-                  </td>
-                  <td className="inquiries-table__td inquiries-table__td--title">
-                    {inquiry.title}
-                  </td>
-                  <td className="inquiries-table__td">
-                    <div className="user-info">
-                      <span className="user-info__name">{inquiry.userName}</span>
-                      <span className="user-info__email">{inquiry.userEmail}</span>
-                    </div>
-                  </td>
-                  <td className="inquiries-table__td">
-                    {inquiry.messageCount || inquiry.messages?.length || 0}
-                  </td>
-                  <td className="inquiries-table__td">
-                    {formatDate(inquiry.createdAt)}
-                  </td>
-                  <td className="inquiries-table__td">
-                    {formatDate(inquiry.updatedAt)}
-                  </td>
-                </tr>
-              ))}
+              {inquiries.map((inquiry) => {
+                const isUnread = unreadIds.has(inquiry._id);
+                return (
+                  <tr
+                    key={inquiry._id}
+                    className={`inquiries-table__row ${isUnread ? 'inquiries-table__row--unread' : ''}`}
+                    onClick={() => handleRowClick(inquiry._id)}
+                  >
+                    <td className="inquiries-table__td">
+                      <span className={`status-badge status-badge--${inquiry.status}`}>
+                        {STATUS_LABELS[inquiry.status]}
+                      </span>
+                    </td>
+                    <td className="inquiries-table__td">
+                      <span className={`category-badge category-badge--${inquiry.category}`}>
+                        {CATEGORY_LABELS[inquiry.category]}
+                      </span>
+                    </td>
+                    <td className="inquiries-table__td inquiries-table__td--title">
+                      <span className={`inquiries-table__unread-dot ${isUnread ? '' : 'inquiries-table__unread-dot--hidden'}`} />
+                      {inquiry.title}
+                    </td>
+                    <td className="inquiries-table__td">
+                      <div className="user-info">
+                        <span className="user-info__name">{inquiry.userName}</span>
+                        <span className="user-info__email">{inquiry.userEmail}</span>
+                      </div>
+                    </td>
+                    <td className="inquiries-table__td">
+                      {inquiry.messageCount || inquiry.messages?.length || 0}
+                    </td>
+                    <td className="inquiries-table__td">
+                      {formatDate(inquiry.createdAt)}
+                    </td>
+                    <td className="inquiries-table__td">
+                      {formatDate(inquiry.updatedAt)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

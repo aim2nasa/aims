@@ -179,6 +179,50 @@ export function getAttachmentUrl(inquiryId: string, filename: string): string {
   return url;
 }
 
+// ========================================
+// 알림 관련 API
+// ========================================
+
+/**
+ * 미확인 문의 개수 조회
+ */
+export async function getUnreadCount(): Promise<number> {
+  const response = await apiClient.get<{ success: boolean; data: { count: number } }>(
+    '/api/admin/inquiries/unread-count'
+  );
+  return response.data.count;
+}
+
+/**
+ * 미확인 문의 ID 목록 조회
+ */
+export async function getUnreadIds(): Promise<string[]> {
+  const response = await apiClient.get<{ success: boolean; data: { ids: string[] } }>(
+    '/api/admin/inquiries/unread'
+  );
+  return response.data.ids;
+}
+
+/**
+ * 문의 읽음 처리
+ */
+export async function markAsRead(inquiryId: string): Promise<void> {
+  await apiClient.put(`/api/admin/inquiries/${inquiryId}/mark-read`);
+}
+
+/**
+ * SSE 알림 스트림 URL 생성
+ */
+export function getNotificationStreamUrl(): string {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  const token = localStorage.getItem('aims-admin-token');
+  const url = `${baseUrl}/api/admin/inquiries/notifications/stream`;
+  if (token) {
+    return `${url}?token=${encodeURIComponent(token)}`;
+  }
+  return url;
+}
+
 export const inquiriesApi = {
   getInquiries,
   getInquiry,
@@ -186,4 +230,8 @@ export const inquiriesApi = {
   updateStatus,
   getInquiryStats,
   getAttachmentUrl,
+  getUnreadCount,
+  getUnreadIds,
+  markAsRead,
+  getNotificationStreamUrl,
 };

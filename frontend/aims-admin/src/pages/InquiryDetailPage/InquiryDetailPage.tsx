@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInquiryNotificationContext } from '@/App';
 import {
   inquiriesApi,
   CATEGORY_LABELS,
@@ -41,6 +42,7 @@ export const InquiryDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { unreadIds, markAsRead } = useInquiryNotificationContext();
   const [replyContent, setReplyContent] = useState('');
   const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,13 @@ export const InquiryDetailPage = () => {
     queryFn: () => inquiriesApi.getInquiry(id!),
     enabled: !!id,
   });
+
+  // 진입 시 읽음 처리
+  useEffect(() => {
+    if (id && unreadIds.has(id)) {
+      markAsRead(id);
+    }
+  }, [id, unreadIds, markAsRead]);
 
   // 답변 등록
   const replyMutation = useMutation({

@@ -63,13 +63,365 @@ const upload = multer({
 const CATEGORIES = ['bug', 'feature', 'question', 'other'];
 const STATUSES = ['pending', 'in_progress', 'resolved', 'closed'];
 
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리
+// ========================================
+const sseClients = {
+  users: new Map(),    // userId(string) -> Set<response>
+  admins: new Set(),   // Set<response>
+};
+
+// SSE 이벤트 전송 헬퍼
+function sendSSE(res, event, data) {
+  try {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  } catch (e) {
+    console.error('SSE 전송 실패:', e);
+  }
+}
+
+// 특정 사용자에게 알림 전송
+function notifyUser(userId, event, data) {
+  const userIdStr = userId.toString();
+  const clients = sseClients.users.get(userIdStr);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE] 사용자 ${userIdStr}에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  }
+}
+
+// 모든 관리자에게 알림 전송
+function notifyAdmins(event, data) {
+  if (sseClients.admins.size > 0) {
+    sseClients.admins.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE] 관리자들에게 ${event} 이벤트 전송 (${sseClients.admins.size} 연결)`);
+  }
+}
+
 module.exports = (db, authenticateJWT, requireRole) => {
   const inquiriesCollection = db.collection('inquiries');
   const usersCollection = db.collection('users');
 
   // ========================================
+  // 미확인 문의 조회 헬퍼 함수
+  // ========================================
+
+  /**
+   * 사용자의 미확인 문의 개수 조회
+   * 관리자가 답변했는데 사용자가 아직 안 읽은 문의
+   */
+  async function getUnreadCountForUser(userId) {
+    const userObjectId = new ObjectId(userId);
+
+    // aggregation으로 미확인 문의 개수 계산
+    const result = await inquiriesCollection.aggregate([
+      { $match: { userId: userObjectId } },
+      {
+        $addFields: {
+          // 관리자가 작성한 메시지 중 가장 최근 시각
+          lastAdminMessageAt: {
+            $max: {
+              $map: {
+                input: { $filter: { input: '$messages', cond: { $eq: ['$$this.authorRole', 'admin'] } } },
+                as: 'm',
+                in: '$$m.createdAt'
+              }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          $expr: {
+            $gt: [
+              '$lastAdminMessageAt',
+              { $ifNull: ['$userLastReadAt', new Date(0)] }
+            ]
+          }
+        }
+      },
+      { $count: 'unreadCount' }
+    ]).toArray();
+
+    return result[0]?.unreadCount || 0;
+  }
+
+  /**
+   * 사용자의 미확인 문의 ID 목록 조회
+   */
+  async function getUnreadIdsForUser(userId) {
+    const userObjectId = new ObjectId(userId);
+
+    const result = await inquiriesCollection.aggregate([
+      { $match: { userId: userObjectId } },
+      {
+        $addFields: {
+          lastAdminMessageAt: {
+            $max: {
+              $map: {
+                input: { $filter: { input: '$messages', cond: { $eq: ['$$this.authorRole', 'admin'] } } },
+                as: 'm',
+                in: '$$m.createdAt'
+              }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          $expr: {
+            $gt: [
+              '$lastAdminMessageAt',
+              { $ifNull: ['$userLastReadAt', new Date(0)] }
+            ]
+          }
+        }
+      },
+      { $project: { _id: 1 } }
+    ]).toArray();
+
+    return result.map(r => r._id.toString());
+  }
+
+  /**
+   * 관리자의 미확인 문의 개수 조회
+   * 사용자가 메시지를 보냈는데 관리자가 아직 안 읽은 문의
+   */
+  async function getUnreadCountForAdmin() {
+    const result = await inquiriesCollection.aggregate([
+      {
+        $addFields: {
+          // 사용자가 작성한 메시지 중 가장 최근 시각
+          lastUserMessageAt: {
+            $max: {
+              $map: {
+                input: { $filter: { input: '$messages', cond: { $eq: ['$$this.authorRole', 'user'] } } },
+                as: 'm',
+                in: '$$m.createdAt'
+              }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          $expr: {
+            $gt: [
+              '$lastUserMessageAt',
+              { $ifNull: ['$adminLastReadAt', new Date(0)] }
+            ]
+          }
+        }
+      },
+      { $count: 'unreadCount' }
+    ]).toArray();
+
+    return result[0]?.unreadCount || 0;
+  }
+
+  /**
+   * 관리자의 미확인 문의 ID 목록 조회
+   */
+  async function getUnreadIdsForAdmin() {
+    const result = await inquiriesCollection.aggregate([
+      {
+        $addFields: {
+          lastUserMessageAt: {
+            $max: {
+              $map: {
+                input: { $filter: { input: '$messages', cond: { $eq: ['$$this.authorRole', 'user'] } } },
+                as: 'm',
+                in: '$$m.createdAt'
+              }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          $expr: {
+            $gt: [
+              '$lastUserMessageAt',
+              { $ifNull: ['$adminLastReadAt', new Date(0)] }
+            ]
+          }
+        }
+      },
+      { $project: { _id: 1 } }
+    ]).toArray();
+
+    return result.map(r => r._id.toString());
+  }
+
+  // ========================================
+  // SSE 스트림 엔드포인트
+  // ========================================
+
+  /**
+   * 사용자용 SSE 스트림
+   * GET /api/inquiries/notifications/stream
+   *
+   * 인증: ?token=xxx 쿼리 파라미터 (EventSource는 헤더 설정 불가)
+   */
+  router.get('/inquiries/notifications/stream', authenticateJWTWithQuery, (req, res) => {
+    const userId = req.user.id;
+    const userIdStr = userId.toString();
+
+    console.log(`[SSE] 사용자 ${userIdStr} 연결 시작`);
+
+    // SSE 헤더 설정
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Accel-Buffering', 'no'); // nginx 버퍼링 비활성화
+    res.flushHeaders();
+
+    // 클라이언트 등록
+    if (!sseClients.users.has(userIdStr)) {
+      sseClients.users.set(userIdStr, new Set());
+    }
+    sseClients.users.get(userIdStr).add(res);
+
+    // 연결 확인 이벤트
+    sendSSE(res, 'connected', { userId: userIdStr, timestamp: new Date().toISOString() });
+
+    // 초기 미확인 개수 및 ID 목록 전송
+    Promise.all([
+      getUnreadCountForUser(userId),
+      getUnreadIdsForUser(userId)
+    ]).then(([count, ids]) => {
+      sendSSE(res, 'init', { count, ids });
+    }).catch(err => {
+      console.error('[SSE] 초기 데이터 조회 오류:', err);
+    });
+
+    // 30초마다 keep-alive 전송
+    const keepAliveInterval = setInterval(() => {
+      sendSSE(res, 'ping', { timestamp: new Date().toISOString() });
+    }, 30000);
+
+    // 연결 종료 처리
+    req.on('close', () => {
+      console.log(`[SSE] 사용자 ${userIdStr} 연결 종료`);
+      clearInterval(keepAliveInterval);
+      sseClients.users.get(userIdStr)?.delete(res);
+      if (sseClients.users.get(userIdStr)?.size === 0) {
+        sseClients.users.delete(userIdStr);
+      }
+    });
+  });
+
+  /**
+   * 관리자용 SSE 스트림
+   * GET /api/admin/inquiries/notifications/stream
+   */
+  router.get('/admin/inquiries/notifications/stream', authenticateJWTWithQuery, (req, res) => {
+    // 관리자 권한 확인
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다' });
+    }
+
+    const adminId = req.user.id;
+    console.log(`[SSE] 관리자 ${adminId} 연결 시작`);
+
+    // SSE 헤더 설정
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    // 클라이언트 등록
+    sseClients.admins.add(res);
+
+    // 연결 확인 이벤트
+    sendSSE(res, 'connected', { adminId, timestamp: new Date().toISOString() });
+
+    // 초기 미확인 개수 및 ID 목록 전송
+    Promise.all([
+      getUnreadCountForAdmin(),
+      getUnreadIdsForAdmin()
+    ]).then(([count, ids]) => {
+      sendSSE(res, 'init', { count, ids });
+    }).catch(err => {
+      console.error('[SSE] 초기 데이터 조회 오류:', err);
+    });
+
+    // 30초마다 keep-alive 전송
+    const keepAliveInterval = setInterval(() => {
+      sendSSE(res, 'ping', { timestamp: new Date().toISOString() });
+    }, 30000);
+
+    // 연결 종료 처리
+    req.on('close', () => {
+      console.log(`[SSE] 관리자 ${adminId} 연결 종료`);
+      clearInterval(keepAliveInterval);
+      sseClients.admins.delete(res);
+    });
+  });
+
+  // ========================================
   // 사용자용 API
   // ========================================
+
+  /**
+   * 미확인 문의 개수 조회 (사용자)
+   * GET /api/inquiries/unread-count
+   */
+  router.get('/inquiries/unread-count', authenticateJWT, async (req, res) => {
+    try {
+      const count = await getUnreadCountForUser(req.user.id);
+      res.json({ success: true, data: { count } });
+    } catch (error) {
+      console.error('미확인 개수 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 미확인 문의 ID 목록 조회 (사용자)
+   * GET /api/inquiries/unread
+   */
+  router.get('/inquiries/unread', authenticateJWT, async (req, res) => {
+    try {
+      const ids = await getUnreadIdsForUser(req.user.id);
+      res.json({ success: true, data: { ids } });
+    } catch (error) {
+      console.error('미확인 목록 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 문의 읽음 처리 (사용자)
+   * PUT /api/inquiries/:id/mark-read
+   */
+  router.put('/inquiries/:id/mark-read', authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: '유효하지 않은 문의 ID입니다' });
+      }
+
+      const result = await inquiriesCollection.updateOne(
+        { _id: new ObjectId(id), userId: new ObjectId(userId) },
+        { $set: { userLastReadAt: new Date() } }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ success: false, message: '문의를 찾을 수 없습니다' });
+      }
+
+      res.json({ success: true, message: '읽음 처리되었습니다' });
+    } catch (error) {
+      console.error('읽음 처리 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
 
   /**
    * 내 문의 목록 조회
@@ -258,6 +610,15 @@ module.exports = (db, authenticateJWT, requireRole) => {
         { $push: { messages: firstMessage } }
       );
 
+      // SSE: 관리자들에게 새 문의 알림
+      notifyAdmins('new-inquiry', {
+        inquiryId: inquiryId.toString(),
+        userId: userId,
+        userName: user.name || '이름 없음',
+        title: title.trim(),
+        category
+      });
+
       res.status(201).json({
         success: true,
         data: {
@@ -375,6 +736,14 @@ module.exports = (db, authenticateJWT, requireRole) => {
         }
       );
 
+      // SSE: 관리자들에게 새 메시지 알림
+      notifyAdmins('new-message', {
+        inquiryId: id,
+        userId: userId,
+        userName: user?.name || '이름 없음',
+        title: inquiry.title
+      });
+
       res.json({
         success: true,
         data: newMessage
@@ -468,6 +837,62 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
   // 관리자용 API
   // ========================================
+
+  /**
+   * 미확인 문의 개수 조회 (관리자)
+   * GET /api/admin/inquiries/unread-count
+   */
+  router.get('/admin/inquiries/unread-count', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const count = await getUnreadCountForAdmin();
+      res.json({ success: true, data: { count } });
+    } catch (error) {
+      console.error('관리자 미확인 개수 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 미확인 문의 ID 목록 조회 (관리자)
+   * GET /api/admin/inquiries/unread
+   */
+  router.get('/admin/inquiries/unread', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const ids = await getUnreadIdsForAdmin();
+      res.json({ success: true, data: { ids } });
+    } catch (error) {
+      console.error('관리자 미확인 목록 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 문의 읽음 처리 (관리자)
+   * PUT /api/admin/inquiries/:id/mark-read
+   */
+  router.put('/admin/inquiries/:id/mark-read', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: '유효하지 않은 문의 ID입니다' });
+      }
+
+      const result = await inquiriesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { adminLastReadAt: new Date() } }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ success: false, message: '문의를 찾을 수 없습니다' });
+      }
+
+      res.json({ success: true, message: '읽음 처리되었습니다' });
+    } catch (error) {
+      console.error('관리자 읽음 처리 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
 
   /**
    * 전체 문의 목록 조회 (관리자)
@@ -710,6 +1135,12 @@ module.exports = (db, authenticateJWT, requireRole) => {
           $set: updateFields
         }
       );
+
+      // SSE: 해당 사용자에게 새 답변 알림
+      notifyUser(inquiry.userId, 'new-message', {
+        inquiryId: id,
+        title: inquiry.title
+      });
 
       res.json({
         success: true,

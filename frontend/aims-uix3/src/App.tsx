@@ -15,6 +15,7 @@ import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
+import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
 import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
 
@@ -140,6 +141,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // User Store - 사용자 정보 전역 관리
   const { updateCurrentUser } = useUserStore()
+
+  // 문의 알림 관리 (SSE 실시간 알림)
+  const {
+    unreadCount: inquiryUnreadCount,
+    unreadIds: inquiryUnreadIds,
+    markAsRead: markInquiryAsRead,
+  } = useInquiryNotifications()
 
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
@@ -1212,6 +1220,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onMenuClick={handleMenuClick}
               onCustomerClick={handleRecentCustomerClick}
               selectedKey={activeDocumentView || 'dsd'}
+              inquiryUnreadCount={inquiryUnreadCount}
             />
           </Suspense>
 
@@ -1503,6 +1512,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <InquiryView
               visible={activeDocumentView === 'inquiry'}
               onClose={closeDocumentView}
+              unreadIds={inquiryUnreadIds}
+              onMarkAsRead={markInquiryAsRead}
             />
           </Suspense>
         </main>

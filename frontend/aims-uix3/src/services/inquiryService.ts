@@ -19,6 +19,11 @@ const ENDPOINTS = {
   INQUIRY_MESSAGES: (id: string) => `/api/inquiries/${id}/messages`,
   ATTACHMENT: (inquiryId: string, filename: string) =>
     `/api/inquiries/attachments/${inquiryId}/${filename}`,
+  // 알림 관련 엔드포인트
+  UNREAD_COUNT: '/api/inquiries/unread-count',
+  UNREAD_IDS: '/api/inquiries/unread',
+  MARK_READ: (id: string) => `/api/inquiries/${id}/mark-read`,
+  NOTIFICATIONS_STREAM: '/api/inquiries/notifications/stream',
 } as const;
 
 /**
@@ -135,4 +140,47 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+// ========================================
+// 알림 관련 API
+// ========================================
+
+/**
+ * 미확인 문의 개수 조회
+ */
+export async function getUnreadCount(): Promise<number> {
+  const response = await api.get<{ success: boolean; data: { count: number } }>(
+    ENDPOINTS.UNREAD_COUNT
+  );
+  return response.data.count;
+}
+
+/**
+ * 미확인 문의 ID 목록 조회
+ */
+export async function getUnreadIds(): Promise<string[]> {
+  const response = await api.get<{ success: boolean; data: { ids: string[] } }>(
+    ENDPOINTS.UNREAD_IDS
+  );
+  return response.data.ids;
+}
+
+/**
+ * 문의 읽음 처리
+ */
+export async function markAsRead(inquiryId: string): Promise<void> {
+  await api.put(ENDPOINTS.MARK_READ(inquiryId));
+}
+
+/**
+ * SSE 알림 스트림 URL 생성
+ */
+export function getNotificationStreamUrl(): string {
+  const token = getAuthToken();
+  const baseUrl = `${API_CONFIG.BASE_URL}${ENDPOINTS.NOTIFICATIONS_STREAM}`;
+  if (token) {
+    return `${baseUrl}?token=${encodeURIComponent(token)}`;
+  }
+  return baseUrl;
 }

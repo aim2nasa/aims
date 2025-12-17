@@ -1,14 +1,35 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/authStore';
 import { Button } from '@/shared/ui/Button/Button';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
 import { usePersistentTheme } from '@/hooks/usePersistentTheme';
+import { useInquiryNotifications } from '@/shared/hooks/useInquiryNotifications';
 import './App.css';
+
+// 문의 알림 컨텍스트 (하위 컴포넌트에서 접근 가능)
+interface InquiryNotificationContextType {
+  unreadCount: number;
+  unreadIds: Set<string>;
+  isUnread: (id: string) => boolean;
+  markAsRead: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+const InquiryNotificationContext = createContext<InquiryNotificationContextType | null>(null);
+
+export function useInquiryNotificationContext() {
+  const ctx = useContext(InquiryNotificationContext);
+  if (!ctx) {
+    throw new Error('useInquiryNotificationContext must be used within App');
+  }
+  return ctx;
+}
 
 interface NavItem {
   path: string;
   label: string;
+  badge?: number;
   children?: NavItem[];
 }
 
@@ -23,6 +44,10 @@ function App() {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = usePersistentTheme();
+
+  // 문의 알림 관리 (SSE 실시간 알림)
+  const inquiryNotifications = useInquiryNotifications();
+
   const [expandedMenus, setExpandedMenus] = useState<string[]>(() => {
     const saved = localStorage.getItem(EXPANDED_MENUS_KEY);
     if (saved) {
@@ -112,6 +137,7 @@ function App() {
     {
       path: '/inquiries',
       label: '문의 관리',
+      badge: inquiryNotifications.unreadCount,
     },
   ];
 
@@ -149,7 +175,14 @@ function App() {
             navigate(item.path);
           }}
         >
-          <span className="app__nav-item-label">{item.label}</span>
+          <span className="app__nav-item-label">
+            {item.label}
+            {item.badge !== undefined && item.badge > 0 && (
+              <span className="app__nav-item-badge">
+                {item.badge > 99 ? '99+' : item.badge}
+              </span>
+            )}
+          </span>
           {hasChildren && (
             <span className={`app__nav-item-arrow ${isExpanded ? 'app__nav-item-arrow--expanded' : ''}`}>
               ›
@@ -166,46 +199,48 @@ function App() {
   };
 
   return (
-    <div className="app">
-      {/* Header */}
-      <header className="app__header">
-        <div className="app__header-left">
-          <h1 className="app__logo">AIMS Admin</h1>
+    <InquiryNotificationContext.Provider value={inquiryNotifications}>
+      <div className="app">
+        {/* Header */}
+        <header className="app__header">
+          <div className="app__header-left">
+            <h1 className="app__logo">AIMS Admin</h1>
+          </div>
+          <div className="app__header-right">
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+            <span className="app__user-name">{user?.name || user?.email || '관리자'}</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              로그아웃
+            </Button>
+          </div>
+        </header>
+
+        <div className="app__body">
+          {/* Sidebar */}
+          <aside className="app__sidebar" style={{ width: sidebarWidth }}>
+            <nav className="app__nav">
+              {navItems.map((item) => renderNavItem(item))}
+            </nav>
+          </aside>
+
+          {/* Resize Handle */}
+          <div
+            className={`app__resize-handle ${isResizing ? 'app__resize-handle--active' : ''}`}
+            onMouseDown={handleResizeStart}
+            onDoubleClick={() => {
+              setSidebarWidth(SIDEBAR_DEFAULT_WIDTH);
+              localStorage.setItem(SIDEBAR_WIDTH_KEY, SIDEBAR_DEFAULT_WIDTH.toString());
+            }}
+            title="더블클릭으로 기본 너비 복원"
+          />
+
+          {/* Main Content */}
+          <main className="app__main">
+            <Outlet />
+          </main>
         </div>
-        <div className="app__header-right">
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <span className="app__user-name">{user?.name || user?.email || '관리자'}</span>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            로그아웃
-          </Button>
-        </div>
-      </header>
-
-      <div className="app__body">
-        {/* Sidebar */}
-        <aside className="app__sidebar" style={{ width: sidebarWidth }}>
-          <nav className="app__nav">
-            {navItems.map((item) => renderNavItem(item))}
-          </nav>
-        </aside>
-
-        {/* Resize Handle */}
-        <div
-          className={`app__resize-handle ${isResizing ? 'app__resize-handle--active' : ''}`}
-          onMouseDown={handleResizeStart}
-          onDoubleClick={() => {
-            setSidebarWidth(SIDEBAR_DEFAULT_WIDTH);
-            localStorage.setItem(SIDEBAR_WIDTH_KEY, SIDEBAR_DEFAULT_WIDTH.toString());
-          }}
-          title="더블클릭으로 기본 너비 복원"
-        />
-
-        {/* Main Content */}
-        <main className="app__main">
-          <Outlet />
-        </main>
       </div>
-    </div>
+    </InquiryNotificationContext.Provider>
   );
 }
 

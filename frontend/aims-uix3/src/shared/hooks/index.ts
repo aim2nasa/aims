@@ -6,3 +6,5 @@
 
 export { useModal } from './useModal'
 export type { UseModalOptions, UseModalReturn } from './useModal'
+
+export { useInquiryNotifications } from './useInquiryNotifications'

@@ -12,4 +12,9 @@ export {
   addMessage,
   getAttachmentUrl,
   formatFileSize,
+  // 알림 관련
+  getUnreadCount,
+  getUnreadIds,
+  markAsRead,
+  getNotificationStreamUrl,
 } from '@/services/inquiryService';

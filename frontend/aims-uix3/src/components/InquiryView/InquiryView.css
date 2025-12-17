@@ -298,6 +298,8 @@ html[data-theme="dark"] .inquiry-row:hover {
 
 /* Row cells */
 .inquiry-row-title {
+  display: flex;
+  align-items: center;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-ios-text-primary-light);
@@ -1251,6 +1253,25 @@ html[data-theme="dark"] .inquiry-back-button {
 
 html[data-theme="dark"] .inquiry-back-button:hover {
   background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* === 🍎 UNREAD INDICATOR === */
+.inquiry-row--unread {
+  font-weight: 600;
+}
+
+.inquiry-row--unread .inquiry-row-title {
+  font-weight: 600;
+}
+
+.inquiry-row-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--color-primary, #007aff);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 6px;
 }
 
 /* Utility */

@@ -844,3 +844,25 @@
 .custom-menu .sf-symbol__shape {
   font-size: inherit;
 }
+
+/* === 문의 알림 배지 === */
+.menu-item-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu-item-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--color-error);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  line-height: 1;
+}

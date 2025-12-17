@@ -154,7 +154,7 @@ const MenuIcons = {
 export interface MenuItem {
   key: string
   icon: ReactNode
-  label: string
+  label: ReactNode
   tooltipTitle: string
   children?: MenuItem[] | undefined
 }
@@ -167,6 +167,7 @@ interface CustomMenuProps {
   searchResultsCount?: number
   collapsed?: boolean
   selectedKey?: string // 외부에서 제어되는 선택된 키
+  inquiryUnreadCount?: number // 미확인 문의 개수
 }
 
 interface CustomMenuItemProps {
@@ -291,7 +292,8 @@ const CustomMenu = ({
   hasSearchResults = false,
   searchResultsCount = 0,
   collapsed = false,
-  selectedKey: externalSelectedKey = 'dsd' // 외부에서 제어, 기본값은 'dsd'
+  selectedKey: externalSelectedKey = 'dsd', // 외부에서 제어, 기본값은 'dsd'
+  inquiryUnreadCount = 0 // 미확인 문의 개수
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
@@ -531,12 +533,19 @@ const CustomMenu = ({
     {
       key: 'inquiry',
       icon: <MenuIcons.ChatBubble />,
-      label: collapsed ? '' : '1:1 문의',
-      tooltipTitle: '1:1 문의',
+      label: collapsed ? '' : (
+        <span className="menu-item-with-badge">
+          1:1 문의
+          {inquiryUnreadCount > 0 && (
+            <span className="menu-item-badge">{inquiryUnreadCount > 99 ? '99+' : inquiryUnreadCount}</span>
+          )}
+        </span>
+      ),
+      tooltipTitle: inquiryUnreadCount > 0 ? `1:1 문의 (${inquiryUnreadCount}개 미확인)` : '1:1 문의',
     },
 
     // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
-  ], [collapsed, hasSearchResults, searchResultsCount])
+  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>

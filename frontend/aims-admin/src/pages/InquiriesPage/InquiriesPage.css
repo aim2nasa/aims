@@ -154,6 +154,29 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Unread Row Styling */
+.inquiries-table__row--unread {
+  font-weight: var(--font-weight-semibold);
+}
+
+.inquiries-table__row--unread .inquiries-table__td--title {
+  font-weight: var(--font-weight-semibold);
+}
+
+.inquiries-table__unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-primary, #007aff);
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.inquiries-table__unread-dot--hidden {
+  visibility: hidden;
+}
+
 /* Status Badge */
 .status-badge {
   display: inline-flex;
