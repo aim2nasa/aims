@@ -642,6 +642,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
   const cancelUpload = useCallback(() => {
     isCancelledRef.current = true
     isPausedRef.current = false
+    duplicateResolverRef.current = null
 
     // 모든 활성 업로드 취소
     abortControllersRef.current.forEach((controller) => {
@@ -657,6 +658,10 @@ export function useBatchUpload(): UseBatchUploadReturn {
           ? { ...f, status: 'cancelled' }
           : f
       ),
+      duplicateState: {
+        ...prev.duplicateState,
+        currentDuplicate: null,
+      },
     }))
   }, [])
 
