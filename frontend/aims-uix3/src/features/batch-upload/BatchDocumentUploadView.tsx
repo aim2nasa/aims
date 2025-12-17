@@ -317,8 +317,8 @@ export default function BatchDocumentUploadView({
     // 5. 정상 진행
     setFolderMappings(mappings)
 
-    // 6. 기본 펼침 상태 설정 (루트 폴더들만)
-    setExpandedPaths(new Set(mappings.map(m => m.folderName)))
+    // 6. 기본 펼침 상태 설정 (모두 닫힘 - 고객명만 표시)
+    setExpandedPaths(new Set())
 
     // 7. 미리보기 단계로 이동
     if (mappings.length > 0) {
