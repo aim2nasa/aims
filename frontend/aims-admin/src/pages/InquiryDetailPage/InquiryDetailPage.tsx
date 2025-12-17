@@ -28,6 +28,15 @@ const formatDate = (dateString: string) => {
   }).replace(/\. /g, '.').replace(/:/g, ':');
 };
 
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 export const InquiryDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -156,7 +165,7 @@ export const InquiryDetailPage = () => {
             </div>
           </div>
 
-          {/* 메시지 스레드 */}
+          {/* 메시지 스레드 - 카카오톡 스타일 */}
           <div className="inquiry-detail-page__messages">
             <h3>대화 내역</h3>
             <div className="messages-container">
@@ -165,51 +174,62 @@ export const InquiryDetailPage = () => {
                   key={message._id}
                   className={`message-item message-item--${message.authorRole}`}
                 >
-                  <div className="message-item__header">
-                    <span className="message-item__author">
-                      {message.authorRole === 'admin' ? '관리자' : inquiry.userName}
-                    </span>
-                    <span className="message-item__date">
-                      {formatDate(message.createdAt)}
-                    </span>
+                  {/* 아바타 (사용자만 표시) */}
+                  <div className="message-item__avatar">
+                    {message.authorRole === 'user' ? inquiry.userName.charAt(0) : '관'}
                   </div>
-                  <div className="message-item__content">
-                    {message.content}
-                  </div>
-                  {message.attachments && message.attachments.length > 0 && (
-                    <div className="message-item__attachments">
-                      {message.attachments.map((attachment, idx) => {
-                        const isImage = attachment.mimeType?.startsWith('image/');
-                        const attachmentUrl = inquiriesApi.getAttachmentUrl(inquiry._id, attachment.filename);
 
-                        if (isImage) {
+                  {/* 말풍선 컨테이너 */}
+                  <div className="message-item__bubble">
+                    {/* 작성자 이름 (사용자만 표시) */}
+                    <span className="message-item__author">{inquiry.userName}</span>
+
+                    {/* 메시지 내용 */}
+                    <div className="message-item__content">
+                      {message.content}
+                    </div>
+
+                    {/* 첨부파일 */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="message-item__attachments">
+                        {message.attachments.map((attachment, idx) => {
+                          const isImage = attachment.mimeType?.startsWith('image/');
+                          const attachmentUrl = inquiriesApi.getAttachmentUrl(inquiry._id, attachment.filename);
+
+                          if (isImage) {
+                            return (
+                              <a
+                                key={idx}
+                                href={attachmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="message-item__image"
+                              >
+                                <img src={attachmentUrl} alt={attachment.originalName} />
+                              </a>
+                            );
+                          }
+
                           return (
                             <a
                               key={idx}
                               href={attachmentUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="message-item__image"
+                              className="message-item__attachment"
                             >
-                              <img src={attachmentUrl} alt={attachment.originalName} />
+                              📎 {attachment.originalName}
                             </a>
                           );
-                        }
+                        })}
+                      </div>
+                    )}
+                  </div>
 
-                        return (
-                          <a
-                            key={idx}
-                            href={attachmentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="message-item__attachment"
-                          >
-                            📎 {attachment.originalName}
-                          </a>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {/* 시간 표시 */}
+                  <span className="message-item__date">
+                    {formatTime(message.createdAt)}
+                  </span>
                 </div>
               ))}
               <div ref={messagesEndRef} />

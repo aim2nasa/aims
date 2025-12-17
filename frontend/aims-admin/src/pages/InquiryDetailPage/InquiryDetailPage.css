@@ -173,70 +173,154 @@
 .messages-container {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 12px;
   max-height: 400px;
   overflow-y: auto;
-  padding: var(--spacing-sm);
+  padding: 16px 12px;
+  background: var(--color-background-tertiary);
+  border-radius: var(--radius-md);
 }
 
-/* 메시지 아이템 - 전체 너비 카드 스타일 (사용자 프론트엔드와 동일) */
+/* ===============================================
+   카카오톡 스타일 메시지 (Admin View)
+   - 관리자 메시지: 오른쪽 (노란 말풍선)
+   - 사용자 메시지: 왼쪽 (흰색 말풍선 + 아바타)
+   =============================================== */
+
+/* 메시지 행 (아바타 + 말풍선 + 시간) */
 .message-item {
-  width: 100%;
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-}
-
-.message-item--user {
-  border-left: 3px solid var(--color-primary);
-}
-
-.message-item--admin {
-  border-left: 3px solid var(--color-success);
-}
-
-.message-item__header {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* 사용자 메시지: 왼쪽 정렬 (관리자 화면에서) */
+.message-item--user {
+  align-self: flex-start;
+  flex-direction: row;
+}
+
+/* 관리자 메시지: 오른쪽 정렬 (관리자 화면에서) */
+.message-item--admin {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+/* 아바타 영역 */
+.message-item__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-xs);
-  gap: var(--spacing-md);
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
+/* 관리자 아바타: 숨김 (카카오톡처럼 본인은 아바타 없음) */
+.message-item--admin .message-item__avatar {
+  display: none;
+}
+
+/* 사용자 아바타: 파란색 배경 */
+.message-item--user .message-item__avatar {
+  background: var(--color-primary, #007aff);
+  color: white;
+}
+
+/* 말풍선 컨테이너 */
+.message-item__bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 작성자 이름 */
 .message-item__author {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a1a;
+  padding-left: 4px;
 }
 
-.message-item__date {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+/* 다크모드: 작성자 이름 */
+[data-theme="dark"] .message-item__author {
+  color: #ffffff;
 }
 
+/* 관리자 메시지는 이름 숨김 */
+.message-item--admin .message-item__author {
+  display: none;
+}
+
+/* 말풍선 본문 */
 .message-item__content {
+  padding: 10px 14px;
+  border-radius: 16px;
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--color-text-primary);
+  max-width: 100%;
 }
 
+/* 관리자 말풍선: 노란색 (카카오톡 스타일) */
+.message-item--admin .message-item__content {
+  background: #fee500;
+  color: #1a1a1a;
+  border-bottom-right-radius: 4px;
+}
+
+/* 사용자 말풍선: 흰색/회색 */
+.message-item--user .message-item__content {
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: 4px;
+}
+
+/* 다크모드: 사용자 말풍선 */
+[data-theme="dark"] .message-item--user .message-item__content {
+  background: #3a3a3c;
+  color: #ffffff;
+  border-color: #48484a;
+}
+
+/* 시간 표시 */
+.message-item__date {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  align-self: flex-end;
+  padding-bottom: 2px;
+}
+
+/* 헤더는 더이상 사용하지 않음 */
+.message-item__header {
+  display: none;
+}
+
+/* 첨부파일 영역 */
 .message-item__attachments {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
+  gap: 8px;
+  margin-top: 8px;
 }
 
-/* 이미지 첨부파일 */
+/* 이미지 첨부파일 - 카카오톡 스타일 */
 .message-item__image {
   display: block;
-  max-width: 300px;
-  border-radius: var(--radius-md);
+  max-width: 200px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .message-item__image img {

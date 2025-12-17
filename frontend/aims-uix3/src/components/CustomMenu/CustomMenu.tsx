@@ -141,6 +141,12 @@ const MenuIcons = {
       <circle cx="10" cy="10" r="10" opacity="0.2" />
       <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
     </svg>
+  ),
+  // 1:1 문의 아이콘 (말풍선)
+  ChatBubble: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--chat">
+      <path d="M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.47L4 21l4.88-2.33C9.86 18.89 10.91 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z" opacity="0.85"/>
+    </svg>
   )
 }
 
@@ -524,7 +530,7 @@ const CustomMenu = ({
     // ━━━ 1:1 문의 ━━━
     {
       key: 'inquiry',
-      icon: <SFSymbol name="envelope" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+      icon: <MenuIcons.ChatBubble />,
       label: collapsed ? '' : '1:1 문의',
       tooltipTitle: '1:1 문의',
     },

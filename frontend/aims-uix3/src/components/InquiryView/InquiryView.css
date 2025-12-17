@@ -732,102 +732,160 @@ html[data-theme="dark"] .inquiry-detail-info-value {
   color: var(--color-ios-text-primary-dark);
 }
 
-/* Messages */
+/* ===============================================
+   카카오톡 스타일 메시지 (KakaoTalk Style)
+   =============================================== */
 .inquiry-messages {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 12px 0;
-}
-
-.inquiry-message {
-  width: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--color-ios-bg-secondary-light);
-  border: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .inquiry-message {
-  background: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.inquiry-message--user {
-  border-left: 3px solid var(--color-primary);
-}
-
-.inquiry-message--admin {
-  border-left: 3px solid var(--color-success);
-}
-
-.inquiry-message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
   gap: 12px;
+  padding: 16px 12px;
+  background: var(--color-ios-bg-tertiary-light);
+  border-radius: 8px;
 }
 
-.inquiry-message-author {
-  font-size: 12px;
+html[data-theme="dark"] .inquiry-messages {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* 메시지 행 (아바타 + 말풍선 + 시간) */
+.inquiry-message {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* 사용자 메시지: 오른쪽 정렬 */
+.inquiry-message--user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+/* 관리자 메시지: 왼쪽 정렬 */
+.inquiry-message--admin {
+  align-self: flex-start;
+  flex-direction: row;
+}
+
+/* 아바타 영역 */
+.inquiry-message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--color-ios-text-primary-light);
+}
+
+/* 사용자 아바타: 숨김 (카카오톡처럼 본인은 아바타 없음) */
+.inquiry-message--user .inquiry-message-avatar {
+  display: none;
+}
+
+/* 관리자 아바타: 초록색 배경 */
+.inquiry-message--admin .inquiry-message-avatar {
+  background: var(--color-success, #34c759);
+  color: white;
+}
+
+/* 말풍선 컨테이너 */
+.inquiry-message-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 작성자 이름 */
+.inquiry-message-author {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  padding-left: 4px;
 }
 
 html[data-theme="dark"] .inquiry-message-author {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 사용자 메시지는 이름 숨김 */
+.inquiry-message--user .inquiry-message-author {
+  display: none;
+}
+
+/* 말풍선 본문 */
+.inquiry-message-content {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+/* 사용자 말풍선: 노란색 (카카오톡 스타일) */
+.inquiry-message--user .inquiry-message-content {
+  background: #fee500;
+  color: #1a1a1a;
+  border-bottom-right-radius: 4px;
+}
+
+/* 관리자 말풍선: 흰색/회색 */
+.inquiry-message--admin .inquiry-message-content {
+  background: white;
+  color: var(--color-ios-text-primary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-bottom-left-radius: 4px;
+}
+
+html[data-theme="dark"] .inquiry-message--admin .inquiry-message-content {
+  background: var(--color-ios-bg-secondary-dark);
   color: var(--color-ios-text-primary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
-.inquiry-message--user .inquiry-message-author::before {
-  content: "나";
-}
-
-.inquiry-message--admin .inquiry-message-author::before {
-  content: "관리자";
-}
-
+/* 시간 표시 */
 .inquiry-message-date {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-ios-text-tertiary-light);
+  white-space: nowrap;
+  align-self: flex-end;
+  padding-bottom: 2px;
 }
 
 html[data-theme="dark"] .inquiry-message-date {
   color: var(--color-ios-text-tertiary-dark);
 }
 
-.inquiry-message-content {
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--color-ios-text-primary-light);
+/* 헤더는 더이상 사용하지 않음 */
+.inquiry-message-header {
+  display: none;
 }
 
-html[data-theme="dark"] .inquiry-message-content {
-  color: var(--color-ios-text-primary-dark);
-}
-
+/* 첨부파일 영역 */
 .inquiry-message-attachments {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
-/* 이미지 첨부파일 */
+/* 이미지 첨부파일 - 카카오톡 스타일 */
 .inquiry-message-image {
   display: block;
-  max-width: 300px;
-  border-radius: 8px;
+  max-width: 200px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .inquiry-message-image {
-  border-color: var(--color-ios-separator-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .inquiry-message-image img {
@@ -1031,6 +1089,11 @@ html[data-theme="dark"] .inquiry-attach-btn:hover {
 html[data-theme="dark"] .inquiry-closed-notice {
   background: var(--color-ios-bg-secondary-dark);
   color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === TITLE ICON === */
+.inquiry-title-icon {
+  color: var(--color-ios-indigo, #5856d6);
 }
 
 /* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */

@@ -422,55 +422,68 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
             </div>
           </div>
 
-          {/* 메시지 목록 */}
+          {/* 메시지 목록 - 카카오톡 스타일 */}
           <div className="inquiry-messages">
             {inquiryDetail.messages.map((message) => (
               <div
                 key={message._id}
                 className={`inquiry-message inquiry-message--${message.authorRole}`}
               >
-                <div className="inquiry-message-header">
-                  <span className="inquiry-message-author" />
-                  <span className="inquiry-message-date">
-                    {formatDateTime(message.createdAt)}
-                  </span>
+                {/* 아바타 (관리자만 표시) */}
+                <div className="inquiry-message-avatar">
+                  {message.authorRole === 'admin' ? '관' : '나'}
                 </div>
-                <div className="inquiry-message-content">{message.content}</div>
-                {message.attachments && message.attachments.length > 0 && (
-                  <div className="inquiry-message-attachments">
-                    {message.attachments.map((attachment, idx) => {
-                      const isImage = attachment.mimeType?.startsWith('image/');
-                      const attachmentUrl = getAttachmentUrl(inquiryDetail._id, attachment.filename);
 
-                      if (isImage) {
+                {/* 말풍선 컨테이너 */}
+                <div className="inquiry-message-bubble">
+                  {/* 작성자 이름 (관리자만 표시) */}
+                  <span className="inquiry-message-author">관리자</span>
+
+                  {/* 메시지 내용 */}
+                  <div className="inquiry-message-content">{message.content}</div>
+
+                  {/* 첨부파일 */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="inquiry-message-attachments">
+                      {message.attachments.map((attachment, idx) => {
+                        const isImage = attachment.mimeType?.startsWith('image/');
+                        const attachmentUrl = getAttachmentUrl(inquiryDetail._id, attachment.filename);
+
+                        if (isImage) {
+                          return (
+                            <a
+                              key={idx}
+                              href={attachmentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inquiry-message-image"
+                            >
+                              <img src={attachmentUrl} alt={attachment.originalName} />
+                            </a>
+                          );
+                        }
+
                         return (
                           <a
                             key={idx}
                             href={attachmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inquiry-message-image"
+                            className="inquiry-message-attachment"
                           >
-                            <img src={attachmentUrl} alt={attachment.originalName} />
+                            <SFSymbol name="paperclip" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
+                            {attachment.originalName}
                           </a>
                         );
-                      }
+                      })}
+                    </div>
+                  )}
+                </div>
 
-                      return (
-                        <a
-                          key={idx}
-                          href={attachmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inquiry-message-attachment"
-                        >
-                          <SFSymbol name="paperclip" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
-                          {attachment.originalName}
-                        </a>
-                      );
-                    })}
-                  </div>
-                )}
+                {/* 시간 표시 */}
+                <span className="inquiry-message-date">
+                  {formatDateTime(message.createdAt).split(' ')[1]}
+                </span>
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -544,11 +557,18 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
     </div>
   );
 
+  // 1:1 문의 아이콘 (SFSymbol에 정의되지 않아 직접 SVG 사용)
+  const inquiryIcon = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inquiry-title-icon">
+      <path d="M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.47L4 21l4.88-2.33C9.86 18.89 10.91 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z" opacity="0.85"/>
+    </svg>
+  );
+
   return (
     <CenterPaneView
       visible={visible}
       title={getTitle()}
-      titleIcon={<SFSymbol name="envelope" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+      titleIcon={inquiryIcon}
       titleLeftAccessory={titleLeftAccessory}
       titleAccessory={titleAccessory}
       onClose={onClose}
