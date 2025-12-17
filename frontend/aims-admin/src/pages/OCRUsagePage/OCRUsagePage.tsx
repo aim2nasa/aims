@@ -171,10 +171,32 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
+// localStorage 키
+const STORAGE_KEY_PERIOD = 'aims-admin:ocr-usage:periodType';
+const STORAGE_KEY_YEAR = 'aims-admin:ocr-usage:selectedYear';
+
 export const OCRUsagePage = () => {
   const currentYear = new Date().getFullYear();
-  const [periodType, setPeriodType] = useState<PeriodType>('monthly');
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  // localStorage에서 초기값 로드
+  const [periodType, setPeriodTypeState] = useState<PeriodType>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_PERIOD);
+    return (saved as PeriodType) || 'monthly';
+  });
+  const [selectedYear, setSelectedYearState] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_YEAR);
+    return saved ? parseInt(saved) : currentYear;
+  });
+
+  // localStorage에 저장하는 래퍼 함수
+  const setPeriodType = (value: PeriodType) => {
+    localStorage.setItem(STORAGE_KEY_PERIOD, value);
+    setPeriodTypeState(value);
+  };
+  const setSelectedYear = (value: number) => {
+    localStorage.setItem(STORAGE_KEY_YEAR, String(value));
+    setSelectedYearState(value);
+  };
   const [isFailedModalOpen, setIsFailedModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
