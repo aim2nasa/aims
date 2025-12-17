@@ -646,19 +646,29 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
       
       console.log(`📈 크기 정렬 결과 개수: ${documents.length}`);
       
+    } else if (sort === 'uploadTime_desc' || sort === 'uploadTime_asc' || !sort) {
+      // 🔧 uploadTime 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
+      const sortOrder = sort === 'uploadTime_asc' ? 1 : -1;
+      console.log(`📝 uploadTime 정렬 요청: ${sort} (aggregation)`);
+
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            uploaded_at_normalized: { $toDate: '$upload.uploaded_at' }
+          }
+        },
+        { $sort: { uploaded_at_normalized: sortOrder } },
+        { $skip: parseInt(skip) },
+        { $limit: parseInt(limit) },
+        { $project: { uploaded_at_normalized: 0 } }
+      ]).toArray();
     } else {
-      // 기존 방식: 크기 정렬이 아닌 경우
+      // filename 정렬
       console.log(`📝 일반 정렬 요청: ${sort}`);
-      
-      // 정렬 조건 설정 (크기 정렬 제외)
+
       let sortOption = {};
       switch (sort) {
-        case 'uploadTime_desc':
-          sortOption = { 'upload.uploaded_at': -1 };
-          break;
-        case 'uploadTime_asc':
-          sortOption = { 'upload.uploaded_at': 1 };
-          break;
         case 'filename_asc':
           sortOption = { 'upload.originalName': 1 };
           break;
@@ -668,8 +678,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
         default:
           sortOption = { 'upload.uploaded_at': -1 };
       }
-      
-      // 일반 쿼리 실행
+
       documents = await db.collection(COLLECTION_NAME)
         .find(query)
         .sort(sortOption)
@@ -1605,12 +1614,15 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
     }
 
     // ⭐ 소유권 검증: 해당 설계사의 문서만 수정 가능
-    const document = await db.collection(COLLECTION_NAME)
-      .find({ 'upload.originalName': filename, ownerId: userId })
-      .sort({ 'upload.uploaded_at': -1 })
-      .limit(1)
-      .toArray()
-      .then(docs => docs[0]);
+    // 🔧 Date/String 혼합 타입 대응을 위해 $toDate 사용
+    const documents = await db.collection(COLLECTION_NAME).aggregate([
+      { $match: { 'upload.originalName': filename, ownerId: userId } },
+      { $addFields: { uploaded_at_normalized: { $toDate: '$upload.uploaded_at' } } },
+      { $sort: { uploaded_at_normalized: -1 } },
+      { $limit: 1 },
+      { $project: { uploaded_at_normalized: 0 } }
+    ]).toArray();
+    const document = documents[0];
 
     if (!document) {
       console.log(`❌ [Set AR Flag] 문서를 찾을 수 없음: ${filename}`);
@@ -5200,10 +5212,17 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
       query.ownerId = userId;
     }
 
-    const documents = await db.collection(COLLECTION_NAME)
-      .find(query)
-      .sort({ 'upload.uploaded_at': -1 })
-      .toArray();
+    // 🔧 Date/String 혼합 타입 대응을 위해 $toDate 사용
+    const documents = await db.collection(COLLECTION_NAME).aggregate([
+      { $match: query },
+      {
+        $addFields: {
+          uploaded_at_normalized: { $toDate: '$upload.uploaded_at' }
+        }
+      },
+      { $sort: { uploaded_at_normalized: -1 } },
+      { $project: { uploaded_at_normalized: 0 } }
+    ]).toArray();
 
     // 문서에 상태 정보 추가
     const documentsWithStatus = documents.map(doc => {
