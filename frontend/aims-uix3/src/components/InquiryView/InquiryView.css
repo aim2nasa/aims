@@ -454,10 +454,10 @@ html[data-theme="dark"] .inquiry-form-label-hint {
   font-family: inherit;
 }
 
-html[data-theme="dark"] .inquiry-form-select,
 html[data-theme="dark"] .inquiry-form-input {
   border-color: var(--color-ios-separator-dark);
   color: var(--color-ios-text-primary-dark);
+  background-color: var(--color-ios-bg-secondary-dark);
 }
 
 .inquiry-form-select:focus,

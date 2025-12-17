@@ -21,6 +21,7 @@ import {
 import { CenterPaneView } from '../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import Tooltip from '../../shared/ui/Tooltip';
+import { Dropdown } from '../../shared/ui/Dropdown';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import './InquiryView.css';
 
@@ -314,18 +315,18 @@ export default function InquiryView({
     <div className="inquiry-container">
       <form className="inquiry-create-form" onSubmit={handleSubmitInquiry}>
         <div className="inquiry-form-field">
-          <label className="inquiry-form-label" htmlFor="inquiry-category">문의 유형</label>
-          <select
-            id="inquiry-category"
-            className="inquiry-form-select"
+          <label className="inquiry-form-label">문의 유형</label>
+          <Dropdown
             value={category}
-            onChange={(e) => setCategory(e.target.value as InquiryCategory)}
-          >
-            <option value="bug">버그 신고</option>
-            <option value="feature">기능 제안</option>
-            <option value="question">사용 문의</option>
-            <option value="other">기타</option>
-          </select>
+            onChange={(value) => setCategory(value as InquiryCategory)}
+            options={[
+              { value: 'bug', label: '버그 신고' },
+              { value: 'feature', label: '기능 제안' },
+              { value: 'question', label: '사용 문의' },
+              { value: 'other', label: '기타' },
+            ]}
+            aria-label="문의 유형 선택"
+          />
         </div>
 
         <div className="inquiry-form-field">
