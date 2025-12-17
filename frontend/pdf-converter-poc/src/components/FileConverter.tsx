@@ -164,8 +164,20 @@ function FileConverter() {
       clearProgressInterval()
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '변환 실패')
+        const contentType = response.headers.get('content-type') || ''
+        let errorMessage = `변환 실패 (HTTP ${response.status})`
+        try {
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          } else {
+            const text = await response.text()
+            if (text) errorMessage = text
+          }
+        } catch {
+          // 파싱 실패 시 기본 에러 메시지 사용
+        }
+        throw new Error(errorMessage)
       }
 
       // 완료 시 100%로 설정

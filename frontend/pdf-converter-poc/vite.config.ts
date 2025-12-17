@@ -7,10 +7,11 @@ export default defineConfig({
     port: 5179,
     strictPort: true,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3011',
+      '/api/convert': {
+        target: 'https://aims.giize.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: true,
+        rewrite: (path) => '/api/pdf/convert'
       }
     }
   }

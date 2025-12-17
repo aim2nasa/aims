@@ -29,6 +29,7 @@ const ALLOWED_ORIGINS = [
   'https://admin.aims.giize.com',
   'http://localhost:5177',
   'http://localhost:5178',
+  'http://localhost:5179',
   'http://localhost:5173',
   process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -306,6 +307,76 @@ async function triggerPdfConversionIfNeeded(document) {
 
   return 'triggered';
 }
+
+// ========================
+// PDF 변환 프록시 엔드포인트 (POC용)
+// ========================
+
+const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
+const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 3011;
+
+/**
+ * PDF 변환 프록시 - 파일 업로드를 PDF 변환 서버로 전달
+ * POST /api/pdf/convert
+ * multipart/form-data로 파일 전송
+ */
+app.post('/api/pdf/convert', upload.single('file'), async (req, res) => {
+  const startTime = Date.now();
+
+  if (!req.file) {
+    return res.status(400).json({ error: '파일이 필요합니다.' });
+  }
+
+  try {
+    // FormData 생성
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    // PDF 변환 서버로 프록시
+    const response = await axios.post(
+      `http://${PDF_CONVERTER_HOST}:${PDF_CONVERTER_PORT}/convert`,
+      formData,
+      {
+        headers: formData.getHeaders(),
+        responseType: 'arraybuffer',
+        timeout: 120000,  // 2분 타임아웃
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      }
+    );
+
+    const conversionTime = Date.now() - startTime;
+
+    // PDF 응답 전달
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(req.file.originalname.replace(/\.[^/.]+$/, '.pdf'))}"`,
+      'X-Conversion-Time': conversionTime.toString()
+    });
+    res.send(Buffer.from(response.data));
+
+  } catch (error) {
+    console.error('[PDF Proxy] 변환 실패:', error.message);
+
+    // 에러 응답 처리
+    if (error.response) {
+      const errorMessage = error.response.data
+        ? Buffer.from(error.response.data).toString('utf-8')
+        : '변환 실패';
+      try {
+        const errorJson = JSON.parse(errorMessage);
+        return res.status(error.response.status).json(errorJson);
+      } catch {
+        return res.status(error.response.status).json({ error: errorMessage });
+      }
+    }
+
+    res.status(500).json({ error: `PDF 변환 서버 오류: ${error.message}` });
+  }
+});
 
 // Qdrant 클라이언트 인스턴스 (서버 1.9.0과 클라이언트 1.15.x 호환성 문제 해결)
 const qdrantClient = new QdrantClient({
