@@ -80,12 +80,17 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 - `pm2 restart`, `npm start`, `uvicorn` 직접 실행 등 **절대 금지**
 - 절차: 로컬 수정 → `scp` → 배포 스크립트 실행
 
-| 서비스 | 배포 스크립트 |
-|--------|---------------|
-| aims_api | `./deploy_aims_api.sh` |
-| aims_rag_api | `./deploy_aims_rag_api.sh` |
-| annual_report_api | `./deploy_annual_report_api.sh` |
-| pdf_proxy | `./deploy_pdf_proxy.sh` |
+| 서비스 | 배포 스크립트 경로 |
+|--------|-------------------|
+| aims_api | `backend/api/aims_api/deploy_aims_api.sh` |
+| aims_rag_api | `backend/api/aims_rag_api/deploy_aims_rag_api.sh` |
+| annual_report_api | `backend/api/annual_report_api/deploy_annual_report_api.sh` |
+| pdf_proxy | `backend/api/pdf_proxy/deploy_pdf_proxy.sh` |
+
+```bash
+# 사용 예시 (서버에서)
+cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
+```
 
 ### 10. 🔴 데이터 중복 금지 (Single Source of Truth)
 **동일한 관계/데이터를 두 곳에 저장하지 않는다!**
