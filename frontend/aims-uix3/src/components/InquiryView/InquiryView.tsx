@@ -571,13 +571,18 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
                     className="visually-hidden"
                     aria-label="첨부파일 선택"
                   />
-                  <button
-                    type="submit"
-                    className="inquiry-send-btn"
-                    disabled={addMessageMutation.isPending || !newMessage.trim()}
-                  >
-                    {addMessageMutation.isPending ? '전송 중...' : '전송'}
-                  </button>
+                  <Tooltip content="전송">
+                    <button
+                      type="submit"
+                      className="inquiry-send-btn"
+                      disabled={addMessageMutation.isPending || !newMessage.trim()}
+                      aria-label="전송"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                      </svg>
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </form>

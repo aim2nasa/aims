@@ -1013,7 +1013,7 @@ html[data-theme="dark"] .inquiry-reply-input {
 .inquiry-reply-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .inquiry-reply-files {
@@ -1154,12 +1154,14 @@ html[data-theme="dark"] .inquiry-reply-file-remove {
   gap: 8px;
 }
 
-.inquiry-attach-btn {
+.inquiry-attach-btn,
+.inquiry-send-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--color-ios-text-secondary-light);
@@ -1168,39 +1170,32 @@ html[data-theme="dark"] .inquiry-reply-file-remove {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-html[data-theme="dark"] .inquiry-attach-btn {
+html[data-theme="dark"] .inquiry-attach-btn,
+html[data-theme="dark"] .inquiry-send-btn {
   color: var(--color-ios-text-secondary-dark);
 }
 
-.inquiry-attach-btn:hover {
-  opacity: 0.7;
-  transform: scale(1.05);
-}
-
-.inquiry-attach-btn svg {
-  stroke: var(--color-ios-text-secondary-light);
-}
-
-html[data-theme="dark"] .inquiry-attach-btn svg {
-  stroke: var(--color-ios-text-secondary-dark);
-}
-
-.inquiry-send-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  border: none;
-  background: var(--color-primary);
-  color: white;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
+.inquiry-attach-btn:hover,
 .inquiry-send-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+.inquiry-attach-btn svg,
+.inquiry-send-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+html[data-theme="dark"] .inquiry-attach-btn svg,
+html[data-theme="dark"] .inquiry-send-btn svg {
+  stroke: currentColor;
+}
+
+.inquiry-send-btn svg {
+  fill: currentColor;
+  stroke: none;
 }
 
 .inquiry-send-btn:disabled {
