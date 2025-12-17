@@ -44,7 +44,9 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initReceivedRef = useRef(false); // init 이벤트 수신 여부
+  const processedEventIdsRef = useRef<Set<string>>(new Set()); // 처리된 이벤트 ID 추적
 
   // 초기 데이터 로드
   const loadInitialData = useCallback(async () => {
@@ -78,6 +80,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
     console.log('[AdminInquiryNotifications] SSE 연결 시작...');
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
+    initReceivedRef.current = false; // 연결 시 초기화
 
     eventSource.addEventListener('connected', () => {
       console.log('[AdminInquiryNotifications] SSE 연결됨');
@@ -89,6 +92,9 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         const data = JSON.parse(e.data);
         setUnreadCount(data.count);
         setUnreadIds(new Set(data.ids));
+        // 처리된 이벤트 ID 초기화 (init에서 받은 ID들은 이미 처리된 것으로 표시)
+        processedEventIdsRef.current = new Set(data.ids);
+        initReceivedRef.current = true; // init 수신 완료
         console.log('[AdminInquiryNotifications] 초기 데이터 수신:', data);
       } catch (error) {
         console.error('[AdminInquiryNotifications] init 이벤트 파싱 실패:', error);
@@ -100,16 +106,27 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         const data: InquiryNotificationData = JSON.parse(e.data);
         console.log('[AdminInquiryNotifications] 새 문의 알림:', data);
 
-        // 미확인 목록에 추가 (중복 방지)
+        // init 이벤트 수신 전이면 무시 (init에서 최신 상태를 받으므로)
+        if (!initReceivedRef.current) {
+          console.log('[AdminInquiryNotifications] init 전 이벤트 무시');
+          return;
+        }
+
+        // 이미 처리된 이벤트면 무시 (중복 방지)
+        if (processedEventIdsRef.current.has(data.inquiryId)) {
+          console.log('[AdminInquiryNotifications] 이미 처리된 이벤트 무시:', data.inquiryId);
+          return;
+        }
+        // 처리됨으로 표시
+        processedEventIdsRef.current.add(data.inquiryId);
+
+        // 미확인 목록에 추가 및 카운트 증가
         setUnreadIds((prev) => {
-          if (prev.has(data.inquiryId)) {
-            return prev;
-          }
           const next = new Set(prev);
           next.add(data.inquiryId);
-          setUnreadCount((c) => c + 1);
           return next;
         });
+        setUnreadCount((c) => c + 1);
 
         // React Query 캐시 무효화 (목록 자동 갱신)
         queryClient.invalidateQueries({ queryKey: ['admin', 'inquiries'] });
@@ -123,16 +140,27 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         const data: InquiryNotificationData = JSON.parse(e.data);
         console.log('[AdminInquiryNotifications] 새 메시지 알림:', data);
 
-        // 미확인 목록에 추가 (중복 방지)
+        // init 이벤트 수신 전이면 무시 (init에서 최신 상태를 받으므로)
+        if (!initReceivedRef.current) {
+          console.log('[AdminInquiryNotifications] init 전 이벤트 무시');
+          return;
+        }
+
+        // 이미 처리된 이벤트면 무시 (중복 방지)
+        if (processedEventIdsRef.current.has(data.inquiryId)) {
+          console.log('[AdminInquiryNotifications] 이미 처리된 이벤트 무시:', data.inquiryId);
+          return;
+        }
+        // 처리됨으로 표시
+        processedEventIdsRef.current.add(data.inquiryId);
+
+        // 미확인 목록에 추가 및 카운트 증가
         setUnreadIds((prev) => {
-          if (prev.has(data.inquiryId)) {
-            return prev;
-          }
           const next = new Set(prev);
           next.add(data.inquiryId);
-          setUnreadCount((c) => c + 1);
           return next;
         });
+        setUnreadCount((c) => c + 1);
 
         // React Query 캐시 무효화 (목록 및 상세 자동 갱신)
         queryClient.invalidateQueries({ queryKey: ['admin', 'inquiries'] });
@@ -167,13 +195,17 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
     try {
       await markAsReadApi(inquiryId);
 
-      // 로컬 상태 업데이트
+      // 처리된 이벤트 목록에서 제거 (새 메시지 오면 다시 미확인 처리 가능하도록)
+      processedEventIdsRef.current.delete(inquiryId);
+
+      // 로컬 상태 업데이트 (카운트는 실제로 제거될 때만 감소)
       setUnreadIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(inquiryId)) {
-          next.delete(inquiryId);
-          setUnreadCount((c) => Math.max(0, c - 1));
+        if (!prev.has(inquiryId)) {
+          return prev; // 이미 없으면 변경 없음
         }
+        const next = new Set(prev);
+        next.delete(inquiryId);
+        setUnreadCount((c) => Math.max(0, c - 1));
         return next;
       });
     } catch (error) {
@@ -194,9 +226,8 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
   // SSE 연결 관리
   useEffect(() => {
     if (enabled) {
-      // 먼저 REST API로 초기 데이터 로드
-      loadInitialData();
-      // SSE 연결 시작
+      // SSE 연결만 시작 (init 이벤트에서 초기 데이터 수신)
+      // loadInitialData()를 함께 호출하면 타이밍 이슈로 count 중복 발생
       connectSSE();
     }
 
@@ -211,7 +242,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
       }
       setIsConnected(false);
     };
-  }, [enabled, loadInitialData, connectSSE]);
+  }, [enabled, connectSSE]);
 
   return {
     unreadCount,
