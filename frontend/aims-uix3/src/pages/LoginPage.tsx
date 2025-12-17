@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { startKakaoLogin, startKakaoLoginSwitch } from '@/entities/auth/api';
+import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLoginSwitch } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
@@ -81,7 +81,7 @@ export default function LoginPage() {
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
 
-        console.log('[LoginPage] 카카오 로그인 성공:', user.name);
+        console.log(`[LoginPage] ${user.authProvider} 로그인 성공:`, user.name);
 
         // 5. 메인 페이지로 이동 (URL 파라미터 제거)
         navigate('/', { replace: true });
@@ -180,39 +180,69 @@ export default function LoginPage() {
         </div>
 
         <div className="login-content">
-          {/* 카카오 로그인 (기존 세션 유지) */}
-          <button
-            type="button"
-            className="kakao-login-button"
-            onClick={startKakaoLogin}
-            aria-label="카카오 로그인"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M9 0C4.029 0 0 3.285 0 7.333c0 2.627 1.727 4.929 4.318 6.209-.178.656-.657 2.432-.748 2.828 0 0-.055.44.23.606.285.166.625.024.625.024 1.023-.131 4.715-3.083 5.471-3.585.368.048.743.074 1.125.074 4.971 0 9-3.285 9-7.333S13.971 0 9 0z"
-                fill="#371D1E"
-              />
-            </svg>
-            <span>카카오 로그인</span>
-          </button>
+          {/* 소셜 로그인 버튼 그룹 */}
+          <div className="social-login-buttons">
+            {/* 카카오 로그인 */}
+            <button
+              type="button"
+              className="social-login-button kakao-login-button"
+              onClick={startKakaoLogin}
+              aria-label="카카오 로그인"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M9 0C4.029 0 0 3.285 0 7.333c0 2.627 1.727 4.929 4.318 6.209-.178.656-.657 2.432-.748 2.828 0 0-.055.44.23.606.285.166.625.024.625.024 1.023-.131 4.715-3.083 5.471-3.585.368.048.743.074 1.125.074 4.971 0 9-3.285 9-7.333S13.971 0 9 0z"
+                  fill="#371D1E"
+                />
+              </svg>
+              <span>카카오 로그인</span>
+            </button>
 
-          {/* 다른 계정으로 로그인 */}
-          <button
-            type="button"
-            className="switch-account-button"
-            onClick={startKakaoLoginSwitch}
-            aria-label="다른 계정으로 로그인"
-          >
-            다른 계정으로 로그인
-          </button>
+            {/* 네이버 로그인 */}
+            <button
+              type="button"
+              className="social-login-button naver-login-button"
+              onClick={startNaverLogin}
+              aria-label="네이버 로그인"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path
+                  d="M12.1875 9.5625L5.4375 0H0V18H5.8125V8.4375L12.5625 18H18V0H12.1875V9.5625Z"
+                  fill="#FFFFFF"
+                />
+              </svg>
+              <span>네이버 로그인</span>
+            </button>
+          </div>
+
+          {/* 다른 계정으로 로그인 섹션 */}
+          <div className="switch-account-section">
+            <button
+              type="button"
+              className="switch-account-button"
+              onClick={startKakaoLoginSwitch}
+              aria-label="다른 카카오 계정으로 로그인"
+            >
+              다른 카카오 계정
+            </button>
+            <span className="switch-account-divider">|</span>
+            <button
+              type="button"
+              className="switch-account-button"
+              onClick={startNaverLoginSwitch}
+              aria-label="다른 네이버 계정으로 로그인"
+            >
+              다른 네이버 계정
+            </button>
+          </div>
 
           {/* 개발자 모드 전용: 로그인 건너뛰기 (Ctrl+Alt+Shift+D로 활성화) */}
           {isDevMode && (
             <button
               type="button"
-              className="kakao-login-button dev-login-button"
+              className="social-login-button dev-login-button"
               onClick={handleDevLogin}
               aria-label="개발용 로그인 건너뛰기"
             >

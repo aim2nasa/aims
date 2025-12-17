@@ -29,7 +29,9 @@ export default function AuthCallbackPage() {
           throw new Error(
             errorParam === 'kakao_auth_failed'
               ? '카카오 로그인에 실패했습니다'
-              : '인증에 실패했습니다'
+              : errorParam === 'naver_auth_failed'
+                ? '네이버 로그인에 실패했습니다'
+                : '인증에 실패했습니다'
           );
         }
 

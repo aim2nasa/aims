@@ -44,6 +44,25 @@ export const startKakaoLoginSwitch = () => {
 };
 
 /**
+ * 네이버 로그인 시작 - 기존 세션 유지
+ * 네이버에 이미 로그인되어 있으면 자동으로 진행 (빠른 로그인)
+ * 현재 origin을 redirect 파라미터로 전달하여 개발/상용 서버 모두 지원
+ */
+export const startNaverLogin = () => {
+  const redirectOrigin = encodeURIComponent(window.location.origin);
+  window.location.href = `${API_BASE_URL}/api/auth/naver?redirect=${redirectOrigin}`;
+};
+
+/**
+ * 네이버 로그인 시작 - 다른 계정으로 로그인 (매번 로그인 화면 표시)
+ * 현재 origin을 redirect 파라미터로 전달하여 개발/상용 서버 모두 지원
+ */
+export const startNaverLoginSwitch = () => {
+  const redirectOrigin = encodeURIComponent(window.location.origin);
+  window.location.href = `${API_BASE_URL}/api/auth/naver/switch?redirect=${redirectOrigin}`;
+};
+
+/**
  * 현재 로그인한 사용자 정보 조회
  */
 export const getCurrentUser = async (token: string): Promise<User> => {

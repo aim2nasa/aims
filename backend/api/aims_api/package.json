@@ -27,7 +27,8 @@
     "mongodb": "^6.18.0",
     "multer": "^2.0.2",
     "passport": "^0.7.0",
-    "passport-kakao": "^1.0.1"
+    "passport-kakao": "^1.0.1",
+    "passport-naver-v2": "^2.0.8"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",

@@ -156,6 +156,125 @@ module.exports = function(db) {
     }
   );
 
+  // ===== 네이버 OAuth 라우트 =====
+
+  /**
+   * GET /api/auth/naver
+   * 네이버 로그인 시작 (기존 계정으로 빠른 로그인)
+   * ?redirect=origin 파라미터로 리다이렉트 대상 지정 가능
+   */
+  router.get('/naver', (req, res, next) => {
+    const redirectOrigin = req.query.redirect;
+    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+      return passport.authenticate('naver', {
+        session: false,
+        state: Buffer.from(redirectOrigin).toString('base64')
+      })(req, res, next);
+    }
+    passport.authenticate('naver', { session: false })(req, res, next);
+  });
+
+  /**
+   * GET /api/auth/naver/switch
+   * 네이버 로그인 (다른 계정으로 로그인 - 매번 로그인 화면 표시)
+   * ?redirect=origin 파라미터로 리다이렉트 대상 지정 가능
+   */
+  router.get('/naver/switch', (req, res, next) => {
+    const redirectOrigin = req.query.redirect;
+    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+      return passport.authenticate('naver-switch', {
+        session: false,
+        state: Buffer.from(redirectOrigin).toString('base64')
+      })(req, res, next);
+    }
+    passport.authenticate('naver-switch', { session: false })(req, res, next);
+  });
+
+  /**
+   * GET /api/auth/naver/callback
+   * 네이버 로그인 콜백 (naver, naver-switch 공통)
+   * state 파라미터에서 redirect origin 추출하여 동적 리다이렉트
+   */
+  router.get('/naver/callback',
+    passport.authenticate('naver', {
+      session: false,
+      failureRedirect: `${process.env.FRONTEND_URL}/login?error=naver_auth_failed`
+    }),
+    (req, res) => {
+      try {
+        // JWT 토큰 생성
+        const token = generateToken(req.user);
+
+        // state에서 redirect origin 추출
+        let frontendUrl = process.env.FRONTEND_URL;
+        if (req.query.state) {
+          try {
+            const decodedOrigin = Buffer.from(req.query.state, 'base64').toString('utf-8');
+            if (ALLOWED_REDIRECT_ORIGINS.includes(decodedOrigin)) {
+              frontendUrl = decodedOrigin;
+              console.log(`[Auth] Dynamic redirect to: ${frontendUrl}`);
+            }
+          } catch (e) {
+            console.error('[Auth] Failed to decode state:', e);
+          }
+        }
+
+        // 로그인 성공 로그
+        activityLogger.log({
+          actor: {
+            user_id: req.user._id.toString(),
+            name: req.user.name,
+            email: req.user.email,
+            role: req.user.role,
+            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            userAgent: req.headers['user-agent']
+          },
+          action: {
+            type: 'login',
+            category: 'auth',
+            description: '네이버 로그인'
+          },
+          result: {
+            success: true,
+            statusCode: 302
+          },
+          meta: {
+            endpoint: '/api/auth/naver/callback',
+            method: 'GET'
+          }
+        });
+
+        // 프론트엔드로 리다이렉트 (토큰 포함)
+        res.redirect(`${frontendUrl}/login?token=${token}`);
+      } catch (error) {
+        console.error('Token generation error:', error);
+
+        activityLogger.log({
+          actor: {
+            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            userAgent: req.headers['user-agent']
+          },
+          action: {
+            type: 'login',
+            category: 'auth',
+            description: '네이버 로그인 실패'
+          },
+          result: {
+            success: false,
+            statusCode: 500,
+            error: { message: error.message }
+          },
+          meta: {
+            endpoint: '/api/auth/naver/callback',
+            method: 'GET'
+          }
+        });
+
+        res.redirect(`${process.env.FRONTEND_URL}/login?error=token_generation_failed`);
+      }
+    }
+  );
+
   /**
    * GET /api/auth/me
    * 현재 로그인한 사용자 정보 조회

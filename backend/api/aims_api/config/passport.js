@@ -1,9 +1,10 @@
 /**
- * Passport.js 설정 - 카카오 OAuth 전략
+ * Passport.js 설정 - 카카오/네이버 OAuth 전략
  */
 
 const passport = require('passport');
 const KakaoStrategy = require('passport-kakao').Strategy;
+const NaverStrategy = require('passport-naver-v2').Strategy;
 
 module.exports = function(db) {
   const usersCollection = db.collection('users');
@@ -81,6 +82,80 @@ module.exports = function(db) {
     clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
     callbackURL: process.env.KAKAO_CALLBACK_URL
   }, kakaoVerifyCallback));
+
+  // ===== 네이버 OAuth 설정 =====
+  const naverClientId = process.env.NAVER_CLIENT_ID || 'test_naver_client_id';
+  if (naverClientId === 'your_naver_client_id_here' || naverClientId === 'test_naver_client_id') {
+    console.warn('⚠️  NAVER_CLIENT_ID가 실제 값이 아닙니다. 테스트 모드로 작동합니다.');
+  }
+
+  // 네이버 인증 콜백
+  const naverVerifyCallback = async (accessToken, refreshToken, profile, done) => {
+    try {
+      const naverId = profile.id;
+      const email = profile.email || null;
+      const avatarUrl = profile.profileImage || null;
+
+      // 기존 사용자 찾기
+      let user = await usersCollection.findOne({ naverId });
+
+      if (user) {
+        // 기존 사용자: lastLogin만 업데이트
+        await usersCollection.updateOne(
+          { naverId },
+          {
+            $set: {
+              lastLogin: new Date()
+            }
+          }
+        );
+        user = await usersCollection.findOne({ naverId });
+      } else {
+        // 새 사용자 생성
+        const newUser = {
+          kakaoId: null,
+          naverId,
+          googleId: null,
+          name: null,  // 프로필 설정에서 입력
+          email,
+          avatarUrl,
+          role: 'user',
+          authProvider: 'naver',
+          hasOcrPermission: false,
+          profileCompleted: false,
+          createdAt: new Date(),
+          lastLogin: new Date()
+        };
+        const result = await usersCollection.insertOne(newUser);
+        user = { _id: result.insertedId, ...newUser };
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  };
+
+  // 커스텀 네이버 전략 (auth_type=reprompt: 다른 계정으로 로그인)
+  class NaverStrategyWithReprompt extends NaverStrategy {
+    authorizationParams() {
+      return { auth_type: 'reprompt' };
+    }
+  }
+
+  // 기본 전략: 기존 계정으로 빠른 로그인
+  passport.use('naver', new NaverStrategy({
+    clientID: naverClientId,
+    clientSecret: process.env.NAVER_CLIENT_SECRET || '',
+    callbackURL: process.env.NAVER_CALLBACK_URL
+  }, naverVerifyCallback));
+
+  // 다른 계정 전략: 매번 로그인 화면 표시
+  passport.use('naver-switch', new NaverStrategyWithReprompt({
+    clientID: naverClientId,
+    clientSecret: process.env.NAVER_CLIENT_SECRET || '',
+    callbackURL: process.env.NAVER_CALLBACK_URL
+  }, naverVerifyCallback));
 
   // 세션에 사용자 ID 저장
   passport.serializeUser((user, done) => {
