@@ -9,7 +9,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   userActivityApi,
   formatDateTime,
-  type ActivityLog,
 } from '@/features/users/userActivityApi';
 import './ActivityTimeline.css';
 
@@ -51,23 +50,6 @@ const getActorLabel = (actor: { name: string | null; role: string }): string => 
   if (actor.name) return actor.name;
   if (actor.role === 'system') return '시스템';
   return '사용자';
-};
-
-// 시간 포맷 (HH:mm:ss)
-const formatTime = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-};
-
-// 날짜 포맷 (MM.DD)
-const formatShortDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
 };
 
 type SortKey = 'timestamp' | 'actor' | 'category' | 'target' | 'action' | 'result';

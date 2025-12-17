@@ -11,6 +11,34 @@
 const API_DEBUG = false;
 
 /**
+ * JWT 토큰만 가져오기
+ * localStorage의 auth-storage에서 토큰만 추출
+ *
+ * @returns JWT 토큰 문자열 또는 null
+ *
+ * @example
+ * ```ts
+ * const token = getAuthToken()
+ * // 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ * ```
+ */
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const authStorage = localStorage.getItem('auth-storage')
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage)
+      return parsed?.state?.token || null
+    }
+  } catch {
+    // 파싱 실패 시 무시
+  }
+
+  return null
+}
+
+/**
  * JWT 토큰을 포함한 Authorization 헤더 가져오기
  * localStorage의 auth-storage에서 토큰을 추출하여 Bearer 토큰 형식으로 반환
  *

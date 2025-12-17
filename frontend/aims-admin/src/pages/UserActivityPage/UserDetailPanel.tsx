@@ -38,13 +38,6 @@ const TIER_LABELS: Record<string, string> = {
   admin: '관리자',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  completed: '완료',
-  processing: '처리중',
-  error: '오류',
-  pending: '대기',
-};
-
 type TabType = 'summary' | 'logs' | 'errors' | 'documents';
 
 // 정렬 타입

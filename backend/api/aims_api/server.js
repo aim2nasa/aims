@@ -7678,6 +7678,11 @@ MongoClient.connect(MONGO_URI)
     const systemSettingsRoutes = require('./routes/system-settings-routes')(db, authenticateJWT, requireRole);
     app.use('/api', systemSettingsRoutes);
 
+    // 1:1 문의 라우트 설정
+    const inquiriesRoutes = require('./routes/inquiries-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', inquiriesRoutes);
+    console.log('[Server] inquiriesRoutes 등록 완료');
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })

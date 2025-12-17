@@ -45,6 +45,7 @@ const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 const CustomerFullDetailView = lazy(() => import('./features/customer/views/CustomerFullDetailView'))
 const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
+const InquiryView = lazy(() => import('./components/InquiryView/InquiryView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
@@ -299,7 +300,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "contracts-import" ||
         activeDocumentView === "batch-document-upload" ||
         activeDocumentView === "quick-actions" ||
-        activeDocumentView === "account-settings") {
+        activeDocumentView === "account-settings" ||
+        activeDocumentView === "inquiry") {
       setPaginationVisible(false)
       // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
       if (!selectedDocument && !selectedCustomer) {
@@ -581,7 +583,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 계약 관리 View들
       'contracts', 'contracts-all', 'contracts-import', 'batch-document-upload',
       // 설정 View들
-      'account-settings'
+      'account-settings',
+      // 1:1 문의
+      'inquiry'
     ]
     if (allViewKeys.includes(menuKey)) {
       setActiveDocumentView(menuKey)
@@ -1491,6 +1495,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'quick-actions'}
               onClose={closeDocumentView}
               onNavigate={handleMenuClick}
+            />
+          </Suspense>
+
+          {/* 1:1 문의 View */}
+          <Suspense fallback={null}>
+            <InquiryView
+              visible={activeDocumentView === 'inquiry'}
+              onClose={closeDocumentView}
             />
           </Suspense>
         </main>

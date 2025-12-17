@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { usersApi } from '@/features/users/api';
 import { Button } from '@/shared/ui/Button/Button';
-import type { User } from '@/features/auth/types';
 import './UsersPage.css';
 
 const TIER_OPTIONS = [

@@ -109,6 +109,10 @@ function App() {
         { path: '/users/activity', label: '사용자 활동' },
       ],
     },
+    {
+      path: '/inquiries',
+      label: '문의 관리',
+    },
   ];
 
   const toggleMenu = (path: string) => {

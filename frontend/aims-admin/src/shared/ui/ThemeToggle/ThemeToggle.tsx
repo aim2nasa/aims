@@ -1,4 +1,4 @@
-import { FC, memo } from 'react';
+import { memo, type FC } from 'react';
 import './ThemeToggle.css';
 
 interface ThemeToggleProps {

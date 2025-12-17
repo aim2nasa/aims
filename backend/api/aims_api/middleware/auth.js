@@ -66,6 +66,45 @@ function authenticateJWT(req, res, next) {
 }
 
 /**
+ * JWT 토큰 검증 미들웨어 (쿼리 파라미터 지원)
+ * 파일 다운로드 등 <img src="...">나 <a href="...">로 접근하는 경우
+ * Authorization 헤더 대신 ?token=xxx 쿼리 파라미터로 인증 가능
+ */
+function authenticateJWTWithQuery(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const queryToken = req.query.token;
+
+  // Authorization 헤더 또는 쿼리 파라미터에서 토큰 추출
+  let token = null;
+  if (authHeader) {
+    token = authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : authHeader;
+  } else if (queryToken) {
+    token = queryToken;
+  }
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    req.user = decoded;
+    next();
+  });
+}
+
+/**
  * 선택적 JWT 인증 미들웨어
  */
 function optionalAuthJWT(req, res, next) {
@@ -198,6 +237,7 @@ function authenticateJWTorAPIKey(req, res, next) {
 module.exports = {
   generateToken,
   authenticateJWT,
+  authenticateJWTWithQuery,
   optionalAuthJWT,
   requireRole,
   authenticateAPIKey,

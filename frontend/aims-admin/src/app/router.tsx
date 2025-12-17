@@ -12,6 +12,8 @@ import { AIUsagePage } from '@/pages/AIUsagePage';
 import { OCRUsagePage } from '@/pages/OCRUsagePage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import { UserActivityPage } from '@/pages/UserActivityPage';
+import { InquiriesPage } from '@/pages/InquiriesPage/InquiriesPage';
+import { InquiryDetailPage } from '@/pages/InquiryDetailPage/InquiryDetailPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -74,6 +76,14 @@ export const router = createBrowserRouter([
       {
         path: 'users/activity',
         element: <UserActivityPage />,
+      },
+      {
+        path: 'inquiries',
+        element: <InquiriesPage />,
+      },
+      {
+        path: 'inquiries/:id',
+        element: <InquiryDetailPage />,
       },
     ],
   },

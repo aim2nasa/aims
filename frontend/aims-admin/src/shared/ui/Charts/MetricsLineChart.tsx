@@ -77,7 +77,7 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200 }: Metri
 
   return (
     <div className="metrics-line-chart">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={typeof height === 'number' ? height : 200}>
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis

@@ -39,10 +39,10 @@ export const DashboardPage = () => {
   const storageWarnings = (storageData?.users_over_80_percent || 0) + (storageData?.users_over_95_percent || 0);
   const unhealthyServices = [
     data?.health.nodeApi,
-    data?.health.pythonApi,
+    data?.health.aimsRagApi,
     data?.health.mongodb,
     data?.health.qdrant,
-  ].filter((s) => s === 'unhealthy').length;
+  ].filter((s) => s?.status === 'unhealthy').length;
 
   return (
     <div className="dashboard-page">

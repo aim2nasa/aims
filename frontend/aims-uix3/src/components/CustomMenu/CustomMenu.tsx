@@ -521,6 +521,14 @@ const CustomMenu = ({
       }
     ] : []),
 
+    // ━━━ 1:1 문의 ━━━
+    {
+      key: 'inquiry',
+      icon: <SFSymbol name="envelope" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+      label: collapsed ? '' : '1:1 문의',
+      tooltipTitle: '1:1 문의',
+    },
+
     // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
   ], [collapsed, hasSearchResults, searchResultsCount])
 

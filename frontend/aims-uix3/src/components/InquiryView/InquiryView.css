@@ -1,0 +1,1074 @@
+/**
+ * 🍎 1:1 문의 뷰 스타일
+ * AllCustomersView 패턴 적용
+ * iOS/macOS native table view style
+ */
+
+/* 🍎 CONTAINER: Pure minimal */
+.inquiry-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 16px;
+}
+
+/* === 🍎 SEARCH BAR: iOS-style search field with controls === */
+.inquiry-bar {
+  width: 100%;
+}
+
+.inquiry-container .search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 6px 8px;
+  transition: background-color 0.2s ease-out;
+  overflow: visible;
+}
+
+.inquiry-container .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-ios-text-quaternary-light);
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-theme="dark"] .inquiry-container .search-icon {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.inquiry-container .search-input {
+  flex: 1;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-primary-light);
+  outline: none;
+  padding: 4px 8px 4px 26px;
+  transition: border-color 0.2s ease-out;
+}
+
+html[data-theme="dark"] .inquiry-container .search-input {
+  color: var(--color-ios-text-primary-dark);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.inquiry-container .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-light);
+  font-weight: 400;
+}
+
+html[data-theme="dark"] .inquiry-container .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-dark);
+}
+
+/* === 🍎 RESULT HEADER === */
+.inquiry-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 4px 4px;
+  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+}
+
+html[data-theme="dark"] .inquiry-result-header {
+  border-bottom-color: var(--color-ios-separator-subtle-dark);
+}
+
+.inquiry-result-count {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+html[data-theme="dark"] .inquiry-result-count {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 🍎 STATUS FILTER BUTTON */
+.inquiry-filter-button {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ios-text-tertiary-light);
+  transition: all 0.15s ease-out;
+  user-select: none;
+}
+
+html[data-theme="dark"] .inquiry-filter-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-filter-button.active {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .inquiry-filter-button.active {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.inquiry-filter-separator {
+  color: var(--color-ios-text-quaternary-light);
+  user-select: none;
+}
+
+html[data-theme="dark"] .inquiry-filter-separator {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 CREATE BUTTON */
+.inquiry-create-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.inquiry-create-button:hover {
+  opacity: 0.85;
+}
+
+/* === 🍎 LIST HEADER: macOS Finder-style === */
+.inquiry-list-header {
+  display: grid;
+  grid-template-columns: 80px 90px 1fr 150px 80px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 32px;
+  background: #f5f6f7;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+html[data-theme="dark"] .inquiry-list-header {
+  background: #374151;
+  border-bottom-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === 🍎 INQUIRY LIST === */
+.inquiry-list {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+/* === 🍎 INQUIRY ROW === */
+.inquiry-row {
+  display: grid;
+  grid-template-columns: 80px 90px 1fr 150px 80px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: 6px;
+}
+
+.inquiry-row:hover {
+  background: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-row:hover {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 🍎 STATUS BADGE */
+.inquiry-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.inquiry-status-badge--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.inquiry-status-badge--in_progress {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.inquiry-status-badge--resolved {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.inquiry-status-badge--closed {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+/* 🍎 CATEGORY BADGE */
+.inquiry-category-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.inquiry-category-badge--bug {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.inquiry-category-badge--feature {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.inquiry-category-badge--question {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.inquiry-category-badge--other {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+/* Row cells */
+.inquiry-row-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ios-text-primary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .inquiry-row-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-row-date {
+  font-size: 12px;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-row-date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-row-messages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-row-messages {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === 🍎 EMPTY STATE === */
+.inquiry-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-empty-icon {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.inquiry-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .inquiry-empty-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-empty-desc {
+  font-size: 13px;
+  color: var(--color-ios-text-tertiary-light);
+  margin-bottom: 20px;
+}
+
+html[data-theme="dark"] .inquiry-empty-desc {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-empty-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.inquiry-empty-button:hover {
+  opacity: 0.9;
+}
+
+/* === 🍎 LOADING === */
+.inquiry-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: 13px;
+}
+
+html[data-theme="dark"] .inquiry-loading {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* ===============================================
+   CREATE FORM (슬라이드 패널 형태)
+   =============================================== */
+.inquiry-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.inquiry-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inquiry-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-form-label {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-form-label-hint {
+  font-weight: 400;
+  color: var(--color-ios-text-tertiary-light);
+  margin-left: 4px;
+}
+
+html[data-theme="dark"] .inquiry-form-label-hint {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-form-select,
+.inquiry-form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-ios-text-primary-light);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+html[data-theme="dark"] .inquiry-form-select,
+html[data-theme="dark"] .inquiry-form-input {
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-form-select:focus,
+.inquiry-form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.inquiry-form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-ios-text-primary-light);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+html[data-theme="dark"] .inquiry-form-textarea {
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* File drop zone */
+.inquiry-file-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  border: 2px dashed var(--color-ios-separator-light);
+  border-radius: 10px;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+html[data-theme="dark"] .inquiry-file-drop {
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-file-drop:hover {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.inquiry-file-drop-text {
+  font-size: 12px;
+}
+
+.inquiry-file-drop-hint {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* File list */
+.inquiry-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  list-style: none;
+  padding: 0;
+}
+
+.inquiry-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-file-item {
+  background: var(--color-ios-bg-secondary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-file-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  border-radius: 50%;
+  margin-left: 4px;
+}
+
+html[data-theme="dark"] .inquiry-file-remove {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-file-remove:hover {
+  background: var(--color-error);
+  color: white;
+}
+
+/* Form actions */
+.inquiry-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-form-actions {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-form-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--color-ios-separator-light);
+  background: transparent;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .inquiry-form-cancel {
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-form-cancel:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-form-cancel:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.inquiry-form-submit {
+  padding: 8px 20px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.inquiry-form-submit:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.inquiry-form-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===============================================
+   DETAIL VIEW
+   =============================================== */
+.inquiry-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+/* Detail header */
+.inquiry-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-detail-header {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-detail-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] .inquiry-detail-back {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-detail-back:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-detail-back:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.inquiry-detail-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .inquiry-detail-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-detail-badges {
+  display: flex;
+  gap: 8px;
+}
+
+/* Detail info */
+.inquiry-detail-info {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+html[data-theme="dark"] .inquiry-detail-info {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.inquiry-detail-info-item {
+  display: flex;
+  gap: 6px;
+}
+
+.inquiry-detail-info-label {
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-detail-info-label {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-detail-info-value {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 500;
+}
+
+html[data-theme="dark"] .inquiry-detail-info-value {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* Messages */
+.inquiry-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.inquiry-message {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-message {
+  background: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-message--user {
+  border-left: 3px solid var(--color-primary);
+}
+
+.inquiry-message--admin {
+  border-left: 3px solid var(--color-success);
+}
+
+.inquiry-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.inquiry-message-author {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .inquiry-message-author {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-message--user .inquiry-message-author::before {
+  content: "나";
+}
+
+.inquiry-message--admin .inquiry-message-author::before {
+  content: "관리자";
+}
+
+.inquiry-message-date {
+  font-size: 11px;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-message-date {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-message-content {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .inquiry-message-content {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* 이미지 첨부파일 */
+.inquiry-message-image {
+  display: block;
+  max-width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-message-image {
+  border-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-message-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.inquiry-message-image:hover {
+  opacity: 0.9;
+}
+
+/* 파일 첨부파일 */
+.inquiry-message-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-decoration: none;
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-message-attachment {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-message-attachment:hover {
+  background: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-message-attachment:hover {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+/* Reply form */
+.inquiry-reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+}
+
+html[data-theme="dark"] .inquiry-reply-form {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.inquiry-reply-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+  color: var(--color-ios-text-primary-light);
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+html[data-theme="dark"] .inquiry-reply-input {
+  border-color: var(--color-ios-separator-dark);
+  background: var(--color-bg-primary);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.inquiry-reply-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.inquiry-reply-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inquiry-reply-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.inquiry-reply-files li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-reply-files li {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-reply-files button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+html[data-theme="dark"] .inquiry-reply-files button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-reply-files button:hover {
+  background: var(--color-error);
+  color: white;
+}
+
+.inquiry-reply-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inquiry-attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-ios-separator-light);
+  background: var(--color-bg-primary);
+  color: var(--color-ios-text-secondary-light);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .inquiry-attach-btn {
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-attach-btn:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-attach-btn:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.inquiry-send-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.inquiry-send-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.inquiry-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Closed status */
+.inquiry-closed-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: 13px;
+}
+
+html[data-theme="dark"] .inquiry-closed-notice {
+  background: var(--color-ios-bg-secondary-dark);
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */
+.inquiry-back-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .inquiry-back-button {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-back-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-back-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* Utility */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
