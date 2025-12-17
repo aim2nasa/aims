@@ -28,7 +28,8 @@
     "multer": "^2.0.2",
     "passport": "^0.7.0",
     "passport-kakao": "^1.0.1",
-    "passport-naver-v2": "^2.0.8"
+    "passport-naver-v2": "^2.0.8",
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",

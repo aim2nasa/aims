@@ -99,6 +99,18 @@
   background: #02B350;
 }
 
+/* 구글 로그인 버튼 */
+.google-login-button {
+  background: #FFFFFF;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+}
+
+.google-login-button:hover {
+  background: #f8f9fa;
+  border-color: #c6c6c6;
+}
+
 /* 다른 계정으로 로그인 버튼 - 테두리 스타일 */
 .kakao-login-button--secondary {
   background: transparent;

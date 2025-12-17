@@ -1,10 +1,11 @@
 /**
- * Passport.js 설정 - 카카오/네이버 OAuth 전략
+ * Passport.js 설정 - 카카오/네이버/구글 OAuth 전략
  */
 
 const passport = require('passport');
 const KakaoStrategy = require('passport-kakao').Strategy;
 const NaverStrategy = require('passport-naver-v2').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 module.exports = function(db) {
   const usersCollection = db.collection('users');
@@ -156,6 +157,82 @@ module.exports = function(db) {
     clientSecret: process.env.NAVER_CLIENT_SECRET || '',
     callbackURL: process.env.NAVER_CALLBACK_URL
   }, naverVerifyCallback));
+
+  // ===== 구글 OAuth 설정 =====
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || 'test_google_client_id';
+  if (googleClientId === 'your_google_client_id_here' || googleClientId === 'test_google_client_id') {
+    console.warn('⚠️  GOOGLE_CLIENT_ID가 실제 값이 아닙니다. 테스트 모드로 작동합니다.');
+  }
+
+  // 구글 인증 콜백
+  const googleVerifyCallback = async (accessToken, refreshToken, profile, done) => {
+    try {
+      const googleId = profile.id;
+      const email = profile.emails?.[0]?.value || null;
+      const avatarUrl = profile.photos?.[0]?.value || null;
+
+      // 기존 사용자 찾기
+      let user = await usersCollection.findOne({ googleId });
+
+      if (user) {
+        // 기존 사용자: lastLogin만 업데이트
+        await usersCollection.updateOne(
+          { googleId },
+          {
+            $set: {
+              lastLogin: new Date()
+            }
+          }
+        );
+        user = await usersCollection.findOne({ googleId });
+      } else {
+        // 새 사용자 생성
+        const newUser = {
+          kakaoId: null,
+          naverId: null,
+          googleId,
+          name: null,  // 프로필 설정에서 입력
+          email,
+          avatarUrl,
+          role: 'user',
+          authProvider: 'google',
+          hasOcrPermission: false,
+          profileCompleted: false,
+          createdAt: new Date(),
+          lastLogin: new Date()
+        };
+        const result = await usersCollection.insertOne(newUser);
+        user = { _id: result.insertedId, ...newUser };
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  };
+
+  // 커스텀 구글 전략 (prompt=select_account: 다른 계정으로 로그인)
+  class GoogleStrategyWithPrompt extends GoogleStrategy {
+    authorizationParams() {
+      return { prompt: 'select_account' };
+    }
+  }
+
+  // 기본 전략: 기존 계정으로 빠른 로그인
+  passport.use('google', new GoogleStrategy({
+    clientID: googleClientId,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    scope: ['profile', 'email']
+  }, googleVerifyCallback));
+
+  // 다른 계정 전략: 매번 로그인 화면 표시
+  passport.use('google-switch', new GoogleStrategyWithPrompt({
+    clientID: googleClientId,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    scope: ['profile', 'email']
+  }, googleVerifyCallback));
 
   // 세션에 사용자 ID 저장
   passport.serializeUser((user, done) => {
