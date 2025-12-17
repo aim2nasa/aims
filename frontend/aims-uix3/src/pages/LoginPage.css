@@ -133,13 +133,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
   margin-top: 4px;
+  flex-wrap: nowrap;
 }
 
 .switch-account-divider {
   color: var(--color-text-quaternary);
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 /* 다른 계정으로 로그인 링크 */
@@ -147,10 +149,12 @@
   background: none;
   border: none;
   color: var(--color-text-tertiary);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 8px;
+  padding: 8px 4px;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .switch-account-button:hover {
