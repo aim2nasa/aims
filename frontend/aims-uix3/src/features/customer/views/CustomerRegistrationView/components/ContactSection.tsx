@@ -9,6 +9,7 @@
 
 import React from 'react';
 import type { CustomerRegistrationFormData } from '../../../controllers/useCustomerRegistrationController';
+import { formatPhoneNumber } from '@/shared/lib/phoneUtils';
 
 export type ContactFormData = Pick<CustomerRegistrationFormData, 'mobile_phone' | 'home_phone' | 'work_phone' | 'email'>;
 
@@ -22,6 +23,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   formData,
   onChange,
 }) => {
+  // 전화번호 입력 시 자동 포맷팅 (네이버/카카오 스타일)
+  const handlePhoneChange = (field: keyof ContactFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    onChange(field, formatted);
+  };
+
   return (
     <div className="form-section">
       <h3 className="form-section__title form-section__title--contact">
@@ -39,8 +46,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             <input
               type="tel"
               value={formData.mobile_phone || ''}
-              onChange={(e) => onChange('mobile_phone', e.target.value)}
+              onChange={handlePhoneChange('mobile_phone')}
               placeholder="010-1234-5678"
+              maxLength={13}
             />
           </div>
         </div>
@@ -52,8 +60,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             <input
               type="tel"
               value={formData.home_phone || ''}
-              onChange={(e) => onChange('home_phone', e.target.value)}
+              onChange={handlePhoneChange('home_phone')}
               placeholder="02-1234-5678"
+              maxLength={13}
             />
           </div>
         </div>
@@ -65,8 +74,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             <input
               type="tel"
               value={formData.work_phone || ''}
-              onChange={(e) => onChange('work_phone', e.target.value)}
+              onChange={handlePhoneChange('work_phone')}
               placeholder="02-1234-5678"
+              maxLength={13}
             />
           </div>
         </div>
