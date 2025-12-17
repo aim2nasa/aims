@@ -147,7 +147,7 @@ export const UserActivityPage = () => {
         limit,
         search: debouncedSearch || undefined,
         tier: tierFilter || undefined,
-        role: 'agent',  // 설계사만 조회 (관리자 제외)
+        // role 필터 제거 - 모든 사용자 조회 (admin, agent, user 포함)
         sortBy,
         sortOrder,
       }),
