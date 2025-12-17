@@ -1,5 +1,14 @@
 # PDF Converter POC 구조
 
+## 접속 URL
+
+| 환경 | URL |
+|------|-----|
+| **프로덕션** | https://aims.giize.com/pdf-converter/ |
+| 개발 | http://localhost:5179/ |
+
+---
+
 ## 한눈에 보는 흐름
 
 ```
@@ -89,10 +98,12 @@
 
 ### vite.config.ts
 ```typescript
+base: '/pdf-converter/',
 proxy: {
-  '/api/convert': {
+  '/api/pdf': {
     target: 'https://aims.giize.com',
-    rewrite: () => '/api/pdf/convert'
+    changeOrigin: true,
+    secure: true
   }
 }
 ```
@@ -103,6 +114,28 @@ app.post('/api/pdf/convert', async (req, res) => {
   // localhost:3011로 프록시
 });
 ```
+
+### nginx 설정 (/etc/nginx/sites-available/aims)
+```nginx
+location /pdf-converter/ {
+    alias /home/rossi/aims/frontend/pdf-converter-poc/dist/;
+    try_files $uri $uri/ /pdf-converter/index.html;
+}
+```
+
+---
+
+## 배포
+
+### 빌드 및 배포
+```bash
+cd frontend/pdf-converter-poc
+npm run build
+scp -r dist/* rossi@tars.giize.com:/home/rossi/aims/frontend/pdf-converter-poc/dist/
+```
+
+### 배포 파일 위치
+- 서버: `/home/rossi/aims/frontend/pdf-converter-poc/dist/`
 
 ---
 

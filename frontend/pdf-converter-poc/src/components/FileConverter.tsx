@@ -156,7 +156,7 @@ function FileConverter() {
 
     try {
       const startTime = Date.now()
-      const response = await fetch('/api/convert', {
+      const response = await fetch('/api/pdf/convert', {
         method: 'POST',
         body: formData
       })

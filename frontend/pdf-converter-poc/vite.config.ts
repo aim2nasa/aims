@@ -3,15 +3,15 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  base: '/pdf-converter/',
   server: {
     port: 5179,
     strictPort: true,
     proxy: {
-      '/api/convert': {
+      '/api/pdf': {
         target: 'https://aims.giize.com',
         changeOrigin: true,
-        secure: true,
-        rewrite: (path) => '/api/pdf/convert'
+        secure: true
       }
     }
   }

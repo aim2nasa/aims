@@ -1,6 +1,14 @@
+import { useEffect } from 'react'
 import FileConverter from './components/FileConverter'
 
 function App() {
+  // URL에서 불필요한 쿼리 파라미터 제거
+  useEffect(() => {
+    if (window.location.search) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   return (
     <div className="app">
       <header className="app-header">
