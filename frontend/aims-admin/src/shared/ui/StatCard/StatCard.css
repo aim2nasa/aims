@@ -54,3 +54,19 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
 }
+
+/* 클릭 가능한 카드 */
+.stat-card--clickable {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.stat-card--clickable:hover {
+  background-color: var(--color-background-hover);
+  transform: translateY(-1px);
+}
+
+.stat-card--clickable:active {
+  transform: translateY(0);
+}

@@ -52,7 +52,7 @@ export const DashboardPage = () => {
       <section className="dashboard-page__section">
         <h2 className="dashboard-page__section-title">시스템 통계</h2>
         <div className="dashboard-page__stats-grid">
-          <StatCard title="전체 사용자" value={data?.stats.totalUsers || 0} />
+          <StatCard title="전체 사용자" value={data?.stats.totalUsers || 0} onClick={() => navigate('/users')} />
           <StatCard title="활성 사용자" value={data?.stats.activeUsers || 0} subtitle="최근 30일 내 로그인" />
           <StatCard title="고객 수" value={data?.stats.totalCustomers || 0} />
           <StatCard title="문서 수" value={data?.stats.totalDocuments || 0} />
