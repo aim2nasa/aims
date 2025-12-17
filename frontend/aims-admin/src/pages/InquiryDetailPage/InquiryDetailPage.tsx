@@ -42,7 +42,9 @@ export const InquiryDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [replyContent, setReplyContent] = useState('');
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 문의 상세 조회
   const { data: inquiry, isLoading, isError, error, refetch } = useQuery({
@@ -53,11 +55,13 @@ export const InquiryDetailPage = () => {
 
   // 답변 등록
   const replyMutation = useMutation({
-    mutationFn: (content: string) => inquiriesApi.addReply(id!, content),
+    mutationFn: ({ content, files }: { content: string; files?: File[] }) =>
+      inquiriesApi.addReply(id!, content, files),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'inquiry', id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'inquiries'] });
       setReplyContent('');
+      setReplyFiles([]);
     },
   });
 
@@ -80,7 +84,19 @@ export const InquiryDetailPage = () => {
   const handleSubmitReply = (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyContent.trim()) return;
-    replyMutation.mutate(replyContent);
+    replyMutation.mutate({ content: replyContent, files: replyFiles.length > 0 ? replyFiles : undefined });
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setReplyFiles(prev => [...prev, ...newFiles].slice(0, 5)); // 최대 5개
+    }
+    e.target.value = ''; // 같은 파일 다시 선택 가능하도록
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setReplyFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleStatusChange = (status: InquiryStatus) => {
@@ -247,7 +263,42 @@ export const InquiryDetailPage = () => {
                 placeholder="답변 내용을 입력하세요..."
                 rows={5}
               />
+              {/* 첨부파일 목록 */}
+              {replyFiles.length > 0 && (
+                <div className="inquiry-detail-page__files">
+                  {replyFiles.map((file, idx) => (
+                    <div key={idx} className="inquiry-detail-page__file-item">
+                      <span className="inquiry-detail-page__file-name">{file.name}</span>
+                      <button
+                        type="button"
+                        className="inquiry-detail-page__file-remove"
+                        onClick={() => handleRemoveFile(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="inquiry-detail-page__reply-actions">
+                {/* 숨겨진 파일 input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf"
+                  onChange={handleFileSelect}
+                  className="inquiry-detail-page__file-input"
+                  aria-label="첨부파일 선택"
+                />
+                {/* 첨부파일 버튼 */}
+                <button
+                  type="button"
+                  className="inquiry-attach-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  첨부
+                </button>
                 <Button
                   type="submit"
                   variant="primary"

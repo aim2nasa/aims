@@ -629,9 +629,9 @@ module.exports = (db, authenticateJWT, requireRole) => {
   /**
    * 문의에 답변 추가 (관리자)
    * POST /api/admin/inquiries/:id/messages
-   * Body: { content }
+   * FormData: { content, files[] }
    */
-  router.post('/admin/inquiries/:id/messages', authenticateJWT, requireRole('admin'), async (req, res) => {
+  router.post('/admin/inquiries/:id/messages', authenticateJWT, requireRole('admin'), upload.array('files', 5), async (req, res) => {
     try {
       const adminId = req.user.id;
       const { id } = req.params;
@@ -663,13 +663,34 @@ module.exports = (db, authenticateJWT, requireRole) => {
       // 관리자 정보 조회
       const admin = await usersCollection.findOne({ _id: new ObjectId(adminId) });
 
+      // 첨부파일 처리
+      const attachments = [];
+      if (req.files && req.files.length > 0) {
+        const inquiryDir = path.join(INQUIRY_FILES_PATH, id);
+        await ensureDirectoryExists(inquiryDir);
+
+        for (const file of req.files) {
+          const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+          const newPath = path.join(inquiryDir, file.filename);
+          await fs.rename(file.path, newPath);
+
+          attachments.push({
+            filename: file.filename,
+            originalName,
+            mimeType: file.mimetype,
+            size: file.size,
+            path: newPath
+          });
+        }
+      }
+
       const newMessage = {
         _id: new ObjectId(),
         authorId: new ObjectId(adminId),
         authorName: admin?.name || '관리자',
         authorRole: 'admin',
         content: content.trim(),
-        attachments: [],
+        attachments,
         createdAt: new Date()
       };
 

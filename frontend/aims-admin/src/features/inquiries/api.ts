@@ -127,12 +127,20 @@ export async function getInquiry(id: string): Promise<Inquiry> {
 }
 
 /**
- * 답변 추가
+ * 답변 추가 (첨부파일 지원)
  */
-export async function addReply(inquiryId: string, content: string): Promise<InquiryMessage> {
+export async function addReply(inquiryId: string, content: string, files?: File[]): Promise<InquiryMessage> {
+  const formData = new FormData();
+  formData.append('content', content);
+
+  if (files && files.length > 0) {
+    files.forEach(file => formData.append('files', file));
+  }
+
+  // FormData 사용 시 Content-Type 헤더를 수동 설정하지 않음 (axios가 boundary 포함하여 자동 설정)
   const response = await apiClient.post<{ success: boolean; data: InquiryMessage }>(
     `/api/admin/inquiries/${inquiryId}/messages`,
-    { content }
+    formData
   );
   return response.data;
 }

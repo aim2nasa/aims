@@ -49,6 +49,30 @@ class ApiClient {
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
+    // FormData인 경우 Content-Type을 설정하지 않고 body를 그대로 전달
+    if (data instanceof FormData) {
+      const token = localStorage.getItem('aims-admin-token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: data,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          message: 'Network error',
+        }));
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    }
+
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
