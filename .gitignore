@@ -29,3 +29,5 @@ backend/api/*/.env
 # 임시 네트워크 테스트 파일 (백그라운드 프로세스 출력)
 tars.giize.com
 nul
+# TypeScript build cache
+*.tsbuildinfo
