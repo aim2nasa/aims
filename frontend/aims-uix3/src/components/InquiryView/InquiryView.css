@@ -899,32 +899,41 @@ html[data-theme="dark"] .inquiry-message-date {
   opacity: 0.9;
 }
 
-/* 파일 첨부파일 */
+/* 파일 첨부파일 링크 */
 .inquiry-message-attachment {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
   font-size: 12px;
   text-decoration: none;
-  background: var(--color-ios-bg-tertiary-light);
+  background: transparent;
   color: var(--color-ios-text-secondary-light);
-  border: 1px solid var(--color-ios-separator-light);
+  transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 html[data-theme="dark"] .inquiry-message-attachment {
-  background: var(--color-ios-bg-tertiary-dark);
   color: var(--color-ios-text-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
 }
 
 .inquiry-message-attachment:hover {
-  background: var(--color-ios-bg-secondary-light);
+  background: rgba(0, 0, 0, 0.06);
+  opacity: 0.8;
 }
 
 html[data-theme="dark"] .inquiry-message-attachment:hover {
-  background: var(--color-ios-bg-secondary-dark);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* paperclip 아이콘 스타일 */
+.inquiry-message-attachment svg {
+  flex-shrink: 0;
+  stroke: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-message-attachment svg {
+  stroke: var(--color-ios-text-tertiary-dark);
 }
 
 /* Reply form */
@@ -1030,24 +1039,29 @@ html[data-theme="dark"] .inquiry-reply-files button {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--color-ios-separator-light);
-  background: var(--color-bg-primary);
+  border: none;
+  background: transparent;
   color: var(--color-ios-text-secondary-light);
   border-radius: 6px;
   cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 html[data-theme="dark"] .inquiry-attach-btn {
-  border-color: var(--color-ios-separator-dark);
   color: var(--color-ios-text-secondary-dark);
 }
 
 .inquiry-attach-btn:hover {
-  background: var(--color-ios-bg-tertiary-light);
+  opacity: 0.7;
+  transform: scale(1.05);
 }
 
-html[data-theme="dark"] .inquiry-attach-btn:hover {
-  background: var(--color-ios-bg-tertiary-dark);
+.inquiry-attach-btn svg {
+  stroke: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-attach-btn svg {
+  stroke: var(--color-ios-text-secondary-dark);
 }
 
 .inquiry-send-btn {

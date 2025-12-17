@@ -20,6 +20,7 @@ import {
 } from '@/entities/inquiry';
 import { CenterPaneView } from '../CenterPaneView/CenterPaneView';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
+import Tooltip from '../../shared/ui/Tooltip';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import './InquiryView.css';
 
@@ -471,7 +472,9 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
                             rel="noopener noreferrer"
                             className="inquiry-message-attachment"
                           >
-                            <SFSymbol name="paperclip" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
                             {attachment.originalName}
                           </a>
                         );
@@ -516,15 +519,18 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
                   <div />
                 )}
                 <div className="inquiry-reply-buttons">
-                  <button
-                    type="button"
-                    className="inquiry-attach-btn"
-                    onClick={() => messageFileInputRef.current?.click()}
-                    title="파일 첨부"
-                    aria-label="파일 첨부"
-                  >
-                    <SFSymbol name="paperclip" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} />
-                  </button>
+                  <Tooltip content="파일 첨부">
+                    <button
+                      type="button"
+                      className="inquiry-attach-btn"
+                      onClick={() => messageFileInputRef.current?.click()}
+                      aria-label="파일 첨부"
+                    >
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                      </svg>
+                    </button>
+                  </Tooltip>
                   <input
                     ref={messageFileInputRef}
                     type="file"
