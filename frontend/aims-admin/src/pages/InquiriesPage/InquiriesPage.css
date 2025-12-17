@@ -54,6 +54,34 @@
   color: var(--color-text-secondary);
 }
 
+.inquiries-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.inquiries-page__delete-toggle {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.inquiries-page__delete-toggle:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-tertiary);
+}
+
+.inquiries-page__delete-toggle--active {
+  color: #ff3b30;
+  border-color: #ff3b30;
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
 .inquiries-page__count {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);

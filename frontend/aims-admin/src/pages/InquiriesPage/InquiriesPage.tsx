@@ -38,6 +38,7 @@ export const InquiriesPage = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | ''>('');
   const [categoryFilter, setCategoryFilter] = useState<InquiryCategory | ''>('');
+  const [deleteMode, setDeleteMode] = useState(false);
   const limit = 20;
 
   const debouncedSearch = useDebounce(search, 300);
@@ -116,7 +117,17 @@ export const InquiriesPage = () => {
             </div>
           )}
         </div>
-        <span className="inquiries-page__count">총 {pagination?.total || 0}건</span>
+        <div className="inquiries-page__actions">
+          <button
+            type="button"
+            className={`inquiries-page__delete-toggle ${deleteMode ? 'inquiries-page__delete-toggle--active' : ''}`}
+            onClick={() => setDeleteMode(!deleteMode)}
+            title={deleteMode ? '삭제 모드 끄기' : '삭제 모드 켜기'}
+          >
+            {deleteMode ? '삭제 모드 끄기' : '삭제 모드'}
+          </button>
+          <span className="inquiries-page__count">총 {pagination?.total || 0}건</span>
+        </div>
       </div>
 
       <div className="inquiries-page__filters">
@@ -166,7 +177,7 @@ export const InquiriesPage = () => {
                 <th className="inquiries-table__th">메시지</th>
                 <th className="inquiries-table__th">등록일</th>
                 <th className="inquiries-table__th">최근 활동</th>
-                <th className="inquiries-table__th inquiries-table__th--action">삭제</th>
+                {deleteMode && <th className="inquiries-table__th inquiries-table__th--action">삭제</th>}
               </tr>
             </thead>
             <tbody>
@@ -207,17 +218,19 @@ export const InquiriesPage = () => {
                     <td className="inquiries-table__td">
                       {formatDate(inquiry.updatedAt)}
                     </td>
-                    <td className="inquiries-table__td inquiries-table__td--action">
-                      <button
-                        type="button"
-                        className="inquiries-table__delete-btn"
-                        onClick={(e) => handleDelete(e, inquiry._id, inquiry.title)}
-                        disabled={deleteMutation.isPending}
-                        title="삭제"
-                      >
-                        ✕
-                      </button>
-                    </td>
+                    {deleteMode && (
+                      <td className="inquiries-table__td inquiries-table__td--action">
+                        <button
+                          type="button"
+                          className="inquiries-table__delete-btn"
+                          onClick={(e) => handleDelete(e, inquiry._id, inquiry.title)}
+                          disabled={deleteMutation.isPending}
+                          title="삭제"
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
