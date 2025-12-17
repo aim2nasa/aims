@@ -49,7 +49,7 @@ export const UsersPage = () => {
         page,
         limit,
         search: debouncedSearch || undefined,
-        role: 'agent',  // 설계사만 조회 (관리자 제외)
+        // role 필터 제거 - 모든 사용자 조회 (admin, agent, user 포함)
       }),
   });
 
