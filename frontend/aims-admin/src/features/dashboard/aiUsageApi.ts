@@ -29,6 +29,16 @@ export interface DailyUsagePoint {
   request_count: number;
 }
 
+export interface DailyUsageBySourcePoint {
+  date: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+  request_count: number;
+}
+
 export interface HourlyUsagePoint {
   timestamp: string;
   rag_api: number;
@@ -53,6 +63,11 @@ export interface AIUsageOverviewResponse {
 export interface DailyUsageResponse {
   success: boolean;
   data: DailyUsagePoint[];
+}
+
+export interface DailyUsageBySourceResponse {
+  success: boolean;
+  data: DailyUsageBySourcePoint[];
 }
 
 export interface TopUsersResponse {
@@ -100,6 +115,16 @@ export const aiUsageApi = {
   },
 
   /**
+   * 시스템 전체 AI 사용량 통계 (날짜 범위)
+   */
+  getOverviewByRange: async (start: string, end: string): Promise<AIUsageOverview> => {
+    const res = await apiClient.get<AIUsageOverviewResponse>(
+      `/api/admin/ai-usage/overview?start=${start}&end=${end}`
+    );
+    return res.data;
+  },
+
+  /**
    * 시스템 일별 사용량
    */
   getDailyUsage: async (days: number = 30): Promise<DailyUsagePoint[]> => {
@@ -110,11 +135,31 @@ export const aiUsageApi = {
   },
 
   /**
+   * 시스템 일별 사용량 (날짜 범위, 소스별 분리)
+   */
+  getDailyUsageByRange: async (start: string, end: string): Promise<DailyUsageBySourcePoint[]> => {
+    const res = await apiClient.get<DailyUsageBySourceResponse>(
+      `/api/admin/ai-usage/daily?start=${start}&end=${end}`
+    );
+    return res.data;
+  },
+
+  /**
    * Top 10 사용자 목록
    */
   getTopUsers: async (days: number = 30): Promise<TopUser[]> => {
     const res = await apiClient.get<TopUsersResponse>(
       `/api/admin/ai-usage/top-users?days=${days}`
+    );
+    return res.data;
+  },
+
+  /**
+   * Top 10 사용자 목록 (날짜 범위)
+   */
+  getTopUsersByRange: async (start: string, end: string): Promise<TopUser[]> => {
+    const res = await apiClient.get<TopUsersResponse>(
+      `/api/admin/ai-usage/top-users?start=${start}&end=${end}`
     );
     return res.data;
   },

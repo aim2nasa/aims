@@ -399,6 +399,47 @@
   margin: 1px 0;
 }
 
+.ai-usage-page__tooltip-item--rag {
+  color: #007AFF;
+}
+
+.ai-usage-page__tooltip-item--summary {
+  color: #34C759;
+}
+
+.ai-usage-page__tooltip-item--embed {
+  color: #FF9500;
+}
+
+/* Year Selector */
+.ai-usage-page__year-selector {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  outline: none;
+}
+
+.ai-usage-page__year-selector:hover {
+  border-color: var(--color-primary);
+}
+
+.ai-usage-page__year-selector:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+/* Period Label */
+.ai-usage-page__period-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-tertiary);
+}
+
 /* Compact StatCard override */
 .ai-usage-page .stat-card {
   padding: var(--spacing-sm) var(--spacing-md);

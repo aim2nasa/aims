@@ -1,9 +1,10 @@
 /**
  * AI Usage Admin Page
  * @since 2025-12-13
+ * @updated 2025-12-17 - 주간/월간 기간 선택 UI 재설계
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart,
@@ -16,59 +17,195 @@ import {
   Legend,
 } from 'recharts';
 import { aiUsageApi, formatTokens, formatCost } from '@/features/dashboard/aiUsageApi';
+import type { DailyUsageBySourcePoint, HourlyUsagePoint } from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
 
-const PERIOD_OPTIONS = [
-  { value: 7, label: '7일' },
-  { value: 14, label: '14일' },
-  { value: 30, label: '30일' },
-];
+type PeriodType = 'daily' | 'weekly' | 'monthly';
 
-const CHART_PERIOD_OPTIONS = [
-  { value: 1, label: '1h', hours: 1 },
-  { value: 6, label: '6h', hours: 6 },
-  { value: 24, label: '1d', hours: 24 },
-  { value: 72, label: '3d', hours: 72 },
-  { value: 168, label: '7d', hours: 168 },
-];
+// 최근 24시간 범위 계산
+function getLast24HoursRange(): { start: string; end: string } {
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return {
+    start: yesterday.toISOString().split('T')[0],
+    end: now.toISOString().split('T')[0],
+  };
+}
 
-// 시간 포맷팅
-const formatTime = (timestamp: string) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-};
+// 현재 주간 범위 계산 (월~일)
+function getCurrentWeekRange(): { start: string; end: string } {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=일, 1=월, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
-const formatTooltipTime = (timestamp: string) => {
-  const date = new Date(timestamp);
-  return date.toLocaleString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-};
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  return {
+    start: monday.toISOString().split('T')[0],
+    end: sunday.toISOString().split('T')[0],
+  };
+}
+
+// 년도 범위 계산
+function getYearRange(year: number): { start: string; end: string } {
+  return {
+    start: `${year}-01-01`,
+    end: `${year}-12-31`,
+  };
+}
+
+// 요일 라벨
+const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+
+// 월 라벨
+const MONTH_LABELS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+// 일별 데이터를 월별로 집계
+function aggregateToMonthly(dailyData: DailyUsageBySourcePoint[]): Array<{
+  month: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total_tokens: number;
+}> {
+  const monthlyMap = new Map<string, {
+    rag_api: number;
+    n8n_docsummary: number;
+    doc_embedding: number;
+    total_tokens: number;
+  }>();
+
+  // 12개월 초기화
+  for (let m = 1; m <= 12; m++) {
+    const monthKey = String(m).padStart(2, '0');
+    monthlyMap.set(monthKey, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
+  }
+
+  for (const day of dailyData) {
+    const month = day.date.split('-')[1]; // YYYY-MM-DD에서 MM 추출
+    const entry = monthlyMap.get(month);
+    if (entry) {
+      entry.rag_api += day.rag_api;
+      entry.n8n_docsummary += day.n8n_docsummary;
+      entry.doc_embedding += day.doc_embedding;
+      entry.total_tokens += day.total_tokens;
+    }
+  }
+
+  return Array.from(monthlyMap.entries()).map(([month, data]) => ({
+    month: MONTH_LABELS[parseInt(month) - 1],
+    ...data,
+  }));
+}
+
+// 일별 데이터를 요일별로 매핑 (날짜 포함)
+function mapToWeekdays(dailyData: DailyUsageBySourcePoint[], weekStart: string): Array<{
+  day: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total_tokens: number;
+}> {
+  const startDate = new Date(weekStart);
+  const result: Array<{
+    day: string;
+    rag_api: number;
+    n8n_docsummary: number;
+    doc_embedding: number;
+    total_tokens: number;
+  }> = [];
+
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    const dateStr = currentDate.toISOString().split('T')[0];
+
+    // 날짜 포맷: "월 12/16"
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const dayLabel = `${WEEKDAY_LABELS[i]} ${month}/${day}`;
+
+    const dayData = dailyData.find(d => d.date === dateStr);
+    result.push({
+      day: dayLabel,
+      rag_api: dayData?.rag_api || 0,
+      n8n_docsummary: dayData?.n8n_docsummary || 0,
+      doc_embedding: dayData?.doc_embedding || 0,
+      total_tokens: dayData?.total_tokens || 0,
+    });
+  }
+
+  return result;
+}
+
+// 시간별 데이터를 차트용으로 매핑 (24시간)
+function mapToHours(hourlyData: HourlyUsagePoint[]): Array<{
+  hour: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total: number;
+}> {
+  // 24시간 초기화
+  const hourlyMap = new Map<number, { rag_api: number; n8n_docsummary: number; doc_embedding: number; total: number }>();
+  for (let h = 0; h < 24; h++) {
+    hourlyMap.set(h, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total: 0 });
+  }
+
+  // 데이터 매핑
+  for (const point of hourlyData) {
+    const hour = new Date(point.timestamp).getHours();
+    const entry = hourlyMap.get(hour);
+    if (entry) {
+      entry.rag_api += point.rag_api;
+      entry.n8n_docsummary += point.n8n_docsummary;
+      entry.doc_embedding += point.doc_embedding;
+      entry.total += point.total;
+    }
+  }
+
+  // 결과 배열 생성
+  return Array.from(hourlyMap.entries()).map(([hour, data]) => ({
+    hour: `${hour}시`,
+    ...data,
+  }));
+}
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string }>;
+  payload?: Array<{ name: string; value: number; dataKey: string }>;
   label?: string;
 }
+
+// dataKey to CSS class mapping
+const getTooltipColorClass = (dataKey: string): string => {
+  switch (dataKey) {
+    case 'rag_api':
+      return 'ai-usage-page__tooltip-item--rag';
+    case 'n8n_docsummary':
+      return 'ai-usage-page__tooltip-item--summary';
+    case 'doc_embedding':
+      return 'ai-usage-page__tooltip-item--embed';
+    default:
+      return '';
+  }
+};
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload || !label) return null;
 
   return (
     <div className="ai-usage-page__tooltip">
-      <p className="ai-usage-page__tooltip-time">{formatTooltipTime(label)}</p>
+      <p className="ai-usage-page__tooltip-time">{label}</p>
       {payload.map((entry, index) => (
-        <p key={index} className="ai-usage-page__tooltip-item" style={{ color: entry.color }}>
+        <p key={index} className={`ai-usage-page__tooltip-item ${getTooltipColorClass(entry.dataKey)}`}>
           {entry.name}: {formatTokens(entry.value)}
         </p>
       ))}
@@ -77,34 +214,70 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export const AIUsagePage = () => {
-  const [days, setDays] = useState(30);
-  const [chartHours, setChartHours] = useState(24);
+  const currentYear = new Date().getFullYear();
+  const [periodType, setPeriodType] = useState<PeriodType>('monthly');
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
+  // 기간 범위 계산
+  const dateRange = useMemo(() => {
+    if (periodType === 'daily') {
+      return getLast24HoursRange();
+    }
+    if (periodType === 'weekly') {
+      return getCurrentWeekRange();
+    }
+    return getYearRange(selectedYear);
+  }, [periodType, selectedYear]);
+
+  // 년도 옵션 (최근 3년)
+  const yearOptions = useMemo(() => {
+    return [currentYear, currentYear - 1, currentYear - 2];
+  }, [currentYear]);
+
+  // API 쿼리 - 24시간 모드는 days=1 사용, 그 외는 start/end 사용
   const { data: overview, isLoading: overviewLoading, isError: overviewError, refetch: refetchOverview } = useQuery({
-    queryKey: ['admin', 'ai-usage', 'overview', days],
-    queryFn: () => aiUsageApi.getOverview(days),
-    refetchInterval: 60000, // 1분마다 갱신
+    queryKey: ['admin', 'ai-usage', 'overview', periodType, dateRange.start, dateRange.end],
+    queryFn: () => periodType === 'daily'
+      ? aiUsageApi.getOverview(1)
+      : aiUsageApi.getOverviewByRange(dateRange.start, dateRange.end),
+    refetchInterval: 60000,
+  });
+
+  const { data: dailyUsageRaw, refetch: refetchDaily } = useQuery({
+    queryKey: ['admin', 'ai-usage', 'daily', dateRange.start, dateRange.end],
+    queryFn: () => aiUsageApi.getDailyUsageByRange(dateRange.start, dateRange.end),
+    refetchInterval: 60000,
+    gcTime: 5 * 60 * 1000,
+    staleTime: 30000,
+    enabled: periodType !== 'daily', // 24시간 모드에서는 hourly 사용
+  });
+
+  const { data: topUsers, refetch: refetchTopUsers } = useQuery({
+    queryKey: ['admin', 'ai-usage', 'top-users', periodType, dateRange.start, dateRange.end],
+    queryFn: () => periodType === 'daily'
+      ? aiUsageApi.getTopUsers(1)
+      : aiUsageApi.getTopUsersByRange(dateRange.start, dateRange.end),
+    refetchInterval: 300000,
   });
 
   const { data: hourlyUsageRaw, refetch: refetchHourly } = useQuery({
-    queryKey: ['admin', 'ai-usage', 'hourly', chartHours],
-    queryFn: () => aiUsageApi.getHourlyUsage(chartHours),
-    refetchInterval: 60000, // 1분마다 갱신
-    gcTime: 5 * 60 * 1000, // 5분 후 캐시 정리 (메모리 절약)
-    staleTime: 30000, // 30초간 fresh 상태 유지
+    queryKey: ['admin', 'ai-usage', 'hourly'],
+    queryFn: () => aiUsageApi.getHourlyUsage(24),
+    refetchInterval: 60000,
+    enabled: periodType === 'daily',
   });
 
-  // 메모리 절약을 위해 최대 300개 데이터 포인트로 제한 (다운샘플링)
-  const maxPoints = 300;
-  const hourlyUsage = hourlyUsageRaw && hourlyUsageRaw.length > maxPoints
-    ? hourlyUsageRaw.filter((_, i) => i % Math.ceil(hourlyUsageRaw.length / maxPoints) === 0)
-    : hourlyUsageRaw;
-
-  const { data: topUsers } = useQuery({
-    queryKey: ['admin', 'ai-usage', 'top-users', days],
-    queryFn: () => aiUsageApi.getTopUsers(days),
-    refetchInterval: 300000, // 5분 (변화가 느린 데이터)
-  });
+  // 차트 데이터 준비
+  const chartData = useMemo(() => {
+    if (periodType === 'daily') {
+      return hourlyUsageRaw ? mapToHours(hourlyUsageRaw) : [];
+    }
+    if (!dailyUsageRaw) return [];
+    if (periodType === 'weekly') {
+      return mapToWeekdays(dailyUsageRaw, dateRange.start);
+    }
+    return aggregateToMonthly(dailyUsageRaw);
+  }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start]);
 
   if (overviewLoading) {
     return <div className="ai-usage-page__loading">데이터를 불러오는 중...</div>;
@@ -128,8 +301,19 @@ export const AIUsagePage = () => {
   // 모든 데이터 새로고침
   const handleRefreshAll = () => {
     refetchOverview();
-    refetchHourly();
+    refetchDaily();
+    refetchTopUsers();
+    if (periodType === 'daily') {
+      refetchHourly();
+    }
   };
+
+  // 기간 표시 텍스트
+  const periodLabel = periodType === 'daily'
+    ? '최근 24시간'
+    : periodType === 'weekly'
+      ? `${dateRange.start} ~ ${dateRange.end}`
+      : `${selectedYear}년`;
 
   return (
     <div className="ai-usage-page">
@@ -137,17 +321,42 @@ export const AIUsagePage = () => {
         <h1 className="ai-usage-page__title">AI 사용량 현황</h1>
         <div className="ai-usage-page__header-right">
           <div className="ai-usage-page__period-selector">
-            {PERIOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={`ai-usage-page__period-btn ${days === opt.value ? 'ai-usage-page__period-btn--active' : ''}`}
-                onClick={() => setDays(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              className={`ai-usage-page__period-btn ${periodType === 'daily' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('daily')}
+            >
+              24시간
+            </button>
+            <button
+              type="button"
+              className={`ai-usage-page__period-btn ${periodType === 'weekly' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('weekly')}
+            >
+              주간
+            </button>
+            <button
+              type="button"
+              className={`ai-usage-page__period-btn ${periodType === 'monthly' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('monthly')}
+            >
+              월간
+            </button>
           </div>
+          {periodType === 'monthly' && (
+            <select
+              className="ai-usage-page__year-selector"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              aria-label="년도 선택"
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}년
+                </option>
+              ))}
+            </select>
+          )}
           <div className="ai-usage-page__actions">
             <span className="ai-usage-page__refresh-info">
               1분마다 자동 갱신
@@ -161,7 +370,9 @@ export const AIUsagePage = () => {
 
       {/* 전체 통계 */}
       <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">전체 통계</h2>
+        <h2 className="ai-usage-page__section-title">
+          전체 통계 <span className="ai-usage-page__period-label">({periodLabel})</span>
+        </h2>
         <div className="ai-usage-page__stats-grid">
           <StatCard
             title="총 토큰"
@@ -171,7 +382,7 @@ export const AIUsagePage = () => {
           <StatCard
             title="예상 비용"
             value={formatCost(overview?.estimated_cost_usd || 0)}
-            subtitle={`최근 ${days}일`}
+            subtitle="기간 내 사용"
           />
           <StatCard
             title="활성 사용자"
@@ -183,7 +394,9 @@ export const AIUsagePage = () => {
 
       {/* 소스별 분포 */}
       <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">소스별 사용량</h2>
+        <h2 className="ai-usage-page__section-title">
+          소스별 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
+        </h2>
         <div className="ai-usage-page__source-grid">
           <div className="source-card source-card--rag">
             <span className="source-card__label">RAG API</span>
@@ -203,37 +416,22 @@ export const AIUsagePage = () => {
         </div>
       </section>
 
-      {/* 시간별 라인 차트 */}
+      {/* 차트 */}
       <section className="ai-usage-page__section">
-        <div className="ai-usage-page__chart-header">
-          <h2 className="ai-usage-page__section-title">사용량 추이</h2>
-          <div className="ai-usage-page__chart-period">
-            {CHART_PERIOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={`ai-usage-page__chart-period-btn ${chartHours === opt.hours ? 'ai-usage-page__chart-period-btn--active' : ''}`}
-                onClick={() => setChartHours(opt.hours)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <h2 className="ai-usage-page__section-title">
+          사용량 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
+        </h2>
         <div className="ai-usage-page__line-chart-container">
-          {!hourlyUsage || hourlyUsage.length === 0 ? (
+          {chartData.length === 0 ? (
             <div className="ai-usage-page__chart-empty">사용 데이터가 없습니다</div>
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={hourlyUsage} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis
-                  dataKey="timestamp"
-                  tickFormatter={formatTime}
-                  tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+                  dataKey={periodType === 'daily' ? 'hour' : periodType === 'weekly' ? 'day' : 'month'}
+                  tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
                   stroke="var(--color-border)"
-                  interval="preserveStartEnd"
-                  minTickGap={50}
                 />
                 <YAxis
                   tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
@@ -257,7 +455,9 @@ export const AIUsagePage = () => {
 
       {/* Top 사용자 */}
       <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">Top 10 사용자</h2>
+        <h2 className="ai-usage-page__section-title">
+          Top 10 사용자 <span className="ai-usage-page__period-label">({periodLabel})</span>
+        </h2>
         <div className="ai-usage-page__table-container">
           <table className="ai-usage-page__table">
             <thead>

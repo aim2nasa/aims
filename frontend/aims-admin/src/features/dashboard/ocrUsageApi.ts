@@ -25,6 +25,13 @@ export interface HourlyOCRPoint {
   error: number;  // 실패 건수
 }
 
+export interface DailyOCRPoint {
+  date: string;      // YYYY-MM-DD
+  done: number;      // 성공 건수
+  error: number;     // 실패 건수
+  page_count: number;
+}
+
 export interface TopOCRUser {
   rank: number;
   user_id: string;
@@ -62,6 +69,11 @@ interface OCRUsageOverviewResponse {
 interface HourlyOCRResponse {
   success: boolean;
   data: HourlyOCRPoint[];
+}
+
+interface DailyOCRResponse {
+  success: boolean;
+  data: DailyOCRPoint[];
 }
 
 interface TopOCRUsersResponse {
@@ -109,6 +121,16 @@ export const ocrUsageApi = {
   },
 
   /**
+   * OCR 전체 통계 (날짜 범위)
+   */
+  getOverviewByRange: async (start: string, end: string): Promise<OCRUsageOverview> => {
+    const res = await apiClient.get<OCRUsageOverviewResponse>(
+      `/api/admin/ocr-usage/overview?start=${start}&end=${end}`
+    );
+    return res.data;
+  },
+
+  /**
    * 시간별 OCR 처리 추이
    */
   getHourlyUsage: async (hours: number = 24): Promise<HourlyOCRPoint[]> => {
@@ -119,11 +141,31 @@ export const ocrUsageApi = {
   },
 
   /**
+   * 일별 OCR 처리 추이 (날짜 범위)
+   */
+  getDailyUsageByRange: async (start: string, end: string): Promise<DailyOCRPoint[]> => {
+    const res = await apiClient.get<DailyOCRResponse>(
+      `/api/admin/ocr-usage/daily?start=${start}&end=${end}`
+    );
+    return res.data;
+  },
+
+  /**
    * Top OCR 사용자 목록
    */
   getTopUsers: async (days: number = 30): Promise<TopOCRUser[]> => {
     const res = await apiClient.get<TopOCRUsersResponse>(
       `/api/admin/ocr-usage/top-users?days=${days}`
+    );
+    return res.data;
+  },
+
+  /**
+   * Top OCR 사용자 목록 (날짜 범위)
+   */
+  getTopUsersByRange: async (start: string, end: string): Promise<TopOCRUser[]> => {
+    const res = await apiClient.get<TopOCRUsersResponse>(
+      `/api/admin/ocr-usage/top-users?start=${start}&end=${end}`
     );
     return res.data;
   },

@@ -180,17 +180,16 @@ async function getDailyUsage(analyticsDb, userId, days = 30) {
 /**
  * 시스템 전체 AI 토큰 사용량 통계 (관리자용)
  * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
- * @param {number} days - 조회 기간 (일)
+ * @param {Date} startDate - 시작일
+ * @param {Date} endDate - 종료일
  * @returns {Promise<Object>} 시스템 통계
  */
-async function getSystemOverview(analyticsDb, days = 30) {
+async function getSystemOverview(analyticsDb, startDate, endDate) {
   const collection = analyticsDb.collection('ai_token_usage');
-  const since = new Date();
-  since.setDate(since.getDate() - days);
 
   // 전체 통계
   const totalPipeline = [
-    { $match: { timestamp: { $gte: since } } },
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: null,
@@ -205,7 +204,7 @@ async function getSystemOverview(analyticsDb, days = 30) {
 
   // 소스별 통계
   const bySourcePipeline = [
-    { $match: { timestamp: { $gte: since } } },
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: '$source',
@@ -218,14 +217,14 @@ async function getSystemOverview(analyticsDb, days = 30) {
 
   // 사용자 수
   const userCountPipeline = [
-    { $match: { timestamp: { $gte: since } } },
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
     { $group: { _id: '$user_id' } },
     { $count: 'count' }
   ];
 
   // Top 사용자
   const topUsersPipeline = [
-    { $match: { timestamp: { $gte: since } } },
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
     {
       $group: {
         _id: '$user_id',
@@ -259,8 +258,11 @@ async function getSystemOverview(analyticsDb, days = 30) {
     bySource[result._id] = result.total_tokens;
   }
 
+  // 기간 일수 계산
+  const periodDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
   return {
-    period_days: days,
+    period_days: periodDays,
     total_tokens: total.total_tokens,
     prompt_tokens: total.prompt_tokens,
     completion_tokens: total.completion_tokens,
@@ -428,6 +430,106 @@ async function getTopUsers(analyticsDb, days = 30, limit = 10) {
 }
 
 /**
+ * Top 사용자 목록 조회 - 날짜 범위 버전 (관리자용)
+ * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
+ * @param {Date} startDate - 시작일
+ * @param {Date} endDate - 종료일
+ * @param {number} limit - 사용자 수 제한
+ * @returns {Promise<Array>} Top 사용자 목록
+ */
+async function getTopUsersWithRange(analyticsDb, startDate, endDate, limit = 10) {
+  const collection = analyticsDb.collection('ai_token_usage');
+
+  const pipeline = [
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
+    {
+      $group: {
+        _id: '$user_id',
+        total_tokens: { $sum: '$total_tokens' },
+        estimated_cost_usd: { $sum: '$estimated_cost_usd' },
+        request_count: { $sum: 1 }
+      }
+    },
+    { $sort: { total_tokens: -1 } },
+    { $limit: limit }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+
+  return results.map(u => ({
+    user_id: u._id,
+    total_tokens: u.total_tokens,
+    estimated_cost_usd: Math.round(u.estimated_cost_usd * 1000000) / 1000000,
+    request_count: u.request_count
+  }));
+}
+
+/**
+ * 일별 AI 토큰 사용량 조회 - 날짜 범위 버전 (관리자용)
+ * @param {Db} analyticsDb - MongoDB aims_analytics 인스턴스
+ * @param {Date} startDate - 시작일
+ * @param {Date} endDate - 종료일
+ * @returns {Promise<Array>} 일별 사용량
+ */
+async function getDailyUsageByRange(analyticsDb, startDate, endDate) {
+  const collection = analyticsDb.collection('ai_token_usage');
+
+  const pipeline = [
+    { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
+    {
+      $group: {
+        _id: {
+          date: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp', timezone: 'Asia/Seoul' } },
+          source: '$source'
+        },
+        total_tokens: { $sum: '$total_tokens' },
+        estimated_cost_usd: { $sum: '$estimated_cost_usd' },
+        request_count: { $sum: 1 }
+      }
+    },
+    { $sort: { '_id.date': 1 } }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+
+  // 날짜별로 소스별 데이터 집계
+  const dateMap = new Map();
+  for (const r of results) {
+    const date = r._id.date;
+    const source = r._id.source;
+
+    if (!dateMap.has(date)) {
+      dateMap.set(date, {
+        date,
+        rag_api: 0,
+        n8n_docsummary: 0,
+        doc_embedding: 0,
+        total_tokens: 0,
+        estimated_cost_usd: 0,
+        request_count: 0
+      });
+    }
+
+    const entry = dateMap.get(date);
+    if (source === 'rag_api') {
+      entry.rag_api = r.total_tokens;
+    } else if (source === 'n8n_docsummary') {
+      entry.n8n_docsummary = r.total_tokens;
+    } else if (source === 'doc_embedding') {
+      entry.doc_embedding = r.total_tokens;
+    }
+    entry.total_tokens += r.total_tokens;
+    entry.estimated_cost_usd += r.estimated_cost_usd;
+    entry.request_count += r.request_count;
+  }
+
+  return Array.from(dateMap.values()).map(d => ({
+    ...d,
+    estimated_cost_usd: Math.round(d.estimated_cost_usd * 1000000) / 1000000
+  }));
+}
+
+/**
  * 비용 포맷팅
  * @param {number} costUsd - 비용 (USD)
  * @returns {string} 포맷된 비용
@@ -472,8 +574,10 @@ module.exports = {
   logTokenUsage,
   getUserTokenUsage,
   getDailyUsage,
+  getDailyUsageByRange,
   getSystemOverview,
   getTopUsers,
+  getTopUsersWithRange,
   getHourlyUsageBySource,
   formatCost,
   formatTokens,

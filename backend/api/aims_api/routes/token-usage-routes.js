@@ -10,8 +10,10 @@ const {
   logTokenUsage,
   getUserTokenUsage,
   getDailyUsage,
+  getDailyUsageByRange,
   getSystemOverview,
   getTopUsers,
+  getTopUsersWithRange,
   getHourlyUsageBySource,
   formatCost,
   formatTokens,
@@ -221,18 +223,34 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    * 시스템 전체 AI 토큰 사용량 통계 (관리자용)
    *
    * Query:
-   * - days: number (기본값: 30)
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
    */
   router.get('/admin/ai-usage/overview', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const days = parseInt(req.query.days) || 30;
+      // 기간 계산
+      let startDate, endDate;
+      if (req.query.start && req.query.end) {
+        startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = parseInt(req.query.days) || 30;
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+      }
 
-      const overview = await getSystemOverview(analyticsDb, days);
+      const overview = await getSystemOverview(analyticsDb, startDate, endDate);
 
       res.json({
         success: true,
         data: {
           ...overview,
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
           formatted: {
             total_tokens: formatTokens(overview.total_tokens),
             estimated_cost: formatCost(overview.estimated_cost_usd)
@@ -255,14 +273,27 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    * 시스템 전체 일별 AI 토큰 사용량 (관리자용)
    *
    * Query:
-   * - days: number (기본값: 30)
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
    */
   router.get('/admin/ai-usage/daily', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const days = parseInt(req.query.days) || 30;
+      let dailyUsage;
 
-      // userId를 null로 전달하면 전체 시스템 통계
-      const dailyUsage = await getDailyUsage(analyticsDb, null, days);
+      if (req.query.start && req.query.end) {
+        // start/end 범위로 조회
+        const startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+
+        dailyUsage = await getDailyUsageByRange(analyticsDb, startDate, endDate);
+      } else {
+        // 기존 days 파라미터로 조회
+        const days = parseInt(req.query.days) || 30;
+        dailyUsage = await getDailyUsage(analyticsDb, null, days);
+      }
 
       res.json({
         success: true,
@@ -284,13 +315,27 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    * Top 10 AI 사용자 목록 (관리자용)
    *
    * Query:
-   * - days: number (기본값: 30)
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
    */
   router.get('/admin/ai-usage/top-users', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const days = parseInt(req.query.days) || 30;
+      // 기간 계산
+      let startDate, endDate;
+      if (req.query.start && req.query.end) {
+        startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = parseInt(req.query.days) || 30;
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+      }
 
-      const topUsersList = await getTopUsers(analyticsDb, days, 10);
+      const topUsersList = await getTopUsersWithRange(analyticsDb, startDate, endDate, 10);
 
       // 사용자 이름 조회
       const { ObjectId } = require('mongodb');

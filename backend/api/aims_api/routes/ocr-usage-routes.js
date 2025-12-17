@@ -35,37 +35,73 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    * OCR 전체 통계
    *
    * Query:
-   * - days: number (기본값: 30)
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
    */
+  // 날짜 문자열(ISO/KST offset)을 Date로 변환하는 헬퍼 - aggregation $addFields용
+  const dateConversionFields = {
+    done_at_date: {
+      $cond: {
+        if: { $and: [{ $ne: ['$ocr.done_at', null] }, { $ne: [{ $type: '$ocr.done_at' }, 'missing'] }] },
+        then: {
+          $cond: {
+            if: { $eq: [{ $type: '$ocr.done_at' }, 'string'] },
+            then: { $dateFromString: { dateString: '$ocr.done_at', onError: null } },
+            else: '$ocr.done_at'
+          }
+        },
+        else: null
+      }
+    },
+    failed_at_date: {
+      $cond: {
+        if: { $and: [{ $ne: ['$ocr.failed_at', null] }, { $ne: [{ $type: '$ocr.failed_at' }, 'missing'] }] },
+        then: {
+          $cond: {
+            if: { $eq: [{ $type: '$ocr.failed_at' }, 'string'] },
+            then: { $dateFromString: { dateString: '$ocr.failed_at', onError: null } },
+            else: '$ocr.failed_at'
+          }
+        },
+        else: null
+      }
+    }
+  };
+
   router.get('/admin/ocr-usage/overview', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const days = parseInt(req.query.days) || 30;
       const filesCollection = db.collection('files');
 
-      // 기간 계산
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      const startOfMonthISO = startOfMonth.toISOString();
+      // 기간 계산 (start/end 또는 days)
+      let startDate, endDate;
+      if (req.query.start && req.query.end) {
+        startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = parseInt(req.query.days) || 30;
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+      }
 
-      const daysAgo = new Date();
-      daysAgo.setDate(daysAgo.getDate() - days);
-
-      const [ocrThisMonth, ocrTotal, ocrPending, ocrProcessing, ocrFailed, activeUsersResult, pagesThisMonthResult, pagesTotalResult] = await Promise.all([
-        // 이번 달 OCR 처리 수 (성공+실패)
-        filesCollection.countDocuments({
-          $and: [
-            { 'ocr.status': { $in: ['done', 'error'] } },
-            {
+      const [ocrInPeriodResult, ocrTotal, ocrPending, ocrProcessing, ocrFailed, activeUsersResult, pagesInPeriodResult, pagesTotalResult] = await Promise.all([
+        // 선택 기간 OCR 처리 수 (성공+실패) - aggregation으로 날짜 변환 후 비교
+        filesCollection.aggregate([
+          { $match: { 'ocr.status': { $in: ['done', 'error'] } } },
+          { $addFields: dateConversionFields },
+          {
+            $match: {
               $or: [
-                { 'ocr.done_at': { $gte: startOfMonth } },
-                { 'ocr.done_at': { $gte: startOfMonthISO } },
-                { 'ocr.failed_at': { $gte: startOfMonth } },
-                { 'ocr.failed_at': { $gte: startOfMonthISO } }
+                { done_at_date: { $gte: startDate, $lte: endDate } },
+                { failed_at_date: { $gte: startDate, $lte: endDate } }
               ]
             }
-          ]
-        }),
+          },
+          { $count: 'count' }
+        ]).toArray(),
         // 전체 OCR 처리 수 (성공+실패)
         filesCollection.countDocuments({
           'ocr.status': { $in: ['done', 'error'] }
@@ -92,31 +128,19 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             { 'stages.ocr.status': 'error' }
           ]
         }),
-        // 활성 사용자 (최근 N일 내 OCR 처리한 사용자)
+        // 활성 사용자 (선택 기간 내 OCR 처리한 사용자)
         filesCollection.aggregate([
-          {
-            $match: {
-              $or: [
-                { 'ocr.done_at': { $gte: daysAgo } },
-                { 'ocr.done_at': { $gte: daysAgo.toISOString() } }
-              ],
-              ownerId: { $exists: true, $ne: null }
-            }
-          },
+          { $match: { 'ocr.status': 'done', ownerId: { $exists: true, $ne: null } } },
+          { $addFields: dateConversionFields },
+          { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
           { $group: { _id: '$ownerId' } },
           { $count: 'count' }
         ]).toArray(),
-        // 이번 달 페이지 수 (성공한 OCR만)
+        // 선택 기간 페이지 수 (성공한 OCR만)
         filesCollection.aggregate([
-          {
-            $match: {
-              'ocr.status': 'done',
-              $or: [
-                { 'ocr.done_at': { $gte: startOfMonth } },
-                { 'ocr.done_at': { $gte: startOfMonthISO } }
-              ]
-            }
-          },
+          { $match: { 'ocr.status': 'done' } },
+          { $addFields: dateConversionFields },
+          { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
           {
             $group: {
               _id: null,
@@ -140,25 +164,31 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         ]).toArray()
       ]);
 
+      const ocrInPeriod = ocrInPeriodResult[0]?.count || 0;
+
       // 페이지 수 및 예상 비용 계산
-      const pagesThisMonth = pagesThisMonthResult[0]?.total || 0;
+      const pagesInPeriod = pagesInPeriodResult[0]?.total || 0;
       const pagesTotal = pagesTotalResult[0]?.total || 0;
-      const costThisMonth = calculateOCRCost(pagesThisMonth);
+      const costInPeriod = calculateOCRCost(pagesInPeriod);
 
       res.json({
         success: true,
         data: {
-          period_days: days,
-          ocr_this_month: ocrThisMonth,
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          ocr_count: ocrInPeriod,
           ocr_total: ocrTotal,
           active_users: activeUsersResult[0]?.count || 0,
           ocr_pending: ocrPending,
           ocr_processing: ocrProcessing,
           ocr_failed: ocrFailed,
-          pages_this_month: pagesThisMonth,
+          page_count: pagesInPeriod,
           pages_total: pagesTotal,
-          estimated_cost_usd: costThisMonth.usd,
-          estimated_cost_krw: costThisMonth.krw
+          estimated_cost_usd: costInPeriod.usd,
+          estimated_cost_krw: costInPeriod.krw,
+          // 하위 호환성을 위해 기존 필드 유지
+          ocr_this_month: ocrInPeriod,
+          pages_this_month: pagesInPeriod
         }
       });
     } catch (error) {
@@ -202,28 +232,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         return `${year}-${month}-${day}T${hour}:00:00`;
       };
 
-      // 시간별 OCR 성공 집계
+      // 시간별 OCR 성공 집계 - 먼저 날짜 변환 후 필터링
       const donePipeline = [
-        {
-          $match: {
-            $or: [
-              { 'ocr.done_at': { $gte: since } },
-              { 'ocr.done_at': { $gte: since.toISOString() } }
-            ],
-            'ocr.status': 'done'
-          }
-        },
-        {
-          $addFields: {
-            done_at_date: {
-              $cond: {
-                if: { $eq: [{ $type: '$ocr.done_at' }, 'string'] },
-                then: { $dateFromString: { dateString: '$ocr.done_at' } },
-                else: '$ocr.done_at'
-              }
-            }
-          }
-        },
+        { $match: { 'ocr.status': 'done', 'ocr.done_at': { $exists: true } } },
+        { $addFields: dateConversionFields },
+        { $match: { done_at_date: { $gte: since } } },
         {
           $group: {
             _id: {
@@ -239,28 +252,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         { $sort: { _id: 1 } }
       ];
 
-      // 시간별 OCR 실패 집계
+      // 시간별 OCR 실패 집계 - 먼저 날짜 변환 후 필터링
       const errorPipeline = [
-        {
-          $match: {
-            $or: [
-              { 'ocr.failed_at': { $gte: since } },
-              { 'ocr.failed_at': { $gte: since.toISOString() } }
-            ],
-            'ocr.status': 'error'
-          }
-        },
-        {
-          $addFields: {
-            failed_at_date: {
-              $cond: {
-                if: { $eq: [{ $type: '$ocr.failed_at' }, 'string'] },
-                then: { $dateFromString: { dateString: '$ocr.failed_at' } },
-                else: '$ocr.failed_at'
-              }
-            }
-          }
-        },
+        { $match: { 'ocr.status': 'error', 'ocr.failed_at': { $exists: true } } },
+        { $addFields: dateConversionFields },
+        { $match: { failed_at_date: { $gte: since } } },
         {
           $group: {
             _id: {
@@ -322,42 +318,166 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
   });
 
   /**
+   * GET /api/admin/ocr-usage/daily
+   * 일별 OCR 처리 추이 (성공/실패 분리)
+   *
+   * Query:
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   *
+   * Response:
+   * - date: YYYY-MM-DD
+   * - done: 성공 건수
+   * - error: 실패 건수
+   * - page_count: 페이지 수
+   */
+  router.get('/admin/ocr-usage/daily', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const filesCollection = db.collection('files');
+
+      // 기간 계산
+      let startDate, endDate;
+      if (req.query.start && req.query.end) {
+        startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = parseInt(req.query.days) || 30;
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+      }
+
+      // 일별 OCR 성공 집계 - 날짜 변환 후 필터링
+      const donePipeline = [
+        { $match: { 'ocr.status': 'done', 'ocr.done_at': { $exists: true } } },
+        { $addFields: dateConversionFields },
+        { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$done_at_date',
+                timezone: 'Asia/Seoul'
+              }
+            },
+            count: { $sum: 1 },
+            page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ];
+
+      // 일별 OCR 실패 집계 - 날짜 변환 후 필터링
+      const errorPipeline = [
+        { $match: { 'ocr.status': 'error', 'ocr.failed_at': { $exists: true } } },
+        { $addFields: dateConversionFields },
+        { $match: { failed_at_date: { $gte: startDate, $lte: endDate } } },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$failed_at_date',
+                timezone: 'Asia/Seoul'
+              }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ];
+
+      const [doneResults, errorResults] = await Promise.all([
+        filesCollection.aggregate(donePipeline).toArray(),
+        filesCollection.aggregate(errorPipeline).toArray()
+      ]);
+
+      // 결과를 Map으로 변환
+      const doneMap = new Map();
+      const pageCountMap = new Map();
+      for (const r of doneResults) {
+        doneMap.set(r._id, r.count);
+        pageCountMap.set(r._id, r.page_count);
+      }
+
+      const errorMap = new Map();
+      for (const r of errorResults) {
+        errorMap.set(r._id, r.count);
+      }
+
+      // 모든 날짜 슬롯 생성 (빈 날짜도 포함)
+      const usageData = [];
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        usageData.push({
+          date: dateStr,
+          done: doneMap.get(dateStr) || 0,
+          error: errorMap.get(dateStr) || 0,
+          page_count: pageCountMap.get(dateStr) || 0
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      res.json({
+        success: true,
+        data: usageData
+      });
+    } catch (error) {
+      console.error('[GET /api/admin/ocr-usage/daily] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: '일별 OCR 사용량 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
    * GET /api/admin/ocr-usage/top-users
    * Top OCR 사용자 목록
    *
    * Query:
-   * - days: number (기본값: 30)
+   * - days: number (기본값: 30) - start/end가 없을 때 사용
+   * - start: string (YYYY-MM-DD) - 기간 시작일
+   * - end: string (YYYY-MM-DD) - 기간 종료일
    * - limit: number (기본값: 10)
    */
   router.get('/admin/ocr-usage/top-users', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const days = parseInt(req.query.days) || 30;
       const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-
       const filesCollection = db.collection('files');
       const usersCollection = db.collection('users');
 
-      const daysAgo = new Date();
-      daysAgo.setDate(daysAgo.getDate() - days);
+      // 기간 계산
+      let startDate, endDate;
+      if (req.query.start && req.query.end) {
+        startDate = new Date(req.query.start);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(req.query.end);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = parseInt(req.query.days) || 30;
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+      }
 
-      // 사용자별 OCR 성공 집계 (페이지 수 포함)
+      // 사용자별 OCR 성공 집계 (페이지 수 포함) - 날짜 변환 후 필터링
       const successPipeline = [
-        {
-          $match: {
-            $or: [
-              { 'ocr.done_at': { $gte: daysAgo } },
-              { 'ocr.done_at': { $gte: daysAgo.toISOString() } }
-            ],
-            'ocr.status': 'done',
-            ownerId: { $exists: true, $ne: null }
-          }
-        },
+        { $match: { 'ocr.status': 'done', 'ocr.done_at': { $exists: true }, ownerId: { $exists: true, $ne: null } } },
+        { $addFields: dateConversionFields },
+        { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
         {
           $group: {
             _id: '$ownerId',
             ocr_count: { $sum: 1 },
             page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } },
-            last_ocr_at: { $max: '$ocr.done_at' }
+            last_ocr_at: { $max: '$done_at_date' }
           }
         },
         { $sort: { ocr_count: -1 } },

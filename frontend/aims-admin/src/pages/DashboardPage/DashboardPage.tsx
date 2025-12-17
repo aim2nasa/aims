@@ -119,10 +119,26 @@ export const DashboardPage = () => {
           <button
             type="button"
             className="quick-link-card"
+            onClick={() => navigate('/dashboard/ocr-usage')}
+          >
+            <span className="quick-link-card__title">OCR 사용량</span>
+            <span className="quick-link-card__subtitle">처리 현황 및 비용</span>
+          </button>
+          <button
+            type="button"
+            className="quick-link-card"
+            onClick={() => navigate('/dashboard/ai-usage')}
+          >
+            <span className="quick-link-card__title">AI 사용량</span>
+            <span className="quick-link-card__subtitle">토큰 사용 현황</span>
+          </button>
+          <button
+            type="button"
+            className="quick-link-card"
             onClick={() => navigate('/dashboard/documents')}
           >
             <span className="quick-link-card__title">문서 처리</span>
-            <span className="quick-link-card__subtitle">OCR/임베딩 대기열 관리</span>
+            <span className="quick-link-card__subtitle">OCR/임베딩 대기열</span>
           </button>
           <button
             type="button"
