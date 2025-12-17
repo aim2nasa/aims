@@ -200,17 +200,7 @@ export default function InquiryView({
     </button>
   ) : undefined;
 
-  // 새 문의 버튼 (목록 뷰에서)
-  const titleAccessory = viewMode === 'list' ? (
-    <button
-      type="button"
-      className="inquiry-create-button"
-      onClick={() => setViewMode('create')}
-    >
-      <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.SEMIBOLD} />
-      새 문의
-    </button>
-  ) : undefined;
+  // titleAccessory 제거 - 새 문의 버튼은 필터 줄에 배치
 
   // 목록 뷰 컨텐츠
   const renderListContent = () => (
@@ -250,6 +240,16 @@ export default function InquiryView({
             해결({statusCounts.resolved})
           </button>
         </div>
+        <button
+          type="button"
+          className="inquiry-create-button"
+          onClick={() => setViewMode('create')}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          새 문의
+        </button>
       </div>
 
       {/* 목록 */}
@@ -263,7 +263,9 @@ export default function InquiryView({
           <p className="inquiry-empty-title">등록된 문의가 없습니다</p>
           <p className="inquiry-empty-desc">문의 사항이 있으시면 새 문의를 등록해주세요</p>
           <button type="button" className="inquiry-empty-button" onClick={() => setViewMode('create')}>
-            <SFSymbol name="plus" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
             첫 문의 등록하기
           </button>
         </div>
@@ -635,7 +637,6 @@ export default function InquiryView({
       title={getTitle()}
       titleIcon={inquiryIcon}
       titleLeftAccessory={titleLeftAccessory}
-      titleAccessory={titleAccessory}
       onClose={onClose}
     >
       {viewMode === 'list' && renderListContent()}
