@@ -266,18 +266,30 @@ export const InquiryDetailPage = () => {
               {/* 첨부파일 목록 */}
               {replyFiles.length > 0 && (
                 <div className="inquiry-detail-page__files">
-                  {replyFiles.map((file, idx) => (
-                    <div key={idx} className="inquiry-detail-page__file-item">
-                      <span className="inquiry-detail-page__file-name">{file.name}</span>
-                      <button
-                        type="button"
-                        className="inquiry-detail-page__file-remove"
-                        onClick={() => handleRemoveFile(idx)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  {replyFiles.map((file, idx) => {
+                    const isImage = file.type.startsWith('image/');
+                    return (
+                      <div key={idx} className={`inquiry-detail-page__file-item ${isImage ? 'inquiry-detail-page__file-item--image' : ''}`}>
+                        {isImage ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="inquiry-detail-page__file-thumbnail"
+                            onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                          />
+                        ) : (
+                          <span className="inquiry-detail-page__file-name">{file.name}</span>
+                        )}
+                        <button
+                          type="button"
+                          className="inquiry-detail-page__file-remove"
+                          onClick={() => handleRemoveFile(idx)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <div className="inquiry-detail-page__reply-actions">

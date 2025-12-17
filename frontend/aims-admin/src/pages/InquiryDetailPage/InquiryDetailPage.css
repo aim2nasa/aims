@@ -423,7 +423,7 @@
 .inquiry-detail-page__files {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
 }
 
@@ -436,6 +436,39 @@
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+/* 이미지 파일 아이템 */
+.inquiry-detail-page__file-item--image {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border-radius: var(--radius-md);
+  overflow: visible;
+}
+
+.inquiry-detail-page__file-thumbnail {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.inquiry-detail-page__file-item--image .inquiry-detail-page__file-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 12px;
+}
+
+.inquiry-detail-page__file-item--image .inquiry-detail-page__file-remove:hover {
+  background: var(--color-error);
 }
 
 .inquiry-detail-page__file-name {

@@ -357,21 +357,35 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
           </div>
           {files.length > 0 && (
             <ul className="inquiry-file-list">
-              {files.map((file, index) => (
-                <li key={index} className="inquiry-file-item">
-                  <SFSymbol name="doc" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                  <span>{file.name} ({formatFileSize(file.size)})</span>
-                  <button
-                    type="button"
-                    className="inquiry-file-remove"
-                    onClick={() => handleRemoveFile(index)}
-                    title="파일 삭제"
-                    aria-label="파일 삭제"
-                  >
-                    <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
-                  </button>
-                </li>
-              ))}
+              {files.map((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                return (
+                  <li key={index} className={`inquiry-file-item ${isImage ? 'inquiry-file-item--image' : ''}`}>
+                    {isImage ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="inquiry-file-thumbnail"
+                        onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                      />
+                    ) : (
+                      <>
+                        <SFSymbol name="doc" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                        <span>{file.name} ({formatFileSize(file.size)})</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="inquiry-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                      title="파일 삭제"
+                      aria-label="파일 삭제"
+                    >
+                      <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -503,21 +517,38 @@ export default function InquiryView({ visible, onClose }: InquiryViewProps) {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleFileDrop(e, true)}
               />
-              <div className="inquiry-reply-actions">
-                {messageFiles.length > 0 ? (
-                  <ul className="inquiry-reply-files">
-                    {messageFiles.map((file, index) => (
-                      <li key={index}>
-                        <span>{file.name}</span>
-                        <button type="button" onClick={() => handleRemoveFile(index, true)} title="파일 삭제" aria-label="파일 삭제">
+              {/* 첨부파일 프리뷰 */}
+              {messageFiles.length > 0 && (
+                <div className="inquiry-reply-file-previews">
+                  {messageFiles.map((file, index) => {
+                    const isImage = file.type.startsWith('image/');
+                    return (
+                      <div key={index} className={`inquiry-reply-file-item ${isImage ? 'inquiry-reply-file-item--image' : ''}`}>
+                        {isImage ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="inquiry-reply-file-thumbnail"
+                            onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                          />
+                        ) : (
+                          <span className="inquiry-reply-file-name">{file.name}</span>
+                        )}
+                        <button
+                          type="button"
+                          className="inquiry-reply-file-remove"
+                          onClick={() => handleRemoveFile(index, true)}
+                          title="파일 삭제"
+                          aria-label="파일 삭제"
+                        >
                           <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} />
                         </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div />
-                )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="inquiry-reply-actions">
                 <div className="inquiry-reply-buttons">
                   <Tooltip content="파일 첨부">
                     <button

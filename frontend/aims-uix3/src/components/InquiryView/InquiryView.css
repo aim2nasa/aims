@@ -571,6 +571,41 @@ html[data-theme="dark"] .inquiry-file-remove {
   color: white;
 }
 
+/* 🍎 IMAGE THUMBNAIL PREVIEW */
+.inquiry-file-item--image {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border-radius: var(--radius-md, 8px);
+  overflow: visible;
+}
+
+.inquiry-file-thumbnail {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-file-thumbnail {
+  border-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-file-item--image .inquiry-file-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 12px;
+  border-radius: 50%;
+  margin-left: 0;
+}
+
 /* Form actions */
 .inquiry-form-actions {
   display: flex;
@@ -1025,6 +1060,92 @@ html[data-theme="dark"] .inquiry-reply-files button {
 .inquiry-reply-files button:hover {
   background: var(--color-error);
   color: white;
+}
+
+/* 🍎 REPLY FILE PREVIEWS - Thumbnail style */
+.inquiry-reply-file-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.inquiry-reply-file-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--color-bg-primary);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-reply-file-item {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.inquiry-reply-file-item--image {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border-radius: var(--radius-md, 8px);
+  overflow: visible;
+}
+
+.inquiry-reply-file-thumbnail {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .inquiry-reply-file-thumbnail {
+  border-color: var(--color-ios-separator-dark);
+}
+
+.inquiry-reply-file-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inquiry-reply-file-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  border-radius: 50%;
+  margin-left: 4px;
+}
+
+html[data-theme="dark"] .inquiry-reply-file-remove {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.inquiry-reply-file-remove:hover {
+  background: var(--color-error);
+  color: white;
+}
+
+.inquiry-reply-file-item--image .inquiry-reply-file-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 12px;
+  margin-left: 0;
 }
 
 .inquiry-reply-buttons {
