@@ -16,6 +16,8 @@ import {
 interface InquiryNotificationData {
   inquiryId: string;
   title?: string;
+  status?: string;
+  previousStatus?: string;
 }
 
 interface UseInquiryNotificationsReturn {
@@ -99,19 +101,46 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         const data: InquiryNotificationData = JSON.parse(e.data);
         console.log('[InquiryNotifications] 새 메시지 알림:', data);
 
-        // 미확인 목록에 추가
+        // 미확인 목록에 추가 (중복 방지)
         setUnreadIds((prev) => {
+          if (prev.has(data.inquiryId)) {
+            return prev; // 이미 있으면 그대로 반환 (count 증가 안 함)
+          }
           const next = new Set(prev);
           next.add(data.inquiryId);
+          setUnreadCount((c) => c + 1);
           return next;
         });
-        setUnreadCount((prev) => prev + 1);
 
         // React Query 캐시 무효화 (목록 자동 갱신)
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
         queryClient.invalidateQueries({ queryKey: ['inquiry', data.inquiryId] });
       } catch (error) {
         console.error('[InquiryNotifications] new-message 이벤트 파싱 실패:', error);
+      }
+    });
+
+    eventSource.addEventListener('status-changed', (e) => {
+      try {
+        const data: InquiryNotificationData = JSON.parse(e.data);
+        console.log('[InquiryNotifications] 상태 변경 알림:', data);
+
+        // 미확인 목록에 추가 (중복 방지)
+        setUnreadIds((prev) => {
+          if (prev.has(data.inquiryId)) {
+            return prev;
+          }
+          const next = new Set(prev);
+          next.add(data.inquiryId);
+          setUnreadCount((c) => c + 1);
+          return next;
+        });
+
+        // React Query 캐시 무효화 (목록 자동 갱신)
+        queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+        queryClient.invalidateQueries({ queryKey: ['inquiry', data.inquiryId] });
+      } catch (error) {
+        console.error('[InquiryNotifications] status-changed 이벤트 파싱 실패:', error);
       }
     });
 

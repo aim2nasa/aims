@@ -1203,6 +1203,14 @@ module.exports = (db, authenticateJWT, requireRole) => {
         { $set: updateFields }
       );
 
+      // SSE: 해당 사용자에게 상태 변경 알림
+      notifyUser(inquiry.userId, 'status-changed', {
+        inquiryId: id,
+        title: inquiry.title,
+        status,
+        previousStatus: inquiry.status
+      });
+
       res.json({
         success: true,
         message: '상태가 변경되었습니다',
