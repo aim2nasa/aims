@@ -334,8 +334,7 @@ export const InquiryDetailPage = () => {
 
           {/* 답변 입력 */}
           {inquiry.status !== 'closed' && (
-            <form className="inquiry-detail-page__reply" onSubmit={handleSubmitReply}>
-              <h3>답변 작성</h3>
+            <form className="inquiry-reply-form" onSubmit={handleSubmitReply}>
               <textarea
                 className="inquiry-detail-page__reply-input"
                 value={replyContent}
