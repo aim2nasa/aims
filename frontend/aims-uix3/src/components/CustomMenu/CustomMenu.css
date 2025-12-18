@@ -799,9 +799,13 @@
   color: var(--color-neutral-500, #8e8e93); /* iOS systemGray */
 }
 
-/* 1:1 문의 - iOS systemIndigo */
+/* 1:1 문의 - 카카오톡 스타일 */
 .menu-icon--chat {
-  color: var(--color-ios-indigo, #5856d6); /* iOS systemIndigo */
+  color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
+}
+
+html[data-theme="dark"] .menu-icon--chat {
+  color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
 }
 
 /* ━━━ 고객 타입 아이콘 (전체 고객 보기와 동일) ━━━ */

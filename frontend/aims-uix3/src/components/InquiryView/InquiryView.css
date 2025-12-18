@@ -1258,7 +1258,11 @@ html[data-theme="dark"] .inquiry-closed-notice {
 
 /* === TITLE ICON === */
 .inquiry-title-icon {
-  color: var(--color-ios-indigo, #5856d6);
+  color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
+}
+
+html[data-theme="dark"] .inquiry-title-icon {
+  color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
 }
 
 /* === BACK BUTTON (for CenterPaneView titleLeftAccessory) === */
