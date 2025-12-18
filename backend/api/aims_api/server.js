@@ -13,7 +13,7 @@ const { prepareDocumentResponse, formatBytes, isConvertibleFile } = require('./l
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
-const { generateToken, authenticateJWT, authenticateJWTorAPIKey, requireRole } = require('./middleware/auth');
+const { generateToken, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, requireRole } = require('./middleware/auth');
 const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
@@ -204,6 +204,40 @@ const pdfConversionService = require('./lib/pdfConversionService');
 
 let db;
 let fallbackHandlersRegistered = false;
+
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - 고객 문서
+// ========================================
+const customerDocSSEClients = new Map(); // customerId(string) -> Set<response>
+
+/**
+ * SSE 이벤트 전송 헬퍼
+ * @param {object} res - Express response 객체
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function sendSSE(res, event, data) {
+  try {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  } catch (e) {
+    console.error('[SSE] 전송 실패:', e);
+  }
+}
+
+/**
+ * 특정 고객 문서 구독자들에게 알림 전송
+ * @param {string} customerId - 고객 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyCustomerDocSubscribers(customerId, event, data) {
+  const customerIdStr = customerId.toString();
+  const clients = customerDocSSEClients.get(customerIdStr);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE] 고객 ${customerIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  }
+}
 
 // ========================
 // PDF 변환 백그라운드 처리
@@ -4941,6 +4975,15 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       }
     });
 
+    // 🔔 SSE 알림: 고객 문서 변경
+    notifyCustomerDocSubscribers(id, 'document-change', {
+      type: 'linked',
+      customerId: id,
+      documentId: document_id,
+      documentName: document.upload?.originalName || document.filename,
+      timestamp: utcNowISO()
+    });
+
     res.json({
       success: true,
       message: '문서가 고객에게 성공적으로 연결되었습니다.',
@@ -5068,6 +5111,15 @@ app.delete('/api/customers/:id/documents/:document_id', authenticateJWT, async (
     const qdrantResult = await syncQdrantCustomerRelation(document_id, null);
     console.log(`📊 [Qdrant 동기화 결과] ${qdrantResult.message}, 업데이트된 청크: ${qdrantResult.chunksUpdated || 0}개`);
 
+    // 🔔 SSE 알림: 고객 문서 변경
+    notifyCustomerDocSubscribers(id, 'document-change', {
+      type: 'unlinked',
+      customerId: id,
+      documentId: document_id,
+      documentName: document.upload?.originalName || document.filename,
+      timestamp: utcNowISO()
+    });
+
     res.json({
       success: true,
       message: '문서 연결이 성공적으로 해제되었습니다.',
@@ -5175,6 +5227,70 @@ app.patch('/api/customers/:id/documents/:document_id', authenticateJWT, async (r
       details: error.message
     });
   }
+});
+
+// ========================================
+// SSE 스트림: 고객 문서 실시간 업데이트
+// ========================================
+
+/**
+ * 고객 문서 SSE 스트림 엔드포인트
+ * GET /api/customers/:id/documents/stream
+ *
+ * 인증: ?token=xxx 쿼리 파라미터 (EventSource는 헤더 설정 불가)
+ * 이벤트:
+ * - connected: 연결 성공
+ * - document-change: 문서 변경 (추가/삭제/수정)
+ * - ping: Keep-alive (30초)
+ */
+app.get('/api/customers/:id/documents/stream', authenticateJWTWithQuery, (req, res) => {
+  const { id: customerId } = req.params;
+  const userId = req.user.id;
+
+  if (!ObjectId.isValid(customerId)) {
+    return res.status(400).json({
+      success: false,
+      error: '유효하지 않은 고객 ID입니다.'
+    });
+  }
+
+  console.log(`[SSE] 고객 문서 스트림 연결 - customerId: ${customerId}, userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no'); // nginx 버퍼링 비활성화
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!customerDocSSEClients.has(customerId)) {
+    customerDocSSEClients.set(customerId, new Set());
+  }
+  customerDocSSEClients.get(customerId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    customerId,
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE] 고객 문서 스트림 연결 종료 - customerId: ${customerId}`);
+    clearInterval(keepAliveInterval);
+    customerDocSSEClients.get(customerId)?.delete(res);
+    if (customerDocSSEClients.get(customerId)?.size === 0) {
+      customerDocSSEClients.delete(customerId);
+    }
+  });
 });
 
 /**

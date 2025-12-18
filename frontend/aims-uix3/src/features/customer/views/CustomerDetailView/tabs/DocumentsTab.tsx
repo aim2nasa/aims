@@ -39,6 +39,7 @@ import DocumentSummaryModal from '../../../../../components/DocumentViews/Docume
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
+import { useCustomerDocumentsSSE } from '@/shared/hooks/useCustomerDocumentsSSE'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -242,44 +243,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     return () => resizeObserver.disconnect()
   }, [])
 
-  // 🍎 10초 폴링 (Page Visibility API로 백그라운드에서는 중지)
-  useEffect(() => {
-    if (!customer?._id) return
-
-    let intervalId: ReturnType<typeof setInterval> | null = null
-
-    const startPolling = () => {
-      if (intervalId) return
-      intervalId = setInterval(() => {
-        refresh()
-      }, 10000) // 10초
-    }
-
-    const stopPolling = () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-        intervalId = null
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopPolling()
-      } else {
-        refresh() // 탭 활성화 시 즉시 새로고침
-        startPolling()
-      }
-    }
-
-    // 초기 시작
-    startPolling()
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      stopPolling()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [customer?._id, refresh])
+  // 🍎 SSE 실시간 업데이트 (폴링 대체)
+  useCustomerDocumentsSSE(customer?._id, refresh, {
+    enabled: Boolean(customer?._id),
+  })
 
   // 🍎 드롭다운 옵션 (자동 모드일 때 계산된 값 표시)
   const itemsPerPageOptions = useMemo(() => {
