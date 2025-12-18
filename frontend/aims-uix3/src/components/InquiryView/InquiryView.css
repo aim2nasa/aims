@@ -1327,6 +1327,91 @@ html[data-theme="dark"] .inquiry-back-button:hover {
   to { opacity: 1; }
 }
 
+/* 상단 툴바 - 화면에 고정 */
+.inquiry-image-preview-modal__toolbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: inquiryToolbarSlideIn 0.2s ease;
+}
+
+@keyframes inquiryToolbarSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.inquiry-image-preview-modal__toolbar button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.inquiry-image-preview-modal__toolbar button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.inquiry-image-preview-modal__toolbar button:active {
+  transform: scale(0.95);
+}
+
+/* 리셋 버튼 */
+.inquiry-image-preview-modal__toolbar button.reset-btn {
+  width: auto;
+  padding: 0 16px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 닫기 버튼 */
+.inquiry-image-preview-modal__toolbar button.close-btn {
+  background: rgba(255, 59, 48, 0.8);
+  margin-left: 8px;
+}
+
+.inquiry-image-preview-modal__toolbar button.close-btn:hover {
+  background: rgba(255, 59, 48, 1);
+}
+
+/* 줌 퍼센트 표시 */
+.inquiry-image-preview-modal__toolbar .zoom-level {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 52px;
+  text-align: center;
+  padding: 0 4px;
+}
+
+/* 구분선 */
+.inquiry-image-preview-modal__toolbar .divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .inquiry-image-preview-modal__content {
   position: relative;
   max-width: 90vw;
@@ -1352,85 +1437,21 @@ html[data-theme="dark"] .inquiry-back-button:hover {
   transition: transform 0.1s ease;
 }
 
-.inquiry-image-preview-modal__close {
-  position: absolute;
-  top: -40px;
-  right: 0;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 24px;
-  line-height: 1;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.inquiry-image-preview-modal__close:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* 줌 컨트롤 */
-.inquiry-image-preview-modal__zoom-controls {
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 4px 12px;
-  border-radius: 20px;
-}
-
-.inquiry-image-preview-modal__zoom-controls button {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 16px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-
-.inquiry-image-preview-modal__zoom-controls button:last-child {
-  width: auto;
-  padding: 0 12px;
-  border-radius: 14px;
-  font-size: 11px;
-}
-
-.inquiry-image-preview-modal__zoom-controls button:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.inquiry-image-preview-modal__zoom-controls span {
-  color: white;
-  font-size: 12px;
-  min-width: 48px;
-  text-align: center;
-}
-
-/* 힌트 */
+/* 힌트 - 화면 하단에 고정 */
 .inquiry-image-preview-modal__hint {
-  position: absolute;
-  bottom: -32px;
+  position: fixed;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
+  z-index: 10001;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
   white-space: nowrap;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 16px;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 /* 드래그 중 */
@@ -1453,30 +1474,31 @@ html[data-theme="dark"] .inquiry-back-button:hover {
 
 /* 반응형 */
 @media (max-width: 600px) {
-  .inquiry-image-preview-modal__close {
-    top: -36px;
-    right: 4px;
+  .inquiry-image-preview-modal__toolbar {
+    top: 12px;
+    padding: 6px 12px;
+    gap: 8px;
   }
 
-  .inquiry-image-preview-modal__zoom-controls {
-    top: -36px;
-    padding: 2px 8px;
-    gap: 4px;
+  .inquiry-image-preview-modal__toolbar button {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
 
-  .inquiry-image-preview-modal__zoom-controls button {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
+  .inquiry-image-preview-modal__toolbar button.reset-btn {
+    padding: 0 12px;
+    font-size: 11px;
   }
 
-  .inquiry-image-preview-modal__zoom-controls span {
-    font-size: 10px;
-    min-width: 36px;
+  .inquiry-image-preview-modal__toolbar .zoom-level {
+    font-size: 12px;
+    min-width: 44px;
   }
 
   .inquiry-image-preview-modal__hint {
-    bottom: -28px;
-    font-size: 10px;
+    bottom: 16px;
+    font-size: 11px;
+    padding: 6px 12px;
   }
 }

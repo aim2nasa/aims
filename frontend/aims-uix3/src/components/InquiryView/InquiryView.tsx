@@ -713,24 +713,22 @@ export default function InquiryView({
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
+          {/* 상단 툴바 - 화면에 고정 */}
+          <div className="inquiry-image-preview-modal__toolbar" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setZoom(prev => Math.max(MIN_ZOOM, prev - ZOOM_STEP))} title="축소">−</button>
+            <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+            <button type="button" onClick={() => setZoom(prev => Math.min(MAX_ZOOM, prev + ZOOM_STEP))} title="확대">+</button>
+            <span className="divider" />
+            <button type="button" className="reset-btn" onClick={handleDoubleClick}>리셋</button>
+            <button type="button" className="close-btn" onClick={closePreview} title="닫기">✕</button>
+          </div>
+
+          {/* 이미지 콘텐츠 */}
           <div
             className={`inquiry-image-preview-modal__content ${isDragging ? 'inquiry-image-preview-modal__content--dragging' : ''}`}
             onClick={(e) => e.stopPropagation()}
             onWheel={handleWheel}
           >
-            <button
-              type="button"
-              className="inquiry-image-preview-modal__close"
-              onClick={closePreview}
-            >
-              ×
-            </button>
-            <div className="inquiry-image-preview-modal__zoom-controls">
-              <button type="button" onClick={() => setZoom(prev => Math.max(MIN_ZOOM, prev - ZOOM_STEP))}>−</button>
-              <span>{Math.round(zoom * 100)}%</span>
-              <button type="button" onClick={() => setZoom(prev => Math.min(MAX_ZOOM, prev + ZOOM_STEP))}>+</button>
-              <button type="button" onClick={handleDoubleClick}>리셋</button>
-            </div>
             <img
               src={previewImage}
               alt="미리보기"
@@ -742,9 +740,11 @@ export default function InquiryView({
               onDoubleClick={handleDoubleClick}
               draggable={false}
             />
-            <div className="inquiry-image-preview-modal__hint">
-              스크롤: 확대/축소 | 드래그: 이동 | 더블클릭: 원래 크기
-            </div>
+          </div>
+
+          {/* 하단 힌트 - 화면에 고정 */}
+          <div className="inquiry-image-preview-modal__hint">
+            스크롤: 확대/축소 | 드래그: 이동 | 더블클릭: 원래 크기
           </div>
         </div>
       )}
