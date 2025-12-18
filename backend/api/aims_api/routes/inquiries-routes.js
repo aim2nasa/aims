@@ -63,6 +63,14 @@ const upload = multer({
 const CATEGORIES = ['bug', 'feature', 'question', 'other'];
 const STATUSES = ['pending', 'in_progress', 'resolved', 'closed'];
 
+// 상태 라벨 (한글)
+const STATUS_LABELS = {
+  pending: '대기',
+  in_progress: '처리중',
+  resolved: '해결',
+  closed: '종료'
+};
+
 // ========================================
 // SSE (Server-Sent Events) 클라이언트 관리
 // ========================================
@@ -718,17 +726,29 @@ module.exports = (db, authenticateJWT, requireRole) => {
       };
 
       // resolved 상태에서 사용자가 메시지를 보내면 자동으로 pending으로 재접수
-      const updateFields = { updatedAt: new Date() };
+      const now = new Date();
+      const updateFields = { updatedAt: now };
+      const messagesToPush = [newMessage];
+
       if (inquiry.status === 'resolved') {
         updateFields.status = 'pending';
         updateFields.resolvedAt = null; // 재접수 시 resolvedAt 초기화
+
+        // 시스템 메시지 추가 (상태 변경 기록)
+        const systemMessage = {
+          _id: new ObjectId(),
+          authorRole: 'system',
+          content: `상태가 변경되었습니다: ${STATUS_LABELS.resolved} → ${STATUS_LABELS.pending}`,
+          createdAt: new Date(now.getTime() + 1) // 사용자 메시지 바로 다음에 표시
+        };
+        messagesToPush.push(systemMessage);
         console.log(`[Inquiry] 문의 ${id} 재접수됨 (resolved → pending)`);
       }
 
       await inquiriesCollection.updateOne(
         { _id: new ObjectId(id) },
         {
-          $push: { messages: newMessage },
+          $push: { messages: { $each: messagesToPush } },
           $set: updateFields
         }
       );
@@ -1196,24 +1216,46 @@ module.exports = (db, authenticateJWT, requireRole) => {
         });
       }
 
+      // 상태가 실제로 변경되었는지 확인
+      if (inquiry.status === status) {
+        return res.json({
+          success: true,
+          message: '상태가 동일합니다',
+          data: { status }
+        });
+      }
+
+      const now = new Date();
       const updateFields = {
         status,
-        updatedAt: new Date()
+        updatedAt: now
       };
 
       // resolved 또는 closed로 변경 시 resolvedAt 설정
       if ((status === 'resolved' || status === 'closed') && !inquiry.resolvedAt) {
-        updateFields.resolvedAt = new Date();
+        updateFields.resolvedAt = now;
       }
+
+      // 시스템 메시지 생성 (상태 변경 기록)
+      const systemMessage = {
+        _id: new ObjectId(),
+        authorRole: 'system',
+        content: `상태가 변경되었습니다: ${STATUS_LABELS[inquiry.status]} → ${STATUS_LABELS[status]}`,
+        createdAt: now
+      };
 
       await inquiriesCollection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: updateFields }
+        {
+          $set: updateFields,
+          $push: { messages: systemMessage }
+        }
       );
 
       // SSE: 해당 사용자에게 상태 변경 알림
       notifyUser(inquiry.userId, 'status-changed', {
         inquiryId: id,
+        messageId: systemMessage._id.toString(),
         title: inquiry.title,
         status,
         previousStatus: inquiry.status

@@ -545,6 +545,14 @@ export default function InquiryView({
           {/* 메시지 목록 - 카카오톡 스타일 */}
           <div className="inquiry-messages">
             {inquiryDetail.messages.map((message) => (
+              // 시스템 메시지는 중앙 정렬로 표시
+              message.authorRole === 'system' ? (
+                <div key={message._id} className="inquiry-message inquiry-message--system">
+                  <div className="inquiry-system-message">
+                    <span>{message.content}</span>
+                  </div>
+                </div>
+              ) : (
               <div
                 key={message._id}
                 className={`inquiry-message inquiry-message--${message.authorRole}`}
@@ -606,6 +614,7 @@ export default function InquiryView({
                   {formatDateTime(message.createdAt).split(' ')[1]}
                 </span>
               </div>
+              )
             ))}
             <div ref={messagesEndRef} />
           </div>

@@ -10,7 +10,7 @@ export type InquiryCategory = 'bug' | 'feature' | 'question' | 'other';
 export type InquiryStatus = 'pending' | 'in_progress' | 'resolved' | 'closed';
 
 /** 메시지 작성자 역할 */
-export type MessageAuthorRole = 'user' | 'admin';
+export type MessageAuthorRole = 'user' | 'admin' | 'system';
 
 /** 첨부파일 */
 export interface InquiryAttachment {
@@ -24,11 +24,11 @@ export interface InquiryAttachment {
 /** 문의 메시지 */
 export interface InquiryMessage {
   _id: string;
-  authorId: string;
-  authorName: string;
+  authorId?: string;      // system 메시지는 없음
+  authorName?: string;    // system 메시지는 없음
   authorRole: MessageAuthorRole;
   content: string;
-  attachments: InquiryAttachment[];
+  attachments?: InquiryAttachment[];  // system 메시지는 없음
   createdAt: string;
 }
 

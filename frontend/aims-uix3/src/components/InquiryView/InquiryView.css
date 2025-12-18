@@ -1281,6 +1281,29 @@ html[data-theme="dark"] .inquiry-resolved-banner {
   color: var(--color-ios-green-dark, #30D158);
 }
 
+/* === SYSTEM MESSAGE (상태 변경 알림) === */
+.inquiry-message--system {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.inquiry-system-message {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-ios-bg-tertiary-light, rgba(0, 0, 0, 0.05));
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .inquiry-system-message {
+  background: var(--color-ios-bg-tertiary-dark, rgba(255, 255, 255, 0.08));
+  color: var(--color-ios-text-secondary-dark);
+}
+
 /* === TITLE ICON === */
 .inquiry-title-icon {
   color: #D4A300; /* 라이트 테마: 진한 금색 (가시성 확보) */
