@@ -618,6 +618,77 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* 줌 컨트롤 */
+.image-preview-modal__zoom-controls {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.image-preview-modal__zoom-controls button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.image-preview-modal__zoom-controls button:last-child {
+  width: auto;
+  padding: 0 12px;
+  border-radius: 14px;
+  font-size: 11px;
+}
+
+.image-preview-modal__zoom-controls button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.image-preview-modal__zoom-controls span {
+  color: white;
+  font-size: 12px;
+  min-width: 48px;
+  text-align: center;
+}
+
+/* 힌트 */
+.image-preview-modal__hint {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* 드래그 중 */
+.image-preview-modal__content--dragging img {
+  cursor: grabbing !important;
+}
+
+/* 이미지 선택 방지 */
+.image-preview-modal__content img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 0.1s ease;
+}
+
 /* 반응형 */
 @media (max-width: 600px) {
   .inquiry-detail-page__header-top {
@@ -644,5 +715,27 @@
   .image-preview-modal__close {
     top: -36px;
     right: 4px;
+  }
+
+  .image-preview-modal__zoom-controls {
+    top: -36px;
+    padding: 2px 8px;
+    gap: 4px;
+  }
+
+  .image-preview-modal__zoom-controls button {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .image-preview-modal__zoom-controls span {
+    font-size: 10px;
+    min-width: 36px;
+  }
+
+  .image-preview-modal__hint {
+    bottom: -28px;
+    font-size: 10px;
   }
 }

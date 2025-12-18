@@ -3,7 +3,7 @@
  * @since 2025-12-18
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInquiryNotificationContext } from '@/App';
@@ -15,6 +15,11 @@ import {
 } from '@/features/inquiries/api';
 import { Button } from '@/shared/ui/Button/Button';
 import './InquiryDetailPage.css';
+
+// 줌/팬 설정
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 5;
+const ZOOM_STEP = 0.2;
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -48,6 +53,12 @@ export const InquiryDetailPage = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 이미지 줌/팬 상태
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   // 문의 상세 조회
   const { data: inquiry, isLoading, isError, error, refetch } = useQuery({
@@ -114,6 +125,54 @@ export const InquiryDetailPage = () => {
       statusMutation.mutate(status);
     }
   };
+
+  // 이미지 미리보기 열기 (줌/팬 초기화)
+  const openPreview = useCallback((url: string) => {
+    setPreviewImage(url);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // 이미지 미리보기 닫기
+  const closePreview = useCallback(() => {
+    setPreviewImage(null);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // 마우스 휠로 줌
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    setZoom(prev => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta)));
+  }, []);
+
+  // 드래그 시작
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (zoom <= 1) return; // 확대 상태에서만 팬 가능
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  }, [zoom, pan]);
+
+  // 드래그 중
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+  }, [isDragging]);
+
+  // 드래그 종료
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // 줌 리셋 (더블클릭)
+  const handleDoubleClick = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
 
   if (isLoading) {
     return <div className="inquiry-detail-page__loading">데이터를 불러오는 중...</div>;
@@ -243,7 +302,7 @@ export const InquiryDetailPage = () => {
                                 key={idx}
                                 type="button"
                                 className="message-item__image"
-                                onClick={() => setPreviewImage(attachmentUrl)}
+                                onClick={() => openPreview(attachmentUrl)}
                               >
                                 <img src={attachmentUrl} alt={attachment.originalName} />
                               </button>
@@ -351,17 +410,43 @@ export const InquiryDetailPage = () => {
       {previewImage && (
         <div
           className="image-preview-modal"
-          onClick={() => setPreviewImage(null)}
+          onClick={closePreview}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
-          <div className="image-preview-modal__content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`image-preview-modal__content ${isDragging ? 'image-preview-modal__content--dragging' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+          >
             <button
               type="button"
               className="image-preview-modal__close"
-              onClick={() => setPreviewImage(null)}
+              onClick={closePreview}
             >
               ×
             </button>
-            <img src={previewImage} alt="미리보기" />
+            <div className="image-preview-modal__zoom-controls">
+              <button type="button" onClick={() => setZoom(prev => Math.max(MIN_ZOOM, prev - ZOOM_STEP))}>−</button>
+              <span>{Math.round(zoom * 100)}%</span>
+              <button type="button" onClick={() => setZoom(prev => Math.min(MAX_ZOOM, prev + ZOOM_STEP))}>+</button>
+              <button type="button" onClick={handleDoubleClick}>리셋</button>
+            </div>
+            <img
+              src={previewImage}
+              alt="미리보기"
+              style={{
+                transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+              }}
+              onMouseDown={handleMouseDown}
+              onDoubleClick={handleDoubleClick}
+              draggable={false}
+            />
+            <div className="image-preview-modal__hint">
+              스크롤: 확대/축소 | 드래그: 이동 | 더블클릭: 원래 크기
+            </div>
           </div>
         </div>
       )}
