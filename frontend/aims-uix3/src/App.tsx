@@ -260,6 +260,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     rightPaneContentType,
     selectedDocument,
     selectedCustomer,
+    rightPaneRefreshTrigger,
     handleDocumentClick,
     handleCustomerClick,
     handleOpenFullDetail,
@@ -1728,6 +1729,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 onDelete={handleCustomerDelete}
                 onSelectCustomer={handleCustomerClick}
                 onOpenFullDetail={handleOpenFullDetail}
+                refreshTrigger={rightPaneRefreshTrigger}
                 {...(documentLibraryRefreshRef.current ? { onDocumentLibraryRefresh: documentLibraryRefreshRef.current } : {})}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}

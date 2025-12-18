@@ -54,6 +54,8 @@ interface DocumentsTabProps {
   onSearchChange?: (term: string) => void
   /** 메뉴 네비게이션 핸들러 (간편 문서검색 → 문서 검색 페이지) */
   onNavigate?: (menuKey: string) => void
+  /** 외부 새로고침 트리거 (RightPane visibility 변경 시) */
+  refreshTrigger?: number
 }
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
@@ -87,7 +89,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onAnnualReportNeedRefresh,
   searchTerm: externalSearchTerm,
   onSearchChange,
-  onNavigate
+  onNavigate,
+  refreshTrigger,
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -247,6 +250,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   useCustomerDocumentsSSE(customer?._id, refresh, {
     enabled: Boolean(customer?._id),
   })
+
+  // 🍎 외부 refreshTrigger 변경 시 새로고침 (RightPane visibility 변경)
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      if (import.meta.env.DEV) {
+        console.log('[DocumentsTab] refreshTrigger 변경 감지, 새로고침 실행:', refreshTrigger)
+      }
+      void refresh()
+    }
+  }, [refreshTrigger, refresh])
 
   // 🍎 드롭다운 옵션 (자동 모드일 때 계산된 값 표시)
   const itemsPerPageOptions = useMemo(() => {

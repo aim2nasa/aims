@@ -36,6 +36,8 @@ interface CustomerDetailViewProps {
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   onOpenFullDetail?: (customerId: string) => void;
   onDocumentLibraryRefresh?: () => Promise<void>;
+  /** RightPane visibility 변경 시 새로고침 트리거 */
+  refreshTrigger?: number;
   gapLeft?: number;
   gapRight?: number;
   gapTop?: number;
@@ -50,6 +52,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onSelectCustomer,
   onOpenFullDetail,
   onDocumentLibraryRefresh,
+  refreshTrigger,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -516,6 +519,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <DocumentsTab
             customer={customer}
             onDocumentCountChange={setDocumentCount}
+            refreshTrigger={refreshTrigger}
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
             onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
@@ -545,7 +549,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <AnnualReportTab
             customer={customer}
             onAnnualReportCountChange={setAnnualReportCount}
-            refreshTrigger={annualReportRefreshTrigger}
+            refreshTrigger={(refreshTrigger || 0) + annualReportRefreshTrigger}
           />
         </div>
       </>

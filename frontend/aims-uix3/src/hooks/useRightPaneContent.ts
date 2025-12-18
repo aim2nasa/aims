@@ -10,7 +10,7 @@
  * - 전체 정보 페이지 열기/닫기
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Customer } from '@/entities/customer'
 import type { SelectedDocument, DocumentComputedData } from '../utils/documentTransformers'
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from '../utils/documentTransformers'
@@ -63,6 +63,8 @@ export interface UseRightPaneContentReturn {
   rightPaneContentType: RightPaneContentType
   selectedDocument: SelectedDocument | null
   selectedCustomer: Customer | null
+  /** RightPane이 숨김→표시 전환될 때 증가하는 트리거 (탭 데이터 새로고침용) */
+  rightPaneRefreshTrigger: number
 
   // 핸들러
   handleDocumentClick: (documentId: string) => Promise<void>
@@ -128,13 +130,94 @@ export function useRightPaneContent(
   const [selectedDocument, setSelectedDocument] = useState<SelectedDocument | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
+  // RightPane 새로고침 트리거 (숨김→표시 전환 시 증가)
+  const [rightPaneRefreshTrigger, setRightPaneRefreshTrigger] = useState(0)
+
   // 전체 정보 뷰 열기 전 UI 상태 저장 (돌아가기 버튼용)
   const previousUIStateRef = useRef<PreviousUIState | null>(null)
+
+  // 이전 visible 상태 추적 (숨김 → 표시 감지용)
+  const prevVisibleRef = useRef(false)
 
   // RightPane 토글
   const toggleRightPane = useCallback(() => {
     setRightPaneVisible(prev => !prev)
   }, [])
+
+  // 문서 새로고침 핸들러 (내부용 - visibility change 시 사용)
+  const refreshDocument = useCallback(async (documentId: string) => {
+    try {
+      const result = await api.get<{
+        success: boolean
+        data?: { raw?: unknown; computed?: DocumentComputedData }
+      }>(`/api/documents/${documentId}/status`)
+      if (!result.success || !result.data) return
+      const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
+      if (!rawDocument) return
+      const computed = result.data.computed ?? null
+      const selected = buildSelectedDocument(documentId, rawDocument, computed)
+      setSelectedDocument(selected)
+      if (import.meta.env.DEV) {
+        console.log('[useRightPaneContent] 문서 새로고침 완료:', documentId)
+      }
+    } catch (error) {
+      console.error('[useRightPaneContent] 문서 새로고침 실패:', error)
+    }
+  }, [])
+
+  // ref로 최신 상태 유지 (클로저 문제 방지)
+  const selectedCustomerRef = useRef(selectedCustomer)
+  const selectedDocumentRef = useRef(selectedDocument)
+  const rightPaneContentTypeRef = useRef(rightPaneContentType)
+
+  useEffect(() => {
+    selectedCustomerRef.current = selectedCustomer
+  }, [selectedCustomer])
+
+  useEffect(() => {
+    selectedDocumentRef.current = selectedDocument
+  }, [selectedDocument])
+
+  useEffect(() => {
+    rightPaneContentTypeRef.current = rightPaneContentType
+  }, [rightPaneContentType])
+
+  // RightPane이 숨김 → 표시로 변경될 때 새로고침 트리거 증가
+  useEffect(() => {
+    const wasHidden = !prevVisibleRef.current
+    const isNowVisible = rightPaneVisible
+
+    if (import.meta.env.DEV) {
+      console.log('[useRightPaneContent] visibility change:', { wasHidden, isNowVisible, prevVisible: prevVisibleRef.current })
+    }
+
+    // 숨김 → 표시 전환 시 트리거 증가 (탭들이 이 트리거를 감지하여 새로고침)
+    if (wasHidden && isNowVisible) {
+      if (import.meta.env.DEV) {
+        console.log('[useRightPaneContent] RightPane 표시됨 - refreshTrigger 증가')
+      }
+      setRightPaneRefreshTrigger(prev => prev + 1)
+    }
+
+    prevVisibleRef.current = rightPaneVisible
+  }, [rightPaneVisible])
+
+  // 브라우저 탭 활성화 시 새로고침 트리거 증가 (Page Visibility API)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && rightPaneVisible) {
+        if (import.meta.env.DEV) {
+          console.log('[useRightPaneContent] 탭 활성화됨 - refreshTrigger 증가')
+        }
+        setRightPaneRefreshTrigger(prev => prev + 1)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [rightPaneVisible])
 
   // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
   const handleDocumentClick = useCallback(async (documentId: string) => {
@@ -363,6 +446,7 @@ export function useRightPaneContent(
     rightPaneContentType,
     selectedDocument,
     selectedCustomer,
+    rightPaneRefreshTrigger,
 
     // 핸들러
     handleDocumentClick,
