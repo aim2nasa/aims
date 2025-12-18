@@ -8,9 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   helpContentApi,
-  FAQ_CATEGORY_LABELS,
   type FAQ,
-  type FAQCategory,
+  type FAQCategoryInfo,
 } from '@/features/help-content/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { Modal } from '@/shared/ui/Modal/Modal';
@@ -19,7 +18,7 @@ import './FAQsPage.css';
 interface FAQFormData {
   question: string;
   answer: string;
-  category: FAQCategory;
+  category: string;
   order: number;
   isPublished: boolean;
 }
@@ -35,13 +34,25 @@ const initialFormData: FAQFormData = {
 export const FAQsPage = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<FAQCategory | ''>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [publishedFilter, setPublishedFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
   const [formData, setFormData] = useState<FAQFormData>(initialFormData);
 
   const debouncedSearch = useDebounce(search, 300);
+
+  // FAQ 카테고리 목록 조회 (DB에서 동적으로)
+  const { data: categories = [] } = useQuery({
+    queryKey: ['admin', 'faq-categories'],
+    queryFn: helpContentApi.getFAQCategories,
+  });
+
+  // 카테고리 라벨 맵 생성
+  const categoryLabelMap = categories.reduce((acc, cat) => {
+    acc[cat.key] = cat.label;
+    return acc;
+  }, {} as Record<string, string>);
 
   // FAQ 목록 조회
   const { data: faqs, isLoading, isError, error, refetch } = useQuery({
@@ -59,6 +70,7 @@ export const FAQsPage = () => {
     mutationFn: helpContentApi.createFAQ,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'faqs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
       closeModal();
     },
   });
@@ -69,6 +81,7 @@ export const FAQsPage = () => {
       helpContentApi.updateFAQ(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'faqs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
       closeModal();
     },
   });
@@ -78,6 +91,7 @@ export const FAQsPage = () => {
     mutationFn: helpContentApi.deleteFAQ,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'faqs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
     },
   });
 
@@ -143,10 +157,10 @@ export const FAQsPage = () => {
     }
     acc[faq.category].push(faq);
     return acc;
-  }, {} as Record<FAQCategory, FAQ[]>) || {};
+  }, {} as Record<string, FAQ[]>) || {};
 
-  // 카테고리 순서 정렬
-  const sortedCategories: FAQCategory[] = ['general', 'customer', 'document', 'contract', 'account'];
+  // 카테고리 순서 (DB에서 가져온 순서 사용)
+  const sortedCategories = categories.map(cat => cat.key);
 
   if (isLoading) {
     return <div className="faqs-page__loading">데이터를 불러오는 중...</div>;
@@ -185,11 +199,11 @@ export const FAQsPage = () => {
         <select
           className="faqs-page__select"
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value as FAQCategory | '')}
+          onChange={(e) => setCategoryFilter(e.target.value)}
         >
           <option value="">전체 카테고리</option>
-          {Object.entries(FAQ_CATEGORY_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
+          {categories.map((cat) => (
+            <option key={cat.key} value={cat.key}>{cat.label}</option>
           ))}
         </select>
         <select
@@ -223,7 +237,7 @@ export const FAQsPage = () => {
                     <td className="faqs-page__order">{faq.order}</td>
                     <td>
                       <span className={`faqs-page__category faqs-page__category--${faq.category}`}>
-                        {FAQ_CATEGORY_LABELS[faq.category]}
+                        {categoryLabelMap[faq.category] || faq.category}
                       </span>
                     </td>
                     <td className="faqs-page__question">{faq.question}</td>
@@ -266,7 +280,7 @@ export const FAQsPage = () => {
               <div key={category} className="faqs-page__category-group">
                 <h2 className="faqs-page__category-title">
                   <span className={`faqs-page__category-badge faqs-page__category-badge--${category}`}>
-                    {FAQ_CATEGORY_LABELS[category]}
+                    {categoryLabelMap[category] || category}
                   </span>
                   <span className="faqs-page__category-count">{categoryFaqs.length}개</span>
                 </h2>
@@ -327,10 +341,10 @@ export const FAQsPage = () => {
               <select
                 className="faqs-page__form-select"
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as FAQCategory })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               >
-                {Object.entries(FAQ_CATEGORY_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                {categories.map((cat) => (
+                  <option key={cat.key} value={cat.key}>{cat.label}</option>
                 ))}
               </select>
             </div>

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
-import { helpApi, FAQ_CATEGORY_LABELS, type FAQ } from '@/features/help/api';
+import { helpApi, type FAQ, type FAQCategory } from '@/features/help/api';
 import './FAQView.css';
 
 // FAQ 아이콘 (말풍선 물음표)
@@ -23,14 +23,19 @@ interface FAQViewProps {
   onClose: () => void;
 }
 
-type FAQCategory = FAQ['category'];
-
 export default function FAQView({
   visible,
   onClose,
 }: FAQViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<FAQCategory | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // FAQ 카테고리 목록 조회 (DB에서 동적으로)
+  const { data: categories = [] } = useQuery({
+    queryKey: ['faq-categories'],
+    queryFn: helpApi.getFAQCategories,
+    enabled: visible,
+  });
 
   // FAQ 목록 조회
   const { data: faqs = [], isLoading, isError } = useQuery({
@@ -68,7 +73,7 @@ export default function FAQView({
         </div>
       ) : (
         <div className="faq-view__content">
-          {/* 카테고리 필터 */}
+          {/* 카테고리 필터 (DB에서 동적으로) */}
           <div className="faq-view__filters">
             <button
               type="button"
@@ -77,14 +82,14 @@ export default function FAQView({
             >
               전체
             </button>
-            {(Object.entries(FAQ_CATEGORY_LABELS) as [FAQCategory, string][]).map(([key, label]) => (
+            {categories.map((cat) => (
               <button
                 type="button"
-                key={key}
-                className={`faq-view__filter ${selectedCategory === key ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(key)}
+                key={cat.key}
+                className={`faq-view__filter ${selectedCategory === cat.key ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat.key)}
               >
-                {label}
+                {cat.label}
               </button>
             ))}
           </div>

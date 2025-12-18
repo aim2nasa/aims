@@ -11,10 +11,24 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 
-// 카테고리 상수
+// 카테고리 상수 (기본값, DB에서 동적으로 조회 가능)
 const NOTICE_CATEGORIES = ['system', 'product', 'policy', 'event'];
-const FAQ_CATEGORIES = ['general', 'customer', 'document', 'contract', 'account'];
 const GUIDE_CATEGORIES = ['customer', 'document', 'contract'];
+
+// FAQ 카테고리 라벨 매핑
+const FAQ_CATEGORY_LABELS = {
+  general: '일반',
+  'import-data': '고객계약 등록',
+  'import-file': '문서 등록',
+  customer: '고객',
+  document: '문서',
+  contract: '계약',
+  account: '계정',
+  'term-customer': '고객 용어',
+  'term-doc': '문서 용어',
+  'term-contract': '계약 용어',
+  'term-system': '시스템 용어',
+};
 
 module.exports = (db, authenticateJWT, requireRole) => {
   const noticesCollection = db.collection('notices');
@@ -552,6 +566,50 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
 
   /**
+   * FAQ 카테고리 목록 조회 (DB에서 동적으로)
+   * GET /api/faq-categories
+   */
+  router.get('/faq-categories', async (req, res) => {
+    try {
+      // DB에서 사용 중인 카테고리 distinct 조회
+      const categories = await faqsCollection.distinct('category', { isPublished: true });
+
+      // 카테고리별 FAQ 수 집계
+      const counts = await faqsCollection.aggregate([
+        { $match: { isPublished: true } },
+        { $group: { _id: '$category', count: { $sum: 1 } } }
+      ]).toArray();
+
+      const countMap = counts.reduce((acc, c) => {
+        acc[c._id] = c.count;
+        return acc;
+      }, {});
+
+      // 카테고리 정보 생성 (라벨 포함)
+      const result = categories
+        .filter(cat => cat) // null 제거
+        .map(category => ({
+          key: category,
+          label: FAQ_CATEGORY_LABELS[category] || category,
+          count: countMap[category] || 0
+        }))
+        .sort((a, b) => {
+          // 정렬 순서 (세분화된 카테고리 포함)
+          const order = ['general', 'import-data', 'import-file', 'customer', 'document', 'contract', 'account', 'term-customer', 'term-doc', 'term-contract', 'term-system'];
+          const aIdx = order.indexOf(a.key);
+          const bIdx = order.indexOf(b.key);
+          // 정렬 순서에 없는 카테고리는 맨 뒤로
+          return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+        });
+
+      res.json({ success: true, data: result });
+    } catch (error) {
+      console.error('FAQ 카테고리 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
    * FAQ 목록 조회 (게시된 것만)
    * GET /api/faqs
    */
@@ -560,8 +618,8 @@ module.exports = (db, authenticateJWT, requireRole) => {
       const { category } = req.query;
 
       const query = { isPublished: true };
-      if (category && FAQ_CATEGORIES.includes(category)) {
-        query.category = category;
+      if (category) {
+        query.category = category; // DB에 있는 모든 카테고리 허용
       }
 
       const faqs = await faqsCollection
@@ -581,6 +639,49 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
 
   /**
+   * FAQ 카테고리 목록 조회 (관리자용 - 모든 FAQ 포함)
+   * GET /api/admin/faq-categories
+   */
+  router.get('/admin/faq-categories', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      // DB에서 모든 카테고리 distinct 조회 (비공개 포함)
+      const categories = await faqsCollection.distinct('category');
+
+      // 카테고리별 FAQ 수 집계
+      const counts = await faqsCollection.aggregate([
+        { $group: { _id: '$category', count: { $sum: 1 } } }
+      ]).toArray();
+
+      const countMap = counts.reduce((acc, c) => {
+        acc[c._id] = c.count;
+        return acc;
+      }, {});
+
+      // 카테고리 정보 생성
+      const result = categories
+        .filter(cat => cat)
+        .map(category => ({
+          key: category,
+          label: FAQ_CATEGORY_LABELS[category] || category,
+          count: countMap[category] || 0
+        }))
+        .sort((a, b) => {
+          // 정렬 순서 (세분화된 카테고리 포함)
+          const order = ['general', 'import-data', 'import-file', 'customer', 'document', 'contract', 'account', 'term-customer', 'term-doc', 'term-contract', 'term-system'];
+          const aIdx = order.indexOf(a.key);
+          const bIdx = order.indexOf(b.key);
+          // 정렬 순서에 없는 카테고리는 맨 뒤로
+          return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+        });
+
+      res.json({ success: true, data: result });
+    } catch (error) {
+      console.error('관리자 FAQ 카테고리 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
    * FAQ 전체 목록 조회 (관리자)
    * GET /api/admin/faqs
    */
@@ -589,8 +690,8 @@ module.exports = (db, authenticateJWT, requireRole) => {
       const { category, isPublished, search } = req.query;
 
       const query = {};
-      if (category && FAQ_CATEGORIES.includes(category)) {
-        query.category = category;
+      if (category) {
+        query.category = category; // DB에 있는 모든 카테고리 허용
       }
       if (isPublished !== undefined) {
         query.isPublished = isPublished === 'true';
@@ -629,8 +730,8 @@ module.exports = (db, authenticateJWT, requireRole) => {
       if (!answer || !answer.trim()) {
         return res.status(400).json({ success: false, message: '답변을 입력해주세요' });
       }
-      if (!category || !FAQ_CATEGORIES.includes(category)) {
-        return res.status(400).json({ success: false, message: '유효한 카테고리를 선택해주세요' });
+      if (!category || !category.trim()) {
+        return res.status(400).json({ success: false, message: '카테고리를 선택해주세요' });
       }
 
       const now = new Date();
@@ -673,8 +774,8 @@ module.exports = (db, authenticateJWT, requireRole) => {
       const updateFields = { updatedAt: new Date() };
       if (question !== undefined) updateFields.question = question.trim();
       if (answer !== undefined) updateFields.answer = answer.trim();
-      if (category !== undefined && FAQ_CATEGORIES.includes(category)) {
-        updateFields.category = category;
+      if (category !== undefined) {
+        updateFields.category = category; // DB에 있는 모든 카테고리 허용
       }
       if (order !== undefined) updateFields.order = order;
       if (isPublished !== undefined) updateFields.isPublished = isPublished;

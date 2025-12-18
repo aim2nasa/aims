@@ -181,6 +181,12 @@
   color: #af52de;
 }
 
+.faqs-page__category--import,
+.faqs-page__category-badge--import {
+  background: rgba(90, 200, 250, 0.12);
+  color: #5ac8fa;
+}
+
 .faqs-page__category-count {
   font-size: var(--font-size-sm);
   font-weight: 400;

@@ -77,13 +77,11 @@ export const GUIDE_CATEGORY_LABELS: Record<string, string> = {
 // FAQ 타입
 // ========================================
 
-export type FAQCategory = 'general' | 'customer' | 'document' | 'contract' | 'account';
-
 export interface FAQ {
   _id: string;
   question: string;
   answer: string;
-  category: FAQCategory;
+  category: string; // DB에서 동적으로 가져오므로 string 타입
   order: number;
   isPublished: boolean;
   createdAt: string;
@@ -91,13 +89,12 @@ export interface FAQ {
   createdBy: string;
 }
 
-export const FAQ_CATEGORY_LABELS: Record<FAQCategory, string> = {
-  general: '일반',
-  customer: '고객',
-  document: '문서',
-  contract: '계약',
-  account: '계정',
-};
+// FAQ 카테고리 타입 (DB에서 동적으로)
+export interface FAQCategoryInfo {
+  key: string;
+  label: string;
+  count: number;
+}
 
 // ========================================
 // 공지사항 API
@@ -237,8 +234,18 @@ export async function deleteGuideItem(guideId: string, itemId: string): Promise<
 // FAQ API
 // ========================================
 
+/**
+ * FAQ 카테고리 목록 조회 (DB에서 동적으로)
+ */
+export async function getFAQCategories(): Promise<FAQCategoryInfo[]> {
+  const response = await apiClient.get<{ success: boolean; data: FAQCategoryInfo[] }>(
+    '/api/admin/faq-categories'
+  );
+  return response.data;
+}
+
 export async function getFAQs(params?: {
-  category?: FAQCategory;
+  category?: string;
   isPublished?: boolean;
   search?: string;
 }): Promise<FAQ[]> {
@@ -260,7 +267,7 @@ export async function getFAQs(params?: {
 export async function createFAQ(data: {
   question: string;
   answer: string;
-  category: FAQCategory;
+  category: string;
   order?: number;
   isPublished?: boolean;
 }): Promise<FAQ> {
@@ -274,7 +281,7 @@ export async function createFAQ(data: {
 export async function updateFAQ(id: string, data: {
   question?: string;
   answer?: string;
-  category?: FAQCategory;
+  category?: string;
   order?: number;
   isPublished?: boolean;
 }): Promise<FAQ> {
@@ -312,6 +319,7 @@ export const helpContentApi = {
   updateGuideItem,
   deleteGuideItem,
   // FAQs
+  getFAQCategories,
   getFAQs,
   createFAQ,
   updateFAQ,

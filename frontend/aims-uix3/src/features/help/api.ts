@@ -46,11 +46,18 @@ export interface FAQ {
   _id: string;
   question: string;
   answer: string;
-  category: 'general' | 'customer' | 'document' | 'contract' | 'account';
+  category: string; // DB에서 동적으로 가져오므로 string 타입
   order: number;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// FAQ 카테고리 타입 (DB에서 동적으로)
+export interface FAQCategory {
+  key: string;
+  label: string;
+  count: number;
 }
 
 // 카테고리 라벨
@@ -59,14 +66,6 @@ export const NOTICE_CATEGORY_LABELS: Record<Notice['category'], string> = {
   product: '상품',
   policy: '정책',
   event: '이벤트',
-};
-
-export const FAQ_CATEGORY_LABELS: Record<FAQ['category'], string> = {
-  general: '일반',
-  customer: '고객',
-  document: '문서',
-  contract: '계약',
-  account: '계정',
 };
 
 // API 응답 타입
@@ -87,6 +86,11 @@ interface FAQsResponse {
   data: FAQ[];
 }
 
+interface FAQCategoriesResponse {
+  success: boolean;
+  data: FAQCategory[];
+}
+
 // API 함수
 export const helpApi = {
   // 공지사항 목록 조회
@@ -98,6 +102,12 @@ export const helpApi = {
   // 사용 가이드 목록 조회
   getUsageGuides: async (): Promise<UsageGuide[]> => {
     const response = await api.get<UsageGuidesResponse>('/api/usage-guides');
+    return response.data;
+  },
+
+  // FAQ 카테고리 목록 조회 (DB에서 동적으로)
+  getFAQCategories: async (): Promise<FAQCategory[]> => {
+    const response = await api.get<FAQCategoriesResponse>('/api/faq-categories');
     return response.data;
   },
 
