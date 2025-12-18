@@ -166,16 +166,14 @@ export default function NoticeView({
                 className={`notice-view__item ${notice.isNew ? 'notice-view__item--new' : ''}`}
                 onClick={() => handleSelectNotice(notice)}
               >
-                <div className="notice-view__item-header">
-                  <span className={`notice-view__category notice-view__category--${notice.category}`}>
-                    {CATEGORY_LABELS[notice.category]}
-                  </span>
-                  {notice.isNew && <span className="notice-view__new-badge">NEW</span>}
-                </div>
-                <div className="notice-view__item-title">{notice.title}</div>
-                <div className="notice-view__item-date">
+                <span className={`notice-view__category notice-view__category--${notice.category}`}>
+                  {CATEGORY_LABELS[notice.category]}
+                </span>
+                {notice.isNew && <span className="notice-view__new-badge">NEW</span>}
+                <span className="notice-view__item-title">{notice.title}</span>
+                <span className="notice-view__item-date">
                   {formatDateTime(notice.createdAt)}
-                </div>
+                </span>
               </div>
             ))
           )}
