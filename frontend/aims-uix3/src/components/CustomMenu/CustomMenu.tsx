@@ -169,6 +169,7 @@ interface CustomMenuProps {
   collapsed?: boolean
   selectedKey?: string // 외부에서 제어되는 선택된 키
   inquiryUnreadCount?: number // 미확인 문의 개수
+  footer?: ReactNode // 하단 영역 (버전 표시 + 햄버거 버튼)
 }
 
 interface CustomMenuItemProps {
@@ -295,7 +296,8 @@ const CustomMenu = ({
   searchResultsCount = 0,
   collapsed = false,
   selectedKey: externalSelectedKey = 'dsd', // 외부에서 제어, 기본값은 'dsd'
-  inquiryUnreadCount = 0 // 미확인 문의 개수
+  inquiryUnreadCount = 0, // 미확인 문의 개수
+  footer // 하단 영역 (버전 + 햄버거)
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
@@ -665,6 +667,13 @@ const CustomMenu = ({
         onCustomerClick={onCustomerClick}
         onCustomerDoubleClick={onCustomerDoubleClick}
       />
+
+      {/* 하단 영역 (버전 + 햄버거) - 메뉴와 동일 레이어에 통합 */}
+      {footer && (
+        <div className="custom-menu__footer">
+          {footer}
+        </div>
+      )}
     </div>
   )
 }

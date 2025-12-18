@@ -1212,7 +1212,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
           }}
         >
-          {/* CustomMenu - 메뉴 + 최근 검색 고객 통합 */}
+          {/* CustomMenu - 메뉴 + 최근 검색 고객 + 하단 영역 통합 */}
           <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
             <CustomMenu
               collapsed={leftPaneCollapsed}
@@ -1221,62 +1221,62 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               selectedKey={activeDocumentView || 'dsd'}
               inquiryUnreadCount={inquiryUnreadCount}
+              footer={
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: leftPaneCollapsed ? 'center' : 'flex-end' }}>
+                  {/* 버전 표시 - 햄버거 버튼 바로 위 (호버: 툴팁, 클릭: 복사) */}
+                  <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="right">
+                    <div
+                      className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
+                      style={{
+                        paddingBottom: 0,
+                        fontSize: 'var(--font-size-caption-2)',
+                        color: 'var(--color-text-tertiary)',
+                        opacity: 0.6,
+                        textAlign: leftPaneCollapsed ? 'center' : 'left',
+                        transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
+                        userSelect: 'none',
+                        cursor: 'pointer'
+                      }}
+                      aria-label={`버전 ${APP_VERSION} (${GIT_HASH})`}
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(FULL_VERSION)
+                          // 햅틱 피드백
+                          if (window.aimsHaptic) {
+                            window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                          }
+                        } catch (err) {
+                          console.error('버전 복사 실패:', err)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          navigator.clipboard.writeText(FULL_VERSION)
+                        }
+                      }}
+                    >
+                      <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
+                        v{APP_VERSION}
+                      </div>
+                    </div>
+                  </Tooltip>
+
+                  {/* 햄버거 버튼 */}
+                  <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`} style={{ marginTop: 0 }}>
+                    <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+                      <HamburgerButton
+                        collapsed={leftPaneCollapsed}
+                        onClick={toggleLeftPaneCollapsed}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              }
             />
           </Suspense>
-
-          {/* 햄버거 버튼 + 버전 - 맨 아래 오른쪽 배치 */}
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: leftPaneCollapsed ? 'center' : 'flex-end' }}>
-            {/* 버전 표시 - 햄버거 버튼 바로 위 (호버: 툴팁, 클릭: 복사) */}
-            <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="right">
-              <div
-                className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
-                style={{
-                  paddingBottom: 0,
-                  fontSize: 'var(--font-size-caption-2)',
-                  color: 'var(--color-text-tertiary)',
-                  opacity: 0.6,
-                  textAlign: leftPaneCollapsed ? 'center' : 'left',
-                  transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
-                  userSelect: 'none',
-                  cursor: 'pointer'
-                }}
-                aria-label={`버전 ${APP_VERSION} (${GIT_HASH})`}
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(FULL_VERSION)
-                    // 햅틱 피드백
-                    if (window.aimsHaptic) {
-                      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
-                    }
-                  } catch (err) {
-                    console.error('버전 복사 실패:', err)
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    navigator.clipboard.writeText(FULL_VERSION)
-                  }
-                }}
-              >
-                <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
-                  v{APP_VERSION}
-                </div>
-              </div>
-            </Tooltip>
-
-            {/* 햄버거 버튼 */}
-            <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`} style={{ marginTop: 0 }}>
-              <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
-                <HamburgerButton
-                  collapsed={leftPaneCollapsed}
-                  onClick={toggleLeftPaneCollapsed}
-                />
-              </Suspense>
-            </div>
-          </div>
         </nav>
       )}
 
