@@ -3,7 +3,7 @@ import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
-// useRecentCustomersStore는 LeftPane의 RecentCustomers 컴포넌트로 이동됨
+import RecentCustomers from '../RecentCustomers'
 import './CustomMenu.css'
 import './CustomMenuTooltip.css'
 
@@ -163,6 +163,7 @@ export interface MenuItem {
 interface CustomMenuProps {
   onMenuClick?: (key: string) => void
   onCustomerClick?: (customerId: string) => void  // 최근 검색 고객 클릭 핸들러
+  onCustomerDoubleClick?: (customerId: string) => void  // 최근 검색 고객 더블클릭 핸들러
   hasSearchResults?: boolean
   searchResultsCount?: number
   collapsed?: boolean
@@ -289,6 +290,7 @@ const CustomMenuItem = ({
 const CustomMenu = ({
   onMenuClick,
   onCustomerClick,
+  onCustomerDoubleClick,
   hasSearchResults = false,
   searchResultsCount = 0,
   collapsed = false,
@@ -297,8 +299,6 @@ const CustomMenu = ({
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
-
-  // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨 (useRecentCustomersStore 제거)
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
   useEffect(() => {
@@ -658,6 +658,13 @@ const CustomMenu = ({
           onToggleExpand={handleToggleExpand}
         />
       ))}
+
+      {/* 최근 검색 고객 - 메뉴와 동일 레이어에 통합 */}
+      <RecentCustomers
+        collapsed={collapsed}
+        onCustomerClick={onCustomerClick}
+        onCustomerDoubleClick={onCustomerDoubleClick}
+      />
     </div>
   )
 }

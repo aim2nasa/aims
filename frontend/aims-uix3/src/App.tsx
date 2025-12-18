@@ -22,7 +22,6 @@ import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/ve
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
 const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
-const RecentCustomers = lazy(() => import('./components/RecentCustomers'))
 const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
 const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
@@ -1213,23 +1212,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
           }}
         >
-          {/* CustomMenu - color.png 기반 완벽한 구현 */}
+          {/* CustomMenu - 메뉴 + 최근 검색 고객 통합 */}
           <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
             <CustomMenu
               collapsed={leftPaneCollapsed}
               onMenuClick={handleMenuClick}
-              onCustomerClick={handleRecentCustomerClick}
-              selectedKey={activeDocumentView || 'dsd'}
-              inquiryUnreadCount={inquiryUnreadCount}
-            />
-          </Suspense>
-
-          {/* 최근 검색 고객 - 컴팩트 리스트 */}
-          <Suspense fallback={null}>
-            <RecentCustomers
-              collapsed={leftPaneCollapsed}
               onCustomerClick={handleCustomerClick}
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
+              selectedKey={activeDocumentView || 'dsd'}
+              inquiryUnreadCount={inquiryUnreadCount}
             />
           </Suspense>
 
