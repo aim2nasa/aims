@@ -3,7 +3,7 @@
  * @since 2025-12-18
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/shared/hooks/useDebounce';
@@ -17,6 +17,10 @@ import {
 } from '@/features/inquiries/api';
 import { Button } from '@/shared/ui/Button/Button';
 import './InquiriesPage.css';
+
+// 정렬 가능한 필드
+type SortField = 'status' | 'category' | 'title' | 'userName' | 'messageCount' | 'createdAt' | 'updatedAt';
+type SortOrder = 'asc' | 'desc';
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -39,6 +43,8 @@ export const InquiriesPage = () => {
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | ''>('');
   const [categoryFilter, setCategoryFilter] = useState<InquiryCategory | ''>('');
   const [deleteMode, setDeleteMode] = useState(false);
+  const [sortBy, setSortBy] = useState<SortField>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const limit = 20;
 
   const debouncedSearch = useDebounce(search, 300);
@@ -58,9 +64,38 @@ export const InquiriesPage = () => {
     }
   };
 
+  // 정렬 핸들러
+  const handleColumnSort = useCallback((field: SortField) => {
+    if (sortBy === field) {
+      // 같은 필드 클릭: 방향 토글
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭: 해당 필드로 변경, 기본 내림차순
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  }, [sortBy]);
+
+  // 정렬 아이콘 렌더링
+  const renderSortIndicator = (field: SortField) => {
+    if (sortBy === field) {
+      return (
+        <span className="inquiries-sort-indicator">
+          {sortOrder === 'asc' ? '▲' : '▼'}
+        </span>
+      );
+    }
+    return (
+      <span className="inquiries-sort-indicator inquiries-sort-indicator--both">
+        <span className="inquiries-sort-arrow">▲</span>
+        <span className="inquiries-sort-arrow">▼</span>
+      </span>
+    );
+  };
+
   // 문의 목록 조회
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'inquiries', page, debouncedSearch, statusFilter, categoryFilter],
+    queryKey: ['admin', 'inquiries', page, debouncedSearch, statusFilter, categoryFilter, sortBy, sortOrder],
     queryFn: () =>
       inquiriesApi.getInquiries({
         page,
@@ -68,8 +103,8 @@ export const InquiriesPage = () => {
         search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
+        sortBy,
+        sortOrder,
       }),
   });
 
@@ -170,13 +205,34 @@ export const InquiriesPage = () => {
           <table className="inquiries-table">
             <thead className="inquiries-table__head">
               <tr>
-                <th className="inquiries-table__th">상태</th>
-                <th className="inquiries-table__th">유형</th>
-                <th className="inquiries-table__th">제목</th>
-                <th className="inquiries-table__th">작성자</th>
-                <th className="inquiries-table__th">메시지</th>
-                <th className="inquiries-table__th">등록일</th>
-                <th className="inquiries-table__th">최근 활동</th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('status')}>
+                  <span>상태</span>
+                  {renderSortIndicator('status')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('category')}>
+                  <span>유형</span>
+                  {renderSortIndicator('category')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('title')}>
+                  <span>제목</span>
+                  {renderSortIndicator('title')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('userName')}>
+                  <span>작성자</span>
+                  {renderSortIndicator('userName')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('messageCount')}>
+                  <span>메시지</span>
+                  {renderSortIndicator('messageCount')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('createdAt')}>
+                  <span>등록일</span>
+                  {renderSortIndicator('createdAt')}
+                </th>
+                <th className="inquiries-table__th inquiries-table__th--sortable" onClick={() => handleColumnSort('updatedAt')}>
+                  <span>최근 활동</span>
+                  {renderSortIndicator('updatedAt')}
+                </th>
                 {deleteMode && <th className="inquiries-table__th inquiries-table__th--action">삭제</th>}
               </tr>
             </thead>

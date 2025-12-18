@@ -4,7 +4,7 @@
  * @since 2025-12-18
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getInquiries,
@@ -15,6 +15,7 @@ import {
   formatFileSize,
   type InquiryStatus,
   type InquiryCategory,
+  type Inquiry,
   CATEGORY_LABELS,
   STATUS_LABELS,
 } from '@/entities/inquiry';
@@ -43,6 +44,10 @@ interface InquiryViewProps {
 
 type ViewMode = 'list' | 'create' | 'detail';
 
+// 정렬 가능한 필드
+type SortField = 'status' | 'category' | 'title' | 'createdAt' | 'messageCount';
+type SortDirection = 'asc' | 'desc';
+
 export default function InquiryView({
   visible,
   onClose,
@@ -54,6 +59,10 @@ export default function InquiryView({
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | ''>('');
+
+  // 정렬 상태
+  const [sortField, setSortField] = useState<SortField | null>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // 문의 작성 폼 상태
   const [category, setCategory] = useState<InquiryCategory>('question');
@@ -276,6 +285,77 @@ export default function InquiryView({
     all: inquiriesData?.inquiries.length ?? 0,
   };
 
+  // 정렬 핸들러
+  const handleColumnSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      // 같은 필드 클릭: 방향 토글
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭: 해당 필드로 변경, 기본 내림차순
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }, [sortField]);
+
+  // 정렬된 문의 목록
+  const sortedInquiries = useMemo(() => {
+    const inquiries = inquiriesData?.inquiries || [];
+    if (!sortField) return inquiries;
+
+    return [...inquiries].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (sortField) {
+        case 'status':
+          // 상태 우선순위: pending > in_progress > resolved > closed
+          const statusOrder: Record<InquiryStatus, number> = { pending: 0, in_progress: 1, resolved: 2, closed: 3 };
+          aVal = statusOrder[a.status];
+          bVal = statusOrder[b.status];
+          break;
+        case 'category':
+          aVal = a.category;
+          bVal = b.category;
+          break;
+        case 'title':
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+          break;
+        case 'createdAt':
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+        case 'messageCount':
+          aVal = a.messages?.length || 0;
+          bVal = b.messages?.length || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [inquiriesData?.inquiries, sortField, sortDirection]);
+
+  // 정렬 아이콘 렌더링
+  const renderSortIndicator = (field: SortField) => {
+    if (sortField === field) {
+      return (
+        <span className="inquiry-sort-indicator">
+          {sortDirection === 'asc' ? '▲' : '▼'}
+        </span>
+      );
+    }
+    return (
+      <span className="inquiry-sort-indicator inquiry-sort-indicator--both">
+        <span className="inquiry-sort-arrow">▲</span>
+        <span className="inquiry-sort-arrow">▼</span>
+      </span>
+    );
+  };
+
   // 동적 타이틀
   const getTitle = () => {
     if (viewMode === 'create') return '새 문의 작성';
@@ -364,14 +444,44 @@ export default function InquiryView({
         <div className="inquiry-list">
           {/* 헤더 */}
           <div className="inquiry-list-header">
-            <span>상태</span>
-            <span>유형</span>
-            <span>제목</span>
-            <span>등록일</span>
-            <span>메시지</span>
+            <div
+              className="inquiry-header-sortable"
+              onClick={() => handleColumnSort('status')}
+            >
+              <span>상태</span>
+              {renderSortIndicator('status')}
+            </div>
+            <div
+              className="inquiry-header-sortable"
+              onClick={() => handleColumnSort('category')}
+            >
+              <span>유형</span>
+              {renderSortIndicator('category')}
+            </div>
+            <div
+              className="inquiry-header-sortable"
+              onClick={() => handleColumnSort('title')}
+            >
+              <span>제목</span>
+              {renderSortIndicator('title')}
+            </div>
+            <div
+              className="inquiry-header-sortable"
+              onClick={() => handleColumnSort('createdAt')}
+            >
+              <span>등록일</span>
+              {renderSortIndicator('createdAt')}
+            </div>
+            <div
+              className="inquiry-header-sortable"
+              onClick={() => handleColumnSort('messageCount')}
+            >
+              <span>메시지</span>
+              {renderSortIndicator('messageCount')}
+            </div>
           </div>
           {/* 행들 */}
-          {inquiriesData?.inquiries.map((inquiry) => {
+          {sortedInquiries.map((inquiry) => {
             const isUnread = unreadIds.has(inquiry._id);
             return (
               <button

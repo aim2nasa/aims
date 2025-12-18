@@ -206,6 +206,78 @@ html[data-theme="dark"] .inquiry-list-header {
   color: var(--color-ios-text-tertiary-dark);
 }
 
+/* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
+.inquiry-header-sortable {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+}
+
+.inquiry-header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .inquiry-header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.inquiry-header-sortable:active {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .inquiry-header-sortable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+.inquiry-sort-indicator {
+  font-size: var(--font-size-caption-2, 11px);
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  margin-left: 2px;
+  color: var(--color-primary-600);
+  opacity: 0.9;
+}
+
+/* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+.inquiry-sort-indicator:not(.inquiry-sort-indicator--both) {
+  color: var(--color-sort-indicator-active, var(--color-primary-600));
+  font-weight: 700;
+  opacity: 1;
+}
+
+/* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+.inquiry-sort-indicator--both {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 0.6;
+  margin-left: 2px;
+  gap: 2px;
+}
+
+.inquiry-sort-indicator--both .inquiry-sort-arrow {
+  display: block;
+  font-size: var(--font-size-caption-2, 11px);
+  line-height: 0.6;
+  height: 6px;
+}
+
+html[data-theme="dark"] .inquiry-sort-indicator {
+  color: var(--color-primary-300);
+}
+
+.inquiry-header-sortable:hover .inquiry-sort-indicator {
+  opacity: 1;
+}
+
 /* === 🍎 INQUIRY LIST === */
 .inquiry-list {
   min-height: 0;
