@@ -205,21 +205,6 @@
   gap: var(--spacing-md);
 }
 
-/* 메시지 영역 */
-.inquiry-detail-page__messages {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
-}
-
-.inquiry-detail-page__messages h3 {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-md) 0;
-}
-
 .messages-container {
   display: flex;
   flex-direction: column;

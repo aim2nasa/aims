@@ -266,9 +266,7 @@ export const InquiryDetailPage = () => {
       <div className="inquiry-detail-page__content">
 
           {/* 메시지 스레드 - 카카오톡 스타일 */}
-          <div className="inquiry-detail-page__messages">
-            <h3>대화 내역</h3>
-            <div className="messages-container">
+          <div className="messages-container">
               {inquiry.messages.map((message) => (
                 <div
                   key={message._id}
@@ -332,7 +330,6 @@ export const InquiryDetailPage = () => {
                 </div>
               ))}
               <div ref={messagesEndRef} />
-            </div>
           </div>
 
           {/* 답변 입력 */}
