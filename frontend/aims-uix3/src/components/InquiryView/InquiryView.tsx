@@ -610,6 +610,14 @@ export default function InquiryView({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* 해결됨 배너 */}
+          {inquiryDetail.status === 'resolved' && (
+            <div className="inquiry-resolved-banner">
+              <SFSymbol name="checkmark.circle.fill" size={SFSymbolSize.BODY} weight={SFSymbolWeight.MEDIUM} />
+              <span>문의가 해결되었습니다. 추가 문의 시 자동으로 다시 접수됩니다.</span>
+            </div>
+          )}
+
           {/* 답변 입력 */}
           {inquiryDetail.status !== 'closed' ? (
             <form className="inquiry-reply-form" onSubmit={handleSubmitMessage}>
@@ -617,7 +625,7 @@ export default function InquiryView({
                 className="inquiry-reply-input"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="추가 문의 내용을 입력하세요..."
+                placeholder={inquiryDetail.status === 'resolved' ? '추가 문의가 있으시면 입력하세요...' : '추가 문의 내용을 입력하세요...'}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleFileDrop(e, true)}
               />

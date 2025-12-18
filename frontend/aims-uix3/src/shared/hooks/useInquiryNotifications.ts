@@ -148,9 +148,12 @@ export function useInquiryNotifications(
           setUnreadCount((c) => c + 1);
         }
 
-        // 쿼리 무효화 (메시지 목록 갱신)
+        // 쿼리 리셋 (메시지 목록 갱신) - reset으로 캐시 완전 초기화 후 재요청
+        console.log('[InquiryNotifications] 쿼리 리셋 시작:', data.inquiryId);
+        queryClient.resetQueries({ queryKey: ['inquiry', data.inquiryId] })
+          .then(() => console.log('[InquiryNotifications] 쿼리 리셋 완료'))
+          .catch((err) => console.error('[InquiryNotifications] 쿼리 리셋 실패:', err));
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
-        queryClient.invalidateQueries({ queryKey: ['inquiry', data.inquiryId] });
       } catch (error) {
         console.error('[InquiryNotifications] new-message 이벤트 파싱 실패:', error);
       }
@@ -160,8 +163,8 @@ export function useInquiryNotifications(
       try {
         const data: InquiryNotificationData = JSON.parse(e.data);
         console.log('[InquiryNotifications] 상태 변경 알림:', data);
+        queryClient.resetQueries({ queryKey: ['inquiry', data.inquiryId] });
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
-        queryClient.invalidateQueries({ queryKey: ['inquiry', data.inquiryId] });
       } catch (error) {
         console.error('[InquiryNotifications] status-changed 이벤트 파싱 실패:', error);
       }

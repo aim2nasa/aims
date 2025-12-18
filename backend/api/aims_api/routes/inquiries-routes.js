@@ -717,11 +717,19 @@ module.exports = (db, authenticateJWT, requireRole) => {
         createdAt: new Date()
       };
 
+      // resolved 상태에서 사용자가 메시지를 보내면 자동으로 pending으로 재접수
+      const updateFields = { updatedAt: new Date() };
+      if (inquiry.status === 'resolved') {
+        updateFields.status = 'pending';
+        updateFields.resolvedAt = null; // 재접수 시 resolvedAt 초기화
+        console.log(`[Inquiry] 문의 ${id} 재접수됨 (resolved → pending)`);
+      }
+
       await inquiriesCollection.updateOne(
         { _id: new ObjectId(id) },
         {
           $push: { messages: newMessage },
-          $set: { updatedAt: new Date() }
+          $set: updateFields
         }
       );
 
@@ -732,6 +740,16 @@ module.exports = (db, authenticateJWT, requireRole) => {
         userName: user?.name || '이름 없음',
         title: inquiry.title
       });
+
+      // SSE: resolved → pending 상태 변경 시 사용자에게 알림 (UI 갱신용)
+      if (inquiry.status === 'resolved') {
+        notifyUser(userId, 'status-changed', {
+          inquiryId: id,
+          title: inquiry.title,
+          status: 'pending',
+          previousStatus: 'resolved'
+        });
+      }
 
       res.json({
         success: true,
