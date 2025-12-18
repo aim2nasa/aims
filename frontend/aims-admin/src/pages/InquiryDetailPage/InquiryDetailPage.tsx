@@ -108,6 +108,15 @@ export const InquiryDetailPage = () => {
     replyMutation.mutate({ content: replyContent, files: replyFiles.length > 0 ? replyFiles : undefined });
   };
 
+  // Enter 키로 답변 전송 (Shift+Enter는 줄바꿈)
+  const handleReplyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!replyContent.trim() || replyMutation.isPending) return;
+      replyMutation.mutate({ content: replyContent, files: replyFiles.length > 0 ? replyFiles : undefined });
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -341,6 +350,7 @@ export const InquiryDetailPage = () => {
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="답변 내용을 입력하세요..."
                 rows={5}
+                onKeyDown={handleReplyKeyDown}
               />
               {/* 첨부파일 목록 */}
               {replyFiles.length > 0 && (

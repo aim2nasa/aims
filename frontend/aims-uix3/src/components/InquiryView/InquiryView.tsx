@@ -196,6 +196,19 @@ export default function InquiryView({
     });
   }, [newMessage, messageFiles, selectedInquiryId, addMessageMutation]);
 
+  // Enter 키로 메시지 전송 (Shift+Enter는 줄바꿈)
+  const handleMessageKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!newMessage.trim() || !selectedInquiryId || addMessageMutation.isPending) return;
+      addMessageMutation.mutate({
+        inquiryId: selectedInquiryId,
+        content: newMessage,
+        files: messageFiles.length > 0 ? messageFiles : undefined,
+      });
+    }
+  }, [newMessage, messageFiles, selectedInquiryId, addMessageMutation]);
+
   const handleInquiryClick = useCallback((inquiryId: string) => {
     setSelectedInquiryId(inquiryId);
     setViewMode('detail');
@@ -635,6 +648,7 @@ export default function InquiryView({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder={inquiryDetail.status === 'resolved' ? '추가 문의가 있으시면 입력하세요...' : '추가 문의 내용을 입력하세요...'}
+                onKeyDown={handleMessageKeyDown}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleFileDrop(e, true)}
               />
