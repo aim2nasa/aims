@@ -29,6 +29,7 @@ export default function FAQView({
 }: FAQViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // FAQ 카테고리 목록 조회 (DB에서 동적으로)
   const { data: categories = [] } = useQuery({
@@ -49,11 +50,24 @@ export default function FAQView({
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  // 필터된 FAQ (order 기준 정렬)
-  const filteredFAQ = (selectedCategory === 'all'
-    ? faqs
-    : faqs.filter(item => item.category === selectedCategory)
-  ).sort((a, b) => a.order - b.order);
+  // 필터된 FAQ (카테고리 + 검색어 + order 기준 정렬)
+  const filteredFAQ = faqs
+    .filter(item => {
+      // 카테고리 필터
+      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
+        return false;
+      }
+      // 검색어 필터
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        return (
+          item.question.toLowerCase().includes(query) ||
+          item.answer.toLowerCase().includes(query)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => a.order - b.order);
 
   return (
     <CenterPaneView
@@ -73,6 +87,32 @@ export default function FAQView({
         </div>
       ) : (
         <div className="faq-view__content">
+          {/* 검색 입력 */}
+          <div className="faq-view__search">
+            <svg className="faq-view__search-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input
+              type="text"
+              className="faq-view__search-input"
+              placeholder="질문 또는 답변 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="faq-view__search-clear"
+                onClick={() => setSearchQuery('')}
+                title="검색어 지우기"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
           {/* 카테고리 필터 (DB에서 동적으로) */}
           <div className="faq-view__filters">
             <button
@@ -130,7 +170,9 @@ export default function FAQView({
 
           {filteredFAQ.length === 0 && (
             <div className="faq-view__empty">
-              해당 카테고리에 등록된 질문이 없습니다.
+              {searchQuery
+                ? `"${searchQuery}"에 대한 검색 결과가 없습니다.`
+                : '해당 카테고리에 등록된 질문이 없습니다.'}
             </div>
           )}
         </div>
