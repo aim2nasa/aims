@@ -115,11 +115,14 @@ export default function InquiryView({
   }, [inquiryDetail?.messages, viewMode]);
 
   // 상세 화면 진입 시 읽음 처리
+  // 주의: unreadIds를 의존성에서 제외하여 새 메시지 수신 시 자동 읽음 처리 방지
+  // (새 메시지가 오면 알림 배지가 깜빡이는 문제 해결)
   useEffect(() => {
     if (viewMode === 'detail' && selectedInquiryId && unreadIds.has(selectedInquiryId) && onMarkAsRead) {
       onMarkAsRead(selectedInquiryId);
     }
-  }, [viewMode, selectedInquiryId, unreadIds, onMarkAsRead]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, selectedInquiryId, onMarkAsRead]);
 
   const resetCreateForm = () => {
     setCategory('question');

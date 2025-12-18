@@ -107,34 +107,22 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
 
   /**
-   * 사용자의 미확인 문의 개수 조회
-   * 관리자가 답변했는데 사용자가 아직 안 읽은 문의
+   * 사용자의 미확인 메시지 개수 조회 (카카오톡 스타일)
+   * 관리자가 답변했는데 사용자가 아직 안 읽은 메시지 개수
    */
   async function getUnreadCountForUser(userId) {
     const userObjectId = new ObjectId(userId);
 
-    // aggregation으로 미확인 문의 개수 계산
+    // aggregation으로 미확인 메시지 개수 계산
     const result = await inquiriesCollection.aggregate([
       { $match: { userId: userObjectId } },
-      {
-        $addFields: {
-          // 관리자가 작성한 메시지 중 가장 최근 시각
-          lastAdminMessageAt: {
-            $max: {
-              $map: {
-                input: { $filter: { input: '$messages', cond: { $eq: ['$$this.authorRole', 'admin'] } } },
-                as: 'm',
-                in: '$$m.createdAt'
-              }
-            }
-          }
-        }
-      },
+      { $unwind: '$messages' },
       {
         $match: {
+          'messages.authorRole': 'admin',
           $expr: {
             $gt: [
-              '$lastAdminMessageAt',
+              '$messages.createdAt',
               { $ifNull: ['$userLastReadAt', new Date(0)] }
             ]
           }
@@ -291,6 +279,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       getUnreadCountForUser(userId),
       getUnreadIdsForUser(userId)
     ]).then(([count, ids]) => {
+      console.log(`[SSE] 사용자 ${userIdStr}에게 init 이벤트 전송 - count: ${count}, ids: ${JSON.stringify(ids)}`);
       sendSSE(res, 'init', { count, ids });
     }).catch(err => {
       console.error('[SSE] 초기 데이터 조회 오류:', err);
@@ -1136,9 +1125,10 @@ module.exports = (db, authenticateJWT, requireRole) => {
         }
       );
 
-      // SSE: 해당 사용자에게 새 답변 알림
+      // SSE: 해당 사용자에게 새 답변 알림 (messageId 포함으로 중복 방지)
       notifyUser(inquiry.userId, 'new-message', {
         inquiryId: id,
+        messageId: newMessage._id.toString(),
         title: inquiry.title
       });
 
