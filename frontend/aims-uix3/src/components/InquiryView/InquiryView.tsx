@@ -37,6 +37,8 @@ interface InquiryViewProps {
   unreadIds?: Set<string>;
   /** 읽음 처리 함수 */
   onMarkAsRead?: (inquiryId: string) => Promise<void>;
+  /** 현재 보고 있는 문의 ID 변경 시 콜백 (카카오톡 스타일: 열린 채팅방은 카운트 증가 안함) */
+  onViewingInquiryChange?: (inquiryId: string | null) => void;
 }
 
 type ViewMode = 'list' | 'create' | 'detail';
@@ -46,6 +48,7 @@ export default function InquiryView({
   onClose,
   unreadIds = new Set(),
   onMarkAsRead,
+  onViewingInquiryChange,
 }: InquiryViewProps) {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -116,13 +119,25 @@ export default function InquiryView({
 
   // 상세 화면 진입 시 읽음 처리
   // 주의: unreadIds를 의존성에서 제외하여 새 메시지 수신 시 자동 읽음 처리 방지
-  // (새 메시지가 오면 알림 배지가 깜빡이는 문제 해결)
+  // visible 추가: 화면을 닫았다가 다시 열 때도 읽음 처리 필요
   useEffect(() => {
-    if (viewMode === 'detail' && selectedInquiryId && unreadIds.has(selectedInquiryId) && onMarkAsRead) {
+    if (visible && viewMode === 'detail' && selectedInquiryId && unreadIds.has(selectedInquiryId) && onMarkAsRead) {
       onMarkAsRead(selectedInquiryId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, selectedInquiryId, onMarkAsRead]);
+  }, [visible, viewMode, selectedInquiryId, onMarkAsRead]);
+
+  // 카카오톡 스타일: 현재 보고 있는 문의 ID를 부모에게 알림
+  // 열린 채팅방에 새 메시지가 오면 카운트 증가 안함
+  useEffect(() => {
+    if (!onViewingInquiryChange) return;
+
+    if (visible && viewMode === 'detail' && selectedInquiryId) {
+      onViewingInquiryChange(selectedInquiryId);
+    } else {
+      onViewingInquiryChange(null);
+    }
+  }, [visible, viewMode, selectedInquiryId, onViewingInquiryChange]);
 
   const resetCreateForm = () => {
     setCategory('question');

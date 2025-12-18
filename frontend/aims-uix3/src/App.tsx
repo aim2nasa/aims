@@ -146,12 +146,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // User Store - 사용자 정보 전역 관리
   const { updateCurrentUser } = useUserStore()
 
+  // 현재 보고 있는 문의 ID (카카오톡 스타일: 열린 채팅방은 카운트 증가 안함)
+  const [currentViewingInquiryId, setCurrentViewingInquiryId] = useState<string | null>(null)
+
   // 문의 알림 관리 (SSE 실시간 알림)
+  // 카카오톡 스타일: 현재 보고 있는 문의 ID 전달 → 열린 채팅방은 카운트 증가 안함
   const {
     unreadCount: inquiryUnreadCount,
     unreadIds: inquiryUnreadIds,
     markAsRead: markInquiryAsRead,
-  } = useInquiryNotifications()
+  } = useInquiryNotifications(true, currentViewingInquiryId)
 
   // 공지사항 알림 관리
   const {
@@ -1523,6 +1527,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               unreadIds={inquiryUnreadIds}
               onMarkAsRead={markInquiryAsRead}
+              onViewingInquiryChange={setCurrentViewingInquiryId}
             />
           </Suspense>
 

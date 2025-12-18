@@ -37,10 +37,14 @@ interface UseInquiryNotificationsReturn {
 }
 
 /**
- * 문의 알림 관리 훅
+ * 문의 알림 관리 훅 (카카오톡 스타일)
  * @param enabled SSE 연결 활성화 여부 (로그인 상태에서만 true)
+ * @param currentViewingInquiryId 현재 보고 있는 문의 ID (열려있는 채팅방)
  */
-export function useInquiryNotifications(enabled: boolean = true): UseInquiryNotificationsReturn {
+export function useInquiryNotifications(
+  enabled: boolean = true,
+  currentViewingInquiryId: string | null = null
+): UseInquiryNotificationsReturn {
   const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
@@ -49,6 +53,12 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initReceivedRef = useRef(false);
   const processedEventIdsRef = useRef<Set<string>>(new Set());
+
+  // 현재 보고 있는 문의 ID를 ref로 추적 (SSE 핸들러에서 사용)
+  const currentViewingInquiryIdRef = useRef<string | null>(currentViewingInquiryId);
+  useEffect(() => {
+    currentViewingInquiryIdRef.current = currentViewingInquiryId;
+  }, [currentViewingInquiryId]);
 
   // 초기 데이터 로드 (수동 새로고침용)
   const loadInitialData = useCallback(async () => {
@@ -120,15 +130,25 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         }
         processedEventIdsRef.current.add(eventKey);
 
-        // unreadIds는 문의 ID 기준 (UI 하이라이트용)
-        setUnreadIds((prev) => {
-          const next = new Set(prev);
-          next.add(data.inquiryId);
-          return next;
-        });
-        // count는 메시지 개수 (카카오톡 스타일)
-        setUnreadCount((c) => c + 1);
+        // 카카오톡 스타일: 현재 보고 있는 문의면 카운트 증가 안함 + 즉시 읽음 처리
+        const isCurrentlyViewing = currentViewingInquiryIdRef.current === data.inquiryId;
+        if (isCurrentlyViewing) {
+          console.log('[InquiryNotifications] 현재 보고 있는 문의 - 즉시 읽음 처리');
+          // 서버에 읽음 처리 요청 (카운트 증가 안함)
+          markAsReadApi(data.inquiryId).catch((err) => {
+            console.error('[InquiryNotifications] 자동 읽음 처리 실패:', err);
+          });
+        } else {
+          // 다른 문의면 카운트 증가
+          setUnreadIds((prev) => {
+            const next = new Set(prev);
+            next.add(data.inquiryId);
+            return next;
+          });
+          setUnreadCount((c) => c + 1);
+        }
 
+        // 쿼리 무효화 (메시지 목록 갱신)
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
         queryClient.invalidateQueries({ queryKey: ['inquiry', data.inquiryId] });
       } catch (error) {
