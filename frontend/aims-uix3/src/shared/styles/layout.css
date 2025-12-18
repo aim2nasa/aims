@@ -150,7 +150,7 @@
   padding-left: max(20px, env(safe-area-inset-left));
   padding-right: max(20px, env(safe-area-inset-right));
   padding-top: max(0px, env(safe-area-inset-top));
-  padding-bottom: max(8px, env(safe-area-inset-bottom)); /* 최소 여백 */
+  padding-bottom: max(2px, env(safe-area-inset-bottom)); /* 최소 여백 - 초컴팩트 */
 
   /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
   -webkit-font-smoothing: antialiased;

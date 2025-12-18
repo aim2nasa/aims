@@ -3,10 +3,10 @@
 .recent-customers {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2) 0;
+  gap: 0;
+  padding: 2px 0;
   border-top: 1px solid var(--color-separator);
-  margin-top: var(--spacing-2);
+  margin-top: 2px;
 }
 
 /* 섹션 헤더 */
@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
+  padding: 2px var(--spacing-2);
   color: var(--color-text-tertiary);
   font-size: 10px;
   font-weight: 600;
@@ -47,7 +47,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: 4px var(--spacing-2);
+  padding: 2px var(--spacing-2);
   padding-left: var(--spacing-11); /* 44px - 서브메뉴와 동일 */
   border-radius: var(--radius-sm);
   cursor: pointer;

@@ -618,7 +618,7 @@
 .hamburger-container {
   margin-top: auto;
   display: flex;
-  padding-top: 10px;
+  padding-top: 0;
 }
 
 .hamburger-container--collapsed {

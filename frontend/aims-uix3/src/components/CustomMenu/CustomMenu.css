@@ -917,6 +917,6 @@ html[data-theme="dark"] .menu-icon--help {
 /* 버전 표시 + 햄버거 버튼 영역 - 메뉴와 동일 레이어에 통합 */
 .custom-menu__footer {
   margin-top: auto;
-  padding-top: var(--spacing-2);
+  padding-top: 2px;
   border-top: 1px solid var(--color-separator);
 }
