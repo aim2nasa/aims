@@ -808,13 +808,18 @@ html[data-theme="dark"] .menu-icon--chat {
   color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
 }
 
-/* 도움말 - iOS systemIndigo */
+/* 도움말 - iOS systemGray */
 .menu-icon--help {
-  color: var(--color-ios-indigo, #5856d6);
+  color: var(--color-text-secondary, #8e8e93);
 }
 
 html[data-theme="dark"] .menu-icon--help {
-  color: #5e5ce6; /* 다크 테마: 약간 밝은 인디고 */
+  color: #aeaeb2;
+}
+
+/* 도움말 아이콘 - 선택 시 흰색 */
+.custom-menu-item.selected .menu-icon--help {
+  color: white;
 }
 
 /* 공지사항 - iOS systemBlue */
