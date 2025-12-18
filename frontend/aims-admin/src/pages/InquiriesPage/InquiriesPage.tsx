@@ -108,7 +108,7 @@ export const InquiriesPage = () => {
     <div className="inquiries-page">
       <div className="inquiries-page__header">
         <div>
-          <h1 className="inquiries-page__title">문의 관리</h1>
+          <h1 className="inquiries-page__title">1:1 문의 관리</h1>
           {stats && (
             <div className="inquiries-page__stats">
               <span className="stat-badge stat-badge--pending">대기 {stats.pending}</span>

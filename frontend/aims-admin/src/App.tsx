@@ -135,17 +135,13 @@ function App() {
       ],
     },
     {
-      path: '/inquiries',
-      label: '문의 관리',
-      badge: inquiryNotifications.unreadCount,
-    },
-    {
       path: '/help',
-      label: '콘텐츠 관리',
+      label: '도움말 관리',
       children: [
         { path: '/help/notices', label: '공지사항' },
         { path: '/help/guides', label: '사용 가이드' },
         { path: '/help/faqs', label: 'FAQ' },
+        { path: '/inquiries', label: '1:1 문의', badge: inquiryNotifications.unreadCount },
       ],
     },
   ];
