@@ -139,6 +139,15 @@ function App() {
       label: '문의 관리',
       badge: inquiryNotifications.unreadCount,
     },
+    {
+      path: '/help',
+      label: '콘텐츠 관리',
+      children: [
+        { path: '/help/notices', label: '공지사항' },
+        { path: '/help/guides', label: '사용 가이드' },
+        { path: '/help/faqs', label: 'FAQ' },
+      ],
+    },
   ];
 
   const toggleMenu = (path: string) => {

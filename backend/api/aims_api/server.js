@@ -7683,6 +7683,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', inquiriesRoutes);
     console.log('[Server] inquiriesRoutes 등록 완료');
 
+    // 도움말 콘텐츠 라우트 설정 (공지사항, 사용 가이드, FAQ)
+    const helpContentRoutes = require('./routes/help-content-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', helpContentRoutes);
+    console.log('[Server] helpContentRoutes 등록 완료');
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })
