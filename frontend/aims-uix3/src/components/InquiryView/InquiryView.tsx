@@ -248,12 +248,12 @@ export default function InquiryView({
   // 동적 타이틀
   const getTitle = () => {
     if (viewMode === 'create') return '새 문의 작성';
-    if (viewMode === 'detail' && inquiryDetail) return inquiryDetail.title;
+    // detail 모드에서도 헤더는 '1:1 문의'로 유지 (제목은 본문에 표시)
     return '1:1 문의';
   };
 
-  // 뒤로가기 버튼 (작성/상세 뷰에서)
-  const titleLeftAccessory = (viewMode === 'create' || viewMode === 'detail') ? (
+  // 뒤로가기 버튼 (작성 뷰에서만 헤더에 표시, 상세 뷰는 본문에 표시)
+  const titleLeftAccessory = viewMode === 'create' ? (
     <button type="button" className="inquiry-back-button" onClick={handleBackToList}>
       <SFSymbol name="chevron-left" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
       목록
@@ -502,25 +502,25 @@ export default function InquiryView({
         <div className="inquiry-loading">로딩 중...</div>
       ) : inquiryDetail ? (
         <div className="inquiry-detail">
-          {/* 정보 */}
-          <div className="inquiry-detail-info">
-            <div className="inquiry-detail-info-item">
+          {/* 상단 바: 목록 버튼 + 배지 + 메타정보 */}
+          <div className="inquiry-detail-topbar">
+            <button type="button" className="inquiry-detail-back" onClick={handleBackToList}>
+              <SFSymbol name="chevron-left" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.SEMIBOLD} />
+              목록
+            </button>
+            <div className="inquiry-detail-meta">
               <span className={`inquiry-status-badge inquiry-status-badge--${inquiryDetail.status}`}>
                 {STATUS_LABELS[inquiryDetail.status]}
               </span>
               <span className={`inquiry-category-badge inquiry-category-badge--${inquiryDetail.category}`}>
                 {CATEGORY_LABELS[inquiryDetail.category]}
               </span>
-            </div>
-            <div className="inquiry-detail-info-item">
-              <span className="inquiry-detail-info-label">등록일</span>
-              <span className="inquiry-detail-info-value">{formatDateTime(inquiryDetail.createdAt)}</span>
-            </div>
-            <div className="inquiry-detail-info-item">
-              <span className="inquiry-detail-info-label">메시지</span>
-              <span className="inquiry-detail-info-value">{inquiryDetail.messages.length}개</span>
+              <span className="inquiry-detail-date">{formatDateTime(inquiryDetail.createdAt)}</span>
             </div>
           </div>
+
+          {/* 문의 제목 */}
+          <h2 className="inquiry-detail-title">{inquiryDetail.title}</h2>
 
           {/* 메시지 목록 - 카카오톡 스타일 */}
           <div className="inquiry-messages">

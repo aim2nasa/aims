@@ -8,9 +8,10 @@
 .inquiry-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   height: 100%;
-  padding: 16px;
+  min-height: 0; /* flexbox 스크롤 활성화 필수 */
+  padding: 12px;
 }
 
 /* === 🍎 SEARCH BAR: iOS-style search field with controls === */
@@ -181,14 +182,14 @@ html[data-theme="dark"] .inquiry-create-button:hover {
 /* === 🍎 LIST HEADER: macOS Finder-style === */
 .inquiry-list-header {
   display: grid;
-  grid-template-columns: 80px 90px 1fr 150px 80px;
+  grid-template-columns: 60px 70px 1fr 140px 60px;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  min-height: 32px;
+  gap: 10px;
+  padding: 6px 10px;
+  min-height: 28px;
   background: #f5f6f7;
   border-bottom: 1px solid var(--color-ios-separator-light);
-  font-size: var(--font-size-caption-1);
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
   font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
@@ -219,11 +220,11 @@ html[data-theme="dark"] .inquiry-list-header {
 /* === 🍎 INQUIRY ROW === */
 .inquiry-row {
   display: grid;
-  grid-template-columns: 80px 90px 1fr 150px 80px;
+  grid-template-columns: 60px 70px 1fr 140px 60px;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  min-height: 44px;
+  gap: 10px;
+  padding: 8px 10px;
+  min-height: 36px;
   background: transparent;
   border: none;
   width: 100%;
@@ -246,10 +247,10 @@ html[data-theme="dark"] .inquiry-row:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px; /* 폰트 규정: 배지 */
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -278,10 +279,10 @@ html[data-theme="dark"] .inquiry-row:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px; /* 폰트 규정: 배지 */
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -309,8 +310,8 @@ html[data-theme="dark"] .inquiry-row:hover {
 .inquiry-row-title {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
+  font-weight: 400;
   color: var(--color-ios-text-primary-light);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -322,7 +323,8 @@ html[data-theme="dark"] .inquiry-row-title {
 }
 
 .inquiry-row-date {
-  font-size: 12px;
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+  font-weight: 400;
   color: var(--color-ios-text-secondary-light);
 }
 
@@ -333,8 +335,9 @@ html[data-theme="dark"] .inquiry-row-date {
 .inquiry-row-messages {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 3px;
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+  font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
 }
 
@@ -690,101 +693,95 @@ html[data-theme="dark"] .inquiry-form-submit:hover:not(:disabled) {
 .inquiry-detail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   height: 100%;
+  min-height: 0; /* flexbox 스크롤 활성화 필수 */
 }
 
-/* Detail header */
-.inquiry-detail-header {
+/* 🍎 DETAIL TOPBAR: 목록버튼 + 메타정보 한 줄 배치 */
+.inquiry-detail-topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
 }
 
-html[data-theme="dark"] .inquiry-detail-header {
+html[data-theme="dark"] .inquiry-detail-topbar {
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
+/* 🍎 목록 버튼 - iOS 스타일 세컨더리 버튼 */
 .inquiry-detail-back {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  font-size: 13px;
+  gap: 3px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-ios-separator-light);
+  background: var(--color-ios-bg-secondary-light);
+  color: var(--color-ios-text-primary-light);
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 html[data-theme="dark"] .inquiry-detail-back {
-  color: var(--color-ios-text-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-primary-dark);
 }
 
 .inquiry-detail-back:hover {
   background: var(--color-ios-bg-tertiary-light);
+  border-color: var(--color-ios-text-quaternary-light);
 }
 
 html[data-theme="dark"] .inquiry-detail-back:hover {
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-.inquiry-detail-title {
-  flex: 1;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-ios-text-primary-light);
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .inquiry-detail-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.inquiry-detail-badges {
-  display: flex;
-  gap: 8px;
-}
-
-/* Detail info */
-.inquiry-detail-info {
-  display: flex;
-  gap: 16px;
-  padding: 12px;
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-  font-size: 12px;
-}
-
-html[data-theme="dark"] .inquiry-detail-info {
   background: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-text-quaternary-dark);
 }
 
-.inquiry-detail-info-item {
+.inquiry-detail-back:active {
+  transform: scale(0.97);
+}
+
+/* 메타 정보 영역: 배지 + 날짜 */
+.inquiry-detail-meta {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.inquiry-detail-info-label {
+.inquiry-detail-date {
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
+  font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
+  margin-left: 4px;
 }
 
-html[data-theme="dark"] .inquiry-detail-info-label {
+html[data-theme="dark"] .inquiry-detail-date {
   color: var(--color-ios-text-tertiary-dark);
 }
 
-.inquiry-detail-info-value {
+/* 문의 제목 - 폰트 규정 준수 */
+.inquiry-detail-title {
+  margin: 4px 0;
+  font-size: 13px; /* 폰트 규정: 섹션 제목 */
+  font-weight: 600;
   color: var(--color-ios-text-primary-light);
-  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.1px;
+  flex-shrink: 0;
 }
 
-html[data-theme="dark"] .inquiry-detail-info-value {
+html[data-theme="dark"] .inquiry-detail-title {
   color: var(--color-ios-text-primary-dark);
 }
 
@@ -793,11 +790,12 @@ html[data-theme="dark"] .inquiry-detail-info-value {
    =============================================== */
 .inquiry-messages {
   flex: 1;
+  min-height: 0; /* flexbox 스크롤 활성화 필수 */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 12px;
+  gap: 10px;
+  padding: 12px 10px;
   background: var(--color-ios-bg-tertiary-light);
   border-radius: 8px;
   /* 와이드 스크린 대응: 채팅 영역 중앙 정렬 */
@@ -866,7 +864,7 @@ html[data-theme="dark"] .inquiry-messages {
 
 /* 작성자 이름 */
 .inquiry-message-author {
-  font-size: 11px;
+  font-size: 11px; /* 폰트 규정: 테이블 헤더 */
   font-weight: 600;
   color: var(--color-ios-text-secondary-light);
   padding-left: 4px;
@@ -883,9 +881,9 @@ html[data-theme="dark"] .inquiry-message-author {
 
 /* 말풍선 본문 */
 .inquiry-message-content {
-  padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -915,7 +913,8 @@ html[data-theme="dark"] .inquiry-message--admin .inquiry-message-content {
 
 /* 시간 표시 */
 .inquiry-message-date {
-  font-size: 10px;
+  font-size: 10px; /* 폰트 규정: 배지 */
+  font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
   white-space: nowrap;
   align-self: flex-end;
@@ -996,18 +995,19 @@ html[data-theme="dark"] .inquiry-message-attachment svg {
   stroke: var(--color-ios-text-tertiary-dark);
 }
 
-/* Reply form */
+/* Reply form - 컴팩트 */
 .inquiry-reply-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px 10px;
   background: var(--color-ios-bg-secondary-light);
   border-radius: 8px;
   /* 와이드 스크린 대응: 메시지 영역과 동일하게 중앙 정렬 */
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+  flex-shrink: 0; /* 축소 방지 */
 }
 
 html[data-theme="dark"] .inquiry-reply-form {
@@ -1016,16 +1016,17 @@ html[data-theme="dark"] .inquiry-reply-form {
 
 .inquiry-reply-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--color-bg-primary);
   color: var(--color-ios-text-primary-light);
-  font-size: 13px;
+  font-size: 12px; /* 폰트 규정: 테이블 데이터 */
   font-family: inherit;
   resize: none;
-  min-height: 60px;
-  line-height: 1.5;
+  min-height: 44px; /* 축소 */
+  max-height: 80px;
+  line-height: 1.4;
 }
 
 html[data-theme="dark"] .inquiry-reply-input {
