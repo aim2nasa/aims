@@ -24,6 +24,25 @@ const { mockApiGet, mockApiPost } = vi.hoisted(() => ({
   mockApiPost: vi.fn(),
 }));
 
+// EventSource mock (SSE 테스트용)
+class MockEventSource {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSED = 2;
+  readyState = MockEventSource.OPEN;
+  url: string;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  onopen: ((event: Event) => void) | null = null;
+  constructor(url: string) {
+    this.url = url;
+  }
+  addEventListener = vi.fn();
+  removeEventListener = vi.fn();
+  close = vi.fn();
+}
+global.EventSource = MockEventSource as unknown as typeof EventSource;
+
 // api 모듈 mock 설정
 vi.mock('@/shared/lib/api', () => ({
   api: {
@@ -34,6 +53,7 @@ vi.mock('@/shared/lib/api', () => ({
   },
   apiRequest: vi.fn(),
   getAuthHeaders: () => ({ 'Authorization': 'Bearer mock-token' }),
+  getAuthToken: () => 'mock-token',
   ApiError: class ApiError extends Error {
     constructor(message: string, public status: number, public statusText: string, public data?: unknown) {
       super(message);

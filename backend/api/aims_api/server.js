@@ -233,9 +233,37 @@ function sendSSE(res, event, data) {
 function notifyCustomerDocSubscribers(customerId, event, data) {
   const customerIdStr = customerId.toString();
   const clients = customerDocSSEClients.get(customerIdStr);
+  const totalClients = Array.from(customerDocSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE] notifyCustomerDocSubscribers 호출 - customerId: ${customerIdStr}, 해당 고객 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
   if (clients && clients.size > 0) {
     clients.forEach(res => sendSSE(res, event, data));
     console.log(`[SSE] 고객 ${customerIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE] 고객 ${customerIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - Annual Report
+// ========================================
+const arSSEClients = new Map(); // customerId(string) -> Set<response>
+
+/**
+ * 특정 고객 AR 구독자들에게 알림 전송
+ * @param {string} customerId - 고객 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyARSubscribers(customerId, event, data) {
+  const customerIdStr = customerId.toString();
+  const clients = arSSEClients.get(customerIdStr);
+  const totalClients = Array.from(arSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-AR] notifyARSubscribers 호출 - customerId: ${customerIdStr}, 해당 고객 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-AR] 고객 ${customerIdStr}의 AR 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-AR] 고객 ${customerIdStr}에 연결된 AR 구독자 없음 - 이벤트 미전송`);
   }
 }
 
@@ -6002,6 +6030,100 @@ app.get('/api/customers/:customerId/annual-reports/pending', authenticateJWT, as
 });
 
 /**
+ * 고객의 Annual Report 실시간 업데이트 SSE 스트림
+ * @route GET /api/customers/:customerId/annual-reports/stream
+ * @description 고객의 AR 상태 변경을 실시간으로 전달
+ */
+app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQuery, (req, res) => {
+  const { customerId } = req.params;
+  const userId = req.user.id;
+
+  if (!ObjectId.isValid(customerId)) {
+    return res.status(400).json({ success: false, error: '유효하지 않은 고객 ID입니다.' });
+  }
+
+  console.log(`[SSE-AR] AR 스트림 연결 - customerId: ${customerId}, userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!arSSEClients.has(customerId)) {
+    arSSEClients.set(customerId, new Set());
+  }
+  arSSEClients.get(customerId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    customerId,
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-AR] AR 스트림 연결 종료 - customerId: ${customerId}`);
+    clearInterval(keepAliveInterval);
+    arSSEClients.get(customerId)?.delete(res);
+    if (arSSEClients.get(customerId)?.size === 0) {
+      arSSEClients.delete(customerId);
+    }
+  });
+});
+
+/**
+ * 문서 업로드 알림 endpoint
+ * n8n webhook에서 직접 업로드 후 프론트엔드가 호출하여 SSE 알림 발생
+ * @route POST /api/notify/document-uploaded
+ */
+app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
+  try {
+    const { customerId, documentId, documentName } = req.body;
+    const userId = req.user.id;
+
+    if (!customerId) {
+      return res.status(400).json({ success: false, error: 'customerId가 필요합니다.' });
+    }
+
+    // 고객 소유권 확인
+    const customer = await db.collection('customers').findOne({
+      _id: new ObjectId(customerId),
+      userId: userId
+    });
+
+    if (!customer) {
+      return res.status(404).json({ success: false, error: '고객을 찾을 수 없습니다.' });
+    }
+
+    // SSE 알림 전송: 문서 변경
+    notifyCustomerDocSubscribers(customerId, 'document-change', {
+      type: 'linked',
+      customerId,
+      documentId: documentId || 'unknown',
+      documentName: documentName || 'Unknown',
+      timestamp: utcNowISO()
+    });
+
+    console.log(`[SSE] 문서 업로드 알림 전송 - customerId: ${customerId}, userId: ${userId}`);
+
+    res.json({ success: true, message: '알림이 전송되었습니다.' });
+  } catch (error) {
+    console.error('문서 업로드 알림 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * 고객의 최신 Annual Report 조회 프록시
  */
 /**
@@ -8146,6 +8268,18 @@ app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) =
 
     console.log("🔄 [AR 파싱 재시도 프록시] 요청 수신, file_id:", file_id, "userId:", userId);
 
+    // customerId 조회 (SSE 알림용)
+    let customerId = null;
+    try {
+      const file = await db.collection(COLLECTION_NAME).findOne(
+        { _id: new ObjectId(file_id) },
+        { projection: { customerId: 1 } }
+      );
+      customerId = file?.customerId?.toString();
+    } catch (e) {
+      console.warn("[AR 파싱 재시도] customerId 조회 실패:", e.message);
+    }
+
     // localhost:8004로 요청 전달
     const response = await axios.post(
       "http://localhost:8004/ar-background/retry-parsing",
@@ -8160,6 +8294,16 @@ app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) =
     );
 
     console.log("✅ [AR 파싱 재시도 프록시] 성공:", response.data);
+
+    // SSE 알림 전송
+    if (customerId) {
+      notifyARSubscribers(customerId, 'ar-change', {
+        type: 'retry-started',
+        fileId: file_id,
+        timestamp: utcNowISO()
+      });
+    }
+
     res.json(response.data);
   } catch (error) {
     console.error("❌ [AR 파싱 재시도 프록시] 실패:", error.message);
@@ -8168,6 +8312,46 @@ app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) =
       error: "파싱 재시도 트리거 실패",
       details: error.message
     });
+  }
+});
+
+/**
+ * AR 파싱 상태 변경 웹훅 (Python API에서 호출)
+ * @route POST /api/webhooks/ar-status-change
+ * @description AR 파싱 완료/실패 시 SSE 알림 트리거
+ */
+app.post("/api/webhooks/ar-status-change", async (req, res) => {
+  try {
+    const { customer_id, file_id, status, error_message } = req.body;
+
+    if (!customer_id) {
+      return res.status(400).json({ success: false, error: 'customer_id required' });
+    }
+
+    console.log(`[AR 웹훅] 상태 변경 - customer_id: ${customer_id}, file_id: ${file_id}, status: ${status}`);
+
+    // SSE 알림 전송: AR 탭용
+    notifyARSubscribers(customer_id, 'ar-change', {
+      type: status === 'completed' ? 'parsing-complete' : status === 'error' ? 'parsing-error' : 'status-change',
+      fileId: file_id,
+      status,
+      errorMessage: error_message,
+      timestamp: utcNowISO()
+    });
+
+    // SSE 알림 전송: 문서 탭용 (AR도 문서이므로 문서 탭도 갱신)
+    notifyCustomerDocSubscribers(customer_id, 'document-change', {
+      type: 'linked',
+      customerId: customer_id,
+      documentId: file_id || 'unknown',
+      documentName: 'Annual Report',
+      timestamp: utcNowISO()
+    });
+
+    res.json({ success: true, message: 'SSE notification sent' });
+  } catch (error) {
+    console.error("❌ [AR 웹훅] 실패:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

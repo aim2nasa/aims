@@ -225,6 +225,11 @@ export class UploadService {
         if (import.meta.env.DEV) {
           console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
         }
+
+        // 🔔 customerId가 있으면 SSE 알림 트리거 (고객 상세 페이지 실시간 갱신)
+        if (customerId) {
+          this.notifyDocumentUploaded(customerId, id, file.name)
+        }
       }
 
     } catch (error) {
@@ -351,6 +356,43 @@ export class UploadService {
       // 업로드 시작
       xhr.send(formData)
     })
+  }
+
+  /**
+   * 문서 업로드 알림 (SSE 실시간 갱신용)
+   * 고객에게 연결된 문서가 업로드되면 aims_api에 알려서 SSE 이벤트 발생
+   */
+  private async notifyDocumentUploaded(
+    customerId: string,
+    documentId: string,
+    documentName: string
+  ): Promise<void> {
+    try {
+      const authData = localStorage.getItem('auth-storage')
+      if (!authData) return
+
+      const parsed = JSON.parse(authData)
+      const token = parsed?.state?.token
+      if (!token) return
+
+      const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || ''
+      const response = await fetch(`${API_BASE_URL}/api/notify/document-uploaded`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ customerId, documentId, documentName })
+      })
+
+      if (import.meta.env.DEV) {
+        const result = await response.json()
+        console.log(`[UploadService] SSE 알림 전송 완료:`, result)
+      }
+    } catch (error) {
+      // 알림 실패는 무시 (업로드 자체는 성공)
+      console.warn('[UploadService] SSE 알림 전송 실패:', error)
+    }
   }
 
   /**

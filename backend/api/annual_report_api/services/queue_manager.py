@@ -9,6 +9,8 @@ from pymongo.database import Database
 from pymongo import ASCENDING, DESCENDING
 import logging
 
+from .db_writer import notify_ar_status_change
+
 logger = logging.getLogger(__name__)
 
 # 큐 상태 상수
@@ -200,6 +202,17 @@ class ARParseQueueManager:
             if retry_count >= MAX_RETRY_COUNT or not retry:
                 status = QueueStatus.FAILED
                 logger.warning(f"⚠️  작업 최종 실패: task_id={task_id}, retry={retry_count}")
+
+                # 🔔 SSE 알림: AR 파싱 최종 실패
+                customer_id = task.get("customer_id")
+                file_id = task.get("file_id")
+                if customer_id:
+                    notify_ar_status_change(
+                        customer_id=str(customer_id),
+                        file_id=str(file_id) if file_id else None,
+                        status="error",
+                        error_message=error_message
+                    )
             else:
                 status = QueueStatus.PENDING
                 logger.info(f"🔄 작업 재시도 예약: task_id={task_id}, retry={retry_count}/{MAX_RETRY_COUNT}")

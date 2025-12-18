@@ -4,6 +4,8 @@ customers 컬렉션의 annual_reports 배열에 추가
 """
 import logging
 import sys
+import os
+import requests
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime, timezone
@@ -17,6 +19,31 @@ sys.path.insert(0, str(project_root))
 from src.shared.time_utils import utc_now_iso
 
 logger = logging.getLogger(__name__)
+
+# aims_api webhook URL
+AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+
+
+def notify_ar_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
+    """
+    AR 상태 변경을 aims_api에 알림 (SSE 실시간 업데이트용)
+    """
+    try:
+        webhook_url = f"{AIMS_API_URL}/api/webhooks/ar-status-change"
+        payload = {
+            "customer_id": customer_id,
+            "file_id": file_id,
+            "status": status,
+            "error_message": error_message
+        }
+        response = requests.post(webhook_url, json=payload, timeout=5)
+        if response.ok:
+            logger.info(f"✅ [SSE] AR 상태 변경 알림 전송: customer_id={customer_id}, status={status}")
+        else:
+            logger.warning(f"⚠️ [SSE] 알림 전송 실패: {response.status_code} - {response.text}")
+    except Exception as e:
+        # 알림 실패는 무시 (파싱 자체는 성공)
+        logger.warning(f"⚠️ [SSE] 알림 전송 실패 (무시됨): {e}")
 
 
 def save_annual_report(
@@ -184,6 +211,13 @@ def save_annual_report(
             logger.info(
                 f"✅ Annual Report 저장 성공: customer={customer_name}, "
                 f"계약={total_contracts}건, 월보험료={total_monthly_premium:,}원"
+            )
+
+            # 🔔 SSE 알림: AR 파싱 완료
+            notify_ar_status_change(
+                customer_id=customer_id,
+                file_id=source_file_id,
+                status="completed"
             )
 
             return {

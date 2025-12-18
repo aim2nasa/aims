@@ -903,6 +903,33 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             console.log(`✅ [고객 파일 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
             addLog('success', `[4/4] 문서 처리 완료: ${fileName}`, undefined, customerFileInfo.customerName);
 
+            // 🔔 SSE 알림 트리거: 문서-고객 연결 완료 알림
+            try {
+              const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
+              const authData = localStorage.getItem('auth-storage');
+              const token = authData ? JSON.parse(authData)?.state?.token : null;
+              if (token) {
+                fetch(`${API_BASE_URL}/api/notify/document-uploaded`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    customerId: customerFileInfo.customerId,
+                    documentId: documentId,
+                    documentName: fileName
+                  })
+                }).then(() => {
+                  console.log(`🔔 [SSE] 문서 연결 알림 전송 완료: ${fileName} → ${customerFileInfo.customerName}`);
+                }).catch(err => {
+                  console.warn(`⚠️ [SSE] 문서 연결 알림 전송 실패:`, err);
+                });
+              }
+            } catch (e) {
+              console.warn(`⚠️ [SSE] 알림 전송 중 오류:`, e);
+            }
+
             // 추적 목록에서 제거
             customerFileUploadMappingRef.current.delete(fileName);
           } else if (attempts >= maxAttempts) {

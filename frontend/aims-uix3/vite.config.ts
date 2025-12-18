@@ -38,6 +38,17 @@ export default defineConfig({
     port: 5177,
     strictPort: true,  // 포트 사용 중이면 에러 (다른 포트로 변경 금지)
     proxy: {
+      // SSE 스트리밍 엔드포인트 - 별도 설정 필요
+      '^/api/.*/stream$': {
+        target: 'http://tars.giize.com:3010',
+        changeOrigin: true,
+        // SSE 스트리밍을 위한 설정
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Connection', 'keep-alive');
+          });
+        }
+      },
       // API 요청을 백엔드 서버로 프록시
       '/api': {
         target: 'http://tars.giize.com:3010',

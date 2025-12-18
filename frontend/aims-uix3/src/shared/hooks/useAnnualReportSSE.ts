@@ -1,6 +1,6 @@
 /**
- * 고객 문서 SSE 실시간 업데이트 훅
- * 폴링 방식을 SSE로 대체하여 실시간 문서 변경 감지
+ * Annual Report SSE 실시간 업데이트 훅
+ * 폴링 방식을 SSE로 대체하여 AR 상태 변경 실시간 감지
  * @since 2025-12-19
  */
 
@@ -9,33 +9,33 @@ import { getAuthToken } from '@/shared/lib/api';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
-interface DocumentChangeEvent {
-  type: 'linked' | 'unlinked';
-  customerId: string;
-  documentId: string;
-  documentName: string;
+interface ARChangeEvent {
+  type: 'parsing-complete' | 'parsing-error' | 'retry-started' | 'status-change';
+  fileId?: string;
+  status?: string;
+  errorMessage?: string;
   timestamp: string;
 }
 
-interface UseCustomerDocumentsSSEOptions {
+interface UseAnnualReportSSEOptions {
   /** SSE 활성화 여부 (기본: true) */
   enabled?: boolean;
-  /** 문서 변경 시 호출할 콜백 */
-  onDocumentChange?: (event: DocumentChangeEvent) => void;
+  /** AR 상태 변경 시 호출할 콜백 */
+  onARChange?: (event: ARChangeEvent) => void;
 }
 
 /**
- * 고객 문서 SSE 훅
+ * Annual Report SSE 훅
  * @param customerId 고객 ID
- * @param onRefresh 문서 목록 새로고침 함수
+ * @param onRefresh AR 목록 새로고침 함수
  * @param options 옵션
  */
-export function useCustomerDocumentsSSE(
+export function useAnnualReportSSE(
   customerId: string | null | undefined,
   onRefresh: () => void,
-  options: UseCustomerDocumentsSSEOptions = {}
+  options: UseAnnualReportSSEOptions = {}
 ) {
-  const { enabled = true, onDocumentChange } = options;
+  const { enabled = true, onARChange } = options;
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,7 +43,7 @@ export function useCustomerDocumentsSSE(
 
   // 콜백을 ref로 저장하여 의존성 문제 해결
   const onRefreshRef = useRef(onRefresh);
-  const onDocumentChangeRef = useRef(onDocumentChange);
+  const onARChangeRef = useRef(onARChange);
 
   // 최신 콜백 참조 유지
   useEffect(() => {
@@ -51,8 +51,8 @@ export function useCustomerDocumentsSSE(
   }, [onRefresh]);
 
   useEffect(() => {
-    onDocumentChangeRef.current = onDocumentChange;
-  }, [onDocumentChange]);
+    onARChangeRef.current = onARChange;
+  }, [onARChange]);
 
   // 연결 해제 함수
   const disconnect = useCallback(() => {
@@ -77,9 +77,9 @@ export function useCustomerDocumentsSSE(
     // 기존 연결 정리
     disconnect();
 
-    const url = `${API_BASE_URL}/api/customers/${customerId}/documents/stream?token=${encodeURIComponent(token)}`;
+    const url = `${API_BASE_URL}/api/customers/${customerId}/annual-reports/stream?token=${encodeURIComponent(token)}`;
 
-    console.log('[CustomerDocumentsSSE] 연결 시작...', { customerId, url: url.replace(/token=[^&]+/, 'token=***') });
+    console.log('[AnnualReportSSE] 연결 시작...', { customerId, url: url.replace(/token=[^&]+/, 'token=***') });
 
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
@@ -88,24 +88,24 @@ export function useCustomerDocumentsSSE(
     eventSource.addEventListener('connected', (e) => {
       try {
         const data = JSON.parse(e.data);
-        console.log('[CustomerDocumentsSSE] 연결됨:', data);
+        console.log('[AnnualReportSSE] 연결됨:', data);
         isConnectedRef.current = true;
       } catch (error) {
-        console.error('[CustomerDocumentsSSE] connected 이벤트 파싱 실패:', error);
+        console.error('[AnnualReportSSE] connected 이벤트 파싱 실패:', error);
       }
     });
 
-    // 문서 변경 이벤트
-    eventSource.addEventListener('document-change', (e) => {
+    // AR 상태 변경 이벤트
+    eventSource.addEventListener('ar-change', (e) => {
       try {
-        const data: DocumentChangeEvent = JSON.parse(e.data);
-        console.log('[CustomerDocumentsSSE] 문서 변경:', data);
+        const data: ARChangeEvent = JSON.parse(e.data);
+        console.log('[AnnualReportSSE] AR 상태 변경:', data);
 
         // ref를 통해 최신 콜백 호출
-        onDocumentChangeRef.current?.(data);
+        onARChangeRef.current?.(data);
         onRefreshRef.current();
       } catch (error) {
-        console.error('[CustomerDocumentsSSE] document-change 이벤트 파싱 실패:', error);
+        console.error('[AnnualReportSSE] ar-change 이벤트 파싱 실패:', error);
       }
     });
 
@@ -116,7 +116,7 @@ export function useCustomerDocumentsSSE(
 
     // 연결 오류 처리
     eventSource.onerror = (error) => {
-      console.error('[CustomerDocumentsSSE] 연결 오류:', error, 'readyState:', eventSource.readyState);
+      console.error('[AnnualReportSSE] 연결 오류:', error, 'readyState:', eventSource.readyState);
       isConnectedRef.current = false;
       eventSource.close();
 
@@ -125,11 +125,11 @@ export function useCustomerDocumentsSSE(
         clearTimeout(reconnectTimeoutRef.current);
       }
       reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('[CustomerDocumentsSSE] 재연결 시도...');
+        console.log('[AnnualReportSSE] 재연결 시도...');
         connect();
       }, 5000);
     };
-  }, [customerId, enabled, disconnect]); // onRefresh, onDocumentChange 제거
+  }, [customerId, enabled, disconnect]); // onRefresh, onARChange 제거
 
   // Page Visibility API 처리 (탭 활성화 시 재연결)
   useEffect(() => {
@@ -163,4 +163,4 @@ export function useCustomerDocumentsSSE(
   };
 }
 
-export default useCustomerDocumentsSSE;
+export default useAnnualReportSSE;

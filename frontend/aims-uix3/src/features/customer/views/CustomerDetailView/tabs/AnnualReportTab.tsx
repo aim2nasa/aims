@@ -18,6 +18,7 @@ import { formatDate } from '@/shared/lib/timeUtils';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
 import type { CustomerDocumentItem } from '@/services/DocumentService';
@@ -122,17 +123,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   // AR 파싱 대기/진행 중인 문서 상태
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
-  // Page Visibility API: 백그라운드 탭에서 폴링 중지
-  const [isPageVisible, setPageVisible] = useState(true);
 
   // 🍎 정렬 상태
   const [sortField, setSortField] = useState<SortField>('issue_date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
-  // 🍎 processing/pending 상태 AR이 있는지 확인 (폴링 조건용)
-  const hasProcessingReports = useMemo(() => {
-    return reports.some(r => r.status === 'processing' || r.status === 'pending');
-  }, [reports]);
 
   // 개발자 모드 - 전역 상태 사용
   const { isDevMode } = useDevModeStore();
@@ -140,27 +134,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
 
-  // Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const isVisible = document.visibilityState === 'visible';
-      setPageVisible(isVisible);
+  // SSE 새로고침 콜백 (pending + reports 모두 갱신)
+  const handleSSERefresh = useCallback(() => {
+    loadPendingDocuments();
+    loadAnnualReports();
+  }, []);
 
-      // 탭이 다시 보이면 즉시 데이터 새로고침
-      if (isVisible && pendingCount > 0) {
-        loadPendingDocuments();
-        loadAnnualReports();
-      }
-    };
-
-    // 초기 상태 설정
-    setPageVisible(document.visibilityState === 'visible');
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [pendingCount]);
+  // SSE 실시간 업데이트 (폴링 대체)
+  useAnnualReportSSE(customer._id, handleSSERefresh, {
+    enabled: Boolean(customer._id),
+  });
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
@@ -292,23 +275,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     loadAnnualReports();
     loadPendingDocuments();
   }, [customer._id, refreshTrigger]);
-
-  // 주기적으로 파싱 대기 문서 확인 (10초마다)
-  // 페이지가 보일 때만 폴링
-  useEffect(() => {
-    if (!isPageVisible) return; // 백그라운드 탭에서는 폴링 중지
-
-    const interval = setInterval(() => {
-      // 항상 pending 문서 확인 (업로드 직후에도 감지하기 위해)
-      loadPendingDocuments();
-      // pending 또는 processing 상태가 있으면 AR 목록도 새로고침
-      if (pendingCount > 0 || hasProcessingReports) {
-        loadAnnualReports();
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [pendingCount, customer._id, isPageVisible, hasProcessingReports]);
 
   // 🍎 Annual Report 개수 변경 시 부모에게 알림
   useEffect(() => {
