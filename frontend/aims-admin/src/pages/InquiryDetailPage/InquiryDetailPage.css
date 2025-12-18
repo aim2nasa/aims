@@ -372,6 +372,11 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .message-item__image img {
@@ -383,6 +388,7 @@
 
 .message-item__image:hover {
   opacity: 0.9;
+  transform: scale(1.02);
 }
 
 /* 파일 첨부파일 */
@@ -549,6 +555,69 @@
   color: white;
 }
 
+/* 이미지 미리보기 모달 */
+.image-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.image-preview-modal__content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: scaleIn 0.15s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.image-preview-modal__content img {
+  display: block;
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.image-preview-modal__close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-modal__close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* 반응형 */
 @media (max-width: 600px) {
   .inquiry-detail-page__header-top {
@@ -570,5 +639,10 @@
   .status-buttons-inline {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .image-preview-modal__close {
+    top: -36px;
+    right: 4px;
   }
 }

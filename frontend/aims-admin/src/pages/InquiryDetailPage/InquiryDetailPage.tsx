@@ -45,6 +45,7 @@ export const InquiryDetailPage = () => {
   const { unreadIds, markAsRead } = useInquiryNotificationContext();
   const [replyContent, setReplyContent] = useState('');
   const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -238,15 +239,14 @@ export const InquiryDetailPage = () => {
 
                           if (isImage) {
                             return (
-                              <a
+                              <button
                                 key={idx}
-                                href={attachmentUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                type="button"
                                 className="message-item__image"
+                                onClick={() => setPreviewImage(attachmentUrl)}
                               >
                                 <img src={attachmentUrl} alt={attachment.originalName} />
-                              </a>
+                              </button>
                             );
                           }
 
@@ -346,6 +346,25 @@ export const InquiryDetailPage = () => {
             </form>
           )}
       </div>
+
+      {/* 이미지 미리보기 모달 */}
+      {previewImage && (
+        <div
+          className="image-preview-modal"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="image-preview-modal__content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="image-preview-modal__close"
+              onClick={() => setPreviewImage(null)}
+            >
+              ×
+            </button>
+            <img src={previewImage} alt="미리보기" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
