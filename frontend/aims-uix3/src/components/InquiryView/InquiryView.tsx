@@ -25,6 +25,11 @@ import { Dropdown } from '../../shared/ui/Dropdown';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import './InquiryView.css';
 
+// 줌/팬 설정
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 5;
+const ZOOM_STEP = 0.2;
+
 interface InquiryViewProps {
   visible: boolean;
   onClose: () => void;
@@ -59,6 +64,13 @@ export default function InquiryView({
   const [messageFiles, setMessageFiles] = useState<File[]>([]);
   const messageFileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 이미지 미리보기 상태
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   // 문의 목록 조회
   const { data: inquiriesData, isLoading: isListLoading } = useQuery({
@@ -174,6 +186,54 @@ export default function InquiryView({
   const handleBackToList = useCallback(() => {
     setViewMode('list');
     setSelectedInquiryId(null);
+  }, []);
+
+  // 이미지 미리보기 열기 (줌/팬 초기화)
+  const openPreview = useCallback((url: string) => {
+    setPreviewImage(url);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // 이미지 미리보기 닫기
+  const closePreview = useCallback(() => {
+    setPreviewImage(null);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // 마우스 휠로 줌
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    setZoom(prev => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta)));
+  }, []);
+
+  // 드래그 시작
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (zoom <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  }, [zoom, pan]);
+
+  // 드래그 중
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+  }, [isDragging]);
+
+  // 드래그 종료
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // 줌 리셋 (더블클릭)
+  const handleDoubleClick = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   }, []);
 
   // 상태별 카운트 계산
@@ -491,15 +551,14 @@ export default function InquiryView({
 
                         if (isImage) {
                           return (
-                            <a
+                            <button
                               key={idx}
-                              href={attachmentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              type="button"
                               className="inquiry-message-image"
+                              onClick={() => openPreview(attachmentUrl)}
                             >
                               <img src={attachmentUrl} alt={attachment.originalName} />
-                            </a>
+                            </button>
                           );
                         }
 
@@ -632,16 +691,63 @@ export default function InquiryView({
   );
 
   return (
-    <CenterPaneView
-      visible={visible}
-      title={getTitle()}
-      titleIcon={inquiryIcon}
-      titleLeftAccessory={titleLeftAccessory}
-      onClose={onClose}
-    >
-      {viewMode === 'list' && renderListContent()}
-      {viewMode === 'create' && renderCreateContent()}
-      {viewMode === 'detail' && renderDetailContent()}
-    </CenterPaneView>
+    <>
+      <CenterPaneView
+        visible={visible}
+        title={getTitle()}
+        titleIcon={inquiryIcon}
+        titleLeftAccessory={titleLeftAccessory}
+        onClose={onClose}
+      >
+        {viewMode === 'list' && renderListContent()}
+        {viewMode === 'create' && renderCreateContent()}
+        {viewMode === 'detail' && renderDetailContent()}
+      </CenterPaneView>
+
+      {/* 이미지 미리보기 모달 */}
+      {previewImage && (
+        <div
+          className="inquiry-image-preview-modal"
+          onClick={closePreview}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <div
+            className={`inquiry-image-preview-modal__content ${isDragging ? 'inquiry-image-preview-modal__content--dragging' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+          >
+            <button
+              type="button"
+              className="inquiry-image-preview-modal__close"
+              onClick={closePreview}
+            >
+              ×
+            </button>
+            <div className="inquiry-image-preview-modal__zoom-controls">
+              <button type="button" onClick={() => setZoom(prev => Math.max(MIN_ZOOM, prev - ZOOM_STEP))}>−</button>
+              <span>{Math.round(zoom * 100)}%</span>
+              <button type="button" onClick={() => setZoom(prev => Math.min(MAX_ZOOM, prev + ZOOM_STEP))}>+</button>
+              <button type="button" onClick={handleDoubleClick}>리셋</button>
+            </div>
+            <img
+              src={previewImage}
+              alt="미리보기"
+              style={{
+                transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+              }}
+              onMouseDown={handleMouseDown}
+              onDoubleClick={handleDoubleClick}
+              draggable={false}
+            />
+            <div className="inquiry-image-preview-modal__hint">
+              스크롤: 확대/축소 | 드래그: 이동 | 더블클릭: 원래 크기
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
