@@ -140,55 +140,70 @@ export const InquiryDetailPage = () => {
   return (
     <div className="inquiry-detail-page">
       <div className="inquiry-detail-page__header">
-        <button
-          className="inquiry-detail-page__back"
-          onClick={() => navigate('/inquiries')}
-        >
-          ← 목록으로
-        </button>
-        <h1 className="inquiry-detail-page__title">{inquiry.title}</h1>
-        <div className="inquiry-detail-page__meta">
-          <span className={`status-badge status-badge--${inquiry.status}`}>
-            {STATUS_LABELS[inquiry.status]}
-          </span>
-          <span className={`category-badge category-badge--${inquiry.category}`}>
-            {CATEGORY_LABELS[inquiry.category]}
-          </span>
+        <div className="inquiry-detail-page__header-top">
+          <button
+            type="button"
+            className="inquiry-detail-page__back"
+            onClick={() => navigate('/inquiries')}
+          >
+            ← 목록으로
+          </button>
+          <div className="inquiry-detail-page__header-info">
+            <span className="inquiry-detail-page__date-info">
+              등록: {formatDate(inquiry.createdAt)}
+            </span>
+            <span className="inquiry-detail-page__date-info">
+              최근: {formatDate(inquiry.updatedAt)}
+            </span>
+          </div>
+        </div>
+        <div className="inquiry-detail-page__header-main">
+          <div className="inquiry-detail-page__title-row">
+            <h1 className="inquiry-detail-page__title">{inquiry.title}</h1>
+            <div className="inquiry-detail-page__meta">
+              <span className={`status-badge status-badge--${inquiry.status}`}>
+                {STATUS_LABELS[inquiry.status]}
+              </span>
+              <span className={`category-badge category-badge--${inquiry.category}`}>
+                {CATEGORY_LABELS[inquiry.category]}
+              </span>
+            </div>
+          </div>
+          <div className="inquiry-detail-page__status-actions">
+            <span className="inquiry-detail-page__user-brief">
+              {inquiry.userName} ({inquiry.userEmail})
+            </span>
+            <div className="status-buttons-inline">
+              <button
+                type="button"
+                className={`status-btn status-btn--pending ${inquiry.status === 'pending' ? 'status-btn--active' : ''}`}
+                onClick={() => handleStatusChange('pending')}
+                disabled={statusMutation.isPending || inquiry.status === 'pending'}
+              >
+                대기
+              </button>
+              <button
+                type="button"
+                className={`status-btn status-btn--in_progress ${inquiry.status === 'in_progress' ? 'status-btn--active' : ''}`}
+                onClick={() => handleStatusChange('in_progress')}
+                disabled={statusMutation.isPending || inquiry.status === 'in_progress'}
+              >
+                처리중
+              </button>
+              <button
+                type="button"
+                className={`status-btn status-btn--resolved ${inquiry.status === 'resolved' || inquiry.status === 'closed' ? 'status-btn--active' : ''}`}
+                onClick={() => handleStatusChange('resolved')}
+                disabled={statusMutation.isPending || inquiry.status === 'resolved' || inquiry.status === 'closed'}
+              >
+                해결
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="inquiry-detail-page__content">
-        <div className="inquiry-detail-page__main">
-          {/* 문의자 정보 */}
-          <div className="inquiry-detail-page__user-info">
-            <h3>문의자 정보</h3>
-            <div className="user-info-card">
-              <div className="user-info-card__row">
-                <span className="user-info-card__label">이름</span>
-                <span className="user-info-card__value">{inquiry.userName}</span>
-              </div>
-              <div className="user-info-card__row">
-                <span className="user-info-card__label">이메일</span>
-                <span className="user-info-card__value">{inquiry.userEmail}</span>
-              </div>
-              {inquiry.user && (
-                <>
-                  <div className="user-info-card__row">
-                    <span className="user-info-card__label">티어</span>
-                    <span className="user-info-card__value">
-                      {typeof inquiry.user.tier === 'object' && inquiry.user.tier
-                        ? inquiry.user.tier.tier_id || '-'
-                        : inquiry.user.tier || '-'}
-                    </span>
-                  </div>
-                  <div className="user-info-card__row">
-                    <span className="user-info-card__label">가입일</span>
-                    <span className="user-info-card__value">{formatDate(inquiry.user.createdAt)}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
 
           {/* 메시지 스레드 - 카카오톡 스타일 */}
           <div className="inquiry-detail-page__messages">
@@ -330,53 +345,6 @@ export const InquiryDetailPage = () => {
               </div>
             </form>
           )}
-        </div>
-
-        {/* 사이드바 - 상태 관리 */}
-        <div className="inquiry-detail-page__sidebar">
-          <div className="status-panel">
-            <h3>상태 관리</h3>
-            <div className="status-panel__info">
-              <div className="status-panel__row">
-                <span>등록일</span>
-                <span>{formatDate(inquiry.createdAt)}</span>
-              </div>
-              <div className="status-panel__row">
-                <span>최근 활동</span>
-                <span>{formatDate(inquiry.updatedAt)}</span>
-              </div>
-              {inquiry.resolvedAt && (
-                <div className="status-panel__row">
-                  <span>해결일</span>
-                  <span>{formatDate(inquiry.resolvedAt)}</span>
-                </div>
-              )}
-            </div>
-            <div className="status-panel__actions">
-              <button
-                className={`status-button status-button--pending ${inquiry.status === 'pending' ? 'status-button--active' : ''}`}
-                onClick={() => handleStatusChange('pending')}
-                disabled={statusMutation.isPending || inquiry.status === 'pending'}
-              >
-                대기
-              </button>
-              <button
-                className={`status-button status-button--in_progress ${inquiry.status === 'in_progress' ? 'status-button--active' : ''}`}
-                onClick={() => handleStatusChange('in_progress')}
-                disabled={statusMutation.isPending || inquiry.status === 'in_progress'}
-              >
-                처리중
-              </button>
-              <button
-                className={`status-button status-button--resolved ${inquiry.status === 'resolved' || inquiry.status === 'closed' ? 'status-button--active' : ''}`}
-                onClick={() => handleStatusChange('resolved')}
-                disabled={statusMutation.isPending || inquiry.status === 'resolved' || inquiry.status === 'closed'}
-              >
-                해결
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
