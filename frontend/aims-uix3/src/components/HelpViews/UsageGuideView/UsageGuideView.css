@@ -1,0 +1,190 @@
+/**
+ * 사용 가이드 뷰 스타일
+ * CenterPaneView 기반, Apple 디자인 철학 준수
+ */
+
+/* 제목 아이콘 */
+.usage-guide-view__title-icon {
+  color: var(--color-ios-green, #34c759);
+}
+
+/* 콘텐츠 영역 */
+.usage-guide-view__content {
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+/* 카테고리 */
+.usage-guide-view__category {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* 카테고리 헤더 */
+.usage-guide-view__category-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-standard);
+}
+
+.usage-guide-view__category-header:hover {
+  background: var(--color-hover-bg);
+}
+
+.usage-guide-view__category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* 카테고리별 아이콘 색상 */
+.usage-guide-view__category-icon--customer {
+  background: var(--color-ios-blue-bg, rgba(0, 122, 255, 0.12));
+  color: var(--color-ios-blue, #007aff);
+}
+
+.usage-guide-view__category-icon--document {
+  background: var(--color-ios-orange-bg, rgba(255, 149, 0, 0.12));
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.usage-guide-view__category-icon--contract {
+  background: var(--color-ios-indigo-bg, rgba(88, 86, 214, 0.12));
+  color: var(--color-ios-indigo, #5856d6);
+}
+
+.usage-guide-view__category-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.usage-guide-view__category-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* 셰브론 아이콘 */
+.usage-guide-view__chevron {
+  color: var(--color-text-tertiary);
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.usage-guide-view__category-header.expanded .usage-guide-view__chevron,
+.usage-guide-view__item-header.expanded .usage-guide-view__chevron {
+  transform: rotate(180deg);
+}
+
+/* 아이템 목록 - 들여쓰기 영역에 시각적 연결선 */
+.usage-guide-view__items {
+  border-top: 1px solid var(--color-separator);
+  position: relative;
+}
+
+.usage-guide-view__items::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--spacing-4) + 34px); /* bullet 중앙 위치 */
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-separator);
+}
+
+/* 아이템 */
+.usage-guide-view__item {
+  border-bottom: 1px solid var(--color-separator);
+}
+
+.usage-guide-view__item:last-child {
+  border-bottom: none;
+}
+
+/* 아이템 헤더 - 들여쓰기로 계층 구조 표현 */
+.usage-guide-view__item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  padding-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-standard);
+  position: relative;
+}
+
+/* 서브메뉴 앞 머리말 표시 (bullet) */
+.usage-guide-view__item-header::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--spacing-4) + 32px);
+  width: 6px;
+  height: 6px;
+  background: var(--color-text-tertiary);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+.usage-guide-view__item-header:hover {
+  background: var(--color-hover-bg);
+}
+
+.usage-guide-view__item-header:hover::before {
+  background: var(--color-ios-blue, #007aff);
+  opacity: 1;
+}
+
+.usage-guide-view__item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+/* 아이템 콘텐츠 - 박스 스타일 */
+.usage-guide-view__item-content {
+  margin: 0 var(--spacing-4) var(--spacing-3);
+  margin-left: calc(var(--spacing-4) + 48px); /* 4단계 들여쓰기 */
+  padding: var(--spacing-3);
+  background: rgba(0, 122, 255, 0.04);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-ios-blue, #007aff);
+}
+
+html[data-theme="dark"] .usage-guide-view__item-content {
+  background: rgba(0, 122, 255, 0.08);
+}
+
+.usage-guide-view__item-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-3);
+  line-height: 1.5;
+}
+
+/* 단계 목록 */
+.usage-guide-view__steps {
+  margin: 0;
+  padding-left: var(--spacing-4);
+  list-style-type: decimal;
+}
+
+.usage-guide-view__step {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-1);
+}
+
+.usage-guide-view__step:last-child {
+  margin-bottom: 0;
+}

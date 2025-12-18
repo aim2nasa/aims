@@ -808,6 +808,39 @@ html[data-theme="dark"] .menu-icon--chat {
   color: #FEE500; /* 다크 테마: 카카오톡 공식 노란색 */
 }
 
+/* 도움말 - iOS systemIndigo */
+.menu-icon--help {
+  color: var(--color-ios-indigo, #5856d6);
+}
+
+html[data-theme="dark"] .menu-icon--help {
+  color: #5e5ce6; /* 다크 테마: 약간 밝은 인디고 */
+}
+
+/* 공지사항 - iOS systemBlue */
+.menu-icon--notice {
+  color: var(--color-icon-doc-search, #007aff);
+}
+
+/* 사용 가이드 - iOS systemGreen */
+.menu-icon--guide {
+  color: var(--color-ios-green, #34c759);
+}
+
+/* FAQ - iOS systemOrange */
+.menu-icon--faq {
+  color: var(--color-icon-doc-register, #ff9500);
+}
+
+/* 공지사항 새 글 배지 (N 표시) */
+.menu-item-badge--notice {
+  background: var(--color-ios-red, #ff3b30);
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+  padding: 0 4px;
+}
+
 /* ━━━ 고객 타입 아이콘 (전체 고객 보기와 동일) ━━━ */
 
 /* 개인 고객 - 파란색 */

@@ -147,6 +147,34 @@ const MenuIcons = {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--chat">
       <path d="M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.47L4 21l4.88-2.33C9.86 18.89 10.91 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z" opacity="0.85"/>
     </svg>
+  ),
+  // 도움말 아이콘 (물음표 원)
+  Help: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--help">
+      <circle cx="12" cy="12" r="10" opacity="0.15"/>
+      <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="bold">?</text>
+    </svg>
+  ),
+  // 공지사항 아이콘 (벨)
+  Bell: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--notice">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" opacity="0.85"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  // 사용 가이드 아이콘 (책)
+  Book: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--guide">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" opacity="0.85"/>
+    </svg>
+  ),
+  // FAQ 아이콘 (말풍선 물음표)
+  ChatQuestion: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--faq">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" opacity="0.85"/>
+      <text x="12" y="13" textAnchor="middle" fontSize="10" fontWeight="bold" fill="var(--color-bg-primary, white)">?</text>
+    </svg>
   )
 }
 
@@ -169,6 +197,7 @@ interface CustomMenuProps {
   collapsed?: boolean
   selectedKey?: string // 외부에서 제어되는 선택된 키
   inquiryUnreadCount?: number // 미확인 문의 개수
+  noticeHasNew?: boolean // 공지사항 새 글 여부
   footer?: ReactNode // 하단 영역 (버전 표시 + 햄버거 버튼)
 }
 
@@ -297,6 +326,7 @@ const CustomMenu = ({
   collapsed = false,
   selectedKey: externalSelectedKey = 'dsd', // 외부에서 제어, 기본값은 'dsd'
   inquiryUnreadCount = 0, // 미확인 문의 개수
+  noticeHasNew = false, // 공지사항 새 글 여부
   footer // 하단 영역 (버전 + 햄버거)
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
@@ -531,23 +561,84 @@ const CustomMenu = ({
       }
     ] : []),
 
-    // ━━━ 1:1 문의 ━━━
+    // ━━━ 도움말 ━━━
     {
-      key: 'inquiry',
-      icon: <MenuIcons.ChatBubble />,
-      label: collapsed ? '' : (
-        <span className="menu-item-with-badge">
-          1:1 문의
-          {inquiryUnreadCount > 0 && (
-            <span className="menu-item-badge">{inquiryUnreadCount > 99 ? '99+' : inquiryUnreadCount}</span>
-          )}
-        </span>
-      ),
-      tooltipTitle: inquiryUnreadCount > 0 ? `1:1 문의 (${inquiryUnreadCount}개 미확인)` : '1:1 문의',
+      key: 'help',
+      icon: <MenuIcons.Help />,
+      label: collapsed ? '' : '도움말',
+      tooltipTitle: '도움말',
+      children: collapsed ? undefined : [
+        {
+          key: 'help-notice',
+          icon: <span className="menu-icon-blue"><MenuIcons.Bell /></span>,
+          label: (
+            <span className="menu-item-with-badge">
+              공지사항
+              {noticeHasNew && (
+                <span className="menu-item-badge menu-item-badge--notice">N</span>
+              )}
+            </span>
+          ),
+          tooltipTitle: noticeHasNew ? '공지사항 (새 글)' : '공지사항',
+        },
+        {
+          key: 'help-guide',
+          icon: <span className="menu-icon-green"><MenuIcons.Book /></span>,
+          label: '사용 가이드',
+          tooltipTitle: '기능별 사용 가이드',
+        },
+        {
+          key: 'help-faq',
+          icon: <span className="menu-icon-orange"><MenuIcons.ChatQuestion /></span>,
+          label: 'FAQ',
+          tooltipTitle: '자주 묻는 질문',
+        },
+        {
+          key: 'help-inquiry',
+          icon: <MenuIcons.ChatBubble />,
+          label: (
+            <span className="menu-item-with-badge">
+              1:1 문의
+              {inquiryUnreadCount > 0 && (
+                <span className="menu-item-badge">{inquiryUnreadCount > 99 ? '99+' : inquiryUnreadCount}</span>
+              )}
+            </span>
+          ),
+          tooltipTitle: inquiryUnreadCount > 0 ? `1:1 문의 (${inquiryUnreadCount}개 미확인)` : '1:1 문의',
+        },
+      ]
     },
 
+    // collapsed 상태에서 도움말 서브메뉴 표시
+    ...(collapsed ? [
+      {
+        key: 'help-notice',
+        icon: <span className="menu-icon-blue"><MenuIcons.Bell /></span>,
+        label: '',
+        tooltipTitle: noticeHasNew ? '공지사항 (새 글)' : '공지사항',
+      },
+      {
+        key: 'help-guide',
+        icon: <span className="menu-icon-green"><MenuIcons.Book /></span>,
+        label: '',
+        tooltipTitle: '사용 가이드',
+      },
+      {
+        key: 'help-faq',
+        icon: <span className="menu-icon-orange"><MenuIcons.ChatQuestion /></span>,
+        label: '',
+        tooltipTitle: 'FAQ',
+      },
+      {
+        key: 'help-inquiry',
+        icon: <MenuIcons.ChatBubble />,
+        label: '',
+        tooltipTitle: inquiryUnreadCount > 0 ? `1:1 문의 (${inquiryUnreadCount}개 미확인)` : '1:1 문의',
+      }
+    ] : []),
+
     // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
-  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount])
+  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount, noticeHasNew])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>

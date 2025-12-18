@@ -16,6 +16,7 @@ import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
 import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
+import { useNoticeNotifications } from './hooks/useNoticeNotifications'
 import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
 
@@ -46,6 +47,10 @@ const CustomerDetailView = lazy(() => import('./features/customer/views/Customer
 const CustomerFullDetailView = lazy(() => import('./features/customer/views/CustomerFullDetailView'))
 const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
 const InquiryView = lazy(() => import('./components/InquiryView/InquiryView'))
+const NoticeView = lazy(() => import('./components/HelpViews/NoticeView/NoticeView'))
+const UsageGuideView = lazy(() => import('./components/HelpViews/UsageGuideView/UsageGuideView'))
+const FAQView = lazy(() => import('./components/HelpViews/FAQView/FAQView'))
+const HelpDashboardView = lazy(() => import('./components/HelpViews/HelpDashboardView/HelpDashboardView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
@@ -147,6 +152,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     unreadIds: inquiryUnreadIds,
     markAsRead: markInquiryAsRead,
   } = useInquiryNotifications()
+
+  // 공지사항 알림 관리
+  const {
+    hasNewNotice: noticeHasNew,
+    markAsRead: markNoticeAsRead,
+  } = useNoticeNotifications()
 
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
@@ -314,6 +325,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       if (!selectedDocument && !selectedCustomer) {
         setRightPaneVisible(false)
       }
+    } else if (activeDocumentView?.startsWith("help")) {
+      // 도움말 하위 메뉴는 RightPane 항상 숨김
+      setPaginationVisible(false)
+      setRightPaneVisible(false)
     } else {
       setPaginationVisible(true)
       setRightPaneVisible(true)
@@ -591,7 +606,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       'contracts', 'contracts-all', 'contracts-import', 'batch-document-upload',
       // 설정 View들
       'account-settings',
-      // 1:1 문의
+      // 도움말
+      'help', 'help-notice', 'help-guide', 'help-faq', 'help-inquiry',
+      // 1:1 문의 (하위 호환성)
       'inquiry'
     ]
     if (allViewKeys.includes(menuKey)) {
@@ -1221,6 +1238,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               selectedKey={activeDocumentView || 'dsd'}
               inquiryUnreadCount={inquiryUnreadCount}
+              noticeHasNew={noticeHasNew}
               footer={
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: leftPaneCollapsed ? 'center' : 'flex-end' }}>
                   {/* 버전 표시 - 햄버거 버튼 바로 위 (호버: 툴팁, 클릭: 복사) */}
@@ -1501,10 +1519,46 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           {/* 1:1 문의 View */}
           <Suspense fallback={null}>
             <InquiryView
-              visible={activeDocumentView === 'inquiry'}
+              visible={activeDocumentView === 'inquiry' || activeDocumentView === 'help-inquiry'}
               onClose={closeDocumentView}
               unreadIds={inquiryUnreadIds}
               onMarkAsRead={markInquiryAsRead}
+            />
+          </Suspense>
+
+          {/* 도움말 대시보드 View */}
+          <Suspense fallback={null}>
+            <HelpDashboardView
+              visible={activeDocumentView === 'help'}
+              onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
+              noticeHasNew={noticeHasNew}
+              inquiryUnreadCount={inquiryUnreadCount}
+            />
+          </Suspense>
+
+          {/* 공지사항 View */}
+          <Suspense fallback={null}>
+            <NoticeView
+              visible={activeDocumentView === 'help-notice'}
+              onClose={closeDocumentView}
+              onMarkAsRead={markNoticeAsRead}
+            />
+          </Suspense>
+
+          {/* 사용 가이드 View */}
+          <Suspense fallback={null}>
+            <UsageGuideView
+              visible={activeDocumentView === 'help-guide'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          {/* FAQ View */}
+          <Suspense fallback={null}>
+            <FAQView
+              visible={activeDocumentView === 'help-faq'}
+              onClose={closeDocumentView}
             />
           </Suspense>
         </main>
