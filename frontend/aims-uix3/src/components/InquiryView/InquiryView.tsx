@@ -505,7 +505,9 @@ export default function InquiryView({
           {/* 상단 바: 목록 버튼 + 배지 + 메타정보 */}
           <div className="inquiry-detail-topbar">
             <button type="button" className="inquiry-detail-back" onClick={handleBackToList}>
-              <SFSymbol name="chevron-left" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.SEMIBOLD} />
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="inquiry-back-icon">
+                <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               목록
             </button>
             <div className="inquiry-detail-meta">

@@ -731,6 +731,11 @@ html[data-theme="dark"] .inquiry-detail-topbar {
   flex-shrink: 0;
 }
 
+/* 목록 버튼 내 아이콘 */
+.inquiry-detail-back .inquiry-back-icon {
+  flex-shrink: 0;
+}
+
 html[data-theme="dark"] .inquiry-detail-back {
   border-color: var(--color-ios-separator-dark);
   background: var(--color-ios-bg-tertiary-dark);
