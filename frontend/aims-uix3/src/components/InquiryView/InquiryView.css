@@ -800,6 +800,10 @@ html[data-theme="dark"] .inquiry-detail-info-value {
   padding: 16px 12px;
   background: var(--color-ios-bg-tertiary-light);
   border-radius: 8px;
+  /* 와이드 스크린 대응: 채팅 영역 중앙 정렬 */
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 html[data-theme="dark"] .inquiry-messages {
@@ -1000,6 +1004,10 @@ html[data-theme="dark"] .inquiry-message-attachment svg {
   padding: 12px;
   background: var(--color-ios-bg-secondary-light);
   border-radius: 8px;
+  /* 와이드 스크린 대응: 메시지 영역과 동일하게 중앙 정렬 */
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 html[data-theme="dark"] .inquiry-reply-form {
