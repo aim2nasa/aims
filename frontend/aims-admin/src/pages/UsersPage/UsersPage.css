@@ -262,15 +262,17 @@
   color: #ff9500;
 }
 
-/* Tier Select Dropdown */
+/* Tier Select Dropdown - Unified Style */
 .tier-select {
   appearance: none;
   padding: 2px 20px 2px var(--spacing-xs);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-sm);
-  border: none;
+  border: 1px solid var(--color-border);
   cursor: pointer;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
   background-repeat: no-repeat;
   background-position: right 4px center;
   background-size: 10px;
@@ -278,13 +280,19 @@
   transition: all var(--transition-fast);
 }
 
+html[data-theme="dark"] .tier-select {
+  background-color: var(--color-background-secondary);
+  border-color: var(--color-border);
+}
+
 .tier-select:hover {
-  opacity: 0.8;
+  border-color: var(--color-primary);
 }
 
 .tier-select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
 .tier-select:disabled {
@@ -292,22 +300,12 @@
   opacity: 0.5;
 }
 
-.tier-select--free_trial {
-  background-color: rgba(142, 142, 147, 0.2);
-  color: var(--color-text-secondary);
+.tier-select option {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
 
-.tier-select--standard {
-  background-color: rgba(0, 122, 255, 0.15);
-  color: #007aff;
-}
-
-.tier-select--premium {
-  background-color: rgba(175, 82, 222, 0.15);
-  color: #af52de;
-}
-
-.tier-select--vip {
-  background-color: rgba(255, 149, 0, 0.15);
-  color: #ff9500;
+html[data-theme="dark"] .tier-select option {
+  background-color: #2c2c2e;
+  color: #f5f5f7;
 }
