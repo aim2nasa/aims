@@ -30,6 +30,25 @@ const FAQ_CATEGORY_LABELS = {
   'term-system': '시스템 용어',
 };
 
+// 사용 가이드 카테고리 라벨 매핑
+const USAGE_GUIDE_CATEGORY_LABELS = {
+  'getting-started': '시작하기',
+  customer: '고객 관리',
+  contract: '계약 관리',
+  document: '문서 관리',
+  'batch-import': '일괄 등록',
+  advanced: '고급 기능',
+  account: '계정 설정',
+  tips: '팁 & 트릭',
+  terminology: '용어 설명',
+};
+
+// 사용 가이드 카테고리 정렬 순서
+const USAGE_GUIDE_CATEGORY_ORDER = [
+  'getting-started', 'customer', 'contract', 'document',
+  'batch-import', 'advanced', 'account', 'tips', 'terminology'
+];
+
 module.exports = (db, authenticateJWT, requireRole) => {
   const noticesCollection = db.collection('notices');
   const usageGuidesCollection = db.collection('usage_guides');
@@ -278,15 +297,82 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
 
   /**
-   * 사용 가이드 조회 (게시된 것만)
+   * 사용 가이드 카테고리 목록 조회 (DB에서 동적으로)
+   * GET /api/usage-guide-categories
+   */
+  router.get('/usage-guide-categories', async (req, res) => {
+    try {
+      // DB에서 사용 중인 카테고리 distinct 조회
+      const categories = await usageGuidesCollection.distinct('categoryId', { isPublished: true });
+
+      // 카테고리별 아이템 수 집계
+      const guides = await usageGuidesCollection.find({ isPublished: true }).toArray();
+      const countMap = guides.reduce((acc, guide) => {
+        acc[guide.categoryId] = (guide.items || []).length;
+        return acc;
+      }, {});
+
+      // 카테고리 정보 생성 (라벨 포함)
+      const result = categories
+        .filter(cat => cat) // null 제거
+        .map(category => ({
+          key: category,
+          label: USAGE_GUIDE_CATEGORY_LABELS[category] || category,
+          count: countMap[category] || 0
+        }))
+        .sort((a, b) => {
+          const aIdx = USAGE_GUIDE_CATEGORY_ORDER.indexOf(a.key);
+          const bIdx = USAGE_GUIDE_CATEGORY_ORDER.indexOf(b.key);
+          return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+        });
+
+      res.json({ success: true, data: result });
+    } catch (error) {
+      console.error('사용 가이드 카테고리 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 사용 가이드 조회 (게시된 것만, 검색 지원)
    * GET /api/usage-guides
+   * @query search - 검색어 (제목, 설명, 단계에서 검색)
+   * @query category - 카테고리 필터
    */
   router.get('/usage-guides', async (req, res) => {
     try {
-      const guides = await usageGuidesCollection
-        .find({ isPublished: true })
+      const { search, category } = req.query;
+
+      const query = { isPublished: true };
+      if (category) {
+        query.categoryId = category;
+      }
+
+      let guides = await usageGuidesCollection
+        .find(query)
         .sort({ order: 1 })
         .toArray();
+
+      // 검색어가 있으면 필터링
+      if (search && search.trim()) {
+        const searchLower = search.toLowerCase().trim();
+        guides = guides.map(guide => {
+          // 아이템 필터링: 제목, 설명, 단계에서 검색
+          const filteredItems = (guide.items || []).filter(item => {
+            const titleMatch = item.title?.toLowerCase().includes(searchLower);
+            const descMatch = item.description?.toLowerCase().includes(searchLower);
+            const stepsMatch = (item.steps || []).some(step =>
+              step.toLowerCase().includes(searchLower)
+            );
+            return titleMatch || descMatch || stepsMatch;
+          });
+
+          return {
+            ...guide,
+            items: filteredItems
+          };
+        }).filter(guide => guide.items.length > 0); // 매칭되는 아이템이 있는 카테고리만
+      }
 
       // 각 카테고리 내 items도 order로 정렬
       const sortedGuides = guides.map(guide => ({
@@ -304,6 +390,43 @@ module.exports = (db, authenticateJWT, requireRole) => {
   // ========================================
   // 사용 가이드 API - 관리자용
   // ========================================
+
+  /**
+   * 사용 가이드 카테고리 목록 조회 (관리자용 - 모든 가이드 포함)
+   * GET /api/admin/usage-guide-categories
+   */
+  router.get('/admin/usage-guide-categories', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      // DB에서 모든 카테고리 distinct 조회 (비공개 포함)
+      const categories = await usageGuidesCollection.distinct('categoryId');
+
+      // 카테고리별 아이템 수 집계
+      const guides = await usageGuidesCollection.find({}).toArray();
+      const countMap = guides.reduce((acc, guide) => {
+        acc[guide.categoryId] = (guide.items || []).length;
+        return acc;
+      }, {});
+
+      // 카테고리 정보 생성
+      const result = categories
+        .filter(cat => cat)
+        .map(category => ({
+          key: category,
+          label: USAGE_GUIDE_CATEGORY_LABELS[category] || category,
+          count: countMap[category] || 0
+        }))
+        .sort((a, b) => {
+          const aIdx = USAGE_GUIDE_CATEGORY_ORDER.indexOf(a.key);
+          const bIdx = USAGE_GUIDE_CATEGORY_ORDER.indexOf(b.key);
+          return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+        });
+
+      res.json({ success: true, data: result });
+    } catch (error) {
+      console.error('관리자 사용 가이드 카테고리 조회 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
 
   /**
    * 사용 가이드 전체 조회 (관리자)
@@ -557,6 +680,34 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '항목이 삭제되었습니다' });
     } catch (error) {
       console.error('가이드 항목 삭제 오류:', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 사용 가이드 카테고리 순서 일괄 업데이트 (관리자)
+   * PUT /api/admin/usage-guides/reorder
+   */
+  router.put('/admin/usage-guides/reorder', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { orders } = req.body; // [{ id: string, order: number }, ...]
+
+      if (!Array.isArray(orders)) {
+        return res.status(400).json({ success: false, message: '순서 배열이 필요합니다' });
+      }
+
+      const bulkOps = orders.map(({ id, order }) => ({
+        updateOne: {
+          filter: { _id: new ObjectId(id) },
+          update: { $set: { order, updatedAt: new Date() } }
+        }
+      }));
+
+      await usageGuidesCollection.bulkWrite(bulkOps);
+
+      res.json({ success: true, message: '순서가 업데이트되었습니다' });
+    } catch (error) {
+      console.error('사용 가이드 순서 업데이트 오류:', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
