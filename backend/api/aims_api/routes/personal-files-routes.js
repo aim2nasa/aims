@@ -248,6 +248,19 @@ router.post('/folders', authenticateToken, async (req, res) => {
 
     const result = await collection.insertOne(newFolder);
 
+    // SSE 알림: 폴더 생성
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'created',
+        itemId: result.insertedId.toString(),
+        itemName: newFolder.name,
+        itemType: 'folder'
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 폴더 생성 알림 실패:', sseErr.message);
+    }
+
     res.json({
       success: true,
       data: {
@@ -328,6 +341,19 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     };
 
     const result = await collection.insertOne(newFile);
+
+    // SSE 알림: 파일 업로드
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'created',
+        itemId: result.insertedId.toString(),
+        itemName: newFile.name,
+        itemType: 'file'
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 파일 업로드 알림 실패:', sseErr.message);
+    }
 
     res.json({
       success: true,
@@ -425,6 +451,19 @@ router.put('/:itemId/rename', authenticateToken, async (req, res) => {
       }
     );
 
+    // SSE 알림: 이름 변경
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'renamed',
+        itemId: itemId,
+        itemName: newName.trim(),
+        itemType: item.type
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 이름 변경 알림 실패:', sseErr.message);
+    }
+
     res.json({
       success: true,
       message: '이름이 변경되었습니다'
@@ -510,6 +549,19 @@ router.delete('/:itemId', authenticateToken, async (req, res) => {
       
       // 하위 폴더들도 재귀적으로 소프트 삭제
       await deleteChildrenRecursively(collection, userId, new ObjectId(itemId));
+    }
+
+    // SSE 알림: 항목 삭제
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'deleted',
+        itemId: itemId,
+        itemName: item.name,
+        itemType: item.type
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 항목 삭제 알림 실패:', sseErr.message);
     }
 
     res.json({
@@ -699,6 +751,19 @@ router.put('/:itemId/move', authenticateToken, async (req, res) => {
       }
     );
 
+    // SSE 알림: 항목 이동
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'moved',
+        itemId: itemId,
+        itemName: item.name,
+        itemType: item.type
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 항목 이동 알림 실패:', sseErr.message);
+    }
+
     res.json({
       success: true,
       message: '이동되었습니다'
@@ -864,10 +929,10 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
     const { targetFolderId } = req.body;
     const userId = req.user.userId;
 
-    // 문서 존재 확인 (customerId === userId인 문서만 이동 가능)
+    // 문서 존재 확인 (customerId를 문자열로 변환하여 userId와 비교)
     const document = await filesCollection.findOne({
       _id: new ObjectId(documentId),
-      customerId: userId
+      $expr: { $eq: [{ $toString: '$customerId' }, userId] }
     });
 
     if (!document) {
@@ -906,6 +971,19 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
       }
     );
 
+    // SSE 알림: 문서 이동
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'moved',
+        itemId: documentId,
+        itemName: document.filename || 'document',
+        itemType: 'document'
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 문서 이동 알림 실패:', sseErr.message);
+    }
+
     res.json({
       success: true,
       message: '문서가 이동되었습니다'
@@ -913,6 +991,87 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
 
   } catch (error) {
     console.error('문서 이동 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다',
+      error: error.message
+    });
+  } finally {
+    await client.close();
+  }
+});
+
+/**
+ * PUT /api/personal-files/documents/:documentId/rename
+ * 문서(files 컬렉션) 이름 변경
+ *
+ * @param {string} documentId - 문서 ID
+ * @body {string} newName - 새 파일명 (확장자 포함)
+ * @returns {Object} 성공/실패 응답
+ */
+router.put('/documents/:documentId/rename', authenticateToken, async (req, res) => {
+  const client = new MongoClient(mongoUrl);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    const filesCollection = db.collection('files');
+
+    const { documentId } = req.params;
+    const { newName } = req.body;
+    const userId = req.user.userId;
+
+    if (!newName || typeof newName !== 'string' || newName.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: '새 파일명을 입력해주세요'
+      });
+    }
+
+    // 문서 존재 확인 (customerId를 문자열로 변환하여 userId와 비교)
+    const document = await filesCollection.findOne({
+      _id: new ObjectId(documentId),
+      $expr: { $eq: [{ $toString: '$customerId' }, userId] }
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: '문서를 찾을 수 없거나 권한이 없습니다'
+      });
+    }
+
+    // 문서 이름 업데이트 (filename과 upload.originalName 모두 업데이트)
+    await filesCollection.updateOne(
+      { _id: new ObjectId(documentId) },
+      {
+        $set: {
+          filename: newName.trim(),
+          'upload.originalName': newName.trim()
+        }
+      }
+    );
+
+    // SSE 알림: 문서 이름 변경
+    try {
+      await axios.post('http://localhost:3010/api/webhooks/personal-files-change', {
+        userId,
+        changeType: 'renamed',
+        itemId: documentId,
+        itemName: newName.trim(),
+        itemType: 'document'
+      });
+    } catch (sseErr) {
+      console.warn('[SSE] 문서 이름 변경 알림 실패:', sseErr.message);
+    }
+
+    res.json({
+      success: true,
+      message: '문서 이름이 변경되었습니다'
+    });
+
+  } catch (error) {
+    console.error('문서 이름 변경 오류:', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',

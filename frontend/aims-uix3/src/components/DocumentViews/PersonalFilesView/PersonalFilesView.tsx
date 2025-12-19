@@ -36,6 +36,7 @@ import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSumma
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { usePersonalFilesSSE } from '@/shared/hooks/usePersonalFilesSSE'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
@@ -153,9 +154,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const breadcrumbRef = useRef<HTMLDivElement>(null)
   const [breadcrumbWidth, setBreadcrumbWidth] = useState(0)
 
-  // 폴링 관련 상태
-  const [isPollingEnabled, setIsPollingEnabled] = useState(true)
-  const [isPageVisible, setIsPageVisible] = useState(true)
+  // SSE 관련 상태
+  const [isSSEEnabled, setIsSSEEnabled] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   // 현재 사용자 ID
@@ -260,7 +260,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
       // 2. customerId === userId인 문서들 조회 (folderId 기반 필터링)
       try {
-        const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
+        // 🔴 중요: fileScope='onlyMyFiles'로 내 파일만 조회 (기본값은 excludeMyFiles로 내 파일 제외됨!)
+        const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000, undefined, undefined, undefined, 'onlyMyFiles')
         const allDocs = docsResponse.documents || []
 
         // customerId === userId이고, folderId가 현재 폴더와 일치하는 문서만 필터링
@@ -269,7 +270,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           if (!doc.customerId || doc.customerId !== userId) return false
 
           // folderId 체크 (undefined는 null로 간주)
-          const docFolderId = (doc as any).folderId || null
+          const docFolderId = (doc as any).folderId ?? null  // || 대신 ?? 사용 (null 보존)
           const targetFolderId = folderId
 
           // 둘 다 null이거나, 둘 다 같은 값일 때만 표시
@@ -480,46 +481,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [visible, loadFolderContents])
 
   /**
-   * Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
+   * SSE 실시간 업데이트
+   * 폴링을 대체하여 서버에서 파일 변경 이벤트 발생 시 즉시 새로고침
    */
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const handleVisibilityChange = () => {
-      const isVisible = document.visibilityState === 'visible'
-      setIsPageVisible(isVisible)
-
-      // 탭이 다시 보이면 즉시 데이터 새로고침
-      if (isVisible) {
-        loadFolderContents(currentFolderId)
-      }
-    }
-
-    // 초기 상태 설정
-    setIsPageVisible(document.visibilityState === 'visible')
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
+  const handleSSERefresh = useCallback(() => {
+    loadFolderContents(currentFolderId, { silentRefresh: true })
   }, [loadFolderContents, currentFolderId])
 
-  /**
-   * 실시간 폴링 (5초마다)
-   * 페이지가 보이고(isPageVisible) 폴링이 활성화(isPollingEnabled)되어 있을 때만 실행
-   */
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (!visible) return
-    if (!isPollingEnabled) return
-    if (!isPageVisible) return
-
-    const interval = setInterval(() => {
-      loadFolderContents(currentFolderId, { silentRefresh: true })
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [isPollingEnabled, isPageVisible, visible, loadFolderContents, currentFolderId])
+  usePersonalFilesSSE(
+    visible && isSSEEnabled ? userId : null,
+    handleSSERefresh,
+    { enabled: visible && isSSEEnabled }
+  )
 
   // 검색 debounce (500ms) - 필터/정렬은 클라이언트에서 처리
   useEffect(() => {
@@ -602,9 +575,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [breadcrumbs])
 
-  // 폴링 토글
-  const togglePolling = useCallback(() => {
-    setIsPollingEnabled((prev) => !prev)
+  // SSE 토글
+  const toggleSSE = useCallback(() => {
+    setIsSSEEnabled((prev) => !prev)
   }, [])
 
   // 마지막 업데이트 시간 포맷팅 (시분초만 표시)
@@ -677,7 +650,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       fileSize: file.size,
       status: 'pending' as const,
       progress: 0,
-      customerId: userId  // 🆕 내 보관함: customerId = userId (규약)
+      customerId: userId,  // 🆕 내 보관함: customerId = userId (규약)
+      folderId: currentFolderId  // 🆕 현재 폴더 ID (문서가 속할 폴더)
     }))
 
     setUploadingFiles(prev => [...prev, ...newUploadFiles])
@@ -689,7 +663,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }, [userId])
+  }, [userId, currentFolderId])
 
   // 파일 다운로드
   const handleFileDownload = useCallback(async (fileId: string, fileName: string, e: React.MouseEvent) => {
@@ -785,7 +759,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 이름 변경 실행
   const handleRenameItem = useCallback(async () => {
-    console.log('🔧 [Rename] 시작:', { itemToRename, renameValue })
+    console.log('🔧 [Rename] 시작:', { itemToRename, renameValue, isLibraryDocument: itemToRename?.isLibraryDocument })
 
     if (!itemToRename || !renameValue.trim()) {
       console.log('❌ [Rename] 검증 실패: 이름 없음')
@@ -798,8 +772,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     console.log('🚀 [Rename] API 호출 시작:', itemToRename._id, '→', renameValue.trim())
 
     try {
-      await personalFilesService.renameItem(itemToRename._id, renameValue.trim())
-      console.log('✅ [Rename] API 호출 성공')
+      // 문서 라이브러리 파일인지 폴더 시스템 항목인지 확인
+      if (itemToRename.isLibraryDocument) {
+        // 문서 라이브러리 파일 이름 변경 (files 컬렉션)
+        await personalFilesService.renameDocument(itemToRename._id, renameValue.trim())
+        console.log('✅ [Rename] 문서 라이브러리 파일 이름 변경 완료')
+      } else {
+        // 폴더 시스템 항목 이름 변경 (personal_files 컬렉션)
+        await personalFilesService.renameItem(itemToRename._id, renameValue.trim())
+        console.log('✅ [Rename] 폴더 시스템 항목 이름 변경 완료')
+      }
 
       // 🍎 캐시 무효화 (이름이 변경된 아이템)
       folderItemCache.current.delete(itemToRename._id)
@@ -1958,7 +1940,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </Tooltip>
               </div>
 
-              {/* 폴링 컨트롤 영역 */}
+              {/* SSE 컨트롤 영역 */}
               <div className="toolbar-divider" />
 
               {/* 최근 업데이트 시간 */}
@@ -1968,14 +1950,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </span>
               )}
 
-              {/* 폴링 토글 버튼 */}
-              <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+              {/* SSE 토글 버튼 */}
+              <Tooltip content={isSSEEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
                 <button
-                  className={`polling-toggle ${isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
-                  onClick={togglePolling}
-                  aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+                  className={`polling-toggle ${isSSEEnabled ? 'polling-active' : 'polling-inactive'}`}
+                  onClick={toggleSSE}
+                  aria-label={isSSEEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
                 >
-                  <span className={`polling-dot ${isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
+                  <span className={`polling-dot ${isSSEEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
                 </button>
               </Tooltip>
 

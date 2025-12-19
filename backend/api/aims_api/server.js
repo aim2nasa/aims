@@ -267,6 +267,30 @@ function notifyARSubscribers(customerId, event, data) {
   }
 }
 
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - Personal Files
+// ========================================
+const personalFilesSSEClients = new Map(); // userId(string) -> Set<response>
+
+/**
+ * 특정 사용자 Personal Files 구독자들에게 알림 전송
+ * @param {string} userId - 사용자 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyPersonalFilesSubscribers(userId, event, data) {
+  const userIdStr = userId.toString();
+  const clients = personalFilesSSEClients.get(userIdStr);
+  const totalClients = Array.from(personalFilesSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-PF] notifyPersonalFilesSubscribers 호출 - userId: ${userIdStr}, 해당 사용자 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-PF] 사용자 ${userIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-PF] 사용자 ${userIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
 // ========================
 // PDF 변환 백그라운드 처리
 // ========================
@@ -6082,6 +6106,88 @@ app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQ
 });
 
 /**
+ * Personal Files 실시간 업데이트 SSE 스트림
+ * @route GET /api/personal-files/stream
+ * @description 사용자의 개인 파일 변경을 실시간으로 전달
+ */
+app.get('/api/personal-files/stream', (req, res) => {
+  // x-user-id 헤더 또는 쿼리 파라미터에서 userId 추출
+  const userId = req.headers['x-user-id'] || req.query.userId;
+
+  if (!userId) {
+    return res.status(401).json({ success: false, error: '사용자 ID가 필요합니다.' });
+  }
+
+  console.log(`[SSE-PF] Personal Files 스트림 연결 - userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!personalFilesSSEClients.has(userId)) {
+    personalFilesSSEClients.set(userId, new Set());
+  }
+  personalFilesSSEClients.get(userId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-PF] Personal Files 스트림 연결 종료 - userId: ${userId}`);
+    clearInterval(keepAliveInterval);
+    personalFilesSSEClients.get(userId)?.delete(res);
+    if (personalFilesSSEClients.get(userId)?.size === 0) {
+      personalFilesSSEClients.delete(userId);
+    }
+  });
+});
+
+/**
+ * Personal Files 변경 알림 Webhook (내부용)
+ * @route POST /api/webhooks/personal-files-change
+ * @description Personal Files routes에서 파일 변경 시 호출하여 SSE 알림 발생
+ */
+app.post('/api/webhooks/personal-files-change', (req, res) => {
+  try {
+    const { userId, changeType, itemId, itemName, itemType } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
+
+    // SSE 알림 전송: 파일 변경
+    notifyPersonalFilesSubscribers(userId, 'file-change', {
+      type: changeType || 'updated',
+      itemId: itemId || 'unknown',
+      itemName: itemName || 'Unknown',
+      itemType: itemType || 'file',
+      timestamp: utcNowISO()
+    });
+
+    console.log(`[SSE-PF] Personal Files 변경 알림 전송 - userId: ${userId}, type: ${changeType}`);
+
+    res.json({ success: true, message: '알림이 전송되었습니다.' });
+  } catch (error) {
+    console.error('[SSE-PF] Personal Files 변경 알림 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * 문서 업로드 알림 endpoint
  * n8n webhook에서 직접 업로드 후 프론트엔드가 호출하여 SSE 알림 발생
  * @route POST /api/notify/document-uploaded
@@ -6119,6 +6225,55 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('문서 업로드 알림 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 내 보관함: 최근 업로드된 문서의 folderId 설정
+ * n8n webhook이 folderId를 저장하지 않으므로 업로드 후 별도로 설정
+ * @route PATCH /api/documents/recent/set-folder
+ */
+app.patch('/api/documents/recent/set-folder', authenticateJWT, async (req, res) => {
+  try {
+    const { filename, folderId } = req.body;
+    const userId = req.user.id;
+
+    if (!filename) {
+      return res.status(400).json({ success: false, error: 'filename이 필요합니다.' });
+    }
+
+    // 최근 5분 이내에 업로드된, 해당 사용자의 문서 중 파일명이 일치하는 것 찾기
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const document = await db.collection('files').findOne({
+      ownerId: userId,
+      'upload.originalName': filename,
+      'meta.created_at': { $gte: fiveMinutesAgo.toISOString() }
+    }, {
+      sort: { 'meta.created_at': -1 }  // 가장 최근 것
+    });
+
+    if (!document) {
+      console.log(`[SetFolder] 문서를 찾을 수 없음 - filename: ${filename}, userId: ${userId}`);
+      return res.status(404).json({ success: false, error: '최근 업로드된 문서를 찾을 수 없습니다.' });
+    }
+
+    // folderId 업데이트 (null이면 루트 폴더)
+    await db.collection('files').updateOne(
+      { _id: document._id },
+      { $set: { folderId: folderId || null } }
+    );
+
+    console.log(`[SetFolder] 문서 folderId 설정 - docId: ${document._id}, folderId: ${folderId || 'null (root)'}`);
+
+    res.json({
+      success: true,
+      documentId: document._id.toString(),
+      folderId: folderId || null
+    });
+  } catch (error) {
+    console.error('[SetFolder] 오류:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -320,6 +320,22 @@ export const personalFilesService = {
     if (!response.success) {
       throw new Error(response.message || '문서 이동 실패');
     }
+  },
+
+  /**
+   * 문서 라이브러리 파일 이름 변경
+   * @param documentId - 문서 ID
+   * @param newName - 새 파일명
+   */
+  async renameDocument(documentId: string, newName: string): Promise<void> {
+    const response = await api.put<ApiResponse<void>>(
+      `${API_BASE}/documents/${documentId}/rename`,
+      { newName }
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || '문서 이름 변경 실패');
+    }
   }
 };
 

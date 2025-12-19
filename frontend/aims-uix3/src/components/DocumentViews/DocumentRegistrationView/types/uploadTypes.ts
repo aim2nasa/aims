@@ -46,6 +46,8 @@ export interface UploadFile {
   relativePath?: string | undefined
   /** 고객 ID - "내 파일"에서 업로드 시 userId와 동일 */
   customerId?: string | undefined
+  /** 폴더 ID - "내 보관함"에서 업로드 시 현재 폴더 ID */
+  folderId?: string | null | undefined
 }
 
 // 업로드 에러 정보

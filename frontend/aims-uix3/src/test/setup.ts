@@ -124,3 +124,54 @@ if (typeof ResizeObserver === 'undefined') {
     disconnect() {}
   }
 }
+
+// EventSource stub (SSE 테스트 환경에서 EventSource API가 없음)
+if (typeof EventSource === 'undefined') {
+  (global as any).EventSource = class MockEventSource {
+    static readonly CONNECTING = 0
+    static readonly OPEN = 1
+    static readonly CLOSED = 2
+
+    readonly CONNECTING = 0
+    readonly OPEN = 1
+    readonly CLOSED = 2
+
+    url: string
+    readyState: number = 0
+    onmessage: ((event: MessageEvent) => void) | null = null
+    onerror: ((event: Event) => void) | null = null
+    onopen: ((event: Event) => void) | null = null
+
+    private listeners: Map<string, ((event: MessageEvent) => void)[]> = new Map()
+
+    constructor(url: string) {
+      this.url = url
+      // 연결 성공 시뮬레이션
+      setTimeout(() => {
+        this.readyState = 1
+        this.onopen?.({ type: 'open' } as Event)
+      }, 0)
+    }
+
+    addEventListener(type: string, listener: (event: MessageEvent) => void) {
+      if (!this.listeners.has(type)) {
+        this.listeners.set(type, [])
+      }
+      this.listeners.get(type)!.push(listener)
+    }
+
+    removeEventListener(type: string, listener: (event: MessageEvent) => void) {
+      const listeners = this.listeners.get(type)
+      if (listeners) {
+        const index = listeners.indexOf(listener)
+        if (index > -1) {
+          listeners.splice(index, 1)
+        }
+      }
+    }
+
+    close() {
+      this.readyState = 2
+    }
+  }
+}

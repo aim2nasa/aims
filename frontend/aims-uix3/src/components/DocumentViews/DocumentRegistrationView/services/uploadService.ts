@@ -162,7 +162,7 @@ export class UploadService {
    * 개별 파일 업로드 (바이러스 검사 + 자동 재시도 지원)
    */
   private async uploadFile(uploadFile: UploadFile): Promise<void> {
-    const { id, file, customerId } = uploadFile
+    const { id, file, customerId, folderId } = uploadFile
     const controller = new AbortController()
 
     try {
@@ -205,6 +205,12 @@ export class UploadService {
         console.log(`[UploadService] 내 파일 업로드 - customerId: ${customerId}`)
       }
 
+      // 🆕 폴더 ID: folderId가 있으면 추가 (내 보관함에서 특정 폴더에 업로드 시)
+      if (folderId) {
+        formData.append('folderId', folderId)
+        console.log(`[UploadService] 폴더 업로드 - folderId: ${folderId}`)
+      }
+
       // XMLHttpRequest로 업로드 (진행률 추적을 위해)
       const result = await this.uploadWithProgress(formData, id, controller.signal)
 
@@ -226,9 +232,18 @@ export class UploadService {
           console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
         }
 
-        // 🔔 customerId가 있으면 SSE 알림 트리거 (고객 상세 페이지 실시간 갱신)
+        // 🔔 SSE 알림 트리거 (실시간 갱신)
         if (customerId) {
-          this.notifyDocumentUploaded(customerId, id, file.name)
+          // userId 가져오기
+          const currentUserId = localStorage.getItem('aims-current-user-id') || ''
+
+          if (customerId === currentUserId) {
+            // 내 보관함: folderId 설정 + Personal Files SSE 웹훅 호출
+            this.notifyPersonalFilesUploaded(customerId, file.name, folderId)
+          } else {
+            // 고객 문서: Customer Documents SSE 알림 호출
+            this.notifyDocumentUploaded(customerId, id, file.name)
+          }
         }
       }
 
@@ -392,6 +407,70 @@ export class UploadService {
     } catch (error) {
       // 알림 실패는 무시 (업로드 자체는 성공)
       console.warn('[UploadService] SSE 알림 전송 실패:', error)
+    }
+  }
+
+  /**
+   * Personal Files 업로드 알림 (SSE 실시간 갱신용)
+   * 내 보관함에 문서가 업로드되면:
+   * 1. folderId 설정 API 호출 (n8n이 folderId를 저장하지 않으므로)
+   * 2. SSE 알림 발송
+   */
+  private async notifyPersonalFilesUploaded(
+    userId: string,
+    filename: string,
+    folderId?: string | null
+  ): Promise<void> {
+    const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || ''
+
+    // 1. folderId 설정 API 호출
+    try {
+      const authData = localStorage.getItem('auth-storage')
+      if (authData) {
+        const parsed = JSON.parse(authData)
+        const token = parsed?.state?.token
+        if (token) {
+          const setFolderResponse = await fetch(`${API_BASE_URL}/api/documents/recent/set-folder`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ filename, folderId: folderId || null })
+          })
+
+          if (import.meta.env.DEV) {
+            const result = await setFolderResponse.json()
+            console.log(`[UploadService] folderId 설정 완료:`, result)
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[UploadService] folderId 설정 실패:', error)
+    }
+
+    // 2. SSE 알림 발송
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/webhooks/personal-files-change`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          changeType: 'created',
+          itemId: 'uploaded',
+          itemName: filename,
+          itemType: 'document'
+        })
+      })
+
+      if (import.meta.env.DEV) {
+        const result = await response.json()
+        console.log(`[UploadService] Personal Files SSE 알림 전송 완료:`, result)
+      }
+    } catch (error) {
+      console.warn('[UploadService] Personal Files SSE 알림 전송 실패:', error)
     }
   }
 
