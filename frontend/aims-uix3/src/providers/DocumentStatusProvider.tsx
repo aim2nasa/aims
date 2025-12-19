@@ -289,6 +289,28 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setSearchTerm(searchQuery)
   }, [searchQuery])
 
+  // 🔧 초기 마운트 여부 추적 (정렬/페이지/검색 변경 시 재조회용)
+  const isInitialMountRef = useRef(true)
+
+  /**
+   * 🍎 정렬, 페이지네이션, 검색어 변경 시 즉시 재조회
+   * - 초기 로드는 별도 useEffect에서 처리하므로 스킵
+   * - 폴링 5초 대기 없이 즉시 반영
+   */
+  useEffect(() => {
+    // 초기 마운트 시에는 스킵 (초기 로드 useEffect에서 처리)
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      return
+    }
+
+    // 테스트 환경에서는 스킵
+    if (typeof window === 'undefined') return
+
+    // 정렬/페이지/검색어 변경 시 즉시 재조회
+    fetchDocumentsRef.current(false)
+  }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm])
+
   // 🔄 SSE 훅 사용: Page Visibility API 및 실시간 업데이트 처리는 훅 내부에서 관리
   useDocumentStatusListSSE(
     () => {
@@ -391,14 +413,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'
       console.log(`🔄 [정렬 방향 변경] ${sortDirection} → ${newDirection}`)
       setSortDirection(newDirection)
-      // 🍎 방향만 변경되므로 fetchDocuments가 자동으로 재호출됨 (의존성 배열)
     } else {
       // New field: set field and default to asc
       console.log(`🆕 [정렬 필드 변경] ${sortField} → ${field} (direction: asc)`)
       setSortField(field)
       setSortDirection('asc')
-      // 🍎 필드가 변경되므로 fetchDocuments가 자동으로 재호출됨 (의존성 배열)
     }
+    // 🍎 상태 변경 → useEffect에서 fetchDocuments 자동 호출
     setCurrentPage(1) // 정렬 변경 시 첫 페이지로 이동
   }, [sortField, sortDirection])
 
