@@ -181,13 +181,15 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           const finalDocs = [...documentsWithCustomerRelation, ...uniqueTempDocs]
 
           // 🔧 변경 감지: ID + 상태 비교로 불필요한 리렌더링 방지
-          // ID가 같아도 상태(overallStatus, progress 등)가 변경되면 업데이트 필요
+          // ID가 같아도 상태(overallStatus, progress, conversionStatus 등)가 변경되면 업데이트 필요
           const createDocFingerprint = (doc: Document) => {
             const id = doc._id || doc.id || ''
             const status = doc.overallStatus || ''
             const progress = doc.progress ?? 0
             const customerRelation = doc.customer_relation?.customer_id || ''
-            return `${id}:${status}:${progress}:${customerRelation}`
+            // 🔥 PDF 변환 상태도 fingerprint에 포함 (변환 완료 시 UI 즉시 반영)
+            const convStatus = doc.conversionStatus || (typeof doc.upload === 'object' ? doc.upload?.conversion_status : null) || ''
+            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}`
           }
 
           // 🔧 정렬 순서도 반영하기 위해 sort() 제거

@@ -1321,6 +1321,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         badgeType: badgeType,  // 🔥 항상 badgeType 포함
         conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
         isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),   // 🔥 PDF 변환 가능 여부 (destPath 없으면 originalName으로 확인)
+        upload: doc.upload,  // 🔥 프론트엔드에서 upload.conversion_status 접근용
         meta: doc.meta,
         ocr: doc.ocr,
         docembed: doc.docembed,
