@@ -814,6 +814,39 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"document_id\": $('Merge DocMeta for Update').item.json._id, \"status\": \"completed\", \"owner_id\": $('Save OwnerId').item.json.ownerId } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        272
+      ],
+      "id": "notify-no-ocr-complete-001",
+      "name": "Notify No OCR Complete"
+    },
+    {
+      "parameters": {
         "options": {
           "responseCode": 200
         }
@@ -821,11 +854,25 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        736,
+        850,
         272
       ],
       "id": "7c275483-dc12-4507-8092-69f900e43376",
       "name": "Respond Done"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1050,
+        272
+      ],
+      "id": "wait-3s-for-sse",
+      "name": "Wait 3s for SSE"
     },
     {
       "parameters": {
@@ -1304,6 +1351,28 @@
         [
           {
             "node": "Respond Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Done": {
+      "main": [
+        [
+          {
+            "node": "Wait 3s for SSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3s for SSE": {
+      "main": [
+        [
+          {
+            "node": "Notify No OCR Complete",
             "type": "main",
             "index": 0
           }

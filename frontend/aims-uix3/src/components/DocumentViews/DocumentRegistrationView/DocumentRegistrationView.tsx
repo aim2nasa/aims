@@ -19,6 +19,7 @@ import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
 import { api } from '@/shared/lib/api'
+import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
 import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
@@ -780,65 +781,43 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         // 문서 ID 기반 매핑 저장 (더 확실함)
         arDocumentCustomerMappingRef.current.set(documentId, customerId);
         console.log(`🔗 [AR] 문서 ID → 고객 ID 매핑 저장: ${documentId} → ${customerId}`);
-        console.log(`⏳ [AR] 문서 처리 완료 대기 시작: ${documentId}`);
+        console.log(`⏳ [AR] 문서 처리 완료 대기 시작 (SSE): ${documentId}`);
 
-        // 문서 처리 완료될 때까지 polling
-        const checkInterval = 5000; // 5초마다 체크
-        const maxAttempts = 36; // 최대 180초 (3분)
-        let attempts = 0;
+        // 문서 처리 완료될 때까지 SSE로 대기
+        const result = await waitForDocumentProcessing(documentId);
 
-        const checkAndLink = setInterval(async () => {
-          attempts++;
+        // 👤 고객명 가져오기
+        const customerName = customerNameMappingRef.current.get(customerId);
 
+        if (result.success && result.status === 'completed') {
+          // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
+          console.log(`✅ [AR 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
+          addLog('success', `[5/5] AR 처리 최종 완료: ${fileName}`, undefined, customerName);
+
+          // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
           try {
-            // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-            const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
-              `/api/documents/${documentId}/status`
-            );
-
-            // 문서 처리 완료 확인 (overallStatus === 'completed')
-            if (response.success && response.data?.computed?.overallStatus === 'completed') {
-              clearInterval(checkAndLink);
-
-              // 👤 고객명 가져오기
-              const customerName = customerNameMappingRef.current.get(customerId);
-
-              // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
-              console.log(`✅ [AR 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
-              addLog('success', `[5/5] AR 처리 최종 완료: ${fileName}`, undefined, customerName);
-
-              // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
-              try {
-                console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}`);
-                // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-                const bgParseData = await api.post<{ success: boolean; message?: string }>(
-                  '/api/ar-background/trigger-parsing',
-                  {
-                    customer_id: customerId,
-                    file_id: documentId
-                  }
-                );
-                console.log(`✅ [AR 백그라운드 파싱] 트리거 완료:`, bgParseData);
-              } catch (bgError) {
-                console.error(`❌ [AR 백그라운드 파싱] 트리거 실패:`, bgError);
+            console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}`);
+            const bgParseData = await api.post<{ success: boolean; message?: string }>(
+              '/api/ar-background/trigger-parsing',
+              {
+                customer_id: customerId,
+                file_id: documentId
               }
-
-              arCustomerMappingRef.current.delete(fileName);
-              arMetadataMappingRef.current.delete(fileName);
-              arDocumentCustomerMappingRef.current.delete(documentId);
-            } else if (attempts >= maxAttempts) {
-              clearInterval(checkAndLink);
-              console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
-              arCustomerMappingRef.current.delete(fileName);
-              arMetadataMappingRef.current.delete(fileName);
-              arDocumentCustomerMappingRef.current.delete(documentId);
-            } else {
-              console.log(`⏳ [AR] 대기 중... (${attempts}/${maxAttempts})`);
-            }
-          } catch (error) {
-            console.error(`❌ [AR] 문서 상태 확인 실패:`, error);
+            );
+            console.log(`✅ [AR 백그라운드 파싱] 트리거 완료:`, bgParseData);
+          } catch (bgError) {
+            console.error(`❌ [AR 백그라운드 파싱] 트리거 실패:`, bgError);
           }
-        }, checkInterval);
+        } else if (result.status === 'timeout') {
+          console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
+        } else {
+          console.error(`❌ [AR] 문서 처리 실패:`, result);
+        }
+
+        // 매핑에서 제거
+        arCustomerMappingRef.current.delete(fileName);
+        arMetadataMappingRef.current.delete(fileName);
+        arDocumentCustomerMappingRef.current.delete(documentId);
       } else {
         console.warn(`⚠️ [AR] 매핑을 찾을 수 없어서 자동 연결을 건너뜁니다. customerId=${customerId}, documentId=${documentId}`);
       }
@@ -882,68 +861,50 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       console.log(`🔍 [고객 파일 자동 연결] 문서 ID 확인: ${fileName} → ${documentId}`);
 
-      // 2. 문서 처리 완료 대기 (overallStatus === 'completed')
-      const checkInterval = 5000; // 5초마다 체크
-      const maxAttempts = 36; // 최대 180초 (3분)
-      let attempts = 0;
+      // 2. 문서 처리 완료 대기 (SSE)
+      console.log(`⏳ [고객 파일 자동 연결] 문서 처리 완료 대기 시작 (SSE): ${documentId}`);
+      const result = await waitForDocumentProcessing(documentId);
 
-      const checkAndLink = setInterval(async () => {
-        attempts++;
+      if (result.success && result.status === 'completed') {
+        // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
+        console.log(`✅ [고객 파일 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
+        addLog('success', `[4/4] 문서 처리 완료: ${fileName}`, undefined, customerFileInfo.customerName);
 
+        // 🔔 SSE 알림 트리거: 문서-고객 연결 완료 알림
         try {
-          // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-          const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
-            `/api/documents/${documentId}/status`
-          );
-
-          if (response.success && response.data?.computed?.overallStatus === 'completed') {
-            clearInterval(checkAndLink);
-
-            // ✅ n8n이 이미 문서-고객 연결을 처리함 (중복 호출 제거)
-            console.log(`✅ [고객 파일 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
-            addLog('success', `[4/4] 문서 처리 완료: ${fileName}`, undefined, customerFileInfo.customerName);
-
-            // 🔔 SSE 알림 트리거: 문서-고객 연결 완료 알림
-            try {
-              const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
-              const authData = localStorage.getItem('auth-storage');
-              const token = authData ? JSON.parse(authData)?.state?.token : null;
-              if (token) {
-                fetch(`${API_BASE_URL}/api/notify/document-uploaded`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    customerId: customerFileInfo.customerId,
-                    documentId: documentId,
-                    documentName: fileName
-                  })
-                }).then(() => {
-                  console.log(`🔔 [SSE] 문서 연결 알림 전송 완료: ${fileName} → ${customerFileInfo.customerName}`);
-                }).catch(err => {
-                  console.warn(`⚠️ [SSE] 문서 연결 알림 전송 실패:`, err);
-                });
-              }
-            } catch (e) {
-              console.warn(`⚠️ [SSE] 알림 전송 중 오류:`, e);
-            }
-
-            // 추적 목록에서 제거
-            customerFileUploadMappingRef.current.delete(fileName);
-          } else if (attempts >= maxAttempts) {
-            clearInterval(checkAndLink);
-            console.warn(`⚠️ [고객 파일 자동 연결] 문서 처리 대기 시간 초과: ${fileName}`);
-            addLog('warning', `문서 자동 연결 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 수동으로 연결해주세요.', customerFileInfo.customerName);
-            customerFileUploadMappingRef.current.delete(fileName);
-          } else {
-            console.log(`⏳ [고객 파일 자동 연결] 대기 중... (${attempts}/${maxAttempts}) - ${fileName}`);
+          const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
+          const authData = localStorage.getItem('auth-storage');
+          const token = authData ? JSON.parse(authData)?.state?.token : null;
+          if (token) {
+            fetch(`${API_BASE_URL}/api/notify/document-uploaded`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                customerId: customerFileInfo.customerId,
+                documentId: documentId,
+                documentName: fileName
+              })
+            }).then(() => {
+              console.log(`🔔 [SSE] 문서 연결 알림 전송 완료: ${fileName} → ${customerFileInfo.customerName}`);
+            }).catch(err => {
+              console.warn(`⚠️ [SSE] 문서 연결 알림 전송 실패:`, err);
+            });
           }
-        } catch (error) {
-          console.error(`❌ [고객 파일 자동 연결] 상태 확인 실패:`, error);
+        } catch (e) {
+          console.warn(`⚠️ [SSE] 알림 전송 중 오류:`, e);
         }
-      }, checkInterval);
+      } else if (result.status === 'timeout') {
+        console.warn(`⚠️ [고객 파일 자동 연결] 문서 처리 대기 시간 초과: ${fileName}`);
+        addLog('warning', `문서 자동 연결 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 수동으로 연결해주세요.', customerFileInfo.customerName);
+      } else {
+        console.error(`❌ [고객 파일 자동 연결] 문서 처리 실패:`, result);
+      }
+
+      // 추적 목록에서 제거
+      customerFileUploadMappingRef.current.delete(fileName);
     } catch (error) {
       console.error(`❌ [고객 파일 자동 연결] 처리 실패:`, error);
       addLog('error', `문서 자동 연결 실패: ${fileName}`, error instanceof Error ? error.message : String(error), customerFileInfo.customerName);
@@ -951,7 +912,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [addLog]);
 
   /**
-   * 일반 문서 백그라운드 처리 완료 확인 (polling)
+   * 일반 문서 백그라운드 처리 완료 확인 (SSE)
    */
   const checkNormalDocumentCompletion = useCallback(async (fileName: string) => {
     try {
@@ -977,44 +938,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
       console.log(`🔍 [일반 문서] 문서 ID 확인: ${fileName} → ${documentId}`);
 
-      // 2. overallStatus가 completed가 될 때까지 polling
-      const checkInterval = 5000; // 5초마다 체크
-      const maxAttempts = 36; // 최대 180초 (3분)
-      let attempts = 0;
-
-      const checkStatus = setInterval(async () => {
-        attempts++;
-
-        try {
-          // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-          const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
-            `/api/documents/${documentId}/status`
-          );
-
-          // 문서 처리 완료 확인 (overallStatus === 'completed')
-          if (response.success && response.data?.computed?.overallStatus === 'completed') {
-            clearInterval(checkStatus);
-
-            console.log(`✅ [일반 문서] 백그라운드 처리 완료: ${fileName}`);
-            addLog('success', `[4/4] 백그라운드 처리 완료 - 일반 문서 처리 최종 완료: ${fileName}`);
-
-            // 매핑에서 제거
-            normalDocumentMappingRef.current.delete(fileName);
-          } else if (attempts >= maxAttempts) {
-            clearInterval(checkStatus);
-            console.warn(`⚠️ [일반 문서] 처리 대기 시간 초과: ${fileName}`);
-            addLog('warning', `백그라운드 처리 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 확인해주세요.');
-            normalDocumentMappingRef.current.delete(fileName);
-          } else {
-            console.log(`⏳ [일반 문서] 대기 중... (${attempts}/${maxAttempts}) - ${fileName}`);
-          }
-        } catch (error) {
-          console.error(`❌ [일반 문서] 상태 확인 실패:`, error);
-        }
-      }, checkInterval);
-
       // 매핑에 추가
       normalDocumentMappingRef.current.set(fileName, documentId);
+
+      // 2. overallStatus가 completed가 될 때까지 SSE 대기
+      console.log(`⏳ [일반 문서] 문서 처리 완료 대기 시작 (SSE): ${documentId}`);
+      const result = await waitForDocumentProcessing(documentId);
+
+      if (result.success && result.status === 'completed') {
+        console.log(`✅ [일반 문서] 백그라운드 처리 완료: ${fileName}`);
+        addLog('success', `[4/4] 백그라운드 처리 완료 - 일반 문서 처리 최종 완료: ${fileName}`);
+      } else if (result.status === 'timeout') {
+        console.warn(`⚠️ [일반 문서] 처리 대기 시간 초과: ${fileName}`);
+        addLog('warning', `백그라운드 처리 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 확인해주세요.');
+      } else {
+        console.error(`❌ [일반 문서] 처리 실패:`, result);
+      }
+
+      // 매핑에서 제거
+      normalDocumentMappingRef.current.delete(fileName);
     } catch (error) {
       console.error(`❌ [일반 문서] 처리 실패:`, error);
     }

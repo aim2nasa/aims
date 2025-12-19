@@ -291,6 +291,30 @@ function notifyPersonalFilesSubscribers(userId, event, data) {
   }
 }
 
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - 문서 처리 상태
+// ========================================
+const documentStatusSSEClients = new Map(); // documentId(string) -> Set<response>
+
+/**
+ * 특정 문서 처리 상태 구독자들에게 알림 전송
+ * @param {string} documentId - 문서 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyDocumentStatusSubscribers(documentId, event, data) {
+  const documentIdStr = documentId.toString();
+  const clients = documentStatusSSEClients.get(documentIdStr);
+  const totalClients = Array.from(documentStatusSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-DocStatus] notifyDocumentStatusSubscribers 호출 - documentId: ${documentIdStr}, 해당 문서 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-DocStatus] 문서 ${documentIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-DocStatus] 문서 ${documentIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
 // ========================
 // PDF 변환 백그라운드 처리
 // ========================
@@ -6183,6 +6207,129 @@ app.post('/api/webhooks/personal-files-change', (req, res) => {
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('[SSE-PF] Personal Files 변경 알림 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 문서 처리 상태 실시간 업데이트 SSE 스트림
+ * @route GET /api/documents/:documentId/status/stream
+ * @description 특정 문서의 처리 완료를 실시간으로 전달 (1회성)
+ */
+app.get('/api/documents/:documentId/status/stream', authenticateJWTWithQuery, (req, res) => {
+  const { documentId } = req.params;
+  const userId = req.user.id;
+
+  if (!ObjectId.isValid(documentId)) {
+    return res.status(400).json({ success: false, error: '유효하지 않은 문서 ID입니다.' });
+  }
+
+  console.log(`[SSE-DocStatus] 문서 상태 스트림 연결 - documentId: ${documentId}, userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!documentStatusSSEClients.has(documentId)) {
+    documentStatusSSEClients.set(documentId, new Set());
+  }
+  documentStatusSSEClients.get(documentId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    documentId,
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 180초 타임아웃 (자동 연결 해제)
+  const timeoutId = setTimeout(() => {
+    console.log(`[SSE-DocStatus] 문서 상태 스트림 타임아웃 - documentId: ${documentId}`);
+    sendSSE(res, 'timeout', { documentId, timestamp: utcNowISO() });
+    res.end();
+  }, 180000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-DocStatus] 문서 상태 스트림 연결 종료 - documentId: ${documentId}`);
+    clearInterval(keepAliveInterval);
+    clearTimeout(timeoutId);
+    documentStatusSSEClients.get(documentId)?.delete(res);
+    if (documentStatusSSEClients.get(documentId)?.size === 0) {
+      documentStatusSSEClients.delete(documentId);
+    }
+  });
+});
+
+/**
+ * 문서 처리 완료 알림 Webhook (n8n OCRWorker에서 호출)
+ * @route POST /api/webhooks/document-processing-complete
+ * @description OCR 처리 완료 시 호출하여 SSE 알림 발생
+ */
+app.post('/api/webhooks/document-processing-complete', async (req, res) => {
+  try {
+    const { document_id, status, owner_id } = req.body;
+
+    // API Key 인증 (n8n에서 호출 시 사용)
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+      console.warn('[SSE-DocStatus] 잘못된 API Key로 webhook 호출 시도');
+      return res.status(401).json({ success: false, error: '인증 실패' });
+    }
+
+    if (!document_id) {
+      return res.status(400).json({ success: false, error: 'document_id가 필요합니다.' });
+    }
+
+    console.log(`[SSE-DocStatus] 문서 처리 완료 알림 수신 - document_id: ${document_id}, type: ${typeof document_id}, status: ${status}`);
+    console.log(`[SSE-DocStatus] 현재 SSE 클라이언트 목록: [${Array.from(documentStatusSSEClients.keys()).join(', ')}]`);
+
+    // SSE 알림 전송 (클라이언트가 없으면 재시도)
+    const eventData = {
+      documentId: document_id,
+      status: status || 'completed',
+      ownerId: owner_id || 'unknown',
+      timestamp: utcNowISO()
+    };
+
+    // n8n에서 따옴표가 포함된 문자열로 올 수 있음 - 제거
+    const documentIdStr = document_id.toString().replace(/^"|"$/g, '');
+    console.log(`[SSE-DocStatus] 검색할 키: "${documentIdStr}" (length: ${documentIdStr.length})`);
+
+    const maxRetries = 10;  // 최대 10회 재시도
+    const retryDelay = 500; // 500ms 간격
+    let sent = false;
+
+    for (let i = 0; i < maxRetries; i++) {
+      const clients = documentStatusSSEClients.get(documentIdStr);
+      console.log(`[SSE-DocStatus] 시도 ${i + 1}: 키 "${documentIdStr}" → clients=${clients ? clients.size : 'null'}, 전체 키: [${Array.from(documentStatusSSEClients.keys()).join(', ')}]`);
+      if (clients && clients.size > 0) {
+        notifyDocumentStatusSubscribers(documentIdStr, 'processing-complete', eventData);
+        sent = true;
+        console.log(`[SSE-DocStatus] 이벤트 전송 성공 (시도 ${i + 1}/${maxRetries})`);
+        break;
+      }
+      console.log(`[SSE-DocStatus] 클라이언트 없음, 대기 중... (시도 ${i + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+
+    if (!sent) {
+      console.log(`[SSE-DocStatus] 최대 재시도 초과 - 클라이언트 연결 없음`);
+    }
+
+    res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
+  } catch (error) {
+    console.error('[SSE-DocStatus] 문서 처리 완료 알림 오류:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -501,6 +501,72 @@
           "name": "MongoDB account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"document_id\": $('Pasre').item.json.doc_id, \"status\": \"completed\", \"owner_id\": $('Pasre').item.json.owner_id } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        -32
+      ],
+      "id": "notify-processing-complete-001",
+      "name": "Notify Processing Complete"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"document_id\": $('Pasre').item.json.doc_id, \"status\": \"error\", \"owner_id\": $('Pasre').item.json.owner_id } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        -320
+      ],
+      "id": "notify-processing-error-001",
+      "name": "Notify Processing Error"
     }
   ],
   "pinData": {},
@@ -665,6 +731,17 @@
       "main": [
         [
           {
+            "node": "Notify Processing Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Processing Complete": {
+      "main": [
+        [
+          {
             "node": "Delete Redis Stream Message",
             "type": "main",
             "index": 0
@@ -684,6 +761,17 @@
       ]
     },
     "Update OCR Error in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Notify Processing Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Processing Error": {
       "main": [
         [
           {
