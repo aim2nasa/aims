@@ -12,6 +12,7 @@ import {
 } from '../contexts/DocumentStatusContext'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { getAuthHeaders } from '@/shared/lib/api'
+import { useDocumentStatusListSSE } from '@/shared/hooks/useDocumentStatusListSSE'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
 interface DocumentStatusProviderProps {
@@ -38,9 +39,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>(searchQuery)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  // 🔄 SSE 실시간 업데이트 활성화 여부 (기존 isPollingEnabled와 호환 유지)
   const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
-  const [isPageVisible, setPageVisible] = useState<boolean>(true) // Page Visibility API
 
   // 🍎 Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -286,33 +287,14 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setSearchTerm(searchQuery)
   }, [searchQuery])
 
-  /**
-   * Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
-   * 🔧 useRef 사용으로 이벤트 리스너 재등록 방지
-   */
-  useEffect(() => {
-    // 테스트 환경에서는 스킵
-    if (typeof window === 'undefined') return
-
-    const handleVisibilityChange = () => {
-      const isVisible = document.visibilityState === 'visible'
-      setPageVisible(isVisible)
-
-      // 탭이 다시 보이면 즉시 데이터 새로고침 (ref 사용)
-      if (isVisible) {
-        fetchDocumentsRef.current(false)
-        checkApiHealthRef.current()
-      }
-    }
-
-    // 초기 상태 설정
-    setPageVisible(document.visibilityState === 'visible')
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, []) // 🔧 의존성 제거 - ref 사용으로 안정화
+  // 🔄 SSE 훅 사용: Page Visibility API 및 실시간 업데이트 처리는 훅 내부에서 관리
+  useDocumentStatusListSSE(
+    () => {
+      fetchDocumentsRef.current(false)
+      checkApiHealthRef.current()
+    },
+    { enabled: isPollingEnabled }
+  )
 
   /**
    * 초기 로드
@@ -354,24 +336,19 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
   }, [initialFiles, isLoading])
 
-  /**
-   * 실시간 폴링 (5초마다)
-   * 페이지가 보이고(isPageVisible) 폴링이 활성화(isPollingEnabled)되어 있을 때만 실행
-   * 🔧 useRef 사용으로 interval 재생성 방지 (메모리 누수 수정)
-   */
+  // 🔄 하이브리드 방식: 폴링(진행률) + SSE(완료 알림)
+  // - 5초 폴링: 처리 중인 문서의 진행률 업데이트 (0% → 30% → 60% → 100%)
+  // - SSE: 완료 시 즉시 반영 (폴링 대기 없이)
   useEffect(() => {
-    // 테스트 환경에서는 폴링 스킵
-    if (typeof window === 'undefined') return
     if (!isPollingEnabled) return
-    if (!isPageVisible) return // 페이지가 백그라운드면 폴링 중지
 
-    const interval = setInterval(() => {
+    const intervalId = setInterval(() => {
       fetchDocumentsRef.current(false)
       checkApiHealthRef.current()
-    }, 5000)
+    }, 5000) // 5초마다 폴링
 
-    return () => clearInterval(interval)
-  }, [isPollingEnabled, isPageVisible]) // 🔧 fetchDocuments, checkApiHealth 의존성 제거
+    return () => clearInterval(intervalId)
+  }, [isPollingEnabled])
 
   /**
    * 🔍 검색 및 필터링

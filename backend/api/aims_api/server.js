@@ -315,6 +315,30 @@ function notifyDocumentStatusSubscribers(documentId, event, data) {
   }
 }
 
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - 문서 목록 (DocumentStatusProvider)
+// ========================================
+const documentListSSEClients = new Map(); // userId(string) -> Set<response>
+
+/**
+ * 특정 사용자의 문서 목록 구독자들에게 알림 전송
+ * @param {string} userId - 사용자 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyDocumentListSubscribers(userId, event, data) {
+  const userIdStr = userId.toString();
+  const clients = documentListSSEClients.get(userIdStr);
+  const totalClients = Array.from(documentListSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-DocList] notifyDocumentListSubscribers 호출 - userId: ${userIdStr}, 해당 사용자 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-DocList] 사용자 ${userIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-DocList] 사용자 ${userIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
 // ========================
 // PDF 변환 백그라운드 처리
 // ========================
@@ -548,6 +572,18 @@ MongoClient.connect(MONGO_URI)
  * 하위 호환성을 위해 잠시 유지하지만, 곧 제거될 예정
  */
 function analyzeDocumentStatus(doc) {
+  // 🔄 DB에 overallStatus가 'completed'로 설정되어 있으면 그대로 반환
+  // (webhook에서 직접 설정한 경우 - SSE 실시간 업데이트 지원)
+  if (doc.overallStatus === 'completed') {
+    const response = prepareDocumentResponse(doc);
+    return {
+      stages: response.computed.uiStages,
+      currentStage: response.computed.currentStage,
+      overallStatus: 'completed',  // DB 값 우선
+      progress: 100
+    };
+  }
+
   const response = prepareDocumentResponse(doc);
   // 기존 API 응답 형식 유지 (computed만 반환)
   return {
@@ -6306,6 +6342,23 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
     const documentIdStr = document_id.toString().replace(/^"|"$/g, '');
     console.log(`[SSE-DocStatus] 검색할 키: "${documentIdStr}" (length: ${documentIdStr.length})`);
 
+    // 🔄 overallStatus 직접 업데이트 (API 계산 의존 대신 직접 설정)
+    // 이렇게 해야 SSE 알림 후 fetchDocuments 호출 시 최신 상태를 즉시 읽을 수 있음
+    try {
+      const newOverallStatus = (status === 'completed' || status === 'done') ? 'completed' : 'error';
+      await db.collection('files').updateOne(
+        { _id: new ObjectId(documentIdStr) },
+        { $set: {
+          overallStatus: newOverallStatus,
+          overallStatusUpdatedAt: new Date()
+        } }
+      );
+      console.log(`[SSE-DocStatus] overallStatus 직접 업데이트 완료: ${documentIdStr} → ${newOverallStatus}`);
+    } catch (updateError) {
+      console.error(`[SSE-DocStatus] overallStatus 업데이트 실패:`, updateError);
+      // 업데이트 실패해도 SSE 알림은 계속 진행
+    }
+
     const maxRetries = 10;  // 최대 10회 재시도
     const retryDelay = 500; // 500ms 간격
     let sent = false;
@@ -6327,9 +6380,106 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       console.log(`[SSE-DocStatus] 최대 재시도 초과 - 클라이언트 연결 없음`);
     }
 
+    // 🔄 문서 목록 SSE 알림도 함께 발송 (owner_id가 있는 경우)
+    if (owner_id) {
+      const ownerIdStr = owner_id.toString().replace(/^"|"$/g, '');
+      notifyDocumentListSubscribers(ownerIdStr, 'document-list-change', {
+        type: 'status-changed',
+        documentId: documentIdStr,
+        status: status || 'completed',
+        timestamp: utcNowISO()
+      });
+      console.log(`[SSE-DocList] 문서 처리 완료 → 목록 변경 알림 전송 - userId: ${ownerIdStr}`);
+    }
+
     res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
   } catch (error) {
     console.error('[SSE-DocStatus] 문서 처리 완료 알림 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 문서 목록 실시간 업데이트 SSE 스트림 (DocumentStatusProvider용)
+ * @route GET /api/documents/status-list/stream
+ * @description 사용자의 문서 목록 변경을 실시간으로 전달
+ * 인증: ?token=xxx 쿼리 파라미터 (EventSource는 헤더 설정 불가)
+ */
+app.get('/api/documents/status-list/stream', authenticateJWTWithQuery, (req, res) => {
+  const userId = req.user.id;
+
+  console.log(`[SSE-DocList] 문서 목록 스트림 연결 - userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!documentListSSEClients.has(userId)) {
+    documentListSSEClients.set(userId, new Set());
+  }
+  documentListSSEClients.get(userId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-DocList] 문서 목록 스트림 연결 종료 - userId: ${userId}`);
+    clearInterval(keepAliveInterval);
+    documentListSSEClients.get(userId)?.delete(res);
+    if (documentListSSEClients.get(userId)?.size === 0) {
+      documentListSSEClients.delete(userId);
+    }
+  });
+});
+
+/**
+ * 문서 목록 변경 알림 Webhook (내부용)
+ * @route POST /api/webhooks/document-list-change
+ * @description 문서 업로드/삭제/상태변경 시 호출하여 SSE 알림 발생
+ */
+app.post('/api/webhooks/document-list-change', (req, res) => {
+  try {
+    const { userId, changeType, documentId, documentName, status } = req.body;
+
+    // API Key 인증 (내부 호출용)
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+      console.warn('[SSE-DocList] 잘못된 API Key로 webhook 호출 시도');
+      return res.status(401).json({ success: false, error: '인증 실패' });
+    }
+
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId가 필요합니다.' });
+    }
+
+    // SSE 알림 전송: 문서 목록 변경
+    notifyDocumentListSubscribers(userId, 'document-list-change', {
+      type: changeType || 'updated',
+      documentId: documentId || 'unknown',
+      documentName: documentName || 'Unknown',
+      status: status || 'unknown',
+      timestamp: utcNowISO()
+    });
+
+    console.log(`[SSE-DocList] 문서 목록 변경 알림 전송 - userId: ${userId}, type: ${changeType}`);
+
+    res.json({ success: true, message: '알림이 전송되었습니다.' });
+  } catch (error) {
+    console.error('[SSE-DocList] 문서 목록 변경 알림 오류:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
