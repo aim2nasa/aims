@@ -901,23 +901,27 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
       case 'data':
         const getTierInfo = (tier: string) => {
-          const tiers: Record<string, { name: string; color: string; icon: string }> = {
-            free_trial: { name: '무료체험', color: 'var(--color-text-tertiary)', icon: 'gift' },
-            standard: { name: '일반', color: 'var(--color-accent-blue)', icon: 'person' },
-            premium: { name: '프리미엄', color: 'var(--color-accent-purple)', icon: 'star' },
-            vip: { name: 'VIP', color: 'var(--color-accent-orange)', icon: 'crown' },
-            admin: { name: '관리자', color: 'var(--color-accent-red)', icon: 'shield' }
+          const tiers: Record<string, { name: string; color: string }> = {
+            free_trial: { name: '무료체험', color: 'var(--color-text-tertiary)' },
+            standard: { name: '일반', color: 'var(--color-accent-blue)' },
+            premium: { name: '프리미엄', color: 'var(--color-accent-purple)' },
+            vip: { name: 'VIP', color: 'var(--color-accent-orange)' },
+            admin: { name: '관리자', color: 'var(--color-accent-red)' }
           }
           return tiers[tier] || tiers['standard']
         }
 
-        const getUsagePercent = () => {
+        const getStoragePercent = () => {
           if (!storageInfo || storageInfo.quota_bytes <= 0) return 0
           return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
         }
 
-        const getWarningLevel = () => {
-          const percent = getUsagePercent()
+        const getOcrPercent = () => {
+          if (!storageInfo || storageInfo.ocr_quota <= 0) return 0
+          return Math.min((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100, 100)
+        }
+
+        const getLevel = (percent: number) => {
           if (percent >= 95) return 'danger'
           if (percent >= 80) return 'warning'
           return 'normal'
@@ -925,371 +929,158 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
         return (
           <div className="account-settings-view__content">
-            {/* 저장공간 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">저장공간</h3>
-              <div className="storage-card">
-              {storageLoading ? (
-                <div className="storage-card__loading">
-                  <div className="storage-card__loading-spinner" />
-                  <span>스토리지 정보를 불러오는 중...</span>
-                </div>
-              ) : storageInfo ? (
-                <>
-                  {/* 헤더: 티어 정보 */}
-                  <div className="storage-card__header">
-                    <div className="storage-card__tier">
-                      <div
-                        className="storage-card__tier-icon"
-                        style={{ background: getTierInfo(storageInfo.tier).color }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
-                          <path d="M8 1C4.1 1 1 4.1 1 8s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/>
-                          <path d="M8 4v4l3 2" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                        </svg>
-                      </div>
-                      <div className="storage-card__tier-info">
-                        <span className="storage-card__tier-label">요금제</span>
-                        <span
-                          className="storage-card__tier-name"
-                          style={{ color: getTierInfo(storageInfo.tier).color }}
-                        >
-                          {getTierInfo(storageInfo.tier).name}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="storage-card__quota">
-                      {storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)}
-                    </div>
-                  </div>
-
-                  {/* 사용량 표시 */}
-                  <div className="storage-card__usage">
-                    <div className="storage-card__usage-header">
-                      <span className="storage-card__usage-label">사용 중</span>
-                      <span className="storage-card__usage-value">
-                        <strong>{formatFileSize(storageInfo.used_bytes)}</strong>
-                        {!storageInfo.is_unlimited && (
-                          <span className="storage-card__usage-percent">
-                            ({getUsagePercent().toFixed(1)}%)
-                          </span>
-                        )}
-                      </span>
-                    </div>
-
-                    {/* 프로그레스 바 */}
-                    {!storageInfo.is_unlimited && (
-                      <div className={`storage-card__progress storage-card__progress--${getWarningLevel()}`}>
-                        <div
-                          className="storage-card__progress-bar"
-                          style={{ width: `${getUsagePercent()}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {/* 남은 용량 */}
-                    <div className="storage-card__remaining">
-                      {storageInfo.is_unlimited ? (
-                        <span className="storage-card__unlimited">
-                          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-accent-green)">
-                            <path d="M8 1l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/>
-                          </svg>
-                          무제한 사용 가능
-                        </span>
-                      ) : (
-                        <>
-                          <span className="storage-card__remaining-label">남은 용량</span>
-                          <span className={`storage-card__remaining-value storage-card__remaining-value--${getWarningLevel()}`}>
-                            {formatFileSize(storageInfo.remaining_bytes)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 경고 메시지 */}
-                  {getWarningLevel() === 'warning' && (
-                    <div className="storage-card__warning storage-card__warning--yellow">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 1L1 14h14L8 1zm0 4v4m0 2v1"/>
-                      </svg>
-                      <span>저장 공간이 80%를 초과했습니다. 불필요한 파일을 정리해주세요.</span>
-                    </div>
-                  )}
-                  {getWarningLevel() === 'danger' && (
-                    <div className="storage-card__warning storage-card__warning--red">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3v5m0 2v1"/>
-                      </svg>
-                      <span>저장 공간이 거의 가득 찼습니다! 파일 업로드가 제한될 수 있습니다.</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="storage-card__error">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 8v4m0 4h.01"/>
+            {/* 사용량 카드: 저장공간 + OCR 한 줄 배치 */}
+            <div className="account-settings-view__usage-card">
+              {/* 저장공간 */}
+              <div className="account-settings-view__usage-col">
+                <h3 className="account-settings-view__usage-title">
+                  <svg width="14" height="14" viewBox="0 0 16 16" style={{ color: 'var(--color-ios-purple)' }}>
+                    <rect x="2" y="4" width="12" height="8" rx="1.5" fill="currentColor" />
+                    <circle cx="5" cy="8" r="1" fill="var(--color-bg-primary)" />
                   </svg>
-                  <span>스토리지 정보를 불러올 수 없습니다</span>
-                </div>
-              )}
-              </div>
-            </section>
-
-            {/* OCR 사용량 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">OCR 사용량</h3>
-              <div className="storage-card">
-              {storageLoading ? (
-                <div className="storage-card__loading">
-                  <div className="storage-card__loading-spinner" />
-                  <span>OCR 정보를 불러오는 중...</span>
-                </div>
-              ) : storageInfo ? (
-                <>
-                  {/* OCR 권한 상태 */}
-                  <div className="storage-card__header">
-                    <div className="storage-card__tier">
-                      <div
-                        className="storage-card__tier-icon"
-                        style={{ background: storageInfo.has_ocr_permission ? 'var(--color-accent-green)' : 'var(--color-text-tertiary)' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
-                          <path d="M8 2C4.7 2 2 4.7 2 8s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 10c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z"/>
-                          <path d="M8 5c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3zm0 4c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1z"/>
-                        </svg>
-                      </div>
-                      <div className="storage-card__tier-info">
-                        <span className="storage-card__tier-label">OCR 권한</span>
-                        <span
-                          className="storage-card__tier-name"
-                          style={{ color: storageInfo.has_ocr_permission ? 'var(--color-accent-green)' : 'var(--color-text-tertiary)' }}
-                        >
-                          {storageInfo.has_ocr_permission ? '사용 가능' : '사용 불가'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="storage-card__quota">
-                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회/월`}
-                    </div>
-                  </div>
-
-                  {/* OCR 사용량 표시 (권한 상관없이 항상 표시) */}
-                  <div className="storage-card__usage">
-                    <div className="storage-card__usage-header">
-                      <span className="storage-card__usage-label">이번 달 사용</span>
-                      <span className="storage-card__usage-value">
-                        <strong>{storageInfo.ocr_used_this_month}회</strong>
-                        {!storageInfo.ocr_is_unlimited && (
-                          <span className="storage-card__usage-percent">
-                            ({Math.round((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100)}%)
-                          </span>
-                        )}
-                      </span>
-                    </div>
-
-                    {/* 프로그레스 바 */}
-                    {!storageInfo.ocr_is_unlimited && (
-                      <div className={`storage-card__progress ${
-                        (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.95 ? 'storage-card__progress--danger' :
-                        (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.80 ? 'storage-card__progress--warning' : ''
-                      }`}>
-                        <div
-                          className="storage-card__progress-bar"
-                          style={{ width: `${Math.min((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100, 100)}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {/* 남은 횟수 */}
-                    <div className="storage-card__remaining">
-                      {storageInfo.ocr_is_unlimited ? (
-                        <span className="storage-card__unlimited">
-                          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--color-accent-green)">
-                            <path d="M8 1l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/>
-                          </svg>
-                          무제한 사용 가능
-                        </span>
-                      ) : (
-                        <>
-                          <span className="storage-card__remaining-label">남은 횟수</span>
-                          <span className={`storage-card__remaining-value ${
-                            (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.95 ? 'storage-card__remaining-value--danger' :
-                            (storageInfo.ocr_used_this_month / storageInfo.ocr_quota) >= 0.80 ? 'storage-card__remaining-value--warning' : ''
-                          }`}>
-                            {storageInfo.ocr_remaining}회
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* OCR 권한 없음 메시지 */}
-                  {!storageInfo.has_ocr_permission && (
-                    <div className="storage-card__warning storage-card__warning--gray">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3v5m0 2v1"/>
-                      </svg>
-                      <span>OCR 기능을 사용하려면 관리자에게 문의하세요.</span>
-                    </div>
+                  저장공간
+                </h3>
+                <div className="account-settings-view__usage-main">
+                  {storageLoading ? (
+                    <span className="account-settings-view__value account-settings-view__value--muted">로딩 중...</span>
+                  ) : storageInfo ? (
+                    <span className="account-settings-view__usage-value">
+                      {formatFileSize(storageInfo.used_bytes)} / {storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__value account-settings-view__value--muted">-</span>
                   )}
-                </>
-              ) : (
-                <div className="storage-card__error">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 8v4m0 4h.01"/>
-                  </svg>
-                  <span>OCR 정보를 불러올 수 없습니다</span>
                 </div>
-              )}
-              </div>
-            </section>
-
-            {/* AI 사용량 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">AI 사용량</h3>
-              <div className="storage-card">
-              {aiUsageLoading ? (
-                <div className="storage-card__loading">
-                  <div className="storage-card__loading-spinner" />
-                  <span>AI 사용량 정보를 불러오는 중...</span>
-                </div>
-              ) : aiUsage ? (
-                <>
-                  {/* 요약 정보 */}
-                  <div className="ai-usage-summary">
-                    <div className="ai-usage-summary__item">
-                      <div className="ai-usage-summary__icon ai-usage-summary__icon--blue">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                      </div>
-                      <div className="ai-usage-summary__content">
-                        <span className="ai-usage-summary__label">총 토큰 (30일)</span>
-                        <span className="ai-usage-summary__value">{formatTokens(aiUsage.total_tokens)}</span>
-                      </div>
-                    </div>
-                    <div className="ai-usage-summary__item">
-                      <div className="ai-usage-summary__icon ai-usage-summary__icon--green">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="12" y1="1" x2="12" y2="23"/>
-                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                      </div>
-                      <div className="ai-usage-summary__content">
-                        <span className="ai-usage-summary__label">예상 비용</span>
-                        <span className="ai-usage-summary__value">{formatCost(aiUsage.estimated_cost_usd)}</span>
-                      </div>
-                    </div>
-                    <div className="ai-usage-summary__item">
-                      <div className="ai-usage-summary__icon ai-usage-summary__icon--purple">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                          <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                      </div>
-                      <div className="ai-usage-summary__content">
-                        <span className="ai-usage-summary__label">요청 횟수</span>
-                        <span className="ai-usage-summary__value">{aiUsage.request_count}회</span>
-                      </div>
-                    </div>
+                {storageInfo && !storageInfo.is_unlimited && (
+                  <div className={`account-settings-view__progress-bar-wrap account-settings-view__progress-bar-wrap--${getLevel(getStoragePercent())}`}>
+                    <div className="account-settings-view__progress-bar-fill" style={{ width: `${getStoragePercent()}%` }} />
                   </div>
-
-                  {/* 소스별 사용량 */}
-                  <div className="ai-usage-sources">
-                    <div className="ai-usage-sources__title">소스별 토큰 사용량</div>
-                    <div className="ai-usage-sources__list">
-                      <div className="ai-usage-sources__item">
-                        <span className="ai-usage-sources__name">
-                          <span className="ai-usage-sources__dot ai-usage-sources__dot--blue" />
-                          RAG 검색
-                        </span>
-                        <span className="ai-usage-sources__value">
-                          {formatTokens(aiUsage.by_source?.rag_api || 0)}
-                        </span>
-                      </div>
-                      <div className="ai-usage-sources__item">
-                        <span className="ai-usage-sources__name">
-                          <span className="ai-usage-sources__dot ai-usage-sources__dot--orange" />
-                          문서 요약
-                        </span>
-                        <span className="ai-usage-sources__value">
-                          {formatTokens(aiUsage.by_source?.n8n_docsummary || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 일별 사용량 그래프 */}
-                  {dailyUsage.length > 0 && (
-                    <div className="ai-usage-chart-wrapper">
-                      <div className="ai-usage-chart-title">일별 토큰 사용량</div>
-                      <AIUsageChart data={dailyUsage} height={160} />
-                    </div>
+                )}
+                <div className="account-settings-view__usage-footer">
+                  <span className="account-settings-view__usage-label">남은 용량</span>
+                  {storageInfo ? (
+                    <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getStoragePercent())}`}>
+                      {storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.remaining_bytes)}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__usage-stat">-</span>
                   )}
-                </>
-              ) : (
-                <div className="storage-card__error">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 8v4m0 4h.01"/>
-                  </svg>
-                  <span>AI 사용량 정보를 불러올 수 없습니다</span>
+                  <span className="account-settings-view__usage-divider">|</span>
+                  <span className="account-settings-view__usage-label">등급</span>
+                  {storageInfo ? (
+                    <span className="account-settings-view__usage-stat" style={{ color: getTierInfo(storageInfo.tier).color }}>
+                      {getTierInfo(storageInfo.tier).name}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__usage-stat">-</span>
+                  )}
                 </div>
-              )}
               </div>
-            </section>
 
-            {/* 데이터 관리 섹션 */}
+              {/* 구분선 */}
+              <div className="account-settings-view__usage-separator" />
+
+              {/* OCR */}
+              <div className="account-settings-view__usage-col">
+                <h3 className="account-settings-view__usage-title">
+                  <svg width="14" height="14" viewBox="0 0 16 16" style={{ color: 'var(--color-ios-green)' }}>
+                    <path d="M2 5V3.5A1.5 1.5 0 0 1 3.5 2H5M11 2h1.5A1.5 1.5 0 0 1 14 3.5V5M14 11v1.5a1.5 1.5 0 0 1-1.5 1.5H11M5 14H3.5A1.5 1.5 0 0 1 2 12.5V11" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                    <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+                  </svg>
+                  OCR (이번 달)
+                </h3>
+                <div className="account-settings-view__usage-main">
+                  {storageLoading ? (
+                    <span className="account-settings-view__value account-settings-view__value--muted">로딩 중...</span>
+                  ) : storageInfo ? (
+                    <span className="account-settings-view__usage-value">
+                      {storageInfo.ocr_used_this_month}회 / {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회`}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__value account-settings-view__value--muted">-</span>
+                  )}
+                </div>
+                {storageInfo && !storageInfo.ocr_is_unlimited && (
+                  <div className={`account-settings-view__progress-bar-wrap account-settings-view__progress-bar-wrap--${getLevel(getOcrPercent())}`}>
+                    <div className="account-settings-view__progress-bar-fill" style={{ width: `${getOcrPercent()}%` }} />
+                  </div>
+                )}
+                <div className="account-settings-view__usage-footer">
+                  <span className="account-settings-view__usage-label">남은 횟수</span>
+                  {storageInfo ? (
+                    <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getOcrPercent())}`}>
+                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_remaining}회`}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__usage-stat">-</span>
+                  )}
+                  <span className="account-settings-view__usage-divider">|</span>
+                  <span className="account-settings-view__usage-label">상태</span>
+                  {storageInfo ? (
+                    <span className={`account-settings-view__usage-stat ${storageInfo.has_ocr_permission ? 'account-settings-view__usage-stat--success' : ''}`}>
+                      {storageInfo.has_ocr_permission ? '사용 가능' : '권한 없음'}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__usage-stat">-</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* AI 사용량 (30일) */}
             <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">데이터 관리</h3>
-              <div className="data-management-grid">
-                <button type="button" className="data-management-card" disabled>
-                  <div className="data-management-card__icon data-management-card__icon--blue">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                      <polyline points="7,10 12,15 17,10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                  </div>
-                  <div className="data-management-card__content">
-                    <span className="data-management-card__title">데이터 내보내기</span>
-                    <span className="data-management-card__desc">내 데이터를 백업합니다</span>
-                  </div>
-                  <span className="data-management-card__badge">준비중</span>
-                </button>
+              <h3 className="account-settings-view__section-title">AI 사용량 (30일)</h3>
+              <div className="account-settings-view__ai-stats">
+                <div className="account-settings-view__ai-stat">
+                  <span className="account-settings-view__ai-stat-label">총 토큰</span>
+                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.total_tokens) : '-'}</span>
+                </div>
+                <div className="account-settings-view__ai-stat">
+                  <span className="account-settings-view__ai-stat-label">예상 비용</span>
+                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatCost(aiUsage.estimated_cost_usd) : '-'}</span>
+                </div>
+                <div className="account-settings-view__ai-stat">
+                  <span className="account-settings-view__ai-stat-label">요청 횟수</span>
+                  <span className="account-settings-view__ai-stat-value">{aiUsage ? `${aiUsage.request_count}회` : '-'}</span>
+                </div>
+                <div className="account-settings-view__ai-stat">
+                  <span className="account-settings-view__ai-stat-label">RAG 검색</span>
+                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.by_source?.rag_api || 0) : '-'}</span>
+                </div>
+                <div className="account-settings-view__ai-stat">
+                  <span className="account-settings-view__ai-stat-label">문서 요약</span>
+                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.by_source?.n8n_docsummary || 0) : '-'}</span>
+                </div>
               </div>
             </section>
 
-            {/* 위험 영역 */}
+            {/* 데이터 관리 */}
             <section className="account-settings-view__section account-settings-view__section--danger">
-              <h3 className="account-settings-view__section-title">위험 영역</h3>
-              <Tooltip content="계정과 모든 데이터가 영구적으로 삭제됩니다" placement="top">
-                <button
-                  type="button"
-                  className="danger-action-card"
-                  onClick={() => setShowDeleteModal(true)}
-                  aria-label="계정 삭제"
-                >
-                  <div className="danger-action-card__icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <h3 className="account-settings-view__section-title">데이터 관리</h3>
+              <div className="account-settings-view__action-buttons">
+                <button type="button" className="account-settings-view__action-btn" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-blue)" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <span>데이터 내보내기</span>
+                  <span className="account-settings-view__action-badge">준비중</span>
+                </button>
+                <Tooltip content="계정과 모든 데이터가 영구 삭제됩니다" placement="top">
+                  <button
+                    type="button"
+                    className="account-settings-view__action-btn account-settings-view__action-btn--danger"
+                    onClick={() => setShowDeleteModal(true)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3,6 5,6 21,6"/>
                       <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                      <line x1="10" y1="11" x2="10" y2="17"/>
-                      <line x1="14" y1="11" x2="14" y2="17"/>
                     </svg>
-                  </div>
-                  <div className="danger-action-card__content">
-                    <span className="danger-action-card__title">계정 삭제</span>
-                    <span className="danger-action-card__desc">계정과 모든 데이터가 영구 삭제됩니다</span>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="danger-action-card__arrow">
-                    <polyline points="9,18 15,12 9,6"/>
-                  </svg>
-                </button>
-              </Tooltip>
+                    <span>계정 삭제</span>
+                  </button>
+                </Tooltip>
+              </div>
             </section>
           </div>
         )

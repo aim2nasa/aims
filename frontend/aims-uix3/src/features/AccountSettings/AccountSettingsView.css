@@ -1446,3 +1446,236 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* === DATA TAB - UNIFIED STYLES === */
+
+/* 사용량 카드 (저장공간 + OCR 한 줄 배치) */
+.account-settings-view__usage-card {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-5);
+}
+
+.account-settings-view__usage-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.account-settings-view__usage-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.account-settings-view__usage-title svg {
+  flex-shrink: 0;
+}
+
+.account-settings-view__usage-main {
+  margin: var(--spacing-1) 0;
+}
+
+.account-settings-view__usage-value {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.account-settings-view__usage-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-1);
+}
+
+.account-settings-view__usage-label {
+  font-size: var(--font-size-caption-2);
+  color: var(--color-text-tertiary);
+}
+
+.account-settings-view__usage-stat {
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+}
+
+.account-settings-view__usage-stat--normal {
+  color: var(--color-accent-blue);
+}
+
+.account-settings-view__usage-stat--warning {
+  color: var(--color-accent-orange);
+}
+
+.account-settings-view__usage-stat--danger {
+  color: var(--color-accent-red);
+}
+
+.account-settings-view__usage-stat--success {
+  color: var(--color-accent-green);
+}
+
+.account-settings-view__usage-divider {
+  color: var(--color-border);
+  font-size: var(--font-size-caption-2);
+}
+
+.account-settings-view__usage-separator {
+  width: 1px;
+  background: var(--color-border);
+  align-self: stretch;
+  margin: 0 var(--spacing-2);
+}
+
+/* 값 표시 (input 대신) */
+.account-settings-view__value {
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+}
+
+.account-settings-view__value--muted {
+  color: var(--color-text-tertiary);
+}
+
+.account-settings-view__value--success {
+  color: var(--color-accent-green);
+}
+
+.account-settings-view__value--normal {
+  color: var(--color-accent-blue);
+}
+
+.account-settings-view__value--warning {
+  color: var(--color-accent-orange);
+}
+
+.account-settings-view__value--danger {
+  color: var(--color-accent-red);
+}
+
+/* 프로그레스 바 */
+.account-settings-view__progress-bar-wrap {
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: var(--spacing-1);
+}
+
+.account-settings-view__progress-bar-fill {
+  height: 100%;
+  background: var(--color-accent-blue);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--easing-standard);
+}
+
+.account-settings-view__progress-bar-wrap--warning .account-settings-view__progress-bar-fill {
+  background: var(--color-accent-orange);
+}
+
+.account-settings-view__progress-bar-wrap--danger .account-settings-view__progress-bar-fill {
+  background: var(--color-accent-red);
+  animation: pulse-danger 1.5s ease-in-out infinite;
+}
+
+/* AI 사용량 통계 그리드 */
+.account-settings-view__ai-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.account-settings-view__ai-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  text-align: center;
+}
+
+.account-settings-view__ai-stat-label {
+  font-size: var(--font-size-caption-2);
+  color: var(--color-text-tertiary);
+}
+
+.account-settings-view__ai-stat-value {
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* 액션 버튼 영역 */
+.account-settings-view__action-buttons {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.account-settings-view__action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.account-settings-view__action-btn:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-hover);
+}
+
+.account-settings-view__action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-settings-view__action-btn--danger {
+  color: var(--color-accent-red);
+  border-color: var(--color-accent-red-translucent, rgba(255, 59, 48, 0.3));
+}
+
+.account-settings-view__action-btn--danger:hover:not(:disabled) {
+  background: var(--color-accent-red-translucent, rgba(255, 59, 48, 0.08));
+  border-color: var(--color-accent-red);
+}
+
+.account-settings-view__action-badge {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* 반응형: AI 통계 그리드 */
+@media (max-width: 768px) {
+  .account-settings-view__ai-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .account-settings-view__action-buttons {
+    flex-direction: column;
+  }
+}
