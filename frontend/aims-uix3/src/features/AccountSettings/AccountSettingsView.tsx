@@ -23,6 +23,7 @@ import { AIUsageChart } from '@/shared/ui/AIUsageChart'
 import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -68,6 +69,9 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
   // 소셜 로그인 사용자 정보 (authStore)
   const { user: authUser, isAuthenticated, setUser: setAuthUser, token, logout } = useAuthStore()
+
+  // 개발자 모드 (보안/알림 탭 활성화 용)
+  const { isDevMode } = useDevModeStore()
 
   // 현재 탭 (sessionStorage에서 복원)
   const [activeTab, setActiveTab] = useState<TabId>(() => {
@@ -1317,14 +1321,18 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       <nav className="account-settings-view__tabs">
         {TABS.map(tab => {
           const isActive = activeTab === tab.id
+          // 보안/알림 탭은 개발자 모드에서만 활성화
+          const isDisabled = (tab.id === 'security' || tab.id === 'notifications') && !isDevMode
           return (
             <button
               key={tab.id}
               className={`account-settings-view__tab ${
                 isActive ? 'account-settings-view__tab--active' : ''
-              }`}
-              onClick={() => setActiveTab(tab.id)}
+              } ${isDisabled ? 'account-settings-view__tab--disabled' : ''}`}
+              onClick={() => !isDisabled && setActiveTab(tab.id)}
               aria-selected={isActive}
+              disabled={isDisabled}
+              title={isDisabled ? '준비중' : undefined}
               style={isActive ? { color: 'var(--color-neutral-0)', background: 'var(--color-accent-blue)', borderColor: 'var(--color-accent-blue)' } : undefined}
             >
               {/* SVG 아이콘 직접 추가 */}

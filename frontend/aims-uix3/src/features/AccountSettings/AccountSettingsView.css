@@ -96,6 +96,18 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
   color: var(--color-neutral-0);
 }
 
+/* Disabled 탭 (준비중) */
+.account-settings-view__tab.account-settings-view__tab--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.account-settings-view__tab.account-settings-view__tab--disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
 /* === CONTENT === */
 
 .account-settings-view__content {
