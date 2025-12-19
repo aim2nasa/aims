@@ -198,6 +198,7 @@ interface CustomMenuProps {
   selectedKey?: string // 외부에서 제어되는 선택된 키
   inquiryUnreadCount?: number // 미확인 문의 개수
   noticeHasNew?: boolean // 공지사항 새 글 여부
+  usageWidget?: ReactNode // 사용량 요약 위젯 (LeftPane 하단)
   footer?: ReactNode // 하단 영역 (버전 표시 + 햄버거 버튼)
 }
 
@@ -327,6 +328,7 @@ const CustomMenu = ({
   selectedKey: externalSelectedKey = 'dsd', // 외부에서 제어, 기본값은 'dsd'
   inquiryUnreadCount = 0, // 미확인 문의 개수
   noticeHasNew = false, // 공지사항 새 글 여부
+  usageWidget, // 사용량 요약 위젯
   footer // 하단 영역 (버전 + 햄버거)
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
@@ -758,6 +760,13 @@ const CustomMenu = ({
         onCustomerClick={onCustomerClick}
         onCustomerDoubleClick={onCustomerDoubleClick}
       />
+
+      {/* 사용량 요약 위젯 (Google Drive 스타일) */}
+      {usageWidget && (
+        <div className="custom-menu__usage-widget">
+          {usageWidget}
+        </div>
+      )}
 
       {/* 하단 영역 (버전 + 햄버거) - 메뉴와 동일 레이어에 통합 */}
       {footer && (

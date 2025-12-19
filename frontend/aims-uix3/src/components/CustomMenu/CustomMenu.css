@@ -913,10 +913,25 @@ html[data-theme="dark"] .menu-icon--help {
   line-height: 1;
 }
 
-/* === FOOTER SECTION === */
-/* 버전 표시 + 햄버거 버튼 영역 - 메뉴와 동일 레이어에 통합 */
-.custom-menu__footer {
-  margin-top: auto;
-  padding-top: 2px;
+/* === USAGE WIDGET SECTION === */
+/* 사용량 요약 위젯 (Google Drive 스타일) */
+.custom-menu__usage-widget {
+  padding: var(--spacing-2) var(--spacing-2);
   border-top: 1px solid var(--color-separator);
+}
+
+/* 축소 모드에서 패딩 조정 */
+.custom-menu--collapsed .custom-menu__usage-widget {
+  padding: var(--spacing-1);
+  display: flex;
+  justify-content: center;
+}
+
+/* === FOOTER SECTION === */
+/* 버전 표시 + 햄버거 버튼 영역 - LeftPane 최하단 고정 */
+.custom-menu__footer {
+  margin-top: auto; /* flex container에서 하단으로 밀기 */
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--color-separator);
+  flex-shrink: 0;
 }

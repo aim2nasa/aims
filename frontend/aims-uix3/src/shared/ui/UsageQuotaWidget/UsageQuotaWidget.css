@@ -1,0 +1,117 @@
+/**
+ * UsageQuotaWidget - 스토리지 + OCR 파이 차트
+ */
+
+/* 컨테이너 */
+.usage-widget-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-standard);
+}
+
+.usage-widget-container:hover {
+  background: var(--color-hover-bg);
+}
+
+.usage-widget-container:active {
+  transform: scale(0.98);
+}
+
+.usage-widget-container--loading {
+  cursor: default;
+}
+
+/* 파이 차트 */
+.usage-pie {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.usage-widget-container:hover .usage-pie {
+  transform: scale(1.05);
+}
+
+/* 배경 원 */
+.usage-pie__bg {
+  opacity: 0.15;
+}
+
+/* 프로그레스 원 */
+.usage-pie__progress {
+  transition: stroke-dashoffset var(--duration-normal) var(--easing-standard);
+}
+
+/* 중앙 아이콘 - 선명한 색상 */
+.usage-pie__icon {
+  opacity: 1;
+}
+
+/* 스토리지 아이콘: 보라색 (하드디스크) */
+.usage-pie__icon--storage {
+  color: var(--color-ios-purple, #af52de);
+}
+
+/* OCR 아이콘: 민트/그린 (눈/인식) */
+.usage-pie__icon--ocr {
+  color: var(--color-ios-green, #34c759);
+}
+
+/* 프로그레스 링 색상 - normal (파랑) */
+.usage-pie--normal .usage-pie__bg,
+.usage-pie--normal .usage-pie__progress {
+  color: var(--color-ios-blue);
+}
+
+/* 프로그레스 링 색상 - warning (주황) */
+.usage-pie--warning .usage-pie__bg,
+.usage-pie--warning .usage-pie__progress {
+  color: var(--color-ios-orange);
+}
+
+/* 프로그레스 링 색상 - danger (빨강) */
+.usage-pie--danger .usage-pie__bg,
+.usage-pie--danger .usage-pie__progress {
+  color: var(--color-ios-red);
+}
+
+.usage-pie--danger .usage-pie__progress {
+  animation: pulse-danger 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* 로딩 상태 */
+.usage-pie--loading {
+  width: 28px;
+  height: 28px;
+}
+
+.usage-pie__skeleton {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton-base) 25%,
+    var(--color-skeleton-highlight) 50%,
+    var(--color-skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

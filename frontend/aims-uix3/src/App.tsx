@@ -56,6 +56,9 @@ import type { PreviewDocumentInfo } from './features/customer/controllers/useCus
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
 import type { SearchResultItem } from './entities/search'
+import { getMyStorageInfo, type StorageInfo } from './services/userService'
+import { getMyAIUsage, type AIUsageData } from './services/aiUsageService'
+import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
 import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
@@ -200,6 +203,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
+
+  // 사용량 요약 위젯 상태 (LeftPane 하단)
+  const [usageStorageInfo, setUsageStorageInfo] = useState<StorageInfo | null>(null)
+  const [usageAIUsage, setUsageAIUsage] = useState<AIUsageData | null>(null)
+  const [usageLoading, setUsageLoading] = useState(true)
 
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
@@ -489,6 +497,32 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     initializeDynamicType()
     initializeHapticStyles()
     logVersionInfo()
+  }, [])
+
+  // 사용량 요약 위젯 데이터 패칭 (마운트 시 + 5분 간격 갱신)
+  useEffect(() => {
+    const fetchUsageData = async () => {
+      try {
+        setUsageLoading(true)
+        const [storageResult, aiResult] = await Promise.all([
+          getMyStorageInfo(),
+          getMyAIUsage()
+        ])
+        setUsageStorageInfo(storageResult)
+        setUsageAIUsage(aiResult)
+      } catch (error) {
+        console.error('[App] 사용량 데이터 로드 실패:', error)
+      } finally {
+        setUsageLoading(false)
+      }
+    }
+
+    fetchUsageData()
+
+    // 5분마다 갱신 (300000ms)
+    const intervalId = setInterval(fetchUsageData, 5 * 60 * 1000)
+
+    return () => clearInterval(intervalId)
   }, [])
 
   const { currentSize, scaleFactor, isAccessibilitySize } = dynamicType
@@ -1245,51 +1279,54 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               inquiryUnreadCount={inquiryUnreadCount}
               noticeHasNew={noticeHasNew}
               footer={
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: leftPaneCollapsed ? 'center' : 'flex-end' }}>
-                  {/* 버전 표시 - 햄버거 버튼 바로 위 (호버: 툴팁, 클릭: 복사) */}
-                  <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="right">
-                    <div
-                      className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
-                      style={{
-                        paddingBottom: 0,
-                        fontSize: 'var(--font-size-caption-2)',
-                        color: 'var(--color-text-tertiary)',
-                        opacity: 0.6,
-                        textAlign: leftPaneCollapsed ? 'center' : 'left',
-                        transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
-                        userSelect: 'none',
-                        cursor: 'pointer'
-                      }}
-                      aria-label={`버전 ${APP_VERSION} (${GIT_HASH})`}
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(FULL_VERSION)
-                          // 햅틱 피드백
-                          if (window.aimsHaptic) {
-                            window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                <div className={`leftpane-footer ${leftPaneCollapsed ? 'leftpane-footer--collapsed' : ''}`}>
+                  {/* 좌측: 사용량 파이 차트 (축소 시 숨김) */}
+                  {!leftPaneCollapsed && (
+                    <div className="leftpane-footer__left">
+                      <UsageQuotaWidget
+                        storageInfo={usageStorageInfo}
+                        aiUsage={usageAIUsage}
+                        loading={usageLoading}
+                        collapsed={leftPaneCollapsed}
+                        onClick={() => {
+                          setRightPaneVisible(false)
+                          setSelectedDocument(null)
+                          setSelectedCustomer(null)
+                          setRightPaneContentType(null)
+                          sessionStorage.setItem('accountSettings_activeTab', 'data')
+                          setActiveDocumentView('account-settings')
+                          updateURLParams({ customerId: null, documentId: null })
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* 가운데: 버전 (축소 시 숨김) */}
+                  {!leftPaneCollapsed && (
+                    <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
+                      <div
+                        className="leftpane-footer__version"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(FULL_VERSION)
+                            if (window.aimsHaptic) {
+                              window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                            }
+                          } catch (err) {
+                            console.error('버전 복사 실패:', err)
                           }
-                        } catch (err) {
-                          console.error('버전 복사 실패:', err)
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          navigator.clipboard.writeText(FULL_VERSION)
-                        }
-                      }}
-                    >
-                      <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
+                        }}
+                        role="button"
+                        tabIndex={0}
+                      >
                         v{APP_VERSION}
                       </div>
-                    </div>
-                  </Tooltip>
+                    </Tooltip>
+                  )}
 
-                  {/* 햄버거 버튼 */}
-                  <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`} style={{ marginTop: 0 }}>
-                    <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+                  {/* 햄버거 버튼 (항상 표시) */}
+                  <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
+                    <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
                       <HamburgerButton
                         collapsed={leftPaneCollapsed}
                         onClick={toggleLeftPaneCollapsed}

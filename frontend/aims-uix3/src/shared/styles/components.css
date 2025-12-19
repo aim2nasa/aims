@@ -629,6 +629,59 @@
   justify-content: flex-end;
 }
 
+/* === LEFTPANE FOOTER === */
+
+.leftpane-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.leftpane-footer__left {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.leftpane-footer__version {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity var(--duration-fast) var(--easing-standard);
+  text-align: center;
+}
+
+.leftpane-footer__version:hover {
+  opacity: 1;
+}
+
+.leftpane-footer__right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.leftpane-footer__hamburger-skeleton {
+  width: 32px;
+  height: 32px;
+  background: var(--color-skeleton-base);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+/* 축소 상태: 햄버거 버튼만 가운데 표시 */
+.leftpane-footer--collapsed {
+  justify-content: center;
+}
+
+.leftpane-footer__right--centered {
+  flex: none;
+  justify-content: center;
+}
+
 /* === LAYOUT CONTROL MODAL === */
 
 .modal-overlay {
