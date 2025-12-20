@@ -73,5 +73,6 @@ export const COLLECTIONS = {
   CONTRACTS: 'contracts',
   FILES: 'files',
   CUSTOMER_RELATIONSHIPS: 'customer_relationships',
-  INSURANCE_PRODUCTS: 'insurance_products'
+  INSURANCE_PRODUCTS: 'insurance_products',
+  MEMOS: 'customer_memos'
 } as const;

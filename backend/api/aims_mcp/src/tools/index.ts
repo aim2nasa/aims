@@ -5,12 +5,15 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Tool 정의 및 핸들러 import
-import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer } from './customers.js';
-import { contractToolDefinitions, handleListContracts } from './contracts.js';
+import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer } from './customers.js';
+import { contractToolDefinitions, handleListContracts, handleGetContractDetails } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { expiringToolDefinitions, handleFindExpiringContracts } from './expiring.js';
 import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
+import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments } from './documents.js';
+import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
+import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -20,17 +23,38 @@ const allToolDefinitions = [
   ...expiringToolDefinitions,
   ...statisticsToolDefinitions,
   ...networkToolDefinitions,
+  ...documentToolDefinitions,
+  ...memoToolDefinitions,
+  ...productToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
 const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type: string; text: string }[]; isError?: boolean }>> = {
+  // 고객 관련
   search_customers: handleSearchCustomers,
   get_customer: handleGetCustomer,
+  create_customer: handleCreateCustomer,
+  update_customer: handleUpdateCustomer,
+  // 계약 관련
   list_contracts: handleListContracts,
+  get_contract_details: handleGetContractDetails,
+  // 생일/만기
   find_birthday_customers: handleFindBirthdayCustomers,
   find_expiring_contracts: handleFindExpiringContracts,
+  // 통계/네트워크
   get_statistics: handleGetStatistics,
   get_customer_network: handleGetCustomerNetwork,
+  // 문서 관련
+  search_documents: handleSearchDocuments,
+  get_document: handleGetDocument,
+  list_customer_documents: handleListCustomerDocuments,
+  // 메모 관련
+  add_customer_memo: handleAddMemo,
+  list_customer_memos: handleListMemos,
+  delete_customer_memo: handleDeleteMemo,
+  // 보험상품 관련
+  search_products: handleSearchProducts,
+  get_product_details: handleGetProductDetails,
 };
 
 /**

@@ -1,6 +1,13 @@
 import { z } from 'zod';
+import { ObjectId } from 'mongodb';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
+
+// 날짜 포맷 함수 (YYYY.MM.DD HH:mm:ss)
+function formatDateTime(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
 
 // 스키마 정의
 export const searchCustomersSchema = z.object({
@@ -13,6 +20,24 @@ export const searchCustomersSchema = z.object({
 
 export const getCustomerSchema = z.object({
   customerId: z.string().describe('고객 ID')
+});
+
+export const createCustomerSchema = z.object({
+  name: z.string().min(1).describe('고객명 (필수)'),
+  customerType: z.enum(['개인', '법인']).default('개인').describe('고객 유형'),
+  phone: z.string().optional().describe('전화번호'),
+  email: z.string().email().optional().describe('이메일'),
+  birthDate: z.string().optional().describe('생년월일 (YYYY-MM-DD)'),
+  address: z.string().optional().describe('주소')
+});
+
+export const updateCustomerSchema = z.object({
+  customerId: z.string().describe('고객 ID'),
+  name: z.string().optional().describe('고객명'),
+  phone: z.string().optional().describe('전화번호'),
+  email: z.string().email().optional().describe('이메일'),
+  birthDate: z.string().optional().describe('생년월일 (YYYY-MM-DD)'),
+  address: z.string().optional().describe('주소')
 });
 
 // Tool 정의
@@ -38,6 +63,38 @@ export const customerToolDefinitions = [
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '고객 ID' }
+      },
+      required: ['customerId']
+    }
+  },
+  {
+    name: 'create_customer',
+    description: '새 고객을 등록합니다. 같은 설계사 내에서 고객명은 중복될 수 없습니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string', description: '고객명 (필수)' },
+        customerType: { type: 'string', enum: ['개인', '법인'], description: '고객 유형 (기본: 개인)' },
+        phone: { type: 'string', description: '전화번호' },
+        email: { type: 'string', description: '이메일' },
+        birthDate: { type: 'string', description: '생년월일 (YYYY-MM-DD)' },
+        address: { type: 'string', description: '주소' }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'update_customer',
+    description: '고객 정보를 수정합니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerId: { type: 'string', description: '고객 ID' },
+        name: { type: 'string', description: '고객명' },
+        phone: { type: 'string', description: '전화번호' },
+        email: { type: 'string', description: '이메일' },
+        birthDate: { type: 'string', description: '생년월일 (YYYY-MM-DD)' },
+        address: { type: 'string', description: '주소' }
       },
       required: ['customerId']
     }
@@ -194,6 +251,166 @@ export async function handleGetCustomer(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `고객 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 고객 등록 핸들러
+ * CLAUDE.md 규칙 #8: 같은 설계사 내에서 고객명 중복 불가
+ */
+export async function handleCreateCustomer(args: unknown) {
+  try {
+    const params = createCustomerSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // 이름 중복 체크 (동일 userId 내)
+    const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      'personal_info.name': { $regex: `^${escapeRegex(params.name)}$`, $options: 'i' },
+      'meta.created_by': userId,
+      deleted_at: { $exists: false }
+    });
+
+    if (existing) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: `같은 이름의 고객이 이미 존재합니다: ${params.name}`
+        }]
+      };
+    }
+
+    const now = formatDateTime(new Date());
+    const newCustomer = {
+      personal_info: {
+        name: params.name,
+        phone: params.phone || '',
+        email: params.email || '',
+        birth_date: params.birthDate || '',
+        address: params.address ? { address1: params.address } : {}
+      },
+      insurance_info: {
+        customer_type: params.customerType || '개인'
+      },
+      meta: {
+        status: 'active',
+        created_by: userId,
+        created_at: now,
+        updated_at: now
+      }
+    };
+
+    const result = await db.collection(COLLECTIONS.CUSTOMERS).insertOne(newCustomer);
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          customerId: result.insertedId.toString(),
+          name: params.name,
+          customerType: params.customerType || '개인',
+          createdAt: now
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `고객 등록 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 고객 정보 수정 핸들러
+ */
+export async function handleUpdateCustomer(args: unknown) {
+  try {
+    const params = updateCustomerSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const objectId = toSafeObjectId(params.customerId);
+    if (!objectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
+    // 고객 존재 확인
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: objectId,
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+      };
+    }
+
+    // 이름 변경 시 중복 체크
+    if (params.name && params.name !== customer.personal_info?.name) {
+      const existing = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        'personal_info.name': { $regex: `^${escapeRegex(params.name)}$`, $options: 'i' },
+        'meta.created_by': userId,
+        _id: { $ne: objectId },
+        deleted_at: { $exists: false }
+      });
+
+      if (existing) {
+        return {
+          isError: true,
+          content: [{
+            type: 'text' as const,
+            text: `같은 이름의 고객이 이미 존재합니다: ${params.name}`
+          }]
+        };
+      }
+    }
+
+    // 업데이트할 필드 구성
+    const updateFields: Record<string, unknown> = {
+      'meta.updated_at': formatDateTime(new Date())
+    };
+
+    if (params.name) updateFields['personal_info.name'] = params.name;
+    if (params.phone) updateFields['personal_info.phone'] = params.phone;
+    if (params.email) updateFields['personal_info.email'] = params.email;
+    if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
+    if (params.address) updateFields['personal_info.address.address1'] = params.address;
+
+    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+      { _id: objectId },
+      { $set: updateFields }
+    );
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          customerId: params.customerId,
+          updatedFields: Object.keys(updateFields).filter(k => k !== 'meta.updated_at'),
+          message: '고객 정보가 수정되었습니다.'
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `고객 정보 수정 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
       }]
     };
   }

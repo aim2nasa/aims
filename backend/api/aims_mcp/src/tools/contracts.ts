@@ -11,6 +11,10 @@ export const listContractsSchema = z.object({
   limit: z.number().optional().default(50).describe('결과 개수 제한')
 });
 
+export const getContractDetailsSchema = z.object({
+  contractId: z.string().describe('계약 ID')
+});
+
 // Tool 정의
 export const contractToolDefinitions = [
   {
@@ -24,6 +28,17 @@ export const contractToolDefinitions = [
         status: { type: 'string', description: '계약 상태' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 50)' }
       }
+    }
+  },
+  {
+    name: 'get_contract_details',
+    description: '계약의 상세 정보를 조회합니다. 피보험자, 수익자, 특약 등 모든 정보를 포함합니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contractId: { type: 'string', description: '계약 ID' }
+      },
+      required: ['contractId']
     }
   }
 ];
@@ -109,6 +124,120 @@ export async function handleListContracts(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `계약 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 계약 상세 조회 핸들러
+ */
+export async function handleGetContractDetails(args: unknown) {
+  try {
+    const params = getContractDetailsSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const objectId = toSafeObjectId(params.contractId);
+    if (!objectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 계약 ID입니다.' }]
+      };
+    }
+
+    // agent_id 필터 (ObjectId 또는 string)
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+
+    const contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
+      _id: objectId,
+      $or: [
+        { agent_id: agentObjectId },
+        { agent_id: userId }
+      ]
+    });
+
+    if (!contract) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '계약을 찾을 수 없습니다.' }]
+      };
+    }
+
+    // 보험상품 정보 조회
+    let productInfo = null;
+    if (contract.product_id) {
+      const productObjectId = toSafeObjectId(contract.product_id);
+      if (productObjectId) {
+        const product = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS).findOne({
+          _id: productObjectId
+        });
+        if (product) {
+          productInfo = {
+            id: product._id.toString(),
+            name: product.product_name,
+            insurerName: product.insurer_name,
+            category: product.category,
+            type: product.product_type
+          };
+        }
+      }
+    }
+
+    const contractDetails = {
+      id: contract._id.toString(),
+      // 기본 정보
+      policyNumber: contract.policy_number,
+      productName: contract.product_name,
+      insurerName: contract.insurer_name,
+      status: contract.status,
+      // 계약자 정보
+      contractor: {
+        customerId: contract.customer_id?.toString(),
+        customerName: contract.customer_name
+      },
+      // 피보험자 정보
+      insured: contract.insured || {
+        name: contract.insured_name,
+        birthDate: contract.insured_birth_date,
+        relation: contract.insured_relation
+      },
+      // 수익자 정보
+      beneficiary: contract.beneficiary || {
+        name: contract.beneficiary_name,
+        relation: contract.beneficiary_relation
+      },
+      // 보험료 및 금액
+      premium: contract.premium,
+      paymentFrequency: contract.payment_frequency,
+      sumInsured: contract.sum_insured,
+      // 날짜
+      contractDate: contract.contract_date,
+      expiryDate: contract.expiry_date,
+      paymentStartDate: contract.payment_start_date,
+      paymentEndDate: contract.payment_end_date,
+      // 특약
+      riders: contract.riders || [],
+      // 상품 정보
+      product: productInfo,
+      // 메타
+      memo: contract.memo,
+      createdAt: contract.meta?.created_at,
+      updatedAt: contract.meta?.updated_at
+    };
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify(contractDetails, null, 2)
+      }]
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `계약 상세 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
       }]
     };
   }

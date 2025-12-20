@@ -16,15 +16,36 @@ async function loadToolHandlers() {
   const expiring = await import('../tools/expiring.js');
   const statistics = await import('../tools/statistics.js');
   const network = await import('../tools/network.js');
+  const documents = await import('../tools/documents.js');
+  const memos = await import('../tools/memos.js');
+  const products = await import('../tools/products.js');
 
   toolHandlers = {
+    // 고객 관련
     search_customers: customers.handleSearchCustomers,
     get_customer: customers.handleGetCustomer,
+    create_customer: customers.handleCreateCustomer,
+    update_customer: customers.handleUpdateCustomer,
+    // 계약 관련
     list_contracts: contracts.handleListContracts,
+    get_contract_details: contracts.handleGetContractDetails,
+    // 생일/만기
     find_birthday_customers: birthdays.handleFindBirthdayCustomers,
     find_expiring_contracts: expiring.handleFindExpiringContracts,
+    // 통계/네트워크
     get_statistics: statistics.handleGetStatistics,
     get_customer_network: network.handleGetCustomerNetwork,
+    // 문서 관련
+    search_documents: documents.handleSearchDocuments,
+    get_document: documents.handleGetDocument,
+    list_customer_documents: documents.handleListCustomerDocuments,
+    // 메모 관련
+    add_customer_memo: memos.handleAddMemo,
+    list_customer_memos: memos.handleListMemos,
+    delete_customer_memo: memos.handleDeleteMemo,
+    // 보험상품 관련
+    search_products: products.handleSearchProducts,
+    get_product_details: products.handleGetProductDetails,
   };
 }
 
