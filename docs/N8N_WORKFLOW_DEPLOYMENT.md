@@ -40,9 +40,12 @@ echo 'export N8N_API_KEY="your-api-key-here"' >> ~/.bashrc
 ### 2. 배포 실행
 
 ```bash
-# tars 서버에서 실행
+# tars 서버에서 직접 실행
 cd ~/aims/backend/n8n_flows
 ./deploy_n8n_workflows.sh
+
+# 또는 원격에서 실행 (login shell 필요)
+ssh tars 'bash -l -c "cd ~/aims/backend/n8n_flows && ./deploy_n8n_workflows.sh"'
 ```
 
 ---
