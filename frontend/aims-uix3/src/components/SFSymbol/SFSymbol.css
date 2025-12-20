@@ -1687,3 +1687,102 @@
   -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
   -webkit-mask-size: contain;
 }
+
+/* === BUBBLE.LEFT (말풍선 아이콘) - AI 채팅 === */
+
+.sf-symbol--bubble-left .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.85em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* === BUBBLE.LEFT.FILL (말풍선 채움 아이콘) - AI 채팅 활성 === */
+
+.sf-symbol--bubble-left-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.85em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* === BUBBLE.LEFT.AND.BUBBLE.RIGHT.FILL (양쪽 말풍선) - 대화 아이콘 === */
+
+.sf-symbol--bubble-left-and-bubble-right-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9em;
+  height: 0.9em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* === SPARKLES (반짝임) - AI 아이콘 === */
+
+.sf-symbol--sparkles .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9em;
+  height: 0.9em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M12 3L10.5 8.5L5 10L10.5 11.5L12 17L13.5 11.5L19 10L13.5 8.5L12 3zM5 16l-.75 2.25L2 19l2.25.75L5 22l.75-2.25L8 19l-2.25-.75L5 16zm14-2l-.75 2.25L16 17l2.25.75.75 2.25.75-2.25L22 17l-2.25-.75L19 14z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* === STOP.FILL (정지) - 채팅 중단 버튼 === */
+
+.sf-symbol--stop-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* === ARROW.UP (위 화살표) - 전송 버튼 === */
+
+.sf-symbol--arrow-up .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.85em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M13 7.83l5.59 5.59L20 12l-8-8-8 8 1.41 1.41L11 7.83V20h2V7.83z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}

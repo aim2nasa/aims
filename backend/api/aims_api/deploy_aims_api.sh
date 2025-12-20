@@ -97,6 +97,8 @@ docker run -d --network host \
   -e FRONTEND_URL="${FRONTEND_URL}" \
   -e N8N_API_KEY="${N8N_API_KEY}" \
   -e CLAMAV_ENABLED="${CLAMAV_ENABLED:-true}" \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+  -e MCP_SERVER_URL="${MCP_SERVER_URL:-http://localhost:3011}" \
   -v /data/files:/data/files \
   -v /home/rossi/n8n-docker/n8n_data:/n8n_data:ro \
   -v /var/run/clamav:/var/run/clamav:ro \
