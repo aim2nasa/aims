@@ -5,7 +5,7 @@
 # 환경변수:
 #   N8N_API_KEY - n8n API 키 (필수)
 
-set -e
+# set -e  # 개별 오류 핸들링 사용
 
 # 설정
 N8N_URL="https://n8nd.giize.com/api/v1"
@@ -71,38 +71,57 @@ for file in "${WORKFLOW_FILES[@]}"; do
 
   echo -n "배포 중: $WORKFLOW_NAME ... "
 
-  # 기존 워크플로우 ID 찾기
-  WORKFLOW_ID=$(echo "$EXISTING_WORKFLOWS" | jq -r --arg name "$WORKFLOW_NAME" '.data[] | select(.name == $name) | .id')
+  # 기존 워크플로우 ID 찾기 (동일 이름이 여러개면 첫번째 사용)
+  WORKFLOW_ID=$(echo "$EXISTING_WORKFLOWS" | jq -r --arg name "$WORKFLOW_NAME" '[.data[] | select(.name == $name) | .id][0] // empty')
+
+  # 임시 파일에 필터링된 JSON 저장 (쉘 변수 크기 제한 우회)
+  TEMP_JSON=$(mktemp)
+  if ! jq 'del(.id, .versionId, .meta, .tags, .pinData, .active, .settings.callerPolicy)' "$file" > "$TEMP_JSON" 2>/dev/null; then
+    echo -e "${RED}JSON 필터링 실패${NC}"
+    ((FAIL_COUNT++))
+    rm -f "$TEMP_JSON"
+    continue
+  fi
 
   if [ -n "$WORKFLOW_ID" ] && [ "$WORKFLOW_ID" != "null" ]; then
     # 기존 워크플로우 업데이트
-    RESPONSE=$(curl -sf -X PUT "$N8N_URL/workflows/$WORKFLOW_ID" \
+    RESPONSE=$(curl -s -X PUT "$N8N_URL/workflows/$WORKFLOW_ID" \
       -H "X-N8N-API-KEY: $N8N_API_KEY" \
       -H "Content-Type: application/json" \
-      -d @"$file" 2>&1)
+      -d @"$TEMP_JSON" 2>&1)
 
-    if [ $? -eq 0 ]; then
+    if [ -z "$RESPONSE" ]; then
+      echo -e "${RED}업데이트 실패 (빈 응답)${NC}"
+      ((FAIL_COUNT++))
+    elif echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
       echo -e "${GREEN}업데이트 완료${NC}"
       ((SUCCESS_COUNT++))
     else
       echo -e "${RED}업데이트 실패${NC}"
+      echo "  응답: ${RESPONSE:0:200}"
       ((FAIL_COUNT++))
     fi
   else
     # 새 워크플로우 생성
-    RESPONSE=$(curl -sf -X POST "$N8N_URL/workflows" \
+    RESPONSE=$(curl -s -X POST "$N8N_URL/workflows" \
       -H "X-N8N-API-KEY: $N8N_API_KEY" \
       -H "Content-Type: application/json" \
-      -d @"$file" 2>&1)
+      -d @"$TEMP_JSON" 2>&1)
 
-    if [ $? -eq 0 ]; then
+    if [ -z "$RESPONSE" ]; then
+      echo -e "${RED}생성 실패 (빈 응답)${NC}"
+      ((FAIL_COUNT++))
+    elif echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
       echo -e "${GREEN}생성 완료${NC}"
       ((SUCCESS_COUNT++))
     else
       echo -e "${RED}생성 실패${NC}"
+      echo "  응답: ${RESPONSE:0:200}"
       ((FAIL_COUNT++))
     fi
   fi
+
+  rm -f "$TEMP_JSON"
 done
 
 echo ""

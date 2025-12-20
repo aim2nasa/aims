@@ -90,6 +90,19 @@ backend/n8n_flows/
 
 ---
 
+## 스크립트 동작
+
+배포 스크립트는 다음을 자동 처리:
+
+1. **JSON 필터링**: API 호환성을 위해 불필요한 필드 제거
+   - 제거: `id`, `versionId`, `meta`, `tags`, `pinData`, `active`, `settings.callerPolicy`
+
+2. **중복 이름 처리**: 동일 이름 워크플로우가 여러개면 첫번째 사용
+
+3. **에러 핸들링**: 개별 워크플로우 실패시 계속 진행, 최종 결과 출력
+
+---
+
 ## 참고 문서
 
 - [n8n CLI Commands](https://docs.n8n.io/hosting/cli-commands/)
