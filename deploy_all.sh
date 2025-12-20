@@ -20,8 +20,6 @@ cd "$AIMS_DIR"
 git checkout -- . > /dev/null 2>&1
 git clean -fd -e deploy_all.sh > /dev/null 2>&1
 git pull > /dev/null 2>&1
-# 배포 스크립트 실행 권한 복원
-chmod +x "$AIMS_DIR"/backend/api/*/deploy_*.sh "$AIMS_DIR"/backend/n8n_flows/deploy_*.sh "$AIMS_DIR"/frontend/aims-uix3/deploy_*.sh 2>/dev/null || true
 echo -e "${GREEN}완료${NC}"
 
 # 2. aims_api
