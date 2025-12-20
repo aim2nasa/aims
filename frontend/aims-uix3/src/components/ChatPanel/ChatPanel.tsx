@@ -134,11 +134,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       {/* Header */}
       <div className="chat-panel__header">
         <div className="chat-panel__title">
-          <SFSymbol
-            name="bubble.left.and.bubble.right.fill"
-            size={SFSymbolSize.FOOTNOTE}
-            weight={SFSymbolWeight.MEDIUM}
-          />
+          {/* AI 로봇 아이콘 v3 - 미니멀 모던 스타일 */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#06B6D4" />
+              </linearGradient>
+            </defs>
+            {/* 머리 - 둥근 사각형 */}
+            <rect x="4" y="5" width="16" height="14" rx="4" fill="url(#robotGradient)" />
+            {/* 눈 - LED 스타일 */}
+            <rect x="7" y="9" width="3" height="4" rx="1" fill="white" />
+            <rect x="14" y="9" width="3" height="4" rx="1" fill="white" />
+            {/* 안테나 */}
+            <line x1="12" y1="5" x2="12" y2="2" stroke="url(#robotGradient)" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="1.5" r="1.5" fill="url(#robotGradient)" />
+            {/* 귀 */}
+            <rect x="1" y="9" width="3" height="6" rx="1" fill="url(#robotGradient)" />
+            <rect x="20" y="9" width="3" height="6" rx="1" fill="url(#robotGradient)" />
+          </svg>
           <span>AI 어시스턴트</span>
         </div>
         <div className="chat-panel__header-actions">
