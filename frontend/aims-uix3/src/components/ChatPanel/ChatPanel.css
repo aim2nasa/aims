@@ -5,11 +5,11 @@
  */
 
 .chat-panel {
-  /* 고정 위치 - 오른쪽 슬라이드 패널 */
+  /* 고정 위치 - center-pane-view__content와 정확히 동일한 높이 */
   position: fixed;
-  top: 0;
+  top: calc(var(--header-height-base, 50px) + var(--gap-top, 2px) + 4px);
   right: 0;
-  height: 100vh;
+  height: calc(100vh - var(--header-height-base, 50px) - var(--gap-top, 2px) - var(--gap-bottom, 2px) - 8px);
   width: 400px;
   min-width: 360px;
   max-width: 480px;
