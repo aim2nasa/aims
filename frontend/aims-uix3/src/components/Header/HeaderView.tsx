@@ -240,7 +240,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
               aria-pressed={isChatOpen === true}
             >
               <span className="header-chat-icon">
-  {/* AI 말풍선 커스텀 아이콘 */}
+  {/* AI 말풍선 커스텀 아이콘 - 그라데이션 */}
                 <svg
                   className="header-chat-ai-icon"
                   viewBox="0 0 36 26"
@@ -248,21 +248,29 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
                   xmlns="http://www.w3.org/2000/svg"
                   aria-hidden="true"
                 >
-                  {/* 말풍선 - 하나의 통합된 경로 */}
+                  {/* 그라데이션 정의 - 1번: 보라-시안 */}
+                  <defs>
+                    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#8B5CF6" />
+                      <stop offset="100%" stopColor="#06B6D4" />
+                    </linearGradient>
+                    <linearGradient id="aiGradientHover" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#7C3AED" />
+                      <stop offset="100%" stopColor="#0891B2" />
+                    </linearGradient>
+                  </defs>
+                  {/* 말풍선 - 그라데이션 채움 */}
                   <path
                     d="M8 2C4.68629 2 2 4.68629 2 8V14C2 17.3137 4.68629 20 8 20H9V24L15 20H28C31.3137 20 34 17.3137 34 14V8C34 4.68629 31.3137 2 28 2H8Z"
-                    fill={isChatOpen ? 'var(--color-icon-purple)' : 'transparent'}
-                    stroke="var(--color-icon-purple)"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
+                    fill={isChatOpen ? 'url(#aiGradientHover)' : 'url(#aiGradient)'}
                   />
-                  {/* AI 텍스트 */}
+                  {/* AI 텍스트 - 항상 흰색 */}
                   <text
                     x="18"
                     y="12"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill={isChatOpen ? 'white' : 'var(--color-icon-purple)'}
+                    fill="white"
                     fontSize="12"
                     fontWeight="800"
                     fontFamily="system-ui, -apple-system, sans-serif"
