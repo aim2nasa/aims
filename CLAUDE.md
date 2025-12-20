@@ -105,7 +105,8 @@ cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 | 4 | aims_rag_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_rag_api && ./deploy_aims_rag_api.sh'` |
 | 5 | annual_report_api 배포 | `ssh tars 'cd ~/aims/backend/api/annual_report_api && ./deploy_annual_report_api.sh'` |
 | 6 | pdf_proxy 배포 | `ssh tars 'cd ~/aims/backend/api/pdf_proxy && ./deploy_pdf_proxy.sh'` |
-| 7 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
+| 7 | n8n 워크플로우 배포 | `ssh tars 'bash -l -c "cd ~/aims/backend/n8n_flows && ./deploy_n8n_workflows.sh"'` |
+| 8 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
 
 **주의사항:**
 - 각 단계 실패 시 즉시 중단하고 사용자에게 보고
