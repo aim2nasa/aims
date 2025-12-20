@@ -86,6 +86,7 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 | aims_rag_api | `backend/api/aims_rag_api/deploy_aims_rag_api.sh` |
 | annual_report_api | `backend/api/annual_report_api/deploy_annual_report_api.sh` |
 | pdf_proxy | `backend/api/pdf_proxy/deploy_pdf_proxy.sh` |
+| aims_mcp | `backend/api/aims_mcp/deploy_aims_mcp.sh` |
 
 ```bash
 # 사용 예시 (서버에서)
@@ -105,8 +106,9 @@ cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 | 4 | aims_rag_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_rag_api && ./deploy_aims_rag_api.sh'` |
 | 5 | annual_report_api 배포 | `ssh tars 'cd ~/aims/backend/api/annual_report_api && ./deploy_annual_report_api.sh'` |
 | 6 | pdf_proxy 배포 | `ssh tars 'cd ~/aims/backend/api/pdf_proxy && ./deploy_pdf_proxy.sh'` |
-| 7 | n8n 워크플로우 배포 | `ssh tars 'bash -l -c "cd ~/aims/backend/n8n_flows && ./deploy_n8n_workflows.sh"'` |
-| 8 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
+| 7 | aims_mcp 배포 | `ssh tars 'cd ~/aims/backend/api/aims_mcp && ./deploy_aims_mcp.sh'` |
+| 8 | n8n 워크플로우 배포 | `ssh tars 'bash -l -c "cd ~/aims/backend/n8n_flows && ./deploy_n8n_workflows.sh"'` |
+| 9 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
 
 **주의사항:**
 - 각 단계 실패 시 즉시 중단하고 사용자에게 보고
@@ -183,6 +185,7 @@ cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 ### Backend Services
 - Node.js API: `backend/api/aims_api/` (포트 3010)
 - Python FastAPI: `backend/api/doc_status_api/` (포트 8000)
+- MCP Server: `backend/api/aims_mcp/` (포트 3011, HTTP 모드)
 
 ---
 
@@ -255,3 +258,4 @@ npm run dev
 | [ICON_IMPLEMENTATION_TROUBLESHOOTING.md](docs/ICON_IMPLEMENTATION_TROUBLESHOOTING.md) | 아이콘 문제 해결 |
 | [SECURITY_ROADMAP.md](docs/SECURITY_ROADMAP.md) | 보안 로드맵 |
 | [EXCEL_IMPORT_SPECIFICATION.md](docs/EXCEL_IMPORT_SPECIFICATION.md) | 고객/계약 일괄등록 엑셀 입력 표준 |
+| [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP 서버 (LLM 연동) |
