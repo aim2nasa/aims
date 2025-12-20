@@ -42,6 +42,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   onThemeToggle,
   onMenuClick,
   onQuickSearchCustomerClick,
+  onChatToggle,
+  isChatOpen,
   className = '',
   controller
 }) => {
@@ -226,6 +228,26 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             placeholder="고객 검색..."
           />
         </div>
+
+        {/* AI 채팅 버튼 - 항상 표시 */}
+        {onChatToggle && (
+          <Tooltip content={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅'}>
+            <button
+              type="button"
+              onClick={onChatToggle}
+              className={`header-control-button header-chat-button ${isChatOpen ? 'header-chat-button--active' : ''}`}
+              aria-label={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅 열기'}
+              aria-pressed={isChatOpen === true}
+            >
+              <SFSymbol
+                name={isChatOpen ? 'bubble.left.fill' : 'bubble.left'}
+                size={SFSymbolSize.CALLOUT}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative={true}
+              />
+            </button>
+          </Tooltip>
+        )}
 
         {/* 테마 토글 - 항상 표시 */}
         <div className="header-theme-container">

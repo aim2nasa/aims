@@ -8677,6 +8677,64 @@ app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
   }
 });
 
+// ==================== AI 채팅 API ====================
+
+/**
+ * AI 채팅 SSE 엔드포인트
+ * OpenAI GPT-4o + MCP 연동
+ * @route POST /api/chat
+ */
+app.post('/api/chat', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  const { messages } = req.body;
+
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({
+      success: false,
+      error: 'messages 배열이 필요합니다.'
+    });
+  }
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  console.log(`[Chat] 채팅 시작 - userId: ${userId}, messages: ${messages.length}개`);
+
+  try {
+    const { streamChatResponse } = require('./lib/chatService');
+
+    for await (const event of streamChatResponse(messages, userId, analyticsDb)) {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+
+    res.end();
+  } catch (error) {
+    console.error('[Chat] 스트리밍 오류:', error);
+    res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+/**
+ * MCP Tools 목록 조회 (디버깅용)
+ * @route GET /api/chat/tools
+ */
+app.get('/api/chat/tools', authenticateJWT, async (req, res) => {
+  try {
+    const { getMCPToolsAsOpenAIFunctions } = require('./lib/chatService');
+    const tools = await getMCPToolsAsOpenAIFunctions();
+    res.json({ success: true, tools, count: tools.length });
+  } catch (error) {
+    console.error('[Chat] Tools 조회 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', async () => {
   // 버전 정보 출력

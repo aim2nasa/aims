@@ -21,6 +21,10 @@ export interface HeaderProps {
   onMenuClick?: (menuKey: string) => void;
   /** 빠른검색 고객 클릭 핸들러 */
   onQuickSearchCustomerClick?: (customerId: string, customer: Customer) => void;
+  /** AI 채팅 토글 핸들러 */
+  onChatToggle?: () => void;
+  /** AI 채팅 패널 열림 상태 */
+  isChatOpen?: boolean;
   /** 추가 CSS 클래스명 */
   className?: string;
 }

@@ -52,6 +52,7 @@ const UsageGuideView = lazy(() => import('./components/HelpViews/UsageGuideView/
 const FAQView = lazy(() => import('./components/HelpViews/FAQView/FAQView'))
 const HelpDashboardView = lazy(() => import('./components/HelpViews/HelpDashboardView/HelpDashboardView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
+const ChatPanel = lazy(() => import('./components/ChatPanel'))
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
@@ -178,6 +179,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [centerPaneVisible, setCenterPaneVisible] = useState(true)
   const [mainPaneVisible, setMainPaneVisible] = useState(true)
   const [brbVisible, setBrbVisible] = useState(true)
+
+  // AI 채팅 패널 열림 상태
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   // LeftPane 축소/확장 상태 (localStorage 영속화)
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(() => {
@@ -1249,6 +1253,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           // 최근 검색 고객 목록에 추가
           addRecentCustomer(customer)
         }}
+        onChatToggle={() => setIsChatOpen(prev => !prev)}
+        isChatOpen={isChatOpen}
       />
 
       {/* LeftPane - 독립 레이어 */}
@@ -2336,6 +2342,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           )}
         </div>
       </Modal>
+
+      {/* AI 채팅 패널 */}
+      <Suspense fallback={null}>
+        <ChatPanel
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
+      </Suspense>
 
     </div>
   )

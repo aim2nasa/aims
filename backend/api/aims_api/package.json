@@ -29,7 +29,9 @@
     "passport": "^0.7.0",
     "passport-kakao": "^1.0.1",
     "passport-naver-v2": "^2.0.8",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "openai": "^4.73.0",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
