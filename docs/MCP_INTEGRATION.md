@@ -336,6 +336,52 @@ pm2 restart aims_mcp || pm2 start index.js --name aims_mcp
 ### 7.3 포트
 - 기본 포트: `3011` (aims_api: 3010)
 
+### 7.4 테스트 방법
+
+#### 헬스 체크
+```bash
+curl http://localhost:3011/health
+```
+
+#### Tool 목록 조회
+```bash
+curl http://localhost:3011/tools
+```
+
+#### Tool 호출 (X-User-ID 헤더 사용)
+```bash
+# 고객 검색
+curl -X POST http://localhost:3011/call \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-ID: <userId>' \
+  -d '{"tool": "search_customers", "arguments": {"limit": 3}}'
+
+# 고객 상세
+curl -X POST http://localhost:3011/call \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-ID: <userId>' \
+  -d '{"tool": "get_customer", "arguments": {"customerId": "<customerId>"}}'
+
+# 계약 목록
+curl -X POST http://localhost:3011/call \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-ID: <userId>' \
+  -d '{"tool": "list_contracts", "arguments": {"limit": 5}}'
+
+# 통계
+curl -X POST http://localhost:3011/call \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-ID: <userId>' \
+  -d '{"tool": "get_statistics", "arguments": {"type": "customer_count"}}'
+```
+
+#### 인증 방식
+| 방식 | 용도 | 헤더 |
+|------|------|------|
+| JWT | 프로덕션 | `Authorization: Bearer <token>` |
+| X-User-ID | 개발/테스트 | `X-User-ID: <userId>` |
+| 환경변수 | stdio 모드 | `USER_ID=<userId>` |
+
 ---
 
 ## 8. 참고 자료
@@ -352,3 +398,4 @@ pm2 restart aims_mcp || pm2 start index.js --name aims_mcp
 |------|------|
 | 2025-12-20 | 초기 문서 작성 - 유스케이스 및 구조 분석 |
 | 2025-12-20 | MCP 서버 v1.0.0 구현 완료 - 7개 Tools |
+| 2025-12-20 | X-User-ID 인증 및 테스트 방법 문서화 |

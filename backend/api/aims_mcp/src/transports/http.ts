@@ -61,9 +61,10 @@ export async function startHttpServer(_server: Server): Promise<void> {
   // MCP Tool 호출
   app.post('/call', async (req: Request, res: Response) => {
     try {
-      // Authorization 헤더에서 userId 추출
+      // Authorization 헤더 또는 X-User-ID 헤더에서 userId 추출
       const authHeader = req.headers.authorization;
-      const userId = getUserIdFromAuth(authHeader);
+      const xUserId = req.headers['x-user-id'] as string | undefined;
+      const userId = getUserIdFromAuth(authHeader, xUserId);
       setCurrentUserId(userId);
 
       const { tool, arguments: args } = req.body;
@@ -109,7 +110,8 @@ export async function startHttpServer(_server: Server): Promise<void> {
   app.post('/tools/:toolName', async (req: Request, res: Response) => {
     try {
       const authHeader = req.headers.authorization;
-      const userId = getUserIdFromAuth(authHeader);
+      const xUserId = req.headers['x-user-id'] as string | undefined;
+      const userId = getUserIdFromAuth(authHeader, xUserId);
       setCurrentUserId(userId);
 
       const { toolName } = req.params;

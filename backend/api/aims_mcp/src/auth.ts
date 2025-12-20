@@ -33,7 +33,7 @@ export function getCurrentUserId(): string {
 /**
  * Authorization 헤더 또는 환경변수에서 userId 추출
  */
-export function getUserIdFromAuth(authHeader?: string): string {
+export function getUserIdFromAuth(authHeader?: string, xUserId?: string): string {
   // 1. HTTP 모드: Authorization 헤더에서 JWT 추출
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
@@ -54,7 +54,12 @@ export function getUserIdFromAuth(authHeader?: string): string {
     }
   }
 
-  // 2. stdio 모드: 환경변수에서 userId 사용
+  // 2. X-User-ID 헤더 (개발/테스트용)
+  if (xUserId) {
+    return xUserId;
+  }
+
+  // 3. stdio 모드: 환경변수에서 userId 사용
   const envUserId = process.env.USER_ID;
   if (envUserId) {
     return envUserId;
