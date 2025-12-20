@@ -14,8 +14,10 @@ ENV BUILD_TIME=${BUILD_TIME}
 WORKDIR /app
 
 # requirements.txt 복사 및 의존성 설치
+# CPU 전용 PyTorch 먼저 설치 (CUDA 불필요 - 서버에 GPU 없음)
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
 
 # 프로젝트 파일 복사
 COPY . .

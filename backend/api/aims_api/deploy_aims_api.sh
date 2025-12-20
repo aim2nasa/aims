@@ -1,11 +1,15 @@
 #!/bin/bash
 # deploy_aims_api.sh
-# AIMS Main API 컨테이너 재배포 스크립트
+# AIMS Main API 컨테이너 재배포 스크립트 (스마트 빌드)
 
-set -e  # 오류 발생 시 즉시 종료
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 CONTAINER_NAME="aims-api"
 IMAGE_NAME="aims-api"
+HASH_FILE=".build_hash"
 
 # .env 파일에서 환경변수 읽기
 if [ -f .env ]; then
@@ -17,23 +21,57 @@ GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
 
+# 소스 파일 해시 계산 (Dockerfile, package.json, server.js, lib/*)
+calculate_hash() {
+  cat Dockerfile package.json package-lock.json 2>/dev/null | md5sum | cut -d' ' -f1
+  find . -maxdepth 1 -name "*.js" -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d' ' -f1
+  find lib middleware routes -type f -name "*.js" -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d' ' -f1
+}
+
+CURRENT_HASH=$(calculate_hash)
+PREVIOUS_HASH=""
+if [ -f "$HASH_FILE" ]; then
+  PREVIOUS_HASH=$(cat "$HASH_FILE")
+fi
+
+NEED_BUILD=false
+if [ "$CURRENT_HASH" != "$PREVIOUS_HASH" ]; then
+  NEED_BUILD=true
+fi
+
+# 이미지가 없으면 반드시 빌드
+if ! docker image inspect $IMAGE_NAME > /dev/null 2>&1; then
+  NEED_BUILD=true
+fi
+
 echo "========================================="
 echo "  AIMS API 배포"
 echo "  Version: v${VERSION} (${GIT_HASH})"
-echo "  Build Time: ${BUILD_TIME}"
+if [ "$NEED_BUILD" = true ]; then
+  echo "  Mode: FULL BUILD"
+else
+  echo "  Mode: QUICK RESTART (변경 없음)"
+fi
 echo "========================================="
 
 # 1. 기존 컨테이너 중지 및 제거
-echo "🚫 기존 컨테이너 중지 및 제거..."
+echo "기존 컨테이너 중지..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
 docker rm $CONTAINER_NAME 2>/dev/null || true
 
-# 2. 새 이미지 빌드 (BuildKit 사용, 버전 정보 주입)
-echo "📦 새 이미지 빌드 중..."
-DOCKER_BUILDKIT=1 docker build \
-  --build-arg GIT_HASH="${GIT_HASH}" \
-  --build-arg BUILD_TIME="${BUILD_TIME}" \
-  -t $IMAGE_NAME .
+if [ "$NEED_BUILD" = true ]; then
+  # 2. 새 이미지 빌드
+  echo "새 이미지 빌드 중..."
+  DOCKER_BUILDKIT=1 docker build \
+    --build-arg GIT_HASH="${GIT_HASH}" \
+    --build-arg BUILD_TIME="${BUILD_TIME}" \
+    -t $IMAGE_NAME .
+
+  # 해시 저장
+  echo "$CURRENT_HASH" > "$HASH_FILE"
+else
+  echo "빌드 스킵 (변경 없음)"
+fi
 
 # 3. 컨테이너 실행 (환경변수 전달 + 볼륨 마운트)
 echo "🚀 새 컨테이너 실행..."
