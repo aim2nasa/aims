@@ -28,11 +28,19 @@ interface DisplayMessage {
  * AI 채팅 패널 컴포넌트
  * RightPane 슬라이드 패널로 표시됨
  */
+// 기본 너비 및 제한
+const DEFAULT_WIDTH = 400;
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 600;
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState('');
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const {
     sendMessage,
@@ -41,6 +49,37 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     currentResponse,
     activeTools
   } = useChatSSE();
+
+  // 리사이즈 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX;
+      setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   // 자동 스크롤
   const scrollToBottom = useCallback(() => {
@@ -130,7 +169,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className={`chat-panel ${isOpen ? 'chat-panel--open' : ''}`}>
+    <div
+      ref={panelRef}
+      className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
+      style={{ width: panelWidth }}
+    >
+      {/* 리사이즈 핸들 */}
+      <div
+        className="chat-panel__resize-handle"
+        onMouseDown={handleResizeStart}
+        title="드래그하여 너비 조절"
+      />
       {/* Header */}
       <div className="chat-panel__header">
         <div className="chat-panel__title">

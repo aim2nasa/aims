@@ -10,9 +10,9 @@
   top: calc(var(--header-height-base, 50px) + var(--gap-top, 2px) + 4px);
   right: 0;
   height: calc(100vh - var(--header-height-base, 50px) - var(--gap-top, 2px) - var(--gap-bottom, 2px) - 8px);
-  width: 400px;
-  min-width: 360px;
-  max-width: 480px;
+  /* width는 inline style로 동적 제어 */
+  min-width: 320px;
+  max-width: 600px;
   z-index: 1000;
 
   /* 레이아웃 */
@@ -40,6 +40,48 @@
   transform: translateX(0);
   opacity: 1;
   visibility: visible;
+}
+
+/* 리사이즈 중 상태 */
+.chat-panel--resizing {
+  transition: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ==================== Resize Handle ==================== */
+.chat-panel__resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.chat-panel__resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 40px;
+  background: transparent;
+  border-radius: 1px;
+  transition: background 0.15s ease;
+}
+
+.chat-panel__resize-handle:hover::after,
+.chat-panel--resizing .chat-panel__resize-handle::after {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.chat-panel__resize-handle:active::after {
+  background: rgba(139, 92, 246, 0.8);
 }
 
 /* ==================== Header ==================== */
