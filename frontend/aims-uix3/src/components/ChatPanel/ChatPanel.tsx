@@ -282,7 +282,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
         </div>
         <div className="chat-panel__header-actions">
           {/* 이전 대화 목록 */}
-          <Tooltip content="이전 대화">
+          <Tooltip content="이전 대화" placement="bottom">
             <button
               type="button"
               className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
@@ -293,7 +293,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
             </button>
           </Tooltip>
           {/* 새 대화 */}
-          <Tooltip content="새 대화">
+          <Tooltip content="새 대화" placement="bottom">
             <button
               type="button"
               className="chat-panel__header-btn"
@@ -305,7 +305,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           </Tooltip>
           {/* 삭제 */}
           {messages.length > 0 && (
-            <Tooltip content="대화 초기화">
+            <Tooltip content="대화 초기화" placement="bottom">
               <button
                 type="button"
                 className="chat-panel__header-btn"
@@ -316,7 +316,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               </button>
             </Tooltip>
           )}
-          <Tooltip content="닫기">
+          <Tooltip content="닫기" placement="bottom">
             <button
               type="button"
               className="chat-panel__header-btn chat-panel__close"

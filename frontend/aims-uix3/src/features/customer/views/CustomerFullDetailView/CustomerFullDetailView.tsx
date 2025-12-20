@@ -550,7 +550,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       titleIcon={customer ? getCustomerTypeIcon() : undefined}
       titleAction={
         onSwitchToCompactView && customerId ? (
-          <Tooltip content="간략 보기로 전환">
+          <Tooltip content="간략 보기로 전환" placement="bottom">
             <button
               type="button"
               className="view-switch-button view-switch-button--compact"
@@ -566,7 +566,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
         ) : undefined
       }
       titleAccessory={
-        <Tooltip content="이전 페이지로 돌아가기">
+        <Tooltip content="이전 페이지로 돌아가기" placement="bottom">
           <button
             type="button"
             className="back-icon-button"

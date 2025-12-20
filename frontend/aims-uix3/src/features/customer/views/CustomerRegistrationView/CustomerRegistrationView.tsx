@@ -74,7 +74,7 @@ export const CustomerRegistrationView: React.FC = () => {
         <div className="customer-registration__inner">
           {/* 🍎 도움말 버튼 */}
           <div className="customer-registration__header">
-            <Tooltip content="도움말">
+            <Tooltip content="도움말" placement="bottom">
               <button
                 type="button"
                 className="help-icon-button"

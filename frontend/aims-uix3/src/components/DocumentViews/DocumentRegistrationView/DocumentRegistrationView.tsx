@@ -1197,7 +1197,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderIcon="doc.badge.plus"
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
       titleAccessory={
-        <Tooltip content="도움말">
+        <Tooltip content="도움말" placement="bottom">
           <button
             type="button"
             className="help-icon-button"

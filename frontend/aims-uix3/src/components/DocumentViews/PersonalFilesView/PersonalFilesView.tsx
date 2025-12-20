@@ -1737,7 +1737,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             {/* 검색 및 뷰 모드 */}
             <div className="toolbar-actions">
               {/* 🍎 도움말 버튼 */}
-              <Tooltip content="도움말">
+              <Tooltip content="도움말" placement="bottom">
                 <button
                   type="button"
                   className="help-icon-button"

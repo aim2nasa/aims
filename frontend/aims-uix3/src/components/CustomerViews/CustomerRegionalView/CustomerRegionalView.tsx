@@ -113,7 +113,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
         marginRight={6}
         className="customer-regional-view"
         titleAccessory={
-          <Tooltip content="도움말">
+          <Tooltip content="도움말" placement="bottom">
             <button
               type="button"
               className="help-icon-button"

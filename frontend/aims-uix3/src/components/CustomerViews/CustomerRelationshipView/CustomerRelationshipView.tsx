@@ -900,7 +900,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       marginRight={7}
       className="customer-relationship-view"
       titleAccessory={
-        <Tooltip content="도움말">
+        <Tooltip content="도움말" placement="bottom">
           <button
             type="button"
             className="help-icon-button"

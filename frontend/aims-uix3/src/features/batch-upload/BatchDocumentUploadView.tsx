@@ -516,7 +516,7 @@ export default function BatchDocumentUploadView({
     >
       {/* 🍎 도움말 버튼 */}
       <div className="batch-upload-header">
-        <Tooltip content="도움말">
+        <Tooltip content="도움말" placement="bottom">
           <button
             type="button"
             className="help-icon-button"

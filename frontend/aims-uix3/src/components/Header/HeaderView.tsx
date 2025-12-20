@@ -200,7 +200,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
         {/* 레이아웃 제어 버튼 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
         {isDevMode && (
-          <Tooltip content="레이아웃 제어">
+          <Tooltip content="레이아웃 제어" placement="bottom">
             <button
               onClick={handleLayoutControlClick}
               className="header-control-button haptic-enabled micro-button micro-haptic-medium"

@@ -1000,7 +1000,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       title="상세 문서검색"
       titleIcon={<SFSymbol name="search-bold" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-search)' }} />}
       titleAccessory={
-        <Tooltip content="이전 페이지로 돌아가기">
+        <Tooltip content="이전 페이지로 돌아가기" placement="bottom">
           <button
             type="button"
             className="back-icon-button"
