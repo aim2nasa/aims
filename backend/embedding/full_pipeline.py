@@ -143,7 +143,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 if embedded_chunks:
                     save_chunks_to_qdrant(embedded_chunks, collection_name="docembed")
                 
-                # 4단계: MongoDB에 처리 상태 업데이트
+                # 4단계: MongoDB에 처리 상태 업데이트 (임베딩 완료 = 전체 완료)
                 collection.update_one(
                     {'_id': ObjectId(doc_id)},
                     {'$set': {
@@ -153,10 +153,12 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             'chunks': len(embedded_chunks),
                             'text_source': text_source,  # 텍스트 소스 기록
                             'updated_at': datetime.now(timezone.utc).isoformat()
-                        }
+                        },
+                        'overallStatus': 'completed',  # 임베딩 완료 = 전체 처리 완료
+                        'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
-                print(f"--- 문서 ID: {doc_id} 처리 완료 및 MongoDB 상태 업데이트 ---")
+                print(f"--- 문서 ID: {doc_id} 처리 완료 (overallStatus: completed) ---")
             except EmbeddingError as e:
                 # OpenAI API 크레딧 소진 등 명확한 임베딩 에러
                 print(f"!!! 문서 ID: {doc_id} 임베딩 에러: [{e.error_code}] {e.message} !!!")
@@ -168,7 +170,9 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             'error_code': e.error_code,
                             'error_message': e.message,
                             'failed_at': datetime.now(timezone.utc).isoformat()
-                        }
+                        },
+                        'overallStatus': 'error',  # 임베딩 실패 = 전체 처리 실패
+                        'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
                 # 크레딧 소진 시 전체 파이프라인 중단
@@ -187,7 +191,9 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                             'error_code': 'UNKNOWN',
                             'error_message': str(e),
                             'failed_at': datetime.now(timezone.utc).isoformat()
-                        }
+                        },
+                        'overallStatus': 'error',  # 임베딩 실패 = 전체 처리 실패
+                        'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
 

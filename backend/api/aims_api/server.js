@@ -6425,18 +6425,35 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
     const documentIdStr = document_id.toString().replace(/^"|"$/g, '');
     console.log(`[SSE-DocStatus] 검색할 키: "${documentIdStr}" (length: ${documentIdStr.length})`);
 
-    // 🔄 overallStatus 직접 업데이트 (API 계산 의존 대신 직접 설정)
-    // 이렇게 해야 SSE 알림 후 fetchDocuments 호출 시 최신 상태를 즉시 읽을 수 있음
+    // 🔄 overallStatus 업데이트 - 임베딩까지 완료되어야 'completed'
+    // OCR 완료만으로는 completed가 아님! docembed.status === 'done'이어야 함
     try {
-      const newOverallStatus = (status === 'completed' || status === 'done') ? 'completed' : 'error';
-      await db.collection('files').updateOne(
-        { _id: new ObjectId(documentIdStr) },
-        { $set: {
-          overallStatus: newOverallStatus,
-          overallStatusUpdatedAt: new Date()
-        } }
-      );
-      console.log(`[SSE-DocStatus] overallStatus 직접 업데이트 완료: ${documentIdStr} → ${newOverallStatus}`);
+      const doc = await db.collection('files').findOne({ _id: new ObjectId(documentIdStr) });
+      if (doc) {
+        let newOverallStatus = 'processing';
+
+        // 에러 상태 처리
+        if (status === 'error' || status === 'failed') {
+          newOverallStatus = 'error';
+        }
+        // 임베딩까지 완료된 경우에만 completed
+        else if (doc.docembed && doc.docembed.status === 'done') {
+          newOverallStatus = 'completed';
+        }
+        // OCR만 완료된 상태는 processing 유지
+        else if (status === 'completed' || status === 'done') {
+          newOverallStatus = 'processing';
+        }
+
+        await db.collection('files').updateOne(
+          { _id: new ObjectId(documentIdStr) },
+          { $set: {
+            overallStatus: newOverallStatus,
+            overallStatusUpdatedAt: new Date()
+          } }
+        );
+        console.log(`[SSE-DocStatus] overallStatus 업데이트: ${documentIdStr} → ${newOverallStatus} (docembed: ${doc.docembed?.status || 'none'})`);
+      }
     } catch (updateError) {
       console.error(`[SSE-DocStatus] overallStatus 업데이트 실패:`, updateError);
       // 업데이트 실패해도 SSE 알림은 계속 진행

@@ -12,9 +12,15 @@ CONTAINER_NAME="aims-rag-api"
 IMAGE_NAME="aims-rag-api"
 HASH_FILE=".build_hash"
 
-# .env 파일에서 환경변수 읽기
+# 환경변수 로드 (우선순위: .env > ~/.bashrc)
 if [ -f .env ]; then
   export $(cat .env | grep -v '^#' | xargs)
+fi
+
+# .bashrc에서 OPENAI_API_KEY 로드 (비대화형 쉘 대응)
+if [ -z "$OPENAI_API_KEY" ] && [ -f ~/.bashrc ]; then
+  OPENAI_API_KEY=$(grep "OPENAI_API_KEY" ~/.bashrc | cut -d= -f2 | tr -d '"' | head -1)
+  export OPENAI_API_KEY
 fi
 
 # 버전 정보 가져오기
