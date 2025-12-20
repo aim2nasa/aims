@@ -1,4 +1,4 @@
-#\!/bin/bash
+#!/bin/bash
 # deploy_aims_api.sh
 # AIMS Main API 컨테이너 재배포 스크립트
 
@@ -12,14 +12,28 @@ if [ -f .env ]; then
   export $(cat .env | grep -v '^#' | xargs)
 fi
 
+# 버전 정보 가져오기
+GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
+
+echo "========================================="
+echo "  AIMS API 배포"
+echo "  Version: v${VERSION} (${GIT_HASH})"
+echo "  Build Time: ${BUILD_TIME}"
+echo "========================================="
+
 # 1. 기존 컨테이너 중지 및 제거
 echo "🚫 기존 컨테이너 중지 및 제거..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
 docker rm $CONTAINER_NAME 2>/dev/null || true
 
-# 2. 새 이미지 빌드 (BuildKit 사용)
+# 2. 새 이미지 빌드 (BuildKit 사용, 버전 정보 주입)
 echo "📦 새 이미지 빌드 중..."
-DOCKER_BUILDKIT=1 docker build -t $IMAGE_NAME .
+DOCKER_BUILDKIT=1 docker build \
+  --build-arg GIT_HASH="${GIT_HASH}" \
+  --build-arg BUILD_TIME="${BUILD_TIME}" \
+  -t $IMAGE_NAME .
 
 # 3. 컨테이너 실행 (환경변수 전달 + 볼륨 마운트)
 echo "🚀 새 컨테이너 실행..."

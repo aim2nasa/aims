@@ -2,6 +2,14 @@
 # Python 3.10 기반 이미지 사용
 FROM python:3.10-slim
 
+# 빌드 시 주입되는 버전 정보
+ARG GIT_HASH=dev
+ARG BUILD_TIME=unknown
+
+# 버전 정보를 환경변수로 설정
+ENV GIT_HASH=${GIT_HASH}
+ENV BUILD_TIME=${BUILD_TIME}
+
 # 작업 디렉터리 설정
 WORKDIR /app
 

@@ -17,6 +17,7 @@ const { generateToken, authenticateJWT, authenticateJWTorAPIKey, authenticateJWT
 const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
+const { VERSION_INFO, logVersionInfo } = require('./version');
 
 const app = express();
 
@@ -2280,18 +2281,21 @@ app.get('/api/health', async (req, res) => {
   try {
     // MongoDB 연결 상태 확인
     await db.admin().ping();
-    
+
     res.json({
       success: true,
       message: 'API 서버가 정상적으로 작동 중입니다.',
       timestamp: utcNowISO(),
-      database: 'connected'
+      database: 'connected',
+      version: VERSION_INFO.fullVersion,
+      versionInfo: VERSION_INFO
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'API 서버에 문제가 있습니다.',
-      error: error.message
+      error: error.message,
+      version: VERSION_INFO.fullVersion
     });
   }
 });
@@ -8580,7 +8584,10 @@ app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
 
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log('\n🚀🚀🚀 ================================');
+  // 버전 정보 출력
+  logVersionInfo();
+
+  console.log('🚀🚀🚀 ================================');
   console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
   console.log(`🚀 서버 시간: ${utcNowISO()}`);
   console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);

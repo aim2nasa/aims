@@ -5,6 +5,7 @@ Annual Report API 설정 파일
 import os
 from typing import Optional
 from dotenv import load_dotenv
+from version import APP_VERSION, VERSION_INFO
 
 # .env 파일 로드
 load_dotenv()
@@ -24,7 +25,8 @@ class Settings:
 
     # API 설정
     API_TITLE: str = "Annual Report API"
-    API_VERSION: str = "1.0.0"
+    API_VERSION: str = APP_VERSION
+    API_VERSION_INFO: dict = VERSION_INFO
     API_HOST: str = "0.0.0.0"
     API_PORT: int = int(os.getenv("API_PORT", "8081"))
 

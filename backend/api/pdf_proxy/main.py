@@ -21,10 +21,15 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 import fitz  # PyMuPDF
 
+from version import VERSION_INFO, log_version_info
+
+# 시작 시 버전 정보 출력
+log_version_info()
+
 app = FastAPI(
     title="PDF Metadata Fix Proxy",
     description="Fixes PDF metadata encoding on-the-fly",
-    version="1.0.0"
+    version=VERSION_INFO["version"]
 )
 
 # CORS 설정
@@ -108,7 +113,12 @@ def fix_pdf_metadata_in_memory(pdf_bytes: bytes, replacement_title: Optional[str
 @app.get("/health")
 async def health_check():
     """헬스 체크"""
-    return {"status": "ok", "service": "pdf-proxy"}
+    return {
+        "status": "healthy",
+        "service": "pdf-proxy",
+        "version": VERSION_INFO["fullVersion"],
+        "versionInfo": VERSION_INFO
+    }
 
 
 @app.get("/pdf/{file_path:path}")

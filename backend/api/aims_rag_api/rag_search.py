@@ -25,8 +25,18 @@ from alert_system import AlertSystem
 # 🔥 Phase 4: AI 토큰 사용량 추적 추가
 from token_tracker import TokenTracker
 
+# 버전 정보
+from version import VERSION_INFO, log_version_info
+
 # FastAPI 애플리케이션 인스턴스 생성
-app = FastAPI()
+app = FastAPI(
+    title="AIMS RAG API",
+    version=VERSION_INFO["version"],
+    description="AIMS 문서 검색 및 RAG API"
+)
+
+# 시작 시 버전 정보 출력
+log_version_info()
 
 # CORS는 nginx에서 처리하므로 여기서는 제거
 
@@ -191,6 +201,22 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> tuple:
         return response.choices[0].message.content, response
     except Exception as e:
         return f"❌ LLM 답변 생성 중 오류 발생: {e}", None
+
+
+# ========================================
+# 헬스체크 API
+# ========================================
+
+@app.get("/health")
+async def health_check():
+    """헬스 체크 엔드포인트"""
+    return {
+        "status": "healthy",
+        "service": "aims-rag-api",
+        "version": VERSION_INFO["fullVersion"],
+        "versionInfo": VERSION_INFO
+    }
+
 
 @app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):

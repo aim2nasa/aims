@@ -14,6 +14,25 @@ LOG_FILE="$LOG_DIR/api.log"
 # 로그 디렉토리 생성
 mkdir -p "$LOG_DIR"
 
+# 버전 정보 가져오기
+GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+VERSION=$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "0.0.0")
+
+echo "========================================="
+echo "  Annual Report API 배포"
+echo "  Version: v${VERSION} (${GIT_HASH})"
+echo "  Build Time: ${BUILD_TIME}"
+echo "========================================="
+
+# 빌드 정보 파일 생성
+cat > "$SCRIPT_DIR/_build_info.json" << EOF
+{
+  "gitHash": "${GIT_HASH}",
+  "buildTime": "${BUILD_TIME}"
+}
+EOF
+
 # 1. 기존 프로세스 중지
 echo "🚫 기존 프로세스 중지..."
 pkill -f "python.*$MAIN_PY" 2>/dev/null && echo "   기존 프로세스 종료됨" || echo "   실행 중인 프로세스 없음"
@@ -52,7 +71,7 @@ cd "$SCRIPT_DIR"
 nohup $VENV_PYTHON $MAIN_PY >> "$LOG_FILE" 2>&1 &
 PID=$!
 
-echo "✅ Annual Report API 재배포 완료"
+echo "✅ Annual Report API 배포 완료: v${VERSION} (${GIT_HASH})"
 echo ""
 echo "📊 프로세스 정보:"
 echo "  PID: $PID"

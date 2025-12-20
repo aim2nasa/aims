@@ -1,6 +1,14 @@
 FROM node:18-slim
 
+# 빌드 시 주입되는 버전 정보
+ARG GIT_HASH=dev
+ARG BUILD_TIME=unknown
+
 WORKDIR /app
+
+# 버전 정보를 환경변수로 설정
+ENV GIT_HASH=${GIT_HASH}
+ENV BUILD_TIME=${BUILD_TIME}
 
 # sqlite3 및 ClamAV 설치
 # clamdscan은 호스트의 clamd 데몬에 소켓으로 연결하여 스캔

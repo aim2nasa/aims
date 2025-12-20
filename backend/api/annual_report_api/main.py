@@ -327,13 +327,15 @@ async def health_check():
             "status": "healthy",
             "database": db_status,
             "openai": openai_status,
-            "version": settings.API_VERSION
+            "version": settings.API_VERSION_INFO.get("fullVersion"),
+            "versionInfo": settings.API_VERSION_INFO
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {
             "status": "unhealthy",
-            "error": str(e)
+            "error": str(e),
+            "version": settings.API_VERSION_INFO.get("fullVersion")
         }
 
 # 라우터 등록
