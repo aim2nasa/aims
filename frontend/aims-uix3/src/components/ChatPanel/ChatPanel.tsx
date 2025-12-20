@@ -90,6 +90,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages, currentResponse, scrollToBottom]);
 
+  // 패널 열릴 때 입력창에 자동 포커스
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 애니메이션 완료 후 포커스 (300ms transition)
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 320);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
   // 입력창 자동 높이 조절
   const adjustTextareaHeight = useCallback(() => {
     const textarea = inputRef.current;

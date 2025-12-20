@@ -209,14 +209,14 @@
 }
 
 .chat-panel__message--user .chat-panel__message-content {
-  background: var(--color-accent);
-  color: white;
+  background: #007AFF;
+  color: #ffffff;
   border-bottom-right-radius: 4px;
 }
 
 .chat-panel__message--assistant .chat-panel__message-content {
   background: rgba(255, 255, 255, 0.85);
-  color: var(--color-text-primary);
+  color: #1a1a1a;
   border: 1px solid rgba(139, 92, 246, 0.12);
   border-bottom-left-radius: 4px;
 }
@@ -322,7 +322,7 @@
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.9);
-  color: var(--color-text-primary);
+  color: #1a1a1a;
   resize: none;
   min-height: 40px;
   max-height: 120px;
@@ -372,6 +372,7 @@ html[data-theme="dark"] .chat-panel__header {
 html[data-theme="dark"] .chat-panel__message--assistant .chat-panel__message-content {
   background: rgba(30, 26, 46, 0.9);
   border-color: rgba(139, 92, 246, 0.15);
+  color: #f0f0f0;
 }
 
 html[data-theme="dark"] .chat-panel__input-area {
@@ -382,6 +383,7 @@ html[data-theme="dark"] .chat-panel__input-area {
 html[data-theme="dark"] .chat-panel__input {
   background: rgba(21, 18, 32, 0.9);
   border-color: rgba(139, 92, 246, 0.2);
+  color: #f0f0f0;
 }
 
 html[data-theme="dark"] .chat-panel__input:focus {
