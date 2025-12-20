@@ -92,7 +92,26 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 ```
 
-### 10. 🔴 데이터 중복 금지 (Single Source of Truth)
+### 10. 🚀 전체 배포 (Full Deploy)
+**요청 방법**: `"전체 배포"` 또는 `"deploy all"`
+
+사용자가 위 명령을 요청하면 아래 작업을 **순서대로 자동 수행**:
+
+| 단계 | 작업 | 명령어 |
+|------|------|--------|
+| 1 | tars Git 정리 | `ssh tars 'cd ~/aims && git checkout -- . && git clean -fd'` |
+| 2 | tars Pull | `ssh tars 'cd ~/aims && git pull'` |
+| 3 | aims_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'` |
+| 4 | aims_rag_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_rag_api && ./deploy_aims_rag_api.sh'` |
+| 5 | annual_report_api 배포 | `ssh tars 'cd ~/aims/backend/api/annual_report_api && ./deploy_annual_report_api.sh'` |
+| 6 | pdf_proxy 배포 | `ssh tars 'cd ~/aims/backend/api/pdf_proxy && ./deploy_pdf_proxy.sh'` |
+| 7 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
+
+**주의사항:**
+- 각 단계 실패 시 즉시 중단하고 사용자에게 보고
+- 모든 배포 스크립트는 서버에서 실행 (직접 pm2/uvicorn 실행 금지)
+
+### 11. 🔴 데이터 중복 금지 (Single Source of Truth)
 **동일한 관계/데이터를 두 곳에 저장하지 않는다!**
 
 | 원칙 | 설명 |
