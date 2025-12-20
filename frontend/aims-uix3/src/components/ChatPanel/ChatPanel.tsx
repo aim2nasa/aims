@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import Button from '@/shared/ui/Button';
+import Tooltip from '@/shared/ui/Tooltip';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import './ChatPanel.css';
 
@@ -282,38 +283,50 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
         </div>
         <div className="chat-panel__header-actions">
           {/* 이전 대화 목록 */}
-          <button
-            className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
-            onClick={() => setShowSessionList(!showSessionList)}
-            title="이전 대화"
-          >
-            <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} />
-          </button>
+          <Tooltip content="이전 대화">
+            <button
+              type="button"
+              className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
+              onClick={() => setShowSessionList(!showSessionList)}
+              aria-label="이전 대화"
+            >
+              <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} />
+            </button>
+          </Tooltip>
           {/* 새 대화 */}
-          <button
-            className="chat-panel__header-btn"
-            onClick={handleNewChat}
-            title="새 대화"
-          >
-            <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} />
-          </button>
+          <Tooltip content="새 대화">
+            <button
+              type="button"
+              className="chat-panel__header-btn"
+              onClick={handleNewChat}
+              aria-label="새 대화"
+            >
+              <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} />
+            </button>
+          </Tooltip>
           {/* 삭제 */}
           {messages.length > 0 && (
-            <button
-              className="chat-panel__header-btn"
-              onClick={handleClear}
-              title="대화 초기화"
-            >
-              <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} />
-            </button>
+            <Tooltip content="대화 초기화">
+              <button
+                type="button"
+                className="chat-panel__header-btn"
+                onClick={handleClear}
+                aria-label="대화 초기화"
+              >
+                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} />
+              </button>
+            </Tooltip>
           )}
-          <button
-            className="chat-panel__header-btn chat-panel__close"
-            onClick={onClose}
-            title="닫기"
-          >
-            <SFSymbol name="xmark" size={SFSymbolSize.FOOTNOTE} />
-          </button>
+          <Tooltip content="닫기">
+            <button
+              type="button"
+              className="chat-panel__header-btn chat-panel__close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <SFSymbol name="xmark" size={SFSymbolSize.FOOTNOTE} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
