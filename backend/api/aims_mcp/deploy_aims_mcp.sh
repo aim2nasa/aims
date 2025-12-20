@@ -12,13 +12,17 @@ echo "=========================================="
 echo "AIMS MCP Server 배포 시작"
 echo "=========================================="
 
-# 1. 의존성 설치
+# 1. 의존성 설치 (devDependencies 포함 - 빌드에 필요)
 echo "[1/4] 의존성 설치..."
-npm install --production
+npm install
 
 # 2. TypeScript 빌드
 echo "[2/4] TypeScript 빌드..."
 npm run build
+
+# 3. devDependencies 제거 (프로덕션 최적화)
+echo "[2.5/4] 프로덕션 최적화..."
+npm prune --omit=dev
 
 # 3. 환경변수 확인
 if [ ! -f .env ]; then
