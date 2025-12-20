@@ -231,7 +231,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
         {/* AI 채팅 버튼 - 항상 표시 */}
         {onChatToggle && (
-          <Tooltip content={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅'}>
+          <Tooltip content={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅'} placement="bottom">
             <button
               type="button"
               onClick={onChatToggle}
