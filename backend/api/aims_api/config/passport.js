@@ -20,6 +20,8 @@ module.exports = function(db) {
   const kakaoVerifyCallback = async (accessToken, refreshToken, profile, done) => {
     try {
       const kakaoId = profile.id;
+      // 카카오에서 제공하는 정보: 닉네임, 이메일, 프로필 사진
+      const name = profile._json.properties?.nickname || null;
       const email = profile._json.kakao_account?.email || null;
       const avatarUrl = profile._json.properties?.profile_image || null;
 
@@ -27,7 +29,7 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ kakaoId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트 (avatarUrl은 사용자가 직접 설정한 것 유지)
+        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
         await usersCollection.updateOne(
           { kakaoId },
           {
@@ -38,14 +40,15 @@ module.exports = function(db) {
         );
         user = await usersCollection.findOne({ kakaoId });
       } else {
-        // 새 사용자 생성 (설계안 준수)
+        // 새 사용자 생성 (소셜 정보는 oauthProfile에 보관, 적용은 별도 처리)
         const newUser = {
           kakaoId,
           naverId: null,
           googleId: null,
-          name: null,  // 프로필 설정에서 입력
-          email,
-          avatarUrl,
+          name: null,
+          email: null,
+          avatarUrl: null,
+          oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'kakao',
           hasOcrPermission: false,  // 🆕 OCR 권한 (기본값: 불가)
@@ -94,6 +97,8 @@ module.exports = function(db) {
   const naverVerifyCallback = async (accessToken, refreshToken, profile, done) => {
     try {
       const naverId = profile.id;
+      // 네이버에서 제공하는 정보: 이름, 이메일, 프로필 사진
+      const name = profile.name || profile.nickname || null;
       const email = profile.email || null;
       const avatarUrl = profile.profileImage || null;
 
@@ -101,7 +106,7 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ naverId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트
+        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
         await usersCollection.updateOne(
           { naverId },
           {
@@ -112,14 +117,15 @@ module.exports = function(db) {
         );
         user = await usersCollection.findOne({ naverId });
       } else {
-        // 새 사용자 생성
+        // 새 사용자 생성 (소셜 정보는 oauthProfile에 보관, 적용은 별도 처리)
         const newUser = {
           kakaoId: null,
           naverId,
           googleId: null,
-          name: null,  // 프로필 설정에서 입력
-          email,
-          avatarUrl,
+          name: null,
+          email: null,
+          avatarUrl: null,
+          oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'naver',
           hasOcrPermission: false,
@@ -168,6 +174,8 @@ module.exports = function(db) {
   const googleVerifyCallback = async (accessToken, refreshToken, profile, done) => {
     try {
       const googleId = profile.id;
+      // 구글에서 제공하는 정보: 이름, 이메일, 프로필 사진
+      const name = profile.displayName || null;
       const email = profile.emails?.[0]?.value || null;
       const avatarUrl = profile.photos?.[0]?.value || null;
 
@@ -175,7 +183,7 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ googleId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트
+        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
         await usersCollection.updateOne(
           { googleId },
           {
@@ -186,14 +194,15 @@ module.exports = function(db) {
         );
         user = await usersCollection.findOne({ googleId });
       } else {
-        // 새 사용자 생성
+        // 새 사용자 생성 (소셜 정보는 oauthProfile에 보관, 적용은 별도 처리)
         const newUser = {
           kakaoId: null,
           naverId: null,
           googleId,
-          name: null,  // 프로필 설정에서 입력
-          email,
-          avatarUrl,
+          name: null,
+          email: null,
+          avatarUrl: null,
+          oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'google',
           hasOcrPermission: false,
