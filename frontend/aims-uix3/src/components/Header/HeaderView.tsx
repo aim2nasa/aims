@@ -235,16 +235,42 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             <button
               type="button"
               onClick={onChatToggle}
-              className={`header-control-button header-chat-button ${isChatOpen ? 'header-chat-button--active' : ''}`}
+              className={`header-chat-button ${isChatOpen ? 'header-chat-button--active' : ''}`}
               aria-label={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅 열기'}
               aria-pressed={isChatOpen === true}
             >
-              <SFSymbol
-                name={isChatOpen ? 'bubble.left.fill' : 'bubble.left'}
-                size={SFSymbolSize.CALLOUT}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative={true}
-              />
+              <span className="header-chat-icon">
+  {/* AI 말풍선 커스텀 아이콘 */}
+                <svg
+                  className="header-chat-ai-icon"
+                  viewBox="0 0 36 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  {/* 말풍선 - 하나의 통합된 경로 */}
+                  <path
+                    d="M8 2C4.68629 2 2 4.68629 2 8V14C2 17.3137 4.68629 20 8 20H9V24L15 20H28C31.3137 20 34 17.3137 34 14V8C34 4.68629 31.3137 2 28 2H8Z"
+                    fill={isChatOpen ? 'var(--color-icon-purple)' : 'transparent'}
+                    stroke="var(--color-icon-purple)"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  {/* AI 텍스트 */}
+                  <text
+                    x="18"
+                    y="12"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={isChatOpen ? 'white' : 'var(--color-icon-purple)'}
+                    fontSize="12"
+                    fontWeight="800"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    AI
+                  </text>
+                </svg>
+              </span>
             </button>
           </Tooltip>
         )}
