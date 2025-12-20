@@ -17,6 +17,7 @@ const { generateToken, authenticateJWT, authenticateJWTorAPIKey, authenticateJWT
 const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
+const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 
 const app = express();
@@ -8421,6 +8422,11 @@ MongoClient.connect(MONGO_URI)
       console.error('[Server] ActivityLogger 초기화 실패:', err.message);
     });
 
+    // ChatHistoryService 초기화
+    chatHistoryService.initialize(analyticsDb).catch(err => {
+      console.error('[Server] ChatHistoryService 초기화 실패:', err.message);
+    });
+
     // Passport 초기화
     require('./config/passport')(db);
     app.use(passport.initialize());
@@ -8682,12 +8688,12 @@ app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
 
 /**
  * AI 채팅 SSE 엔드포인트
- * OpenAI GPT-4o + MCP 연동
+ * OpenAI GPT-4o + MCP 연동 + 히스토리 저장
  * @route POST /api/chat
  */
 app.post('/api/chat', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
-  const { messages } = req.body;
+  const { messages, session_id: requestSessionId } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({
@@ -8704,13 +8710,77 @@ app.post('/api/chat', authenticateJWT, async (req, res) => {
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
-  console.log(`[Chat] 채팅 시작 - userId: ${userId}, messages: ${messages.length}개`);
+  // 세션 관리: 없으면 새로 생성
+  let sessionId = requestSessionId;
+  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+
+  try {
+    if (!sessionId && lastUserMessage) {
+      // 새 세션 생성
+      const newSession = await chatHistoryService.createSession(userId, lastUserMessage.content);
+      sessionId = newSession.session_id;
+      // 세션 ID 전송
+      res.write(`data: ${JSON.stringify({ type: 'session', session_id: sessionId })}\n\n`);
+    }
+
+    // 사용자 메시지 저장
+    if (sessionId && lastUserMessage) {
+      await chatHistoryService.addMessage(
+        sessionId,
+        userId,
+        'user',
+        lastUserMessage.content
+      );
+    }
+  } catch (historyError) {
+    console.error('[Chat] 히스토리 저장 오류:', historyError.message);
+    // 히스토리 저장 실패해도 채팅은 계속
+  }
+
+  console.log(`[Chat] 채팅 시작 - userId: ${userId}, sessionId: ${sessionId || 'none'}, messages: ${messages.length}개`);
 
   try {
     const { streamChatResponse } = require('./lib/chatService');
 
+    let fullResponse = '';
+    let usage = null;
+    const toolsUsed = [];
+
     for await (const event of streamChatResponse(messages, userId, analyticsDb)) {
+      // 응답 내용 수집
+      if (event.type === 'content') {
+        fullResponse += event.content;
+      }
+      if (event.type === 'tool_calling') {
+        toolsUsed.push(event.name);
+      }
+      if (event.type === 'done') {
+        usage = event.usage;
+      }
+
       res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+
+    // 어시스턴트 응답 저장
+    if (sessionId && fullResponse) {
+      try {
+        await chatHistoryService.addMessage(
+          sessionId,
+          userId,
+          'assistant',
+          fullResponse,
+          {
+            tokens: usage ? {
+              prompt: usage.prompt_tokens,
+              completion: usage.completion_tokens,
+              total: usage.total_tokens
+            } : null,
+            tools_used: toolsUsed
+          }
+        );
+      } catch (saveError) {
+        console.error('[Chat] 응답 저장 오류:', saveError.message);
+      }
     }
 
     res.end();
@@ -8732,6 +8802,125 @@ app.get('/api/chat/tools', authenticateJWT, async (req, res) => {
     res.json({ success: true, tools, count: tools.length });
   } catch (error) {
     console.error('[Chat] Tools 조회 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ==================== 채팅 히스토리 API ====================
+
+/**
+ * 채팅 세션 목록 조회
+ * @route GET /api/chat/sessions
+ */
+app.get('/api/chat/sessions', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
+
+  try {
+    const result = await chatHistoryService.getSessionList(userId, page, limit);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('[Chat] 세션 목록 조회 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 채팅 세션 메시지 조회
+ * @route GET /api/chat/sessions/:sessionId
+ */
+app.get('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  const { sessionId } = req.params;
+
+  try {
+    const result = await chatHistoryService.getSessionMessages(sessionId, userId);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error: '세션을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('[Chat] 세션 메시지 조회 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 채팅 세션 삭제
+ * @route DELETE /api/chat/sessions/:sessionId
+ */
+app.delete('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  const { sessionId } = req.params;
+
+  try {
+    const deleted = await chatHistoryService.deleteSession(sessionId, userId);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        error: '세션을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({ success: true, message: '세션이 삭제되었습니다.' });
+  } catch (error) {
+    console.error('[Chat] 세션 삭제 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 채팅 세션 제목 수정
+ * @route PATCH /api/chat/sessions/:sessionId
+ */
+app.patch('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  const { sessionId } = req.params;
+  const { title } = req.body;
+
+  if (!title || typeof title !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: '제목(title)이 필요합니다.'
+    });
+  }
+
+  try {
+    const updated = await chatHistoryService.updateSessionTitle(sessionId, userId, title);
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        error: '세션을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({ success: true, message: '제목이 수정되었습니다.' });
+  } catch (error) {
+    console.error('[Chat] 세션 제목 수정 오류:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 사용자 채팅 통계 조회
+ * @route GET /api/chat/stats
+ */
+app.get('/api/chat/stats', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const stats = await chatHistoryService.getUserStats(userId);
+    res.json({ success: true, stats });
+  } catch (error) {
+    console.error('[Chat] 통계 조회 오류:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

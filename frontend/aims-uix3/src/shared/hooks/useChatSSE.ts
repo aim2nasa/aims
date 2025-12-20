@@ -19,12 +19,13 @@ export interface ChatMessage {
  * SSE 이벤트 타입
  */
 export interface ChatEvent {
-  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error';
+  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error' | 'session';
   content?: string;
   tools?: string[];
   name?: string;
   success?: boolean;
   error?: string;
+  session_id?: string;
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -33,11 +34,31 @@ export interface ChatEvent {
 }
 
 /**
+ * 메시지 전송 옵션
+ */
+export interface SendMessageOptions {
+  /** 기존 세션 ID (없으면 새 세션 생성) */
+  sessionId?: string;
+  /** 청크 콜백 */
+  onChunk?: (event: ChatEvent) => void;
+}
+
+/**
+ * 메시지 전송 결과
+ */
+export interface SendMessageResult {
+  /** 응답 텍스트 */
+  response: string;
+  /** 세션 ID */
+  sessionId: string | null;
+}
+
+/**
  * useChatSSE 반환 타입
  */
 export interface UseChatSSEReturn {
-  /** 메시지 전송 */
-  sendMessage: (messages: ChatMessage[], onChunk?: (event: ChatEvent) => void) => Promise<string>;
+  /** 메시지 전송 (세션 ID 지원) */
+  sendMessage: (messages: ChatMessage[], options?: SendMessageOptions) => Promise<SendMessageResult>;
   /** 요청 중단 */
   abort: () => void;
   /** 로딩 상태 */
@@ -48,6 +69,8 @@ export interface UseChatSSEReturn {
   activeTools: string[];
   /** 마지막 사용량 정보 */
   lastUsage: ChatEvent['usage'] | null;
+  /** 현재 세션 ID */
+  currentSessionId: string | null;
 }
 
 /**
@@ -70,6 +93,7 @@ export function useChatSSE(): UseChatSSEReturn {
   const [currentResponse, setCurrentResponse] = useState('');
   const [activeTools, setActiveTools] = useState<string[]>([]);
   const [lastUsage, setLastUsage] = useState<ChatEvent['usage'] | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   /**
@@ -100,12 +124,14 @@ export function useChatSSE(): UseChatSSEReturn {
    */
   const sendMessage = useCallback(async (
     messages: ChatMessage[],
-    onChunk?: (event: ChatEvent) => void
-  ): Promise<string> => {
+    options?: SendMessageOptions
+  ): Promise<SendMessageResult> => {
     const token = getAuthToken();
     if (!token) {
       throw new Error('인증이 필요합니다. 다시 로그인해주세요.');
     }
+
+    const { sessionId, onChunk } = options || {};
 
     // 상태 초기화
     setIsLoading(true);
@@ -117,6 +143,7 @@ export function useChatSSE(): UseChatSSEReturn {
     abortControllerRef.current = new AbortController();
 
     let fullResponse = '';
+    let resultSessionId: string | null = sessionId || null;
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/chat`, {
@@ -125,7 +152,10 @@ export function useChatSSE(): UseChatSSEReturn {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({
+          messages,
+          session_id: sessionId
+        }),
         signal: abortControllerRef.current.signal
       });
 
@@ -153,6 +183,14 @@ export function useChatSSE(): UseChatSSEReturn {
           onChunk?.(event);
 
           switch (event.type) {
+            case 'session':
+              // 새 세션 ID 수신
+              if (event.session_id) {
+                resultSessionId = event.session_id;
+                setCurrentSessionId(event.session_id);
+              }
+              break;
+
             case 'content':
               if (event.content) {
                 fullResponse += event.content;
@@ -187,11 +225,11 @@ export function useChatSSE(): UseChatSSEReturn {
         }
       }
 
-      return fullResponse;
+      return { response: fullResponse, sessionId: resultSessionId };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         console.log('[useChatSSE] 요청이 중단되었습니다.');
-        return fullResponse;
+        return { response: fullResponse, sessionId: resultSessionId };
       }
       throw error;
     } finally {
@@ -217,7 +255,8 @@ export function useChatSSE(): UseChatSSEReturn {
     isLoading,
     currentResponse,
     activeTools,
-    lastUsage
+    lastUsage,
+    currentSessionId
   };
 }
 

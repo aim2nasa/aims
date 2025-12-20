@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
+import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import Button from '@/shared/ui/Button';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import './ChatPanel.css';
@@ -38,6 +39,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showSessionList, setShowSessionList] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -49,6 +52,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     currentResponse,
     activeTools
   } = useChatSSE();
+
+  const {
+    sessions,
+    isLoadingSessions,
+    isLoadingMessages,
+    fetchSessions,
+    loadSession,
+    deleteSession
+  } = useChatHistory();
+
+  // 패널 열릴 때 세션 목록 로드
+  useEffect(() => {
+    if (isOpen) {
+      fetchSessions(1, 10);
+    }
+  }, [isOpen, fetchSessions]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -139,15 +158,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
         content: m.content
       }));
 
-      // 메시지 전송 및 응답 받기
-      const response = await sendMessage(chatMessages);
+      // 메시지 전송 및 응답 받기 (세션 ID 포함)
+      const result = await sendMessage(chatMessages, { sessionId: sessionId || undefined });
+
+      // 새 세션 ID 저장
+      if (result.sessionId && !sessionId) {
+        setSessionId(result.sessionId);
+      }
 
       // 어시스턴트 응답 추가
-      if (response) {
+      if (result.response) {
         setMessages(prev => [...prev, {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: response,
+          content: result.response,
           timestamp: new Date()
         }]);
       }
@@ -163,6 +187,44 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // 세션 선택
+  const handleSelectSession = async (selectedSession: ChatSession) => {
+    setShowSessionList(false);
+    const detail = await loadSession(selectedSession.session_id);
+
+    if (detail) {
+      setSessionId(selectedSession.session_id);
+      setMessages(detail.messages.map((m, idx) => ({
+        id: `${m.role}-${idx}-${Date.now()}`,
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.timestamp)
+      })));
+    }
+  };
+
+  // 새 대화 시작
+  const handleNewChat = () => {
+    if (isLoading) {
+      abort();
+    }
+    setSessionId(null);
+    setMessages([]);
+    setInput('');
+    setShowSessionList(false);
+    // 세션 목록 새로고침
+    fetchSessions(1, 10);
+  };
+
+  // 세션 삭제
+  const handleDeleteSession = async (e: React.MouseEvent, targetSessionId: string) => {
+    e.stopPropagation();
+    const confirmed = await deleteSession(targetSessionId);
+    if (confirmed && sessionId === targetSessionId) {
+      handleNewChat();
+    }
+  };
+
   // Enter 키 처리 (Shift+Enter는 줄바꿈)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -171,14 +233,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  // 대화 초기화
-  const handleClear = () => {
-    if (isLoading) {
-      abort();
-    }
-    setMessages([]);
-    setInput('');
-  };
+  // 대화 초기화 (= 새 대화)
+  const handleClear = handleNewChat;
 
   return (
     <div
@@ -225,6 +281,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           <span>AI 어시스턴트</span>
         </div>
         <div className="chat-panel__header-actions">
+          {/* 이전 대화 목록 */}
+          <button
+            className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
+            onClick={() => setShowSessionList(!showSessionList)}
+            title="이전 대화"
+          >
+            <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} />
+          </button>
+          {/* 새 대화 */}
+          <button
+            className="chat-panel__header-btn"
+            onClick={handleNewChat}
+            title="새 대화"
+          >
+            <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} />
+          </button>
+          {/* 삭제 */}
           {messages.length > 0 && (
             <button
               className="chat-panel__header-btn"
@@ -243,6 +316,53 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
       </div>
+
+      {/* 세션 목록 드롭다운 */}
+      {showSessionList && (
+        <div className="chat-panel__session-list">
+          <div className="chat-panel__session-list-header">
+            <span>이전 대화</span>
+            {isLoadingSessions && <span className="chat-panel__session-loading">...</span>}
+          </div>
+          {sessions.length === 0 ? (
+            <div className="chat-panel__session-empty">저장된 대화가 없습니다</div>
+          ) : (
+            <div className="chat-panel__session-items">
+              {sessions.map((s) => (
+                <div
+                  key={s.session_id}
+                  className={`chat-panel__session-item ${sessionId === s.session_id ? 'chat-panel__session-item--active' : ''}`}
+                  onClick={() => handleSelectSession(s)}
+                >
+                  <div className="chat-panel__session-info">
+                    <div className="chat-panel__session-title">{s.title}</div>
+                    <div className="chat-panel__session-meta">
+                      {s.message_count}개 메시지 · {new Date(s.updated_at).toLocaleDateString('ko-KR')}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="chat-panel__session-delete"
+                    onClick={(e) => handleDeleteSession(e, s.session_id)}
+                    title="삭제"
+                  >
+                    <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 메시지 로딩 오버레이 */}
+      {isLoadingMessages && (
+        <div className="chat-panel__loading-overlay">
+          <span className="chat-panel__loading-dot" />
+          <span className="chat-panel__loading-dot" />
+          <span className="chat-panel__loading-dot" />
+        </div>
+      )}
 
       {/* Messages */}
       <div className="chat-panel__messages">

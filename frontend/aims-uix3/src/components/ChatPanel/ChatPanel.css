@@ -136,6 +136,126 @@
   color: var(--color-destructive);
 }
 
+.chat-panel__header-btn--active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8B5CF6;
+}
+
+/* ==================== Session List ==================== */
+.chat-panel__session-list {
+  border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(255, 255, 255, 0.5);
+  max-height: 280px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.chat-panel__session-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.chat-panel__session-loading {
+  color: var(--color-text-tertiary);
+}
+
+.chat-panel__session-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-tertiary);
+}
+
+.chat-panel__session-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel__session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.05);
+}
+
+.chat-panel__session-item:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.chat-panel__session-item--active {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.chat-panel__session-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-panel__session-title {
+  font-size: var(--font-size-caption-1);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-panel__session-meta {
+  font-size: var(--font-size-caption-2);
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.chat-panel__session-delete {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.chat-panel__session-item:hover .chat-panel__session-delete {
+  opacity: 1;
+}
+
+.chat-panel__session-delete:hover {
+  background: var(--color-destructive-bg);
+  color: var(--color-destructive);
+}
+
+/* Loading Overlay */
+.chat-panel__loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 5;
+}
+
 /* ==================== Messages ==================== */
 .chat-panel__messages {
   flex: 1;
@@ -394,6 +514,31 @@ html[data-theme="dark"] .chat-panel__input:focus {
 html[data-theme="dark"] .chat-panel__tool-indicator {
   background: rgba(30, 26, 46, 0.9);
   border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__session-list {
+  background: rgba(26, 22, 37, 0.9);
+  border-bottom-color: rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__session-list-header {
+  border-bottom-color: rgba(139, 92, 246, 0.1);
+}
+
+html[data-theme="dark"] .chat-panel__session-item {
+  border-bottom-color: rgba(139, 92, 246, 0.05);
+}
+
+html[data-theme="dark"] .chat-panel__session-item:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+html[data-theme="dark"] .chat-panel__session-item--active {
+  background: rgba(139, 92, 246, 0.18);
+}
+
+html[data-theme="dark"] .chat-panel__loading-overlay {
+  background: rgba(26, 22, 37, 0.9);
 }
 
 /* ==================== Responsive ==================== */
