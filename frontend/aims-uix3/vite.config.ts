@@ -54,8 +54,14 @@ export default defineConfig({
         target: 'http://tars.giize.com:3010',
         changeOrigin: true,
         configure: (proxy) => {
+          // SSE 스트리밍을 위한 버퍼링 비활성화
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-cache';
+            proxyRes.headers['x-accel-buffering'] = 'no';
+          });
           proxy.on('proxyReq', (proxyReq) => {
             proxyReq.setHeader('Connection', 'keep-alive');
+            proxyReq.setHeader('Cache-Control', 'no-cache');
           });
         }
       },
