@@ -44,6 +44,10 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null)
   const [infoTab, setInfoTab] = useState<'summary' | 'snippet'>('summary')
   const [leftPanelWidth, setLeftPanelWidth] = useState(320)
+  // 🍎 프리뷰 관련 상태
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewType, setPreviewType] = useState<'pdf' | 'image' | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
   // 🍎 검색 입력 ref
   const inputRef = useRef<HTMLInputElement>(null)
@@ -73,9 +77,14 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       setError(null)
       setHasSearched(false)
       setSelectedItem(null)
+      setPreviewUrl(null)
+      setPreviewType(null)
       shouldAutoSearch.current = false
     }
   }, [isOpen])
+
+  // 🍎 선택된 문서가 변경되면 프리뷰 정보 자동 로드
+  const selectedItemRef = useRef<SearchResultItem | null>(null)
 
   // 🍎 초기 검색어로 자동 검색 실행
   useEffect(() => {
@@ -87,6 +96,8 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
         setError(null)
         setHasSearched(true)
         setSelectedItem(null)
+        setPreviewUrl(null)
+        setPreviewType(null)
 
         try {
           const response = await SearchService.searchDocuments({
@@ -98,7 +109,9 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
 
           setResults(response.search_results || [])
           if (response.search_results && response.search_results.length > 0) {
-            setSelectedItem(response.search_results[0])
+            const firstItem = response.search_results[0]
+            setSelectedItem(firstItem)
+            selectedItemRef.current = firstItem
           }
         } catch (err) {
           console.error('[DocumentContentSearchModal] 자동 검색 실패:', err)
@@ -160,6 +173,8 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     setError(null)
     setHasSearched(true)
     setSelectedItem(null)
+    setPreviewUrl(null)
+    setPreviewType(null)
 
     try {
       const response = await SearchService.searchDocuments({
@@ -172,7 +187,9 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       setResults(response.search_results || [])
       // 첫 번째 결과 자동 선택
       if (response.search_results && response.search_results.length > 0) {
-        setSelectedItem(response.search_results[0])
+        const firstItem = response.search_results[0]
+        setSelectedItem(firstItem)
+        selectedItemRef.current = firstItem
       }
     } catch (err) {
       console.error('[DocumentContentSearchModal] 검색 실패:', err)
@@ -248,6 +265,114 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     const fileName = getFileName(item).toLowerCase()
     return mimeType.includes('pdf') || fileName.endsWith('.pdf')
   }
+
+  // 🍎 이미지 여부 확인
+  const isImage = (item: SearchResultItem): boolean => {
+    const mimeType = getMimeType(item)
+    const fileName = getFileName(item).toLowerCase()
+    return mimeType.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/.test(fileName)
+  }
+
+  // 🍎 프리뷰 가능 여부 (PDF/이미지/변환된 PDF)
+  const canPreview = (item: SearchResultItem): boolean => {
+    return isPdf(item) || isImage(item)
+  }
+
+  // 🍎 프리뷰 정보 가져오기 (PDF 변환 파일 포함)
+  const fetchPreviewInfo = useCallback(async (item: SearchResultItem) => {
+    const docId = getDocumentId(item)
+    if (!docId) {
+      setPreviewUrl(null)
+      setPreviewType(null)
+      return
+    }
+
+    // PDF나 이미지는 바로 프리뷰 가능
+    if (isPdf(item)) {
+      const url = getFileUrl(item)
+      setPreviewUrl(url)
+      setPreviewType('pdf')
+      return
+    }
+
+    if (isImage(item)) {
+      const filePath = SearchService.getFilePath(item)
+      const url = filePath ? resolveFileUrl(filePath) : null
+      setPreviewUrl(url || null)
+      setPreviewType('image')
+      return
+    }
+
+    // 그 외 파일은 API에서 변환된 PDF 경로 조회
+    setIsLoadingPreview(true)
+    try {
+      const userId = localStorage.getItem('aims-current-user-id') || 'tester'
+      const authData = localStorage.getItem('auth-storage')
+      const token = authData ? JSON.parse(authData).state?.token : null
+
+      const response = await fetch(`/api/documents/${docId}/status`, {
+        headers: {
+          'x-user-id': userId,
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
+      })
+
+      if (!response.ok) {
+        setPreviewUrl(null)
+        setPreviewType(null)
+        return
+      }
+
+      const data = await response.json()
+      if (data.success && data.data?.computed) {
+        const { previewFilePath, canPreview: canPrev } = data.data.computed
+
+        if (canPrev && previewFilePath) {
+          // 변환된 PDF 경로가 있으면 PDF 프록시 URL로 변환
+          const ext = (previewFilePath.split('.').pop() || '').toLowerCase()
+          if (ext === 'pdf') {
+            const originalName = getFileName(item)
+            const url = resolvePdfUrl(previewFilePath, originalName)
+            setPreviewUrl(url || null)
+            setPreviewType('pdf')
+          } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) {
+            const url = resolveFileUrl(previewFilePath)
+            setPreviewUrl(url || null)
+            setPreviewType('image')
+          } else {
+            setPreviewUrl(null)
+            setPreviewType(null)
+          }
+        } else {
+          setPreviewUrl(null)
+          setPreviewType(null)
+        }
+      } else {
+        setPreviewUrl(null)
+        setPreviewType(null)
+      }
+    } catch (err) {
+      console.error('[DocumentContentSearchModal] 프리뷰 정보 조회 실패:', err)
+      setPreviewUrl(null)
+      setPreviewType(null)
+    } finally {
+      setIsLoadingPreview(false)
+    }
+  }, [])
+
+  // 🍎 문서 선택 핸들러
+  const handleSelectItem = useCallback((item: SearchResultItem) => {
+    setSelectedItem(item)
+    void fetchPreviewInfo(item)
+  }, [fetchPreviewInfo])
+
+  // 🍎 검색 결과에서 첫 번째 문서 자동 선택 시 프리뷰 로드
+  useEffect(() => {
+    if (selectedItemRef.current && selectedItem === selectedItemRef.current) {
+      void fetchPreviewInfo(selectedItemRef.current)
+      selectedItemRef.current = null
+    }
+  }, [selectedItem, fetchPreviewInfo])
 
   // 🍎 요약 텍스트 추출
   const getSummary = (item: SearchResultItem): string => {
@@ -447,7 +572,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                         key={getDocumentId(item) || index}
                         type="button"
                         className={`doc-search-item ${isSelected ? 'doc-search-item--selected' : ''}`}
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => handleSelectItem(item)}
                       >
                         <span className={`doc-search-item__badge ${badge.className}`}>
                           {badge.label}
@@ -512,7 +637,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
               </div>
 
               {/* 🍎 탭 형식 요약/검색어 위치 */}
-              <div className={`doc-search-right__info${isPdf(selectedItem) ? ' doc-search-right__info--with-preview' : ''}`}>
+              <div className={`doc-search-right__info${(previewUrl && previewType) ? ' doc-search-right__info--with-preview' : ''}`}>
                 {/* 탭 헤더 */}
                 <div className="doc-search-right__tabs">
                   <button
@@ -541,13 +666,32 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
                 </div>
               </div>
 
-              {/* PDF 미리보기 */}
-              {isPdf(selectedItem) && getFileUrl(selectedItem) && (
+              {/* 🍎 문서 미리보기 (PDF/이미지/변환된 PDF) */}
+              {isLoadingPreview && (
+                <div className="doc-search-right__preview doc-search-right__preview--loading">
+                  <SFSymbol
+                    name="arrow.trianglehead.2.clockwise"
+                    size={SFSymbolSize.TITLE_2}
+                    animation={SFSymbolAnimation.ROTATE}
+                  />
+                  <span>프리뷰 로딩 중...</span>
+                </div>
+              )}
+              {!isLoadingPreview && previewUrl && previewType === 'pdf' && (
                 <div className="doc-search-right__preview">
                   <iframe
-                    src={getFileUrl(selectedItem) || ''}
+                    src={previewUrl}
                     className="doc-search-right__preview-iframe"
                     title={getFileName(selectedItem)}
+                  />
+                </div>
+              )}
+              {!isLoadingPreview && previewUrl && previewType === 'image' && (
+                <div className="doc-search-right__preview doc-search-right__preview--image">
+                  <img
+                    src={previewUrl}
+                    alt={getFileName(selectedItem)}
+                    className="doc-search-right__preview-image"
                   />
                 </div>
               )}
