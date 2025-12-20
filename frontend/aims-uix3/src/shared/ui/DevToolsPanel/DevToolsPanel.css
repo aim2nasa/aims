@@ -46,8 +46,8 @@
   background: var(--color-bg-secondary, #1e1e1e);
   border: 1px solid var(--color-border-primary, #333);
   border-radius: 8px;
-  padding: 12px;
-  min-width: 180px;
+  padding: 14px;
+  min-width: 280px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
@@ -95,6 +95,105 @@
 
 .dev-tools-btn-danger:hover {
   background: rgba(255, 59, 48, 0.3);
+}
+
+/* 버전 정보 섹션 */
+.dev-tools-versions {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border-primary, #333);
+}
+
+.dev-tools-versions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-primary, #007aff);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.dev-tools-refresh-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-bg-tertiary, #2a2a2a);
+  color: var(--color-text-secondary, #aaa);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dev-tools-refresh-btn:hover {
+  background: var(--color-bg-hover, #3a3a3a);
+}
+
+.dev-tools-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-tools-versions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dev-tools-version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 6px 8px;
+  background: var(--color-bg-tertiary, #2a2a2a);
+  border-radius: 6px;
+}
+
+.dev-tools-version-name {
+  color: var(--color-text-primary, #fff);
+  font-weight: 600;
+}
+
+.dev-tools-version-value {
+  color: var(--color-text-primary, #fff);
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dev-tools-version-hash {
+  color: var(--color-text-primary, #fff);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.dev-tools-version-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.dev-tools-version-status.ok {
+  background: rgba(52, 199, 89, 0.3);
+  color: #4cd964;
+}
+
+.dev-tools-version-status.error {
+  background: rgba(255, 59, 48, 0.3);
+  color: #ff6b6b;
+}
+
+.dev-tools-versions-loading {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #888);
+  text-align: center;
+  padding: 12px 0;
 }
 
 .dev-tools-info {

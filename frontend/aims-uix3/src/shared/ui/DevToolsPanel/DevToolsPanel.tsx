@@ -2,20 +2,52 @@
  * DevToolsPanel - 개발자 도구 패널
  *
  * 개발자 모드에서만 표시되는 플로팅 도구 패널
+ * - 시스템 버전 정보 표시 (프론트엔드 + 백엔드)
  * - 캐시 클리어 (localStorage, sessionStorage)
  * - 페이지 새로고침
  *
  * 위치: 화면 우측 하단 고정
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import {
+  fetchSystemVersions,
+  getFrontendVersion,
+  type SystemVersions,
+} from '@/services/versionService'
 import './DevToolsPanel.css'
 
 export function DevToolsPanel() {
   const { isDevMode } = useDevModeStore()
   const [isExpanded, setIsExpanded] = useState(false)
   const [clearing, setClearing] = useState(false)
+  const [versions, setVersions] = useState<SystemVersions | null>(null)
+  const [loadingVersions, setLoadingVersions] = useState(false)
+
+  // 버전 정보 로드
+  const loadVersions = useCallback(async () => {
+    setLoadingVersions(true)
+    try {
+      const result = await fetchSystemVersions()
+      setVersions(result)
+    } catch (error) {
+      console.error('[DevTools] 버전 정보 로드 실패:', error)
+      setVersions({
+        frontend: getFrontendVersion(),
+        backends: [],
+      })
+    } finally {
+      setLoadingVersions(false)
+    }
+  }, [])
+
+  // 패널 열릴 때 버전 로드
+  useEffect(() => {
+    if (isExpanded && !versions) {
+      loadVersions()
+    }
+  }, [isExpanded, versions, loadVersions])
 
   if (!isDevMode) return null
 
@@ -61,6 +93,59 @@ export function DevToolsPanel() {
       {isExpanded && (
         <div className="dev-tools-content">
           <div className="dev-tools-header">DEV TOOLS</div>
+
+          {/* 버전 정보 섹션 */}
+          <div className="dev-tools-versions">
+            <div className="dev-tools-versions-header">
+              SYSTEM VERSIONS
+              <button
+                type="button"
+                className="dev-tools-refresh-btn"
+                onClick={loadVersions}
+                disabled={loadingVersions}
+                title="버전 정보 새로고침"
+              >
+                {loadingVersions ? '...' : '↻'}
+              </button>
+            </div>
+
+            {versions ? (
+              <div className="dev-tools-versions-list">
+                {/* 프론트엔드 */}
+                <div className="dev-tools-version-item">
+                  <span className="dev-tools-version-name">Frontend</span>
+                  <span className="dev-tools-version-value">
+                    v{versions.frontend.version}
+                    <span className="dev-tools-version-hash">
+                      ({versions.frontend.gitHash?.substring(0, 7)})
+                    </span>
+                  </span>
+                </div>
+
+                {/* 백엔드 서비스들 */}
+                {versions.backends.map((service) => (
+                  <div key={service.name} className="dev-tools-version-item">
+                    <span className="dev-tools-version-name">{service.displayName}</span>
+                    <span className="dev-tools-version-value">
+                      {service.status === 'ok' ? (
+                        <>
+                          v{service.version}
+                          <span className="dev-tools-version-hash">
+                            ({service.gitHash?.substring(0, 7)})
+                          </span>
+                          <span className="dev-tools-version-status ok">OK</span>
+                        </>
+                      ) : (
+                        <span className="dev-tools-version-status error">ERR</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : loadingVersions ? (
+              <div className="dev-tools-versions-loading">Loading...</div>
+            ) : null}
+          </div>
 
           <div className="dev-tools-buttons">
             {/* 캐시 클리어 버튼 */}

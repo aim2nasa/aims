@@ -2300,6 +2300,84 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+/**
+ * 시스템 버전 정보 API
+ * 각 백엔드 서비스의 /health 엔드포인트를 localhost로 호출하여 버전 정보 수집
+ * 개발자 도구에서 전체 시스템 버전 확인용
+ */
+app.get('/api/system/versions', async (req, res) => {
+  const fs = require('fs').promises;
+  const path = require('path');
+  const http = require('http');
+
+  // 내부 서비스 health 엔드포인트 호출 헬퍼
+  const fetchHealth = (port, healthPath) => {
+    return new Promise((resolve) => {
+      const options = { hostname: 'localhost', port, path: healthPath, method: 'GET', timeout: 2000 };
+      const req = http.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { resolve(null); }
+        });
+      });
+      req.on('error', () => resolve(null));
+      req.on('timeout', () => { req.destroy(); resolve(null); });
+      req.end();
+    });
+  };
+
+  // aims_api 자체 버전 (VERSION 파일 + 환경변수)
+  let aimsApiVersion = null;
+  try {
+    aimsApiVersion = (await fs.readFile(path.join(__dirname, 'VERSION'), 'utf8')).trim();
+  } catch {}
+
+  // 다른 서비스들의 health 엔드포인트 병렬 호출
+  const [ragHealth, arHealth, pdfHealth] = await Promise.all([
+    fetchHealth(8000, '/health'),  // aims_rag_api
+    fetchHealth(8004, '/health'),  // annual_report_api
+    fetchHealth(8002, '/health'),  // pdf_proxy
+  ]);
+
+  const services = [
+    {
+      name: 'aims_api',
+      displayName: 'aims_api',
+      version: aimsApiVersion,
+      gitHash: process.env.GIT_HASH || null,
+      status: 'ok'
+    },
+    {
+      name: 'aims_rag_api',
+      displayName: 'rag_api',
+      version: ragHealth?.versionInfo?.version || null,
+      gitHash: ragHealth?.versionInfo?.gitHash || null,
+      status: ragHealth ? 'ok' : 'error'
+    },
+    {
+      name: 'annual_report_api',
+      displayName: 'ar_api',
+      version: arHealth?.versionInfo?.version || null,
+      gitHash: arHealth?.versionInfo?.gitHash || null,
+      status: arHealth ? 'ok' : 'error'
+    },
+    {
+      name: 'pdf_proxy',
+      displayName: 'pdf_proxy',
+      version: pdfHealth?.versionInfo?.version || null,
+      gitHash: pdfHealth?.versionInfo?.gitHash || null,
+      status: pdfHealth ? 'ok' : 'error'
+    },
+  ];
+
+  res.json({
+    success: true,
+    timestamp: utcNowISO(),
+    services
+  });
+});
+
 // ==================== 사용자 관리 API ====================
 
 /**
