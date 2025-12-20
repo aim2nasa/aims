@@ -354,6 +354,31 @@ export function ChatPanel() {
 
 ---
 
+## 구현 완료 보고 (2025-12-20)
+
+### 백엔드
+- ✅ `lib/chatService.js` - OpenAI GPT-4o + Function Calling + MCP 연동
+- ✅ `POST /api/chat` - SSE 스트리밍 엔드포인트
+- ✅ `tokenUsageService.js` - GPT-4o 비용 추가
+
+### 프론트엔드
+- ✅ `useChatSSE.ts` - SSE 스트리밍 훅
+- ✅ `ChatPanel/` - 슬라이드 패널 UI 컴포넌트
+- ✅ Header - AI 채팅 토글 버튼 추가
+
+### 배포
+- ✅ aims_api 배포 완료
+- ✅ aims_mcp 배포 완료 (18개 도구)
+- ✅ Frontend 배포 완료
+
+### 테스트 방법
+1. https://aims.giize.com 접속
+2. 로그인 후 Header의 채팅 버튼 클릭
+3. 채팅 패널에서 질문 입력 (예: "홍길동 고객 정보 알려줘")
+4. AI가 MCP 도구를 사용하여 DB 조회 후 응답
+
+---
+
 ## 관련 문서
 
 - [MCP_INTEGRATION.md](./MCP_INTEGRATION.md) - MCP 서버 상세
