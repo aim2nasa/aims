@@ -5,6 +5,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+interface OAuthProfile {
+  name: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+}
+
 interface User {
   _id: string;
   name: string | null;
@@ -13,6 +19,7 @@ interface User {
   role: string;
   authProvider?: string;
   profileCompleted?: boolean;
+  oauthProfile?: OAuthProfile | null;
 }
 
 interface AuthState {
@@ -60,10 +67,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage', // localStorage 키
+      // 토큰만 저장 (사용자 정보는 매번 서버에서 가져옴)
       partialize: (state) => ({
         token: state.token,
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     }
   )

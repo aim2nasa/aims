@@ -6,6 +6,12 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
+export interface OAuthProfile {
+  name: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+}
+
 export interface User {
   _id: string;
   name: string | null;
@@ -15,6 +21,7 @@ export interface User {
   authProvider?: string;
   profileCompleted?: boolean;
   hasOcrPermission?: boolean;  // 🆕 OCR 권한 (기본값: false)
+  oauthProfile?: OAuthProfile | null;  // 소셜 로그인에서 받아온 초기 프로필 정보
 }
 
 export interface AuthResponse {
@@ -98,13 +105,19 @@ export const getCurrentUser = async (token: string): Promise<User> => {
   return response.data.user;
 };
 
+export interface ProfileUpdateData {
+  name: string;
+  email?: string;
+  avatarUrl?: string | null;
+}
+
 /**
- * 프로필 업데이트 (이름 설정)
+ * 프로필 업데이트 (이름, 이메일, 프로필 사진)
  */
-export const updateProfile = async (token: string, name: string): Promise<User> => {
+export const updateProfile = async (token: string, data: ProfileUpdateData): Promise<User> => {
   const response = await axios.put<AuthResponse>(
     `${API_BASE_URL}/api/auth/profile`,
-    { name },
+    data,
     {
       headers: {
         Authorization: `Bearer ${token}`,

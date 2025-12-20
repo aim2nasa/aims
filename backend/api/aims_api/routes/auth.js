@@ -406,7 +406,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1, hasOcrPermission: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1, hasOcrPermission: 1, oauthProfile: 1 } }
       );
 
       if (!user) {
@@ -429,7 +429,8 @@ module.exports = function(db) {
           role: user.role,
           authProvider: user.authProvider,
           profileCompleted: user.profileCompleted ?? true,
-          hasOcrPermission: user.hasOcrPermission || false
+          hasOcrPermission: user.hasOcrPermission || false,
+          oauthProfile: user.oauthProfile || null  // 소셜 로그인에서 받아온 초기 프로필 정보
         }
       });
     } catch (error) {

@@ -20,21 +20,28 @@ module.exports = function(db) {
   const kakaoVerifyCallback = async (accessToken, refreshToken, profile, done) => {
     try {
       const kakaoId = profile.id;
+
+      // 디버깅: 카카오에서 받은 전체 프로필 출력
+      console.log('[Kakao OAuth] Full profile:', JSON.stringify(profile, null, 2));
+
       // 카카오에서 제공하는 정보: 닉네임, 이메일, 프로필 사진
       const name = profile._json.properties?.nickname || null;
       const email = profile._json.kakao_account?.email || null;
       const avatarUrl = profile._json.properties?.profile_image || null;
 
+      console.log('[Kakao OAuth] Extracted:', { name, email, avatarUrl });
+
       // 기존 사용자 찾기
       let user = await usersCollection.findOne({ kakaoId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
+        // 기존 사용자: lastLogin 업데이트 + oauthProfile 갱신 (사용자가 설정한 name, email, avatarUrl은 유지)
         await usersCollection.updateOne(
           { kakaoId },
           {
             $set: {
-              lastLogin: new Date()
+              lastLogin: new Date(),
+              oauthProfile: { name, email, avatarUrl }  // 소셜 로그인 정보는 항상 최신으로 갱신
             }
           }
         );
@@ -106,12 +113,13 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ naverId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
+        // 기존 사용자: lastLogin 업데이트 + oauthProfile 갱신 (사용자가 설정한 name, email, avatarUrl은 유지)
         await usersCollection.updateOne(
           { naverId },
           {
             $set: {
-              lastLogin: new Date()
+              lastLogin: new Date(),
+              oauthProfile: { name, email, avatarUrl }  // 소셜 로그인 정보는 항상 최신으로 갱신
             }
           }
         );
@@ -183,12 +191,13 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ googleId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트 (name, avatarUrl은 사용자가 직접 설정한 것 유지)
+        // 기존 사용자: lastLogin 업데이트 + oauthProfile 갱신 (사용자가 설정한 name, email, avatarUrl은 유지)
         await usersCollection.updateOne(
           { googleId },
           {
             $set: {
-              lastLogin: new Date()
+              lastLogin: new Date(),
+              oauthProfile: { name, email, avatarUrl }  // 소셜 로그인 정보는 항상 최신으로 갱신
             }
           }
         );
