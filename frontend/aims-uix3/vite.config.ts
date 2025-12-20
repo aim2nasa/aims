@@ -49,6 +49,16 @@ export default defineConfig({
           });
         }
       },
+      // AI 채팅 SSE 엔드포인트
+      '/api/chat': {
+        target: 'http://tars.giize.com:3010',
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Connection', 'keep-alive');
+          });
+        }
+      },
       // API 요청을 백엔드 서버로 프록시
       '/api': {
         target: 'http://tars.giize.com:3010',

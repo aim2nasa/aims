@@ -204,6 +204,7 @@ const personalFilesRoutes = require('./routes/personal-files-routes');
 const pdfConversionService = require('./lib/pdfConversionService');
 
 let db;
+let analyticsDb;
 let fallbackHandlersRegistered = false;
 
 // ========================================
@@ -8413,7 +8414,7 @@ MongoClient.connect(MONGO_URI)
   .then(client => {
     console.log('MongoDB 연결 성공');
     db = client.db(DB_NAME);
-    const analyticsDb = client.db(ANALYTICS_DB_NAME);
+    analyticsDb = client.db(ANALYTICS_DB_NAME);
 
     // ActivityLogger 초기화
     activityLogger.initialize(analyticsDb).catch(err => {
