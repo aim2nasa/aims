@@ -247,7 +247,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       <div
         className="chat-panel__resize-handle"
         onMouseDown={handleResizeStart}
-        title="드래그하여 너비 조절"
       />
       {/* Header */}
       <div className="chat-panel__header">
@@ -290,7 +289,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               onClick={() => setShowSessionList(!showSessionList)}
               aria-label="이전 대화"
             >
-              <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} />
+              <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} decorative />
             </button>
           </Tooltip>
           {/* 새 대화 */}
@@ -301,7 +300,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               onClick={handleNewChat}
               aria-label="새 대화"
             >
-              <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} />
+              <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
             </button>
           </Tooltip>
           {/* 삭제 */}
@@ -313,7 +312,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                 onClick={handleClear}
                 aria-label="대화 초기화"
               >
-                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} />
+                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} decorative />
               </button>
             </Tooltip>
           )}
@@ -324,7 +323,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               onClick={onClose}
               aria-label="닫기"
             >
-              <SFSymbol name="xmark" size={SFSymbolSize.FOOTNOTE} />
+              <SFSymbol name="xmark" size={SFSymbolSize.FOOTNOTE} decorative />
             </button>
           </Tooltip>
         </div>
@@ -353,14 +352,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                       {s.message_count}개 메시지 · {new Date(s.updated_at).toLocaleDateString('ko-KR')}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="chat-panel__session-delete"
-                    onClick={(e) => handleDeleteSession(e, s.session_id)}
-                    title="삭제"
-                  >
-                    <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} />
-                  </button>
+                  <Tooltip content="삭제">
+                    <button
+                      type="button"
+                      className="chat-panel__session-delete"
+                      onClick={(e) => handleDeleteSession(e, s.session_id)}
+                      aria-label="삭제"
+                    >
+                      <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} decorative />
+                    </button>
+                  </Tooltip>
                 </div>
               ))}
             </div>
@@ -385,6 +386,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               name="sparkles"
               size={SFSymbolSize.TITLE_2}
               weight={SFSymbolWeight.LIGHT}
+              decorative
             />
             <p>무엇이든 물어보세요!</p>
             <span>고객, 문서, 계약 정보를 검색할 수 있습니다.</span>
@@ -454,9 +456,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           disabled={!input.trim() || isLoading}
         >
           {isLoading ? (
-            <SFSymbol name="stop.fill" size={SFSymbolSize.CAPTION_1} />
+            <SFSymbol name="stop.fill" size={SFSymbolSize.CAPTION_1} decorative />
           ) : (
-            <SFSymbol name="arrow.up" size={SFSymbolSize.CAPTION_1} />
+            <SFSymbol name="arrow.up" size={SFSymbolSize.CAPTION_1} decorative />
           )}
         </Button>
       </form>
