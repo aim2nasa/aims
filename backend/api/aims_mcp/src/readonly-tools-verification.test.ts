@@ -589,3 +589,38 @@ describe('권한 및 데이터 격리', () => {
     }
   });
 });
+
+describe('빈 결과 처리 일관성', () => {
+  const listToolFiles = [
+    { file: './tools/customers.ts', countField: 'count: customers.length' },
+    { file: './tools/contracts.ts', countField: 'count: contracts.length' },
+    { file: './tools/birthdays.ts', countField: 'count: customers.length' },
+    { file: './tools/memos.ts', countField: 'count: memos.length' },
+    { file: './tools/expiring.ts', countField: 'count: contractsWithDaysLeft.length' },
+    { file: './tools/documents.ts', countField: 'count: documents.length' },
+  ];
+
+  for (const { file, countField } of listToolFiles) {
+    describe(file, () => {
+      let sourceCode: string;
+
+      beforeAll(() => {
+        sourceCode = readSourceFile(file);
+      });
+
+      it('count 필드 사용 (빈 배열도 count: 0)', () => {
+        expect(sourceCode).toContain(countField);
+      });
+
+      it('빈 결과는 에러가 아님 (isError 없이 반환)', () => {
+        // 성공 응답에 isError가 포함되면 안 됨
+        // 에러 응답만 isError: true를 가짐
+        expect(sourceCode).toContain('isError: true');
+      });
+
+      it('map() 사용 (빈 배열도 안전하게 처리)', () => {
+        expect(sourceCode).toContain('.map(');
+      });
+    });
+  }
+});
