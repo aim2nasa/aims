@@ -97,7 +97,7 @@ export async function handleAddMemo(args: unknown) {
       updated_at: now
     };
 
-    const result = await db.collection('customer_memos').insertOne(memo);
+    const result = await db.collection(COLLECTIONS.MEMOS).insertOne(memo);
 
     return {
       content: [{
@@ -153,13 +153,13 @@ export async function handleListMemos(args: unknown) {
       };
     }
 
-    const memos = await db.collection('customer_memos')
+    const memos = await db.collection(COLLECTIONS.MEMOS)
       .find({ customer_id: customerObjectId })
       .sort({ created_at: -1 })
       .limit(params.limit || 20)
       .toArray();
 
-    const totalCount = await db.collection('customer_memos').countDocuments({
+    const totalCount = await db.collection(COLLECTIONS.MEMOS).countDocuments({
       customer_id: customerObjectId
     });
 
@@ -211,7 +211,7 @@ export async function handleDeleteMemo(args: unknown) {
     }
 
     // 메모 존재 및 소유권 확인
-    const memo = await db.collection('customer_memos').findOne({
+    const memo = await db.collection(COLLECTIONS.MEMOS).findOne({
       _id: memoObjectId
     });
 
@@ -229,7 +229,7 @@ export async function handleDeleteMemo(args: unknown) {
       };
     }
 
-    await db.collection('customer_memos').deleteOne({ _id: memoObjectId });
+    await db.collection(COLLECTIONS.MEMOS).deleteOne({ _id: memoObjectId });
 
     return {
       content: [{

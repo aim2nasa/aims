@@ -115,8 +115,19 @@ describe('MCP 소스 코드 검증', () => {
         expect(sourceCode).toContain('updated_at: now');
       });
 
-      it('customer_memos 컬렉션에 저장해야 함', () => {
-        expect(sourceCode).toContain("db.collection('customer_memos').insertOne");
+      it('COLLECTIONS.MEMOS 상수 사용해야 함 (하드코딩 금지)', () => {
+        expect(sourceCode).toContain('db.collection(COLLECTIONS.MEMOS)');
+        // 하드코딩된 컬렉션명 금지
+        expect(sourceCode).not.toContain("db.collection('customer_memos')");
+      });
+    });
+
+    describe('컬렉션명 상수 사용', () => {
+      it('모든 memos 컬렉션 접근에 COLLECTIONS.MEMOS 사용', () => {
+        // COLLECTIONS import 확인
+        expect(sourceCode).toContain('COLLECTIONS');
+        // 하드코딩 금지
+        expect(sourceCode).not.toMatch(/db\.collection\(['"]customer_memos['"]\)/);
       });
     });
   });
