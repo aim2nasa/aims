@@ -564,6 +564,38 @@ html[data-theme="dark"] .chat-panel__welcome-feature--primary .chat-panel__welco
   color: #a78bfa;
 }
 
+/* Secondary Feature - 사용 가능한 기능 보기 (빈 상태에서 사용) */
+.chat-panel__welcome-feature--secondary {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  margin-top: 16px;
+  width: auto;
+  max-width: 280px;
+}
+
+.chat-panel__welcome-feature--secondary:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
+  color: #6B7280;
+}
+
+/* Dark Theme - Secondary Feature */
+html[data-theme="dark"] .chat-panel__welcome-feature--secondary {
+  background: rgba(30, 26, 46, 0.8);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+html[data-theme="dark"] .chat-panel__welcome-feature--secondary:hover {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
+  color: #9CA3AF;
+}
+
 /* Mode Toggle - Welcome Screen */
 .chat-panel__welcome-mode-toggle {
   display: flex;

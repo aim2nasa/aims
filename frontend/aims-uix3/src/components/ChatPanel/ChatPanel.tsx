@@ -100,6 +100,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const handleToggleMode = useCallback((direct: boolean) => {
     setPreferDirectChat(direct);
     localStorage.setItem('aims-chat-direct-mode', direct ? 'true' : 'false');
+    // 바로 채팅 모드: 상태 변경 후 입력창에 포커스
+    if (direct) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
   }, []);
 
   // 패널 열릴 때 세션 목록 로드
@@ -224,6 +228,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
         content: `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         timestamp: new Date()
       }]);
+    } finally {
+      // 전송 완료 후 입력창 포커스 유지 (disabled 해제 후 렌더링 완료 대기)
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -431,12 +438,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               />
               <p>무엇이든 물어보세요!</p>
               <span>고객, 계약, 문서 관련 질문을 자유롭게 하세요</span>
+              {/* 기능 보기 - 메뉴 스타일 */}
               <button
                 type="button"
-                className="chat-panel__empty-mode-toggle"
+                className="chat-panel__welcome-feature chat-panel__welcome-feature--secondary"
                 onClick={() => handleToggleMode(false)}
               >
-                사용 가능한 기능 보기
+                <span className="chat-panel__welcome-feature-icon">📋</span>
+                <div className="chat-panel__welcome-feature-content">
+                  <div className="chat-panel__welcome-feature-title">사용 가능한 기능 보기</div>
+                  <div className="chat-panel__welcome-feature-desc">18가지 AI 기능 목록 확인</div>
+                </div>
               </button>
             </div>
           ) : (
