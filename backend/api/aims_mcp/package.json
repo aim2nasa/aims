@@ -10,9 +10,11 @@
     "start:stdio": "node dist/index.js",
     "start:http": "MCP_MODE=http node dist/index.js",
     "dev": "tsc --watch",
-    "test": "vitest run --exclude='**/user-simulation.e2e.test.ts'",
-    "test:watch": "vitest --exclude='**/user-simulation.e2e.test.ts'",
+    "test": "vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
+    "test:watch": "vitest --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
     "test:e2e": "vitest run src/user-simulation.e2e.test.ts",
+    "test:e2e:cross-system": "vitest run src/__tests__/cross-system/",
+    "test:e2e:all": "vitest run src/user-simulation.e2e.test.ts src/__tests__/cross-system/",
     "test:all": "vitest run"
   },
   "dependencies": {
