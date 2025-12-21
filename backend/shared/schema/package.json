@@ -3,16 +3,27 @@
   "version": "1.0.0",
   "description": "AIMS 공유 스키마 - 모든 백엔드 서비스가 공유하는 DB 스키마 정의",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:cjs-pkg",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:cjs-pkg": "echo {\"type\":\"commonjs\"} > dist/cjs/package.json",
+    "test": "node test/cjs-import.test.cjs && node test/esm-import.test.mjs",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
