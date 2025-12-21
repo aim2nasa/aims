@@ -3,11 +3,6 @@ import { ObjectId } from 'mongodb';
 import { getDB, toSafeObjectId, COLLECTIONS } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
-// 날짜 포맷 함수 (YYYY.MM.DD HH:mm:ss)
-function formatDateTime(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
 
 // 스키마 정의
 export const addMemoSchema = z.object({
@@ -93,7 +88,7 @@ export async function handleAddMemo(args: unknown) {
       };
     }
 
-    const now = formatDateTime(new Date());
+    const now = new Date();
     const memo = {
       customer_id: customerObjectId,
       content: params.content,
@@ -113,7 +108,7 @@ export async function handleAddMemo(args: unknown) {
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
           content: params.content,
-          createdAt: now
+          createdAt: now.toISOString()
         }, null, 2)
       }]
     };
