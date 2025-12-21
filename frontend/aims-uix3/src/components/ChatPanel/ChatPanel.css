@@ -651,6 +651,18 @@ html[data-theme="dark"] .chat-panel__welcome-feature:hover {
   background: rgba(139, 92, 246, 0.18);
 }
 
+/* Features Header - 기능 목록 설명 */
+.chat-panel__welcome-features-header {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-tertiary);
+  padding: 16px 4px 8px;
+  margin-top: 8px;
+}
+
+html[data-theme="dark"] .chat-panel__welcome-features-header {
+  color: var(--color-text-tertiary);
+}
+
 /* Message Bubble */
 .chat-panel__message {
   display: flex;
