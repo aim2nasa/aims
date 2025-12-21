@@ -99,6 +99,45 @@ function toSafeObjectId(id) {
 }
 
 /**
+ * 중첩 객체를 dot notation으로 평탄화
+ * MongoDB $set에서 중첩 객체의 특정 필드만 업데이트할 때 사용
+ *
+ * 예: { personal_info: { mobile_phone: '010-1234' } }
+ * → { 'personal_info.mobile_phone': '010-1234' }
+ *
+ * @param {Object} obj - 평탄화할 객체
+ * @param {string} prefix - 현재 키 프리픽스
+ * @returns {Object} - dot notation으로 평탄화된 객체
+ */
+function flattenObject(obj, prefix = '') {
+  const result = {};
+
+  for (const key in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+
+    const value = obj[key];
+    const newKey = prefix ? `${prefix}.${key}` : key;
+
+    // 평탄화하지 않을 타입: null, 배열, Date, ObjectId
+    if (
+      value !== null &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      !(value instanceof Date) &&
+      !(value instanceof ObjectId)
+    ) {
+      // 중첩 객체는 재귀적으로 평탄화
+      Object.assign(result, flattenObject(value, newKey));
+    } else {
+      // 기본값, 배열, Date, ObjectId는 그대로 유지
+      result[newKey] = value;
+    }
+  }
+
+  return result;
+}
+
+/**
  * 명백한 BIN 타입 체크 (OCR 비용 절감)
  * FILE_BADGE_SYSTEM.md 참조
  * @param {string} mimeType - MIME 타입
@@ -2692,7 +2731,7 @@ app.put('/api/users/:id', async (req, res) => {
 /**
  * 고객 목록 조회 API
  */
-app.get('/api/customers', authenticateJWT, async (req, res) => {
+app.get('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -2839,7 +2878,7 @@ app.get('/api/customers', authenticateJWT, async (req, res) => {
 /**
  * 새 고객 등록 API
  */
-app.post('/api/customers', authenticateJWT, async (req, res) => {
+app.post('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const customerData = req.body;
 
@@ -3424,7 +3463,7 @@ app.get('/api/customers/check-name', authenticateJWT, async (req, res) => {
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:id', authenticateJWT, async (req, res) => {
+app.get('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -3476,7 +3515,7 @@ app.get('/api/customers/:id', authenticateJWT, async (req, res) => {
  * 고객 정보 수정 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
+app.put('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -3534,8 +3573,13 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
     }
 
     // 기존 고객 정보 업데이트 로직
+    // ⭐ flattenObject로 중첩 객체를 dot notation으로 변환
+    // 예: { personal_info: { mobile_phone: '010-1234' } }
+    //  → { 'personal_info.mobile_phone': '010-1234' }
+    // 이렇게 하면 기존 personal_info.name 등이 유지됨
+    const flattenedData = flattenObject(updateData);
     const updateFields = {
-      ...updateData,
+      ...flattenedData,
       'meta.updated_at': utcNowDate(),
       'meta.last_modified_by': updateData.modified_by || null
     };
@@ -3633,7 +3677,7 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
  * ⭐ 설계사별 고객 데이터 격리 적용
  * ⭐ 트랜잭션으로 원자적 삭제 (좀비 참조 방지)
  */
-app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
+app.delete('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const { permanent } = req.query; // ?permanent=true for hard delete
@@ -7084,7 +7128,7 @@ async function syncCustomerMemoField(customerId) {
  * GET /api/customers/:id/memos
  * 고객 메모 목록 조회
  */
-app.get('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
+app.get('/api/customers/:id/memos', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -7134,7 +7178,7 @@ app.get('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
  * POST /api/customers/:id/memos
  * 고객 메모 생성
  */
-app.post('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
+app.post('/api/customers/:id/memos', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;

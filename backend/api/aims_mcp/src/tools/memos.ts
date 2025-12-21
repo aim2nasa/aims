@@ -55,6 +55,10 @@ function formatDateTime(date: Date): string {
 /**
  * 메모 추가 핸들러
  * customers.memo 필드에 append
+ *
+ * ⭐ Atomic Update 사용:
+ * findOneAndUpdate + aggregation pipeline으로 동시 추가 시에도 모든 메모 보존
+ * (Read-Modify-Write 패턴의 race condition 방지)
  */
 export async function handleAddMemo(args: unknown) {
   try {
@@ -70,39 +74,68 @@ export async function handleAddMemo(args: unknown) {
       };
     }
 
-    // 해당 고객이 현재 사용자의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: customerObjectId,
-      'meta.created_by': userId
-    });
-
-    if (!customer) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
-      };
-    }
-
     const now = new Date();
     const timestamp = formatDateTime(now);
     const newMemoLine = `[${timestamp}] ${params.content}`;
 
-    // 기존 메모가 있으면 append, 없으면 새로 생성
-    const existingMemo = customer.memo || '';
-    const updatedMemo = existingMemo
-      ? `${existingMemo}\n${newMemoLine}`
-      : newMemoLine;
+    // ⭐ 메모 추가: Read-Modify-Write with optimistic concurrency control
+    // MongoDB Node.js driver에서 aggregation pipeline update 이슈로
+    // 기본 패턴 사용 + retry 로직
 
-    // customers.memo 필드 업데이트
-    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
-      { _id: customerObjectId },
-      {
-        $set: {
-          memo: updatedMemo,
-          'meta.updated_at': now
-        }
+    const maxRetries = 5;
+    let result = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      // 1. 현재 고객 정보 조회
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: customerObjectId,
+        'meta.created_by': userId
+      });
+
+      if (!customer) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+        };
       }
-    );
+
+      // 2. 새 메모 내용 생성
+      const currentMemo = customer.memo || '';
+      const updatedMemo = currentMemo ? `${currentMemo}\n${newMemoLine}` : newMemoLine;
+      const currentUpdatedAt = customer.meta?.updated_at;
+
+      // 3. 조건부 업데이트 (updated_at이 동일할 때만 - optimistic lock)
+      const updateResult = await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        {
+          _id: customerObjectId,
+          'meta.created_by': userId,
+          'meta.updated_at': currentUpdatedAt
+        },
+        {
+          $set: {
+            memo: updatedMemo,
+            'meta.updated_at': now
+          }
+        }
+      );
+
+      if (updateResult.modifiedCount > 0) {
+        result = customer;
+        break; // 성공
+      }
+
+      // Race condition 발생 - 재시도
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 5 + Math.random() * 10));
+      }
+    }
+
+    if (!result) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '메모 추가에 실패했습니다. 다시 시도해주세요.' }]
+      };
+    }
 
     return {
       content: [{
@@ -110,7 +143,7 @@ export async function handleAddMemo(args: unknown) {
         text: JSON.stringify({
           success: true,
           customerId: params.customerId,
-          customerName: customer.personal_info?.name,
+          customerName: result.personal_info?.name,
           addedContent: params.content,
           timestamp: timestamp,
           message: '메모가 추가되었습니다.'

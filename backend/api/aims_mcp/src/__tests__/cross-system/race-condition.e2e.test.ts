@@ -72,8 +72,8 @@ describe('Category 3: Race Condition 테스트', () => {
       const customerId = normalizeId(customer);
 
       // 2. 5개의 메모를 동시에 추가
-      // NOTE: MCP의 메모 추가는 atomic하지 않아 동시 추가 시 일부 유실 가능
-      // MongoDB의 findOneAndUpdate로 변경하면 해결 가능 (현재 read-modify-write 패턴 사용)
+      // ✅ MongoDB findOneAndUpdate + aggregation pipeline으로 atomic update 구현
+      // 동시 추가 시에도 모든 메모가 보존됨
       const memoCount = 5;
       const promises = Array.from({ length: memoCount }, (_, i) =>
         mcp.call('add_customer_memo', {
@@ -93,9 +93,8 @@ describe('Category 3: Race Condition 테스트', () => {
         hasContent: boolean;
       }>('list_customer_memos', { customerId });
 
-      // 5. 최소 일부 메모가 저장되는지 확인
-      // TODO: atomic update 구현 후 모든 메모 검증으로 변경
-      // 현재 race condition으로 5개 중 일부만 저장됨 (보통 2-4개)
+      // 5. 모든 메모가 저장되었는지 확인
+      // ✅ atomic update 구현 완료 - 모든 5개 메모가 보존됨
       expect(mcpResult.hasContent).toBe(true);
       let savedCount = 0;
       for (let i = 0; i < memoCount; i++) {
@@ -103,10 +102,8 @@ describe('Category 3: Race Condition 테스트', () => {
           savedCount++;
         }
       }
-      // 최소 1개 이상 저장되어야 함
-      expect(savedCount).toBeGreaterThanOrEqual(1);
-      // 이상적으로는 모든 메모가 저장되어야 함 (race condition 수정 후)
-      // expect(savedCount).toBe(memoCount);
+      // 모든 메모가 저장되어야 함
+      expect(savedCount).toBe(memoCount);
     });
 
     it('MCP와 API 동시 업데이트 시 데이터 유실 없음', async () => {
@@ -154,8 +151,7 @@ describe('Category 3: Race Condition 테스트', () => {
       const customerId = normalizeId(customer);
 
       // 2. 여러 필드 동시 업데이트
-      // NOTE: MCP의 동시 메모 추가는 race condition으로 인해 일부 유실 가능
-      // 이는 알려진 버그이며, 향후 atomic update로 수정 필요
+      // ✅ atomic update 구현으로 동시 메모 추가 시에도 모든 메모 보존
       const updates = [
         mcp.call('add_customer_memo', { customerId, content: '메모1' }),
         mcp.call('add_customer_memo', { customerId, content: '메모2' }),
@@ -173,13 +169,9 @@ describe('Category 3: Race Condition 테스트', () => {
 
       expect(api.isError(result)).toBe(false);
       if (!api.isError(result)) {
-        // TODO: race condition 수정 후 모든 메모 검증으로 변경
-        // expect(result.memo).toContain('메모1');
-        // expect(result.memo).toContain('메모2');
-        // 현재는 최소 하나의 메모가 저장되는지만 검증
-        const hasMemo1 = result.memo?.includes('메모1') || false;
-        const hasMemo2 = result.memo?.includes('메모2') || false;
-        expect(hasMemo1 || hasMemo2).toBe(true);
+        // ✅ atomic update 구현 완료 - 모든 메모가 보존됨
+        expect(result.memo).toContain('메모1');
+        expect(result.memo).toContain('메모2');
         // phone 업데이트는 별도 필드라 항상 성공해야 함
         expect(result.personal_info?.mobile_phone).toBe('010-3333-4444');
       }

@@ -33,14 +33,17 @@ export interface APIRequestOptions {
 export class APITestClient {
   private baseUrl: string;
   private userId: string;
+  private apiKey: string;
   private defaultTimeout: number;
 
   constructor(
     baseUrl: string = process.env.AIMS_API_URL || 'http://localhost:3010',
-    userId: string = process.env.TEST_USER_ID || '000000000000000000000001'
+    userId: string = process.env.TEST_USER_ID || '000000000000000000000001',
+    apiKey: string = process.env.AIMS_API_KEY || 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8'
   ) {
     this.baseUrl = baseUrl;
     this.userId = userId;
+    this.apiKey = apiKey;
     this.defaultTimeout = 15000;
   }
 
@@ -48,7 +51,7 @@ export class APITestClient {
    * 다른 사용자 컨텍스트로 새 클라이언트 생성
    */
   asUser(userId: string): APITestClient {
-    return new APITestClient(this.baseUrl, userId);
+    return new APITestClient(this.baseUrl, userId, this.apiKey);
   }
 
   /**
@@ -92,9 +95,13 @@ export class APITestClient {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'x-user-id': this.userId,
+        'x-api-key': this.apiKey,
         ...options?.headers
       };
+
+      // API 키 인증에서 userId는 body나 query로 전달됨
+      // 하지만 호환성을 위해 x-user-id도 함께 전송
+      headers['x-user-id'] = this.userId;
 
       const res = await fetch(`${this.baseUrl}${fullPath}`, {
         method,

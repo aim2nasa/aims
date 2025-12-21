@@ -181,8 +181,9 @@ function authenticateAPIKey(req, res, next) {
 
   // API Key 인증 성공 시 시스템 사용자로 설정
   // n8n이 보내는 요청의 userId는 body에서 받음
+  // GET 요청 시 req.body가 undefined일 수 있으므로 optional chaining 사용
   req.user = {
-    id: req.body.userId || req.query.userId,
+    id: req.body?.userId || req.query.userId || req.headers['x-user-id'],
     role: 'system',
     authMethod: 'apiKey'
   };
@@ -201,8 +202,11 @@ function authenticateJWTorAPIKey(req, res, next) {
   // API Key 우선 확인
   if (apiKey) {
     if (apiKey === process.env.N8N_API_KEY) {
+      // userId를 body, query, 또는 x-user-id 헤더에서 가져옴
+      // GET 요청 시 req.body가 undefined일 수 있으므로 optional chaining 사용
+      const userId = req.body?.userId || req.query.userId || req.headers['x-user-id'];
       req.user = {
-        id: req.body.userId || req.query.userId,
+        id: userId,
         role: 'system',
         authMethod: 'apiKey'
       };
