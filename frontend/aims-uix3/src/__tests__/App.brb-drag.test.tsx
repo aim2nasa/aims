@@ -186,6 +186,65 @@ describe('App - BRB 드래그 동기화', () => {
 
     fireEvent.mouseUp(document)
   })
+
+  it('[핵심] BRB 드래그 시 RightPane 컨테이너에도 no-transition이 적용되어야 함 (commit a014f2bb)', () => {
+    const { container } = render(<App />)
+
+    const brb = container.querySelector('.layout-brb')
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
+    const rightPaneContainer = container.querySelector('.layout-rightpane-container') as HTMLElement
+
+    // 초기 상태: 둘 다 no-transition 클래스 없음
+    expect(centerPane?.classList.contains('no-transition')).toBe(false)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(false)
+
+    // BRB 드래그 시작
+    fireEvent.mouseDown(brb!, { clientX: 960 })
+
+    // 핵심 검증: CenterPane과 RightPane 컨테이너 모두 no-transition 적용
+    expect(centerPane?.classList.contains('no-transition')).toBe(true)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(true)
+
+    // 드래그 중에도 유지
+    fireEvent.mouseMove(document, { clientX: 900 })
+    expect(centerPane?.classList.contains('no-transition')).toBe(true)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(true)
+
+    // 드래그 종료
+    fireEvent.mouseUp(document)
+
+    // 드래그 종료 후: 둘 다 no-transition 클래스 제거
+    expect(centerPane?.classList.contains('no-transition')).toBe(false)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(false)
+  })
+
+  it('[핵심] 브라우저 리사이즈 시에도 RightPane 컨테이너에 no-transition이 적용되어야 함', () => {
+    vi.useFakeTimers()
+    const { container } = render(<App />)
+
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
+    const rightPaneContainer = container.querySelector('.layout-rightpane-container') as HTMLElement
+
+    // 브라우저 리사이즈 시작
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+
+    // 핵심 검증: CenterPane과 RightPane 컨테이너 모두 no-transition 적용
+    expect(centerPane?.classList.contains('no-transition')).toBe(true)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(true)
+
+    // 100ms 후 리사이즈 완료
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    // 리사이즈 완료 후: 둘 다 no-transition 클래스 제거
+    expect(centerPane?.classList.contains('no-transition')).toBe(false)
+    expect(rightPaneContainer?.classList.contains('no-transition')).toBe(false)
+
+    vi.useRealTimers()
+  })
 })
 
 // ============================================
