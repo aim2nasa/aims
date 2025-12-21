@@ -68,7 +68,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // 사용자 정보 로드 (모달이 열릴 때마다 API에서 최신 정보 가져옴)
+  // 사용자 정보 로드 (모달이 열릴 때만 API 호출)
   useEffect(() => {
     if (!visible) return
 
@@ -78,7 +78,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         setLoadError(null)
 
         // 항상 API에서 전체 사용자 정보 가져옴 (phone, department, position 포함)
-        // 캐시된 데이터가 불완전할 수 있으므로 항상 최신 데이터 조회
         const userData = await getCurrentUser()
         setUser(userData)
         setFormData({
@@ -88,9 +87,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           department: userData.department || '',
           position: userData.position || ''
         })
-
-        // 전역 상태 동기화
-        updateCurrentUser(userData)
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
         setLoadError(error instanceof Error ? error.message : '사용자 정보를 불러올 수 없습니다')
@@ -100,7 +96,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
 
     loadUserData()
-  }, [visible, updateCurrentUser])
+  }, [visible]) // visible만 의존 - 모달 열릴 때만 1회 호출
 
   // 참고: 이전에는 전역 currentUser 변경을 감지했지만,
   // 이제 모달이 열릴 때마다 API에서 최신 데이터를 가져오므로 제거됨
