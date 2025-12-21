@@ -96,23 +96,28 @@ cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 ### 10. 🚀 전체 배포 (Full Deploy)
 **요청 방법**: `"전체 배포"` 또는 `"deploy all"`
 
-사용자가 위 명령을 요청하면 아래 작업을 **순서대로 자동 수행**:
+사용자가 위 명령을 요청하면 **deploy_all.sh 스크립트 사용**:
 
-| 단계 | 작업 | 명령어 |
-|------|------|--------|
-| 1 | tars Git 정리 | `ssh tars 'cd ~/aims && git checkout -- . && git clean -fd'` |
-| 2 | tars Pull | `ssh tars 'cd ~/aims && git pull'` |
-| 3 | aims_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'` |
-| 4 | aims_rag_api 배포 | `ssh tars 'cd ~/aims/backend/api/aims_rag_api && ./deploy_aims_rag_api.sh'` |
-| 5 | annual_report_api 배포 | `ssh tars 'cd ~/aims/backend/api/annual_report_api && ./deploy_annual_report_api.sh'` |
-| 6 | pdf_proxy 배포 | `ssh tars 'cd ~/aims/backend/api/pdf_proxy && ./deploy_pdf_proxy.sh'` |
-| 7 | aims_mcp 배포 | `ssh tars 'cd ~/aims/backend/api/aims_mcp && ./deploy_aims_mcp.sh'` |
-| 8 | n8n 워크플로우 배포 | `ssh tars 'bash -l -c "cd ~/aims/backend/n8n_flows && ./deploy_n8n_workflows.sh"'` |
-| 9 | Frontend 배포 | `ssh tars 'cd ~/aims/frontend/aims-uix3 && ./deploy_aims_frontend.sh'` |
+```bash
+ssh tars 'cd ~/aims && ./deploy_all.sh'
+```
+
+**스크립트가 자동 수행하는 작업:**
+1. Git 정리 및 Pull (`.build_hash` 파일 보존)
+2. aims_api 배포
+3. aims_rag_api 배포
+4. annual_report_api 배포
+5. pdf_proxy 배포
+6. aims_mcp 배포
+7. n8n 워크플로우 배포
+8. Frontend 배포
+9. 서비스 상태 확인
+
+**스마트 빌드**: 소스 변경이 없는 서비스는 QUICK RESTART 모드로 빠르게 재시작
 
 **주의사항:**
-- 각 단계 실패 시 즉시 중단하고 사용자에게 보고
-- 모든 배포 스크립트는 서버에서 실행 (직접 pm2/uvicorn 실행 금지)
+- 수동으로 `git clean -fd` 실행 금지 (`.build_hash` 파일 삭제됨 → 전체 재빌드 발생)
+- 실패 시 즉시 중단하고 사용자에게 보고
 
 ### 11. 🔴 데이터 중복 금지 (Single Source of Truth)
 **동일한 관계/데이터를 두 곳에 저장하지 않는다!**
