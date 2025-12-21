@@ -31,3 +31,6 @@ tars.giize.com
 nul
 # TypeScript build cache
 *.tsbuildinfo
+
+# Build hash files (deployment smart build tracking)
+.build_hash
