@@ -306,7 +306,7 @@ export const ErrorLogsPage = () => {
                         />
                       </td>
                       <td className="error-logs-page__cell-time">
-                        {formatRelativeTime(log.timestamp)}
+                        {formatDateTime(log.timestamp)}
                       </td>
                       <td className="error-logs-page__cell-source">
                         <span className={`source-badge source-badge--${log.source.type}`}>
