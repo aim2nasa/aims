@@ -72,6 +72,7 @@ export default function LoginPage() {
           role: data.user.role,
           authProvider: data.user.authProvider || 'kakao',
           profileCompleted: data.user.profileCompleted ?? true,
+          oauthProfile: data.user.oauthProfile || null,
         };
 
         // 3. Zustand store에 사용자 정보 저장

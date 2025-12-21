@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: loading }),
     }),
     {
-      name: 'auth-storage', // localStorage 키
+      name: 'auth-storage-v2', // localStorage 키 (v2: user 데이터 캐싱 제거)
       // 토큰만 저장 (사용자 정보는 매번 서버에서 가져옴)
       partialize: (state) => ({
         token: state.token,
