@@ -208,5 +208,26 @@ describe('MCP 소스 코드 검증', () => {
         expect(customersSource).toContain('formatZodError(error)');
       });
     });
+
+    describe('에러 로깅 (디버깅용)', () => {
+      it('[MCP] 접두사로 로깅', () => {
+        expect(customersSource).toContain("console.error('[MCP]");
+      });
+
+      it('각 핸들러별 식별자', () => {
+        expect(customersSource).toContain('search_customers 에러');
+        expect(customersSource).toContain('get_customer 에러');
+        expect(customersSource).toContain('create_customer 에러');
+        expect(customersSource).toContain('update_customer 에러');
+      });
+
+      it('에러 객체 출력', () => {
+        expect(customersSource).toContain(', error)');
+      });
+
+      it('디버깅용 주석', () => {
+        expect(customersSource).toContain('에러 로깅 (디버깅용)');
+      });
+    });
   });
 });

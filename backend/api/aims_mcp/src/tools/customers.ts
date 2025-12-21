@@ -173,6 +173,8 @@ export async function handleSearchCustomers(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] search_customers 에러:', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -244,6 +246,8 @@ export async function handleGetCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] get_customer 에러:', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -319,6 +323,8 @@ export async function handleCreateCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] create_customer 에러:', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -410,6 +416,8 @@ export async function handleUpdateCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] update_customer 에러:', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
