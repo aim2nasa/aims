@@ -155,4 +155,58 @@ describe('MCP 소스 코드 검증', () => {
       expect(memosCode).not.toMatch(dateStringPattern);
     });
   });
+
+  describe('Zod 에러 메시지 가공', () => {
+    let dbSource: string;
+    let customersSource: string;
+
+    beforeAll(() => {
+      dbSource = readSourceFile('./db.ts');
+      customersSource = readSourceFile('./tools/customers.ts');
+    });
+
+    describe('db.ts formatZodError 유틸리티', () => {
+      it('formatZodError 함수 정의', () => {
+        expect(dbSource).toContain('export function formatZodError');
+      });
+
+      it('FIELD_NAME_MAP 한글 매핑 존재', () => {
+        expect(dbSource).toContain('FIELD_NAME_MAP');
+        expect(dbSource).toContain("name: '이름'");
+        expect(dbSource).toContain("customerId: '고객 ID'");
+      });
+
+      it('ZodIssue 타입별 처리', () => {
+        expect(dbSource).toContain('invalid_type');
+        expect(dbSource).toContain('too_small');
+        expect(dbSource).toContain('too_big');
+        expect(dbSource).toContain('invalid_enum_value');
+        expect(dbSource).toContain('invalid_string');
+      });
+
+      it('친절한 한글 에러 메시지', () => {
+        expect(dbSource).toContain('을(를) 입력해주세요');
+        expect(dbSource).toContain('형식이 올바르지 않습니다');
+        expect(dbSource).toContain('이(가) 너무');
+      });
+    });
+
+    describe('customers.ts formatZodError 적용', () => {
+      it('formatZodError import', () => {
+        expect(customersSource).toContain('formatZodError');
+      });
+
+      it('ZodError import', () => {
+        expect(customersSource).toContain('ZodError');
+      });
+
+      it('catch 블록에서 ZodError 체크', () => {
+        expect(customersSource).toContain('error instanceof ZodError');
+      });
+
+      it('formatZodError 호출', () => {
+        expect(customersSource).toContain('formatZodError(error)');
+      });
+    });
+  });
 });

@@ -314,7 +314,8 @@ describe('스키마 정의 일관성', () => {
       });
 
       it('Zod 스키마 사용', () => {
-        expect(sourceCode).toContain("import { z } from 'zod'");
+        // import { z } 또는 import { z, ZodError } 등 다양한 형태 허용
+        expect(sourceCode).toMatch(/import \{ z[^}]* \} from 'zod'/);
       });
 
       it('스키마 parse 사용', () => {

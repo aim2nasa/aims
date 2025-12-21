@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS } from '../db.js';
+import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 
@@ -173,11 +173,14 @@ export async function handleSearchCustomers(args: unknown) {
       }]
     };
   } catch (error) {
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `고객 검색 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `고객 검색 실패: ${errorMessage}`
       }]
     };
   }
@@ -241,11 +244,14 @@ export async function handleGetCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `고객 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `고객 조회 실패: ${errorMessage}`
       }]
     };
   }
@@ -313,11 +319,14 @@ export async function handleCreateCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `고객 등록 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `고객 등록 실패: ${errorMessage}`
       }]
     };
   }
@@ -401,11 +410,14 @@ export async function handleUpdateCustomer(args: unknown) {
       }]
     };
   } catch (error) {
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `고객 정보 수정 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `고객 정보 수정 실패: ${errorMessage}`
       }]
     };
   }

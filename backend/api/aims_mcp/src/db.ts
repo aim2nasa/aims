@@ -1,5 +1,6 @@
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
+import { ZodError, ZodIssue } from 'zod';
 
 dotenv.config();
 
@@ -76,3 +77,67 @@ export const COLLECTIONS = {
   INSURANCE_PRODUCTS: 'insurance_products',
   MEMOS: 'customer_memos'
 } as const;
+
+// 필드명 한글 매핑
+const FIELD_NAME_MAP: Record<string, string> = {
+  name: '이름',
+  phone: '전화번호',
+  email: '이메일',
+  customerId: '고객 ID',
+  contractId: '계약 ID',
+  documentId: '문서 ID',
+  memoId: '메모 ID',
+  productId: '상품 ID',
+  content: '내용',
+  query: '검색어',
+  limit: '결과 개수',
+  month: '월',
+  day: '일',
+  birthDate: '생년월일',
+  address: '주소',
+  customerType: '고객 유형',
+  status: '상태',
+  search: '검색어',
+  searchMode: '검색 모드',
+  daysWithin: '기간(일)'
+};
+
+/**
+ * Zod 이슈를 친절한 한글 메시지로 변환
+ */
+function formatZodIssue(issue: ZodIssue): string {
+  const fieldPath = issue.path.join('.');
+  const fieldName = FIELD_NAME_MAP[fieldPath] || fieldPath || '입력값';
+
+  switch (issue.code) {
+    case 'invalid_type':
+      if (issue.received === 'undefined') {
+        return `${fieldName}을(를) 입력해주세요.`;
+      }
+      return `${fieldName}의 형식이 올바르지 않습니다.`;
+    case 'too_small':
+      if (issue.type === 'string') {
+        return `${fieldName}을(를) 입력해주세요.`;
+      }
+      return `${fieldName}이(가) 너무 작습니다.`;
+    case 'too_big':
+      return `${fieldName}이(가) 너무 큽니다.`;
+    case 'invalid_enum_value':
+      return `${fieldName}의 값이 올바르지 않습니다.`;
+    case 'invalid_string':
+      if (issue.validation === 'email') {
+        return `올바른 이메일 형식이 아닙니다.`;
+      }
+      return `${fieldName}의 형식이 올바르지 않습니다.`;
+    default:
+      return `${fieldName}: 입력값을 확인해주세요.`;
+  }
+}
+
+/**
+ * Zod 에러를 사용자 친화적인 한글 메시지로 변환
+ */
+export function formatZodError(error: ZodError): string {
+  const messages = error.issues.map(formatZodIssue);
+  return messages.join(' ');
+}
