@@ -372,19 +372,22 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
 
     describe('안전한 날짜 처리', () => {
       it('Invalid Date 체크 (isNaN)', () => {
-        expect(sourceCode).toContain('isNaN(parsed.getTime())');
+        // contract_date 파싱 시 isNaN 체크
+        expect(sourceCode).toContain('isNaN(contractDate.getTime())');
       });
 
-      it('null 처리', () => {
-        expect(sourceCode).toContain('expiryDate: Date | null');
+      it('payment_period 파싱', () => {
+        // payment_period에서 연수 추출 ('10년' -> 10)
+        expect(sourceCode).toContain('parsePaymentPeriodYears');
       });
 
-      it('안전한 날짜 처리 주석', () => {
-        expect(sourceCode).toContain('안전한 날짜 처리');
+      it('종신보험 제외', () => {
+        // 종신보험은 만기가 없으므로 제외
+        expect(sourceCode).toContain('종신');
       });
 
-      it('daysLeft null 허용', () => {
-        expect(sourceCode).toContain('daysLeft,');
+      it('daysLeft 계산', () => {
+        expect(sourceCode).toContain('daysLeft');
       });
     });
   });
@@ -596,7 +599,7 @@ describe('빈 결과 처리 일관성', () => {
     { file: './tools/contracts.ts', countField: 'count: contracts.length' },
     { file: './tools/birthdays.ts', countField: 'count: customers.length' },
     { file: './tools/memos.ts', countField: 'count: memos.length' },
-    { file: './tools/expiring.ts', countField: 'count: contractsWithDaysLeft.length' },
+    { file: './tools/expiring.ts', countField: 'count: expiringContracts.length' },
     { file: './tools/documents.ts', countField: 'count: documents.length' },
   ];
 
