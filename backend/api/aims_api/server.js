@@ -19,6 +19,8 @@ const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
+// 공유 스키마에서 컬렉션명 상수 import
+const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
 const app = express();
 
@@ -187,10 +189,12 @@ app.use((req, res, next) => {
 const MONGO_URI = 'mongodb://tars:27017/';
 const DB_NAME = 'docupload';
 const ANALYTICS_DB_NAME = 'aims_analytics';
-const COLLECTION_NAME = 'files';
-const CUSTOMERS_COLLECTION = 'customers';
-const AGENTS_COLLECTION = 'agents';
-const CASES_COLLECTION = 'cases';
+// 컬렉션명은 @aims/shared-schema의 COLLECTIONS 사용
+// 하위 호환성을 위한 별칭 (점진적으로 COLLECTIONS.XXX로 교체 예정)
+const COLLECTION_NAME = COLLECTIONS.FILES;
+const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
+const AGENTS_COLLECTION = 'agents';  // TODO: COLLECTIONS에 추가 필요
+const CASES_COLLECTION = 'cases';    // TODO: COLLECTIONS에 추가 필요
 
 // Qdrant 설정
 const QDRANT_HOST = 'localhost';
@@ -880,7 +884,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     const customerMap = {};
     if (customerIds.length > 0) {
       console.log('[DEBUG] customerIds:', customerIds);
-      const customers = await db.collection('customers')
+      const customers = await db.collection(COLLECTIONS.CUSTOMERS)
         .find({ _id: { $in: customerIds } })
         .project({ _id: 1, 'personal_info.name': 1 })
         .toArray();
@@ -1248,7 +1252,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
     // 고객 정보 일괄 조회
     const customerMap = {};
     if (customerIds.length > 0) {
-      const customers = await db.collection('customers')
+      const customers = await db.collection(COLLECTIONS.CUSTOMERS)
         .find({ _id: { $in: customerIds } })
         .project({ _id: 1, 'personal_info.name': 1 })
         .toArray();
@@ -1401,7 +1405,7 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
     if (document.customerId) {
       const customerId = document.customerId.toString();
       // 고객 이름 조회
-      const customer = await db.collection('customers')
+      const customer = await db.collection(COLLECTIONS.CUSTOMERS)
         .findOne(
           { _id: new ObjectId(customerId) },
           { projection: { 'personal_info.name': 1 } }
@@ -1820,14 +1824,14 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
       try {
         // 이미 있는지 확인 후 추가 (중복 방지)
         const customerObjectId = new ObjectId(customer_id);
-        const customer = await db.collection('customers').findOne({
+        const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
           _id: customerObjectId,
           'documents.document_id': document._id
         });
 
         if (!customer) {
           // documents 배열에 추가
-          await db.collection('customers').updateOne(
+          await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
             { _id: customerObjectId },
             {
               $push: {
@@ -2388,7 +2392,7 @@ app.get('/api/system/versions', async (req, res) => {
  */
 app.get('/api/users', async (req, res) => {
   try {
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection(COLLECTIONS.USERS);
 
     // 모든 사용자 조회 (비밀번호 제외)
     const users = await usersCollection
@@ -2449,7 +2453,7 @@ app.post('/api/dev/ensure-user', async (req, res) => {
       lastLogin: new Date()
     };
 
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection(COLLECTIONS.USERS);
 
     // 개발 계정 존재 여부 확인
     let user = await usersCollection.findOne({ _id: DEV_USER_ID });
@@ -2570,7 +2574,7 @@ app.delete('/api/dev/contracts/all', authenticateJWT, async (req, res) => {
 app.get('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection(COLLECTIONS.USERS);
 
     // 사용자 조회 (비밀번호 제외)
     const user = await usersCollection.findOne(
@@ -2622,7 +2626,7 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     const updateData = req.body;
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection(COLLECTIONS.USERS);
 
     // 업데이트할 수 있는 필드만 허용
     const allowedFields = ['name', 'email', 'phone', 'department', 'position', 'avatarUrl'];
@@ -3739,7 +3743,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
     let filesUpdateCount = 0;
 
     // 1. 해당 고객과 관련된 모든 관계 레코드 삭제
-    const relationshipsDeleteResult = await db.collection('customer_relationships').deleteMany({
+    const relationshipsDeleteResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({
       $or: [
         { from_customer: customerId },
         { related_customer: customerId },
@@ -3749,7 +3753,7 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
     relationshipsDeleteCount = relationshipsDeleteResult.deletedCount;
 
     // 2. 해당 고객의 계약 삭제
-    const contractsDeleteResult = await db.collection('contracts').deleteMany({
+    const contractsDeleteResult = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({
       customer_id: customerId
     });
     contractsDeleteCount = contractsDeleteResult.deletedCount;
@@ -4002,7 +4006,7 @@ app.get('/api/admin/orphaned-relationships', async (req, res) => {
     console.log('🔍 Orphaned relationships 조회 시작...');
     
     // 모든 관계 레코드 조회
-    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).find({}).toArray();
     console.log(`📊 총 관계 레코드 수: ${relationships.length}`);
     
     // 모든 고객 ID 조회
@@ -4064,7 +4068,7 @@ app.delete('/api/admin/orphaned-relationships', async (req, res) => {
     console.log('🗑️ Orphaned relationships 정리 시작...');
     
     // 먼저 orphaned relationships 조회
-    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).find({}).toArray();
     const allCustomerIds = new Set(
       (await db.collection(CUSTOMERS_COLLECTION).find({}, { _id: 1 }).toArray())
         .map(customer => customer._id.toString())
@@ -4093,7 +4097,7 @@ app.delete('/api/admin/orphaned-relationships', async (req, res) => {
     }
     
     // Orphaned relationships 삭제
-    const deleteResult = await db.collection('customer_relationships').deleteMany({
+    const deleteResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({
       _id: { $in: orphanedIds }
     });
     
@@ -4126,8 +4130,8 @@ app.get('/api/admin/data-integrity-report', async (req, res) => {
     // 1. 전체 데이터 수 조회
     const [totalCustomers, totalContracts, totalRelationships, totalFiles] = await Promise.all([
       db.collection(CUSTOMERS_COLLECTION).countDocuments(),
-      db.collection('contracts').countDocuments(),
-      db.collection('customer_relationships').countDocuments(),
+      db.collection(COLLECTIONS.CONTRACTS).countDocuments(),
+      db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).countDocuments(),
       db.collection(COLLECTION_NAME).countDocuments()
     ]);
 
@@ -4138,14 +4142,14 @@ app.get('/api/admin/data-integrity-report', async (req, res) => {
     );
 
     // 3. 고아 계약 탐지 (customer_id가 존재하지 않는 고객 참조)
-    const contracts = await db.collection('contracts').find({}, { projection: { customer_id: 1 } }).toArray();
+    const contracts = await db.collection(COLLECTIONS.CONTRACTS).find({}, { projection: { customer_id: 1 } }).toArray();
     const orphanedContracts = contracts.filter(c => {
       const customerId = c.customer_id?.toString();
       return customerId && !allCustomerIds.has(customerId);
     });
 
     // 4. 고아 관계 탐지
-    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).find({}).toArray();
     const orphanedRelationships = relationships.filter(r => {
       const fromId = r.from_customer?.toString();
       const toId = r.related_customer?.toString();
@@ -4214,7 +4218,7 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
     );
 
     // 2. 고아 계약 삭제
-    const contracts = await db.collection('contracts').find({}, { projection: { _id: 1, customer_id: 1 } }).toArray();
+    const contracts = await db.collection(COLLECTIONS.CONTRACTS).find({}, { projection: { _id: 1, customer_id: 1 } }).toArray();
     const orphanedContractIds = contracts
       .filter(c => {
         const customerId = c.customer_id?.toString();
@@ -4224,12 +4228,12 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
 
     let deletedContracts = 0;
     if (orphanedContractIds.length > 0) {
-      const result = await db.collection('contracts').deleteMany({ _id: { $in: orphanedContractIds } });
+      const result = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ _id: { $in: orphanedContractIds } });
       deletedContracts = result.deletedCount;
     }
 
     // 3. 고아 관계 삭제
-    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).find({}).toArray();
     const orphanedRelIds = relationships
       .filter(r => {
         const fromId = r.from_customer?.toString();
@@ -4240,7 +4244,7 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
 
     let deletedRelationships = 0;
     if (orphanedRelIds.length > 0) {
-      const result = await db.collection('customer_relationships').deleteMany({ _id: { $in: orphanedRelIds } });
+      const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({ _id: { $in: orphanedRelIds } });
       deletedRelationships = result.deletedCount;
     }
 
@@ -4312,7 +4316,7 @@ app.put('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
     const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
     const query = isObjectId ? { _id: new ObjectId(id) } : { _id: id };
 
-    const result = await db.collection('users').updateOne(
+    const result = await db.collection(COLLECTIONS.USERS).updateOne(
       query,
       { $set: { hasOcrPermission } }
     );
@@ -4353,7 +4357,7 @@ app.get('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
     const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
     const query = isObjectId ? { _id: new ObjectId(id) } : { _id: id };
 
-    const user = await db.collection('users').findOne(
+    const user = await db.collection(COLLECTIONS.USERS).findOne(
       query,
       { projection: { hasOcrPermission: 1 } }
     );
@@ -4387,15 +4391,15 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
   try {
     // 병렬로 모든 통계 쿼리 실행
     const [totalUsers, totalCustomers, totalDocuments, totalContracts] = await Promise.all([
-      db.collection('users').countDocuments(),
-      db.collection('customers').countDocuments({ deleted_at: null }),
-      db.collection('files').countDocuments(),
-      db.collection('contracts').countDocuments()
+      db.collection(COLLECTIONS.USERS).countDocuments(),
+      db.collection(COLLECTIONS.CUSTOMERS).countDocuments({ deleted_at: null }),
+      db.collection(COLLECTIONS.FILES).countDocuments(),
+      db.collection(COLLECTIONS.CONTRACTS).countDocuments()
     ]);
 
     // 활성 사용자 (최근 30일 이내 로그인)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const activeUsers = await db.collection('users').countDocuments({
+    const activeUsers = await db.collection(COLLECTIONS.USERS).countDocuments({
       lastLogin: { $gte: thirtyDaysAgo }
     });
 
@@ -4438,50 +4442,50 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       ocrTotalProcessed
     ] = await Promise.all([
       // OCR 대상 문서 (ocr 서브도큐먼트 존재)
-      db.collection('files').countDocuments({ 'ocr': { $exists: true } }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'ocr': { $exists: true } }),
       // OCR 비대상 문서 (ocr 서브도큐먼트 없음)
-      db.collection('files').countDocuments({ 'ocr': { $exists: false } }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'ocr': { $exists: false } }),
       // OCR 완료
-      db.collection('files').countDocuments({ 'ocr.status': 'done' }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'ocr.status': 'done' }),
       // OCR 대기
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'ocr.status': 'pending' },
           { 'stages.ocr.status': 'pending' }
         ]
       }),
       // OCR 처리중
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'ocr.status': 'processing' },
           { 'stages.ocr.status': 'processing' }
         ]
       }),
       // OCR 실패
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'ocr.status': 'error' },
           { 'stages.ocr.status': 'error' }
         ]
       }),
       // 임베딩 완료
-      db.collection('files').countDocuments({ 'docembed.status': 'done' }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'docembed.status': 'done' }),
       // 임베딩 대기
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'docembed.status': 'pending' },
           { 'stages.docembed.status': 'pending' }
         ]
       }),
       // 임베딩 처리중
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'docembed.status': 'processing' },
           { 'stages.docembed.status': 'processing' }
         ]
       }),
       // 임베딩 실패
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         $or: [
           { 'docembed.status': 'failed' },
           { 'docembed.status': 'error' },
@@ -4490,13 +4494,13 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         ]
       }),
       // 전체 완료
-      db.collection('files').countDocuments({ 'overallStatus': 'completed' }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'completed' }),
       // 전체 처리중
-      db.collection('files').countDocuments({ 'overallStatus': 'processing' }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'processing' }),
       // 전체 실패
-      db.collection('files').countDocuments({ 'overallStatus': 'error' }),
+      db.collection(COLLECTIONS.FILES).countDocuments({ 'overallStatus': 'error' }),
       // 이번 달 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         'ocr.status': { $in: ['done', 'error'] },
         $or: [
           { 'ocr.done_at': { $gte: startOfMonth } },
@@ -4506,7 +4510,7 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         ]
       }),
       // 전체 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
-      db.collection('files').countDocuments({
+      db.collection(COLLECTIONS.FILES).countDocuments({
         'ocr.status': { $in: ['done', 'error'] }
       })
     ]);
@@ -4805,7 +4809,7 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
 
     // 병렬로 사용자 목록과 전체 개수 조회
     const [users, total] = await Promise.all([
-      db.collection('users')
+      db.collection(COLLECTIONS.USERS)
         .find(filter, {
           projection: {
             // 보안상 소셜 로그인 ID 제외
@@ -4818,14 +4822,14 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
         .skip(skip)
         .limit(limitNum)
         .toArray(),
-      db.collection('users').countDocuments(filter)
+      db.collection(COLLECTIONS.USERS).countDocuments(filter)
     ]);
 
     console.log('[Admin Users API] 결과:', { total, returnedCount: users.length });
 
     // 각 사용자의 스토리지 사용량 계산
     const userIds = users.map(u => u._id.toString());
-    const storageAgg = await db.collection('files').aggregate([
+    const storageAgg = await db.collection(COLLECTIONS.FILES).aggregate([
       { $match: { ownerId: { $in: userIds } } },
       { $group: {
         _id: '$ownerId',
@@ -4844,7 +4848,7 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
     startOfMonth.setHours(0, 0, 0, 0);
     const startOfMonthISO = startOfMonth.toISOString();
 
-    const ocrAgg = await db.collection('files').aggregate([
+    const ocrAgg = await db.collection(COLLECTIONS.FILES).aggregate([
       {
         $match: {
           ownerId: { $in: userIds },
@@ -5022,7 +5026,7 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
     // 🔑 API Key 인증 시 실제 사용자 정보 조회 (활동 로그용)
     if (req.user.authMethod === 'apiKey' && userId) {
       try {
-        const actualUser = await db.collection('users').findOne(
+        const actualUser = await db.collection(COLLECTIONS.USERS).findOne(
           { _id: new ObjectId(userId) },
           { projection: { name: 1, email: 1, role: 1 } }
         );
@@ -6430,7 +6434,7 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
     // 🔄 overallStatus 업데이트 - 임베딩까지 완료되어야 'completed'
     // OCR 완료만으로는 completed가 아님! docembed.status === 'done'이어야 함
     try {
-      const doc = await db.collection('files').findOne({ _id: new ObjectId(documentIdStr) });
+      const doc = await db.collection(COLLECTIONS.FILES).findOne({ _id: new ObjectId(documentIdStr) });
       if (doc) {
         let newOverallStatus = 'processing';
 
@@ -6447,7 +6451,7 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
           newOverallStatus = 'processing';
         }
 
-        await db.collection('files').updateOne(
+        await db.collection(COLLECTIONS.FILES).updateOne(
           { _id: new ObjectId(documentIdStr) },
           { $set: {
             overallStatus: newOverallStatus,
@@ -6601,7 +6605,7 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
     }
 
     // 고객 소유권 확인
-    const customer = await db.collection('customers').findOne({
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
       _id: new ObjectId(customerId),
       userId: userId
     });
@@ -6645,7 +6649,7 @@ app.patch('/api/documents/recent/set-folder', authenticateJWT, async (req, res) 
     // 최근 5분 이내에 업로드된, 해당 사용자의 문서 중 파일명이 일치하는 것 찾기
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const document = await db.collection('files').findOne({
+    const document = await db.collection(COLLECTIONS.FILES).findOne({
       ownerId: userId,
       'upload.originalName': filename,
       'meta.created_at': { $gte: fiveMinutesAgo.toISOString() }
@@ -6659,7 +6663,7 @@ app.patch('/api/documents/recent/set-folder', authenticateJWT, async (req, res) 
     }
 
     // folderId 업데이트 (null이면 루트 폴더)
-    await db.collection('files').updateOne(
+    await db.collection(COLLECTIONS.FILES).updateOne(
       { _id: document._id },
       { $set: { folderId: folderId || null } }
     );
@@ -7883,7 +7887,7 @@ app.post('/api/contracts/bulk', async (req, res) => {
     const agentObjectId = new ObjectId(agent_id);
 
     // 고객 목록 조회 (이름으로 매칭)
-    const customers = await db.collection('customers').find({}).toArray();
+    const customers = await db.collection(COLLECTIONS.CUSTOMERS).find({}).toArray();
     const customerMap = new Map();
     customers.forEach(c => {
       const name = c.personal_info?.name?.trim().toLowerCase();
@@ -8523,7 +8527,7 @@ async function checkOcrPermissions() {
           continue;
         }
 
-        const user = await db.collection('users').findOne({ _id: new ObjectId(doc.ownerId) });
+        const user = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(doc.ownerId) });
 
         if (!user || !user.hasOcrPermission) {
           await db.collection(COLLECTION_NAME).updateOne(

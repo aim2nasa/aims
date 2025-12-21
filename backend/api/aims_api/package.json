@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aims/shared-schema": "file:../../shared/schema",
     "@qdrant/js-client-rest": "^1.15.1",
     "axios": "^1.11.0",
     "ioredis": "^5.4.1",

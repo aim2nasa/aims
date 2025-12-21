@@ -2,6 +2,7 @@
 
 const { ObjectId } = require('mongodb');
 const { utcNowDate, utcNowISO } = require('./lib/timeUtils');
+const { COLLECTIONS } = require('@aims/shared-schema');
 
 // 관계 유형 정의
 const RELATIONSHIP_TYPES = {
@@ -119,8 +120,8 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
       // 두 고객이 모두 존재하는지 확인
       const [fromCustomer, toCustomer] = await Promise.all([
-        db.collection('customers').findOne({ _id: new ObjectId(id) }),
-        db.collection('customers').findOne({ _id: new ObjectId(to_customer_id) })
+        db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: new ObjectId(id) }),
+        db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: new ObjectId(to_customer_id) })
       ]);
 
       if (!fromCustomer || !toCustomer) {
@@ -131,7 +132,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 기존 관계 중복 체크
-      const existingRelation = await db.collection('customer_relationships').findOne({
+      const existingRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
         'relationship_info.from_customer_id': new ObjectId(id),
         'relationship_info.to_customer_id': new ObjectId(to_customer_id),
         'relationship_info.status': 'active'
@@ -187,12 +188,12 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       };
 
       // 관계 저장
-      const result = await db.collection('customer_relationships').insertOne(relationshipData);
+      const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(relationshipData);
 
       // 양방향 관계이거나 family 관계인 경우 역방향 관계도 생성
       if (typeConfig.bidirectional || typeConfig.category === 'family') {
         // 역방향 관계 중복 체크
-        const existingReverseRelation = await db.collection('customer_relationships').findOne({
+        const existingReverseRelation = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
           'relationship_info.from_customer_id': new ObjectId(to_customer_id),
           'relationship_info.to_customer_id': new ObjectId(id),
           'relationship_info.status': 'active'
@@ -213,7 +214,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
             }
           };
           
-          await db.collection('customer_relationships').insertOne(reverseRelationshipData);
+          await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).insertOne(reverseRelationshipData);
         }
       }
 
@@ -248,7 +249,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 현재 고객 정보 조회하여 법인/개인 구분
-      const currentCustomer = await db.collection('customers').findOne({ _id: new ObjectId(id) });
+      const currentCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({ _id: new ObjectId(id) });
       if (!currentCustomer) {
         return res.status(404).json({
           success: false,
@@ -290,7 +291,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         baseFilter['relationship_info.relationship_type'] = type;
       }
 
-      const relationships = await db.collection('customer_relationships')
+      const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
         .find(baseFilter)
         .sort({ 'meta.created_at': -1 })
         .toArray();
@@ -317,7 +318,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
           relatedCustomersFilter['insurance_info.customer_type'] = '개인';
         }
 
-        const relatedCustomers = await db.collection('customers')
+        const relatedCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
           .find(relatedCustomersFilter)
           .toArray();
 
@@ -395,7 +396,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 직접 연결된 관계들 조회
-      const directRelationships = await db.collection('customer_relationships')
+      const directRelationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
         .find({
           'relationship_info.from_customer_id': new ObjectId(id),
           'relationship_info.status': 'active'
@@ -488,7 +489,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       updateFields['meta.updated_at'] = utcNowDate();
       updateFields['meta.last_modified_by'] = new ObjectId('000000000000000000000000'); // 임시
 
-      const result = await db.collection('customer_relationships').updateOne(
+      const result = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).updateOne(
         { 
           _id: new ObjectId(relationshipId),
           'relationship_info.from_customer_id': new ObjectId(id)
@@ -530,7 +531,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 관계 정보 조회 (양방향 관계 처리를 위해)
-      const relationship = await db.collection('customer_relationships').findOne({
+      const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
         _id: new ObjectId(relationshipId),
         'relationship_info.from_customer_id': new ObjectId(id)
       });
@@ -543,13 +544,13 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 관계 삭제 (hard delete)
-      await db.collection('customer_relationships').deleteOne(
+      await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteOne(
         { _id: new ObjectId(relationshipId) }
       );
 
       // 양방향 관계이거나 family 관계인 경우 역방향 관계도 삭제
       if (relationship.relationship_info.is_bidirectional || relationship.relationship_info.relationship_category === 'family') {
-        await db.collection('customer_relationships').deleteMany(
+        await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany(
           {
             'relationship_info.from_customer_id': relationship.relationship_info.to_customer_id,
             'relationship_info.to_customer_id': relationship.relationship_info.from_customer_id,
@@ -604,7 +605,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       // 집계 쿼리로 통계 계산
-      const stats = await db.collection('customer_relationships').aggregate([
+      const stats = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).aggregate([
         {
           $match: {
             'relationship_info.from_customer_id': new ObjectId(id),
