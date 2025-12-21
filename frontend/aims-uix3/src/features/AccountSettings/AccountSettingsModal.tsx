@@ -47,8 +47,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   // 전역 상태
   const { currentUser, updateCurrentUser } = useUserStore()
 
-  // 소셜 로그인 사용자 정보 (authStore)
-  const { user: authUser, isAuthenticated, setUser: setAuthUser } = useAuthStore()
+  // 소셜 로그인 사용자 정보 (authStore) - 저장 시 동기화용
+  const { user: authUser, setUser: setAuthUser } = useAuthStore()
 
   // 사용자 정보 상태
   const [user, setUser] = useState<User | null>(null)
@@ -68,7 +68,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // 사용자 정보 로드 (authStore 우선, 없으면 레거시 currentUser, 없으면 API 호출)
+  // 사용자 정보 로드 (항상 API에서 전체 정보 가져옴)
   useEffect(() => {
     if (!visible) return
 
@@ -77,28 +77,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         setIsLoading(true)
         setLoadError(null)
 
-        // 1. authStore 사용자 정보 우선 사용 (소셜 로그인)
-        if (isAuthenticated && authUser) {
-          const authUserData: User = {
-            id: authUser._id,
-            name: authUser.name || '',
-            email: authUser.email || '',
-            role: authUser.role,
-            ...(authUser.avatarUrl && { avatarUrl: authUser.avatarUrl })
-          }
-          setUser(authUserData)
-          setFormData({
-            name: authUserData.name,
-            email: authUserData.email,
-            phone: '',
-            department: '',
-            position: ''
-          })
-          setIsLoading(false)
-          return
-        }
-
-        // 2. 레거시 전역 상태에 이미 있으면 API 호출 불필요
+        // 레거시 전역 상태에 이미 있으면 API 호출 불필요
         if (currentUser) {
           setUser(currentUser)
           setFormData({
@@ -112,7 +91,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           return
         }
 
-        // 3. 전역 상태에 없으면 API 호출
+        // API에서 전체 사용자 정보 가져옴 (phone, department, position 포함)
         const userData = await getCurrentUser()
         setUser(userData)
         setFormData({
@@ -131,7 +110,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
 
     loadUserData()
-  }, [visible, currentUser, isAuthenticated, authUser])
+  }, [visible, currentUser])
 
   // 전역 currentUser 변경 감지 (다른 곳에서 저장한 경우)
   // 편집 중일 때는 사용자 입력을 보존하기 위해 동기화 스킵
