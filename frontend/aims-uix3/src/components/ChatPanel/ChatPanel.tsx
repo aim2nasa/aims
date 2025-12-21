@@ -71,12 +71,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showSessionList, setShowSessionList] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  // 고급 사용자 모드: 기능 목록 없이 바로 채팅
+  const [preferDirectChat, setPreferDirectChat] = useState(() => {
+    return localStorage.getItem('aims-chat-direct-mode') === 'true';
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const helpRef = useRef<HTMLDivElement>(null);
-  const helpBtnRef = useRef<HTMLButtonElement>(null);
 
   const {
     sendMessage,
@@ -95,31 +96,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     deleteSession
   } = useChatHistory();
 
+  // 모드 변경 시 localStorage 저장
+  const handleToggleMode = useCallback((direct: boolean) => {
+    setPreferDirectChat(direct);
+    localStorage.setItem('aims-chat-direct-mode', direct ? 'true' : 'false');
+  }, []);
+
   // 패널 열릴 때 세션 목록 로드
   useEffect(() => {
     if (isOpen) {
       fetchSessions(1, 10);
     }
   }, [isOpen, fetchSessions]);
-
-  // 도움말 패널 바깥 클릭 시 닫기
-  useEffect(() => {
-    if (!showHelp) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      // 도움말 패널이나 버튼 클릭이 아니면 닫기
-      if (
-        helpRef.current && !helpRef.current.contains(target) &&
-        helpBtnRef.current && !helpBtnRef.current.contains(target)
-      ) {
-        setShowHelp(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showHelp]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -332,24 +320,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           <span>AI 어시스턴트</span>
         </div>
         <div className="chat-panel__header-actions">
-          {/* 도움말 */}
-          <Tooltip content="사용 가이드" placement="bottom">
-            <button
-              ref={helpBtnRef}
-              type="button"
-              className={`chat-panel__header-btn ${showHelp ? 'chat-panel__header-btn--active' : ''}`}
-              onClick={() => { setShowHelp(!showHelp); setShowSessionList(false); }}
-              aria-label="도움말"
-            >
-              <SFSymbol name="questionmark.circle" size={SFSymbolSize.CAPTION_1} decorative />
-            </button>
-          </Tooltip>
           {/* 이전 대화 목록 */}
           <Tooltip content="이전 대화" placement="bottom">
             <button
               type="button"
               className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
-              onClick={() => { setShowSessionList(!showSessionList); setShowHelp(false); }}
+              onClick={() => setShowSessionList(!showSessionList)}
               aria-label="이전 대화"
             >
               <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} decorative />
@@ -391,39 +367,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           </Tooltip>
         </div>
       </div>
-
-      {/* 도움말 드롭다운 */}
-      {showHelp && (
-        <div ref={helpRef} className="chat-panel__help">
-          <div className="chat-panel__help-header">
-            <span>사용 가능한 기능 ({HELP_FEATURES.length}개)</span>
-            <span className="chat-panel__help-scroll-hint">↓ 스크롤</span>
-          </div>
-          <div className="chat-panel__help-items-wrapper">
-            <div className="chat-panel__help-items">
-              {HELP_FEATURES.map((feature, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="chat-panel__help-item"
-                  onClick={() => {
-                    setInput(feature.example);
-                    setShowHelp(false);
-                    inputRef.current?.focus();
-                  }}
-                >
-                  <span className="chat-panel__help-icon">{feature.icon}</span>
-                  <div className="chat-panel__help-content">
-                    <div className="chat-panel__help-title">{feature.title}</div>
-                    <div className="chat-panel__help-desc">{feature.desc}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <div className="chat-panel__help-fade" />
-          </div>
-        </div>
-      )}
 
       {/* 세션 목록 드롭다운 */}
       {showSessionList && (
@@ -477,16 +420,69 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       {/* Messages */}
       <div className="chat-panel__messages">
         {messages.length === 0 && !isLoading && (
-          <div className="chat-panel__empty">
-            <SFSymbol
-              name="sparkles"
-              size={SFSymbolSize.TITLE_2}
-              weight={SFSymbolWeight.LIGHT}
-              decorative
-            />
-            <p>무엇이든 물어보세요!</p>
-            <span>고객, 문서, 계약 정보를 검색할 수 있습니다.</span>
-          </div>
+          preferDirectChat ? (
+            // 직접 채팅 모드: 간단한 빈 상태
+            <div className="chat-panel__empty">
+              <SFSymbol
+                name="sparkles"
+                size={SFSymbolSize.TITLE_3}
+                weight={SFSymbolWeight.LIGHT}
+                decorative
+              />
+              <p>무엇이든 물어보세요!</p>
+              <span>고객, 계약, 문서 관련 질문을 자유롭게 하세요</span>
+              <button
+                type="button"
+                className="chat-panel__empty-mode-toggle"
+                onClick={() => handleToggleMode(false)}
+              >
+                사용 가능한 기능 보기
+              </button>
+            </div>
+          ) : (
+            // 기능 목록 모드: 전체 기능 표시
+            <div className="chat-panel__welcome">
+              <div className="chat-panel__welcome-header">
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.TITLE_3}
+                  weight={SFSymbolWeight.LIGHT}
+                  decorative
+                />
+                <div className="chat-panel__welcome-text">
+                  <p>무엇이든 물어보세요!</p>
+                  <span>아래 기능을 클릭하면 예시가 입력됩니다</span>
+                </div>
+              </div>
+              <div className="chat-panel__welcome-mode-toggle">
+                <button
+                  type="button"
+                  onClick={() => handleToggleMode(true)}
+                >
+                  바로 채팅하기
+                </button>
+              </div>
+              <div className="chat-panel__welcome-features">
+                {HELP_FEATURES.map((feature, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="chat-panel__welcome-feature"
+                    onClick={() => {
+                      setInput(feature.example);
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
+                    <div className="chat-panel__welcome-feature-content">
+                      <div className="chat-panel__welcome-feature-title">{feature.title}</div>
+                      <div className="chat-panel__welcome-feature-desc">{feature.desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
         )}
 
         {messages.map((msg) => (
