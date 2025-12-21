@@ -199,6 +199,16 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       it('$dayOfMonth 사용', () => {
         expect(sourceCode).toContain('$dayOfMonth');
       });
+
+      it('null/빈 문자열 생일 데이터 필터링 ($nin 사용)', () => {
+        // 생일이 없는 고객은 aggregation에서 제외해야 함
+        expect(sourceCode).toContain('$nin: [null,');
+        expect(sourceCode).toContain("$nin: [null, '']");
+      });
+
+      it('생일 null safety 주석 존재', () => {
+        expect(sourceCode).toContain('null safety');
+      });
     });
 
     describe('권한 검증', () => {

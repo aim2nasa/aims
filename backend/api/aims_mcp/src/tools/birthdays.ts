@@ -35,11 +35,16 @@ export async function handleFindBirthdayCustomers(args: unknown) {
 
     // MongoDB aggregation으로 생일 필터링
     // personal_info.birth_date 또는 personal_info.birthdate 필드 사용
+    // 생일 정보가 없는 고객은 제외 (null safety)
     const pipeline: object[] = [
       {
         $match: {
           'meta.created_by': userId,
-          'meta.status': 'active'
+          'meta.status': 'active',
+          $or: [
+            { 'personal_info.birth_date': { $exists: true, $nin: [null, ''] } },
+            { 'personal_info.birthdate': { $exists: true, $nin: [null, ''] } }
+          ]
         }
       },
       {
