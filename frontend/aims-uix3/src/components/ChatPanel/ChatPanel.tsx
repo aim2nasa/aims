@@ -75,6 +75,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
+  const helpBtnRef = useRef<HTMLButtonElement>(null);
 
   const {
     sendMessage,
@@ -99,6 +101,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       fetchSessions(1, 10);
     }
   }, [isOpen, fetchSessions]);
+
+  // 도움말 패널 바깥 클릭 시 닫기
+  useEffect(() => {
+    if (!showHelp) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      // 도움말 패널이나 버튼 클릭이 아니면 닫기
+      if (
+        helpRef.current && !helpRef.current.contains(target) &&
+        helpBtnRef.current && !helpBtnRef.current.contains(target)
+      ) {
+        setShowHelp(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showHelp]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -314,6 +335,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           {/* 도움말 */}
           <Tooltip content="사용 가이드" placement="bottom">
             <button
+              ref={helpBtnRef}
               type="button"
               className={`chat-panel__header-btn ${showHelp ? 'chat-panel__header-btn--active' : ''}`}
               onClick={() => { setShowHelp(!showHelp); setShowSessionList(false); }}
@@ -372,7 +394,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
 
       {/* 도움말 드롭다운 */}
       {showHelp && (
-        <div className="chat-panel__help">
+        <div ref={helpRef} className="chat-panel__help">
           <div className="chat-panel__help-header">
             <span>사용 가능한 기능 ({HELP_FEATURES.length}개)</span>
             <span className="chat-panel__help-scroll-hint">↓ 스크롤</span>
