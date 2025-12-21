@@ -7,6 +7,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
+import { CustomerService } from '@/services/customerService';
+import { DocumentService } from '@/services/DocumentService';
+import { ContractService } from '@/services/contractService';
 import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
@@ -64,6 +67,13 @@ const HELP_FEATURES = [
   { icon: '📦', title: '상품 상세 정보', desc: '담보, 보험료, 가입조건 등', example: '상품의 상세 정보 보여줘' },
 ];
 
+// 데이터 현황 인터페이스
+interface DataStats {
+  customers: number;
+  contracts: number;
+  documents: number;
+}
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState('');
@@ -75,6 +85,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [preferDirectChat, setPreferDirectChat] = useState(() => {
     return localStorage.getItem('aims-chat-direct-mode') === 'true';
   });
+  // 데이터 현황 오버레이
+  const [showDataOverlay, setShowDataOverlay] = useState(false);
+  const [dataStats, setDataStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
+  const [animatedStats, setAnimatedStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
+  const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -112,6 +127,68 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       fetchSessions(1, 10);
     }
   }, [isOpen, fetchSessions]);
+
+  // 패널이 열릴 때 데이터 현황 오버레이 표시
+  useEffect(() => {
+    // isOpen이 false -> true로 변할 때만 실행
+    if (isOpen && !prevIsOpenRef.current) {
+      // 데이터 통계 로드
+      const loadStats = async () => {
+        try {
+          const [customerStats, contractsResponse, documentStats] = await Promise.all([
+            CustomerService.getCustomerStats().catch(() => ({ total: 0 })),
+            ContractService.getContracts({ limit: 1 }).catch(() => ({ total: 0 })),
+            DocumentService.getDocumentStats().catch(() => ({ total: 0 })),
+          ]);
+
+          const stats: DataStats = {
+            customers: customerStats.total || 0,
+            contracts: contractsResponse.total || 0,
+            documents: documentStats.total || 0,
+          };
+
+          setDataStats(stats);
+          setAnimatedStats({ customers: 0, contracts: 0, documents: 0 });
+          setShowDataOverlay(true);
+
+          // 카운트업 애니메이션 (800ms 동안)
+          const duration = 800;
+          const steps = 30;
+          const interval = duration / steps;
+          let step = 0;
+
+          const animationTimer = setInterval(() => {
+            step++;
+            const progress = step / steps;
+            // easeOutQuart 이징 함수
+            const eased = 1 - Math.pow(1 - progress, 4);
+
+            setAnimatedStats({
+              customers: Math.round(stats.customers * eased),
+              contracts: Math.round(stats.contracts * eased),
+              documents: Math.round(stats.documents * eased),
+            });
+
+            if (step >= steps) {
+              clearInterval(animationTimer);
+              setAnimatedStats(stats);
+            }
+          }, interval);
+
+          // 3초 후 페이드아웃
+          setTimeout(() => {
+            setShowDataOverlay(false);
+          }, 3000);
+        } catch (error) {
+          console.error('[ChatPanel] 데이터 통계 로드 실패:', error);
+        }
+      };
+
+      loadStats();
+    }
+
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -411,6 +488,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           <span className="chat-panel__loading-dot" />
           <span className="chat-panel__loading-dot" />
           <span className="chat-panel__loading-dot" />
+        </div>
+      )}
+
+      {/* 데이터 현황 오버레이 */}
+      {showDataOverlay && (
+        <div className="chat-panel__data-overlay">
+          <div className="chat-panel__data-overlay-content">
+            <div className="chat-panel__data-overlay-title">내 데이터</div>
+            <div className="chat-panel__data-stats">
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">👤</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.customers.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">고객</span>
+              </div>
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">📋</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.contracts.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">계약</span>
+              </div>
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">📄</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.documents.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">문서</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
