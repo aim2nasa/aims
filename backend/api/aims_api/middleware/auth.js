@@ -29,6 +29,15 @@ function generateToken(user) {
  */
 function authenticateJWT(req, res, next) {
   const authHeader = req.headers.authorization;
+  const testUserId = req.headers['x-user-id'];
+
+  // 테스트 환경: x-user-id 헤더만으로 인증 허용 (JWT 없이)
+  // NODE_ENV=test 또는 ALLOW_TEST_AUTH=true일 때만 활성화
+  if (!authHeader && testUserId && (process.env.NODE_ENV === 'test' || process.env.ALLOW_TEST_AUTH === 'true')) {
+    console.log(`[TEST AUTH] x-user-id 인증: ${testUserId}`);
+    req.user = { id: testUserId, name: 'Test User', role: 'user' };
+    return next();
+  }
 
   if (!authHeader) {
     return res.status(401).json({
