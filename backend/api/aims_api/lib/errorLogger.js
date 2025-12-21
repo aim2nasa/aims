@@ -192,6 +192,8 @@ class ErrorLogger {
     endDate,
     search,
     resolved,
+    sortBy = 'timestamp',  // 정렬 필드
+    sortOrder = 'desc',    // 정렬 방향 ('asc' | 'desc')
     page = 1,
     limit = 50
   } = {}) {
@@ -240,10 +242,22 @@ class ErrorLogger {
 
     const skip = (page - 1) * limit;
 
+    // 정렬 필드 매핑 및 정렬 객체 생성
+    const sortFieldMap = {
+      timestamp: 'timestamp',
+      source: 'source.type',
+      severity: 'error.severity',
+      type: 'error.type',
+      message: 'error.message',
+      user: 'actor.name'
+    };
+    const sortField = sortFieldMap[sortBy] || 'timestamp';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+
     const [logs, total] = await Promise.all([
       this.collection
         .find(query)
-        .sort({ timestamp: -1 })
+        .sort({ [sortField]: sortDirection })
         .skip(skip)
         .limit(limit)
         .toArray(),

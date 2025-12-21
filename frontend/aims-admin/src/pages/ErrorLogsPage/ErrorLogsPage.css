@@ -525,3 +525,30 @@
   margin: 0;
   color: var(--color-text-secondary);
 }
+
+/* Sortable columns */
+.error-logs-page__th--sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 0.15s;
+}
+
+.error-logs-page__th--sortable:hover {
+  background: var(--color-surface-secondary, rgba(0, 0, 0, 0.05));
+}
+
+.sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+}
+
+.sort-icon--inactive {
+  opacity: 0.3;
+}
+
+.sort-icon--active {
+  opacity: 1;
+  color: var(--color-primary);
+}

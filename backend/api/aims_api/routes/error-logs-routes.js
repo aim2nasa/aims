@@ -240,6 +240,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
    * - endDate: ISO date string
    * - search: string (메시지/타입 검색)
    * - resolved: 'true' | 'false' | 'all'
+   * - sortBy: 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user'
+   * - sortOrder: 'asc' | 'desc'
    */
   router.get('/admin/error-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
@@ -254,7 +256,9 @@ module.exports = function(db, authenticateJWT, requireRole) {
         startDate,
         endDate,
         search,
-        resolved
+        resolved,
+        sortBy = 'timestamp',
+        sortOrder = 'desc'
       } = req.query;
 
       const result = await errorLogger.getLogs({
@@ -267,6 +271,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
         endDate,
         search,
         resolved,
+        sortBy,
+        sortOrder,
         page: parseInt(page),
         limit: Math.min(100, parseInt(limit))
       });

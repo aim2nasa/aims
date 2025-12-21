@@ -11,12 +11,13 @@ import { useErrorLogSSE } from '@/shared/hooks/useErrorLogSSE';
 import {
   errorLogsApi,
   formatDateTime,
-  formatRelativeTime,
   SEVERITY_LABELS,
   CATEGORY_LABELS,
   SOURCE_LABELS,
   type ErrorLog,
   type GetErrorLogsParams,
+  type SortField,
+  type SortOrder,
 } from '@/features/error-logs/api';
 import { Button } from '@/shared/ui/Button/Button';
 import './ErrorLogsPage.css';
@@ -61,6 +62,8 @@ export const ErrorLogsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailLog, setDetailLog] = useState<ErrorLog | null>(null);
+  const [sortBy, setSortBy] = useState<SortField>('timestamp');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -75,6 +78,8 @@ export const ErrorLogsPage = () => {
     source: sourceFilter as 'frontend' | 'backend' | undefined,
     severity: severityFilter || undefined,
     category: categoryFilter || undefined,
+    sortBy,
+    sortOrder,
   };
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -133,6 +138,29 @@ export const ErrorLogsPage = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     setSelectedIds(new Set());
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortBy === field) {
+      // 같은 필드 클릭 시 방향 토글
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭 시 해당 필드로 변경, desc로 시작
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortBy !== field) {
+      return <span className="sort-icon sort-icon--inactive">⇅</span>;
+    }
+    return (
+      <span className="sort-icon sort-icon--active">
+        {sortOrder === 'asc' ? '↑' : '↓'}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -280,12 +308,42 @@ export const ErrorLogsPage = () => {
                         onChange={handleSelectAll}
                       />
                     </th>
-                    <th className="error-logs-page__th-time">시간</th>
-                    <th className="error-logs-page__th-source">소스</th>
-                    <th className="error-logs-page__th-severity">심각도</th>
-                    <th className="error-logs-page__th-type">타입</th>
-                    <th className="error-logs-page__th-message">메시지</th>
-                    <th className="error-logs-page__th-user">사용자</th>
+                    <th
+                      className="error-logs-page__th-time error-logs-page__th--sortable"
+                      onClick={() => handleSort('timestamp')}
+                    >
+                      시간 {renderSortIcon('timestamp')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-source error-logs-page__th--sortable"
+                      onClick={() => handleSort('source')}
+                    >
+                      소스 {renderSortIcon('source')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-severity error-logs-page__th--sortable"
+                      onClick={() => handleSort('severity')}
+                    >
+                      심각도 {renderSortIcon('severity')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-type error-logs-page__th--sortable"
+                      onClick={() => handleSort('type')}
+                    >
+                      타입 {renderSortIcon('type')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-message error-logs-page__th--sortable"
+                      onClick={() => handleSort('message')}
+                    >
+                      메시지 {renderSortIcon('message')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-user error-logs-page__th--sortable"
+                      onClick={() => handleSort('user')}
+                    >
+                      사용자 {renderSortIcon('user')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

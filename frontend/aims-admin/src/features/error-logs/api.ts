@@ -87,6 +87,9 @@ export interface ErrorLogStatsResponse {
   stats: ErrorLogStats;
 }
 
+export type SortField = 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user';
+export type SortOrder = 'asc' | 'desc';
+
 export interface GetErrorLogsParams {
   page?: number;
   limit?: number;
@@ -98,6 +101,8 @@ export interface GetErrorLogsParams {
   endDate?: string;
   search?: string;
   resolved?: boolean;
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
 }
 
 // ============================================================
@@ -121,6 +126,8 @@ export const errorLogsApi = {
     if (params.endDate) queryParams.append('endDate', params.endDate);
     if (params.search) queryParams.append('search', params.search);
     if (params.resolved !== undefined) queryParams.append('resolved', params.resolved.toString());
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
     const queryString = queryParams.toString();
     const endpoint = queryString
