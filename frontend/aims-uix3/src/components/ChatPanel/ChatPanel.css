@@ -142,14 +142,16 @@
 
 /* ==================== Help Panel ==================== */
 .chat-panel__help {
+  position: relative;
   border-bottom: 1px solid rgba(139, 92, 246, 0.15);
   background: rgba(255, 255, 255, 0.5);
-  max-height: 360px;
-  overflow-y: auto;
   flex-shrink: 0;
 }
 
 .chat-panel__help-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -158,6 +160,9 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .chat-panel__help-hint {
@@ -166,9 +171,60 @@
   color: var(--color-text-tertiary);
 }
 
+.chat-panel__help-scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 500;
+  color: #8B5CF6;
+  animation: bounce-hint 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce-hint {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+.chat-panel__help-items-wrapper {
+  max-height: 45vh;
+  overflow-y: auto;
+  /* 커스텀 스크롤바 - 눈에 띄게 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+}
+
+.chat-panel__help-items-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-panel__help-items-wrapper::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 3px;
+}
+
+.chat-panel__help-items-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.4);
+  border-radius: 3px;
+}
+
+.chat-panel__help-items-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
 .chat-panel__help-items {
   display: flex;
   flex-direction: column;
+}
+
+/* 하단 fade 그라데이션 - 더 많은 항목이 있음을 암시 */
+.chat-panel__help-fade {
+  position: sticky;
+  bottom: 0;
+  height: 32px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, transparent 100%);
+  pointer-events: none;
+  margin-top: -32px;
 }
 
 .chat-panel__help-item {
@@ -600,7 +656,24 @@ html[data-theme="dark"] .chat-panel__help {
 }
 
 html[data-theme="dark"] .chat-panel__help-header {
+  background: rgba(26, 22, 37, 0.95);
   border-bottom-color: rgba(139, 92, 246, 0.1);
+}
+
+html[data-theme="dark"] .chat-panel__help-items-wrapper {
+  scrollbar-color: rgba(139, 92, 246, 0.5) rgba(139, 92, 246, 0.1);
+}
+
+html[data-theme="dark"] .chat-panel__help-items-wrapper::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__help-items-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+html[data-theme="dark"] .chat-panel__help-fade {
+  background: linear-gradient(to top, rgba(26, 22, 37, 0.95) 0%, transparent 100%);
 }
 
 html[data-theme="dark"] .chat-panel__help-item {

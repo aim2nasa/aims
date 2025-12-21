@@ -35,17 +35,33 @@ const DEFAULT_WIDTH = 400;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 600;
 
-// 도움말 기능 목록
+// 도움말 기능 목록 (MCP 도구 100% 커버리지)
 const HELP_FEATURES = [
-  { icon: '👤', title: '고객 검색/조회', desc: '이름으로 고객 검색', example: '김OO 고객 정보 알려줘' },
-  { icon: '📄', title: '계약 조회', desc: '고객별 계약 현황 조회', example: '내 고객 계약 목록 보여줘' },
-  { icon: '⏰', title: '만기 예정 알림', desc: '만기 예정 계약 조회', example: '이번 달 만기 예정 계약 알려줘' },
-  { icon: '🎂', title: '생일 고객 알림', desc: '생일 고객 조회', example: '이번 주 생일인 고객은?' },
-  { icon: '📁', title: '문서 검색', desc: '키워드로 문서 검색', example: '종신보험 관련 문서 찾아줘' },
-  { icon: '📝', title: '메모 관리', desc: '고객 메모 추가/조회', example: '고객에게 메모 추가해줘' },
-  { icon: '📊', title: '통계 조회', desc: '고객/계약 통계', example: '이번 달 신규 고객 몇 명이야?' },
-  { icon: '🔗', title: '관계 네트워크', desc: '고객 간 관계 조회', example: '고객 가족관계 보여줘' },
-  { icon: '🏢', title: '보험상품 검색', desc: '상품 정보 조회', example: '암보험 상품 정보 알려줘' },
+  // 고객 관리 (4 tools: search, get, create, update)
+  { icon: '🔍', title: '고객 검색', desc: '이름, 전화번호, 지역, 유형별 검색', example: '서울 사는 법인 고객 목록 보여줘' },
+  { icon: '👤', title: '고객 상세 조회', desc: '특정 고객의 전체 정보 조회', example: '고객 상세 정보 알려줘' },
+  { icon: '➕', title: '고객 등록', desc: '새 고객 추가', example: '새 고객 등록해줘. 이름은 테스트, 전화번호 010-1234-5678' },
+  { icon: '✏️', title: '고객 정보 수정', desc: '고객 연락처, 주소 등 수정', example: '고객 전화번호를 010-9999-8888로 변경해줘' },
+  // 계약 관리 (3 tools: list, get_details, find_expiring)
+  { icon: '📄', title: '계약 목록 조회', desc: '고객별 계약 현황, 상품별 필터', example: '내 전체 계약 목록 보여줘' },
+  { icon: '📋', title: '계약 상세 조회', desc: '피보험자, 수익자, 특약 정보 포함', example: '계약의 피보험자와 수익자 알려줘' },
+  { icon: '⏰', title: '만기 예정 계약', desc: 'N일 이내 만기 도래 계약 조회', example: '30일 이내 만기 예정 계약 알려줘' },
+  // 생일 (1 tool)
+  { icon: '🎂', title: '생일 고객', desc: '특정 월/일의 생일 고객 조회', example: '12월 생일인 고객 목록 보여줘' },
+  // 문서 관리 (3 tools: search, get, list_customer)
+  { icon: '🔎', title: '문서 AI 검색', desc: 'AI 의미 검색 또는 키워드 검색', example: '자동차보험 관련 문서 찾아줘' },
+  { icon: '📁', title: '고객별 문서 조회', desc: '특정 고객의 문서 목록', example: '고객의 문서 목록 보여줘' },
+  // 메모 관리 (3 tools: add, list, delete)
+  { icon: '📝', title: '메모 추가', desc: '고객에게 상담 메모 기록', example: '고객에게 메모 추가해줘: 다음 주 상담 예정' },
+  { icon: '📋', title: '메모 조회/삭제', desc: '기록된 메모 확인 및 삭제', example: '고객 메모 목록 보여줘' },
+  // 통계 (1 tool with 4 types)
+  { icon: '📊', title: '전체 통계 요약', desc: '고객수, 계약수, 보험료 현황', example: '내 전체 통계 요약 보여줘' },
+  { icon: '📈', title: '월별 신규 현황', desc: '최근 6개월 신규 고객/계약 추이', example: '최근 월별 신규 고객 현황 알려줘' },
+  // 관계 네트워크 (1 tool)
+  { icon: '🔗', title: '고객 관계 조회', desc: '가족, 친척, 지인, 직장 관계', example: '고객의 가족관계 보여줘' },
+  // 보험상품 (2 tools: search, get_details)
+  { icon: '🏢', title: '보험상품 검색', desc: '상품명, 보험사, 카테고리별 검색', example: '메트라이프 종신보험 상품 알려줘' },
+  { icon: '📦', title: '상품 상세 정보', desc: '담보, 보험료, 가입조건 등', example: '상품의 상세 정보 보여줘' },
 ];
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
@@ -358,28 +374,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       {showHelp && (
         <div className="chat-panel__help">
           <div className="chat-panel__help-header">
-            <span>사용 가능한 기능</span>
-            <span className="chat-panel__help-hint">클릭하면 예시가 입력됩니다</span>
+            <span>사용 가능한 기능 ({HELP_FEATURES.length}개)</span>
+            <span className="chat-panel__help-scroll-hint">↓ 스크롤</span>
           </div>
-          <div className="chat-panel__help-items">
-            {HELP_FEATURES.map((feature, idx) => (
-              <button
-                key={idx}
-                type="button"
-                className="chat-panel__help-item"
-                onClick={() => {
-                  setInput(feature.example);
-                  setShowHelp(false);
-                  inputRef.current?.focus();
-                }}
-              >
-                <span className="chat-panel__help-icon">{feature.icon}</span>
-                <div className="chat-panel__help-content">
-                  <div className="chat-panel__help-title">{feature.title}</div>
-                  <div className="chat-panel__help-desc">{feature.desc}</div>
-                </div>
-              </button>
-            ))}
+          <div className="chat-panel__help-items-wrapper">
+            <div className="chat-panel__help-items">
+              {HELP_FEATURES.map((feature, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="chat-panel__help-item"
+                  onClick={() => {
+                    setInput(feature.example);
+                    setShowHelp(false);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  <span className="chat-panel__help-icon">{feature.icon}</span>
+                  <div className="chat-panel__help-content">
+                    <div className="chat-panel__help-title">{feature.title}</div>
+                    <div className="chat-panel__help-desc">{feature.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="chat-panel__help-fade" />
           </div>
         </div>
       )}
