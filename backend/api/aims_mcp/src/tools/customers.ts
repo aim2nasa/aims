@@ -3,11 +3,6 @@ import { ObjectId } from 'mongodb';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
-// 날짜 포맷 함수 (YYYY.MM.DD HH:mm:ss)
-function formatDateTime(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
 
 // 스키마 정의
 export const searchCustomersSchema = z.object({
@@ -283,7 +278,7 @@ export async function handleCreateCustomer(args: unknown) {
       };
     }
 
-    const now = formatDateTime(new Date());
+    const now = new Date();
     const newCustomer = {
       personal_info: {
         name: params.name,
@@ -313,7 +308,7 @@ export async function handleCreateCustomer(args: unknown) {
           customerId: result.insertedId.toString(),
           name: params.name,
           customerType: params.customerType || '개인',
-          createdAt: now
+          createdAt: now.toISOString()
         }, null, 2)
       }]
     };
@@ -380,7 +375,7 @@ export async function handleUpdateCustomer(args: unknown) {
 
     // 업데이트할 필드 구성
     const updateFields: Record<string, unknown> = {
-      'meta.updated_at': formatDateTime(new Date())
+      'meta.updated_at': new Date()
     };
 
     if (params.name) updateFields['personal_info.name'] = params.name;
