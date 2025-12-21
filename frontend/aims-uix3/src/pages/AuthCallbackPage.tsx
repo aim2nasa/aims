@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { getCurrentUser } from '@/entities/auth/api';
-import { syncUserIdFromStorage } from '@/stores/user';
+import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
 import './AuthCallbackPage.css';
 
 export default function AuthCallbackPage() {
@@ -15,6 +15,7 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   const { setToken, setUser, setLoading } = useAuthStore();
+  const { updateCurrentUser } = useUserStore();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -48,6 +49,15 @@ export default function AuthCallbackPage() {
         const user = await getCurrentUser(token);
         setUser(user);
 
+        // useUserStore에 사용자 정보 동기화 (AccountSettings 등에서 즉시 사용)
+        updateCurrentUser({
+          id: user._id,
+          name: user.name || '',
+          email: user.email || '',
+          role: user.role,
+          avatarUrl: user.avatarUrl || undefined,
+        });
+
         // 레거시 API용 사용자 ID 저장 및 동기화
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
@@ -68,7 +78,7 @@ export default function AuthCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, setToken, setUser, setLoading]);
+  }, [searchParams, navigate, setToken, setUser, setLoading, updateCurrentUser]);
 
   if (error) {
     return (

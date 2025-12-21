@@ -8,13 +8,14 @@ import { startKakaoLogin, startKakaoLoginSwitch, startNaverLogin, startNaverLogi
 import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
-import { syncUserIdFromStorage } from '@/stores/user';
+import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
 import './LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setToken, setUser } = useAuthStore();
+  const { updateCurrentUser } = useUserStore();
   const { isDevMode, toggleDevMode } = useDevModeStore();
   const { showAlert } = useAppleConfirm();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -78,7 +79,16 @@ export default function LoginPage() {
         // 3. Zustand store에 사용자 정보 저장
         setUser(user);
 
-        // 4. 레거시 API용 사용자 ID 저장
+        // 4. useUserStore에 사용자 정보 동기화 (AccountSettings 등에서 즉시 사용)
+        updateCurrentUser({
+          id: user._id,
+          name: user.name || '',
+          email: user.email || '',
+          role: user.role,
+          avatarUrl: user.avatarUrl || undefined,
+        });
+
+        // 5. 레거시 API용 사용자 ID 저장
         localStorage.setItem('aims-current-user-id', user._id);
         syncUserIdFromStorage();
 
@@ -142,11 +152,20 @@ export default function LoginPage() {
       setToken(data.token);
       setUser(devUser);
 
-      // 5. 레거시 API용 사용자 ID 저장
+      // 5. useUserStore에 사용자 정보 동기화 (AccountSettings 등에서 즉시 사용)
+      updateCurrentUser({
+        id: devUser._id,
+        name: devUser.name || '',
+        email: devUser.email || '',
+        role: devUser.role,
+        avatarUrl: devUser.avatarUrl || undefined,
+      });
+
+      // 6. 레거시 API용 사용자 ID 저장
       localStorage.setItem('aims-current-user-id', devUser._id);
       syncUserIdFromStorage();
 
-      // 6. 메인 페이지로 이동
+      // 7. 메인 페이지로 이동
       navigate('/', { replace: true });
     } catch (error) {
       console.error('개발용 로그인 실패:', error);
