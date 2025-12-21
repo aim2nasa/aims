@@ -1629,7 +1629,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       {/* RightPane + BRB 통합 컨테이너 - 미닫이문 UX */}
       <aside
-        className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''}`}
+        className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''} ${isDraggingBRB || isResizing ? 'no-transition' : ''}`}
         role="complementary"
         aria-label="보조 정보 패널"
         style={{

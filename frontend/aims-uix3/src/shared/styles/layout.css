@@ -239,6 +239,10 @@
   transition: none !important;
 }
 
+.layout-rightpane-container.no-transition {
+  transition: none !important;
+}
+
 /* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
 .layout-centerpane:hover {
   box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
