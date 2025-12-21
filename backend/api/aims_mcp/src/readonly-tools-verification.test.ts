@@ -82,6 +82,22 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).toContain("type: 'text' as const");
       });
     });
+
+    describe('toString() 최적화', () => {
+      it('ID 변환 후 재사용 (첫 번째 루프)', () => {
+        expect(sourceCode).toContain('const sourceId = rel.source_customer_id?.toString()');
+        expect(sourceCode).toContain('const targetId = rel.target_customer_id?.toString()');
+      });
+
+      it('최적화 주석 존재', () => {
+        expect(sourceCode).toContain('toString() 한 번만 호출하여 최적화');
+      });
+
+      it('변환된 ID로 비교', () => {
+        expect(sourceCode).toContain('sourceId !== params.customerId');
+        expect(sourceCode).toContain('targetId !== params.customerId');
+      });
+    });
   });
 
   describe('contracts.ts', () => {

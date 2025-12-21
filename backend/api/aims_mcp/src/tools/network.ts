@@ -105,14 +105,17 @@ export async function handleGetCustomerNetwork(args: unknown) {
       })
       .toArray();
 
-    // 관련 고객 ID 수집
+    // 관련 고객 ID 수집 (toString() 한 번만 호출하여 최적화)
     const relatedCustomerIds = new Set<string>();
     relationships.forEach(rel => {
-      if (rel.source_customer_id?.toString() !== params.customerId) {
-        relatedCustomerIds.add(rel.source_customer_id.toString());
+      const sourceId = rel.source_customer_id?.toString();
+      const targetId = rel.target_customer_id?.toString();
+
+      if (sourceId && sourceId !== params.customerId) {
+        relatedCustomerIds.add(sourceId);
       }
-      if (rel.target_customer_id?.toString() !== params.customerId) {
-        relatedCustomerIds.add(rel.target_customer_id.toString());
+      if (targetId && targetId !== params.customerId) {
+        relatedCustomerIds.add(targetId);
       }
     });
 
@@ -135,10 +138,12 @@ export async function handleGetCustomerNetwork(args: unknown) {
 
     const customerMap = new Map(relatedCustomers.map(c => [c._id.toString(), c]));
 
-    // 관계 정보 정리
+    // 관계 정보 정리 (toString() 한 번만 호출하여 최적화)
     const network = relationships.map(rel => {
-      const isSource = rel.source_customer_id?.toString() === params.customerId;
-      const relatedId = isSource ? rel.target_customer_id?.toString() : rel.source_customer_id?.toString();
+      const sourceId = rel.source_customer_id?.toString();
+      const targetId = rel.target_customer_id?.toString();
+      const isSource = sourceId === params.customerId;
+      const relatedId = isSource ? targetId : sourceId;
       const relatedCustomer = customerMap.get(relatedId || '');
 
       return {
