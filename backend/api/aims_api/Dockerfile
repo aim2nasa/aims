@@ -24,7 +24,7 @@ ENV PORT=3010
 WORKDIR /shared-schema
 COPY shared/schema/package*.json ./
 COPY shared/schema/tsconfig*.json ./
-COPY shared/schema/src ./src
+COPY shared/schema/*.ts ./
 RUN npm ci && npm run build
 
 # 2. aims_api 빌드
