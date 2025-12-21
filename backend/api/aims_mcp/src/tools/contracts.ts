@@ -52,29 +52,30 @@ export async function handleListContracts(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // 기본 필터: 해당 설계사의 계약만
-    const filter: Record<string, unknown> = {};
+    // 쿼리 조건들을 배열로 수집 (명확한 $and 구조)
+    const conditions: object[] = [];
 
-    // agent_id 필터 (ObjectId 또는 string)
+    // agent_id 필터 (ObjectId 또는 string 모두 지원)
     const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
-    filter.$or = [
-      { agent_id: agentObjectId },
-      { agent_id: userId }
-    ];
+    conditions.push({
+      $or: [
+        { agent_id: agentObjectId },
+        { agent_id: userId }
+      ]
+    });
 
     // 고객 ID
     if (params.customerId) {
       const customerObjectId = toSafeObjectId(params.customerId);
       if (customerObjectId) {
-        filter.customer_id = customerObjectId;
+        conditions.push({ customer_id: customerObjectId });
       }
     }
 
     // 검색어
     if (params.search) {
       const regex = { $regex: escapeRegex(params.search), $options: 'i' };
-      filter.$and = filter.$and || [];
-      (filter.$and as unknown[]).push({
+      conditions.push({
         $or: [
           { customer_name: regex },
           { product_name: regex },
@@ -85,8 +86,11 @@ export async function handleListContracts(args: unknown) {
 
     // 상태
     if (params.status) {
-      filter.status = params.status;
+      conditions.push({ status: params.status });
     }
+
+    // 최종 필터: 모든 조건을 $and로 결합
+    const filter = conditions.length > 1 ? { $and: conditions } : conditions[0];
 
     const contracts = await db.collection(COLLECTIONS.CONTRACTS)
       .find(filter)

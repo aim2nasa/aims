@@ -102,6 +102,24 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       });
     });
 
+    describe('쿼리 구조 (명확한 $and)', () => {
+      it('conditions 배열로 쿼리 조건 수집', () => {
+        expect(sourceCode).toContain('const conditions: object[] = []');
+      });
+
+      it('conditions.push로 조건 추가', () => {
+        expect(sourceCode).toContain('conditions.push({');
+      });
+
+      it('$and로 최종 필터 결합', () => {
+        expect(sourceCode).toContain('{ $and: conditions }');
+      });
+
+      it('조건이 하나뿐이면 $and 생략', () => {
+        expect(sourceCode).toContain('conditions.length > 1 ?');
+      });
+    });
+
     describe('응답 필드', () => {
       it('id 필드 포함 (toString 변환)', () => {
         expect(sourceCode).toContain('id: c._id.toString()');
