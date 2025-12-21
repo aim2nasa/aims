@@ -10,8 +10,10 @@
     "start:stdio": "node dist/index.js",
     "start:http": "MCP_MODE=http node dist/index.js",
     "dev": "tsc --watch",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --exclude='**/user-simulation.e2e.test.ts'",
+    "test:watch": "vitest --exclude='**/user-simulation.e2e.test.ts'",
+    "test:e2e": "vitest run src/user-simulation.e2e.test.ts",
+    "test:all": "vitest run"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
