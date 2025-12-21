@@ -291,9 +291,17 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       });
     });
 
-    describe('premium 계산', () => {
-      it('$toDouble 사용', () => {
-        expect(sourceCode).toContain('$toDouble');
+    describe('premium 계산 (타입 안전)', () => {
+      it('$convert 사용 (타입 안전 변환)', () => {
+        expect(sourceCode).toContain('$convert');
+      });
+
+      it('onError: 0 (변환 실패 시 0)', () => {
+        expect(sourceCode).toContain('onError: 0');
+      });
+
+      it('onNull: 0 (null 시 0)', () => {
+        expect(sourceCode).toContain('onNull: 0');
       });
 
       it('$ifNull로 null 처리', () => {
@@ -302,6 +310,10 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
 
       it('totalPremium 계산', () => {
         expect(sourceCode).toContain('totalPremium');
+      });
+
+      it('타입 안전 변환 주석', () => {
+        expect(sourceCode).toContain('타입 안전 변환');
       });
     });
 

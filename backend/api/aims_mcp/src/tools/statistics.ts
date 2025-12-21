@@ -56,14 +56,23 @@ export async function handleGetStatistics(args: unknown) {
           }
         ]).toArray(),
 
-        // 계약 통계
+        // 계약 통계 (premium 타입 안전 변환)
         db.collection(COLLECTIONS.CONTRACTS).aggregate([
           { $match: { $or: [{ agent_id: agentObjectId }, { agent_id: userId }] } },
           {
             $group: {
               _id: null,
               total: { $sum: 1 },
-              totalPremium: { $sum: { $toDouble: { $ifNull: ['$premium', 0] } } }
+              totalPremium: {
+                $sum: {
+                  $convert: {
+                    input: { $ifNull: ['$premium', 0] },
+                    to: 'double',
+                    onError: 0,
+                    onNull: 0
+                  }
+                }
+              }
             }
           }
         ]).toArray()
@@ -123,13 +132,23 @@ export async function handleGetStatistics(args: unknown) {
     }
 
     if (params.type === 'contract_count') {
+      // premium 타입 안전 변환
       const stats = await db.collection(COLLECTIONS.CONTRACTS).aggregate([
         { $match: { $or: [{ agent_id: agentObjectId }, { agent_id: userId }] } },
         {
           $group: {
             _id: '$status',
             count: { $sum: 1 },
-            totalPremium: { $sum: { $toDouble: { $ifNull: ['$premium', 0] } } }
+            totalPremium: {
+              $sum: {
+                $convert: {
+                  input: { $ifNull: ['$premium', 0] },
+                  to: 'double',
+                  onError: 0,
+                  onNull: 0
+                }
+              }
+            }
           }
         }
       ]).toArray();
