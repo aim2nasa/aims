@@ -108,6 +108,13 @@ export class TestDataFactory {
     const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const customerName = overrides.name || `테스트고객_${uniqueSuffix}`;
 
+    // MCP는 customerType: '개인' | '법인' 형식 사용
+    const customerTypeMap = {
+      individual: '개인',
+      corporate: '법인'
+    } as const;
+    const customerType = customerTypeMap[overrides.type || 'individual'];
+
     const result = await this.mcp.call<{
       success: boolean;
       customerId: string;
@@ -115,7 +122,7 @@ export class TestDataFactory {
       customerType: string;
     }>('create_customer', {
       name: customerName,
-      type: overrides.type || 'individual',
+      customerType,
       phone: overrides.phone,
       email: overrides.email,
       birthDate: overrides.birthDate,

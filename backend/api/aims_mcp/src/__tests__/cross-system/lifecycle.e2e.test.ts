@@ -94,9 +94,10 @@ describe('Category 4: 라이프사이클 테스트', () => {
       }
 
       // ========== 3. UPDATE via API ==========
+      // Note: dot notation 사용 (nested object는 전체 필드를 덮어씀)
       const newPhone = '010-9999-8888';
       await api.put(`/customers/${customerId}`, {
-        personal_info: { mobile_phone: newPhone }
+        'personal_info.mobile_phone': newPhone
       });
 
       // ========== 4. READ via MCP ==========

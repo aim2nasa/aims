@@ -170,9 +170,9 @@ describe('Category 1: 데이터 동기화 테스트', () => {
         const customer = await factory.createCustomer({ name: originalName });
         const customerId = normalizeId(customer);
 
-        // 2. API로 이름 변경
+        // 2. API로 이름 변경 (dot notation 사용)
         const newName = `변경이름_${Date.now()}`;
-        await api.put(`/customers/${customerId}`, { personal_info: { name: newName } });
+        await api.put(`/customers/${customerId}`, { 'personal_info.name': newName });
 
         // 3. MCP로 검색
         const mcpResult = await mcp.call<{

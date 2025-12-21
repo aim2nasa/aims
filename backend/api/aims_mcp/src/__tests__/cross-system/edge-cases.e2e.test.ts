@@ -72,11 +72,12 @@ describe('Category 5: 엣지 케이스 테스트', () => {
     it('한글 자모 및 특수 한글 처리', async () => {
       if (!serversAvailable) return;
 
+      const timestamp = Date.now();
       const koreanNames = [
-        '김ㄱㄴㄷ테스트',
-        '이ㅏㅓㅗㅜ',
-        '박가나다라',
-        '홍길동 님' // 공백 포함
+        `김ㄱㄴㄷ테스트_${timestamp}`,
+        `이ㅏㅓㅗㅜ_${timestamp}`,
+        `박가나다라_${timestamp}`,
+        `홍길동 님_${timestamp}` // 공백 포함
       ];
 
       for (const name of koreanNames) {
@@ -230,7 +231,9 @@ describe('Category 5: 엣지 케이스 테스트', () => {
     it('긴 고객명 처리', async () => {
       if (!serversAvailable) return;
 
-      const longName = '가'.repeat(100);
+      // 고유한 긴 고객명 생성 (90자 + 타임스탬프)
+      const timestamp = Date.now().toString();
+      const longName = '가'.repeat(90) + '_' + timestamp.slice(-8);
       const customer = await factory.createCustomer({ name: longName });
       const customerId = normalizeId(customer);
 
