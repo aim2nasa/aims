@@ -35,6 +35,19 @@ const DEFAULT_WIDTH = 400;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 600;
 
+// 도움말 기능 목록
+const HELP_FEATURES = [
+  { icon: '👤', title: '고객 검색/조회', desc: '이름으로 고객 검색', example: '김OO 고객 정보 알려줘' },
+  { icon: '📄', title: '계약 조회', desc: '고객별 계약 현황 조회', example: '내 고객 계약 목록 보여줘' },
+  { icon: '⏰', title: '만기 예정 알림', desc: '만기 예정 계약 조회', example: '이번 달 만기 예정 계약 알려줘' },
+  { icon: '🎂', title: '생일 고객 알림', desc: '생일 고객 조회', example: '이번 주 생일인 고객은?' },
+  { icon: '📁', title: '문서 검색', desc: '키워드로 문서 검색', example: '종신보험 관련 문서 찾아줘' },
+  { icon: '📝', title: '메모 관리', desc: '고객 메모 추가/조회', example: '고객에게 메모 추가해줘' },
+  { icon: '📊', title: '통계 조회', desc: '고객/계약 통계', example: '이번 달 신규 고객 몇 명이야?' },
+  { icon: '🔗', title: '관계 네트워크', desc: '고객 간 관계 조회', example: '고객 가족관계 보여줘' },
+  { icon: '🏢', title: '보험상품 검색', desc: '상품 정보 조회', example: '암보험 상품 정보 알려줘' },
+];
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState('');
@@ -42,6 +55,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showSessionList, setShowSessionList] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -281,12 +295,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           <span>AI 어시스턴트</span>
         </div>
         <div className="chat-panel__header-actions">
+          {/* 도움말 */}
+          <Tooltip content="사용 가이드" placement="bottom">
+            <button
+              type="button"
+              className={`chat-panel__header-btn ${showHelp ? 'chat-panel__header-btn--active' : ''}`}
+              onClick={() => { setShowHelp(!showHelp); setShowSessionList(false); }}
+              aria-label="도움말"
+            >
+              <SFSymbol name="questionmark.circle" size={SFSymbolSize.CAPTION_1} decorative />
+            </button>
+          </Tooltip>
           {/* 이전 대화 목록 */}
           <Tooltip content="이전 대화" placement="bottom">
             <button
               type="button"
               className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
-              onClick={() => setShowSessionList(!showSessionList)}
+              onClick={() => { setShowSessionList(!showSessionList); setShowHelp(false); }}
               aria-label="이전 대화"
             >
               <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} decorative />
@@ -328,6 +353,36 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           </Tooltip>
         </div>
       </div>
+
+      {/* 도움말 드롭다운 */}
+      {showHelp && (
+        <div className="chat-panel__help">
+          <div className="chat-panel__help-header">
+            <span>사용 가능한 기능</span>
+            <span className="chat-panel__help-hint">클릭하면 예시가 입력됩니다</span>
+          </div>
+          <div className="chat-panel__help-items">
+            {HELP_FEATURES.map((feature, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="chat-panel__help-item"
+                onClick={() => {
+                  setInput(feature.example);
+                  setShowHelp(false);
+                  inputRef.current?.focus();
+                }}
+              >
+                <span className="chat-panel__help-icon">{feature.icon}</span>
+                <div className="chat-panel__help-content">
+                  <div className="chat-panel__help-title">{feature.title}</div>
+                  <div className="chat-panel__help-desc">{feature.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 세션 목록 드롭다운 */}
       {showSessionList && (
