@@ -357,6 +357,24 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
     it('agent_id 필터', () => {
       expect(sourceCode).toContain('agent_id');
     });
+
+    describe('안전한 날짜 처리', () => {
+      it('Invalid Date 체크 (isNaN)', () => {
+        expect(sourceCode).toContain('isNaN(parsed.getTime())');
+      });
+
+      it('null 처리', () => {
+        expect(sourceCode).toContain('expiryDate: Date | null');
+      });
+
+      it('안전한 날짜 처리 주석', () => {
+        expect(sourceCode).toContain('안전한 날짜 처리');
+      });
+
+      it('daysLeft null 허용', () => {
+        expect(sourceCode).toContain('daysLeft,');
+      });
+    });
   });
 
   describe('products.ts', () => {

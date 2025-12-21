@@ -89,10 +89,22 @@ export async function handleFindExpiringContracts(args: unknown) {
       .aggregate(pipeline)
       .toArray();
 
-    // 남은 일수 계산
+    // 남은 일수 계산 (안전한 날짜 처리)
     const contractsWithDaysLeft = contracts.map(c => {
-      const expiryDate = c.expiryDateParsed || new Date(c.expiry_date);
-      const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      let expiryDate: Date | null = c.expiryDateParsed || null;
+
+      // expiryDateParsed가 없으면 expiry_date에서 파싱 시도
+      if (!expiryDate && c.expiry_date) {
+        const parsed = new Date(c.expiry_date);
+        // Invalid Date 체크
+        expiryDate = isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      // 유효한 날짜가 있을 때만 daysLeft 계산
+      const daysLeft = expiryDate
+        ? Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+
       return {
         id: c._id.toString(),
         customerId: c.customer_id?.toString(),
