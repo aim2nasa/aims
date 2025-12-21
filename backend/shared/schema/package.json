@@ -22,7 +22,7 @@
     "build": "npm run build:esm && npm run build:cjs && npm run build:cjs-pkg",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:cjs-pkg": "echo {\"type\":\"commonjs\"} > dist/cjs/package.json",
+    "build:cjs-pkg": "node -e \"require('fs').writeFileSync('dist/cjs/package.json', '{\\\"type\\\":\\\"commonjs\\\"}\\n')\"",
     "test": "node test/cjs-import.test.cjs && node test/esm-import.test.mjs",
     "prepublishOnly": "npm run build"
   },
