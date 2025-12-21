@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, COLLECTIONS } from '../db.js';
+import { getDB, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 // 스키마 정의
@@ -236,11 +236,16 @@ export async function handleGetStatistics(args: unknown) {
       content: [{ type: 'text' as const, text: '알 수 없는 통계 유형입니다.' }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] get_statistics 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `통계 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `통계 조회 실패: ${errorMessage}`
       }]
     };
   }

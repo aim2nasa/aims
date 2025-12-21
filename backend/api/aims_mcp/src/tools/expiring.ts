@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, COLLECTIONS } from '../db.js';
+import { getDB, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 // 스키마 정의
@@ -130,11 +130,16 @@ export async function handleFindExpiringContracts(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] find_expiring_contracts 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `만기 계약 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `만기 계약 조회 실패: ${errorMessage}`
       }]
     };
   }

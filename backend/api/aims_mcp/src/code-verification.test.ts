@@ -230,4 +230,67 @@ describe('MCP 소스 코드 검증', () => {
       });
     });
   });
+
+  describe('모든 도구 파일 일관성 검증', () => {
+    const toolFiles = [
+      { name: 'customers.ts', handlers: ['search_customers', 'get_customer', 'create_customer', 'update_customer'] },
+      { name: 'memos.ts', handlers: ['add_customer_memo', 'list_customer_memos', 'delete_customer_memo'] },
+      { name: 'birthdays.ts', handlers: ['find_birthday_customers'] },
+      { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details'] },
+      { name: 'documents.ts', handlers: ['search_documents', 'get_document', 'list_customer_documents'] },
+      { name: 'expiring.ts', handlers: ['find_expiring_contracts'] },
+      { name: 'network.ts', handlers: ['get_customer_network'] },
+      { name: 'products.ts', handlers: ['search_products', 'get_product_details'] },
+      { name: 'statistics.ts', handlers: ['get_statistics'] }
+    ];
+
+    describe('formatZodError 일관성', () => {
+      toolFiles.forEach(({ name }) => {
+        it(`${name}에서 ZodError import`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain('ZodError');
+        });
+
+        it(`${name}에서 formatZodError import`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain('formatZodError');
+        });
+
+        it(`${name}에서 error instanceof ZodError 체크`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain('error instanceof ZodError');
+        });
+
+        it(`${name}에서 formatZodError(error) 호출`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain('formatZodError(error)');
+        });
+      });
+    });
+
+    describe('[MCP] 에러 로깅 일관성', () => {
+      toolFiles.forEach(({ name, handlers }) => {
+        handlers.forEach(handler => {
+          it(`${name}: ${handler} 에러 로깅`, () => {
+            const source = readSourceFile(`./tools/${name}`);
+            expect(source).toContain(`[MCP] ${handler} 에러`);
+          });
+        });
+      });
+    });
+
+    describe('에러 로깅 패턴 일관성', () => {
+      toolFiles.forEach(({ name }) => {
+        it(`${name}에서 console.error('[MCP] 패턴`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain("console.error('[MCP]");
+        });
+
+        it(`${name}에서 에러 로깅 주석`, () => {
+          const source = readSourceFile(`./tools/${name}`);
+          expect(source).toContain('에러 로깅 (디버깅용)');
+        });
+      });
+    });
+  });
 });

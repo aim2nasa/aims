@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
-import { getDB, toSafeObjectId, COLLECTIONS } from '../db.js';
+import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 
@@ -113,11 +113,16 @@ export async function handleAddMemo(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] add_customer_memo 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `메모 추가 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `메모 추가 실패: ${errorMessage}`
       }]
     };
   }
@@ -183,11 +188,16 @@ export async function handleListMemos(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] list_customer_memos 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `메모 목록 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `메모 목록 조회 실패: ${errorMessage}`
       }]
     };
   }
@@ -242,11 +252,16 @@ export async function handleDeleteMemo(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] delete_customer_memo 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `메모 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `메모 삭제 실패: ${errorMessage}`
       }]
     };
   }

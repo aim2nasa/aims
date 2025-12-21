@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS } from '../db.js';
+import { z, ZodError } from 'zod';
+import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 // 스키마 정의
@@ -154,11 +154,16 @@ export async function handleSearchDocuments(args: unknown) {
       throw fetchError;
     }
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] search_documents 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `문서 검색 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `문서 검색 실패: ${errorMessage}`
       }]
     };
   }
@@ -214,11 +219,16 @@ export async function handleGetDocument(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] get_document 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `문서 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `문서 조회 실패: ${errorMessage}`
       }]
     };
   }
@@ -299,11 +309,16 @@ export async function handleListCustomerDocuments(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] list_customer_documents 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `문서 목록 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `문서 목록 조회 실패: ${errorMessage}`
       }]
     };
   }

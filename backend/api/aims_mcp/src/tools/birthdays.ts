@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { getDB, COLLECTIONS } from '../db.js';
+import { z, ZodError } from 'zod';
+import { getDB, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 // 스키마 정의
@@ -117,11 +117,16 @@ export async function handleFindBirthdayCustomers(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] find_birthday_customers 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `생일 고객 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `생일 고객 조회 실패: ${errorMessage}`
       }]
     };
   }

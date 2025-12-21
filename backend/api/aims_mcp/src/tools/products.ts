@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS } from '../db.js';
+import { z, ZodError } from 'zod';
+import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 
 // 스키마 정의
@@ -113,11 +113,16 @@ export async function handleSearchProducts(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] search_products 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `보험상품 검색 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `보험상품 검색 실패: ${errorMessage}`
       }]
     };
   }
@@ -181,11 +186,16 @@ export async function handleGetProductDetails(args: unknown) {
       }]
     };
   } catch (error) {
+    // 에러 로깅 (디버깅용)
+    console.error('[MCP] get_product_details 에러:', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
     return {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `보험상품 조회 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+        text: `보험상품 조회 실패: ${errorMessage}`
       }]
     };
   }
