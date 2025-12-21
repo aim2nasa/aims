@@ -7,6 +7,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# 빌드 context는 backend/ 디렉토리 (shared-schema 접근 위해)
+BACKEND_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 CONTAINER_NAME="aims-api"
 IMAGE_NAME="aims-api"
 HASH_FILE=".build_hash"
@@ -21,11 +24,13 @@ GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
 
-# 소스 파일 해시 계산 (Dockerfile, package.json, server.js, lib/*)
+# 소스 파일 해시 계산 (Dockerfile, package.json, server.js, lib/*, shared-schema)
 calculate_hash() {
   cat Dockerfile package.json package-lock.json 2>/dev/null | md5sum | cut -d' ' -f1
   find . -maxdepth 1 -name "*.js" -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d' ' -f1
   find lib middleware routes -type f -name "*.js" -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d' ' -f1
+  # shared-schema 변경도 감지
+  cat "$BACKEND_DIR/shared/schema/src"/*.ts 2>/dev/null | md5sum | cut -d' ' -f1
 }
 
 CURRENT_HASH=$(calculate_hash)
@@ -60,12 +65,14 @@ docker stop $CONTAINER_NAME 2>/dev/null || true
 docker rm $CONTAINER_NAME 2>/dev/null || true
 
 if [ "$NEED_BUILD" = true ]; then
-  # 2. 새 이미지 빌드
+  # 2. 새 이미지 빌드 (backend/ 디렉토리에서 빌드하여 shared-schema 접근)
   echo "새 이미지 빌드 중..."
   DOCKER_BUILDKIT=1 docker build \
     --build-arg GIT_HASH="${GIT_HASH}" \
     --build-arg BUILD_TIME="${BUILD_TIME}" \
-    -t $IMAGE_NAME .
+    -f "$SCRIPT_DIR/Dockerfile" \
+    -t $IMAGE_NAME \
+    "$BACKEND_DIR"
 
   # 해시 저장
   echo "$CURRENT_HASH" > "$HASH_FILE"

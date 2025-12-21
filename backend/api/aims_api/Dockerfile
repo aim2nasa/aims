@@ -20,14 +20,23 @@ RUN apt-get update && apt-get install -y \
 # 환경변수 기본값 설정
 ENV PORT=3010
 
-# package.json과 package-lock.json 먼저 복사 (Docker 캐시 활용)
-COPY package*.json ./
+# 1. shared-schema 복사 및 빌드 (file: 의존성 해결)
+WORKDIR /shared-schema
+COPY shared/schema/package*.json ./
+COPY shared/schema/tsconfig*.json ./
+COPY shared/schema/src ./src
+RUN npm ci && npm run build
 
-# Node.js 패키지 설치
-RUN npm ci --only=production
+# 2. aims_api 빌드
+WORKDIR /app
+COPY api/aims_api/package*.json ./
+
+# 로컬 의존성을 /shared-schema로 수정하여 설치
+RUN sed -i 's|file:../../shared/schema|file:/shared-schema|g' package.json && \
+    npm ci --omit=dev
 
 # 애플리케이션 코드 복사
-COPY . .
+COPY api/aims_api/ .
 
 # 로그 디렉토리 생성
 RUN mkdir -p logs
