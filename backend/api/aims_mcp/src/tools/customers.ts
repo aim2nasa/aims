@@ -115,7 +115,7 @@ export async function handleSearchCustomers(args: unknown) {
       const regex = { $regex: escapeRegex(params.query), $options: 'i' };
       filter.$or = [
         { 'personal_info.name': regex },
-        { 'personal_info.phone': regex },
+        { 'personal_info.mobile_phone': regex },
         { 'personal_info.email': regex }
       ];
     }
@@ -142,7 +142,7 @@ export async function handleSearchCustomers(args: unknown) {
       .project({
         _id: 1,
         'personal_info.name': 1,
-        'personal_info.phone': 1,
+        'personal_info.mobile_phone': 1,
         'personal_info.email': 1,
         'personal_info.address': 1,
         'insurance_info.customer_type': 1,
@@ -162,7 +162,7 @@ export async function handleSearchCustomers(args: unknown) {
           customers: customers.map(c => ({
             id: c._id.toString(),
             name: c.personal_info?.name,
-            phone: c.personal_info?.phone,
+            phone: c.personal_info?.mobile_phone,
             email: c.personal_info?.email,
             address: c.personal_info?.address?.address1,
             type: c.insurance_info?.customer_type,
@@ -282,7 +282,7 @@ export async function handleCreateCustomer(args: unknown) {
     const newCustomer = {
       personal_info: {
         name: params.name,
-        phone: params.phone || '',
+        mobile_phone: params.phone || '',
         email: params.email || '',
         birth_date: params.birthDate || '',
         address: params.address ? { address1: params.address } : {}
@@ -379,7 +379,7 @@ export async function handleUpdateCustomer(args: unknown) {
     };
 
     if (params.name) updateFields['personal_info.name'] = params.name;
-    if (params.phone) updateFields['personal_info.phone'] = params.phone;
+    if (params.phone) updateFields['personal_info.mobile_phone'] = params.phone;
     if (params.email) updateFields['personal_info.email'] = params.email;
     if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
     if (params.address) updateFields['personal_info.address.address1'] = params.address;
