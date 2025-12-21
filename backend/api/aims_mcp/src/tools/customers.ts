@@ -217,7 +217,7 @@ export async function handleGetCustomer(args: unknown) {
       id: customer._id.toString(),
       personalInfo: {
         name: customer.personal_info?.name,
-        phone: customer.personal_info?.phone,
+        phone: customer.personal_info?.mobile_phone,
         email: customer.personal_info?.email,
         address: customer.personal_info?.address
       },
