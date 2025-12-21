@@ -386,6 +386,35 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       expect(sourceCode).toMatch(/ownerId|owner_id/);
     });
 
+    describe('RAG API 타임아웃', () => {
+      it('RAG_API_TIMEOUT_MS 상수 정의', () => {
+        expect(sourceCode).toContain('RAG_API_TIMEOUT_MS');
+      });
+
+      it('AbortController 사용', () => {
+        expect(sourceCode).toContain('new AbortController()');
+      });
+
+      it('signal 전달', () => {
+        expect(sourceCode).toContain('signal: controller.signal');
+      });
+
+      it('AbortError 처리', () => {
+        expect(sourceCode).toContain("fetchError.name === 'AbortError'");
+      });
+
+      it('타임아웃 에러 메시지 (한글)', () => {
+        expect(sourceCode).toContain('RAG API 응답 시간 초과');
+      });
+
+      it('clearTimeout 호출 (성공/실패 모두)', () => {
+        // clearTimeout이 두 번 이상 호출되어야 함 (성공 시, 에러 시)
+        const matches = sourceCode.match(/clearTimeout\(timeoutId\)/g);
+        expect(matches).not.toBeNull();
+        expect(matches!.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
     it('RAG API 호출', () => {
       expect(sourceCode).toMatch(/fetch|RAG|search/i);
     });

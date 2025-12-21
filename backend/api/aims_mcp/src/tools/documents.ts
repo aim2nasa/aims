@@ -60,6 +60,9 @@ export const documentToolDefinitions = [
   }
 ];
 
+// RAG API 타임아웃 (30초)
+const RAG_API_TIMEOUT_MS = 30000;
+
 /**
  * 문서 검색 핸들러 (RAG API 연동)
  */
@@ -68,72 +71,88 @@ export async function handleSearchDocuments(args: unknown) {
     const params = searchDocumentsSchema.parse(args);
     const userId = getCurrentUserId();
 
-    // RAG API 호출
-    const response = await fetch('http://localhost:8000/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: params.query,
-        search_mode: params.searchMode || 'semantic',
-        user_id: userId,
-        customer_id: params.customerId,
-        top_k: params.limit || 10
-      })
-    });
+    // AbortController로 타임아웃 설정
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), RAG_API_TIMEOUT_MS);
 
-    if (!response.ok) {
-      throw new Error(`RAG API 오류: ${response.status}`);
+    try {
+      // RAG API 호출 (타임아웃 적용)
+      const response = await fetch('http://localhost:8000/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: params.query,
+          search_mode: params.searchMode || 'semantic',
+          user_id: userId,
+          customer_id: params.customerId,
+          top_k: params.limit || 10
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`RAG API 오류: ${response.status}`);
+      }
+
+      const result = await response.json() as {
+        search_mode: string;
+        answer: string | null;
+        search_results: Array<{
+          doc_id: string;
+          score: number;
+          final_score?: number;
+          payload: {
+            original_name: string;
+            preview: string;
+            mime: string;
+            uploaded_at: string;
+          };
+        }>;
+      };
+
+      // 결과 포맷팅
+      const formattedResult = {
+        searchMode: result.search_mode,
+        answer: result.answer,
+        resultCount: result.search_results?.length || 0,
+        documents: (result.search_results || []).map((doc: {
+          doc_id: string;
+          score: number;
+          final_score?: number;
+          payload: {
+            original_name: string;
+            preview: string;
+            mime: string;
+            uploaded_at: string;
+          };
+        }) => ({
+          id: doc.doc_id,
+          filename: doc.payload?.original_name,
+          preview: doc.payload?.preview?.substring(0, 200) + '...',
+          mimeType: doc.payload?.mime,
+          uploadedAt: doc.payload?.uploaded_at,
+          score: doc.final_score || doc.score
+        }))
+      };
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(formattedResult, null, 2)
+        }]
+      };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      // AbortController 타임아웃 에러 처리
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new Error(`RAG API 응답 시간 초과 (${RAG_API_TIMEOUT_MS / 1000}초)`);
+      }
+      throw fetchError;
     }
-
-    const result = await response.json() as {
-      search_mode: string;
-      answer: string | null;
-      search_results: Array<{
-        doc_id: string;
-        score: number;
-        final_score?: number;
-        payload: {
-          original_name: string;
-          preview: string;
-          mime: string;
-          uploaded_at: string;
-        };
-      }>;
-    };
-
-    // 결과 포맷팅
-    const formattedResult = {
-      searchMode: result.search_mode,
-      answer: result.answer,
-      resultCount: result.search_results?.length || 0,
-      documents: (result.search_results || []).map((doc: {
-        doc_id: string;
-        score: number;
-        final_score?: number;
-        payload: {
-          original_name: string;
-          preview: string;
-          mime: string;
-          uploaded_at: string;
-        };
-      }) => ({
-        id: doc.doc_id,
-        filename: doc.payload?.original_name,
-        preview: doc.payload?.preview?.substring(0, 200) + '...',
-        mimeType: doc.payload?.mime,
-        uploadedAt: doc.payload?.uploaded_at,
-        score: doc.final_score || doc.score
-      }))
-    };
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(formattedResult, null, 2)
-      }]
-    };
   } catch (error) {
     return {
       isError: true,
