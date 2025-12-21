@@ -7037,6 +7037,50 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
 const CUSTOMER_MEMOS_COLLECTION = 'customer_memos';
 
 /**
+ * 날짜를 YYYY.MM.DD HH:mm 형식으로 변환
+ */
+function formatMemoDateTime(date) {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${y}.${m}.${day} ${h}:${min}`;
+}
+
+/**
+ * customer_memos 컬렉션의 데이터를 customers.memo 필드로 동기화
+ * MCP와 aims_api 간 데이터 일관성 유지
+ */
+async function syncCustomerMemoField(customerId) {
+  try {
+    const customerObjectId = new ObjectId(customerId);
+
+    // customer_memos에서 해당 고객의 모든 메모 조회 (시간순)
+    const memos = await db.collection(CUSTOMER_MEMOS_COLLECTION)
+      .find({ customer_id: customerObjectId })
+      .sort({ created_at: 1 })
+      .toArray();
+
+    // 타임스탬프 형식으로 변환
+    const memoText = memos.map(m =>
+      `[${formatMemoDateTime(m.created_at)}] ${m.content}`
+    ).join('\n');
+
+    // customers.memo 필드 업데이트
+    await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      { _id: customerObjectId },
+      { $set: { memo: memoText, 'meta.updated_at': new Date() } }
+    );
+
+    console.log(`[Memo Sync] 고객 ${customerId}: ${memos.length}개 메모 동기화 완료`);
+  } catch (error) {
+    console.error(`[Memo Sync] 동기화 실패 (고객 ${customerId}):`, error);
+  }
+}
+
+/**
  * GET /api/customers/:id/memos
  * 고객 메모 목록 조회
  */
@@ -7127,6 +7171,9 @@ app.post('/api/customers/:id/memos', authenticateJWT, async (req, res) => {
 
     const result = await db.collection(CUSTOMER_MEMOS_COLLECTION).insertOne(newMemo);
 
+    // customers.memo 필드 동기화 (MCP 호환)
+    await syncCustomerMemoField(id);
+
     res.json({
       success: true,
       data: {
@@ -7197,6 +7244,9 @@ app.put('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res) =>
       }
     );
 
+    // customers.memo 필드 동기화 (MCP 호환)
+    await syncCustomerMemoField(id);
+
     res.json({
       success: true,
       data: {
@@ -7251,6 +7301,9 @@ app.delete('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res)
     await db.collection(CUSTOMER_MEMOS_COLLECTION).deleteOne({
       _id: new ObjectId(memoId)
     });
+
+    // customers.memo 필드 동기화 (MCP 호환)
+    await syncCustomerMemoField(id);
 
     res.json({
       success: true,
