@@ -460,4 +460,79 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
       });
     });
   });
+
+  // --------------------------------------------------------
+  // 8. MCP-프론트엔드 통합 검증
+  // --------------------------------------------------------
+  describe('MCP-프론트엔드 데이터 일관성', () => {
+    const AIMS_API_URL = process.env.AIMS_API_URL || 'http://localhost:3010';
+
+    /**
+     * aims_api를 통해 고객 조회 (프론트엔드가 사용하는 API)
+     */
+    async function getCustomerFromAPI(customerId: string): Promise<{ memo?: string } | null> {
+      try {
+        const res = await fetch(`${AIMS_API_URL}/api/customers/${customerId}`, {
+          headers: { 'x-user-id': TEST_USER_ID },
+          signal: AbortSignal.timeout(10000)
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.success ? data.data : null;
+      } catch {
+        return null;
+      }
+    }
+
+    it('MCP로 추가한 메모가 프론트엔드 API에서 조회 가능해야 함', async () => {
+      // 1. 고객 검색으로 테스트 대상 찾기
+      const searchRes = await callTool('search_customers', { limit: 1 });
+      expect(searchRes.success).toBe(true);
+
+      const searchData = parseResult(searchRes) as { customers: Array<{ id: string; name: string }> };
+      if (searchData.customers.length === 0) {
+        console.warn('테스트할 고객이 없습니다. 스킵합니다.');
+        return;
+      }
+
+      const testCustomer = searchData.customers[0];
+      const testMemoContent = `E2E 통합테스트 ${Date.now()}`;
+
+      // 2. MCP로 메모 추가
+      const addRes = await callTool('add_customer_memo', {
+        customerId: testCustomer.id,
+        content: testMemoContent
+      });
+      expect(addRes.success).toBe(true);
+      expect(isErrorResponse(addRes)).toBe(false);
+
+      // 3. 프론트엔드 API로 고객 조회
+      const customer = await getCustomerFromAPI(testCustomer.id);
+
+      // 4. memo 필드에 추가된 내용이 있는지 검증
+      expect(customer).not.toBeNull();
+      expect(customer?.memo).toBeDefined();
+      expect(customer?.memo).toContain(testMemoContent);
+    });
+
+    it('MCP 메모 조회 결과가 프론트엔드 API와 일치해야 함', async () => {
+      // 1. 고객 검색
+      const searchRes = await callTool('search_customers', { limit: 1 });
+      const searchData = parseResult(searchRes) as { customers: Array<{ id: string }> };
+      if (searchData.customers.length === 0) return;
+
+      const customerId = searchData.customers[0].id;
+
+      // 2. MCP로 메모 조회
+      const mcpRes = await callTool('list_customer_memos', { customerId });
+      expect(mcpRes.success).toBe(true);
+      const mcpData = parseResult(mcpRes) as { memo: string };
+
+      // 3. 프론트엔드 API로 고객 조회
+      const customer = await getCustomerFromAPI(customerId);
+
+      // 4. 동일한 데이터인지 검증
+      expect(customer?.memo || '').toBe(mcpData.memo);
+    });
+  });
 });
