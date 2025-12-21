@@ -844,9 +844,9 @@
   --color-layout-brb-icon-light: #aeaeb2;  /* Light Theme: iOS systemGray2 */
   --color-layout-brb-icon-dark: #636366;   /* Dark Theme: iOS systemGray2 */
 
-  /* RightPane Colors - iOS systemGray5 적용 (gapRight 시각적 구분용) */
-  --color-layout-rightpane-light: #e5e5ea; /* Light Theme: iOS systemGray5 */
-  --color-layout-rightpane-dark: #2c2c2e;  /* Dark Theme: iOS systemGray5 */
+  /* RightPane Colors - CenterPane과 동일 (통일된 카드 배경) */
+  --color-layout-rightpane-light: #ffffff; /* Light Theme: CenterPane과 동일 */
+  --color-layout-rightpane-dark: #1c1c1e;  /* Dark Theme: CenterPane과 동일 */
 
   /* iOS System Colors - 공식 색상 팔레트 */
   --color-ios-system-blue: rgba(0, 122, 255, 0.8);
