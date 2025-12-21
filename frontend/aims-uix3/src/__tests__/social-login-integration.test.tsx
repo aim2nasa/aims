@@ -1,9 +1,10 @@
 /**
  * 소셜 로그인 통합 테스트
- * @description 카카오/네이버 전체 로그인 흐름 통합 테스트
+ * @description 카카오/네이버/구글 전체 로그인 흐름 통합 테스트
  * @regression
  *   - 로그인 후 Store 동기화 확인
  *   - 에러 처리 흐름 확인
+ *   - 계정 전환 기능 확인
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -284,6 +285,93 @@ describe('소셜 로그인 통합 테스트', () => {
     })
   })
 
+  describe('구글 로그인 전체 흐름', () => {
+    const mockGoogleUser = {
+      _id: 'google_345678',
+      name: '구글사용자',
+      email: 'google@test.com',
+      role: 'agent',
+      avatarUrl: 'https://lh3.googleusercontent.com/avatar.jpg',
+      authProvider: 'google',
+      profileCompleted: true
+    }
+
+    it('1. 구글 로그인 버튼 클릭 시 OAuth 시작', async () => {
+      renderApp('/login')
+
+      const googleButton = screen.getByText('구글 로그인')
+      fireEvent.click(googleButton)
+
+      expect(mockStartGoogleLogin).toHaveBeenCalled()
+      expect(mockHref).toContain('/api/auth/google')
+    })
+
+    it('2. 콜백 처리 → 토큰 저장', async () => {
+      mockGetCurrentUser.mockResolvedValue(mockGoogleUser)
+
+      renderApp('/auth/callback?token=google-jwt-token')
+
+      await waitFor(() => {
+        expect(mockSetToken).toHaveBeenCalledWith('google-jwt-token')
+      })
+    })
+
+    it('3. 사용자 정보 조회 → Store 동기화', async () => {
+      mockGetCurrentUser.mockResolvedValue(mockGoogleUser)
+
+      renderApp('/auth/callback?token=google-jwt-token')
+
+      await waitFor(() => {
+        // authStore 동기화
+        expect(mockSetUser).toHaveBeenCalledWith(mockGoogleUser)
+
+        // userStore 동기화
+        expect(mockUpdateCurrentUser).toHaveBeenCalledWith({
+          id: mockGoogleUser._id,
+          name: mockGoogleUser.name,
+          email: mockGoogleUser.email,
+          role: mockGoogleUser.role,
+          avatarUrl: mockGoogleUser.avatarUrl
+        })
+      })
+    })
+
+    it('4. localStorage에 사용자 ID 저장', async () => {
+      mockGetCurrentUser.mockResolvedValue(mockGoogleUser)
+
+      renderApp('/auth/callback?token=google-jwt-token')
+
+      await waitFor(() => {
+        expect(localStorage.setItem).toHaveBeenCalledWith('aims-current-user-id', mockGoogleUser._id)
+      })
+    })
+
+    it('5. 메인 페이지로 리다이렉트', async () => {
+      mockGetCurrentUser.mockResolvedValue(mockGoogleUser)
+
+      renderApp('/auth/callback?token=google-jwt-token')
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
+      })
+    })
+
+    it('6. 구글 인증 실패 시 에러 처리', async () => {
+      vi.useFakeTimers()
+
+      renderApp('/auth/callback?error=google_auth_failed')
+
+      expect(screen.getByText('구글 로그인에 실패했습니다')).toBeInTheDocument()
+
+      // 3초 후 /login으로 리다이렉트
+      await vi.runAllTimersAsync()
+
+      expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
+
+      vi.useRealTimers()
+    })
+  })
+
   describe('계정 전환', () => {
     it('"다른 카카오 계정" 클릭 시 switch 엔드포인트 사용', async () => {
       renderApp('/login')
@@ -303,6 +391,16 @@ describe('소셜 로그인 통합 테스트', () => {
 
       expect(mockStartNaverLoginSwitch).toHaveBeenCalled()
       expect(mockHref).toContain('/api/auth/naver/switch')
+    })
+
+    it('"다른 구글 계정" 클릭 시 switch 엔드포인트 사용', async () => {
+      renderApp('/login')
+
+      const switchButton = screen.getByText('다른 구글 계정')
+      fireEvent.click(switchButton)
+
+      expect(mockStartGoogleLoginSwitch).toHaveBeenCalled()
+      expect(mockHref).toContain('/api/auth/google/switch')
     })
   })
 
