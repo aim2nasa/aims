@@ -1,12 +1,13 @@
 /**
  * Error Logs Page
- * 시스템 에러 로그 조회/관리 페이지
+ * 시스템 에러 로그 조회/관리 페이지 (SSE 실시간 스트림 지원)
  * @since 2025-12-22
  */
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
+import { useErrorLogSSE } from '@/shared/hooks/useErrorLogSSE';
 import {
   errorLogsApi,
   formatDateTime,
@@ -63,6 +64,9 @@ export const ErrorLogsPage = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
+  // SSE 실시간 스트림 연결
+  const { isConnected, stats: sseStats, newCount } = useErrorLogSSE(true);
+
   // 에러 로그 목록 조회
   const params: GetErrorLogsParams = {
     page,
@@ -76,15 +80,20 @@ export const ErrorLogsPage = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'error-logs', params],
     queryFn: () => errorLogsApi.getList(params),
-    refetchInterval: 60000,
+    // SSE가 연결되어 있으면 폴링 비활성화, 아니면 fallback으로 60초 폴링
+    refetchInterval: isConnected ? false : 60000,
   });
 
-  // 통계 조회
-  const { data: stats } = useQuery({
+  // 통계 조회 (SSE에서 실시간 stats를 받으므로 fallback용)
+  const { data: apiStats } = useQuery({
     queryKey: ['admin', 'error-logs', 'stats'],
     queryFn: () => errorLogsApi.getStats(7),
-    refetchInterval: 60000,
+    // SSE가 연결되어 있으면 초기 로드만, 아니면 폴링
+    refetchInterval: isConnected ? false : 60000,
   });
+
+  // SSE stats 우선, fallback으로 API stats 사용
+  const stats = sseStats || apiStats;
 
   // 삭제 mutation
   const deleteMutation = useMutation({
@@ -146,9 +155,16 @@ export const ErrorLogsPage = () => {
   return (
     <div className="error-logs-page">
       <div className="error-logs-page__header">
-        <h1 className="error-logs-page__title">에러 로그</h1>
+        <h1 className="error-logs-page__title">
+          에러 로그
+          {newCount > 0 && (
+            <span className="error-logs-page__new-badge">+{newCount} 새 에러</span>
+          )}
+        </h1>
         <div className="error-logs-page__actions">
-          <span className="error-logs-page__refresh-info">1분마다 자동 갱신</span>
+          <span className={`error-logs-page__connection-status ${isConnected ? 'error-logs-page__connection-status--connected' : ''}`}>
+            {isConnected ? '실시간 연결됨' : '연결 중...'}
+          </span>
           <Button variant="secondary" size="sm" onClick={() => refetch()}>
             새로고침
           </Button>

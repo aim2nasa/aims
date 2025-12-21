@@ -1,12 +1,38 @@
 /**
  * Error Logs API Routes
- * 에러 로그 수집 및 조회 API
+ * 에러 로그 수집 및 조회 API (SSE 실시간 스트림 지원)
  * @since 2025-12-22
  */
 
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const errorLogger = require('../lib/errorLogger');
+
+// ==================== SSE 클라이언트 관리 ====================
+
+// 관리자 SSE 클라이언트 Set
+const errorLogSSEClients = new Set();
+
+/**
+ * SSE 이벤트 전송 헬퍼
+ */
+function sendSSE(res, event, data) {
+  try {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  } catch (e) {
+    console.error('[ErrorLogs-SSE] 전송 실패:', e.message);
+  }
+}
+
+/**
+ * 모든 관리자에게 새 에러 로그 브로드캐스트
+ */
+function broadcastNewErrorLog(errorLog) {
+  console.log(`[ErrorLogs-SSE] 새 에러 브로드캐스트 - 연결된 클라이언트: ${errorLogSSEClients.size}`);
+  errorLogSSEClients.forEach(res => sendSSE(res, 'new-error', errorLog));
+}
 
 /**
  * 라우트 설정 함수
@@ -37,6 +63,75 @@ module.exports = function(db, authenticateJWT, requireRole) {
     });
   };
 
+  // ==================== SSE 스트림 엔드포인트 ====================
+
+  /**
+   * GET /api/admin/error-logs/stream
+   * 에러 로그 실시간 스트림 (관리자 전용)
+   * SSE로 새 에러 로그를 실시간으로 수신
+   */
+  router.get('/admin/error-logs/stream', async (req, res) => {
+    // 쿼리 파라미터에서 토큰 추출 (EventSource는 헤더 설정 불가)
+    const token = req.query.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: '인증 토큰이 필요합니다'
+      });
+    }
+
+    // JWT 검증
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      if (decoded.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: '관리자 권한이 필요합니다'
+        });
+      }
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: '유효하지 않은 토큰입니다'
+      });
+    }
+
+    // SSE 헤더 설정
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // nginx 버퍼링 비활성화
+    res.flushHeaders();
+
+    // 클라이언트 등록
+    errorLogSSEClients.add(res);
+    console.log(`[ErrorLogs-SSE] 클라이언트 연결됨 (총 ${errorLogSSEClients.size}개)`);
+
+    // 연결 확인 이벤트
+    sendSSE(res, 'connected', { message: 'Error logs stream connected' });
+
+    // 초기 통계 전송
+    try {
+      const stats = await errorLogger.getStats(7);
+      sendSSE(res, 'init', { stats });
+    } catch (err) {
+      console.error('[ErrorLogs-SSE] 초기 통계 전송 실패:', err.message);
+    }
+
+    // Keep-alive ping (30초마다)
+    const pingInterval = setInterval(() => {
+      sendSSE(res, 'ping', { time: new Date().toISOString() });
+    }, 30000);
+
+    // 연결 종료 처리
+    req.on('close', () => {
+      clearInterval(pingInterval);
+      errorLogSSEClients.delete(res);
+      console.log(`[ErrorLogs-SSE] 클라이언트 연결 해제 (남은 ${errorLogSSEClients.size}개)`);
+    });
+  });
+
   // ==================== 에러 수집 API ====================
 
   /**
@@ -63,8 +158,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
         });
       }
 
-      // 에러 로그 저장
-      const logId = await errorLogger.log({
+      // 에러 로그 데이터 구성
+      const errorLogData = {
         actor: {
           user_id: req.user?.id || null,
           name: req.user?.name || null,
@@ -103,6 +198,16 @@ module.exports = function(db, authenticateJWT, requireRole) {
         meta: {
           resolved: false
         }
+      };
+
+      // 에러 로그 저장
+      const logId = await errorLogger.log(errorLogData);
+
+      // SSE로 관리자에게 실시간 브로드캐스트
+      broadcastNewErrorLog({
+        _id: logId,
+        ...errorLogData,
+        timestamp: new Date().toISOString()
       });
 
       res.json({
