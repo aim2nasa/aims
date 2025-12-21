@@ -10,6 +10,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { DefaultOptions } from '@tanstack/react-query';
 import { ApiError, NetworkError, TimeoutError, handleApiError } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * 기본 쿼리 옵션
@@ -64,6 +65,11 @@ const defaultOptions: DefaultOptions = {
     onError: (error) => {
       // 전역 에러 처리 로직
       const errorMessage = handleApiError(error);
+
+      // 에러 로깅 서비스에 전송
+      if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
+        errorReporter.reportApiError(error);
+      }
 
       // 개발 환경에서 콘솔에 에러 출력
       if (import.meta.env.DEV) {

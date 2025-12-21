@@ -17,6 +17,7 @@ const { generateToken, authenticateJWT, authenticateJWTorAPIKey, authenticateJWT
 const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
+const errorLogger = require('./lib/errorLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 // 공유 스키마에서 컬렉션명 상수 import
@@ -594,6 +595,35 @@ const registerFallbackHandlers = () => {
 
   app.use((error, req, res, next) => {
     console.error('서버 오류:', error);
+
+    // ErrorLogger로 기록
+    errorLogger.log({
+      actor: {
+        user_id: req.user?.id || null,
+        name: req.user?.name || null,
+        role: req.user?.role || 'anonymous',
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+      },
+      source: {
+        type: 'backend',
+        endpoint: req.originalUrl,
+        method: req.method
+      },
+      error: {
+        type: error.name || 'Error',
+        message: error.message || 'Unknown error',
+        stack: error.stack,
+        severity: 'high',
+        category: 'unhandled'
+      },
+      context: {
+        request_id: req.headers['x-request-id']
+      }
+    }).catch(err => {
+      console.error('[Server] 에러 로깅 실패:', err.message);
+    });
+
     res.status(500).json({
       success: false,
       error: '내부 서버 오류가 발생했습니다.',
@@ -8523,6 +8553,11 @@ MongoClient.connect(MONGO_URI)
       console.error('[Server] ActivityLogger 초기화 실패:', err.message);
     });
 
+    // ErrorLogger 초기화
+    errorLogger.initialize(analyticsDb).catch(err => {
+      console.error('[Server] ErrorLogger 초기화 실패:', err.message);
+    });
+
     // ChatHistoryService 초기화
     chatHistoryService.initialize(analyticsDb).catch(err => {
       console.error('[Server] ChatHistoryService 초기화 실패:', err.message);
@@ -8585,6 +8620,11 @@ MongoClient.connect(MONGO_URI)
     const helpContentRoutes = require('./routes/help-content-routes')(db, authenticateJWT, requireRole);
     app.use('/api', helpContentRoutes);
     console.log('[Server] helpContentRoutes 등록 완료');
+
+    // 에러 로그 라우트 설정 (에러 수집 및 관리자 조회)
+    const errorLogsRoutes = require('./routes/error-logs-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', errorLogsRoutes);
+    console.log('[Server] errorLogsRoutes 등록 완료');
 
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();

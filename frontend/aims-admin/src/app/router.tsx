@@ -12,6 +12,7 @@ import { AIUsagePage } from '@/pages/AIUsagePage';
 import { OCRUsagePage } from '@/pages/OCRUsagePage';
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import { UserActivityPage } from '@/pages/UserActivityPage';
+import { ErrorLogsPage } from '@/pages/ErrorLogsPage';
 import { InquiriesPage } from '@/pages/InquiriesPage/InquiriesPage';
 import { InquiryDetailPage } from '@/pages/InquiryDetailPage/InquiryDetailPage';
 import { NoticesPage } from '@/pages/NoticesPage/NoticesPage';
@@ -71,6 +72,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/ocr-usage',
         element: <OCRUsagePage />,
+      },
+      {
+        path: 'dashboard/error-logs',
+        element: <ErrorLogsPage />,
       },
       {
         path: 'users',

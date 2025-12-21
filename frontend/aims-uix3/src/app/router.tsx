@@ -12,6 +12,7 @@ import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { LoadingSkeleton } from '@/shared/ui/LoadingSkeleton';
 import { queryClient } from './queryClient';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 // 페이지 컴포넌트 지연 로딩
 const HomePage = React.lazy(() => import('@/pages/home'));
@@ -55,6 +56,9 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // 에러 로깅 서비스에 전송
+    errorReporter.reportComponentError(error, 'RouterErrorBoundary', {
+      componentStack: errorInfo.componentStack || undefined
+    });
     console.error('Router Error Boundary caught an error:', error, errorInfo);
   }
 
