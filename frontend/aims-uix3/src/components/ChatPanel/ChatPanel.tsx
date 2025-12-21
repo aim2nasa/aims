@@ -259,6 +259,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     setMessages([]);
     setInput('');
     setShowSessionList(false);
+    // 기능 목록 화면으로 돌아가기
+    setPreferDirectChat(false);
+    localStorage.setItem('aims-chat-direct-mode', 'false');
     // 세션 목록 새로고침
     fetchSessions(1, 10);
   };
@@ -349,19 +352,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
             </button>
           </Tooltip>
-          {/* 삭제 */}
-          {messages.length > 0 && (
-            <Tooltip content="대화 초기화" placement="bottom">
-              <button
-                type="button"
-                className="chat-panel__header-btn"
-                onClick={handleClear}
-                aria-label="대화 초기화"
-              >
-                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} decorative />
-              </button>
-            </Tooltip>
-          )}
           <Tooltip content="닫기" placement="bottom">
             <button
               type="button"
