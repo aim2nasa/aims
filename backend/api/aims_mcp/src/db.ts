@@ -2,6 +2,9 @@ import { MongoClient, Db, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import { ZodError, ZodIssue } from 'zod';
 
+// 공유 스키마에서 import - 모든 백엔드 서비스가 동일한 정의 사용
+export { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_TYPES, CUSTOMER_STATUS } from '@aims/shared-schema';
+
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://tars:27017/';
@@ -68,15 +71,7 @@ export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// 컬렉션 이름 상수
-export const COLLECTIONS = {
-  CUSTOMERS: 'customers',
-  CONTRACTS: 'contracts',
-  FILES: 'files',
-  CUSTOMER_RELATIONSHIPS: 'customer_relationships',
-  INSURANCE_PRODUCTS: 'insurance_products',
-  MEMOS: 'customer_memos'
-} as const;
+// 컬렉션 이름 상수는 @aims/shared-schema에서 import됨 (상단 참조)
 
 // 필드명 한글 매핑
 const FIELD_NAME_MAP: Record<string, string> = {

@@ -157,7 +157,7 @@ describe('응답 포맷 일관성', () => {
     });
   });
 
-  describe('memos.ts 응답 상세 검증', () => {
+  describe('memos.ts 응답 상세 검증 (단일 메모 필드)', () => {
     let sourceCode: string;
 
     beforeAll(() => {
@@ -169,10 +169,6 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain('success: true');
       });
 
-      it('memoId 필드 포함', () => {
-        expect(sourceCode).toContain('memoId: result.insertedId.toString()');
-      });
-
       it('customerId 필드 포함', () => {
         expect(sourceCode).toContain('customerId: params.customerId');
       });
@@ -181,12 +177,16 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain("customerName: customer.personal_info?.name");
       });
 
-      it('content 필드 포함', () => {
-        expect(sourceCode).toContain('content: params.content');
+      it('addedContent 필드 포함', () => {
+        expect(sourceCode).toContain('addedContent: params.content');
       });
 
-      it('createdAt 필드 포함 (ISO 문자열)', () => {
-        expect(sourceCode).toContain('createdAt: now.toISOString()');
+      it('timestamp 필드 포함', () => {
+        expect(sourceCode).toContain('timestamp: timestamp');
+      });
+
+      it('message 필드 포함', () => {
+        expect(sourceCode).toContain("message: '메모가 추가되었습니다.'");
       });
     });
 
@@ -199,30 +199,18 @@ describe('응답 포맷 일관성', () => {
         expect(sourceCode).toContain("customerName: customer.personal_info?.name");
       });
 
-      it('count 필드 포함', () => {
-        expect(sourceCode).toContain('count: memos.length');
+      it('memo 필드 포함 (단일 문자열)', () => {
+        expect(sourceCode).toContain('memo: memo');
       });
 
-      it('totalCount 필드 포함', () => {
-        expect(sourceCode).toContain('totalCount');
-      });
-
-      it('memos 배열 포함', () => {
-        expect(sourceCode).toMatch(/memos:\s*memos\.map/);
+      it('hasContent 필드 포함', () => {
+        expect(sourceCode).toContain('hasContent: memo.length > 0');
       });
     });
 
     describe('delete_customer_memo 응답', () => {
-      it('success 필드 포함', () => {
-        expect(sourceCode).toContain('success: true');
-      });
-
-      it('deletedMemoId 필드 포함', () => {
-        expect(sourceCode).toContain('deletedMemoId: params.memoId');
-      });
-
-      it('message 필드 포함', () => {
-        expect(sourceCode).toContain("message: '메모가 삭제되었습니다.'");
+      it('기능 비활성화 메시지', () => {
+        expect(sourceCode).toContain('더 이상 지원되지 않습니다');
       });
     });
   });
@@ -279,22 +267,21 @@ describe('응답 포맷 일관성', () => {
 
   describe('응답에서 Date 처리', () => {
 
-    it('응답의 날짜는 ISO 문자열로 변환', () => {
+    it('customers.ts: createdAt 응답에서 toISOString() 사용', () => {
       const customersCode = readSourceFile('./tools/customers.ts');
-      const memosCode = readSourceFile('./tools/memos.ts');
-
-      // createdAt 응답에서 toISOString() 사용
       expect(customersCode).toContain('createdAt: now.toISOString()');
-      expect(memosCode).toContain('createdAt: now.toISOString()');
     });
 
-    it('목록 응답에서는 Date 그대로 반환 (JSON.stringify가 ISO로 변환)', () => {
+    it('customers.ts: 목록 응답에서 Date 그대로 반환', () => {
       const customersCode = readSourceFile('./tools/customers.ts');
-      const memosCode = readSourceFile('./tools/memos.ts');
-
-      // 목록 응답에서는 Date 객체 그대로 (JSON.stringify가 알아서 변환)
       expect(customersCode).toContain("createdAt: c.meta?.created_at");
-      expect(memosCode).toContain('createdAt: memo.created_at');
+    });
+
+    it('memos.ts: 타임스탬프 형식으로 메모 추가', () => {
+      const memosCode = readSourceFile('./tools/memos.ts');
+      // memos는 단일 필드에 타임스탬프 형식으로 저장
+      expect(memosCode).toContain('formatDateTime');
+      expect(memosCode).toContain('timestamp');
     });
   });
 });
@@ -357,10 +344,6 @@ describe('필드명 일관성 (카멜케이스 vs 스네이크케이스)', () =>
     it('memos.ts: customerId', () => {
       expect(memosCode).toContain('customerId:');
     });
-
-    it('memos.ts: memoId', () => {
-      expect(memosCode).toContain('memoId:');
-    });
   });
 
   describe('DB 필드: 스네이크케이스', () => {
@@ -388,12 +371,12 @@ describe('필드명 일관성 (카멜케이스 vs 스네이크케이스)', () =>
       expect(customersCode).toContain('updated_at');
     });
 
-    it('memos.ts: customer_id', () => {
-      expect(memosCode).toContain('customer_id');
+    it('memos.ts: meta.created_by', () => {
+      expect(memosCode).toContain('meta.created_by');
     });
 
-    it('memos.ts: created_by', () => {
-      expect(memosCode).toContain('created_by');
+    it('memos.ts: meta.updated_at', () => {
+      expect(memosCode).toContain('meta.updated_at');
     });
   });
 });

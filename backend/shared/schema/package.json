@@ -1,0 +1,21 @@
+{
+  "name": "@aims/shared-schema",
+  "version": "1.0.0",
+  "description": "AIMS 공유 스키마 - 모든 백엔드 서비스가 공유하는 DB 스키마 정의",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

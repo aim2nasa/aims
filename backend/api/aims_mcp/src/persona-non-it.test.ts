@@ -325,19 +325,16 @@ describe('페르소나: IT 비전문가', () => {
 
     it('에러 메시지에 "Zod" 없음', () => {
       const customersSource = readSourceFile('./tools/customers.ts');
-      const memosSource = readSourceFile('./tools/memos.ts');
 
       // 에러 메시지 문자열 내에 Zod 노출 안 됨
       // (코드 내부에서는 사용하지만 사용자 메시지에는 없음)
       expect(customersSource).toContain('유효하지 않은 고객 ID');
-      expect(memosSource).toContain('유효하지 않은 메모 ID');
     });
 
     it('에러 메시지에 "regex" 없음', () => {
       const errorMessages = [
         '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다',
-        '유효하지 않은 메모 ID입니다'
+        '고객을 찾을 수 없습니다'
       ];
 
       for (const msg of errorMessages) {
@@ -349,8 +346,7 @@ describe('페르소나: IT 비전문가', () => {
     it('에러 메시지에 "validation" 없음', () => {
       const errorMessages = [
         '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다',
-        '유효하지 않은 메모 ID입니다'
+        '고객을 찾을 수 없습니다'
       ];
 
       for (const msg of errorMessages) {
@@ -366,8 +362,8 @@ describe('페르소나: IT 비전문가', () => {
       // 한글 에러 메시지 확인
       expect(customersSource).toContain('유효하지 않은 고객 ID');
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
-      expect(memosSource).toContain('유효하지 않은 메모 ID');
-      expect(memosSource).toContain('본인이 작성한 메모만');
+      // memos는 단일 메모 필드 구조 - 고객 ID 검증만 확인
+      expect(memosSource).toContain('유효하지 않은 고객 ID');
       expect(contractsSource).toContain('유효하지 않은 계약 ID');
       expect(contractsSource).toContain('계약을 찾을 수 없습니다');
     });

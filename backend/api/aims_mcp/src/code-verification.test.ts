@@ -104,30 +104,39 @@ describe('MCP 소스 코드 검증', () => {
     });
 
     describe('add_customer_memo 핸들러', () => {
-      it('created_at에 new Date() 사용해야 함', () => {
-        expect(sourceCode).toContain('created_at: now');
-        expect(sourceCode).toContain('const now = new Date()');
-        // formatDateTime 사용 금지
-        expect(sourceCode).not.toContain('formatDateTime');
-      });
-
-      it('updated_at에 new Date() 사용해야 함', () => {
-        expect(sourceCode).toContain('updated_at: now');
-      });
-
-      it('COLLECTIONS.MEMOS 상수 사용해야 함 (하드코딩 금지)', () => {
-        expect(sourceCode).toContain('db.collection(COLLECTIONS.MEMOS)');
-        // 하드코딩된 컬렉션명 금지
+      it('customers.memo 필드에 직접 저장해야 함 (별도 컬렉션 아님)', () => {
+        // COLLECTIONS.CUSTOMERS 사용 확인
+        expect(sourceCode).toContain('db.collection(COLLECTIONS.CUSTOMERS)');
+        // customer_memos 별도 컬렉션 사용 금지
         expect(sourceCode).not.toContain("db.collection('customer_memos')");
+        expect(sourceCode).not.toContain('COLLECTIONS.MEMOS');
+      });
+
+      it('메모 필드명은 memo 사용해야 함', () => {
+        expect(sourceCode).toContain('memo: updatedMemo');
+        expect(sourceCode).toContain('customer.memo');
+      });
+
+      it('기존 메모에 append하는 로직이 있어야 함', () => {
+        expect(sourceCode).toContain('existingMemo');
+        expect(sourceCode).toContain('updatedMemo');
+        // 기존 메모 + 새 메모 병합
+        expect(sourceCode).toMatch(/existingMemo[\s\S]*?newMemoLine/);
+      });
+
+      it('타임스탬프 형식으로 메모를 추가해야 함', () => {
+        // [YYYY.MM.DD HH:mm] 형식의 타임스탬프
+        expect(sourceCode).toContain('formatDateTime');
+        expect(sourceCode).toContain('newMemoLine');
       });
     });
 
     describe('컬렉션명 상수 사용', () => {
-      it('모든 memos 컬렉션 접근에 COLLECTIONS.MEMOS 사용', () => {
+      it('customers 컬렉션 접근에 COLLECTIONS.CUSTOMERS 사용', () => {
         // COLLECTIONS import 확인
         expect(sourceCode).toContain('COLLECTIONS');
         // 하드코딩 금지
-        expect(sourceCode).not.toMatch(/db\.collection\(['"]customer_memos['"]\)/);
+        expect(sourceCode).not.toMatch(/db\.collection\(['"]customers['"]\)/);
       });
     });
   });
@@ -139,20 +148,17 @@ describe('MCP 소스 코드 검증', () => {
       expect(sourceCode).not.toContain('format_date_time');
     });
 
-    it('memos.ts에 formatDateTime 함수가 없어야 함', () => {
+    it('memos.ts에는 formatDateTime이 있어야 함 (타임스탬프 형식용)', () => {
       const sourceCode = readSourceFile('./tools/memos.ts');
-      expect(sourceCode).not.toContain('formatDateTime');
-      expect(sourceCode).not.toContain('format_date_time');
+      // memos.ts는 메모 타임스탬프를 위해 formatDateTime 사용
+      expect(sourceCode).toContain('formatDateTime');
     });
 
-    it('날짜 문자열 직접 생성 패턴이 없어야 함', () => {
+    it('customers.ts에 날짜 문자열 직접 생성 패턴이 없어야 함', () => {
       const customersCode = readSourceFile('./tools/customers.ts');
-      const memosCode = readSourceFile('./tools/memos.ts');
-
       // YYYY.MM.DD 형식 문자열 생성 패턴 금지
       const dateStringPattern = /['"`]\d{4}\.\d{2}\.\d{2}/;
       expect(customersCode).not.toMatch(dateStringPattern);
-      expect(memosCode).not.toMatch(dateStringPattern);
     });
   });
 
@@ -234,7 +240,8 @@ describe('MCP 소스 코드 검증', () => {
   describe('모든 도구 파일 일관성 검증', () => {
     const toolFiles = [
       { name: 'customers.ts', handlers: ['search_customers', 'get_customer', 'create_customer', 'update_customer'] },
-      { name: 'memos.ts', handlers: ['add_customer_memo', 'list_customer_memos', 'delete_customer_memo'] },
+      // delete_customer_memo는 deprecated되어 단순 에러 반환만 함
+      { name: 'memos.ts', handlers: ['add_customer_memo', 'list_customer_memos'] },
       { name: 'birthdays.ts', handlers: ['find_birthday_customers'] },
       { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details'] },
       { name: 'documents.ts', handlers: ['search_documents', 'get_document', 'list_customer_documents'] },

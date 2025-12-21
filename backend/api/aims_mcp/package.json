@@ -16,6 +16,7 @@
     "test:all": "vitest run"
   },
   "dependencies": {
+    "@aims/shared-schema": "file:../../shared/schema",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "mongodb": "^6.18.0",
     "zod": "^3.23.8",

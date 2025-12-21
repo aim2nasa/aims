@@ -472,9 +472,9 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
 
 describe('금지 패턴 전역 검증', () => {
 
+  // memos.ts는 타임스탬프를 위해 formatDateTime 사용 허용
   const toolFiles = [
     './tools/customers.ts',
-    './tools/memos.ts',
     './tools/network.ts',
     './tools/contracts.ts',
     './tools/birthdays.ts',
@@ -515,6 +515,25 @@ describe('금지 패턴 전역 검증', () => {
       });
     });
   }
+
+  // memos.ts는 별도 검증 (단일 메모 필드 구조)
+  describe('./tools/memos.ts', () => {
+    let sourceCode: string;
+
+    beforeAll(() => {
+      sourceCode = readSourceFile('./tools/memos.ts');
+    });
+
+    it('formatDateTime 사용 허용 (타임스탬프용)', () => {
+      // memos.ts는 메모 타임스탬프를 위해 formatDateTime 사용
+      expect(sourceCode).toContain('formatDateTime');
+    });
+
+    it('customers.memo 필드에 저장 (별도 컬렉션 아님)', () => {
+      expect(sourceCode).toContain('db.collection(COLLECTIONS.CUSTOMERS)');
+      expect(sourceCode).not.toContain('COLLECTIONS.MEMOS');
+    });
+  });
 });
 
 describe('응답 형식 일관성', () => {
@@ -594,11 +613,11 @@ describe('권한 및 데이터 격리', () => {
 });
 
 describe('빈 결과 처리 일관성', () => {
+  // memos.ts는 단일 메모 필드이므로 목록 도구에서 제외
   const listToolFiles = [
     { file: './tools/customers.ts', countField: 'count: customers.length' },
     { file: './tools/contracts.ts', countField: 'count: contracts.length' },
     { file: './tools/birthdays.ts', countField: 'count: customers.length' },
-    { file: './tools/memos.ts', countField: 'count: memos.length' },
     { file: './tools/expiring.ts', countField: 'count: expiringContracts.length' },
     { file: './tools/documents.ts', countField: 'count: documents.length' },
   ];

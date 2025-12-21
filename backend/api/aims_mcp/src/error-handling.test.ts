@@ -151,8 +151,9 @@ describe('에러 처리 테스트', () => {
         }
       });
 
-      it('memos.ts: 모든 핸들러에 try-catch', () => {
-        const handlers = ['handleAddMemo', 'handleListMemos', 'handleDeleteMemo'];
+      // handleDeleteMemo는 deprecated되어 단순 에러 반환만 함 (try-catch 불필요)
+      it('memos.ts: add/list 핸들러에 try-catch', () => {
+        const handlers = ['handleAddMemo', 'handleListMemos'];
         for (const handler of handlers) {
           const handlerMatch = memosCode.match(new RegExp(`async function ${handler}[^}]+{[\\s\\S]*?^}`, 'm'));
           expect(handlerMatch, `${handler} 찾을 수 없음`).not.toBeNull();
@@ -180,10 +181,6 @@ describe('에러 처리 테스트', () => {
       it('memos.ts: 고객 ID 변환 실패 시 에러 반환', () => {
         expect(memosCode).toContain("text: '유효하지 않은 고객 ID입니다.'");
       });
-
-      it('memos.ts: 메모 ID 변환 실패 시 에러 반환', () => {
-        expect(memosCode).toContain("text: '유효하지 않은 메모 ID입니다.'");
-      });
     });
 
     describe('존재 여부 확인', () => {
@@ -193,10 +190,6 @@ describe('에러 처리 테스트', () => {
 
       it('memos.ts: 고객 존재 확인', () => {
         expect(memosCode).toContain("text: '고객을 찾을 수 없습니다.'");
-      });
-
-      it('memos.ts: 메모 존재 확인', () => {
-        expect(memosCode).toContain("text: '메모를 찾을 수 없습니다.'");
       });
     });
 
@@ -208,10 +201,6 @@ describe('에러 처리 테스트', () => {
 
       it('memos.ts: 본인 고객의 메모만 조회 가능', () => {
         expect(memosCode).toContain("'meta.created_by': userId");
-      });
-
-      it('memos.ts: 본인 메모만 삭제 가능', () => {
-        expect(memosCode).toContain("text: '본인이 작성한 메모만 삭제할 수 있습니다.'");
       });
     });
 

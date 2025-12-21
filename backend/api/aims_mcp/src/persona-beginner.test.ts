@@ -260,20 +260,16 @@ describe('페르소나: 생초보 설계사', () => {
       expect(customersSource).toContain('유효하지 않은 고객 ID입니다');
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
       expect(customersSource).toContain('같은 이름의 고객이 이미 존재합니다');
-      expect(memosSource).toContain('유효하지 않은 메모 ID입니다');
-      expect(memosSource).toContain('본인이 작성한 메모만 삭제');
+      // memos는 단일 메모 필드 구조로 변경됨 - 고객 ID 검증만 확인
+      expect(memosSource).toContain('유효하지 않은 고객 ID입니다');
     });
 
     it('영어 기술 용어가 사용자 에러에 노출되지 않음', () => {
-      const customersSource = readSourceFile('./tools/customers.ts');
-      const memosSource = readSourceFile('./tools/memos.ts');
-
       // isError: true 블록 내에 기술 용어 없어야 함
       // 다만 코드 내부에서는 사용할 수 있으므로 에러 메시지 문자열만 확인
       const errorMessages = [
         '유효하지 않은 고객 ID입니다',
-        '고객을 찾을 수 없습니다',
-        '유효하지 않은 메모 ID입니다'
+        '고객을 찾을 수 없습니다'
       ];
 
       for (const msg of errorMessages) {
