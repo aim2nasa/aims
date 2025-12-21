@@ -74,7 +74,7 @@ export async function handleFindBirthdayCustomers(args: unknown) {
         $project: {
           _id: 1,
           'personal_info.name': 1,
-          'personal_info.phone': 1,
+          'personal_info.mobile_phone': 1,
           'personal_info.email': 1,
           'personal_info.birth_date': 1,
           'personal_info.birthdate': 1,
@@ -103,7 +103,7 @@ export async function handleFindBirthdayCustomers(args: unknown) {
           customers: customers.map(c => ({
             id: c._id.toString(),
             name: c.personal_info?.name,
-            phone: c.personal_info?.phone,
+            phone: c.personal_info?.mobile_phone,
             email: c.personal_info?.email,
             birthDate: c.personal_info?.birth_date || c.personal_info?.birthdate,
             birthDay: c.birthDay

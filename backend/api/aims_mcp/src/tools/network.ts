@@ -128,7 +128,7 @@ export async function handleGetCustomerNetwork(args: unknown) {
       .project({
         _id: 1,
         'personal_info.name': 1,
-        'personal_info.phone': 1,
+        'personal_info.mobile_phone': 1,
         'insurance_info.customer_type': 1
       })
       .toArray();
@@ -144,7 +144,7 @@ export async function handleGetCustomerNetwork(args: unknown) {
       return {
         relatedCustomerId: relatedId,
         relatedCustomerName: relatedCustomer?.personal_info?.name || '알 수 없음',
-        relatedCustomerPhone: relatedCustomer?.personal_info?.phone,
+        relatedCustomerPhone: relatedCustomer?.personal_info?.mobile_phone,
         relatedCustomerType: relatedCustomer?.insurance_info?.customer_type,
         relationshipCategory: rel.relationship_category,
         relationshipType: rel.relationship_type,
