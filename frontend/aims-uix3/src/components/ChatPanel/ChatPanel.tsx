@@ -454,15 +454,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                   <span>아래 기능을 클릭하면 예시가 입력됩니다</span>
                 </div>
               </div>
-              <div className="chat-panel__welcome-mode-toggle">
+              <div className="chat-panel__welcome-features">
+                {/* 바로 채팅하기 - 첫 번째 메뉴 항목 */}
                 <button
                   type="button"
+                  className="chat-panel__welcome-feature chat-panel__welcome-feature--primary"
                   onClick={() => handleToggleMode(true)}
                 >
-                  바로 채팅하기
+                  <span className="chat-panel__welcome-feature-icon">💬</span>
+                  <div className="chat-panel__welcome-feature-content">
+                    <div className="chat-panel__welcome-feature-title">바로 채팅하기</div>
+                    <div className="chat-panel__welcome-feature-desc">기능 목록 없이 바로 대화 시작</div>
+                  </div>
                 </button>
-              </div>
-              <div className="chat-panel__welcome-features">
                 {HELP_FEATURES.map((feature, idx) => (
                   <button
                     key={idx}
