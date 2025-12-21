@@ -32,8 +32,9 @@ WORKDIR /app
 COPY api/aims_api/package*.json ./
 
 # 로컬 의존성을 /shared-schema로 수정하여 설치
-# npm install 사용 (package-lock.json 재생성)
+# package-lock.json 삭제 후 npm install로 새로 생성
 RUN sed -i 's|file:../../shared/schema|file:/shared-schema|g' package.json && \
+    rm -f package-lock.json && \
     npm install --omit=dev
 
 # 애플리케이션 코드 복사
