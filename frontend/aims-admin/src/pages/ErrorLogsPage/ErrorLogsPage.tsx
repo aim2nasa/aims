@@ -64,6 +64,7 @@ export const ErrorLogsPage = () => {
   const [detailLog, setDetailLog] = useState<ErrorLog | null>(null);
   const [sortBy, setSortBy] = useState<SortField>('timestamp');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -135,6 +136,14 @@ export const ErrorLogsPage = () => {
     }
   };
 
+  const handleToggleDeleteMode = () => {
+    if (isDeleteMode) {
+      // 삭제 모드 해제 시 선택 초기화
+      setSelectedIds(new Set());
+    }
+    setIsDeleteMode(!isDeleteMode);
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     setSelectedIds(new Set());
@@ -193,6 +202,13 @@ export const ErrorLogsPage = () => {
           <span className={`error-logs-page__connection-status ${isConnected ? 'error-logs-page__connection-status--connected' : ''}`}>
             {isConnected ? '실시간 연결됨' : '연결 중...'}
           </span>
+          <Button
+            variant={isDeleteMode ? 'destructive' : 'secondary'}
+            size="sm"
+            onClick={handleToggleDeleteMode}
+          >
+            {isDeleteMode ? '삭제 모드 해제' : '삭제'}
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => refetch()}>
             새로고침
           </Button>
@@ -279,7 +295,7 @@ export const ErrorLogsPage = () => {
             </option>
           ))}
         </select>
-        {selectedIds.size > 0 && (
+        {isDeleteMode && selectedIds.size > 0 && (
           <Button
             variant="destructive"
             size="sm"
@@ -301,13 +317,16 @@ export const ErrorLogsPage = () => {
               <table className="error-logs-page__table">
                 <thead>
                   <tr>
-                    <th className="error-logs-page__th-check">
-                      <input
-                        type="checkbox"
-                        checked={logs.length > 0 && selectedIds.size === logs.length}
-                        onChange={handleSelectAll}
-                      />
-                    </th>
+                    {isDeleteMode && (
+                      <th className="error-logs-page__th-check">
+                        <input
+                          type="checkbox"
+                          aria-label="전체 선택"
+                          checked={logs.length > 0 && selectedIds.size === logs.length}
+                          onChange={handleSelectAll}
+                        />
+                      </th>
+                    )}
                     <th
                       className="error-logs-page__th-time error-logs-page__th--sortable"
                       onClick={() => handleSort('timestamp')}
@@ -353,16 +372,19 @@ export const ErrorLogsPage = () => {
                       className={`error-logs-page__row ${selectedIds.has(log._id) ? 'error-logs-page__row--selected' : ''}`}
                       onClick={() => setDetailLog(log)}
                     >
-                      <td
-                        className="error-logs-page__cell-check"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(log._id)}
-                          onChange={() => handleSelect(log._id)}
-                        />
-                      </td>
+                      {isDeleteMode && (
+                        <td
+                          className="error-logs-page__cell-check"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label="로그 선택"
+                            checked={selectedIds.has(log._id)}
+                            onChange={() => handleSelect(log._id)}
+                          />
+                        </td>
+                      )}
                       <td className="error-logs-page__cell-time">
                         {formatDateTime(log.timestamp)}
                       </td>
