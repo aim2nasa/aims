@@ -12,7 +12,7 @@ const API_DEBUG = false;
 
 /**
  * JWT 토큰만 가져오기
- * localStorage의 auth-storage에서 토큰만 추출
+ * localStorage에서 토큰 추출 (v2 우선, 하위 호환성 위해 v1도 확인)
  *
  * @returns JWT 토큰 문자열 또는 null
  *
@@ -26,10 +26,25 @@ export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
 
   try {
-    const authStorage = localStorage.getItem('auth-storage')
+    // v2 키 우선 확인
+    let authStorage = localStorage.getItem('auth-storage-v2')
     if (authStorage) {
       const parsed = JSON.parse(authStorage)
-      return parsed?.state?.token || null
+      if (parsed?.state?.token) {
+        return parsed.state.token
+      }
+    }
+
+    // 하위 호환성: v1 키도 확인 (마이그레이션 전 사용자 지원)
+    authStorage = localStorage.getItem('auth-storage')
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage)
+      if (parsed?.state?.token) {
+        // v1에서 찾은 토큰을 v2로 마이그레이션
+        localStorage.setItem('auth-storage-v2', JSON.stringify({ state: { token: parsed.state.token } }))
+        localStorage.removeItem('auth-storage')
+        return parsed.state.token
+      }
     }
   } catch {
     // 파싱 실패 시 무시
@@ -40,7 +55,7 @@ export function getAuthToken(): string | null {
 
 /**
  * JWT 토큰을 포함한 Authorization 헤더 가져오기
- * localStorage의 auth-storage에서 토큰을 추출하여 Bearer 토큰 형식으로 반환
+ * getAuthToken()을 사용하여 토큰 추출 (v2 우선, v1 하위 호환)
  *
  * @returns Authorization 헤더 객체 또는 빈 객체
  *
@@ -68,18 +83,10 @@ export function getAuthHeaders(): Record<string, string> {
     headers['x-user-id'] = currentUserId
   }
 
-  // Authorization 헤더 추가
-  try {
-    const authStorage = localStorage.getItem('auth-storage')
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage)
-      const token = parsed?.state?.token
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-    }
-  } catch {
-    // 파싱 실패 시 무시
+  // Authorization 헤더 추가 (getAuthToken 사용으로 v1/v2 호환)
+  const token = getAuthToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   return headers
