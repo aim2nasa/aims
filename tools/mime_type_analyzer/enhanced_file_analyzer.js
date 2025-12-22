@@ -64,7 +64,66 @@ const XLSX = require('xlsx'); // Excel
 const yauzl = require('yauzl'); // ZIP 파일 처리 (PPTX용)
 const xml2js = require('xml2js'); // XML 파싱
 const http = require('http');
+const https = require('https');
 const FormData = require('form-data');
+
+// AIMS 시스템 로그 API
+const AIMS_API_URL = process.env.AIMS_API_URL || 'https://aims.giize.com';
+
+/**
+ * 시스템 로그 API로 에러 전송
+ * @param {string} filename - 파일명
+ * @param {string} mimeType - MIME 타입
+ * @param {string} errorMessage - 에러 메시지
+ */
+function sendErrorToSystemLog(filename, mimeType, errorMessage) {
+  const logData = JSON.stringify({
+    level: 'error',
+    source: {
+      type: 'backend',
+      component: 'document'
+    },
+    message: `텍스트 추출 실패: ${filename}`,
+    data: {
+      filename,
+      mimeType,
+      error: errorMessage
+    }
+  });
+
+  const urlObj = new URL(AIMS_API_URL);
+  const isHttps = urlObj.protocol === 'https:';
+  const httpModule = isHttps ? https : http;
+
+  const options = {
+    hostname: urlObj.hostname,
+    port: urlObj.port || (isHttps ? 443 : 80),
+    path: '/api/system-logs',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(logData)
+    },
+    timeout: 5000,
+    rejectUnauthorized: false  // 자체 서명 인증서 허용
+  };
+
+  const req = httpModule.request(options, (res) => {
+    // 응답 무시 (fire-and-forget)
+  });
+
+  req.on('error', (err) => {
+    // 로그 전송 실패는 무시 (메인 로직 방해하지 않음)
+    console.error(`[SYSTEM-LOG] 전송 실패: ${err.message}`);
+  });
+
+  req.on('timeout', () => {
+    req.destroy();
+  });
+
+  req.write(logData);
+  req.end();
+}
 
 // PDF Converter 서비스 (Docker 환경에서 호스트 접근)
 const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || '172.17.0.1';
@@ -515,6 +574,10 @@ async function getFileMetadata(filePath, extractText = true) {
     } catch (error) {
       meta.error = error.message;
       meta.extracted_text = null;
+      // 에러 로그를 stderr에 출력 (서버 로그에 남김)
+      console.error(`[TEXT-EXTRACT-ERROR] ${meta.filename} (${mimeType}): ${error.message}`);
+      // AIMS 시스템 로그로 전송
+      sendErrorToSystemLog(meta.filename, mimeType, error.message);
     }
   }
 
