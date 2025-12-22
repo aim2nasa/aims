@@ -124,7 +124,7 @@ function App() {
         { path: '/dashboard/file-validation', label: '파일 검증' },
         { path: '/dashboard/ai-usage', label: 'AI 사용량' },
         { path: '/dashboard/ocr-usage', label: 'OCR 사용량' },
-        { path: '/dashboard/error-logs', label: '에러 로그' },
+        { path: '/dashboard/error-logs', label: '시스템 로그' },
       ],
     },
     {
