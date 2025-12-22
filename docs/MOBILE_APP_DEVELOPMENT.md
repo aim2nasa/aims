@@ -236,11 +236,26 @@ mobile/aims-mobile/
 └── app.json                 # Expo 설정 (마이크 권한 등)
 ```
 
-### Phase 2: 인증 시스템 (예정)
+### Phase 2: 인증 시스템 ✅ 완료 (2025.12.22)
 
-- [ ] Zustand + SecureStore 설정
-- [ ] 로그인 화면 구현
-- [ ] JWT 토큰 관리
+- [x] 인증 서비스 분리 (`authService.ts`)
+- [x] 토큰 자동 갱신 로직 (만료 1일 전 자동 갱신)
+- [x] 토큰 만료 관리 (SecureStore에 만료 시간 저장)
+- [x] 채팅 서비스 구현 (`chatService.ts`) - SSE 스트리밍
+- [x] 채팅 스토어 구현 (`chatStore.ts`) - 상태 관리
+
+**추가된 파일:**
+```
+src/services/
+├── index.ts           # 서비스 export
+├── authService.ts     # 로그인, 토큰 갱신, 사용자 정보
+└── chatService.ts     # 메시지 전송, 세션 관리
+
+src/stores/
+├── index.ts           # 스토어 export
+├── authStore.ts       # 개선: 토큰 갱신, 만료 관리
+└── chatStore.ts       # 채팅 상태 관리
+```
 
 ### Phase 3: 채팅 기능 (예정)
 
@@ -272,7 +287,8 @@ mobile/aims-mobile/
 | 날짜 | 커밋 | 내용 |
 |------|------|------|
 | 2025.12.22 | 07182098 | docs: 모바일 앱 개발 계획 문서 추가 |
-| 2025.12.22 | (예정) | feat: Phase 1 - Expo 프로젝트 초기화 |
+| 2025.12.22 | d28dec1b | feat: Phase 1 - Expo 프로젝트 초기화 |
+| 2025.12.22 | (예정) | feat: Phase 2 - 인증/채팅 서비스 구현 |
 
 ---
 
