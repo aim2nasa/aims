@@ -109,7 +109,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
 
   const modalBody = (
     <div
-      className="draggable-modal-backdrop"
+      className={`draggable-modal-backdrop ${className}`}
       onClick={handleBackdropClick}
       role="presentation"
     >

@@ -1196,6 +1196,16 @@ html[data-theme="dark"] .chat-panel__loading-overlay {
   background: linear-gradient(180deg, #ede5ff 0%, #e5f0ff 100%);
 }
 
+/* 분리 모드 모달 - 배경 클릭 통과 */
+.chat-panel-modal.draggable-modal-backdrop {
+  background: transparent;
+  pointer-events: none;
+}
+
+.chat-panel-modal .draggable-modal {
+  pointer-events: auto;
+}
+
 /* 분리 모드 모달 컨테이너 */
 .chat-panel-modal .draggable-modal__content {
   padding: 0;
