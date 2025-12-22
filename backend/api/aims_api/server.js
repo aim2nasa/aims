@@ -2889,6 +2889,7 @@ app.get('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
  * 새 고객 등록 API
  */
 app.post('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
+  console.log('[DEBUG] POST /api/customers 요청 수신:', req.body?.personal_info?.name);
   try {
     const customerData = req.body;
 

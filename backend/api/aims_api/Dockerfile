@@ -37,6 +37,11 @@ RUN sed -i 's|file:../../shared/schema|file:/shared-schema|g' package.json && \
     rm -f package-lock.json && \
     npm install --omit=dev
 
+# shared-schema를 node_modules에 직접 링크 (심볼릭 링크 문제 해결)
+RUN mkdir -p node_modules/@aims && \
+    rm -rf node_modules/@aims/shared-schema && \
+    ln -s /shared-schema node_modules/@aims/shared-schema
+
 # 애플리케이션 코드 복사
 COPY api/aims_api/ .
 

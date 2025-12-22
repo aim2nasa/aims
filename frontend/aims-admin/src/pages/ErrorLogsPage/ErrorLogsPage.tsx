@@ -4,7 +4,7 @@
  * @since 2025-12-22
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useErrorLogSSE } from '@/shared/hooks/useErrorLogSSE';
@@ -88,7 +88,10 @@ export const ErrorLogsPage = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   // SSE 실시간 스트림 연결
-  const { isConnected, stats: sseStats, newCount } = useErrorLogSSE(true);
+  const { isConnected, stats: sseStats, newLogs, clearNewLogs } = useErrorLogSSE(true);
+
+  // 이전 필터 상태 추적 (필터 변경 시 newLogs 클리어)
+  const prevFiltersRef = useRef({ levelFilter, sourceFilter, logTypeFilter, search: debouncedSearch });
 
   // 에러 로그 목록 조회
   const params: GetErrorLogsParams = {
@@ -121,6 +124,72 @@ export const ErrorLogsPage = () => {
 
   // SSE stats 우선, fallback으로 API stats 사용
   const stats = sseStats || apiStats;
+
+  // 필터 변경 감지 시 newLogs 클리어
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    if (
+      prev.levelFilter !== levelFilter ||
+      prev.sourceFilter !== sourceFilter ||
+      prev.logTypeFilter !== logTypeFilter ||
+      prev.search !== debouncedSearch
+    ) {
+      clearNewLogs();
+      prevFiltersRef.current = { levelFilter, sourceFilter, logTypeFilter, search: debouncedSearch };
+    }
+  }, [levelFilter, sourceFilter, logTypeFilter, debouncedSearch, clearNewLogs]);
+
+  // SSE로 받은 새 로그를 현재 필터에 맞게 필터링
+  const filteredNewLogs = useMemo(() => {
+    if (page !== 1) return []; // 첫 페이지에서만 새 로그 표시
+
+    return newLogs.filter((log) => {
+      // 로그 타입 필터
+      if (logTypeFilter === 'activity' && log.logType !== 'activity') return false;
+      if (logTypeFilter === 'system' && log.logType === 'activity') return false;
+
+      // 레벨 필터
+      if (levelFilter) {
+        const levels = levelFilter.split(',').map((l) => l.trim());
+        if (!levels.includes(log.level || 'error')) return false;
+      }
+
+      // 소스 필터
+      if (sourceFilter && log.source.type !== sourceFilter) return false;
+
+      // 심각도 필터
+      if (severityFilter && log.error?.severity !== severityFilter) return false;
+
+      // 카테고리 필터
+      if (categoryFilter && log.error?.category !== categoryFilter) return false;
+
+      // 검색어 필터
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const messageMatch = (log.message || log.error?.message || '').toLowerCase().includes(searchLower);
+        const componentMatch = (log.source.component || '').toLowerCase().includes(searchLower);
+        const typeMatch = (log.error?.type || log.activity?.action_type || '').toLowerCase().includes(searchLower);
+        if (!messageMatch && !componentMatch && !typeMatch) return false;
+      }
+
+      return true;
+    });
+  }, [newLogs, page, logTypeFilter, levelFilter, sourceFilter, severityFilter, categoryFilter, debouncedSearch]);
+
+  // API 데이터와 새 로그 병합 (중복 제거)
+  const mergedLogs = useMemo(() => {
+    const apiLogs = data?.logs || [];
+    if (filteredNewLogs.length === 0) return apiLogs;
+
+    // API 로그 ID Set
+    const apiLogIds = new Set(apiLogs.map((log) => log._id));
+
+    // 새 로그 중 API 결과에 없는 것만 추가
+    const uniqueNewLogs = filteredNewLogs.filter((log) => !apiLogIds.has(log._id));
+
+    // 새 로그를 상단에 추가
+    return [...uniqueNewLogs, ...apiLogs];
+  }, [data?.logs, filteredNewLogs]);
 
   // 삭제 mutation
   const deleteMutation = useMutation({
@@ -207,16 +276,17 @@ export const ErrorLogsPage = () => {
     );
   }
 
-  const logs = data?.logs || [];
+  const logs = mergedLogs;
   const pagination = data?.pagination;
+  const hasNewLogs = filteredNewLogs.length > 0;
 
   return (
     <div className="error-logs-page">
       <div className="error-logs-page__header">
         <h1 className="error-logs-page__title">
           시스템 로그
-          {newCount > 0 && (
-            <span className="error-logs-page__new-badge">+{newCount} 새 로그</span>
+          {hasNewLogs && (
+            <span className="error-logs-page__new-badge">+{filteredNewLogs.length} 실시간</span>
           )}
         </h1>
         <div className="error-logs-page__actions">
@@ -429,10 +499,12 @@ export const ErrorLogsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {logs.map((log) => {
+                    const isNewLog = filteredNewLogs.some((nl) => nl._id === log._id);
+                    return (
                     <tr
                       key={log._id}
-                      className={`error-logs-page__row ${selectedIds.has(log._id) ? 'error-logs-page__row--selected' : ''}`}
+                      className={`error-logs-page__row ${selectedIds.has(log._id) ? 'error-logs-page__row--selected' : ''} ${isNewLog ? 'error-logs-page__row--new' : ''}`}
                       onClick={() => setDetailLog(log)}
                     >
                       {isDeleteMode && (
@@ -484,7 +556,8 @@ export const ErrorLogsPage = () => {
                         {log.actor.name || log.actor.user_id || '-'}
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>

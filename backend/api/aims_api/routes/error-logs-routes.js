@@ -11,72 +11,11 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const systemLogger = require('../lib/errorLogger');
 const activityLogger = require('../lib/activityLogger');
+const sseBroadcast = require('../lib/sseBroadcast');
 
 // ==================== SSE 클라이언트 관리 ====================
-
-// 관리자 SSE 클라이언트 Set
-const sseClients = new Set();
-
-// SSE 배치 전송 설정 (시스템 부하 제어)
-const SSE_BATCH_INTERVAL = 1000;  // 1초
-const SSE_BATCH_SIZE = 20;        // 최대 20개
-let logBuffer = [];
-
-/**
- * SSE 이벤트 전송 헬퍼
- */
-function sendSSE(res, event, data) {
-  try {
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  } catch (e) {
-    console.error('[SystemLogs-SSE] 전송 실패:', e.message);
-  }
-}
-
-/**
- * 로그를 배치 버퍼에 추가 (즉시 브로드캐스트 대신)
- */
-function queueLogForBroadcast(log) {
-  logBuffer.push(log);
-}
-
-/**
- * 배치 브로드캐스트 (1초마다 실행)
- */
-setInterval(() => {
-  if (logBuffer.length === 0 || sseClients.size === 0) return;
-
-  const batch = logBuffer.splice(0, SSE_BATCH_SIZE);
-
-  // 클라이언트에게 배치 전송
-  sseClients.forEach(res => {
-    sendSSE(res, 'logs-batch', batch);
-  });
-
-  // 남은 로그가 있으면 다음 사이클에 전송
-  if (logBuffer.length > SSE_BATCH_SIZE * 3) {
-    // 버퍼 오버플로우 방지 - 오래된 로그 삭제
-    console.warn(`[SystemLogs-SSE] 버퍼 오버플로우, ${logBuffer.length - SSE_BATCH_SIZE * 2}개 로그 삭제`);
-    logBuffer = logBuffer.slice(-SSE_BATCH_SIZE * 2);
-  }
-}, SSE_BATCH_INTERVAL);
-
-/**
- * 모든 관리자에게 새 로그 브로드캐스트 (기존 호환)
- * error 레벨은 즉시 전송, 나머지는 배치
- */
-function broadcastNewLog(log) {
-  if (sseClients.size === 0) return;
-
-  // error/warn 레벨은 즉시 전송 (중요한 알림)
-  if (log.level === 'error' || log.level === 'warn') {
-    sseClients.forEach(res => sendSSE(res, 'new-log', log));
-  } else {
-    // debug/info는 배치로 전송
-    queueLogForBroadcast(log);
-  }
-}
+// 공유 SSE 모듈 사용
+const { sendSSE, broadcastNewLog, addClient, removeClient } = sseBroadcast;
 
 // 기존 함수 별칭 (하위 호환성)
 function broadcastNewErrorLog(errorLog) {
@@ -224,8 +163,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
     res.flushHeaders();
 
     // 클라이언트 등록
-    sseClients.add(res);
-    console.log(`[SystemLogs-SSE] 클라이언트 연결됨 (총 ${sseClients.size}개)`);
+    addClient(res);
 
     // 연결 확인 이벤트
     sendSSE(res, 'connected', { message: 'System logs stream connected' });
@@ -246,8 +184,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
     // 연결 종료 처리
     req.on('close', () => {
       clearInterval(pingInterval);
-      sseClients.delete(res);
-      console.log(`[SystemLogs-SSE] 클라이언트 연결 해제 (남은 ${sseClients.size}개)`);
+      removeClient(res);
     });
   });
 

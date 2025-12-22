@@ -1,0 +1,35 @@
+# Node.js dependencies (모든 하위 디렉토리)
+**/node_modules/
+**/npm-debug.log*
+
+# 로그 파일
+**/logs/
+**/*.log
+
+# 환경 설정 (각 서비스별 .env는 별도 마운트)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# IDE 설정
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+
+# OS 생성 파일
+**/.DS_Store
+**/Thumbs.db
+
+# Git
+.git/
+**/.gitignore
+
+# Docker 관련
+**/Dockerfile
+**/.dockerignore
+
+# 테스트 및 문서
+**/*.md
+**/test/
+**/__tests__/

@@ -13,6 +13,7 @@
  */
 
 const crypto = require('crypto');
+const sseBroadcast = require('./sseBroadcast');
 
 // 민감 정보 필드 목록
 const SENSITIVE_FIELDS = [
@@ -94,6 +95,7 @@ class ActivityLogger {
    * @param {Object} params.meta - 메타 정보 (선택)
    */
   async log({ actor, action, result, meta = {} }) {
+    console.log('[ActivityLogger] log() 호출됨:', action?.type, action?.category);
     if (!this.collection) {
       console.warn('[ActivityLogger] 초기화되지 않음, 로그 스킵');
       return;
@@ -158,7 +160,14 @@ class ActivityLogger {
     };
 
     try {
-      await this.collection.insertOne(logEntry);
+      const insertResult = await this.collection.insertOne(logEntry);
+      console.log('[ActivityLogger] 로그 저장 완료, SSE 브로드캐스트 호출');
+
+      // SSE를 통해 실시간 브로드캐스트
+      sseBroadcast.broadcastActivityLog({
+        ...logEntry,
+        _id: insertResult.insertedId
+      });
     } catch (error) {
       // 로깅 실패가 메인 로직을 방해하지 않도록 콘솔만 출력
       console.error('[ActivityLogger] 저장 실패:', error.message);

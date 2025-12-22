@@ -327,6 +327,20 @@
   background-color: rgba(0, 122, 255, 0.08);
 }
 
+.error-logs-page__row--new {
+  background-color: rgba(52, 199, 89, 0.08);
+  animation: newLogFade 3s ease-out;
+}
+
+@keyframes newLogFade {
+  0% {
+    background-color: rgba(52, 199, 89, 0.25);
+  }
+  100% {
+    background-color: rgba(52, 199, 89, 0.08);
+  }
+}
+
 .error-logs-page__cell-time {
   color: var(--color-text-secondary);
   font-size: 10px;
