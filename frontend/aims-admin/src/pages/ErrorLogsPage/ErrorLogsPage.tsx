@@ -69,21 +69,82 @@ const LIMIT_OPTIONS = [
   { value: 100, label: '100개씩' },
 ];
 
+// localStorage 키
+const STORAGE_KEY = 'aims-admin-error-logs-settings';
+
+// 저장할 설정 타입
+interface ErrorLogsSettings {
+  limit: number;
+  levelFilter: string;
+  sourceFilter: string;
+  severityFilter: string;
+  categoryFilter: string;
+  logTypeFilter: LogType;
+  sortBy: SortField;
+  sortOrder: SortOrder;
+}
+
+// 기본 설정
+const DEFAULT_SETTINGS: ErrorLogsSettings = {
+  limit: 20,
+  levelFilter: '',
+  sourceFilter: '',
+  severityFilter: '',
+  categoryFilter: '',
+  logTypeFilter: 'all',
+  sortBy: 'timestamp',
+  sortOrder: 'desc',
+};
+
+// localStorage에서 설정 불러오기
+const loadSettings = (): ErrorLogsSettings => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    }
+  } catch (e) {
+    console.warn('[ErrorLogsPage] localStorage 로드 실패:', e);
+  }
+  return DEFAULT_SETTINGS;
+};
+
+// localStorage에 설정 저장
+const saveSettings = (settings: Partial<ErrorLogsSettings>) => {
+  try {
+    const current = loadSettings();
+    const updated = { ...current, ...settings };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('[ErrorLogsPage] localStorage 저장 실패:', e);
+  }
+};
+
 export const ErrorLogsPage = () => {
   const queryClient = useQueryClient();
+
+  // localStorage에서 초기값 로드
+  const initialSettings = useMemo(() => loadSettings(), []);
+
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(initialSettings.limit);
   const [search, setSearch] = useState('');
-  const [levelFilter, setLevelFilter] = useState(''); // 기본값: 전체 (activity 포함)
-  const [sourceFilter, setSourceFilter] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [logTypeFilter, setLogTypeFilter] = useState<LogType>('all'); // 기본값: 전체
+  const [levelFilter, setLevelFilter] = useState(initialSettings.levelFilter);
+  const [sourceFilter, setSourceFilter] = useState(initialSettings.sourceFilter);
+  const [severityFilter, setSeverityFilter] = useState(initialSettings.severityFilter);
+  const [categoryFilter, setCategoryFilter] = useState(initialSettings.categoryFilter);
+  const [logTypeFilter, setLogTypeFilter] = useState<LogType>(initialSettings.logTypeFilter);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailLog, setDetailLog] = useState<ErrorLog | null>(null);
-  const [sortBy, setSortBy] = useState<SortField>('timestamp');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortBy, setSortBy] = useState<SortField>(initialSettings.sortBy);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(initialSettings.sortOrder);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // 설정 변경 시 localStorage에 저장
+  useEffect(() => {
+    saveSettings({ limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder });
+  }, [limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder]);
 
   const debouncedSearch = useDebounce(search, 300);
 
