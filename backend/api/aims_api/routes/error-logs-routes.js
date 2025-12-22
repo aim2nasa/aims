@@ -19,7 +19,7 @@ const { sendSSE, broadcastNewLog, addClient, removeClient } = sseBroadcast;
 
 // ==================== 자동 정리 변수 ====================
 let lastCleanupTime = 0;
-const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5분마다 정리 체크
+const CLEANUP_INTERVAL = 60 * 1000; // 1분마다 정리 체크 (분 단위 retention 지원)
 
 /**
  * 보존 기간 초과 로그 자동 정리 (백그라운드)
@@ -697,15 +697,16 @@ module.exports = function(db, authenticateJWT, requireRole) {
    * 로그 보존 기간 설정 (관리자 전용)
    *
    * Body:
-   * - hours: number (보존 기간, 시간 단위, 최소 1시간, 최대 2160시간=90일)
+   * - hours: number (보존 기간, 시간 단위, 최소 1분=0.0167시간, 최대 2160시간=90일)
    * - enabled: boolean (자동 삭제 활성화 여부)
    */
   router.put('/admin/error-logs/retention', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const { hours, enabled = true } = req.body;
 
-      // 유효성 검사: 최소 1시간, 최대 90일(2160시간)
-      const validHours = Math.max(1, Math.min(2160, parseInt(hours) || 168));
+      // 유효성 검사: 최소 1분(1/60시간), 최대 90일(2160시간)
+      // parseFloat로 소수점 지원 (1분=0.0167, 5분=0.083, 15분=0.25, 30분=0.5)
+      const validHours = Math.max(1/60, Math.min(2160, parseFloat(hours) || 168));
 
       const settingsCollection = db.collection('settings');
       await settingsCollection.updateOne(
@@ -731,10 +732,17 @@ module.exports = function(db, authenticateJWT, requireRole) {
         console.log(`[ErrorLogs] Retention 적용: error_logs=${errorDeleted}, activity_logs=${activityDeleted} 삭제 (기준: ${validHours}시간)`);
       }
 
+      // 시간/분 포맷팅
+      const formatDuration = (h) => {
+        if (h < 1) return `${Math.round(h * 60)}분`;
+        if (h < 24) return `${h}시간`;
+        return `${Math.round(h / 24)}일`;
+      };
+
       res.json({
         success: true,
         retention: { hours: validHours, enabled: !!enabled },
-        message: `보존 기간이 ${validHours}시간으로 설정되었습니다`
+        message: `보존 기간이 ${formatDuration(validHours)}으로 설정되었습니다`
       });
     } catch (err) {
       console.error('[ErrorLogs] Retention 설정 실패:', err.message);
@@ -1011,6 +1019,44 @@ module.exports = function(db, authenticateJWT, requireRole) {
       });
     }
   });
+
+  // ==================== 자동 정리 스케줄러 ====================
+  // 1분마다 보존 기간 초과 로그 자동 삭제 (API 호출 없이도 동작)
+  const cleanupScheduler = setInterval(async () => {
+    try {
+      const settingsCollection = db.collection('settings');
+      const setting = await settingsCollection.findOne({ key: 'log_retention' });
+
+      if (!setting?.value?.enabled) {
+        return; // 자동 정리 비활성화
+      }
+
+      const hours = setting.value.hours || 168;
+      const cutoffDate = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+      const [errorDeleted, activityDeleted] = await Promise.all([
+        systemLogger.deleteByFilter({ endDate: cutoffDate.toISOString() }),
+        activityLogger.deleteOlderThan ? activityLogger.deleteOlderThan(cutoffDate) : Promise.resolve(0)
+      ]);
+
+      if (errorDeleted > 0 || activityDeleted > 0) {
+        console.log(`[ErrorLogs] 스케줄러 정리: error_logs=${errorDeleted}, activity_logs=${activityDeleted} 삭제 (보존: ${hours < 1 ? Math.round(hours * 60) + '분' : hours + '시간'})`);
+        // SSE로 클라이언트에 삭제 알림 브로드캐스트
+        sseBroadcast.broadcast('logs-cleanup', {
+          cutoffTime: cutoffDate.toISOString(),
+          deletedCount: errorDeleted + activityDeleted
+        });
+      }
+    } catch (err) {
+      // 조용히 실패 (로그 스팸 방지)
+    }
+  }, CLEANUP_INTERVAL);
+
+  // 프로세스 종료 시 스케줄러 정리
+  process.on('SIGTERM', () => clearInterval(cleanupScheduler));
+  process.on('SIGINT', () => clearInterval(cleanupScheduler));
+
+  console.log('[ErrorLogs] 자동 정리 스케줄러 시작 (1분 간격)');
 
   return router;
 };

@@ -38,8 +38,9 @@ function getStreamUrl(): string {
 /**
  * 에러 로그 실시간 스트림 훅
  * @param enabled SSE 연결 활성화 여부
+ * @param retentionHours 보존 기간 (시간 단위, 이 시간이 지난 로그는 자동 제거)
  */
-export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
+export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number): UseErrorLogSSEReturn {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [stats, setStats] = useState<ErrorLogStats | null>(null);
@@ -149,6 +150,36 @@ export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
       }
     });
 
+    // 로그 자동 정리 이벤트 (서버에서 보존 기간 초과 로그 삭제 시)
+    eventSource.addEventListener('logs-cleanup', (e) => {
+      try {
+        const { cutoffTime, deletedCount } = JSON.parse(e.data);
+        console.log(`[SystemLogSSE] 로그 정리 알림: ${deletedCount}개 삭제 (기준: ${cutoffTime})`);
+
+        // cutoffTime 이전의 로그를 newLogs에서 제거
+        const cutoff = new Date(cutoffTime).getTime();
+        setNewLogs((prev) => {
+          const filtered = prev.filter((log) => new Date(log.timestamp).getTime() > cutoff);
+          if (filtered.length < prev.length) {
+            const removed = prev.length - filtered.length;
+            console.log(`[SystemLogSSE] ${removed}개 로그 UI에서 제거`);
+            // 통계도 업데이트
+            setStats((prevStats) => {
+              if (!prevStats) return prevStats;
+              return { ...prevStats, total: Math.max(0, prevStats.total - removed) };
+            });
+          }
+          return filtered;
+        });
+
+        // 쿼리 무효화하여 서버 데이터 새로 가져오기
+        queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'stats'] });
+      } catch (error) {
+        console.error('[SystemLogSSE] logs-cleanup 이벤트 파싱 실패:', error);
+      }
+    });
+
     eventSource.addEventListener('ping', () => {
       // Keep-alive, 무시
     });
@@ -185,6 +216,37 @@ export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
       period: '7d'
     });
   }, []);
+
+  // 보존 기간 지난 로그 자동 제거 (10초마다 체크)
+  useEffect(() => {
+    if (!retentionHours || retentionHours <= 0) return;
+
+    const cleanupInterval = setInterval(() => {
+      const cutoffTime = Date.now() - retentionHours * 60 * 60 * 1000;
+      setNewLogs((prev) => {
+        const filtered = prev.filter((log) => {
+          const logTime = new Date(log.timestamp).getTime();
+          return logTime > cutoffTime;
+        });
+        // 삭제된 로그가 있으면 통계도 업데이트
+        if (filtered.length < prev.length) {
+          const removedCount = prev.length - filtered.length;
+          console.log(`[ErrorLogSSE] ${removedCount}개 로그 자동 제거 (보존: ${retentionHours < 1 ? Math.round(retentionHours * 60) + '분' : retentionHours + '시간'})`);
+          // 통계 감소
+          setStats((prevStats) => {
+            if (!prevStats) return prevStats;
+            return {
+              ...prevStats,
+              total: Math.max(0, prevStats.total - removedCount)
+            };
+          });
+        }
+        return filtered;
+      });
+    }, 10000); // 10초마다 체크
+
+    return () => clearInterval(cleanupInterval);
+  }, [retentionHours]);
 
   // SSE 연결 관리
   useEffect(() => {

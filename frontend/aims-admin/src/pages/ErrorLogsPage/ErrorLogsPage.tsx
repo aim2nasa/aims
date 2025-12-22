@@ -87,6 +87,11 @@ const PERIOD_OPTIONS = [
 
 // 보존 기간 옵션 (시간 단위)
 const RETENTION_OPTIONS = [
+  { value: 1 / 60, label: '1분' },
+  { value: 5 / 60, label: '5분' },
+  { value: 10 / 60, label: '10분' },
+  { value: 0.25, label: '15분' },
+  { value: 0.5, label: '30분' },
   { value: 1, label: '1시간' },
   { value: 2, label: '2시간' },
   { value: 6, label: '6시간' },
@@ -99,6 +104,19 @@ const RETENTION_OPTIONS = [
   { value: 1440, label: '60일' },
   { value: 2160, label: '90일' },
 ];
+
+/**
+ * 부동소수점 값을 가장 가까운 RETENTION_OPTIONS 값으로 매핑
+ * (JavaScript 부동소수점 비교 문제 해결)
+ */
+function normalizeRetentionHours(hours: number): number {
+  const tolerance = 0.001; // 0.1% 허용 오차
+  const matched = RETENTION_OPTIONS.find(opt =>
+    Math.abs(opt.value - hours) < tolerance ||
+    Math.abs(opt.value - hours) / Math.max(opt.value, hours) < tolerance
+  );
+  return matched?.value ?? hours;
+}
 
 // localStorage 키
 const STORAGE_KEY = 'aims-admin-error-logs-settings';
@@ -183,8 +201,16 @@ export const ErrorLogsPage = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  // SSE 실시간 스트림 연결
-  const { isConnected, stats: sseStats, newLogs, clearNewLogs, clearStats } = useErrorLogSSE(true);
+  // 보존 기간 설정 조회 (SSE 훅보다 먼저 선언)
+  const { data: retentionData } = useQuery({
+    queryKey: ['admin', 'error-logs', 'retention'],
+    queryFn: () => errorLogsApi.getRetention(),
+  });
+  const [localRetentionHours, setLocalRetentionHours] = useState<number | null>(null);
+  const retentionHours = normalizeRetentionHours(localRetentionHours ?? retentionData?.hours ?? 168);
+
+  // SSE 실시간 스트림 연결 (retentionHours 전달하여 자동 정리)
+  const { isConnected, stats: sseStats, newLogs, clearNewLogs, clearStats } = useErrorLogSSE(true, retentionHours);
 
   // 이전 필터 상태 추적 (필터 변경 시 newLogs 클리어)
   const prevFiltersRef = useRef({ levelFilter, sourceFilter, logTypeFilter, search: debouncedSearch });
@@ -220,16 +246,6 @@ export const ErrorLogsPage = () => {
 
   // SSE stats 우선, fallback으로 API stats 사용
   const stats = sseStats || apiStats;
-
-  // 보존 기간 설정 조회
-  const { data: retentionData } = useQuery({
-    queryKey: ['admin', 'error-logs', 'retention'],
-    queryFn: () => errorLogsApi.getRetention(),
-  });
-
-  // 로컬 보존 기간 상태 (optimistic update용)
-  const [localRetentionHours, setLocalRetentionHours] = useState<number | null>(null);
-  const retentionHours = localRetentionHours ?? retentionData?.hours ?? 168;
 
   // 보존 기간 설정 변경 - 모달 열기
   const handleRetentionChange = (hours: number) => {
