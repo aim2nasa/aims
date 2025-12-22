@@ -107,14 +107,12 @@ export default function ChatScreen() {
     }
   }, [error]);
 
-  // 메시지가 추가되면 스크롤
-  useEffect(() => {
+  // 콘텐츠 크기 변경 시 스크롤
+  const handleContentSizeChange = () => {
     if (messages.length > 0 || streamingContent) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
     }
-  }, [messages, streamingContent]);
+  };
 
   // 키보드가 나타나면 스크롤
   useEffect(() => {
@@ -283,6 +281,10 @@ export default function ChatScreen() {
           contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          overScrollMode="always"
+          onContentSizeChange={handleContentSizeChange}
         >
           {showWelcome && messages.length === 0 ? renderWelcome() : renderChat()}
         </ScrollView>
@@ -338,7 +340,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: spacing.md,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 120, // 입력창 높이 + 여유 공간
   },
   welcomeContainer: {
     alignItems: 'center',

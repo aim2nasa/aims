@@ -219,9 +219,15 @@ export default function VoiceScreen() {
         {(streamingContent || (messages.length > 0 && messages[messages.length - 1].role === 'assistant')) && (
           <View style={styles.responseContainer}>
             <Text style={styles.responseLabel}>AI 응답:</Text>
-            <Text style={styles.responseText}>
-              {streamingContent || messages[messages.length - 1]?.content || ''}
-            </Text>
+            <ScrollView
+              style={styles.responseScrollView}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text style={styles.responseText}>
+                {streamingContent || messages[messages.length - 1]?.content || ''}
+              </Text>
+            </ScrollView>
           </View>
         )}
 
@@ -364,6 +370,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     marginBottom: spacing.xs,
+  },
+  responseScrollView: {
+    flex: 1,
   },
   responseText: {
     fontSize: fontSize.md,
