@@ -641,19 +641,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
 
       {/* Input */}
       <form className="chat-panel__input-area" onSubmit={handleSubmit}>
-        <textarea
-          ref={inputRef}
-          className="chat-panel__input"
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            adjustTextareaHeight();
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
-          disabled={isLoading}
-          rows={1}
-        />
+        <div className="chat-panel__input-wrapper">
+          <textarea
+            ref={inputRef}
+            className="chat-panel__input"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
+            disabled={isLoading}
+            rows={1}
+          />
+          {/* 텍스트 지우기 버튼 */}
+          {input.trim() && !isLoading && (
+            <button
+              type="button"
+              className="chat-panel__input-clear"
+              onClick={() => {
+                setInput('');
+                if (inputRef.current) {
+                  inputRef.current.style.height = 'auto';
+                  inputRef.current.focus();
+                }
+              }}
+              aria-label="입력 지우기"
+            >
+              <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.FOOTNOTE} decorative />
+            </button>
+          )}
+        </div>
         <Button
           type="submit"
           variant="primary"

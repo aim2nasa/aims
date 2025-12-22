@@ -939,9 +939,16 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   align-items: flex-end;
 }
 
+.chat-panel__input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
 .chat-panel__input {
   flex: 1;
-  padding: 10px 14px;
+  padding: 10px 36px 10px 14px;
   font-size: var(--font-size-footnote);
   font-family: var(--font-family-primary);
   border: 1px solid rgba(139, 92, 246, 0.2);
@@ -954,6 +961,29 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   line-height: 1.4;
+}
+
+/* 입력 지우기 버튼 */
+.chat-panel__input-clear {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.chat-panel__input-clear:hover {
+  transform: scale(1.1);
+  color: var(--color-text-primary);
 }
 
 .chat-panel__input:focus {
