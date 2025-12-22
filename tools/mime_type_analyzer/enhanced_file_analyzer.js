@@ -68,7 +68,7 @@ const FormData = require('form-data');
 
 // PDF Converter 서비스 (Docker 환경에서 호스트 접근)
 const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || '172.17.0.1';
-const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 3011;
+const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
 
 // HWP 확장자 매핑
 const EXTENSION_MIME_MAP = {
