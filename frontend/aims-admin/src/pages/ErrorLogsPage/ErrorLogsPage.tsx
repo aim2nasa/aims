@@ -452,6 +452,21 @@ export const ErrorLogsPage = () => {
           <span className={`error-logs-page__connection-status ${isConnected ? 'error-logs-page__connection-status--connected' : ''}`}>
             {isConnected ? '실시간 연결됨' : '연결 중...'}
           </span>
+          <div className="error-logs-page__retention-setting">
+            <span className="error-logs-page__retention-icon" title="자동 삭제 설정">⚙</span>
+            <select
+              className="error-logs-page__retention-select"
+              value={retentionHours}
+              onChange={(e) => handleRetentionChange(Number(e.target.value))}
+              aria-label="로그 자동 삭제 기간"
+            >
+              {RETENTION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} 후
+                </option>
+              ))}
+            </select>
+          </div>
           {isDeleteMode && (
             <Button
               variant="destructive"
@@ -478,39 +493,6 @@ export const ErrorLogsPage = () => {
       {/* Stats */}
       {stats && (
         <div className="error-logs-page__stats-section">
-          <div className="error-logs-page__stats-header">
-            <div className="error-logs-page__stats-filter">
-              <span className="error-logs-page__stats-filter-label">조회:</span>
-              <select
-                className="error-logs-page__period-select"
-                value={statsPeriod}
-                onChange={(e) => setStatsPeriod(Number(e.target.value))}
-                aria-label="통계 조회 기간"
-              >
-                {PERIOD_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="error-logs-page__retention-setting">
-              <span className="error-logs-page__retention-icon" title="자동 삭제 설정">⚙</span>
-              <span className="error-logs-page__retention-text">자동 삭제:</span>
-              <select
-                className="error-logs-page__retention-select"
-                value={retentionHours}
-                onChange={(e) => handleRetentionChange(Number(e.target.value))}
-                aria-label="로그 자동 삭제 기간"
-              >
-                {RETENTION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label} 후
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
           <div className="error-logs-page__stats">
             <div className="error-logs-page__stat-card">
               <span className="error-logs-page__stat-value">{stats.total}</span>
@@ -621,6 +603,18 @@ export const ErrorLogsPage = () => {
           }}
         >
           {CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="error-logs-page__select"
+          value={statsPeriod}
+          onChange={(e) => setStatsPeriod(Number(e.target.value))}
+          aria-label="조회 기간"
+        >
+          {PERIOD_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -776,6 +770,7 @@ export const ErrorLogsPage = () => {
                     setLimit(Number(e.target.value));
                     setPage(1);
                   }}
+                  aria-label="페이지당 항목 수"
                 >
                   {LIMIT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
