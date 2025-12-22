@@ -38,33 +38,217 @@ const DEFAULT_WIDTH = 400;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 600;
 
-// 도움말 기능 목록 (MCP 도구 100% 커버리지)
+// 도움말 기능 목록 (MCP 도구 100% 커버리지) - 다양한 예시 포함
 const HELP_FEATURES = [
   // 고객 관리 (4 tools: search, get, create, update)
-  { icon: '🔍', title: '고객 검색', desc: '이름, 전화번호, 지역, 유형별 검색', example: '서울 사는 법인 고객 목록 보여줘' },
-  { icon: '👤', title: '고객 상세 조회', desc: '특정 고객의 전체 정보 조회', example: '고객 상세 정보 알려줘' },
-  { icon: '➕', title: '고객 등록', desc: '새 고객 추가', example: '새 고객 등록해줘. 이름은 테스트, 전화번호 010-1234-5678' },
-  { icon: '✏️', title: '고객 정보 수정', desc: '고객 연락처, 주소 등 수정', example: '고객 전화번호를 010-9999-8888로 변경해줘' },
+  {
+    icon: '🔍', title: '고객 검색', desc: '이름, 전화번호, 지역, 유형별 검색',
+    examples: [
+      '최근 등록한 고객 보여줘',
+      '김씨 성을 가진 고객 찾아줘',
+      '서울 지역 고객 목록 보여줘',
+      '법인 고객 목록 보여줘',
+      '개인 고객 중 부산 사는 분 찾아줘',
+      '휴면 고객 목록 조회해줘',
+      '010-1234로 시작하는 전화번호 가진 고객 검색해줘',
+      '경기도에 사는 개인 고객 찾아줘',
+      '이메일 주소가 gmail인 고객 검색해줘',
+      '대구 사는 법인 고객 찾아줘',
+    ]
+  },
+  {
+    icon: '👤', title: '고객 상세 조회', desc: '특정 고객의 전체 정보 조회',
+    examples: [
+      '이 고객 상세 정보 알려줘',
+      '선택한 고객의 전체 정보 보여줘',
+      '홍길동 고객의 연락처와 주소 알려줘',
+      '고객 등록일과 상태 확인해줘',
+      '이 고객이 언제 등록됐는지 알려줘',
+    ]
+  },
+  {
+    icon: '➕', title: '고객 등록', desc: '새 고객 추가',
+    examples: [
+      '새 고객 등록해줘. 이름은 홍길동, 전화번호 010-1234-5678',
+      '법인 고객 등록해줘. 회사명 ABC주식회사',
+      '김영희 고객 추가해줘. 생년월일 1990-05-15',
+      '새 고객: 이름 박민수, 이메일 minsu@email.com',
+      '서울시 강남구에 사는 최지원 고객 등록해줘',
+      '개인 고객 신규 등록. 이름 정다은, 연락처 010-9876-5432',
+      '법인 고객 추가. 상호명 테크솔루션, 대표자 김대표',
+    ]
+  },
+  {
+    icon: '✏️', title: '고객 정보 수정', desc: '고객 연락처, 주소 등 수정',
+    examples: [
+      '홍길동 고객 전화번호를 010-9999-8888로 변경해줘',
+      '김철수 고객 이메일 주소 수정해줘',
+      '이 고객 주소를 서울시 송파구로 변경해줘',
+      '고객 생년월일을 1985-03-20으로 수정해줘',
+      '박민수 고객 연락처 업데이트해줘',
+    ]
+  },
   // 계약 관리 (3 tools: list, get_details, find_expiring)
-  { icon: '📄', title: '계약 목록 조회', desc: '고객별 계약 현황, 상품별 필터', example: '내 전체 계약 목록 보여줘' },
-  { icon: '📋', title: '계약 상세 조회', desc: '피보험자, 수익자, 특약 정보 포함', example: '계약의 피보험자와 수익자 알려줘' },
-  { icon: '⏰', title: '만기 예정 계약', desc: 'N일 이내 만기 도래 계약 조회', example: '30일 이내 만기 예정 계약 알려줘' },
+  {
+    icon: '📄', title: '계약 목록 조회', desc: '고객별 계약 현황, 상품별 필터',
+    examples: [
+      '내 전체 계약 목록 보여줘',
+      '홍길동 고객의 계약 현황 알려줘',
+      '삼성생명 계약 목록 조회해줘',
+      '종신보험 계약만 보여줘',
+      '이 고객의 모든 계약 보여줘',
+      '최근 체결한 계약 20개 보여줘',
+      '자동차보험 계약 목록 찾아줘',
+      '납입 중인 계약만 조회해줘',
+    ]
+  },
+  {
+    icon: '📋', title: '계약 상세 조회', desc: '피보험자, 수익자, 특약 정보 포함',
+    examples: [
+      '계약 상세 정보 전체 보여줘',
+      '이 계약의 피보험자와 수익자 알려줘',
+      '특약 내용 확인해줘',
+      '계약의 보험료와 만기일 알려줘',
+      '피보험자가 누구인지 확인해줘',
+      '이 계약의 수익자 정보 보여줘',
+      '가입한 담보 내역 알려줘',
+    ]
+  },
+  {
+    icon: '⏰', title: '만기 예정 계약', desc: 'N일 이내 만기 도래 계약 조회',
+    examples: [
+      '이번 달 만기되는 계약 보여줘',
+      '30일 이내 만기 예정 계약 알려줘',
+      '다음 달 만기 예정인 계약 알려줘',
+      '60일 내 갱신 필요한 계약 찾아줘',
+      '90일 이내 만기 도래 계약 조회해줘',
+      '1주일 내 만기인 계약 있어?',
+      '올해 안에 만기되는 계약 전부 보여줘',
+    ]
+  },
   // 생일 (1 tool)
-  { icon: '🎂', title: '생일 고객', desc: '특정 월/일의 생일 고객 조회', example: '12월 생일인 고객 목록 보여줘' },
+  {
+    icon: '🎂', title: '생일 고객', desc: '특정 월/일의 생일 고객 조회',
+    examples: [
+      '이번 달 생일 고객 알려줘',
+      '오늘 생일인 고객 있어?',
+      '내일 생일인 고객 알려줘',
+      '다음 주 생일인 고객 목록 보여줘',
+      '12월 생일인 고객 목록 보여줘',
+      '1월 15일 생일인 고객 찾아줘',
+      '3월 생일 고객 전체 조회해줘',
+      '크리스마스에 생일인 고객 있어?',
+    ]
+  },
   // 문서 관리 (3 tools: search, get, list_customer)
-  { icon: '🔎', title: '문서 AI 검색', desc: 'AI 의미 검색 또는 키워드 검색', example: '자동차보험 관련 문서 찾아줘' },
-  { icon: '📁', title: '고객별 문서 조회', desc: '특정 고객의 문서 목록', example: '고객의 문서 목록 보여줘' },
+  {
+    icon: '🔎', title: '문서 AI 검색', desc: 'AI 의미 검색 또는 키워드 검색',
+    examples: [
+      '보험증권 문서 검색해줘',
+      '청구서 관련 문서 찾아줘',
+      '이 고객의 증권 문서 찾아줘',
+      '건강검진 관련 서류 있어?',
+      '최근 업로드한 계약서 찾아줘',
+      '신분증 사본 검색해줘',
+      '사고 관련 문서 전부 보여줘',
+      '진단서 키워드로 검색해줘',
+      '자동차보험 관련 문서 찾아줘',
+      '보험료 납입 영수증 찾아줘',
+    ]
+  },
+  {
+    icon: '📁', title: '고객별 문서 조회', desc: '특정 고객의 문서 목록',
+    examples: [
+      '이 고객의 문서 목록 보여줘',
+      '홍길동 고객이 제출한 서류 전체 보여줘',
+      '선택한 고객의 파일 목록 조회해줘',
+      '이 고객의 최근 업로드 문서 보여줘',
+      '고객 문서 몇 개 있는지 알려줘',
+    ]
+  },
   // 메모 관리 (3 tools: add, list, delete)
-  { icon: '📝', title: '메모 추가', desc: '고객에게 상담 메모 기록', example: '고객에게 메모 추가해줘: 다음 주 상담 예정' },
-  { icon: '📋', title: '메모 조회/삭제', desc: '기록된 메모 확인 및 삭제', example: '고객 메모 목록 보여줘' },
+  {
+    icon: '📝', title: '메모 추가', desc: '고객에게 상담 메모 기록',
+    examples: [
+      '이 고객에게 메모 추가해줘: 다음 주 상담 예정',
+      '홍길동 고객 메모: 보험료 인상 안내 완료',
+      '고객 메모 기록해줘 - 가족력 청취 필요',
+      '메모 추가: 주말에 전화 드리기로 함',
+      '이 고객 특이사항 기록해줘: VIP 관리 대상',
+      '상담 내용 메모해줘: 종신보험 관심 있음',
+      '고객 노트 추가: 매월 15일 납입일',
+    ]
+  },
+  {
+    icon: '📋', title: '메모 조회', desc: '기록된 메모 확인',
+    examples: [
+      '이 고객 메모 보여줘',
+      '홍길동 고객의 상담 기록 확인해줘',
+      '고객 메모 내역 전체 조회해줘',
+      '최근에 추가한 메모 보여줘',
+      '이 고객에게 남긴 메모가 있어?',
+    ]
+  },
   // 통계 (1 tool with 4 types)
-  { icon: '📊', title: '전체 통계 요약', desc: '고객수, 계약수, 보험료 현황', example: '내 전체 통계 요약 보여줘' },
-  { icon: '📈', title: '월별 신규 현황', desc: '최근 6개월 신규 고객/계약 추이', example: '최근 월별 신규 고객 현황 알려줘' },
+  {
+    icon: '📊', title: '전체 통계 요약', desc: '고객수, 계약수, 보험료 현황',
+    examples: [
+      '내 전체 통계 요약 보여줘',
+      '현재 고객수와 계약수 알려줘',
+      '전체 보험료 현황 보여줘',
+      '내 실적 요약 조회해줘',
+      '관리 중인 고객과 계약 현황 알려줘',
+    ]
+  },
+  {
+    icon: '📈', title: '월별 신규 현황', desc: '최근 6개월 신규 고객/계약 추이',
+    examples: [
+      '최근 6개월 실적 추이 보여줘',
+      '이번 달 신규 계약 몇 건이야?',
+      '최근 월별 신규 고객 현황 알려줘',
+      '월별 신규 등록 현황 조회해줘',
+      '올해 월별 계약 체결 현황 알려줘',
+    ]
+  },
   // 관계 네트워크 (1 tool)
-  { icon: '🔗', title: '고객 관계 조회', desc: '가족, 친척, 지인, 직장 관계', example: '고객의 가족관계 보여줘' },
+  {
+    icon: '🔗', title: '고객 관계 조회', desc: '가족, 친척, 지인, 직장 관계',
+    examples: [
+      '이 고객의 가족관계 보여줘',
+      '홍길동 고객과 연결된 관계 조회해줘',
+      '가족 구성원 확인해줘',
+      '이 고객의 지인 관계 보여줘',
+      '소개로 연결된 고객 있어?',
+      '고객 네트워크 전체 보여줘',
+      '직장 관계로 연결된 고객 찾아줘',
+    ]
+  },
   // 보험상품 (2 tools: search, get_details)
-  { icon: '🏢', title: '보험상품 검색', desc: '상품명, 보험사, 카테고리별 검색', example: '메트라이프 종신보험 상품 알려줘' },
-  { icon: '📦', title: '상품 상세 정보', desc: '담보, 보험료, 가입조건 등', example: '상품의 상세 정보 보여줘' },
+  {
+    icon: '🏢', title: '보험상품 검색', desc: '상품명, 보험사, 카테고리별 검색',
+    examples: [
+      '종신보험 상품 목록 보여줘',
+      '삼성생명 상품 검색해줘',
+      '건강보험 상품 찾아줘',
+      '연금보험 상품 추천해줘',
+      '실손보험 상품 목록 보여줘',
+      '어린이보험 상품 있어?',
+      '메트라이프 종신보험 상품 알려줘',
+      '교보생명 암보험 찾아줘',
+      '한화생명 저축보험 알려줘',
+      'DB손해보험 자동차보험 찾아줘',
+    ]
+  },
+  {
+    icon: '📦', title: '상품 상세 정보', desc: '담보, 보험료, 가입조건 등',
+    examples: [
+      '이 상품의 상세 정보 보여줘',
+      '가입 조건과 보험료 알려줘',
+      '담보 내용 확인해줘',
+      '이 상품 가입 연령대 알려줘',
+      '상품 특징과 장점 설명해줘',
+    ]
+  },
 ];
 
 // 데이터 현황 인터페이스
@@ -89,6 +273,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [showDataOverlay, setShowDataOverlay] = useState(false);
   const [dataStats, setDataStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
   const [animatedStats, setAnimatedStats] = useState<DataStats>({ customers: 0, contracts: 0, documents: 0 });
+  // 각 기능별 현재 예시 인덱스 (pagination용)
+  const [exampleIndices, setExampleIndices] = useState<number[]>(
+    () => HELP_FEATURES.map(() => 0)
+  );
   const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -119,6 +307,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     if (direct) {
       setTimeout(() => inputRef.current?.focus(), 0);
     }
+  }, []);
+
+  // 예시 pagination 핸들러 (이전)
+  const handlePrevExample = useCallback((featureIdx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExampleIndices(prev => {
+      const newIndices = [...prev];
+      const total = HELP_FEATURES[featureIdx].examples.length;
+      newIndices[featureIdx] = (prev[featureIdx] - 1 + total) % total;
+      return newIndices;
+    });
+  }, []);
+
+  // 예시 pagination 핸들러 (다음)
+  const handleNextExample = useCallback((featureIdx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExampleIndices(prev => {
+      const newIndices = [...prev];
+      const total = HELP_FEATURES[featureIdx].examples.length;
+      newIndices[featureIdx] = (prev[featureIdx] + 1) % total;
+      return newIndices;
+    });
   }, []);
 
   // 패널 열릴 때 세션 목록 로드
@@ -582,7 +792,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                     type="button"
                     className="chat-panel__welcome-feature"
                     onClick={() => {
-                      setInput(feature.example);
+                      setInput(feature.examples[exampleIndices[idx]]);
                       inputRef.current?.focus();
                     }}
                   >
@@ -590,6 +800,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                     <div className="chat-panel__welcome-feature-content">
                       <div className="chat-panel__welcome-feature-title">{feature.title}</div>
                       <div className="chat-panel__welcome-feature-desc">{feature.desc}</div>
+                    </div>
+                    {/* Pagination 버튼 */}
+                    <div className="chat-panel__welcome-feature-pagination">
+                      <button
+                        type="button"
+                        className="chat-panel__welcome-feature-nav"
+                        onClick={(e) => handlePrevExample(idx, e)}
+                        aria-label="이전 예시"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <span className="chat-panel__welcome-feature-page">
+                        {exampleIndices[idx] + 1}/{feature.examples.length}
+                      </span>
+                      <button
+                        type="button"
+                        className="chat-panel__welcome-feature-nav"
+                        onClick={(e) => handleNextExample(idx, e)}
+                        aria-label="다음 예시"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
                     </div>
                   </button>
                 ))}

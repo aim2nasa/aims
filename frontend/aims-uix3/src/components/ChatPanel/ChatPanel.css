@@ -668,6 +668,56 @@ html[data-theme="dark"] .chat-panel__data-stat-value {
   text-overflow: ellipsis;
 }
 
+/* Pagination - 예시 순환 버튼 */
+.chat-panel__welcome-feature-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.chat-panel__welcome-feature-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 0;
+  border-radius: 4px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.chat-panel__welcome-feature-nav:hover {
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.chat-panel__welcome-feature-nav:active {
+  transform: scale(0.95);
+}
+
+.chat-panel__welcome-feature-page {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  min-width: 28px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="dark"] .chat-panel__welcome-feature-nav {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .chat-panel__welcome-feature-nav:hover {
+  color: var(--color-text-primary);
+}
+
 /* Primary Feature - 바로 채팅하기 (강조) */
 .chat-panel__welcome-feature--primary {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
