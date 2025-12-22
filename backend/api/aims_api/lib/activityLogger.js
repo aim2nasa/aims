@@ -406,6 +406,27 @@ class ActivityLogger {
       return 0;
     }
   }
+
+  /**
+   * 특정 날짜 이전 로그 삭제 (보존 기간 초과 로그 정리)
+   * @param {Date} cutoffDate - 이 날짜 이전 로그 삭제
+   * @returns {number} 삭제된 로그 수
+   */
+  async deleteOlderThan(cutoffDate) {
+    if (!this.collection) {
+      throw new Error('ActivityLogger가 초기화되지 않았습니다');
+    }
+
+    try {
+      const result = await this.collection.deleteMany({
+        timestamp: { $lt: cutoffDate }
+      });
+      return result.deletedCount;
+    } catch (error) {
+      console.error('[ActivityLogger] 기간 초과 로그 삭제 실패:', error.message);
+      return 0;
+    }
+  }
 }
 
 // 싱글톤 인스턴스 export

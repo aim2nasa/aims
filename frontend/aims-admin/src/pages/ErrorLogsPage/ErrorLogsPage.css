@@ -32,6 +32,53 @@
   gap: var(--spacing-sm);
 }
 
+/* Stats filter & Retention setting */
+.error-logs-page__stats-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.error-logs-page__stats-filter-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.error-logs-page__retention-setting {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--color-surface-secondary, rgba(0, 0, 0, 0.03));
+  border-radius: var(--radius-sm);
+}
+
+.error-logs-page__retention-icon {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.error-logs-page__retention-text {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.error-logs-page__retention-select {
+  padding: 2px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  background-color: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.error-logs-page__retention-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 .error-logs-page__refresh-info {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
@@ -110,11 +157,42 @@
 }
 
 /* Stats */
+.error-logs-page__stats-section {
+  margin-bottom: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.error-logs-page__stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.error-logs-page__stats-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.error-logs-page__period-select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.error-logs-page__period-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 .error-logs-page__stats {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  flex-shrink: 0;
   flex-wrap: wrap;
 }
 

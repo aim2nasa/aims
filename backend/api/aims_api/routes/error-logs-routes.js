@@ -17,6 +17,48 @@ const sseBroadcast = require('../lib/sseBroadcast');
 // 공유 SSE 모듈 사용
 const { sendSSE, broadcastNewLog, addClient, removeClient } = sseBroadcast;
 
+// ==================== 자동 정리 변수 ====================
+let lastCleanupTime = 0;
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5분마다 정리 체크
+
+/**
+ * 보존 기간 초과 로그 자동 정리 (백그라운드)
+ * 5분 간격으로 실행, 설정된 보존 기간보다 오래된 로그 삭제
+ */
+async function autoCleanupLogs(db) {
+  const now = Date.now();
+  if (now - lastCleanupTime < CLEANUP_INTERVAL) {
+    return; // 아직 정리 시간이 아님
+  }
+  lastCleanupTime = now;
+
+  try {
+    const settingsCollection = db.collection('settings');
+    const setting = await settingsCollection.findOne({ key: 'log_retention' });
+
+    if (!setting?.value?.enabled) {
+      return; // 자동 정리 비활성화
+    }
+
+    const hours = setting.value.hours || 168;
+    const cutoffDate = new Date(now - hours * 60 * 60 * 1000);
+
+    // 백그라운드로 삭제 (await 없이)
+    Promise.all([
+      systemLogger.deleteByFilter({ endDate: cutoffDate.toISOString() }),
+      activityLogger.deleteOlderThan ? activityLogger.deleteOlderThan(cutoffDate) : Promise.resolve(0)
+    ]).then(([errorDeleted, activityDeleted]) => {
+      if (errorDeleted > 0 || activityDeleted > 0) {
+        console.log(`[ErrorLogs] 자동 정리: error_logs=${errorDeleted}, activity_logs=${activityDeleted} 삭제`);
+      }
+    }).catch(err => {
+      console.warn('[ErrorLogs] 자동 정리 실패:', err.message);
+    });
+  } catch (err) {
+    console.warn('[ErrorLogs] 자동 정리 설정 조회 실패:', err.message);
+  }
+}
+
 // 기존 함수 별칭 (하위 호환성)
 function broadcastNewErrorLog(errorLog) {
   broadcastNewLog({ ...errorLog, level: 'error' });
@@ -468,6 +510,9 @@ module.exports = function(db, authenticateJWT, requireRole) {
    * - logType: 'system' | 'activity' | 'all' (기본값: 'all')
    */
   router.get('/admin/error-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
+    // 백그라운드로 오래된 로그 자동 정리 (5분마다)
+    autoCleanupLogs(db);
+
     try {
       const {
         page = 1,
@@ -616,6 +661,122 @@ module.exports = function(db, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         message: '에러 로그 조회에 실패했습니다'
+      });
+    }
+  });
+
+  // ==================== Retention 설정 API ====================
+
+  /**
+   * GET /api/admin/error-logs/retention
+   * 로그 보존 기간 설정 조회 (관리자 전용)
+   */
+  router.get('/admin/error-logs/retention', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const settingsCollection = db.collection('settings');
+      const setting = await settingsCollection.findOne({ key: 'log_retention' });
+
+      // 기본값: 7일 (168시간)
+      const defaultRetention = { hours: 168, enabled: true };
+
+      res.json({
+        success: true,
+        retention: setting?.value || defaultRetention
+      });
+    } catch (err) {
+      console.error('[ErrorLogs] Retention 조회 실패:', err.message);
+      res.status(500).json({
+        success: false,
+        message: '보존 기간 설정 조회에 실패했습니다'
+      });
+    }
+  });
+
+  /**
+   * PUT /api/admin/error-logs/retention
+   * 로그 보존 기간 설정 (관리자 전용)
+   *
+   * Body:
+   * - hours: number (보존 기간, 시간 단위, 최소 1시간, 최대 2160시간=90일)
+   * - enabled: boolean (자동 삭제 활성화 여부)
+   */
+  router.put('/admin/error-logs/retention', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { hours, enabled = true } = req.body;
+
+      // 유효성 검사: 최소 1시간, 최대 90일(2160시간)
+      const validHours = Math.max(1, Math.min(2160, parseInt(hours) || 168));
+
+      const settingsCollection = db.collection('settings');
+      await settingsCollection.updateOne(
+        { key: 'log_retention' },
+        {
+          $set: {
+            key: 'log_retention',
+            value: { hours: validHours, enabled: !!enabled },
+            updatedAt: new Date(),
+            updatedBy: req.user.id
+          }
+        },
+        { upsert: true }
+      );
+
+      // 설정 변경 시 즉시 오래된 로그 삭제
+      if (enabled) {
+        const cutoffDate = new Date(Date.now() - validHours * 60 * 60 * 1000);
+        const [errorDeleted, activityDeleted] = await Promise.all([
+          systemLogger.deleteByFilter({ endDate: cutoffDate.toISOString() }),
+          activityLogger.deleteOlderThan ? activityLogger.deleteOlderThan(cutoffDate) : Promise.resolve(0)
+        ]);
+        console.log(`[ErrorLogs] Retention 적용: error_logs=${errorDeleted}, activity_logs=${activityDeleted} 삭제 (기준: ${validHours}시간)`);
+      }
+
+      res.json({
+        success: true,
+        retention: { hours: validHours, enabled: !!enabled },
+        message: `보존 기간이 ${validHours}시간으로 설정되었습니다`
+      });
+    } catch (err) {
+      console.error('[ErrorLogs] Retention 설정 실패:', err.message);
+      res.status(500).json({
+        success: false,
+        message: '보존 기간 설정에 실패했습니다'
+      });
+    }
+  });
+
+  /**
+   * POST /api/admin/error-logs/cleanup
+   * 보존 기간 초과 로그 수동 정리 (관리자 전용)
+   */
+  router.post('/admin/error-logs/cleanup', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const settingsCollection = db.collection('settings');
+      const setting = await settingsCollection.findOne({ key: 'log_retention' });
+      const hours = setting?.value?.hours || 168; // 기본 7일
+
+      const cutoffDate = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+      const [errorDeleted, activityDeleted] = await Promise.all([
+        systemLogger.deleteByFilter({ endDate: cutoffDate.toISOString() }),
+        activityLogger.deleteOlderThan ? activityLogger.deleteOlderThan(cutoffDate) : Promise.resolve(0)
+      ]);
+
+      res.json({
+        success: true,
+        deleted: {
+          errorLogs: errorDeleted,
+          activityLogs: activityDeleted,
+          total: errorDeleted + activityDeleted
+        },
+        cutoffDate: cutoffDate.toISOString(),
+        message: `${errorDeleted + activityDeleted}개 로그가 정리되었습니다`
+      });
+    } catch (err) {
+      console.error('[ErrorLogs] Cleanup 실패:', err.message);
+      res.status(500).json({
+        success: false,
+        message: '로그 정리에 실패했습니다'
       });
     }
   });

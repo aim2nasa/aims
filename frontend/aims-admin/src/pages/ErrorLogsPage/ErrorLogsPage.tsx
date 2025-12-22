@@ -69,6 +69,30 @@ const LIMIT_OPTIONS = [
   { value: 100, label: '100개씩' },
 ];
 
+const PERIOD_OPTIONS = [
+  { value: 1, label: '오늘' },
+  { value: 7, label: '최근 7일' },
+  { value: 30, label: '최근 30일' },
+  { value: 90, label: '최근 90일' },
+  { value: 365, label: '최근 1년' },
+  { value: 0, label: '전체 기간' },
+];
+
+// 보존 기간 옵션 (시간 단위)
+const RETENTION_OPTIONS = [
+  { value: 1, label: '1시간' },
+  { value: 2, label: '2시간' },
+  { value: 6, label: '6시간' },
+  { value: 12, label: '12시간' },
+  { value: 24, label: '1일' },
+  { value: 72, label: '3일' },
+  { value: 168, label: '7일' },
+  { value: 336, label: '14일' },
+  { value: 720, label: '30일' },
+  { value: 1440, label: '60일' },
+  { value: 2160, label: '90일' },
+];
+
 // localStorage 키
 const STORAGE_KEY = 'aims-admin-error-logs-settings';
 
@@ -82,6 +106,7 @@ interface ErrorLogsSettings {
   logTypeFilter: LogType;
   sortBy: SortField;
   sortOrder: SortOrder;
+  statsPeriod: number;  // 통계 기간 (일수, 0=전체)
 }
 
 // 기본 설정
@@ -94,6 +119,7 @@ const DEFAULT_SETTINGS: ErrorLogsSettings = {
   logTypeFilter: 'all',
   sortBy: 'timestamp',
   sortOrder: 'desc',
+  statsPeriod: 7,  // 기본 7일
 };
 
 // localStorage에서 설정 불러오기
@@ -140,11 +166,12 @@ export const ErrorLogsPage = () => {
   const [sortBy, setSortBy] = useState<SortField>(initialSettings.sortBy);
   const [sortOrder, setSortOrder] = useState<SortOrder>(initialSettings.sortOrder);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [statsPeriod, setStatsPeriod] = useState(initialSettings.statsPeriod);
 
   // 설정 변경 시 localStorage에 저장
   useEffect(() => {
-    saveSettings({ limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder });
-  }, [limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder]);
+    saveSettings({ limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder, statsPeriod });
+  }, [limit, levelFilter, sourceFilter, severityFilter, categoryFilter, logTypeFilter, sortBy, sortOrder, statsPeriod]);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -175,16 +202,62 @@ export const ErrorLogsPage = () => {
     refetchInterval: isConnected ? false : 60000,
   });
 
-  // 통계 조회 (SSE에서 실시간 stats를 받으므로 fallback용)
+  // 통계 조회 - 조회 기간에 맞춰 조회
   const { data: apiStats } = useQuery({
-    queryKey: ['admin', 'error-logs', 'stats'],
-    queryFn: () => errorLogsApi.getStats(7),
+    queryKey: ['admin', 'error-logs', 'stats', statsPeriod],
+    queryFn: () => errorLogsApi.getStats(statsPeriod || 9999),  // 0이면 전체 기간
     // SSE가 연결되어 있으면 초기 로드만, 아니면 폴링
     refetchInterval: isConnected ? false : 60000,
   });
 
   // SSE stats 우선, fallback으로 API stats 사용
   const stats = sseStats || apiStats;
+
+  // 보존 기간 설정 조회
+  const { data: retentionData } = useQuery({
+    queryKey: ['admin', 'error-logs', 'retention'],
+    queryFn: () => errorLogsApi.getRetention(),
+  });
+
+  // 로컬 보존 기간 상태 (optimistic update용)
+  const [localRetentionHours, setLocalRetentionHours] = useState<number | null>(null);
+  const retentionHours = localRetentionHours ?? retentionData?.hours ?? 168;
+
+  // 보존 기간 설정 변경 (확인 후 적용)
+  const handleRetentionChange = async (hours: number) => {
+    // 현재 값과 같으면 무시
+    if (hours === retentionHours) return;
+
+    // 레이블 찾기
+    const label = RETENTION_OPTIONS.find(opt => opt.value === hours)?.label || `${hours}시간`;
+    const currentLabel = RETENTION_OPTIONS.find(opt => opt.value === retentionHours)?.label || `${retentionHours}시간`;
+
+    // 확인 다이얼로그
+    const confirmed = confirm(
+      `자동 삭제 기간을 변경하시겠습니까?\n\n` +
+      `현재: ${currentLabel} 후 삭제\n` +
+      `변경: ${label} 후 삭제\n\n` +
+      `⚠️ 변경 시 새 기간보다 오래된 로그는 즉시 삭제됩니다.`
+    );
+
+    if (!confirmed) return;
+
+    // 확인 후 UI 업데이트
+    setLocalRetentionHours(hours);
+
+    try {
+      await errorLogsApi.setRetention(hours, true);
+      // 설정 변경 후 로그 목록 및 통계 새로고침
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'retention'] });
+    } catch (err) {
+      console.error('보존 기간 설정 실패:', err);
+      alert('보존 기간 설정에 실패했습니다.');
+      // 실패 시 원래 값으로 복원
+      setLocalRetentionHours(null);
+    }
+  };
 
   // 필터 변경 감지 시 newLogs 클리어
   useEffect(() => {
@@ -404,34 +477,69 @@ export const ErrorLogsPage = () => {
 
       {/* Stats */}
       {stats && (
-        <div className="error-logs-page__stats">
-          <div className="error-logs-page__stat-card">
-            <span className="error-logs-page__stat-value">{stats.total}</span>
-            <span className="error-logs-page__stat-label">총 로그 (7일)</span>
+        <div className="error-logs-page__stats-section">
+          <div className="error-logs-page__stats-header">
+            <div className="error-logs-page__stats-filter">
+              <span className="error-logs-page__stats-filter-label">조회:</span>
+              <select
+                className="error-logs-page__period-select"
+                value={statsPeriod}
+                onChange={(e) => setStatsPeriod(Number(e.target.value))}
+                aria-label="통계 조회 기간"
+              >
+                {PERIOD_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="error-logs-page__retention-setting">
+              <span className="error-logs-page__retention-icon" title="자동 삭제 설정">⚙</span>
+              <span className="error-logs-page__retention-text">자동 삭제:</span>
+              <select
+                className="error-logs-page__retention-select"
+                value={retentionHours}
+                onChange={(e) => handleRetentionChange(Number(e.target.value))}
+                aria-label="로그 자동 삭제 기간"
+              >
+                {RETENTION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label} 후
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--activity">
-            <span className="error-logs-page__stat-value">{stats.byLevel?.activity || stats.bySource?.activity || 0}</span>
-            <span className="error-logs-page__stat-label">Activity</span>
-          </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--error">
-            <span className="error-logs-page__stat-value">{stats.byLevel?.error || 0}</span>
-            <span className="error-logs-page__stat-label">Error</span>
-          </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--warn">
-            <span className="error-logs-page__stat-value">{stats.byLevel?.warn || 0}</span>
-            <span className="error-logs-page__stat-label">Warn</span>
-          </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--info">
-            <span className="error-logs-page__stat-value">{stats.byLevel?.info || 0}</span>
-            <span className="error-logs-page__stat-label">Info</span>
-          </div>
-          <div className="error-logs-page__stat-card">
-            <span className="error-logs-page__stat-value">{stats.bySource?.frontend || 0}</span>
-            <span className="error-logs-page__stat-label">Frontend</span>
-          </div>
-          <div className="error-logs-page__stat-card">
-            <span className="error-logs-page__stat-value">{stats.bySource?.backend || 0}</span>
-            <span className="error-logs-page__stat-label">Backend</span>
+          <div className="error-logs-page__stats">
+            <div className="error-logs-page__stat-card">
+              <span className="error-logs-page__stat-value">{stats.total}</span>
+              <span className="error-logs-page__stat-label">총 로그</span>
+            </div>
+            <div className="error-logs-page__stat-card error-logs-page__stat-card--activity">
+              <span className="error-logs-page__stat-value">{stats.byLevel?.activity || stats.bySource?.activity || 0}</span>
+              <span className="error-logs-page__stat-label">Activity</span>
+            </div>
+            <div className="error-logs-page__stat-card error-logs-page__stat-card--error">
+              <span className="error-logs-page__stat-value">{stats.byLevel?.error || 0}</span>
+              <span className="error-logs-page__stat-label">Error</span>
+            </div>
+            <div className="error-logs-page__stat-card error-logs-page__stat-card--warn">
+              <span className="error-logs-page__stat-value">{stats.byLevel?.warn || 0}</span>
+              <span className="error-logs-page__stat-label">Warn</span>
+            </div>
+            <div className="error-logs-page__stat-card error-logs-page__stat-card--info">
+              <span className="error-logs-page__stat-value">{stats.byLevel?.info || 0}</span>
+              <span className="error-logs-page__stat-label">Info</span>
+            </div>
+            <div className="error-logs-page__stat-card">
+              <span className="error-logs-page__stat-value">{stats.bySource?.frontend || 0}</span>
+              <span className="error-logs-page__stat-label">Frontend</span>
+            </div>
+            <div className="error-logs-page__stat-card">
+              <span className="error-logs-page__stat-value">{stats.bySource?.backend || 0}</span>
+              <span className="error-logs-page__stat-label">Backend</span>
+            </div>
           </div>
         </div>
       )}

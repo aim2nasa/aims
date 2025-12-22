@@ -205,6 +205,41 @@ export const errorLogsApi = {
   },
 
   /**
+   * 보존 기간 설정 조회
+   */
+  getRetention: async (): Promise<{ hours: number; enabled: boolean }> => {
+    const response = await apiClient.get<{ success: boolean; retention: { hours: number; enabled: boolean } }>(
+      '/api/admin/error-logs/retention'
+    );
+    return response.retention;
+  },
+
+  /**
+   * 보존 기간 설정
+   */
+  setRetention: async (hours: number, enabled: boolean = true): Promise<{ hours: number; enabled: boolean }> => {
+    const token = localStorage.getItem('aims-admin-token');
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '';
+
+    const response = await fetch(`${baseURL}/api/admin/error-logs/retention`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ hours, enabled }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to set retention' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.retention;
+  },
+
+  /**
    * 전체 로그 삭제
    */
   deleteAll: async (): Promise<{ deletedCount: number; details: { errorLogs: number; activityLogs: number } }> => {
