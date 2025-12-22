@@ -330,11 +330,41 @@ Response:
 }
 ```
 
-### Phase 6: 테스트 및 배포 (예정)
+### Phase 6: 테스트 및 배포 (진행 중)
 
 - [ ] Expo Go 테스트
 - [ ] EAS Build 설정
 - [ ] 내부 배포
+
+**테스트 방법:**
+```bash
+# 1. 백엔드 배포 (서버에서)
+cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
+
+# 2. 모바일 앱 실행 (로컬에서)
+cd mobile/aims-mobile
+npm install
+npx expo start
+
+# 3. Expo Go 앱으로 QR 스캔하여 테스트
+```
+
+**EAS Build 설정 (예정):**
+```bash
+# EAS CLI 설치
+npm install -g eas-cli
+eas login
+
+# 프로젝트 설정
+cd mobile/aims-mobile
+eas build:configure
+
+# iOS 빌드 (TestFlight)
+eas build --platform ios --profile preview
+
+# Android 빌드 (APK)
+eas build --platform android --profile preview
+```
 
 ---
 
@@ -347,6 +377,7 @@ Response:
 | 2025.12.22 | 7b6f95ed | feat: Phase 2 - 인증/채팅 서비스 구현 |
 | 2025.12.22 | 45c8f391 | feat: Phase 3 - 채팅 기능 구현 |
 | 2025.12.22 | fca5e3c9 | feat: Phase 4 - 음성 기능 구현 |
+| 2025.12.22 | e383a944 | feat: Phase 5 - 백엔드 음성 변환 API 추가 |
 
 ---
 
