@@ -362,6 +362,16 @@
   background: transparent;
 }
 
+.header-chat-button--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.header-chat-button--disabled:hover {
+  transform: none;
+}
+
 /* === 테마 토글 컨테이너 === */
 
 .header-theme-container {

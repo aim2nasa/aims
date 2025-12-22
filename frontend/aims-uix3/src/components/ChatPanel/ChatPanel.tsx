@@ -21,6 +21,8 @@ interface ChatPanelProps {
   isOpen: boolean;
   /** 패널 닫기 핸들러 */
   onClose: () => void;
+  /** 팝업 모드 (분리 모드 비활성화, 항상 도킹 모드로 렌더링) */
+  isPopup?: boolean;
 }
 
 interface DisplayMessage {
@@ -259,15 +261,16 @@ interface DataStats {
   documents: number;
 }
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup = false }) => {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState('');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showSessionList, setShowSessionList] = useState(false);
-  // 분리 모드 (독립 모달)
+  // 분리 모드 (독립 모달) - 팝업 모드에서는 항상 false
   const [isDetached, setIsDetached] = useState(() => {
+    if (isPopup) return false;
     return localStorage.getItem('aims-chat-detached') === 'true';
   });
   // 고급 사용자 모드: 기능 목록 없이 바로 채팅
@@ -295,6 +298,50 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
       return newValue;
     });
   }, []);
+
+  // 팝업 창으로 열기
+  const handleOpenPopup = useCallback(() => {
+    // 이미 팝업이 열려있는지 확인
+    if (localStorage.getItem('aims-ai-popup-open') === 'true') {
+      // 기존 팝업에 포커스 시도
+      const existingPopup = window.open('', 'AIMS_AI_Assistant');
+      if (existingPopup && !existingPopup.closed) {
+        existingPopup.focus();
+        onClose();
+        return;
+      }
+    }
+
+    const width = 420;
+    const height = 700;
+    const left = window.screenX + window.innerWidth - width - 20;
+    const top = window.screenY + 80;
+
+    // 주소창 숨기기 옵션 추가 (브라우저에 따라 동작이 다를 수 있음)
+    const popup = window.open(
+      '/ai-assistant',
+      'AIMS_AI_Assistant',
+      `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+
+    if (popup) {
+      // 팝업 열림 상태 저장
+      localStorage.setItem('aims-ai-popup-open', 'true');
+
+      // 팝업 닫힘 감지
+      const checkPopupClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          localStorage.removeItem('aims-ai-popup-open');
+          // 팝업 닫힘 이벤트 발생 (메인 창에서 감지 가능)
+          window.dispatchEvent(new CustomEvent('aiAssistantPopupClosed'));
+        }
+      }, 500);
+
+      // 팝업 열린 후 현재 창의 ChatPanel 닫기
+      onClose();
+    }
+  }, [onClose]);
 
   const {
     sendMessage,
@@ -679,6 +726,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                   <path d="M8 1h6.5a.5.5 0 0 1 .5.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               )}
+            </button>
+          </Tooltip>
+          {/* 새 창에서 열기 (팝업 윈도우) */}
+          <Tooltip content="새 창에서 열기" placement="bottom">
+            <button
+              type="button"
+              className="chat-panel__header-btn"
+              onClick={handleOpenPopup}
+              aria-label="새 창에서 열기"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="1" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5 1h10v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8 8L14.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
             </button>
           </Tooltip>
           <Tooltip content="닫기" placement="bottom">
@@ -1292,6 +1354,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M14 4v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </Tooltip>
+        <Tooltip content="새 창에서 열기" placement="bottom">
+          <button
+            type="button"
+            className="chat-panel__header-btn"
+            onClick={(e) => { e.stopPropagation(); handleOpenPopup(); }}
+            aria-label="새 창에서 열기"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M5 1h10v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M8 8L14.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </Tooltip>

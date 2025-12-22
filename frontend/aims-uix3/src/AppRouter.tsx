@@ -2,7 +2,7 @@
  * 앱 라우터 - 인증 라우팅 처리
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import LoginPage from '@/pages/LoginPage';
@@ -10,6 +10,9 @@ import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import ProtectedRoute from '@/shared/components/ProtectedRoute';
 import ProfileSetupModal from '@/shared/components/ProfileSetupModal';
 import App from './App';
+
+// AI 어시스턴트 팝업 페이지 (lazy loading)
+const AIAssistantPage = lazy(() => import('@/pages/AIAssistantPage'));
 
 export default function AppRouter() {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -47,6 +50,18 @@ export default function AppRouter() {
           }
         />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+        {/* AI 어시스턴트 팝업 전용 라우트 (메인 앱 레이아웃 없이 독립 렌더링) */}
+        <Route
+          path="/ai-assistant"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={null}>
+                <AIAssistantPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
 
         {/* 보호된 라우트 (인증 필요) */}
         <Route

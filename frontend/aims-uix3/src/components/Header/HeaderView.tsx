@@ -44,6 +44,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   onQuickSearchCustomerClick,
   onChatToggle,
   isChatOpen,
+  isAiPopupOpen = false,
   className = '',
   controller
 }) => {
@@ -229,15 +230,20 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
           />
         </div>
 
-        {/* AI 채팅 버튼 - 항상 표시 */}
+        {/* AI 채팅 버튼 - 팝업 열림 시 비활성화 */}
         {onChatToggle && (
-          <Tooltip content={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅'} placement="bottom">
+          <Tooltip
+            content={isAiPopupOpen ? 'AI 어시스턴트가 별도 창에서 실행 중' : (isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅')}
+            placement="bottom"
+          >
             <button
               type="button"
-              onClick={onChatToggle}
-              className={`header-chat-button ${isChatOpen ? 'header-chat-button--active' : ''}`}
-              aria-label={isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅 열기'}
-              aria-pressed={isChatOpen === true}
+              onClick={isAiPopupOpen ? undefined : onChatToggle}
+              className={`header-chat-button ${isChatOpen ? 'header-chat-button--active' : ''} ${isAiPopupOpen ? 'header-chat-button--disabled' : ''}`}
+              aria-label={isAiPopupOpen ? 'AI 어시스턴트가 별도 창에서 실행 중' : (isChatOpen ? 'AI 채팅 닫기' : 'AI 채팅 열기')}
+              aria-pressed={isChatOpen ? 'true' : 'false'}
+              aria-disabled={isAiPopupOpen ? 'true' : undefined}
+              disabled={isAiPopupOpen}
             >
               <span className="header-chat-icon">
   {/* AI 말풍선 커스텀 아이콘 - 그라데이션 */}

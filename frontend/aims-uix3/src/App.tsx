@@ -183,6 +183,34 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // AI 채팅 패널 열림 상태
   const [isChatOpen, setIsChatOpen] = useState(false)
 
+  // AI 팝업 창 열림 상태 (localStorage 기반 + 실시간 감지)
+  const [isAiPopupOpen, setIsAiPopupOpen] = useState(() => {
+    return localStorage.getItem('aims-ai-popup-open') === 'true'
+  })
+
+  // AI 팝업 상태 변화 감지 (다른 탭/팝업에서의 변경 사항 동기화)
+  useEffect(() => {
+    // storage 이벤트: 다른 탭에서 localStorage 변경 시
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'aims-ai-popup-open') {
+        setIsAiPopupOpen(e.newValue === 'true')
+      }
+    }
+
+    // 커스텀 이벤트: 같은 탭에서 팝업 닫힘 감지 (ChatPanel에서 dispatch)
+    const handlePopupClosed = () => {
+      setIsAiPopupOpen(false)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('aiAssistantPopupClosed', handlePopupClosed)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('aiAssistantPopupClosed', handlePopupClosed)
+    }
+  }, [])
+
   // LeftPane 축소/확장 상태 (localStorage 영속화)
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(() => {
     try {
@@ -1253,8 +1281,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           // 최근 검색 고객 목록에 추가
           addRecentCustomer(customer)
         }}
-        onChatToggle={() => setIsChatOpen(prev => !prev)}
-        isChatOpen={isChatOpen}
+        onChatToggle={() => {
+          // 팝업이 열려있으면 메인 창에서 AI 어시스턴트 열기 차단
+          if (localStorage.getItem('aims-ai-popup-open') === 'true') {
+            // 기존 팝업에 포커스 시도
+            const existingPopup = window.open('', 'AIMS_AI_Assistant');
+            if (existingPopup && !existingPopup.closed) {
+              existingPopup.focus();
+            }
+            return;
+          }
+          setIsChatOpen(prev => !prev);
+        }}
+        isChatOpen={isChatOpen && localStorage.getItem('aims-ai-popup-open') !== 'true'}
+        isAiPopupOpen={isAiPopupOpen}
       />
 
       {/* LeftPane - 독립 레이어 */}
@@ -2343,10 +2383,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         </div>
       </Modal>
 
-      {/* AI 채팅 패널 */}
+      {/* AI 채팅 패널 - 팝업이 열려있으면 메인 창에서 표시하지 않음 */}
       <Suspense fallback={null}>
         <ChatPanel
-          isOpen={isChatOpen}
+          isOpen={isChatOpen && localStorage.getItem('aims-ai-popup-open') !== 'true'}
           onClose={() => setIsChatOpen(false)}
         />
       </Suspense>

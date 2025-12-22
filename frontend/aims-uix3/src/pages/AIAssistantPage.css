@@ -1,0 +1,115 @@
+/**
+ * AI 어시스턴트 팝업 페이지 스타일
+ * @since 2025-12-22
+ */
+
+/* 팝업 페이지 컨테이너 */
+.ai-assistant-page {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+}
+
+/* ChatPanel이 팝업에서 전체 크기를 차지하도록 - 높은 우선순위 */
+body.ai-assistant-popup .chat-panel,
+body.ai-assistant-popup .chat-panel.chat-panel--open,
+.ai-assistant-page .chat-panel,
+.ai-assistant-page .chat-panel.chat-panel--open {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* 팝업에서는 닫기 버튼 숨기기 (창 닫기로 대체) */
+.ai-assistant-popup .chat-panel__close {
+  display: none;
+}
+
+/* 팝업에서 분리/도킹 버튼 숨기기 (이미 분리된 상태) */
+.ai-assistant-popup .chat-panel__header-btn[aria-label="분리"],
+.ai-assistant-popup .chat-panel__header-btn[aria-label="도킹"] {
+  display: none;
+}
+
+/* 팝업에서 새 창 버튼 숨기기 (이미 팝업 상태) */
+.ai-assistant-popup .chat-panel__header-btn[aria-label="새 창에서 열기"] {
+  display: none;
+}
+
+/* 팝업에서 리사이즈 핸들 숨기기 (전체 화면이므로 불필요) */
+.ai-assistant-popup .chat-panel__resize-handle {
+  display: none;
+}
+
+/* 로딩 상태 */
+.ai-assistant-page--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-assistant-page__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border-secondary);
+  border-top-color: var(--color-accent-primary);
+  border-radius: 50%;
+  animation: ai-assistant-spin 0.8s linear infinite;
+}
+
+@keyframes ai-assistant-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 인증 필요 상태 */
+.ai-assistant-page--auth-required {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-assistant-page__auth-message {
+  text-align: center;
+  padding: var(--spacing-8);
+}
+
+.ai-assistant-page__auth-message h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-3);
+}
+
+.ai-assistant-page__auth-message p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-6);
+}
+
+.ai-assistant-page__auth-button {
+  padding: var(--spacing-2) var(--spacing-6);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.ai-assistant-page__auth-button:hover {
+  background-color: var(--color-bg-quaternary);
+}

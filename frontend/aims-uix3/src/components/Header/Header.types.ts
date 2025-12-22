@@ -25,6 +25,8 @@ export interface HeaderProps {
   onChatToggle?: () => void;
   /** AI 채팅 패널 열림 상태 */
   isChatOpen?: boolean;
+  /** AI 팝업 창 열림 상태 (팝업 열려있으면 메인 창에서 비활성화) */
+  isAiPopupOpen?: boolean;
   /** 추가 CSS 클래스명 */
   className?: string;
 }
