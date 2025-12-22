@@ -282,12 +282,12 @@ const ServerResourcesSection = () => {
   );
 };
 
-// 포트 현황 섹션 컴포넌트
+// 포트 현황 섹션 컴포넌트 (컴팩트 칩 형태)
 const PortsSection = () => {
   const { data: ports, isLoading } = useQuery({
     queryKey: ['admin', 'ports'],
     queryFn: dashboardApi.getPorts,
-    refetchInterval: 30000, // 30초마다 갱신
+    refetchInterval: 30000,
   });
 
   if (isLoading) {
@@ -309,35 +309,21 @@ const PortsSection = () => {
       <div className="ports-section__header">
         <h2 className="ports-section__title">포트 현황</h2>
         <span className="ports-section__subtitle">
-          {listeningCount}/{totalCount} 포트 listening
+          {listeningCount}/{totalCount} listening
         </span>
       </div>
-      <div className="ports-section__table-wrapper">
-        <table className="ports-section__table">
-          <thead>
-            <tr>
-              <th>포트</th>
-              <th>서비스</th>
-              <th>설명</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ports?.map((port) => (
-              <tr key={port.port} className={port.status === 'closed' ? 'ports-section__row--closed' : ''}>
-                <td className="ports-section__port">{port.port}</td>
-                <td className="ports-section__service">{port.service}</td>
-                <td className="ports-section__description">{port.description}</td>
-                <td>
-                  <span className={`ports-section__status ports-section__status--${port.status}`}>
-                    <span className={`ports-section__indicator ports-section__indicator--${port.status}`} />
-                    {port.status === 'listening' ? 'Listening' : 'Closed'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="ports-section__grid">
+        {ports?.map((port) => (
+          <div
+            key={port.port}
+            className={`ports-section__item ports-section__item--${port.status}`}
+          >
+            <span className={`ports-section__indicator ports-section__indicator--${port.status}`} />
+            <span className="ports-section__item-port">{port.port}</span>
+            <span className="ports-section__item-service">{port.service}</span>
+            <span className="ports-section__item-desc">{port.description}</span>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -486,28 +472,36 @@ export const SystemHealthPage = () => {
       {/* 서버 리소스 섹션 */}
       <ServerResourcesSection />
 
-      {/* 포트 현황 섹션 */}
-      <PortsSection />
+      {/* 서비스 상태 + 포트 현황 2열 레이아웃 */}
+      <div className="system-health-page__two-column">
+        {/* 좌측: Tier 서비스 상태 */}
+        <div className="system-health-page__services-column">
+          {serviceTiers.map((tierGroup) => (
+            <section key={tierGroup.tier} className="system-health-page__section">
+              <div className="system-health-page__tier-header">
+                <h2 className="system-health-page__section-title">{tierGroup.tier}</h2>
+                <span className="system-health-page__tier-description">{tierGroup.description}</span>
+              </div>
+              <div className="system-health-page__health-grid">
+                {tierGroup.services.map((service) => (
+                  <HealthCard
+                    key={service.service}
+                    service={service.service}
+                    health={service.health}
+                    description={service.description}
+                    port={service.port}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
 
-      {serviceTiers.map((tierGroup) => (
-        <section key={tierGroup.tier} className="system-health-page__section">
-          <div className="system-health-page__tier-header">
-            <h2 className="system-health-page__section-title">{tierGroup.tier}</h2>
-            <span className="system-health-page__tier-description">{tierGroup.description}</span>
-          </div>
-          <div className="system-health-page__health-grid">
-            {tierGroup.services.map((service) => (
-              <HealthCard
-                key={service.service}
-                service={service.service}
-                health={service.health}
-                description={service.description}
-                port={service.port}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+        {/* 우측: 포트 현황 */}
+        <div className="system-health-page__ports-column">
+          <PortsSection />
+        </div>
+      </div>
 
       {/* n8n 워크플로우 상태 */}
       {data?.workflows && data.workflows.length > 0 && (
