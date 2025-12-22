@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { api } from '../services/api';
+import { api, API_BASE_URL } from '../services/api';
 import * as authService from '../services/authService';
 import { User } from '../types';
 
@@ -23,6 +23,7 @@ interface AuthState {
   // 액션
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
+  devLogin: () => Promise<boolean>;  // 개발자 로그인
   logout: () => Promise<void>;
   refreshTokenIfNeeded: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
@@ -111,6 +112,51 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다.';
+      set({ error: message, isLoading: false });
+      return false;
+    }
+  },
+
+  // 개발자 로그인 (이메일/비밀번호 없이)
+  devLogin: async () => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/dev/ensure-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || '개발자 로그인에 실패했습니다.');
+      }
+
+      const { token, user } = data;
+
+      // 만료 시간 계산
+      const expiry = Date.now() + TOKEN_EXPIRY_MS;
+
+      // SecureStore에 저장
+      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+      await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, expiry.toString());
+
+      // API 클라이언트에 토큰 설정
+      api.setToken(token);
+
+      set({
+        token,
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '개발자 로그인 중 오류가 발생했습니다.';
       set({ error: message, isLoading: false });
       return false;
     }

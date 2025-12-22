@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -15,66 +17,66 @@ import { useChatSSE } from '../../../src/hooks/useChatSSE';
 import { ChatBubble, ChatInput, ToolIndicator } from '../../../src/components/chat';
 import { colors, spacing, fontSize, borderRadius, fontWeight } from '../../../src/utils/theme';
 
-// MCP 도구 카테고리 및 목록 (18개)
+// MCP 도구 카테고리 및 목록 (18개) - 대화식 예시 (AI가 후속 질문)
 const TOOL_CATEGORIES = [
   {
     name: '고객 관리',
     icon: 'people-outline' as const,
     tools: [
-      { name: 'search_customers', label: '고객 검색', icon: 'search-outline' as const, example: '홍길동 고객 찾아줘' },
-      { name: 'get_customer', label: '고객 상세', icon: 'person-outline' as const, example: '홍길동 고객 정보 보여줘' },
-      { name: 'create_customer', label: '고객 등록', icon: 'person-add-outline' as const, example: '새 고객 김철수 등록해줘' },
-      { name: 'update_customer', label: '정보 수정', icon: 'create-outline' as const, example: '홍길동 연락처 변경해줘' },
+      { name: 'search_customers', label: '고객 검색', icon: 'search-outline' as const, example: '고객 찾아줘' },
+      { name: 'get_customer', label: '고객 상세', icon: 'person-outline' as const, example: '고객 정보 알려줘' },
+      { name: 'create_customer', label: '고객 등록', icon: 'person-add-outline' as const, example: '고객 등록해줘' },
+      { name: 'update_customer', label: '정보 수정', icon: 'create-outline' as const, example: '연락처 수정해줘' },
     ],
   },
   {
     name: '계약 관리',
     icon: 'document-text-outline' as const,
     tools: [
-      { name: 'list_contracts', label: '계약 목록', icon: 'list-outline' as const, example: '홍길동 계약 목록 보여줘' },
-      { name: 'get_contract_details', label: '계약 상세', icon: 'document-outline' as const, example: '홍길동 자동차보험 상세 보여줘' },
+      { name: 'list_contracts', label: '계약 목록', icon: 'list-outline' as const, example: '계약 목록 보여줘' },
+      { name: 'get_contract_details', label: '계약 상세', icon: 'document-outline' as const, example: '계약 상세 보여줘' },
     ],
   },
   {
     name: '일정',
     icon: 'calendar-outline' as const,
     tools: [
-      { name: 'find_birthday_customers', label: '생일 고객', icon: 'gift-outline' as const, example: '이번 달 생일 고객 알려줘' },
-      { name: 'find_expiring_contracts', label: '만기 예정', icon: 'alarm-outline' as const, example: '30일 내 만기 예정 계약' },
+      { name: 'find_birthday_customers', label: '생일 고객', icon: 'gift-outline' as const, example: '생일 고객 알려줘' },
+      { name: 'find_expiring_contracts', label: '만기 예정', icon: 'alarm-outline' as const, example: '만기 예정 계약 알려줘' },
     ],
   },
   {
     name: '문서',
     icon: 'folder-outline' as const,
     tools: [
-      { name: 'search_documents', label: 'AI 검색', icon: 'search-circle-outline' as const, example: '암보험 관련 문서 찾아줘' },
-      { name: 'get_document', label: '문서 상세', icon: 'document-attach-outline' as const, example: '이 문서 내용 요약해줘' },
-      { name: 'list_customer_documents', label: '고객별 문서', icon: 'documents-outline' as const, example: '홍길동 문서 목록 보여줘' },
+      { name: 'search_documents', label: 'AI 검색', icon: 'search-circle-outline' as const, example: '문서 검색해줘' },
+      { name: 'get_document', label: '문서 상세', icon: 'document-attach-outline' as const, example: '문서 보여줘' },
+      { name: 'list_customer_documents', label: '고객별 문서', icon: 'documents-outline' as const, example: '문서 목록 보여줘' },
     ],
   },
   {
     name: '메모',
     icon: 'create-outline' as const,
     tools: [
-      { name: 'add_customer_memo', label: '메모 추가', icon: 'add-circle-outline' as const, example: '홍길동에게 상담 메모 추가해줘' },
-      { name: 'list_customer_memos', label: '메모 조회', icon: 'reader-outline' as const, example: '홍길동 메모 보여줘' },
-      { name: 'delete_customer_memo', label: '메모 삭제', icon: 'trash-outline' as const, example: '홍길동 마지막 메모 삭제해줘' },
+      { name: 'add_customer_memo', label: '메모 추가', icon: 'add-circle-outline' as const, example: '메모 추가해줘' },
+      { name: 'list_customer_memos', label: '메모 조회', icon: 'reader-outline' as const, example: '메모 보여줘' },
+      { name: 'delete_customer_memo', label: '메모 삭제', icon: 'trash-outline' as const, example: '메모 삭제해줘' },
     ],
   },
   {
     name: '분석',
     icon: 'analytics-outline' as const,
     tools: [
-      { name: 'get_statistics', label: '통계', icon: 'bar-chart-outline' as const, example: '전체 통계 보여줘' },
-      { name: 'get_customer_network', label: '관계 조회', icon: 'git-network-outline' as const, example: '홍길동 가족 관계 보여줘' },
+      { name: 'get_statistics', label: '통계', icon: 'bar-chart-outline' as const, example: '통계 보여줘' },
+      { name: 'get_customer_network', label: '관계 조회', icon: 'git-network-outline' as const, example: '가족 관계 보여줘' },
     ],
   },
   {
     name: '상품',
     icon: 'pricetag-outline' as const,
     tools: [
-      { name: 'search_products', label: '상품 검색', icon: 'search-outline' as const, example: '암보험 상품 검색해줘' },
-      { name: 'get_product_details', label: '상품 상세', icon: 'information-circle-outline' as const, example: '이 상품 상세 정보 보여줘' },
+      { name: 'search_products', label: '상품 검색', icon: 'search-outline' as const, example: '상품 검색해줘' },
+      { name: 'get_product_details', label: '상품 상세', icon: 'information-circle-outline' as const, example: '상품 정보 보여줘' },
     ],
   },
 ];
@@ -113,6 +115,19 @@ export default function ChatScreen() {
       }, 100);
     }
   }, [messages, streamingContent]);
+
+  // 키보드가 나타나면 스크롤
+  useEffect(() => {
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+
+    return () => {
+      keyboardDidShow.remove();
+    };
+  }, []);
 
   // 도구 예시 클릭
   const handleToolPress = (example: string) => {
@@ -240,39 +255,46 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="chatbubble-ellipses" size={24} color={colors.primary} />
-          <Text style={styles.headerTitle}>AI 어시스턴트</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
-            <Ionicons name="time-outline" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleNewChat}>
-            <Ionicons name="add" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* 메인 콘텐츠 */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {showWelcome && messages.length === 0 ? renderWelcome() : renderChat()}
-      </ScrollView>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="chatbubble-ellipses" size={24} color={colors.primary} />
+            <Text style={styles.headerTitle}>AI 어시스턴트</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
+              <Ionicons name="time-outline" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerButton} onPress={handleNewChat}>
+              <Ionicons name="add" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* 입력창 */}
-      <ChatInput
-        onSend={handleSend}
-        onVoice={handleVoice}
-        isLoading={isStreaming}
-        disabled={isStreaming}
-      />
+        {/* 메인 콘텐츠 */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+        >
+          {showWelcome && messages.length === 0 ? renderWelcome() : renderChat()}
+        </ScrollView>
+
+        {/* 입력창 */}
+        <ChatInput
+          onSend={handleSend}
+          onVoice={handleVoice}
+          isLoading={isStreaming}
+          disabled={isStreaming}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -281,6 +303,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

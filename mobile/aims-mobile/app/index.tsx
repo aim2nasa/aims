@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -16,11 +13,7 @@ import { useAuthStore } from '../src/stores/authStore';
 import { colors, spacing, fontSize, borderRadius, fontWeight } from '../src/utils/theme';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const { isAuthenticated, isLoading, error, login, clearError } = useAuthStore();
+  const { isAuthenticated, isLoading, error, devLogin, clearError } = useAuthStore();
 
   // 이미 로그인된 경우 메인 화면으로 이동
   useEffect(() => {
@@ -38,27 +31,15 @@ export default function LoginScreen() {
     }
   }, [error]);
 
-  const handleLogin = async () => {
-    if (!email.trim()) {
-      Alert.alert('입력 오류', '이메일을 입력해주세요.');
-      return;
-    }
-    if (!password.trim()) {
-      Alert.alert('입력 오류', '비밀번호를 입력해주세요.');
-      return;
-    }
-
-    const success = await login(email.trim(), password);
+  const handleDevLogin = async () => {
+    const success = await devLogin();
     if (success) {
       router.replace('/(auth)/chat');
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.container}>
       <View style={styles.content}>
         {/* 로고 영역 */}
         <View style={styles.logoContainer}>
@@ -69,56 +50,18 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>보험 설계사를 위한{'\n'}지능형 고객 관리 시스템</Text>
         </View>
 
-        {/* 입력 폼 */}
+        {/* 개발자 로그인 버튼 */}
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="이메일"
-              placeholderTextColor={colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="비밀번호"
-              placeholderTextColor={colors.textMuted}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-
+          <Text style={styles.devModeText}>개발 모드</Text>
           <TouchableOpacity
             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            onPress={handleDevLogin}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color={colors.white} />
             ) : (
-              <Text style={styles.loginButtonText}>로그인</Text>
+              <Text style={styles.loginButtonText}>개발자 로그인</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -130,7 +73,7 @@ export default function LoginScreen() {
           </Text>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -171,27 +114,15 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.md,
-  },
-  inputContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    height: 52,
   },
-  inputIcon: {
-    marginRight: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    fontSize: fontSize.lg,
-    color: colors.text,
-  },
-  eyeIcon: {
-    padding: spacing.xs,
+  devModeText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
   },
   loginButton: {
+    width: '100%',
     backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     height: 52,
