@@ -22,6 +22,8 @@ interface UseErrorLogSSEReturn {
   newCount: number;
   /** 새 에러 목록 초기화 */
   clearNewLogs: () => void;
+  /** 통계 초기화 (전체 삭제 시 사용) */
+  clearStats: () => void;
 }
 
 /**
@@ -172,6 +174,18 @@ export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
     setNewLogs([]);
   }, []);
 
+  // 통계 초기화 (전체 삭제 시 사용)
+  const clearStats = useCallback(() => {
+    setStats({
+      total: 0,
+      byLevel: {},
+      bySeverity: {},
+      byCategory: {},
+      bySource: {},
+      period: '7d'
+    });
+  }, []);
+
   // SSE 연결 관리
   useEffect(() => {
     if (enabled) {
@@ -197,5 +211,6 @@ export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
     newLogs,
     newCount: newLogs.length,
     clearNewLogs,
+    clearStats,
   };
 }

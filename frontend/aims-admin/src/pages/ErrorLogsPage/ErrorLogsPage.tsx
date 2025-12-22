@@ -149,7 +149,7 @@ export const ErrorLogsPage = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   // SSE 실시간 스트림 연결
-  const { isConnected, stats: sseStats, newLogs, clearNewLogs } = useErrorLogSSE(true);
+  const { isConnected, stats: sseStats, newLogs, clearNewLogs, clearStats } = useErrorLogSSE(true);
 
   // 이전 필터 상태 추적 (필터 변경 시 newLogs 클리어)
   const prevFiltersRef = useRef({ levelFilter, sourceFilter, logTypeFilter, search: debouncedSearch });
@@ -267,6 +267,7 @@ export const ErrorLogsPage = () => {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       clearNewLogs();
+      clearStats();  // 상단 통계 카드 초기화
       alert(`전체 로그가 삭제되었습니다.\n시스템: ${result.details?.errorLogs || 0}개\n활동: ${result.details?.activityLogs || 0}개`);
     },
     onError: (error) => {
