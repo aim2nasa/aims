@@ -261,6 +261,30 @@ export const ErrorLogsPage = () => {
     },
   });
 
+  // 전체 삭제 mutation
+  const deleteAllMutation = useMutation({
+    mutationFn: () => errorLogsApi.deleteAll(),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+      clearNewLogs();
+      alert(`전체 로그가 삭제되었습니다.\n시스템: ${result.details?.errorLogs || 0}개\n활동: ${result.details?.activityLogs || 0}개`);
+    },
+    onError: (error) => {
+      alert(`삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    },
+  });
+
+  const handleDeleteAll = () => {
+    const totalLogs = (stats?.total || 0);
+    const confirmMsg = `정말 모든 로그(${totalLogs}개)를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.\n\n계속하려면 "삭제"를 입력하세요:`;
+    const userInput = prompt(confirmMsg);
+    if (userInput === '삭제') {
+      deleteAllMutation.mutate();
+    } else if (userInput !== null) {
+      alert('입력이 일치하지 않습니다. 삭제가 취소되었습니다.');
+    }
+  };
+
   const handleSelectAll = () => {
     if (!data?.logs) return;
     if (selectedIds.size === data.logs.length) {
@@ -354,6 +378,16 @@ export const ErrorLogsPage = () => {
           <span className={`error-logs-page__connection-status ${isConnected ? 'error-logs-page__connection-status--connected' : ''}`}>
             {isConnected ? '실시간 연결됨' : '연결 중...'}
           </span>
+          {isDeleteMode && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteAll}
+              disabled={deleteAllMutation.isPending || !stats?.total}
+            >
+              {deleteAllMutation.isPending ? '삭제 중...' : '전체 삭제'}
+            </Button>
+          )}
           <Button
             variant={isDeleteMode ? 'destructive' : 'secondary'}
             size="sm"

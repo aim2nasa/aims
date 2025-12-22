@@ -387,6 +387,25 @@ class ActivityLogger {
 
     return stats;
   }
+
+  /**
+   * 전체 활동 로그 삭제
+   * @returns {number} 삭제된 로그 수
+   */
+  async deleteAll() {
+    if (!this.collection) {
+      throw new Error('ActivityLogger가 초기화되지 않았습니다');
+    }
+
+    try {
+      const result = await this.collection.deleteMany({});
+      console.log(`[ActivityLogger] 전체 삭제 완료: ${result.deletedCount}개`);
+      return result.deletedCount;
+    } catch (error) {
+      console.error('[ActivityLogger] 전체 삭제 실패:', error.message);
+      return 0;
+    }
+  }
 }
 
 // 싱글톤 인스턴스 export

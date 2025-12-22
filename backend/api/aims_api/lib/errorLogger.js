@@ -630,6 +630,25 @@ class ErrorLogger {
   }
 
   /**
+   * 전체 에러 로그 삭제
+   * @returns {number} 삭제된 로그 수
+   */
+  async deleteAll() {
+    if (!this.collection) {
+      throw new Error('ErrorLogger가 초기화되지 않았습니다');
+    }
+
+    try {
+      const result = await this.collection.deleteMany({});
+      console.log(`[ErrorLogger] 전체 삭제 완료: ${result.deletedCount}개`);
+      return result.deletedCount;
+    } catch (error) {
+      console.error('[ErrorLogger] 전체 삭제 실패:', error.message);
+      return 0;
+    }
+  }
+
+  /**
    * 개별 에러 로그 조회
    * @param {string} errorId - 에러 로그 ID
    */

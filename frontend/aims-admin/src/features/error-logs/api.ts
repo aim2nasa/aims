@@ -203,6 +203,30 @@ export const errorLogsApi = {
   markResolved: async (id: string, notes?: string): Promise<void> => {
     await apiClient.put(`/api/admin/error-logs/${id}/resolve`, { notes });
   },
+
+  /**
+   * 전체 로그 삭제
+   */
+  deleteAll: async (): Promise<{ deletedCount: number; details: { errorLogs: number; activityLogs: number } }> => {
+    const token = localStorage.getItem('aims-admin-token');
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '';
+
+    const response = await fetch(`${baseURL}/api/admin/error-logs`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ deleteAll: true, confirmText: 'DELETE ALL' }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Delete failed' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
 };
 
 // ============================================================

@@ -747,14 +747,47 @@ module.exports = function(db, authenticateJWT, requireRole) {
    * Body:
    * - ids: string[] (삭제할 에러 로그 ID 배열)
    * - filter: { type?, severity?, startDate?, endDate? } (조건부 삭제)
+   * - deleteAll: boolean (전체 삭제, confirmText와 함께 사용)
+   * - confirmText: string (전체 삭제 시 "DELETE ALL" 입력 필수)
    */
   router.delete('/admin/error-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const { ids, filter } = req.body;
+      const { ids, filter, deleteAll, confirmText } = req.body;
 
       let deletedCount = 0;
+      let activityDeletedCount = 0;
 
-      if (ids && Array.isArray(ids) && ids.length > 0) {
+      if (deleteAll === true) {
+        // 전체 삭제 - 안전을 위해 confirmText 검증
+        if (confirmText !== 'DELETE ALL') {
+          return res.status(400).json({
+            success: false,
+            message: '전체 삭제를 확인하려면 confirmText에 "DELETE ALL"을 입력하세요'
+          });
+        }
+
+        // error_logs 전체 삭제
+        deletedCount = await systemLogger.deleteAll();
+
+        // activity_logs도 전체 삭제
+        try {
+          activityDeletedCount = await activityLogger.deleteAll();
+        } catch (actErr) {
+          console.warn('[ErrorLogs] activity_logs 전체 삭제 실패:', actErr.message);
+        }
+
+        console.log(`[ErrorLogs] 전체 삭제 완료: error_logs=${deletedCount}, activity_logs=${activityDeletedCount}`);
+
+        return res.json({
+          success: true,
+          deletedCount: deletedCount + activityDeletedCount,
+          details: {
+            errorLogs: deletedCount,
+            activityLogs: activityDeletedCount
+          },
+          message: `전체 로그가 삭제되었습니다 (시스템: ${deletedCount}개, 활동: ${activityDeletedCount}개)`
+        });
+      } else if (ids && Array.isArray(ids) && ids.length > 0) {
         // ID 배열로 삭제
         deletedCount = await systemLogger.deleteLogs(ids);
       } else if (filter && Object.keys(filter).length > 0) {
@@ -763,7 +796,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
       } else {
         return res.status(400).json({
           success: false,
-          message: 'ids 또는 filter 중 하나가 필요합니다'
+          message: 'ids, filter, 또는 deleteAll 중 하나가 필요합니다'
         });
       }
 
