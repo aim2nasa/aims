@@ -3084,6 +3084,9 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
     const skipped = [];
     const errors = [];
 
+    // 개인/법인 카운트 추적
+    const typeCount = { personal: { created: 0, updated: 0 }, corporate: { created: 0, updated: 0 } };
+
     for (const customer of customers) {
       try {
         const name = customer.name?.trim();
@@ -3175,10 +3178,14 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
               { $set: updateFields }
             );
 
-            updated.push({ name, _id: existingCustomer._id.toString(), changes });
+            const custType = existingCustomer.insurance_info?.customer_type || '개인';
+            updated.push({ name, _id: existingCustomer._id.toString(), changes, customer_type: custType });
+            if (custType === '법인') typeCount.corporate.updated++;
+            else typeCount.personal.updated++;
           } else {
             // 변경사항 없음 - 건너뜀
-            skipped.push({ name, reason: '변경사항 없음' });
+            const custType = existingCustomer.insurance_info?.customer_type || '개인';
+            skipped.push({ name, reason: '변경사항 없음', customer_type: custType });
           }
         } else {
           // 신규 고객 생성
@@ -3211,7 +3218,10 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
           };
 
           const result = await db.collection(CUSTOMERS_COLLECTION).insertOne(newCustomer);
-          created.push({ name, _id: result.insertedId.toString() });
+          const custType = customer.customer_type || '개인';
+          created.push({ name, _id: result.insertedId.toString(), customer_type: custType });
+          if (custType === '법인') typeCount.corporate.created++;
+          else typeCount.personal.created++;
 
           // 현재 배치 내 중복 방지를 위해 맵에 추가
           customerMap.set(name, { ...newCustomer, _id: result.insertedId });
@@ -3221,7 +3231,16 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
       }
     }
 
-    // 고객 일괄등록 성공 로그
+    // 고객 일괄등록 성공 로그 - 상세 description 생성
+    const descParts = [];
+    if (typeCount.personal.created > 0) descParts.push(`개인 ${typeCount.personal.created}건 등록`);
+    if (typeCount.corporate.created > 0) descParts.push(`법인 ${typeCount.corporate.created}건 등록`);
+    if (typeCount.personal.updated > 0) descParts.push(`개인 ${typeCount.personal.updated}건 업데이트`);
+    if (typeCount.corporate.updated > 0) descParts.push(`법인 ${typeCount.corporate.updated}건 업데이트`);
+    if (skipped.length > 0) descParts.push(`${skipped.length}건 건너뜀`);
+    if (errors.length > 0) descParts.push(`${errors.length}건 오류`);
+    const detailedDesc = descParts.length > 0 ? descParts.join(', ') : '처리 완료';
+
     activityLogger.log({
       actor: {
         user_id: req.user.id,
@@ -3234,8 +3253,14 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
       action: {
         type: 'bulk_create',
         category: 'customer',
-        description: '고객 일괄 등록',
-        bulkCount: created.length + updated.length
+        description: `고객 일괄 등록: ${detailedDesc}`,
+        bulkCount: created.length + updated.length,
+        details: {
+          personal: typeCount.personal,
+          corporate: typeCount.corporate,
+          skipped: skipped.length,
+          errors: errors.length
+        }
       },
       result: {
         success: true,
@@ -8206,7 +8231,14 @@ app.post('/api/contracts/bulk', authenticateJWT, async (req, res) => {
       }
     }
 
-    // 계약 일괄등록 성공 로그
+    // 계약 일괄등록 성공 로그 - 상세 description 생성
+    const contractDescParts = [];
+    if (created.length > 0) contractDescParts.push(`${created.length}건 등록`);
+    if (updated.length > 0) contractDescParts.push(`${updated.length}건 업데이트`);
+    if (skipped.length > 0) contractDescParts.push(`${skipped.length}건 건너뜀`);
+    if (errors.length > 0) contractDescParts.push(`${errors.length}건 오류`);
+    const contractDetailedDesc = contractDescParts.length > 0 ? contractDescParts.join(', ') : '처리 완료';
+
     activityLogger.log({
       actor: {
         user_id: agent_id,
@@ -8219,8 +8251,14 @@ app.post('/api/contracts/bulk', authenticateJWT, async (req, res) => {
       action: {
         type: 'bulk_create',
         category: 'contract',
-        description: '계약 일괄 등록',
-        bulkCount: created.length + updated.length
+        description: `계약 일괄 등록: ${contractDetailedDesc}`,
+        bulkCount: created.length + updated.length,
+        details: {
+          created: created.length,
+          updated: updated.length,
+          skipped: skipped.length,
+          errors: errors.length
+        }
       },
       result: {
         success: true,
