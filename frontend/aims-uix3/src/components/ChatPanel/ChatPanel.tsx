@@ -315,10 +315,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     setExampleIndices(prev => {
       const newIndices = [...prev];
       const total = HELP_FEATURES[featureIdx].examples.length;
-      newIndices[featureIdx] = (prev[featureIdx] - 1 + total) % total;
+      const newIdx = (prev[featureIdx] - 1 + total) % total;
+      newIndices[featureIdx] = newIdx;
+      // 입력창도 새 예시로 업데이트
+      setInput(HELP_FEATURES[featureIdx].examples[newIdx]);
       return newIndices;
     });
-  }, []);
+  }, [setInput]);
 
   // 예시 pagination 핸들러 (다음)
   const handleNextExample = useCallback((featureIdx: number, e: React.MouseEvent) => {
@@ -326,10 +329,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
     setExampleIndices(prev => {
       const newIndices = [...prev];
       const total = HELP_FEATURES[featureIdx].examples.length;
-      newIndices[featureIdx] = (prev[featureIdx] + 1) % total;
+      const newIdx = (prev[featureIdx] + 1) % total;
+      newIndices[featureIdx] = newIdx;
+      // 입력창도 새 예시로 업데이트
+      setInput(HELP_FEATURES[featureIdx].examples[newIdx]);
       return newIndices;
     });
-  }, []);
+  }, [setInput]);
 
   // 패널 열릴 때 세션 목록 로드
   useEffect(() => {
