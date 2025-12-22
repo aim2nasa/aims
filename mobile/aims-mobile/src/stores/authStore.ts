@@ -24,6 +24,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   devLogin: () => Promise<boolean>;  // 개발자 로그인
+  setAuth: (token: string, user: User) => void;  // 외부 로그인 (카카오 등)
   logout: () => Promise<void>;
   refreshTokenIfNeeded: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
@@ -160,6 +161,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ error: message, isLoading: false });
       return false;
     }
+  },
+
+  // 외부 로그인 (카카오 등) - 이미 토큰과 유저 정보가 있을 때
+  setAuth: (token: string, user: User) => {
+    api.setToken(token);
+    set({
+      token,
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null
+    });
   },
 
   // 로그아웃

@@ -16,7 +16,9 @@ const ALLOWED_REDIRECT_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5177',
   'http://127.0.0.1:5178',
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
+  // 모바일 앱 딥링크
+  'aims-mobile://'
 ];
 
 module.exports = function(db) {
@@ -125,7 +127,12 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        res.redirect(`${frontendUrl}/login?token=${token}`);
+        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
+        if (frontendUrl.endsWith('://')) {
+          res.redirect(`${frontendUrl}?token=${token}`);
+        } else {
+          res.redirect(`${frontendUrl}/login?token=${token}`);
+        }
       } catch (error) {
         console.error('Token generation error:', error);
 
@@ -245,7 +252,12 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        res.redirect(`${frontendUrl}/login?token=${token}`);
+        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
+        if (frontendUrl.endsWith('://')) {
+          res.redirect(`${frontendUrl}?token=${token}`);
+        } else {
+          res.redirect(`${frontendUrl}/login?token=${token}`);
+        }
       } catch (error) {
         console.error('Token generation error:', error);
 
@@ -364,7 +376,12 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        res.redirect(`${frontendUrl}/login?token=${token}`);
+        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
+        if (frontendUrl.endsWith('://')) {
+          res.redirect(`${frontendUrl}?token=${token}`);
+        } else {
+          res.redirect(`${frontendUrl}/login?token=${token}`);
+        }
       } catch (error) {
         console.error('Token generation error:', error);
 
