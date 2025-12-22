@@ -702,7 +702,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               onClick={handleNewChat}
               aria-label="새 대화"
             >
-              <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
+              {/* square.and.pencil - Option 3: Apple 스타일 */}
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                {/* 사각형 */}
+                <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H8v1.5H4.5v9h9V10H15v3.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 3 13.5v-9z"/>
+                {/* 연필 */}
+                <path d="M12.854 1.146a.5.5 0 0 1 .707 0l1.293 1.293a.5.5 0 0 1 0 .707L8.207 9.793 6 10l.207-2.207 6.647-6.647z"/>
+              </svg>
             </button>
           </Tooltip>
           {/* 분리/도킹 토글 */}
@@ -1341,7 +1347,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             onClick={(e) => { e.stopPropagation(); handleNewChat(); }}
             aria-label="새 대화"
           >
-            <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
+            {/* square.and.pencil - Option 3: Apple 스타일 */}
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              {/* 사각형 */}
+              <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H8v1.5H4.5v9h9V10H15v3.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 3 13.5v-9z"/>
+              {/* 연필 */}
+              <path d="M12.854 1.146a.5.5 0 0 1 .707 0l1.293 1.293a.5.5 0 0 1 0 .707L8.207 9.793 6 10l.207-2.207 6.647-6.647z"/>
+            </svg>
           </button>
         </Tooltip>
         <Tooltip content="도킹" placement="bottom">
