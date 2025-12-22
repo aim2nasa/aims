@@ -22,7 +22,14 @@ import {
   type LogType,
 } from '@/features/error-logs/api';
 import { Button } from '@/shared/ui/Button/Button';
+import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import './ErrorLogsPage.css';
+
+// 모달 상태 타입
+interface ModalState {
+  type: 'retention' | 'deleteAll' | 'deleteSelected' | null;
+  data?: { hours?: number; label?: string; currentLabel?: string };
+}
 
 const LEVEL_OPTIONS = [
   { value: '', label: '전체 레벨' },
@@ -167,6 +174,7 @@ export const ErrorLogsPage = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>(initialSettings.sortOrder);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState(initialSettings.statsPeriod);
+  const [confirmModal, setConfirmModal] = useState<ModalState>({ type: null });
 
   // 설정 변경 시 localStorage에 저장
   useEffect(() => {
@@ -223,38 +231,34 @@ export const ErrorLogsPage = () => {
   const [localRetentionHours, setLocalRetentionHours] = useState<number | null>(null);
   const retentionHours = localRetentionHours ?? retentionData?.hours ?? 168;
 
-  // 보존 기간 설정 변경 (확인 후 적용)
-  const handleRetentionChange = async (hours: number) => {
-    // 현재 값과 같으면 무시
+  // 보존 기간 설정 변경 - 모달 열기
+  const handleRetentionChange = (hours: number) => {
     if (hours === retentionHours) return;
 
-    // 레이블 찾기
     const label = RETENTION_OPTIONS.find(opt => opt.value === hours)?.label || `${hours}시간`;
     const currentLabel = RETENTION_OPTIONS.find(opt => opt.value === retentionHours)?.label || `${retentionHours}시간`;
 
-    // 확인 다이얼로그
-    const confirmed = confirm(
-      `자동 삭제 기간을 변경하시겠습니까?\n\n` +
-      `현재: ${currentLabel} 후 삭제\n` +
-      `변경: ${label} 후 삭제\n\n` +
-      `⚠️ 변경 시 새 기간보다 오래된 로그는 즉시 삭제됩니다.`
-    );
+    setConfirmModal({
+      type: 'retention',
+      data: { hours, label, currentLabel },
+    });
+  };
 
-    if (!confirmed) return;
+  // 보존 기간 설정 확정
+  const confirmRetentionChange = async () => {
+    const hours = confirmModal.data?.hours;
+    if (!hours) return;
 
-    // 확인 후 UI 업데이트
     setLocalRetentionHours(hours);
+    setConfirmModal({ type: null });
 
     try {
       await errorLogsApi.setRetention(hours, true);
-      // 설정 변경 후 로그 목록 및 통계 새로고침
       refetch();
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'retention'] });
     } catch (err) {
       console.error('보존 기간 설정 실패:', err);
-      alert('보존 기간 설정에 실패했습니다.');
-      // 실패 시 원래 값으로 복원
       setLocalRetentionHours(null);
     }
   };
@@ -337,26 +341,23 @@ export const ErrorLogsPage = () => {
   // 전체 삭제 mutation
   const deleteAllMutation = useMutation({
     mutationFn: () => errorLogsApi.deleteAll(),
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       clearNewLogs();
-      clearStats();  // 상단 통계 카드 초기화
-      alert(`전체 로그가 삭제되었습니다.\n시스템: ${result.details?.errorLogs || 0}개\n활동: ${result.details?.activityLogs || 0}개`);
+      clearStats();
+      setConfirmModal({ type: null });
     },
-    onError: (error) => {
-      alert(`삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    onError: () => {
+      setConfirmModal({ type: null });
     },
   });
 
   const handleDeleteAll = () => {
-    const totalLogs = (stats?.total || 0);
-    const confirmMsg = `정말 모든 로그(${totalLogs}개)를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.\n\n계속하려면 "삭제"를 입력하세요:`;
-    const userInput = prompt(confirmMsg);
-    if (userInput === '삭제') {
-      deleteAllMutation.mutate();
-    } else if (userInput !== null) {
-      alert('입력이 일치하지 않습니다. 삭제가 취소되었습니다.');
-    }
+    setConfirmModal({ type: 'deleteAll' });
+  };
+
+  const confirmDeleteAll = () => {
+    deleteAllMutation.mutate();
   };
 
   const handleSelectAll = () => {
@@ -380,9 +381,12 @@ export const ErrorLogsPage = () => {
 
   const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return;
-    if (confirm(`${selectedIds.size}개의 에러 로그를 삭제하시겠습니까?`)) {
-      deleteMutation.mutate(Array.from(selectedIds));
-    }
+    setConfirmModal({ type: 'deleteSelected' });
+  };
+
+  const confirmDeleteSelected = () => {
+    deleteMutation.mutate(Array.from(selectedIds));
+    setConfirmModal({ type: null });
   };
 
   const handleToggleDeleteMode = () => {
@@ -1012,6 +1016,69 @@ export const ErrorLogsPage = () => {
           </div>
         </div>
       )}
+
+      {/* 보존 기간 변경 확인 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.type === 'retention'}
+        onClose={() => setConfirmModal({ type: null })}
+        onConfirm={confirmRetentionChange}
+        title="자동 삭제 기간 변경"
+        variant="warning"
+        confirmText="변경"
+        message={
+          <>
+            <div className="confirm-modal__row">
+              <span className="confirm-modal__label">현재:</span>{' '}
+              <strong>{confirmModal.data?.currentLabel}</strong> 후 삭제
+            </div>
+            <div className="confirm-modal__row--last">
+              <span className="confirm-modal__label">변경:</span>{' '}
+              <strong className="confirm-modal__value--primary">{confirmModal.data?.label}</strong> 후 삭제
+            </div>
+            <div className="confirm-modal__hint confirm-modal__hint--warning">
+              변경 시 새 기간보다 오래된 로그는 즉시 삭제됩니다.
+            </div>
+          </>
+        }
+      />
+
+      {/* 전체 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.type === 'deleteAll'}
+        onClose={() => setConfirmModal({ type: null })}
+        onConfirm={confirmDeleteAll}
+        title="전체 로그 삭제"
+        variant="danger"
+        confirmText="전체 삭제"
+        confirmInput="삭제"
+        isLoading={deleteAllMutation.isPending}
+        message={
+          <>
+            <div className="confirm-modal__row">
+              총 <strong className="confirm-modal__value--danger">{stats?.total || 0}개</strong>의 로그를 삭제합니다.
+            </div>
+            <div className="confirm-modal__hint confirm-modal__hint--danger">
+              이 작업은 되돌릴 수 없습니다.
+            </div>
+          </>
+        }
+      />
+
+      {/* 선택 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.type === 'deleteSelected'}
+        onClose={() => setConfirmModal({ type: null })}
+        onConfirm={confirmDeleteSelected}
+        title="선택 로그 삭제"
+        variant="danger"
+        confirmText="삭제"
+        isLoading={deleteMutation.isPending}
+        message={
+          <>
+            선택한 <strong className="confirm-modal__value--danger">{selectedIds.size}개</strong>의 로그를 삭제하시겠습니까?
+          </>
+        }
+      />
     </div>
   );
 };
