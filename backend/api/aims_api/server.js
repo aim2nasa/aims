@@ -7828,7 +7828,7 @@ app.get('/api/contracts/:id', async (req, res) => {
  * POST /api/contracts
  * 단일 계약 등록
  */
-app.post('/api/contracts', async (req, res) => {
+app.post('/api/contracts', authenticateJWT, async (req, res) => {
   try {
     const contract = req.body;
 
@@ -7889,6 +7889,9 @@ app.post('/api/contracts', async (req, res) => {
     activityLogger.log({
       actor: {
         user_id: contract.agent_id,
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
@@ -7927,6 +7930,9 @@ app.post('/api/contracts', async (req, res) => {
     activityLogger.log({
       actor: {
         user_id: req.body?.agent_id,
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
@@ -7964,7 +7970,7 @@ app.post('/api/contracts', async (req, res) => {
  * - 증권번호 기준 upsert: 존재하면 업데이트, 없으면 생성
  * - 변경사항 없으면 건너뜀
  */
-app.post('/api/contracts/bulk', async (req, res) => {
+app.post('/api/contracts/bulk', authenticateJWT, async (req, res) => {
   try {
     const { contracts, agent_id } = req.body;
 
@@ -8204,6 +8210,9 @@ app.post('/api/contracts/bulk', async (req, res) => {
     activityLogger.log({
       actor: {
         user_id: agent_id,
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
@@ -8246,6 +8255,9 @@ app.post('/api/contracts/bulk', async (req, res) => {
     activityLogger.log({
       actor: {
         user_id: req.body?.agent_id,
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
@@ -8333,7 +8345,7 @@ app.put('/api/contracts/:id', async (req, res) => {
  * DELETE /api/contracts/:id
  * 계약 삭제
  */
-app.delete('/api/contracts/:id', async (req, res) => {
+app.delete('/api/contracts/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -8384,6 +8396,9 @@ app.delete('/api/contracts/:id', async (req, res) => {
     activityLogger.log({
       actor: {
         user_id: contract.agent_id?.toString(),
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
         ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         userAgent: req.headers['user-agent']
       },
