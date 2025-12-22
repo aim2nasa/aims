@@ -302,10 +302,33 @@ app/(auth)/voice/index.tsx  # 업데이트: 실제 음성 기능 연동
 - 파형 애니메이션 시각화
 - 최근 질문 목록 관리
 
-### Phase 5: 백엔드 수정 (예정)
+### Phase 5: 백엔드 수정 ✅ 완료 (2025.12.22)
 
-- [ ] CORS 설정
-- [ ] /api/transcribe 엔드포인트
+- [x] CORS 설정 (Expo 개발 환경 포트 추가)
+- [x] /api/transcribe 엔드포인트 (Whisper API)
+
+**수정/추가된 파일:**
+```
+backend/api/aims_api/
+├── server.js              # CORS 설정 + /api/transcribe 엔드포인트
+└── lib/transcribeService.js  # Whisper STT 서비스 (신규)
+```
+
+**API 스펙:**
+```
+POST /api/transcribe
+Authorization: Bearer {JWT}
+Content-Type: multipart/form-data
+
+Body:
+- file: 음성 파일 (m4a, mp4, wav 등)
+
+Response:
+{
+  "success": true,
+  "text": "변환된 텍스트"
+}
+```
 
 ### Phase 6: 테스트 및 배포 (예정)
 
@@ -323,6 +346,7 @@ app/(auth)/voice/index.tsx  # 업데이트: 실제 음성 기능 연동
 | 2025.12.22 | d28dec1b | feat: Phase 1 - Expo 프로젝트 초기화 |
 | 2025.12.22 | 7b6f95ed | feat: Phase 2 - 인증/채팅 서비스 구현 |
 | 2025.12.22 | 45c8f391 | feat: Phase 3 - 채팅 기능 구현 |
+| 2025.12.22 | fca5e3c9 | feat: Phase 4 - 음성 기능 구현 |
 
 ---
 

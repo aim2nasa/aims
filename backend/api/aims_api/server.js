@@ -37,6 +37,11 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5178',
   'http://localhost:5179',
   'http://localhost:5173',
+  // Expo 개발 환경 (모바일 앱)
+  'http://localhost:8081',
+  'http://localhost:19000',
+  'http://localhost:19001',
+  'http://localhost:19002',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -9215,6 +9220,53 @@ app.get('/api/chat/stats', authenticateJWT, async (req, res) => {
   } catch (error) {
     console.error('[Chat] 통계 조회 오류:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================
+// 음성 변환 API (모바일 앱용)
+// ============================================================
+
+const { transcribeAudio } = require('./lib/transcribeService');
+
+/**
+ * 음성을 텍스트로 변환 (Whisper API)
+ * @route POST /api/transcribe
+ * @description 모바일 앱에서 녹음한 음성을 텍스트로 변환
+ */
+app.post('/api/transcribe', authenticateJWT, upload.single('file'), async (req, res) => {
+  const startTime = Date.now();
+  const userId = req.user.id;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: '음성 파일이 필요합니다.'
+      });
+    }
+
+    console.log(`[Transcribe] 요청: userId=${userId}, fileName=${req.file.originalname}, size=${req.file.size}, mimeType=${req.file.mimetype}`);
+
+    const result = await transcribeAudio(
+      req.file.buffer,
+      req.file.originalname || 'recording.m4a',
+      req.file.mimetype || 'audio/m4a'
+    );
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Transcribe] 완료: userId=${userId}, text="${result.text?.substring(0, 50)}...", elapsed=${elapsed}ms`);
+
+    res.json({
+      success: true,
+      text: result.text
+    });
+  } catch (error) {
+    console.error('[Transcribe] 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || '음성 변환에 실패했습니다.'
+    });
   }
 });
 
