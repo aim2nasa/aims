@@ -4768,6 +4768,15 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         const start = Date.now();
         const response = await axios.get('http://localhost:8002/health', { timeout: 5000 });
         return { latency: Date.now() - start };
+      })(),
+      // [7] aims_mcp (MCP 서버 - 포트 3011)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get('http://localhost:3011/health', { timeout: 5000 });
+        return {
+          latency: Date.now() - start,
+          version: response.data?.version || null
+        };
       })()
     ]);
 
@@ -4814,6 +4823,13 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         status: healthChecks[6].status === 'fulfilled' ? 'healthy' : 'unhealthy',
         latency: healthChecks[6].status === 'fulfilled' ? healthChecks[6].value.latency : null,
         error: healthChecks[6].status === 'rejected' ? healthChecks[6].reason?.message : null,
+        checkedAt: checkTime
+      },
+      aimsMcp: {
+        status: healthChecks[7].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[7].status === 'fulfilled' ? healthChecks[7].value.latency : null,
+        version: healthChecks[7].status === 'fulfilled' ? healthChecks[7].value.version : null,
+        error: healthChecks[7].status === 'rejected' ? healthChecks[7].reason?.message : null,
         checkedAt: checkTime
       },
       // Tier 3: Workflow
@@ -4972,6 +4988,70 @@ app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), asy
       error: error.message
     });
   }
+});
+
+/**
+ * 관리자: AIMS 서비스 포트 현황 조회
+ */
+app.get('/api/admin/ports', authenticateJWT, requireRole('admin'), async (req, res) => {
+  // AIMS 서비스 포트 목록
+  const AIMS_PORTS = [
+    { port: 3010, service: 'aims_api', description: 'AIMS 메인 API' },
+    { port: 3011, service: 'aims_mcp', description: 'MCP 서버 (AI 도구)' },
+    { port: 8000, service: 'aims_rag_api', description: 'RAG/문서 처리 API' },
+    { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시' },
+    { port: 8004, service: 'annual_report_api', description: '연간보고서 API' },
+    { port: 5678, service: 'n8n', description: '워크플로우 엔진' },
+    { port: 6333, service: 'qdrant', description: '벡터 DB' },
+    { port: 27017, service: 'mongodb', description: '데이터베이스' }
+  ];
+
+  const checkTime = utcNowISO();
+
+  // 병렬로 포트 상태 체크
+  const portChecks = await Promise.allSettled(
+    AIMS_PORTS.map(async ({ port, service, description }) => {
+      try {
+        // TCP 연결 시도로 포트 상태 확인
+        const net = require('net');
+        return new Promise((resolve, reject) => {
+          const socket = new net.Socket();
+          socket.setTimeout(2000);
+          socket.on('connect', () => {
+            socket.destroy();
+            resolve({ port, service, description, status: 'listening', checkedAt: checkTime });
+          });
+          socket.on('timeout', () => {
+            socket.destroy();
+            reject(new Error('timeout'));
+          });
+          socket.on('error', (err) => {
+            socket.destroy();
+            reject(err);
+          });
+          socket.connect(port, 'localhost');
+        });
+      } catch (error) {
+        return { port, service, description, status: 'closed', checkedAt: checkTime };
+      }
+    })
+  );
+
+  const ports = portChecks.map((result, idx) => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    }
+    return {
+      ...AIMS_PORTS[idx],
+      status: 'closed',
+      checkedAt: checkTime
+    };
+  });
+
+  res.json({
+    success: true,
+    data: ports
+  });
 });
 
 /**

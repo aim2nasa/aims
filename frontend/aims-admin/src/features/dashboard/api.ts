@@ -33,8 +33,23 @@ export interface HealthStatus {
   aimsRagApi: ServiceHealth;
   annualReportApi: ServiceHealth;
   pdfProxy: ServiceHealth;
+  aimsMcp: ServiceHealth;
   // Tier 3: Workflow
   n8n: ServiceHealth;
+}
+
+// 포트 현황 타입
+export interface PortStatus {
+  port: number;
+  service: string;
+  description: string;
+  status: 'listening' | 'closed';
+  checkedAt: string;
+}
+
+export interface PortsResponse {
+  success: boolean;
+  data: PortStatus[];
 }
 
 export interface OcrStats {
@@ -222,6 +237,12 @@ export const dashboardApi = {
 
   getMetricsHistory: (hours: number = 24): Promise<{ hours: number; count: number; metrics: SystemMetrics[] }> => {
     return apiClient.get<MetricsHistoryResponse>(`/api/admin/metrics/history?hours=${hours}`)
+      .then((res) => res.data);
+  },
+
+  // 포트 현황 API
+  getPorts: (): Promise<PortStatus[]> => {
+    return apiClient.get<PortsResponse>('/api/admin/ports')
       .then((res) => res.data);
   },
 };

@@ -9,6 +9,7 @@ interface HealthCardProps {
   service: string;
   health: ServiceHealth;
   description?: string;
+  port?: number;
 }
 
 const formatLatency = (latency: number | null): string => {
@@ -52,13 +53,16 @@ const formatBytes = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-const HealthCard = ({ service, health, description }: HealthCardProps) => {
+const HealthCard = ({ service, health, description, port }: HealthCardProps) => {
   const isHealthy = health.status === 'healthy';
 
   return (
     <div className={`health-card ${isHealthy ? '' : 'health-card--unhealthy'}`}>
       <div className="health-card__header">
-        <span className="health-card__service">{service}</span>
+        <span className="health-card__service">
+          {service}
+          {port && <span className="health-card__port">:{port}</span>}
+        </span>
         <span
           className={`health-card__status ${
             isHealthy ? 'health-card__status--healthy' : 'health-card__status--unhealthy'
@@ -278,6 +282,67 @@ const ServerResourcesSection = () => {
   );
 };
 
+// 포트 현황 섹션 컴포넌트
+const PortsSection = () => {
+  const { data: ports, isLoading } = useQuery({
+    queryKey: ['admin', 'ports'],
+    queryFn: dashboardApi.getPorts,
+    refetchInterval: 30000, // 30초마다 갱신
+  });
+
+  if (isLoading) {
+    return (
+      <section className="ports-section">
+        <div className="ports-section__header">
+          <h2 className="ports-section__title">포트 현황</h2>
+        </div>
+        <div className="ports-section__loading">로딩 중...</div>
+      </section>
+    );
+  }
+
+  const listeningCount = ports?.filter(p => p.status === 'listening').length || 0;
+  const totalCount = ports?.length || 0;
+
+  return (
+    <section className="ports-section">
+      <div className="ports-section__header">
+        <h2 className="ports-section__title">포트 현황</h2>
+        <span className="ports-section__subtitle">
+          {listeningCount}/{totalCount} 포트 listening
+        </span>
+      </div>
+      <div className="ports-section__table-wrapper">
+        <table className="ports-section__table">
+          <thead>
+            <tr>
+              <th>포트</th>
+              <th>서비스</th>
+              <th>설명</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ports?.map((port) => (
+              <tr key={port.port} className={port.status === 'closed' ? 'ports-section__row--closed' : ''}>
+                <td className="ports-section__port">{port.port}</td>
+                <td className="ports-section__service">{port.service}</td>
+                <td className="ports-section__description">{port.description}</td>
+                <td>
+                  <span className={`ports-section__status ports-section__status--${port.status}`}>
+                    <span className={`ports-section__indicator ports-section__indicator--${port.status}`} />
+                    {port.status === 'listening' ? 'Listening' : 'Closed'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+};
+
 export const SystemHealthPage = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'dashboard'],
@@ -322,11 +387,13 @@ export const SystemHealthPage = () => {
           service: 'MongoDB',
           health: normalizeHealth(health?.mongodb),
           description: '데이터베이스 서버',
+          port: 27017,
         },
         {
           service: 'Qdrant',
           health: normalizeHealth(health?.qdrant),
           description: '벡터 데이터베이스 (AI 검색용)',
+          port: 6333,
         },
       ],
     },
@@ -338,21 +405,31 @@ export const SystemHealthPage = () => {
           service: 'aims_api',
           health: normalizeHealth(health?.nodeApi),
           description: 'AIMS 메인 백엔드 API 서버',
+          port: 3010,
         },
         {
           service: 'aims_rag_api',
           health: normalizeHealth(health?.aimsRagApi),
           description: 'RAG 검색 및 문서 처리 API 서버',
+          port: 8000,
         },
         {
           service: 'annual_report_api',
           health: normalizeHealth(health?.annualReportApi),
           description: '연간보고서 분석 API',
+          port: 8004,
         },
         {
           service: 'pdf_proxy',
           health: normalizeHealth(health?.pdfProxy),
           description: 'PDF 프록시 서버',
+          port: 8002,
+        },
+        {
+          service: 'aims_mcp',
+          health: normalizeHealth(health?.aimsMcp),
+          description: 'MCP 서버 (AI 도구)',
+          port: 3011,
         },
       ],
     },
@@ -364,6 +441,7 @@ export const SystemHealthPage = () => {
           service: 'n8n',
           health: normalizeHealth(health?.n8n),
           description: '워크플로우 자동화 엔진',
+          port: 5678,
         },
       ],
     },
@@ -408,6 +486,9 @@ export const SystemHealthPage = () => {
       {/* 서버 리소스 섹션 */}
       <ServerResourcesSection />
 
+      {/* 포트 현황 섹션 */}
+      <PortsSection />
+
       {serviceTiers.map((tierGroup) => (
         <section key={tierGroup.tier} className="system-health-page__section">
           <div className="system-health-page__tier-header">
@@ -421,6 +502,7 @@ export const SystemHealthPage = () => {
                 service={service.service}
                 health={service.health}
                 description={service.description}
+                port={service.port}
               />
             ))}
           </div>

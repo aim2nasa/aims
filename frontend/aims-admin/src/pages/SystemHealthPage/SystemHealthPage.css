@@ -398,3 +398,134 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* Health Card Port */
+.health-card__port {
+  font-size: 10px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  font-family: monospace;
+  margin-left: 2px;
+}
+
+/* Ports Section */
+.ports-section {
+  margin-bottom: var(--spacing-sm);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+}
+
+.ports-section__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.ports-section__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.ports-section__subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.ports-section__loading {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.ports-section__table-wrapper {
+  overflow-x: auto;
+}
+
+.ports-section__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+}
+
+.ports-section__table th,
+.ports-section__table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ports-section__table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ports-section__table tbody tr:hover {
+  background-color: var(--color-surface);
+}
+
+.ports-section__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ports-section__row--closed {
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+.ports-section__port {
+  font-family: monospace;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.ports-section__service {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.ports-section__description {
+  color: var(--color-text-secondary);
+}
+
+.ports-section__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.ports-section__status--listening {
+  color: var(--color-success);
+  background-color: rgba(52, 199, 89, 0.1);
+}
+
+.ports-section__status--closed {
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+.ports-section__indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ports-section__indicator--listening {
+  background-color: var(--color-success);
+}
+
+.ports-section__indicator--closed {
+  background-color: var(--color-error);
+}
