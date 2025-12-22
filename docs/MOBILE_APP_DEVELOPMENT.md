@@ -257,11 +257,27 @@ src/stores/
 └── chatStore.ts       # 채팅 상태 관리
 ```
 
-### Phase 3: 채팅 기능 (예정)
+### Phase 3: 채팅 기능 ✅ 완료 (2025.12.22)
 
-- [ ] SSE 스트리밍 훅
-- [ ] 채팅 UI 컴포넌트
-- [ ] 세션 관리
+- [x] SSE 스트리밍 훅 (`useChatSSE.ts`)
+- [x] 채팅 UI 컴포넌트 (ChatBubble, ChatInput, ToolIndicator)
+- [x] 18개 MCP Tools 카테고리별 UI
+- [x] 실시간 스트리밍 표시
+- [x] 도구 실행 상태 표시
+
+**추가된 파일:**
+```
+src/hooks/
+└── useChatSSE.ts         # SSE 스트리밍 훅 (메시지, 도구 상태 관리)
+
+src/components/chat/
+├── index.ts              # 컴포넌트 export
+├── ChatBubble.tsx        # 메시지 버블 (사용자/AI)
+├── ChatInput.tsx         # 입력창 + 음성/전송 버튼
+└── ToolIndicator.tsx     # MCP 도구 실행 표시
+
+app/(auth)/chat/index.tsx  # 업데이트: 실제 채팅 기능 연동
+```
 
 ### Phase 4: 음성 기능 (예정)
 
@@ -288,7 +304,8 @@ src/stores/
 |------|------|------|
 | 2025.12.22 | 07182098 | docs: 모바일 앱 개발 계획 문서 추가 |
 | 2025.12.22 | d28dec1b | feat: Phase 1 - Expo 프로젝트 초기화 |
-| 2025.12.22 | (예정) | feat: Phase 2 - 인증/채팅 서비스 구현 |
+| 2025.12.22 | 7b6f95ed | feat: Phase 2 - 인증/채팅 서비스 구현 |
+| 2025.12.22 | (예정) | feat: Phase 3 - 채팅 기능 구현 |
 
 ---
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  FlatList,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useChatSSE } from '../../../src/hooks/useChatSSE';
+import { ChatBubble, ChatInput, ToolIndicator } from '../../../src/components/chat';
 import { colors, spacing, fontSize, borderRadius, fontWeight } from '../../../src/utils/theme';
 
-// MCP 도구 카테고리 및 목록
+// MCP 도구 카테고리 및 목록 (18개)
 const TOOL_CATEGORIES = [
   {
     name: '고객 관리',
@@ -76,11 +81,162 @@ const TOOL_CATEGORIES = [
 
 export default function ChatScreen() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const scrollViewRef = useRef<ScrollView>(null);
 
+  const {
+    messages,
+    isStreaming,
+    streamingContent,
+    activeTools,
+    currentTool,
+    error,
+    sendMessage,
+    setMessages,
+    setSessionId,
+    abort,
+    clearError,
+  } = useChatSSE();
+
+  // 에러 표시
+  useEffect(() => {
+    if (error) {
+      Alert.alert('오류', error, [{ text: '확인', onPress: clearError }]);
+    }
+  }, [error]);
+
+  // 메시지가 추가되면 스크롤
+  useEffect(() => {
+    if (messages.length > 0 || streamingContent) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages, streamingContent]);
+
+  // 도구 예시 클릭
   const handleToolPress = (example: string) => {
-    // TODO: 채팅 입력창에 예시 텍스트 입력
-    console.log('Tool selected:', example);
+    setShowWelcome(false);
+    sendMessage(example);
   };
+
+  // 바로 채팅하기
+  const handleDirectChat = () => {
+    setShowWelcome(false);
+  };
+
+  // 새 채팅
+  const handleNewChat = () => {
+    setMessages([]);
+    setSessionId(null);
+    setShowWelcome(true);
+  };
+
+  // 메시지 전송
+  const handleSend = (content: string) => {
+    if (showWelcome) {
+      setShowWelcome(false);
+    }
+    sendMessage(content);
+  };
+
+  // 음성 버튼
+  const handleVoice = () => {
+    router.push('/(auth)/voice');
+  };
+
+  // 환영 화면 렌더링
+  const renderWelcome = () => (
+    <>
+      {/* 환영 메시지 */}
+      <View style={styles.welcomeContainer}>
+        <View style={styles.welcomeIcon}>
+          <Ionicons name="chatbubble-ellipses" size={48} color={colors.primary} />
+        </View>
+        <Text style={styles.welcomeTitle}>무엇이든 물어보세요!</Text>
+        <Text style={styles.welcomeSubtitle}>
+          고객, 계약, 문서 관련 질문을 자유롭게 하세요.
+        </Text>
+      </View>
+
+      {/* 바로 채팅하기 버튼 */}
+      <TouchableOpacity style={styles.directChatButton} onPress={handleDirectChat}>
+        <View style={styles.directChatDot} />
+        <View style={styles.directChatContent}>
+          <Text style={styles.directChatTitle}>바로 채팅하기</Text>
+          <Text style={styles.directChatSubtitle}>기능 목록 없이 바로 대화 시작</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      </TouchableOpacity>
+
+      {/* 구분선 */}
+      <View style={styles.dividerContainer}>
+        <View style={styles.divider} />
+        <Text style={styles.dividerText}>또는 기능 선택</Text>
+        <View style={styles.divider} />
+      </View>
+
+      {/* 기능 카테고리 */}
+      {TOOL_CATEGORIES.map((category, categoryIndex) => (
+        <View key={category.name} style={styles.categoryContainer}>
+          <TouchableOpacity
+            style={styles.categoryHeader}
+            onPress={() => setSelectedCategory(
+              selectedCategory === categoryIndex ? null : categoryIndex
+            )}
+          >
+            <View style={styles.categoryLeft}>
+              <Ionicons name={category.icon} size={18} color={colors.primary} />
+              <Text style={styles.categoryName}>{category.name}</Text>
+              <Text style={styles.categoryCount}>{category.tools.length}</Text>
+            </View>
+            <Ionicons
+              name={selectedCategory === categoryIndex ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {selectedCategory === categoryIndex && (
+            <View style={styles.toolsGrid}>
+              {category.tools.map((tool) => (
+                <TouchableOpacity
+                  key={tool.name}
+                  style={styles.toolCard}
+                  onPress={() => handleToolPress(tool.example)}
+                >
+                  <Ionicons name={tool.icon} size={18} color={colors.primary} />
+                  <Text style={styles.toolLabel}>{tool.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      ))}
+    </>
+  );
+
+  // 채팅 화면 렌더링
+  const renderChat = () => (
+    <>
+      {messages.map((message, index) => (
+        <ChatBubble key={index} message={message} />
+      ))}
+
+      {/* 스트리밍 중인 응답 */}
+      {isStreaming && streamingContent && (
+        <ChatBubble
+          message={{ role: 'assistant', content: streamingContent }}
+          isStreaming
+        />
+      )}
+
+      {/* 도구 사용 표시 */}
+      {activeTools.length > 0 && (
+        <ToolIndicator tools={activeTools} currentTool={currentTool} />
+      )}
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,93 +247,32 @@ export default function ChatScreen() {
           <Text style={styles.headerTitle}>AI 어시스턴트</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
             <Ionicons name="time-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleNewChat}>
             <Ionicons name="add" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* 메인 콘텐츠 */}
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {/* 환영 메시지 */}
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeTitle}>무엇이든 물어보세요!</Text>
-          <Text style={styles.welcomeSubtitle}>
-            고객, 계약, 문서 관련 질문을 자유롭게 하세요.
-          </Text>
-        </View>
-
-        {/* 바로 채팅하기 버튼 */}
-        <TouchableOpacity style={styles.directChatButton}>
-          <View style={styles.directChatDot} />
-          <View style={styles.directChatContent}>
-            <Text style={styles.directChatTitle}>바로 채팅하기</Text>
-            <Text style={styles.directChatSubtitle}>기능 목록 없이 바로 대화 시작</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* 구분선 */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>또는 기능 선택</Text>
-          <View style={styles.divider} />
-        </View>
-
-        {/* 기능 카테고리 */}
-        {TOOL_CATEGORIES.map((category, categoryIndex) => (
-          <View key={category.name} style={styles.categoryContainer}>
-            <TouchableOpacity
-              style={styles.categoryHeader}
-              onPress={() => setSelectedCategory(
-                selectedCategory === categoryIndex ? null : categoryIndex
-              )}
-            >
-              <View style={styles.categoryLeft}>
-                <Ionicons name={category.icon} size={18} color={colors.primary} />
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </View>
-              <Ionicons
-                name={selectedCategory === categoryIndex ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-
-            {selectedCategory === categoryIndex && (
-              <View style={styles.toolsGrid}>
-                {category.tools.map((tool) => (
-                  <TouchableOpacity
-                    key={tool.name}
-                    style={styles.toolCard}
-                    onPress={() => handleToolPress(tool.example)}
-                  >
-                    <Ionicons name={tool.icon} size={20} color={colors.primary} />
-                    <Text style={styles.toolLabel}>{tool.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        {showWelcome && messages.length === 0 ? renderWelcome() : renderChat()}
       </ScrollView>
 
       {/* 입력창 */}
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TouchableOpacity style={styles.inputField}>
-            <Text style={styles.inputPlaceholder}>메시지를 입력하세요...</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.voiceButton}>
-            <Ionicons name="mic" size={22} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sendButton}>
-            <Ionicons name="arrow-up" size={20} color={colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ChatInput
+        onSend={handleSend}
+        onVoice={handleVoice}
+        isLoading={isStreaming}
+        disabled={isStreaming}
+      />
     </SafeAreaView>
   );
 }
@@ -223,6 +318,16 @@ const styles = StyleSheet.create({
   welcomeContainer: {
     alignItems: 'center',
     marginBottom: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  welcomeIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   welcomeTitle: {
     fontSize: fontSize.xl,
@@ -299,6 +404,14 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
     color: colors.text,
   },
+  categoryCount: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    backgroundColor: colors.backgroundTertiary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+  },
   toolsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -317,40 +430,5 @@ const styles = StyleSheet.create({
   toolLabel: {
     fontSize: fontSize.sm,
     color: colors.text,
-  },
-  inputContainer: {
-    padding: spacing.md,
-    paddingBottom: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.xxl,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.xs,
-    height: 48,
-    gap: spacing.xs,
-  },
-  inputField: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  inputPlaceholder: {
-    fontSize: fontSize.md,
-    color: colors.textMuted,
-  },
-  voiceButton: {
-    padding: spacing.sm,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
