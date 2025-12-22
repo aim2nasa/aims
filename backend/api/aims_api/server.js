@@ -503,7 +503,7 @@ async function triggerPdfConversionIfNeeded(document) {
 // ========================
 
 const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
-const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 3011;
+const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
 
 /**
  * PDF 변환 프록시 - 파일 업로드를 PDF 변환 서버로 전달

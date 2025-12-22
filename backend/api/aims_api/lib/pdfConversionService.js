@@ -14,7 +14,7 @@ const FormData = require('form-data');
 
 // PDF 변환 서버 설정
 const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
-const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 3011;
+const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
 
 // ========================
 // 확장자 목록
