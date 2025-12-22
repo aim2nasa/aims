@@ -279,11 +279,28 @@ src/components/chat/
 app/(auth)/chat/index.tsx  # 업데이트: 실제 채팅 기능 연동
 ```
 
-### Phase 4: 음성 기능 (예정)
+### Phase 4: 음성 기능 ✅ 완료 (2025.12.22)
 
-- [ ] STT (Whisper API)
-- [ ] TTS (expo-speech)
-- [ ] 음성 UI
+- [x] STT 훅 (`useSpeechToText.ts`) - expo-av 녹음 + Whisper API
+- [x] TTS 훅 (`useTextToSpeech.ts`) - expo-speech
+- [x] 음성 화면 개선 - 파형 애니메이션, 실시간 변환, AI 응답 TTS
+
+**추가된 파일:**
+```
+src/hooks/
+├── useSpeechToText.ts    # 음성→텍스트 (녹음, 변환)
+└── useTextToSpeech.ts    # 텍스트→음성 (TTS)
+
+app/(auth)/voice/index.tsx  # 업데이트: 실제 음성 기능 연동
+```
+
+**기능:**
+- 마이크 버튼으로 녹음 시작/중지
+- 녹음된 음성을 Whisper API로 변환
+- 변환된 텍스트로 AI 채팅 자동 전송
+- AI 응답을 TTS로 자동 읽기
+- 파형 애니메이션 시각화
+- 최근 질문 목록 관리
 
 ### Phase 5: 백엔드 수정 (예정)
 
@@ -305,7 +322,7 @@ app/(auth)/chat/index.tsx  # 업데이트: 실제 채팅 기능 연동
 | 2025.12.22 | 07182098 | docs: 모바일 앱 개발 계획 문서 추가 |
 | 2025.12.22 | d28dec1b | feat: Phase 1 - Expo 프로젝트 초기화 |
 | 2025.12.22 | 7b6f95ed | feat: Phase 2 - 인증/채팅 서비스 구현 |
-| 2025.12.22 | (예정) | feat: Phase 3 - 채팅 기능 구현 |
+| 2025.12.22 | 45c8f391 | feat: Phase 3 - 채팅 기능 구현 |
 
 ---
 
