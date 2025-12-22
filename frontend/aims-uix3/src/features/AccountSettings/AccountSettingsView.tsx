@@ -24,6 +24,7 @@ import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -262,9 +263,14 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   const handleInputChange = (field: keyof typeof formData) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    let value = e.target.value
+    // 전화번호 자동 포맷팅 (네이버/카카오 스타일)
+    if (field === 'phone') {
+      value = formatPhoneNumber(value)
+    }
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: value
     }))
   }
 

@@ -16,6 +16,7 @@ import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
+import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
 import './AccountSettingsModal.css'
 
 export interface AccountSettingsModalProps {
@@ -105,9 +106,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const handleInputChange = (field: keyof typeof formData) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    let value = e.target.value
+    // 전화번호 자동 포맷팅 (네이버/카카오 스타일)
+    if (field === 'phone') {
+      value = formatPhoneNumber(value)
+    }
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: value
     }))
   }
 
