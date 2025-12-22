@@ -2493,19 +2493,21 @@ export function ExcelRefiner() {
           errors: customerBulkResult?.errors || []
         }, customers)
 
-        const 개인NewCount = customerPartitioned.개인고객.created.length
-        const 법인NewCount = customerPartitioned.법인고객.created.length
-        const 계약NewCount = contractResult.createdCount
+        // 성공 건수 = created + updated (변경사항이 적용된 건)
+        const 개인SuccessCount = customerPartitioned.개인고객.created.length + customerPartitioned.개인고객.updated.length
+        const 법인SuccessCount = customerPartitioned.법인고객.created.length + customerPartitioned.법인고객.updated.length
+        const 계약SuccessCount = contractResult.createdCount + contractResult.updatedCount
 
-        // 액션 로그용 상세 메시지 (개인/법인/계약 각각 표시)
+        // 액션 로그용 상세 메시지 (성공/전체 형식으로 표시)
         const resultParts: string[] = []
-        if (개인NewCount > 0) resultParts.push(`개인 ${개인NewCount}명`)
-        if (법인NewCount > 0) resultParts.push(`법인 ${법인NewCount}명`)
-        if (계약NewCount > 0) resultParts.push(`계약 ${계약NewCount}건`)
+        // 입력 시트에 데이터가 있는 항목만 표시
+        if (개인고객Count > 0) resultParts.push(`개인 ${개인SuccessCount}/${개인고객Count}`)
+        if (법인고객Count > 0) resultParts.push(`법인 ${법인SuccessCount}/${법인고객Count}`)
+        if (contracts.length > 0) resultParts.push(`계약 ${계약SuccessCount}/${contracts.length}`)
 
         // 확인 안내 메시지
-        const hasCustomerChanges = 개인NewCount > 0 || 법인NewCount > 0
-        const hasContractChanges = 계약NewCount > 0
+        const hasCustomerChanges = 개인SuccessCount > 0 || 법인SuccessCount > 0
+        const hasContractChanges = 계약SuccessCount > 0
         const guideParts: string[] = []
         if (hasCustomerChanges) guideParts.push('전체 고객 보기')
         if (hasContractChanges) guideParts.push('전체 계약 보기')
@@ -2514,11 +2516,11 @@ export function ExcelRefiner() {
         let actionLogMessage: string
         if (hasSuccess && !hasFailure) {
           actionLogMessage = resultParts.length > 0
-            ? `✓ ${resultParts.join(', ')} 등록 완료${guideText}`
+            ? `✓ ${resultParts.join(' | ')} 등록 완료${guideText}`
             : '변경사항 없음'
         } else if (hasSuccess && hasFailure) {
           actionLogMessage = resultParts.length > 0
-            ? `⚠️ ${resultParts.join(', ')} 등록 완료 (일부 건너뜀)${guideText}`
+            ? `⚠️ ${resultParts.join(' | ')} 등록${guideText}`
             : '⚠️ 일부 건너뜀'
         } else if (totalErrors > 0) {
           actionLogMessage = `✗ 등록 중 오류 발생 (${totalErrors}건)`
