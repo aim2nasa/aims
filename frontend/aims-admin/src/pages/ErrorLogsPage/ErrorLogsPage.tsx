@@ -14,13 +14,24 @@ import {
   SEVERITY_LABELS,
   CATEGORY_LABELS,
   SOURCE_LABELS,
+  LEVEL_LABELS,
   type ErrorLog,
   type GetErrorLogsParams,
   type SortField,
   type SortOrder,
+  type LogType,
 } from '@/features/error-logs/api';
 import { Button } from '@/shared/ui/Button/Button';
 import './ErrorLogsPage.css';
+
+const LEVEL_OPTIONS = [
+  { value: '', label: '전체 레벨' },
+  { value: 'error', label: '에러' },
+  { value: 'warn', label: '경고' },
+  { value: 'info', label: '정보' },
+  { value: 'debug', label: '디버그' },
+  { value: 'warn,error', label: '경고+에러' }, // 기본값
+];
 
 const SEVERITY_OPTIONS = [
   { value: '', label: '전체 심각도' },
@@ -46,6 +57,12 @@ const SOURCE_OPTIONS = [
   { value: 'backend', label: '백엔드' },
 ];
 
+const LOG_TYPE_OPTIONS = [
+  { value: 'all', label: '전체 로그' },
+  { value: 'activity', label: '활동 로그' },
+  { value: 'system', label: '시스템 로그' },
+];
+
 const LIMIT_OPTIONS = [
   { value: 20, label: '20개씩' },
   { value: 50, label: '50개씩' },
@@ -57,9 +74,11 @@ export const ErrorLogsPage = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState('');
+  const [levelFilter, setLevelFilter] = useState(''); // 기본값: 전체 (activity 포함)
   const [sourceFilter, setSourceFilter] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [logTypeFilter, setLogTypeFilter] = useState<LogType>('all'); // 기본값: 전체
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailLog, setDetailLog] = useState<ErrorLog | null>(null);
   const [sortBy, setSortBy] = useState<SortField>('timestamp');
@@ -76,11 +95,13 @@ export const ErrorLogsPage = () => {
     page,
     limit,
     search: debouncedSearch || undefined,
+    level: levelFilter || undefined,
     source: sourceFilter as 'frontend' | 'backend' | undefined,
     severity: severityFilter || undefined,
     category: categoryFilter || undefined,
     sortBy,
     sortOrder,
+    logType: logTypeFilter,
   };
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -193,9 +214,9 @@ export const ErrorLogsPage = () => {
     <div className="error-logs-page">
       <div className="error-logs-page__header">
         <h1 className="error-logs-page__title">
-          에러 로그
+          시스템 로그
           {newCount > 0 && (
-            <span className="error-logs-page__new-badge">+{newCount} 새 에러</span>
+            <span className="error-logs-page__new-badge">+{newCount} 새 로그</span>
           )}
         </h1>
         <div className="error-logs-page__actions">
@@ -220,15 +241,23 @@ export const ErrorLogsPage = () => {
         <div className="error-logs-page__stats">
           <div className="error-logs-page__stat-card">
             <span className="error-logs-page__stat-value">{stats.total}</span>
-            <span className="error-logs-page__stat-label">총 에러 (7일)</span>
+            <span className="error-logs-page__stat-label">총 로그 (7일)</span>
           </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--critical">
-            <span className="error-logs-page__stat-value">{stats.bySeverity?.critical || 0}</span>
-            <span className="error-logs-page__stat-label">Critical</span>
+          <div className="error-logs-page__stat-card error-logs-page__stat-card--activity">
+            <span className="error-logs-page__stat-value">{stats.byLevel?.activity || stats.bySource?.activity || 0}</span>
+            <span className="error-logs-page__stat-label">Activity</span>
           </div>
-          <div className="error-logs-page__stat-card error-logs-page__stat-card--high">
-            <span className="error-logs-page__stat-value">{stats.bySeverity?.high || 0}</span>
-            <span className="error-logs-page__stat-label">High</span>
+          <div className="error-logs-page__stat-card error-logs-page__stat-card--error">
+            <span className="error-logs-page__stat-value">{stats.byLevel?.error || 0}</span>
+            <span className="error-logs-page__stat-label">Error</span>
+          </div>
+          <div className="error-logs-page__stat-card error-logs-page__stat-card--warn">
+            <span className="error-logs-page__stat-value">{stats.byLevel?.warn || 0}</span>
+            <span className="error-logs-page__stat-label">Warn</span>
+          </div>
+          <div className="error-logs-page__stat-card error-logs-page__stat-card--info">
+            <span className="error-logs-page__stat-value">{stats.byLevel?.info || 0}</span>
+            <span className="error-logs-page__stat-label">Info</span>
           </div>
           <div className="error-logs-page__stat-card">
             <span className="error-logs-page__stat-value">{stats.bySource?.frontend || 0}</span>
@@ -246,13 +275,41 @@ export const ErrorLogsPage = () => {
         <input
           type="text"
           className="error-logs-page__search"
-          placeholder="에러 메시지 검색..."
+          placeholder="로그 메시지 검색..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(1);
           }}
         />
+        <select
+          className="error-logs-page__select"
+          value={logTypeFilter}
+          onChange={(e) => {
+            setLogTypeFilter(e.target.value as LogType);
+            setPage(1);
+          }}
+        >
+          {LOG_TYPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="error-logs-page__select"
+          value={levelFilter}
+          onChange={(e) => {
+            setLevelFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          {LEVEL_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
         <select
           className="error-logs-page__select"
           value={sourceFilter}
@@ -310,7 +367,7 @@ export const ErrorLogsPage = () => {
       {/* Table */}
       <div className="error-logs-page__content">
         {logs.length === 0 ? (
-          <div className="error-logs-page__empty">에러 로그가 없습니다.</div>
+          <div className="error-logs-page__empty">시스템 로그가 없습니다.</div>
         ) : (
           <>
             <div className="error-logs-page__table-container">
@@ -332,6 +389,12 @@ export const ErrorLogsPage = () => {
                       onClick={() => handleSort('timestamp')}
                     >
                       시간 {renderSortIcon('timestamp')}
+                    </th>
+                    <th
+                      className="error-logs-page__th-level error-logs-page__th--sortable"
+                      onClick={() => handleSort('level')}
+                    >
+                      레벨 {renderSortIcon('level')}
                     </th>
                     <th
                       className="error-logs-page__th-source error-logs-page__th--sortable"
@@ -388,18 +451,35 @@ export const ErrorLogsPage = () => {
                       <td className="error-logs-page__cell-time">
                         {formatDateTime(log.timestamp)}
                       </td>
+                      <td className="error-logs-page__cell-level">
+                        {log.logType === 'activity' ? (
+                          <span className="level-badge level-badge--activity">활동</span>
+                        ) : (
+                          <span className={`level-badge level-badge--${log.level || 'error'}`}>
+                            {LEVEL_LABELS[log.level] || log.level || 'error'}
+                          </span>
+                        )}
+                      </td>
                       <td className="error-logs-page__cell-source">
                         <span className={`source-badge source-badge--${log.source.type}`}>
-                          {SOURCE_LABELS[log.source.type] || log.source.type}
+                          {log.source.component || SOURCE_LABELS[log.source.type] || log.source.type}
                         </span>
                       </td>
                       <td className="error-logs-page__cell-severity">
-                        <span className={`severity-badge severity-badge--${log.error.severity}`}>
-                          {SEVERITY_LABELS[log.error.severity] || log.error.severity}
-                        </span>
+                        {log.error?.severity ? (
+                          <span className={`severity-badge severity-badge--${log.error.severity}`}>
+                            {SEVERITY_LABELS[log.error.severity] || log.error.severity}
+                          </span>
+                        ) : (
+                          <span className="severity-badge severity-badge--low">-</span>
+                        )}
                       </td>
-                      <td className="error-logs-page__cell-type">{log.error.type}</td>
-                      <td className="error-logs-page__cell-message">{log.error.message}</td>
+                      <td className="error-logs-page__cell-type">
+                        {log.error?.type || log.activity?.action_type || '-'}
+                      </td>
+                      <td className="error-logs-page__cell-message">
+                        {log.message || log.error?.message || '-'}
+                      </td>
                       <td className="error-logs-page__cell-user">
                         {log.actor.name || log.actor.user_id || '-'}
                       </td>
@@ -495,37 +575,72 @@ export const ErrorLogsPage = () => {
                   </div>
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">심각도</span>
-                    <span className={`severity-badge severity-badge--${detailLog.error.severity}`}>
-                      {SEVERITY_LABELS[detailLog.error.severity] || detailLog.error.severity}
+                    <span className={`severity-badge severity-badge--${detailLog.error?.severity || 'low'}`}>
+                      {detailLog.error?.severity ? (SEVERITY_LABELS[detailLog.error.severity] || detailLog.error.severity) : '-'}
                     </span>
                   </div>
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">카테고리</span>
                     <span className="error-logs-detail__value">
-                      {CATEGORY_LABELS[detailLog.error.category] || detailLog.error.category}
+                      {detailLog.error?.category ? (CATEGORY_LABELS[detailLog.error.category] || detailLog.error.category) : '-'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* 에러 정보 */}
+              {/* 로그 정보 */}
               <div className="error-logs-detail__section">
-                <h3 className="error-logs-detail__section-title">에러 정보</h3>
-                <div className="error-logs-detail__item">
-                  <span className="error-logs-detail__label">타입</span>
-                  <span className="error-logs-detail__value">{detailLog.error.type}</span>
-                </div>
-                <div className="error-logs-detail__item">
-                  <span className="error-logs-detail__label">메시지</span>
-                  <span className="error-logs-detail__value error-logs-detail__value--message">
-                    {detailLog.error.message}
-                  </span>
-                </div>
-                {detailLog.error.stack && (
-                  <div className="error-logs-detail__item">
-                    <span className="error-logs-detail__label">스택 트레이스</span>
-                    <pre className="error-logs-detail__stack">{detailLog.error.stack}</pre>
-                  </div>
+                <h3 className="error-logs-detail__section-title">
+                  {detailLog.logType === 'activity' ? '활동 정보' : '에러 정보'}
+                </h3>
+                {detailLog.logType === 'activity' ? (
+                  <>
+                    <div className="error-logs-detail__item">
+                      <span className="error-logs-detail__label">액션</span>
+                      <span className="error-logs-detail__value">
+                        {detailLog.activity?.action_type || '-'}
+                      </span>
+                    </div>
+                    <div className="error-logs-detail__item">
+                      <span className="error-logs-detail__label">카테고리</span>
+                      <span className="error-logs-detail__value">
+                        {detailLog.activity?.category || '-'}
+                      </span>
+                    </div>
+                    <div className="error-logs-detail__item">
+                      <span className="error-logs-detail__label">메시지</span>
+                      <span className="error-logs-detail__value">
+                        {detailLog.message || '-'}
+                      </span>
+                    </div>
+                    {detailLog.activity?.success !== undefined && (
+                      <div className="error-logs-detail__item">
+                        <span className="error-logs-detail__label">결과</span>
+                        <span className="error-logs-detail__value">
+                          {detailLog.activity.success ? '성공' : '실패'}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="error-logs-detail__item">
+                      <span className="error-logs-detail__label">타입</span>
+                      <span className="error-logs-detail__value">{detailLog.error?.type || '-'}</span>
+                    </div>
+                    <div className="error-logs-detail__item">
+                      <span className="error-logs-detail__label">메시지</span>
+                      <span className="error-logs-detail__value error-logs-detail__value--message">
+                        {detailLog.error?.message || detailLog.message || '-'}
+                      </span>
+                    </div>
+                    {detailLog.error?.stack && (
+                      <div className="error-logs-detail__item">
+                        <span className="error-logs-detail__label">스택 트레이스</span>
+                        <pre className="error-logs-detail__stack">{detailLog.error.stack}</pre>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

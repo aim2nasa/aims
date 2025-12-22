@@ -9,7 +9,6 @@ import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   helpContentApi,
   type FAQ,
-  type FAQCategoryInfo,
 } from '@/features/help-content/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { Modal } from '@/shared/ui/Modal/Modal';

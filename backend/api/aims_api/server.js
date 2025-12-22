@@ -18,6 +18,7 @@ const { getTierDefinitions } = require('./lib/storageQuotaService');
 const metricsCollector = require('./lib/metricsCollector');
 const activityLogger = require('./lib/activityLogger');
 const errorLogger = require('./lib/errorLogger');
+const backendLogger = require('./lib/backendLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 // 공유 스키마에서 컬렉션명 상수 import
@@ -65,6 +66,9 @@ app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
 });
+
+// 백엔드 로거 미들웨어 (요청 컨텍스트 캡처)
+app.use(backendLogger.middleware);
 
 /**
  * 정규식 특수문자 이스케이프 함수
@@ -594,35 +598,11 @@ const registerFallbackHandlers = () => {
   });
 
   app.use((error, req, res, next) => {
-    console.error('서버 오류:', error);
-
-    // ErrorLogger로 기록
-    errorLogger.log({
-      actor: {
-        user_id: req.user?.id || null,
-        name: req.user?.name || null,
-        role: req.user?.role || 'anonymous',
-        ip_address: req.ip,
-        user_agent: req.headers['user-agent']
-      },
-      source: {
-        type: 'backend',
-        endpoint: req.originalUrl,
-        method: req.method
-      },
-      error: {
-        type: error.name || 'Error',
-        message: error.message || 'Unknown error',
-        stack: error.stack,
-        severity: 'high',
-        category: 'unhandled'
-      },
-      context: {
-        request_id: req.headers['x-request-id']
-      }
-    }).catch(err => {
-      console.error('[Server] 에러 로깅 실패:', err.message);
-    });
+    // backendLogger로 에러 기록 (미들웨어가 컨텍스트 자동 캡처)
+    backendLogger.error('Server', `${req.method} ${req.originalUrl} - ${error.message}`, error)
+      .catch(err => {
+        console.error('[Server] 에러 로깅 실패:', err.message);
+      });
 
     res.status(500).json({
       success: false,
@@ -1025,7 +1005,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('문서 목록 조회 오류:', error);
+    backendLogger.error('Documents', '문서 목록 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '문서 목록 조회에 실패했습니다.',
@@ -1427,7 +1407,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('문서 상태 조회 오류:', error);
+    backendLogger.error('Documents', '문서 상태 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '문서 상태 조회에 실패했습니다.',
@@ -1558,7 +1538,7 @@ app.get('/webhook/get-status/:document_id', async (req, res) => {
       last_updated: utcNowISO()
     });
   } catch (error) {
-    console.error('문서 상태 조회 오류:', error);
+    backendLogger.error('Documents', '문서 상태 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '문서 상태 조회에 실패했습니다.',
@@ -2118,7 +2098,7 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
       message: '문서가 성공적으로 삭제되었습니다.'
     });
   } catch (error) {
-    console.error('문서 삭제 오류:', error);
+    backendLogger.error('Documents', '문서 삭제 오류', error);
 
     // 문서 삭제 실패 로그
     activityLogger.log({
@@ -2896,7 +2876,7 @@ app.get('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('고객 목록 조회 오류:', error);
+    backendLogger.error('Customers', '고객 목록 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '고객 목록 조회에 실패했습니다.',
@@ -3022,7 +3002,7 @@ app.post('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
       data: createdCustomer
     });
   } catch (error) {
-    console.error('고객 등록 오류:', error);
+    backendLogger.error('Customers', '고객 등록 오류', error);
 
     // 고객 등록 실패 로그
     activityLogger.log({
@@ -3664,7 +3644,7 @@ app.put('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
       address_archived: addressChanged
     });
   } catch (error) {
-    console.error('고객 수정 오류:', error);
+    backendLogger.error('Customers', '고객 수정 오류', error);
 
     // 고객 수정 실패 로그
     activityLogger.log({
@@ -3948,7 +3928,7 @@ app.delete('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
       permanent: true
     });
   } catch (error) {
-    console.error('고객 삭제 오류:', error);
+    backendLogger.error('Customers', '고객 삭제 오류', error);
 
     // 고객 삭제 실패 로그
     activityLogger.log({
@@ -5266,7 +5246,7 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       pdf_conversion: pdfConversionResult
     });
   } catch (error) {
-    console.error('문서 연결 오류:', error);
+    backendLogger.error('Documents', '문서 연결 오류', error);
 
     // 문서 업로드 실패 로그 (actorInfo 사용)
     activityLogger.log({

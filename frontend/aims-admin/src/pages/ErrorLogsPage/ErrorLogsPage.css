@@ -139,6 +139,26 @@
   background: rgba(255, 149, 0, 0.05);
 }
 
+.error-logs-page__stat-card--error {
+  border-color: var(--color-error, #ff3b30);
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.error-logs-page__stat-card--warn {
+  border-color: #ff9500;
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.error-logs-page__stat-card--info {
+  border-color: #007aff;
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.error-logs-page__stat-card--activity {
+  border-color: #34c759;
+  background: rgba(52, 199, 89, 0.05);
+}
+
 .error-logs-page__stat-value {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
@@ -151,6 +171,22 @@
 
 .error-logs-page__stat-card--high .error-logs-page__stat-value {
   color: #ff9500;
+}
+
+.error-logs-page__stat-card--error .error-logs-page__stat-value {
+  color: var(--color-error, #ff3b30);
+}
+
+.error-logs-page__stat-card--warn .error-logs-page__stat-value {
+  color: #ff9500;
+}
+
+.error-logs-page__stat-card--info .error-logs-page__stat-value {
+  color: #007aff;
+}
+
+.error-logs-page__stat-card--activity .error-logs-page__stat-value {
+  color: #34c759;
 }
 
 .error-logs-page__stat-label {
@@ -254,6 +290,10 @@
   width: 140px;
 }
 
+.error-logs-page__th-level {
+  width: 70px;
+}
+
 .error-logs-page__th-source {
   width: 90px;
 }
@@ -345,6 +385,40 @@
 .severity-badge--low {
   background-color: rgba(142, 142, 147, 0.15);
   color: var(--color-text-secondary);
+}
+
+/* Level Badges */
+.level-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.level-badge--error {
+  background-color: rgba(255, 59, 48, 0.15);
+  color: var(--color-error, #ff3b30);
+}
+
+.level-badge--warn {
+  background-color: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+}
+
+.level-badge--info {
+  background-color: rgba(0, 122, 255, 0.15);
+  color: #007aff;
+}
+
+.level-badge--debug {
+  background-color: rgba(142, 142, 147, 0.15);
+  color: var(--color-text-secondary, #8e8e93);
+}
+
+.level-badge--activity {
+  background-color: rgba(52, 199, 89, 0.15);
+  color: #34c759;
 }
 
 /* Pagination */

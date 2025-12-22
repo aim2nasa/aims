@@ -1,19 +1,31 @@
 /**
- * 에러 로거 서비스
- * 프론트엔드/백엔드 에러를 체계적으로 수집하여 관리자 대시보드에서 조회
+ * 시스템 로거 서비스
+ * 프론트엔드/백엔드 로그를 체계적으로 수집하여 관리자 대시보드에서 조회
  *
  * 기록 원칙:
- * - WHO: 누가 (에러 발생 사용자)
+ * - WHO: 누가 (로그 발생 사용자)
  * - WHEN: 언제 (타임스탬프)
  * - WHERE: 어디서 (소스 위치)
- * - WHAT: 무엇이 (에러 상세)
+ * - WHAT: 무엇이 (로그 상세)
  * - CONTEXT: 맥락 (요청 정보)
  *
  * @since 2025-12-22
+ * @updated 2025-12-22 - 전체 로그 레벨 지원 (debug/info/warn/error)
  */
 
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
+
+// 로그 레벨 정의
+const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
+
+// 레벨별 샘플링 비율 (시스템 부하 제어)
+const SAMPLING_RATE = {
+  debug: 0.01,   // 1% - 디버그 로그는 대부분 스킵
+  info: 0.10,    // 10% - 정보 로그는 샘플링
+  warn: 1.0,     // 100% - 경고는 모두 수집
+  error: 1.0     // 100% - 에러는 모두 수집
+};
 
 // 민감 정보 필드 목록
 const SENSITIVE_FIELDS = [
@@ -31,8 +43,9 @@ const SENSITIVE_FIELDS = [
   'authorization'
 ];
 
-// 30일 = 30 * 24 * 60 * 60 초
-const TTL_SECONDS = 2592000;
+// TTL 설정 (환경변수로 설정 가능, 기본 30일, 최대 30일)
+const DEFAULT_TTL_DAYS = parseInt(process.env.SYSTEM_LOG_TTL_DAYS || '30', 10);
+const TTL_SECONDS = Math.min(DEFAULT_TTL_DAYS, 30) * 86400;
 
 class ErrorLogger {
   constructor() {
@@ -84,20 +97,23 @@ class ErrorLogger {
       // 에러 타입별 조회
       await this.collection.createIndex({ 'error.type': 1, timestamp: -1 });
 
-      // 30일 TTL (자동 삭제)
+      // 로그 레벨별 조회
+      await this.collection.createIndex({ level: 1, timestamp: -1 });
+
+      // TTL (자동 삭제) - 환경변수로 설정 가능
       await this.collection.createIndex(
         { timestamp: 1 },
         { expireAfterSeconds: TTL_SECONDS }
       );
 
-      console.log('[ErrorLogger] 인덱스 생성 완료 (30일 TTL)');
+      console.log(`[SystemLogger] 인덱스 생성 완료 (${DEFAULT_TTL_DAYS}일 TTL)`);
     } catch (error) {
       console.error('[ErrorLogger] 인덱스 생성 실패:', error.message);
     }
   }
 
   /**
-   * 에러 로그 기록
+   * 에러 로그 기록 (기존 API 호환)
    * @param {Object} params - 로그 파라미터
    * @param {Object} params.actor - 사용자 정보
    * @param {Object} params.source - 에러 발생 위치
@@ -106,12 +122,126 @@ class ErrorLogger {
    * @param {Object} params.meta - 메타 정보 (선택)
    */
   async log({ actor = {}, source = {}, error = {}, context = {}, meta = {} }) {
+    // 기존 log() 메서드는 error 레벨로 처리 (하위 호환성)
+    return this._insertLog('error', { actor, source, error, context, meta });
+  }
+
+  /**
+   * 레벨별 로그 기록 (샘플링 적용)
+   * @param {string} level - 로그 레벨 (debug, info, warn, error)
+   * @param {Object} params - 로그 파라미터
+   */
+  async logWithLevel(level, { actor = {}, source = {}, message = '', data = null, error = null, context = {}, meta = {} }) {
     if (!this.collection) {
-      console.warn('[ErrorLogger] 초기화되지 않음, 로그 스킵');
+      console.warn('[SystemLogger] 초기화되지 않음, 로그 스킵');
+      return null;
+    }
+
+    // 레벨 정규화
+    const normalizedLevel = LOG_LEVELS.includes(level) ? level : 'info';
+
+    // 샘플링 체크 (시스템 부하 제어)
+    const samplingRate = SAMPLING_RATE[normalizedLevel] || 1.0;
+    if (Math.random() > samplingRate) {
+      return null; // 샘플링으로 스킵
+    }
+
+    // error 레벨이면 기존 error 객체 사용, 아니면 message로 구성
+    const errorObj = normalizedLevel === 'error' && error ? {
+      type: error.type || 'Error',
+      code: error.code || null,
+      message: error.message || message || 'Unknown error',
+      stack: error.stack || null,
+      severity: this._normalizeSeverity(error.severity),
+      category: this._normalizeCategory(error.category)
+    } : null;
+
+    return this._insertLog(normalizedLevel, {
+      actor,
+      source,
+      message,
+      data,
+      error: errorObj,
+      context,
+      meta
+    });
+  }
+
+  /**
+   * 편의 메서드: debug 레벨 로그
+   */
+  async debug(component, message, data = null, context = {}) {
+    return this.logWithLevel('debug', {
+      source: { type: 'backend', component },
+      message,
+      data,
+      context
+    });
+  }
+
+  /**
+   * 편의 메서드: info 레벨 로그
+   */
+  async info(component, message, data = null, context = {}) {
+    return this.logWithLevel('info', {
+      source: { type: 'backend', component },
+      message,
+      data,
+      context
+    });
+  }
+
+  /**
+   * 편의 메서드: warn 레벨 로그
+   */
+  async warn(component, message, data = null, context = {}) {
+    return this.logWithLevel('warn', {
+      source: { type: 'backend', component },
+      message,
+      data,
+      context
+    });
+  }
+
+  /**
+   * 편의 메서드: error 레벨 로그
+   */
+  async error(component, message, errorOrData = null, context = {}) {
+    const isError = errorOrData instanceof Error || (errorOrData && errorOrData.stack);
+    return this.logWithLevel('error', {
+      source: { type: 'backend', component },
+      message,
+      data: isError ? null : errorOrData,
+      error: isError ? {
+        type: errorOrData.name || 'Error',
+        message: errorOrData.message,
+        stack: errorOrData.stack,
+        severity: 'high',
+        category: 'runtime'
+      } : null,
+      context
+    });
+  }
+
+  /**
+   * 내부: 로그 실제 저장
+   */
+  async _insertLog(level, { actor = {}, source = {}, message = '', data = null, error = null, context = {}, meta = {} }) {
+    if (!this.collection) {
+      console.warn('[SystemLogger] 초기화되지 않음, 로그 스킵');
       return null;
     }
 
     const logEntry = {
+      // LEVEL (새 필드)
+      level: level || 'error',
+
+      // MESSAGE (새 필드 - 일반 로그용)
+      message: message || (error ? error.message : null) || '',
+
+      // DATA (새 필드 - 추가 데이터)
+      data: data ? this._maskSensitiveFields(data) : null,
+
       // WHO
       actor: {
         user_id: actor.user_id || actor.userId || null,
@@ -137,15 +267,15 @@ class ErrorLogger {
         column: source.column || null
       },
 
-      // WHAT
-      error: {
+      // WHAT (error 레벨일 때만)
+      error: error ? {
         type: error.type || 'Error',
         code: error.code || null,
         message: error.message || 'Unknown error',
         stack: error.stack || null,
         severity: this._normalizeSeverity(error.severity),
         category: this._normalizeCategory(error.category)
-      },
+      } : null,
 
       // CONTEXT
       context: {
@@ -173,17 +303,18 @@ class ErrorLogger {
       return result.insertedId;
     } catch (err) {
       // 로깅 실패가 메인 로직을 방해하지 않도록 콘솔만 출력
-      console.error('[ErrorLogger] 저장 실패:', err.message);
+      console.error('[SystemLogger] 저장 실패:', err.message);
       return null;
     }
   }
 
   /**
-   * 에러 로그 조회 (Admin용)
+   * 시스템 로그 조회 (Admin용)
    * @param {Object} params - 조회 파라미터
    */
   async getLogs({
     userId,
+    level,        // 'debug' | 'info' | 'warn' | 'error' 또는 쉼표 구분 문자열 'warn,error'
     type,         // 'frontend' | 'backend'
     severity,     // 'low' | 'medium' | 'high' | 'critical'
     category,     // 'api' | 'network' | 'timeout' | 'validation' | 'runtime' | 'unhandled'
@@ -198,11 +329,20 @@ class ErrorLogger {
     limit = 50
   } = {}) {
     if (!this.collection) {
-      throw new Error('ErrorLogger가 초기화되지 않았습니다');
+      throw new Error('SystemLogger가 초기화되지 않았습니다');
     }
 
     const query = {};
 
+    // 레벨 필터 (쉼표 구분 가능: 'warn,error')
+    if (level && level !== 'all') {
+      const levels = level.split(',').map(l => l.trim()).filter(l => LOG_LEVELS.includes(l));
+      if (levels.length === 1) {
+        query.level = levels[0];
+      } else if (levels.length > 1) {
+        query.level = { $in: levels };
+      }
+    }
     if (userId) {
       query['actor.user_id'] = userId;
     }
@@ -232,10 +372,12 @@ class ErrorLogger {
     }
     if (search) {
       query.$or = [
+        { message: { $regex: search, $options: 'i' } },
         { 'error.message': { $regex: search, $options: 'i' } },
         { 'error.type': { $regex: search, $options: 'i' } },
         { 'source.url': { $regex: search, $options: 'i' } },
         { 'source.endpoint': { $regex: search, $options: 'i' } },
+        { 'source.component': { $regex: search, $options: 'i' } },
         { 'actor.name': { $regex: search, $options: 'i' } }
       ];
     }
@@ -245,10 +387,12 @@ class ErrorLogger {
     // 정렬 필드 매핑 및 정렬 객체 생성
     const sortFieldMap = {
       timestamp: 'timestamp',
+      level: 'level',
       source: 'source.type',
+      component: 'source.component',
       severity: 'error.severity',
       type: 'error.type',
-      message: 'error.message',
+      message: 'message',
       user: 'actor.name'
     };
     const sortField = sortFieldMap[sortBy] || 'timestamp';
@@ -276,12 +420,12 @@ class ErrorLogger {
   }
 
   /**
-   * 에러 통계 조회
+   * 시스템 로그 통계 조회
    * @param {number} days - 조회 일수 (기본 7일)
    */
   async getStats(days = 7) {
     if (!this.collection) {
-      throw new Error('ErrorLogger가 초기화되지 않았습니다');
+      throw new Error('SystemLogger가 초기화되지 않았습니다');
     }
 
     const startDate = new Date();
@@ -290,6 +434,7 @@ class ErrorLogger {
     // 전체 통계
     const [
       totalCount,
+      byLevel,
       bySource,
       bySeverity,
       byCategory,
@@ -299,21 +444,27 @@ class ErrorLogger {
       // 전체 개수
       this.collection.countDocuments({ timestamp: { $gte: startDate } }),
 
+      // 레벨별 (debug/info/warn/error)
+      this.collection.aggregate([
+        { $match: { timestamp: { $gte: startDate } } },
+        { $group: { _id: '$level', count: { $sum: 1 } } }
+      ]).toArray(),
+
       // 소스별 (frontend/backend)
       this.collection.aggregate([
         { $match: { timestamp: { $gte: startDate } } },
         { $group: { _id: '$source.type', count: { $sum: 1 } } }
       ]).toArray(),
 
-      // 심각도별
+      // 심각도별 (error 레벨만)
       this.collection.aggregate([
-        { $match: { timestamp: { $gte: startDate } } },
+        { $match: { timestamp: { $gte: startDate }, level: 'error' } },
         { $group: { _id: '$error.severity', count: { $sum: 1 } } }
       ]).toArray(),
 
-      // 카테고리별
+      // 카테고리별 (error 레벨만)
       this.collection.aggregate([
-        { $match: { timestamp: { $gte: startDate } } },
+        { $match: { timestamp: { $gte: startDate }, level: 'error' } },
         { $group: { _id: '$error.category', count: { $sum: 1 } } }
       ]).toArray(),
 
@@ -329,9 +480,9 @@ class ErrorLogger {
         { $sort: { _id: 1 } }
       ]).toArray(),
 
-      // 자주 발생하는 에러 Top 10
+      // 자주 발생하는 에러 Top 10 (error 레벨만)
       this.collection.aggregate([
-        { $match: { timestamp: { $gte: startDate } } },
+        { $match: { timestamp: { $gte: startDate }, level: 'error' } },
         {
           $group: {
             _id: { type: '$error.type', message: '$error.message' },
@@ -347,6 +498,7 @@ class ErrorLogger {
     return {
       period: { days, startDate, endDate: new Date() },
       total: totalCount,
+      byLevel: this._arrayToObject(byLevel),
       bySource: this._arrayToObject(bySource),
       bySeverity: this._arrayToObject(bySeverity),
       byCategory: this._arrayToObject(byCategory),

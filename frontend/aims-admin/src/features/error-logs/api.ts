@@ -45,12 +45,18 @@ export interface ErrorLogMeta {
   notes?: string;
 }
 
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
 export interface ErrorLog {
   _id: string;
+  logType?: 'system' | 'activity';  // 로그 타입 (시스템/활동)
+  level: LogLevel;  // 로그 레벨
   actor: ErrorLogActor;
   timestamp: string;
   source: ErrorLogSource;
-  error: ErrorLogError;
+  message?: string;  // 로그 메시지 (error 레벨이 아닌 경우)
+  data?: Record<string, unknown>;  // 추가 데이터
+  error?: ErrorLogError;  // activity 로그는 error가 없을 수 있음
   context: {
     request_id?: string;
     browser?: string;
@@ -61,10 +67,18 @@ export interface ErrorLog {
     componentStack?: string;
   };
   meta: ErrorLogMeta;
+  activity?: {  // activity 로그 전용 정보
+    action_type?: string;
+    category?: string;
+    success?: boolean;
+    affected_count?: number;
+    duration_ms?: number;
+  };
 }
 
 export interface ErrorLogStats {
   total: number;
+  byLevel: Record<string, number>;
   bySeverity: Record<string, number>;
   byCategory: Record<string, number>;
   bySource: Record<string, number>;
@@ -87,12 +101,14 @@ export interface ErrorLogStatsResponse {
   stats: ErrorLogStats;
 }
 
-export type SortField = 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user';
+export type SortField = 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user' | 'level';
 export type SortOrder = 'asc' | 'desc';
+export type LogType = 'system' | 'activity' | 'all';
 
 export interface GetErrorLogsParams {
   page?: number;
   limit?: number;
+  level?: string;  // 'debug', 'info', 'warn', 'error' 또는 콤마로 구분된 복수 레벨
   source?: 'frontend' | 'backend';
   severity?: string;
   category?: string;
@@ -103,6 +119,7 @@ export interface GetErrorLogsParams {
   resolved?: boolean;
   sortBy?: SortField;
   sortOrder?: SortOrder;
+  logType?: LogType;  // 'system' | 'activity' | 'all'
 }
 
 // ============================================================
@@ -118,6 +135,7 @@ export const errorLogsApi = {
 
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.level) queryParams.append('level', params.level);
     if (params.source) queryParams.append('type', params.source); // 백엔드는 'type' 파라미터 사용
     if (params.severity) queryParams.append('severity', params.severity);
     if (params.category) queryParams.append('category', params.category);
@@ -128,6 +146,7 @@ export const errorLogsApi = {
     if (params.resolved !== undefined) queryParams.append('resolved', params.resolved.toString());
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    if (params.logType) queryParams.append('logType', params.logType);
 
     const queryString = queryParams.toString();
     const endpoint = queryString
@@ -252,4 +271,14 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export const SOURCE_LABELS: Record<string, string> = {
   frontend: '프론트엔드',
   backend: '백엔드',
+};
+
+/**
+ * 레벨 레이블
+ */
+export const LEVEL_LABELS: Record<string, string> = {
+  debug: '디버그',
+  info: '정보',
+  warn: '경고',
+  error: '에러',
 };

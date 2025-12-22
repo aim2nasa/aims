@@ -1,18 +1,26 @@
 /**
- * Error Logs API Routes
- * 에러 로그 수집 및 조회 API (SSE 실시간 스트림 지원)
+ * System Logs API Routes
+ * 시스템 로그 수집 및 조회 API (SSE 실시간 스트림 지원)
  * @since 2025-12-22
+ * @updated 2025-12-22 - 전체 로그 레벨 지원 (debug/info/warn/error)
+ * @updated 2025-12-22 - activity_logs 통합 (시스템 동작 파악용)
  */
 
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const errorLogger = require('../lib/errorLogger');
+const systemLogger = require('../lib/errorLogger');
+const activityLogger = require('../lib/activityLogger');
 
 // ==================== SSE 클라이언트 관리 ====================
 
 // 관리자 SSE 클라이언트 Set
-const errorLogSSEClients = new Set();
+const sseClients = new Set();
+
+// SSE 배치 전송 설정 (시스템 부하 제어)
+const SSE_BATCH_INTERVAL = 1000;  // 1초
+const SSE_BATCH_SIZE = 20;        // 최대 20개
+let logBuffer = [];
 
 /**
  * SSE 이벤트 전송 헬퍼
@@ -22,16 +30,127 @@ function sendSSE(res, event, data) {
     res.write(`event: ${event}\n`);
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   } catch (e) {
-    console.error('[ErrorLogs-SSE] 전송 실패:', e.message);
+    console.error('[SystemLogs-SSE] 전송 실패:', e.message);
   }
 }
 
 /**
- * 모든 관리자에게 새 에러 로그 브로드캐스트
+ * 로그를 배치 버퍼에 추가 (즉시 브로드캐스트 대신)
  */
+function queueLogForBroadcast(log) {
+  logBuffer.push(log);
+}
+
+/**
+ * 배치 브로드캐스트 (1초마다 실행)
+ */
+setInterval(() => {
+  if (logBuffer.length === 0 || sseClients.size === 0) return;
+
+  const batch = logBuffer.splice(0, SSE_BATCH_SIZE);
+
+  // 클라이언트에게 배치 전송
+  sseClients.forEach(res => {
+    sendSSE(res, 'logs-batch', batch);
+  });
+
+  // 남은 로그가 있으면 다음 사이클에 전송
+  if (logBuffer.length > SSE_BATCH_SIZE * 3) {
+    // 버퍼 오버플로우 방지 - 오래된 로그 삭제
+    console.warn(`[SystemLogs-SSE] 버퍼 오버플로우, ${logBuffer.length - SSE_BATCH_SIZE * 2}개 로그 삭제`);
+    logBuffer = logBuffer.slice(-SSE_BATCH_SIZE * 2);
+  }
+}, SSE_BATCH_INTERVAL);
+
+/**
+ * 모든 관리자에게 새 로그 브로드캐스트 (기존 호환)
+ * error 레벨은 즉시 전송, 나머지는 배치
+ */
+function broadcastNewLog(log) {
+  if (sseClients.size === 0) return;
+
+  // error/warn 레벨은 즉시 전송 (중요한 알림)
+  if (log.level === 'error' || log.level === 'warn') {
+    sseClients.forEach(res => sendSSE(res, 'new-log', log));
+  } else {
+    // debug/info는 배치로 전송
+    queueLogForBroadcast(log);
+  }
+}
+
+// 기존 함수 별칭 (하위 호환성)
 function broadcastNewErrorLog(errorLog) {
-  console.log(`[ErrorLogs-SSE] 새 에러 브로드캐스트 - 연결된 클라이언트: ${errorLogSSEClients.size}`);
-  errorLogSSEClients.forEach(res => sendSSE(res, 'new-error', errorLog));
+  broadcastNewLog({ ...errorLog, level: 'error' });
+}
+
+// ==================== Activity Log 변환 ====================
+
+/**
+ * activity_log를 system_log 형식으로 변환
+ * @param {Object} actLog - activity_log 문서
+ * @returns {Object} - system_log 형식
+ */
+function transformActivityLog(actLog) {
+  // 액션 타입을 레벨로 매핑
+  const levelMap = {
+    'create': 'info',
+    'update': 'info',
+    'delete': 'warn',
+    'upload': 'info',
+    'download': 'info',
+    'bulk_create': 'info',
+    'bulk_delete': 'warn',
+    'login': 'info',
+    'logout': 'info'
+  };
+
+  const level = actLog.result?.success === false ? 'error' : (levelMap[actLog.action?.type] || 'info');
+
+  // 메시지 생성
+  const actionDesc = actLog.action?.description || `${actLog.action?.category} ${actLog.action?.type}`;
+  const targetName = actLog.action?.target?.entity_name;
+  const message = targetName ? `${actionDesc}: ${targetName}` : actionDesc;
+
+  return {
+    _id: actLog._id,
+    logType: 'activity',  // 로그 타입 구분
+    level,
+    actor: actLog.actor || {},
+    timestamp: actLog.timestamp,
+    source: {
+      type: 'backend',
+      component: actLog.action?.category || 'system',
+      endpoint: actLog.location?.endpoint,
+      method: actLog.location?.method
+    },
+    message,
+    data: actLog.action?.target ? {
+      entity_type: actLog.action.target.entity_type,
+      entity_id: actLog.action.target.entity_id,
+      entity_name: actLog.action.target.entity_name
+    } : null,
+    error: actLog.result?.success === false ? {
+      type: 'OperationError',
+      message: actLog.result?.error?.message || 'Operation failed',
+      severity: 'medium',
+      category: 'runtime'
+    } : null,
+    context: {
+      request_id: actLog.meta?.request_id,
+      session_id: actLog.meta?.session_id
+    },
+    meta: {
+      resolved: actLog.result?.success !== false
+    },
+    // 원본 activity 정보 (상세 조회용)
+    activity: {
+      action_type: actLog.action?.type,
+      category: actLog.action?.category,
+      success: actLog.result?.success,
+      affected_count: actLog.result?.affected_count,
+      duration_ms: actLog.result?.duration_ms
+    }
+  };
 }
 
 /**
@@ -105,15 +224,15 @@ module.exports = function(db, authenticateJWT, requireRole) {
     res.flushHeaders();
 
     // 클라이언트 등록
-    errorLogSSEClients.add(res);
-    console.log(`[ErrorLogs-SSE] 클라이언트 연결됨 (총 ${errorLogSSEClients.size}개)`);
+    sseClients.add(res);
+    console.log(`[SystemLogs-SSE] 클라이언트 연결됨 (총 ${sseClients.size}개)`);
 
     // 연결 확인 이벤트
-    sendSSE(res, 'connected', { message: 'Error logs stream connected' });
+    sendSSE(res, 'connected', { message: 'System logs stream connected' });
 
     // 초기 통계 전송
     try {
-      const stats = await errorLogger.getStats(7);
+      const stats = await systemLogger.getStats(7);
       sendSSE(res, 'init', { stats });
     } catch (err) {
       console.error('[ErrorLogs-SSE] 초기 통계 전송 실패:', err.message);
@@ -127,8 +246,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
     // 연결 종료 처리
     req.on('close', () => {
       clearInterval(pingInterval);
-      errorLogSSEClients.delete(res);
-      console.log(`[ErrorLogs-SSE] 클라이언트 연결 해제 (남은 ${errorLogSSEClients.size}개)`);
+      sseClients.delete(res);
+      console.log(`[SystemLogs-SSE] 클라이언트 연결 해제 (남은 ${sseClients.size}개)`);
     });
   });
 
@@ -201,7 +320,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
       };
 
       // 에러 로그 저장
-      const logId = await errorLogger.log(errorLogData);
+      const logId = await systemLogger.log(errorLogData);
 
       // SSE로 관리자에게 실시간 브로드캐스트
       broadcastNewErrorLog({
@@ -223,16 +342,183 @@ module.exports = function(db, authenticateJWT, requireRole) {
     }
   });
 
+  // ==================== 시스템 로그 수집 API ====================
+
+  /**
+   * POST /api/system-logs
+   * 프론트엔드 일반 로그 수집 (모든 레벨)
+   * 인증 선택적 - 로그인하지 않은 사용자의 로그도 수집
+   */
+  router.post('/system-logs', optionalAuthJWT, async (req, res) => {
+    try {
+      const { level, source, message, data, context } = req.body;
+
+      // 필수 필드 검증
+      if (!level || !['debug', 'info', 'warn', 'error'].includes(level)) {
+        return res.status(400).json({
+          success: false,
+          message: 'level은 debug, info, warn, error 중 하나여야 합니다'
+        });
+      }
+
+      if (!source || !source.type) {
+        return res.status(400).json({
+          success: false,
+          message: 'source.type은 필수입니다'
+        });
+      }
+
+      if (!message) {
+        return res.status(400).json({
+          success: false,
+          message: 'message는 필수입니다'
+        });
+      }
+
+      // 로그 저장 (샘플링 적용됨)
+      const logId = await systemLogger.logWithLevel(level, {
+        actor: {
+          user_id: req.user?.id || null,
+          name: req.user?.name || null,
+          role: req.user?.role || 'anonymous',
+          ip_address: req.ip,
+          user_agent: req.headers['user-agent']
+        },
+        source: {
+          type: source.type,
+          component: source.component || null,
+          url: source.url || null,
+          file: source.file || null,
+          line: source.line || null
+        },
+        message,
+        data: data || null,
+        context: {
+          request_id: context?.request_id || context?.requestId || null,
+          session_id: context?.session_id || context?.sessionId || null,
+          browser: context?.browser || null,
+          os: context?.os || null,
+          version: context?.version || null
+        }
+      });
+
+      // 샘플링으로 저장되지 않은 경우 logId는 null
+      if (logId) {
+        // SSE 브로드캐스트
+        broadcastNewLog({
+          _id: logId,
+          level,
+          source,
+          message,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.json({
+        success: true,
+        logId,
+        sampled: !!logId
+      });
+    } catch (err) {
+      console.error('[SystemLogs] 로그 수집 실패:', err.message);
+      res.status(500).json({
+        success: false,
+        message: '로그 저장에 실패했습니다'
+      });
+    }
+  });
+
+  /**
+   * POST /api/system-logs/batch
+   * 프론트엔드 로그 배치 수집
+   * 인증 선택적
+   */
+  router.post('/system-logs/batch', optionalAuthJWT, async (req, res) => {
+    try {
+      const { logs } = req.body;
+
+      if (!Array.isArray(logs) || logs.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'logs 배열이 필요합니다'
+        });
+      }
+
+      // 최대 50개로 제한
+      const logsToProcess = logs.slice(0, 50);
+      const results = [];
+
+      for (const log of logsToProcess) {
+        const { level, source, message, data, context } = log;
+
+        // 유효성 검사
+        if (!level || !['debug', 'info', 'warn', 'error'].includes(level)) continue;
+        if (!source || !source.type) continue;
+        if (!message) continue;
+
+        const logId = await systemLogger.logWithLevel(level, {
+          actor: {
+            user_id: req.user?.id || null,
+            name: req.user?.name || null,
+            role: req.user?.role || 'anonymous',
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent']
+          },
+          source: {
+            type: source.type,
+            component: source.component || null,
+            url: source.url || null,
+            file: source.file || null,
+            line: source.line || null
+          },
+          message,
+          data: data || null,
+          context: {
+            request_id: context?.request_id || context?.requestId || null,
+            session_id: context?.session_id || context?.sessionId || null,
+            browser: context?.browser || null,
+            os: context?.os || null,
+            version: context?.version || null
+          }
+        });
+
+        if (logId) {
+          results.push({ logId, level, sampled: true });
+          broadcastNewLog({
+            _id: logId,
+            level,
+            source,
+            message,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        processed: logsToProcess.length,
+        saved: results.length
+      });
+    } catch (err) {
+      console.error('[SystemLogs] 배치 로그 수집 실패:', err.message);
+      res.status(500).json({
+        success: false,
+        message: '로그 저장에 실패했습니다'
+      });
+    }
+  });
+
   // ==================== Admin 조회 API ====================
 
   /**
    * GET /api/admin/error-logs
-   * 에러 로그 목록 조회 (관리자 전용)
+   * 시스템 로그 목록 조회 (관리자 전용)
    *
    * Query:
    * - page: number (기본값: 1)
    * - limit: number (기본값: 50)
    * - userId: string (사용자 ID 필터)
+   * - level: 'debug' | 'info' | 'warn' | 'error' 또는 콤마로 구분된 복수 레벨 (예: 'warn,error')
    * - type: 'frontend' | 'backend' | 'all'
    * - severity: 'low' | 'medium' | 'high' | 'critical' | 'all'
    * - category: 'api' | 'network' | 'timeout' | 'validation' | 'runtime' | 'unhandled' | 'all'
@@ -240,8 +526,9 @@ module.exports = function(db, authenticateJWT, requireRole) {
    * - endDate: ISO date string
    * - search: string (메시지/타입 검색)
    * - resolved: 'true' | 'false' | 'all'
-   * - sortBy: 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user'
+   * - sortBy: 'timestamp' | 'source' | 'severity' | 'type' | 'message' | 'user' | 'level'
    * - sortOrder: 'asc' | 'desc'
+   * - logType: 'system' | 'activity' | 'all' (기본값: 'all')
    */
   router.get('/admin/error-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
@@ -249,6 +536,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
         page = 1,
         limit = 50,
         userId,
+        level,
         type,
         severity,
         category,
@@ -258,28 +546,133 @@ module.exports = function(db, authenticateJWT, requireRole) {
         search,
         resolved,
         sortBy = 'timestamp',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        logType = 'all'  // 'system' | 'activity' | 'all'
       } = req.query;
 
-      const result = await errorLogger.getLogs({
-        userId,
-        type,
-        severity,
-        category,
-        errorType,
-        startDate,
-        endDate,
-        search,
-        resolved,
-        sortBy,
-        sortOrder,
-        page: parseInt(page),
-        limit: Math.min(100, parseInt(limit))
+      const pageNum = parseInt(page);
+      const limitNum = Math.min(100, parseInt(limit));
+      const sortDir = sortOrder === 'asc' ? 1 : -1;
+
+      let allLogs = [];
+      let systemTotal = 0;
+      let activityTotal = 0;
+
+      // 시스템 로그 조회 (error_logs)
+      if (logType === 'all' || logType === 'system') {
+        const systemResult = await systemLogger.getLogs({
+          userId,
+          level,
+          type,
+          severity,
+          category,
+          errorType,
+          startDate,
+          endDate,
+          search,
+          resolved,
+          sortBy,
+          sortOrder,
+          page: 1,
+          limit: 500  // 병합용으로 더 많이 가져옴
+        });
+
+        // logType 표시 추가
+        const systemLogs = (systemResult.logs || []).map(log => ({
+          ...log,
+          logType: 'system'
+        }));
+
+        allLogs = allLogs.concat(systemLogs);
+        systemTotal = systemResult.pagination?.total || 0;
+      }
+
+      // 활동 로그 조회 (activity_logs)
+      if (logType === 'all' || logType === 'activity') {
+        // activity_logs 필터 구성
+        const activityQuery = {};
+
+        if (userId) {
+          activityQuery['actor.user_id'] = userId;
+        }
+        if (startDate || endDate) {
+          activityQuery.timestamp = {};
+          if (startDate) activityQuery.timestamp.$gte = new Date(startDate);
+          if (endDate) activityQuery.timestamp.$lte = new Date(endDate);
+        }
+        if (search) {
+          activityQuery.$or = [
+            { 'action.description': { $regex: search, $options: 'i' } },
+            { 'action.target.entity_name': { $regex: search, $options: 'i' } },
+            { 'action.category': { $regex: search, $options: 'i' } }
+          ];
+        }
+        // type이 backend이면 activity 포함, frontend면 activity 제외
+        if (type === 'frontend') {
+          // activity는 모두 backend이므로 스킵
+          activityTotal = 0;
+        } else {
+          try {
+            const activityResult = await activityLogger.getLogs({
+              userId,
+              startDate,
+              endDate,
+              page: 1,
+              limit: 500
+            });
+
+            // 변환하여 추가
+            const activityLogs = (activityResult.logs || [])
+              .map(transformActivityLog)
+              .filter(log => {
+                // level 필터 적용
+                if (level && level !== 'all') {
+                  const levels = level.split(',').map(l => l.trim());
+                  if (!levels.includes(log.level)) return false;
+                }
+                // search 필터 적용
+                if (search) {
+                  const searchLower = search.toLowerCase();
+                  const messageMatch = log.message?.toLowerCase().includes(searchLower);
+                  const componentMatch = log.source?.component?.toLowerCase().includes(searchLower);
+                  if (!messageMatch && !componentMatch) return false;
+                }
+                return true;
+              });
+
+            allLogs = allLogs.concat(activityLogs);
+            activityTotal = activityResult.pagination?.total || 0;
+          } catch (actErr) {
+            console.warn('[ErrorLogs] activity_logs 조회 실패:', actErr.message);
+          }
+        }
+      }
+
+      // 시간순 정렬
+      allLogs.sort((a, b) => {
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return sortDir * (timeB - timeA);
       });
+
+      // 페이지네이션 적용
+      const totalCount = allLogs.length;
+      const startIdx = (pageNum - 1) * limitNum;
+      const paginatedLogs = allLogs.slice(startIdx, startIdx + limitNum);
 
       res.json({
         success: true,
-        ...result
+        logs: paginatedLogs,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: systemTotal + activityTotal,
+          totalPages: Math.ceil((systemTotal + activityTotal) / limitNum)
+        },
+        counts: {
+          system: systemTotal,
+          activity: activityTotal
+        }
       });
     } catch (err) {
       console.error('[ErrorLogs] 조회 실패:', err.message);
@@ -301,7 +694,39 @@ module.exports = function(db, authenticateJWT, requireRole) {
     try {
       const days = Math.min(90, Math.max(1, parseInt(req.query.days) || 7));
 
-      const stats = await errorLogger.getStats(days);
+      // 시스템 로그 통계
+      const stats = await systemLogger.getStats(days);
+
+      // 활동 로그 통계 추가
+      try {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+
+        const activityResult = await activityLogger.getLogs({
+          startDate: startDate.toISOString(),
+          page: 1,
+          limit: 1  // 총 개수만 필요
+        });
+
+        // 활동 로그 개수를 통계에 추가
+        stats.activity = {
+          total: activityResult.pagination?.total || 0
+        };
+
+        // byLevel에 activity를 info로 추가
+        stats.byLevel = stats.byLevel || {};
+        stats.byLevel.activity = activityResult.pagination?.total || 0;
+
+        // total에 activity 추가
+        stats.total = (stats.total || 0) + (activityResult.pagination?.total || 0);
+
+        // bySource에 backend activity 추가
+        stats.bySource = stats.bySource || {};
+        stats.bySource.activity = activityResult.pagination?.total || 0;
+      } catch (actErr) {
+        console.warn('[ErrorLogs] activity 통계 조회 실패:', actErr.message);
+        stats.activity = { total: 0 };
+      }
 
       res.json({
         success: true,
@@ -324,7 +749,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
     try {
       const { id } = req.params;
 
-      const log = await errorLogger.getLog(id);
+      const log = await systemLogger.getLog(id);
 
       if (!log) {
         return res.status(404).json({
@@ -356,7 +781,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
     try {
       const { id } = req.params;
 
-      const deleted = await errorLogger.deleteLog(id);
+      const deleted = await systemLogger.deleteLog(id);
 
       if (!deleted) {
         return res.status(404).json({
@@ -394,10 +819,10 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
       if (ids && Array.isArray(ids) && ids.length > 0) {
         // ID 배열로 삭제
-        deletedCount = await errorLogger.deleteLogs(ids);
+        deletedCount = await systemLogger.deleteLogs(ids);
       } else if (filter && Object.keys(filter).length > 0) {
         // 필터 조건으로 삭제
-        deletedCount = await errorLogger.deleteByFilter(filter);
+        deletedCount = await systemLogger.deleteByFilter(filter);
       } else {
         return res.status(400).json({
           success: false,
@@ -434,7 +859,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const { notes } = req.body;
       const adminId = req.user.id;
 
-      const resolved = await errorLogger.markResolved(id, adminId, notes);
+      const resolved = await systemLogger.markResolved(id, adminId, notes);
 
       if (!resolved) {
         return res.status(404).json({

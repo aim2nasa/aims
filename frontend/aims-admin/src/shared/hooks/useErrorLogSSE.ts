@@ -1,7 +1,8 @@
 /**
- * 에러 로그 실시간 스트림 훅
- * SSE를 통해 새 에러 로그를 실시간으로 수신
+ * 시스템 로그 실시간 스트림 훅
+ * SSE를 통해 새 시스템 로그를 실시간으로 수신
  * @since 2025-12-22
+ * @updated 2025-12-22 - 전체 로그 레벨 지원 (debug/info/warn/error)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -78,39 +79,71 @@ export function useErrorLogSSE(enabled: boolean = true): UseErrorLogSSEReturn {
       }
     });
 
+    // 통계 업데이트 헬퍼
+    const updateStats = (log: ErrorLog) => {
+      setStats((prev) => {
+        if (!prev) return prev;
+        const level = log.level || 'error';
+        return {
+          ...prev,
+          total: prev.total + 1,
+          byLevel: {
+            ...prev.byLevel,
+            [level]: (prev.byLevel?.[level] || 0) + 1
+          },
+          bySeverity: log.error ? {
+            ...prev.bySeverity,
+            [log.error.severity]: (prev.bySeverity[log.error.severity] || 0) + 1
+          } : prev.bySeverity,
+          byCategory: log.error ? {
+            ...prev.byCategory,
+            [log.error.category]: (prev.byCategory[log.error.category] || 0) + 1
+          } : prev.byCategory,
+          bySource: {
+            ...prev.bySource,
+            [log.source.type]: (prev.bySource[log.source.type] || 0) + 1
+          }
+        };
+      });
+    };
+
+    // 기존 new-error 이벤트 (하위 호환성)
     eventSource.addEventListener('new-error', (e) => {
       try {
         const errorLog: ErrorLog = JSON.parse(e.data);
-        console.log('[ErrorLogSSE] 새 에러 수신:', errorLog);
-
-        // 새 에러 목록에 추가 (최신 것이 앞에)
+        console.log('[SystemLogSSE] 새 에러 수신:', errorLog);
         setNewLogs((prev) => [errorLog, ...prev]);
-
-        // 통계 업데이트 (카운트 증가)
-        setStats((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            total: prev.total + 1,
-            bySeverity: {
-              ...prev.bySeverity,
-              [errorLog.error.severity]: (prev.bySeverity[errorLog.error.severity] || 0) + 1
-            },
-            byCategory: {
-              ...prev.byCategory,
-              [errorLog.error.category]: (prev.byCategory[errorLog.error.category] || 0) + 1
-            },
-            bySource: {
-              ...prev.bySource,
-              [errorLog.source.type]: (prev.bySource[errorLog.source.type] || 0) + 1
-            }
-          };
-        });
-
-        // React Query 캐시 무효화 (목록 자동 갱신)
+        updateStats(errorLog);
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
-        console.error('[ErrorLogSSE] new-error 이벤트 파싱 실패:', error);
+        console.error('[SystemLogSSE] new-error 이벤트 파싱 실패:', error);
+      }
+    });
+
+    // 새 로그 이벤트 (모든 레벨)
+    eventSource.addEventListener('new-log', (e) => {
+      try {
+        const log: ErrorLog = JSON.parse(e.data);
+        console.log('[SystemLogSSE] 새 로그 수신:', log);
+        setNewLogs((prev) => [log, ...prev]);
+        updateStats(log);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+      } catch (error) {
+        console.error('[SystemLogSSE] new-log 이벤트 파싱 실패:', error);
+      }
+    });
+
+    // 배치 로그 이벤트 (debug/info 레벨)
+    eventSource.addEventListener('logs-batch', (e) => {
+      try {
+        const logs: ErrorLog[] = JSON.parse(e.data);
+        console.log('[SystemLogSSE] 배치 로그 수신:', logs.length, '개');
+        // 배치는 역순으로 추가 (최신이 앞에)
+        setNewLogs((prev) => [...logs.reverse(), ...prev]);
+        logs.forEach(updateStats);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+      } catch (error) {
+        console.error('[SystemLogSSE] logs-batch 이벤트 파싱 실패:', error);
       }
     });
 
