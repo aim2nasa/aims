@@ -1,8 +1,17 @@
 import { memo, useRef, useCallback } from 'react'
 import { useRecentCustomersStore } from '../../shared/store/useRecentCustomersStore'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import './RecentCustomers.css'
+
+// 시계 아이콘 - CustomMenu와 동일한 구조 (16x16 SVG)
+const ClockIcon = () => (
+  <span className="recent-customers__icon-container">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z" />
+      <path d="M8 3.5a.75.75 0 0 0-.75.75v4l2.72 2.72a.75.75 0 0 0 1.06-1.06L8.75 7.63V4.25A.75.75 0 0 0 8 3.5z" />
+    </svg>
+  </span>
+)
 
 interface RecentCustomersProps {
   collapsed?: boolean
@@ -26,6 +35,7 @@ const BuildingIcon = () => (
 
 const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDoubleClick }: RecentCustomersProps) => {
   const recentCustomers = useRecentCustomersStore((state) => state.recentCustomers)
+  const clearRecentCustomers = useRecentCustomersStore((state) => state.clearRecentCustomers)
 
   // 클릭/더블클릭 구분을 위한 타이머 ref
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -60,14 +70,23 @@ const RecentCustomers = memo(({ collapsed = false, onCustomerClick, onCustomerDo
     <div className="recent-customers">
       {/* 섹션 헤더 */}
       <div className="recent-customers__header">
-        <span className="recent-customers__icon">
-          <SFSymbol
-            name="clock"
-            size={SFSymbolSize.FOOTNOTE}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-        </span>
+        <ClockIcon />
         <span className="recent-customers__title">최근 검색 고객</span>
+        <Tooltip content="목록 지우기" placement="top">
+          <button
+            type="button"
+            className="recent-customers__clear-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              clearRecentCustomers()
+            }}
+            aria-label="최근 검색 고객 목록 지우기"
+          >
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M1 1l6 6M7 1L1 7" />
+            </svg>
+          </button>
+        </Tooltip>
       </div>
 
       {/* 고객 리스트 */}

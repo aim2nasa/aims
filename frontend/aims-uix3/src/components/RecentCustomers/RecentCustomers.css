@@ -9,12 +9,11 @@
   margin-top: 2px;
 }
 
-/* 섹션 헤더 */
+/* 섹션 헤더 - CustomMenu 아이템과 동일 정렬 */
 .recent-customers__header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
-  padding: 2px var(--spacing-2);
+  padding: 6px 16px; /* custom-menu-item과 동일 */
   color: var(--color-text-tertiary);
   font-size: 10px;
   font-weight: 600;
@@ -24,15 +23,42 @@
   user-select: none;
 }
 
-.recent-customers__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 아이콘 - 색상만 지정 (CustomMenu와 동일) */
+.recent-customers__icon-container {
   color: var(--color-teal-500, #30d5c8);
 }
 
 .recent-customers__title {
   opacity: 0.8;
+  flex: 1;
+  margin-left: 4px; /* custom-menu-item-text와 동일 */
+}
+
+/* 목록 지우기 버튼 */
+.recent-customers__clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--easing-ease-out),
+              color var(--duration-fast) var(--easing-ease-out);
+}
+
+.recent-customers__header:hover .recent-customers__clear-btn {
+  opacity: 0.5;
+}
+
+.recent-customers__header .recent-customers__clear-btn:hover {
+  opacity: 1;
+  color: var(--color-text-secondary);
 }
 
 /* 고객 리스트 */
