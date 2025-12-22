@@ -158,15 +158,10 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
 
         logger.info(f"✅ 파일 업로드 완료: {uploaded_file.id}")
 
-        # 2. Responses API 호출 (검증된 방식)
+        # 2. Chat Completions API 호출 (파일 입력 지원)
         logger.info("🔍 OpenAI API 호출 중 (약 25초 소요)...")
 
-        response = ai_client.responses.create(
-            model=settings.OPENAI_MODEL,
-            input=[
-                {
-                    "role": "system",
-                    "content": """You are a strict document parsing assistant.
+        system_prompt = """You are a strict document parsing assistant.
 Extract contract tables AND summary totals from the Annual Report PDF (pages 2~N only, page 1 excluded).
 
 Rules:
@@ -213,12 +208,18 @@ Rules:
 
 NOTE: This PDF contains only pages 2~N (page 1 was excluded for token optimization).
 Customer name and issue date are already extracted from page 1."""
-                },
+
+        user_text = f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
+
+        response = ai_client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
                     "content": [
-                        {"type": "input_text", "text": f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"},
-                        {"type": "input_file", "file_id": uploaded_file.id}
+                        {"type": "text", "text": user_text},
+                        {"type": "file", "file": {"file_id": uploaded_file.id}}
                     ]
                 }
             ]
@@ -226,17 +227,12 @@ Customer name and issue date are already extracted from page 1."""
 
         logger.info("✅ OpenAI API 응답 수신 완료")
 
-        # 3. 응답 텍스트 추출
+        # 3. 응답 텍스트 추출 (Chat Completions 형식)
         try:
-            logger.info(f"DEBUG: response type = {type(response)}")
-            logger.info(f"DEBUG: response dir = {[attr for attr in dir(response) if not attr.startswith('_')][:20]}")
-            logger.info(f"DEBUG: has output? {hasattr(response, 'output')}")
-            logger.info(f"DEBUG: has choices? {hasattr(response, 'choices')}")
-
-            output_text = response.output[0].content[0].text.strip()
+            output_text = response.choices[0].message.content.strip()
             logger.info(f"📝 응답 텍스트 길이: {len(output_text)} 문자")
         except Exception as e:
-            logger.error(f"DEBUG: 응답 텍스트 추출 실패: {type(e).__name__}: {e}")
+            logger.error(f"❌ 응답 텍스트 추출 실패: {type(e).__name__}: {e}")
             logger.error(f"DEBUG: response = {response}")
             raise
 
