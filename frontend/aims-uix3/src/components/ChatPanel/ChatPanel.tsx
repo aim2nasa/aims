@@ -405,67 +405,75 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   }, [isOpen, fetchSessions]);
 
-  // 패널이 열릴 때 데이터 현황 오버레이 표시
+  // 통계 오버레이 표시 함수 (세션 첫 방문 및 헤더 아이콘 클릭 시 사용)
+  const showStatsOverlay = useCallback(async () => {
+    try {
+      const [customerStats, contractsResponse, documentStats] = await Promise.all([
+        CustomerService.getCustomerStats().catch(() => ({ total: 0 })),
+        ContractService.getContracts({ limit: 1 }).catch(() => ({ total: 0 })),
+        DocumentService.getDocumentStats().catch(() => ({ total: 0 })),
+      ]);
+
+      const stats: DataStats = {
+        customers: customerStats.total || 0,
+        contracts: contractsResponse.total || 0,
+        documents: documentStats.total || 0,
+      };
+
+      setDataStats(stats);
+      setAnimatedStats({ customers: 0, contracts: 0, documents: 0 });
+      setShowDataOverlay(true);
+
+      // 카운트업 애니메이션 (800ms)
+      const duration = 800;
+      const steps = 30;
+      const interval = duration / steps;
+      let step = 0;
+
+      const animationTimer = setInterval(() => {
+        step++;
+        const progress = step / steps;
+        const eased = 1 - Math.pow(1 - progress, 4);
+
+        setAnimatedStats({
+          customers: Math.round(stats.customers * eased),
+          contracts: Math.round(stats.contracts * eased),
+          documents: Math.round(stats.documents * eased),
+        });
+
+        if (step >= steps) {
+          clearInterval(animationTimer);
+          setAnimatedStats(stats);
+        }
+      }, interval);
+
+      // 3초 후 페이드아웃
+      setTimeout(() => {
+        setShowDataOverlay(false);
+      }, 3000);
+    } catch (error) {
+      console.error('[ChatPanel] 데이터 통계 로드 실패:', error);
+    }
+  }, []);
+
+  // 패널이 열릴 때 데이터 현황 오버레이 표시 (세션당 1회만)
   useEffect(() => {
     // isOpen이 false -> true로 변할 때만 실행
     if (isOpen && !prevIsOpenRef.current) {
-      // 데이터 통계 로드
-      const loadStats = async () => {
-        try {
-          const [customerStats, contractsResponse, documentStats] = await Promise.all([
-            CustomerService.getCustomerStats().catch(() => ({ total: 0 })),
-            ContractService.getContracts({ limit: 1 }).catch(() => ({ total: 0 })),
-            DocumentService.getDocumentStats().catch(() => ({ total: 0 })),
-          ]);
+      // 세션당 첫 방문인지 확인 (Progressive Disclosure)
+      const statsShownKey = 'aims-chat-stats-shown';
+      if (sessionStorage.getItem(statsShownKey)) {
+        prevIsOpenRef.current = isOpen;
+        return; // 이미 이번 세션에서 표시됨
+      }
+      sessionStorage.setItem(statsShownKey, 'true');
 
-          const stats: DataStats = {
-            customers: customerStats.total || 0,
-            contracts: contractsResponse.total || 0,
-            documents: documentStats.total || 0,
-          };
-
-          setDataStats(stats);
-          setAnimatedStats({ customers: 0, contracts: 0, documents: 0 });
-          setShowDataOverlay(true);
-
-          // 카운트업 애니메이션 (800ms 동안)
-          const duration = 800;
-          const steps = 30;
-          const interval = duration / steps;
-          let step = 0;
-
-          const animationTimer = setInterval(() => {
-            step++;
-            const progress = step / steps;
-            // easeOutQuart 이징 함수
-            const eased = 1 - Math.pow(1 - progress, 4);
-
-            setAnimatedStats({
-              customers: Math.round(stats.customers * eased),
-              contracts: Math.round(stats.contracts * eased),
-              documents: Math.round(stats.documents * eased),
-            });
-
-            if (step >= steps) {
-              clearInterval(animationTimer);
-              setAnimatedStats(stats);
-            }
-          }, interval);
-
-          // 3초 후 페이드아웃
-          setTimeout(() => {
-            setShowDataOverlay(false);
-          }, 3000);
-        } catch (error) {
-          console.error('[ChatPanel] 데이터 통계 로드 실패:', error);
-        }
-      };
-
-      loadStats();
+      // 통계 오버레이 표시
+      showStatsOverlay();
     }
 
     prevIsOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, showStatsOverlay]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -709,6 +717,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                 {/* 연필 */}
                 <path d="M12.854 1.146a.5.5 0 0 1 .707 0l1.293 1.293a.5.5 0 0 1 0 .707L8.207 9.793 6 10l.207-2.207 6.647-6.647z"/>
               </svg>
+            </button>
+          </Tooltip>
+          {/* 내 데이터 통계 */}
+          <Tooltip content="내 데이터" placement="bottom">
+            <button
+              type="button"
+              className="chat-panel__header-btn"
+              onClick={showStatsOverlay}
+              aria-label="내 데이터"
+            >
+              <SFSymbol name="chart.bar" size={SFSymbolSize.CAPTION_1} decorative />
             </button>
           </Tooltip>
           {/* 분리/도킹 토글 */}
@@ -1354,6 +1373,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               {/* 연필 */}
               <path d="M12.854 1.146a.5.5 0 0 1 .707 0l1.293 1.293a.5.5 0 0 1 0 .707L8.207 9.793 6 10l.207-2.207 6.647-6.647z"/>
             </svg>
+          </button>
+        </Tooltip>
+        <Tooltip content="내 데이터" placement="bottom">
+          <button
+            type="button"
+            className="chat-panel__header-btn"
+            onClick={(e) => { e.stopPropagation(); showStatsOverlay(); }}
+            aria-label="내 데이터"
+          >
+            <SFSymbol name="chart.bar" size={SFSymbolSize.CAPTION_1} decorative />
           </button>
         </Tooltip>
         <Tooltip content="도킹" placement="bottom">
