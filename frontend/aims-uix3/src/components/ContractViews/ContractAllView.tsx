@@ -121,12 +121,14 @@ export default function ContractAllView({
       setContracts(contractResponse.data)
 
       // 고객 ID -> 고객 유형 맵 생성
+      // ObjectId/String 형식 불일치 방지를 위해 String() 변환
       const typeMap = new Map<string, '개인' | '법인'>()
       customerResponse.customers.forEach((customer) => {
         const customerType = customer.insurance_info?.customer_type || '개인'
-        typeMap.set(customer._id, customerType)
+        typeMap.set(String(customer._id), customerType)
       })
       setCustomerTypeMap(typeMap)
+
     } catch (err) {
       console.error('[ContractAllView] 계약 목록 조회 실패:', err)
       setError('계약 목록을 불러오는 데 실패했습니다.')
@@ -264,8 +266,8 @@ export default function ContractAllView({
       switch (sortField) {
         case 'customer_type':
           // 고객 유형으로 정렬 (개인 < 법인)
-          aVal = a.customer_id ? (customerTypeMap.get(a.customer_id) === '법인' ? 1 : 0) : -1
-          bVal = b.customer_id ? (customerTypeMap.get(b.customer_id) === '법인' ? 1 : 0) : -1
+          aVal = a.customer_id ? (customerTypeMap.get(String(a.customer_id)) === '법인' ? 1 : 0) : -1
+          bVal = b.customer_id ? (customerTypeMap.get(String(b.customer_id)) === '법인' ? 1 : 0) : -1
           break
         case 'customer_name':
           aVal = a.customer_name || ''
@@ -832,7 +834,7 @@ export default function ContractAllView({
               )}
               {/* 고객 유형 아이콘 칼럼 (개인/법인) */}
               <span className="contract-type">
-                {contract.customer_id && customerTypeMap.get(contract.customer_id) === '법인' ? (
+                {contract.customer_id && customerTypeMap.get(String(contract.customer_id)) === '법인' ? (
                   <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon customer-type-icon--corporate">
                     <circle cx="10" cy="10" r="10" opacity="0.2" />
                     <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />

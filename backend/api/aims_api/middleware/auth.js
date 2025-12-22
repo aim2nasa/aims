@@ -243,6 +243,17 @@ function authenticateJWTorAPIKey(req, res, next) {
       ...decoded,
       authMethod: 'jwt'
     };
+
+    // ⭐ 개발 환경 전용: x-user-id 헤더로 사용자 ID 오버라이드 (개발자 모드 계정 전환)
+    // authenticateJWT와 동일한 동작 보장
+    if (process.env.NODE_ENV === 'development') {
+      const devUserId = req.headers['x-user-id'];
+      if (devUserId && devUserId !== decoded.id) {
+        console.log(`[DEV] 사용자 ID 오버라이드: ${decoded.id} → ${devUserId}`);
+        req.user = { ...req.user, id: devUserId };
+      }
+    }
+
     next();
   });
 }
