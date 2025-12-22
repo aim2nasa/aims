@@ -1160,6 +1160,82 @@ html[data-theme="dark"] .chat-panel__loading-overlay {
   background: rgba(26, 22, 37, 0.9);
 }
 
+/* ==================== Detached Mode (분리 모드) ==================== */
+
+/* 분리 모드 헤더 (DraggableModal 타이틀 영역) */
+.chat-panel__detached-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.chat-panel__detached-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-panel--detached {
+  /* DraggableModal 내부에서 사용 */
+  position: relative;
+  top: auto;
+  right: auto;
+  height: 100%;
+  width: 100%;
+  min-width: unset;
+  max-width: unset;
+  z-index: auto;
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: none;
+  border-left: none;
+  border-radius: 0;
+  background: linear-gradient(180deg, #ede5ff 0%, #e5f0ff 100%);
+}
+
+/* 분리 모드 모달 컨테이너 */
+.chat-panel-modal .draggable-modal__content {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel-modal .chat-panel--detached {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 분리 모드에서 헤더 스타일 조정 */
+.chat-panel--detached .chat-panel__header {
+  border-radius: 0;
+}
+
+/* 분리 모드에서 메시지 영역 */
+.chat-panel--detached .chat-panel__messages {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 분리 모드에서 입력 영역 */
+.chat-panel--detached .chat-panel__input-area {
+  border-radius: 0;
+}
+
+/* Dark Theme - Detached Mode */
+html[data-theme="dark"] .chat-panel--detached {
+  background: linear-gradient(180deg, #1a1625 0%, #161422 100%);
+}
+
+html[data-theme="dark"] .chat-panel-modal .draggable-modal {
+  background: linear-gradient(180deg, #1a1625 0%, #161422 100%);
+}
+
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
   .chat-panel {

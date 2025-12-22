@@ -12,6 +12,7 @@ import { DocumentService } from '@/services/DocumentService';
 import { ContractService } from '@/services/contractService';
 import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
+import DraggableModal from '@/shared/ui/DraggableModal';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import './ChatPanel.css';
 
@@ -265,6 +266,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showSessionList, setShowSessionList] = useState(false);
+  // 분리 모드 (독립 모달)
+  const [isDetached, setIsDetached] = useState(() => {
+    return localStorage.getItem('aims-chat-detached') === 'true';
+  });
   // 고급 사용자 모드: 기능 목록 없이 바로 채팅
   const [preferDirectChat, setPreferDirectChat] = useState(() => {
     return localStorage.getItem('aims-chat-direct-mode') === 'true';
@@ -281,6 +286,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // 분리/도킹 토글
+  const handleToggleDetach = useCallback(() => {
+    setIsDetached(prev => {
+      const newValue = !prev;
+      localStorage.setItem('aims-chat-detached', newValue ? 'true' : 'false');
+      return newValue;
+    });
+  }, []);
 
   const {
     sendMessage,
@@ -579,17 +593,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   // 대화 초기화 (= 새 대화)
   const handleClear = handleNewChat;
 
-  return (
-    <div
-      ref={panelRef}
-      className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
-      style={{ width: panelWidth }}
-    >
-      {/* 리사이즈 핸들 */}
-      <div
-        className="chat-panel__resize-handle"
-        onMouseDown={handleResizeStart}
-      />
+  // 패널 콘텐츠 (공통)
+  const panelContent = (
+    <>
+      {/* 도킹 모드에서만 리사이즈 핸들 표시 */}
+      {!isDetached && (
+        <div
+          className="chat-panel__resize-handle"
+          onMouseDown={handleResizeStart}
+        />
+      )}
       {/* Header */}
       <div className="chat-panel__header">
         <div className="chat-panel__title">
@@ -643,6 +656,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               aria-label="새 대화"
             >
               <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
+            </button>
+          </Tooltip>
+          {/* 분리/도킹 토글 */}
+          <Tooltip content={isDetached ? "도킹" : "분리"} placement="bottom">
+            <button
+              type="button"
+              className={`chat-panel__header-btn ${isDetached ? 'chat-panel__header-btn--active' : ''}`}
+              onClick={handleToggleDetach}
+              aria-label={isDetached ? "도킹" : "분리"}
+            >
+              {isDetached ? (
+                // 도킹 아이콘: 오른쪽으로 붙이기
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M14 4v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                // 분리 아이콘: 떠 있는 창
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="2" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 1h6.5a.5.5 0 0 1 .5.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )}
             </button>
           </Tooltip>
           <Tooltip content="닫기" placement="bottom">
@@ -928,6 +964,372 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
           )}
         </Button>
       </form>
+    </>
+  );
+
+  // 분리 모드용 콘텐츠 (헤더 제외)
+  const detachedPanelContent = (
+    <>
+      {/* 세션 목록 드롭다운 */}
+      {showSessionList && (
+        <div className="chat-panel__session-list">
+          <div className="chat-panel__session-list-header">
+            <span>이전 대화</span>
+            {isLoadingSessions && <span className="chat-panel__session-loading">...</span>}
+          </div>
+          {sessions.length === 0 ? (
+            <div className="chat-panel__session-empty">저장된 대화가 없습니다</div>
+          ) : (
+            <div className="chat-panel__session-items">
+              {sessions.map((s) => (
+                <div
+                  key={s.session_id}
+                  className={`chat-panel__session-item ${sessionId === s.session_id ? 'chat-panel__session-item--active' : ''}`}
+                  onClick={() => handleSelectSession(s)}
+                >
+                  <div className="chat-panel__session-info">
+                    <div className="chat-panel__session-title">{s.title}</div>
+                    <div className="chat-panel__session-meta">
+                      {s.message_count}개 메시지 · {new Date(s.updated_at).toLocaleDateString('ko-KR')}
+                    </div>
+                  </div>
+                  <Tooltip content="삭제">
+                    <button
+                      type="button"
+                      className="chat-panel__session-delete"
+                      onClick={(e) => handleDeleteSession(e, s.session_id)}
+                      aria-label="삭제"
+                    >
+                      <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} decorative />
+                    </button>
+                  </Tooltip>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 메시지 로딩 오버레이 */}
+      {isLoadingMessages && (
+        <div className="chat-panel__loading-overlay">
+          <span className="chat-panel__loading-dot" />
+          <span className="chat-panel__loading-dot" />
+          <span className="chat-panel__loading-dot" />
+        </div>
+      )}
+
+      {/* 데이터 현황 오버레이 */}
+      {showDataOverlay && (
+        <div className="chat-panel__data-overlay">
+          <div className="chat-panel__data-overlay-content">
+            <div className="chat-panel__data-overlay-title">내 데이터</div>
+            <div className="chat-panel__data-stats">
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">👤</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.customers.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">고객</span>
+              </div>
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">📋</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.contracts.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">계약</span>
+              </div>
+              <div className="chat-panel__data-stat">
+                <span className="chat-panel__data-stat-icon">📄</span>
+                <span className="chat-panel__data-stat-value">{animatedStats.documents.toLocaleString()}</span>
+                <span className="chat-panel__data-stat-label">문서</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="chat-panel__messages">
+        {messages.length === 0 && !isLoading && (
+          preferDirectChat ? (
+            <div className="chat-panel__empty">
+              <SFSymbol
+                name="sparkles"
+                size={SFSymbolSize.TITLE_3}
+                weight={SFSymbolWeight.LIGHT}
+                decorative
+              />
+              <p>무엇이든 물어보세요!</p>
+              <span>고객, 계약, 문서 관련 질문을 자유롭게 하세요</span>
+              <button
+                type="button"
+                className="chat-panel__welcome-feature chat-panel__welcome-feature--secondary"
+                onClick={() => handleToggleMode(false)}
+              >
+                <span className="chat-panel__welcome-feature-icon">📋</span>
+                <div className="chat-panel__welcome-feature-content">
+                  <div className="chat-panel__welcome-feature-title">사용 가능한 기능 보기</div>
+                  <div className="chat-panel__welcome-feature-desc">18가지 AI 기능 목록 확인</div>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="chat-panel__welcome">
+              <div className="chat-panel__welcome-header">
+                <SFSymbol
+                  name="sparkles"
+                  size={SFSymbolSize.TITLE_3}
+                  weight={SFSymbolWeight.LIGHT}
+                  decorative
+                />
+                <div className="chat-panel__welcome-text">
+                  <p>무엇이든 물어보세요!</p>
+                  <span>고객, 계약, 문서 관련 질문을 자유롭게 하세요</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="chat-panel__welcome-feature chat-panel__welcome-feature--primary"
+                onClick={() => handleToggleMode(true)}
+              >
+                <span className="chat-panel__welcome-feature-icon">💬</span>
+                <div className="chat-panel__welcome-feature-content">
+                  <div className="chat-panel__welcome-feature-title">바로 채팅하기</div>
+                  <div className="chat-panel__welcome-feature-desc">기능 목록 없이 바로 대화 시작</div>
+                </div>
+              </button>
+              <div className="chat-panel__welcome-features-header">
+                아래 기능을 클릭하면 예시가 입력됩니다
+              </div>
+              <div className="chat-panel__welcome-features">
+                {HELP_FEATURES.map((feature, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="chat-panel__welcome-feature"
+                    onClick={() => {
+                      setInput(feature.examples[exampleIndices[idx]]);
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
+                    <div className="chat-panel__welcome-feature-content">
+                      <div className="chat-panel__welcome-feature-title">{feature.title}</div>
+                      <div className="chat-panel__welcome-feature-desc">{feature.desc}</div>
+                    </div>
+                    <div className="chat-panel__welcome-feature-pagination">
+                      <button
+                        type="button"
+                        className="chat-panel__welcome-feature-nav"
+                        onClick={(e) => handlePrevExample(idx, e)}
+                        aria-label="이전 예시"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <span className="chat-panel__welcome-feature-page">
+                        {exampleIndices[idx] + 1}/{feature.examples.length}
+                      </span>
+                      <button
+                        type="button"
+                        className="chat-panel__welcome-feature-nav"
+                        onClick={(e) => handleNextExample(idx, e)}
+                        aria-label="다음 예시"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        )}
+
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`chat-panel__message chat-panel__message--${msg.role}`}
+          >
+            <div className="chat-panel__message-content">
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {isLoading && currentResponse && (
+          <div className="chat-panel__message chat-panel__message--assistant chat-panel__message--streaming">
+            <div className="chat-panel__message-content">
+              {currentResponse}
+              <span className="chat-panel__cursor" />
+            </div>
+          </div>
+        )}
+
+        {activeTools.length > 0 && (
+          <div className="chat-panel__tool-indicator">
+            <span className="chat-panel__tool-spinner" />
+            <span>데이터 조회 중: {activeTools.join(', ')}</span>
+          </div>
+        )}
+
+        {isLoading && !currentResponse && activeTools.length === 0 && (
+          <div className="chat-panel__loading">
+            <span className="chat-panel__loading-dot" />
+            <span className="chat-panel__loading-dot" />
+            <span className="chat-panel__loading-dot" />
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <form className="chat-panel__input-area" onSubmit={handleSubmit}>
+        <div className="chat-panel__input-wrapper">
+          <textarea
+            ref={inputRef}
+            className="chat-panel__input"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
+            disabled={isLoading}
+            rows={1}
+          />
+          {input.trim() && !isLoading && (
+            <button
+              type="button"
+              className="chat-panel__input-clear"
+              onClick={() => {
+                setInput('');
+                if (inputRef.current) {
+                  inputRef.current.style.height = 'auto';
+                  inputRef.current.focus();
+                }
+              }}
+              aria-label="입력 지우기"
+            >
+              <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.FOOTNOTE} decorative />
+            </button>
+          )}
+        </div>
+        <Button
+          type="submit"
+          variant="primary"
+          size="sm"
+          disabled={!input.trim() || isLoading}
+        >
+          {isLoading ? (
+            <SFSymbol name="stop.fill" size={SFSymbolSize.CAPTION_1} decorative />
+          ) : (
+            <SFSymbol name="arrow.up" size={SFSymbolSize.CAPTION_1} decorative />
+          )}
+        </Button>
+      </form>
+    </>
+  );
+
+  // 분리 모드용 헤더 타이틀 (드래그 가능한 영역에 액션 버튼 포함)
+  const detachedHeaderTitle = (
+    <div className="chat-panel__detached-header">
+      <div className="chat-panel__title">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="robotGradientModal" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="100%" stopColor="#06B6D4" />
+            </linearGradient>
+          </defs>
+          <rect x="4" y="5" width="16" height="14" rx="4" fill="url(#robotGradientModal)" />
+          <rect x="7" y="9" width="3" height="4" rx="1" fill="white" />
+          <rect x="14" y="9" width="3" height="4" rx="1" fill="white" />
+          <line x1="12" y1="5" x2="12" y2="2" stroke="url(#robotGradientModal)" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="1.5" r="1.5" fill="url(#robotGradientModal)" />
+          <rect x="1" y="9" width="3" height="6" rx="1" fill="url(#robotGradientModal)" />
+          <rect x="20" y="9" width="3" height="6" rx="1" fill="url(#robotGradientModal)" />
+        </svg>
+        <span>AI 어시스턴트</span>
+      </div>
+      <div className="chat-panel__detached-actions">
+        <Tooltip content="이전 대화" placement="bottom">
+          <button
+            type="button"
+            className={`chat-panel__header-btn ${showSessionList ? 'chat-panel__header-btn--active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); setShowSessionList(!showSessionList); }}
+            aria-label="이전 대화"
+          >
+            <SFSymbol name="clock.arrow.circlepath" size={SFSymbolSize.CAPTION_1} decorative />
+          </button>
+        </Tooltip>
+        <Tooltip content="새 대화" placement="bottom">
+          <button
+            type="button"
+            className="chat-panel__header-btn"
+            onClick={(e) => { e.stopPropagation(); handleNewChat(); }}
+            aria-label="새 대화"
+          >
+            <SFSymbol name="plus" size={SFSymbolSize.CAPTION_1} decorative />
+          </button>
+        </Tooltip>
+        <Tooltip content="도킹" placement="bottom">
+          <button
+            type="button"
+            className="chat-panel__header-btn chat-panel__header-btn--active"
+            onClick={(e) => { e.stopPropagation(); handleToggleDetach(); }}
+            aria-label="도킹"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M14 4v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </Tooltip>
+      </div>
+    </div>
+  );
+
+  // 분리 모드: DraggableModal 사용
+  if (isDetached) {
+    return (
+      <DraggableModal
+        visible={isOpen}
+        onClose={onClose}
+        title={detachedHeaderTitle}
+        showHeader={true}
+        initialWidth={450}
+        initialHeight={650}
+        minWidth={360}
+        minHeight={400}
+        className="chat-panel-modal"
+        escapeToClose={false}
+        backdropClosable={false}
+      >
+        <div className="chat-panel chat-panel--detached">
+          {detachedPanelContent}
+        </div>
+      </DraggableModal>
+    );
+  }
+
+  // 도킹 모드: 기존 슬라이드 패널
+  return (
+    <div
+      ref={panelRef}
+      className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
+      style={{ width: panelWidth }}
+    >
+      {panelContent}
     </div>
   );
 };
