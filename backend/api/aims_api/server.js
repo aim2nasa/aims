@@ -653,6 +653,73 @@ function analyzeDocumentStatus(doc) {
 // prepareDocumentResponse와 formatBytes는 lib/documentStatusHelper.js로 이동됨
 
 /**
+ * 문서 통계 조회 API
+ * GET /api/documents/stats
+ */
+app.get('/api/documents/stats', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId required' });
+    }
+
+    const baseFilter = { ownerId: userId };
+
+    // 병렬로 통계 조회
+    const [total, active, archived, deleted, ocrStats, sizeStats] = await Promise.all([
+      // 전체 문서 수
+      db.collection(COLLECTIONS.FILES).countDocuments(baseFilter),
+      // 활성 문서 수
+      db.collection(COLLECTIONS.FILES).countDocuments({
+        ...baseFilter,
+        status: { $nin: ['archived', 'deleted'] }
+      }),
+      // 보관 문서 수
+      db.collection(COLLECTIONS.FILES).countDocuments({
+        ...baseFilter,
+        status: 'archived'
+      }),
+      // 삭제 문서 수
+      db.collection(COLLECTIONS.FILES).countDocuments({
+        ...baseFilter,
+        status: 'deleted'
+      }),
+      // OCR 통계
+      db.collection(COLLECTIONS.FILES).aggregate([
+        { $match: baseFilter },
+        {
+          $group: {
+            _id: null,
+            completed: { $sum: { $cond: [{ $eq: ['$ocr_status', 'completed'] }, 1, 0] } },
+            pending: { $sum: { $cond: [{ $in: ['$ocr_status', ['pending', 'processing', null]] }, 1, 0] } }
+          }
+        }
+      ]).toArray(),
+      // 총 파일 크기
+      db.collection(COLLECTIONS.FILES).aggregate([
+        { $match: baseFilter },
+        { $group: { _id: null, totalSize: { $sum: '$fileSize' } } }
+      ]).toArray()
+    ]);
+
+    res.json({
+      success: true,
+      total,
+      active,
+      archived,
+      deleted,
+      totalSize: sizeStats[0]?.totalSize || 0,
+      ocrCompleted: ocrStats[0]?.completed || 0,
+      ocrPending: ocrStats[0]?.pending || 0,
+      mostUsedTags: []
+    });
+  } catch (error) {
+    console.error('[Documents Stats] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * 모든 문서 목록 조회 API (문서검색View용)
  */
 app.get('/api/documents', authenticateJWT, async (req, res) => {
@@ -2737,6 +2804,57 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 // ==================== 고객 관리 API ====================
+
+/**
+ * 고객 통계 조회 API
+ * GET /api/customers/stats
+ */
+app.get('/api/customers/stats', authenticateJWTorAPIKey, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId required' });
+    }
+
+    const baseFilter = { 'meta.created_by': userId };
+
+    // 병렬로 통계 조회
+    const [total, active, inactive, newThisMonth] = await Promise.all([
+      // 전체 고객 수
+      db.collection(CUSTOMERS_COLLECTION).countDocuments(baseFilter),
+      // 활성 고객 수
+      db.collection(CUSTOMERS_COLLECTION).countDocuments({
+        ...baseFilter,
+        'meta.status': { $ne: 'inactive' }
+      }),
+      // 휴면 고객 수
+      db.collection(CUSTOMERS_COLLECTION).countDocuments({
+        ...baseFilter,
+        'meta.status': 'inactive'
+      }),
+      // 이번 달 신규 고객 수
+      db.collection(CUSTOMERS_COLLECTION).countDocuments({
+        ...baseFilter,
+        'meta.created_at': {
+          $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        }
+      })
+    ]);
+
+    res.json({
+      success: true,
+      total,
+      active,
+      inactive,
+      newThisMonth,
+      totalTags: 0,
+      mostUsedTags: []
+    });
+  } catch (error) {
+    console.error('[Customers Stats] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 /**
  * 고객 목록 조회 API
