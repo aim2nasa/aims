@@ -567,6 +567,72 @@
       ],
       "id": "notify-processing-error-001",
       "name": "Notify Processing Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/internal/ocr/log-usage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"file_id\": $('Pasre').item.json.doc_id, \"owner_id\": $('Pasre').item.json.owner_id, \"page_count\": $('OCR Done').item.json.ocr.page_count ?? 1, \"status\": \"done\", \"processed_at\": $now.toISO() } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        -32
+      ],
+      "id": "log-ocr-usage-success-001",
+      "name": "Log OCR Usage (Success)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/internal/ocr/log-usage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"file_id\": $('Pasre').item.json.doc_id, \"owner_id\": $('Pasre').item.json.owner_id, \"page_count\": 0, \"status\": \"error\", \"processed_at\": $now.toISO(), \"error_code\": $('Set OCR Error Message').item.json.ocr.statusCode, \"error_message\": $('Set OCR Error Message').item.json.ocr.statusMessage } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        496,
+        -320
+      ],
+      "id": "log-ocr-usage-error-001",
+      "name": "Log OCR Usage (Error)"
     }
   ],
   "pinData": {},
@@ -731,6 +797,17 @@
       "main": [
         [
           {
+            "node": "Log OCR Usage (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log OCR Usage (Success)": {
+      "main": [
+        [
+          {
             "node": "Notify Processing Complete",
             "type": "main",
             "index": 0
@@ -761,6 +838,17 @@
       ]
     },
     "Update OCR Error in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Log OCR Usage (Error)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log OCR Usage (Error)": {
       "main": [
         [
           {

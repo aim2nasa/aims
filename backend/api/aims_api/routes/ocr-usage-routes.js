@@ -2,6 +2,7 @@
  * OCR Usage API Routes
  * OCR 사용량 조회 API
  * @since 2025-12-14
+ * @updated 2025-12-23 - OCR 사용량 영구 보존 (ocr_usage_log)
  */
 
 const express = require('express');
@@ -9,6 +10,7 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const Redis = require('ioredis');
 const { calculateOCRCost } = require('../lib/ocrPricing');
+const ocrUsageLogService = require('../lib/ocrUsageLogService');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -87,33 +89,18 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
-      const [ocrInPeriodResult, ocrTotal, ocrPending, ocrProcessing, ocrFailed, activeUsersResult, pagesInPeriodResult, pagesTotalResult] = await Promise.all([
-        // 선택 기간 OCR 처리 수 (성공+실패) - aggregation으로 날짜 변환 후 비교
-        filesCollection.aggregate([
-          { $match: { 'ocr.status': { $in: ['done', 'error'] } } },
-          { $addFields: dateConversionFields },
-          {
-            $match: {
-              $or: [
-                { done_at_date: { $gte: startDate, $lte: endDate } },
-                { failed_at_date: { $gte: startDate, $lte: endDate } }
-              ]
-            }
-          },
-          { $count: 'count' }
-        ]).toArray(),
-        // 전체 OCR 처리 수 (성공+실패)
-        filesCollection.countDocuments({
-          'ocr.status': { $in: ['done', 'error'] }
-        }),
-        // OCR 대기
+      // 영구 로그에서 OCR 통계 조회 (문서 삭제 후에도 유지)
+      const [logStats, ocrPending, ocrProcessing, ocrFailed] = await Promise.all([
+        // ocr_usage_log에서 통계 조회 (영구)
+        ocrUsageLogService.getOcrUsageStats(analyticsDb, startDate, endDate),
+        // OCR 대기 (실시간 - files에서 조회)
         filesCollection.countDocuments({
           $or: [
             { 'stages.ocr.status': 'pending' },
             { 'overallStatus': 'processing', 'ocr.status': { $exists: false }, 'meta.full_text': { $exists: false } }
           ]
         }),
-        // OCR 처리중
+        // OCR 처리중 (실시간 - files에서 조회)
         filesCollection.countDocuments({
           $or: [
             { 'stages.ocr.status': 'processing' },
@@ -121,74 +108,40 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             { 'ocr.status': 'running' }
           ]
         }),
-        // OCR 실패
+        // OCR 실패 (실시간 - files에서 조회, 재시도 가능 문서용)
         filesCollection.countDocuments({
           $or: [
             { 'ocr.status': 'error' },
             { 'stages.ocr.status': 'error' }
           ]
-        }),
-        // 활성 사용자 (선택 기간 내 OCR 처리한 사용자)
-        filesCollection.aggregate([
-          { $match: { 'ocr.status': 'done', ownerId: { $exists: true, $ne: null } } },
-          { $addFields: dateConversionFields },
-          { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
-          { $group: { _id: '$ownerId' } },
-          { $count: 'count' }
-        ]).toArray(),
-        // 선택 기간 페이지 수 (성공한 OCR만)
-        filesCollection.aggregate([
-          { $match: { 'ocr.status': 'done' } },
-          { $addFields: dateConversionFields },
-          { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
-            }
-          }
-        ]).toArray(),
-        // 전체 페이지 수 (성공한 OCR만)
-        filesCollection.aggregate([
-          {
-            $match: {
-              'ocr.status': 'done'
-            }
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
-            }
-          }
-        ]).toArray()
+        })
       ]);
 
-      const ocrInPeriod = ocrInPeriodResult[0]?.count || 0;
+      // 전체 기간 통계 (처음부터 지금까지)
+      const allTimeStart = new Date('2020-01-01');
+      const allTimeStats = await ocrUsageLogService.getOcrUsageStats(analyticsDb, allTimeStart, endDate);
 
       // 페이지 수 및 예상 비용 계산
-      const pagesInPeriod = pagesInPeriodResult[0]?.total || 0;
-      const pagesTotal = pagesTotalResult[0]?.total || 0;
-      const costInPeriod = calculateOCRCost(pagesInPeriod);
+      const costInPeriod = calculateOCRCost(logStats.page_count);
 
       res.json({
         success: true,
         data: {
           start_date: startDate.toISOString().split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
-          ocr_count: ocrInPeriod,
-          ocr_total: ocrTotal,
-          active_users: activeUsersResult[0]?.count || 0,
+          ocr_count: logStats.total_count,
+          ocr_total: allTimeStats.total_count,
+          active_users: logStats.active_users,
           ocr_pending: ocrPending,
           ocr_processing: ocrProcessing,
           ocr_failed: ocrFailed,
-          page_count: pagesInPeriod,
-          pages_total: pagesTotal,
+          page_count: logStats.page_count,
+          pages_total: allTimeStats.page_count,
           estimated_cost_usd: costInPeriod.usd,
           estimated_cost_krw: costInPeriod.krw,
           // 하위 호환성을 위해 기존 필드 유지
-          ocr_this_month: ocrInPeriod,
-          pages_this_month: pagesInPeriod
+          ocr_this_month: logStats.success_count,
+          pages_this_month: logStats.page_count
         }
       });
     } catch (error) {
@@ -334,8 +287,6 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/ocr-usage/daily', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const filesCollection = db.collection('files');
-
       // 기간 계산
       let startDate, endDate;
       if (req.query.start && req.query.end) {
@@ -350,78 +301,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
-      // 일별 OCR 성공 집계 - 날짜 변환 후 필터링
-      const donePipeline = [
-        { $match: { 'ocr.status': 'done', 'ocr.done_at': { $exists: true } } },
-        { $addFields: dateConversionFields },
-        { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: '%Y-%m-%d',
-                date: '$done_at_date',
-                timezone: 'Asia/Seoul'
-              }
-            },
-            count: { $sum: 1 },
-            page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
-          }
-        },
-        { $sort: { _id: 1 } }
-      ];
-
-      // 일별 OCR 실패 집계 - 날짜 변환 후 필터링
-      const errorPipeline = [
-        { $match: { 'ocr.status': 'error', 'ocr.failed_at': { $exists: true } } },
-        { $addFields: dateConversionFields },
-        { $match: { failed_at_date: { $gte: startDate, $lte: endDate } } },
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: '%Y-%m-%d',
-                date: '$failed_at_date',
-                timezone: 'Asia/Seoul'
-              }
-            },
-            count: { $sum: 1 }
-          }
-        },
-        { $sort: { _id: 1 } }
-      ];
-
-      const [doneResults, errorResults] = await Promise.all([
-        filesCollection.aggregate(donePipeline).toArray(),
-        filesCollection.aggregate(errorPipeline).toArray()
-      ]);
-
-      // 결과를 Map으로 변환
-      const doneMap = new Map();
-      const pageCountMap = new Map();
-      for (const r of doneResults) {
-        doneMap.set(r._id, r.count);
-        pageCountMap.set(r._id, r.page_count);
-      }
-
-      const errorMap = new Map();
-      for (const r of errorResults) {
-        errorMap.set(r._id, r.count);
-      }
-
-      // 모든 날짜 슬롯 생성 (빈 날짜도 포함)
-      const usageData = [];
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        usageData.push({
-          date: dateStr,
-          done: doneMap.get(dateStr) || 0,
-          error: errorMap.get(dateStr) || 0,
-          page_count: pageCountMap.get(dateStr) || 0
-        });
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+      // 영구 로그에서 일별 통계 조회 (문서 삭제 후에도 유지)
+      const usageData = await ocrUsageLogService.getDailyOcrUsage(analyticsDb, startDate, endDate);
 
       res.json({
         success: true,
@@ -450,7 +331,6 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
   router.get('/admin/ocr-usage/top-users', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-      const filesCollection = db.collection('files');
       const usersCollection = db.collection('users');
 
       // 기간 계산
@@ -467,49 +347,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
-      // 사용자별 OCR 성공 집계 (페이지 수 포함) - 날짜 변환 후 필터링
-      const successPipeline = [
-        { $match: { 'ocr.status': 'done', 'ocr.done_at': { $exists: true }, ownerId: { $exists: true, $ne: null } } },
-        { $addFields: dateConversionFields },
-        { $match: { done_at_date: { $gte: startDate, $lte: endDate } } },
-        {
-          $group: {
-            _id: '$ownerId',
-            ocr_count: { $sum: 1 },
-            page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } },
-            last_ocr_at: { $max: '$done_at_date' }
-          }
-        },
-        { $sort: { ocr_count: -1 } },
-        { $limit: limit }
-      ];
-
-      // 사용자별 OCR 실패 집계
-      const errorPipeline = [
-        {
-          $match: {
-            'ocr.status': 'error',
-            ownerId: { $exists: true, $ne: null }
-          }
-        },
-        {
-          $group: {
-            _id: '$ownerId',
-            error_count: { $sum: 1 }
-          }
-        }
-      ];
-
-      const [topUsers, errorCounts] = await Promise.all([
-        filesCollection.aggregate(successPipeline).toArray(),
-        filesCollection.aggregate(errorPipeline).toArray()
-      ]);
-
-      // 에러 카운트 맵 생성
-      const errorCountMap = {};
-      for (const e of errorCounts) {
-        errorCountMap[e._id] = e.error_count;
-      }
+      // 영구 로그에서 Top 사용자 조회 (문서 삭제 후에도 유지)
+      const topUsers = await ocrUsageLogService.getTopOcrUsers(analyticsDb, startDate, endDate, limit);
 
       // 사용자 이름 조회
       const userIds = topUsers
@@ -542,7 +381,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           ocr_count: u.ocr_count,
           page_count: pageCount,
           estimated_cost_usd: cost.usd,
-          error_count: errorCountMap[u._id] || 0,
+          error_count: 0, // 로그에서는 실패 건수 별도 추적 안함 (실시간 상태)
           last_ocr_at: u.last_ocr_at
         };
       });
@@ -793,6 +632,77 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.status(500).json({
         success: false,
         error: 'OCR 재처리 요청에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/internal/ocr/log-usage
+   * OCR 사용량 기록 (n8n 워크플로우에서 호출)
+   *
+   * 문서 삭제와 관계없이 OCR 사용량을 영구 보존하기 위해
+   * 별도 컬렉션(ocr_usage_log)에 기록합니다.
+   *
+   * Body:
+   * - file_id: string (필수) - 문서 ID
+   * - owner_id: string (필수) - 소유자 ID
+   * - page_count: number (기본값: 1) - 처리된 페이지 수
+   * - status: 'done' | 'error' (필수) - 처리 결과
+   * - processed_at: string (ISO 날짜) - 처리 완료 시각
+   * - error_code: string (선택) - 에러 코드
+   * - error_message: string (선택) - 에러 메시지
+   * - metadata: object (선택) - 추가 메타데이터
+   *
+   * @internal 내부 API - n8n 전용
+   */
+  router.post('/internal/ocr/log-usage', async (req, res) => {
+    try {
+      const {
+        file_id,
+        owner_id,
+        page_count = 1,
+        status,
+        processed_at,
+        error_code,
+        error_message,
+        metadata = {}
+      } = req.body;
+
+      // 필수 파라미터 검증
+      if (!file_id || !owner_id || !status) {
+        return res.status(400).json({
+          success: false,
+          error: 'file_id, owner_id, status는 필수입니다.'
+        });
+      }
+
+      if (!['done', 'error'].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: "status는 'done' 또는 'error'만 허용됩니다."
+        });
+      }
+
+      const result = await ocrUsageLogService.logOcrUsage(analyticsDb, {
+        file_id,
+        owner_id,
+        page_count,
+        status,
+        processed_at,
+        error_code,
+        error_message,
+        metadata
+      });
+
+      console.log(`[OCR Usage Log] 기록 완료: file_id=${file_id}, status=${status}, pages=${page_count}`);
+
+      res.json(result);
+    } catch (error) {
+      console.error('[POST /api/internal/ocr/log-usage] 오류:', error);
+      res.status(500).json({
+        success: false,
+        error: 'OCR 사용량 기록에 실패했습니다.',
         details: error.message
       });
     }
