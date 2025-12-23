@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 export interface GeocodeResult {
   address: string
@@ -37,6 +38,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     return null
   } catch (error) {
     console.error('[Geocode] 주소 변환 실패:', error)
+    errorReporter.reportApiError(error as Error, { component: 'geocode.geocodeAddress', payload: { address } })
     return null
   }
 }
