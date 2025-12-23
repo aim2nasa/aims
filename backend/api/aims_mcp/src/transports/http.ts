@@ -11,6 +11,7 @@ const PORT = parseInt(process.env.MCP_PORT || '3011', 10);
 let toolHandlers: Record<string, (args: unknown) => Promise<unknown>> = {};
 
 async function loadToolHandlers() {
+  // Core tools
   const customers = await import('../tools/customers.js');
   const contracts = await import('../tools/contracts.js');
   const birthdays = await import('../tools/birthdays.js');
@@ -20,6 +21,16 @@ async function loadToolHandlers() {
   const documents = await import('../tools/documents.js');
   const memos = await import('../tools/memos.js');
   const products = await import('../tools/products.js');
+  // Phase 1: 액션 도구
+  const relationships = await import('../tools/relationships.js');
+  // Phase 2: Annual Report 도구
+  const annualReports = await import('../tools/annual_reports.js');
+  // Phase 3: 인사이트 도구
+  const insights = await import('../tools/insights.js');
+  // Phase 4: 유틸리티 도구
+  const utilities = await import('../tools/utilities.js');
+  // Phase 5: RAG 검색 도구
+  const rag = await import('../tools/rag.js');
 
   toolHandlers = {
     // 고객 관련
@@ -27,6 +38,8 @@ async function loadToolHandlers() {
     get_customer: customers.handleGetCustomer,
     create_customer: customers.handleCreateCustomer,
     update_customer: customers.handleUpdateCustomer,
+    restore_customer: customers.handleRestoreCustomer,
+    list_deleted_customers: customers.handleListDeletedCustomers,
     // 계약 관련
     list_contracts: contracts.handleListContracts,
     get_contract_details: contracts.handleGetContractDetails,
@@ -40,6 +53,8 @@ async function loadToolHandlers() {
     search_documents: documents.handleSearchDocuments,
     get_document: documents.handleGetDocument,
     list_customer_documents: documents.handleListCustomerDocuments,
+    delete_document: documents.handleDeleteDocument,
+    delete_documents: documents.handleDeleteDocuments,
     // 메모 관련
     add_customer_memo: memos.handleAddMemo,
     list_customer_memos: memos.handleListMemos,
@@ -47,6 +62,30 @@ async function loadToolHandlers() {
     // 보험상품 관련
     search_products: products.handleSearchProducts,
     get_product_details: products.handleGetProductDetails,
+    // Phase 1: 관계 관리
+    create_relationship: relationships.handleCreateRelationship,
+    delete_relationship: relationships.handleDeleteRelationship,
+    list_relationships: relationships.handleListRelationships,
+    // Phase 2: Annual Report
+    get_annual_reports: annualReports.handleGetAnnualReports,
+    get_ar_parsing_status: annualReports.handleGetArParsingStatus,
+    trigger_ar_parsing: annualReports.handleTriggerArParsing,
+    get_ar_queue_status: annualReports.handleGetArQueueStatus,
+    // Phase 3: 인사이트
+    analyze_customer_value: insights.handleAnalyzeCustomerValue,
+    find_coverage_gaps: insights.handleFindCoverageGaps,
+    suggest_next_action: insights.handleSuggestNextAction,
+    // Phase 4: 유틸리티
+    get_storage_info: utilities.handleGetStorageInfo,
+    check_customer_name: utilities.handleCheckCustomerName,
+    list_notices: utilities.handleListNotices,
+    list_faqs: utilities.handleListFaqs,
+    list_usage_guides: utilities.handleListUsageGuides,
+    // Phase 5: RAG 검색
+    search_documents_semantic: rag.handleSearchDocumentsSemantic,
+    get_search_analytics: rag.handleGetSearchAnalytics,
+    get_failed_queries: rag.handleGetFailedQueries,
+    submit_search_feedback: rag.handleSubmitSearchFeedback,
   };
 }
 
