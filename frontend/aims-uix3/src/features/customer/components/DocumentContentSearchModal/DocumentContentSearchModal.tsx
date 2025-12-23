@@ -13,6 +13,7 @@ import { SearchService } from '@/services/searchService'
 import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransformers'
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentContentSearchModal.css'
 
 interface DocumentContentSearchModalProps {
@@ -115,6 +116,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
           }
         } catch (err) {
           console.error('[DocumentContentSearchModal] 자동 검색 실패:', err)
+          errorReporter.reportApiError(err as Error, { component: 'DocumentContentSearchModal.autoSearch' })
           setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
           setResults([])
         } finally {
@@ -193,6 +195,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       }
     } catch (err) {
       console.error('[DocumentContentSearchModal] 검색 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentContentSearchModal.handleSearch' })
       setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
       setResults([])
     } finally {
@@ -353,6 +356,7 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
       }
     } catch (err) {
       console.error('[DocumentContentSearchModal] 프리뷰 정보 조회 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentContentSearchModal.fetchPreviewInfo' })
       setPreviewUrl(null)
       setPreviewType(null)
     } finally {

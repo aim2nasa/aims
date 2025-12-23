@@ -16,6 +16,7 @@ import Button from '@/shared/ui/Button';
 import { CustomerService } from '@/services/customerService';
 import { RelationshipService } from '@/services/relationshipService';
 import type { Customer } from '@/entities/customer/model';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './RelationshipModal.css';
 
 export interface RelationshipType {
@@ -149,6 +150,7 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
       setAlreadyRelatedCustomers(relatedCustomers);
     } catch (error) {
       console.error('[RelationshipModal] 관계 고객 식별 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'RelationshipModal.identifyRelatedCustomers' });
       setAlreadyRelatedCustomers(new Set());
     }
   }, [customerId, relationshipCategory, filterCustomerType]);

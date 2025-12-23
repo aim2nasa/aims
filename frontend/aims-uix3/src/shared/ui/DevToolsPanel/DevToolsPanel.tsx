@@ -16,6 +16,7 @@ import {
   getFrontendVersion,
   type SystemVersions,
 } from '@/services/versionService'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DevToolsPanel.css'
 
 export function DevToolsPanel() {
@@ -33,6 +34,7 @@ export function DevToolsPanel() {
       setVersions(result)
     } catch (error) {
       console.error('[DevTools] 버전 정보 로드 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DevToolsPanel.loadVersions' })
       setVersions({
         frontend: getFrontendVersion(),
         backends: [],
@@ -66,6 +68,7 @@ export function DevToolsPanel() {
       }, 300)
     } catch (error) {
       console.error('❌ [DevTools] 캐시 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DevToolsPanel.handleClearCache' })
       setClearing(false)
     }
   }

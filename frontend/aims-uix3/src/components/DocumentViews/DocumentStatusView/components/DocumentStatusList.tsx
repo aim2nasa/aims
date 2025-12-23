@@ -24,6 +24,7 @@ import {
 } from '../../components/DocumentActionIcons'
 import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentStatusList.css'
 
 export interface DocumentStatusListProps {
@@ -307,6 +308,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       }
     } catch (error) {
       console.error('[DocumentStatusList] PDF 변환 재시도 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleRetryPdfConversion' })
       await showAlert({
         title: '오류',
         message: '재시도 중 오류가 발생했습니다.',
@@ -342,6 +344,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       }
     } catch (error) {
       console.error('[DocumentStatusList] 메모 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleSaveNotes' })
       showAlert({
         title: '저장 실패',
         message: '메모 저장에 실패했습니다.',
@@ -377,6 +380,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       }
     } catch (error) {
       console.error('[DocumentStatusList] 메모 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleDeleteNotes' })
       showAlert({
         title: '삭제 실패',
         message: '메모 삭제에 실패했습니다.',

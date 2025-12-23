@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import { geocodeAddress } from '@/shared/api/geocode'
 import Tooltip from '@/shared/ui/Tooltip'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './NaverMap.css'
 
 // Naver Maps API 타입 정의
@@ -455,6 +456,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           } catch (error) {
             if (import.meta.env.DEV) {
               console.error('[NaverMap] ❌ 지도 상태 복원 중 예외 발생:', error)
+              errorReporter.reportApiError(error as Error, { component: 'NaverMap.restoreMapState' })
             }
           }
         }, 300)
@@ -870,6 +872,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     createMarkers().catch(error => {
       console.error('[NaverMap] 마커 생성 중 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'NaverMap.createMarkers' })
     })
   }, [customers, isMapReady, selectedRegion, selectedDistrict, onGeocodingFailedCustomersChange])
 

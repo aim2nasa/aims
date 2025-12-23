@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerSelectorModal } from '../CustomerSelectorModal';
 import { RelationshipService } from '@/services/relationshipService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 export interface FamilySelectorModalProps {
   /** 모달 표시 여부 */
@@ -84,6 +85,7 @@ export const FamilySelectorModal: React.FC<FamilySelectorModalProps> = ({
         setFamilyCustomerIds(familyIds);
       } catch (error) {
         console.error('[FamilySelectorModal] 가족 관계 로드 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'FamilySelectorModal.loadFamilyCustomers' });
         setFamilyCustomerIds(new Set());
       }
     };

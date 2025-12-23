@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerSelectorModal } from '../CustomerSelectorModal';
 import { RelationshipService } from '@/services/relationshipService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 export interface CorporateMemberSelectorModalProps {
   /** 모달 표시 여부 */
@@ -90,6 +91,7 @@ export const CorporateMemberSelectorModal: React.FC<CorporateMemberSelectorModal
         setCorporateMemberIds(memberIds);
       } catch (error) {
         console.error('[CorporateMemberSelectorModal] 법인 관계 로드 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CorporateMemberSelectorModal.loadCorporateMembers' });
         setCorporateMemberIds(new Set());
       }
     };

@@ -25,6 +25,7 @@ import NaverMap from '../../NaverMap/NaverMap'
 import { CustomerAddressInputModal } from './CustomerAddressInputModal'
 import { CustomerService } from '@/services/customerService'
 import type { FormattedAddress } from '@/features/customer/api/addressApi'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**
  * 광역시/도 이름 정규화 맵
@@ -993,6 +994,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       }
     } catch (error) {
       console.error('[RegionalTreeView] 주소 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'RegionalTreeView.handleAddressSave' })
       throw error
     }
   }
