@@ -43,6 +43,7 @@ class ChatHistoryService {
       console.log('[ChatHistoryService] 초기화 완료');
     } catch (error) {
       console.error('[ChatHistoryService] 초기화 실패:', error.message);
+      backendLogger.error('ChatHistoryService', '초기화 실패', error);
       throw error;
     }
   }

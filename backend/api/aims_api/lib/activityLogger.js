@@ -14,6 +14,7 @@
 
 const crypto = require('crypto');
 const sseBroadcast = require('./sseBroadcast');
+const backendLogger = require('./backendLogger');
 
 // 민감 정보 필드 목록
 const SENSITIVE_FIELDS = [
@@ -53,6 +54,7 @@ class ActivityLogger {
       console.log('[ActivityLogger] 초기화 완료');
     } catch (error) {
       console.error('[ActivityLogger] 초기화 실패:', error.message);
+      backendLogger.error('ActivityLogger', '초기화 실패', error);
       throw error;
     }
   }
@@ -83,6 +85,7 @@ class ActivityLogger {
       console.log('[ActivityLogger] 인덱스 생성 완료');
     } catch (error) {
       console.error('[ActivityLogger] 인덱스 생성 실패:', error.message);
+      backendLogger.error('ActivityLogger', '인덱스 생성 실패', error);
     }
   }
 
@@ -171,6 +174,7 @@ class ActivityLogger {
     } catch (error) {
       // 로깅 실패가 메인 로직을 방해하지 않도록 콘솔만 출력
       console.error('[ActivityLogger] 저장 실패:', error.message);
+      backendLogger.error('ActivityLogger', '저장 실패', error);
     }
   }
 
@@ -403,6 +407,7 @@ class ActivityLogger {
       return result.deletedCount;
     } catch (error) {
       console.error('[ActivityLogger] 전체 삭제 실패:', error.message);
+      backendLogger.error('ActivityLogger', '전체 삭제 실패', error);
       return 0;
     }
   }
@@ -424,6 +429,7 @@ class ActivityLogger {
       return result.deletedCount;
     } catch (error) {
       console.error('[ActivityLogger] 기간 초과 로그 삭제 실패:', error.message);
+      backendLogger.error('ActivityLogger', '기간 초과 로그 삭제 실패', error);
       return 0;
     }
   }

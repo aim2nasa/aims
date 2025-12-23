@@ -6,6 +6,7 @@ const passport = require('passport');
 const KakaoStrategy = require('passport-kakao').Strategy;
 const NaverStrategy = require('passport-naver-v2').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const backendLogger = require('../lib/backendLogger');
 
 module.exports = function(db) {
   const usersCollection = db.collection('users');
@@ -69,6 +70,7 @@ module.exports = function(db) {
 
       return done(null, user);
     } catch (error) {
+      backendLogger.error('Passport', '카카오 OAuth 인증 오류', error);
       return done(error, null);
     }
   };
@@ -147,6 +149,7 @@ module.exports = function(db) {
 
       return done(null, user);
     } catch (error) {
+      backendLogger.error('Passport', '네이버 OAuth 인증 오류', error);
       return done(error, null);
     }
   };
@@ -225,6 +228,7 @@ module.exports = function(db) {
 
       return done(null, user);
     } catch (error) {
+      backendLogger.error('Passport', '구글 OAuth 인증 오류', error);
       return done(error, null);
     }
   };
@@ -264,6 +268,7 @@ module.exports = function(db) {
       const user = await usersCollection.findOne({ _id: new ObjectId(id) });
       done(null, user);
     } catch (error) {
+      backendLogger.error('Passport', '세션 사용자 복원 오류', error);
       done(error, null);
     }
   });
