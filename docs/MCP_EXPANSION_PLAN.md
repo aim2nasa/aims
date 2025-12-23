@@ -7,7 +7,7 @@
 
 ## 1. 현황 분석
 
-### 1.1 현재 aims-mcp 도구 (29개) - Phase 3 완료
+### 1.1 현재 aims-mcp 도구 (34개) - Phase 4 완료
 
 | 카테고리 | 도구 | 상태 |
 |---------|------|------|
@@ -42,6 +42,11 @@
 | 인사이트 | `analyze_customer_value` | ✅ Phase 3 추가 |
 | | `find_coverage_gaps` | ✅ Phase 3 추가 |
 | | `suggest_next_action` | ✅ Phase 3 추가 |
+| 유틸리티 | `get_storage_info` | ✅ Phase 4 추가 |
+| | `check_customer_name` | ✅ Phase 4 추가 |
+| | `list_notices` | ✅ Phase 4 추가 |
+| | `list_faqs` | ✅ Phase 4 추가 |
+| | `list_usage_guides` | ✅ Phase 4 추가 |
 
 ### 1.2 문제점
 
@@ -96,6 +101,18 @@
 | `suggest_next_action` | 다음 영업 액션 추천 | "이 고객에게 뭘 해야해?" | ✅ 완료 |
 
 **결과**: 3개 도구 추가, 영업 인사이트 제공 가능
+
+### Phase 4: 유틸리티 도구 (사용자 편의) ✅ 완료
+
+| 도구 | 설명 | 유스케이스 | 상태 |
+|------|------|-----------|------|
+| `get_storage_info` | 저장소 사용량 조회 | "내 저장소 사용량은?" | ✅ 완료 |
+| `check_customer_name` | 고객명 중복 검사 | "이 이름 등록 가능해?" | ✅ 완료 |
+| `list_notices` | 공지사항 조회 | "최신 공지 보여줘" | ✅ 완료 |
+| `list_faqs` | FAQ 조회 | "관련 FAQ 찾아줘" | ✅ 완료 |
+| `list_usage_guides` | 사용 가이드 조회 | "사용법 알려줘" | ✅ 완료 |
+
+**결과**: 5개 도구 추가, 시스템 정보 및 도움말 접근 가능
 
 ---
 
@@ -161,6 +178,24 @@
 
 ---
 
+### Phase 4 진행 로그
+
+#### 2025-12-23: Phase 4 구현 완료
+- [x] `utilities.ts` 신규 생성
+  - `get_storage_info`: 저장소 사용량 조회 (티어별 할당량, 사용량, 잔여량)
+  - `check_customer_name`: 고객명 중복 검사 (등록 전 검증용)
+  - `list_notices`: 공지사항 조회 (카테고리별 필터링)
+  - `list_faqs`: FAQ 조회 (카테고리별, 검색 지원)
+  - `list_usage_guides`: 사용 가이드 조회 (카테고리별, 검색 지원)
+- [x] `index.ts` 도구 등록 완료
+- [x] TypeScript 타입 체크 통과
+- [x] Phase 4 커밋
+
+**추가된 도구**: 5개
+**총 도구 수**: 34개
+
+---
+
 ## 4. 기술 참고
 
 ### 4.1 aims_api 관련 엔드포인트
@@ -213,3 +248,4 @@ export function registerExampleTools(server: McpServer, db: Db) {
 | 2025-12-23 | Phase 1 완료 - 7개 도구 추가 (관계 관리 3개, 문서 삭제 2개, 고객 복구 2개) |
 | 2025-12-23 | Phase 2 완료 - 4개 도구 추가 (Annual Report 관련) |
 | 2025-12-23 | Phase 3 완료 - 3개 도구 추가 (인사이트: 고객 가치 분석, 보장 공백 분석, 액션 추천) |
+| 2025-12-23 | Phase 4 완료 - 5개 도구 추가 (유틸리티: 저장소, 고객명 검사, 공지, FAQ, 가이드) |
