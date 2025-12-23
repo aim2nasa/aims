@@ -25,6 +25,7 @@ import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -189,6 +190,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setAvatarPreview(userData.avatarUrl)
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.loadUserData' })
         setLoadError(error instanceof Error ? error.message : '사용자 정보를 불러올 수 없습니다')
       } finally {
         setIsLoading(false)
@@ -225,6 +227,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setStorageInfo(info)
       } catch (error) {
         console.error('스토리지 정보 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.loadStorageInfo' })
         setStorageInfo(null)
       } finally {
         setStorageLoading(false)
@@ -249,6 +252,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setDailyUsage(daily)
       } catch (error) {
         console.error('AI 사용량 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.loadAIUsage' })
         setAIUsage(null)
         setDailyUsage([])
       } finally {
@@ -348,6 +352,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setAvatarPreview(resizedImage)
       } catch (error) {
         console.error('이미지 리사이즈 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.handleAvatarChange' })
         showAlert({
           title: '이미지 처리 오류',
           message: '이미지 처리 중 오류가 발생했습니다.',
@@ -411,6 +416,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       console.log('✅ 사용자 정보가 저장되었습니다')
     } catch (error) {
       console.error('❌ 사용자 정보 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.handleSave' })
       showAlert({
         title: '저장 실패',
         message: error instanceof Error ? error.message : '저장에 실패했습니다',
@@ -461,6 +467,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       window.location.href = '/login'
     } catch (error) {
       console.error('계정 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.handleDeleteAccount' })
       showAlert({
         title: '삭제 실패',
         message: error instanceof Error ? error.message : '계정 삭제에 실패했습니다.',

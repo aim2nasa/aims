@@ -17,6 +17,7 @@ import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './AccountSettingsModal.css'
 
 export interface AccountSettingsModalProps {
@@ -90,6 +91,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         })
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsModal.loadUserData' })
         setLoadError(error instanceof Error ? error.message : '사용자 정보를 불러올 수 없습니다')
       } finally {
         setIsLoading(false)
@@ -158,6 +160,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       console.log('✅ 사용자 정보가 저장되었습니다')
     } catch (error) {
       console.error('❌ 사용자 정보 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'AccountSettingsModal.handleSave' })
       showAlert({
         title: '저장 실패',
         message: error instanceof Error ? error.message : '저장에 실패했습니다',

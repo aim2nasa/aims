@@ -12,6 +12,7 @@ import {
 } from '../contexts/DocumentStatusContext'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { getAuthHeaders } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import { useDocumentStatusListSSE } from '@/shared/hooks/useDocumentStatusListSSE'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
@@ -146,6 +147,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
                 }
               } catch (error) {
                 console.error(`[DocumentStatusProvider] 고객 ${customerId} 조회 오류:`, error)
+                errorReporter.reportApiError(error as Error, { component: 'DocumentStatusProvider.fetchDocuments.getCustomer', payload: { customerId } })
               }
             })
           )
@@ -210,6 +212,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           setError('문서 목록을 불러올 수 없습니다.')
         }
         console.error('Fetch documents error:', err)
+        errorReporter.reportApiError(err as Error, { component: 'DocumentStatusProvider.fetchDocuments' })
         if (isInitialLoad && typeof window !== 'undefined') {
           setDocuments([])
         }

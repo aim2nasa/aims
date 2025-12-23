@@ -33,6 +33,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { formatDate } from '@/shared/lib/timeUtils'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './CustomerFullDetailView.css'
 
 interface CustomerFullDetailViewProps {
@@ -201,6 +202,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       setCustomer(data)
     } catch (err) {
       console.error('[CustomerFullDetailView] 고객 로드 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'CustomerFullDetailView.loadCustomer', payload: { customerId } })
       const errorMessage = err instanceof Error ? err.message : '고객 정보를 불러올 수 없습니다.'
 
       // 🍎 삭제된 고객 감지 (404 또는 "삭제되었습니다" 메시지)
@@ -315,6 +317,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
         setCanAddFamilyRelation(familyRepId === customer._id)
       } catch (error) {
         console.error('[CustomerFullDetailView] 가족 관계 확인 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'CustomerFullDetailView.checkCanAddFamilyRelation', payload: { customerId: customer._id } })
         setCanAddFamilyRelation(false)
       }
     }

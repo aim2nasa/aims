@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { KeywordMode, SearchMode } from '@/entities/search'
 import { SearchService } from '@/services/searchService'
 import { usePersistedState } from '@/hooks/usePersistedState'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import {
   DocumentSearchContext,
   type DocumentSearchContextValue
@@ -54,6 +55,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
       setLastSearchMode(searchMode)
     } catch (err) {
       console.error('[DocumentSearchContext] 검색 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentSearchProvider.handleSearch' })
       setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
     } finally {
       setIsLoading(false)

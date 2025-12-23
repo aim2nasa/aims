@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { DocumentService } from '@/services/DocumentService';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { handleApiError } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
 
@@ -81,6 +82,7 @@ export const useDocumentsController = () => {
             } as any;
           } catch (error) {
             console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
+            errorReporter.reportApiError(error as Error, { component: 'useDocumentsController.loadDocuments' });
             return doc;
           }
         })

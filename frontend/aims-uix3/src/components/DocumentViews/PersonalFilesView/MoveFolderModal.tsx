@@ -11,6 +11,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import DraggableModal from '@/shared/ui/DraggableModal'
 import { Button } from '@/shared/ui'
 import type { PersonalFileItem } from '@/services/personalFilesService'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './MoveFolderModal.css'
 
 interface MoveFolderModalProps {
@@ -140,6 +141,7 @@ export const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
       onClose()
     } catch (error) {
       console.error('폴더 이동 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'MoveFolderModal.handleMove' })
     } finally {
       setMoving(false)
     }

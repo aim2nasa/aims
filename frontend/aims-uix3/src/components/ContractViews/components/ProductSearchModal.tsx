@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './ProductSearchModal.css'
 
 interface ProductSearchModalProps {
@@ -49,6 +50,7 @@ export function ProductSearchModal({
       setProducts(data)
     } catch (error) {
       console.error('보험상품 로드 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'ProductSearchModal.loadProducts' })
     } finally {
       setLoading(false)
     }

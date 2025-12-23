@@ -26,6 +26,7 @@ import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } fr
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { checkStorageWithInfo, calculatePartialUpload } from '@/shared/lib/fileValidation'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import type { FolderMapping, DuplicateAction } from './types'
 import { TIER_LIMITS } from './types'
 import './BatchDocumentUploadView.css'
@@ -311,6 +312,7 @@ export default function BatchDocumentUploadView({
       }
     } catch (error) {
       console.error('스토리지 정보 조회 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'BatchDocumentUploadView.handleFilesReady.getStorage' })
       // 에러 시에도 정상 진행 (서버에서 최종 검증)
     }
 

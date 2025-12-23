@@ -13,6 +13,7 @@ import { AddressSearchModal } from '@/features/customer/components/AddressSearch
 import type { FormattedAddress } from '@/features/customer/api/addressApi';
 import type { Customer } from '@/entities/customer';
 import { Button } from '@/shared/ui/Button';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerAddressInputModal.css';
 
 interface CustomerAddressInputModalProps {
@@ -82,6 +83,7 @@ export const CustomerAddressInputModal: React.FC<CustomerAddressInputModalProps>
       handleClose();
     } catch (error) {
       console.error('[CustomerAddressInputModal] 주소 저장 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerAddressInputModal.handleSave' });
       // 에러는 부모 컴포넌트에서 처리
     } finally {
       setIsSaving(false);

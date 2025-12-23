@@ -9,6 +9,7 @@ import { useAuthStore } from '@/shared/stores/authStore';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -98,6 +99,7 @@ export default function LoginPage() {
         navigate('/', { replace: true });
       } catch (error) {
         console.error('[LoginPage] 토큰 처리 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'LoginPage.processToken' });
         showAlert({
           title: '로그인 실패',
           message: '인증 토큰 처리에 실패했습니다. 다시 시도해주세요.',
@@ -169,6 +171,7 @@ export default function LoginPage() {
       navigate('/', { replace: true });
     } catch (error) {
       console.error('개발용 로그인 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'LoginPage.handleDevLogin' });
       showAlert({
         title: '로그인 실패',
         message: '개발용 로그인에 실패했습니다. 백엔드 서버를 확인해주세요.',
