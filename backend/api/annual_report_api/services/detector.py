@@ -7,6 +7,7 @@ from typing import Dict
 import logging
 
 from utils.pdf_utils import extract_text_from_page, validate_pdf_file
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ def is_annual_report(pdf_path: str) -> Dict[str, any]:
             first_page_text = extract_text_from_page(pdf_path, page_num=0)
         except Exception as e:
             logger.error(f"1페이지 텍스트 추출 실패: {e}")
+            send_error_log("annual_report_api", f"AR 판단 - 1페이지 텍스트 추출 실패: {e}", e)
             return {
                 "is_annual_report": False,
                 "confidence": 0.0,
@@ -119,6 +121,7 @@ def is_annual_report(pdf_path: str) -> Dict[str, any]:
 
     except Exception as e:
         logger.error(f"Annual Report 판단 중 오류: {e}")
+        send_error_log("annual_report_api", f"Annual Report 판단 중 오류: {e}", e)
         return {
             "is_annual_report": False,
             "confidence": 0.0,

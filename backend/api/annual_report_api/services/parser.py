@@ -13,6 +13,7 @@ from openai import OpenAI
 from PyPDF2 import PdfReader, PdfWriter
 
 from config import settings
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -264,6 +265,7 @@ Customer name and issue date are already extracted from page 1."""
 
     except Exception as e:
         logger.error(f"❌ OpenAI API 파싱 중 오류: {e}")
+        send_error_log("annual_report_api", f"OpenAI API 파싱 중 오류: {e}", e)
         return {
             "error": f"파싱 실패: {str(e)}",
             "raw_output": ""

@@ -17,6 +17,7 @@ project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.shared.time_utils import utc_now_iso
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -249,6 +250,7 @@ def save_annual_report(
 
     except Exception as e:
         logger.error(f"❌ Annual Report 저장 중 예상치 못한 오류: {e}")
+        send_error_log("annual_report_api", f"Annual Report 저장 중 예상치 못한 오류: {e}", e)
         return {
             "success": False,
             "message": f"저장 실패: {str(e)}"

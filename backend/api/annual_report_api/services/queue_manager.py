@@ -10,6 +10,7 @@ from pymongo import ASCENDING, DESCENDING
 import logging
 
 from .db_writer import notify_ar_status_change
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 큐 추가 실패: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 큐 추가 실패: {e}", e)
             return False
 
     def dequeue(self) -> Optional[Dict[str, Any]]:
@@ -138,6 +140,7 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 큐 조회 실패: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 큐 조회 실패: {e}", e)
             return None
 
     def mark_completed(self, task_id: ObjectId) -> bool:
@@ -174,6 +177,7 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 작업 완료 처리 실패: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 작업 완료 처리 실패: {e}", e)
             return False
 
     def mark_failed(self, task_id: ObjectId, error_message: str, retry: bool = True) -> bool:
@@ -233,6 +237,7 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 작업 실패 처리 중 오류: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 작업 실패 처리 중 오류: {e}", e)
             return False
 
     def get_pending_count(self) -> int:
@@ -244,6 +249,7 @@ class ARParseQueueManager:
             })
         except Exception as e:
             logger.error(f"❌ 대기 작업 수 조회 실패: {e}")
+            send_error_log("annual_report_api", f"QueueManager 대기 작업 수 조회 실패: {e}", e)
             return 0
 
     def get_processing_count(self) -> int:
@@ -252,6 +258,7 @@ class ARParseQueueManager:
             return self.queue.count_documents({"status": QueueStatus.PROCESSING})
         except Exception as e:
             logger.error(f"❌ 처리 중 작업 수 조회 실패: {e}")
+            send_error_log("annual_report_api", f"QueueManager 처리 중 작업 수 조회 실패: {e}", e)
             return 0
 
     def get_stats(self) -> Dict[str, int]:
@@ -266,6 +273,7 @@ class ARParseQueueManager:
             }
         except Exception as e:
             logger.error(f"❌ 큐 통계 조회 실패: {e}")
+            send_error_log("annual_report_api", f"QueueManager 큐 통계 조회 실패: {e}", e)
             return {"error": str(e)}
 
     def reset_stale_processing_tasks(self, timeout_seconds: int = 300) -> int:
@@ -305,6 +313,7 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 좀비 작업 복구 실패: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 좀비 작업 복구 실패: {e}", e)
             return 0
 
     def clear_old_completed_tasks(self, days: int = 7) -> int:
@@ -335,4 +344,5 @@ class ARParseQueueManager:
 
         except Exception as e:
             logger.error(f"❌ 완료 작업 삭제 실패: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"QueueManager 완료 작업 삭제 실패: {e}", e)
             return 0
