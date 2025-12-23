@@ -180,7 +180,15 @@ export async function handleGetStorageInfo(args: unknown) {
 
     const usedBytes = usage.totalSize;
     const remainingBytes = quotaBytes === -1 ? -1 : Math.max(0, quotaBytes - usedBytes);
-    const usagePercent = quotaBytes === -1 ? 0 : Math.round((usedBytes / quotaBytes) * 100);
+    // 소수점 2자리까지 계산, 불필요한 소수점은 제거
+    const usagePercentRaw = quotaBytes === -1 ? 0 : (usedBytes / quotaBytes) * 100;
+    const usagePercent = Math.round(usagePercentRaw * 100) / 100; // 소수점 2자리
+    // 0.05% → "0.05", 45.00% → "45", 12.50% → "12.5"
+    const usagePercentDisplay = usagePercent < 0.01 && usagePercent > 0
+      ? '<0.01'
+      : usagePercent % 1 === 0
+        ? String(usagePercent)
+        : usagePercent.toFixed(2).replace(/\.?0+$/, '');
 
     return {
       content: [{
@@ -201,12 +209,13 @@ export async function handleGetStorageInfo(args: unknown) {
             formatted: formatBytes(remainingBytes)
           },
           usagePercent,
+          usagePercentDisplay: `${usagePercentDisplay}%`,
           fileCount: usage.fileCount,
           message: quotaBytes === -1
             ? '무제한 저장소입니다.'
             : usagePercent >= 90
-              ? `⚠️ 저장소 사용량이 ${usagePercent}%입니다. 정리가 필요합니다.`
-              : `저장소 ${usagePercent}% 사용 중입니다.`
+              ? `⚠️ 저장소 사용량이 ${usagePercentDisplay}%입니다. 정리가 필요합니다.`
+              : `저장소 ${usagePercentDisplay}% 사용 중입니다.`
         }, null, 2)
       }]
     };
