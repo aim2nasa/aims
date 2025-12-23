@@ -3,6 +3,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { connectDB } from './db.js';
 import { registerAllTools } from './tools/index.js';
+import { sendErrorLog } from './systemLogger.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -42,6 +43,7 @@ async function main() {
     }
   } catch (error) {
     console.error('[aims-mcp] 서버 시작 실패:', error);
+    await sendErrorLog('aims_mcp', '서버 시작 실패', error);
     process.exit(1);
   }
 }

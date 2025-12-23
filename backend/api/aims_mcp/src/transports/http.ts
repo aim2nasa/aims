@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { setCurrentUserId, getUserIdFromAuth } from '../auth.js';
 import { allToolDefinitions } from '../tools/index.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 const PORT = parseInt(process.env.MCP_PORT || '3011', 10);
 
@@ -120,6 +121,14 @@ export async function startHttpServer(_server: Server): Promise<void> {
       const isAuthError = error instanceof Error &&
         (error.message.includes('auth') || error.message.includes('token') || error.message.includes('Authentication'));
 
+      // 인증 에러가 아닌 경우에만 시스템 로그 전송
+      if (!isAuthError) {
+        sendErrorLog('aims_mcp', `Tool 호출 실패: ${req.body?.tool}`, error, {
+          tool: req.body?.tool,
+          userId: req.headers['x-user-id'] || 'unknown'
+        });
+      }
+
       res.status(isAuthError ? 401 : 500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -155,6 +164,10 @@ export async function startHttpServer(_server: Server): Promise<void> {
       });
     } catch (error) {
       console.error('[aims-mcp/http] Tool 호출 실패:', error);
+      sendErrorLog('aims_mcp', `Tool 호출 실패: ${req.params.toolName}`, error, {
+        tool: req.params.toolName,
+        userId: req.headers['x-user-id'] || 'unknown'
+      });
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
