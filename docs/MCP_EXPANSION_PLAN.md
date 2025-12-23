@@ -7,7 +7,7 @@
 
 ## 1. 현황 분석
 
-### 1.1 현재 aims-mcp 도구 (22개) - Phase 1 완료
+### 1.1 현재 aims-mcp 도구 (26개) - Phase 2 완료
 
 | 카테고리 | 도구 | 상태 |
 |---------|------|------|
@@ -35,6 +35,10 @@
 | 관계 관리 | `create_relationship` | ✅ Phase 1 추가 |
 | | `delete_relationship` | ✅ Phase 1 추가 |
 | | `list_relationships` | ✅ Phase 1 추가 |
+| Annual Report | `get_annual_reports` | ✅ Phase 2 추가 |
+| | `get_ar_parsing_status` | ✅ Phase 2 추가 |
+| | `trigger_ar_parsing` | ✅ Phase 2 추가 |
+| | `get_ar_queue_status` | ✅ Phase 2 추가 |
 
 ### 1.2 문제점
 
@@ -69,15 +73,16 @@
 
 **결과**: 7개 도구 추가, "~해줘" 요청 처리 가능
 
-### Phase 2: Annual Report 연동 (고부가가치)
+### Phase 2: Annual Report 연동 (고부가가치) ✅ 완료
 
 | 도구 | 설명 | 유스케이스 | 상태 |
 |------|------|-----------|------|
-| `parse_annual_report` | 연차보고서 파싱 요청 | "이 보고서 분석해줘" | ⬜ 예정 |
-| `get_report_status` | 파싱 진행 상태 확인 | "파싱 완료됐어?" | ⬜ 예정 |
-| `compare_contracts_with_report` | 기존 계약과 비교 | "누락된 계약 있어?" | ⬜ 예정 |
+| `get_annual_reports` | 고객의 AR 목록 조회 | "이 고객의 연차보고서 보여줘" | ✅ 완료 |
+| `get_ar_parsing_status` | AR 파싱 상태 조회 | "파싱 완료됐어?" | ✅ 완료 |
+| `trigger_ar_parsing` | AR 파싱 트리거 | "이 보고서 파싱해줘" | ✅ 완료 |
+| `get_ar_queue_status` | AR 파싱 큐 상태 | "대기 중인 파싱 작업은?" | ✅ 완료 |
 
-**목표**: 연차보고서 수동 입력 → 자동화
+**결과**: 4개 도구 추가, Annual Report 관리 가능
 
 ### Phase 3: 인사이트 도구 (차별화)
 
@@ -122,7 +127,18 @@
 
 ### Phase 2 진행 로그
 
-(Phase 2 시작 시 작성)
+#### 2025-12-23: Phase 2 구현 완료
+- [x] `annual_reports.ts` 신규 생성
+  - `get_annual_reports`: 고객의 AR 목록 조회 (계약 정보 포함)
+  - `get_ar_parsing_status`: AR 파싱 상태 조회 (파일/고객 기준)
+  - `trigger_ar_parsing`: AR 파싱 트리거 (큐에 작업 추가)
+  - `get_ar_queue_status`: 전체 파싱 큐 상태 조회
+- [x] `index.ts` 도구 등록 완료
+- [x] TypeScript 타입 체크 통과
+- [x] Phase 2 커밋
+
+**추가된 도구**: 4개
+**총 도구 수**: 26개
 
 ---
 
@@ -182,3 +198,4 @@ export function registerExampleTools(server: McpServer, db: Db) {
 |------|------|
 | 2025-12-23 | 문서 생성, 확장 계획 수립 |
 | 2025-12-23 | Phase 1 완료 - 7개 도구 추가 (관계 관리 3개, 문서 삭제 2개, 고객 복구 2개) |
+| 2025-12-23 | Phase 2 완료 - 4개 도구 추가 (Annual Report 관련) |

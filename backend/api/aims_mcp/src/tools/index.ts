@@ -16,6 +16,7 @@ import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, hand
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
 import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
+import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus } from './annual_reports.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -29,6 +30,7 @@ const allToolDefinitions = [
   ...memoToolDefinitions,
   ...productToolDefinitions,
   ...relationshipToolDefinitions,
+  ...annualReportToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -66,6 +68,11 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   create_relationship: handleCreateRelationship,
   delete_relationship: handleDeleteRelationship,
   list_relationships: handleListRelationships,
+  // Annual Report 관련
+  get_annual_reports: handleGetAnnualReports,
+  get_ar_parsing_status: handleGetArParsingStatus,
+  trigger_ar_parsing: handleTriggerArParsing,
+  get_ar_queue_status: handleGetArQueueStatus,
 };
 
 /**
