@@ -11,6 +11,7 @@ from bson.errors import InvalidId
 import logging
 
 from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +173,7 @@ async def get_customer_annual_reports(
         )
     except Exception as e:
         logger.error(f"❌ Annual Reports 조회 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Annual Reports 조회 API 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
@@ -268,6 +270,7 @@ async def get_latest_annual_report(
         raise
     except Exception as e:
         logger.error(f"❌ 최신 Annual Report 조회 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"최신 Annual Report 조회 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
@@ -397,6 +400,7 @@ async def delete_customer_annual_reports(
         )
     except Exception as e:
         logger.error(f"❌ Annual Reports 삭제 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Annual Reports 삭제 API 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
@@ -538,6 +542,7 @@ async def cleanup_duplicate_reports(
         )
     except Exception as e:
         logger.error(f"❌ 중복 정리 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"중복 정리 API 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
