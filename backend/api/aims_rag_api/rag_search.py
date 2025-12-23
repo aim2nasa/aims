@@ -28,6 +28,9 @@ from token_tracker import TokenTracker
 # 버전 정보
 from version import VERSION_INFO, log_version_info
 
+# 시스템 로그 연동
+from system_logger import send_error_log
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI(
     title="AIMS RAG API",
@@ -237,6 +240,7 @@ async def search_endpoint(request: SearchRequest):
                 search_results=raw_results
             )
         except requests.RequestException as e:
+            send_error_log("aims_rag_api", f"SmartSearch API 호출 오류: {e}", e, {"query": request.query})
             raise HTTPException(status_code=500, detail=f"SmartSearch API 호출 오류: {e}")
 
     elif request.search_mode == "semantic":
@@ -342,6 +346,7 @@ async def search_endpoint(request: SearchRequest):
             print(f"❌ 하이브리드 검색 중 오류 발생: {e}")
             print(f"📍 Traceback:")
             traceback.print_exc()
+            send_error_log("aims_rag_api", f"하이브리드 검색 오류: {e}", e, {"query": request.query, "search_mode": request.search_mode})
             raise HTTPException(status_code=500, detail=f"하이브리드 검색 오류: {e}")
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
@@ -374,6 +379,7 @@ async def get_overall_stats(days: int = 7):
         stats = quality_analyzer.get_overall_stats(days=days)
         return {"success": True, "data": stats, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"통계 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"통계 조회 오류: {e}")
 
 
@@ -392,6 +398,7 @@ async def get_query_type_breakdown(days: int = 7):
         breakdown = quality_analyzer.get_query_type_breakdown(days=days)
         return {"success": True, "data": breakdown, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"쿼리 유형 통계 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"쿼리 유형 통계 조회 오류: {e}")
 
 
@@ -410,6 +417,7 @@ async def get_rerank_impact(days: int = 7):
         impact = quality_analyzer.get_rerank_impact(days=days)
         return {"success": True, "data": impact, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"재순위화 효과 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"재순위화 효과 조회 오류: {e}")
 
 
@@ -434,6 +442,7 @@ async def get_failure_rate(days: int = 7, threshold_score: float = 0.3, threshol
         )
         return {"success": True, "data": failure_rate, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"실패율 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"실패율 조회 오류: {e}")
 
 
@@ -453,6 +462,7 @@ async def get_failed_queries(days: int = 7, limit: int = 10):
         failed_queries = quality_analyzer.get_top_failed_queries(days=days, limit=limit)
         return {"success": True, "data": failed_queries, "days": days, "limit": limit}
     except Exception as e:
+        send_error_log("aims_rag_api", f"실패 쿼리 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"실패 쿼리 조회 오류: {e}")
 
 
@@ -471,6 +481,7 @@ async def get_performance_trends(days: int = 7):
         trends = quality_analyzer.get_performance_trends(days=days)
         return {"success": True, "data": trends, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"성능 트렌드 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"성능 트렌드 조회 오류: {e}")
 
 
@@ -489,6 +500,7 @@ async def get_user_satisfaction(days: int = 7):
         satisfaction = quality_analyzer.get_user_satisfaction(days=days)
         return {"success": True, "data": satisfaction, "days": days}
     except Exception as e:
+        send_error_log("aims_rag_api", f"만족도 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"만족도 조회 오류: {e}")
 
 
@@ -514,6 +526,7 @@ async def check_alerts(days: int = 1):
             "days": days
         }
     except Exception as e:
+        send_error_log("aims_rag_api", f"알림 체크 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"알림 체크 오류: {e}")
 
 
@@ -537,6 +550,7 @@ async def submit_feedback(request: FeedbackRequest):
         )
         return {"success": True, "message": "피드백이 성공적으로 저장되었습니다"}
     except Exception as e:
+        send_error_log("aims_rag_api", f"피드백 저장 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"피드백 저장 오류: {e}")
 
 
@@ -556,6 +570,7 @@ async def get_recent_logs(user_id: Optional[str] = None, limit: int = 100):
         logs = search_logger.get_recent_logs(user_id=user_id, limit=limit)
         return {"success": True, "data": logs, "count": len(logs)}
     except Exception as e:
+        send_error_log("aims_rag_api", f"로그 조회 오류: {e}", e)
         raise HTTPException(status_code=500, detail=f"로그 조회 오류: {e}")
 
 

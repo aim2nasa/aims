@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import fitz  # PyMuPDF
 
 from version import VERSION_INFO, log_version_info
+from system_logger import send_error_log
 
 # 시작 시 버전 정보 출력
 log_version_info()
@@ -66,6 +67,7 @@ def fix_pdf_metadata_in_memory(pdf_bytes: bytes, replacement_title: Optional[str
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     except Exception as e:
+        send_error_log("pdf_proxy", f"PDF open failed: {e}", e, {"title": replacement_title})
         return pdf_bytes, False, f"PDF open failed: {e}"
 
     metadata = doc.metadata
@@ -107,6 +109,7 @@ def fix_pdf_metadata_in_memory(pdf_bytes: bytes, replacement_title: Optional[str
         return result_bytes, True, f"Fixed: {', '.join(changes)}"
     except Exception as e:
         doc.close()
+        send_error_log("pdf_proxy", f"PDF save failed: {e}", e, {"title": replacement_title})
         return pdf_bytes, False, f"Save failed: {e}"
 
 
@@ -156,6 +159,7 @@ async def serve_pdf(
     try:
         pdf_bytes = full_path.read_bytes()
     except Exception as e:
+        send_error_log("pdf_proxy", f"파일 읽기 실패: {e}", e, {"path": str(full_path)})
         raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
 
     # 제목이 없으면 파일명 사용

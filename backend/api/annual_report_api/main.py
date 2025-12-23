@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from config import settings
 from services.queue_manager import ARParseQueueManager
+from system_logger import send_error_log
 
 # 로깅 설정
 logging.basicConfig(
@@ -102,6 +103,7 @@ async def scan_pending_ar_documents():
 
     except Exception as e:
         logger.error(f"❌ pending AR 문서 스캔 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"pending AR 문서 스캔 오류: {e}", e)
         return 0
 
 
@@ -208,6 +210,7 @@ async def queue_worker():
                         retry=True
                     )
                     logger.error(f"❌ AR 파싱 예외: file_id={file_id}, error={parse_error}", exc_info=True)
+                    send_error_log("annual_report_api", f"AR 파싱 예외: {parse_error}", parse_error, {"file_id": str(file_id)})
 
                 # 작업 처리 후 즉시 다음 작업 확인 (딜레이 없음)
             else:
@@ -216,6 +219,7 @@ async def queue_worker():
 
         except Exception as e:
             logger.error(f"❌ 워커 루프 오류: {e}", exc_info=True)
+            send_error_log("annual_report_api", f"워커 루프 오류: {e}", e)
             await asyncio.sleep(1)  # 오류 발생 시 1초 대기 후 재시도
 
 @app.on_event("startup")
@@ -275,9 +279,11 @@ async def startup_event():
 
     except ConnectionFailure as e:
         logger.error(f"❌ MongoDB 연결 실패: {e}")
+        send_error_log("annual_report_api", f"MongoDB 연결 실패: {e}", e)
         raise
     except Exception as e:
         logger.error(f"❌ 시작 오류: {e}")
+        send_error_log("annual_report_api", f"시작 오류: {e}", e)
         raise
 
 @app.on_event("shutdown")
@@ -332,6 +338,7 @@ async def health_check():
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
+        send_error_log("annual_report_api", f"Health check 실패: {e}", e)
         return {
             "status": "unhealthy",
             "error": str(e),
