@@ -61,15 +61,10 @@ const defaultOptions: DefaultOptions = {
     // 뮤테이션 재시도는 기본적으로 하지 않음
     retry: false,
 
-    // 에러 처리
+    // 에러 처리 (에러 리포팅은 mutationCache.onError에서 처리)
     onError: (error) => {
       // 전역 에러 처리 로직
       const errorMessage = handleApiError(error);
-
-      // 에러 로깅 서비스에 전송
-      if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
-        errorReporter.reportApiError(error);
-      }
 
       // 개발 환경에서 콘솔에 에러 출력
       if (import.meta.env.DEV) {

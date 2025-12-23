@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { setCurrentUserId, getUserIdFromAuth } from '../auth.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 /**
  * stdio Transport로 MCP 서버 시작
@@ -18,7 +19,13 @@ export async function startStdioServer(server: Server): Promise<void> {
   }
 
   const transport = new StdioServerTransport();
-  await server.connect(transport);
 
-  console.error('[aims-mcp] stdio 서버 시작됨');
+  try {
+    await server.connect(transport);
+    console.error('[aims-mcp] stdio 서버 시작됨');
+  } catch (error) {
+    console.error('[aims-mcp] stdio 서버 연결 실패:', error);
+    sendErrorLog('aims_mcp', 'stdio 서버 연결 실패', error);
+    throw error;
+  }
 }

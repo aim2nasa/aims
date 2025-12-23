@@ -454,6 +454,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           })
           .catch(error => {
             console.error('[App] URL에서 고객 정보 복원 실패:', error)
+            errorReporter.reportApiError(error as Error, { component: 'App.restoreCustomerFromURL' })
             // URL에서 잘못된 고객 ID 제거
             updateURLParams({ customerId: null })
           })
@@ -491,6 +492,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         })
         .catch(error => {
           console.error('[App] URL에서 문서 정보 복원 실패:', error)
+          errorReporter.reportApiError(error as Error, { component: 'App.restoreDocumentFromURL' })
           updateURLParams({ documentId: null })
         })
     }
