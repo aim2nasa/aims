@@ -7,7 +7,7 @@
 
 ## 1. 현황 분석
 
-### 1.1 현재 aims-mcp 도구 (34개) - Phase 4 완료
+### 1.1 현재 aims-mcp 도구 (38개) - Phase 5 완료
 
 | 카테고리 | 도구 | 상태 |
 |---------|------|------|
@@ -47,6 +47,10 @@
 | | `list_notices` | ✅ Phase 4 추가 |
 | | `list_faqs` | ✅ Phase 4 추가 |
 | | `list_usage_guides` | ✅ Phase 4 추가 |
+| RAG 검색 | `search_documents_semantic` | ✅ Phase 5 추가 |
+| | `get_search_analytics` | ✅ Phase 5 추가 |
+| | `get_failed_queries` | ✅ Phase 5 추가 |
+| | `submit_search_feedback` | ✅ Phase 5 추가 |
 
 ### 1.2 문제점
 
@@ -113,6 +117,17 @@
 | `list_usage_guides` | 사용 가이드 조회 | "사용법 알려줘" | ✅ 완료 |
 
 **결과**: 5개 도구 추가, 시스템 정보 및 도움말 접근 가능
+
+### Phase 5: RAG 검색 강화 (고급 검색) ✅ 완료
+
+| 도구 | 설명 | 유스케이스 | 상태 |
+|------|------|-----------|------|
+| `search_documents_semantic` | 시맨틱 문서 검색 | "보험금 청구 관련 문서 찾아줘" | ✅ 완료 |
+| `get_search_analytics` | 검색 품질 통계 | "검색 성능 어때?" | ✅ 완료 |
+| `get_failed_queries` | 실패한 검색 분석 | "검색 실패한 것들 뭐야?" | ✅ 완료 |
+| `submit_search_feedback` | 검색 피드백 제출 | "이 결과 별로야" | ✅ 완료 |
+
+**결과**: 4개 도구 추가, 하이브리드 검색 엔진(메타데이터+벡터) 활용 가능
 
 ---
 
@@ -196,6 +211,24 @@
 
 ---
 
+### Phase 5 진행 로그
+
+#### 2025-12-23: Phase 5 구현 완료
+- [x] `rag.ts` 신규 생성
+  - `search_documents_semantic`: 시맨틱 문서 검색 (하이브리드 엔진 활용)
+  - `get_search_analytics`: 검색 품질 통계 조회 (성공률, 응답 시간, 쿼리 유형 분포)
+  - `get_failed_queries`: 실패한 검색 쿼리 분석
+  - `submit_search_feedback`: 검색 결과 피드백 제출
+- [x] aims_rag_api HTTP 연동 구현
+- [x] `index.ts` 도구 등록 완료
+- [x] TypeScript 타입 체크 통과
+- [x] Phase 5 커밋
+
+**추가된 도구**: 4개
+**총 도구 수**: 38개
+
+---
+
 ## 4. 기술 참고
 
 ### 4.1 aims_api 관련 엔드포인트
@@ -215,7 +248,16 @@
 | 상태 조회 | `/status/:file_id` | GET |
 | 보고서 조회 | `/customers/:id/annual-reports` | GET |
 
-### 4.3 MCP 도구 구현 패턴
+### 4.3 aims_rag_api 관련 엔드포인트
+
+| 기능 | API | 메서드 |
+|------|-----|--------|
+| 시맨틱 검색 | `/search` | POST |
+| 검색 통계 | `/analytics/overall` | GET |
+| 실패 쿼리 | `/analytics/failed_queries` | GET |
+| 피드백 제출 | `/feedback` | POST |
+
+### 4.4 MCP 도구 구현 패턴
 
 ```typescript
 // tools/example.ts
@@ -249,3 +291,4 @@ export function registerExampleTools(server: McpServer, db: Db) {
 | 2025-12-23 | Phase 2 완료 - 4개 도구 추가 (Annual Report 관련) |
 | 2025-12-23 | Phase 3 완료 - 3개 도구 추가 (인사이트: 고객 가치 분석, 보장 공백 분석, 액션 추천) |
 | 2025-12-23 | Phase 4 완료 - 5개 도구 추가 (유틸리티: 저장소, 고객명 검사, 공지, FAQ, 가이드) |
+| 2025-12-23 | Phase 5 완료 - 4개 도구 추가 (RAG 검색: 시맨틱 검색, 검색 통계, 실패 쿼리, 피드백) |

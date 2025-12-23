@@ -19,6 +19,7 @@ import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRela
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus } from './annual_reports.js';
 import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageGaps, handleSuggestNextAction } from './insights.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
+import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -35,6 +36,7 @@ const allToolDefinitions = [
   ...annualReportToolDefinitions,
   ...insightToolDefinitions,
   ...utilityToolDefinitions,
+  ...ragToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -87,6 +89,11 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   list_notices: handleListNotices,
   list_faqs: handleListFaqs,
   list_usage_guides: handleListUsageGuides,
+  // RAG 검색 관련
+  search_documents_semantic: handleSearchDocumentsSemantic,
+  get_search_analytics: handleGetSearchAnalytics,
+  get_failed_queries: handleGetFailedQueries,
+  submit_search_feedback: handleSubmitSearchFeedback,
 };
 
 /**
