@@ -434,6 +434,7 @@ async function convertDocumentInBackground(fileId, inputPath) {
     console.log(`[PDF변환] 변환 완료: ${pdfPath}`);
   } catch (error) {
     console.error(`[PDF변환] 변환 실패 (${fileIdStr}): ${error.message}`);
+    backendLogger.error('Documents', `[PDF변환] 변환 실패 (${fileIdStr})`, error);
 
     // 4. 실패 시 에러 기록
     await db.collection(COLLECTION_NAME).updateOne(
@@ -550,6 +551,7 @@ app.post('/api/pdf/convert', upload.single('file'), async (req, res) => {
 
   } catch (error) {
     console.error('[PDF Proxy] 변환 실패:', error.message);
+    backendLogger.error('Documents', '[PDF Proxy] 변환 실패', error);
 
     // 에러 응답 처리
     if (error.response) {
@@ -4901,6 +4903,7 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       }
     } catch (wfError) {
       console.error('[Admin] n8n 워크플로우 상태 조회 오류:', wfError.message);
+      backendLogger.error('Admin', 'n8n 워크플로우 상태 조회 오류', wfError);
     }
 
     res.json({
@@ -8220,6 +8223,7 @@ app.post('/api/contracts', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('계약 등록 오류:', error);
+    backendLogger.error('Contracts', '계약 등록 오류', error);
 
     // 계약 등록 실패 로그
     activityLogger.log({
@@ -8558,6 +8562,7 @@ app.post('/api/contracts/bulk', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('계약 일괄 등록 오류:', error);
+    backendLogger.error('Contracts', '계약 일괄 등록 오류', error);
 
     // 계약 일괄등록 실패 로그
     activityLogger.log({
@@ -8998,6 +9003,7 @@ async function checkOcrPermissions() {
     }
   } catch (error) {
     console.error('[OCR Permission Check] 오류:', error);
+    backendLogger.error('OCR', '[OCR Permission Check] 오류', error);
   }
 }
 
@@ -9025,6 +9031,7 @@ async function collectAndSaveMetrics() {
     console.log(`[Metrics] 시스템 메트릭 수집 완료 - CPU: ${metrics.cpu.usage}%, Mem: ${metrics.memory.usagePercent}%, Disk: ${metrics.disk.usagePercent}%`);
   } catch (error) {
     console.error('[Metrics] 메트릭 수집 실패:', error.message);
+    backendLogger.error('Metrics', '메트릭 수집 실패', error);
   }
 }
 
@@ -9049,6 +9056,7 @@ async function setupMetricsCollection() {
     // 인덱스가 이미 있으면 무시
     if (!error.message.includes('already exists')) {
       console.error('[Metrics] 인덱스 설정 실패:', error.message);
+      backendLogger.error('Metrics', '인덱스 설정 실패', error);
     }
   }
 }
