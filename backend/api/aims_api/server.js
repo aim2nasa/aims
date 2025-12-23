@@ -2539,6 +2539,7 @@ app.get('/api/users', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 사용자 목록 조회 실패:', error);
+    backendLogger.error('Users', '사용자 목록 조회 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2618,6 +2619,7 @@ app.post('/api/dev/ensure-user', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 개발 계정 생성/조회 실패:', error);
+    backendLogger.error('Users', '개발 계정 생성/조회 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2648,6 +2650,7 @@ app.delete('/api/dev/customers/all', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 고객 전체 삭제 실패:', error);
+    backendLogger.error('Customers', '고객 전체 삭제 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2680,6 +2683,7 @@ app.delete('/api/dev/contracts/all', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 계약 전체 삭제 실패:', error);
+    backendLogger.error('Contracts', '계약 전체 삭제 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2731,6 +2735,7 @@ app.get('/api/users/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 사용자 조회 실패:', error);
+    backendLogger.error('Users', '사용자 조회 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2801,6 +2806,7 @@ app.put('/api/users/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 사용자 정보 업데이트 실패:', error);
+    backendLogger.error('Users', '사용자 정보 업데이트 실패', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -2857,6 +2863,7 @@ app.get('/api/customers/stats', authenticateJWTorAPIKey, async (req, res) => {
     });
   } catch (error) {
     console.error('[Customers Stats] Error:', error);
+    backendLogger.error('Customers', '고객 통계 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -3558,6 +3565,7 @@ app.post('/api/customers/validate-names', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('고객명 검증 오류:', error);
+    backendLogger.error('Customers', '고객명 검증 오류', error);
     res.status(500).json({
       success: false,
       error: '고객명 검증에 실패했습니다.',
@@ -3611,6 +3619,7 @@ app.get('/api/customers/check-name', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('고객명 중복 체크 오류:', error);
+    backendLogger.error('Customers', '고객명 중복 체크 오류', error);
     res.status(500).json({
       success: false,
       error: '고객명 중복 체크에 실패했습니다.'
@@ -3662,6 +3671,7 @@ app.get('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
     });
   } catch (error) {
     console.error('고객 조회 오류:', error);
+    backendLogger.error('Customers', '고객 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '고객 조회에 실패했습니다.',
@@ -4193,6 +4203,7 @@ app.post('/api/customers/:id/restore', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('고객 복원 오류:', error);
+    backendLogger.error('Customers', '고객 복원 오류', error);
     res.status(500).json({
       success: false,
       error: '고객 복원에 실패했습니다.',
@@ -4255,6 +4266,7 @@ app.get('/api/admin/orphaned-relationships', async (req, res) => {
     
   } catch (error) {
     console.error('Orphaned relationships 조회 오류:', error);
+    backendLogger.error('Admin', 'Orphaned relationships 조회 오류', error);
     res.status(500).json({
       success: false,
       error: 'Orphaned relationships 조회에 실패했습니다.',
