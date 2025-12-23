@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**
  * 테마 타입
@@ -67,6 +68,7 @@ const saveTheme = (theme: Theme): void => {
     if (import.meta.env.DEV) {
       console.error('[Theme] localStorage 저장 실패:', error)
     }
+    errorReporter.reportApiError(error as Error, { component: 'usePersistentTheme.saveTheme' })
   }
 }
 

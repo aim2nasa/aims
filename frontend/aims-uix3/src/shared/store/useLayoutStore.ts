@@ -11,6 +11,7 @@
  */
 
 import { create } from 'zustand'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 // CenterPane과 RightPane의 기본 비율 (0~1 범위)
 const DEFAULT_CENTER_PANE_RATIO = 0.5
@@ -176,6 +177,7 @@ export const useLayoutStore = create<LayoutStore>((set, get) => ({
       if (import.meta.env.DEV) {
         console.error('[LayoutStore] LeftPane 상태 저장 실패:', error)
       }
+      errorReporter.reportApiError(error as Error, { component: 'useLayoutStore.toggleLeftPaneCollapsed' })
     }
 
     // 애니메이션 상태 설정
