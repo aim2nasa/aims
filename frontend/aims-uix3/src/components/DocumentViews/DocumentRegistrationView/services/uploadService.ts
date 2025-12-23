@@ -15,6 +15,7 @@ import {
 } from '../types/uploadTypes'
 import { UserContextService, uploadConfig } from './userContextService'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**
  * 업로드 진행률 콜백 타입
@@ -262,10 +263,12 @@ export class UploadService {
           const errorMessage = this.getErrorMessage(error, response)
           this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
+          errorReporter.reportApiError(error, { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
         }
       } else {
         this.statusCallbacks.forEach(callback => callback(id, 'error', '알 수 없는 오류가 발생했습니다'))
         console.error(`[UploadService] 알 수 없는 오류: ${file.name}`, error)
+        errorReporter.reportApiError(new Error('Unknown upload error'), { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
       }
     }
   }
@@ -407,6 +410,7 @@ export class UploadService {
     } catch (error) {
       // 알림 실패는 무시 (업로드 자체는 성공)
       console.warn('[UploadService] SSE 알림 전송 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'UploadService.notifyDocumentUploaded', payload: { customerId, documentId } })
     }
   }
 
@@ -447,6 +451,7 @@ export class UploadService {
       }
     } catch (error) {
       console.warn('[UploadService] folderId 설정 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'UploadService.notifyPersonalFilesUploaded.setFolder', payload: { userId, filename, folderId } })
     }
 
     // 2. SSE 알림 발송
@@ -471,6 +476,7 @@ export class UploadService {
       }
     } catch (error) {
       console.warn('[UploadService] Personal Files SSE 알림 전송 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'UploadService.notifyPersonalFilesUploaded.sseNotify', payload: { userId, filename } })
     }
   }
 

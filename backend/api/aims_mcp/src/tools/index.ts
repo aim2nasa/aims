@@ -3,6 +3,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 // Tool 정의 및 핸들러 import
 import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer } from './customers.js';
@@ -94,6 +95,7 @@ export function registerAllTools(server: Server): void {
       return result;
     } catch (error) {
       console.error(`[aims-mcp] Tool 오류: ${name}`, error);
+      sendErrorLog('aims_mcp', `Tool 실행 오류: ${name}`, error);
       return {
         isError: true,
         content: [{

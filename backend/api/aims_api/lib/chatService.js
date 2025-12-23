@@ -8,6 +8,7 @@ const OpenAI = require('openai');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { logTokenUsage, TOKEN_COSTS } = require('./tokenUsageService');
+const backendLogger = require('./backendLogger');
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -67,6 +68,7 @@ async function getMCPToolsAsOpenAIFunctions() {
     }));
   } catch (error) {
     console.error('[ChatService] MCP tools 로드 실패:', error.message);
+    backendLogger.error('ChatService', 'MCP tools 로드 실패', error);
     return [];
   }
 }
@@ -100,6 +102,7 @@ async function callMCPTool(toolName, args, userId) {
     return JSON.stringify(response.data);
   } catch (error) {
     console.error(`[ChatService] MCP tool ${toolName} 호출 실패:`, error.message);
+    backendLogger.error('ChatService', `MCP tool ${toolName} 호출 실패`, error);
     throw new Error(`도구 호출 실패: ${error.message}`);
   }
 }

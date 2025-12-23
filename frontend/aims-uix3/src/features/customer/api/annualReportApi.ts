@@ -6,6 +6,7 @@
 
 import type { Customer } from '@/entities/customer';
 import { api, apiRequest, ApiError } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 // Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
 const ANNUAL_REPORT_API_URL = '/api';
@@ -206,6 +207,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'Annual Report 파싱 중 오류가 발생했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.parseAnnualReport' });
       return { success: false, error: message };
     }
   }
@@ -243,6 +245,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : '상태 조회 중 오류가 발생했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.getParseStatus', payload: { fileId } });
       return { success: false, error: message };
     }
   }
@@ -287,6 +290,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'Annual Reports 조회 중 오류가 발생했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.getAnnualReports', payload: { customerId } });
       return { success: false, error: message };
     }
   }
@@ -330,6 +334,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : '최신 Annual Report 조회 중 오류가 발생했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.getLatestAnnualReport', payload: { customerId } });
       return { success: false, error: message };
     }
   }
@@ -435,8 +440,9 @@ export class AnnualReportApi {
         formData
       );
       return data;
-    } catch {
+    } catch (error) {
       // 에러 시에도 is_annual_report: false로 반환 (조용히 실패)
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.checkAnnualReport' });
       return { is_annual_report: false, confidence: 0, metadata: null };
     }
   }
@@ -468,6 +474,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'Annual Report 파싱 요청에 실패했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.parseAnnualReportFile', payload: { customerId } });
       return { success: false, message };
     }
   }
@@ -489,8 +496,9 @@ export class AnnualReportApi {
 
       // 백엔드 응답 구조: { success: true, data: { customers: [...] } }
       return data.data?.customers || [];
-    } catch {
+    } catch (error) {
       // 에러 시 빈 배열 반환 (조용히 실패)
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.searchCustomersByName', payload: { name } });
       return [];
     }
   }
@@ -531,6 +539,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.deleteAnnualReports', payload: { customerId, indices } });
       return { success: false, message };
     }
   }
@@ -601,6 +610,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : '중복 Annual Reports 정리 중 오류가 발생했습니다');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.cleanupDuplicates', payload: { customerId, issueDate } });
       return { success: false, message };
     }
   }
@@ -634,6 +644,7 @@ export class AnnualReportApi {
       const message = error instanceof ApiError
         ? error.message
         : (error instanceof Error ? error.message : 'AR 파싱 재시도 중 오류가 발생했습니다');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.retryParsing', payload: { fileId } });
       return { success: false, message };
     }
   }
