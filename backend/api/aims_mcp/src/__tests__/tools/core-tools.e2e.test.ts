@@ -191,6 +191,37 @@ describe('핵심 도구 테스트', () => {
       });
       expect(updated.phone).toBe(newPhone);
     });
+
+    it('update_customer: 존재하지 않는 고객 수정', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('update_customer', {
+        customerId: '000000000000000000000000',
+        phone: '010-9999-9999'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('get_customer: 유효하지 않은 고객 ID', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('get_customer', {
+        customerId: 'invalid-customer-id'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('get_customer: 존재하지 않는 고객', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('get_customer', {
+        customerId: '000000000000000000000000'
+      });
+
+      expect(result.isError).toBe(true);
+    });
   });
 
   // ============================================================
@@ -371,6 +402,80 @@ describe('핵심 도구 테스트', () => {
       expect(result.customerId).toBe(customer.customerId);
       expect(Array.isArray(result.documents)).toBe(true);
     });
+
+    it('get_document: 존재하지 않는 문서 조회', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('get_document', {
+        documentId: '000000000000000000000000'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('get_document: 유효하지 않은 문서 ID', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('get_document', {
+        documentId: 'invalid-id'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('delete_document: 존재하지 않는 문서 삭제', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('delete_document', {
+        documentId: '000000000000000000000000'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('delete_document: 유효하지 않은 문서 ID', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('delete_document', {
+        documentId: 'invalid-id-format'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('delete_documents: 빈 배열', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('delete_documents', {
+        documentIds: []
+      });
+
+      // Zod 스키마에서 min(1) 검증으로 오류
+      expect(result.isError).toBe(true);
+    });
+
+    it('delete_documents: 존재하지 않는 문서들', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('delete_documents', {
+        documentIds: [
+          '000000000000000000000000',
+          '000000000000000000000001'
+        ]
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('delete_documents: 유효하지 않은 ID 포함', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('delete_documents', {
+        documentIds: ['invalid-id-1', 'invalid-id-2']
+      });
+
+      expect(result.isError).toBe(true);
+    });
   });
 
   // ============================================================
@@ -460,6 +565,44 @@ describe('핵심 도구 테스트', () => {
 
       expect(result.memo).toContain('첫 번째 메모');
       expect(result.memo).toContain('두 번째 메모');
+    });
+
+    it('add_customer_memo: 존재하지 않는 고객', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('add_customer_memo', {
+        customerId: '000000000000000000000000',
+        content: '테스트 메모'
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('add_customer_memo: 빈 content', async () => {
+      if (!serversAvailable) return;
+
+      const customer = await mcp.call<{ customerId: string }>('create_customer', {
+        name: `빈메모테스트_${Date.now()}`,
+        type: 'individual'
+      });
+      factory['createdCustomerIds'].push(customer.customerId);
+
+      const result = await mcp.callRaw('add_customer_memo', {
+        customerId: customer.customerId,
+        content: ''
+      });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('list_customer_memos: 존재하지 않는 고객', async () => {
+      if (!serversAvailable) return;
+
+      const result = await mcp.callRaw('list_customer_memos', {
+        customerId: '000000000000000000000000'
+      });
+
+      expect(result.isError).toBe(true);
     });
   });
 
