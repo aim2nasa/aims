@@ -1977,6 +1977,7 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
         }
       } catch (linkError) {
         console.error(`⚠️ [Set AR Flag] 고객 documents 연결 실패:`, linkError);
+        backendLogger.error('Documents', `[Set AR Flag] 고객 documents 연결 실패: ${customer_id}`, linkError);
         // 연결 실패해도 AR 플래그 설정은 성공으로 처리
       }
     }
@@ -2366,6 +2367,7 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
         errors.push({ document_id: docId, error: error.message });
         failedCount++;
         console.error(`❌ 문서 삭제 중 오류: ${docId} - ${error.message}`);
+        backendLogger.error('Documents', `문서 삭제 중 오류: ${docId}`, error);
       }
     }
 
@@ -3367,6 +3369,7 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
         }
       } catch (itemError) {
         errors.push({ name: customer.name || '(이름없음)', reason: itemError.message });
+        backendLogger.error('Customers', `고객 일괄 등록 개별 항목 오류: ${customer.name || '(이름없음)'}`, itemError);
       }
     }
 
@@ -4046,6 +4049,7 @@ app.delete('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
 
       } catch (docError) {
         console.error(`❌ 문서 삭제 중 오류: ${docError.message}`);
+        backendLogger.error('Documents', '고객 삭제 시 문서 삭제 오류', docError);
       }
     }
 
