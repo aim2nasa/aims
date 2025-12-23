@@ -1369,6 +1369,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                             }
                           } catch (err) {
                             console.error('버전 복사 실패:', err)
+                            errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
                           }
                         }}
                         role="button"

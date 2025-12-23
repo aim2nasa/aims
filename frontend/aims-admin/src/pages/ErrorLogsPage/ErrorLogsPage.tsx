@@ -23,6 +23,7 @@ import {
 } from '@/features/error-logs/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './ErrorLogsPage.css';
 
 // 모달 상태 타입
@@ -275,6 +276,7 @@ export const ErrorLogsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'retention'] });
     } catch (err) {
       console.error('보존 기간 설정 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'ErrorLogsPage.confirmRetentionChange' });
       setLocalRetentionHours(null);
     }
   };

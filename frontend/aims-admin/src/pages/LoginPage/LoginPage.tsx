@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/authStore';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './LoginPage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -46,6 +47,7 @@ export const LoginPage = () => {
       }
     } catch (err) {
       console.error('Admin 로그인 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'LoginPage.handleAdminLogin' });
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다');
     } finally {
       setIsLoading(false);

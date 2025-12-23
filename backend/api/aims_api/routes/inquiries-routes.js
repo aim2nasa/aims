@@ -86,6 +86,7 @@ function sendSSE(res, event, data) {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   } catch (e) {
     console.error('SSE 전송 실패:', e);
+    backendLogger.error('Inquiries', 'SSE 전송 실패', e);
   }
 }
 

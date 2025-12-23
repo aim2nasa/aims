@@ -12,6 +12,7 @@ import {
   markAsRead as markAsReadApi,
   getNotificationStreamUrl,
 } from '@/features/inquiries/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 interface InquiryNotificationData {
   inquiryId: string;
@@ -59,6 +60,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
       setUnreadIds(new Set(ids));
     } catch (error) {
       console.error('[AdminInquiryNotifications] 초기 데이터 로드 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.loadInitialData' });
     }
   }, []);
 
@@ -98,6 +100,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         console.log('[AdminInquiryNotifications] 초기 데이터 수신:', data);
       } catch (error) {
         console.error('[AdminInquiryNotifications] init 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.init' });
       }
     });
 
@@ -132,6 +135,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         queryClient.invalidateQueries({ queryKey: ['admin', 'inquiries'] });
       } catch (error) {
         console.error('[AdminInquiryNotifications] new-inquiry 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.new-inquiry' });
       }
     });
 
@@ -167,6 +171,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
         queryClient.invalidateQueries({ queryKey: ['admin', 'inquiry', data.inquiryId] });
       } catch (error) {
         console.error('[AdminInquiryNotifications] new-message 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.new-message' });
       }
     });
 
@@ -221,6 +226,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
       });
       setUnreadCount((c) => c + 1);
       console.error('[AdminInquiryNotifications] 읽음 처리 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.markAsRead' });
     }
   }, []);
 

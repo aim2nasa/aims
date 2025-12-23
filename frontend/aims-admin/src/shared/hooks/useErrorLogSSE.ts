@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ErrorLog, ErrorLogStats } from '@/features/error-logs/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -79,6 +80,7 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         console.log('[ErrorLogSSE] 초기 통계 수신:', data.stats);
       } catch (error) {
         console.error('[ErrorLogSSE] init 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useErrorLogSSE.init' });
       }
     });
 
@@ -120,6 +122,7 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
         console.error('[SystemLogSSE] new-error 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useErrorLogSSE.new-error' });
       }
     });
 
@@ -133,6 +136,7 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
         console.error('[SystemLogSSE] new-log 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useErrorLogSSE.new-log' });
       }
     });
 
@@ -147,6 +151,7 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
         console.error('[SystemLogSSE] logs-batch 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useErrorLogSSE.logs-batch' });
       }
     });
 
@@ -177,6 +182,7 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs', 'stats'] });
       } catch (error) {
         console.error('[SystemLogSSE] logs-cleanup 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useErrorLogSSE.logs-cleanup' });
       }
     });
 

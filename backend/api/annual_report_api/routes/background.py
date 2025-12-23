@@ -16,6 +16,7 @@ from services.detector import is_annual_report, extract_customer_info_from_first
 from services.parser import parse_annual_report
 from services.db_writer import save_annual_report
 from config import settings
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +102,9 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             # 🔧 완료된 작업은 큐에서 삭제
             try:
                 db["ar_parse_queue"].delete_one({"file_id": doc["_id"]})
-            except Exception:
-                pass  # 무시
+            except Exception as e:
+                logger.warning(f"큐 삭제 실패 (무시됨): {e}")
+                send_error_log("annual_report_api", f"AR 큐 삭제 실패: {e}", e)
             return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
 
         # 3. AR 파싱 실행

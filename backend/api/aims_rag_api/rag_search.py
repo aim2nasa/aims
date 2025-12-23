@@ -25,6 +25,9 @@ from alert_system import AlertSystem
 # 🔥 Phase 4: AI 토큰 사용량 추적 추가
 from token_tracker import TokenTracker
 
+# 시스템 로그 전송
+from system_logger import send_error_log
+
 # 버전 정보
 from version import VERSION_INFO, log_version_info
 
@@ -97,6 +100,7 @@ def embed_query(query_text: str) -> tuple:
         return response.data[0].embedding, response
     except Exception as e:
         print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
+        send_error_log("aims_rag_api", f"쿼리 임베딩 중 오류: {e}", e)
         return None, None
 
 # 2. Qdrant 유사도 검색 함수 (사용자 필터 추가)
@@ -127,6 +131,7 @@ def search_qdrant(query_vector: List[float], user_id: Optional[str] = None, coll
         return search_result
     except Exception as e:
         print(f"❌ Qdrant 검색 중 오류 발생: {e}")
+        send_error_log("aims_rag_api", f"Qdrant 검색 중 오류: {e}", e)
         return []
 
 # 3. 문서별 중복 제거 함수 (최고 점수 청크만 반환)
@@ -203,6 +208,7 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> tuple:
         )
         return response.choices[0].message.content, response
     except Exception as e:
+        send_error_log("aims_rag_api", f"LLM 답변 생성 중 오류: {e}", e)
         return f"❌ LLM 답변 생성 중 오류 발생: {e}", None
 
 
@@ -302,6 +308,7 @@ async def search_endpoint(request: SearchRequest):
                 print(f"📝 검색 로그 저장 완료: {log_id}")
             except Exception as log_error:
                 print(f"⚠️ 로그 저장 실패 (검색은 정상 진행): {log_error}")
+                send_error_log("aims_rag_api", f"검색 로그 저장 실패: {log_error}", log_error)
 
             # 🔥 Phase 4: AI 토큰 사용량 추적 (항상 추적)
             try:
@@ -333,6 +340,7 @@ async def search_endpoint(request: SearchRequest):
                     )
             except Exception as token_error:
                 print(f"⚠️ 토큰 사용량 저장 실패 (검색은 정상 진행): {token_error}")
+                send_error_log("aims_rag_api", f"토큰 사용량 저장 실패: {token_error}", token_error)
 
             # 응답 구조를 통일된 형식으로 변경
             return UnifiedSearchResponse(

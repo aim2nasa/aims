@@ -16,6 +16,7 @@ from services.detector import is_annual_report, extract_customer_info_from_first
 from services.parser import parse_annual_report
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
+from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +160,7 @@ async def check_annual_report_endpoint(
         raise
     except Exception as e:
         logger.error(f"❌ Annual Report 체크 중 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Annual Report 체크 중 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
