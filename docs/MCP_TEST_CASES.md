@@ -2,7 +2,7 @@
 
 > **생성일**: 2025-12-23
 > **총 도구 수**: 40개
-> **총 테스트 케이스**: 72개
+> **총 테스트 케이스**: 85개
 > **테스트 결과**: ✅ 전체 통과
 
 ---
@@ -29,9 +29,12 @@
 | `search_customers` | 이름으로 검색 | 고객명으로 검색 후 결과 확인 | ✅ |
 | `search_customers` | 고객 유형 필터링 | individual/corporate 타입 필터 | ✅ |
 | `get_customer` | 상세 정보 조회 | 고객 ID로 상세 정보 조회 | ✅ |
+| `get_customer` | 존재하지 않는 고객 | 없는 고객 조회 시 오류 | ✅ |
+| `get_customer` | 유효하지 않은 ID | 잘못된 형식의 ID 시 오류 | ✅ |
 | `create_customer` | 개인 고객 생성 | 이름, 전화번호, 이메일로 생성 | ✅ |
 | `create_customer` | 법인 고객 생성 | 사업자번호 포함 법인 생성 | ✅ |
 | `update_customer` | 고객 정보 수정 | 전화번호 변경 후 확인 | ✅ |
+| `update_customer` | 존재하지 않는 고객 | 없는 고객 수정 시 오류 | ✅ |
 
 **Use Case 예시:**
 ```
@@ -78,6 +81,13 @@
 |------|--------------|------|------|
 | `search_documents` | 문서 검색 | 키워드로 문서 검색 | ✅ |
 | `list_customer_documents` | 고객별 문서 조회 | 특정 고객의 문서 목록 | ✅ |
+| `get_document` | 존재하지 않는 문서 | 없는 문서 조회 시 오류 | ✅ |
+| `get_document` | 유효하지 않은 ID | 잘못된 형식의 ID 시 오류 | ✅ |
+| `delete_document` | 존재하지 않는 문서 | 없는 문서 삭제 시 오류 | ✅ |
+| `delete_document` | 유효하지 않은 ID | 잘못된 형식의 ID 시 오류 | ✅ |
+| `delete_documents` | 빈 배열 | 빈 documentIds 배열 시 오류 | ✅ |
+| `delete_documents` | 존재하지 않는 문서들 | 없는 문서들 삭제 시 오류 | ✅ |
+| `delete_documents` | 유효하지 않은 ID 포함 | 잘못된 ID 포함 시 오류 | ✅ |
 
 ### 1.6 메모 도구
 
@@ -86,6 +96,9 @@
 | `add_customer_memo` | 메모 추가 | 고객에게 메모 추가 | ✅ |
 | `list_customer_memos` | 메모 조회 | 고객의 메모 조회 | ✅ |
 | `add_customer_memo` | 여러 메모 추가 | 다중 메모 추가 후 확인 | ✅ |
+| `add_customer_memo` | 존재하지 않는 고객 | 없는 고객에 메모 시 오류 | ✅ |
+| `add_customer_memo` | 빈 content | 빈 메모 내용 시 오류 | ✅ |
+| `list_customer_memos` | 존재하지 않는 고객 | 없는 고객 조회 시 오류 | ✅ |
 
 **Use Case 예시:**
 ```
@@ -512,5 +525,6 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 
 | 날짜 | 내용 |
 |------|------|
+| 2025-12-23 | 테스트 케이스 확대 (72→85개): 문서/고객/메모 엣지 케이스 추가 |
 | 2025-12-23 | 완성도 평가 섹션 추가 (85/100) |
 | 2025-12-23 | 초기 문서 생성, 72개 테스트 케이스 문서화 |
