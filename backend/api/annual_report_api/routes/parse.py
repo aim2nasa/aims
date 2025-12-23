@@ -415,6 +415,7 @@ async def parse_annual_report_endpoint(
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
         logger.error(f"❌ 파싱 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"파싱 API 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
@@ -526,6 +527,7 @@ async def parse_annual_report_by_path_endpoint(
         raise
     except Exception as e:
         logger.error(f"❌ 파싱 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"경로 기반 파싱 API 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"

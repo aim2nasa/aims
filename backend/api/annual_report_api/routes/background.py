@@ -189,6 +189,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
 
     except Exception as e:
         logger.error(f"❌ [Queue Parsing] 예외 발생: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Queue Parsing 예외 발생: {e}", e)
         try:
             db["files"].update_one(
                 {"_id": ObjectId(file_id)},
@@ -381,6 +382,7 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 
             except Exception as e:
                 logger.error(f"❌ [BG Parsing] 문서 처리 실패: {doc.get('_id')}, {e}", exc_info=True)
+                send_error_log("annual_report_api", f"BG Parsing 문서 처리 실패: {doc.get('_id')}, {e}", e)
                 try:
                     db["files"].update_one(
                         {"_id": doc["_id"]},
@@ -398,6 +400,7 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 
     except Exception as e:
         logger.error(f"❌ [BG Parsing] 전체 실패: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"BG Parsing 전체 실패: {e}", e)
 
 
 @router.post("/trigger-parsing", response_model=TriggerParsingResponse)
@@ -499,6 +502,7 @@ async def trigger_ar_parsing(
         raise
     except Exception as e:
         logger.error(f"❌ [Trigger] 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Trigger Parsing 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
@@ -637,6 +641,7 @@ async def retry_ar_parsing(
         raise
     except Exception as e:
         logger.error(f"❌ [Retry] 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"Retry Parsing 오류: {e}", e)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"
