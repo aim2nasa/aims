@@ -24,6 +24,7 @@ import type {
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 import { formatDateTime } from '@/shared/lib/timeUtils'
 import { getAuthHeaders } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
 
@@ -78,6 +79,7 @@ export class DocumentStatusService {
     } catch (error) {
       // Health check 실패는 중요한 에러이므로 유지
       console.error('[DocumentStatusService] Health check failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.checkHealth' })
       throw error
     }
   }
@@ -127,6 +129,7 @@ export class DocumentStatusService {
       return data.success ? data.data : data
     } catch (error) {
       console.error('[DocumentStatusService] Get documents failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getRecentDocuments' })
       throw error
     }
   }
@@ -152,6 +155,7 @@ export class DocumentStatusService {
       return await response.json()
     } catch (error) {
       console.error('[DocumentStatusService] Get document status failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getDocumentStatus', payload: { documentId } })
       throw error
     }
   }
@@ -182,6 +186,7 @@ export class DocumentStatusService {
       return null
     } catch (error) {
       console.error('[DocumentStatusService] Get document detail failed:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusService.getDocumentDetailViaWebhook', payload: { documentId } })
       throw error
     }
   }

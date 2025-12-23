@@ -9,6 +9,7 @@
  */
 
 import { VERSION_INFO } from '../config/version'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 export interface ServiceVersionInfo {
   name: string
@@ -83,6 +84,7 @@ export async function fetchAllBackendVersions(): Promise<ServiceVersionInfo[]> {
     }))
   } catch (error) {
     console.error('[versionService] 버전 정보 조회 실패:', error)
+    errorReporter.reportApiError(error as Error, { component: 'versionService.fetchAllBackendVersions' })
     return []
   }
 }

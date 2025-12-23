@@ -18,7 +18,26 @@ vi.mock('@/shared/lib/api', () => ({
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn()
-  }
+  },
+  NetworkError: class NetworkError extends Error {
+    constructor(message: string, public originalError?: Error) {
+      super(message);
+      this.name = 'NetworkError';
+    }
+  },
+  TimeoutError: class TimeoutError extends Error {
+    constructor(message = '요청 시간이 초과되었습니다') {
+      super(message);
+      this.name = 'TimeoutError';
+    }
+  },
+}));
+
+// errorReporter mock 설정
+vi.mock('@/shared/lib/errorReporter', () => ({
+  errorReporter: {
+    reportApiError: vi.fn(),
+  },
 }));
 
 describe('AddressService', () => {

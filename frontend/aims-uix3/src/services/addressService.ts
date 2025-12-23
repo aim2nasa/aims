@@ -12,6 +12,7 @@
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { formatDateTime } from '@/shared/lib/timeUtils';
 import { api } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * AddressService 클래스
@@ -51,6 +52,7 @@ export class AddressService {
       return data.data || [];
     } catch (error) {
       console.error('[AddressService] 주소 이력 조회 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'AddressService.getAddressHistory', payload: { customerId } });
 
       if (error instanceof Error) {
         throw error;

@@ -10,6 +10,7 @@
 
 import type { CustomerMemo } from '@/entities/customer/model';
 import { api } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 interface MemoListResponse {
   success: boolean;
@@ -59,6 +60,7 @@ export class MemoService {
       return data.data || [];
     } catch (error) {
       console.error('[MemoService] 메모 목록 조회 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'MemoService.getMemos', payload: { customerId } });
 
       if (error instanceof Error) {
         throw error;
@@ -98,6 +100,7 @@ export class MemoService {
       return data.data;
     } catch (error) {
       console.error('[MemoService] 메모 생성 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'MemoService.createMemo', payload: { customerId } });
 
       if (error instanceof Error) {
         throw error;
@@ -138,6 +141,7 @@ export class MemoService {
       return data.data;
     } catch (error) {
       console.error('[MemoService] 메모 수정 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'MemoService.updateMemo', payload: { customerId, memoId } });
 
       if (error instanceof Error) {
         throw error;
@@ -169,6 +173,7 @@ export class MemoService {
       }
     } catch (error) {
       console.error('[MemoService] 메모 삭제 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'MemoService.deleteMemo', payload: { customerId, memoId } });
 
       if (error instanceof Error) {
         throw error;

@@ -7,6 +7,7 @@
  */
 
 import { api } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import type { Customer } from '@/entities/customer/model'
 
 /**
@@ -216,6 +217,7 @@ export class RelationshipService {
         });
       } catch (error) {
         console.warn(`고객 ${customer.personal_info?.name}의 관계 조회 실패:`, error);
+        errorReporter.reportApiError(error as Error, { component: 'RelationshipService.getAllRelationshipsWithCustomers', payload: { customerId: customer._id } });
       }
     }
 

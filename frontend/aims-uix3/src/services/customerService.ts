@@ -8,6 +8,7 @@
  */
 
 import { api } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import {
   Customer,
   CreateCustomerData,
@@ -441,6 +442,7 @@ export class CustomerService {
       if (import.meta.env.DEV) {
         console.warn('[CustomerService.checkDuplicateName] 중복 체크 실패:', error);
       }
+      errorReporter.reportApiError(error as Error, { component: 'CustomerService.checkDuplicateName', payload: { name } });
       // 에러 시 false 반환 (등록은 백엔드에서 최종 검증)
       return { exists: false, customer: null };
     }
