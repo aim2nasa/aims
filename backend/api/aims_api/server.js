@@ -2473,10 +2473,11 @@ app.get('/api/system/versions', async (req, res) => {
   } catch {}
 
   // 다른 서비스들의 health 엔드포인트 병렬 호출
-  const [ragHealth, arHealth, pdfHealth] = await Promise.all([
+  const [ragHealth, arHealth, pdfProxyHealth, pdfConverterHealth] = await Promise.all([
     fetchHealth(8000, '/health'),  // aims_rag_api
     fetchHealth(8004, '/health'),  // annual_report_api
     fetchHealth(8002, '/health'),  // pdf_proxy
+    fetchHealth(8005, '/health'),  // pdf_converter
   ]);
 
   const services = [
@@ -2504,9 +2505,16 @@ app.get('/api/system/versions', async (req, res) => {
     {
       name: 'pdf_proxy',
       displayName: 'pdf_proxy',
-      version: pdfHealth?.versionInfo?.version || null,
-      gitHash: pdfHealth?.versionInfo?.gitHash || null,
-      status: pdfHealth ? 'ok' : 'error'
+      version: pdfProxyHealth?.versionInfo?.version || null,
+      gitHash: pdfProxyHealth?.versionInfo?.gitHash || null,
+      status: pdfProxyHealth ? 'ok' : 'error'
+    },
+    {
+      name: 'pdf_converter',
+      displayName: 'pdf_converter',
+      version: pdfConverterHealth?.version || null,
+      gitHash: null,
+      status: pdfConverterHealth ? 'ok' : 'error'
     },
   ];
 
@@ -4809,6 +4817,12 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
           latency: Date.now() - start,
           version: response.data?.version || null
         };
+      })(),
+      // [8] PDF Converter (문서→PDF 변환 서버 - 포트 8005)
+      (async () => {
+        const start = Date.now();
+        const response = await axios.get('http://localhost:8005/health', { timeout: 5000 });
+        return { latency: Date.now() - start };
       })()
     ]);
 
@@ -4855,6 +4869,12 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
         status: healthChecks[6].status === 'fulfilled' ? 'healthy' : 'unhealthy',
         latency: healthChecks[6].status === 'fulfilled' ? healthChecks[6].value.latency : null,
         error: healthChecks[6].status === 'rejected' ? healthChecks[6].reason?.message : null,
+        checkedAt: checkTime
+      },
+      pdfConverter: {
+        status: healthChecks[8].status === 'fulfilled' ? 'healthy' : 'unhealthy',
+        latency: healthChecks[8].status === 'fulfilled' ? healthChecks[8].value.latency : null,
+        error: healthChecks[8].status === 'rejected' ? healthChecks[8].reason?.message : null,
         checkedAt: checkTime
       },
       aimsMcp: {
@@ -5037,6 +5057,7 @@ app.get('/api/admin/ports', authenticateJWT, requireRole('admin'), async (req, r
     { port: 8000, service: 'aims_rag_api', description: 'RAG/문서 처리 API' },
     { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시' },
     { port: 8004, service: 'annual_report_api', description: '연간보고서 API' },
+    { port: 8005, service: 'pdf_converter', description: 'PDF 변환 서버' },
     { port: 5678, service: 'n8n', description: '워크플로우 엔진' },
     { port: 6333, service: 'qdrant', description: '벡터 DB' },
     { port: 27017, service: 'mongodb', description: '데이터베이스' }

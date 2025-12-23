@@ -412,6 +412,12 @@ export const SystemHealthPage = () => {
           port: 8002,
         },
         {
+          service: 'pdf_converter',
+          health: normalizeHealth(health?.pdfConverter),
+          description: 'PDF 변환 서버 (HWP→PDF 등)',
+          port: 8005,
+        },
+        {
           service: 'aims_mcp',
           health: normalizeHealth(health?.aimsMcp),
           description: 'MCP 서버 (AI 도구)',
