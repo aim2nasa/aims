@@ -6,15 +6,16 @@ import {
 import { sendErrorLog } from '../systemLogger.js';
 
 // Tool 정의 및 핸들러 import
-import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer } from './customers.js';
+import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer, handleRestoreCustomer, handleListDeletedCustomers } from './customers.js';
 import { contractToolDefinitions, handleListContracts, handleGetContractDetails } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { expiringToolDefinitions, handleFindExpiringContracts } from './expiring.js';
 import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
-import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments } from './documents.js';
+import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleDeleteDocument, handleDeleteDocuments } from './documents.js';
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
 import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
+import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -27,6 +28,7 @@ const allToolDefinitions = [
   ...documentToolDefinitions,
   ...memoToolDefinitions,
   ...productToolDefinitions,
+  ...relationshipToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -36,6 +38,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_customer: handleGetCustomer,
   create_customer: handleCreateCustomer,
   update_customer: handleUpdateCustomer,
+  restore_customer: handleRestoreCustomer,
+  list_deleted_customers: handleListDeletedCustomers,
   // 계약 관련
   list_contracts: handleListContracts,
   get_contract_details: handleGetContractDetails,
@@ -49,6 +53,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   search_documents: handleSearchDocuments,
   get_document: handleGetDocument,
   list_customer_documents: handleListCustomerDocuments,
+  delete_document: handleDeleteDocument,
+  delete_documents: handleDeleteDocuments,
   // 메모 관련
   add_customer_memo: handleAddMemo,
   list_customer_memos: handleListMemos,
@@ -56,6 +62,10 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   // 보험상품 관련
   search_products: handleSearchProducts,
   get_product_details: handleGetProductDetails,
+  // 관계 관련
+  create_relationship: handleCreateRelationship,
+  delete_relationship: handleDeleteRelationship,
+  list_relationships: handleListRelationships,
 };
 
 /**

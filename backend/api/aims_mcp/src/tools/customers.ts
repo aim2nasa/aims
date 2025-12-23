@@ -36,6 +36,14 @@ export const updateCustomerSchema = z.object({
   address: z.string().optional().describe('주소')
 });
 
+export const restoreCustomerSchema = z.object({
+  customerId: z.string().describe('복구할 고객 ID')
+});
+
+export const listDeletedCustomersSchema = z.object({
+  limit: z.number().optional().default(20).describe('결과 개수 제한')
+});
+
 // Tool 정의
 export const customerToolDefinitions = [
   {
@@ -93,6 +101,27 @@ export const customerToolDefinitions = [
         address: { type: 'string', description: '주소' }
       },
       required: ['customerId']
+    }
+  },
+  {
+    name: 'restore_customer',
+    description: '삭제된(휴면) 고객을 복구합니다. 삭제된 고객만 복구할 수 있습니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerId: { type: 'string', description: '복구할 고객 ID' }
+      },
+      required: ['customerId']
+    }
+  },
+  {
+    name: 'list_deleted_customers',
+    description: '삭제된(휴면) 고객 목록을 조회합니다. 복구 가능한 고객을 확인할 수 있습니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 20)' }
+      }
     }
   }
 ];
@@ -431,6 +460,184 @@ export async function handleUpdateCustomer(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `고객 정보 수정 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 삭제된 고객 복구 핸들러
+ */
+export async function handleRestoreCustomer(args: unknown) {
+  try {
+    const params = restoreCustomerSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const objectId = toSafeObjectId(params.customerId);
+    if (!objectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
+    // 삭제된 고객 확인 (deleted_at 필드가 있는 경우)
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: objectId,
+      'meta.created_by': userId,
+      deleted_at: { $exists: true }
+    });
+
+    if (!customer) {
+      // 삭제되지 않은 고객이거나 권한 없음
+      const activeCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: objectId,
+        'meta.created_by': userId
+      });
+
+      if (activeCustomer) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '이 고객은 삭제되지 않은 활성 고객입니다.' }]
+        };
+      }
+
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+      };
+    }
+
+    const customerName = customer.personal_info?.name || '알 수 없음';
+
+    // 이름 중복 체크 (복구 시에도 동일 이름 체크)
+    const duplicateName = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      'personal_info.name': { $regex: `^${escapeRegex(customerName)}$`, $options: 'i' },
+      'meta.created_by': userId,
+      _id: { $ne: objectId },
+      deleted_at: { $exists: false }
+    });
+
+    if (duplicateName) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: `같은 이름의 활성 고객이 이미 존재합니다: ${customerName}. 먼저 기존 고객을 삭제하거나 이름을 변경해주세요.`
+        }]
+      };
+    }
+
+    // 고객 복구 (deleted_at 필드 제거, 상태 active로 변경)
+    const result = await db.collection(COLLECTIONS.CUSTOMERS).findOneAndUpdate(
+      { _id: objectId },
+      {
+        $unset: { deleted_at: '' },
+        $set: {
+          'meta.status': 'active',
+          'meta.updated_at': new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객 복구에 실패했습니다.' }]
+      };
+    }
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          customerId: params.customerId,
+          customerName,
+          customerType: customer.insurance_info?.customer_type,
+          message: `고객이 성공적으로 복구되었습니다: ${customerName}`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] restore_customer 에러:', error);
+    sendErrorLog('aims_mcp', 'restore_customer 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `고객 복구 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 삭제된 고객 목록 조회 핸들러
+ */
+export async function handleListDeletedCustomers(args: unknown) {
+  try {
+    const params = listDeletedCustomersSchema.parse(args || {});
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
+      .find({
+        'meta.created_by': userId,
+        deleted_at: { $exists: true }
+      })
+      .sort({ deleted_at: -1 })
+      .limit(params.limit || 20)
+      .project({
+        _id: 1,
+        'personal_info.name': 1,
+        'personal_info.mobile_phone': 1,
+        'insurance_info.customer_type': 1,
+        'meta.status': 1,
+        deleted_at: 1
+      })
+      .toArray();
+
+    const totalCount = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments({
+      'meta.created_by': userId,
+      deleted_at: { $exists: true }
+    });
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          count: customers.length,
+          totalCount,
+          customers: customers.map(c => ({
+            id: c._id.toString(),
+            name: c.personal_info?.name,
+            phone: c.personal_info?.mobile_phone,
+            type: c.insurance_info?.customer_type,
+            deletedAt: c.deleted_at
+          })),
+          message: totalCount > 0
+            ? `${totalCount}명의 삭제된 고객이 있습니다. restore_customer 도구로 복구할 수 있습니다.`
+            : '삭제된 고객이 없습니다.'
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] list_deleted_customers 에러:', error);
+    sendErrorLog('aims_mcp', 'list_deleted_customers 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `삭제된 고객 목록 조회 실패: ${errorMessage}`
       }]
     };
   }

@@ -20,6 +20,14 @@ export const listCustomerDocumentsSchema = z.object({
   limit: z.number().optional().default(20).describe('결과 개수 제한')
 });
 
+export const deleteDocumentSchema = z.object({
+  documentId: z.string().describe('삭제할 문서 ID')
+});
+
+export const deleteDocumentsSchema = z.object({
+  documentIds: z.array(z.string()).min(1).describe('삭제할 문서 ID 목록')
+});
+
 // Tool 정의
 export const documentToolDefinitions = [
   {
@@ -57,6 +65,32 @@ export const documentToolDefinitions = [
         limit: { type: 'number', description: '결과 개수 제한 (기본: 20)' }
       },
       required: ['customerId']
+    }
+  },
+  {
+    name: 'delete_document',
+    description: '단일 문서를 삭제합니다. 삭제된 문서는 복구할 수 없으니 주의하세요.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        documentId: { type: 'string', description: '삭제할 문서 ID' }
+      },
+      required: ['documentId']
+    }
+  },
+  {
+    name: 'delete_documents',
+    description: '여러 문서를 한 번에 삭제합니다. 삭제된 문서는 복구할 수 없으니 주의하세요.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        documentIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '삭제할 문서 ID 목록'
+        }
+      },
+      required: ['documentIds']
     }
   }
 ];
@@ -323,6 +357,159 @@ export async function handleListCustomerDocuments(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `문서 목록 조회 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 단일 문서 삭제 핸들러
+ */
+export async function handleDeleteDocument(args: unknown) {
+  try {
+    const params = deleteDocumentSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const objectId = toSafeObjectId(params.documentId);
+    if (!objectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 문서 ID입니다.' }]
+      };
+    }
+
+    // 소유권 검증: 해당 설계사의 문서만 삭제 가능
+    const document = await db.collection(COLLECTIONS.FILES).findOne({
+      _id: objectId,
+      ownerId: userId
+    });
+
+    if (!document) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '문서를 찾을 수 없거나 접근 권한이 없습니다.' }]
+      };
+    }
+
+    const filename = document.upload?.originalName || '알 수 없는 파일';
+
+    // 고객 참조 정리 - 이 문서를 참조하는 모든 고객의 documents 배열에서 제거
+    await db.collection(COLLECTIONS.CUSTOMERS).updateMany(
+      { 'documents.document_id': objectId },
+      {
+        $pull: { documents: { document_id: objectId } } as any,
+        $set: { 'meta.updated_at': new Date() }
+      }
+    );
+
+    // 문서 삭제
+    await db.collection(COLLECTIONS.FILES).deleteOne({ _id: objectId });
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          deletedDocumentId: params.documentId,
+          filename,
+          message: `문서가 성공적으로 삭제되었습니다: ${filename}`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] delete_document 에러:', error);
+    sendErrorLog('aims_mcp', 'delete_document 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `문서 삭제 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 복수 문서 삭제 핸들러
+ */
+export async function handleDeleteDocuments(args: unknown) {
+  try {
+    const params = deleteDocumentsSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // ObjectId 변환 및 유효성 검사
+    const objectIds = params.documentIds
+      .map(id => toSafeObjectId(id))
+      .filter((id): id is import('mongodb').ObjectId => id !== null);
+
+    if (objectIds.length === 0) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효한 문서 ID가 없습니다.' }]
+      };
+    }
+
+    // 소유권 검증: 해당 설계사의 문서만 삭제 가능
+    const ownedDocs = await db.collection(COLLECTIONS.FILES)
+      .find({ _id: { $in: objectIds }, ownerId: userId })
+      .toArray();
+
+    const ownedDocIds = ownedDocs.map(d => d._id.toString());
+    const unauthorizedIds = params.documentIds.filter(id => !ownedDocIds.includes(id));
+
+    if (unauthorizedIds.length > 0 && ownedDocs.length === 0) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '삭제 권한이 있는 문서가 없습니다.' }]
+      };
+    }
+
+    const filenames = ownedDocs.map(d => d.upload?.originalName || '알 수 없는 파일');
+    const ownedObjectIds = ownedDocs.map(d => d._id);
+
+    // 고객 참조 정리
+    await db.collection(COLLECTIONS.CUSTOMERS).updateMany(
+      { 'documents.document_id': { $in: ownedObjectIds } },
+      {
+        $pull: { documents: { document_id: { $in: ownedObjectIds } } } as any,
+        $set: { 'meta.updated_at': new Date() }
+      }
+    );
+
+    // 문서 삭제
+    const deleteResult = await db.collection(COLLECTIONS.FILES).deleteMany({
+      _id: { $in: ownedObjectIds }
+    });
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          requestedCount: params.documentIds.length,
+          deletedCount: deleteResult.deletedCount,
+          deletedFilenames: filenames,
+          unauthorizedIds: unauthorizedIds.length > 0 ? unauthorizedIds : undefined,
+          message: `${deleteResult.deletedCount}개의 문서가 성공적으로 삭제되었습니다.`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] delete_documents 에러:', error);
+    sendErrorLog('aims_mcp', 'delete_documents 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `문서 삭제 실패: ${errorMessage}`
       }]
     };
   }
