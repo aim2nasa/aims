@@ -23,7 +23,7 @@ import { Button } from '@/shared/ui/Button/Button';
 import { OCRFailedModal } from './OCRFailedModal';
 import './OCRUsagePage.css';
 
-type PeriodType = 'daily' | 'weekly' | 'monthly';
+type PeriodType = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 // 최근 24시간 범위 계산
 function getLast24HoursRange(): { start: string; end: string } {
@@ -62,6 +62,24 @@ function getYearRange(year: number): { start: string; end: string } {
   };
 }
 
+// 월 범위 계산
+function getMonthRange(year: number, month: number): { start: string; end: string } {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // 다음 달의 0일 = 이번 달의 마지막 날
+  return {
+    start: startDate.toISOString().split('T')[0],
+    end: endDate.toISOString().split('T')[0],
+  };
+}
+
+// 최근 N년 범위 계산
+function getMultiYearRange(currentYear: number, yearsBack: number = 3): { start: string; end: string } {
+  return {
+    start: `${currentYear - yearsBack + 1}-01-01`,
+    end: `${currentYear}-12-31`,
+  };
+}
+
 // 요일 라벨
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -92,6 +110,55 @@ function aggregateToMonthly(dailyData: DailyOCRPoint[]): Array<{ month: string; 
     month: MONTH_LABELS[parseInt(month) - 1],
     ...data,
   }));
+}
+
+// 일별 데이터를 년도별로 집계
+function aggregateToYearly(dailyData: DailyOCRPoint[], currentYear: number, yearsBack: number = 3): Array<{
+  year: string;
+  done: number;
+  error: number;
+  page_count: number;
+}> {
+  const yearlyMap = new Map<string, { done: number; error: number; page_count: number }>();
+
+  // N년 초기화
+  for (let y = currentYear - yearsBack + 1; y <= currentYear; y++) {
+    yearlyMap.set(String(y), { done: 0, error: 0, page_count: 0 });
+  }
+
+  for (const day of dailyData) {
+    const year = day.date.split('-')[0]; // YYYY-MM-DD에서 YYYY 추출
+    const entry = yearlyMap.get(year);
+    if (entry) {
+      entry.done += day.done;
+      entry.error += day.error;
+      entry.page_count += day.page_count;
+    }
+  }
+
+  return Array.from(yearlyMap.entries()).map(([year, data]) => ({
+    year: `${year}년`,
+    ...data,
+  }));
+}
+
+// 일별 데이터를 일자별로 매핑 (1~31일)
+function mapToDays(dailyData: DailyOCRPoint[], year: number, month: number): Array<{ day: string; done: number; error: number; page_count: number }> {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const result: Array<{ day: string; done: number; error: number; page_count: number }> = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayData = dailyData.find(item => item.date === dateStr);
+    result.push({
+      day: `${d}`,
+      done: dayData?.done || 0,
+      error: dayData?.error || 0,
+      page_count: dayData?.page_count || 0,
+    });
+  }
+
+  return result;
 }
 
 // 일별 데이터를 요일별로 매핑 (날짜 포함)
@@ -174,18 +241,26 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 // localStorage 키
 const STORAGE_KEY_PERIOD = 'aims-admin:ocr-usage:periodType';
 const STORAGE_KEY_YEAR = 'aims-admin:ocr-usage:selectedYear';
+const STORAGE_KEY_MONTH = 'aims-admin:ocr-usage:selectedMonth';
 
 export const OCRUsagePage = () => {
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
 
   // localStorage에서 초기값 로드
   const [periodType, setPeriodTypeState] = useState<PeriodType>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PERIOD);
+    // 기존 'daily' 값이 저장되어 있으면 'hourly'로 변환
+    if (saved === 'daily') return 'hourly';
     return (saved as PeriodType) || 'monthly';
   });
   const [selectedYear, setSelectedYearState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_YEAR);
     return saved ? parseInt(saved) : currentYear;
+  });
+  const [selectedMonth, setSelectedMonthState] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_MONTH);
+    return saved ? parseInt(saved) : currentMonth;
   });
 
   // localStorage에 저장하는 래퍼 함수
@@ -197,30 +272,45 @@ export const OCRUsagePage = () => {
     localStorage.setItem(STORAGE_KEY_YEAR, String(value));
     setSelectedYearState(value);
   };
+  const setSelectedMonth = (value: number) => {
+    localStorage.setItem(STORAGE_KEY_MONTH, String(value));
+    setSelectedMonthState(value);
+  };
   const [isFailedModalOpen, setIsFailedModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
 
   // 기간 범위 계산
   const dateRange = useMemo(() => {
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       return getLast24HoursRange();
+    }
+    if (periodType === 'daily') {
+      return getMonthRange(selectedYear, selectedMonth);
     }
     if (periodType === 'weekly') {
       return getCurrentWeekRange();
     }
+    if (periodType === 'yearly') {
+      return getMultiYearRange(currentYear, 3);
+    }
     return getYearRange(selectedYear);
-  }, [periodType, selectedYear]);
+  }, [periodType, selectedYear, selectedMonth, currentYear]);
 
   // 년도 옵션 (최근 3년)
   const yearOptions = useMemo(() => {
     return [currentYear, currentYear - 1, currentYear - 2];
   }, [currentYear]);
 
+  // 월 옵션 (1~12월)
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => i + 1);
+  }, []);
+
   // API 쿼리 - 24시간 모드는 days=1 사용, 그 외는 start/end 사용
   const { data: overview, isLoading, isError, refetch: refetchOverview } = useQuery({
     queryKey: ['admin', 'ocr-usage', 'overview', periodType, dateRange.start, dateRange.end],
-    queryFn: () => periodType === 'daily'
+    queryFn: () => periodType === 'hourly'
       ? ocrUsageApi.getOverview(1)
       : ocrUsageApi.getOverviewByRange(dateRange.start, dateRange.end),
     refetchInterval: 60000,
@@ -230,12 +320,12 @@ export const OCRUsagePage = () => {
     queryKey: ['admin', 'ocr-usage', 'daily', dateRange.start, dateRange.end],
     queryFn: () => ocrUsageApi.getDailyUsageByRange(dateRange.start, dateRange.end),
     refetchInterval: 60000,
-    enabled: periodType !== 'daily', // 24시간 모드에서는 hourly 사용
+    enabled: periodType !== 'hourly', // 24시간 모드에서는 hourly 사용
   });
 
   const { data: topUsers, refetch: refetchTopUsers } = useQuery({
     queryKey: ['admin', 'ocr-usage', 'top-users', periodType, dateRange.start, dateRange.end],
-    queryFn: () => periodType === 'daily'
+    queryFn: () => periodType === 'hourly'
       ? ocrUsageApi.getTopUsers(1)
       : ocrUsageApi.getTopUsersByRange(dateRange.start, dateRange.end),
     refetchInterval: 300000,
@@ -245,20 +335,26 @@ export const OCRUsagePage = () => {
     queryKey: ['admin', 'ocr-usage', 'hourly'],
     queryFn: () => ocrUsageApi.getHourlyUsage(24),
     refetchInterval: 60000,
-    enabled: periodType === 'daily',
+    enabled: periodType === 'hourly',
   });
 
   // 차트 데이터 준비
   const chartData = useMemo(() => {
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       return hourlyUsageRaw ? mapToHours(hourlyUsageRaw) : [];
     }
     if (!dailyUsageRaw) return [];
+    if (periodType === 'daily') {
+      return mapToDays(dailyUsageRaw, selectedYear, selectedMonth);
+    }
     if (periodType === 'weekly') {
       return mapToWeekdays(dailyUsageRaw, dateRange.start);
     }
+    if (periodType === 'yearly') {
+      return aggregateToYearly(dailyUsageRaw, currentYear, 3);
+    }
     return aggregateToMonthly(dailyUsageRaw);
-  }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start]);
+  }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start, selectedYear, selectedMonth, currentYear]);
 
   if (isLoading) {
     return <div className="ocr-usage-page__loading">데이터를 불러오는 중...</div>;
@@ -277,7 +373,7 @@ export const OCRUsagePage = () => {
     refetchOverview();
     refetchDaily();
     refetchTopUsers();
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       refetchHourly();
     }
   };
@@ -295,11 +391,15 @@ export const OCRUsagePage = () => {
   };
 
   // 기간 표시 텍스트
-  const periodLabel = periodType === 'daily'
+  const periodLabel = periodType === 'hourly'
     ? '최근 24시간'
-    : periodType === 'weekly'
-      ? `${dateRange.start} ~ ${dateRange.end}`
-      : `${selectedYear}년`;
+    : periodType === 'daily'
+      ? `${selectedYear}년 ${selectedMonth}월`
+      : periodType === 'weekly'
+        ? `${dateRange.start} ~ ${dateRange.end}`
+        : periodType === 'yearly'
+          ? `${currentYear - 2}~${currentYear}년`
+          : `${selectedYear}년`;
 
   return (
     <div className="ocr-usage-page">
@@ -309,8 +409,8 @@ export const OCRUsagePage = () => {
           <div className="ocr-usage-page__period-selector">
             <button
               type="button"
-              className={`ocr-usage-page__period-btn ${periodType === 'daily' ? 'ocr-usage-page__period-btn--active' : ''}`}
-              onClick={() => setPeriodType('daily')}
+              className={`ocr-usage-page__period-btn ${periodType === 'hourly' ? 'ocr-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('hourly')}
             >
               24시간
             </button>
@@ -323,13 +423,27 @@ export const OCRUsagePage = () => {
             </button>
             <button
               type="button"
+              className={`ocr-usage-page__period-btn ${periodType === 'daily' ? 'ocr-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('daily')}
+            >
+              일별
+            </button>
+            <button
+              type="button"
               className={`ocr-usage-page__period-btn ${periodType === 'monthly' ? 'ocr-usage-page__period-btn--active' : ''}`}
               onClick={() => setPeriodType('monthly')}
             >
               월간
             </button>
+            <button
+              type="button"
+              className={`ocr-usage-page__period-btn ${periodType === 'yearly' ? 'ocr-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('yearly')}
+            >
+              년도
+            </button>
           </div>
-          {periodType === 'monthly' && (
+          {(periodType === 'daily' || periodType === 'monthly') && (
             <select
               className="ocr-usage-page__year-selector"
               value={selectedYear}
@@ -339,6 +453,20 @@ export const OCRUsagePage = () => {
               {yearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}년
+                </option>
+              ))}
+            </select>
+          )}
+          {periodType === 'daily' && (
+            <select
+              className="ocr-usage-page__month-selector"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              aria-label="월 선택"
+            >
+              {monthOptions.map((month) => (
+                <option key={month} value={month}>
+                  {month}월
                 </option>
               ))}
             </select>
@@ -419,7 +547,7 @@ export const OCRUsagePage = () => {
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis
-                  dataKey={periodType === 'daily' ? 'hour' : periodType === 'weekly' ? 'day' : 'month'}
+                  dataKey={periodType === 'hourly' ? 'hour' : periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
                   tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
                   stroke="var(--color-border)"
                 />

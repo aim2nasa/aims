@@ -411,8 +411,9 @@
   color: #FF9500;
 }
 
-/* Year Selector */
-.ai-usage-page__year-selector {
+/* Year/Month Selector */
+.ai-usage-page__year-selector,
+.ai-usage-page__month-selector {
   padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -424,11 +425,13 @@
   outline: none;
 }
 
-.ai-usage-page__year-selector:hover {
+.ai-usage-page__year-selector:hover,
+.ai-usage-page__month-selector:hover {
   border-color: var(--color-primary);
 }
 
-.ai-usage-page__year-selector:focus {
+.ai-usage-page__year-selector:focus,
+.ai-usage-page__month-selector:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }

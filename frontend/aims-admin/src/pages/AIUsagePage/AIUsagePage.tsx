@@ -22,7 +22,7 @@ import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
 
-type PeriodType = 'daily' | 'weekly' | 'monthly';
+type PeriodType = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 // 최근 24시간 범위 계산
 function getLast24HoursRange(): { start: string; end: string } {
@@ -58,6 +58,24 @@ function getYearRange(year: number): { start: string; end: string } {
   return {
     start: `${year}-01-01`,
     end: `${year}-12-31`,
+  };
+}
+
+// 월 범위 계산
+function getMonthRange(year: number, month: number): { start: string; end: string } {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // 다음 달의 0일 = 이번 달의 마지막 날
+  return {
+    start: startDate.toISOString().split('T')[0],
+    end: endDate.toISOString().split('T')[0],
+  };
+}
+
+// 최근 N년 범위 계산
+function getMultiYearRange(currentYear: number, yearsBack: number = 3): { start: string; end: string } {
+  return {
+    start: `${currentYear - yearsBack + 1}-01-01`,
+    end: `${currentYear}-12-31`,
   };
 }
 
@@ -103,6 +121,75 @@ function aggregateToMonthly(dailyData: DailyUsageBySourcePoint[]): Array<{
     month: MONTH_LABELS[parseInt(month) - 1],
     ...data,
   }));
+}
+
+// 일별 데이터를 년도별로 집계
+function aggregateToYearly(dailyData: DailyUsageBySourcePoint[], currentYear: number, yearsBack: number = 3): Array<{
+  year: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total_tokens: number;
+}> {
+  const yearlyMap = new Map<string, {
+    rag_api: number;
+    n8n_docsummary: number;
+    doc_embedding: number;
+    total_tokens: number;
+  }>();
+
+  // N년 초기화
+  for (let y = currentYear - yearsBack + 1; y <= currentYear; y++) {
+    yearlyMap.set(String(y), { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
+  }
+
+  for (const day of dailyData) {
+    const year = day.date.split('-')[0]; // YYYY-MM-DD에서 YYYY 추출
+    const entry = yearlyMap.get(year);
+    if (entry) {
+      entry.rag_api += day.rag_api;
+      entry.n8n_docsummary += day.n8n_docsummary;
+      entry.doc_embedding += day.doc_embedding;
+      entry.total_tokens += day.total_tokens;
+    }
+  }
+
+  return Array.from(yearlyMap.entries()).map(([year, data]) => ({
+    year: `${year}년`,
+    ...data,
+  }));
+}
+
+// 일별 데이터를 일자별로 매핑 (1~31일)
+function mapToDays(dailyData: DailyUsageBySourcePoint[], year: number, month: number): Array<{
+  day: string;
+  rag_api: number;
+  n8n_docsummary: number;
+  doc_embedding: number;
+  total_tokens: number;
+}> {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const result: Array<{
+    day: string;
+    rag_api: number;
+    n8n_docsummary: number;
+    doc_embedding: number;
+    total_tokens: number;
+  }> = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayData = dailyData.find(item => item.date === dateStr);
+    result.push({
+      day: `${d}`,
+      rag_api: dayData?.rag_api || 0,
+      n8n_docsummary: dayData?.n8n_docsummary || 0,
+      doc_embedding: dayData?.doc_embedding || 0,
+      total_tokens: dayData?.total_tokens || 0,
+    });
+  }
+
+  return result;
 }
 
 // 일별 데이터를 요일별로 매핑 (날짜 포함)
@@ -216,18 +303,26 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 // localStorage 키
 const STORAGE_KEY_PERIOD = 'aims-admin:ai-usage:periodType';
 const STORAGE_KEY_YEAR = 'aims-admin:ai-usage:selectedYear';
+const STORAGE_KEY_MONTH = 'aims-admin:ai-usage:selectedMonth';
 
 export const AIUsagePage = () => {
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
 
   // localStorage에서 초기값 로드
   const [periodType, setPeriodTypeState] = useState<PeriodType>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PERIOD);
+    // 기존 'daily' 값이 저장되어 있으면 'hourly'로 변환
+    if (saved === 'daily') return 'hourly';
     return (saved as PeriodType) || 'monthly';
   });
   const [selectedYear, setSelectedYearState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_YEAR);
     return saved ? parseInt(saved) : currentYear;
+  });
+  const [selectedMonth, setSelectedMonthState] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_MONTH);
+    return saved ? parseInt(saved) : currentMonth;
   });
 
   // localStorage에 저장하는 래퍼 함수
@@ -239,27 +334,42 @@ export const AIUsagePage = () => {
     localStorage.setItem(STORAGE_KEY_YEAR, String(value));
     setSelectedYearState(value);
   };
+  const setSelectedMonth = (value: number) => {
+    localStorage.setItem(STORAGE_KEY_MONTH, String(value));
+    setSelectedMonthState(value);
+  };
 
   // 기간 범위 계산
   const dateRange = useMemo(() => {
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       return getLast24HoursRange();
+    }
+    if (periodType === 'daily') {
+      return getMonthRange(selectedYear, selectedMonth);
     }
     if (periodType === 'weekly') {
       return getCurrentWeekRange();
     }
+    if (periodType === 'yearly') {
+      return getMultiYearRange(currentYear, 3);
+    }
     return getYearRange(selectedYear);
-  }, [periodType, selectedYear]);
+  }, [periodType, selectedYear, selectedMonth, currentYear]);
 
   // 년도 옵션 (최근 3년)
   const yearOptions = useMemo(() => {
     return [currentYear, currentYear - 1, currentYear - 2];
   }, [currentYear]);
 
+  // 월 옵션 (1~12월)
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => i + 1);
+  }, []);
+
   // API 쿼리 - 24시간 모드는 days=1 사용, 그 외는 start/end 사용
   const { data: overview, isLoading: overviewLoading, isError: overviewError, refetch: refetchOverview } = useQuery({
     queryKey: ['admin', 'ai-usage', 'overview', periodType, dateRange.start, dateRange.end],
-    queryFn: () => periodType === 'daily'
+    queryFn: () => periodType === 'hourly'
       ? aiUsageApi.getOverview(1)
       : aiUsageApi.getOverviewByRange(dateRange.start, dateRange.end),
     refetchInterval: 60000,
@@ -271,12 +381,12 @@ export const AIUsagePage = () => {
     refetchInterval: 60000,
     gcTime: 5 * 60 * 1000,
     staleTime: 30000,
-    enabled: periodType !== 'daily', // 24시간 모드에서는 hourly 사용
+    enabled: periodType !== 'hourly', // 24시간 모드에서는 hourly 사용
   });
 
   const { data: topUsers, refetch: refetchTopUsers } = useQuery({
     queryKey: ['admin', 'ai-usage', 'top-users', periodType, dateRange.start, dateRange.end],
-    queryFn: () => periodType === 'daily'
+    queryFn: () => periodType === 'hourly'
       ? aiUsageApi.getTopUsers(1)
       : aiUsageApi.getTopUsersByRange(dateRange.start, dateRange.end),
     refetchInterval: 300000,
@@ -286,20 +396,26 @@ export const AIUsagePage = () => {
     queryKey: ['admin', 'ai-usage', 'hourly'],
     queryFn: () => aiUsageApi.getHourlyUsage(24),
     refetchInterval: 60000,
-    enabled: periodType === 'daily',
+    enabled: periodType === 'hourly',
   });
 
   // 차트 데이터 준비
   const chartData = useMemo(() => {
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       return hourlyUsageRaw ? mapToHours(hourlyUsageRaw) : [];
     }
     if (!dailyUsageRaw) return [];
+    if (periodType === 'daily') {
+      return mapToDays(dailyUsageRaw, selectedYear, selectedMonth);
+    }
     if (periodType === 'weekly') {
       return mapToWeekdays(dailyUsageRaw, dateRange.start);
     }
+    if (periodType === 'yearly') {
+      return aggregateToYearly(dailyUsageRaw, currentYear, 3);
+    }
     return aggregateToMonthly(dailyUsageRaw);
-  }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start]);
+  }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start, selectedYear, selectedMonth, currentYear]);
 
   if (overviewLoading) {
     return <div className="ai-usage-page__loading">데이터를 불러오는 중...</div>;
@@ -325,17 +441,21 @@ export const AIUsagePage = () => {
     refetchOverview();
     refetchDaily();
     refetchTopUsers();
-    if (periodType === 'daily') {
+    if (periodType === 'hourly') {
       refetchHourly();
     }
   };
 
   // 기간 표시 텍스트
-  const periodLabel = periodType === 'daily'
+  const periodLabel = periodType === 'hourly'
     ? '최근 24시간'
-    : periodType === 'weekly'
-      ? `${dateRange.start} ~ ${dateRange.end}`
-      : `${selectedYear}년`;
+    : periodType === 'daily'
+      ? `${selectedYear}년 ${selectedMonth}월`
+      : periodType === 'weekly'
+        ? `${dateRange.start} ~ ${dateRange.end}`
+        : periodType === 'yearly'
+          ? `${currentYear - 2}~${currentYear}년`
+          : `${selectedYear}년`;
 
   return (
     <div className="ai-usage-page">
@@ -345,8 +465,8 @@ export const AIUsagePage = () => {
           <div className="ai-usage-page__period-selector">
             <button
               type="button"
-              className={`ai-usage-page__period-btn ${periodType === 'daily' ? 'ai-usage-page__period-btn--active' : ''}`}
-              onClick={() => setPeriodType('daily')}
+              className={`ai-usage-page__period-btn ${periodType === 'hourly' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('hourly')}
             >
               24시간
             </button>
@@ -359,13 +479,27 @@ export const AIUsagePage = () => {
             </button>
             <button
               type="button"
+              className={`ai-usage-page__period-btn ${periodType === 'daily' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('daily')}
+            >
+              일별
+            </button>
+            <button
+              type="button"
               className={`ai-usage-page__period-btn ${periodType === 'monthly' ? 'ai-usage-page__period-btn--active' : ''}`}
               onClick={() => setPeriodType('monthly')}
             >
               월간
             </button>
+            <button
+              type="button"
+              className={`ai-usage-page__period-btn ${periodType === 'yearly' ? 'ai-usage-page__period-btn--active' : ''}`}
+              onClick={() => setPeriodType('yearly')}
+            >
+              년도
+            </button>
           </div>
-          {periodType === 'monthly' && (
+          {(periodType === 'daily' || periodType === 'monthly') && (
             <select
               className="ai-usage-page__year-selector"
               value={selectedYear}
@@ -375,6 +509,20 @@ export const AIUsagePage = () => {
               {yearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}년
+                </option>
+              ))}
+            </select>
+          )}
+          {periodType === 'daily' && (
+            <select
+              className="ai-usage-page__month-selector"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              aria-label="월 선택"
+            >
+              {monthOptions.map((month) => (
+                <option key={month} value={month}>
+                  {month}월
                 </option>
               ))}
             </select>
@@ -451,7 +599,7 @@ export const AIUsagePage = () => {
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis
-                  dataKey={periodType === 'daily' ? 'hour' : periodType === 'weekly' ? 'day' : 'month'}
+                  dataKey={periodType === 'hourly' ? 'hour' : periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
                   tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
                   stroke="var(--color-border)"
                 />
