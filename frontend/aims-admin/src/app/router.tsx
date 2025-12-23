@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
+import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage/DashboardPage';
@@ -32,9 +33,11 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ProtectedRoute>
-        <App />
-      </ProtectedRoute>
+      <ErrorBoundary>
+        <ProtectedRoute>
+          <App />
+        </ProtectedRoute>
+      </ErrorBoundary>
     ),
     children: [
       {
