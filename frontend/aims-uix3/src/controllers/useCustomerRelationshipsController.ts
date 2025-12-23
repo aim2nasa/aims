@@ -153,9 +153,10 @@ export const useCustomerRelationshipsController = (
     if (!customerId) return undefined;
 
     const handleRelationshipChanged = () => {
-      loadRelationships({ silent: true }).catch((error) =>
-        console.warn('[useCustomerRelationshipsController] relationshipChanged handler error:', error),
-      );
+      loadRelationships({ silent: true }).catch((error) => {
+        console.warn('[useCustomerRelationshipsController] relationshipChanged handler error:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useCustomerRelationshipsController.relationshipChanged' });
+      });
     };
 
     window.addEventListener('relationshipChanged', handleRelationshipChanged);
@@ -167,9 +168,10 @@ export const useCustomerRelationshipsController = (
   // 초기 로드
   useEffect(() => {
     if (autoLoad) {
-      loadRelationships().catch((error) =>
-        console.warn('[useCustomerRelationshipsController] initial load error:', error),
-      );
+      loadRelationships().catch((error) => {
+        console.warn('[useCustomerRelationshipsController] initial load error:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useCustomerRelationshipsController.initialLoad' });
+      });
     }
   }, [autoLoad, loadRelationships]);
 

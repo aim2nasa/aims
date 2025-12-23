@@ -13,6 +13,7 @@ import {
   getNotificationStreamUrl,
 } from '@/entities/inquiry/api';
 
+import { errorReporter } from '@/shared/lib/errorReporter';
 interface InquiryNotificationData {
   inquiryId: string;
   messageId?: string;
@@ -71,6 +72,7 @@ export function useInquiryNotifications(
       setUnreadIds(new Set(ids));
     } catch (error) {
       console.error('[InquiryNotifications] 초기 데이터 로드 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.loadInitialData' });
     }
   }, []);
 
@@ -109,6 +111,7 @@ export function useInquiryNotifications(
         console.log('[InquiryNotifications] 초기 데이터 수신:', data);
       } catch (error) {
         console.error('[InquiryNotifications] init 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.initEvent' });
       }
     });
 
@@ -137,6 +140,7 @@ export function useInquiryNotifications(
           // 서버에 읽음 처리 요청 (카운트 증가 안함)
           markAsReadApi(data.inquiryId).catch((err) => {
             console.error('[InquiryNotifications] 자동 읽음 처리 실패:', err);
+            errorReporter.reportApiError(err as Error, { component: 'useInquiryNotifications.autoMarkAsRead' });
           });
         } else {
           // 다른 문의면 카운트 증가
@@ -152,10 +156,14 @@ export function useInquiryNotifications(
         console.log('[InquiryNotifications] 쿼리 리셋 시작:', data.inquiryId);
         queryClient.resetQueries({ queryKey: ['inquiry', data.inquiryId] })
           .then(() => console.log('[InquiryNotifications] 쿼리 리셋 완료'))
-          .catch((err) => console.error('[InquiryNotifications] 쿼리 리셋 실패:', err));
+          .catch((err) => {
+            console.error('[InquiryNotifications] 쿼리 리셋 실패:', err);
+            errorReporter.reportApiError(err as Error, { component: 'useInquiryNotifications.queryReset' });
+          });
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
       } catch (error) {
         console.error('[InquiryNotifications] new-message 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.newMessageEvent' });
       }
     });
 
@@ -167,6 +175,7 @@ export function useInquiryNotifications(
         queryClient.invalidateQueries({ queryKey: ['inquiries'] });
       } catch (error) {
         console.error('[InquiryNotifications] status-changed 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.statusChangedEvent' });
       }
     });
 
@@ -174,6 +183,7 @@ export function useInquiryNotifications(
 
     eventSource.onerror = (error) => {
       console.error('[InquiryNotifications] SSE 오류:', error);
+      errorReporter.reportApiError(new Error('SSE connection error'), { component: 'useInquiryNotifications.sseError' });
       setIsConnected(false);
       eventSource.close();
 
@@ -223,6 +233,7 @@ export function useInquiryNotifications(
         return next;
       });
       console.error('[InquiryNotifications] 읽음 처리 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'useInquiryNotifications.markAsRead' });
     }
   }, []);
 

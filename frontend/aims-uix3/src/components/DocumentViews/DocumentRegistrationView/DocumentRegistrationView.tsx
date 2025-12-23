@@ -164,6 +164,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     } catch (error) {
       console.warn('[DocumentRegistrationView] Failed to restore state:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.restoreState' })
     }
 
     return {
@@ -227,6 +228,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     } catch (error) {
       console.warn('[DocumentRegistrationView] Failed to restore logs:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.restoreLogs' })
     }
     return []
   }
@@ -288,6 +290,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(stateToSave))
     } catch (error) {
       console.warn('[DocumentRegistrationView] Failed to save state:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.saveState' })
     }
   }, [uploadState, SESSION_KEY])
 
@@ -300,6 +303,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       sessionStorage.setItem(LOGS_KEY, JSON.stringify(processingLogs))
     } catch (error) {
       console.warn('[DocumentRegistrationView] Failed to save logs:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.saveLogs' })
     }
   }, [processingLogs])
 
@@ -1139,6 +1143,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           }
         } catch (error) {
           console.warn('[DocumentRegistrationView] Failed to auto-clear state:', error)
+          errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.autoClearState' })
         }
       }, 5 * 60 * 1000) // 5분
 
