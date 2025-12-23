@@ -4326,6 +4326,7 @@ app.delete('/api/admin/orphaned-relationships', async (req, res) => {
     
   } catch (error) {
     console.error('Orphaned relationships 정리 오류:', error);
+    backendLogger.error('Admin', 'Orphaned relationships 정리 오류', error);
     res.status(500).json({
       success: false,
       error: 'Orphaned relationships 정리에 실패했습니다.',
@@ -4410,6 +4411,7 @@ app.get('/api/admin/data-integrity-report', async (req, res) => {
 
   } catch (error) {
     console.error('데이터 무결성 리포트 오류:', error);
+    backendLogger.error('Admin', '데이터 무결성 리포트 오류', error);
     res.status(500).json({
       success: false,
       error: '데이터 무결성 리포트 생성에 실패했습니다.',
@@ -4504,6 +4506,7 @@ app.delete('/api/admin/orphaned-all', async (req, res) => {
 
   } catch (error) {
     console.error('고아 데이터 정리 오류:', error);
+    backendLogger.error('Admin', '고아 데이터 정리 오류', error);
     res.status(500).json({
       success: false,
       error: '고아 데이터 정리에 실패했습니다.',
@@ -4553,6 +4556,7 @@ app.put('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
     });
   } catch (error) {
     console.error('OCR 권한 설정 오류:', error);
+    backendLogger.error('Admin', 'OCR 권한 설정 오류', error);
     res.status(500).json({
       success: false,
       error: 'OCR 권한 설정에 실패했습니다.',
@@ -4591,6 +4595,7 @@ app.get('/api/admin/users/:id/ocr-permission', authenticateJWT, requireRole('adm
     });
   } catch (error) {
     console.error('OCR 권한 조회 오류:', error);
+    backendLogger.error('Admin', 'OCR 권한 조회 오류', error);
     res.status(500).json({
       success: false,
       error: 'OCR 권한 조회에 실패했습니다.',
@@ -4940,6 +4945,7 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
     });
   } catch (error) {
     console.error('[Admin] 대시보드 통계 조회 오류:', error);
+    backendLogger.error('Admin', '대시보드 통계 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '대시보드 통계 조회에 실패했습니다',
@@ -4962,6 +4968,7 @@ app.get('/api/admin/metrics/current', authenticateJWT, requireRole('admin'), asy
     });
   } catch (error) {
     console.error('[Admin] 시스템 메트릭 조회 오류:', error);
+    backendLogger.error('Admin', '시스템 메트릭 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '시스템 메트릭 조회에 실패했습니다',
@@ -4994,6 +5001,7 @@ app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), asy
     });
   } catch (error) {
     console.error('[Admin] 메트릭 히스토리 조회 오류:', error);
+    backendLogger.error('Admin', '메트릭 히스토리 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '메트릭 히스토리 조회에 실패했습니다',
@@ -5218,6 +5226,7 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
     });
   } catch (error) {
     console.error('[Admin] 사용자 목록 조회 오류:', error);
+    backendLogger.error('Admin', '사용자 목록 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '사용자 목록 조회에 실패했습니다',
