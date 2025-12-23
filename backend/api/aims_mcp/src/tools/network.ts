@@ -2,6 +2,7 @@ import { z, ZodError } from 'zod';
 import { ObjectId } from 'mongodb';
 import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 // 스키마 정의
 export const getCustomerNetworkSchema = z.object({
@@ -182,8 +183,9 @@ export async function handleGetCustomerNetwork(args: unknown) {
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] get_customer_network 에러:', error);
+    sendErrorLog('aims_mcp', 'get_customer_network 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');

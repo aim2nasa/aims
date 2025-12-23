@@ -1,6 +1,7 @@
 import { z, ZodError } from 'zod';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 // 스키마 정의
 export const searchProductsSchema = z.object({
@@ -113,8 +114,9 @@ export async function handleSearchProducts(args: unknown) {
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] search_products 에러:', error);
+    sendErrorLog('aims_mcp', 'search_products 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -186,8 +188,9 @@ export async function handleGetProductDetails(args: unknown) {
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] get_product_details 에러:', error);
+    sendErrorLog('aims_mcp', 'get_product_details 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');

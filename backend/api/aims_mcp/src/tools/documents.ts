@@ -1,6 +1,7 @@
 import { z, ZodError } from 'zod';
 import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
+import { sendErrorLog } from '../systemLogger.js';
 
 // 스키마 정의
 export const searchDocumentsSchema = z.object({
@@ -154,8 +155,9 @@ export async function handleSearchDocuments(args: unknown) {
       throw fetchError;
     }
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] search_documents 에러:', error);
+    sendErrorLog('aims_mcp', 'search_documents 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -219,8 +221,9 @@ export async function handleGetDocument(args: unknown) {
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] get_document 에러:', error);
+    sendErrorLog('aims_mcp', 'get_document 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
@@ -309,8 +312,9 @@ export async function handleListCustomerDocuments(args: unknown) {
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
+    // 에러 로깅
     console.error('[MCP] list_customer_documents 에러:', error);
+    sendErrorLog('aims_mcp', 'list_customer_documents 에러', error);
     const errorMessage = error instanceof ZodError
       ? formatZodError(error)
       : (error instanceof Error ? error.message : '알 수 없는 오류');
