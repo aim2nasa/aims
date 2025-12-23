@@ -116,6 +116,7 @@ export type { StorageInfo } from '@/services/userService'
 import { validateFiles, type ValidateFileOptions } from './validators'
 import { checkStorageWithInfo, checkStorageQuota } from './storageChecker'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import type {
   ValidationPipelineResult,
   ValidationPipelineOptions,
@@ -146,6 +147,7 @@ export async function validateFilesWithStorage(
       storageCheck = await checkStorageQuota(validFiles)
     } catch (error) {
       console.error('스토리지 검사 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'fileValidation.validateFilesWithStorage' })
       // 스토리지 검사 실패 시에도 계속 진행
       // (서버에서 최종 검증)
     }

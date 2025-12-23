@@ -12,6 +12,7 @@ import type {
   SemanticSearchResultItem
 } from '@/entities/search'
 import { API_CONFIG, getAuthHeaders } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
 // n8n webhook은 aims_api 프록시를 통해 접근 (보안: 내부망에서만 n8n 접근 가능)
@@ -126,6 +127,7 @@ export class SearchService {
               }
             } catch (error) {
               console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)
+              errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.enrichDoc', payload: { docId } })
               return item
             }
           })
@@ -173,6 +175,7 @@ export class SearchService {
                 }
               } catch (error) {
                 console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
+                errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.enrichCustomer', payload: { customerId } })
               }
             })
           )
@@ -245,6 +248,7 @@ export class SearchService {
               }
             } catch (error) {
               console.error(`[SearchService] 키워드 검색 - 문서 ${docId} customer_relation 조회 오류:`, error)
+              errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.keywordEnrich', payload: { docId } })
               return item
             }
           })
@@ -292,6 +296,7 @@ export class SearchService {
                 }
               } catch (error) {
                 console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
+                errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments.keywordCustomer', payload: { customerId } })
               }
             })
           )
@@ -339,6 +344,7 @@ export class SearchService {
       }
     } catch (error) {
       console.error('[SearchService] 검색 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'SearchService.searchDocuments' })
       throw error
     }
   }
@@ -373,6 +379,7 @@ export class SearchService {
       return null
     } catch (error) {
       console.error('[SearchService] 문서 상세 조회 오류:', docId, error)
+      errorReporter.reportApiError(error as Error, { component: 'SearchService.getDocumentDetails', payload: { docId } })
       return null
     }
   }

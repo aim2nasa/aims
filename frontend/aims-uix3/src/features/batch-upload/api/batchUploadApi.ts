@@ -8,6 +8,7 @@
  */
 
 import { api, ApiError, API_CONFIG, getAuthHeaders } from '../../../shared/lib/api'
+import { errorReporter } from '../../../shared/lib/errorReporter'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 
@@ -83,6 +84,7 @@ export class BatchUploadApi {
       const message = error instanceof ApiError
         ? error.message
         : '고객 목록 조회 중 오류가 발생했습니다'
+      errorReporter.reportApiError(error as Error, { component: 'BatchUploadApi.getCustomersForMatching' })
       return { success: false, customers: [], error: message }
     }
   }
@@ -237,6 +239,7 @@ export class BatchUploadApi {
     } catch (error) {
       // 이력 저장 실패는 업로드 성공에 영향을 주지 않음
       console.warn('[BatchUploadApi] 이력 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'BatchUploadApi.saveBatchHistory' })
       return {
         success: false,
         error: error instanceof ApiError ? error.message : '이력 저장 실패',
@@ -264,6 +267,7 @@ export class BatchUploadApi {
         history: data.data || [],
       }
     } catch (error) {
+      errorReporter.reportApiError(error as Error, { component: 'BatchUploadApi.getBatchHistory' })
       return {
         success: false,
         history: [],

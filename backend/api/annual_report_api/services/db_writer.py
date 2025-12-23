@@ -309,8 +309,8 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             if source_id:
                 try:
                     completed_file_ids.add(ObjectId(source_id))
-                except:
-                    pass  # 유효하지 않은 ID는 무시
+                except Exception as e:
+                    logger.debug(f"유효하지 않은 ObjectId 무시: {source_id} - {e}")
 
         # files 컬렉션 참조
         files_collection = db["files"]
@@ -403,7 +403,8 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             if isinstance(uploaded_at, str):
                 try:
                     return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
-                except:
+                except Exception as e:
+                    logger.debug(f"uploaded_at 파싱 실패, 기본값 사용: {uploaded_at} - {e}")
                     return min_dt
             return min_dt
 
@@ -705,7 +706,8 @@ def cleanup_duplicate_annual_reports(
             if isinstance(parsed_at, str):
                 try:
                     parsed_dt = datetime.fromisoformat(parsed_at.replace('Z', '+00:00'))
-                except:
+                except Exception as e:
+                    logger.debug(f"parsed_at 파싱 실패, 스킵: {parsed_at} - {e}")
                     continue
             elif isinstance(parsed_at, datetime):
                 parsed_dt = parsed_at

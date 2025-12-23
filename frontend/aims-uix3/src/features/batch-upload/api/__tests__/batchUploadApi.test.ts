@@ -27,7 +27,26 @@ vi.mock('@/shared/lib/api', () => ({
       this.name = 'ApiError'
     }
   },
+  NetworkError: class NetworkError extends Error {
+    constructor(message: string) {
+      super(message)
+      this.name = 'NetworkError'
+    }
+  },
+  TimeoutError: class TimeoutError extends Error {
+    constructor(message: string) {
+      super(message)
+      this.name = 'TimeoutError'
+    }
+  },
   getAuthHeaders: vi.fn(() => ({ 'Authorization': 'Bearer test-token' })),
+}))
+
+// errorReporter 모킹
+vi.mock('@/shared/lib/errorReporter', () => ({
+  errorReporter: {
+    reportApiError: vi.fn(),
+  },
 }))
 
 // 바이러스 검사 API 모킹 (테스트에서는 비활성화)

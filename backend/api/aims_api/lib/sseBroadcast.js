@@ -4,6 +4,8 @@
  * @since 2025-12-22
  */
 
+const backendLogger = require('./backendLogger');
+
 console.log('[SSE-Broadcast] 모듈 로드됨');
 
 // SSE 클라이언트 Set
@@ -23,6 +25,7 @@ function sendSSE(res, event, data) {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   } catch (e) {
     console.error('[SSE-Broadcast] 전송 실패:', e.message);
+    backendLogger.error('SSE-Broadcast', 'SSE 이벤트 전송 실패', e);
   }
 }
 

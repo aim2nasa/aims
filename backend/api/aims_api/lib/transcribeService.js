@@ -7,6 +7,7 @@ const OpenAI = require('openai');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const backendLogger = require('./backendLogger');
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -46,6 +47,7 @@ async function transcribeAudio(fileBuffer, fileName, mimeType) {
       }
     } catch (cleanupError) {
       console.error('[Transcribe] 임시 파일 삭제 실패:', cleanupError.message);
+      backendLogger.warn('Transcribe', '임시 파일 삭제 실패', cleanupError);
     }
   }
 }

@@ -6,6 +6,7 @@
 
 import { useState, useCallback } from 'react';
 import { getAuthToken, API_CONFIG } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * 채팅 세션 타입
@@ -167,6 +168,7 @@ export function useChatHistory(): UseChatHistoryReturn {
       const message = err instanceof Error ? err.message : '세션 목록 조회 실패';
       setError(message);
       console.error('[useChatHistory] fetchSessions 오류:', message);
+      errorReporter.reportApiError(err as Error, { component: 'useChatHistory.fetchSessions' });
     } finally {
       setIsLoadingSessions(false);
     }
@@ -194,6 +196,7 @@ export function useChatHistory(): UseChatHistoryReturn {
       const message = err instanceof Error ? err.message : '세션 조회 실패';
       setError(message);
       console.error('[useChatHistory] loadSession 오류:', message);
+      errorReporter.reportApiError(err as Error, { component: 'useChatHistory.loadSession' });
       return null;
     } finally {
       setIsLoadingMessages(false);
@@ -219,6 +222,7 @@ export function useChatHistory(): UseChatHistoryReturn {
       const message = err instanceof Error ? err.message : '세션 삭제 실패';
       setError(message);
       console.error('[useChatHistory] deleteSession 오류:', message);
+      errorReporter.reportApiError(err as Error, { component: 'useChatHistory.deleteSession' });
       return false;
     }
   }, []);
@@ -250,6 +254,7 @@ export function useChatHistory(): UseChatHistoryReturn {
       const message = err instanceof Error ? err.message : '제목 수정 실패';
       setError(message);
       console.error('[useChatHistory] updateSessionTitle 오류:', message);
+      errorReporter.reportApiError(err as Error, { component: 'useChatHistory.updateSessionTitle' });
       return false;
     }
   }, []);

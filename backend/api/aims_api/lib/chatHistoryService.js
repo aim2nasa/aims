@@ -9,6 +9,7 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
+const backendLogger = require('./backendLogger');
 
 // 설정값
 const TTL_DAYS = 30;
@@ -81,6 +82,7 @@ class ChatHistoryService {
       console.log('[ChatHistoryService] 인덱스 생성 완료');
     } catch (error) {
       console.error('[ChatHistoryService] 인덱스 생성 실패:', error.message);
+      backendLogger.error('ChatHistoryService', '인덱스 생성 실패', error);
     }
   }
 
@@ -365,6 +367,7 @@ class ChatHistoryService {
       }
     } catch (error) {
       console.error('[ChatHistoryService] 세션 제한 적용 실패:', error.message);
+      backendLogger.error('ChatHistoryService', '세션 제한 적용 실패', error);
     }
   }
 
