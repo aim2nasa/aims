@@ -7,7 +7,7 @@
 
 ## 1. 현황 분석
 
-### 1.1 현재 aims-mcp 도구 (26개) - Phase 2 완료
+### 1.1 현재 aims-mcp 도구 (29개) - Phase 3 완료
 
 | 카테고리 | 도구 | 상태 |
 |---------|------|------|
@@ -39,6 +39,9 @@
 | | `get_ar_parsing_status` | ✅ Phase 2 추가 |
 | | `trigger_ar_parsing` | ✅ Phase 2 추가 |
 | | `get_ar_queue_status` | ✅ Phase 2 추가 |
+| 인사이트 | `analyze_customer_value` | ✅ Phase 3 추가 |
+| | `find_coverage_gaps` | ✅ Phase 3 추가 |
+| | `suggest_next_action` | ✅ Phase 3 추가 |
 
 ### 1.2 문제점
 
@@ -84,15 +87,15 @@
 
 **결과**: 4개 도구 추가, Annual Report 관리 가능
 
-### Phase 3: 인사이트 도구 (차별화)
+### Phase 3: 인사이트 도구 (차별화) ✅ 완료
 
 | 도구 | 설명 | 유스케이스 | 상태 |
 |------|------|-----------|------|
-| `analyze_customer_value` | 고객 가치 점수 계산 | "중요 고객이 누구야?" | ⬜ 예정 |
-| `find_coverage_gaps` | 보장 공백 분석 | "이 고객 보장 부족한 부분?" | ⬜ 예정 |
-| `suggest_next_action` | 다음 영업 액션 추천 | "이 고객에게 뭘 해야해?" | ⬜ 예정 |
+| `analyze_customer_value` | 고객 가치 점수 계산 | "중요 고객이 누구야?" | ✅ 완료 |
+| `find_coverage_gaps` | 보장 공백 분석 | "이 고객 보장 부족한 부분?" | ✅ 완료 |
+| `suggest_next_action` | 다음 영업 액션 추천 | "이 고객에게 뭘 해야해?" | ✅ 완료 |
 
-**목표**: 단순 조회 → 영업 인사이트 제공
+**결과**: 3개 도구 추가, 영업 인사이트 제공 가능
 
 ---
 
@@ -144,7 +147,17 @@
 
 ### Phase 3 진행 로그
 
-(Phase 2 완료 후 작성)
+#### 2025-12-23: Phase 3 구현 완료
+- [x] `insights.ts` 신규 생성
+  - `analyze_customer_value`: 고객 가치 점수 계산 (계약 수, 보험료, 관계망, 고객 기간 기반)
+  - `find_coverage_gaps`: 보장 공백 분석 (현재 보장 카테고리 분석, 부족 영역 식별)
+  - `suggest_next_action`: 다음 영업 액션 추천 (계약 만기, 생일, 미접촉, 정보 미완성 기준)
+- [x] `index.ts` 도구 등록 완료
+- [x] TypeScript 타입 체크 통과
+- [x] Phase 3 커밋
+
+**추가된 도구**: 3개
+**총 도구 수**: 29개
 
 ---
 
@@ -199,3 +212,4 @@ export function registerExampleTools(server: McpServer, db: Db) {
 | 2025-12-23 | 문서 생성, 확장 계획 수립 |
 | 2025-12-23 | Phase 1 완료 - 7개 도구 추가 (관계 관리 3개, 문서 삭제 2개, 고객 복구 2개) |
 | 2025-12-23 | Phase 2 완료 - 4개 도구 추가 (Annual Report 관련) |
+| 2025-12-23 | Phase 3 완료 - 3개 도구 추가 (인사이트: 고객 가치 분석, 보장 공백 분석, 액션 추천) |

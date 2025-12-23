@@ -17,6 +17,7 @@ import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo }
 import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus } from './annual_reports.js';
+import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageGaps, handleSuggestNextAction } from './insights.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -31,6 +32,7 @@ const allToolDefinitions = [
   ...productToolDefinitions,
   ...relationshipToolDefinitions,
   ...annualReportToolDefinitions,
+  ...insightToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -73,6 +75,10 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_ar_parsing_status: handleGetArParsingStatus,
   trigger_ar_parsing: handleTriggerArParsing,
   get_ar_queue_status: handleGetArQueueStatus,
+  // 인사이트 관련
+  analyze_customer_value: handleAnalyzeCustomerValue,
+  find_coverage_gaps: handleFindCoverageGaps,
+  suggest_next_action: handleSuggestNextAction,
 };
 
 /**
