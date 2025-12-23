@@ -13,6 +13,7 @@ from pymongo import MongoClient
 from qdrant_client import QdrantClient, models
 from openai import OpenAI
 import re
+from system_logger import send_error_log
 
 
 class HybridSearchEngine:
@@ -172,6 +173,7 @@ class HybridSearchEngine:
             self.last_embedding_response = response
         except Exception as e:
             print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
+            send_error_log("aims_rag_api", f"HybridSearch 쿼리 임베딩 오류: {e}", e)
             self.last_embedding_response = None
             return []
 
@@ -192,6 +194,7 @@ class HybridSearchEngine:
             )
         except Exception as e:
             print(f"❌ Qdrant 검색 중 오류 발생: {e}")
+            send_error_log("aims_rag_api", f"HybridSearch Qdrant 검색 오류: {e}", e)
             return []
 
         # 문서별 중복 제거 (최고 점수 청크만 유지)

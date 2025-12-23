@@ -11,6 +11,7 @@
 from openai import OpenAI
 from typing import Dict, List
 import json
+from system_logger import send_error_log
 
 
 class QueryAnalyzer:
@@ -103,6 +104,7 @@ JSON만 응답해줘:"""
 
         except Exception as e:
             print(f"❌ 쿼리 분석 중 오류 발생: {e}")
+            send_error_log("aims_rag_api", f"QueryAnalyzer 쿼리 분석 오류: {e}", e)
             # 오류 시 기본 개념 쿼리로 처리
             return {
                 "query_type": "concept",
