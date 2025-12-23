@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { getAuthToken } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
@@ -92,6 +93,7 @@ export function useCustomerDocumentsSSE(
         isConnectedRef.current = true;
       } catch (error) {
         console.error('[CustomerDocumentsSSE] connected 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useCustomerDocumentsSSE.connected', payload: { customerId } });
       }
     });
 
@@ -106,6 +108,7 @@ export function useCustomerDocumentsSSE(
         onRefreshRef.current();
       } catch (error) {
         console.error('[CustomerDocumentsSSE] document-change 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useCustomerDocumentsSSE.documentChange', payload: { customerId } });
       }
     });
 
@@ -117,6 +120,7 @@ export function useCustomerDocumentsSSE(
     // 연결 오류 처리
     eventSource.onerror = (error) => {
       console.error('[CustomerDocumentsSSE] 연결 오류:', error, 'readyState:', eventSource.readyState);
+      errorReporter.reportApiError(new Error('CustomerDocumentsSSE 연결 오류'), { component: 'useCustomerDocumentsSSE.onerror', payload: { customerId, readyState: eventSource.readyState } });
       isConnectedRef.current = false;
       eventSource.close();
 

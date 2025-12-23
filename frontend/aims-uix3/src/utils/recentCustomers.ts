@@ -4,6 +4,7 @@
  */
 
 import type { Customer } from '@/entities/customer'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 const STORAGE_KEY = 'aims_recent_customers'
 const MAX_RECENT_CUSTOMERS = 5
@@ -27,6 +28,7 @@ export function getRecentCustomers(): RecentCustomer[] {
     return customers.sort((a, b) => b.timestamp - a.timestamp)
   } catch (error) {
     console.error('Failed to load recent customers:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomers.getRecentCustomers' })
     return []
   }
 }
@@ -59,6 +61,7 @@ export function addRecentCustomer(customer: Customer): void {
     console.log('[addRecentCustomer] 저장됨:', trimmed)
   } catch (error) {
     console.error('Failed to save recent customer:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomers.addRecentCustomer' })
   }
 }
 
@@ -70,5 +73,6 @@ export function clearRecentCustomers(): void {
     localStorage.removeItem(STORAGE_KEY)
   } catch (error) {
     console.error('Failed to clear recent customers:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomers.clearRecentCustomers' })
   }
 }

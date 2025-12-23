@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { getAuthToken, API_CONFIG } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * 채팅 메시지 타입
@@ -111,6 +112,7 @@ export function useChatSSE(): UseChatSSEReturn {
             events.push(JSON.parse(jsonStr));
           } catch (e) {
             console.error('[useChatSSE] JSON 파싱 오류:', e);
+            errorReporter.reportApiError(e as Error, { component: 'useChatSSE.parseSSE' });
           }
         }
       }

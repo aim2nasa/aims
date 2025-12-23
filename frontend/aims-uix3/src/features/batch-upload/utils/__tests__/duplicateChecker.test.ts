@@ -14,6 +14,13 @@ import {
 import { api } from '../../../../shared/lib/api'
 import { calculateFileHash } from '../../../customer/utils/fileHash'
 
+// Mock errorReporter before import
+vi.mock('../../../../shared/lib/errorReporter', () => ({
+  errorReporter: {
+    reportApiError: vi.fn(),
+  },
+}))
+
 // Mock modules
 vi.mock('../../../../shared/lib/api', () => ({
   api: {

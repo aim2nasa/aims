@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
@@ -94,6 +95,7 @@ export function usePersonalFilesSSE(
         isConnectedRef.current = true;
       } catch (error) {
         console.error('[PersonalFilesSSE] connected 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'usePersonalFilesSSE.connected', payload: { userId } });
       }
     });
 
@@ -110,6 +112,7 @@ export function usePersonalFilesSSE(
         onRefreshRef.current();
       } catch (error) {
         console.error('[PersonalFilesSSE] file-change 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'usePersonalFilesSSE.fileChange', payload: { userId } });
       }
     });
 
@@ -121,6 +124,7 @@ export function usePersonalFilesSSE(
     // 연결 오류 처리
     eventSource.onerror = (error) => {
       console.error('[PersonalFilesSSE] 연결 오류:', error, 'readyState:', eventSource.readyState);
+      errorReporter.reportApiError(new Error('PersonalFilesSSE 연결 오류'), { component: 'usePersonalFilesSSE.onerror', payload: { userId, readyState: eventSource.readyState } });
       isConnectedRef.current = false;
       eventSource.close();
 

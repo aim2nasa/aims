@@ -5,6 +5,8 @@
  * 문서 파일 다운로드 유틸리티
  */
 
+import { errorReporter } from '@/shared/lib/errorReporter';
+
 interface DownloadOptions {
   showMessage?: boolean;
 }
@@ -87,6 +89,7 @@ class DownloadHelper {
       };
     } catch (error) {
       console.error('DownloadHelper.downloadDocument:', error);
+      errorReporter.reportApiError(error as Error, { component: 'DownloadHelper.downloadDocument', payload: { docId: doc._id } });
 
       if (showMessage) {
         console.error('파일 다운로드 중 오류가 발생했습니다:', error);

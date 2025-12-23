@@ -6,6 +6,7 @@
 
 import { DocumentService } from '@/services/DocumentService';
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
 
@@ -65,12 +66,14 @@ export async function processAnnualReportFile(
           }
         } catch (error) {
           console.error('[processAnnualReportFile] 문서 해시 조회 실패:', doc._id, error);
+          errorReporter.reportApiError(error as Error, { component: 'annualReportProcessor.processAnnualReportFile.hashCheck', payload: { docId: doc._id } });
           // 개별 문서 조회 실패는 무시하고 계속 진행
         }
       }
     }
   } catch (error) {
     console.error('[processAnnualReportFile] 문서 중복 검사 실패:', error);
+    errorReporter.reportApiError(error as Error, { component: 'annualReportProcessor.processAnnualReportFile', payload: { customerId } });
     // 에러 발생 시 중복 아닌 것으로 처리 (안전하게 진행)
     isDuplicateDoc = false;
   }

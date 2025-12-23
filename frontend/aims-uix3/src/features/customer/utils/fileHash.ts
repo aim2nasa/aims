@@ -5,6 +5,8 @@
  * Web Crypto API 사용 (브라우저 네이티브)
  */
 
+import { errorReporter } from '@/shared/lib/errorReporter';
+
 /**
  * 파일의 SHA-256 해시 계산
  *
@@ -26,6 +28,7 @@ export async function calculateFileHash(file: File): Promise<string> {
     return hashHex;
   } catch (error) {
     console.error('파일 해시 계산 실패:', error);
+    errorReporter.reportApiError(error as Error, { component: 'fileHash.calculateFileHash', payload: { fileName: file.name } });
     throw new Error('파일 해시 계산에 실패했습니다.');
   }
 }

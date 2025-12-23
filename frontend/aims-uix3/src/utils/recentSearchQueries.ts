@@ -4,6 +4,8 @@
  * @modified 2025-12-10 - 계정별 데이터 격리 적용 (userId 기반 동적 키)
  */
 
+import { errorReporter } from '@/shared/lib/errorReporter'
+
 const STORAGE_KEY_PREFIX = 'aims_recent_search_queries'
 const MAX_RECENT_QUERIES = 10
 
@@ -37,6 +39,7 @@ export function getRecentSearchQueries(): RecentSearchQuery[] {
     return queries.sort((a, b) => b.timestamp - a.timestamp)
   } catch (error) {
     console.error('Failed to load recent search queries:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentSearchQueries.getRecentSearchQueries' })
     return []
   }
 }
@@ -71,6 +74,7 @@ export function addRecentSearchQuery(query: string): void {
     console.log('[addRecentSearchQuery] 저장됨:', trimmed)
   } catch (error) {
     console.error('Failed to save recent search query:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentSearchQueries.addRecentSearchQuery' })
   }
 }
 
@@ -82,5 +86,6 @@ export function clearRecentSearchQueries(): void {
     localStorage.removeItem(getStorageKey())
   } catch (error) {
     console.error('Failed to clear recent search queries:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentSearchQueries.clearRecentSearchQueries' })
   }
 }

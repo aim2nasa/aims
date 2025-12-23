@@ -4,6 +4,7 @@
  */
 
 import type { Customer } from '@/entities/customer'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 export interface RecentCustomer {
   _id: string
@@ -31,6 +32,7 @@ export function getRecentCustomers(): RecentCustomer[] {
       .slice(0, MAX_RECENT_CUSTOMERS)
   } catch (error) {
     console.error('Failed to load recent customers:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomersCache.getRecentCustomers' })
     return []
   }
 }
@@ -73,6 +75,7 @@ export function addRecentCustomer(customer: Customer): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   } catch (error) {
     console.error('Failed to add recent customer:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomersCache.addRecentCustomer' })
   }
 }
 
@@ -86,6 +89,7 @@ export function removeRecentCustomer(customerId: string): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
   } catch (error) {
     console.error('Failed to remove recent customer:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomersCache.removeRecentCustomer' })
   }
 }
 
@@ -97,5 +101,6 @@ export function clearRecentCustomers(): void {
     localStorage.removeItem(STORAGE_KEY)
   } catch (error) {
     console.error('Failed to clear recent customers:', error)
+    errorReporter.reportApiError(error as Error, { component: 'recentCustomersCache.clearRecentCustomers' })
   }
 }

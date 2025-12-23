@@ -14,6 +14,7 @@
 
 import { api } from '../api'
 import { calculateFileHash } from '../../../features/customer/utils/fileHash'
+import { errorReporter } from '../errorReporter'
 
 /**
  * 기존 파일 해시 정보
@@ -128,6 +129,7 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
     return results
   } catch (error) {
     console.error('[duplicateChecker] 고객 문서 해시 조회 실패:', error)
+    errorReporter.reportApiError(error as Error, { component: 'duplicateChecker.getCustomerFileHashes', payload: { customerId } })
     return []
   }
 }

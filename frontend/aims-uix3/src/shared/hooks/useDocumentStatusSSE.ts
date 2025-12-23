@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { getAuthToken } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
@@ -110,6 +111,7 @@ export function useDocumentStatusSSE(
         isConnectedRef.current = true;
       } catch (error) {
         console.error('[DocumentStatusSSE] connected 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusSSE.connected', payload: { documentId } });
       }
     });
 
@@ -127,6 +129,7 @@ export function useDocumentStatusSSE(
         });
       } catch (error) {
         console.error('[DocumentStatusSSE] processing-complete 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusSSE.processingComplete', payload: { documentId } });
       }
     });
 
@@ -141,6 +144,7 @@ export function useDocumentStatusSSE(
         onCompleteRef.current({ status: 'timeout', documentId: data.documentId });
       } catch (error) {
         console.error('[DocumentStatusSSE] timeout 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusSSE.timeout', payload: { documentId } });
       }
     });
 
@@ -152,6 +156,7 @@ export function useDocumentStatusSSE(
     // 연결 오류 처리
     eventSource.onerror = (error) => {
       console.error('[DocumentStatusSSE] 연결 오류:', error, 'readyState:', eventSource.readyState);
+      errorReporter.reportApiError(new Error('DocumentStatusSSE 연결 오류'), { component: 'useDocumentStatusSSE.onerror', payload: { documentId, readyState: eventSource.readyState } });
       isConnectedRef.current = false;
 
       // 결과를 받지 않은 상태에서 오류 발생 시 콜백 호출

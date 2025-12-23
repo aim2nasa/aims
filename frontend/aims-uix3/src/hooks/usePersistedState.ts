@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * SessionStorage와 동기화되는 state를 생성
@@ -39,6 +40,7 @@ export function usePersistedState<T>(
       }
     } catch (error) {
       console.error(`[usePersistedState] "${key}" 복원 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'usePersistedState.restore', payload: { key } });
     }
     return initialValue;
   });
@@ -49,6 +51,7 @@ export function usePersistedState<T>(
       sessionStorage.setItem(key, JSON.stringify(state));
     } catch (error) {
       console.error(`[usePersistedState] "${key}" 저장 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'usePersistedState.save', payload: { key } });
     }
   }, [key, state]);
 
@@ -63,6 +66,7 @@ export function clearPersistedState(key: string): void {
     sessionStorage.removeItem(key);
   } catch (error) {
     console.error(`[usePersistedState] "${key}" 삭제 실패:`, error);
+    errorReporter.reportApiError(error as Error, { component: 'clearPersistedState', payload: { key } });
   }
 }
 

@@ -5,6 +5,7 @@
  */
 
 import { getAuthToken } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
@@ -35,6 +36,7 @@ export function waitForDocumentProcessing(
     const token = getAuthToken();
     if (!token) {
       console.error('[waitForDocumentProcessing] 인증 토큰 없음');
+      errorReporter.reportApiError(new Error('인증 토큰 없음'), { component: 'waitForDocumentProcessing.noToken' });
       resolve({ success: false, status: 'connection_error', error: new Error('No auth token') });
       return;
     }
@@ -81,6 +83,7 @@ export function waitForDocumentProcessing(
           console.log('[waitForDocumentProcessing] 연결됨:', data);
         } catch (error) {
           console.error('[waitForDocumentProcessing] connected 이벤트 파싱 실패:', error);
+          errorReporter.reportApiError(error as Error, { component: 'waitForDocumentProcessing.connected', payload: { documentId } });
         }
       });
 
@@ -97,6 +100,7 @@ export function waitForDocumentProcessing(
           }
         } catch (error) {
           console.error('[waitForDocumentProcessing] processing-complete 이벤트 파싱 실패:', error);
+          errorReporter.reportApiError(error as Error, { component: 'waitForDocumentProcessing.processingComplete', payload: { documentId } });
         }
       });
 
@@ -108,6 +112,7 @@ export function waitForDocumentProcessing(
           doResolve({ success: false, status: 'timeout' });
         } catch (error) {
           console.error('[waitForDocumentProcessing] timeout 이벤트 파싱 실패:', error);
+          errorReporter.reportApiError(error as Error, { component: 'waitForDocumentProcessing.timeout', payload: { documentId } });
         }
       });
 
@@ -119,10 +124,12 @@ export function waitForDocumentProcessing(
       // 연결 오류 처리
       eventSource.onerror = (error) => {
         console.error('[waitForDocumentProcessing] 연결 오류:', error);
+        errorReporter.reportApiError(new Error('waitForDocumentProcessing 연결 오류'), { component: 'waitForDocumentProcessing.onerror', payload: { documentId } });
         doResolve({ success: false, status: 'connection_error', error });
       };
     } catch (error) {
       console.error('[waitForDocumentProcessing] SSE 생성 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'waitForDocumentProcessing.sseCreation', payload: { documentId } });
       doResolve({ success: false, status: 'connection_error', error });
     }
   });

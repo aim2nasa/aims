@@ -4,6 +4,7 @@
  */
 
 import * as pdfjsLib from 'pdfjs-dist';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 // PDF.js worker 설정 (Vite 환경)
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -43,6 +44,7 @@ async function extractFirstPageText(file: File): Promise<string> {
     return text;
   } catch (error) {
     console.error('[pdfParser] PDF 텍스트 추출 실패:', error);
+    errorReporter.reportApiError(error as Error, { component: 'pdfParser.extractFirstPageText', payload: { fileName: file.name } });
     throw new Error('PDF 텍스트 추출에 실패했습니다.');
   }
 }
@@ -122,6 +124,7 @@ export async function checkAnnualReportFromPDF(
     };
   } catch (error) {
     console.error('[pdfParser] ❌ Annual Report 체크 실패:', error);
+    errorReporter.reportApiError(error as Error, { component: 'pdfParser.checkAnnualReportFromPDF', payload: { fileName: file.name } });
     // 에러 발생 시 일반 문서로 처리
     return { is_annual_report: false, confidence: 0, metadata: null };
   }

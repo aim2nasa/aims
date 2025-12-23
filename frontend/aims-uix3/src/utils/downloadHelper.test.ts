@@ -8,6 +8,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import DownloadHelper from './downloadHelper';
 
+// Mock errorReporter before import
+vi.mock('@/shared/lib/errorReporter', () => ({
+  errorReporter: {
+    reportApiError: vi.fn(),
+  },
+}));
+
 // ============================================
 // 테스트 데이터
 // ============================================
