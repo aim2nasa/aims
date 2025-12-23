@@ -23,15 +23,29 @@ interface MetricsLineChartProps {
   data: MetricsDataPoint[];
   showDisk?: boolean;
   height?: number | string;
+  timeRangeHours?: number;
 }
 
-const formatTime = (timestamp: string) => {
+const formatTime = (timestamp: string, timeRangeHours: number = 24) => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('ko-KR', {
+
+  // 24시간 이하: 시간만 표시
+  if (timeRangeHours <= 24) {
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  // 24시간 초과: 날짜 + 시간 표시
+  return date.toLocaleString('ko-KR', {
+    month: 'numeric',
+    day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  });
+  }).replace('. ', '/').replace('. ', ' ');
 };
 
 const formatTooltipTime = (timestamp: string) => {
@@ -66,7 +80,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-export const MetricsLineChart = ({ data, showDisk = false, height = 200 }: MetricsLineChartProps) => {
+export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRangeHours = 24 }: MetricsLineChartProps) => {
   if (!data || data.length === 0) {
     return (
       <div className="metrics-line-chart metrics-line-chart--empty">
@@ -82,11 +96,11 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200 }: Metri
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="timestamp"
-            tickFormatter={formatTime}
+            tickFormatter={(ts) => formatTime(ts, timeRangeHours)}
             tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
             stroke="var(--color-border)"
             interval="preserveStartEnd"
-            minTickGap={50}
+            minTickGap={timeRangeHours > 24 ? 80 : 50}
           />
           <YAxis
             domain={[0, 100]}
