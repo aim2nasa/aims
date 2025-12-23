@@ -16,6 +16,7 @@ import type { SelectedDocument, DocumentComputedData } from '../utils/documentTr
 import { toSmartSearchDocumentResponse, buildSelectedDocument } from '../utils/documentTransformers'
 import { CustomerService } from '@/services/customerService'
 import { api } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 
 /**
@@ -162,6 +163,7 @@ export function useRightPaneContent(
       }
     } catch (error) {
       console.error('[useRightPaneContent] 문서 새로고침 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.refreshDocument', payload: { documentId } })
     }
   }, [])
 
@@ -293,6 +295,7 @@ export function useRightPaneContent(
       updateURLParams({ documentId, customerId: null })
     } catch (error) {
       console.error('[useRightPaneContent] 문서 로드 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.handleDocumentClick', payload: { documentId } })
     }
   }, [updateURLParams])
 
@@ -362,6 +365,7 @@ export function useRightPaneContent(
         addRecentCustomer(customer)
       } catch (error) {
         console.error('[useRightPaneContent] 고객 정보 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.handleOpenFullDetail', payload: { customerId } })
       }
 
       // CustomerFullDetailView 표시
@@ -426,6 +430,7 @@ export function useRightPaneContent(
       }
     } catch (error) {
       console.error('[useRightPaneContent] 고객 정보 새로고침 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'useRightPaneContent.handleCustomerRefresh', payload: { customerId: selectedCustomer?._id } })
     }
   }, [selectedCustomer, customerAllViewRefreshRef])
 

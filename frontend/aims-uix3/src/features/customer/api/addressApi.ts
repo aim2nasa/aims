@@ -1,3 +1,5 @@
+import { errorReporter } from '@/shared/lib/errorReporter';
+
 const ADDRESS_API_URL = '/api/address';
 
 export interface AddressSearchResult {
@@ -64,6 +66,7 @@ export class AddressApi {
       throw new Error(data.error || '주소 검색에 실패했습니다.');
     } catch (error) {
       console.error('AddressApi.searchAddress:', error);
+      errorReporter.reportApiError(error as Error, { component: 'AddressApi.searchAddress', payload: { keyword } });
       return {
         success: false,
         error: error instanceof Error ? error.message : '주소 검색 중 오류가 발생했습니다.'
