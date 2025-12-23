@@ -19,6 +19,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './ContractsTab.css'
 
 interface ContractsTabProps {
@@ -189,6 +190,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       onContractCountChange?.(data.length)
     } catch (err) {
       console.error('[ContractsTab] 계약 로드 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ContractsTab.loadContracts', payload: { customerId: customer._id } })
       setError(err instanceof Error ? err.message : '계약 정보를 불러올 수 없습니다.')
       onContractCountChange?.(0)
     } finally {

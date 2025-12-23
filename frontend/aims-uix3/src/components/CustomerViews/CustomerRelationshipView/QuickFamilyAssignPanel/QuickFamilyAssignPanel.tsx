@@ -17,6 +17,7 @@ import Button from '@/shared/ui/Button';
 import { SFSymbol } from '../../../SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
 import { formatDate } from '@/shared/lib/timeUtils';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './QuickFamilyAssignPanel.css';
 
 /** 패널 모드 */
@@ -172,6 +173,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         setCandidatesLoading(false);
       } catch (err) {
         console.error('[QuickFamilyAssignPanel] 데이터 로드 실패:', err);
+        errorReporter.reportApiError(err as Error, { component: 'QuickFamilyAssignPanel.loadAllData' });
         setError('데이터를 불러오는데 실패했습니다.');
         setCustomersLoading(false);
         setCandidatesLoading(false);
@@ -388,6 +390,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
     } catch (err) {
       const errorMsg = isCorporateMode ? '구성원 등록에 실패했습니다.' : '가족 관계 등록에 실패했습니다.';
       console.error('[QuickFamilyAssignPanel] 관계 등록 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'QuickFamilyAssignPanel.handleRegister', payload: { customerId: customer._id } });
       setError(`${errorMsg} 다시 시도해주세요.`);
     } finally {
       setLoading(false);

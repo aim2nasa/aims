@@ -10,6 +10,7 @@
  */
 
 import { CustomerService } from '@/services/customerService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import type {
   Customer,
   CreateCustomerData,
@@ -272,6 +273,7 @@ export class CustomerDocument {
       this.notify(); // 로드 완료 알림
     } catch (error) {
       console.error('[CustomerDocument] 고객 목록 로드 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.loadCustomers' });
       this.error = error instanceof Error ? error.message : '고객 목록 로드 실패';
       this.isLoading = false;
       this.notify(); // 에러 알림
@@ -300,6 +302,7 @@ export class CustomerDocument {
       return newCustomer;
     } catch (error) {
       console.error('[CustomerDocument] 고객 생성 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.createCustomer' });
       throw error;
     }
   }
@@ -332,6 +335,7 @@ export class CustomerDocument {
       return updatedCustomer;
     } catch (error) {
       console.error('[CustomerDocument] 고객 수정 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.updateCustomer', payload: { customerId: id } });
       throw error;
     }
   }
@@ -367,6 +371,7 @@ export class CustomerDocument {
       this.notify(); // 모든 View에 즉시 알림
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.deleteCustomer', payload: { customerId: id } });
       throw error;
     }
   }
@@ -399,6 +404,7 @@ export class CustomerDocument {
       return result;
     } catch (error) {
       console.error('[CustomerDocument] 고객 영구 삭제 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.permanentDeleteCustomer', payload: { customerId: id } });
       throw error;
     }
   }
@@ -436,6 +442,7 @@ export class CustomerDocument {
       return restoredCustomer;
     } catch (error) {
       console.error('[CustomerDocument] 고객 복원 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.restoreCustomer', payload: { customerId: id } });
       throw error;
     }
   }

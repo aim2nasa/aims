@@ -15,6 +15,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolWeight,
 } from '../../../../../components/SFSymbol';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './MemosTab.css';
 
 interface MemosTabProps {
@@ -55,6 +56,7 @@ export const MemosTab: React.FC<MemosTabProps> = ({
       console.log('[MemosTab] 메모 저장 완료');
     } catch (error) {
       console.error('[MemosTab] 메모 저장 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'MemosTab.handleSave', payload: { customerId: customer._id } });
     } finally {
       setIsSaving(false);
     }

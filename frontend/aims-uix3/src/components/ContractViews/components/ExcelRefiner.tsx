@@ -43,6 +43,7 @@ import { getAuthHeaders } from '@/shared/lib/api'
 import { ContractService } from '@/services/contractService'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { ProductSearchModal } from './ProductSearchModal'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './ExcelRefiner.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
@@ -802,6 +803,7 @@ export function ExcelRefiner() {
       setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)
     } catch (error) {
       console.error('파일 파싱 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.handleFile' })
       showAlert({
         title: '파일 읽기 오류',
         message: '파일을 읽는 중 오류가 발생했습니다.',
@@ -945,6 +947,7 @@ export function ExcelRefiner() {
         })
       } catch (error) {
         console.error('고객명 DB 검증 오류:', error)
+        errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.validateCustomerName', payload: { colIndex } })
         showAlert({
           title: '검증 오류',
           message: '고객명 DB 검증 중 오류가 발생했습니다.',
@@ -1014,6 +1017,7 @@ export function ExcelRefiner() {
         })
       } catch (error) {
         console.error('상품명 검증 오류:', error)
+        errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.validateProductName', payload: { colIndex } })
         showAlert({
           title: '검증 오류',
           message: '상품명 검증 중 오류가 발생했습니다.',
@@ -1168,6 +1172,7 @@ export function ExcelRefiner() {
           results.push({ label, hasIssues: result.unmatched.length > 0, issueCount: result.unmatched.length })
         } catch (error) {
           console.error('상품명 검증 오류:', error)
+          errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.validateAllProducts.batch', payload: { colIndex } })
           results.push({ label, hasIssues: true, issueCount: -1 })
         }
       } else {
@@ -1332,6 +1337,7 @@ export function ExcelRefiner() {
             updateValidatedHistory(sheetName, prev => new Set([...prev, colIndex]))
           } catch (error) {
             console.error('상품명 검증 오류:', error)
+            errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.validateAllSheets.product', payload: { sheetName, colIndex } })
             issueDetails.push(`${label} 검증 오류`)
             totalIssues++
           }
@@ -2138,6 +2144,7 @@ export function ExcelRefiner() {
             }
           } catch (error) {
             console.warn('[ExcelRefiner] DB 고객 조회 실패:', error)
+            errorReporter.reportApiError(error as Error, { component: 'ExcelRefiner.checkExistingCustomers' })
           }
         }
 
@@ -2379,6 +2386,7 @@ export function ExcelRefiner() {
             }
           } catch (err) {
             console.error('[고객 일괄등록 실패]:', err)
+            errorReporter.reportApiError(err as Error, { component: 'ExcelRefiner.bulkCreateCustomers' })
             customerErrors.push(`일괄등록 오류: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
           }
         }
@@ -2617,6 +2625,7 @@ export function ExcelRefiner() {
 
     } catch (err) {
       console.error('일괄등록 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ExcelRefiner.handleImport' })
 
       // 에러 유형별 메시지 분류
       let errorTitle = '일괄등록 오류'

@@ -39,6 +39,7 @@ import type { DocumentCustomerRelation, Document } from '../../../types/document
 import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -469,6 +470,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setDetailModalVisible(true)
     } catch (error) {
       console.error('[DocumentSearchView] 문서 상태 조회 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentSearchView.handleDetailClick' })
     }
   }, [])
 
@@ -538,6 +540,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       await handleSearch()
     } catch (error) {
       console.error('[DocumentSearchView] 메모 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentSearchView.handleSaveNotes' })
       showAlert({
         title: '저장 실패',
         message: '메모 저장에 실패했습니다.',
@@ -571,6 +574,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       await handleSearch()
     } catch (error) {
       console.error('[DocumentSearchView] 메모 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentSearchView.handleDeleteNotes' })
       showAlert({
         title: '삭제 실패',
         message: '메모 삭제에 실패했습니다.',
@@ -645,6 +649,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setIsDeleting(false)
     } catch (error) {
       console.error('[DocumentSearchView] 문서 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentSearchView.handleDeleteSingleDocument', payload: { documentId } })
       setIsDeleting(false)
 
       void showAlert({
@@ -731,6 +736,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 }
               } catch (error) {
                 console.error('다운로드 실패:', error)
+                errorReporter.reportApiError(error as Error, { component: 'DocumentSearchView.download', payload: { documentId } })
               }
             }
           }

@@ -57,6 +57,18 @@ vi.mock('@/shared/lib/api', () => ({
       super(message);
       this.name = 'ApiError';
     }
+  },
+  NetworkError: class NetworkError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'NetworkError';
+    }
+  },
+  TimeoutError: class TimeoutError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'TimeoutError';
+    }
   }
 }));
 

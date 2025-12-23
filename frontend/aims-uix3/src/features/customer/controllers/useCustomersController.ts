@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CustomerSearchQuerySchema, type Customer, type CustomerSearchQuery } from '@/entities/customer/model';
 import { api, ApiError } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 interface UseCustomersControllerProps {
   /** 초기 페이지 크기 */
@@ -123,6 +124,7 @@ export const useCustomersController = ({
         : (err instanceof Error ? err.message : '고객 목록 조회 중 오류가 발생했습니다.');
       setError(message);
       console.error('[useCustomersController] Fetch error:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useCustomersController.fetchCustomers' });
     } finally {
       setIsLoading(false);
     }

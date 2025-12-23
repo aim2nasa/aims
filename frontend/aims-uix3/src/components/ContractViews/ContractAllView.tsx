@@ -20,6 +20,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Contract } from '@/entities/contract'
 import type { Customer } from '@/entities/customer'
 import { formatDate } from '@/shared/lib/timeUtils'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './ContractAllView.css'
 
 interface ContractAllViewProps {
@@ -131,6 +132,7 @@ export default function ContractAllView({
 
     } catch (err) {
       console.error('[ContractAllView] 계약 목록 조회 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ContractAllView.loadContracts' })
       setError('계약 목록을 불러오는 데 실패했습니다.')
     } finally {
       setIsLoading(false)
@@ -181,6 +183,7 @@ export default function ContractAllView({
           onCustomerClick(contract.customer_id, customer)
         } catch (err) {
           console.error('[ContractAllView] 고객 조회 실패:', err)
+          errorReporter.reportApiError(err as Error, { component: 'ContractAllView.handleCustomerClick', payload: { customerId: contract.customer_id } })
           setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
         }
       } else {
@@ -197,6 +200,7 @@ export default function ContractAllView({
           }
         } catch (err) {
           console.error('[ContractAllView] 고객 검색 실패:', err)
+          errorReporter.reportApiError(err as Error, { component: 'ContractAllView.handleCustomerClick.search', payload: { customerName: contract.customer_name } })
           setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
         }
       }
@@ -232,6 +236,7 @@ export default function ContractAllView({
         }
       } catch (err) {
         console.error('[ContractAllView] 고객 검색 실패:', err)
+        errorReporter.reportApiError(err as Error, { component: 'ContractAllView.handleCustomerDoubleClick', payload: { customerName: contract.customer_name } })
         setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
       }
     }
@@ -459,6 +464,7 @@ export default function ContractAllView({
       window.dispatchEvent(new CustomEvent('contractChanged'))
     } catch (error) {
       console.error('[ContractAllView] 계약 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'ContractAllView.handleConfirmDelete' })
       showAlert({
         title: '삭제 실패',
         message: '계약 삭제 중 오류가 발생했습니다.',
@@ -498,6 +504,7 @@ export default function ContractAllView({
       window.dispatchEvent(new CustomEvent('contractChanged'))
     } catch (error) {
       console.error('[ContractAllView] 계약 전체 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'ContractAllView.handleConfirmDeleteAll' })
       showAlert({
         title: '삭제 실패',
         message: '계약 전체 삭제 중 오류가 발생했습니다.',

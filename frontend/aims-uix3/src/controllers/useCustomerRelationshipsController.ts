@@ -13,6 +13,7 @@ import {
   type Relationship,
   type RelationshipTypeData,
 } from '@/services/relationshipService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 interface UseCustomerRelationshipsControllerOptions {
   /** 대상 고객 ID */
   customerId?: string;
@@ -96,6 +97,7 @@ export const useCustomerRelationshipsController = (
         setRelationships(relations);
       } catch (err) {
         console.error('[useCustomerRelationshipsController] Failed to load relationships:', err);
+        errorReporter.reportApiError(err as Error, { component: 'useCustomerRelationshipsController.loadRelationships', payload: { customerId } });
         setError(
           err instanceof Error
             ? err.message
@@ -119,6 +121,7 @@ export const useCustomerRelationshipsController = (
         await loadRelationships({ silent: true });
       } catch (err) {
         console.error('[useCustomerRelationshipsController] Failed to delete relationship:', err);
+        errorReporter.reportApiError(err as Error, { component: 'useCustomerRelationshipsController.deleteRelationship', payload: { customerId, relationshipId } });
         setError('관계 삭제에 실패했습니다. 다시 시도해 주세요.');
       } finally {
         setIsLoading(false);

@@ -37,6 +37,7 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { usePersonalFilesSSE } from '@/shared/hooks/usePersonalFilesSSE'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
@@ -331,6 +332,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         finalItems = [...data.items, ...myFileItems]
       } catch (docErr) {
         console.error('⚠️ 내 보관함 조회 실패:', docErr)
+        errorReporter.reportApiError(docErr as Error, { component: 'PersonalFilesView.loadFolder.myStorageQuery' })
         // 실패해도 폴더 시스템은 정상 표시
       }
 
@@ -441,6 +443,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       })
     } catch (err) {
       console.error('폴더 로드 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.loadFolder' })
       setError(err instanceof Error ? err.message : '폴더를 불러오는데 실패했습니다')
     } finally {
       // 🍎 폴링 중에는 로딩 상태 변경하지 않음 (깜빡임 방지)
@@ -467,6 +470,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setBreadcrumbs([{ _id: null, name: '검색 결과' }])
     } catch (err) {
       console.error('검색 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.performSearch' })
       setError(err instanceof Error ? err.message : '검색에 실패했습니다')
     } finally {
       setLoading(false)
@@ -673,6 +677,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       await personalFilesService.downloadFile(fileId, fileName)
     } catch (err) {
       console.error('파일 다운로드 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleFileDownload', payload: { fileId } })
       setError(err instanceof Error ? err.message : '파일 다운로드에 실패했습니다')
     }
   }, [])
@@ -707,6 +712,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       handleCloseFolderModal()
     } catch (err) {
       console.error('폴더 생성 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleCreateFolder' })
       setError(err instanceof Error ? err.message : '폴더 생성에 실패했습니다')
     } finally {
       setCreatingFolder(false)
@@ -804,6 +810,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       console.log('✅ [Rename] 모달 닫기 완료')
     } catch (err) {
       console.error('❌ [Rename] 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleRename' })
       setError(err instanceof Error ? err.message : '이름 변경에 실패했습니다')
     } finally {
       setRenamingItem(false)
@@ -865,6 +872,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       handleCloseContextMenu()
     } catch (err) {
       console.error('❌ 삭제 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleDeleteClick' })
       const errorMessage = err instanceof Error ? err.message : '삭제에 실패했습니다'
       setError(errorMessage)
 
@@ -902,6 +910,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       return allFolders
     } catch (err) {
       console.error('전체 폴더 로드 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.loadAllFolders' })
       return []
     }
   }, [])
@@ -990,6 +999,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       console.log('🏁 [Move] 완료')
     } catch (err) {
       console.error('❌ [Move] 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleMove' })
       setError(err instanceof Error ? err.message : '이동에 실패했습니다')
     }
   }, [selectedItem, currentFolderId, loadFolderContents, expandedFolderIds, loadAllFolders])
@@ -1115,6 +1125,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           return { success: true, itemId: item._id }
         } catch (error) {
           console.error(`Error deleting item ${item._id}:`, error)
+          errorReporter.reportApiError(error as Error, { component: 'PersonalFilesView.handleDeleteSelected.item', payload: { itemId: item._id } })
           return { success: false, itemId: item._id, error }
         }
       })
@@ -1150,6 +1161,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       }
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
+      errorReporter.reportApiError(error as Error, { component: 'PersonalFilesView.handleDeleteSelected' })
       setIsDeleting(false)
       await confirmModal.actions.openModal({
         title: '삭제 실패',
@@ -1265,6 +1277,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       await loadFolderContents(currentFolderId)
     } catch (err) {
       console.error('항목 이동 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'PersonalFilesView.handleDrop' })
       setError(err instanceof Error ? err.message : '항목 이동에 실패했습니다')
     } finally {
       setDraggingItemId(null)

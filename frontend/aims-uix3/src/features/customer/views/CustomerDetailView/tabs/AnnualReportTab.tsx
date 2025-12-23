@@ -22,6 +22,7 @@ import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
 import type { CustomerDocumentItem } from '@/services/DocumentService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './AnnualReportTab.css';
 
 // 🍎 정렬 필드 타입
@@ -294,6 +295,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       }
     } catch (err) {
       console.error('Failed to load pending AR documents:', err);
+      errorReporter.reportApiError(err as Error, { component: 'AnnualReportTab.loadPendingDocuments', payload: { customerId: customer._id } });
     }
   };
 
@@ -343,6 +345,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         }
       } catch (cleanupError) {
         console.warn('[AnnualReportTab] 자동 중복 정리 실패 (무시):', cleanupError);
+        errorReporter.reportApiError(cleanupError as Error, { component: 'AnnualReportTab.cleanupDuplicates', payload: { customerId: customer._id } });
       }
 
       const response = await AnnualReportApi.getAnnualReports(customer._id, userId, 20);
@@ -394,6 +397,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         setError(response.error || 'Annual Report 조회에 실패했습니다.');
       }
     } catch (err) {
+      console.error('[AnnualReportTab] Annual Report 조회 오류:', err);
+      errorReporter.reportApiError(err as Error, { component: 'AnnualReportTab.loadAnnualReports', payload: { customerId: customer._id } });
       setError(err instanceof Error ? err.message : 'Annual Report 조회 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -451,6 +456,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       }
     } catch (err) {
       console.error('[AnnualReportTab] 재시도 오류:', err);
+      errorReporter.reportApiError(err as Error, { component: 'AnnualReportTab.handleRetry', payload: { fileId } });
       await confirmModal.actions.openModal({
         title: '오류',
         message: '재시도 중 오류가 발생했습니다.',
@@ -564,6 +570,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       }
     } catch (err) {
       setIsDeleting(false);
+      console.error('[AnnualReportTab] 삭제 오류:', err);
+      errorReporter.reportApiError(err as Error, { component: 'AnnualReportTab.handleDeleteSelected', payload: { customerId: customer._id, count: selectedIndices.size } });
       await confirmModal.actions.openModal({
         title: '오류',
         message: '삭제 중 오류가 발생했습니다.',
@@ -571,7 +579,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         showCancel: false,
         iconType: 'error'
       });
-      console.error('Delete error:', err);
     }
   };
 

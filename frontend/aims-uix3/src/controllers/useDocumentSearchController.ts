@@ -8,6 +8,7 @@
 import { useState, useCallback } from 'react'
 import type { SearchMode, KeywordMode, SearchResultItem } from '@/entities/search'
 import { SearchService } from '@/services/searchService'
+import { errorReporter } from '@/shared/lib/errorReporter'
 
 /**
  * Document Search Controller Hook
@@ -56,6 +57,7 @@ export const useDocumentSearchController = () => {
       setAnswer(response.answer || null)
     } catch (err) {
       console.error('[useDocumentSearchController] 검색 오류:', err)
+      errorReporter.reportApiError(err as Error, { component: 'useDocumentSearchController.handleSearch', payload: { query, searchMode } })
       setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
     } finally {
       setIsLoading(false)

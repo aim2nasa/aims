@@ -10,6 +10,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Customer, UpdateCustomerData } from '@/entities/customer';
 import { CustomerDocument } from '@/stores/CustomerDocument';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * 탭 타입 정의
@@ -181,6 +182,7 @@ export const useCustomerEditController = (customer: Customer) => {
       return true;
     } catch (error) {
       console.error('[Customer Edit] 저장 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'useCustomerEditController.handleSubmit', payload: { customerId: customer._id } });
       setErrors({
         submit: error instanceof Error ? error.message : '저장에 실패했습니다',
       });

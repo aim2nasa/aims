@@ -19,6 +19,7 @@ import { RelationshipService, type Relationship } from '../../../services/relati
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerRelationshipView.css';
 
 // 🚀 성능 최적화: 초성 인덱스 맵을 상수로 미리 계산 (O(1) 조회)
@@ -241,6 +242,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       setRelationships(populated);
     } catch (error) {
       console.error('관계 데이터 로드 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerRelationshipView.loadRelationshipsData' });
     } finally {
       setRelationshipsLoading(false);
     }

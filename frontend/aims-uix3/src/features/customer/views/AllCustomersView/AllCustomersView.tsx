@@ -19,6 +19,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './AllCustomersView.css';
 
 interface AllCustomersViewProps {
@@ -656,6 +657,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
       } catch (error) {
         console.error('[AllCustomersView] 고객 삭제 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'AllCustomersView.handleConfirmDelete' });
         showAlert({
           title: '삭제 실패',
           message: '고객 삭제 중 오류가 발생했습니다.',
@@ -696,6 +698,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
       } catch (error) {
         console.error('[AllCustomersView] 고객 전체 삭제 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'AllCustomersView.handleConfirmDeleteAll' });
         showAlert({
           title: '삭제 실패',
           message: '고객 전체 삭제 중 오류가 발생했습니다.',

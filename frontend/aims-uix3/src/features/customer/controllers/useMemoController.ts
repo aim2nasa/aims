@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { CustomerMemo } from '@/entities/customer/model';
 import { MemoService } from '@/services/memoService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * Controller 반환 타입
@@ -81,6 +82,7 @@ export const useMemoController = (customerId: string): MemoControllerReturn => {
       const errorMessage = err instanceof Error ? err.message : '메모를 불러오는데 실패했습니다.';
       setError(errorMessage);
       console.error('[MemoController] 메모 로드 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useMemoController.loadMemos', payload: { customerId } });
       setMemos([]);
     } finally {
       setIsLoading(false);
@@ -122,6 +124,7 @@ export const useMemoController = (customerId: string): MemoControllerReturn => {
       const errorMessage = err instanceof Error ? err.message : '메모 저장에 실패했습니다.';
       setError(errorMessage);
       console.error('[MemoController] 메모 생성 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useMemoController.createMemo', payload: { customerId } });
       return false;
     } finally {
       setIsSaving(false);
@@ -158,6 +161,7 @@ export const useMemoController = (customerId: string): MemoControllerReturn => {
       const errorMessage = err instanceof Error ? err.message : '메모 수정에 실패했습니다.';
       setError(errorMessage);
       console.error('[MemoController] 메모 수정 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useMemoController.updateMemo', payload: { customerId, memoId } });
       return false;
     } finally {
       setIsSaving(false);
@@ -190,6 +194,7 @@ export const useMemoController = (customerId: string): MemoControllerReturn => {
       const errorMessage = err instanceof Error ? err.message : '메모 삭제에 실패했습니다.';
       setError(errorMessage);
       console.error('[MemoController] 메모 삭제 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useMemoController.deleteMemo', payload: { customerId, memoId } });
       return false;
     } finally {
       setIsSaving(false);

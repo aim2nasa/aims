@@ -40,6 +40,7 @@ import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
 import { useCustomerDocumentsSSE } from '@/shared/hooks/useCustomerDocumentsSSE'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -166,6 +167,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       }
     } catch (error) {
       console.error('[DocumentsTab] PDF 변환 재시도 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleRetryPdfConversion', payload: { documentId } })
       await showAlert({
         title: '오류',
         message: '재시도 중 오류가 발생했습니다.',
@@ -596,6 +598,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 }
               } catch (error) {
                 console.error('다운로드 실패:', error)
+                errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDownload', payload: { documentId } })
               }
             }
           }
@@ -644,6 +647,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 }
               } catch (error) {
                 console.error('[DocumentsTab] 문서 삭제 실패:', error)
+                errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDelete', payload: { documentId } })
                 showAlert({
                   title: '삭제 실패',
                   message: '문서 삭제 중 오류가 발생했습니다.',
@@ -680,6 +684,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       await refresh()
     } catch (error) {
       console.error('[DocumentsTab] 메모 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleSaveNotes', payload: { documentId: selectedNotes.documentId } })
       showAlert({
         title: '저장 실패',
         message: '메모 저장에 실패했습니다.',
@@ -713,6 +718,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       await refresh()
     } catch (error) {
       console.error('[DocumentsTab] 메모 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDeleteNotes', payload: { documentId: selectedNotes.documentId } })
       showAlert({
         title: '삭제 실패',
         message: '메모 삭제에 실패했습니다.',
@@ -796,6 +802,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         } catch (error) {
           const message = error instanceof ApiError ? error.message : `Failed to delete document ${docId}`
           console.error(`Error deleting document ${docId}:`, message)
+          errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDeleteSelected.item', payload: { docId } })
           return { success: false, docId, error }
         }
       })
@@ -836,6 +843,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       // 성공한 경우: 모달 없이 바로 종료 (즉시 UI 반영됨)
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDeleteSelected' })
       setIsDeleting(false) // 에러 발생 시에도 상태 복원
       await confirmController.actions.openModal({
         title: '삭제 실패',

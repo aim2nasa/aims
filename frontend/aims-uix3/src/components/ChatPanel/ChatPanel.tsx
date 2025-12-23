@@ -14,6 +14,7 @@ import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './ChatPanel.css';
 
 interface ChatPanelProps {
@@ -453,6 +454,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }, 3000);
     } catch (error) {
       console.error('[ChatPanel] 데이터 통계 로드 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'ChatPanel.showStatsOverlay' });
     }
   }, []);
 
@@ -583,6 +585,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
     } catch (error) {
       console.error('[ChatPanel] 전송 오류:', error);
+      errorReporter.reportApiError(error as Error, { component: 'ChatPanel.handleSend' });
       // 에러 메시지 표시
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,

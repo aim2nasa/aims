@@ -26,6 +26,7 @@ import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { Tooltip } from '@/shared/ui/Tooltip';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerDetailView.css';
 
 interface CustomerDetailViewProps {
@@ -190,6 +191,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         setCanAddFamilyRelation(familyRepId === customer._id);
       } catch (error) {
         console.error('[CustomerDetailView] 가족 관계 확인 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CustomerDetailView.checkCanAddFamilyRelation', payload: { customerId: customer._id } });
         setCanAddFamilyRelation(false);
       }
     };
@@ -224,6 +226,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onDelete?.();
         onClose();
       } catch (error) {
+        console.error('[CustomerDetailView] 휴면 처리 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CustomerDetailView.handleSoftDelete', payload: { customerId: customer._id } });
         await confirmController.actions.openModal({
           title: '휴면 처리 실패',
           message: error instanceof Error ? error.message : '고객 휴면 처리에 실패했습니다.',
@@ -270,6 +274,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onDelete?.();
         onClose();
       } catch (error) {
+        console.error('[CustomerDetailView] 영구 삭제 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CustomerDetailView.handlePermanentDelete', payload: { customerId: customer._id } });
         await confirmController.actions.openModal({
           title: '영구 삭제 실패',
           message: error instanceof Error ? error.message : '고객 영구 삭제에 실패했습니다.',
@@ -315,6 +321,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onDelete?.(); // View 새로고침 트리거
         onClose();
       } catch (error) {
+        console.error('[CustomerDetailView] 휴면 해제 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CustomerDetailView.handleRestore', payload: { customerId: customer._id } });
         await confirmController.actions.openModal({
           title: '휴면 해제 실패',
           message: error instanceof Error ? error.message : '휴면 해제에 실패했습니다.',

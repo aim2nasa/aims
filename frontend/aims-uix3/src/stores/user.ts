@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * 사용자 인터페이스
@@ -147,6 +148,7 @@ export function useUserStore() {
         if (typeof window === 'undefined') return;
 
         console.error('❌ 사용자 목록 API 호출 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'UserStore.fetchUsers' });
         // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
         setAvailableUsers([]);
       } finally {

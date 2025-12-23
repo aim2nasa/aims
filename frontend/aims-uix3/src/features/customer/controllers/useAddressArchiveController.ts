@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
  * Controller 반환 타입
@@ -87,6 +88,7 @@ export const useAddressArchiveController = (
       const errorMessage = err instanceof Error ? err.message : '주소 이력을 불러오는데 실패했습니다.';
       setError(errorMessage);
       console.error('[AddressArchiveController] 주소 이력 로드 실패:', err);
+      errorReporter.reportApiError(err as Error, { component: 'useAddressArchiveController.loadAddressHistory', payload: { customerId } });
       setAddressHistory([]); // 에러 시 빈 배열로 초기화
     } finally {
       setIsLoading(false);

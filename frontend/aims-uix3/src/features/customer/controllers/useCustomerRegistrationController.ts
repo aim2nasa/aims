@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CreateCustomerSchema, type CreateCustomerData } from '@/entities/customer/model';
 import { api } from '@/shared/lib/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 // Draft 저장 키
 const DRAFT_STORAGE_KEY = 'aims_customer_registration_draft';
@@ -339,6 +340,7 @@ export const useCustomerRegistrationController = ({
           fullError: err,
         });
       }
+      errorReporter.reportApiError(err as Error, { component: 'useCustomerRegistrationController.handleSubmit' });
 
       // 에러 콜백 (async 지원)
       if (onError) {
