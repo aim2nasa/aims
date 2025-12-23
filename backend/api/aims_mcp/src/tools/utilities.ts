@@ -94,13 +94,16 @@ export const utilityToolDefinitions = [
 // 상수 정의
 // ============================================================
 
-// 기본 저장소 티어 (system_settings에 없는 경우 사용)
-const DEFAULT_TIERS: Record<string, { name: string; quota_bytes: number }> = {
-  free: { name: '무료', quota_bytes: 1 * 1024 * 1024 * 1024 }, // 1GB
-  basic: { name: '기본', quota_bytes: 5 * 1024 * 1024 * 1024 }, // 5GB
-  premium: { name: '프리미엄', quota_bytes: 20 * 1024 * 1024 * 1024 }, // 20GB
-  admin: { name: '관리자', quota_bytes: -1 } // 무제한
+// 기본 저장소 티어 (aims_api의 storageQuotaService.js와 동일하게 유지)
+const GB = 1024 * 1024 * 1024;
+const DEFAULT_TIER_DEFINITIONS: Record<string, { name: string; quota_bytes: number }> = {
+  free_trial: { name: '무료체험', quota_bytes: 5 * GB },
+  standard: { name: '일반', quota_bytes: 30 * GB },
+  premium: { name: '프리미엄', quota_bytes: 50 * GB },
+  vip: { name: 'VIP', quota_bytes: 100 * GB },
+  admin: { name: '관리자', quota_bytes: -1 }
 };
+const DEFAULT_TIER = 'standard';
 
 // FAQ 카테고리 라벨
 const FAQ_CATEGORY_LABELS: Record<string, string> = {
@@ -141,18 +144,22 @@ export async function handleGetStorageInfo(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // 1. 사용자의 파일 총 용량 계산
+    // 1. 사용자의 파일 총 용량 계산 (ownerId 필드, meta.size_bytes 사용)
     const usageResult = await db.collection(COLLECTIONS.FILES).aggregate([
       {
         $match: {
-          user_id: userId,
+          ownerId: userId,
           deleted_at: { $exists: false }
         }
       },
       {
         $group: {
           _id: null,
-          totalSize: { $sum: { $ifNull: ['$size', 0] } },
+          totalSize: {
+            $sum: {
+              $toInt: { $ifNull: ['$meta.size_bytes', '0'] }
+            }
+          },
           fileCount: { $sum: 1 }
         }
       }
@@ -160,19 +167,17 @@ export async function handleGetStorageInfo(args: unknown) {
 
     const usage = usageResult[0] || { totalSize: 0, fileCount: 0 };
 
-    // 2. 사용자 티어 조회
+    // 2. 사용자 정보 조회
     const userObjectId = toSafeObjectId(userId);
     const user = userObjectId
       ? await db.collection('users').findOne({ _id: userObjectId })
       : await db.collection('users').findOne({ _id: userId as unknown as ObjectId });
-    const userTier = user?.tier || 'basic';
 
-    // 3. 티어 정의 조회 (system_settings 또는 기본값)
-    const tierSettings = await db.collection('system_settings').findOne({ key: 'storage_tiers' });
-    const tiers = tierSettings?.value || DEFAULT_TIERS;
-    const tierInfo = tiers[userTier] || DEFAULT_TIERS.basic;
+    // 3. 사용자의 저장소 정보 (storage.quota_bytes) 또는 기본값 사용
+    const tierName = user?.storage?.tier || user?.tier?.tier_id || DEFAULT_TIER;
+    const tierDef = DEFAULT_TIER_DEFINITIONS[tierName] || DEFAULT_TIER_DEFINITIONS[DEFAULT_TIER];
+    const quotaBytes = user?.storage?.quota_bytes || tierDef.quota_bytes;
 
-    const quotaBytes = tierInfo.quota_bytes;
     const usedBytes = usage.totalSize;
     const remainingBytes = quotaBytes === -1 ? -1 : Math.max(0, quotaBytes - usedBytes);
     const usagePercent = quotaBytes === -1 ? 0 : Math.round((usedBytes / quotaBytes) * 100);
@@ -181,8 +186,8 @@ export async function handleGetStorageInfo(args: unknown) {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
-          tier: userTier,
-          tierName: tierInfo.name,
+          tier: tierName,
+          tierName: tierDef.name,
           quota: {
             bytes: quotaBytes,
             formatted: formatBytes(quotaBytes)
