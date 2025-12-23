@@ -19,6 +19,7 @@ import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/C
 import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/useRecentCustomersStore'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -146,6 +147,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       }
     } catch (error) {
       console.error('고객 문서 조회 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentLinkModal.handleSelectCustomer', payload: { customerId: customer._id } })
       setDuplicateWarning(null)
     }
   }
@@ -255,6 +257,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           successCount++
         } catch (err) {
           console.error(`문서 ${docId} 연결 실패:`, err)
+          errorReporter.reportApiError(err as Error, { component: 'DocumentLinkModal.handleLink.item', payload: { docId, customerId: selectedCustomer._id } })
           failureCount++
         }
       }
@@ -286,6 +289,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       }
     } catch (error) {
       console.error('문서 연결 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentLinkModal.handleLink' })
       const message =
         error instanceof Error
           ? error.message

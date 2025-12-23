@@ -325,6 +325,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   const handleSaveNotes = useCallback(async (notes: string) => {
     if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
       console.error('[DocumentStatusList] customerId 또는 documentId가 없습니다')
+      errorReporter.reportApiError(new Error('customerId 또는 documentId 누락'), { component: 'DocumentStatusList.handleSaveNotes.validation' })
       return
     }
 
@@ -360,6 +361,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   const handleDeleteNotes = useCallback(async () => {
     if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
       console.error('[DocumentStatusList] customerId 또는 documentId가 없습니다')
+      errorReporter.reportApiError(new Error('customerId 또는 documentId 누락'), { component: 'DocumentStatusList.handleDeleteNotes.validation' })
       return
     }
 

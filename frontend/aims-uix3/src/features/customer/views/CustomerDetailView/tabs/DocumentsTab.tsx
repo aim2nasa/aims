@@ -667,6 +667,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const handleSaveNotes = useCallback(async (notes: string) => {
     if (!selectedNotes?.documentId || !customer?._id) {
       console.error('[DocumentsTab] documentId 또는 customer._id가 없습니다')
+      errorReporter.reportApiError(new Error('documentId 또는 customer._id 누락'), { component: 'DocumentsTab.handleSaveNotes.validation' })
       return
     }
 
@@ -700,6 +701,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const handleDeleteNotes = useCallback(async () => {
     if (!selectedNotes?.documentId || !customer?._id) {
       console.error('[DocumentsTab] documentId 또는 customer._id가 없습니다')
+      errorReporter.reportApiError(new Error('documentId 또는 customer._id 누락'), { component: 'DocumentsTab.handleDeleteNotes.validation' })
       return
     }
 

@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Button, Modal } from '@/shared/ui'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentFullTextModal.css'
 
 interface DocumentFullTextModalProps {
@@ -110,6 +111,7 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
         }
       } catch (error) {
         console.error('Full text fetch error:', error)
+        errorReporter.reportApiError(error as Error, { component: 'DocumentFullTextModal.fetchFullText' })
         // API 실패 시 로컬 데이터로 폴백
         const fullText = getFullTextFromDocument(document)
         setFullTextContent(fullText)

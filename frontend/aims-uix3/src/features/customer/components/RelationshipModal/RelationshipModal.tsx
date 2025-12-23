@@ -105,6 +105,7 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
       }
     } catch (error) {
       console.error('고객 검색 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'RelationshipModal.searchCustomers' });
       setErrorMessage('고객 검색에 실패했습니다.');
     } finally {
       setSearchLoading(false);
@@ -254,6 +255,7 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
       }, 1000);
     } catch (error) {
       console.error('관계 추가 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'RelationshipModal.handleSubmit', payload: { customerId, targetCustomerId: selectedCustomer?._id } });
 
       // 더 상세한 에러 메시지 제공
       let errorMsg = '관계 추가 중 오류가 발생했습니다.';

@@ -523,6 +523,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const handleSaveNotes = useCallback(async (notes: string) => {
     if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
       console.error('[DocumentSearchView] customerId 또는 documentId가 없습니다')
+      errorReporter.reportApiError(new Error('customerId 또는 documentId 누락'), { component: 'DocumentSearchView.handleSaveNotes.validation' })
       return
     }
 
@@ -556,6 +557,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const handleDeleteNotes = useCallback(async () => {
     if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
       console.error('[DocumentSearchView] customerId 또는 documentId가 없습니다')
+      errorReporter.reportApiError(new Error('customerId 또는 documentId 누락'), { component: 'DocumentSearchView.handleDeleteNotes.validation' })
       return
     }
 

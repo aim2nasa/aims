@@ -421,6 +421,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     const fileId = report.source_file_id;
     if (!fileId) {
       console.error('[AnnualReportTab] 재시도 불가: file_id 없음');
+      errorReporter.reportApiError(new Error('AR 재시도 불가: file_id 없음'), { component: 'AnnualReportTab.handleRetryParsing.validation', payload: { reportId: report.report_id } });
       await confirmModal.actions.openModal({
         title: '재시도 불가',
         message: '파일 정보를 찾을 수 없습니다.',

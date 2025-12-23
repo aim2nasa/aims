@@ -21,6 +21,7 @@ import { AccountSettingsModal } from '../../../features/AccountSettings';
 import { AppleConfirmModal } from '../../DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController';
 import { resetOnboardingTour } from '../../../shared/components/OnboardingTour';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -221,6 +222,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         navigate('/login', { replace: true });
       } catch (error) {
         console.error('계정 삭제 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'UserProfileMenu.handleDeleteAccount' });
         await confirmActions.openModal({
           title: '오류',
           message: '계정 삭제에 실패했습니다.',

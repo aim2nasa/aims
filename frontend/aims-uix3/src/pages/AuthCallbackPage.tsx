@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { getCurrentUser } from '@/entities/auth/api';
 import { syncUserIdFromStorage, useUserStore } from '@/stores/user';
+import { errorReporter } from '@/shared/lib/errorReporter';
 import './AuthCallbackPage.css';
 
 export default function AuthCallbackPage() {
@@ -66,6 +67,7 @@ export default function AuthCallbackPage() {
         navigate('/', { replace: true });
       } catch (err) {
         console.error('인증 콜백 처리 오류:', err);
+        errorReporter.reportApiError(err as Error, { component: 'AuthCallbackPage.handleCallback' });
         setError(err instanceof Error ? err.message : '로그인 처리 중 오류가 발생했습니다');
 
         // 3초 후 로그인 페이지로 리다이렉트

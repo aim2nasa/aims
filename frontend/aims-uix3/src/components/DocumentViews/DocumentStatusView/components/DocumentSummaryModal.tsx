@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Button, Modal } from '@/shared/ui'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentSummaryModal.css'
 
 interface DocumentSummaryModalProps {
@@ -116,6 +117,7 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
         }
       } catch (error) {
         console.error('Summary fetch error:', error)
+        errorReporter.reportApiError(error as Error, { component: 'DocumentSummaryModal.fetchSummary' })
         // API 실패 시 로컬 데이터로 폴백
         const summary = getSummaryFromDocument(document)
         setSummaryContent(summary)

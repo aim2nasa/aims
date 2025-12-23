@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { getCurrentUser } from '@/entities/auth/api';
+import { errorReporter } from '@/shared/lib/errorReporter';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           setUser(userData);
         } catch (error) {
           console.error('Failed to fetch user:', error);
+          errorReporter.reportApiError(error as Error, { component: 'ProtectedRoute.fetchUser' });
           logout();
         }
       }
