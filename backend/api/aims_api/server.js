@@ -5015,6 +5015,12 @@ app.get('/api/admin/metrics/current', authenticateJWT, requireRole('admin'), asy
 
 /**
  * 관리자: 시스템 메트릭 히스토리 조회 (시계열 그래프용)
+ *
+ * 시간 범위에 따라 자동 샘플링 적용:
+ * - 1~6시간: 전체 데이터 (약 360개)
+ * - 24시간: 5분 간격 샘플링 (약 288개)
+ * - 72시간 (3일): 15분 간격 샘플링 (약 288개)
+ * - 168시간 (7일): 30분 간격 샘플링 (약 336개)
  */
 app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), async (req, res) => {
   try {
@@ -5022,15 +5028,63 @@ app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), asy
     const hoursNum = Math.min(Math.max(parseInt(hours, 10) || 24, 1), 168); // 1~168시간 (7일)
     const since = new Date(Date.now() - hoursNum * 60 * 60 * 1000);
 
-    const metrics = await db.collection('system_metrics')
-      .find({ timestamp: { $gte: since } })
-      .sort({ timestamp: 1 })
-      .toArray();
+    // 시간 범위에 따른 샘플링 간격 결정 (분 단위)
+    let sampleIntervalMinutes;
+    if (hoursNum <= 6) {
+      sampleIntervalMinutes = 1; // 전체 데이터
+    } else if (hoursNum <= 24) {
+      sampleIntervalMinutes = 5; // 5분 간격
+    } else if (hoursNum <= 72) {
+      sampleIntervalMinutes = 15; // 15분 간격
+    } else {
+      sampleIntervalMinutes = 30; // 30분 간격
+    }
+
+    // MongoDB aggregation으로 시간대별 평균 계산
+    // DB 필드 구조: cpu.usage, memory.usagePercent, disks.root.usagePercent, disks.data.usagePercent
+    const metrics = await db.collection('system_metrics').aggregate([
+      // 1. 시간 범위 필터
+      { $match: { timestamp: { $gte: since } } },
+
+      // 2. 시간대별 그룹핑 (샘플링 간격에 맞춰)
+      {
+        $group: {
+          _id: {
+            $toDate: {
+              $subtract: [
+                { $toLong: '$timestamp' },
+                { $mod: [{ $toLong: '$timestamp' }, sampleIntervalMinutes * 60 * 1000] }
+              ]
+            }
+          },
+          cpu: { $avg: '$cpu.usage' },
+          memory: { $avg: '$memory.usagePercent' },
+          diskRoot: { $avg: '$disks.root.usagePercent' },
+          diskData: { $avg: '$disks.data.usagePercent' }
+        }
+      },
+
+      // 3. 시간순 정렬
+      { $sort: { _id: 1 } },
+
+      // 4. 필드 재구성
+      {
+        $project: {
+          _id: 0,
+          timestamp: '$_id',
+          cpu: { $round: ['$cpu', 1] },
+          memory: { $round: ['$memory', 1] },
+          diskRoot: { $round: ['$diskRoot', 1] },
+          diskData: { $round: ['$diskData', 1] }
+        }
+      }
+    ]).toArray();
 
     res.json({
       success: true,
       data: {
         hours: hoursNum,
+        sampleInterval: sampleIntervalMinutes,
         count: metrics.length,
         metrics
       }

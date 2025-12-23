@@ -179,21 +179,19 @@ const ServerResourcesSection = () => {
   });
 
   // 라인 차트용 데이터 변환
-  // disks.data가 없는 레코드(이전 형식)는 null로 처리하여 차트에서 건너뜀
-  // 메모리 절약을 위해 최대 300개 데이터 포인트로 제한 (다운샘플링)
+  // 백엔드에서 이미 샘플링된 데이터가 반환됨 (시간 범위에 따라 자동 샘플링)
+  // - 1~6시간: 전체 데이터, 24시간: 5분 간격, 72시간: 15분 간격, 168시간: 30분 간격
   const rawMetrics = historyData?.metrics || [];
-  const maxPoints = 300;
-  const step = rawMetrics.length > maxPoints ? Math.ceil(rawMetrics.length / maxPoints) : 1;
-  const chartData = rawMetrics
-    .filter((_: SystemMetrics, i: number) => i % step === 0)
-    .map((m: SystemMetrics) => ({
-      timestamp: m.timestamp,
-      cpu: m.cpu.usage,
-      memory: m.memory.usagePercent,
-      disk: m.disk.usagePercent,
-      diskRoot: m.disks?.root?.usagePercent ?? m.disk.usagePercent,
-      diskData: m.disks?.data?.usagePercent ?? null,
-    }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartData = rawMetrics.map((m: any) => ({
+    timestamp: m.timestamp,
+    // 새 형식 (aggregation): 플랫 값 / 구 형식: 중첩 객체
+    cpu: typeof m.cpu === 'number' ? m.cpu : m.cpu?.usage ?? 0,
+    memory: typeof m.memory === 'number' ? m.memory : m.memory?.usagePercent ?? 0,
+    disk: m.diskRoot ?? (typeof m.disk === 'number' ? m.disk : m.disk?.usagePercent ?? 0),
+    diskRoot: m.diskRoot ?? m.disks?.root?.usagePercent ?? (typeof m.disk === 'number' ? m.disk : m.disk?.usagePercent ?? 0),
+    diskData: m.diskData ?? m.disks?.data?.usagePercent ?? null,
+  }));
 
   return (
     <section className="server-resources">
