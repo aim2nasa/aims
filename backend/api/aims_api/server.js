@@ -720,6 +720,7 @@ app.get('/api/documents/stats', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('[Documents Stats] Error:', error);
+    backendLogger.error('Documents', '문서 통계 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1563,6 +1564,7 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('문서 상세 상태 조회 오류:', error);
+    backendLogger.error('Documents', '문서 상세 상태 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '문서 상세 상태 조회에 실패했습니다.',
@@ -1689,6 +1691,7 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('통계 조회 오류:', error);
+    backendLogger.error('Documents', '통계 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '통계 조회에 실패했습니다.',
@@ -1814,6 +1817,7 @@ app.post('/api/documents/:id/retry', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('재처리 요청 오류:', error);
+    backendLogger.error('Documents', '재처리 요청 오류', error);
     res.status(500).json({
       success: false,
       error: '재처리 요청에 실패했습니다.',
@@ -1860,6 +1864,7 @@ app.get('/api/documents/status/live', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('실시간 상태 조회 오류:', error);
+    backendLogger.error('Documents', '실시간 상태 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '실시간 상태 조회에 실패했습니다.'
@@ -1982,6 +1987,7 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
 
   } catch (error) {
     console.error('❌ [Set AR Flag] 오류:', error);
+    backendLogger.error('Documents', '[Set AR Flag] 오류', error);
     res.status(500).json({
       success: false,
       error: 'is_annual_report 설정에 실패했습니다.',
@@ -2376,6 +2382,7 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('❌ [문서 삭제] 오류:', error.message);
+    backendLogger.error('Documents', '[문서 삭제] 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -3420,6 +3427,7 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('고객 일괄 등록 오류:', error);
+    backendLogger.error('Customer', '고객 일괄 등록 오류', error);
 
     // 고객 일괄등록 실패 로그
     activityLogger.log({
@@ -5299,6 +5307,7 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
 
   } catch (error) {
     console.error(`❌ [Qdrant 동기화 오류] 문서 ${documentId}:`, error);
+    backendLogger.error('Qdrant', `[Qdrant 동기화 오류] 문서 ${documentId}`, error);
     return {
       success: false,
       message: `Qdrant 동기화 실패: ${error.message}`
@@ -5416,6 +5425,7 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
       console.log(`📄 [PDF변환] 문서 ${document_id}: ${pdfConversionResult}`);
     } catch (convError) {
       console.error(`📄 [PDF변환] 트리거 실패 (${document_id}): ${convError.message}`);
+      backendLogger.error('Documents', `[PDF변환] 트리거 실패 (${document_id})`, convError);
       // PDF 변환 실패는 치명적이지 않으므로 계속 진행
     }
 
@@ -5447,6 +5457,7 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
         console.log(`✅ AR 파싱 큐에 작업 추가: file_id=${document_id}, customer_id=${id}`);
       } catch (queueError) {
         console.error(`❌ AR 파싱 큐 추가 실패: ${queueError.message}`);
+        backendLogger.error('Documents', 'AR 파싱 큐 추가 실패', queueError);
         // 큐 추가 실패는 치명적이지 않으므로 계속 진행
       }
     }
@@ -5632,6 +5643,7 @@ app.delete('/api/customers/:id/documents/:document_id', authenticateJWT, async (
     });
   } catch (error) {
     console.error('문서 연결 해제 오류:', error);
+    backendLogger.error('Documents', '문서 연결 해제 오류', error);
     res.status(500).json({
       success: false,
       error: '문서 연결 해제에 실패했습니다.',
@@ -5726,6 +5738,7 @@ app.patch('/api/customers/:id/documents/:document_id', authenticateJWT, async (r
     });
   } catch (error) {
     console.error('메모 수정 오류:', error);
+    backendLogger.error('Documents', '메모 수정 오류', error);
     res.status(500).json({
       success: false,
       error: '메모 수정에 실패했습니다.',
@@ -5894,6 +5907,7 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
     });
   } catch (error) {
     console.error('고객 문서 조회 오류:', error);
+    backendLogger.error('Customers', '고객 문서 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '고객 문서 조회에 실패했습니다.',
@@ -6038,14 +6052,15 @@ app.get('/api/address/search', async (req, res) => {
   } catch (error) {
     console.error('🚨 카카오 주소 검색 API 오류:', error.message);
     console.error('🚨 오류 세부사항:', error.response?.data || error);
-    
+    backendLogger.error('Address', '카카오 주소 검색 API 오류', error);
+
     // 카카오 API 오류인 경우 더 자세한 정보 제공
     if (error.response?.status === 401) {
       console.error('🚨 인증 실패: API 키를 확인해주세요');
     } else if (error.response?.status === 400) {
       console.error('🚨 요청 파라미터 오류');
     }
-    
+
     res.status(500).json({
       success: false,
       error: '주소 검색 중 오류가 발생했습니다.',
@@ -6114,6 +6129,7 @@ app.post('/api/geocode', async (req, res) => {
     }
   } catch (error) {
     console.error('❌ [Geocoding] API 오류:', error.message);
+    backendLogger.error('Geocoding', 'Geocoding API 오류', error);
 
     if (error.response?.status === 401) {
       console.error('🚨 [Geocoding] 인증 실패 - API 키 확인 필요');
@@ -6166,6 +6182,7 @@ app.post('/api/annual-report/check', upload.single('file'), async (req, res) => 
 
   } catch (error) {
     console.error('❌ [Annual Report Check] 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report Check] 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -6227,6 +6244,7 @@ app.post('/api/annual-report/parse-file', upload.single('file'), async (req, res
 
   } catch (error) {
     console.error('❌ [Annual Report Parse] 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report Parse] 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -6283,6 +6301,7 @@ app.post('/api/annual-report/parse', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('❌ [Annual Report] 파싱 요청 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 파싱 요청 오류', error);
 
     // Python API 서버가 다운되었거나 응답 없음
     if (error.code === 'ECONNREFUSED') {
@@ -6337,6 +6356,7 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('❌ [Annual Report] 상태 조회 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 상태 조회 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -6401,6 +6421,7 @@ app.get('/api/customers/:customerId/annual-reports', authenticateJWT, async (req
     res.json(response.data);
   } catch (error) {
     console.error('❌ [Annual Report] 조회 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 조회 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -6497,6 +6518,7 @@ app.get('/api/customers/:customerId/annual-reports/pending', authenticateJWT, as
     });
   } catch (error) {
     console.error('❌ [Annual Report] 대기 문서 조회 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 대기 문서 조회 오류', error);
 
     res.status(500).json({
       success: false,
@@ -6636,6 +6658,7 @@ app.post('/api/webhooks/personal-files-change', (req, res) => {
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('[SSE-PF] Personal Files 변경 알림 오류:', error);
+    backendLogger.error('SSE', 'Personal Files 변경 알림 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -6766,6 +6789,7 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       }
     } catch (updateError) {
       console.error(`[SSE-DocStatus] overallStatus 업데이트 실패:`, updateError);
+      backendLogger.error('SSE', 'overallStatus 업데이트 실패', updateError);
       // 업데이트 실패해도 SSE 알림은 계속 진행
     }
 
@@ -6805,6 +6829,7 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
     res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
   } catch (error) {
     console.error('[SSE-DocStatus] 문서 처리 완료 알림 오류:', error);
+    backendLogger.error('SSE', '문서 처리 완료 알림 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -6890,6 +6915,7 @@ app.post('/api/webhooks/document-list-change', (req, res) => {
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('[SSE-DocList] 문서 목록 변경 알림 오류:', error);
+    backendLogger.error('SSE', '문서 목록 변경 알림 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -6932,6 +6958,7 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('문서 업로드 알림 오류:', error);
+    backendLogger.error('SSE', '문서 업로드 알림 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -6981,6 +7008,7 @@ app.patch('/api/documents/recent/set-folder', authenticateJWT, async (req, res) 
     });
   } catch (error) {
     console.error('[SetFolder] 오류:', error);
+    backendLogger.error('Documents', '[SetFolder] 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -7030,6 +7058,7 @@ app.get('/api/customers/:customerId/annual-reports/latest', authenticateJWT, asy
     res.json(response.data);
   } catch (error) {
     console.error('❌ [Annual Report] 최신 조회 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 최신 조회 오류', error);
 
     // 404는 정상 케이스 (데이터 없음) - 프론트엔드에 빈 데이터로 전달
     if (error.response?.status === 404) {
@@ -7113,6 +7142,7 @@ app.delete('/api/customers/:customerId/annual-reports', authenticateJWT, async (
 
   } catch (error) {
     console.error('❌ [Annual Report] 삭제 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 삭제 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -7182,6 +7212,7 @@ app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', authent
 
   } catch (error) {
     console.error('❌ [Annual Report] 중복 정리 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 중복 정리 오류', error);
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
@@ -7278,6 +7309,7 @@ app.get('/api/customers/:id/address-history', authenticateJWT, async (req, res) 
 
   } catch (error) {
     console.error('주소 이력 조회 오류:', error);
+    backendLogger.error('Address', '주소 이력 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '주소 이력 조회에 실패했습니다.',
@@ -7328,6 +7360,7 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
 
   } catch (error) {
     console.error('주소 이력 저장 오류:', error);
+    backendLogger.error('Address', '주소 이력 저장 오류', error);
     res.status(500).json({
       success: false,
       error: '주소 이력 저장에 실패했습니다.',
@@ -7381,6 +7414,7 @@ async function syncCustomerMemoField(customerId) {
     console.log(`[Memo Sync] 고객 ${customerId}: ${memos.length}개 메모 동기화 완료`);
   } catch (error) {
     console.error(`[Memo Sync] 동기화 실패 (고객 ${customerId}):`, error);
+    backendLogger.error('Memos', `메모 동기화 실패 (고객 ${customerId})`, error);
   }
 }
 
@@ -9059,6 +9093,7 @@ app.post('/api/n8n/smartsearch', authenticateJWT, async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('[n8n Proxy] smartsearch 오류:', error.message);
+    backendLogger.error('n8nProxy', 'smartsearch 오류', error);
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
@@ -9090,6 +9125,7 @@ app.post('/api/n8n/docprep', authenticateJWT, async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('[n8n Proxy] docprep 오류:', error.message);
+    backendLogger.error('n8nProxy', 'docprep 오류', error);
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
@@ -9148,6 +9184,7 @@ app.post('/api/chat', authenticateJWT, async (req, res) => {
     }
   } catch (historyError) {
     console.error('[Chat] 히스토리 저장 오류:', historyError.message);
+    backendLogger.error('Chat', '히스토리 저장 오류', historyError);
     // 히스토리 저장 실패해도 채팅은 계속
   }
 
@@ -9194,12 +9231,14 @@ app.post('/api/chat', authenticateJWT, async (req, res) => {
         );
       } catch (saveError) {
         console.error('[Chat] 응답 저장 오류:', saveError.message);
+        backendLogger.error('Chat', '응답 저장 오류', saveError);
       }
     }
 
     res.end();
   } catch (error) {
     console.error('[Chat] 스트리밍 오류:', error);
+    backendLogger.error('Chat', '스트리밍 오류', error);
     res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
     res.end();
   }
@@ -9216,6 +9255,7 @@ app.get('/api/chat/tools', authenticateJWT, async (req, res) => {
     res.json({ success: true, tools, count: tools.length });
   } catch (error) {
     console.error('[Chat] Tools 조회 오류:', error);
+    backendLogger.error('Chat', 'Tools 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9236,6 +9276,7 @@ app.get('/api/chat/sessions', authenticateJWT, async (req, res) => {
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('[Chat] 세션 목록 조회 오류:', error);
+    backendLogger.error('Chat', '세션 목록 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9261,6 +9302,7 @@ app.get('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) => {
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('[Chat] 세션 메시지 조회 오류:', error);
+    backendLogger.error('Chat', '세션 메시지 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9286,6 +9328,7 @@ app.delete('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) =>
     res.json({ success: true, message: '세션이 삭제되었습니다.' });
   } catch (error) {
     console.error('[Chat] 세션 삭제 오류:', error);
+    backendLogger.error('Chat', '세션 삭제 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9319,6 +9362,7 @@ app.patch('/api/chat/sessions/:sessionId', authenticateJWT, async (req, res) => 
     res.json({ success: true, message: '제목이 수정되었습니다.' });
   } catch (error) {
     console.error('[Chat] 세션 제목 수정 오류:', error);
+    backendLogger.error('Chat', '세션 제목 수정 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9335,6 +9379,7 @@ app.get('/api/chat/stats', authenticateJWT, async (req, res) => {
     res.json({ success: true, stats });
   } catch (error) {
     console.error('[Chat] 통계 조회 오류:', error);
+    backendLogger.error('Chat', '통계 조회 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -9379,6 +9424,7 @@ app.post('/api/transcribe', authenticateJWT, upload.single('file'), async (req, 
     });
   } catch (error) {
     console.error('[Transcribe] 오류:', error);
+    backendLogger.error('Transcribe', '음성 변환 오류', error);
     res.status(500).json({
       success: false,
       error: error.message || '음성 변환에 실패했습니다.'
@@ -9499,6 +9545,7 @@ app.post("/api/ar-background/trigger-parsing", authenticateJWT, async (req, res)
     res.json(response.data);
   } catch (error) {
     console.error("❌ [AR 백그라운드 파싱 프록시] 실패:", error.message);
+    backendLogger.error('AnnualReport', 'AR 백그라운드 파싱 프록시 실패', error);
     res.status(500).json({
       success: false,
       error: "백그라운드 파싱 트리거 실패",
@@ -9571,6 +9618,7 @@ app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) =
     res.json(response.data);
   } catch (error) {
     console.error("❌ [AR 파싱 재시도 프록시] 실패:", error.message);
+    backendLogger.error('AnnualReport', 'AR 파싱 재시도 프록시 실패', error);
     res.status(500).json({
       success: false,
       error: "파싱 재시도 트리거 실패",
@@ -9615,6 +9663,7 @@ app.post("/api/webhooks/ar-status-change", async (req, res) => {
     res.json({ success: true, message: 'SSE notification sent' });
   } catch (error) {
     console.error("❌ [AR 웹훅] 실패:", error.message);
+    backendLogger.error('AnnualReport', 'AR 웹훅 실패', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
