@@ -360,9 +360,13 @@ export const ErrorLogsPage = () => {
   const deleteAllMutation = useMutation({
     mutationFn: () => errorLogsApi.deleteAll(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+      // 1. 먼저 로컬 상태 초기화 (UI 즉시 반영)
       clearNewLogs();
       clearStats();
+
+      // 2. 그 다음 서버 데이터 새로 가져오기
+      queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+
       setConfirmModal({ type: null });
     },
     onError: () => {
