@@ -3,6 +3,7 @@
 const { ObjectId } = require('mongodb');
 const { utcNowDate, utcNowISO } = require('./lib/timeUtils');
 const { COLLECTIONS } = require('@aims/shared-schema');
+const backendLogger = require('./lib/backendLogger');
 
 // 관계 유형 정의
 const RELATIONSHIP_TYPES = {
@@ -228,6 +229,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('관계 생성 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 생성 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 생성 중 오류가 발생했습니다.'
@@ -376,6 +378,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('관계 조회 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 조회 중 오류가 발생했습니다.'
@@ -448,6 +451,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('네트워크 분석 오류:', error);
+      backendLogger.error('CustomerRelationship', '네트워크 분석 오류', error);
       res.status(500).json({
         success: false,
         error: '네트워크 분석 중 오류가 발생했습니다.'
@@ -511,6 +515,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('관계 수정 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 수정 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 수정 중 오류가 발생했습니다.'
@@ -566,6 +571,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('관계 삭제 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 삭제 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 삭제 중 오류가 발생했습니다.'
@@ -585,6 +591,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       });
     } catch (error) {
       console.error('관계 유형 조회 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 유형 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 유형 조회 중 오류가 발생했습니다.'
@@ -654,6 +661,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
     } catch (error) {
       console.error('관계 통계 조회 오류:', error);
+      backendLogger.error('CustomerRelationship', '관계 통계 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '관계 통계 조회 중 오류가 발생했습니다.'
