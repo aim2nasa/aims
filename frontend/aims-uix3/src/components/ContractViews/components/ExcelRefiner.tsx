@@ -2617,6 +2617,10 @@ export function ExcelRefiner() {
 
         if (customerErrors.length > 0) {
           console.error('고객 생성 오류:', customerErrors)
+          errorReporter.reportApiError(new Error(`고객 생성 오류: ${customerErrors.length}건`), {
+            component: 'ExcelRefiner.handleImport.customerErrors',
+            payload: { customerErrors }
+          })
         }
 
         window.dispatchEvent(new CustomEvent('customerChanged'))
