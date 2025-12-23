@@ -7405,6 +7405,7 @@ app.get('/api/customers/:id/memos', authenticateJWTorAPIKey, async (req, res) =>
 
   } catch (error) {
     console.error('메모 목록 조회 오류:', error);
+    backendLogger.error('Memos', '메모 목록 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '메모 목록 조회에 실패했습니다.',
@@ -7469,6 +7470,7 @@ app.post('/api/customers/:id/memos', authenticateJWTorAPIKey, async (req, res) =
 
   } catch (error) {
     console.error('메모 생성 오류:', error);
+    backendLogger.error('Memos', '메모 생성 오류', error);
     res.status(500).json({
       success: false,
       error: '메모 저장에 실패했습니다.',
@@ -7543,6 +7545,7 @@ app.put('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res) =>
 
   } catch (error) {
     console.error('메모 수정 오류:', error);
+    backendLogger.error('Memos', '메모 수정 오류', error);
     res.status(500).json({
       success: false,
       error: '메모 수정에 실패했습니다.',
@@ -7595,6 +7598,7 @@ app.delete('/api/customers/:id/memos/:memoId', authenticateJWT, async (req, res)
 
   } catch (error) {
     console.error('메모 삭제 오류:', error);
+    backendLogger.error('Memos', '메모 삭제 오류', error);
     res.status(500).json({
       success: false,
       error: '메모 삭제에 실패했습니다.',
@@ -7649,6 +7653,7 @@ app.get('/api/insurance-products', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 조회 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '보험상품 조회에 실패했습니다.',
@@ -7756,6 +7761,7 @@ app.post('/api/insurance-products/bulk', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 일괄 등록 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 일괄 등록 오류', error);
     res.status(500).json({
       success: false,
       error: '보험상품 등록에 실패했습니다.',
@@ -7796,6 +7802,7 @@ app.post('/api/insurance-products', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 등록 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 등록 오류', error);
     res.status(500).json({
       success: false,
       error: '보험상품 등록에 실패했습니다.',
@@ -7842,6 +7849,7 @@ app.put('/api/insurance-products/:id', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 수정 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 수정 오류', error);
     res.status(500).json({
       success: false,
       error: '보험상품 수정에 실패했습니다.',
@@ -7883,6 +7891,7 @@ app.delete('/api/insurance-products/:id', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 삭제 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 삭제 오류', error);
     res.status(500).json({
       success: false,
       error: '보험상품 삭제에 실패했습니다.',
@@ -7941,6 +7950,7 @@ app.get('/api/insurance-products/statistics', async (req, res) => {
 
   } catch (error) {
     console.error('보험상품 통계 오류:', error);
+    backendLogger.error('InsuranceProducts', '보험상품 통계 오류', error);
     res.status(500).json({
       success: false,
       error: '통계 조회에 실패했습니다.',
@@ -8003,6 +8013,7 @@ app.get('/api/contracts', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('계약 조회 오류:', error);
+    backendLogger.error('Contracts', '계약 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '계약 조회에 실패했습니다.',
@@ -8044,6 +8055,7 @@ app.get('/api/contracts/:id', async (req, res) => {
 
   } catch (error) {
     console.error('계약 상세 조회 오류:', error);
+    backendLogger.error('Contracts', '계약 상세 조회 오류', error);
     res.status(500).json({
       success: false,
       error: '계약 조회에 실패했습니다.',
@@ -8574,6 +8586,7 @@ app.put('/api/contracts/:id', async (req, res) => {
 
   } catch (error) {
     console.error('계약 수정 오류:', error);
+    backendLogger.error('Contracts', '계약 수정 오류', error);
     res.status(500).json({
       success: false,
       error: '계약 수정에 실패했습니다.',
@@ -8672,6 +8685,7 @@ app.delete('/api/contracts/:id', authenticateJWT, async (req, res) => {
 
   } catch (error) {
     console.error('계약 삭제 오류:', error);
+    backendLogger.error('Contracts', '계약 삭제 오류', error);
 
     // 계약 삭제 실패 로그
     activityLogger.log({
@@ -8768,6 +8782,7 @@ app.delete('/api/contracts/bulk', async (req, res) => {
 
   } catch (error) {
     console.error('계약 일괄 삭제 오류:', error);
+    backendLogger.error('Contracts', '계약 일괄 삭제 오류', error);
     res.status(500).json({
       success: false,
       error: '계약 일괄 삭제에 실패했습니다.',
