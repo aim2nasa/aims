@@ -1,0 +1,441 @@
+# AIMS MCP 도구 테스트 케이스
+
+> **생성일**: 2025-12-23
+> **총 도구 수**: 40개
+> **총 테스트 케이스**: 72개
+> **테스트 결과**: ✅ 전체 통과
+
+---
+
+## 목차
+
+1. [핵심 도구 (Core Tools)](#1-핵심-도구-core-tools)
+2. [Phase 1: 액션 도구](#2-phase-1-액션-도구)
+3. [Phase 2: Annual Report 도구](#3-phase-2-annual-report-도구)
+4. [Phase 3: 인사이트 도구](#4-phase-3-인사이트-도구)
+5. [Phase 4: 유틸리티 도구](#5-phase-4-유틸리티-도구)
+6. [Phase 5: RAG 검색 도구](#6-phase-5-rag-검색-도구)
+7. [테스트 실행 방법](#7-테스트-실행-방법)
+
+---
+
+## 1. 핵심 도구 (Core Tools)
+
+### 1.1 고객 관리 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `search_customers` | 이름으로 검색 | 고객명으로 검색 후 결과 확인 | ✅ |
+| `search_customers` | 고객 유형 필터링 | individual/corporate 타입 필터 | ✅ |
+| `get_customer` | 상세 정보 조회 | 고객 ID로 상세 정보 조회 | ✅ |
+| `create_customer` | 개인 고객 생성 | 이름, 전화번호, 이메일로 생성 | ✅ |
+| `create_customer` | 법인 고객 생성 | 사업자번호 포함 법인 생성 | ✅ |
+| `update_customer` | 고객 정보 수정 | 전화번호 변경 후 확인 | ✅ |
+
+**Use Case 예시:**
+```
+사용자: "홍길동 고객 찾아줘"
+→ search_customers(query: "홍길동")
+
+사용자: "이 고객 전화번호 010-1234-5678로 변경해줘"
+→ update_customer(customerId: "...", phone: "010-1234-5678")
+```
+
+### 1.2 계약 관리 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `list_contracts` | 전체 계약 조회 | 설계사의 모든 계약 목록 | ✅ |
+| `list_contracts` | 고객별 계약 조회 | 특정 고객의 계약만 조회 | ✅ |
+| `get_contract_details` | 상세 조회 (없는 경우) | 존재하지 않는 계약 조회 시 오류 | ✅ |
+
+### 1.3 시간 기반 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `find_birthday_customers` | 생일 고객 조회 | 30일 내 생일인 고객 목록 | ✅ |
+| `find_expiring_contracts` | 만기 계약 조회 | 90일 내 만기 계약 목록 | ✅ |
+
+**Use Case 예시:**
+```
+사용자: "이번 달 생일인 고객 알려줘"
+→ find_birthday_customers(days: 30)
+
+사용자: "곧 만기되는 계약 있어?"
+→ find_expiring_contracts(days: 60)
+```
+
+### 1.4 통계 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_statistics` | 전체 통계 조회 | 고객/계약/문서 수 통계 | ✅ |
+
+### 1.5 문서 관리 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `search_documents` | 문서 검색 | 키워드로 문서 검색 | ✅ |
+| `list_customer_documents` | 고객별 문서 조회 | 특정 고객의 문서 목록 | ✅ |
+
+### 1.6 메모 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `add_customer_memo` | 메모 추가 | 고객에게 메모 추가 | ✅ |
+| `list_customer_memos` | 메모 조회 | 고객의 메모 조회 | ✅ |
+| `add_customer_memo` | 여러 메모 추가 | 다중 메모 추가 후 확인 | ✅ |
+
+**Use Case 예시:**
+```
+사용자: "홍길동 고객에게 '3월 방문 예정' 메모해줘"
+→ add_customer_memo(customerId: "...", content: "3월 방문 예정")
+```
+
+### 1.7 상품 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `search_products` | 상품 검색 | 키워드로 보험 상품 검색 | ✅ |
+| `search_products` | 카테고리 필터링 | 생명보험/손해보험 필터 | ✅ |
+| `get_product_details` | 상세 조회 (없는 경우) | 존재하지 않는 상품 조회 시 오류 | ✅ |
+
+---
+
+## 2. Phase 1: 액션 도구
+
+### 2.1 관계 관리 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `create_relationship` | 배우자 관계 생성 | family/spouse 관계 생성 | ✅ |
+| `list_relationships` | 관계 목록 조회 | 고객의 모든 관계 조회 | ✅ |
+| `delete_relationship` | 관계 삭제 | 관계 삭제 후 확인 | ✅ |
+| `create_relationship` | 잘못된 카테고리 | 유효하지 않은 카테고리 시 오류 | ✅ |
+
+**관계 카테고리:**
+- `family`: spouse(배우자), parent(부모), child(자녀), sibling(형제자매)
+- `relative`: uncle_aunt, nephew_niece, cousin, in_law
+- `social`: friend, acquaintance, neighbor
+- `professional`: supervisor, colleague, business_partner
+- `corporate`: ceo, executive, employee, shareholder
+
+**Use Case 예시:**
+```
+사용자: "홍길동의 배우자로 김영희 등록해줘"
+→ create_relationship(
+    sourceCustomerId: "홍길동ID",
+    targetCustomerId: "김영희ID",
+    category: "family",
+    type: "spouse"
+  )
+```
+
+### 2.2 고객 복구 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `list_deleted_customers` | 삭제된 고객 목록 | 복구 가능한 고객 조회 | ✅ |
+| `restore_customer` | 복구 (없는 경우) | 존재하지 않는 고객 복구 시 오류 | ✅ |
+
+### 2.3 네트워크 도구
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_customer_network` | 관계 네트워크 조회 | 카테고리별 그룹화된 네트워크 | ✅ |
+
+---
+
+## 3. Phase 2: Annual Report 도구
+
+### 3.1 AR 목록 조회
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_annual_reports` | 고객의 AR 목록 | 연차보고서 목록 조회 | ✅ |
+| `get_annual_reports` | 존재하지 않는 고객 | 없는 고객 조회 시 오류 | ✅ |
+| `get_annual_reports` | 연도 필터링 | 특정 연도 보고서만 조회 | ✅ |
+
+**Use Case 예시:**
+```
+사용자: "홍길동의 연차보고서 보여줘"
+→ get_annual_reports(customerId: "...")
+
+사용자: "2024년 보고서만 보여줘"
+→ get_annual_reports(customerId: "...", year: 2024)
+```
+
+### 3.2 파싱 상태 조회
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_ar_parsing_status` | 파일 ID로 조회 | 특정 파일의 파싱 상태 | ✅ |
+| `get_ar_parsing_status` | 고객 ID로 조회 | 고객의 모든 파일 파싱 상태 | ✅ |
+
+### 3.3 파싱 큐 상태
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_ar_queue_status` | 전체 큐 상태 | 대기/처리 중/완료 현황 | ✅ |
+
+### 3.4 파싱 트리거
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `trigger_ar_parsing` | 없는 파일 | 존재하지 않는 파일 시 오류 | ✅ |
+
+---
+
+## 4. Phase 3: 인사이트 도구
+
+### 4.1 고객 가치 분석
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `analyze_customer_value` | 단일 고객 분석 | 점수, 등급, 상세 breakdown | ✅ |
+| `analyze_customer_value` | 전체 고객 랭킹 | 상위 고객 점수 순 정렬 | ✅ |
+| `analyze_customer_value` | 없는 고객 | 존재하지 않는 고객 시 오류 | ✅ |
+
+**점수 산정 기준:**
+- 계약 점수 (최대 30점): 활성 계약 수
+- 보험료 점수 (최대 35점): 월 납입 보험료
+- 관계망 점수 (최대 20점): 연결된 고객 수
+- 기간 점수 (최대 15점): 고객 관계 기간
+
+**등급 기준:**
+| 등급 | 점수 범위 | 설명 |
+|------|----------|------|
+| S | 90-100 | 최우수 |
+| A | 70-89 | 우수 |
+| B | 50-69 | 양호 |
+| C | 30-49 | 보통 |
+| D | 0-29 | 관리 필요 |
+
+**Use Case 예시:**
+```
+사용자: "가장 중요한 고객이 누구야?"
+→ analyze_customer_value(limit: 10)
+
+사용자: "이 고객의 가치를 분석해줘"
+→ analyze_customer_value(customerId: "...")
+```
+
+### 4.2 보장 공백 분석
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `find_coverage_gaps` | 단일 고객 분석 | 부족한 보장 영역 식별 | ✅ |
+| `find_coverage_gaps` | 전체 고객 분석 | 공백이 많은 고객 목록 | ✅ |
+
+**분석 카테고리:**
+- 생명보험 (종신, 정기)
+- 건강보험 (실손, 암, 치아)
+- 연금보험
+- 저축보험
+- 손해보험 (자동차, 화재, 배상책임)
+
+**Use Case 예시:**
+```
+사용자: "이 고객 보장 부족한 부분이 뭐야?"
+→ find_coverage_gaps(customerId: "...")
+
+사용자: "보장이 부족한 고객들 알려줘"
+→ find_coverage_gaps(limit: 10)
+```
+
+### 4.3 다음 액션 추천
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `suggest_next_action` | 단일 고객 추천 | 고객별 우선 액션 목록 | ✅ |
+| `suggest_next_action` | 전체 우선순위 | 우선순위별 그룹화 | ✅ |
+| `suggest_next_action` | 액션 타입 필터 | 특정 액션만 조회 | ✅ |
+
+**액션 타입:**
+| 타입 | 설명 | 우선순위 기준 |
+|------|------|-------------|
+| 계약만기 | 만기 30일 이내 계약 | 높음 |
+| 생일축하 | 생일 7일 이내 | 높음/보통 |
+| 정기연락 | 90일 이상 미접촉 | 보통 |
+| 정보보완 | 누락된 정보 | 낮음 |
+
+**Use Case 예시:**
+```
+사용자: "오늘 뭘 해야 해?"
+→ suggest_next_action(limit: 10)
+
+사용자: "만기 다가오는 고객들 알려줘"
+→ suggest_next_action(actionType: "계약만기")
+```
+
+---
+
+## 5. Phase 4: 유틸리티 도구
+
+### 5.1 저장소 정보
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_storage_info` | 사용량 조회 | 티어, 할당량, 사용량, 잔여량 | ✅ |
+
+**응답 예시:**
+```json
+{
+  "tier": "basic",
+  "tierName": "기본",
+  "quota": { "bytes": 5368709120, "formatted": "5.00 GB" },
+  "used": { "bytes": 1073741824, "formatted": "1.00 GB", "fileCount": 150 },
+  "remaining": { "bytes": 4294967296, "formatted": "4.00 GB" },
+  "usagePercent": 20
+}
+```
+
+### 5.2 고객명 중복 검사
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `check_customer_name` | 사용 가능한 이름 | 신규 등록 가능 | ✅ |
+| `check_customer_name` | 중복된 이름 | 이미 존재하는 이름 | ✅ |
+| `check_customer_name` | 대소문자 무시 | case-insensitive 검사 | ✅ |
+| `check_customer_name` | 빈 이름 | 유효성 오류 | ✅ |
+
+**Use Case 예시:**
+```
+사용자: "김철수라는 이름으로 고객 등록해도 돼?"
+→ check_customer_name(name: "김철수")
+```
+
+### 5.3 공지사항
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `list_notices` | 전체 공지 조회 | 모든 공지사항 | ✅ |
+| `list_notices` | 카테고리 필터링 | update/notice/event 필터 | ✅ |
+| `list_notices` | 개수 제한 | 최근 N개만 조회 | ✅ |
+
+### 5.4 FAQ
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `list_faqs` | 전체 FAQ 조회 | 모든 FAQ | ✅ |
+| `list_faqs` | 키워드 검색 | 질문/답변에서 검색 | ✅ |
+| `list_faqs` | 카테고리 필터링 | general/document/customer 등 | ✅ |
+
+### 5.5 사용 가이드
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `list_usage_guides` | 전체 가이드 조회 | 모든 가이드 | ✅ |
+| `list_usage_guides` | 카테고리 필터링 | customer/document/contract 등 | ✅ |
+| `list_usage_guides` | 키워드 검색 | 제목/내용에서 검색 | ✅ |
+
+---
+
+## 6. Phase 5: RAG 검색 도구
+
+### 6.1 시맨틱 문서 검색
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `search_documents_semantic` | 기본 검색 | 시맨틱 모드 검색 | ✅ |
+| `search_documents_semantic` | 키워드 모드 | keyword 모드 검색 | ✅ |
+| `search_documents_semantic` | 결과 수 제한 | limit 파라미터 동작 | ✅ |
+| `search_documents_semantic` | 빈 쿼리 | 유효성 오류 | ✅ |
+| `search_documents_semantic` | 특수 문자 쿼리 | 괄호 등 특수문자 처리 | ✅ |
+| `search_documents_semantic` | 긴 쿼리 처리 | 복잡한 자연어 쿼리 | ✅ |
+
+**검색 모드:**
+| 모드 | 설명 | 특징 |
+|------|------|------|
+| `semantic` | 의미 기반 검색 | 벡터 + 메타데이터 하이브리드, 리랭킹 |
+| `keyword` | 키워드 검색 | 정확한 키워드 매칭 |
+
+**Use Case 예시:**
+```
+사용자: "보험금 청구 관련 문서 찾아줘"
+→ search_documents_semantic(query: "보험금 청구", mode: "semantic")
+
+사용자: "계약서 찾아줘"
+→ search_documents_semantic(query: "계약서", mode: "keyword")
+```
+
+### 6.2 검색 통계
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_search_analytics` | 기본 통계 조회 | 성공률, 응답시간 등 | ✅ |
+| `get_search_analytics` | 기간 지정 | 7일 통계 | ✅ |
+| `get_search_analytics` | 최대 기간 | 90일 통계 | ✅ |
+
+**통계 항목:**
+- 총 검색 수
+- 성공률
+- 평균 응답 시간
+- 쿼리 유형 분포
+- 리랭킹 효과
+
+### 6.3 실패한 검색 쿼리
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `get_failed_queries` | 기본 조회 | 실패 쿼리 목록 | ✅ |
+| `get_failed_queries` | 개수 제한 | 상위 N개만 조회 | ✅ |
+
+### 6.4 검색 피드백
+
+| 도구 | 테스트 케이스 | 설명 | 상태 |
+|------|--------------|------|------|
+| `submit_search_feedback` | 피드백 제출 | 평점 + 코멘트 제출 | ✅ |
+| `submit_search_feedback` | 최소 평점 | rating: 1 | ✅ |
+| `submit_search_feedback` | 최대 평점 | rating: 5 | ✅ |
+| `submit_search_feedback` | 범위 초과 | rating: 6 → 오류 | ✅ |
+| `submit_search_feedback` | queryId 누락 | 필수 파라미터 오류 | ✅ |
+
+---
+
+## 7. 테스트 실행 방법
+
+### 전체 테스트 실행
+
+```bash
+cd backend/api/aims_mcp
+MCP_URL=http://tars.giize.com:3011 \
+AIMS_API_URL=http://tars.giize.com:3010 \
+npx vitest run "src/__tests__/tools"
+```
+
+### 개별 Phase 테스트
+
+```bash
+# Phase 1: 액션 도구
+npx vitest run "src/__tests__/tools/phase1-actions"
+
+# Phase 2: Annual Report
+npx vitest run "src/__tests__/tools/phase2-annual"
+
+# Phase 3: 인사이트
+npx vitest run "src/__tests__/tools/phase3-insights"
+
+# Phase 4: 유틸리티
+npx vitest run "src/__tests__/tools/phase4-utilities"
+
+# Phase 5: RAG 검색
+npx vitest run "src/__tests__/tools/phase5-rag"
+
+# 핵심 도구
+npx vitest run "src/__tests__/tools/core-tools"
+```
+
+### 상세 출력
+
+```bash
+npx vitest run --reporter=verbose "src/__tests__/tools"
+```
+
+---
+
+## 변경 이력
+
+| 날짜 | 내용 |
+|------|------|
+| 2025-12-23 | 초기 문서 생성, 72개 테스트 케이스 문서화 |
