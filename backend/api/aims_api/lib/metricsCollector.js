@@ -5,6 +5,7 @@
 
 const os = require('os');
 const { execSync } = require('child_process');
+const backendLogger = require('./backendLogger');
 
 // CPU 사용률 계산을 위한 이전 값 저장
 let previousCpuInfo = null;
@@ -96,6 +97,7 @@ function getDiskUsageByMount(mountPoint) {
     }
   } catch (err) {
     console.error(`[MetricsCollector] 디스크 정보 조회 실패 (${mountPoint}):`, err.message);
+    backendLogger.error('MetricsCollector', `디스크 정보 조회 실패 (${mountPoint})`, err);
   }
 
   return defaultResult;

@@ -270,6 +270,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         });
       } catch (logError) {
         console.error('[ChatService] 토큰 로깅 실패:', logError.message);
+        backendLogger.error('ChatService', '토큰 로깅 실패', logError);
       }
     }
 
@@ -285,6 +286,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
 
   } catch (error) {
     console.error('[ChatService] 스트리밍 오류:', error);
+    backendLogger.error('ChatService', '스트리밍 오류', error);
     yield { type: 'error', error: error.message };
   }
 }
