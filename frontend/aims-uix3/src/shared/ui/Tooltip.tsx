@@ -44,6 +44,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
+  const [arrowOffset, setArrowOffset] = useState<number | null>(null) // 말꼬리 위치 (px)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const timeoutRef = useRef<number | undefined>(undefined)
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -89,6 +90,25 @@ export const Tooltip: React.FC<TooltipProps> = ({
     }
     if (top < padding) top = triggerRect.bottom + 8 // top이 화면 밖이면 bottom으로
 
+    // 말꼬리 위치 계산: 타겟 요소 중심을 향하도록
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2
+    const triggerCenterY = triggerRect.top + triggerRect.height / 2
+
+    let arrowPos: number | null = null
+    const arrowPadding = 12 // 말꼬리가 모서리에 너무 가깝지 않게
+
+    if (placement === 'top' || placement === 'bottom') {
+      // 수평 방향: 타겟 중심 X를 기준으로 말꼬리 위치 계산
+      arrowPos = triggerCenterX - left
+      // 범위 제한: 툴팁 내부에 있도록
+      arrowPos = Math.max(arrowPadding, Math.min(arrowPos, tooltipRect.width - arrowPadding))
+    } else {
+      // 수직 방향: 타겟 중심 Y를 기준으로 말꼬리 위치 계산
+      arrowPos = triggerCenterY - top
+      arrowPos = Math.max(arrowPadding, Math.min(arrowPos, tooltipRect.height - arrowPadding))
+    }
+
+    setArrowOffset(arrowPos)
     setPosition({ top, left })
   }, [isVisible, placement, mousePos])
 
@@ -151,7 +171,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
       <div className="tooltip-content">
         {content}
       </div>
-      <div className="tooltip-arrow" />
+      <div
+        className="tooltip-arrow"
+        style={
+          arrowOffset !== null
+            ? (placement === 'top' || placement === 'bottom')
+              ? { left: `${arrowOffset}px`, marginLeft: '-4px' }
+              : { top: `${arrowOffset}px`, marginTop: '-4px' }
+            : undefined
+        }
+      />
     </div>
   ) : null
 

@@ -55,29 +55,21 @@ html[data-theme="dark"] .tooltip-arrow {
   background-color: var(--color-ios-tooltip-bg-dark);
 }
 
-/* 위치별 화살표 조정 */
+/* 위치별 화살표 조정 - 수평/수직 위치는 JS에서 동적으로 설정 */
 .tooltip--top .tooltip-arrow {
   bottom: -4px;
-  left: 50%;
-  margin-left: -4px;
 }
 
 .tooltip--bottom .tooltip-arrow {
   top: -4px;
-  left: 50%;
-  margin-left: -4px;
 }
 
 .tooltip--left .tooltip-arrow {
   right: -4px;
-  top: 50%;
-  margin-top: -4px;
 }
 
 .tooltip--right .tooltip-arrow {
   left: -4px;
-  top: 50%;
-  margin-top: -4px;
 }
 
 /* 접근성: 포커스 시에도 툴팁 표시 */
