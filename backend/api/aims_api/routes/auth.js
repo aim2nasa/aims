@@ -136,6 +136,7 @@ module.exports = function(db) {
         }
       } catch (error) {
         console.error('Token generation error:', error);
+        backendLogger.error('Auth', '카카오 로그인 토큰 생성 오류', error);
 
         // 로그인 실패 로그
         activityLogger.log({
@@ -261,6 +262,7 @@ module.exports = function(db) {
         }
       } catch (error) {
         console.error('Token generation error:', error);
+        backendLogger.error('Auth', '네이버 로그인 토큰 생성 오류', error);
 
         activityLogger.log({
           actor: {
@@ -385,6 +387,7 @@ module.exports = function(db) {
         }
       } catch (error) {
         console.error('Token generation error:', error);
+        backendLogger.error('Auth', '구글 로그인 토큰 생성 오류', error);
 
         activityLogger.log({
           actor: {

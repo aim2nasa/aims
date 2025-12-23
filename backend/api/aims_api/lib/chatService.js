@@ -241,6 +241,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         } catch (error) {
           toolCallsExecuted.push({ name: toolName, success: false, error: error.message });
           yield { type: 'tool_result', name: toolName, success: false, error: error.message };
+          backendLogger.error('ChatService', `Tool 실행 실패: ${toolName}`, error);
 
           // 에러 결과도 메시지로 추가
           currentMessages.push({
