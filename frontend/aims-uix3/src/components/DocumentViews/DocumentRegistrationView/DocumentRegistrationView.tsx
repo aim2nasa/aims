@@ -516,6 +516,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             }
           } catch (error) {
             console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
+            errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.arCheck', payload: { fileName: file.name } })
             addLog('warning', `PDF 분석 실패: ${file.name}`, error instanceof Error ? error.message : String(error))
             // 체크 실패 시 일반 문서로 처리
           }
@@ -821,6 +822,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
         } else {
           console.error(`❌ [AR] 문서 처리 실패:`, result);
+          errorReporter.reportApiError(new Error(`AR 문서 처리 실패: ${result.status}`), { component: 'DocumentRegistrationView.linkARDocument.result', payload: { documentId, result } })
         }
 
         // 매핑에서 제거
@@ -911,6 +913,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog('warning', `문서 자동 연결 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 수동으로 연결해주세요.', customerFileInfo.customerName);
       } else {
         console.error(`❌ [고객 파일 자동 연결] 문서 처리 실패:`, result);
+        errorReporter.reportApiError(new Error(`고객 파일 자동 연결 실패: ${result.status}`), { component: 'DocumentRegistrationView.linkCustomerFile.result', payload: { fileName, result } })
       }
 
       // 추적 목록에서 제거
@@ -964,6 +967,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog('warning', `백그라운드 처리 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 확인해주세요.');
       } else {
         console.error(`❌ [일반 문서] 처리 실패:`, result);
+        errorReporter.reportApiError(new Error(`일반 문서 처리 실패: ${result.status}`), { component: 'DocumentRegistrationView.checkNormalDocumentCompletion.result', payload: { fileName, result } })
       }
 
       // 매핑에서 제거

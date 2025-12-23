@@ -140,6 +140,7 @@ export function useUserStore() {
           setAvailableUsers(result.data);
         } else {
           console.error('❌ 사용자 목록 로드 실패:', result.error);
+          errorReporter.reportApiError(new Error(`사용자 목록 로드 실패: ${result.error}`), { component: 'UserStore.fetchUsers.result' });
           // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
           setAvailableUsers([]);
         }
@@ -208,6 +209,7 @@ export function useUserStore() {
       console.log(`[UserStore] 사용자 데이터 정리 완료: ${keysToRemove.length}개 항목 삭제`);
     } catch (error) {
       console.error('[UserStore] 사용자 데이터 정리 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'UserStore.clearPreviousUserData' });
     }
   };
 

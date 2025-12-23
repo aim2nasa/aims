@@ -180,6 +180,7 @@ export class CustomerDocument {
         callback();
       } catch (error) {
         console.error('[CustomerDocument] 구독자 콜백 실행 오류:', error);
+        errorReporter.reportApiError(error as Error, { component: 'CustomerDocument.notifyObservers' });
       }
     });
   }
