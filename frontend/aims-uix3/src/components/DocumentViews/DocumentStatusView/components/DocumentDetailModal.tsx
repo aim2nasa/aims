@@ -14,6 +14,7 @@ import React, { useState } from 'react'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Tooltip, Modal, Button } from '../../../../shared/ui'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentDetailModal.css'
 
 interface DocumentDetailModalProps {
@@ -66,6 +67,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       }, 2000)
     } catch (err) {
       console.error('클립보드 복사 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'DocumentDetailModal.copyToClipboard' })
     }
   }
 

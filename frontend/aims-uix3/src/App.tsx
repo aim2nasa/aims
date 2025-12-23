@@ -934,6 +934,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       } catch (error) {
         if (import.meta.env.DEV) {
           console.error('[App] LeftPane 상태 저장 실패:', error)
+          errorReporter.reportApiError(error as Error, { component: 'App.toggleLeftPane' })
         }
       }
 

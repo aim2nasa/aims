@@ -811,6 +811,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             console.log(`✅ [AR 백그라운드 파싱] 트리거 완료:`, bgParseData);
           } catch (bgError) {
             console.error(`❌ [AR 백그라운드 파싱] 트리거 실패:`, bgError);
+            errorReporter.reportApiError(bgError as Error, { component: 'DocumentRegistrationView.linkARDocument.triggerParsing' });
           }
         } else if (result.status === 'timeout') {
           console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
@@ -827,6 +828,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     } catch (error) {
       console.error(`❌ [AR] 처리 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.linkARDocument' });
     }
   }, []);
 
@@ -911,6 +913,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       customerFileUploadMappingRef.current.delete(fileName);
     } catch (error) {
       console.error(`❌ [고객 파일 자동 연결] 처리 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.linkCustomerFile' });
       addLog('error', `문서 자동 연결 실패: ${fileName}`, error instanceof Error ? error.message : String(error), customerFileInfo.customerName);
     }
   }, [addLog]);
@@ -963,6 +966,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       normalDocumentMappingRef.current.delete(fileName);
     } catch (error) {
       console.error(`❌ [일반 문서] 처리 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.checkNormalDocumentCompletion' });
     }
   }, [addLog]);
 

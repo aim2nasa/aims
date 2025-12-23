@@ -136,6 +136,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       }
     } catch (error) {
       console.error('[CustomerRelationshipView] 확장 상태 복원 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerRelationshipView.restoreExpandedNodes' });
     }
     return new Set(['family', 'corporate']);
   });
@@ -147,6 +148,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       localStorage.setItem('aims_relationship_expanded_nodes', JSON.stringify(array));
     } catch (error) {
       console.error('[CustomerRelationshipView] 확장 상태 저장 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'CustomerRelationshipView.saveExpandedNodes' });
     }
   }, [expandedNodes]);
 

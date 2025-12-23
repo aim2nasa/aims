@@ -15,6 +15,7 @@ import { UploadState, UploadFile } from '../types/uploadTypes'
 import ProgressIndicator from '../ProgressIndicator/ProgressIndicator'
 import Tooltip from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './ProcessingLog.css'
 
 interface ProcessingLogProps {
@@ -119,6 +120,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
       console.log('로그가 클립보드에 복사되었습니다.')
     } catch (error) {
       console.error('클립보드 복사 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'ProcessingLog.copyToClipboard' })
     }
   }
 
