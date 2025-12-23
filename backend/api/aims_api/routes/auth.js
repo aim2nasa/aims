@@ -6,6 +6,7 @@ const express = require('express');
 const passport = require('passport');
 const { generateToken, authenticateJWT } = require('../middleware/auth');
 const activityLogger = require('../lib/activityLogger');
+const backendLogger = require('../lib/backendLogger');
 
 // 허용된 리다이렉트 도메인 목록 (보안)
 const ALLOWED_REDIRECT_ORIGINS = [
@@ -452,6 +453,7 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Get user error:', error);
+      backendLogger.error('Auth', '사용자 정보 조회 오류', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get user information'
@@ -557,6 +559,7 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Profile update error:', error);
+      backendLogger.error('Auth', '프로필 업데이트 오류', error);
       res.status(500).json({
         success: false,
         message: '프로필 업데이트에 실패했습니다'
@@ -650,6 +653,7 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Account deletion error:', error);
+      backendLogger.error('Auth', '계정 삭제 오류', error);
       res.status(500).json({
         success: false,
         message: 'Failed to delete account'
@@ -729,6 +733,7 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Admin login error:', error);
+      backendLogger.error('Auth', 'Admin 로그인 오류', error);
       res.status(500).json({
         success: false,
         message: 'Admin 로그인에 실패했습니다'
@@ -757,6 +762,7 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Token refresh error:', error);
+      backendLogger.error('Auth', '토큰 갱신 오류', error);
       res.status(500).json({
         success: false,
         message: 'Failed to refresh token'

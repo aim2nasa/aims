@@ -11,6 +11,7 @@ const { ObjectId } = require('mongodb');
 const Redis = require('ioredis');
 const { calculateOCRCost } = require('../lib/ocrPricing');
 const ocrUsageLogService = require('../lib/ocrUsageLogService');
+const backendLogger = require('../lib/backendLogger');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -146,6 +147,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/ocr-usage/overview] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 사용량 통계 조회 오류', error);
       res.status(500).json({
         success: false,
         error: 'OCR 사용량 조회에 실패했습니다.',
@@ -262,6 +264,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/ocr-usage/hourly] 오류:', error);
+      backendLogger.error('OcrUsage', '시간별 OCR 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '시간별 OCR 사용량 조회에 실패했습니다.',
@@ -310,6 +313,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/ocr-usage/daily] 오류:', error);
+      backendLogger.error('OcrUsage', '일별 OCR 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '일별 OCR 사용량 조회에 실패했습니다.',
@@ -392,6 +396,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/ocr-usage/top-users] 오류:', error);
+      backendLogger.error('OcrUsage', 'Top OCR 사용자 조회 오류', error);
       res.status(500).json({
         success: false,
         error: 'Top 사용자 조회에 실패했습니다.',
@@ -513,6 +518,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/ocr-usage/failed-documents] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 실패 문서 조회 오류', error);
       res.status(500).json({
         success: false,
         error: 'OCR 실패 문서 조회에 실패했습니다.',
@@ -629,6 +635,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[POST /api/admin/ocr/reprocess] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 재처리 요청 오류', error);
       res.status(500).json({
         success: false,
         error: 'OCR 재처리 요청에 실패했습니다.',
@@ -700,6 +707,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       res.json(result);
     } catch (error) {
       console.error('[POST /api/internal/ocr/log-usage] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 사용량 기록 오류', error);
       res.status(500).json({
         success: false,
         error: 'OCR 사용량 기록에 실패했습니다.',

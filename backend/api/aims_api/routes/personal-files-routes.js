@@ -16,6 +16,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const axios = require('axios');
 const { checkUploadAllowed } = require('../lib/storageQuotaService');
+const backendLogger = require('../lib/backendLogger');
 
 // MongoDB 설정
 const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
@@ -109,6 +110,7 @@ router.get('/folders', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('폴더 조회 오류:', error);
+    backendLogger.error('PersonalFiles', '폴더 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -186,6 +188,7 @@ router.get('/folders/:folderId', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('폴더 조회 오류:', error);
+    backendLogger.error('PersonalFiles', '특정 폴더 조회 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -271,6 +274,7 @@ router.post('/folders', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('폴더 생성 오류:', error);
+    backendLogger.error('PersonalFiles', '폴더 생성 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -365,6 +369,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 
   } catch (error) {
     console.error('파일 업로드 오류:', error);
+    backendLogger.error('PersonalFiles', '파일 업로드 오류', error);
 
     // 업로드 실패시 파일 삭제
     if (req.file) {
@@ -471,6 +476,7 @@ router.put('/:itemId/rename', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('이름 변경 오류:', error);
+    backendLogger.error('PersonalFiles', '이름 변경 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -571,6 +577,7 @@ router.delete('/:itemId', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('삭제 오류:', error);
+    backendLogger.error('PersonalFiles', '삭제 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -771,6 +778,7 @@ router.put('/:itemId/move', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('항목 이동 오류:', error);
+    backendLogger.error('PersonalFiles', '항목 이동 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -816,6 +824,7 @@ router.get('/:fileId/download', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('파일 다운로드 오류:', error);
+    backendLogger.error('PersonalFiles', '파일 다운로드 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -898,6 +907,7 @@ router.get('/search', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('검색 오류:', error);
+    backendLogger.error('PersonalFiles', '검색 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -991,6 +1001,7 @@ router.put('/documents/:documentId/move', authenticateToken, async (req, res) =>
 
   } catch (error) {
     console.error('문서 이동 오류:', error);
+    backendLogger.error('PersonalFiles', '문서 이동 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',
@@ -1072,6 +1083,7 @@ router.put('/documents/:documentId/rename', authenticateToken, async (req, res) 
 
   } catch (error) {
     console.error('문서 이름 변경 오류:', error);
+    backendLogger.error('PersonalFiles', '문서 이름 변경 오류', error);
     res.status(500).json({
       success: false,
       message: '서버 오류가 발생했습니다',

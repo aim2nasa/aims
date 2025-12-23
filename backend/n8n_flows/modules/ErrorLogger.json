@@ -141,6 +141,36 @@
           "name": "Slack account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3010/api/system-logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"level\": \"error\",\n  \"source\": {\n    \"type\": \"backend\",\n    \"component\": \"n8n/{{ $json.workflow.name }}\"\n  },\n  \"message\": \"[n8n] {{ $json.workflow.name }} - {{ $json.execution.error.node.name }}: {{ $json.execution.error.message }}\",\n  \"data\": {\n    \"workflow_name\": \"{{ $json.workflow.name }}\",\n    \"workflow_id\": \"{{ $json.workflow.id }}\",\n    \"node_name\": \"{{ $json.execution.error.node.name }}\",\n    \"node_type\": \"{{ $json.execution.error.node.type }}\",\n    \"execution_id\": \"{{ $json.execution.id }}\",\n    \"execution_url\": \"{{ $json.execution.url }}\"\n  },\n  \"context\": {\n    \"request_id\": \"n8n-{{ $json.execution.id }}\"\n  }\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        400
+      ],
+      "id": "a1b2c3d4-e5f6-4a5b-9c8d-7e6f5a4b3c2d",
+      "name": "Log to AIMS",
+      "continueOnFail": true
     }
   ],
   "pinData": {},
@@ -157,12 +187,17 @@
             "node": "Send a message",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Log to AIMS",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",

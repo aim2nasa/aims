@@ -6,6 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
+const backendLogger = require('../lib/backendLogger');
 const {
   logTokenUsage,
   getUserTokenUsage,
@@ -132,6 +133,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[POST /api/ai-usage/log] 오류:', error);
+      backendLogger.error('TokenUsage', 'AI 사용량 로깅 오류', error);
       res.status(500).json({
         success: false,
         error: 'Failed to log token usage',
@@ -174,6 +176,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/users/me/ai-usage] 오류:', error);
+      backendLogger.error('TokenUsage', 'AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: 'AI 사용량 조회에 실패했습니다.',
@@ -210,6 +213,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/users/me/ai-usage/daily] 오류:', error);
+      backendLogger.error('TokenUsage', '일별 AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '일별 AI 사용량 조회에 실패했습니다.',
@@ -260,6 +264,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/admin/ai-usage/overview] 오류:', error);
+      backendLogger.error('TokenUsage', '시스템 AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '시스템 AI 사용량 조회에 실패했습니다.',
@@ -302,6 +307,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/admin/ai-usage/daily] 오류:', error);
+      backendLogger.error('TokenUsage', '시스템 일별 AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '시스템 일별 AI 사용량 조회에 실패했습니다.',
@@ -378,6 +384,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/admin/ai-usage/top-users] 오류:', error);
+      backendLogger.error('TokenUsage', 'Top 사용자 조회 오류', error);
       res.status(500).json({
         success: false,
         error: 'Top 사용자 조회에 실패했습니다.',
@@ -407,6 +414,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/admin/ai-usage/hourly] 오류:', error);
+      backendLogger.error('TokenUsage', '시간별 AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '시간별 AI 사용량 조회에 실패했습니다.',
@@ -453,6 +461,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('[GET /api/admin/users/:id/ai-usage] 오류:', error);
+      backendLogger.error('TokenUsage', '사용자 AI 사용량 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 AI 사용량 조회에 실패했습니다.',

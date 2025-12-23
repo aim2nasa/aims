@@ -15,6 +15,7 @@ const {
   getTierDefinitions,
   updateTierDefinition
 } = require('../lib/storageQuotaService');
+const backendLogger = require('../lib/backendLogger');
 
 /**
  * 라우트 설정 함수
@@ -55,6 +56,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('스토리지 정보 조회 오류:', error);
+      backendLogger.error('Storage', '스토리지 정보 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '스토리지 정보 조회에 실패했습니다.',
@@ -95,6 +97,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('사용자 스토리지 정보 조회 오류:', error);
+      backendLogger.error('Storage', '사용자 스토리지 정보 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 스토리지 정보 조회에 실패했습니다.',
@@ -141,6 +144,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('티어 변경 오류:', error);
+      backendLogger.error('Storage', '티어 변경 오류', error);
       res.status(500).json({
         success: false,
         error: error.message || '티어 변경에 실패했습니다.'
@@ -168,6 +172,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('시스템 스토리지 통계 조회 오류:', error);
+      backendLogger.error('Storage', '시스템 스토리지 통계 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '시스템 스토리지 통계 조회에 실패했습니다.',
@@ -207,6 +212,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('티어 정의 조회 오류:', error);
+      backendLogger.error('Storage', '티어 정의 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '티어 정의 조회에 실패했습니다.',
@@ -260,6 +266,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('티어 정의 수정 오류:', error);
+      backendLogger.error('Storage', '티어 정의 수정 오류', error);
       res.status(500).json({
         success: false,
         error: error.message || '티어 정의 수정에 실패했습니다.'

@@ -309,7 +309,7 @@ export const ErrorLogsPage = () => {
       }
 
       // 소스 필터
-      if (sourceFilter && log.source.type !== sourceFilter) return false;
+      if (sourceFilter && log.source?.type !== sourceFilter) return false;
 
       // 심각도 필터
       if (severityFilter && log.error?.severity !== severityFilter) return false;
@@ -321,7 +321,7 @@ export const ErrorLogsPage = () => {
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
         const messageMatch = (log.message || log.error?.message || '').toLowerCase().includes(searchLower);
-        const componentMatch = (log.source.component || '').toLowerCase().includes(searchLower);
+        const componentMatch = (log.source?.component || '').toLowerCase().includes(searchLower);
         const typeMatch = (log.error?.type || log.activity?.action_type || '').toLowerCase().includes(searchLower);
         if (!messageMatch && !componentMatch && !typeMatch) return false;
       }
@@ -751,8 +751,8 @@ export const ErrorLogsPage = () => {
                         )}
                       </td>
                       <td className="error-logs-page__cell-source">
-                        <span className={`source-badge source-badge--${log.source.type}`}>
-                          {log.source.component || SOURCE_LABELS[log.source.type] || log.source.type}
+                        <span className={`source-badge source-badge--${log.source?.type || 'unknown'}`}>
+                          {log.source?.component || SOURCE_LABELS[log.source?.type || ''] || log.source?.type || '-'}
                         </span>
                       </td>
                       <td className="error-logs-page__cell-severity">
@@ -771,7 +771,7 @@ export const ErrorLogsPage = () => {
                         {log.message || log.error?.message || '-'}
                       </td>
                       <td className="error-logs-page__cell-user">
-                        {log.actor.name || log.actor.user_id || '-'}
+                        {log.actor?.name || log.actor?.user_id || '-'}
                       </td>
                     </tr>
                   );
@@ -862,7 +862,7 @@ export const ErrorLogsPage = () => {
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">소스</span>
                     <span className="error-logs-detail__value">
-                      {SOURCE_LABELS[detailLog.source.type] || detailLog.source.type}
+                      {detailLog.source?.type ? (SOURCE_LABELS[detailLog.source.type] || detailLog.source.type) : '-'}
                     </span>
                   </div>
                   <div className="error-logs-detail__item">
@@ -940,13 +940,13 @@ export const ErrorLogsPage = () => {
               <div className="error-logs-detail__section">
                 <h3 className="error-logs-detail__section-title">소스 정보</h3>
                 <div className="error-logs-detail__grid">
-                  {detailLog.source.url && (
+                  {detailLog.source?.url && (
                     <div className="error-logs-detail__item">
                       <span className="error-logs-detail__label">URL</span>
                       <span className="error-logs-detail__value">{detailLog.source.url}</span>
                     </div>
                   )}
-                  {detailLog.source.endpoint && (
+                  {detailLog.source?.endpoint && (
                     <div className="error-logs-detail__item">
                       <span className="error-logs-detail__label">엔드포인트</span>
                       <span className="error-logs-detail__value">
@@ -954,13 +954,13 @@ export const ErrorLogsPage = () => {
                       </span>
                     </div>
                   )}
-                  {detailLog.source.component && (
+                  {detailLog.source?.component && (
                     <div className="error-logs-detail__item">
                       <span className="error-logs-detail__label">컴포넌트</span>
                       <span className="error-logs-detail__value">{detailLog.source.component}</span>
                     </div>
                   )}
-                  {detailLog.source.file && (
+                  {detailLog.source?.file && (
                     <div className="error-logs-detail__item">
                       <span className="error-logs-detail__label">파일</span>
                       <span className="error-logs-detail__value">
@@ -980,17 +980,17 @@ export const ErrorLogsPage = () => {
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">사용자 ID</span>
                     <span className="error-logs-detail__value">
-                      {detailLog.actor.user_id || '-'}
+                      {detailLog.actor?.user_id || '-'}
                     </span>
                   </div>
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">이름</span>
-                    <span className="error-logs-detail__value">{detailLog.actor.name || '-'}</span>
+                    <span className="error-logs-detail__value">{detailLog.actor?.name || '-'}</span>
                   </div>
                   <div className="error-logs-detail__item">
                     <span className="error-logs-detail__label">IP</span>
                     <span className="error-logs-detail__value">
-                      {detailLog.actor.ip_address || '-'}
+                      {detailLog.actor?.ip_address || '-'}
                     </span>
                   </div>
                 </div>

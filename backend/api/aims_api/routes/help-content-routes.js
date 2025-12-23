@@ -10,6 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const backendLogger = require('../lib/backendLogger');
 
 // 카테고리 상수 (기본값, DB에서 동적으로 조회 가능)
 const NOTICE_CATEGORIES = ['system', 'product', 'policy', 'event'];
@@ -97,6 +98,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('공지사항 목록 조회 오류:', error);
+      backendLogger.error('HelpContent', '공지사항 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -125,6 +127,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: notice });
     } catch (error) {
       console.error('공지사항 상세 조회 오류:', error);
+      backendLogger.error('HelpContent', '공지사항 상세 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -181,6 +184,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('관리자 공지사항 목록 조회 오류:', error);
+      backendLogger.error('HelpContent', '관리자 공지사항 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -224,6 +228,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('공지사항 생성 오류:', error);
+      backendLogger.error('HelpContent', '공지사항 생성 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -263,6 +268,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: updated });
     } catch (error) {
       console.error('공지사항 수정 오류:', error);
+      backendLogger.error('HelpContent', '공지사항 수정 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -288,6 +294,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '공지사항이 삭제되었습니다' });
     } catch (error) {
       console.error('공지사항 삭제 오류:', error);
+      backendLogger.error('HelpContent', '공지사항 삭제 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -329,6 +336,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: result });
     } catch (error) {
       console.error('사용 가이드 카테고리 조회 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 카테고리 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -383,6 +391,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: sortedGuides });
     } catch (error) {
       console.error('사용 가이드 조회 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -424,6 +433,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: result });
     } catch (error) {
       console.error('관리자 사용 가이드 카테고리 조회 오류:', error);
+      backendLogger.error('HelpContent', '관리자 사용 가이드 카테고리 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -442,6 +452,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: guides });
     } catch (error) {
       console.error('관리자 사용 가이드 조회 오류:', error);
+      backendLogger.error('HelpContent', '관리자 사용 가이드 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -487,6 +498,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('사용 가이드 카테고리 생성 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 카테고리 생성 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -525,6 +537,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: updated });
     } catch (error) {
       console.error('사용 가이드 수정 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 수정 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -550,6 +563,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '가이드 카테고리가 삭제되었습니다' });
     } catch (error) {
       console.error('사용 가이드 삭제 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 삭제 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -601,6 +615,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.status(201).json({ success: true, data: updated });
     } catch (error) {
       console.error('가이드 항목 추가 오류:', error);
+      backendLogger.error('HelpContent', '가이드 항목 추가 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -649,6 +664,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: updated });
     } catch (error) {
       console.error('가이드 항목 수정 오류:', error);
+      backendLogger.error('HelpContent', '가이드 항목 수정 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -680,6 +696,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '항목이 삭제되었습니다' });
     } catch (error) {
       console.error('가이드 항목 삭제 오류:', error);
+      backendLogger.error('HelpContent', '가이드 항목 삭제 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -708,6 +725,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '순서가 업데이트되었습니다' });
     } catch (error) {
       console.error('사용 가이드 순서 업데이트 오류:', error);
+      backendLogger.error('HelpContent', '사용 가이드 순서 업데이트 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -756,6 +774,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: result });
     } catch (error) {
       console.error('FAQ 카테고리 조회 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 카테고리 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -781,6 +800,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: faqs });
     } catch (error) {
       console.error('FAQ 목록 조회 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -828,6 +848,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: result });
     } catch (error) {
       console.error('관리자 FAQ 카테고리 조회 오류:', error);
+      backendLogger.error('HelpContent', '관리자 FAQ 카테고리 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -862,6 +883,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: faqs });
     } catch (error) {
       console.error('관리자 FAQ 목록 조회 오류:', error);
+      backendLogger.error('HelpContent', '관리자 FAQ 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -905,6 +927,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('FAQ 생성 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 생성 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -944,6 +967,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: updated });
     } catch (error) {
       console.error('FAQ 수정 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 수정 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -969,6 +993,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: 'FAQ가 삭제되었습니다' });
     } catch (error) {
       console.error('FAQ 삭제 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 삭제 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -997,6 +1022,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '순서가 업데이트되었습니다' });
     } catch (error) {
       console.error('FAQ 순서 업데이트 오류:', error);
+      backendLogger.error('HelpContent', 'FAQ 순서 업데이트 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });

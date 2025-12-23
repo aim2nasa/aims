@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const multer = require('multer');
+const backendLogger = require('../lib/backendLogger');
 
 const execAsync = promisify(exec);
 
@@ -176,6 +177,7 @@ module.exports = function(db, authenticateJWT) {
 
     } catch (error) {
       console.error('ClamAV 상태 확인 오류:', error);
+      backendLogger.error('Security', 'ClamAV 상태 확인 오류', error);
       res.status(500).json({
         success: false,
         error: 'ClamAV 상태 확인에 실패했습니다.',
@@ -261,6 +263,7 @@ module.exports = function(db, authenticateJWT) {
 
     } catch (error) {
       console.error('바이러스 검사 오류:', error);
+      backendLogger.error('Security', '바이러스 검사 오류', error);
       res.status(500).json({
         success: false,
         error: '바이러스 검사에 실패했습니다.',
@@ -343,6 +346,7 @@ module.exports = function(db, authenticateJWT) {
 
     } catch (error) {
       console.error('바이러스 검사 오류:', error);
+      backendLogger.error('Security', '바이러스 검사 오류 (buffer)', error);
       res.status(500).json({
         success: false,
         error: '바이러스 검사에 실패했습니다.',

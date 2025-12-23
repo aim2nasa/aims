@@ -15,6 +15,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const { authenticateJWTWithQuery } = require('../middleware/auth');
+const backendLogger = require('../lib/backendLogger');
 
 // 첨부파일 저장 경로
 const INQUIRY_FILES_PATH = '/data/files/inquiries';
@@ -373,6 +374,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: { count } });
     } catch (error) {
       console.error('미확인 개수 조회 오류:', error);
+      backendLogger.error('Inquiry', '미확인 개수 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -387,6 +389,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: { ids } });
     } catch (error) {
       console.error('미확인 목록 조회 오류:', error);
+      backendLogger.error('Inquiry', '미확인 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -416,6 +419,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '읽음 처리되었습니다' });
     } catch (error) {
       console.error('읽음 처리 오류:', error);
+      backendLogger.error('Inquiry', '읽음 처리 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -460,6 +464,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('문의 목록 조회 오류:', error);
+      backendLogger.error('Inquiry', '문의 목록 조회 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -501,6 +506,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('문의 상세 조회 오류:', error);
+      backendLogger.error('Inquiry', '문의 상세 조회 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -626,6 +632,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('문의 등록 오류:', error);
+      backendLogger.error('Inquiry', '문의 등록 오류', error);
 
       // 업로드된 파일 정리
       if (req.files) {
@@ -777,6 +784,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('메시지 추가 오류:', error);
+      backendLogger.error('Inquiry', '메시지 추가 오류', error);
 
       if (req.files) {
         for (const file of req.files) {
@@ -854,6 +862,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.download(filePath, originalName);
     } catch (error) {
       console.error('파일 다운로드 오류:', error);
+      backendLogger.error('Inquiry', '파일 다운로드 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -875,6 +884,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: { count } });
     } catch (error) {
       console.error('관리자 미확인 개수 조회 오류:', error);
+      backendLogger.error('Inquiry', '관리자 미확인 개수 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -889,6 +899,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, data: { ids } });
     } catch (error) {
       console.error('관리자 미확인 목록 조회 오류:', error);
+      backendLogger.error('Inquiry', '관리자 미확인 목록 조회 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -917,6 +928,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       res.json({ success: true, message: '읽음 처리되었습니다' });
     } catch (error) {
       console.error('관리자 읽음 처리 오류:', error);
+      backendLogger.error('Inquiry', '관리자 읽음 처리 오류', error);
       res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
     }
   });
@@ -982,6 +994,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('관리자 문의 목록 조회 오류:', error);
+      backendLogger.error('Inquiry', '관리자 문의 목록 조회 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -1022,6 +1035,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('문의 통계 조회 오류:', error);
+      backendLogger.error('Inquiry', '문의 통계 조회 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -1071,6 +1085,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('관리자 문의 상세 조회 오류:', error);
+      backendLogger.error('Inquiry', '관리자 문의 상세 조회 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -1176,6 +1191,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('관리자 답변 추가 오류:', error);
+      backendLogger.error('Inquiry', '관리자 답변 추가 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -1268,6 +1284,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('상태 변경 오류:', error);
+      backendLogger.error('Inquiry', '상태 변경 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'
@@ -1308,6 +1325,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       });
     } catch (error) {
       console.error('문의 삭제 오류:', error);
+      backendLogger.error('Inquiry', '문의 삭제 오류', error);
       res.status(500).json({
         success: false,
         message: '서버 오류가 발생했습니다'

@@ -7,6 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const backendLogger = require('../lib/backendLogger');
 
 /**
  * 라우트 설정 함수
@@ -232,6 +233,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/user-activity/list] 오류:', error);
+      backendLogger.error('UserActivity', '사용자 활동 목록 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 활동 목록 조회에 실패했습니다.',
@@ -438,6 +440,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/user-activity/:userId/detail] 오류:', error);
+      backendLogger.error('UserActivity', '사용자 상세 활동 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 상세 활동 조회에 실패했습니다.',
@@ -531,6 +534,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/user-activity/:userId/errors] 오류:', error);
+      backendLogger.error('UserActivity', '사용자 오류 목록 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 오류 목록 조회에 실패했습니다.',
@@ -606,6 +610,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/activity-logs] 오류:', error);
+      backendLogger.error('UserActivity', '활동 로그 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '활동 로그 조회에 실패했습니다.',
@@ -765,6 +770,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       });
     } catch (error) {
       console.error('[GET /api/admin/activity-logs/:userId] 오류:', error);
+      backendLogger.error('UserActivity', '사용자 활동 로그 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '사용자 활동 로그 조회에 실패했습니다.',

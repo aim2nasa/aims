@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const backendLogger = require('../lib/backendLogger');
 
 // 공유 상수 로드 (프론트엔드와 동일한 소스 사용)
 // 원본: shared/file-validation-constants.json (Docker 빌드 시 복사됨)
@@ -98,6 +99,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('파일 검증 설정 조회 오류:', error);
+      backendLogger.error('SystemSettings', '파일 검증 설정 조회 오류', error);
       res.status(500).json({
         success: false,
         error: '설정 조회에 실패했습니다.',
@@ -168,6 +170,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('파일 검증 설정 수정 오류:', error);
+      backendLogger.error('SystemSettings', '파일 검증 설정 수정 오류', error);
       res.status(500).json({
         success: false,
         error: '설정 저장에 실패했습니다.',
@@ -210,6 +213,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
     } catch (error) {
       console.error('파일 검증 설정 초기화 오류:', error);
+      backendLogger.error('SystemSettings', '파일 검증 설정 초기화 오류', error);
       res.status(500).json({
         success: false,
         error: '설정 초기화에 실패했습니다.',
