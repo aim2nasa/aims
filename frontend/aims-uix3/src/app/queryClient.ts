@@ -7,7 +7,7 @@
  * 에러 처리, 재시도, 캐싱 정책 등을 포함
  */
 
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import type { DefaultOptions } from '@tanstack/react-query';
 import { ApiError, NetworkError, TimeoutError, handleApiError } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
@@ -84,11 +84,45 @@ const defaultOptions: DefaultOptions = {
 };
 
 /**
+ * Query Cache 설정 (Query 에러 핸들링)
+ */
+const queryCache = new QueryCache({
+  onError: (error) => {
+    // Query 에러 시 에러 리포터에 전송
+    if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
+      errorReporter.reportApiError(error, { component: 'QueryCache' });
+    } else if (error instanceof Error) {
+      errorReporter.reportApiError(error, { component: 'QueryCache' });
+    }
+
+    // 개발 환경에서 콘솔에 에러 출력
+    if (import.meta.env.DEV) {
+      console.error('Query Error:', error);
+    }
+  }
+});
+
+/**
+ * Mutation Cache 설정 (Mutation 에러 핸들링)
+ */
+const mutationCache = new MutationCache({
+  onError: (error) => {
+    // Mutation 에러 시 에러 리포터에 전송
+    if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
+      errorReporter.reportApiError(error, { component: 'MutationCache' });
+    } else if (error instanceof Error) {
+      errorReporter.reportApiError(error, { component: 'MutationCache' });
+    }
+  }
+});
+
+/**
  * Query Client 인스턴스 생성
  */
 export const queryClient = new QueryClient({
+  queryCache,
+  mutationCache,
   defaultOptions,
-
 });
 
 /**

@@ -19,6 +19,7 @@ import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
 import { useNoticeNotifications } from './hooks/useNoticeNotifications'
 import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
+import { errorReporter } from './shared/lib/errorReporter'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -329,6 +330,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         updateCurrentUser(user)
       } catch (error) {
         console.error('❌ 초기 사용자 정보 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'App.loadCurrentUser' })
       }
     }
 
@@ -544,6 +546,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         setUsageAIUsage(aiResult)
       } catch (error) {
         console.error('[App] 사용량 데이터 로드 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'App.fetchUsageData' })
       } finally {
         setUsageLoading(false)
       }
@@ -762,6 +765,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       addRecentCustomer(customer)
     } catch (error) {
       console.error('[App] 최근 고객 순서 업데이트 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'App.handleSwitchToDetailView' })
     }
   }, [updateURLParams, addRecentCustomer])
 
@@ -781,6 +785,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneVisible(true)
     } catch (error) {
       console.error('[App] 간략보기 전환 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'App.handleSwitchToCompactView' })
     }
 
     // URL 업데이트
@@ -879,6 +884,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setPreviewModalVisible(true)
     } catch (error) {
       console.error('[handleDocumentPreviewModal] 문서 로드 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'App.handleDocumentPreviewModal' })
     }
   }, [])
 
@@ -908,6 +914,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setPreviewModalVisible(true)
     } catch (error) {
       console.error('[handleDocumentPreviewModalFromSearch] 문서 로드 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'App.handleDocumentPreviewModalFromSearch' })
     }
   }, [])
 
