@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react'
 import { Button, Modal } from '@/shared/ui'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import { AppleConfirmModal } from '../../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentNotesModal.css'
 
 export interface DocumentNotesModalProps {
@@ -67,6 +68,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
       setIsEditing(false)
     } catch (error) {
       console.error('[DocumentNotesModal] 메모 저장 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentNotesModal.handleSave' })
       // 에러는 onSave에서 처리하도록 함
     } finally {
       setIsSaving(false)
@@ -92,6 +94,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
       await onDelete()
     } catch (error) {
       console.error('[DocumentNotesModal] 메모 삭제 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentNotesModal.handleDelete' })
       // 에러는 onDelete에서 처리하도록 함
     } finally {
       setIsDeleting(false)

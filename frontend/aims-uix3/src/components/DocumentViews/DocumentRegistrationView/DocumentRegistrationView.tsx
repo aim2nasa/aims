@@ -35,6 +35,7 @@ import {
 } from '@/shared/lib/fileValidation'
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
 import DuplicateDialog, { type DuplicateAction, type DuplicateFile } from '@/features/batch-upload/components/DuplicateDialog'
+import { errorReporter } from '@/shared/lib/errorReporter'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -409,6 +410,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     } catch (error) {
       console.error('스토리지 정보 조회 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.getStorage' })
       // 에러 시에도 정상 진행 (서버에서 최종 검증)
     }
 
@@ -421,6 +423,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         console.log('[DocumentRegistration] 기존 파일 해시 조회 완료:', existingHashes.length, '개')
       } catch (error) {
         console.error('[DocumentRegistration] 중복 검사용 해시 조회 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.getHashes' })
         // 에러 시에도 정상 진행 (중복 검사 건너뜀)
       }
     }
@@ -547,6 +550,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             }
           } catch (error) {
             console.error('[DocumentRegistration] 중복 검사 실패:', error)
+            errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.duplicateCheck' })
             // 중복 검사 실패 시에도 업로드 진행
           }
         }
