@@ -32,15 +32,9 @@ jobs:
 
       - name: Install Python dependencies (all APIs)
         run: |
-          pip install --no-cache-dir -r backend/api/doc_status_api/requirements.txt
           pip install --no-cache-dir -r backend/api/annual_report_api/requirements.txt
           pip install --no-cache-dir -r backend/api/aims_rag_api/requirements.txt
-
-      - name: Run doc_status_api tests
-        env:
-          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
-        run: |
-          cd backend/api/doc_status_api && python -m pytest -v
+          pip install --no-cache-dir -r backend/api/pdf_proxy/requirements.txt
 
       - name: Run annual_report_api tests
         env:
