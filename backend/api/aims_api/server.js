@@ -2429,6 +2429,7 @@ app.get('/api/health', async (req, res) => {
       versionInfo: VERSION_INFO
     });
   } catch (error) {
+    backendLogger.error('Server', 'Health check 실패 (MongoDB 연결 오류)', error);
     res.status(500).json({
       success: false,
       message: 'API 서버에 문제가 있습니다.',
