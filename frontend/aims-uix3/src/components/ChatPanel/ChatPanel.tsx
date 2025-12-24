@@ -367,6 +367,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const [exampleIndices, setExampleIndices] = useState<number[]>(
     () => HELP_FEATURES.map(() => 0)
   );
+  // 컨텍스트 메뉴 (우클릭 복사)
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    content: string;
+  }>({ visible: false, x: 0, y: 0, content: '' });
   const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -628,6 +635,42 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     e.preventDefault();
     setIsResizing(true);
   }, []);
+
+  // 컨텍스트 메뉴 핸들러 (우클릭 복사)
+  const handleMessageContextMenu = useCallback((e: React.MouseEvent, content: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 선택된 텍스트가 있으면 그것만, 없으면 전체 메시지
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      content: selectedText || content
+    });
+  }, []);
+
+  const handleCopyMessage = useCallback(async () => {
+    if (contextMenu.content) {
+      try {
+        await navigator.clipboard.writeText(contextMenu.content);
+      } catch (err) {
+        console.error('[ChatPanel] 복사 실패:', err);
+      }
+    }
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.content]);
+
+  // 컨텍스트 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!contextMenu.visible) return;
+    const handleClick = () => setContextMenu(prev => ({ ...prev, visible: false }));
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenu.visible]);
 
   useEffect(() => {
     if (!isResizing) return;
@@ -1140,6 +1183,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           <div
             key={msg.id}
             className={`chat-panel__message chat-panel__message--${msg.role}`}
+            onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
           >
             <div className="chat-panel__message-content">
               {msg.content}
@@ -1410,6 +1454,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           <div
             key={msg.id}
             className={`chat-panel__message chat-panel__message--${msg.role}`}
+            onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
           >
             <div className="chat-panel__message-content">
               {msg.content}
@@ -1590,38 +1635,64 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     </div>
   );
 
+  // 컨텍스트 메뉴 UI (우클릭 복사)
+  const contextMenuUI = contextMenu.visible && (
+    <div
+      className="chat-panel__context-menu"
+      style={{ left: contextMenu.x, top: contextMenu.y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="chat-panel__context-menu-item"
+        onClick={handleCopyMessage}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1v1H2z"/>
+        </svg>
+        복사
+      </button>
+    </div>
+  );
+
   // 분리 모드: DraggableModal 사용
   if (isDetached) {
     return (
-      <DraggableModal
-        visible={isOpen}
-        onClose={onClose}
-        title={detachedHeaderTitle}
-        showHeader={true}
-        initialWidth={450}
-        initialHeight={650}
-        minWidth={360}
-        minHeight={400}
-        className="chat-panel-modal"
-        escapeToClose={false}
-        backdropClosable={false}
-      >
-        <div className="chat-panel chat-panel--detached">
-          {detachedPanelContent}
-        </div>
-      </DraggableModal>
+      <>
+        <DraggableModal
+          visible={isOpen}
+          onClose={onClose}
+          title={detachedHeaderTitle}
+          showHeader={true}
+          initialWidth={450}
+          initialHeight={650}
+          minWidth={360}
+          minHeight={400}
+          className="chat-panel-modal"
+          escapeToClose={false}
+          backdropClosable={false}
+        >
+          <div className="chat-panel chat-panel--detached">
+            {detachedPanelContent}
+          </div>
+        </DraggableModal>
+        {contextMenuUI}
+      </>
     );
   }
 
   // 도킹 모드: 기존 슬라이드 패널
   return (
-    <div
-      ref={panelRef}
-      className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
-      style={{ width: panelWidth }}
-    >
-      {panelContent}
-    </div>
+    <>
+      <div
+        ref={panelRef}
+        className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
+        style={{ width: panelWidth }}
+      >
+        {panelContent}
+      </div>
+      {contextMenuUI}
+    </>
   );
 };
 

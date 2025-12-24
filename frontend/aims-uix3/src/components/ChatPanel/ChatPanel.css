@@ -881,6 +881,9 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
 }
 
 .chat-panel__message--user .chat-panel__message-content {
@@ -1244,6 +1247,63 @@ html[data-theme="dark"] .chat-panel--detached {
 
 html[data-theme="dark"] .chat-panel-modal .draggable-modal {
   background: linear-gradient(180deg, #1a1625 0%, #161422 100%);
+}
+
+/* ==================== Context Menu (우클릭 복사) ==================== */
+.chat-panel__context-menu {
+  position: fixed;
+  z-index: 100000;
+  min-width: 100px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chat-panel__context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-footnote);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.chat-panel__context-menu-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.chat-panel__context-menu-item svg {
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .chat-panel__context-menu {
+  background: rgba(30, 26, 46, 0.95);
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .chat-panel__context-menu-item:hover {
+  background: rgba(139, 92, 246, 0.15);
 }
 
 /* ==================== Responsive ==================== */
