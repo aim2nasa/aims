@@ -194,12 +194,23 @@ export async function handleSearchCustomers(args: unknown) {
     const totalCount = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments(filter);
     const hasMore = offset + customers.length < totalCount;
 
+    // 고객 유형별 카운트 (개인/법인)
+    const typeCounts = await db.collection(COLLECTIONS.CUSTOMERS).aggregate([
+      { $match: filter },
+      { $group: { _id: '$insurance_info.customer_type', count: { $sum: 1 } } }
+    ]).toArray();
+
+    const personalCount = typeCounts.find(t => t._id === '개인')?.count || 0;
+    const corporateCount = typeCounts.find(t => t._id === '법인')?.count || 0;
+
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           count: customers.length,
           totalCount,
+          personalCount,
+          corporateCount,
           offset,
           limit,
           hasMore,
