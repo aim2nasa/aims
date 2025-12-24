@@ -374,6 +374,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     y: number;
     content: string;
   }>({ visible: false, x: 0, y: 0, content: '' });
+  // 입력 히스토리 (위/아래 화살표로 탐색)
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1); // -1 = 현재 입력
+  const tempInputRef = useRef(''); // 히스토리 탐색 중 현재 작성 내용 임시 저장
   const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -733,6 +737,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     const trimmedInput = input.trim();
     if (!trimmedInput || isLoading) return;
 
+    // 입력 히스토리에 추가 (중복 방지, 최대 50개)
+    setInputHistory(prev => {
+      const filtered = prev.filter(h => h !== trimmedInput);
+      return [trimmedInput, ...filtered].slice(0, 50);
+    });
+    setHistoryIndex(-1);
+    tempInputRef.current = '';
+
     // 사용자 메시지 추가
     const userMessage: DisplayMessage = {
       id: `user-${Date.now()}`,
@@ -829,11 +841,55 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   };
 
-  // Enter 키 처리 (Shift+Enter는 줄바꿈)
+  // 키보드 처리 (Enter: 전송, 위/아래 화살표: 히스토리 탐색)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter 키: 전송 (Shift+Enter는 줄바꿈)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+      return;
+    }
+
+    // 위 화살표: 이전 입력 히스토리
+    if (e.key === 'ArrowUp' && inputHistory.length > 0) {
+      const textarea = e.currentTarget;
+      // 커서가 첫 줄에 있을 때만 히스토리 탐색 (여러 줄 입력 시 기본 동작 유지)
+      const cursorPos = textarea.selectionStart;
+      const textBeforeCursor = textarea.value.substring(0, cursorPos);
+      if (textBeforeCursor.includes('\n')) return;
+
+      e.preventDefault();
+
+      // 처음 탐색 시작 시 현재 입력 저장
+      if (historyIndex === -1) {
+        tempInputRef.current = input;
+      }
+
+      const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
+      setHistoryIndex(newIndex);
+      setInput(inputHistory[newIndex]);
+      return;
+    }
+
+    // 아래 화살표: 최근 입력으로 이동
+    if (e.key === 'ArrowDown' && historyIndex >= 0) {
+      const textarea = e.currentTarget;
+      // 커서가 마지막 줄에 있을 때만 (여러 줄 입력 시 기본 동작 유지)
+      const cursorPos = textarea.selectionStart;
+      const textAfterCursor = textarea.value.substring(cursorPos);
+      if (textAfterCursor.includes('\n')) return;
+
+      e.preventDefault();
+
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+
+      if (newIndex === -1) {
+        // 현재 입력으로 복원
+        setInput(tempInputRef.current);
+      } else {
+        setInput(inputHistory[newIndex]);
+      }
     }
   };
 
