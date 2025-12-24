@@ -16,6 +16,18 @@ export const getContractDetailsSchema = z.object({
   contractId: z.string().describe('계약 ID')
 });
 
+export const createContractSchema = z.object({
+  customerId: z.string().describe('계약자(고객) ID'),
+  policyNumber: z.string().describe('증권번호'),
+  productName: z.string().optional().describe('상품명'),
+  insurerName: z.string().optional().describe('보험사명'),
+  premium: z.number().optional().describe('보험료'),
+  contractDate: z.string().optional().describe('계약일 (YYYY-MM-DD)'),
+  expiryDate: z.string().optional().describe('만기일 (YYYY-MM-DD)'),
+  status: z.string().optional().describe('계약 상태'),
+  memo: z.string().optional().describe('메모')
+});
+
 // Tool 정의
 export const contractToolDefinitions = [
   {
@@ -40,6 +52,25 @@ export const contractToolDefinitions = [
         contractId: { type: 'string', description: '계약 ID' }
       },
       required: ['contractId']
+    }
+  },
+  {
+    name: 'create_contract',
+    description: '새 계약을 생성합니다. 증권번호는 중복 불가합니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerId: { type: 'string', description: '계약자(고객) ID' },
+        policyNumber: { type: 'string', description: '증권번호' },
+        productName: { type: 'string', description: '상품명' },
+        insurerName: { type: 'string', description: '보험사명' },
+        premium: { type: 'number', description: '보험료' },
+        contractDate: { type: 'string', description: '계약일 (YYYY-MM-DD)' },
+        expiryDate: { type: 'string', description: '만기일 (YYYY-MM-DD)' },
+        status: { type: 'string', description: '계약 상태' },
+        memo: { type: 'string', description: '메모' }
+      },
+      required: ['customerId', 'policyNumber']
     }
   }
 ];
@@ -255,6 +286,104 @@ export async function handleGetContractDetails(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `계약 상세 조회 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 계약 생성 핸들러
+ */
+export async function handleCreateContract(args: unknown) {
+  try {
+    const params = createContractSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // 고객 ID 검증
+    const customerObjectId = toSafeObjectId(params.customerId);
+    if (!customerObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
+    // 고객이 해당 설계사의 고객인지 확인
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: customerObjectId,
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+      };
+    }
+
+    // 증권번호 중복 체크
+    const existing = await db.collection(COLLECTIONS.CONTRACTS).findOne({
+      policy_number: params.policyNumber
+    });
+
+    if (existing) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: `이미 존재하는 증권번호입니다: ${params.policyNumber}`
+        }]
+      };
+    }
+
+    const now = new Date();
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : null;
+
+    const newContract = {
+      agent_id: agentObjectId,
+      customer_id: customerObjectId,
+      customer_name: customer.personal_info?.name || '',
+      policy_number: params.policyNumber,
+      product_name: params.productName || '',
+      insurer_name: params.insurerName || '',
+      premium: params.premium || 0,
+      contract_date: params.contractDate || null,
+      expiry_date: params.expiryDate || null,
+      status: params.status || 'active',
+      memo: params.memo || '',
+      meta: {
+        created_at: now,
+        updated_at: now,
+        created_by: userId
+      }
+    };
+
+    const result = await db.collection(COLLECTIONS.CONTRACTS).insertOne(newContract);
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          contractId: result.insertedId.toString(),
+          policyNumber: params.policyNumber,
+          customerName: customer.personal_info?.name,
+          message: `계약이 성공적으로 생성되었습니다: ${params.policyNumber}`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] create_contract 에러:', error);
+    sendErrorLog('aims_mcp', 'create_contract 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `계약 생성 실패: ${errorMessage}`
       }]
     };
   }

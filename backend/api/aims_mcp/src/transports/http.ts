@@ -43,6 +43,7 @@ async function loadToolHandlers() {
     // 계약 관련
     list_contracts: contracts.handleListContracts,
     get_contract_details: contracts.handleGetContractDetails,
+    create_contract: contracts.handleCreateContract,
     // 생일/만기
     find_birthday_customers: birthdays.handleFindBirthdayCustomers,
     find_expiring_contracts: expiring.handleFindExpiringContracts,

@@ -7,7 +7,7 @@ import { sendErrorLog } from '../systemLogger.js';
 
 // Tool 정의 및 핸들러 import
 import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer, handleRestoreCustomer, handleListDeletedCustomers } from './customers.js';
-import { contractToolDefinitions, handleListContracts, handleGetContractDetails } from './contracts.js';
+import { contractToolDefinitions, handleListContracts, handleGetContractDetails, handleCreateContract } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
 import { expiringToolDefinitions, handleFindExpiringContracts } from './expiring.js';
 import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
@@ -51,6 +51,7 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   // 계약 관련
   list_contracts: handleListContracts,
   get_contract_details: handleGetContractDetails,
+  create_contract: handleCreateContract,
   // 생일/만기
   find_birthday_customers: handleFindBirthdayCustomers,
   find_expiring_contracts: handleFindExpiringContracts,

@@ -276,6 +276,66 @@ describe('핵심 도구 테스트', () => {
 
       expect(mcp.isErrorResponse(result)).toBe(true);
     });
+
+    it('create_contract: 계약 생성', async () => {
+      if (!serversAvailable) return;
+
+      // 고객 먼저 생성
+      const customer = await mcp.call<{ customerId: string }>('create_customer', {
+        name: `계약생성테스트_${Date.now()}`,
+        customerType: '개인'
+      });
+      factory['createdCustomerIds'].push(customer.customerId);
+
+      const policyNumber = `MCP-${Date.now()}`;
+      const result = await mcp.call<{
+        success: boolean;
+        contractId: string;
+        policyNumber: string;
+        customerName: string;
+      }>('create_contract', {
+        customerId: customer.customerId,
+        policyNumber,
+        productName: '테스트 보험상품',
+        premium: 100000
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.contractId).toBeDefined();
+      expect(result.policyNumber).toBe(policyNumber);
+
+      // 계약 조회 확인
+      const details = await mcp.call<{ policyNumber: string }>('get_contract_details', {
+        contractId: result.contractId
+      });
+      expect(details.policyNumber).toBe(policyNumber);
+    });
+
+    it('create_contract: 중복 증권번호 오류', async () => {
+      if (!serversAvailable) return;
+
+      const customer = await mcp.call<{ customerId: string }>('create_customer', {
+        name: `중복증권테스트_${Date.now()}`,
+        customerType: '개인'
+      });
+      factory['createdCustomerIds'].push(customer.customerId);
+
+      const policyNumber = `DUP-${Date.now()}`;
+
+      // 첫 번째 계약 생성
+      await mcp.call('create_contract', {
+        customerId: customer.customerId,
+        policyNumber
+      });
+
+      // 같은 증권번호로 두 번째 계약 시도
+      const result = await mcp.callRaw('create_contract', {
+        customerId: customer.customerId,
+        policyNumber
+      });
+
+      expect(mcp.isErrorResponse(result)).toBe(true);
+    });
   });
 
   // ============================================================
