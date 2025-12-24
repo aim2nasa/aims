@@ -490,19 +490,25 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
 
   // --------------------------------------------------------
   // 8. MCP-프론트엔드 통합 검증
-  // NOTE: aims_api에서 ALLOW_TEST_AUTH=true 환경변수 설정 필요
-  //       이 설정이 없으면 x-user-id 헤더 인증이 거부됨
+  // API Key 인증 사용: aims_api는 x-api-key 헤더로 인증하면
+  // x-user-id 헤더에서 사용자 ID를 가져와 인증 처리함
   // --------------------------------------------------------
   describe('MCP-프론트엔드 데이터 일관성', () => {
     const AIMS_API_URL = process.env.AIMS_API_URL || 'http://localhost:3010';
+    // aims_api API Key (authenticateJWTorAPIKey 미들웨어에서 사용)
+    const AIMS_API_KEY = process.env.AIMS_API_KEY || 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8';
 
     /**
      * aims_api를 통해 고객 조회 (프론트엔드가 사용하는 API)
+     * API Key 인증을 사용하여 x-user-id 헤더로 사용자 컨텍스트 전달
      */
     async function getCustomerFromAPI(customerId: string): Promise<{ memo?: string } | null> {
       try {
         const res = await fetch(`${AIMS_API_URL}/api/customers/${customerId}`, {
-          headers: { 'x-user-id': TEST_USER_ID },
+          headers: {
+            'x-api-key': AIMS_API_KEY,
+            'x-user-id': TEST_USER_ID
+          },
           signal: AbortSignal.timeout(10000)
         });
         if (!res.ok) return null;
