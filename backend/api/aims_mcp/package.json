@@ -15,6 +15,7 @@
     "test:e2e": "vitest run src/user-simulation.e2e.test.ts",
     "test:e2e:cross-system": "vitest run src/__tests__/cross-system/",
     "test:e2e:all": "vitest run src/user-simulation.e2e.test.ts src/__tests__/cross-system/",
+    "test:conversation": "vitest run src/__tests__/conversation/",
     "test:all": "vitest run"
   },
   "dependencies": {

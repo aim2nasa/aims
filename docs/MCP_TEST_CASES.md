@@ -15,8 +15,9 @@
 4. [Phase 3: 인사이트 도구](#4-phase-3-인사이트-도구)
 5. [Phase 4: 유틸리티 도구](#5-phase-4-유틸리티-도구)
 6. [Phase 5: RAG 검색 도구](#6-phase-5-rag-검색-도구)
-7. [테스트 실행 방법](#7-테스트-실행-방법)
-8. [완성도 평가](#8-완성도-평가)
+7. [AI 대화 품질 테스트](#7-ai-대화-품질-테스트)
+8. [테스트 실행 방법](#8-테스트-실행-방법)
+9. [완성도 평가](#9-완성도-평가)
 
 ---
 
@@ -407,7 +408,94 @@
 
 ---
 
-## 7. 테스트 실행 방법
+## 7. AI 대화 품질 테스트
+
+> **추가일**: 2025-12-24
+> **테스트 프레임워크**: OpenAI GPT-4o-mini + MCP 도구
+> **테스트 결과**: ✅ 12/13 통과 (92%)
+
+AI 어시스턴트(OpenAI)가 MCP 도구들을 사용하여 실제 대화에서 적절하게 동작하는지 검증합니다.
+
+### 7.1 검증 항목
+
+| 항목 | 설명 |
+|------|------|
+| 도구 선택 | 사용자 질문에 맞는 도구를 호출하는가? |
+| 파라미터 | 올바른 파라미터를 전달하는가? |
+| 응답 품질 | 최종 응답이 사용자에게 도움이 되는가? |
+| 에러 처리 | 잘못된 요청에 친절한 에러 메시지를 주는가? |
+| 일관성 | 동일 질문에 일관된 도구 선택을 하는가? |
+
+### 7.2 테스트 시나리오 및 결과
+
+| 시나리오 | 사용자 질문 | 호출된 도구 | 상태 |
+|----------|------------|------------|------|
+| 전체 고객 목록 | "전체 고객 목록 보여줘" | `search_customers` | ✅ |
+| 이름으로 검색 | "홍길동 고객 찾아줘" | `search_customers {query: '홍길동'}` | ✅ |
+| 법인 고객 필터 | "법인 고객만 보여줘" | `search_customers {customerType: '법인'}` | ✅ |
+| 계약 목록 조회 | "전체 계약 목록 보여줘" | `list_contracts {limit: 50}` | ✅ |
+| 만기 예정 계약 | "30일 이내 만기 예정인 계약 찾아줘" | `find_expiring_contracts {daysWithin: 30}` | ✅ |
+| 생일 고객 | "이번 달 생일인 고객이 있어?" | `find_birthday_customers {month: 10}` | ✅ |
+| 현황 요약 | "전체 현황 요약해줘" | `get_statistics {type: 'summary'}` | ✅ |
+| 문서 검색 | "보험증권 관련 문서 찾아줘" | `search_documents` | ✅ |
+| 상품 검색 | "암보험 상품 있어?" | `search_products {query: '암보험'}` | ✅ |
+| 복합 시나리오 | "홍길동 고객 정보 자세히 알려줘" | `search_customers` → `get_customer` x3 | ✅ |
+| 지원 안함 | "날씨 알려줘" | (도구 미호출) "지원할 수 없습니다" | ✅ |
+| 에러 처리 | 잘못된 고객 ID 조회 | 친절한 한글 에러 메시지 | ✅ |
+| 일관성 | 동일 질문 3회 반복 | 모두 동일 도구 선택 | ⏱️ |
+
+### 7.3 복합 시나리오 상세
+
+**"홍길동 고객 정보 자세히 알려줘"** 질문에 대한 AI 동작:
+
+```
+1. search_customers { query: '홍길동' }
+   → 홍길동 3명 검색됨
+
+2. get_customer { customerId: '6947f071...' }
+   → 홍길동_1766322289906 상세 정보
+
+3. get_customer { customerId: '6947ef3d...' }
+   → 홍길동_역방향 상세 정보
+
+4. get_customer { customerId: '6947df4b...' }
+   → 홍길동 상세 정보
+
+→ 최종 응답: 3명의 홍길동 고객 상세 정보 제공
+```
+
+### 7.4 테스트 실행 방법
+
+```bash
+cd backend/api/aims_mcp
+
+# 서버에서 실행 (API 키가 .bashrc에 있을 때)
+OPENAI_API_KEY=$(grep OPENAI_API_KEY ~/.bashrc | cut -d= -f2 | tr -d '"') \
+npm run test:conversation
+
+# 직접 API 키 전달
+OPENAI_API_KEY=sk-xxx npm run test:conversation
+
+# 원격 MCP 서버 지정
+MCP_URL=http://tars.giize.com:3011 OPENAI_API_KEY=sk-xxx npm run test:conversation
+```
+
+### 7.5 시나리오 추가 방법
+
+`src/__tests__/conversation/ai-conversation.e2e.test.ts`의 `testScenarios` 배열에 추가:
+
+```typescript
+{
+  name: '시나리오 이름',
+  userQuery: '사용자 질문',
+  expectedTools: ['expected_tool'],
+  responseValidation: (r) => r.includes('예상 키워드')
+}
+```
+
+---
+
+## 8. 테스트 실행 방법
 
 ### 전체 테스트 실행
 
@@ -448,9 +536,9 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 
 ---
 
-## 8. 완성도 평가
+## 9. 완성도 평가
 
-### 8.1 종합 점수: 85/100
+### 9.1 종합 점수: 85/100
 
 | 평가 항목 | 점수 | 최대 | 비고 |
 |----------|------|------|------|
@@ -460,7 +548,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 | 실용성 | 14 | 15 | 실제 영업 시나리오 반영 |
 | 아키텍처 | 10 | 15 | 개선 가능한 부분 존재 |
 
-### 8.2 강점
+### 9.2 강점
 
 | 항목 | 설명 |
 |------|------|
@@ -470,7 +558,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 | 테스트 자동화 | 모든 도구에 대한 E2E 테스트 완비 |
 | 일관된 응답 | 표준화된 응답 형식과 오류 처리 |
 
-### 8.3 개선 필요 영역
+### 9.3 개선 필요 영역
 
 | 항목 | 현재 상태 | 개선 방향 | 우선순위 |
 |------|----------|----------|----------|
@@ -480,7 +568,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 | 캐싱 | 없음 | 통계/분석 결과 캐싱 | 낮음 |
 | MCP 스트리밍 | 미지원 | SSE 기반 진행률 표시 | 낮음 |
 
-### 8.4 도구 분류별 현황
+### 9.4 도구 분류별 현황
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -502,7 +590,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 └─────────────────┴───────┴───────┴───────────────────────────┘
 ```
 
-### 8.5 AI 어시스턴트 UI 현황
+### 9.5 AI 어시스턴트 UI 현황
 
 | 항목 | 수량 | 설명 |
 |------|------|------|
@@ -531,7 +619,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 | Annual Report | 1 | 연차보고서 조회 |
 | 유틸리티 | 2 | 저장소 사용량, 도움말/FAQ |
 
-### 8.6 권장 우선순위
+### 9.6 권장 우선순위
 
 **즉시 (Phase 6)**
 1. `create_contract` - 계약 생성
@@ -554,6 +642,7 @@ npx vitest run --reporter=verbose "src/__tests__/tools"
 
 | 날짜 | 내용 |
 |------|------|
+| 2025-12-24 | AI 대화 품질 테스트 섹션 추가 (OpenAI GPT-4o-mini 기반, 12/13 통과) |
 | 2025-12-23 | AI 어시스턴트 UI 현황 섹션 추가 (MCP 40개 도구 → UI 25개 기능 카드) |
 | 2025-12-23 | 테스트 케이스 확대 (72→85개): 문서/고객/메모 엣지 케이스 추가 |
 | 2025-12-23 | 완성도 평가 섹션 추가 (85/100) |
