@@ -138,7 +138,7 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   }
 
   const ocrTooltip = storageInfo.has_ocr_permission
-    ? `OCR: ${storageInfo.ocr_pages_used}p / ${storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_page_quota}p`} (${storageInfo.ocr_docs_count}건)\n사이클: ${formatCycleDate(storageInfo.ocr_cycle_start)} ~ ${formatCycleDate(storageInfo.ocr_cycle_end)}\n리셋까지: ${storageInfo.ocr_days_until_reset}일`
+    ? `OCR: ${ocrPercent.toFixed(0)}% (${storageInfo.ocr_docs_count}건) ~${formatCycleDate(storageInfo.ocr_cycle_end)}`
     : 'OCR 권한 없음'
 
   return (

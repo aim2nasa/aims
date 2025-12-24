@@ -131,6 +131,17 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     sessionStorage.setItem('accountSettings_activeTab', activeTab)
   }, [activeTab])
 
+  // visible이 true로 변경될 때 sessionStorage에서 탭 복원
+  useEffect(() => {
+    if (visible) {
+      const saved = sessionStorage.getItem('accountSettings_activeTab')
+      if (saved && saved !== activeTab) {
+        setActiveTab(saved as TabId)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]) // visible 변경 시에만 실행 (activeTab 변경 시 실행하면 무한 루프)
+
   // 사용자 정보 로드 (authStore 우선, 없으면 레거시 currentUser, 없으면 API 호출)
   useEffect(() => {
     if (!visible) return
