@@ -203,12 +203,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setIsAiPopupOpen(false)
     }
 
+    // 커스텀 이벤트: 팝업에서 브라우저 내로 이동 요청
+    const handleOpenInMain = () => {
+      setIsAiPopupOpen(false)
+      setIsChatOpen(true)
+    }
+
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('aiAssistantPopupClosed', handlePopupClosed)
+    window.addEventListener('aiAssistantOpenInMain', handleOpenInMain)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('aiAssistantPopupClosed', handlePopupClosed)
+      window.removeEventListener('aiAssistantOpenInMain', handleOpenInMain)
     }
   }, [])
 
@@ -1303,7 +1311,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           }
           setIsChatOpen(prev => !prev);
         }}
-        isChatOpen={isChatOpen && localStorage.getItem('aims-ai-popup-open') !== 'true'}
+        isChatOpen={isChatOpen && !isAiPopupOpen}
         isAiPopupOpen={isAiPopupOpen}
       />
 
@@ -2397,7 +2405,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {/* AI 채팅 패널 - 팝업이 열려있으면 메인 창에서 표시하지 않음 */}
       <Suspense fallback={null}>
         <ChatPanel
-          isOpen={isChatOpen && localStorage.getItem('aims-ai-popup-open') !== 'true'}
+          isOpen={isChatOpen && !isAiPopupOpen}
           onClose={() => setIsChatOpen(false)}
         />
       </Suspense>

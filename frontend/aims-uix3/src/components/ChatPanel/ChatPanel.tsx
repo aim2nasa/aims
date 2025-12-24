@@ -394,6 +394,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
     }
 
+    // 현재 세션 ID를 localStorage에 저장 (팝업에서 복원용)
+    if (sessionId) {
+      localStorage.setItem('aims-chat-resume-session', sessionId);
+    }
+
     const width = 420;
     const height = 700;
     const left = window.screenX + window.innerWidth - width - 20;
@@ -423,7 +428,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       // 팝업 열린 후 현재 창의 ChatPanel 닫기
       onClose();
     }
-  }, [onClose]);
+  }, [onClose, sessionId]);
+
+  // 브라우저 내로 이동 (팝업 창에서 사용)
+  const handleMoveToMainWindow = useCallback(() => {
+    if (window.opener && !window.opener.closed) {
+      // 현재 세션 ID를 localStorage에 저장 (메인 창에서 복원용)
+      if (sessionId) {
+        localStorage.setItem('aims-chat-resume-session', sessionId);
+      }
+      // 팝업 닫힘 상태 먼저 제거 (메인 창에서 ChatPanel이 표시되도록)
+      localStorage.removeItem('aims-ai-popup-open');
+      // 메인 창에 ChatPanel 열기 이벤트 전송
+      window.opener.dispatchEvent(new CustomEvent('aiAssistantOpenInMain'));
+      // 팝업 창 닫기
+      window.close();
+    }
+  }, [sessionId]);
 
   const {
     sendMessage,
@@ -541,11 +562,53 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   }, []);
 
-  // 패널이 열릴 때 데이터 현황 오버레이 표시 (세션당 1회만)
+  // 세션 복원 함수 (공통)
+  const restoreSession = useCallback(async (targetSessionId: string) => {
+    try {
+      const detail = await loadSession(targetSessionId);
+      if (detail) {
+        setSessionId(targetSessionId);
+        setMessages(detail.messages.map((m, idx) => ({
+          id: `${m.role}-${idx}-${Date.now()}`,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: new Date(m.timestamp)
+        })));
+      }
+    } catch (error) {
+      console.error('[ChatPanel] 세션 복원 실패:', error);
+      errorReporter.reportApiError(error as Error, { component: 'ChatPanel.restoreSession' });
+    }
+  }, [loadSession]);
+
+  // 팝업 모드: 마운트 시 세션 복원 (한 번만 실행)
+  useEffect(() => {
+    if (isPopup) {
+      const resumeSessionId = localStorage.getItem('aims-chat-resume-session');
+      if (resumeSessionId) {
+        localStorage.removeItem('aims-chat-resume-session');
+        restoreSession(resumeSessionId);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 팝업 마운트 시 한 번만 실행
+
+  // 패널이 열릴 때 처리 (데이터 오버레이 표시 + 세션 복원)
   useEffect(() => {
     // isOpen이 false -> true로 변할 때만 실행
     if (isOpen && !prevIsOpenRef.current) {
-      // 세션당 첫 방문인지 확인 (Progressive Disclosure)
+      // 1. 세션 복원 (팝업이 아닌 경우만 - 팝업은 위에서 별도 처리)
+      if (!isPopup) {
+        const resumeSessionId = localStorage.getItem('aims-chat-resume-session');
+        if (resumeSessionId) {
+          localStorage.removeItem('aims-chat-resume-session');
+          restoreSession(resumeSessionId);
+          prevIsOpenRef.current = isOpen;
+          return;
+        }
+      }
+
+      // 2. 세션당 첫 방문인지 확인 (Progressive Disclosure)
       const statsShownKey = 'aims-chat-stats-shown';
       if (sessionStorage.getItem(statsShownKey)) {
         prevIsOpenRef.current = isOpen;
@@ -558,7 +621,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
 
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, showStatsOverlay]);
+  }, [isOpen, showStatsOverlay, restoreSession, isPopup]);
 
   // 리사이즈 핸들러
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -816,44 +879,68 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               <SFSymbol name="chart.bar" size={SFSymbolSize.CAPTION_1} decorative />
             </button>
           </Tooltip>
-          {/* 분리/도킹 토글 */}
-          <Tooltip content={isDetached ? "도킹" : "분리"} placement="bottom">
-            <button
-              type="button"
-              className={`chat-panel__header-btn ${isDetached ? 'chat-panel__header-btn--active' : ''}`}
-              onClick={handleToggleDetach}
-              aria-label={isDetached ? "도킹" : "분리"}
-            >
-              {isDetached ? (
-                // 도킹 아이콘: 오른쪽으로 붙이기
+          {/* 분리/도킹 토글 (팝업 모드에서는 숨김) */}
+          {!isPopup && (
+            <Tooltip content={isDetached ? "도킹" : "분리"} placement="bottom">
+              <button
+                type="button"
+                className={`chat-panel__header-btn ${isDetached ? 'chat-panel__header-btn--active' : ''}`}
+                onClick={handleToggleDetach}
+                aria-label={isDetached ? "도킹" : "분리"}
+              >
+                {isDetached ? (
+                  // 도킹 아이콘: 오른쪽으로 붙이기
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M14 4v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  // 분리 아이콘: 떠 있는 창
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <rect x="2" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M8 1h6.5a.5.5 0 0 1 .5.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </button>
+            </Tooltip>
+          )}
+          {/* 새 창에서 열기 (팝업 모드에서는 숨김) */}
+          {!isPopup && (
+            <Tooltip content="새 창에서 열기" placement="bottom">
+              <button
+                type="button"
+                className="chat-panel__header-btn"
+                onClick={handleOpenPopup}
+                aria-label="새 창에서 열기"
+              >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M14 4v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <rect x="1" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 1h10v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 8L14.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-              ) : (
-                // 분리 아이콘: 떠 있는 창
+              </button>
+            </Tooltip>
+          )}
+          {/* 브라우저 내로 이동 (팝업 모드에서만 표시) */}
+          {isPopup && (
+            <Tooltip content="브라우저 내로 이동" placement="bottom">
+              <button
+                type="button"
+                className="chat-panel__header-btn"
+                onClick={handleMoveToMainWindow}
+                aria-label="브라우저 내로 이동"
+              >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <rect x="2" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 1h6.5a.5.5 0 0 1 .5.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <rect x="1" y="1" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M1 4h14" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="3" cy="2.5" r="0.5" fill="currentColor"/>
+                  <circle cx="5" cy="2.5" r="0.5" fill="currentColor"/>
+                  <circle cx="7" cy="2.5" r="0.5" fill="currentColor"/>
+                  <path d="M8 13v2M6 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-              )}
-            </button>
-          </Tooltip>
-          {/* 새 창에서 열기 (팝업 윈도우) */}
-          <Tooltip content="새 창에서 열기" placement="bottom">
-            <button
-              type="button"
-              className="chat-panel__header-btn"
-              onClick={handleOpenPopup}
-              aria-label="새 창에서 열기"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <rect x="1" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M5 1h10v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M8 8L14.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </Tooltip>
+              </button>
+            </Tooltip>
+          )}
           <Tooltip content="닫기" placement="bottom">
             <button
               type="button"
