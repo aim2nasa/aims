@@ -96,27 +96,28 @@ export async function handleGetCustomerNetwork(args: unknown) {
       };
     }
 
-    // 관계 조회
+    // 관계 조회 - relationship_info 내부 필드 사용 (relationships.ts와 동일 구조)
     const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
       .find({
         $or: [
-          { source_customer_id: objectId },
-          { target_customer_id: objectId }
-        ]
+          { 'relationship_info.from_customer_id': objectId },
+          { 'relationship_info.to_customer_id': objectId }
+        ],
+        'relationship_info.status': 'active'
       })
       .toArray();
 
-    // 관련 고객 ID 수집 (toString() 한 번만 호출하여 최적화)
+    // 관련 고객 ID 수집
     const relatedCustomerIds = new Set<string>();
     relationships.forEach(rel => {
-      const sourceId = rel.source_customer_id?.toString();
-      const targetId = rel.target_customer_id?.toString();
+      const fromId = rel.relationship_info?.from_customer_id?.toString();
+      const toId = rel.relationship_info?.to_customer_id?.toString();
 
-      if (sourceId && sourceId !== params.customerId) {
-        relatedCustomerIds.add(sourceId);
+      if (fromId && fromId !== params.customerId) {
+        relatedCustomerIds.add(fromId);
       }
-      if (targetId && targetId !== params.customerId) {
-        relatedCustomerIds.add(targetId);
+      if (toId && toId !== params.customerId) {
+        relatedCustomerIds.add(toId);
       }
     });
 
@@ -139,24 +140,27 @@ export async function handleGetCustomerNetwork(args: unknown) {
 
     const customerMap = new Map(relatedCustomers.map(c => [c._id.toString(), c]));
 
-    // 관계 정보 정리 (toString() 한 번만 호출하여 최적화)
+    // 관계 정보 정리
     const network = relationships.map(rel => {
-      const sourceId = rel.source_customer_id?.toString();
-      const targetId = rel.target_customer_id?.toString();
-      const isSource = sourceId === params.customerId;
-      const relatedId = isSource ? targetId : sourceId;
+      const fromId = rel.relationship_info?.from_customer_id?.toString();
+      const toId = rel.relationship_info?.to_customer_id?.toString();
+      const isSource = fromId === params.customerId;
+      const relatedId = isSource ? toId : fromId;
       const relatedCustomer = customerMap.get(relatedId || '');
+
+      const category = rel.relationship_info?.relationship_category;
+      const type = rel.relationship_info?.relationship_type;
 
       return {
         relatedCustomerId: relatedId,
         relatedCustomerName: relatedCustomer?.personal_info?.name || '알 수 없음',
         relatedCustomerPhone: relatedCustomer?.personal_info?.mobile_phone,
         relatedCustomerType: relatedCustomer?.insurance_info?.customer_type,
-        relationshipCategory: rel.relationship_category,
-        relationshipType: rel.relationship_type,
-        relationshipLabel: getRelationshipLabel(rel.relationship_category, rel.relationship_type),
+        relationshipCategory: category,
+        relationshipType: type,
+        relationshipLabel: getRelationshipLabel(category, type),
         direction: isSource ? 'outgoing' : 'incoming',
-        notes: rel.notes
+        notes: rel.relationship_details?.notes
       };
     });
 

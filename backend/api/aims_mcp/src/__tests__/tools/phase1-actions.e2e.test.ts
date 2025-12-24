@@ -236,9 +236,7 @@ describe('Phase 1: 액션 도구 테스트', () => {
   // ============================================================
 
   describe('1.3 네트워크 도구', () => {
-    // NOTE: get_customer_network은 관계 데이터 구조 차이로 현재 스킵
-    // TODO: 관계 조회 로직 검토 후 활성화
-    it.skip('get_customer_network: 고객 관계 네트워크 조회', async () => {
+    it('get_customer_network: 고객 관계 네트워크 조회', async () => {
       if (!serversAvailable) return;
 
       // 고객 생성 및 관계 설정
