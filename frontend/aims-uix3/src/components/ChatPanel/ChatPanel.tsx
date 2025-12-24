@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
+import { useChatSSE, ChatMessage, ChatEvent } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
@@ -18,6 +18,16 @@ import DraggableModal from '@/shared/ui/DraggableModal';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './ChatPanel.css';
+
+// 데이터 변경을 유발하는 MCP 도구 목록
+const DATA_MUTATING_TOOLS = {
+  // 고객 관련
+  customers: ['create_customer', 'update_customer', 'restore_customer'],
+  // 문서 관련
+  documents: ['delete_document'],
+  // 관계 관련
+  relationships: ['create_relationship'],
+};
 
 interface ChatPanelProps {
   /** 패널 열림 상태 */
@@ -796,8 +806,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         content: m.content
       }));
 
-      // 메시지 전송 및 응답 받기 (세션 ID 포함)
-      const result = await sendMessage(chatMessages, { sessionId: sessionId || undefined });
+      // 데이터 변경 도구 성공 시 화면 새로고침 이벤트 발생
+      const handleToolResult = (event: ChatEvent) => {
+        if (event.type === 'tool_result' && event.success && event.name) {
+          const toolName = event.name;
+          const allMutatingTools = [
+            ...DATA_MUTATING_TOOLS.customers,
+            ...DATA_MUTATING_TOOLS.documents,
+            ...DATA_MUTATING_TOOLS.relationships
+          ];
+
+          if (allMutatingTools.includes(toolName)) {
+            console.log('[ChatPanel] 데이터 변경 감지, 화면 새로고침 이벤트 발생:', toolName);
+            // 전역 이벤트 발생 - 모든 데이터 표시 컴포넌트가 새로고침
+            window.dispatchEvent(new CustomEvent('aiAssistantDataChanged', {
+              detail: { toolName, type: event.type }
+            }));
+          }
+        }
+      };
+
+      // 메시지 전송 및 응답 받기 (세션 ID 포함, 도구 결과 콜백)
+      const result = await sendMessage(chatMessages, {
+        sessionId: sessionId || undefined,
+        onChunk: handleToolResult
+      });
 
       // 새 세션 ID 저장
       if (result.sessionId && !sessionId) {

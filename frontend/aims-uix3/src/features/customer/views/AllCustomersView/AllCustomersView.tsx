@@ -152,6 +152,21 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // Document가 변경되면 자동으로 업데이트됨 (Document-View 패턴)
     // 이벤트 리스너를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
 
+    // 🍎 AI 어시스턴트에서 데이터 변경 시 자동 새로고침
+    useEffect(() => {
+      const handleAIDataChanged = () => {
+        if (import.meta.env.DEV) {
+          console.log('[AllCustomersView] AI 어시스턴트 데이터 변경 감지, 새로고침');
+        }
+        refresh({ limit: 10000, page: 1, status: 'all' });
+      };
+
+      window.addEventListener('aiAssistantDataChanged', handleAIDataChanged);
+      return () => {
+        window.removeEventListener('aiAssistantDataChanged', handleAIDataChanged);
+      };
+    }, [refresh]);
+
     // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환
     useEffect(() => {
       const handleStatusFilterChange = (event: Event) => {
