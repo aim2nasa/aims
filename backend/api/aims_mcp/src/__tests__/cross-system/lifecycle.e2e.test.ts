@@ -184,11 +184,10 @@ describe('Category 4: 라이프사이클 테스트', () => {
 
   // ============================================================
   // 4.2 계약-고객 연동 라이프사이클
-  // NOTE: API JWT 인증 필요로 현재 스킵 (factory.createContract는 API 사용)
-  // TODO: JWT 인증 구현 후 활성화
+  // API Key 인증 지원으로 활성화됨
   // ============================================================
 
-  describe.skip('4.2 계약-고객 연동 라이프사이클 - API JWT 인증 필요', () => {
+  describe('4.2 계약-고객 연동 라이프사이클', () => {
     it('고객 → 계약 → 상태변경 → 통계 반영', async () => {
       if (!serversAvailable) return;
 
@@ -318,11 +317,10 @@ describe('Category 4: 라이프사이클 테스트', () => {
 
   // ============================================================
   // 4.5 복합 시나리오
-  // NOTE: API JWT 인증 필요로 현재 스킵 (factory.createContract는 API 사용)
-  // TODO: JWT 인증 구현 후 활성화
+  // API Key 인증 지원으로 활성화됨
   // ============================================================
 
-  describe.skip('4.5 복합 시나리오 - API JWT 인증 필요', () => {
+  describe('4.5 복합 시나리오', () => {
     it('신규 고객 온보딩 전체 플로우', async () => {
       if (!serversAvailable) return;
 
@@ -331,7 +329,7 @@ describe('Category 4: 라이프사이클 테스트', () => {
       // ========== 1. 신규 고객 등록 (MCP) ==========
       const customer = await factory.createCustomer({
         name: `신규고객_${timestamp}`,
-        customerType: '개인',
+        type: 'individual',
         phone: '010-1234-5678',
         email: `new-customer-${timestamp}@test.com`
       });

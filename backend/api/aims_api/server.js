@@ -8105,7 +8105,7 @@ const CONTRACTS_COLLECTION = 'contracts';
  * GET /api/contracts
  * 계약 목록 조회
  */
-app.get('/api/contracts', authenticateJWT, async (req, res) => {
+app.get('/api/contracts', authenticateJWTorAPIKey, async (req, res) => {
   try {
     // ⭐ 설계사별 데이터 격리: userId 검증
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
@@ -8206,7 +8206,7 @@ app.get('/api/contracts/:id', async (req, res) => {
  * POST /api/contracts
  * 단일 계약 등록
  */
-app.post('/api/contracts', authenticateJWT, async (req, res) => {
+app.post('/api/contracts', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const contract = req.body;
 
@@ -8349,7 +8349,7 @@ app.post('/api/contracts', authenticateJWT, async (req, res) => {
  * - 증권번호 기준 upsert: 존재하면 업데이트, 없으면 생성
  * - 변경사항 없으면 건너뜀
  */
-app.post('/api/contracts/bulk', authenticateJWT, async (req, res) => {
+app.post('/api/contracts/bulk', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { contracts, agent_id } = req.body;
 
@@ -8739,7 +8739,7 @@ app.put('/api/contracts/:id', async (req, res) => {
  * DELETE /api/contracts/:id
  * 계약 삭제
  */
-app.delete('/api/contracts/:id', authenticateJWT, async (req, res) => {
+app.delete('/api/contracts/:id', authenticateJWTorAPIKey, async (req, res) => {
   try {
     const { id } = req.params;
 
