@@ -1,0 +1,55 @@
+{
+  "description": "e2e 테스트용 관계 샘플 데이터",
+  "relationships": [
+    {
+      "id": "rel_hong_kim_spouse",
+      "from_customer_ref": "customer_hong",
+      "to_customer_ref": "customer_kim",
+      "relationship_type": "spouse",
+      "relationship_category": "family",
+      "is_bidirectional": true,
+      "notes": "부부 관계"
+    },
+    {
+      "id": "rel_hong_minsu_parent",
+      "from_customer_ref": "customer_hong",
+      "to_customer_ref": "customer_hongminsu",
+      "relationship_type": "parent",
+      "relationship_category": "family",
+      "is_bidirectional": true,
+      "notes": "아버지-자녀 관계"
+    },
+    {
+      "id": "rel_kim_minsu_parent",
+      "from_customer_ref": "customer_kim",
+      "to_customer_ref": "customer_hongminsu",
+      "relationship_type": "parent",
+      "relationship_category": "family",
+      "is_bidirectional": true,
+      "notes": "어머니-자녀 관계"
+    },
+    {
+      "id": "rel_hong_lee_colleague",
+      "from_customer_ref": "customer_hong",
+      "to_customer_ref": "customer_lee",
+      "relationship_type": "colleague",
+      "relationship_category": "professional",
+      "is_bidirectional": true,
+      "notes": "같은 회사 직장 동료"
+    },
+    {
+      "id": "rel_lee_park_friend",
+      "from_customer_ref": "customer_lee",
+      "to_customer_ref": "customer_park",
+      "relationship_type": "friend",
+      "relationship_category": "social",
+      "is_bidirectional": true,
+      "notes": "대학 동창"
+    }
+  ],
+  "relationship_types": {
+    "family": ["spouse", "parent", "child", "sibling", "grandparent", "grandchild", "relative"],
+    "social": ["friend", "neighbor", "acquaintance"],
+    "professional": ["colleague", "client", "referrer", "business_partner"]
+  }
+}

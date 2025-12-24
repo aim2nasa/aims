@@ -1,0 +1,114 @@
+{
+  "description": "e2e 테스트용 고객 샘플 데이터",
+  "customers": [
+    {
+      "id": "customer_hong",
+      "personal_info": {
+        "name": "홍길동",
+        "mobile_phone": "010-1234-5678",
+        "email": "hong@test.com",
+        "birth_date": "1980-01-15",
+        "address": {
+          "address1": "서울시 강남구 테헤란로 123",
+          "address2": "101동 1001호",
+          "zip": "06234"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "개인"
+      },
+      "memo": "VIP 고객, 정기 연락 필요"
+    },
+    {
+      "id": "customer_kim",
+      "personal_info": {
+        "name": "김영희",
+        "mobile_phone": "010-2345-6789",
+        "email": "kim@test.com",
+        "birth_date": "1982-03-20",
+        "address": {
+          "address1": "서울시 강남구 테헤란로 123",
+          "address2": "101동 1001호",
+          "zip": "06234"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "개인"
+      },
+      "memo": "홍길동 배우자"
+    },
+    {
+      "id": "customer_hongminsu",
+      "personal_info": {
+        "name": "홍민수",
+        "mobile_phone": "010-3456-7890",
+        "email": "minsu@test.com",
+        "birth_date": "2010-05-05",
+        "address": {
+          "address1": "서울시 강남구 테헤란로 123",
+          "address2": "101동 1001호",
+          "zip": "06234"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "개인"
+      },
+      "memo": "홍길동, 김영희 자녀"
+    },
+    {
+      "id": "customer_lee",
+      "personal_info": {
+        "name": "이철수",
+        "mobile_phone": "010-4567-8901",
+        "email": "lee@test.com",
+        "birth_date": "1975-07-10",
+        "address": {
+          "address1": "서울시 서초구 반포대로 456",
+          "address2": "202동 2002호",
+          "zip": "06543"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "개인"
+      },
+      "memo": "홍길동 직장 동료"
+    },
+    {
+      "id": "customer_park",
+      "personal_info": {
+        "name": "박지민",
+        "mobile_phone": "010-5678-9012",
+        "email": "park@test.com",
+        "birth_date": "1990-12-25",
+        "address": {
+          "address1": "경기도 성남시 분당구 판교로 789",
+          "address2": "A동 301호",
+          "zip": "13487"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "개인"
+      },
+      "memo": "신규 고객, 상담 예정"
+    },
+    {
+      "id": "customer_corp_test",
+      "personal_info": {
+        "name": "(주)테스트법인",
+        "mobile_phone": "02-1234-5678",
+        "email": "corp@testcorp.com",
+        "address": {
+          "address1": "서울시 영등포구 여의대로 100",
+          "address2": "테스트빌딩 10층",
+          "zip": "07241"
+        }
+      },
+      "insurance_info": {
+        "customer_type": "법인",
+        "business_number": "123-45-67890",
+        "representative": "김대표"
+      },
+      "memo": "단체보험 문의"
+    }
+  ]
+}

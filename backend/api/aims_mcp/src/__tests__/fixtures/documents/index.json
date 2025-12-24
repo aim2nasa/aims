@@ -1,0 +1,95 @@
+{
+  "description": "e2e 테스트용 문서 샘플 데이터",
+  "documents": [
+    {
+      "id": "doc_hong_insurance_cert",
+      "customer_ref": "customer_hong",
+      "file_ref": "sample_insurance_certificate.pdf",
+      "original_name": "삼성생명_종신보험_보험증권.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": false,
+      "tags": ["보험증권", "종신보험", "삼성생명"],
+      "summary": "홍길동 고객의 삼성생명 종신보험 보험증권입니다."
+    },
+    {
+      "id": "doc_hong_annual_report",
+      "customer_ref": "customer_hong",
+      "file_ref": "sample_annual_report.pdf",
+      "original_name": "홍길동_2024년_연간보장분석표.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": true,
+      "ar_parsing_status": "completed",
+      "tags": ["연간보장분석표", "2024년", "보장분석"],
+      "summary": "홍길동 고객의 2024년 연간보장분석표입니다."
+    },
+    {
+      "id": "doc_kim_pension_plan",
+      "customer_ref": "customer_kim",
+      "file_ref": "sample_pension_plan.pdf",
+      "original_name": "교보생명_연금설계서.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": false,
+      "tags": ["연금설계서", "교보생명", "연금보험"],
+      "summary": "김영희 고객의 교보생명 연금 설계서입니다."
+    },
+    {
+      "id": "doc_corp_business_reg",
+      "customer_ref": "customer_corp_test",
+      "file_ref": "sample_business_registration.pdf",
+      "original_name": "사업자등록증.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": false,
+      "tags": ["사업자등록증", "법인", "증빙서류"],
+      "summary": "(주)테스트법인의 사업자등록증입니다."
+    },
+    {
+      "id": "doc_lee_id_card",
+      "customer_ref": "customer_lee",
+      "file_ref": "sample_id_card.jpg",
+      "original_name": "신분증_사본.jpg",
+      "mime_type": "image/jpeg",
+      "is_annual_report": false,
+      "tags": ["신분증", "증빙서류"],
+      "summary": "이철수 고객의 신분증 사본입니다."
+    },
+    {
+      "id": "doc_park_application",
+      "customer_ref": "customer_park",
+      "file_ref": "sample_application_form.pdf",
+      "original_name": "보험청약서.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": false,
+      "tags": ["청약서", "신규가입"],
+      "summary": "박지민 고객의 건강보험 청약서입니다."
+    },
+    {
+      "id": "doc_hong_ar_pending",
+      "customer_ref": "customer_hong",
+      "file_ref": "sample_annual_report_2.pdf",
+      "original_name": "홍길동_2023년_연간보장분석표.pdf",
+      "mime_type": "application/pdf",
+      "is_annual_report": true,
+      "ar_parsing_status": "pending",
+      "tags": ["연간보장분석표", "2023년"],
+      "summary": "홍길동 고객의 2023년 연간보장분석표 (파싱 대기중)입니다."
+    }
+  ],
+  "file_types": {
+    "pdf": {
+      "mime_type": "application/pdf",
+      "extension": ".pdf"
+    },
+    "jpg": {
+      "mime_type": "image/jpeg",
+      "extension": ".jpg"
+    },
+    "png": {
+      "mime_type": "image/png",
+      "extension": ".png"
+    },
+    "tiff": {
+      "mime_type": "image/tiff",
+      "extension": ".tiff"
+    }
+  }
+}
