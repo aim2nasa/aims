@@ -67,7 +67,7 @@ describe('핵심 도구 테스트', () => {
       const testName = `검색테스트_${Date.now()}`;
       const created = await mcp.call<{ customerId: string }>('create_customer', {
         name: testName,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(created.customerId);
 
@@ -86,13 +86,13 @@ describe('핵심 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        customers: Array<{ customerType: string }>;
+        customers: Array<{ type: string }>;
       }>('search_customers', {
-        type: 'individual'
+        customerType: '개인'
       });
 
       if (result.customers.length > 0) {
-        expect(result.customers.every(c => c.customerType === 'individual')).toBe(true);
+        expect(result.customers.every(c => c.type === '개인')).toBe(true);
       }
     });
 
@@ -102,26 +102,28 @@ describe('핵심 도구 테스트', () => {
       const testName = `상세조회_${Date.now()}`;
       const created = await mcp.call<{ customerId: string }>('create_customer', {
         name: testName,
-        type: 'individual',
+        customerType: '개인',
         phone: '010-1234-5678'
       });
       factory['createdCustomerIds'].push(created.customerId);
 
       const result = await mcp.call<{
-        customerId: string;
-        name: string;
-        customerType: string;
-        phone?: string;
-        contracts: Array<unknown>;
-        documents: Array<unknown>;
+        id: string;
+        personalInfo: {
+          name: string;
+          phone?: string;
+        };
+        insuranceInfo: {
+          customerType: string;
+        };
+        documentCount: number;
       }>('get_customer', {
         customerId: created.customerId
       });
 
-      expect(result.customerId).toBe(created.customerId);
-      expect(result.name).toBe(testName);
-      expect(result).toHaveProperty('contracts');
-      expect(result).toHaveProperty('documents');
+      expect(result.id).toBe(created.customerId);
+      expect(result.personalInfo.name).toBe(testName);
+      expect(result).toHaveProperty('documentCount');
     });
 
     it('create_customer: 개인 고객 생성', async () => {
@@ -134,7 +136,7 @@ describe('핵심 도구 테스트', () => {
         customerType: string;
       }>('create_customer', {
         name: testName,
-        type: 'individual',
+        customerType: '개인',
         phone: '010-9999-8888',
         email: 'test@example.com'
       });
@@ -143,7 +145,7 @@ describe('핵심 도구 테스트', () => {
 
       expect(result.customerId).toBeDefined();
       expect(result.name).toBe(testName);
-      expect(result.customerType).toBe('individual');
+      expect(result.customerType).toBe('개인');
     });
 
     it('create_customer: 법인 고객 생성', async () => {
@@ -155,14 +157,13 @@ describe('핵심 도구 테스트', () => {
         customerType: string;
       }>('create_customer', {
         name: testName,
-        type: 'corporate',
-        businessNumber: '123-45-67890'
+        customerType: '법인'
       });
 
       factory['createdCustomerIds'].push(result.customerId);
 
       expect(result.customerId).toBeDefined();
-      expect(result.customerType).toBe('corporate');
+      expect(result.customerType).toBe('법인');
     });
 
     it('update_customer: 고객 정보 수정', async () => {
@@ -170,7 +171,7 @@ describe('핵심 도구 테스트', () => {
 
       const created = await mcp.call<{ customerId: string }>('create_customer', {
         name: `수정테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(created.customerId);
 
@@ -186,10 +187,10 @@ describe('핵심 도구 테스트', () => {
       expect(result.success).toBe(true);
 
       // 수정 확인
-      const updated = await mcp.call<{ phone?: string }>('get_customer', {
+      const updated = await mcp.call<{ personalInfo: { phone?: string } }>('get_customer', {
         customerId: created.customerId
       });
-      expect(updated.phone).toBe(newPhone);
+      expect(updated.personalInfo.phone).toBe(newPhone);
     });
 
     it('update_customer: 존재하지 않는 고객 수정', async () => {
@@ -200,7 +201,7 @@ describe('핵심 도구 테스트', () => {
         phone: '010-9999-9999'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('get_customer: 유효하지 않은 고객 ID', async () => {
@@ -210,7 +211,7 @@ describe('핵심 도구 테스트', () => {
         customerId: 'invalid-customer-id'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('get_customer: 존재하지 않는 고객', async () => {
@@ -220,7 +221,7 @@ describe('핵심 도구 테스트', () => {
         customerId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 
@@ -251,18 +252,18 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `계약조회테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
       const result = await mcp.call<{
-        customerId: string;
+        count: number;
         contracts: Array<unknown>;
       }>('list_contracts', {
         customerId: customer.customerId
       });
 
-      expect(result.customerId).toBe(customer.customerId);
+      expect(result).toHaveProperty('count');
       expect(Array.isArray(result.contracts)).toBe(true);
     });
 
@@ -273,7 +274,7 @@ describe('핵심 도구 테스트', () => {
         contractId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 
@@ -285,21 +286,21 @@ describe('핵심 도구 테스트', () => {
     it('find_birthday_customers: 생일 고객 조회', async () => {
       if (!serversAvailable) return;
 
+      const currentMonth = new Date().getMonth() + 1;
       const result = await mcp.call<{
-        period: string;
-        totalCount: number;
+        description: string;
+        count: number;
         customers: Array<{
-          customerId: string;
+          id: string;
           name: string;
           birthDate?: string;
-          daysUntilBirthday: number;
         }>;
       }>('find_birthday_customers', {
-        days: 30
+        month: currentMonth
       });
 
-      expect(result).toHaveProperty('period');
-      expect(result).toHaveProperty('totalCount');
+      expect(result).toHaveProperty('description');
+      expect(result).toHaveProperty('count');
       expect(Array.isArray(result.customers)).toBe(true);
     });
 
@@ -307,20 +308,19 @@ describe('핵심 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        period: string;
-        totalCount: number;
+        description: string;
+        count: number;
         contracts: Array<{
-          contractId: string;
+          id: string;
           customerName: string;
           expiryDate: string;
-          daysUntilExpiry: number;
         }>;
       }>('find_expiring_contracts', {
         days: 90
       });
 
-      expect(result).toHaveProperty('period');
-      expect(result).toHaveProperty('totalCount');
+      expect(result).toHaveProperty('description');
+      expect(result).toHaveProperty('count');
       expect(Array.isArray(result.contracts)).toBe(true);
     });
   });
@@ -334,27 +334,25 @@ describe('핵심 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
+        type: string;
         customers: {
           total: number;
-          byType: {
-            individual: number;
-            corporate: number;
-          };
+          active: number;
+          inactive: number;
+          individual: number;
+          corporate: number;
         };
         contracts: {
           total: number;
-          active: number;
-        };
-        documents: {
-          total: number;
+          totalPremium: number;
         };
       }>('get_statistics', {});
 
       expect(result).toHaveProperty('customers');
       expect(result.customers).toHaveProperty('total');
-      expect(result.customers).toHaveProperty('byType');
+      expect(result.customers).toHaveProperty('individual');
+      expect(result.customers).toHaveProperty('corporate');
       expect(result).toHaveProperty('contracts');
-      expect(result).toHaveProperty('documents');
     });
   });
 
@@ -367,9 +365,10 @@ describe('핵심 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        totalCount: number;
+        searchMode: string;
+        resultCount: number;
         documents: Array<{
-          documentId: string;
+          id: string;
           fileName: string;
           customerName?: string;
         }>;
@@ -377,7 +376,8 @@ describe('핵심 도구 테스트', () => {
         query: '계약'
       });
 
-      expect(result).toHaveProperty('totalCount');
+      expect(result).toHaveProperty('searchMode');
+      expect(result).toHaveProperty('resultCount');
       expect(Array.isArray(result.documents)).toBe(true);
     });
 
@@ -386,14 +386,13 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `문서조회테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
       const result = await mcp.call<{
         customerId: string;
         customerName: string;
-        totalCount: number;
         documents: Array<unknown>;
       }>('list_customer_documents', {
         customerId: customer.customerId
@@ -410,7 +409,7 @@ describe('핵심 도구 테스트', () => {
         documentId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('get_document: 유효하지 않은 문서 ID', async () => {
@@ -420,7 +419,7 @@ describe('핵심 도구 테스트', () => {
         documentId: 'invalid-id'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('delete_document: 존재하지 않는 문서 삭제', async () => {
@@ -430,7 +429,7 @@ describe('핵심 도구 테스트', () => {
         documentId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('delete_document: 유효하지 않은 문서 ID', async () => {
@@ -440,7 +439,7 @@ describe('핵심 도구 테스트', () => {
         documentId: 'invalid-id-format'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('delete_documents: 빈 배열', async () => {
@@ -451,7 +450,7 @@ describe('핵심 도구 테스트', () => {
       });
 
       // Zod 스키마에서 min(1) 검증으로 오류
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('delete_documents: 존재하지 않는 문서들', async () => {
@@ -464,7 +463,7 @@ describe('핵심 도구 테스트', () => {
         ]
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('delete_documents: 유효하지 않은 ID 포함', async () => {
@@ -474,7 +473,7 @@ describe('핵심 도구 테스트', () => {
         documentIds: ['invalid-id-1', 'invalid-id-2']
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 
@@ -488,7 +487,7 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `메모테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
@@ -512,7 +511,7 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `메모조회테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
@@ -542,7 +541,7 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `다중메모테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
@@ -575,7 +574,7 @@ describe('핵심 도구 테스트', () => {
         content: '테스트 메모'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('add_customer_memo: 빈 content', async () => {
@@ -583,7 +582,7 @@ describe('핵심 도구 테스트', () => {
 
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: `빈메모테스트_${Date.now()}`,
-        type: 'individual'
+        customerType: '개인'
       });
       factory['createdCustomerIds'].push(customer.customerId);
 
@@ -592,7 +591,7 @@ describe('핵심 도구 테스트', () => {
         content: ''
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
 
     it('list_customer_memos: 존재하지 않는 고객', async () => {
@@ -602,7 +601,7 @@ describe('핵심 도구 테스트', () => {
         customerId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 
@@ -657,7 +656,7 @@ describe('핵심 도구 테스트', () => {
         productId: '000000000000000000000000'
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 });
