@@ -221,6 +221,37 @@ export function useRightPaneContent(
     }
   }, [rightPaneVisible])
 
+  // AI 어시스턴트 데이터 변경 시 RightPane 고객 정보 새로고침
+  useEffect(() => {
+    const handleAIDataChanged = async () => {
+      if (import.meta.env.DEV) {
+        console.log('[useRightPaneContent] AI 어시스턴트 데이터 변경 감지')
+      }
+
+      // 현재 선택된 고객이 있으면 새로고침
+      const currentCustomer = selectedCustomerRef.current
+      if (currentCustomer?._id) {
+        try {
+          const customer = await CustomerService.getCustomer(currentCustomer._id)
+          setSelectedCustomer(customer)
+          if (import.meta.env.DEV) {
+            console.log('[useRightPaneContent] AI 변경 후 고객 정보 새로고침 완료')
+          }
+        } catch (error) {
+          console.error('[useRightPaneContent] AI 변경 후 고객 정보 새로고침 실패:', error)
+        }
+      }
+
+      // refreshTrigger도 증가시켜 탭들이 새로고침하도록
+      setRightPaneRefreshTrigger(prev => prev + 1)
+    }
+
+    window.addEventListener('aiAssistantDataChanged', handleAIDataChanged)
+    return () => {
+      window.removeEventListener('aiAssistantDataChanged', handleAIDataChanged)
+    }
+  }, [])
+
   // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
   const handleDocumentClick = useCallback(async (documentId: string) => {
     if (import.meta.env.DEV) {

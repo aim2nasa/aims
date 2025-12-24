@@ -5,6 +5,56 @@ import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 
 
+/**
+ * 전화번호 포맷팅 함수
+ * 모든 전화번호를 하이픈(-) 포함 형식으로 변환
+ * @param phone - 원본 전화번호
+ * @returns 포맷팅된 전화번호
+ */
+function formatPhoneNumber(phone: string | undefined | null): string {
+  if (!phone) return '';
+
+  // 숫자만 추출
+  const digits = phone.replace(/\D/g, '');
+
+  if (!digits) return '';
+
+  // 휴대폰 (010, 011, 016, 017, 018, 019)
+  if (/^01[0-9]/.test(digits)) {
+    if (digits.length === 11) {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    } else if (digits.length === 10) {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+  }
+
+  // 서울 (02)
+  if (digits.startsWith('02')) {
+    if (digits.length === 10) {
+      return `02-${digits.slice(2, 6)}-${digits.slice(6)}`;
+    } else if (digits.length === 9) {
+      return `02-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    }
+  }
+
+  // 지역번호 (031, 032, 033, 041, 042, 043, 044, 051, 052, 053, 054, 055, 061, 062, 063, 064)
+  if (/^0[3-6][1-4]/.test(digits)) {
+    if (digits.length === 11) {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    } else if (digits.length === 10) {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+  }
+
+  // 대표번호 (1588, 1577, 1544 등)
+  if (/^1[5-9][0-9]{2}/.test(digits) && digits.length === 8) {
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
+
+  // 기타: 원본 그대로 반환 (이미 포맷팅된 경우)
+  return phone;
+}
+
 // 스키마 정의
 export const searchCustomersSchema = z.object({
   query: z.string().optional().describe('검색어 (이름, 전화번호, 이메일)'),
@@ -349,7 +399,7 @@ export async function handleCreateCustomer(args: unknown) {
     const newCustomer = {
       personal_info: {
         name: params.name,
-        mobile_phone: params.phone || '',
+        mobile_phone: formatPhoneNumber(params.phone),
         email: params.email || '',
         birth_date: params.birthDate || '',
         address: params.address ? { address1: params.address } : {}
@@ -452,7 +502,7 @@ export async function handleUpdateCustomer(args: unknown) {
     };
 
     if (params.name) updateFields['personal_info.name'] = params.name;
-    if (params.phone) updateFields['personal_info.mobile_phone'] = params.phone;
+    if (params.phone) updateFields['personal_info.mobile_phone'] = formatPhoneNumber(params.phone);
     if (params.email) updateFields['personal_info.email'] = params.email;
     if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
     if (params.address) updateFields['personal_info.address.address1'] = params.address;

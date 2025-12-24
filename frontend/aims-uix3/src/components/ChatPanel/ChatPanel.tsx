@@ -847,7 +847,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         content: m.content
       }));
 
-      // 데이터 변경 도구 성공 시 화면 새로고침 이벤트 발생
+      // 데이터 변경 도구 성공 시 페이지 새로고침 플래그 설정
+      let shouldReloadPage = false;
       const handleToolResult = (event: ChatEvent) => {
         if (event.type === 'tool_result' && event.success && event.name) {
           const toolName = event.name;
@@ -858,11 +859,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           ];
 
           if (allMutatingTools.includes(toolName)) {
-            console.log('[ChatPanel] 데이터 변경 감지, 화면 새로고침 이벤트 발생:', toolName);
-            // 전역 이벤트 발생 - 모든 데이터 표시 컴포넌트가 새로고침
-            window.dispatchEvent(new CustomEvent('aiAssistantDataChanged', {
-              detail: { toolName, type: event.type }
-            }));
+            console.log('[ChatPanel] 데이터 변경 감지, 응답 완료 후 페이지 새로고침 예정:', toolName);
+            shouldReloadPage = true;
           }
         }
       };
@@ -886,6 +884,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           content: result.response,
           timestamp: new Date()
         }]);
+      }
+
+      // 🚨 AI 어시스턴트 데이터 변경 시 페이지 새로고침 (CenterPane + RightPane 모두 갱신)
+      // aims-uix3 전체 강제 규정: 데이터 변경 도구 성공 시 항상 페이지 새로고침
+      if (shouldReloadPage) {
+        console.log('[ChatPanel] 데이터 변경 완료, 페이지 새로고침 실행');
+        // 응답이 화면에 표시된 후 새로고침 (사용자가 결과를 볼 수 있도록 약간의 딜레이)
+        setTimeout(() => {
+          // 팝업 모드: 메인 창 새로고침 (팝업은 유지)
+          if (isPopup && window.opener && !window.opener.closed) {
+            console.log('[ChatPanel] 팝업 모드 - 메인 창 새로고침');
+            window.opener.location.reload();
+          } else {
+            // 도킹/분리 모드: 현재 창 새로고침
+            window.location.reload();
+          }
+        }, 1500);
       }
     } catch (error) {
       console.error('[ChatPanel] 전송 오류:', error);

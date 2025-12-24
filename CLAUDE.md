@@ -135,6 +135,24 @@ ssh tars 'cd ~/aims && ./deploy_all.sh'
 > "중복된 코드/데이터는 가장 나쁜 디자인의 첫번째 증상이다."
 > "본질적으로 잘못된 디자인이면 리팩토링하며 개선해야 한다. 순간을 모면하는 디자인은 최악이다."
 
+### 12. 🔴 AI 어시스턴트 데이터 변경 시 화면 새로고침 (MUST!)
+**AI 어시스턴트에서 데이터 등록/수정/삭제 시 반드시 CenterPane + RightPane 모두 새로고침!**
+
+| 상황 | 처리 |
+|------|------|
+| 고객 등록/수정/삭제 | `window.location.reload()` |
+| 문서 삭제 | `window.location.reload()` |
+| 관계 등록 | `window.location.reload()` |
+
+**구현 위치**: `ChatPanel.tsx`의 `handleSubmit` 함수
+- `DATA_MUTATING_TOOLS` 배열의 도구가 성공하면 페이지 새로고침
+- 응답이 화면에 표시된 후 1.5초 딜레이 후 새로고침 (`setTimeout`)
+- 대화 내용은 localStorage에 저장되어 새로고침 후에도 유지됨
+
+**절대 금지:**
+- 복잡한 이벤트 기반 부분 새로고침 ❌
+- 단순하게 `window.location.reload()` 사용 ✅
+
 ---
 
 ## System Overview
