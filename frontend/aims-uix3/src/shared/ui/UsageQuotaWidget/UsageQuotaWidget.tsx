@@ -97,10 +97,10 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
     return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
   }
 
-  // OCR 사용률 계산
+  // OCR 사용률 계산 (페이지 기반)
   const getOcrPercent = (): number => {
-    if (!storageInfo || !storageInfo.has_ocr_permission || storageInfo.ocr_is_unlimited || storageInfo.ocr_quota <= 0) return 0
-    return Math.min((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100, 100)
+    if (!storageInfo || !storageInfo.has_ocr_permission || storageInfo.ocr_is_unlimited || storageInfo.ocr_page_quota <= 0) return 0
+    return Math.min((storageInfo.ocr_pages_used / storageInfo.ocr_page_quota) * 100, 100)
   }
 
   // 경고 레벨 결정
@@ -131,8 +131,14 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   // 툴팁 콘텐츠 (소수점 2자리까지 표시)
   const storageTooltip = `저장공간: ${formatFileSize(storageInfo.used_bytes)} / ${storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)} (${storagePercent.toFixed(2)}%)`
 
+  // OCR 사이클 날짜 포맷 (MM/DD 형식)
+  const formatCycleDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    return dateStr.slice(5).replace('-', '/')
+  }
+
   const ocrTooltip = storageInfo.has_ocr_permission
-    ? `OCR: ${storageInfo.ocr_used_this_month}회 / ${storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회`} (${ocrPercent.toFixed(2)}%)`
+    ? `OCR: ${storageInfo.ocr_pages_used}p / ${storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_page_quota}p`} (${storageInfo.ocr_docs_count}건)\n사이클: ${formatCycleDate(storageInfo.ocr_cycle_start)} ~ ${formatCycleDate(storageInfo.ocr_cycle_end)}\n리셋까지: ${storageInfo.ocr_days_until_reset}일`
     : 'OCR 권한 없음'
 
   return (

@@ -930,8 +930,14 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         }
 
         const getOcrPercent = () => {
-          if (!storageInfo || storageInfo.ocr_quota <= 0) return 0
-          return Math.min((storageInfo.ocr_used_this_month / storageInfo.ocr_quota) * 100, 100)
+          if (!storageInfo || storageInfo.ocr_page_quota <= 0) return 0
+          return Math.min((storageInfo.ocr_pages_used / storageInfo.ocr_page_quota) * 100, 100)
+        }
+
+        // OCR 사이클 날짜 포맷 (MM/DD 형식)
+        const formatCycleDate = (dateStr: string) => {
+          if (!dateStr) return ''
+          return dateStr.slice(5).replace('-', '/')
         }
 
         const getLevel = (percent: number) => {
@@ -1000,14 +1006,15 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     <path d="M2 5V3.5A1.5 1.5 0 0 1 3.5 2H5M11 2h1.5A1.5 1.5 0 0 1 14 3.5V5M14 11v1.5a1.5 1.5 0 0 1-1.5 1.5H11M5 14H3.5A1.5 1.5 0 0 1 2 12.5V11" stroke="currentColor" strokeWidth="1.5" fill="none" />
                     <circle cx="8" cy="8" r="2.5" fill="currentColor" />
                   </svg>
-                  OCR (이번 달)
+                  OCR (사이클)
                 </h3>
                 <div className="account-settings-view__usage-main">
                   {storageLoading ? (
                     <span className="account-settings-view__value account-settings-view__value--muted">로딩 중...</span>
                   ) : storageInfo ? (
                     <span className="account-settings-view__usage-value">
-                      {storageInfo.ocr_used_this_month}회 / {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회`}
+                      {storageInfo.ocr_pages_used}p / {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_page_quota}p`}
+                      <span className="account-settings-view__usage-sub"> ({storageInfo.ocr_docs_count}건)</span>
                     </span>
                   ) : (
                     <span className="account-settings-view__value account-settings-view__value--muted">-</span>
@@ -1019,19 +1026,28 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   </div>
                 )}
                 <div className="account-settings-view__usage-footer">
-                  <span className="account-settings-view__usage-label">남은 횟수</span>
+                  <span className="account-settings-view__usage-label">남은 페이지</span>
                   {storageInfo ? (
                     <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getOcrPercent())}`}>
-                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_remaining}회`}
+                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_remaining}p`}
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>
                   )}
                   <span className="account-settings-view__usage-divider">|</span>
-                  <span className="account-settings-view__usage-label">상태</span>
+                  <span className="account-settings-view__usage-label">사이클</span>
                   {storageInfo ? (
-                    <span className={`account-settings-view__usage-stat ${storageInfo.has_ocr_permission ? 'account-settings-view__usage-stat--success' : ''}`}>
-                      {storageInfo.has_ocr_permission ? '사용 가능' : '권한 없음'}
+                    <span className="account-settings-view__usage-stat">
+                      {formatCycleDate(storageInfo.ocr_cycle_start)} ~ {formatCycleDate(storageInfo.ocr_cycle_end)}
+                    </span>
+                  ) : (
+                    <span className="account-settings-view__usage-stat">-</span>
+                  )}
+                  <span className="account-settings-view__usage-divider">|</span>
+                  <span className="account-settings-view__usage-label">리셋까지</span>
+                  {storageInfo ? (
+                    <span className="account-settings-view__usage-stat">
+                      {storageInfo.ocr_days_until_reset}일
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>

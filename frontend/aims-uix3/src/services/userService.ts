@@ -110,12 +110,20 @@ export interface StorageInfo {
     used: string
     remaining: string
   }
-  // OCR 정보
+  // OCR 정보 (페이지 기반 - 신규)
   has_ocr_permission: boolean
+  ocr_page_quota: number          // 페이지 한도
+  ocr_pages_used: number          // 사용 페이지 수
+  ocr_docs_count: number          // 문서 수 (참고용)
+  ocr_remaining: number           // 남은 페이지 수
+  ocr_is_unlimited: boolean
+  // 사이클 정보
+  ocr_cycle_start: string         // "YYYY-MM-DD"
+  ocr_cycle_end: string           // "YYYY-MM-DD"
+  ocr_days_until_reset: number    // 리셋까지 남은 일수
+  // 하위 호환성 (deprecated)
   ocr_quota: number
   ocr_used_this_month: number
-  ocr_remaining: number
-  ocr_is_unlimited: boolean
   // 일괄 업로드 제한 (bytes, -1이면 무제한)
   max_batch_upload_bytes: number
 }

@@ -110,11 +110,209 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -976,
+        -1088,
         -224
       ],
       "id": "38e2bec0-2215-4890-9c01-723ed4c6b46e",
       "name": "Pasre"
+    },
+    {
+      "parameters": {
+        "command": "=node /home/rossi/aims/tools/mime_type_analyzer/file_analyzer.js \"{{ $('Pasre').item.json.file_path }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -224
+      ],
+      "id": "get-page-count-001",
+      "name": "Get Page Count",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const output = JSON.parse($json.stdout);\n  return [{ \n    page_count: output.pdf_pages || 1,\n    file_path: $('Pasre').item.json.file_path,\n    owner_id: $('Pasre').item.json.owner_id,\n    doc_id: $('Pasre').item.json.doc_id,\n    file_id: $('Pasre').item.json.file_id,\n    ...output \n  }];\n} catch(e) {\n  return [{ page_count: 1, error: e.message }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        -224
+      ],
+      "id": "parse-page-count-001",
+      "name": "Parse Page Count"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/internal/ocr/check-quota",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"owner_id\": $('Pasre').item.json.owner_id, \"page_count\": $json.page_count } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -752,
+        -224
+      ],
+      "id": "check-ocr-quota-001",
+      "name": "Check OCR Quota"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "quota-exceeded-condition-001",
+              "leftValue": "={{ $json.body.allowed }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        -224
+      ],
+      "id": "is-quota-exceeded-001",
+      "name": "Is Quota Exceeded?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "quota-exceeded-status-001",
+              "name": "ocr.status",
+              "value": "quota_exceeded",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-reason-001",
+              "name": "ocr.quota_message",
+              "value": "={{ $('Check OCR Quota').item.json.body.reason }}: 현재 {{ $('Check OCR Quota').item.json.body.current_usage }}p / {{ $('Check OCR Quota').item.json.body.quota }}p, 요청 {{ $('Check OCR Quota').item.json.body.requested }}p",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-id-001",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        -320
+      ],
+      "id": "set-quota-exceeded-001",
+      "name": "Set Quota Exceeded"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        -320
+      ],
+      "id": "update-quota-exceeded-001",
+      "name": "Update Quota Exceeded",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"document_id\": $('Pasre').item.json.doc_id, \"status\": \"quota_exceeded\", \"owner_id\": $('Pasre').item.json.owner_id } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -304,
+        -320
+      ],
+      "id": "notify-quota-exceeded-001",
+      "name": "Notify Quota Exceeded"
+    },
+    {
+      "parameters": {
+        "command": "=redis-cli XACK ocr_stream ocr_consumer_group {{ $('Pasre').item.json.message_id }} && redis-cli XDEL ocr_stream {{ $('Pasre').item.json.message_id }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -320
+      ],
+      "id": "delete-redis-quota-exceeded-001",
+      "name": "Delete Redis (Quota Exceeded)"
     },
     {
       "parameters": {
@@ -737,7 +935,91 @@
       "main": [
         [
           {
+            "node": "Get Page Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Page Count": {
+      "main": [
+        [
+          {
+            "node": "Parse Page Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Page Count": {
+      "main": [
+        [
+          {
+            "node": "Check OCR Quota",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check OCR Quota": {
+      "main": [
+        [
+          {
+            "node": "Is Quota Exceeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Quota Exceeded?": {
+      "main": [
+        [
+          {
+            "node": "Set Quota Exceeded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Prepare OCR Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Quota Exceeded": {
+      "main": [
+        [
+          {
+            "node": "Update Quota Exceeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Quota Exceeded": {
+      "main": [
+        [
+          {
+            "node": "Notify Quota Exceeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Quota Exceeded": {
+      "main": [
+        [
+          {
+            "node": "Delete Redis (Quota Exceeded)",
             "type": "main",
             "index": 0
           }

@@ -22,12 +22,14 @@ function toUserIdQuery(userId) {
 const MB = 1024 * 1024;
 
 // 기본 티어 정의 (DB에 없을 때 사용)
+// ocr_quota: 문서 수 기반 (deprecated)
+// ocr_page_quota: 페이지 수 기반 (신규 - OCR_USAGE_POLICY.md 참고)
 const DEFAULT_TIER_DEFINITIONS = {
-  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, max_batch_upload_bytes: 100 * MB, description: '체험 사용자' },
-  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, max_batch_upload_bytes: 500 * MB, description: '기본 등급' },
-  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, max_batch_upload_bytes: 1 * GB, description: '프리미엄 구독자' },
-  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, max_batch_upload_bytes: 2 * GB, description: 'VIP 고객' },
-  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, max_batch_upload_bytes: -1, description: '무제한' }
+  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, ocr_page_quota: 100, max_batch_upload_bytes: 100 * MB, description: '체험 사용자' },
+  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, ocr_page_quota: 500, max_batch_upload_bytes: 500 * MB, description: '기본 등급' },
+  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, ocr_page_quota: 3000, max_batch_upload_bytes: 1 * GB, description: '프리미엄 구독자' },
+  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, ocr_page_quota: 10000, max_batch_upload_bytes: 2 * GB, description: 'VIP 고객' },
+  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1, description: '무제한' }
 };
 
 // 캐싱된 티어 정의 (성능 최적화)
@@ -130,6 +132,113 @@ async function updateTierDefinition(db, tierId, updates) {
 }
 
 /**
+ * 가입 기념일 기반 OCR 사이클 계산 (KST)
+ * @param {Date} subscriptionStartDate - 가입 시작일
+ * @returns {{ cycleStart: Date, cycleEnd: Date, daysUntilReset: number }}
+ */
+function calculateOcrCycle(subscriptionStartDate) {
+  const now = new Date();
+  const KST_OFFSET = 9 * 60 * 60 * 1000; // +9시간
+
+  // KST 기준으로 변환
+  const nowKST = new Date(now.getTime() + KST_OFFSET);
+  const startDate = new Date(subscriptionStartDate);
+  const startKST = new Date(startDate.getTime() + KST_OFFSET);
+
+  const subscriptionDay = startKST.getUTCDate();
+
+  // 현재 사이클 시작일 계산 (KST 기준)
+  let cycleStartKST = new Date(Date.UTC(
+    nowKST.getUTCFullYear(),
+    nowKST.getUTCMonth(),
+    subscriptionDay,
+    0, 0, 0, 0
+  ));
+
+  // 만약 현재 날짜가 사이클 시작일보다 이전이면 이전 달로
+  if (nowKST < cycleStartKST) {
+    cycleStartKST.setUTCMonth(cycleStartKST.getUTCMonth() - 1);
+  }
+
+  // 말일 처리 (예: 31일 가입 -> 2월은 28/29일)
+  const daysInMonth = new Date(
+    cycleStartKST.getUTCFullYear(),
+    cycleStartKST.getUTCMonth() + 1,
+    0
+  ).getUTCDate();
+  if (subscriptionDay > daysInMonth) {
+    cycleStartKST.setUTCDate(daysInMonth);
+  }
+
+  // UTC로 변환 (KST 00:00 = UTC 이전날 15:00)
+  const cycleStart = new Date(cycleStartKST.getTime() - KST_OFFSET);
+
+  // 사이클 종료일 = 다음 사이클 시작일 - 1ms
+  const cycleEndKST = new Date(cycleStartKST);
+  cycleEndKST.setUTCMonth(cycleEndKST.getUTCMonth() + 1);
+  // 다음 달 말일 처리
+  const nextMonthDays = new Date(
+    cycleEndKST.getUTCFullYear(),
+    cycleEndKST.getUTCMonth() + 1,
+    0
+  ).getUTCDate();
+  if (subscriptionDay > nextMonthDays) {
+    cycleEndKST.setUTCDate(nextMonthDays);
+  }
+  const cycleEnd = new Date(cycleEndKST.getTime() - KST_OFFSET - 1);
+
+  // 리셋까지 남은 일수 (다음 사이클 시작일까지)
+  const nextResetKST = new Date(cycleEndKST);
+  const daysUntilReset = Math.ceil((nextResetKST.getTime() - KST_OFFSET - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  return {
+    cycleStart,
+    cycleEnd,
+    daysUntilReset: Math.max(0, daysUntilReset)
+  };
+}
+
+/**
+ * 사용자의 현재 사이클 OCR 페이지 사용량 계산
+ * @param {Db} db - MongoDB 인스턴스
+ * @param {string} userId - 사용자 ID
+ * @param {Date} cycleStart - 사이클 시작일
+ * @param {Date} cycleEnd - 사이클 종료일
+ * @returns {Promise<{ pages_used: number, docs_count: number }>}
+ */
+async function calculateUserOcrPagesInCycle(db, userId, cycleStart, cycleEnd) {
+  const filesCollection = db.collection('files');
+  const cycleStartISO = cycleStart.toISOString();
+  const cycleEndISO = cycleEnd.toISOString();
+
+  const result = await filesCollection.aggregate([
+    {
+      $match: {
+        ownerId: userId,
+        'ocr.status': 'done',
+        $or: [
+          // Date 타입
+          { 'ocr.done_at': { $gte: cycleStart, $lte: cycleEnd } },
+          // ISO string 타입
+          { 'ocr.done_at': { $gte: cycleStartISO, $lte: cycleEndISO } }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        pages_used: { $sum: { $ifNull: ['$ocr.page_count', 1] } },
+        docs_count: { $sum: 1 }
+      }
+    }
+  ]).toArray();
+
+  return result.length > 0
+    ? { pages_used: result[0].pages_used, docs_count: result[0].docs_count }
+    : { pages_used: 0, docs_count: 0 };
+}
+
+/**
  * 사용자의 파일 사용량 계산
  * @param {Db} db - MongoDB 인스턴스
  * @param {string} userId - 사용자 ID (ObjectId 문자열)
@@ -204,7 +313,7 @@ async function getUserStorageInfo(db, userId) {
   const userIdQuery = toUserIdQuery(userId);
   const user = await usersCollection.findOne(
     { _id: userIdQuery },
-    { projection: { storage: 1, role: 1, hasOcrPermission: 1, ocr_used_this_month: 1 } }
+    { projection: { storage: 1, role: 1, hasOcrPermission: 1, subscription_start_date: 1, createdAt: 1 } }
   );
 
   // 관리자 체크
@@ -222,14 +331,29 @@ async function getUserStorageInfo(db, userId) {
   // 실시간 사용량 계산
   const usedBytes = await calculateUserStorageUsage(db, userId);
 
-  // OCR 정보 (관리자가 수동 제어, 티어에서 할당량만 상속)
+  // OCR 페이지 기반 한도 (신규)
+  const ocrPageQuota = isAdmin ? -1 : (tierDef.ocr_page_quota ?? 500);
+  // OCR 문서 수 기반 한도 (deprecated, 하위 호환)
   const ocrQuota = isAdmin ? -1 : (tierDef.ocr_quota ?? 100);
   const hasOcrPermission = isAdmin ? true : (user?.hasOcrPermission ?? false);
-  // 실시간 OCR 사용량 계산
-  const ocrUsedThisMonth = await calculateUserOcrUsageThisMonth(db, userId);
+
+  // subscription_start_date가 없으면 createdAt 사용 (마이그레이션 이전 사용자)
+  const subscriptionStartDate = user?.subscription_start_date || user?.createdAt || new Date();
+
+  // 사이클 계산 (가입 기념일 기반)
+  const { cycleStart, cycleEnd, daysUntilReset } = calculateOcrCycle(subscriptionStartDate);
+
+  // 페이지 기반 OCR 사용량 계산 (신규)
+  const { pages_used, docs_count } = await calculateUserOcrPagesInCycle(db, userId, cycleStart, cycleEnd);
 
   // 일괄 업로드 제한
   const maxBatchUploadBytes = isAdmin ? -1 : (tierDef.max_batch_upload_bytes ?? 100 * MB);
+
+  // 사이클 날짜를 YYYY-MM-DD 형식으로 변환 (KST 기준)
+  const formatDateKST = (date) => {
+    const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    return kst.toISOString().split('T')[0];
+  };
 
   return {
     tier,
@@ -239,12 +363,24 @@ async function getUserStorageInfo(db, userId) {
     remaining_bytes: quotaBytes === -1 ? -1 : Math.max(0, quotaBytes - usedBytes),
     usage_percent: quotaBytes === -1 ? 0 : Math.round((usedBytes / quotaBytes) * 100),
     is_unlimited: quotaBytes === -1,
-    // OCR 정보
+
+    // OCR 정보 (페이지 기반 - 신규)
     has_ocr_permission: hasOcrPermission,
+    ocr_page_quota: ocrPageQuota,
+    ocr_pages_used: pages_used,
+    ocr_docs_count: docs_count,
+    ocr_remaining: ocrPageQuota === -1 ? -1 : Math.max(0, ocrPageQuota - pages_used),
+    ocr_is_unlimited: ocrPageQuota === -1,
+
+    // 사이클 정보
+    ocr_cycle_start: formatDateKST(cycleStart),
+    ocr_cycle_end: formatDateKST(cycleEnd),
+    ocr_days_until_reset: daysUntilReset,
+
+    // 하위 호환성 (deprecated)
     ocr_quota: ocrQuota,
-    ocr_used_this_month: ocrUsedThisMonth,
-    ocr_remaining: ocrQuota === -1 ? -1 : Math.max(0, ocrQuota - ocrUsedThisMonth),
-    ocr_is_unlimited: ocrQuota === -1,
+    ocr_used_this_month: pages_used,
+
     // 일괄 업로드 제한
     max_batch_upload_bytes: maxBatchUploadBytes
   };
@@ -407,6 +543,8 @@ async function getSystemStorageOverview(db) {
 module.exports = {
   DEFAULT_TIER,
   calculateUserStorageUsage,
+  calculateOcrCycle,
+  calculateUserOcrPagesInCycle,
   getUserStorageInfo,
   checkUploadAllowed,
   getTierDisplayName,

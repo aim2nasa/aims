@@ -13,6 +13,14 @@ const pdfParse = require('pdf-parse');
 const exif = require('exif-parser');
 const { getDocument } = require('pdfjs-dist/legacy/build/pdf.js');
 
+// TIFF 다중 페이지 지원 (optional dependency)
+let UTIF = null;
+try {
+  UTIF = require('utif');
+} catch (e) {
+  // utif 패키지가 없으면 TIFF는 1페이지로 처리
+}
+
 //HWP 확장자만 매핑
 const EXTENSION_MIME_MAP = {
     ".hwp": "application/x-hwp",
@@ -91,6 +99,27 @@ async function getFileMetadata(filePath) {
 
     const textStats = await analyzePdfTextRatio(filePath);
     meta.pdf_text_ratio = textStats;
+  }
+  // TIFF 다중 페이지 지원
+  else if (mimeType === "image/tiff") {
+    if (UTIF) {
+      try {
+        const buffer = fs.readFileSync(filePath);
+        const ifds = UTIF.decode(buffer);
+        meta.tiff_pages = ifds.length;
+        meta.pdf_pages = ifds.length; // 통일된 필드명 (OCRWorker에서 사용)
+      } catch (err) {
+        meta.tiff_pages = 1;
+        meta.pdf_pages = 1;
+      }
+    } else {
+      meta.tiff_pages = 1;
+      meta.pdf_pages = 1;
+    }
+  }
+  // 일반 이미지는 1페이지
+  else if (mimeType && mimeType.startsWith("image/")) {
+    meta.pdf_pages = 1;
   }
 
   // JPEG만 EXIF 파싱, PNG 등은 스킵

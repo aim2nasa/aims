@@ -283,9 +283,11 @@ const DEFAULT_TIER_DEFINITIONS = {
 
 ## 구현 체크리스트
 
-- [ ] file_analyzer.js에 TIFF 다중 페이지 지원 추가
-- [ ] users.subscription_start_date 필드 추가 (마이그레이션)
-- [ ] storageQuotaService.js에 사이클 계산 함수 추가
-- [ ] check-quota API 구현
-- [ ] OCRWorker에 페이지 수 체크 노드 추가
-- [ ] 프론트엔드 사이클 정보 표시
+- [x] file_analyzer.js에 TIFF 다중 페이지 지원 추가
+- [x] users.subscription_start_date 필드 추가 (마이그레이션)
+- [x] storageQuotaService.js에 사이클 계산 함수 추가
+- [x] check-quota API 구현
+- [x] OCRWorker에 페이지 수 체크 노드 추가
+- [x] 프론트엔드 사이클 정보 표시
+
+> 구현 완료: 2025-12-24

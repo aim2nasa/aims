@@ -12,6 +12,7 @@ const Redis = require('ioredis');
 const { calculateOCRCost } = require('../lib/ocrPricing');
 const ocrUsageLogService = require('../lib/ocrUsageLogService');
 const backendLogger = require('../lib/backendLogger');
+const { getUserStorageInfo } = require('../lib/storageQuotaService');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -712,6 +713,84 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         success: false,
         error: 'OCR 사용량 기록에 실패했습니다.',
         details: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/internal/ocr/check-quota
+   * OCR 전 한도 체크 (n8n OCRWorker에서 호출)
+   *
+   * Body: { owner_id: string, page_count: number }
+   * Response: { allowed: boolean, current_usage: number, quota: number, remaining: number }
+   */
+  router.post('/internal/ocr/check-quota', async (req, res) => {
+    try {
+      const { owner_id, page_count } = req.body;
+
+      if (!owner_id || typeof page_count !== 'number') {
+        return res.status(400).json({
+          success: false,
+          error: 'owner_id와 page_count(number)가 필요합니다.'
+        });
+      }
+
+      // 사용자 스토리지 정보 조회
+      const storageInfo = await getUserStorageInfo(db, owner_id);
+
+      // OCR 권한 체크
+      if (!storageInfo.has_ocr_permission) {
+        return res.json({
+          success: true,
+          allowed: false,
+          reason: 'no_permission',
+          message: 'OCR 권한이 없습니다.',
+          current_usage: 0,
+          quota: 0,
+          remaining: 0
+        });
+      }
+
+      // 무제한 사용자 (admin)
+      if (storageInfo.ocr_is_unlimited) {
+        return res.json({
+          success: true,
+          allowed: true,
+          reason: 'unlimited',
+          current_usage: storageInfo.ocr_pages_used,
+          quota: -1,
+          remaining: -1,
+          message: '무제한 사용자'
+        });
+      }
+
+      // 한도 체크 (페이지 기반)
+      const newTotal = storageInfo.ocr_pages_used + page_count;
+      const allowed = newTotal <= storageInfo.ocr_page_quota;
+
+      res.json({
+        success: true,
+        allowed,
+        reason: allowed ? 'within_quota' : 'quota_exceeded',
+        current_usage: storageInfo.ocr_pages_used,
+        quota: storageInfo.ocr_page_quota,
+        remaining: storageInfo.ocr_remaining,
+        requested: page_count,
+        would_exceed_by: allowed ? 0 : newTotal - storageInfo.ocr_page_quota,
+        cycle_start: storageInfo.ocr_cycle_start,
+        cycle_end: storageInfo.ocr_cycle_end,
+        days_until_reset: storageInfo.ocr_days_until_reset
+      });
+    } catch (error) {
+      console.error('[POST /api/internal/ocr/check-quota] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 한도 체크 오류', error);
+      // 오류 시 OCR 허용 (fail-open 정책)
+      res.json({
+        success: true,
+        allowed: true,
+        reason: 'error_fallback',
+        message: '한도 체크 중 오류 발생, 기본 허용',
+        error: error.message
       });
     }
   });
