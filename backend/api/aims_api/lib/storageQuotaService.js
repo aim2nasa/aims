@@ -148,6 +148,50 @@ async function calculateUserStorageUsage(db, userId) {
 }
 
 /**
+ * 사용자의 이번 달 OCR 사용량 계산 (실시간)
+ * 실제 OCR API를 호출한 문서만 카운트 (ocr.status=done)
+ * @param {Db} db - MongoDB 인스턴스
+ * @param {string} userId - 사용자 ID (ObjectId 문자열)
+ * @returns {Promise<number>} OCR 사용 횟수
+ */
+async function calculateUserOcrUsageThisMonth(db, userId) {
+  const filesCollection = db.collection('files');
+
+  // 이번 달 시작일
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  const startOfMonthISO = startOfMonth.toISOString();
+
+  const result = await filesCollection.aggregate([
+    {
+      $match: {
+        ownerId: userId,
+        'ocr.status': 'done',  // 실제 OCR API 호출한 것만
+        $or: [
+          // ocr.done_at이 이번 달인 경우 (Date 또는 ISO string)
+          { 'ocr.done_at': { $gte: startOfMonth } },
+          { 'ocr.done_at': { $gte: startOfMonthISO } },
+          // ocr.done_at이 없으면 생성일 기준
+          {
+            'ocr.done_at': { $exists: false },
+            'meta.created_at': { $gte: startOfMonthISO }
+          }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        count: { $sum: 1 }
+      }
+    }
+  ]).toArray();
+
+  return result.length > 0 ? result[0].count : 0;
+}
+
+/**
  * 사용자의 스토리지 정보 조회
  * @param {Db} db - MongoDB 인스턴스
  * @param {string} userId - 사용자 ID
@@ -179,7 +223,8 @@ async function getUserStorageInfo(db, userId) {
   // OCR 정보 (관리자가 수동 제어, 티어에서 할당량만 상속)
   const ocrQuota = isAdmin ? -1 : (tierDef.ocr_quota ?? 100);
   const hasOcrPermission = isAdmin ? true : (user?.hasOcrPermission ?? false);
-  const ocrUsedThisMonth = user?.ocr_used_this_month ?? 0;
+  // 실시간 OCR 사용량 계산
+  const ocrUsedThisMonth = await calculateUserOcrUsageThisMonth(db, userId);
 
   return {
     tier,

@@ -11,7 +11,7 @@
 
 /* 툴팁 트리거 (자식 요소 래퍼) */
 .tooltip-trigger {
-  display: inline-block;
+  display: inline-flex;
 }
 
 /* 툴팁 컨테이너 */
