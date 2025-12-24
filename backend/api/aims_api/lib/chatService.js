@@ -275,7 +275,9 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
 
         try {
           const args = JSON.parse(tc.function.arguments || '{}');
+          console.log(`[ChatService] Tool 호출: ${toolName}`, JSON.stringify(args));
           const result = await callMCPTool(toolName, args, userId);
+          console.log(`[ChatService] Tool 결과: ${toolName}`, result.substring(0, 200));
 
           toolCallsExecuted.push({ name: toolName, success: true });
           yield { type: 'tool_result', name: toolName, success: true };

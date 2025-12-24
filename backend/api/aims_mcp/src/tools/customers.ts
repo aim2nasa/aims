@@ -160,9 +160,13 @@ export async function handleSearchCustomers(args: unknown) {
       filter['meta.status'] = params.status || 'active';
     }
 
-    // 지역
+    // 지역 (유연한 검색: "경기도" → "경기", "서울시" → "서울" 등)
     if (params.region) {
-      filter['personal_info.address.address1'] = { $regex: escapeRegex(params.region), $options: 'i' };
+      // 시/도 접미사 제거하여 유연하게 검색
+      const normalizedRegion = params.region
+        .replace(/특별시$|광역시$|특별자치시$|특별자치도$|도$|시$/, '')
+        .trim();
+      filter['personal_info.address.address1'] = { $regex: escapeRegex(normalizedRegion), $options: 'i' };
     }
 
     const customers = await db.collection(COLLECTIONS.CUSTOMERS)
