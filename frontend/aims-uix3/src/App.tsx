@@ -181,8 +181,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [mainPaneVisible, setMainPaneVisible] = useState(true)
   const [brbVisible, setBrbVisible] = useState(true)
 
-  // AI 채팅 패널 열림 상태
-  const [isChatOpen, setIsChatOpen] = useState(false)
+  // AI 채팅 패널 열림 상태 (localStorage 영속화 - F5 새로고침 시 유지)
+  const [isChatOpen, setIsChatOpen] = useState(() => {
+    try {
+      return localStorage.getItem('aims-chat-panel-open') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // isChatOpen 상태 변경 시 localStorage 동기화
+  useEffect(() => {
+    try {
+      localStorage.setItem('aims-chat-panel-open', String(isChatOpen))
+    } catch {
+      // localStorage 실패 무시
+    }
+  }, [isChatOpen])
 
   // AI 팝업 창 열림 상태 (localStorage 기반 + 실시간 감지)
   const [isAiPopupOpen, setIsAiPopupOpen] = useState(() => {

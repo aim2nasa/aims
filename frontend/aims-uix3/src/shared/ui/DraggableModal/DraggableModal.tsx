@@ -51,6 +51,8 @@ export interface DraggableModalProps {
   minWidth?: number
   /** 최소 높이 */
   minHeight?: number
+  /** localStorage 저장 키 (위치/크기 자동 영속화) */
+  storageKey?: string
 }
 
 /**
@@ -90,13 +92,15 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   initialWidth = 1200,
   initialHeight = 800,
   minWidth = 600,
-  minHeight = 400
+  minHeight = 400,
+  storageKey
 }) => {
   // Drag & Resize 기능
   const modal = useModalDragResize({
     initialWidth,
     initialHeight,
     minWidth,
+    storageKey,
     minHeight
   })
 

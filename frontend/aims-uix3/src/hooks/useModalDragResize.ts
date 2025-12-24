@@ -32,6 +32,8 @@ interface UseModalDragResizeOptions {
   minHeight?: number
   maxWidth?: number
   maxHeight?: number
+  /** localStorage 저장 키 (위치/크기 자동 영속화) */
+  storageKey?: string
 }
 
 interface UseModalDragResizeReturn {
@@ -89,24 +91,54 @@ export const useModalDragResize = (
     minWidth = 600,
     minHeight = 400,
     maxWidth = window.innerWidth * 0.95,
-    maxHeight = window.innerHeight * 0.95
+    maxHeight = window.innerHeight * 0.95,
+    storageKey
   } = options
 
-  // 초기 위치 계산 (중앙)
-  const initialPosition = {
+  // localStorage에서 저장된 위치/크기 로드
+  const loadSavedState = () => {
+    if (!storageKey) return null
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.position && parsed.size) {
+          const { x, y } = parsed.position
+          // 화면 범위 내인지 확인
+          if (x >= 0 && y >= 0 && x < window.innerWidth - 100 && y < window.innerHeight - 100) {
+            return parsed
+          }
+        }
+      }
+    } catch {
+      // 무시
+    }
+    return null
+  }
+
+  const savedState = loadSavedState()
+
+  // 초기 위치 (저장된 값 또는 중앙)
+  const initialPosition = savedState?.position ?? {
     x: (window.innerWidth - initialWidth) / 2,
     y: (window.innerHeight - initialHeight) / 2
   }
 
-  // 초기값 저장 (리셋용)
+  // 초기 크기 (저장된 값 또는 기본값)
+  const initialSize = savedState?.size ?? { width: initialWidth, height: initialHeight }
+
+  // 초기값 저장 (리셋용) - 항상 기본값 사용
   const initialValuesRef = useRef({
-    position: initialPosition,
+    position: {
+      x: (window.innerWidth - initialWidth) / 2,
+      y: (window.innerHeight - initialHeight) / 2
+    },
     size: { width: initialWidth, height: initialHeight }
   })
 
   const [state, setState] = useState<ModalDragResizeState>({
     position: initialPosition,
-    size: { width: initialWidth, height: initialHeight },
+    size: initialSize,
     isDragging: false,
     isResizing: false,
     resizeHandle: null,
@@ -117,6 +149,21 @@ export const useModalDragResize = (
 
   const dragStartRef = useRef({ x: 0, y: 0 })
   const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 })
+
+  // 위치/크기 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!storageKey) return
+    // 드래그/리사이즈 중에는 저장하지 않음 (완료 후 저장)
+    if (state.isDragging || state.isResizing) return
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        position: state.position,
+        size: state.size
+      }))
+    } catch {
+      // 무시
+    }
+  }, [storageKey, state.position, state.size, state.isDragging, state.isResizing])
 
   // 초기값과 다른지 확인 (크기만 비교)
   const isResizedFromDefault =

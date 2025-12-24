@@ -355,11 +355,30 @@ interface DataStats {
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup = false }) => {
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  // 대화 내용 (localStorage 영속화 - F5 새로고침 시 유지)
+  const [messages, setMessages] = useState<DisplayMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem('aims-chat-messages');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // 무시
+    }
+    return [];
+  });
   const [input, setInput] = useState('');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // 세션 ID (localStorage 영속화)
+  const [sessionId, setSessionId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('aims-chat-session-id');
+    } catch {
+      return null;
+    }
+  });
   const [showSessionList, setShowSessionList] = useState(false);
   // 분리 모드 (독립 모달) - 팝업 모드에서는 항상 false
   const [isDetached, setIsDetached] = useState(() => {
@@ -393,6 +412,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // messages 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('aims-chat-messages', JSON.stringify(messages));
+    } catch {
+      // 무시
+    }
+  }, [messages]);
+
+  // sessionId 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      if (sessionId) {
+        localStorage.setItem('aims-chat-session-id', sessionId);
+      } else {
+        localStorage.removeItem('aims-chat-session-id');
+      }
+    } catch {
+      // 무시
+    }
+  }, [sessionId]);
 
   // 분리/도킹 토글
   const handleToggleDetach = useCallback(() => {
@@ -1790,6 +1831,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           className="chat-panel-modal"
           escapeToClose={false}
           backdropClosable={false}
+          storageKey="aims-chat-panel-position"
         >
           <div className="chat-panel chat-panel--detached">
             {detachedPanelContent}
