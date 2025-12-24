@@ -25,10 +25,8 @@ import { BatchUploadApi } from './api/batchUploadApi'
 import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
-import { checkStorageWithInfo, calculatePartialUpload } from '@/shared/lib/fileValidation'
-import { errorReporter } from '@/shared/lib/errorReporter'
+import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
 import type { FolderMapping, DuplicateAction } from './types'
-import { TIER_LIMITS } from './types'
 import './BatchDocumentUploadView.css'
 
 // ==================== SessionStorage 관련 ====================
@@ -173,8 +171,9 @@ export default function BatchDocumentUploadView({
     handleDuplicateAction,
   } = useBatchUpload()
 
-  // 현재 사용자의 등급별 배치 업로드 한도 (임시: 일반 등급)
-  const tierLimit = TIER_LIMITS.STANDARD.maxBatchUpload
+  // 현재 사용자의 등급별 배치 업로드 한도 (API에서 조회)
+  // -1이면 무제한, 0이면 아직 로드되지 않음
+  const tierLimit = storageInfo?.max_batch_upload_bytes ?? 0
 
   // 초기화 시 sessionStorage에서 상태 복원
   useEffect(() => {
@@ -212,9 +211,12 @@ export default function BatchDocumentUploadView({
     saveToSessionStorage(step, customers, folderMappings, Array.from(expandedPaths))
   }, [step, customers, folderMappings, expandedPaths])
 
-  // 고객 목록 로드
+  // 고객 목록 및 스토리지 정보 로드
   useEffect(() => {
-    if (visible && customers.length === 0) {
+    if (!visible) return
+
+    // 고객 목록 로드
+    if (customers.length === 0) {
       setIsLoadingCustomers(true)
       BatchUploadApi.getCustomersForMatching()
         .then((result) => {
@@ -226,7 +228,18 @@ export default function BatchDocumentUploadView({
           setIsLoadingCustomers(false)
         })
     }
-  }, [visible, customers.length])
+
+    // 스토리지 정보 로드 (티어별 제한값 포함)
+    if (!storageInfo) {
+      getMyStorageInfo()
+        .then((info) => {
+          setStorageInfo(info)
+        })
+        .catch((error) => {
+          console.error('스토리지 정보 조회 실패:', error)
+        })
+    }
+  }, [visible, customers.length, storageInfo])
 
   // 업로드 완료 감지
   useEffect(() => {
@@ -234,8 +247,6 @@ export default function BatchDocumentUploadView({
       setStep('complete')
     }
   }, [progress.state])
-
-  // calculatePartialUpload는 공통 모듈에서 import (@/shared/lib/fileValidation)
 
   /**
    * 용량 내 파일만 필터링하여 mappings 생성
@@ -259,6 +270,12 @@ export default function BatchDocumentUploadView({
   }, [])
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
+    // 스토리지 정보가 로드되지 않았으면 대기
+    if (!storageInfo) {
+      console.warn('[BatchUpload] Storage info not loaded yet')
+      return
+    }
+
     // 1. 파일을 폴더별로 그룹화 (고객명 확인을 위해 customers 전달)
     const fileGroups = groupFilesByFolder(files, customers)
 
@@ -267,7 +284,7 @@ export default function BatchDocumentUploadView({
       return
     }
 
-    // 2. 파일 검증
+    // 2. 파일 검증 (tierLimit: -1이면 무제한)
     const allFiles = Array.from(fileGroups.values()).flat()
     const validation = validateBatch(allFiles, tierLimit)
 
@@ -284,36 +301,26 @@ export default function BatchDocumentUploadView({
     const mappings = createFolderMappings(fileGroups, customers)
 
     // 4. 스토리지 용량 체크 (공통 모듈 사용)
-    try {
-      const storage = await getMyStorageInfo()
-      console.log('[BatchUpload] Storage info:', storage)
-      setStorageInfo(storage)
+    // storageInfo는 이미 로드됨
+    const storageCheck = checkStorageWithInfo(allFiles, storageInfo)
 
-      // 공통 모듈로 스토리지 검사
-      const storageCheck = checkStorageWithInfo(allFiles, storage)
+    // 용량 초과 시 다이얼로그 표시
+    if (!storageCheck.canUpload) {
+      console.log('[BatchUpload] Storage exceeded, showing dialog')
 
-      // 용량 초과 시 다이얼로그 표시
-      if (!storageCheck.canUpload) {
-        console.log('[BatchUpload] Storage exceeded, showing dialog')
+      // 상태 저장 (나중에 일부만 업로드 시 사용)
+      setPendingFiles(allFiles)
+      setPendingMappings(mappings)
 
-        // 상태 저장 (나중에 일부만 업로드 시 사용)
-        setPendingFiles(allFiles)
-        setPendingMappings(mappings)
-
-        setStorageExceededInfo({
-          selectedFilesSize: storageCheck.requestedBytes,
-          selectedFilesCount: allFiles.length,
-          partialUploadInfo: storageCheck.partialUploadInfo
-            ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
-            : null
-        })
-        setShowStorageExceededDialog(true)
-        return // preview 단계로 이동하지 않음
-      }
-    } catch (error) {
-      console.error('스토리지 정보 조회 실패:', error)
-      errorReporter.reportApiError(error as Error, { component: 'BatchDocumentUploadView.handleFilesReady.getStorage' })
-      // 에러 시에도 정상 진행 (서버에서 최종 검증)
+      setStorageExceededInfo({
+        selectedFilesSize: storageCheck.requestedBytes,
+        selectedFilesCount: allFiles.length,
+        partialUploadInfo: storageCheck.partialUploadInfo
+          ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
+          : null
+      })
+      setShowStorageExceededDialog(true)
+      return // preview 단계로 이동하지 않음
     }
 
     // 5. 정상 진행
@@ -326,7 +333,7 @@ export default function BatchDocumentUploadView({
     if (mappings.length > 0) {
       setStep('preview')
     }
-  }, [tierLimit, customers])
+  }, [tierLimit, customers, storageInfo])
 
   const handleBack = useCallback(() => {
     setStep('select')
@@ -418,11 +425,11 @@ export default function BatchDocumentUploadView({
           <div className="batch-upload-content">
             <FolderDropZone
               onFilesSelected={handleFilesSelected}
-              disabled={isLoadingCustomers}
+              disabled={isLoadingCustomers || !storageInfo}
             />
-            {isLoadingCustomers && (
+            {(isLoadingCustomers || !storageInfo) && (
               <div className="batch-upload-loading">
-                <span>고객 목록을 불러오는 중...</span>
+                <span>{isLoadingCustomers ? '고객 목록을 불러오는 중...' : '스토리지 정보를 불러오는 중...'}</span>
               </div>
             )}
             {validationErrors.length > 0 && (

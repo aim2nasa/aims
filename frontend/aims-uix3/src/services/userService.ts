@@ -116,6 +116,8 @@ export interface StorageInfo {
   ocr_used_this_month: number
   ocr_remaining: number
   ocr_is_unlimited: boolean
+  // 일괄 업로드 제한 (bytes, -1이면 무제한)
+  max_batch_upload_bytes: number
 }
 
 /**

@@ -19,13 +19,15 @@ function toUserIdQuery(userId) {
   return isObjectId ? new ObjectId(idStr) : idStr;
 }
 
+const MB = 1024 * 1024;
+
 // 기본 티어 정의 (DB에 없을 때 사용)
 const DEFAULT_TIER_DEFINITIONS = {
-  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, description: '체험 사용자' },
-  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, description: '기본 등급' },
-  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, description: '프리미엄 구독자' },
-  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, description: 'VIP 고객' },
-  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, description: '무제한' }
+  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, max_batch_upload_bytes: 100 * MB, description: '체험 사용자' },
+  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, max_batch_upload_bytes: 500 * MB, description: '기본 등급' },
+  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, max_batch_upload_bytes: 1 * GB, description: '프리미엄 구독자' },
+  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, max_batch_upload_bytes: 2 * GB, description: 'VIP 고객' },
+  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, max_batch_upload_bytes: -1, description: '무제한' }
 };
 
 // 캐싱된 티어 정의 (성능 최적화)
@@ -33,7 +35,7 @@ let cachedTierDefinitions = null;
 let cacheExpiry = 0;
 const CACHE_TTL = 60000; // 1분 캐시
 
-const DEFAULT_TIER = 'standard';
+const DEFAULT_TIER = 'free_trial';
 
 /**
  * DB에서 티어 정의 로드 (캐싱 적용)
@@ -226,6 +228,9 @@ async function getUserStorageInfo(db, userId) {
   // 실시간 OCR 사용량 계산
   const ocrUsedThisMonth = await calculateUserOcrUsageThisMonth(db, userId);
 
+  // 일괄 업로드 제한
+  const maxBatchUploadBytes = isAdmin ? -1 : (tierDef.max_batch_upload_bytes ?? 100 * MB);
+
   return {
     tier,
     tierName: tierDef.name,
@@ -239,7 +244,9 @@ async function getUserStorageInfo(db, userId) {
     ocr_quota: ocrQuota,
     ocr_used_this_month: ocrUsedThisMonth,
     ocr_remaining: ocrQuota === -1 ? -1 : Math.max(0, ocrQuota - ocrUsedThisMonth),
-    ocr_is_unlimited: ocrQuota === -1
+    ocr_is_unlimited: ocrQuota === -1,
+    // 일괄 업로드 제한
+    max_batch_upload_bytes: maxBatchUploadBytes
   };
 }
 

@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
+const { DEFAULT_TIER } = require('../lib/storageQuotaService');
 
 /**
  * 라우트 설정 함수
@@ -181,7 +182,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           name: user.name || '-',
           email: user.email || '-',
           role: user.role,
-          tier: user.storage?.tier || 'free_trial',
+          tier: user.storage?.tier || DEFAULT_TIER,
           document_count: docCountMap.get(user._id.toString()) || 0,
           customer_count: customerCountMap.get(user._id.toString()) || 0,
           ai_tokens_30d: aiTokenMap.get(user._id.toString()) || 0,

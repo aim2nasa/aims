@@ -16,6 +16,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { authenticateJWTWithQuery } = require('../middleware/auth');
 const backendLogger = require('../lib/backendLogger');
+const { DEFAULT_TIER } = require('../lib/storageQuotaService');
 
 // 첨부파일 저장 경로
 const INQUIRY_FILES_PATH = '/data/files/inquiries';
@@ -1079,7 +1080,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
             _id: user._id,
             name: user.name,
             email: user.email,
-            tier: user.tier,
+            tier: user.storage?.tier || DEFAULT_TIER,
             createdAt: user.createdAt
           } : null
         }

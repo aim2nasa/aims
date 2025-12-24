@@ -7,6 +7,7 @@ const KakaoStrategy = require('passport-kakao').Strategy;
 const NaverStrategy = require('passport-naver-v2').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const backendLogger = require('../lib/backendLogger');
+const { DEFAULT_TIER } = require('../lib/storageQuotaService');
 
 module.exports = function(db) {
   const usersCollection = db.collection('users');
@@ -59,7 +60,8 @@ module.exports = function(db) {
           oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'kakao',
-          hasOcrPermission: false,  // 🆕 OCR 권한 (기본값: 불가)
+          storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
+          hasOcrPermission: true,  // OCR 권한 (기본값: 허용)
           profileCompleted: false,  // 프로필 미완료
           createdAt: new Date(),
           lastLogin: new Date()
@@ -138,7 +140,8 @@ module.exports = function(db) {
           oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'naver',
-          hasOcrPermission: false,
+          storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
+          hasOcrPermission: true,
           profileCompleted: false,
           createdAt: new Date(),
           lastLogin: new Date()
@@ -217,7 +220,8 @@ module.exports = function(db) {
           oauthProfile: { name, email, avatarUrl },  // 소셜 로그인에서 받아온 정보 보관
           role: 'user',
           authProvider: 'google',
-          hasOcrPermission: false,
+          storage: { tier: DEFAULT_TIER, updated_at: new Date() },  // 기본 등급 설정
+          hasOcrPermission: true,
           profileCompleted: false,
           createdAt: new Date(),
           lastLogin: new Date()
