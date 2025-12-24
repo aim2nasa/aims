@@ -7,6 +7,8 @@
  * - get_failed_queries: 실패한 검색 쿼리 분석
  * - submit_search_feedback: 검색 피드백 제출
  *
+ * 주의: 이 테스트들은 aims_rag_api 서비스가 실행 중이어야 합니다.
+ *
  * 실행 방법:
  *   npm run test:e2e -- --testPathPattern="phase5-rag"
  */
@@ -20,17 +22,36 @@ import {
   checkAllServers
 } from '../../test-utils/index.js';
 
+// RAG API 가용성 체크
+async function checkRagApiAvailable(): Promise<boolean> {
+  try {
+    const ragApiUrl = process.env.RAG_API_URL || 'http://localhost:8003';
+    const response = await fetch(`${ragApiUrl}/health`, { signal: AbortSignal.timeout(3000) });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 describe('Phase 5: RAG 검색 도구 테스트', () => {
   let ctx: TestContext;
   let mcp: MCPTestClient;
   let serversAvailable = false;
+  let ragApiAvailable = false;
 
   beforeAll(async () => {
     const status = await checkAllServers();
     serversAvailable = status.allAvailable;
 
     if (!serversAvailable) {
-      console.warn(`⚠️ 서버 연결 불가. 테스트를 건너뜁니다.`);
+      console.warn(`⚠️ MCP/API 서버 연결 불가. 테스트를 건너뜁니다.`);
+      return;
+    }
+
+    // RAG API 가용성 체크
+    ragApiAvailable = await checkRagApiAvailable();
+    if (!ragApiAvailable) {
+      console.warn(`⚠️ RAG API(aims_rag_api) 연결 불가. Phase 5 테스트를 건너뜁니다.`);
       return;
     }
 
@@ -50,7 +71,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
 
   describe('5.1 시맨틱 문서 검색', () => {
     it('search_documents_semantic: 기본 검색', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         query: string;
@@ -76,7 +97,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('search_documents_semantic: 키워드 모드', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         query: string;
@@ -91,7 +112,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('search_documents_semantic: 결과 수 제한', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         results: Array<unknown>;
@@ -104,7 +125,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('search_documents_semantic: 빈 쿼리 오류', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.callRaw('search_documents_semantic', {
         query: ''
@@ -114,7 +135,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('search_documents_semantic: 특수 문자 쿼리', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       // 특수 문자가 포함된 쿼리도 처리 가능해야 함
       const result = await mcp.call<{
@@ -129,7 +150,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('search_documents_semantic: 긴 쿼리 처리', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const longQuery = '이 고객의 자동차 보험 계약에서 대인배상 및 대물배상 한도액과 자기차량손해 가입 여부를 확인하고 싶습니다';
 
@@ -150,7 +171,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
 
   describe('5.2 검색 통계', () => {
     it('get_search_analytics: 기본 통계 조회', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         period: string;
@@ -170,7 +191,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('get_search_analytics: 기간 지정', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         period: string;
@@ -182,7 +203,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('get_search_analytics: 최대 기간', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         period: string;
@@ -200,7 +221,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
 
   describe('5.3 실패한 검색 쿼리', () => {
     it('get_failed_queries: 기본 조회', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         totalFailedQueries: number;
@@ -219,7 +240,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('get_failed_queries: 개수 제한', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         queries: Array<unknown>;
@@ -237,7 +258,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
 
   describe('5.4 검색 피드백', () => {
     it('submit_search_feedback: 피드백 제출', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       // 먼저 검색을 수행하여 queryId를 얻어야 하지만,
       // 현재 API가 queryId를 반환하지 않으므로 가상 ID로 테스트
@@ -258,7 +279,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('submit_search_feedback: 최소 평점', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         rating: number;
@@ -271,7 +292,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('submit_search_feedback: 최대 평점', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.call<{
         rating: number;
@@ -285,7 +306,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('submit_search_feedback: 범위 초과 평점 오류', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.callRaw('submit_search_feedback', {
         queryId: 'test-query-id',
@@ -296,7 +317,7 @@ describe('Phase 5: RAG 검색 도구 테스트', () => {
     });
 
     it('submit_search_feedback: queryId 누락 오류', async () => {
-      if (!serversAvailable) return;
+      if (!serversAvailable || !ragApiAvailable) return;
 
       const result = await mcp.callRaw('submit_search_feedback', {
         rating: 3

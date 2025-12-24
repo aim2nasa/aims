@@ -83,19 +83,20 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
       });
     });
 
-    describe('toString() 최적화', () => {
-      it('ID 변환 후 재사용 (첫 번째 루프)', () => {
-        expect(sourceCode).toContain('const sourceId = rel.source_customer_id?.toString()');
-        expect(sourceCode).toContain('const targetId = rel.target_customer_id?.toString()');
-      });
-
-      it('최적화 주석 존재', () => {
-        expect(sourceCode).toContain('toString() 한 번만 호출하여 최적화');
+    describe('relationship_info 구조 사용', () => {
+      it('ID 변환 후 재사용', () => {
+        expect(sourceCode).toContain('const fromId = rel.relationship_info?.from_customer_id?.toString()');
+        expect(sourceCode).toContain('const toId = rel.relationship_info?.to_customer_id?.toString()');
       });
 
       it('변환된 ID로 비교', () => {
-        expect(sourceCode).toContain('sourceId !== params.customerId');
-        expect(sourceCode).toContain('targetId !== params.customerId');
+        expect(sourceCode).toContain('fromId !== params.customerId');
+        expect(sourceCode).toContain('toId !== params.customerId');
+      });
+
+      it('relationship_info 내부 필드로 쿼리', () => {
+        expect(sourceCode).toContain("'relationship_info.from_customer_id': objectId");
+        expect(sourceCode).toContain("'relationship_info.to_customer_id': objectId");
       });
     });
   });

@@ -118,10 +118,10 @@ describe('MCP 소스 코드 검증', () => {
       });
 
       it('기존 메모에 append하는 로직이 있어야 함', () => {
-        expect(sourceCode).toContain('existingMemo');
+        expect(sourceCode).toContain('currentMemo');
         expect(sourceCode).toContain('updatedMemo');
         // 기존 메모 + 새 메모 병합
-        expect(sourceCode).toMatch(/existingMemo[\s\S]*?newMemoLine/);
+        expect(sourceCode).toMatch(/currentMemo[\s\S]*?newMemoLine/);
       });
 
       it('타임스탬프 형식으로 메모를 추가해야 함', () => {
@@ -215,7 +215,7 @@ describe('MCP 소스 코드 검증', () => {
       });
     });
 
-    describe('에러 로깅 (디버깅용)', () => {
+    describe('에러 로깅', () => {
       it('[MCP] 접두사로 로깅', () => {
         expect(customersSource).toContain("console.error('[MCP]");
       });
@@ -231,8 +231,8 @@ describe('MCP 소스 코드 검증', () => {
         expect(customersSource).toContain(', error)');
       });
 
-      it('디버깅용 주석', () => {
-        expect(customersSource).toContain('에러 로깅 (디버깅용)');
+      it('에러 로깅 주석', () => {
+        expect(customersSource).toContain('// 에러 로깅');
       });
     });
   });
@@ -243,7 +243,7 @@ describe('MCP 소스 코드 검증', () => {
       // delete_customer_memo는 deprecated되어 단순 에러 반환만 함
       { name: 'memos.ts', handlers: ['add_customer_memo', 'list_customer_memos'] },
       { name: 'birthdays.ts', handlers: ['find_birthday_customers'] },
-      { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details'] },
+      { name: 'contracts.ts', handlers: ['list_contracts', 'get_contract_details', 'create_contract'] },
       { name: 'documents.ts', handlers: ['search_documents', 'get_document', 'list_customer_documents'] },
       { name: 'expiring.ts', handlers: ['find_expiring_contracts'] },
       { name: 'network.ts', handlers: ['get_customer_network'] },
@@ -295,7 +295,7 @@ describe('MCP 소스 코드 검증', () => {
 
         it(`${name}에서 에러 로깅 주석`, () => {
           const source = readSourceFile(`./tools/${name}`);
-          expect(source).toContain('에러 로깅 (디버깅용)');
+          expect(source).toContain('// 에러 로깅');
         });
       });
     });

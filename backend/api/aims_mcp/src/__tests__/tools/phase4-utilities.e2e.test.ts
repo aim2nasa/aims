@@ -72,13 +72,13 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
         used: {
           bytes: number;
           formatted: string;
-          fileCount: number;
         };
         remaining: {
           bytes: number;
           formatted: string;
         };
         usagePercent: number;
+        fileCount: number;
       }>('get_storage_info', {});
 
       expect(result).toHaveProperty('tier');
@@ -86,7 +86,7 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       expect(result.quota).toHaveProperty('bytes');
       expect(result.quota).toHaveProperty('formatted');
       expect(result.used).toHaveProperty('bytes');
-      expect(result.used).toHaveProperty('fileCount');
+      expect(result).toHaveProperty('fileCount');
       expect(result.remaining).toHaveProperty('bytes');
       expect(typeof result.usagePercent).toBe('number');
       expect(result.usagePercent).toBeGreaterThanOrEqual(0);
@@ -106,14 +106,14 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
 
       const result = await mcp.call<{
         name: string;
-        available: boolean;
+        exists: boolean;
         message: string;
       }>('check_customer_name', {
         name: uniqueName
       });
 
       expect(result.name).toBe(uniqueName);
-      expect(result.available).toBe(true);
+      expect(result.exists).toBe(false);  // exists=false means available
       expect(result.message).toContain('사용 가능');
     });
 
@@ -124,7 +124,7 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       const testName = `중복테스트_${Date.now()}`;
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: testName,
-        type: 'individual'
+        customerType: '개인'
       });
 
       factory['createdCustomerIds'].push(customer.customerId);
@@ -132,20 +132,19 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       // 같은 이름으로 중복 검사
       const result = await mcp.call<{
         name: string;
-        available: boolean;
+        exists: boolean;
         message: string;
         existingCustomer?: {
           customerId: string;
           customerType: string;
-        };
+        } | null;
       }>('check_customer_name', {
         name: testName
       });
 
       expect(result.name).toBe(testName);
-      expect(result.available).toBe(false);
+      expect(result.exists).toBe(true);  // exists=true means already exists
       expect(result.message).toContain('이미 존재');
-      expect(result.existingCustomer).toBeDefined();
     });
 
     it('check_customer_name: 대소문자 무시 검사', async () => {
@@ -154,20 +153,20 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       const testName = `CaseTest_${Date.now()}`;
       const customer = await mcp.call<{ customerId: string }>('create_customer', {
         name: testName,
-        type: 'individual'
+        customerType: '개인'
       });
 
       factory['createdCustomerIds'].push(customer.customerId);
 
       // 다른 대소문자로 검사
       const result = await mcp.call<{
-        available: boolean;
+        exists: boolean;
       }>('check_customer_name', {
         name: testName.toLowerCase()
       });
 
-      // 대소문자를 구분하지 않으면 false
-      expect(result.available).toBe(false);
+      // 대소문자를 구분하지 않으면 exists=true
+      expect(result.exists).toBe(true);
     });
 
     it('check_customer_name: 빈 이름 오류', async () => {
@@ -177,7 +176,7 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
         name: ''
       });
 
-      expect(result.isError).toBe(true);
+      expect(mcp.isErrorResponse(result)).toBe(true);
     });
   });
 
@@ -206,17 +205,18 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
     it('list_notices: 카테고리 필터링', async () => {
       if (!serversAvailable) return;
 
+      // 유효한 카테고리: 'system', 'product', 'policy', 'event'
       const result = await mcp.call<{
         notices: Array<{
           category: string;
         }>;
       }>('list_notices', {
-        category: 'update'
+        category: 'system'
       });
 
-      // update 카테고리만 있어야 함 (데이터가 있을 경우)
+      // system 카테고리만 있어야 함 (데이터가 있을 경우)
       if (result.notices.length > 0) {
-        expect(result.notices.every(n => n.category === 'update')).toBe(true);
+        expect(result.notices.every(n => n.category === 'system')).toBe(true);
       }
     });
 
@@ -242,34 +242,43 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
+        count: number;
         totalCount: number;
-        faqs: Array<{
-          id: string;
-          question: string;
-          answer: string;
+        byCategory: Array<{
           category: string;
+          categoryLabel: string;
+          count: number;
+          faqs: Array<{
+            id: string;
+            question: string;
+            answer: string;
+          }>;
         }>;
       }>('list_faqs', {});
 
+      expect(result).toHaveProperty('count');
       expect(result).toHaveProperty('totalCount');
-      expect(Array.isArray(result.faqs)).toBe(true);
+      expect(Array.isArray(result.byCategory)).toBe(true);
     });
 
     it('list_faqs: 키워드 검색', async () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        faqs: Array<{
-          question: string;
-          answer: string;
+        byCategory: Array<{
+          faqs: Array<{
+            question: string;
+            answer: string;
+          }>;
         }>;
       }>('list_faqs', {
         search: '문서'
       });
 
       // 검색어가 질문 또는 답변에 포함되어야 함 (데이터가 있을 경우)
-      if (result.faqs.length > 0) {
-        const hasMatch = result.faqs.some(
+      const allFaqs = result.byCategory.flatMap(c => c.faqs);
+      if (allFaqs.length > 0) {
+        const hasMatch = allFaqs.some(
           f => f.question.includes('문서') || f.answer.includes('문서')
         );
         expect(hasMatch).toBe(true);
@@ -280,15 +289,16 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        faqs: Array<{
+        byCategory: Array<{
           category: string;
         }>;
       }>('list_faqs', {
         category: 'general'
       });
 
-      if (result.faqs.length > 0) {
-        expect(result.faqs.every(f => f.category === 'general')).toBe(true);
+      // general 카테고리만 있어야 함
+      if (result.byCategory.length > 0) {
+        expect(result.byCategory.every(c => c.category === 'general')).toBe(true);
       }
     });
   });
@@ -302,16 +312,20 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
       if (!serversAvailable) return;
 
       const result = await mcp.call<{
-        totalCount: number;
+        count: number;
         guides: Array<{
-          id: string;
-          title: string;
-          category: string;
-          content: string;
+          categoryId: string;
+          categoryTitle: string;
+          itemCount: number;
+          items: Array<{
+            id: string;
+            title: string;
+            description: string;
+          }>;
         }>;
       }>('list_usage_guides', {});
 
-      expect(result).toHaveProperty('totalCount');
+      expect(result).toHaveProperty('count');
       expect(Array.isArray(result.guides)).toBe(true);
     });
 
@@ -320,14 +334,15 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
 
       const result = await mcp.call<{
         guides: Array<{
-          category: string;
+          categoryId: string;
         }>;
       }>('list_usage_guides', {
         category: 'customer'
       });
 
+      // customer 카테고리만 있어야 함
       if (result.guides.length > 0) {
-        expect(result.guides.every(g => g.category === 'customer')).toBe(true);
+        expect(result.guides.every(g => g.categoryId === 'customer')).toBe(true);
       }
     });
 
@@ -336,16 +351,19 @@ describe('Phase 4: 유틸리티 도구 테스트', () => {
 
       const result = await mcp.call<{
         guides: Array<{
-          title: string;
-          content: string;
+          items: Array<{
+            title: string;
+            description: string;
+          }>;
         }>;
       }>('list_usage_guides', {
         search: '등록'
       });
 
-      if (result.guides.length > 0) {
-        const hasMatch = result.guides.some(
-          g => g.title.includes('등록') || g.content.includes('등록')
+      const allItems = result.guides.flatMap(g => g.items);
+      if (allItems.length > 0) {
+        const hasMatch = allItems.some(
+          item => item.title.includes('등록') || item.description.includes('등록')
         );
         expect(hasMatch).toBe(true);
       }

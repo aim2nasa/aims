@@ -118,10 +118,12 @@ async function checkServerHealth(): Promise<boolean> {
 // ============================================================
 
 describe('실제 사용자 시뮬레이션 E2E', () => {
+  let serverAvailable = false;
+
   // 서버 연결 확인
   beforeAll(async () => {
-    const isHealthy = await checkServerHealth();
-    if (!isHealthy) {
+    serverAvailable = await checkServerHealth();
+    if (!serverAvailable) {
       console.warn(`⚠️ MCP 서버 (${MCP_URL})에 연결할 수 없습니다. 테스트를 건너뜁니다.`);
     }
   });
@@ -131,6 +133,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('고객 관리', () => {
     it('사용자: "전체 고객 목록 보여줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_customers', {});
 
       expect(res.success).toBe(true);
@@ -143,6 +146,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "홍길동 고객 찾아줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_customers', { query: '홍길동' });
 
       expect(res.success).toBe(true);
@@ -154,6 +158,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "법인 고객만 보여줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_customers', { customerType: '법인' });
 
       expect(res.success).toBe(true);
@@ -169,6 +174,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "잘못된 ID로 고객 조회"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_customer', { customerId: 'invalid-id' });
 
       expect(res.success).toBe(true);
@@ -179,6 +185,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "필수 정보 없이 고객 등록" (에러 예상)', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('create_customer', {});
 
       expect(res.success).toBe(true);
@@ -195,6 +202,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('계약 관리', () => {
     it('사용자: "내 계약 목록 보여줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('list_contracts', {});
 
       expect(res.success).toBe(true);
@@ -206,6 +214,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "30일 이내 만기 예정 계약 찾아줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('find_expiring_contracts', { daysWithin: 30 });
 
       expect(res.success).toBe(true);
@@ -218,6 +227,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "12월에 생일인 고객 찾아줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('find_birthday_customers', { month: 12 });
 
       expect(res.success).toBe(true);
@@ -229,6 +239,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "잘못된 ID로 계약 상세 조회"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_contract_details', { contractId: 'invalid-id' });
 
       expect(res.success).toBe(true);
@@ -244,6 +255,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('문서/메모', () => {
     it('사용자: "보험증권 관련 문서 찾아줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_documents', { query: '보험증권' });
 
       expect(res.success).toBe(true);
@@ -254,6 +266,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "메모 추가해줘" (정보 부족 - 에러 예상)', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('add_customer_memo', {});
 
       expect(res.success).toBe(true);
@@ -265,6 +278,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "잘못된 메모 삭제" (에러 예상 - 기능 deprecated)', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('delete_customer_memo', { memoId: 'invalid-id' });
 
       expect(res.success).toBe(true);
@@ -281,6 +295,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('통계/분석', () => {
     it('사용자: "전체 현황 요약해줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_statistics', {});
 
       expect(res.success).toBe(true);
@@ -297,6 +312,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "월별 신규 현황 보여줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_statistics', { type: 'monthly_new' });
 
       expect(res.success).toBe(true);
@@ -315,6 +331,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "잘못된 고객 네트워크 조회"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_customer_network', { customerId: 'invalid-id' });
 
       expect(res.success).toBe(true);
@@ -330,6 +347,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('상품 조회', () => {
     it('사용자: "암보험 상품 찾아줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_products', { query: '암보험' });
 
       expect(res.success).toBe(true);
@@ -341,6 +359,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "삼성생명 상품만 보여줘"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_products', { insurerName: '삼성' });
 
       expect(res.success).toBe(true);
@@ -361,6 +380,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('에러 처리', () => {
     it('필수 필드 누락 시 한글 에러 메시지', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('get_customer', {});
 
       expect(res.success).toBe(true);
@@ -374,6 +394,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('잘못된 이메일 형식 에러', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('create_customer', {
         name: '테스트',
         email: 'invalid-email'
@@ -387,6 +408,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('존재하지 않는 고객 조회', async () => {
+      if (!serverAvailable) return;
       // 유효한 ObjectId 형식이지만 존재하지 않는 ID
       const res = await callTool('get_customer', {
         customerId: '507f1f77bcf86cd799439011'
@@ -400,6 +422,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('잘못된 고객 유형', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_customers', {
         customerType: '기타' as '개인' | '법인'
       });
@@ -417,6 +440,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
   // --------------------------------------------------------
   describe('복합 시나리오', () => {
     it('사용자: "서울 지역 개인 고객 중 활성 상태인 고객"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('search_customers', {
         customerType: '개인',
         status: 'active',
@@ -431,6 +455,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "계약 검색 - 특정 상품명 포함"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('list_contracts', {
         search: '종신보험'
       });
@@ -443,6 +468,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('사용자: "1년 내 만기 계약 전체 조회"', async () => {
+      if (!serverAvailable) return;
       const res = await callTool('find_expiring_contracts', { daysWithin: 365 });
 
       expect(res.success).toBe(true);
@@ -488,6 +514,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     }
 
     it('MCP로 추가한 메모가 프론트엔드 API에서 조회 가능해야 함', async () => {
+      if (!serverAvailable) return;
       // 1. 고객 검색으로 테스트 대상 찾기
       const searchRes = await callTool('search_customers', { limit: 1 });
       expect(searchRes.success).toBe(true);
@@ -519,6 +546,7 @@ describe('실제 사용자 시뮬레이션 E2E', () => {
     });
 
     it('MCP 메모 조회 결과가 프론트엔드 API와 일치해야 함', async () => {
+      if (!serverAvailable) return;
       // 1. 고객 검색
       const searchRes = await callTool('search_customers', { limit: 1 });
       const searchData = parseResult(searchRes) as { customers: Array<{ id: string }> };
