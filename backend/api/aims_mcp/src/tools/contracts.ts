@@ -13,7 +13,7 @@ export const listContractsSchema = z.object({
 });
 
 export const getContractDetailsSchema = z.object({
-  contractId: z.string().describe('계약 ID')
+  policyNumber: z.string().describe('증권번호')
 });
 
 export const createContractSchema = z.object({
@@ -45,13 +45,13 @@ export const contractToolDefinitions = [
   },
   {
     name: 'get_contract_details',
-    description: '계약의 상세 정보를 조회합니다. 피보험자, 수익자, 특약 등 모든 정보를 포함합니다.',
+    description: '계약의 상세 정보를 조회합니다. 증권번호로 검색합니다. 피보험자, 수익자, 특약 등 모든 정보를 포함합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        contractId: { type: 'string', description: '계약 ID' }
+        policyNumber: { type: 'string', description: '증권번호' }
       },
-      required: ['contractId']
+      required: ['policyNumber']
     }
   },
   {
@@ -180,29 +180,36 @@ export async function handleGetContractDetails(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    const objectId = toSafeObjectId(params.contractId);
-    if (!objectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 계약 ID입니다.' }]
-      };
-    }
-
     // agent_id 필터 (ObjectId 또는 string)
     const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
 
-    const contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
-      _id: objectId,
+    // 증권번호로 검색 (정확히 일치 또는 포함)
+    const policyNumber = params.policyNumber.trim();
+
+    // 먼저 정확히 일치하는 계약 검색
+    let contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
+      policy_number: policyNumber,
       $or: [
         { agent_id: agentObjectId },
         { agent_id: userId }
       ]
     });
 
+    // 정확히 일치하지 않으면 포함 검색
+    if (!contract) {
+      contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
+        policy_number: { $regex: escapeRegex(policyNumber), $options: 'i' },
+        $or: [
+          { agent_id: agentObjectId },
+          { agent_id: userId }
+        ]
+      });
+    }
+
     if (!contract) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '계약을 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: `증권번호 "${policyNumber}"에 해당하는 계약을 찾을 수 없습니다.` }]
       };
     }
 
