@@ -128,11 +128,11 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
     return null
   }
 
-  // 툴팁 콘텐츠
-  const storageTooltip = `저장공간: ${formatFileSize(storageInfo.used_bytes)} / ${storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)} (${Math.round(storagePercent)}%)`
+  // 툴팁 콘텐츠 (소수점 2자리까지 표시)
+  const storageTooltip = `저장공간: ${formatFileSize(storageInfo.used_bytes)} / ${storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)} (${storagePercent.toFixed(2)}%)`
 
   const ocrTooltip = storageInfo.has_ocr_permission
-    ? `OCR: ${storageInfo.ocr_used_this_month}회 / ${storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회`} (${Math.round(ocrPercent)}%)`
+    ? `OCR: ${storageInfo.ocr_used_this_month}회 / ${storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_quota}회`} (${ocrPercent.toFixed(2)}%)`
     : 'OCR 권한 없음'
 
   return (
