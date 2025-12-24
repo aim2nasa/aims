@@ -89,7 +89,14 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "오늘 할 일" 질문 → suggest_next_action 사용
 - "문서 찾아줘" 질문 → search_documents_semantic (의미 검색) 사용
 - "휴면 고객" 질문 → search_customers (status: "inactive") 사용
-- "삭제된 고객" 질문 → list_deleted_customers 사용`;
+- "삭제된 고객" 질문 → list_deleted_customers 사용
+
+## 목록 조회 규칙 (페이지네이션)
+- 고객/계약/문서 목록 조회 시 한 번에 최대 10개만 표시합니다.
+- 응답에 "전체 N개 중 1~10번째입니다"와 같이 안내합니다.
+- hasMore가 true이면 "더 보시겠습니까?"라고 물어봅니다.
+- 사용자가 "더 보여줘", "계속" 등을 말하면 offset을 증가시켜 다음 페이지를 조회합니다.
+- 예: 처음 조회 offset=0, 다음 offset=10, 그 다음 offset=20`;
 
 // GPT-4o 비용 (TOKEN_COSTS에 없는 경우를 위해)
 const GPT4O_COSTS = { input: 0.0025, output: 0.01 };  // per 1K tokens

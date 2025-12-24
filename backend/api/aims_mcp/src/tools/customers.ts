@@ -11,7 +11,8 @@ export const searchCustomersSchema = z.object({
   customerType: z.enum(['개인', '법인']).optional().describe('고객 유형'),
   status: z.enum(['active', 'inactive', 'all']).optional().default('active').describe('상태'),
   region: z.string().optional().describe('지역 (시/도)'),
-  limit: z.number().optional().default(20).describe('결과 개수 제한')
+  limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10, 최대: 50)'),
+  offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
 });
 
 export const getCustomerSchema = z.object({
@@ -169,10 +170,15 @@ export async function handleSearchCustomers(args: unknown) {
       filter['personal_info.address.address1'] = { $regex: escapeRegex(normalizedRegion), $options: 'i' };
     }
 
+    // limit 최대 50 제한, offset 적용
+    const limit = Math.min(params.limit || 10, 50);
+    const offset = params.offset || 0;
+
     const customers = await db.collection(COLLECTIONS.CUSTOMERS)
       .find(filter)
       .sort({ 'meta.created_at': -1 })
-      .limit(params.limit || 20)
+      .skip(offset)
+      .limit(limit)
       .project({
         _id: 1,
         'personal_info.name': 1,
@@ -186,6 +192,7 @@ export async function handleSearchCustomers(args: unknown) {
       .toArray();
 
     const totalCount = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments(filter);
+    const hasMore = offset + customers.length < totalCount;
 
     return {
       content: [{
@@ -193,6 +200,9 @@ export async function handleSearchCustomers(args: unknown) {
         text: JSON.stringify({
           count: customers.length,
           totalCount,
+          offset,
+          limit,
+          hasMore,
           customers: customers.map(c => ({
             id: c._id.toString(),
             name: c.personal_info?.name,
