@@ -27,6 +27,33 @@ export {
   type Relationship
 } from './test-data.js';
 
+// Fixtures
+export {
+  loadCustomers,
+  loadContracts,
+  loadRelationships,
+  loadDocuments,
+  loadAllFixtures,
+  getFilePath,
+  getFileBuffer,
+  listSampleFiles,
+  findCustomer,
+  getContractsForCustomer,
+  getDocumentsForCustomer,
+  getRelationshipsForCustomer,
+  getExpiringContracts,
+  getCustomersByBirthMonth,
+  getFamilyScenario,
+  getCorporateScenario,
+  getAnnualReportScenario,
+  fixtures,
+  type CustomerFixture,
+  type ContractFixture,
+  type RelationshipFixture,
+  type DocumentFixture,
+  type FixtureData
+} from '../__tests__/fixtures/index.js';
+
 // 설정 및 유틸리티
 export {
   TEST_CONFIG,

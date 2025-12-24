@@ -12,6 +12,18 @@
 
 import { MCPTestClient } from './mcp-client.js';
 import { APITestClient } from './api-client.js';
+import {
+  loadCustomers,
+  loadContracts,
+  loadRelationships,
+  loadDocuments,
+  getFilePath,
+  getFileBuffer,
+  type CustomerFixture,
+  type ContractFixture,
+  type RelationshipFixture,
+  type DocumentFixture
+} from '../__tests__/fixtures/index.js';
 
 // ============================================================
 // 타입 정의
@@ -272,15 +284,45 @@ export class TestDataFactory {
   // --------------------------------------------------------
 
   /**
-   * 고객 관계 생성 (API 사용)
-   * 주의: /api/customer-relationships 엔드포인트가 현재 없음
+   * 고객 관계 생성 (MCP 사용)
    */
   async createRelationship(
-    _customerId1: string,
-    _customerId2: string,
-    _relationshipType: string
+    customerId1: string,
+    customerId2: string,
+    relationshipType: string,
+    category: 'family' | 'social' | 'professional' = 'family'
   ): Promise<Relationship> {
-    throw new Error('customer-relationships API endpoint not available');
+    const result = await this.mcp.call<{
+      success: boolean;
+      relationshipId: string;
+      message: string;
+    }>('create_relationship', {
+      fromCustomerId: customerId1,
+      toCustomerId: customerId2,
+      relationshipType,
+      category
+    });
+
+    if (result.relationshipId) {
+      this.createdRelationshipIds.push(result.relationshipId);
+    }
+
+    return {
+      _id: result.relationshipId,
+      customerId1,
+      customerId2,
+      relationshipType
+    };
+  }
+
+  /**
+   * 관계 삭제 (MCP 사용)
+   */
+  async deleteRelationship(customerId: string, relationshipId: string): Promise<void> {
+    await this.mcp.call('delete_relationship', {
+      customerId,
+      relationshipId
+    });
   }
 
   // --------------------------------------------------------
@@ -361,6 +403,9 @@ export class TestDataFactory {
       }
     }
     this.createdCustomerIds = [];
+
+    // fixture ID 매핑 초기화
+    this.fixtureIdMap.clear();
   }
 
   /**
@@ -376,5 +421,220 @@ export class TestDataFactory {
       contracts: [...this.createdContractIds],
       relationships: [...this.createdRelationshipIds]
     };
+  }
+
+  // --------------------------------------------------------
+  // Fixtures 연동
+  // --------------------------------------------------------
+
+  /** fixture ID → 실제 DB ID 매핑 */
+  private fixtureIdMap: Map<string, string> = new Map();
+
+  /**
+   * Fixture ID로 실제 DB ID 조회
+   */
+  getDbId(fixtureId: string): string | undefined {
+    return this.fixtureIdMap.get(fixtureId);
+  }
+
+  /**
+   * Fixture에서 고객 생성
+   */
+  async createCustomerFromFixture(fixture: CustomerFixture): Promise<Customer> {
+    const customer = await this.createCustomer({
+      name: fixture.personal_info.name,
+      type: fixture.insurance_info.customer_type === '개인' ? 'individual' : 'corporate',
+      phone: fixture.personal_info.mobile_phone,
+      email: fixture.personal_info.email,
+      birthDate: fixture.personal_info.birth_date,
+      address: fixture.personal_info.address?.address1
+    });
+
+    this.fixtureIdMap.set(fixture.id, customer._id);
+    return customer;
+  }
+
+  /**
+   * Fixture에서 계약 생성
+   */
+  async createContractFromFixture(fixture: ContractFixture): Promise<Contract> {
+    const customerId = this.fixtureIdMap.get(fixture.customer_ref);
+    if (!customerId) {
+      throw new Error(`Customer fixture not found: ${fixture.customer_ref}. Create customer first.`);
+    }
+
+    // 상대 날짜 처리
+    let expiryDate = fixture.expiry_date;
+    if (fixture.expiry_date_relative_days !== undefined) {
+      const date = new Date();
+      date.setDate(date.getDate() + fixture.expiry_date_relative_days);
+      expiryDate = date.toISOString().split('T')[0];
+    }
+
+    const contract = await this.createContract(customerId, {
+      policy_number: fixture.policy_number,
+      contract_date: fixture.contract_date,
+      premium: fixture.premium,
+      payment_status: fixture.payment_status || '정상'
+    });
+
+    this.fixtureIdMap.set(fixture.id, contract._id);
+    return contract;
+  }
+
+  /**
+   * Fixture에서 관계 생성
+   */
+  async createRelationshipFromFixture(fixture: RelationshipFixture): Promise<Relationship> {
+    const fromId = this.fixtureIdMap.get(fixture.from_customer_ref);
+    const toId = this.fixtureIdMap.get(fixture.to_customer_ref);
+
+    if (!fromId || !toId) {
+      throw new Error(
+        `Customer fixtures not found: ${fixture.from_customer_ref}, ${fixture.to_customer_ref}. Create customers first.`
+      );
+    }
+
+    const relationship = await this.createRelationship(
+      fromId,
+      toId,
+      fixture.relationship_type,
+      fixture.relationship_category
+    );
+
+    this.fixtureIdMap.set(fixture.id, relationship._id);
+    return relationship;
+  }
+
+  /**
+   * 모든 fixtures에서 데이터 생성
+   * @param options 생성할 데이터 유형 선택
+   */
+  async createAllFromFixtures(options: {
+    customers?: boolean | string[];  // true = 전체, string[] = 특정 ID만
+    contracts?: boolean | string[];
+    relationships?: boolean | string[];
+  } = { customers: true }): Promise<{
+    customers: Customer[];
+    contracts: Contract[];
+    relationships: Relationship[];
+  }> {
+    const result: {
+      customers: Customer[];
+      contracts: Contract[];
+      relationships: Relationship[];
+    } = {
+      customers: [],
+      contracts: [],
+      relationships: []
+    };
+
+    // 고객 생성
+    if (options.customers) {
+      const fixtures = loadCustomers();
+      const targetIds = Array.isArray(options.customers) ? options.customers : null;
+
+      for (const fixture of fixtures) {
+        if (targetIds && !targetIds.includes(fixture.id)) continue;
+        const customer = await this.createCustomerFromFixture(fixture);
+        result.customers.push(customer);
+      }
+    }
+
+    // 계약 생성
+    if (options.contracts) {
+      const fixtures = loadContracts();
+      const targetIds = Array.isArray(options.contracts) ? options.contracts : null;
+
+      for (const fixture of fixtures) {
+        if (targetIds && !targetIds.includes(fixture.id)) continue;
+        // 해당 고객이 생성되어 있는지 확인
+        if (!this.fixtureIdMap.has(fixture.customer_ref)) continue;
+
+        try {
+          const contract = await this.createContractFromFixture(fixture);
+          result.contracts.push(contract);
+        } catch (e) {
+          console.warn(`Failed to create contract ${fixture.id}:`, e);
+        }
+      }
+    }
+
+    // 관계 생성
+    if (options.relationships) {
+      const fixtures = loadRelationships();
+      const targetIds = Array.isArray(options.relationships) ? options.relationships : null;
+
+      for (const fixture of fixtures) {
+        if (targetIds && !targetIds.includes(fixture.id)) continue;
+        // 양쪽 고객이 생성되어 있는지 확인
+        if (!this.fixtureIdMap.has(fixture.from_customer_ref)) continue;
+        if (!this.fixtureIdMap.has(fixture.to_customer_ref)) continue;
+
+        try {
+          const relationship = await this.createRelationshipFromFixture(fixture);
+          result.relationships.push(relationship);
+        } catch (e) {
+          console.warn(`Failed to create relationship ${fixture.id}:`, e);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 가족 시나리오 생성 (홍길동 가족)
+   */
+  async createFamilyScenario(): Promise<{
+    father: Customer;
+    mother: Customer;
+    child: Customer;
+    relationships: Relationship[];
+  }> {
+    const data = await this.createAllFromFixtures({
+      customers: ['customer_hong', 'customer_kim', 'customer_hongminsu'],
+      relationships: true
+    });
+
+    return {
+      father: data.customers.find(c => c.name === '홍길동')!,
+      mother: data.customers.find(c => c.name === '김영희')!,
+      child: data.customers.find(c => c.name === '홍민수')!,
+      relationships: data.relationships
+    };
+  }
+
+  /**
+   * 법인 고객 시나리오 생성
+   */
+  async createCorporateScenario(): Promise<{
+    customer: Customer;
+    contracts: Contract[];
+  }> {
+    const data = await this.createAllFromFixtures({
+      customers: ['customer_corp_test'],
+      contracts: true
+    });
+
+    return {
+      customer: data.customers[0],
+      contracts: data.contracts
+    };
+  }
+
+  /**
+   * 전체 테스트 시나리오 생성 (모든 fixtures)
+   */
+  async createFullScenario(): Promise<{
+    customers: Customer[];
+    contracts: Contract[];
+    relationships: Relationship[];
+  }> {
+    return await this.createAllFromFixtures({
+      customers: true,
+      contracts: true,
+      relationships: true
+    });
   }
 }
