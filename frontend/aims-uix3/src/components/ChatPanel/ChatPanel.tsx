@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -649,10 +650,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
 
+    // 메뉴 크기 (대략적인 값)
+    const menuWidth = 120;
+    const menuHeight = 40;
+
+    // 화면 경계를 고려한 위치 계산
+    let x = e.clientX;
+    let y = e.clientY;
+
+    // 오른쪽 경계 체크 - 화면 밖으로 나가면 왼쪽으로 표시
+    if (x + menuWidth > window.innerWidth) {
+      x = e.clientX - menuWidth;
+    }
+
+    // 하단 경계 체크 - 화면 밖으로 나가면 위로 표시
+    if (y + menuHeight > window.innerHeight) {
+      y = e.clientY - menuHeight;
+    }
+
+    // 최소 위치 보정 (음수 방지)
+    x = Math.max(8, x);
+    y = Math.max(8, y);
+
     setContextMenu({
       visible: true,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
       content: selectedText || content
     });
   }, []);
@@ -668,12 +691,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     setContextMenu(prev => ({ ...prev, visible: false }));
   }, [contextMenu.content]);
 
-  // 컨텍스트 메뉴 외부 클릭 시 닫기
+  // 컨텍스트 메뉴 외부 클릭 시 닫기 (capture phase 사용)
   useEffect(() => {
     if (!contextMenu.visible) return;
-    const handleClick = () => setContextMenu(prev => ({ ...prev, visible: false }));
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    const handleClick = (e: MouseEvent) => {
+      // 메뉴 내부 클릭이면 무시
+      const target = e.target as HTMLElement;
+      if (target.closest('.chat-panel__context-menu')) return;
+      setContextMenu(prev => ({ ...prev, visible: false }));
+    };
+    // capture: true로 이벤트 캡처 단계에서 잡아서 Portal/Modal 내부 클릭도 감지
+    document.addEventListener('mousedown', handleClick, true);
+    return () => document.removeEventListener('mousedown', handleClick, true);
   }, [contextMenu.visible]);
 
   useEffect(() => {
@@ -1691,8 +1720,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     </div>
   );
 
-  // 컨텍스트 메뉴 UI (우클릭 복사)
-  const contextMenuUI = contextMenu.visible && (
+  // 컨텍스트 메뉴 UI (우클릭 복사) - Portal로 body에 직접 렌더링하여 z-index 문제 해결
+  const contextMenuUI = contextMenu.visible && createPortal(
     <div
       className="chat-panel__context-menu"
       style={{ left: contextMenu.x, top: contextMenu.y }}
@@ -1708,7 +1737,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         </svg>
         복사
       </button>
-    </div>
+    </div>,
+    document.body
   );
 
   // 분리 모드: DraggableModal 사용
