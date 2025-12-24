@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatSSE, ChatMessage } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
+import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
 import { DocumentService } from '@/services/DocumentService';
 import { ContractService } from '@/services/contractService';
@@ -431,6 +432,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     currentResponse,
     activeTools
   } = useChatSSE();
+
+  const { isDevMode } = useDevModeStore();
 
   const {
     sessions,
@@ -1067,8 +1070,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
-        {/* 도구 사용 인디케이터 */}
-        {activeTools.length > 0 && (
+        {/* 도구 사용 인디케이터 (개발자 모드에서만 표시) */}
+        {isDevMode && activeTools.length > 0 && (
           <div className="chat-panel__tool-indicator">
             <span className="chat-panel__tool-spinner" />
             <span>데이터 조회 중: {activeTools.join(', ')}</span>
@@ -1336,7 +1339,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
-        {activeTools.length > 0 && (
+        {/* 도구 사용 인디케이터 (개발자 모드에서만 표시) */}
+        {isDevMode && activeTools.length > 0 && (
           <div className="chat-panel__tool-indicator">
             <span className="chat-panel__tool-spinner" />
             <span>데이터 조회 중: {activeTools.join(', ')}</span>
