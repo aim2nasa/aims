@@ -265,21 +265,13 @@ const DocumentLibraryContent: React.FC<{
   const handleSelectAll = React.useCallback((checked: boolean) => {
     if (checked) {
       const allIds = controller.paginatedDocuments
-        .filter(doc => {
-          // 삭제 모드: 처리중 문서만 제외 (완료, 오류, 대기중, 시간초과는 선택 가능)
-          if (isDeleteMode) {
-            const status = DocumentStatusService.extractStatus(doc)
-            return status !== 'processing'
-          }
-          return true
-        })
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
       onSelectAllIds(allIds)
     } else {
       onSelectAllIds([])
     }
-  }, [controller.paginatedDocuments, onSelectAllIds, isDeleteMode])
+  }, [controller.paginatedDocuments, onSelectAllIds])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
