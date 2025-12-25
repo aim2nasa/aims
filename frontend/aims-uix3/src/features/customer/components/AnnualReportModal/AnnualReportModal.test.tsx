@@ -66,7 +66,7 @@ describe('AnnualReportModal', () => {
     contract_count: 3,
     contracts: [
       {
-        insurance_company: '삼성생명',
+        insurance_company: '메트라이프',
         contract_number: 'S12345',
         product_name: '암보험',
         contractor_name: '홍길동',
@@ -308,7 +308,7 @@ describe('AnnualReportModal', () => {
       );
 
       // 보험사 확인
-      expect(screen.getByText('삼성생명')).toBeInTheDocument();
+      expect(screen.getByText('메트라이프')).toBeInTheDocument();
       expect(screen.getByText('KB생명')).toBeInTheDocument();
       expect(screen.getByText('한화생명')).toBeInTheDocument();
 
