@@ -1014,6 +1014,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   // 대화 초기화 (= 새 대화)
   const handleClear = handleNewChat;
 
+  // 패널 닫기 (컨텍스트 초기화 후 닫기)
+  // - 창 닫기 시: 컨텍스트 초기화 (새 대화로 시작)
+  // - F5 새로고침 시: 세션 유지 (localStorage는 그대로)
+  const handlePanelClose = useCallback(() => {
+    // localStorage에서 대화 내용 삭제
+    try {
+      localStorage.removeItem('aims-chat-messages');
+      localStorage.removeItem('aims-chat-session-id');
+    } catch {
+      // 무시
+    }
+    // 메모리 상태도 초기화
+    setMessages([]);
+    setSessionId(null);
+    // 원래 닫기 핸들러 호출
+    onClose();
+  }, [onClose]);
+
   // 패널 콘텐츠 (공통)
   const panelContent = (
     <>
@@ -1162,7 +1180,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             <button
               type="button"
               className="chat-panel__header-btn chat-panel__close"
-              onClick={onClose}
+              onClick={handlePanelClose}
               aria-label="닫기"
             >
               <SFSymbol name="xmark" size={SFSymbolSize.FOOTNOTE} decorative />
@@ -1836,7 +1854,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       <>
         <DraggableModal
           visible={isOpen}
-          onClose={onClose}
+          onClose={handlePanelClose}
           title={detachedHeaderTitle}
           showHeader={true}
           initialWidth={450}
