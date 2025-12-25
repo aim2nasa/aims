@@ -330,7 +330,9 @@ export async function handleGetCustomer(args: unknown) {
       id: customer._id.toString(),
       personalInfo: {
         name: customer.personal_info?.name,
-        phone: customer.personal_info?.mobile_phone,
+        mobilePhone: customer.personal_info?.mobile_phone || null,
+        homePhone: customer.personal_info?.home_phone || null,
+        workPhone: customer.personal_info?.work_phone || null,
         email: customer.personal_info?.email,
         address: customer.personal_info?.address
       },
