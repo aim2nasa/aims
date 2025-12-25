@@ -354,7 +354,7 @@ describe('useCustomerEditController', () => {
       expect(result.current.isSubmitting).toBe(false);
     });
 
-    it('null/빈값 필드를 제거하고 저장해야 함', async () => {
+    it('null/빈값 필드를 제거하고 저장해야 함 (전화번호는 빈 문자열 유지)', async () => {
       mockDocument.updateCustomer.mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useCustomerEditController(mockCustomer));
@@ -369,7 +369,9 @@ describe('useCustomerEditController', () => {
       });
 
       const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
-      expect(callArgs?.personal_info?.mobile_phone).toBeUndefined();
+      // 전화번호 필드는 빈 문자열도 전송 (삭제 지원)
+      expect(callArgs?.personal_info?.mobile_phone).toBe('');
+      // 이메일 등 기타 필드는 빈 값 제거
       expect(callArgs?.personal_info?.email).toBeUndefined();
     });
 

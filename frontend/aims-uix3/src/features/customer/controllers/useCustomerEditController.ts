@@ -160,9 +160,17 @@ export const useCustomerEditController = (customer: Customer) => {
             return;
           }
 
-          // 그 외 문자열 필드: 유효한 문자열만 포함
-          if (typeof value === 'string' && value !== '') {
-            (cleanPersonalInfo as Record<string, unknown>)[key] = value;
+          // 그 외 문자열 필드
+          // 전화번호 필드는 빈 문자열도 포함 (삭제 지원)
+          const phoneFields = ['mobile_phone', 'home_phone', 'work_phone'];
+          if (typeof value === 'string') {
+            if (phoneFields.includes(key)) {
+              // 전화번호: 빈 문자열도 전송 (삭제 지원)
+              (cleanPersonalInfo as Record<string, unknown>)[key] = value;
+            } else if (value !== '') {
+              // 기타 필드: 유효한 문자열만 포함
+              (cleanPersonalInfo as Record<string, unknown>)[key] = value;
+            }
           }
         });
       }
