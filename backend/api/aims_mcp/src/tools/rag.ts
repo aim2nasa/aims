@@ -88,7 +88,12 @@ interface FailedQueriesResponse {
 export const ragToolDefinitions = [
   {
     name: 'search_documents_semantic',
-    description: `문서를 의미 기반으로 검색합니다. 하이브리드 엔진(메타데이터+벡터)과 리랭킹을 사용하여 정확한 결과를 제공합니다.
+    description: `문서를 검색합니다. 키워드 검색과 시맨틱(의미) 검색 두 가지 모드를 지원합니다.
+
+**검색 모드 선택 기준:**
+- keyword: 정확한 단어/파일명/숫자 검색 시 사용 (예: "증권번호 12345", "홍길동.pdf", "2024년 계약")
+- semantic: 의미/맥락 기반 검색 시 사용 (예: "보험료가 비싼 계약", "만기가 임박한 문서", "자동차 관련 서류")
+- 기본값은 semantic이지만, 특정 파일명/번호/이름을 찾을 때는 반드시 keyword 사용
 
 **페이지네이션 사용법:**
 - 응답의 hasMore가 true이면 더 많은 결과가 있음
@@ -177,7 +182,7 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
       body: JSON.stringify({
         query: params.query,
         user_id: userId,
-        mode: params.mode,
+        search_mode: params.mode,  // RAG API는 search_mode 파라미터 사용
         top_k: params.limit,
         offset: params.offset || 0
       })
@@ -195,16 +200,37 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
     }
 
     const result = await response.json() as SearchResponse;
+    const isKeywordSearch = result.search_mode === 'keyword';
 
-    // 결과 포맷팅 (RAG API의 search_results 구조에 맞춤)
-    const formattedResults = (result.search_results || []).map((r: SearchResult) => ({
-      fileId: r.doc_id,
-      fileName: r.payload.original_name,
-      relevanceScore: Math.round((r.final_score || r.score || 0) * 100) / 100,
-      summary: r.payload.preview || '',
-      tags: r.payload.tags || [],
-      customerName: r.payload.customer_name
-    }));
+    // 결과 포맷팅 (semantic/keyword 검색 응답 형식 모두 지원)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formattedResults = ((result.search_results || []) as any[]).map((r: Record<string, unknown>) => {
+      if (isKeywordSearch) {
+        // 키워드 검색: MongoDB 문서 형식
+        const upload = r.upload as Record<string, unknown> | undefined;
+        const meta = r.meta as Record<string, unknown> | undefined;
+        const ocr = r.ocr as Record<string, unknown> | undefined;
+        return {
+          fileId: r._id as string,
+          fileName: upload?.originalName as string || '',
+          relevanceScore: 1,  // 키워드 검색은 점수 없음
+          summary: (meta?.summary as string) || (ocr?.summary as string) || '',
+          tags: (meta?.tags as string[]) || [],
+          customerName: null
+        };
+      } else {
+        // 시맨틱 검색: Qdrant + 리랭킹 결과 형식
+        const payload = r.payload as SearchResultPayload;
+        return {
+          fileId: r.doc_id as string,
+          fileName: payload?.original_name || '',
+          relevanceScore: Math.round(((r.final_score as number) || (r.score as number) || 0) * 100) / 100,
+          summary: payload?.preview || '',
+          tags: payload?.tags || [],
+          customerName: payload?.customer_name
+        };
+      }
+    });
 
     const currentOffset = params.offset || 0;
     const nextOffset = currentOffset + formattedResults.length;
