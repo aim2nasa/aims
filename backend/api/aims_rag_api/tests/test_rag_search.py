@@ -390,3 +390,389 @@ class TestEdgeCases:
             data = response.json()
             assert data["answer"] == "관련 문서를 찾을 수 없습니다."
             assert data["search_results"] == []
+
+
+class TestPaginationKeyword:
+    """키워드 검색 페이지네이션 테스트"""
+
+    def test_search_request_pagination_fields(self):
+        """SearchRequest 모델에 페이지네이션 필드가 있어야 함"""
+        request = SearchRequest(query="test", search_mode="keyword", top_k=10, offset=0)
+        assert request.top_k == 10
+        assert request.offset == 0
+
+    def test_search_request_pagination_defaults(self):
+        """SearchRequest 페이지네이션 기본값 테스트"""
+        request = SearchRequest(query="test")
+        assert request.top_k == 10  # 기본값
+        assert request.offset == 0  # 기본값
+
+    def test_unified_response_pagination_fields(self):
+        """UnifiedSearchResponse에 페이지네이션 필드가 있어야 함"""
+        response = UnifiedSearchResponse(
+            search_mode="keyword",
+            answer=None,
+            search_results=[{"id": "1"}],
+            total_count=20,
+            has_more=True
+        )
+        assert response.total_count == 20
+        assert response.has_more == True
+
+    @patch('rag_search.requests.post')
+    def test_keyword_pagination_first_page(self, mock_requests_post):
+        """키워드 검색: 첫 페이지 (offset=0)"""
+        # Mock - 20개 결과 반환
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        response = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 0}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # 페이지네이션 필드 확인
+        assert data["total_count"] == 20
+        assert data["has_more"] == True
+        assert len(data["search_results"]) == 5
+
+    @patch('rag_search.requests.post')
+    def test_keyword_pagination_second_page(self, mock_requests_post):
+        """키워드 검색: 두 번째 페이지 (offset=5)"""
+        # Mock - 20개 결과 반환
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        response = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # 페이지네이션 필드 확인
+        assert data["total_count"] == 20
+        assert data["has_more"] == True  # 5+5 < 20
+        assert len(data["search_results"]) == 5
+        # offset이 5이므로 id가 5~9여야 함
+        assert data["search_results"][0]["id"] == "5"
+
+    @patch('rag_search.requests.post')
+    def test_keyword_pagination_last_page(self, mock_requests_post):
+        """키워드 검색: 마지막 페이지 (offset=15)"""
+        # Mock - 20개 결과 반환
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(20)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        response = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 15}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # 페이지네이션 필드 확인
+        assert data["total_count"] == 20
+        assert data["has_more"] == False  # 15+5 >= 20
+        assert len(data["search_results"]) == 5
+
+    @patch('rag_search.requests.post')
+    def test_keyword_pagination_exact_last(self, mock_requests_post):
+        """키워드 검색: 정확히 마지막 (offset + len == total)"""
+        # Mock - 10개 결과 반환
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(10)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        response = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # 5 + 5 == 10 → has_more = False
+        assert data["total_count"] == 10
+        assert data["has_more"] == False
+
+    @patch('rag_search.requests.post')
+    def test_keyword_pagination_empty_results(self, mock_requests_post):
+        """키워드 검색: 빈 결과"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = []
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        response = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 10, "offset": 0}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total_count"] == 0
+        assert data["has_more"] == False
+        assert len(data["search_results"]) == 0
+
+
+class TestPaginationSemantic:
+    """시맨틱 검색 페이지네이션 테스트"""
+
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_pagination_first_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+        """시맨틱 검색: 첫 페이지 (offset=0)"""
+        # Mock query analyzer
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["test"],
+            "metadata_keywords": ["test"]
+        }
+
+        # Mock hybrid search - 20개 결과 반환
+        mock_hybrid.search.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(20)
+        ]
+
+        # Mock reranker - 전체 재순위화
+        mock_reranker.rerank.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "rerank_score": 0.95 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(20)
+        ]
+
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = ("AI 답변", MagicMock())
+
+            response = client.post(
+                "/search",
+                json={"query": "test", "search_mode": "semantic", "top_k": 5, "offset": 0}
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            # 페이지네이션 필드 확인
+            assert data["total_count"] == 20
+            assert data["has_more"] == True
+            assert len(data["search_results"]) == 5
+
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_pagination_second_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+        """시맨틱 검색: 두 번째 페이지 (offset=5)"""
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["test"],
+            "metadata_keywords": ["test"]
+        }
+
+        mock_hybrid.search.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(20)
+        ]
+
+        mock_reranker.rerank.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "rerank_score": 0.95 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(20)
+        ]
+
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = ("AI 답변", MagicMock())
+
+            response = client.post(
+                "/search",
+                json={"query": "test", "search_mode": "semantic", "top_k": 5, "offset": 5}
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            # 페이지네이션 필드 확인
+            assert data["total_count"] == 20
+            assert data["has_more"] == True  # 5+5 < 20
+            assert len(data["search_results"]) == 5
+            # offset이 5이므로 doc_id가 doc5~doc9여야 함
+            assert data["search_results"][0]["doc_id"] == "doc5"
+
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_pagination_last_page(self, mock_analyzer, mock_hybrid, mock_reranker):
+        """시맨틱 검색: 마지막 페이지"""
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["test"],
+            "metadata_keywords": ["test"]
+        }
+
+        mock_hybrid.search.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(12)
+        ]
+
+        mock_reranker.rerank.return_value = [
+            {"doc_id": f"doc{i}", "score": 0.9 - i * 0.01, "rerank_score": 0.95 - i * 0.01, "payload": {"preview": f"내용 {i}", "original_name": f"문서{i}.pdf"}}
+            for i in range(12)
+        ]
+
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = ("AI 답변", MagicMock())
+
+            response = client.post(
+                "/search",
+                json={"query": "test", "search_mode": "semantic", "top_k": 5, "offset": 10}
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            # 페이지네이션 필드 확인
+            assert data["total_count"] == 12
+            assert data["has_more"] == False  # 10+2 >= 12
+            assert len(data["search_results"]) == 2  # 남은 것 2개
+
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_pagination_no_results(self, mock_analyzer, mock_hybrid, mock_reranker):
+        """시맨틱 검색: 결과 없음"""
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["없는검색어"],
+            "metadata_keywords": ["없는검색어"]
+        }
+
+        mock_hybrid.search.return_value = []
+        mock_reranker.rerank.return_value = []
+
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = ("관련 문서를 찾을 수 없습니다.", None)
+
+            response = client.post(
+                "/search",
+                json={"query": "없는검색어", "search_mode": "semantic", "top_k": 10, "offset": 0}
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            assert data["total_count"] == 0
+            assert data["has_more"] == False
+            assert len(data["search_results"]) == 0
+
+
+class TestPaginationConsistency:
+    """페이지네이션 일관성 테스트"""
+
+    @patch('rag_search.requests.post')
+    def test_keyword_total_count_consistency(self, mock_requests_post):
+        """키워드 검색: total_count는 페이지와 관계없이 동일"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(15)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        # 첫 페이지
+        response1 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 0}
+        )
+        # 두 번째 페이지
+        response2 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
+        )
+        # 세 번째 페이지
+        response3 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 10}
+        )
+
+        data1 = response1.json()
+        data2 = response2.json()
+        data3 = response3.json()
+
+        # total_count는 모두 15여야 함
+        assert data1["total_count"] == 15
+        assert data2["total_count"] == 15
+        assert data3["total_count"] == 15
+
+    @patch('rag_search.requests.post')
+    def test_keyword_no_duplicate_results(self, mock_requests_post):
+        """키워드 검색: 페이지 간 결과 중복 없음"""
+        results = [{"id": str(i)} for i in range(10)]
+        mock_response = MagicMock()
+        mock_response.json.return_value = results
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        # 첫 페이지
+        response1 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 0}
+        )
+        # 두 번째 페이지
+        response2 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
+        )
+
+        data1 = response1.json()
+        data2 = response2.json()
+
+        ids1 = {r["id"] for r in data1["search_results"]}
+        ids2 = {r["id"] for r in data2["search_results"]}
+
+        # 중복 없어야 함
+        assert ids1.isdisjoint(ids2)
+
+    @patch('rag_search.requests.post')
+    def test_keyword_has_more_boundary(self, mock_requests_post):
+        """키워드 검색: has_more 경계 조건"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": str(i)} for i in range(10)]
+        mock_response.raise_for_status = MagicMock()
+        mock_requests_post.return_value = mock_response
+
+        # offset + len < total → has_more = True
+        response1 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 3, "offset": 0}
+        )
+        assert response1.json()["has_more"] == True
+
+        # offset + len == total → has_more = False
+        response2 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 5}
+        )
+        assert response2.json()["has_more"] == False
+
+        # offset + len > total (offset이 total보다 크면 빈 결과)
+        response3 = client.post(
+            "/search",
+            json={"query": "test", "search_mode": "keyword", "top_k": 5, "offset": 10}
+        )
+        assert response3.json()["has_more"] == False
+        assert len(response3.json()["search_results"]) == 0
