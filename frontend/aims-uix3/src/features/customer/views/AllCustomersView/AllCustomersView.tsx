@@ -1004,7 +1004,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
                 </svg>
-                <span>전화</span>
+                <span>휴대폰</span>
                 {sortField === 'phone' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 ) : (
