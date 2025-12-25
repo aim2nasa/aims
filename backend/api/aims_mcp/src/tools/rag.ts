@@ -6,7 +6,7 @@ import { sendErrorLog } from '../systemLogger.js';
 // RAG API 설정
 // ============================================================
 
-const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:3013';
+const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:8000';
 
 // ============================================================
 // 스키마 정의
@@ -15,7 +15,8 @@ const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:3013';
 export const searchDocumentsSemanticSchema = z.object({
   query: z.string().min(1).describe('검색 쿼리'),
   mode: z.enum(['keyword', 'semantic']).optional().default('semantic').describe('검색 모드 (keyword: 키워드 검색, semantic: 의미 검색)'),
-  limit: z.number().min(1).max(50).optional().default(10).describe('결과 개수 (기본 10, 최대 50)')
+  limit: z.number().min(1).max(50).optional().default(10).describe('결과 개수 (기본 10, 최대 50)'),
+  offset: z.number().min(0).optional().default(0).describe('페이지네이션: 건너뛸 결과 수 (기본 0)')
 });
 
 export const getSearchAnalyticsSchema = z.object({
@@ -36,18 +37,28 @@ export const submitSearchFeedbackSchema = z.object({
 // 타입 정의
 // ============================================================
 
-interface SearchResult {
-  file_id: string;
-  file_name: string;
-  score: number;
-  summary?: string;
-  tags?: string[];
+interface SearchResultPayload {
+  doc_id: string;
+  original_name: string;
+  preview?: string;
   customer_name?: string;
+  tags?: string[];
+}
+
+interface SearchResult {
+  doc_id: string;
+  score: number;
+  payload: SearchResultPayload;
+  rerank_score?: number;
+  final_score?: number;
 }
 
 interface SearchResponse {
-  results?: SearchResult[];
-  search_time_ms?: number;
+  search_mode?: string;
+  answer?: string;
+  search_results?: SearchResult[];
+  total_count?: number;  // 페이지네이션: 전체 결과 수
+  has_more?: boolean;    // 페이지네이션: 더 많은 결과 존재 여부
 }
 
 interface AnalyticsResponse {
@@ -77,13 +88,20 @@ interface FailedQueriesResponse {
 export const ragToolDefinitions = [
   {
     name: 'search_documents_semantic',
-    description: '문서를 의미 기반으로 검색합니다. 하이브리드 엔진(메타데이터+벡터)과 리랭킹을 사용하여 정확한 결과를 제공합니다.',
+    description: `문서를 의미 기반으로 검색합니다. 하이브리드 엔진(메타데이터+벡터)과 리랭킹을 사용하여 정확한 결과를 제공합니다.
+
+**페이지네이션 사용법:**
+- 응답의 hasMore가 true이면 더 많은 결과가 있음
+- "더 보여줘" 요청 시: 반드시 offset을 nextOffset 값으로 설정하여 재검색
+- 예: 첫 검색 offset=0 → 응답에 nextOffset=10 → 다음 검색 offset=10
+- 중요: 같은 쿼리로 offset만 변경하여 호출해야 다음 페이지 결과를 받음`,
     inputSchema: {
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색 쿼리' },
         mode: { type: 'string', enum: ['keyword', 'semantic'], description: '검색 모드 (keyword: 키워드 검색, semantic: 의미 검색, 기본: semantic)' },
-        limit: { type: 'number', description: '결과 개수 (기본 10, 최대 50)' }
+        limit: { type: 'number', description: '결과 개수 (기본 10, 최대 50)' },
+        offset: { type: 'number', description: '페이지네이션: 건너뛸 결과 수. "더 보여줘" 요청 시 이전 응답의 nextOffset 값을 사용 (기본 0)' }
       },
       required: ['query']
     }
@@ -160,7 +178,8 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
         query: params.query,
         user_id: userId,
         mode: params.mode,
-        top_k: params.limit
+        top_k: params.limit,
+        offset: params.offset || 0
       })
     });
 
@@ -177,15 +196,18 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
 
     const result = await response.json() as SearchResponse;
 
-    // 결과 포맷팅
-    const formattedResults = (result.results || []).map((r) => ({
-      fileId: r.file_id,
-      fileName: r.file_name,
-      relevanceScore: Math.round((r.score || 0) * 100) / 100,
-      summary: r.summary || '',
-      tags: r.tags || [],
-      customerName: r.customer_name
+    // 결과 포맷팅 (RAG API의 search_results 구조에 맞춤)
+    const formattedResults = (result.search_results || []).map((r: SearchResult) => ({
+      fileId: r.doc_id,
+      fileName: r.payload.original_name,
+      relevanceScore: Math.round((r.final_score || r.score || 0) * 100) / 100,
+      summary: r.payload.preview || '',
+      tags: r.payload.tags || [],
+      customerName: r.payload.customer_name
     }));
+
+    const currentOffset = params.offset || 0;
+    const nextOffset = currentOffset + formattedResults.length;
 
     return {
       content: [{
@@ -194,7 +216,14 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
           query: params.query,
           mode: params.mode,
           totalResults: formattedResults.length,
-          searchTime: result.search_time_ms,
+          totalCount: result.total_count,  // 전체 결과 수
+          hasMore: result.has_more,        // 더 많은 결과 존재 여부
+          offset: currentOffset,           // 현재 offset
+          nextOffset: result.has_more ? nextOffset : null,  // 다음 페이지 offset (hasMore가 true일 때만)
+          pagination: result.has_more
+            ? `더 많은 결과를 보려면 offset=${nextOffset}로 다시 검색하세요 (현재 ${currentOffset + 1}-${nextOffset}/${result.total_count || '?'}개)`
+            : `모든 결과를 표시했습니다 (총 ${result.total_count || formattedResults.length}개)`,
+          answer: result.answer,           // AI 답변
           results: formattedResults
         }, null, 2)
       }]

@@ -69,11 +69,14 @@ class SearchRequest(BaseModel):
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
     top_k: int = 10  # AI 검색 결과 개수 (기본 10개)
+    offset: int = 0  # 페이지네이션: 건너뛸 결과 수
 
 class UnifiedSearchResponse(BaseModel):
     search_mode: str
     answer: Optional[str] = None
     search_results: List[Dict[str, Any]]
+    total_count: Optional[int] = None  # 페이지네이션: 전체 결과 수
+    has_more: Optional[bool] = None  # 페이지네이션: 더 많은 결과 존재 여부
 
 # 보안: 내부망에서만 n8n 접근 (host 네트워크 모드로 localhost 직접 접근)
 SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
@@ -265,22 +268,28 @@ async def search_endpoint(request: SearchRequest):
             print(f"📊 쿼리 유형: {query_intent['query_type']}")
             print(f"🔍 고객 필터: customer_id={request.customer_id if request.customer_id else '전체'}")
 
-            # 2단계: 하이브리드 검색 (top-20 가져오기)
+            # 2단계: 하이브리드 검색 (offset + top_k + 여유분 가져오기)
+            # 🔥 페이지네이션: offset을 고려하여 충분한 결과 가져오기
+            fetch_count = max(50, request.offset + request.top_k + 10)  # 최소 50개 또는 필요한 만큼
             search_start = time.time()
             search_results = hybrid_engine.search(
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
                 customer_id=request.customer_id,  # 🔥 고객별 필터링 추가
-                top_k=20  # 재순위화를 위해 더 많이 가져오기
+                top_k=fetch_count  # 페이지네이션을 위해 더 많이 가져오기
             )
             timing["search_time"] = time.time() - search_start
 
-            # 3단계: Cross-Encoder 재순위화 (Top-20 → Top-K)
+            # 3단계: Cross-Encoder 재순위화 (전체 결과 재순위화)
             rerank_start = time.time()
-            top_results = reranker.rerank(request.query, search_results, top_k=request.top_k)
+            all_reranked = reranker.rerank(request.query, search_results, top_k=len(search_results))  # 전체 재순위화
             timing["rerank_time"] = time.time() - rerank_start
-            print(f"✅ 재순위화 완료: {len(top_results)}개 문서 선택 (요청: Top-{request.top_k})")
+
+            # 🔥 페이지네이션: offset 적용하여 결과 슬라이싱
+            total_reranked = len(all_reranked)
+            top_results = all_reranked[request.offset:request.offset + request.top_k]
+            print(f"✅ 재순위화 완료: 전체 {total_reranked}개 중 {len(top_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
 
             # 4단계: LLM 답변 생성
             llm_start = time.time()
@@ -342,11 +351,17 @@ async def search_endpoint(request: SearchRequest):
                 print(f"⚠️ 토큰 사용량 저장 실패 (검색은 정상 진행): {token_error}")
                 send_error_log("aims_rag_api", f"토큰 사용량 저장 실패: {token_error}", token_error)
 
+            # 🔥 페이지네이션: 전체 검색 결과 수 및 더 보기 여부 계산
+            # total_reranked: 재순위화된 전체 결과 수 (실제로 반환 가능한 문서 수)
+            has_more = (request.offset + len(top_results)) < total_reranked
+
             # 응답 구조를 통일된 형식으로 변경
             return UnifiedSearchResponse(
                 search_mode="semantic",
                 answer=final_answer,
-                search_results=top_results
+                search_results=top_results,
+                total_count=total_reranked,
+                has_more=has_more
             )
 
         except Exception as e:
