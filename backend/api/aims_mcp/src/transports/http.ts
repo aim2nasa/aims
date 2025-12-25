@@ -31,6 +31,8 @@ async function loadToolHandlers() {
   const utilities = await import('../tools/utilities.js');
   // Phase 5: RAG 검색 도구
   const rag = await import('../tools/rag.js');
+  // 주소 검색 도구
+  const address = await import('../tools/address.js');
 
   toolHandlers = {
     // 고객 관련
@@ -87,6 +89,8 @@ async function loadToolHandlers() {
     get_search_analytics: rag.handleGetSearchAnalytics,
     get_failed_queries: rag.handleGetFailedQueries,
     submit_search_feedback: rag.handleSubmitSearchFeedback,
+    // 주소 검색
+    search_address: address.handleSearchAddress,
   };
 }
 

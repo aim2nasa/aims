@@ -85,7 +85,10 @@ export const updateCustomerSchema = z.object({
   phoneType: z.enum(['mobile', 'home', 'work']).optional().describe('전화번호 종류: mobile(휴대폰), home(집전화), work(회사전화). 기본값: mobile'),
   email: z.string().email().optional().describe('이메일'),
   birthDate: z.string().optional().describe('생년월일 (YYYY-MM-DD)'),
-  address: z.string().optional().describe('주소')
+  // 구조화된 주소 (search_address로 검색한 결과 사용)
+  postal_code: z.string().optional().describe('우편번호 (search_address 결과의 zipNo)'),
+  address1: z.string().optional().describe('기본 주소 (search_address 결과의 roadAddrPart1)'),
+  address2: z.string().optional().describe('상세 주소 (동/호수 등 사용자 입력)')
 });
 
 export const restoreCustomerSchema = z.object({
@@ -141,7 +144,7 @@ export const customerToolDefinitions = [
   },
   {
     name: 'update_customer',
-    description: '고객 정보를 수정합니다. 전화번호 수정 시 반드시 phoneType을 지정하세요.',
+    description: '고객 정보를 수정합니다. 전화번호 수정 시 반드시 phoneType을 지정하세요. 주소 수정 시 반드시 search_address로 먼저 검색한 후 검증된 주소를 사용하세요.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -151,7 +154,9 @@ export const customerToolDefinitions = [
         phoneType: { type: 'string', enum: ['mobile', 'home', 'work'], description: '전화번호 종류: mobile(휴대폰), home(집전화), work(회사전화). 반드시 지정하세요!' },
         email: { type: 'string', description: '이메일' },
         birthDate: { type: 'string', description: '생년월일 (YYYY-MM-DD)' },
-        address: { type: 'string', description: '주소' }
+        postal_code: { type: 'string', description: '우편번호 (search_address 결과의 zipNo 사용)' },
+        address1: { type: 'string', description: '기본 주소 (search_address 결과의 roadAddrPart1 사용)' },
+        address2: { type: 'string', description: '상세 주소 (동/호수 등 사용자가 직접 입력)' }
       },
       required: ['customerId']
     }
@@ -528,7 +533,11 @@ export async function handleUpdateCustomer(args: unknown) {
 
     if (params.email) updateFields['personal_info.email'] = params.email;
     if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
-    if (params.address) updateFields['personal_info.address.address1'] = params.address;
+
+    // 구조화된 주소 처리
+    if (params.postal_code) updateFields['personal_info.address.postal_code'] = params.postal_code;
+    if (params.address1) updateFields['personal_info.address.address1'] = params.address1;
+    if (params.address2 !== undefined) updateFields['personal_info.address.address2'] = params.address2;
 
     await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
       { _id: objectId },

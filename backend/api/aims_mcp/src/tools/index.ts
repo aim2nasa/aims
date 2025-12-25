@@ -20,6 +20,7 @@ import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsing
 import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageGaps, handleSuggestNextAction } from './insights.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
+import { addressToolDefinitions, handleSearchAddress } from './address.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -37,6 +38,7 @@ const allToolDefinitions = [
   ...insightToolDefinitions,
   ...utilityToolDefinitions,
   ...ragToolDefinitions,
+  ...addressToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -95,6 +97,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_search_analytics: handleGetSearchAnalytics,
   get_failed_queries: handleGetFailedQueries,
   submit_search_feedback: handleSubmitSearchFeedback,
+  // 주소 검색 관련
+  search_address: handleSearchAddress,
 };
 
 /**
