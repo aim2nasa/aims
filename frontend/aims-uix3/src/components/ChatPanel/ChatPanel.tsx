@@ -58,7 +58,7 @@ const MAX_WIDTH = 600;
 const HELP_FEATURES = [
   // 고객 관리 (4 tools: search, get, create, update)
   {
-    icon: '🔍', title: '고객 검색', desc: '이름, 전화번호, 지역, 유형별 검색',
+    icon: '🔍', title: '고객 조회', desc: '고객 검색 및 상세 정보 조회',
     examples: [
       '최근 등록한 고객 보여줘',
       '김씨 성을 가진 고객 찾아줘',
@@ -70,11 +70,6 @@ const HELP_FEATURES = [
       '경기도에 사는 개인 고객 찾아줘',
       '이메일 주소가 gmail인 고객 검색해줘',
       '대구 사는 법인 고객 찾아줘',
-    ]
-  },
-  {
-    icon: '👤', title: '고객 상세 조회', desc: '특정 고객의 전체 정보 조회',
-    examples: [
       '고객 상세 정보 알려줘',
       '고객 전체 정보 보여줘',
       '고객 연락처와 주소 알려줘',
@@ -1735,9 +1730,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           title={detachedHeaderTitle}
           showHeader={true}
           initialWidth={450}
-          initialHeight={650}
+          initialHeight={780}
           minWidth={360}
-          minHeight={400}
+          minHeight={500}
           className="chat-panel-modal"
           escapeToClose={false}
           backdropClosable={false}
