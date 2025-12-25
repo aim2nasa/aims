@@ -106,7 +106,7 @@ const HELP_FEATURES = [
   },
   // 계약 관리 (3 tools: list, get_details, find_expiring)
   {
-    icon: '📄', title: '계약 목록 조회', desc: '고객별 계약 현황, 상품별 필터',
+    icon: '📄', title: '계약 조회', desc: '목록, 상세, 피보험자 조회',
     examples: [
       '전체 계약 목록 보여줘',
       '고객 계약 현황 알려줘',
@@ -114,11 +114,6 @@ const HELP_FEATURES = [
       '종신보험 계약만 보여줘',
       '고객의 모든 계약 보여줘',
       '최근 체결한 계약 20개 보여줘',
-    ]
-  },
-  {
-    icon: '📋', title: '계약 상세 조회', desc: '피보험자, 특약 정보 포함',
-    examples: [
       '계약 상세 정보 보여줘',
       '계약 피보험자 알려줘',
     ]
