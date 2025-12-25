@@ -47,7 +47,7 @@ export const contractToolDefinitions = [
   },
   {
     name: 'get_contract_details',
-    description: '계약의 상세 정보를 조회합니다. 증권번호로 검색합니다. 피보험자, 수익자, 특약 등 모든 정보를 포함합니다.',
+    description: '계약의 상세 정보를 조회합니다. 증권번호로 검색합니다. 피보험자, 특약 등 모든 정보를 포함합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -290,16 +290,7 @@ export async function handleGetContractDetails(args: unknown) {
         customerName: contract.customer_name
       },
       // 피보험자 정보
-      insured: contract.insured || {
-        name: contract.insured_name,
-        birthDate: contract.insured_birth_date,
-        relation: contract.insured_relation
-      },
-      // 수익자 정보
-      beneficiary: contract.beneficiary || {
-        name: contract.beneficiary_name,
-        relation: contract.beneficiary_relation
-      },
+      insuredPerson: contract.insured_person || null,
       // 보험료 및 금액
       premium: contract.premium,
       paymentFrequency: contract.payment_frequency,
