@@ -14,6 +14,7 @@ import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Button, Modal } from '@/shared/ui'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { getAuthToken } from '@/shared/lib/api'
 import './DocumentFullTextModal.css'
 
 interface DocumentFullTextModalProps {
@@ -58,17 +59,19 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
       setFullTextContent('로딩 중...')
 
       try {
-        const docId = document._id || document['id']
+        // 🔥 AI 검색 결과의 경우 payload.doc_id에 ID가 있을 수 있음
+        const docRecord = document as Record<string, unknown>
+        const payloadData = docRecord['payload'] as Record<string, unknown> | undefined
+        const docId = document._id || document['id'] || payloadData?.['doc_id']
         if (!docId) {
           setFullTextContent('문서 ID를 찾을 수 없습니다.')
           setIsLoading(false)
           return
         }
 
-        // 백엔드 API를 통해 문서 상세 정보 가져오기
+        // 백엔드 API를 통해 문서 상세 정보 가져오기 (🔥 getAuthToken 사용으로 v1/v2 호환)
         const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-        const authData = localStorage.getItem('auth-storage');
-        const token = authData ? JSON.parse(authData).state?.token : null;
+        const token = getAuthToken();
         const response = await fetch(`/api/documents/${docId}/status`, {
           headers: {
             'x-user-id': userId,

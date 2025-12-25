@@ -11,7 +11,7 @@ import type {
   SearchResultItem,
   SemanticSearchResultItem
 } from '@/entities/search'
-import { API_CONFIG, getAuthHeaders } from '@/shared/lib/api'
+import { API_CONFIG, getAuthHeaders, getAuthToken } from '@/shared/lib/api'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
@@ -89,10 +89,9 @@ export class SearchService {
             if (!docId) return item
 
             try {
-              // MongoDB에서 전체 문서 정보 조회
+              // MongoDB에서 전체 문서 정보 조회 (🔥 getAuthToken 사용으로 v1/v2 호환)
+              const token = getAuthToken();
               const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-              const authData = localStorage.getItem('auth-storage');
-              const token = authData ? JSON.parse(authData).state?.token : null;
               const docResponse = await fetch(`/api/documents/${docId}/status`, {
                 headers: {
                   'x-user-id': userId,
@@ -154,10 +153,9 @@ export class SearchService {
           await Promise.all(
             Array.from(customerIds).map(async (customerId) => {
               try {
-                // ⭐ 설계사별 고객 데이터 격리
+                // ⭐ 설계사별 고객 데이터 격리 (🔥 getAuthToken 사용으로 v1/v2 호환)
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const authDataForCustomer = localStorage.getItem('auth-storage');
-                const tokenForCustomer = authDataForCustomer ? JSON.parse(authDataForCustomer).state?.token : null;
+                const tokenForCustomer = getAuthToken();
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: {
                     'x-user-id': currentUserId,
@@ -228,9 +226,9 @@ export class SearchService {
             if (!docId) return item
 
             try {
+              // 🔥 getAuthToken 사용으로 v1/v2 호환
               const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-              const authData = localStorage.getItem('auth-storage');
-              const token = authData ? JSON.parse(authData).state?.token : null;
+              const token = getAuthToken();
               const docResponse = await fetch(`/api/documents/${docId}/status`, {
                 headers: {
                   'x-user-id': currentUserId,
@@ -275,10 +273,9 @@ export class SearchService {
           await Promise.all(
             Array.from(customerIds).map(async (customerId) => {
               try {
-                // ⭐ 설계사별 고객 데이터 격리
+                // ⭐ 설계사별 고객 데이터 격리 (🔥 getAuthToken 사용으로 v1/v2 호환)
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const authDataForCustomer = localStorage.getItem('auth-storage');
-                const tokenForCustomer = authDataForCustomer ? JSON.parse(authDataForCustomer).state?.token : null;
+                const tokenForCustomer = getAuthToken();
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: {
                     'x-user-id': currentUserId,
@@ -470,6 +467,12 @@ export class SearchService {
     // 5. meta.full_text도 없으면 ocr.full_text의 앞 200자 사용
     if (item.ocr?.full_text && item.ocr.full_text.trim()) {
       const cleanText = item.ocr.full_text.trim()
+      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
+    }
+
+    // 6. 🔥 AI 검색 결과의 경우 payload.preview 사용 (enrichment 실패 시 fallback)
+    if ('payload' in item && item.payload?.preview && item.payload.preview.trim() !== '') {
+      const cleanText = item.payload.preview.trim()
       return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
     }
 

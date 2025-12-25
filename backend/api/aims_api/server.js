@@ -1528,15 +1528,16 @@ app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
     let customerRelation = null;
     if (document.customerId) {
       const customerId = document.customerId.toString();
-      // 고객 이름 조회
+      // 고객 이름 및 타입 조회
       const customer = await db.collection(COLLECTIONS.CUSTOMERS)
         .findOne(
           { _id: new ObjectId(customerId) },
-          { projection: { 'personal_info.name': 1 } }
+          { projection: { 'personal_info.name': 1, 'insurance_info.customer_type': 1 } }
         );
       customerRelation = {
         customer_id: customerId,
         customer_name: customer?.personal_info?.name || null,
+        customer_type: customer?.insurance_info?.customer_type || null,  // 🔥 고객 타입 추가
         notes: document.customer_notes || ''
       };
     }
