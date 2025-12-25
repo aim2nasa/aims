@@ -9,7 +9,8 @@ export const listContractsSchema = z.object({
   customerId: z.string().optional().describe('특정 고객의 계약만 조회'),
   search: z.string().optional().describe('검색어 (고객명, 상품명, 증권번호)'),
   status: z.string().optional().describe('계약 상태'),
-  limit: z.number().optional().default(50).describe('결과 개수 제한')
+  limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10, 최대: 50)'),
+  offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
 });
 
 export const getContractDetailsSchema = z.object({
@@ -32,14 +33,15 @@ export const createContractSchema = z.object({
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 고객별, 상품별로 필터링할 수 있습니다.',
+    description: '계약 목록을 조회합니다. 고객별, 상품별로 필터링할 수 있습니다. 기본 10개씩 페이지네이션됩니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '특정 고객의 계약만 조회' },
         search: { type: 'string', description: '검색어 (고객명, 상품명, 증권번호)' },
         status: { type: 'string', description: '계약 상태' },
-        limit: { type: 'number', description: '결과 개수 제한 (기본: 50)' }
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 10, 최대: 50)' },
+        offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
       }
     }
   },
@@ -124,13 +126,19 @@ export async function handleListContracts(args: unknown) {
     // 최종 필터: 모든 조건을 $and로 결합
     const filter = conditions.length > 1 ? { $and: conditions } : conditions[0];
 
+    // limit 최대 50 제한, offset 적용
+    const limit = Math.min(params.limit || 10, 50);
+    const offset = params.offset || 0;
+
     const contracts = await db.collection(COLLECTIONS.CONTRACTS)
       .find(filter)
       .sort({ 'meta.created_at': -1 })
-      .limit(params.limit || 50)
+      .skip(offset)
+      .limit(limit)
       .toArray();
 
     const totalCount = await db.collection(COLLECTIONS.CONTRACTS).countDocuments(filter);
+    const hasMore = offset + contracts.length < totalCount;
 
     return {
       content: [{
@@ -138,6 +146,9 @@ export async function handleListContracts(args: unknown) {
         text: JSON.stringify({
           count: contracts.length,
           totalCount,
+          offset,
+          limit,
+          hasMore,
           contracts: contracts.map(c => ({
             id: c._id.toString(),
             customerId: c.customer_id?.toString(),
