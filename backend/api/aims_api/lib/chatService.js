@@ -286,9 +286,15 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
       console.warn('[ChatService] MCP tools가 없습니다. 기본 대화만 가능합니다.');
     }
 
-    // 시스템 메시지 추가
+    // 현재 날짜/시간 정보 (KST)
+    const now = new Date();
+    const kstOffset = 9 * 60;  // UTC+9
+    const kstTime = new Date(now.getTime() + (kstOffset + now.getTimezoneOffset()) * 60000);
+    const dateInfo = `현재 날짜: ${kstTime.getFullYear()}년 ${kstTime.getMonth() + 1}월 ${kstTime.getDate()}일 (${['일','월','화','수','목','금','토'][kstTime.getDay()]}요일)`;
+
+    // 시스템 메시지 추가 (현재 날짜 포함)
     const fullMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: `${dateInfo}\n\n${SYSTEM_PROMPT}` },
       ...messages
     ];
 
