@@ -1263,11 +1263,30 @@ html[data-theme="dark"] .chat-panel__loading-overlay {
 .chat-panel--detached .chat-panel__messages {
   flex: 1;
   min-height: 0;
+  padding: 8px 12px;
 }
 
-/* 분리 모드에서 입력 영역 */
+/* 분리 모드 환영 화면에서 스크롤 제거 */
+.chat-panel--detached .chat-panel__welcome-features {
+  overflow-y: visible;
+  flex: none;
+}
+
+/* 분리 모드에서 입력 영역 - 컴팩트하게 */
 .chat-panel--detached .chat-panel__input-area {
   border-radius: 0;
+  padding: 8px 12px;
+}
+
+/* 분리 모드에서 입력 필드 - 컴팩트하게 */
+.chat-panel--detached .chat-panel__input {
+  min-height: 36px;
+  padding: 8px 32px 8px 12px;
+}
+
+/* 분리 모드에서 웰컴 화면 - 공간 최적화 */
+.chat-panel--detached .chat-panel__welcome {
+  padding: 0 8px;
 }
 
 /* Dark Theme - Detached Mode */

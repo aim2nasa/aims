@@ -53,6 +53,17 @@ body.ai-assistant-popup .chat-panel.chat-panel--open,
   display: none;
 }
 
+/* 팝업에서 환영 화면 스크롤 제거 - 9개 기능 모두 표시 */
+.ai-assistant-popup .chat-panel__welcome-features {
+  overflow-y: visible;
+  flex: none;
+}
+
+/* 팝업에서 메시지 영역 패딩 축소 */
+.ai-assistant-popup .chat-panel__messages {
+  padding: 8px 12px;
+}
+
 /* 로딩 상태 */
 .ai-assistant-page--loading {
   display: flex;

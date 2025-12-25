@@ -1719,13 +1719,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           title={detachedHeaderTitle}
           showHeader={true}
           initialWidth={450}
-          initialHeight={780}
+          initialHeight={820}
           minWidth={360}
-          minHeight={500}
+          minHeight={550}
           className="chat-panel-modal"
           escapeToClose={false}
           backdropClosable={false}
-          storageKey="aims-chat-panel-position"
         >
           <div className="chat-panel chat-panel--detached">
             {detachedPanelContent}
