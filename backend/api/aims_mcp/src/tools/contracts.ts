@@ -108,14 +108,47 @@ export async function handleListContracts(args: unknown) {
 
     // 검색어
     if (params.search) {
-      const regex = { $regex: escapeRegex(params.search), $options: 'i' };
-      conditions.push({
+      const searchRegex = { $regex: escapeRegex(params.search), $options: 'i' };
+
+      // 1. 보험사명으로 검색 시도
+      const insurer = await db.collection(COLLECTIONS.INSURERS).findOne({
         $or: [
-          { customer_name: regex },
-          { product_name: regex },
-          { policy_number: regex }
+          { name: searchRegex },
+          { shortName: searchRegex },
+          { code: { $regex: `^${escapeRegex(params.search)}$`, $options: 'i' } }
         ]
       });
+
+      if (insurer) {
+        // 해당 보험사의 모든 상품 ID 가져오기
+        const insurerObjectId = toSafeObjectId(insurer._id.toString());
+        const products = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS)
+          .find({ insurer_id: insurerObjectId })
+          .project({ _id: 1 })
+          .toArray();
+
+        // product_id가 string 또는 ObjectId일 수 있으므로 둘 다 매칭
+        const productIdStrings = products.map(p => p._id.toString());
+        const productIdObjects = products.map(p => p._id);
+
+        if (products.length > 0) {
+          conditions.push({
+            $or: [
+              { product_id: { $in: productIdStrings } },
+              { product_id: { $in: productIdObjects } }
+            ]
+          });
+        }
+      } else {
+        // 보험사 매칭 없으면 기존 검색 (고객명, 상품명, 증권번호)
+        conditions.push({
+          $or: [
+            { customer_name: searchRegex },
+            { product_name: searchRegex },
+            { policy_number: searchRegex }
+          ]
+        });
+      }
     }
 
     // 상태
