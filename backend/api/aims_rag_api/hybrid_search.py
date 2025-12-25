@@ -97,10 +97,10 @@ class HybridSearchEngine:
             ]
         }
 
-        # 🔥 고객별 필터링 추가
+        # 🔥 고객별 필터링 추가 (customerId 필드 사용)
         if customer_id:
             from bson import ObjectId
-            mongo_filter["customer_relation.customer_id"] = ObjectId(customer_id)
+            mongo_filter["customerId"] = ObjectId(customer_id)
 
         results = []
         for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
@@ -161,7 +161,12 @@ class HybridSearchEngine:
     def _vector_search(self, query: str, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
         """
         벡터 검색: Qdrant 의미 검색
+
+        🔥 고객 필터링: Qdrant payload에 customer_id가 없는 기존 문서가 많으므로,
+        Qdrant에서 owner_id만 필터링하고, MongoDB에서 customer_id 후처리 필터링 수행
         """
+        from bson import ObjectId
+
         # 쿼리 임베딩
         try:
             response = self.openai_client.embeddings.create(
@@ -177,20 +182,17 @@ class HybridSearchEngine:
             self.last_embedding_response = None
             return []
 
-        # Qdrant 검색
-        # 🔥 고객별 필터링: 동적으로 필터 조건 생성
+        # Qdrant 검색 (owner_id만 필터링, customer_id는 MongoDB에서 후처리)
+        # 🔥 고객 필터링이 있으면 더 많이 가져와서 후처리
+        qdrant_limit = top_k * 3 if customer_id else top_k
         filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
-        if customer_id:
-            filter_conditions.append(
-                models.FieldCondition(key="customer_id", match=models.MatchValue(value=customer_id))
-            )
 
         try:
             search_results = self.qdrant_client.search(
                 collection_name="docembed",
                 query_vector=query_vector,
                 query_filter=models.Filter(must=filter_conditions),
-                limit=top_k
+                limit=qdrant_limit
             )
         except Exception as e:
             print(f"❌ Qdrant 검색 중 오류 발생: {e}")
@@ -210,6 +212,28 @@ class HybridSearchEngine:
                     "score": hit.score,
                     "payload": hit.payload
                 }
+
+        # 🔥 고객 필터링: MongoDB에서 customerId 확인
+        # Note: 문서-고객 연결은 customerId 필드 사용 (customer_relation.customer_id가 아님!)
+        if customer_id and doc_map:
+            doc_ids = list(doc_map.keys())
+            try:
+                # MongoDB에서 해당 문서들의 customerId 조회
+                customer_filter_docs = self.collection.find(
+                    {
+                        "_id": {"$in": [ObjectId(d) for d in doc_ids]},
+                        "customerId": ObjectId(customer_id)
+                    },
+                    {"_id": 1}
+                )
+                valid_doc_ids = set(str(doc["_id"]) for doc in customer_filter_docs)
+
+                # 해당 고객의 문서만 필터링
+                doc_map = {k: v for k, v in doc_map.items() if k in valid_doc_ids}
+                print(f"🔍 고객 필터링 후: {len(valid_doc_ids)}개 문서 (원본: {len(doc_ids)}개)")
+            except Exception as e:
+                print(f"⚠️ MongoDB 고객 필터링 오류 (무시하고 진행): {e}")
+                send_error_log("aims_rag_api", f"MongoDB 고객 필터링 오류: {e}", e)
 
         results = list(doc_map.values())
         results.sort(key=lambda x: x["score"], reverse=True)
