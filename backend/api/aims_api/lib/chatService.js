@@ -18,6 +18,61 @@ const openai = new OpenAI({
 // MCP 서버 URL
 const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:3011';
 
+// Rate limit 재시도 설정
+const RATE_LIMIT_MAX_RETRIES = 3;
+const RATE_LIMIT_BASE_DELAY_MS = 1000;
+
+/**
+ * 지정된 시간만큼 대기
+ * @param {number} ms - 대기 시간 (밀리초)
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Rate limit 오류인지 확인
+ * @param {Error} error - 오류 객체
+ * @returns {boolean}
+ */
+function isRateLimitError(error) {
+  return error?.status === 429 ||
+         error?.code === 'rate_limit_exceeded' ||
+         error?.message?.includes('429') ||
+         error?.message?.includes('Rate limit');
+}
+
+/**
+ * OpenAI API 호출 (Rate limit 재시도 포함)
+ * @param {Object} streamOptions - OpenAI API 옵션
+ * @returns {Promise<Stream>} 스트림 객체
+ */
+async function createOpenAIStreamWithRetry(streamOptions) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= RATE_LIMIT_MAX_RETRIES; attempt++) {
+    try {
+      return await openai.chat.completions.create(streamOptions);
+    } catch (error) {
+      lastError = error;
+
+      if (isRateLimitError(error) && attempt < RATE_LIMIT_MAX_RETRIES) {
+        // Rate limit 오류: 대기 후 재시도
+        const delayMs = RATE_LIMIT_BASE_DELAY_MS * attempt;
+        console.warn(`[ChatService] Rate limit 발생, ${delayMs}ms 후 재시도 (${attempt}/${RATE_LIMIT_MAX_RETRIES})`);
+        await sleep(delayMs);
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+
+
 // 시스템 프롬프트
 const SYSTEM_PROMPT = `당신은 AIMS(Agent Intelligent Management System)의 AI 어시스턴트입니다.
 AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
@@ -257,7 +312,7 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         streamOptions.tools = tools;
       }
 
-      const stream = await openai.chat.completions.create(streamOptions);
+      const stream = await createOpenAIStreamWithRetry(streamOptions);
 
       let toolCalls = [];
       let assistantContent = '';
@@ -392,7 +447,13 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
   } catch (error) {
     console.error('[ChatService] 스트리밍 오류:', error);
     backendLogger.error('ChatService', '스트리밍 오류', error);
-    yield { type: 'error', error: error.message };
+
+    // Rate limit 오류는 사용자 친화적 메시지로 변환
+    if (isRateLimitError(error)) {
+      yield { type: 'error', error: '현재 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요.' };
+    } else {
+      yield { type: 'error', error: error.message };
+    }
   }
 }
 
