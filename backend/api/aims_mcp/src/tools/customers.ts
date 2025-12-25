@@ -82,6 +82,7 @@ export const updateCustomerSchema = z.object({
   customerId: z.string().describe('고객 ID'),
   name: z.string().optional().describe('고객명'),
   phone: z.string().optional().describe('전화번호'),
+  phoneType: z.enum(['mobile', 'home', 'work']).optional().describe('전화번호 종류: mobile(휴대폰), home(집전화), work(회사전화). 기본값: mobile'),
   email: z.string().email().optional().describe('이메일'),
   birthDate: z.string().optional().describe('생년월일 (YYYY-MM-DD)'),
   address: z.string().optional().describe('주소')
@@ -140,13 +141,14 @@ export const customerToolDefinitions = [
   },
   {
     name: 'update_customer',
-    description: '고객 정보를 수정합니다.',
+    description: '고객 정보를 수정합니다. 전화번호 수정 시 반드시 phoneType을 지정하세요.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '고객 ID' },
         name: { type: 'string', description: '고객명' },
         phone: { type: 'string', description: '전화번호' },
+        phoneType: { type: 'string', enum: ['mobile', 'home', 'work'], description: '전화번호 종류: mobile(휴대폰), home(집전화), work(회사전화). 반드시 지정하세요!' },
         email: { type: 'string', description: '이메일' },
         birthDate: { type: 'string', description: '생년월일 (YYYY-MM-DD)' },
         address: { type: 'string', description: '주소' }
@@ -502,7 +504,26 @@ export async function handleUpdateCustomer(args: unknown) {
     };
 
     if (params.name) updateFields['personal_info.name'] = params.name;
-    if (params.phone) updateFields['personal_info.mobile_phone'] = formatPhoneNumber(params.phone);
+
+    // 전화번호: phoneType에 따라 다른 필드에 저장
+    if (params.phone) {
+      const formattedPhone = formatPhoneNumber(params.phone);
+      const phoneType = params.phoneType || 'mobile'; // 기본값: 휴대폰
+
+      switch (phoneType) {
+        case 'home':
+          updateFields['personal_info.home_phone'] = formattedPhone;
+          break;
+        case 'work':
+          updateFields['personal_info.work_phone'] = formattedPhone;
+          break;
+        case 'mobile':
+        default:
+          updateFields['personal_info.mobile_phone'] = formattedPhone;
+          break;
+      }
+    }
+
     if (params.email) updateFields['personal_info.email'] = params.email;
     if (params.birthDate) updateFields['personal_info.birth_date'] = params.birthDate;
     if (params.address) updateFields['personal_info.address.address1'] = params.address;
