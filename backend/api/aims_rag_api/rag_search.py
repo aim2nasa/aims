@@ -233,7 +233,7 @@ async def health_check():
 @app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):
     if request.search_mode == "keyword":
-        # 키워드 검색 로직
+        # 키워드 검색 로직 (페이지네이션 지원)
         payload = {"query": request.query, "mode": request.mode, "user_id": request.user_id}
         if request.customer_id:
             payload["customer_id"] = request.customer_id
@@ -241,12 +241,22 @@ async def search_endpoint(request: SearchRequest):
             response = requests.post(SMARTSEARCH_API_URL, json=payload)
             response.raise_for_status()
 
-            # 응답 구조를 통일된 형식으로 변경
+            # 응답 구조를 통일된 형식으로 변경 + 페이지네이션 적용
             raw_results = response.json()
+
+            # 🔥 페이지네이션: offset과 top_k 적용
+            total_count = len(raw_results) if isinstance(raw_results, list) else 0
+            paginated_results = raw_results[request.offset:request.offset + request.top_k] if isinstance(raw_results, list) else raw_results
+            has_more = (request.offset + len(paginated_results)) < total_count
+
+            print(f"✅ 키워드 검색 완료: 전체 {total_count}개 중 {len(paginated_results)}개 반환 (offset={request.offset}, top_k={request.top_k})")
+
             return UnifiedSearchResponse(
                 search_mode="keyword",
                 answer=None,
-                search_results=raw_results
+                search_results=paginated_results,
+                total_count=total_count,
+                has_more=has_more
             )
         except requests.RequestException as e:
             send_error_log("aims_rag_api", f"SmartSearch API 호출 오류: {e}", e, {"query": request.query})
