@@ -10,13 +10,13 @@
     "start:stdio": "node dist/index.js",
     "start:http": "MCP_MODE=http node dist/index.js",
     "dev": "tsc --watch",
-    "test": "vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
-    "test:watch": "vitest --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
-    "test:e2e": "vitest run src/user-simulation.e2e.test.ts",
-    "test:e2e:cross-system": "vitest run src/__tests__/cross-system/",
-    "test:e2e:all": "vitest run src/user-simulation.e2e.test.ts src/__tests__/cross-system/",
-    "test:conversation": "vitest run src/__tests__/conversation/",
-    "test:all": "vitest run"
+    "test": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest run --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
+    "test:watch": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest --exclude='**/user-simulation.e2e.test.ts' --exclude='**/__tests__/cross-system/**'",
+    "test:e2e": "cross-env MCP_URL=http://localhost:3011 vitest run src/user-simulation.e2e.test.ts",
+    "test:e2e:cross-system": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 vitest run src/__tests__/cross-system/",
+    "test:e2e:all": "cross-env MCP_URL=http://localhost:3011 vitest run src/user-simulation.e2e.test.ts src/__tests__/cross-system/",
+    "test:conversation": "cross-env MCP_URL=http://localhost:3011 vitest run src/__tests__/conversation/",
+    "test:all": "cross-env MCP_URL=http://localhost:3011 AIMS_API_URL=http://localhost:3010 RAG_API_URL=http://localhost:8000 vitest run"
   },
   "dependencies": {
     "@aims/shared-schema": "file:../../shared/schema",
@@ -33,8 +33,9 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.0",
+    "cross-env": "^10.1.0",
     "typescript": "^5.9.3",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=18.0.0"

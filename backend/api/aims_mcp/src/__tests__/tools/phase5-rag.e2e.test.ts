@@ -25,7 +25,7 @@ import {
 // RAG API 가용성 체크
 async function checkRagApiAvailable(): Promise<boolean> {
   try {
-    const ragApiUrl = process.env.RAG_API_URL || 'http://localhost:8003';
+    const ragApiUrl = process.env.RAG_API_URL || 'http://localhost:8000';
     const response = await fetch(`${ragApiUrl}/health`, { signal: AbortSignal.timeout(3000) });
     return response.ok;
   } catch {
