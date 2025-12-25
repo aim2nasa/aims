@@ -335,7 +335,7 @@ async function getUserStorageInfo(db, userId) {
   const ocrPageQuota = isAdmin ? -1 : (tierDef.ocr_page_quota ?? 500);
   // OCR 문서 수 기반 한도 (deprecated, 하위 호환)
   const ocrQuota = isAdmin ? -1 : (tierDef.ocr_quota ?? 100);
-  const hasOcrPermission = isAdmin ? true : (user?.hasOcrPermission ?? false);
+  const hasOcrPermission = isAdmin ? true : (user?.hasOcrPermission ?? true);
 
   // subscription_start_date가 없으면 createdAt 사용 (마이그레이션 이전 사용자)
   const subscriptionStartDate = user?.subscription_start_date || user?.createdAt || new Date();

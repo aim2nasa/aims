@@ -44,7 +44,7 @@
     },
     {
       "parameters": {
-        "fileSelector": "={{ $json.file_path }}",
+        "fileSelector": "={{ $('Pasre').item.json.file_path }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
@@ -118,7 +118,7 @@
     },
     {
       "parameters": {
-        "command": "=node /home/rossi/aims/tools/mime_type_analyzer/file_analyzer.js \"{{ $('Pasre').item.json.file_path }}\""
+        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js \"{{ $('Pasre').item.json.file_path }}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -472,20 +472,6 @@
       ],
       "id": "5f4975b4-baf1-4193-bc2b-bdb04e29a5ba",
       "name": "Set OCR Running"
-    },
-    {
-      "parameters": {
-        "amount": 1,
-        "unit": "seconds"
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        -416,
-        -128
-      ],
-      "id": "wait-1s-before-ocr-001",
-      "name": "Wait 1s Before OCR"
     },
     {
       "parameters": {
@@ -1045,17 +1031,6 @@
             "type": "main",
             "index": 0
           },
-          {
-            "node": "Wait 1s Before OCR",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait 1s Before OCR": {
-      "main": [
-        [
           {
             "node": "DocOCR Request",
             "type": "main",
