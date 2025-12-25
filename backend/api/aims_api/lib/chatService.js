@@ -42,37 +42,6 @@ function isRateLimitError(error) {
          error?.message?.includes('Rate limit');
 }
 
-/**
- * OpenAI API 호출 (Rate limit 재시도 포함)
- * @param {Object} streamOptions - OpenAI API 옵션
- * @returns {Promise<Stream>} 스트림 객체
- */
-async function createOpenAIStreamWithRetry(streamOptions) {
-  let lastError;
-
-  for (let attempt = 1; attempt <= RATE_LIMIT_MAX_RETRIES; attempt++) {
-    try {
-      return await openai.chat.completions.create(streamOptions);
-    } catch (error) {
-      lastError = error;
-
-      if (isRateLimitError(error) && attempt < RATE_LIMIT_MAX_RETRIES) {
-        // Rate limit 오류: 대기 후 재시도
-        const delayMs = RATE_LIMIT_BASE_DELAY_MS * attempt;
-        console.warn(`[ChatService] Rate limit 발생, ${delayMs}ms 후 재시도 (${attempt}/${RATE_LIMIT_MAX_RETRIES})`);
-        await sleep(delayMs);
-        continue;
-      }
-
-      throw error;
-    }
-  }
-
-  throw lastError;
-}
-
-
-
 // 시스템 프롬프트
 const SYSTEM_PROMPT = `당신은 AIMS(Agent Intelligent Management System)의 AI 어시스턴트입니다.
 AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
@@ -344,7 +313,40 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         streamOptions.tools = tools;
       }
 
-      const stream = await createOpenAIStreamWithRetry(streamOptions);
+      // OpenAI API 호출 (Rate limit 재시도 포함, 인라인 처리로 실시간 알림)
+      let stream = null;
+      let lastError = null;
+
+      for (let attempt = 1; attempt <= RATE_LIMIT_MAX_RETRIES; attempt++) {
+        try {
+          stream = await openai.chat.completions.create(streamOptions);
+          break;  // 성공
+        } catch (error) {
+          lastError = error;
+
+          if (isRateLimitError(error) && attempt < RATE_LIMIT_MAX_RETRIES) {
+            const delayMs = RATE_LIMIT_BASE_DELAY_MS * attempt;
+            console.warn(`[ChatService] Rate limit 발생, ${delayMs}ms 후 재시도 (${attempt}/${RATE_LIMIT_MAX_RETRIES})`);
+
+            // 실시간으로 재시도 알림 전송
+            yield {
+              type: 'rate_limit_retry',
+              attempt,
+              maxAttempts: RATE_LIMIT_MAX_RETRIES,
+              delayMs
+            };
+
+            await sleep(delayMs);
+            continue;
+          }
+
+          throw error;
+        }
+      }
+
+      if (!stream) {
+        throw lastError;
+      }
 
       let toolCalls = [];
       let assistantContent = '';

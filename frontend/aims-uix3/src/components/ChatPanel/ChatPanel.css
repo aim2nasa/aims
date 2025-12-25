@@ -945,6 +945,29 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   to { transform: rotate(360deg); }
 }
 
+/* Rate Limit Retry Indicator */
+.chat-panel__retry-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 149, 0, 0.12);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 8px;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-warning, #ff9500);
+  align-self: flex-start;
+}
+
+.chat-panel__retry-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 149, 0, 0.3);
+  border-top-color: var(--color-warning, #ff9500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 /* Loading Dots */
 .chat-panel__loading {
   display: flex;
@@ -1102,6 +1125,12 @@ html[data-theme="dark"] .chat-panel__input:focus {
 html[data-theme="dark"] .chat-panel__tool-indicator {
   background: rgba(30, 26, 46, 0.9);
   border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__retry-indicator {
+  background: rgba(255, 149, 0, 0.15);
+  border-color: rgba(255, 149, 0, 0.35);
+  color: #ffb84d;
 }
 
 html[data-theme="dark"] .chat-panel__help {

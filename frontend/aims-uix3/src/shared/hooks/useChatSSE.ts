@@ -20,7 +20,7 @@ export interface ChatMessage {
  * SSE 이벤트 타입
  */
 export interface ChatEvent {
-  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error' | 'session';
+  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error' | 'session' | 'rate_limit_retry';
   content?: string;
   tools?: string[];
   name?: string;
@@ -32,6 +32,10 @@ export interface ChatEvent {
     completion_tokens: number;
     total_tokens: number;
   };
+  // Rate limit retry 정보
+  attempt?: number;
+  maxAttempts?: number;
+  delayMs?: number;
 }
 
 /**
@@ -55,6 +59,16 @@ export interface SendMessageResult {
 }
 
 /**
+ * Rate limit 재시도 상태
+ */
+export interface RateLimitRetryStatus {
+  isRetrying: boolean;
+  attempt: number;
+  maxAttempts: number;
+  delayMs: number;
+}
+
+/**
  * useChatSSE 반환 타입
  */
 export interface UseChatSSEReturn {
@@ -72,6 +86,8 @@ export interface UseChatSSEReturn {
   lastUsage: ChatEvent['usage'] | null;
   /** 현재 세션 ID */
   currentSessionId: string | null;
+  /** Rate limit 재시도 상태 */
+  retryStatus: RateLimitRetryStatus | null;
 }
 
 /**
@@ -95,6 +111,7 @@ export function useChatSSE(): UseChatSSEReturn {
   const [activeTools, setActiveTools] = useState<string[]>([]);
   const [lastUsage, setLastUsage] = useState<ChatEvent['usage'] | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [retryStatus, setRetryStatus] = useState<RateLimitRetryStatus | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   /**
@@ -140,6 +157,7 @@ export function useChatSSE(): UseChatSSEReturn {
     setCurrentResponse('');
     setActiveTools([]);
     setLastUsage(null);
+    setRetryStatus(null);
 
     // AbortController 생성
     abortControllerRef.current = new AbortController();
@@ -214,8 +232,19 @@ export function useChatSSE(): UseChatSSEReturn {
               // 도구 실행 결과 (optional)
               break;
 
+            case 'rate_limit_retry':
+              // Rate limit 재시도 상태 업데이트
+              setRetryStatus({
+                isRetrying: true,
+                attempt: event.attempt || 1,
+                maxAttempts: event.maxAttempts || 3,
+                delayMs: event.delayMs || 1000
+              });
+              break;
+
             case 'done':
               setActiveTools([]);
+              setRetryStatus(null);  // 완료 시 재시도 상태 초기화
               if (event.usage) {
                 setLastUsage(event.usage);
               }
@@ -237,6 +266,7 @@ export function useChatSSE(): UseChatSSEReturn {
     } finally {
       setIsLoading(false);
       setActiveTools([]);
+      setRetryStatus(null);
       abortControllerRef.current = null;
     }
   }, [parseSSE]);
@@ -258,7 +288,8 @@ export function useChatSSE(): UseChatSSEReturn {
     currentResponse,
     activeTools,
     lastUsage,
-    currentSessionId
+    currentSessionId,
+    retryStatus
   };
 }
 

@@ -514,7 +514,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     abort,
     isLoading,
     currentResponse,
-    activeTools
+    activeTools,
+    retryStatus
   } = useChatSSE();
 
   const { isDevMode } = useDevModeStore();
@@ -1401,8 +1402,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
+        {/* Rate Limit 재시도 인디케이터 */}
+        {retryStatus?.isRetrying && (
+          <div className="chat-panel__retry-indicator">
+            <span className="chat-panel__retry-spinner" />
+            <span>요청이 많아 잠시 대기 중... ({retryStatus.attempt}/{retryStatus.maxAttempts})</span>
+          </div>
+        )}
+
         {/* 로딩 인디케이터 (응답 대기 중) */}
-        {isLoading && !currentResponse && activeTools.length === 0 && (
+        {isLoading && !currentResponse && activeTools.length === 0 && !retryStatus?.isRetrying && (
           <div className="chat-panel__loading">
             <span className="chat-panel__loading-dot" />
             <span className="chat-panel__loading-dot" />
@@ -1671,7 +1680,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
-        {isLoading && !currentResponse && activeTools.length === 0 && (
+        {/* Rate Limit 재시도 인디케이터 */}
+        {retryStatus?.isRetrying && (
+          <div className="chat-panel__retry-indicator">
+            <span className="chat-panel__retry-spinner" />
+            <span>요청이 많아 잠시 대기 중... ({retryStatus.attempt}/{retryStatus.maxAttempts})</span>
+          </div>
+        )}
+
+        {isLoading && !currentResponse && activeTools.length === 0 && !retryStatus?.isRetrying && (
           <div className="chat-panel__loading">
             <span className="chat-panel__loading-dot" />
             <span className="chat-panel__loading-dot" />
