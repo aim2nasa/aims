@@ -30,6 +30,8 @@ const DATA_MUTATING_TOOLS = {
   documents: ['delete_document'],
   // 관계 관련
   relationships: ['create_relationship'],
+  // 메모 관련
+  memos: ['add_customer_memo'],
 };
 
 interface ChatPanelProps {
@@ -906,7 +908,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           const allMutatingTools = [
             ...DATA_MUTATING_TOOLS.customers,
             ...DATA_MUTATING_TOOLS.documents,
-            ...DATA_MUTATING_TOOLS.relationships
+            ...DATA_MUTATING_TOOLS.relationships,
+            ...DATA_MUTATING_TOOLS.memos
           ];
 
           if (allMutatingTools.includes(toolName)) {
