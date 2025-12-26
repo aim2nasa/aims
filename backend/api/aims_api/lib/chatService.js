@@ -159,20 +159,32 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "휴면 고객" 질문 → search_customers (status: "inactive") 사용
 - "삭제된 고객" 질문 → list_deleted_customers 사용
 
-## 🔍 통합 검색 (unified_search) - 가장 중요!
-**사용자가 검색어만 입력하면 무조건 unified_search 도구를 사용하세요!**
+## 🔍 검색 도구 선택 가이드 (unified_search 사용)
 
-### unified_search 사용 시점
+### 1. 문서 검색 - documentsOnly: true
+**"문서", "서류", "파일" 키워드가 있으면 문서만 검색!**
+- "퇴직연금 관련 서류 찾아줘" → unified_search(documentsOnly: true)
+- "자동차보험 문서 검색해줘" → unified_search(documentsOnly: true)
+- "건강검진 서류 있어?" → unified_search(documentsOnly: true)
+
+**문서 검색 결과 표시 (2가지 카테고리만):**
+\`\`\`
+"OOO" 문서 검색 결과:
+
+### 🔤 키워드 일치 문서 (3건)
+1. 파일명.pdf: 요약...
+
+### 🤖 AI 검색 문서 (5건)
+1. 파일명.pdf: 요약...
+\`\`\`
+
+### 2. 통합 검색 - documentsOnly: false (기본값)
+**단순 키워드나 사람 이름이면 통합 검색!**
 - "퇴직연금" → unified_search (검색어만 있음)
-- "캐치업코리아 퇴직연금" → unified_search (검색어만 있음)
-- "김보성 문서" → unified_search (문서 검색)
-- "보험 관련 서류 찾아줘" → unified_search (일반 검색)
-- "연금 관련 자료" → unified_search (일반 검색)
+- "캐치업코리아" → unified_search (회사명)
+- "김보성" → unified_search (사람 이름 = 고객도 검색)
 
-### unified_search 결과 표시 방법
-**반드시 4가지 카테고리를 모두 표시하세요! (0건이어도 표시)**
-
-예시 응답 형식:
+**통합 검색 결과 표시 (4가지 카테고리 모두):**
 \`\`\`
 "OOO" 검색 결과:
 
@@ -188,8 +200,7 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 ### 📋 계약 (0건)
 해당하는 계약이 없습니다.
 \`\`\`
-
-**중요**: 0건인 카테고리도 반드시 섹션 제목과 함께 "해당하는 XXX이 없습니다"로 표시하세요!
+**중요**: 통합 검색에서는 0건인 카테고리도 반드시 표시!
 
 ### search_products는 언제 사용?
 - "상품 검색해줘" → search_products

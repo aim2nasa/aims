@@ -15,7 +15,8 @@ const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:8000';
 
 export const unifiedSearchSchema = z.object({
   query: z.string().min(1).describe('검색어'),
-  limit: z.number().min(1).max(20).optional().default(5).describe('카테고리별 결과 개수 (기본 5)')
+  limit: z.number().min(1).max(20).optional().default(5).describe('카테고리별 결과 개수 (기본 5)'),
+  documentsOnly: z.boolean().optional().default(false).describe('true: 문서만 검색 (고객/계약 제외)')
 });
 
 // ============================================================
@@ -63,22 +64,21 @@ interface UnifiedSearchResult {
 export const unifiedSearchToolDefinitions = [
   {
     name: 'unified_search',
-    description: `통합 검색: 문서, 고객, 계약을 한 번에 검색합니다.
+    description: `통합 검색: 문서, 고객, 계약을 검색합니다.
 
 **문서 검색 결과:**
 - 🔤 키워드 일치: 정확히 해당 단어가 포함된 문서
-- 🤖 AI 검색: 의미적으로 관련된 문서 (단어가 없어도 내용이 관련되면 검색됨)
+- 🤖 AI 검색: 의미적으로 관련된 문서
 
-**사용 예시:**
-- "퇴직연금" → 퇴직연금이 포함된 문서 + 연금 관련 문서 + 해당 고객/계약
-- "김보성" → 김보성 이름의 문서 + 김보성 고객 + 김보성의 계약
-
-단일 검색어로 모든 관련 정보를 한눈에 볼 수 있습니다.`,
+**documentsOnly 옵션:**
+- false (기본): 문서 + 고객 + 계약 모두 검색
+- true: 문서만 검색 (고객/계약 제외) - "문서", "서류", "파일" 관련 요청 시 사용`,
     inputSchema: {
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색어' },
-        limit: { type: 'number', description: '카테고리별 결과 개수 (기본 5, 최대 20)' }
+        limit: { type: 'number', description: '카테고리별 결과 개수 (기본 5, 최대 20)' },
+        documentsOnly: { type: 'boolean', description: 'true: 문서만 검색 (고객/계약 제외)' }
       },
       required: ['query']
     }
@@ -293,8 +293,44 @@ export async function handleUnifiedSearch(args: unknown) {
     const params = unifiedSearchSchema.parse(args);
     const userId = getCurrentUserId();
     const limit = params.limit || 5;
+    const documentsOnly = params.documentsOnly || false;
 
-    // 모든 검색을 병렬로 실행
+    // 문서만 검색 모드
+    if (documentsOnly) {
+      const [keywordDocs, aiDocs] = await Promise.all([
+        searchDocumentsKeyword(params.query, userId, limit),
+        searchDocumentsAI(params.query, userId, limit)
+      ]);
+
+      // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거
+      const keywordFileIds = new Set(keywordDocs.results.map(d => d.fileId));
+      const uniqueAiDocs = {
+        count: aiDocs.count,
+        results: aiDocs.results.filter(d => !keywordFileIds.has(d.fileId))
+      };
+
+      const totalDocs = keywordDocs.count + uniqueAiDocs.count;
+      const summary = totalDocs > 0
+        ? `"${params.query}" 문서 검색 결과: 📄 ${totalDocs}건 (키워드 ${keywordDocs.count}, AI ${uniqueAiDocs.count})`
+        : `"${params.query}"에 대한 문서가 없습니다.`;
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            query: params.query,
+            documentsOnly: true,
+            documents: {
+              keyword: keywordDocs,
+              ai: uniqueAiDocs
+            },
+            summary
+          }, null, 2)
+        }]
+      };
+    }
+
+    // 전체 검색 모드 (문서 + 고객 + 계약)
     const [keywordDocs, aiDocs, customers, contracts] = await Promise.all([
       searchDocumentsKeyword(params.query, userId, limit),
       searchDocumentsAI(params.query, userId, limit),
