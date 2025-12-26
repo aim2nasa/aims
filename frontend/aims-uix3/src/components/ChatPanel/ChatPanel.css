@@ -1358,6 +1358,42 @@ html[data-theme="dark"] .chat-panel__context-menu-item:hover {
   background: rgba(139, 92, 246, 0.15);
 }
 
+/* ==================== 문서 링크 ==================== */
+.chat-panel__doc-link {
+  display: inline;
+  padding: 2px 6px;
+  margin: 0 2px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+  color: var(--color-accent-primary, #8b5cf6);
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.chat-panel__doc-link:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.chat-panel__doc-link:active {
+  transform: translateY(0);
+}
+
+html[data-theme="dark"] .chat-panel__doc-link {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+html[data-theme="dark"] .chat-panel__doc-link:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
   .chat-panel {

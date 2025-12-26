@@ -4,17 +4,20 @@
  * @since 2025-12-20
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useChatSSE, ChatMessage, ChatEvent } from '@/shared/hooks/useChatSSE';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
 import { DocumentService } from '@/services/DocumentService';
+import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { ContractService } from '@/services/contractService';
 import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
 import DraggableModal from '@/shared/ui/DraggableModal';
+import { CustomerDocumentPreviewModal } from '@/features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal';
+import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './ChatPanel.css';
@@ -243,6 +246,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     y: number;
     content: string;
   }>({ visible: false, x: 0, y: 0, content: '' });
+  // 문서 프리뷰 모달 상태
+  const [previewDocument, setPreviewDocument] = useState<PreviewDocumentInfo | null>(null);
+  const [isDocumentPreviewVisible, setDocumentPreviewVisible] = useState(false);
+  const [isDocumentPreviewLoading, setDocumentPreviewLoading] = useState(false);
+  const [documentPreviewError, setDocumentPreviewError] = useState<string | null>(null);
   // 입력 히스토리 (위/아래 화살표로 탐색)
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 = 현재 입력
@@ -650,6 +658,196 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
     }
   }, []);
+
+  // 파일 경로를 절대 URL로 변환
+  const buildFileUrl = useCallback((path?: string | null): string | null => {
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+    const normalized = path.startsWith('/data') ? path.replace('/data', '') : path;
+    const prefixed = normalized.startsWith('/') ? normalized : `/${normalized}`;
+    return `https://tars.giize.com${prefixed}`;
+  }, []);
+
+  // 문서 프리뷰 모달 열기 핸들러
+  const handleDocumentPreviewClick = useCallback(async (docId: string) => {
+    // 모달 열기 및 로딩 상태 설정
+    setDocumentPreviewVisible(true);
+    setDocumentPreviewLoading(true);
+    setDocumentPreviewError(null);
+    setPreviewDocument(null);
+
+    try {
+      const response = await DocumentStatusService.getDocumentDetailViaWebhook(docId);
+
+      if (!response) {
+        setDocumentPreviewError('문서 상세 정보를 찾을 수 없습니다.');
+        setDocumentPreviewLoading(false);
+        return;
+      }
+
+      // API 응답 구조: { success: true, data: { raw: {...}, computed: {...} } }
+      const apiResponse = response as Record<string, unknown>;
+      const raw = (apiResponse['data'] as Record<string, unknown>)?.['raw'] || apiResponse['raw'] || response;
+      const computed = (apiResponse['data'] as Record<string, unknown>)?.['computed'] || apiResponse['computed'] || null;
+
+      // raw 데이터에서 메타데이터 추출
+      const upload = (raw as Record<string, unknown>)?.['upload'] as Record<string, unknown> | undefined;
+      const payload = (raw as Record<string, unknown>)?.['payload'] as Record<string, unknown> | undefined;
+      const meta = (raw as Record<string, unknown>)?.['meta'] as Record<string, unknown> | undefined;
+      const computedData = computed as Record<string, unknown> | null;
+
+      const originalName =
+        upload?.['originalName'] as string ??
+        payload?.['original_name'] as string ??
+        meta?.['originalName'] as string ??
+        (raw as Record<string, unknown>)?.['originalName'] as string ??
+        (raw as Record<string, unknown>)?.['filename'] as string ??
+        '문서';
+
+      const destPath =
+        upload?.['destPath'] as string ??
+        payload?.['dest_path'] as string ??
+        meta?.['destPath'] as string ??
+        (raw as Record<string, unknown>)?.['destPath'] as string ??
+        null;
+
+      const previewFilePath = computedData?.['previewFilePath'] as string ?? null;
+      const conversionStatus = computedData?.['conversionStatus'] as string ?? upload?.['conversion_status'] as string ?? null;
+      const canPreview = computedData?.['canPreview'] as boolean ?? false;
+
+      const mimeType =
+        upload?.['mimeType'] as string ??
+        payload?.['mime_type'] as string ??
+        meta?.['mimeType'] as string ??
+        meta?.['mime'] as string ??
+        (raw as Record<string, unknown>)?.['mimeType'] as string ??
+        (raw as Record<string, unknown>)?.['mime'] as string ??
+        undefined;
+
+      const sizeBytes =
+        (upload?.['fileSize'] as number) ??
+        (upload?.['size'] as number) ??
+        (payload?.['size_bytes'] as number) ??
+        (meta?.['size_bytes'] as number) ??
+        ((raw as Record<string, unknown>)?.['size_bytes'] as number) ??
+        null;
+
+      const uploadedAt =
+        upload?.['uploaded_at'] as string ??
+        payload?.['uploaded_at'] as string ??
+        meta?.['uploaded_at'] as string ??
+        (raw as Record<string, unknown>)?.['uploaded_at'] as string ??
+        undefined;
+
+      const fileUrl = buildFileUrl(destPath);
+      const previewFileUrl = buildFileUrl(previewFilePath) ?? fileUrl;
+
+      // 변환된 PDF로 프리뷰하는지 여부
+      const isConverted = !!(
+        previewFileUrl &&
+        fileUrl &&
+        previewFileUrl !== fileUrl &&
+        previewFileUrl.toLowerCase().endsWith('.pdf')
+      );
+
+      // 원본 파일 확장자 추출
+      const extMatch = originalName.match(/\.([^.]+)$/);
+      const originalExtension = extMatch ? extMatch[1].toLowerCase() : undefined;
+
+      const previewInfo: PreviewDocumentInfo = {
+        id: docId,
+        originalName,
+        fileUrl,
+        previewFileUrl,
+        mimeType,
+        sizeBytes,
+        uploadedAt,
+        conversionStatus,
+        canPreview,
+        isConverted,
+        originalExtension,
+        document: {
+          _id: docId,
+          originalName,
+          linkedAt: uploadedAt || '',
+          fileSize: sizeBytes ?? undefined,
+          mimeType
+        },
+        rawDetail: raw as Record<string, unknown>
+      };
+
+      setPreviewDocument(previewInfo);
+      setDocumentPreviewLoading(false);
+    } catch (error) {
+      console.error('[ChatPanel] 문서 프리뷰 로드 오류:', error);
+      errorReporter.reportApiError(error as Error, { component: 'ChatPanel.handleDocumentPreviewClick' });
+      setDocumentPreviewError('문서를 불러오는 중 오류가 발생했습니다.');
+      setDocumentPreviewLoading(false);
+    }
+  }, [buildFileUrl]);
+
+  // 문서 프리뷰 모달 닫기 핸들러
+  const handleDocumentPreviewClose = useCallback(() => {
+    setDocumentPreviewVisible(false);
+    setTimeout(() => {
+      setPreviewDocument(null);
+      setDocumentPreviewError(null);
+    }, 300);
+  }, []);
+
+  // 문서 프리뷰 재시도 핸들러
+  const handleDocumentPreviewRetry = useCallback(() => {
+    if (previewDocument?.id) {
+      handleDocumentPreviewClick(previewDocument.id);
+    }
+  }, [previewDocument?.id, handleDocumentPreviewClick]);
+
+  // 메시지 내용에서 문서 링크를 파싱하여 클릭 가능한 요소로 변환
+  const renderMessageContent = useCallback((content: string) => {
+    // [파일명](doc:문서ID) 패턴 파싱
+    const docLinkPattern = /\[([^\]]+)\]\(doc:([a-f0-9]{24})\)/g;
+    const parts: (string | React.ReactElement)[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = docLinkPattern.exec(content)) !== null) {
+      // 링크 앞의 텍스트 추가
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+
+      // 문서 링크 추가
+      const fileName = match[1];
+      const docId = match[2];
+      parts.push(
+        <button
+          key={`doc-${docId}-${match.index}`}
+          type="button"
+          className="chat-panel__doc-link"
+          onClick={() => handleDocumentPreviewClick(docId)}
+          title="클릭하여 문서 미리보기"
+        >
+          📄 {fileName}
+        </button>
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // 나머지 텍스트 추가
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    // 링크가 없으면 원본 텍스트 반환
+    if (parts.length === 0) {
+      return content;
+    }
+
+    return <>{parts}</>;
+  }, [handleDocumentPreviewClick]);
 
   // 메시지 전송
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -1218,7 +1416,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
           >
             <div className="chat-panel__message-content">
-              {msg.content}
+              {renderMessageContent(msg.content)}
             </div>
           </div>
         ))}
@@ -1227,7 +1425,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         {isLoading && currentResponse && (
           <div className="chat-panel__message chat-panel__message--assistant chat-panel__message--streaming">
             <div className="chat-panel__message-content">
-              {currentResponse}
+              {renderMessageContent(currentResponse)}
               <span className="chat-panel__cursor" />
             </div>
           </div>
@@ -1500,7 +1698,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             onContextMenu={(e) => handleMessageContextMenu(e, msg.content)}
           >
             <div className="chat-panel__message-content">
-              {msg.content}
+              {renderMessageContent(msg.content)}
             </div>
           </div>
         ))}
@@ -1508,7 +1706,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         {isLoading && currentResponse && (
           <div className="chat-panel__message chat-panel__message--assistant chat-panel__message--streaming">
             <div className="chat-panel__message-content">
-              {currentResponse}
+              {renderMessageContent(currentResponse)}
               <span className="chat-panel__cursor" />
             </div>
           </div>
@@ -1732,6 +1930,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         </DraggableModal>
         {contextMenuUI}
+        {/* 문서 프리뷰 모달 */}
+        <CustomerDocumentPreviewModal
+          visible={isDocumentPreviewVisible}
+          isLoading={isDocumentPreviewLoading}
+          error={documentPreviewError}
+          document={previewDocument}
+          onClose={handleDocumentPreviewClose}
+          onRetry={handleDocumentPreviewRetry}
+        />
       </>
     );
   }
@@ -1747,6 +1954,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         {panelContent}
       </div>
       {contextMenuUI}
+      {/* 문서 프리뷰 모달 */}
+      <CustomerDocumentPreviewModal
+        visible={isDocumentPreviewVisible}
+        isLoading={isDocumentPreviewLoading}
+        error={documentPreviewError}
+        document={previewDocument}
+        onClose={handleDocumentPreviewClose}
+        onRetry={handleDocumentPreviewRetry}
+      />
     </>
   );
 };
