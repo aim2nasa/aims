@@ -31,7 +31,7 @@ const DATA_MUTATING_TOOLS = {
   // 관계 관련
   relationships: ['create_relationship'],
   // 메모 관련
-  memos: ['add_customer_memo'],
+  memos: ['add_customer_memo', 'delete_customer_memo'],
 };
 
 interface ChatPanelProps {

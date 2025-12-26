@@ -14,6 +14,12 @@ export const getMemoSchema = z.object({
   customerId: z.string().describe('고객 ID')
 });
 
+export const deleteMemoSchema = z.object({
+  customerId: z.string().describe('고객 ID'),
+  lineNumber: z.number().optional().describe('삭제할 메모 줄 번호 (1부터 시작)'),
+  contentPattern: z.string().optional().describe('삭제할 메모 내용 (포함된 텍스트)')
+});
+
 // Tool 정의 (단일 memo 필드 기반)
 export const memoToolDefinitions = [
   {
@@ -35,6 +41,19 @@ export const memoToolDefinitions = [
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '고객 ID' }
+      },
+      required: ['customerId']
+    }
+  },
+  {
+    name: 'delete_customer_memo',
+    description: '고객의 특정 메모를 삭제합니다. lineNumber(줄 번호) 또는 contentPattern(내용 일부)으로 삭제할 메모를 지정합니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        customerId: { type: 'string', description: '고객 ID' },
+        lineNumber: { type: 'number', description: '삭제할 메모 줄 번호 (1부터 시작)' },
+        contentPattern: { type: 'string', description: '삭제할 메모에 포함된 텍스트' }
       },
       required: ['customerId']
     }
@@ -230,15 +249,116 @@ export async function handleListMemos(args: unknown) {
 }
 
 /**
- * 메모 삭제 핸들러 (더 이상 사용하지 않음 - 호환성 유지)
- * 단일 memo 필드에서는 삭제 대신 전체 초기화만 가능
+ * 메모 삭제 핸들러
+ * lineNumber 또는 contentPattern으로 특정 메모 줄 삭제
  */
 export async function handleDeleteMemo(args: unknown) {
-  return {
-    isError: true,
-    content: [{
-      type: 'text' as const,
-      text: '메모 삭제 기능은 더 이상 지원되지 않습니다. 메모를 수정하려면 고객 정보 수정을 이용해주세요.'
-    }]
-  };
+  try {
+    const params = deleteMemoSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // lineNumber와 contentPattern 둘 다 없으면 에러
+    if (params.lineNumber === undefined && !params.contentPattern) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: 'lineNumber 또는 contentPattern 중 하나를 지정해야 합니다.' }]
+      };
+    }
+
+    const customerObjectId = toSafeObjectId(params.customerId);
+    if (!customerObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
+    // 고객 조회
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: customerObjectId,
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+      };
+    }
+
+    const currentMemo = customer.memo || '';
+    if (!currentMemo) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '삭제할 메모가 없습니다.' }]
+      };
+    }
+
+    // 메모를 줄 단위로 분리
+    const lines = currentMemo.split('\n');
+    let deletedLine = '';
+    let newLines: string[];
+
+    if (params.lineNumber !== undefined) {
+      // 줄 번호로 삭제 (1부터 시작)
+      const idx = params.lineNumber - 1;
+      if (idx < 0 || idx >= lines.length) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: `유효하지 않은 줄 번호입니다. (1~${lines.length})` }]
+        };
+      }
+      deletedLine = lines[idx];
+      newLines = lines.filter((_: string, i: number) => i !== idx);
+    } else {
+      // contentPattern으로 삭제
+      const pattern = params.contentPattern!.toLowerCase();
+      const matchIdx = lines.findIndex((line: string) => line.toLowerCase().includes(pattern));
+      if (matchIdx === -1) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: `"${params.contentPattern}" 내용이 포함된 메모를 찾을 수 없습니다.` }]
+        };
+      }
+      deletedLine = lines[matchIdx];
+      newLines = lines.filter((_: string, i: number) => i !== matchIdx);
+    }
+
+    const updatedMemo = newLines.join('\n');
+    const now = new Date();
+
+    // 업데이트 실행
+    await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+      { _id: customerObjectId, 'meta.created_by': userId },
+      { $set: { memo: updatedMemo, 'meta.updated_at': now } }
+    );
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          customerId: params.customerId,
+          customerName: customer.personal_info?.name,
+          deletedMemo: deletedLine,
+          remainingLines: newLines.length,
+          message: '메모가 삭제되었습니다.'
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] delete_customer_memo 에러:', error);
+    sendErrorLog('aims_mcp', 'delete_customer_memo 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `메모 삭제 실패: ${errorMessage}`
+      }]
+    };
+  }
 }
