@@ -42,6 +42,17 @@ function isRateLimitError(error) {
          error?.message?.includes('Rate limit');
 }
 
+/**
+ * API 크레딧 부족 오류인지 확인
+ * @param {Error} error - 오류 객체
+ * @returns {boolean}
+ */
+function isQuotaExceededError(error) {
+  return error?.code === 'insufficient_quota' ||
+         error?.message?.includes('insufficient_quota') ||
+         error?.message?.includes('exceeded your current quota');
+}
+
 // 시스템 프롬프트
 const SYSTEM_PROMPT = `당신은 AIMS(Agent Intelligent Management System)의 AI 어시스턴트입니다.
 AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
@@ -435,6 +446,12 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
         } catch (error) {
           lastError = error;
 
+          // 크레딧 부족 오류는 재시도하지 않고 즉시 실패
+          if (isQuotaExceededError(error)) {
+            console.error('[ChatService] API 크레딧 부족:', error.message);
+            throw error;
+          }
+
           if (isRateLimitError(error) && attempt < RATE_LIMIT_MAX_RETRIES) {
             const delayMs = RATE_LIMIT_BASE_DELAY_MS * attempt;
             console.warn(`[ChatService] Rate limit 발생, ${delayMs}ms 후 재시도 (${attempt}/${RATE_LIMIT_MAX_RETRIES})`);
@@ -593,8 +610,10 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
     console.error('[ChatService] 스트리밍 오류:', error);
     backendLogger.error('ChatService', '스트리밍 오류', error);
 
-    // Rate limit 오류는 사용자 친화적 메시지로 변환
-    if (isRateLimitError(error)) {
+    // 오류 유형별 사용자 친화적 메시지 변환
+    if (isQuotaExceededError(error)) {
+      yield { type: 'error', error: 'AI 서비스 사용량이 초과되었습니다. 관리자에게 문의하세요.' };
+    } else if (isRateLimitError(error)) {
       yield { type: 'error', error: '현재 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요.' };
     } else {
       yield { type: 'error', error: error.message };
