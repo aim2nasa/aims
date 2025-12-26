@@ -21,6 +21,7 @@ import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageG
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
+import { unifiedSearchToolDefinitions, handleUnifiedSearch } from './unified_search.js';
 
 // 모든 Tool 정의 통합
 const allToolDefinitions = [
@@ -39,6 +40,7 @@ const allToolDefinitions = [
   ...utilityToolDefinitions,
   ...ragToolDefinitions,
   ...addressToolDefinitions,
+  ...unifiedSearchToolDefinitions,
 ];
 
 // Tool 핸들러 매핑
@@ -99,6 +101,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   submit_search_feedback: handleSubmitSearchFeedback,
   // 주소 검색 관련
   search_address: handleSearchAddress,
+  // 통합 검색
+  unified_search: handleUnifiedSearch,
 };
 
 /**

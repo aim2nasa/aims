@@ -33,6 +33,8 @@ async function loadToolHandlers() {
   const rag = await import('../tools/rag.js');
   // 주소 검색 도구
   const address = await import('../tools/address.js');
+  // 통합 검색 도구
+  const unifiedSearch = await import('../tools/unified_search.js');
 
   toolHandlers = {
     // 고객 관련
@@ -91,6 +93,8 @@ async function loadToolHandlers() {
     submit_search_feedback: rag.handleSubmitSearchFeedback,
     // 주소 검색
     search_address: address.handleSearchAddress,
+    // 통합 검색
+    unified_search: unifiedSearch.handleUnifiedSearch,
   };
 }
 
