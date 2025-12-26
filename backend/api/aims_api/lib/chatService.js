@@ -166,6 +166,7 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "퇴직연금 관련 서류 찾아줘" → unified_search(documentsOnly: true)
 - "자동차보험 문서 검색해줘" → unified_search(documentsOnly: true)
 - "건강검진 서류 있어?" → unified_search(documentsOnly: true)
+- "계약서 파일 보여줘" → unified_search(documentsOnly: true)
 
 **문서 검색 결과 표시 (2가지 카테고리만):**
 \`\`\`
