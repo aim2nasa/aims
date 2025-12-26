@@ -75,7 +75,7 @@ export const listRelationshipsSchema = z.object({
 export const relationshipToolDefinitions = [
   {
     name: 'create_relationship',
-    description: '두 고객 간의 관계를 생성합니다. 예: 배우자, 부모-자녀, 친구, 동료 등. 양방향 관계(배우자, 친구 등)는 자동으로 역방향 관계도 생성됩니다.',
+    description: '두 고객 간의 관계를 생성합니다. 고객 타입에 따라 관계 유형이 다릅니다. 법인 고객: 대표, 임원, 직원, 기타. 개인 고객: 배우자, 부모, 자녀만 가능.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -83,7 +83,7 @@ export const relationshipToolDefinitions = [
         toCustomerId: { type: 'string', description: '관계 대상 고객 ID' },
         relationshipType: {
           type: 'string',
-          description: '관계 유형: spouse(배우자), parent(부모), child(자녀), friend(친구), colleague(동료), supervisor(상사), subordinate(부하), business_partner(사업파트너) 등'
+          description: '관계 유형 - 법인: ceo(대표), executive(임원), employee(직원), 기타 직접입력 / 개인: spouse(배우자), parent(부모), child(자녀)'
         },
         relationshipCategory: {
           type: 'string',
