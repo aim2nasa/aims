@@ -219,7 +219,10 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - 계약 목록 조회 시 응답 첫 줄에 다음 형식으로 요약 표시:
   "전체 N건 | 1/P 페이지 (10개씩)"
   예: "전체 45건 | 1/5 페이지 (10개씩)"
-- hasMore가 true이면 "다음 페이지를 보시겠습니까?"라고 물어봅니다.
+- **🔴 hasMore 필드를 반드시 확인하세요!**
+  - hasMore=true → "다음 페이지를 보시겠습니까?" 물어보기
+  - hasMore=false → "모든 데이터를 보셨습니다" 가능
+  - **🚨 hasMore=true인데 "모든 문서/고객/계약을 보셨습니다"라고 하면 안 됩니다!**
 
 ## 🚨🚨🚨 다음 페이지 요청 - 절대 규칙 (CRITICAL!) 🚨🚨🚨
 **사용자가 "응", "네", "예", "ㅇㅇ", "더 보여줘", "계속", "다음" 등으로 응답하면:**
@@ -250,7 +253,58 @@ AI: [search_customers 호출 with offset=0]
     "다음 페이지를 보시겠습니까?"
 사용자: "ㅇㅇ"
 AI: [search_customers 호출 with offset=10]  ← 반드시 도구 호출!
-\`\`\``;
+\`\`\`
+
+예시 3 - 고객 문서 목록 다음 페이지:
+\`\`\`
+사용자: "캐치업코리아 문서 목록 보여줘"
+AI: [list_customer_documents 호출 with customerId="6947f716ea0d306a0ac63b61", offset=0, limit=10]
+    → 결과: {
+        customerId: "6947f716ea0d306a0ac63b61",
+        count: 10, totalCount: 25, hasMore: true,
+        nextOffset: 10,
+        _paginationHint: "다음 페이지: list_customer_documents(customerId=\"6947f716ea0d306a0ac63b61\", offset=10)"
+      }
+    "전체 25건 중 10건을 표시합니다. 다음 페이지를 보시겠습니까?"
+사용자: "응"
+AI: [_paginationHint 그대로 사용! → list_customer_documents(customerId="6947f716ea0d306a0ac63b61", offset=10)]
+    → 결과: { count: 10, totalCount: 25, hasMore: true, nextOffset: 20 }
+    "11-20번 문서입니다. 다음 페이지를 보시겠습니까?"
+사용자: "응"
+AI: [list_customer_documents(customerId="6947f716ea0d306a0ac63b61", offset=20)]
+    → 결과: { count: 5, totalCount: 25, hasMore: false, nextOffset: null }
+    "나머지 5건입니다. 모든 문서를 보셨습니다."
+\`\`\`
+
+**🚨🚨🚨 CRITICAL: _paginationHint 필드를 반드시 확인하고 그대로 사용하세요!**
+- hasMore=true일 때 응답에 _paginationHint가 포함됩니다
+- 사용자가 "응", "더 보여줘" 등으로 응답하면 _paginationHint에 있는 도구 호출을 그대로 실행하세요
+- customerId와 nextOffset을 직접 추출해서 사용해도 됩니다
+- **절대 새로운 검색을 하거나 customerId를 잃어버리면 안 됩니다!**
+
+## 🚨🚨🚨 페이지네이션 응답 형식 규칙 (CRITICAL!) 🚨🚨🚨
+**hasMore=true일 때 반드시 아래 형식으로 응답하세요:**
+
+1. **고객 문서 목록**: 응답 첫 줄에 고객명과 ID를 함께 표시
+   형식: "**고객명**(ID:고객ID)의 문서 N건 중 X-Y번입니다."
+   예시: "**캐치업코리아**(ID:6947f716ea0d306a0ac63b61)의 문서 25건 중 1-10번입니다."
+
+2. **계약 목록**: 검색어와 함께 표시
+   형식: "**검색어** 계약 N건 중 X-Y번입니다."
+   예시: "**캐치업코리아** 계약 20건 중 1-10번입니다."
+
+3. **고객 목록**: 전체 수와 범위 표시
+   형식: "전체 N명 중 X-Y번입니다."
+   예시: "전체 35명 중 1-10번입니다."
+
+**🔴 반드시 (ID:xxx) 형태로 고객 ID를 응답에 포함하세요!**
+사용자가 "응"이라고 하면, 이전 응답에서 "(ID:xxx)" 패턴을 찾아서 다음 페이지를 조회해야 합니다.
+
+**🔴 다음 페이지 요청 처리 (사용자가 "응", "더 보여줘" 등 응답 시):**
+- 이전 응답에서 "(ID:xxx)" 패턴을 찾아 customerId로 사용
+- 이전에 보여준 범위(X-Y번)를 확인하여 다음 offset 계산 (예: 1-10번이었으면 offset=10)
+- **⛔ unified_search 절대 사용 금지!** 반드시 동일한 도구(list_customer_documents 등)를 사용
+- **⛔ 새로운 고객 검색(search_customers) 금지!** 이전 응답의 ID를 그대로 사용`;
 
 // GPT-4o 비용 (TOKEN_COSTS에 없는 경우를 위해)
 const GPT4O_COSTS = { input: 0.0025, output: 0.01 };  // per 1K tokens

@@ -805,35 +805,58 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   }, [previewDocument?.id, handleDocumentPreviewClick]);
 
   // 메시지 내용에서 문서 링크를 파싱하여 클릭 가능한 요소로 변환
+  // 파일명에 []가 포함된 경우도 처리 (예: [비용+준비서류 안내]_xxx.pdf)
   const renderMessageContent = useCallback((content: string) => {
-    // [파일명](doc:문서ID) 패턴 파싱
-    const docLinkPattern = /\[([^\]]+)\]\(doc:([a-f0-9]{24})\)/g;
+    // ](doc:문서ID) 패턴을 먼저 찾고, 매칭되는 여는 [ 를 역추적
+    const docSuffixPattern = /\]\(doc:([a-f0-9]{24})\)/g;
     const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = docLinkPattern.exec(content)) !== null) {
-      // 링크 앞의 텍스트 추가
-      if (match.index > lastIndex) {
-        parts.push(content.slice(lastIndex, match.index));
+    while ((match = docSuffixPattern.exec(content)) !== null) {
+      const suffixStart = match.index; // ] 위치
+      const docId = match[1];
+
+      // 여는 [ 를 찾기 위해 역추적 (중첩 bracket 고려)
+      let bracketCount = 1; // 닫는 ] 를 이미 찾았으므로 1로 시작
+      let openBracketPos = -1;
+
+      for (let i = suffixStart - 1; i >= lastIndex; i--) {
+        if (content[i] === ']') {
+          bracketCount++;
+        } else if (content[i] === '[') {
+          bracketCount--;
+          if (bracketCount === 0) {
+            openBracketPos = i;
+            break;
+          }
+        }
       }
 
-      // 문서 링크 추가
-      const fileName = match[1];
-      const docId = match[2];
-      parts.push(
-        <button
-          key={`doc-${docId}-${match.index}`}
-          type="button"
-          className="chat-panel__doc-link"
-          onClick={() => handleDocumentPreviewClick(docId)}
-          title="클릭하여 문서 미리보기"
-        >
-          📄 {fileName}
-        </button>
-      );
+      if (openBracketPos !== -1) {
+        // 링크 앞의 텍스트 추가
+        if (openBracketPos > lastIndex) {
+          parts.push(content.slice(lastIndex, openBracketPos));
+        }
 
-      lastIndex = match.index + match[0].length;
+        // 파일명 추출 ([ 와 ] 사이)
+        const fileName = content.slice(openBracketPos + 1, suffixStart);
+
+        // 문서 링크 추가
+        parts.push(
+          <button
+            key={`doc-${docId}-${match.index}`}
+            type="button"
+            className="chat-panel__doc-link"
+            onClick={() => handleDocumentPreviewClick(docId)}
+            title="클릭하여 문서 미리보기"
+          >
+            📄 {fileName}
+          </button>
+        );
+
+        lastIndex = match.index + match[0].length;
+      }
     }
 
     // 나머지 텍스트 추가

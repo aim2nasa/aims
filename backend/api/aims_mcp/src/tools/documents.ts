@@ -17,7 +17,8 @@ export const getDocumentSchema = z.object({
 
 export const listCustomerDocumentsSchema = z.object({
   customerId: z.string().describe('고객 ID'),
-  limit: z.number().optional().default(20).describe('결과 개수 제한')
+  limit: z.number().optional().default(20).describe('결과 개수 제한'),
+  offset: z.number().optional().default(0).describe('시작 위치 (페이지네이션용)')
 });
 
 export const deleteDocumentSchema = z.object({
@@ -57,12 +58,13 @@ export const documentToolDefinitions = [
   },
   {
     name: 'list_customer_documents',
-    description: '특정 고객의 문서 목록을 조회합니다.',
+    description: '특정 고객의 문서 목록을 조회합니다. offset을 사용하여 페이지네이션이 가능합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '고객 ID' },
-        limit: { type: 'number', description: '결과 개수 제한 (기본: 20)' }
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 20)' },
+        offset: { type: 'number', description: '시작 위치 (기본: 0, 페이지네이션용)' }
       },
       required: ['customerId']
     }
@@ -301,13 +303,17 @@ export async function handleListCustomerDocuments(args: unknown) {
       };
     }
 
+    const limit = params.limit || 20;
+    const offset = params.offset || 0;
+
     const documents = await db.collection(COLLECTIONS.FILES)
       .find({
-        'customer_relation.customer_id': objectId,
+        customerId: objectId,
         ownerId: userId
       })
       .sort({ 'upload.uploaded_at': -1 })
-      .limit(params.limit || 20)
+      .skip(offset)
+      .limit(limit)
       .project({
         _id: 1,
         'upload.originalName': 1,
@@ -321,9 +327,12 @@ export async function handleListCustomerDocuments(args: unknown) {
       .toArray();
 
     const totalCount = await db.collection(COLLECTIONS.FILES).countDocuments({
-      'customer_relation.customer_id': objectId,
+      customerId: objectId,
       ownerId: userId
     });
+
+    const hasMore = offset + documents.length < totalCount;
+    const nextOffset = hasMore ? offset + documents.length : null;
 
     return {
       content: [{
@@ -333,6 +342,13 @@ export async function handleListCustomerDocuments(args: unknown) {
           customerName: customer.personal_info?.name,
           count: documents.length,
           totalCount,
+          offset,
+          hasMore,
+          nextOffset,
+          // AI 지시: 사용자가 "더 보여줘"하면 이 customerId와 nextOffset 사용
+          _paginationHint: hasMore
+            ? `다음 페이지: list_customer_documents(customerId="${params.customerId}", offset=${nextOffset})`
+            : null,
           documents: documents.map(doc => ({
             id: doc._id.toString(),
             filename: doc.upload?.originalName,
