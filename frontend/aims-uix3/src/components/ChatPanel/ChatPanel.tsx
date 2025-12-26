@@ -1238,11 +1238,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
-        {/* 도구 사용 인디케이터 (개발자 모드에서만 표시) */}
-        {isDevMode && activeTools.length > 0 && (
+        {/* 도구 사용 인디케이터 */}
+        {activeTools.length > 0 && (
           <div className="chat-panel__tool-indicator">
-            <span className="chat-panel__tool-spinner" />
-            <span>데이터 조회 중: {activeTools.join(', ')}</span>
+            <svg className="chat-panel__tool-spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
+              <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            <span>{isDevMode ? `데이터 조회 중: ${activeTools.join(', ')}` : '검색 중...'}</span>
           </div>
         )}
 
@@ -1516,11 +1519,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           </div>
         )}
 
-        {/* 도구 사용 인디케이터 (개발자 모드에서만 표시) */}
-        {isDevMode && activeTools.length > 0 && (
+        {/* 도구 사용 인디케이터 */}
+        {activeTools.length > 0 && (
           <div className="chat-panel__tool-indicator">
-            <span className="chat-panel__tool-spinner" />
-            <span>데이터 조회 중: {activeTools.join(', ')}</span>
+            <svg className="chat-panel__tool-spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
+              <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            <span>{isDevMode ? `데이터 조회 중: ${activeTools.join(', ')}` : '검색 중...'}</span>
           </div>
         )}
 

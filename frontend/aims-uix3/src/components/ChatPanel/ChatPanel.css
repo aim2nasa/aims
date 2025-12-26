@@ -934,12 +934,15 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
 }
 
 .chat-panel__tool-spinner {
+  flex-shrink: 0;
   width: 14px;
   height: 14px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
+  color: #007AFF;
   animation: spin 1s linear infinite;
+}
+
+html[data-theme="dark"] .chat-panel__tool-spinner {
+  color: #8B5CF6;
 }
 
 @keyframes spin {
