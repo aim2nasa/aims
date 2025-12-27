@@ -848,6 +848,192 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   color: var(--color-text-tertiary);
 }
 
+/* ==================== Question Tabs ==================== */
+.chat-panel__question-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px;
+  background: rgba(139, 92, 246, 0.08);
+  border-radius: 8px;
+}
+
+.chat-panel__question-tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: var(--font-size-caption-1);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-panel__question-tab:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.chat-panel__question-tab--active {
+  background: #ffffff;
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .chat-panel__question-tabs {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+html[data-theme="dark"] .chat-panel__question-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="dark"] .chat-panel__question-tab--active {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
+}
+
+/* ==================== Saved Questions ==================== */
+.chat-panel__saved-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chat-panel__saved-questions-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  gap: 4px;
+}
+
+.chat-panel__saved-questions-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-text-tertiary);
+}
+
+.chat-panel__saved-questions-empty p {
+  margin: 0 0 4px;
+  font-size: var(--font-size-footnote);
+}
+
+.chat-panel__saved-questions-empty span {
+  font-size: var(--font-size-caption-1);
+  opacity: 0.8;
+}
+
+.chat-panel__saved-question {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.chat-panel__saved-question:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.chat-panel__saved-question-text {
+  flex: 1;
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-primary);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1.4;
+}
+
+.chat-panel__saved-question-text:hover {
+  color: #8B5CF6;
+}
+
+.chat-panel__saved-question-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.chat-panel__saved-question:hover .chat-panel__saved-question-delete {
+  opacity: 1;
+}
+
+.chat-panel__saved-question-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+html[data-theme="dark"] .chat-panel__saved-question {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+html[data-theme="dark"] .chat-panel__saved-question:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 자주 쓰는 질문 횟수 */
+.chat-panel__frequent-count {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  background: rgba(139, 92, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .chat-panel__frequent-count {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+/* ==================== Input Save Button ==================== */
+.chat-panel__input-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.15s ease;
+  opacity: 0.6;
+}
+
+.chat-panel__input-save:hover {
+  background: rgba(139, 92, 246, 0.1);
+  opacity: 1;
+}
+
+.chat-panel__input-save:active {
+  transform: scale(0.95);
+}
+
 /* Message Bubble */
 .chat-panel__message {
   display: flex;

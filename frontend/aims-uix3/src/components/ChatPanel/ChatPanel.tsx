@@ -13,6 +13,7 @@ import { CustomerService } from '@/services/customerService';
 import { DocumentService } from '@/services/DocumentService';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { ContractService } from '@/services/contractService';
+import { SavedQuestionsService, SavedQuestion, FrequentQuestionsService, FrequentQuestion } from '@/services/savedQuestionsService';
 import Button from '@/shared/ui/Button';
 import Tooltip from '@/shared/ui/Tooltip';
 import DraggableModal from '@/shared/ui/DraggableModal';
@@ -229,6 +230,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   // 예시 목록 모달 (더블클릭으로 열기)
   const [exampleModalIdx, setExampleModalIdx] = useState<number | null>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 나만의 질문 저장소 + 자주 쓰는 질문
+  const [questionTab, setQuestionTab] = useState<'examples' | 'saved' | 'frequent'>('examples');
+  const [savedQuestions, setSavedQuestions] = useState<SavedQuestion[]>([]);
+  const [isSavedQuestionsLoading, setIsSavedQuestionsLoading] = useState(false);
+  const [frequentQuestions, setFrequentQuestions] = useState<FrequentQuestion[]>([]);
+  const [isFrequentQuestionsLoading, setIsFrequentQuestionsLoading] = useState(false);
   // 컨텍스트 메뉴 (우클릭 복사)
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -455,12 +462,76 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     inputRef.current?.focus();
   }, [setInput]);
 
+  // 나만의 질문 목록 로드
+  const fetchSavedQuestions = useCallback(async () => {
+    setIsSavedQuestionsLoading(true);
+    try {
+      const questions = await SavedQuestionsService.list();
+      setSavedQuestions(questions);
+    } catch (error) {
+      console.error('[ChatPanel] 저장된 질문 로드 실패:', error);
+    } finally {
+      setIsSavedQuestionsLoading(false);
+    }
+  }, []);
+
+  // 질문 저장
+  const handleSaveQuestion = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+    try {
+      const newQuestion = await SavedQuestionsService.create(text);
+      setSavedQuestions(prev => [newQuestion, ...prev]);
+    } catch (error) {
+      console.error('[ChatPanel] 질문 저장 실패:', error);
+      // 중복 질문 등 에러는 무시
+    }
+  }, []);
+
+  // 질문 삭제
+  const handleDeleteSavedQuestion = useCallback(async (id: string) => {
+    try {
+      await SavedQuestionsService.delete(id);
+      setSavedQuestions(prev => prev.filter(q => q._id !== id));
+    } catch (error) {
+      console.error('[ChatPanel] 질문 삭제 실패:', error);
+    }
+  }, []);
+
+  // 저장된 질문 선택
+  const handleSelectSavedQuestion = useCallback((text: string) => {
+    setInput(text);
+    inputRef.current?.focus();
+  }, [setInput]);
+
+  // 자주 쓰는 질문 목록 로드
+  const fetchFrequentQuestions = useCallback(async () => {
+    setIsFrequentQuestionsLoading(true);
+    try {
+      const questions = await FrequentQuestionsService.list();
+      setFrequentQuestions(questions);
+    } catch (error) {
+      console.error('[ChatPanel] 자주 쓰는 질문 로드 실패:', error);
+    } finally {
+      setIsFrequentQuestionsLoading(false);
+    }
+  }, []);
+
   // 패널 열릴 때 세션 목록 로드
   useEffect(() => {
     if (isOpen) {
       fetchSessions(1, 10);
     }
   }, [isOpen, fetchSessions]);
+
+  // 나만의 질문/자주 쓰는 질문 탭 선택 시 데이터 로드
+  useEffect(() => {
+    if (questionTab === 'saved' && savedQuestions.length === 0) {
+      fetchSavedQuestions();
+    }
+    if (questionTab === 'frequent' && frequentQuestions.length === 0) {
+      fetchFrequentQuestions();
+    }
+  }, [questionTab, savedQuestions.length, frequentQuestions.length, fetchSavedQuestions, fetchFrequentQuestions]);
 
   // 통계 오버레이 표시 함수 (세션 첫 방문 및 헤더 아이콘 클릭 시 사용)
   const showStatsOverlay = useCallback(async () => {
@@ -926,6 +997,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     });
     setHistoryIndex(-1);
     tempInputRef.current = '';
+
+    // 자주 쓰는 질문 사용 추적 (비동기, 실패해도 무시)
+    FrequentQuestionsService.track(trimmedInput);
 
     // 사용자 메시지 추가
     const userMessage: DisplayMessage = {
@@ -1421,52 +1495,147 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   <div className="chat-panel__welcome-feature-desc">원하는 내용을 직접 입력하세요</div>
                 </div>
               </button>
-              {/* 예시 질문 안내 */}
-              <div className="chat-panel__welcome-features-header">
-                이렇게 질문해보세요
+              {/* 탭 헤더 */}
+              <div className="chat-panel__question-tabs">
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'examples' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('examples')}
+                >
+                  이렇게 질문해보세요
+                </button>
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'saved' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('saved')}
+                >
+                  ⭐ 나만의 질문
+                </button>
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'frequent' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('frequent')}
+                >
+                  🔥 자주 쓰는 질문
+                </button>
               </div>
-              <div className="chat-panel__welcome-features">
-                {HELP_FEATURES.map((feature, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="chat-panel__welcome-feature"
-                    onClick={() => handleFeatureClick(idx)}
-                  >
-                    <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
-                    <div className="chat-panel__welcome-feature-content">
-                      <div className="chat-panel__welcome-feature-title">{feature.examples[exampleIndices[idx]]}</div>
-                      <div className="chat-panel__welcome-feature-desc">{feature.title}</div>
+
+              {/* 예시 질문 목록 */}
+              {questionTab === 'examples' && (
+                <div className="chat-panel__welcome-features">
+                  {HELP_FEATURES.map((feature, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="chat-panel__welcome-feature"
+                      onClick={() => handleFeatureClick(idx)}
+                    >
+                      <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
+                      <div className="chat-panel__welcome-feature-content">
+                        <div className="chat-panel__welcome-feature-title">{feature.examples[exampleIndices[idx]]}</div>
+                        <div className="chat-panel__welcome-feature-desc">{feature.title}</div>
+                      </div>
+                      {/* Pagination 버튼 */}
+                      <div className="chat-panel__welcome-feature-pagination">
+                        <button
+                          type="button"
+                          className="chat-panel__welcome-feature-nav"
+                          onClick={(e) => handlePrevExample(idx, e)}
+                          aria-label="이전 예시"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        <span className="chat-panel__welcome-feature-page">
+                          {exampleIndices[idx] + 1}/{feature.examples.length}
+                        </span>
+                        <button
+                          type="button"
+                          className="chat-panel__welcome-feature-nav"
+                          onClick={(e) => handleNextExample(idx, e)}
+                          aria-label="다음 예시"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 나만의 질문 목록 */}
+              {questionTab === 'saved' && (
+                <div className="chat-panel__saved-questions">
+                  {isSavedQuestionsLoading ? (
+                    <div className="chat-panel__saved-questions-loading">
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
                     </div>
-                    {/* Pagination 버튼 */}
-                    <div className="chat-panel__welcome-feature-pagination">
-                      <button
-                        type="button"
-                        className="chat-panel__welcome-feature-nav"
-                        onClick={(e) => handlePrevExample(idx, e)}
-                        aria-label="이전 예시"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                          <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <span className="chat-panel__welcome-feature-page">
-                        {exampleIndices[idx] + 1}/{feature.examples.length}
-                      </span>
-                      <button
-                        type="button"
-                        className="chat-panel__welcome-feature-nav"
-                        onClick={(e) => handleNextExample(idx, e)}
-                        aria-label="다음 예시"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                          <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
+                  ) : savedQuestions.length === 0 ? (
+                    <div className="chat-panel__saved-questions-empty">
+                      <p>저장된 질문이 없습니다</p>
+                      <span>자주 사용하는 질문을 입력 후 ⭐ 버튼으로 저장하세요</span>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  ) : (
+                    savedQuestions.map((q) => (
+                      <div key={q._id} className="chat-panel__saved-question">
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-text"
+                          onClick={() => handleSelectSavedQuestion(q.text)}
+                        >
+                          "{q.text}"
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-delete"
+                          onClick={() => handleDeleteSavedQuestion(q._id)}
+                          aria-label="삭제"
+                        >
+                          <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} decorative />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* 자주 쓰는 질문 목록 */}
+              {questionTab === 'frequent' && (
+                <div className="chat-panel__saved-questions">
+                  {isFrequentQuestionsLoading ? (
+                    <div className="chat-panel__saved-questions-loading">
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                    </div>
+                  ) : frequentQuestions.length === 0 ? (
+                    <div className="chat-panel__saved-questions-empty">
+                      <p>자주 쓰는 질문이 없습니다</p>
+                      <span>질문을 사용하면 자동으로 기록됩니다</span>
+                    </div>
+                  ) : (
+                    frequentQuestions.map((q) => (
+                      <div key={q._id} className="chat-panel__saved-question">
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-text"
+                          onClick={() => handleSelectSavedQuestion(q.text)}
+                        >
+                          "{q.text}"
+                        </button>
+                        <span className="chat-panel__frequent-count">
+                          {q.count}회
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )
         )}
@@ -1558,6 +1727,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             </button>
           )}
         </div>
+        {/* 질문 저장 버튼 */}
+        {input.trim() && !isLoading && (
+          <Tooltip content="나만의 질문에 저장" placement="top">
+            <button
+              type="button"
+              className="chat-panel__input-save"
+              onClick={() => handleSaveQuestion(input)}
+              aria-label="질문 저장"
+            >
+              <span>⭐</span>
+            </button>
+          </Tooltip>
+        )}
         <Button
           type="submit"
           variant="primary"
@@ -1702,51 +1884,146 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   <div className="chat-panel__welcome-feature-desc">원하는 내용을 직접 입력하세요</div>
                 </div>
               </button>
-              {/* 예시 질문 안내 */}
-              <div className="chat-panel__welcome-features-header">
-                이렇게 질문해보세요
+              {/* 탭 헤더 */}
+              <div className="chat-panel__question-tabs">
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'examples' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('examples')}
+                >
+                  이렇게 질문해보세요
+                </button>
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'saved' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('saved')}
+                >
+                  ⭐ 나만의 질문
+                </button>
+                <button
+                  type="button"
+                  className={`chat-panel__question-tab ${questionTab === 'frequent' ? 'chat-panel__question-tab--active' : ''}`}
+                  onClick={() => setQuestionTab('frequent')}
+                >
+                  🔥 자주 쓰는 질문
+                </button>
               </div>
-              <div className="chat-panel__welcome-features">
-                {HELP_FEATURES.map((feature, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="chat-panel__welcome-feature"
-                    onClick={() => handleFeatureClick(idx)}
-                  >
-                    <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
-                    <div className="chat-panel__welcome-feature-content">
-                      <div className="chat-panel__welcome-feature-title">{feature.examples[exampleIndices[idx]]}</div>
-                      <div className="chat-panel__welcome-feature-desc">{feature.title}</div>
+
+              {/* 예시 질문 목록 */}
+              {questionTab === 'examples' && (
+                <div className="chat-panel__welcome-features">
+                  {HELP_FEATURES.map((feature, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="chat-panel__welcome-feature"
+                      onClick={() => handleFeatureClick(idx)}
+                    >
+                      <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
+                      <div className="chat-panel__welcome-feature-content">
+                        <div className="chat-panel__welcome-feature-title">{feature.examples[exampleIndices[idx]]}</div>
+                        <div className="chat-panel__welcome-feature-desc">{feature.title}</div>
+                      </div>
+                      <div className="chat-panel__welcome-feature-pagination">
+                        <button
+                          type="button"
+                          className="chat-panel__welcome-feature-nav"
+                          onClick={(e) => handlePrevExample(idx, e)}
+                          aria-label="이전 예시"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        <span className="chat-panel__welcome-feature-page">
+                          {exampleIndices[idx] + 1}/{feature.examples.length}
+                        </span>
+                        <button
+                          type="button"
+                          className="chat-panel__welcome-feature-nav"
+                          onClick={(e) => handleNextExample(idx, e)}
+                          aria-label="다음 예시"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 나만의 질문 목록 */}
+              {questionTab === 'saved' && (
+                <div className="chat-panel__saved-questions">
+                  {isSavedQuestionsLoading ? (
+                    <div className="chat-panel__saved-questions-loading">
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
                     </div>
-                    <div className="chat-panel__welcome-feature-pagination">
-                      <button
-                        type="button"
-                        className="chat-panel__welcome-feature-nav"
-                        onClick={(e) => handlePrevExample(idx, e)}
-                        aria-label="이전 예시"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                          <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <span className="chat-panel__welcome-feature-page">
-                        {exampleIndices[idx] + 1}/{feature.examples.length}
-                      </span>
-                      <button
-                        type="button"
-                        className="chat-panel__welcome-feature-nav"
-                        onClick={(e) => handleNextExample(idx, e)}
-                        aria-label="다음 예시"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                          <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
+                  ) : savedQuestions.length === 0 ? (
+                    <div className="chat-panel__saved-questions-empty">
+                      <p>저장된 질문이 없습니다</p>
+                      <span>자주 사용하는 질문을 입력 후 ⭐ 버튼으로 저장하세요</span>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  ) : (
+                    savedQuestions.map((q) => (
+                      <div key={q._id} className="chat-panel__saved-question">
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-text"
+                          onClick={() => handleSelectSavedQuestion(q.text)}
+                        >
+                          "{q.text}"
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-delete"
+                          onClick={() => handleDeleteSavedQuestion(q._id)}
+                          aria-label="삭제"
+                        >
+                          <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_2} decorative />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* 자주 쓰는 질문 목록 */}
+              {questionTab === 'frequent' && (
+                <div className="chat-panel__saved-questions">
+                  {isFrequentQuestionsLoading ? (
+                    <div className="chat-panel__saved-questions-loading">
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                      <span className="chat-panel__loading-dot" />
+                    </div>
+                  ) : frequentQuestions.length === 0 ? (
+                    <div className="chat-panel__saved-questions-empty">
+                      <p>자주 쓰는 질문이 없습니다</p>
+                      <span>질문을 사용하면 자동으로 기록됩니다</span>
+                    </div>
+                  ) : (
+                    frequentQuestions.map((q) => (
+                      <div key={q._id} className="chat-panel__saved-question">
+                        <button
+                          type="button"
+                          className="chat-panel__saved-question-text"
+                          onClick={() => handleSelectSavedQuestion(q.text)}
+                        >
+                          "{q.text}"
+                        </button>
+                        <span className="chat-panel__frequent-count">
+                          {q.count}회
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )
         )}

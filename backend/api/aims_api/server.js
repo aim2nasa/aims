@@ -9023,6 +9023,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', errorLogsRoutes);
     console.log('[Server] errorLogsRoutes 등록 완료');
 
+    // 나만의 질문 저장소 라우트 설정
+    const savedQuestionsRoutes = require('./routes/saved-questions-routes')(db, authenticateJWT);
+    app.use('/api', savedQuestionsRoutes);
+    console.log('[Server] savedQuestionsRoutes 등록 완료');
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })
