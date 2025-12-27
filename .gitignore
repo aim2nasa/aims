@@ -34,3 +34,5 @@ nul
 
 # Build hash files (deployment smart build tracking)
 .build_hash
+_build_info.json
+.requirements_hash
