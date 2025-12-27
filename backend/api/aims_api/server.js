@@ -5103,46 +5103,55 @@ app.get('/api/admin/metrics/history', authenticateJWT, requireRole('admin'), asy
 
 /**
  * 관리자: AIMS 서비스 포트 현황 조회
+ * HTTP 헬스 체크 방식으로 Tier 2 백엔드 API 상태와 일관성 유지
  */
 app.get('/api/admin/ports', authenticateJWT, requireRole('admin'), async (req, res) => {
-  // AIMS 서비스 포트 목록
+  // AIMS 서비스 포트 목록 (healthEndpoint: HTTP 헬스체크 URL, 없으면 TCP 체크)
   const AIMS_PORTS = [
-    { port: 3010, service: 'aims_api', description: 'AIMS 메인 API' },
-    { port: 3011, service: 'aims_mcp', description: 'MCP 서버 (AI 도구)' },
-    { port: 8000, service: 'aims_rag_api', description: 'RAG/문서 처리 API' },
-    { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시' },
-    { port: 8004, service: 'annual_report_api', description: '연간보고서 API' },
-    { port: 8005, service: 'pdf_converter', description: 'PDF 변환 서버' },
-    { port: 5678, service: 'n8n', description: '워크플로우 엔진' },
-    { port: 6333, service: 'qdrant', description: '벡터 DB' },
-    { port: 27017, service: 'mongodb', description: '데이터베이스' }
+    { port: 3010, service: 'aims_api', description: 'AIMS 메인 API', healthEndpoint: '/api/health' },
+    { port: 3011, service: 'aims_mcp', description: 'MCP 서버 (AI 도구)', healthEndpoint: '/health' },
+    { port: 8000, service: 'aims_rag_api', description: 'RAG/문서 처리 API', healthEndpoint: '/health' },
+    { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시', healthEndpoint: '/health' },
+    { port: 8004, service: 'annual_report_api', description: '연간보고서 API', healthEndpoint: '/health' },
+    { port: 8005, service: 'pdf_converter', description: 'PDF 변환 서버', healthEndpoint: '/health' },
+    { port: 5678, service: 'n8n', description: '워크플로우 엔진', healthEndpoint: '/healthz' },
+    { port: 6333, service: 'qdrant', description: '벡터 DB', healthEndpoint: null }, // TCP 체크
+    { port: 27017, service: 'mongodb', description: '데이터베이스', healthEndpoint: null } // TCP 체크
   ];
 
   const checkTime = utcNowISO();
+  const TIMEOUT_MS = 5000; // Tier 2 헬스 체크와 동일한 타임아웃
 
   // 병렬로 포트 상태 체크
   const portChecks = await Promise.allSettled(
-    AIMS_PORTS.map(async ({ port, service, description }) => {
+    AIMS_PORTS.map(async ({ port, service, description, healthEndpoint }) => {
       try {
-        // TCP 연결 시도로 포트 상태 확인
-        const net = require('net');
-        return new Promise((resolve, reject) => {
-          const socket = new net.Socket();
-          socket.setTimeout(2000);
-          socket.on('connect', () => {
-            socket.destroy();
-            resolve({ port, service, description, status: 'listening', checkedAt: checkTime });
+        if (healthEndpoint) {
+          // HTTP 헬스 체크 (Tier 2 백엔드 API 체크와 동일한 방식)
+          const url = `http://localhost:${port}${healthEndpoint}`;
+          await axios.get(url, { timeout: TIMEOUT_MS });
+          return { port, service, description, status: 'listening', checkedAt: checkTime };
+        } else {
+          // TCP 연결 체크 (MongoDB, Qdrant 등 HTTP 미지원 서비스)
+          const net = require('net');
+          return new Promise((resolve, reject) => {
+            const socket = new net.Socket();
+            socket.setTimeout(TIMEOUT_MS);
+            socket.on('connect', () => {
+              socket.destroy();
+              resolve({ port, service, description, status: 'listening', checkedAt: checkTime });
+            });
+            socket.on('timeout', () => {
+              socket.destroy();
+              reject(new Error('timeout'));
+            });
+            socket.on('error', (err) => {
+              socket.destroy();
+              reject(err);
+            });
+            socket.connect(port, 'localhost');
           });
-          socket.on('timeout', () => {
-            socket.destroy();
-            reject(new Error('timeout'));
-          });
-          socket.on('error', (err) => {
-            socket.destroy();
-            reject(err);
-          });
-          socket.connect(port, 'localhost');
-        });
+        }
       } catch (error) {
         return { port, service, description, status: 'closed', checkedAt: checkTime };
       }
