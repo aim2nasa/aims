@@ -158,9 +158,27 @@ const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
   );
 };
 
+// localStorage 키
+const TIME_RANGE_STORAGE_KEY = 'aims-admin-metrics-time-range';
+
 // 서버 리소스 섹션 컴포넌트
 const ServerResourcesSection = () => {
-  const [timeRange, setTimeRange] = useState<number>(24);
+  const [timeRange, setTimeRange] = useState<number>(() => {
+    const stored = localStorage.getItem(TIME_RANGE_STORAGE_KEY);
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if ([1, 6, 24, 72, 168].includes(parsed)) {
+        return parsed;
+      }
+    }
+    return 24; // 기본값: 1d
+  });
+
+  // timeRange 변경 시 localStorage에 저장
+  const handleTimeRangeChange = (hours: number) => {
+    setTimeRange(hours);
+    localStorage.setItem(TIME_RANGE_STORAGE_KEY, String(hours));
+  };
 
   // 현재 메트릭
   const { data: currentMetrics, isLoading: isCurrentLoading } = useQuery({
@@ -206,7 +224,7 @@ const ServerResourcesSection = () => {
               key={hours}
               type="button"
               className={`server-resources__time-btn ${timeRange === hours ? 'server-resources__time-btn--active' : ''}`}
-              onClick={() => setTimeRange(hours)}
+              onClick={() => handleTimeRangeChange(hours)}
             >
               {hours < 24 ? `${hours}h` : `${hours / 24}d`}
             </button>
