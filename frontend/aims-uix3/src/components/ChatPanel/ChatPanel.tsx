@@ -11,7 +11,10 @@ import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
 import { DocumentService } from '@/services/DocumentService';
+import type { CreateDocumentData } from '@/entities/document';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
+import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser';
+import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing';
 import { ContractService } from '@/services/contractService';
 import { SavedQuestionsService, SavedQuestion, FrequentQuestionsService, FrequentQuestion } from '@/services/savedQuestionsService';
 import Button from '@/shared/ui/Button';
@@ -780,8 +783,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     fileInputRef.current?.click();
   }, []);
 
-  // 파일 선택 핸들러
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // 파일 선택 핸들러 (선택 즉시 업로드 시작 - 새문서등록과 동일)
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -793,17 +796,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     const errors: string[] = [];
 
     Array.from(files).forEach((file) => {
-      if (attachedFiles.length + validFiles.length >= MAX_FILES) {
+      if (validFiles.length >= MAX_FILES) {
         errors.push(`최대 ${MAX_FILES}개 파일만 첨부할 수 있습니다`);
         return;
       }
       if (file.size > MAX_FILE_SIZE) {
         errors.push(`${file.name}: 파일 크기가 10MB를 초과합니다`);
-        return;
-      }
-      // 중복 파일 체크
-      if (attachedFiles.some(f => f.name === file.name && f.size === file.size)) {
-        errors.push(`${file.name}: 이미 첨부된 파일입니다`);
         return;
       }
       validFiles.push(file);
@@ -813,13 +811,171 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       alert(errors.join('\n'));
     }
 
-    if (validFiles.length > 0) {
-      setAttachedFiles(prev => [...prev, ...validFiles]);
-    }
-
     // input 초기화 (같은 파일 다시 선택 가능하도록)
     e.target.value = '';
-  }, [attachedFiles]);
+
+    if (validFiles.length === 0) return;
+
+    // 🔥 파일 선택 즉시 업로드 시작 (새문서등록과 동일)
+    setIsUploading(true);
+    try {
+      console.log('[ChatPanel] 🚀 파일 선택 즉시 업로드 시작:', validFiles.map(f => f.name));
+
+      // 1. 이전 메시지에서 고객명 추출
+      let targetCustomerId = '';
+      let linkedCustomerName = '';
+
+      // messages에서 가장 최근 user 메시지들을 역순으로 확인
+      const userMessages = [...messages].reverse().filter(m => m.role === 'user');
+      for (const msg of userMessages) {
+        const prevMatches = msg.content.match(/([가-힣]{2,4})/g) || [];
+        if (prevMatches.length > 0) {
+          // 후보 이름으로 고객 검색
+          for (const potentialName of prevMatches) {
+            try {
+              console.log('[ChatPanel] 고객 검색 시도:', potentialName);
+              const result = await CustomerService.getCustomers({
+                search: potentialName,
+                limit: 5
+              });
+              const customers = result?.customers || [];
+              const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
+              if (exactMatch?._id) {
+                targetCustomerId = exactMatch._id;
+                linkedCustomerName = potentialName;
+                console.log('[ChatPanel] 고객 찾음:', potentialName, targetCustomerId);
+                break;
+              }
+            } catch (searchError) {
+              console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
+            }
+          }
+          if (targetCustomerId) break;
+        }
+      }
+
+      // 고객 없으면 업로드 불가
+      if (!targetCustomerId) {
+        console.warn('[ChatPanel] 고객을 찾을 수 없어 업로드 취소');
+        setIsUploading(false);
+        return;
+      }
+
+      // 2. PDF 파일 AR 감지
+      const arInfoMap = new Map<string, { isAR: boolean; metadata: { report_title?: string; issue_date?: string } | null }>();
+      for (const file of validFiles) {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          try {
+            console.log('[ChatPanel] 🔍 AR 감지 시작:', file.name);
+            const arResult = await checkAnnualReportFromPDF(file);
+            arInfoMap.set(file.name, { isAR: arResult.is_annual_report, metadata: arResult.metadata });
+            if (arResult.is_annual_report) {
+              console.log('[ChatPanel] ✅ AR 감지됨:', file.name, arResult.metadata);
+            }
+          } catch (arError) {
+            console.warn('[ChatPanel] AR 감지 실패:', file.name, arError);
+            arInfoMap.set(file.name, { isAR: false, metadata: null });
+          }
+        }
+      }
+
+      // 3. 파일 업로드 (customerId 포함 - n8n이 자동 연결)
+      const uploadResults = await Promise.all(
+        validFiles.map(async (file) => {
+          try {
+            // 🔥 customerId를 전달하여 n8n이 자동으로 고객에 연결
+            const result = await DocumentService.uploadDocument(file, { customerId: targetCustomerId } as Partial<CreateDocumentData>);
+            if (result.success) {
+              const docId = result.document?._id || '';
+              console.log('[ChatPanel] 파일 업로드 성공:', file.name, '→ docId:', docId, '→ customerId:', targetCustomerId);
+              const arInfo = arInfoMap.get(file.name);
+              return { success: true, name: file.name, docId, isAR: arInfo?.isAR || false, arMetadata: arInfo?.metadata };
+            } else {
+              console.error('[ChatPanel] 파일 업로드 실패:', file.name, result.error);
+              return { success: false, name: file.name, docId: '', error: result.error, isAR: false, arMetadata: null };
+            }
+          } catch (error) {
+            console.error('[ChatPanel] 파일 업로드 실패:', file.name, error);
+            return { success: false, name: file.name, docId: '', error, isAR: false, arMetadata: null };
+          }
+        })
+      );
+
+      const uploadedFileNames = uploadResults.filter(r => r.success).map(r => r.name);
+      console.log('[ChatPanel] 업로드 완료:', uploadedFileNames);
+
+      // 4. AR 문서 처리 (DocumentRegistrationView와 동일한 흐름)
+      if (targetCustomerId && uploadedFileNames.length > 0) {
+        // n8n 처리 대기 (파일 → DB 저장까지)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        for (const uploadResult of uploadResults.filter(r => r.success)) {
+          const { name: fileName } = uploadResult;
+
+          if (uploadResult.isAR) {
+            // 🔥 AR 문서: set-annual-report가 customerId + AR플래그 동시 설정
+            console.log('[ChatPanel] 🔥 AR 문서 처리 시작:', fileName);
+            try {
+              // 1. AR 플래그 + 고객 연결 설정
+              const setArResult = await api.patch<{ success: boolean; document_id?: string }>(
+                '/api/documents/set-annual-report',
+                { filename: fileName, metadata: uploadResult.arMetadata, customer_id: targetCustomerId }
+              );
+              console.log('[ChatPanel] ✅ AR 플래그 + 고객연결 완료:', setArResult);
+
+              const documentId = setArResult.document_id;
+              if (documentId) {
+                // 2. 문서 처리 완료 대기 (SSE 기반 - 새문서등록과 동일)
+                console.log('[ChatPanel] ⏳ 문서 처리 완료 대기 시작 (SSE):', documentId);
+                const processingResult = await waitForDocumentProcessing(documentId);
+
+                if (processingResult.success && processingResult.status === 'completed') {
+                  // 3. 처리 완료 후 AR 파싱 트리거
+                  console.log('[ChatPanel] ✅ 문서 처리 완료, AR 파싱 트리거:', documentId);
+                  try {
+                    const triggerResult = await api.post<{ success: boolean; message?: string }>(
+                      '/api/ar-background/trigger-parsing',
+                      { customer_id: targetCustomerId, file_id: documentId }
+                    );
+                    console.log('[ChatPanel] ✅ AR 파싱 트리거 완료:', triggerResult);
+                  } catch (triggerError) {
+                    console.error('[ChatPanel] ❌ AR 파싱 트리거 실패:', triggerError);
+                    errorReporter.reportApiError(triggerError as Error, { component: 'ChatPanel.handleFileSelect.triggerParsing' });
+                  }
+                } else if (processingResult.status === 'timeout') {
+                  console.warn('[ChatPanel] ⚠️ 문서 처리 대기 시간 초과:', documentId);
+                } else {
+                  console.error('[ChatPanel] ❌ 문서 처리 실패:', processingResult);
+                  errorReporter.reportApiError(new Error(`문서 처리 실패: ${processingResult.status}`), { component: 'ChatPanel.handleFileSelect.processing', payload: { documentId, processingResult } });
+                }
+              }
+            } catch (arError) {
+              console.error('[ChatPanel] ❌ AR 처리 실패:', arError);
+              errorReporter.reportApiError(arError as Error, { component: 'ChatPanel.handleFileSelect.arProcessing' });
+            }
+          } else {
+            // 일반 문서: 별도 처리 필요 시 여기에 추가
+            console.log('[ChatPanel] 일반 문서 업로드 완료:', fileName);
+          }
+        }
+
+        console.log('[ChatPanel] 문서 처리 완료');
+
+        // 5. 업로드 완료 메시지 추가
+        const successMessage: DisplayMessage = {
+          id: `upload-${Date.now()}`,
+          role: 'assistant',
+          content: `✅ ${linkedCustomerName} 고객에게 문서가 업로드되었습니다.\n\n📎 ${uploadedFileNames.join(', ')}`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, successMessage]);
+      }
+    } catch (error) {
+      console.error('[ChatPanel] 파일 업로드 오류:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [messages]);
 
   // 첨부 파일 삭제 핸들러
   const handleFileRemove = useCallback((index: number) => {
@@ -1078,155 +1234,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       FrequentQuestionsService.track(trimmedInput);
     }
 
-    // 파일 업로드 처리 (새문서등록과 동일한 방식 - customerId 포함)
-    let uploadedFileNames: string[] = [];
-    let linkedCustomerName = '';
-    if (attachedFiles.length > 0) {
-      setIsUploading(true);
-      try {
-        console.log('[ChatPanel] 파일 업로드 시작:', attachedFiles.map(f => f.name));
+    // 🔥 파일 업로드는 handleFileSelect에서 즉시 처리됨 (여기서는 텍스트만 처리)
 
-        // 1. 메시지 또는 파일명에서 고객명 추출 및 고객 검색
-        let targetCustomerId = '';
-
-        // 한글 이름 패턴 (2-4글자) 추출 - 메시지 텍스트에서 먼저 시도
-        let koreanNameMatch = trimmedInput.match(/([가-힣]{2,4})/g);
-        console.log('[ChatPanel] 메시지에서 한글 이름 추출:', koreanNameMatch, 'from:', trimmedInput);
-
-        // 메시지에서 이름을 못 찾으면 파일명에서 추출 시도
-        if (!koreanNameMatch || koreanNameMatch.length === 0) {
-          for (const file of attachedFiles) {
-            const fileNameMatch = file.name.match(/([가-힣]{2,4})/g);
-            if (fileNameMatch && fileNameMatch.length > 0) {
-              koreanNameMatch = fileNameMatch;
-              console.log('[ChatPanel] 파일명에서 한글 이름 추출:', koreanNameMatch, 'from:', file.name);
-              break;
-            }
-          }
-        }
-
-        if (koreanNameMatch) {
-          for (const potentialName of koreanNameMatch) {
-            try {
-              console.log('[ChatPanel] 고객 검색 시도:', potentialName);
-              // CustomerService 사용 (인증 처리됨)
-              const result = await CustomerService.getCustomers({
-                search: potentialName,
-                limit: 5
-              });
-              const customers = result?.customers || [];
-              console.log('[ChatPanel] 검색 결과:', potentialName, customers.length, '건');
-              // 정확히 일치하는 고객 찾기
-              const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
-              if (exactMatch?._id) {
-                targetCustomerId = exactMatch._id;
-                linkedCustomerName = potentialName;
-                console.log('[ChatPanel] 고객 찾음:', potentialName, targetCustomerId);
-                break;
-              }
-            } catch (searchError) {
-              console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
-            }
-          }
-        }
-        console.log('[ChatPanel] 최종 타겟 고객:', targetCustomerId || '없음');
-
-        // 2. 파일 업로드 (DocumentService 사용)
-        const uploadResults = await Promise.all(
-          attachedFiles.map(async (file) => {
-            try {
-              const result = await DocumentService.uploadDocument(file);
-              if (result.success) {
-                console.log('[ChatPanel] 파일 업로드 성공:', file.name);
-                return { success: true, name: file.name };
-              } else {
-                console.error('[ChatPanel] 파일 업로드 실패:', file.name, result.error);
-                return { success: false, name: file.name, error: result.error };
-              }
-            } catch (error) {
-              console.error('[ChatPanel] 파일 업로드 실패:', file.name, error);
-              return { success: false, name: file.name, error };
-            }
-          })
-        );
-
-        // 실패한 파일이 있으면 알림
-        const failedFiles = uploadResults.filter(r => !r.success);
-        if (failedFiles.length > 0) {
-          alert(`일부 파일 업로드 실패:\n${failedFiles.map(f => f.name).join('\n')}`);
-        }
-
-        uploadedFileNames = uploadResults.filter(r => r.success).map(r => r.name);
-        console.log('[ChatPanel] 업로드 완료:', uploadedFileNames);
-
-        // 3. 고객 ID가 있으면 문서-고객 연결 (aims_api 호출)
-        if (targetCustomerId && uploadedFileNames.length > 0) {
-          console.log('[ChatPanel] 문서-고객 연결 시작:', targetCustomerId, uploadedFileNames);
-
-          // 잠시 대기 (n8n이 DB에 저장할 시간)
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // 최근 문서 조회하여 업로드된 파일들의 ID 찾기
-          try {
-            const docsData = await api.get<{ success: boolean; data: { documents: Array<{ _id: string; filename: string }> } }>('/api/documents?limit=50');
-            const allDocs = docsData?.data?.documents || [];
-
-            for (const fileName of uploadedFileNames) {
-              // 파일명으로 문서 찾기
-              const doc = allDocs.find((d) => d.filename === fileName);
-              if (doc?._id) {
-                // POST /api/customers/:id/documents 호출
-                try {
-                  await DocumentService.linkDocumentToCustomer(targetCustomerId, {
-                    document_id: doc._id,
-                    relationship_type: 'general'
-                  });
-                  console.log('[ChatPanel] 문서-고객 연결 성공:', fileName, '→', linkedCustomerName);
-                } catch (linkError) {
-                  console.error('[ChatPanel] 문서-고객 연결 오류:', fileName, linkError);
-                }
-              } else {
-                console.warn('[ChatPanel] 문서 ID를 찾을 수 없음:', fileName);
-              }
-            }
-          } catch (error) {
-            console.error('[ChatPanel] 문서 조회 오류:', error);
-          }
-
-          console.log('[ChatPanel] 문서-고객 연결 완료');
-        }
-      } catch (error) {
-        console.error('[ChatPanel] 파일 업로드 오류:', error);
-        alert('파일 업로드 중 오류가 발생했습니다.');
-        setIsUploading(false);
-        return;
-      } finally {
-        setIsUploading(false);
-        setAttachedFiles([]); // 첨부 파일 목록 초기화
-      }
-    }
-
-    // 사용자 메시지 구성 (업로드된 파일 정보 포함)
-    let messageContent = trimmedInput;
-    if (uploadedFileNames.length > 0) {
-      const fileList = uploadedFileNames.join(', ');
-      if (linkedCustomerName) {
-        // 고객에게 자동 연결된 경우
-        messageContent = trimmedInput
-          ? `${trimmedInput}\n\n[업로드 완료] ${fileList} → 고객 "${linkedCustomerName}"에게 자동 연결됨`
-          : `문서 ${fileList}이(가) 고객 "${linkedCustomerName}"에게 업로드되었습니다.`;
-      } else {
-        // 고객 없이 업로드된 경우
-        messageContent = trimmedInput
-          ? `${trimmedInput}\n\n[업로드 완료] ${fileList} (고객 미지정 - 전체 문서에서 확인 가능)`
-          : `문서 ${fileList}이(가) 업로드되었습니다. 특정 고객에게 연결하려면 고객명을 알려주세요.`;
-      }
-    }
+    // 사용자 메시지 구성
+    const messageContent = trimmedInput;
 
     // 사용자 메시지 추가 (화면 표시용)
-    const displayContent = uploadedFileNames.length > 0
-      ? `${trimmedInput || '문서 업로드'}\n\n📎 첨부: ${uploadedFileNames.join(', ')}`
-      : trimmedInput;
+    const displayContent = trimmedInput;
 
     const userMessage: DisplayMessage = {
       id: `user-${Date.now()}`,
