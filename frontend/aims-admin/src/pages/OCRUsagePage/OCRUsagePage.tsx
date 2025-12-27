@@ -488,13 +488,8 @@ export const OCRUsagePage = () => {
         <div className="ocr-usage-page__stats-grid">
           <StatCard
             title="OCR 처리"
-            value={formatOCRCount(overview?.ocr_this_month || 0)}
-            subtitle="처리 완료"
-          />
-          <StatCard
-            title="페이지 수"
-            value={formatOCRCount(overview?.pages_this_month || 0)}
-            subtitle="페이지 처리"
+            value={`${formatOCRCount(overview?.pages_this_month || 0)}/${formatOCRCount(overview?.ocr_this_month || 0)}`}
+            subtitle="페이지/문서"
           />
           <StatCard
             title="예상 비용"
@@ -582,7 +577,6 @@ export const OCRUsagePage = () => {
                 <th>#</th>
                 <th>사용자</th>
                 <th>OCR 성공</th>
-                <th>페이지 수</th>
                 <th>예상 비용</th>
                 <th>OCR 실패</th>
                 <th>마지막 처리</th>
@@ -591,7 +585,7 @@ export const OCRUsagePage = () => {
             <tbody>
               {!topUsers || topUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="ocr-usage-page__table-empty">
+                  <td colSpan={6} className="ocr-usage-page__table-empty">
                     사용자 데이터가 없습니다
                   </td>
                 </tr>
@@ -602,11 +596,11 @@ export const OCRUsagePage = () => {
                     <td className="ocr-usage-page__table-user">
                       <span className="ocr-usage-page__user-name">{user.user_name}</span>
                     </td>
-                    <td className="ocr-usage-page__table-count">
-                      {user.ocr_count.toLocaleString()}건
-                    </td>
-                    <td className="ocr-usage-page__table-count">
-                      {user.page_count.toLocaleString()}p
+                    <td
+                      className="ocr-usage-page__table-count"
+                      title={`${user.page_count.toLocaleString()}페이지/${user.ocr_count.toLocaleString()}문서`}
+                    >
+                      {user.page_count.toLocaleString()}/{user.ocr_count.toLocaleString()}
                     </td>
                     <td className="ocr-usage-page__table-cost">
                       ${user.estimated_cost_usd.toFixed(2)}

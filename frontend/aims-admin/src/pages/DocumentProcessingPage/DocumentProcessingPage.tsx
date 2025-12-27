@@ -80,9 +80,12 @@ export const DocumentProcessingPage = () => {
           OCR 대상 문서 중 텍스트 추출 진행 상태
         </p>
         <div className="document-processing-page__status-grid">
-          <div className="status-card status-card--done">
+          <div
+            className="status-card status-card--done"
+            title={`${docs?.ocr?.donePages || 0}페이지/${docs?.ocr?.done || 0}문서`}
+          >
             <span className="status-card__label">완료</span>
-            <span className="status-card__value">{docs?.ocr?.done || 0}</span>
+            <span className="status-card__value">{docs?.ocr?.donePages || 0}/{docs?.ocr?.done || 0}</span>
           </div>
           <div className="status-card status-card--pending">
             <span className="status-card__label">대기</span>

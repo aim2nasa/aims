@@ -62,6 +62,7 @@ export interface DocumentOcrStatus {
   target: number;       // OCR 대상 (ocr 서브도큐먼트 있음)
   nonTarget: number;    // OCR 비대상 (ocr 서브도큐먼트 없음)
   done: number;
+  donePages: number;    // OCR 완료 페이지 수
   pending: number;
   processing: number;
   failed: number;

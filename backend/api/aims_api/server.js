@@ -4683,7 +4683,9 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       // 이번 달 OCR 완료 (ocr 서브도큐먼트가 있는 문서 중)
       ocrUsedThisMonth,
       // 전체 OCR 완료 (ocr 서브도큐먼트가 있는 문서 중)
-      ocrTotalProcessed
+      ocrTotalProcessed,
+      // OCR 완료 문서의 총 페이지 수
+      ocrDonePages
     ] = await Promise.all([
       // OCR 대상 문서 (ocr 서브도큐먼트 존재)
       db.collection(COLLECTIONS.FILES).countDocuments({ 'ocr': { $exists: true } }),
@@ -4756,7 +4758,12 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
       // 전체 OCR 완료 (ocr 서브도큐먼트가 있는 문서만)
       db.collection(COLLECTIONS.FILES).countDocuments({
         'ocr.status': { $in: ['done', 'error'] }
-      })
+      }),
+      // OCR 완료 문서의 총 페이지 수
+      db.collection(COLLECTIONS.FILES).aggregate([
+        { $match: { 'ocr.status': 'done' } },
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$ocr.page_count', 1] } } } }
+      ]).toArray().then(r => r[0]?.total || 0)
     ]);
 
     // 시스템 상태 - 실제 연결 체크
@@ -4949,6 +4956,7 @@ app.get('/api/admin/dashboard', authenticateJWT, requireRole('admin'), async (re
           target: ocrTargetDocs,       // OCR 대상 (ocr 서브도큐먼트 있음)
           nonTarget: ocrNonTargetDocs, // OCR 비대상 (ocr 서브도큐먼트 없음)
           done: ocrDone,
+          donePages: ocrDonePages,     // OCR 완료 페이지 수
           pending: ocrPending,
           processing: ocrProcessing,
           failed: ocrFailed
