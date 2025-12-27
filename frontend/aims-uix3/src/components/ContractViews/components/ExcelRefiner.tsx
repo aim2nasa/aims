@@ -798,6 +798,24 @@ export function ExcelRefiner() {
         })
       }
 
+      // 빈 행 이후에 데이터가 있는 경우 경고 표시
+      const sheetsWithSkippedRows = parsedSheets.filter(s => s.skippedRows && s.skippedRows.length > 0)
+      if (sheetsWithSkippedRows.length > 0) {
+        const warnings = sheetsWithSkippedRows.map(s => {
+          const rows = s.skippedRows!
+          const rowList = rows.length <= 5
+            ? rows.join(', ') + '번 행'
+            : rows.slice(0, 5).join(', ') + `번 외 ${rows.length - 5}개 행`
+          return `• ${s.name}: ${rowList}`
+        }).join('\n')
+
+        showAlert({
+          title: '빈 행 이후 데이터 발견',
+          message: `다음 시트에서 빈 행 이후에 데이터가 발견되어 제외되었습니다.\n엑셀 파일을 확인해주세요.\n\n${warnings}`,
+          iconType: 'warning'
+        })
+      }
+
       // 액션 로그 표시
       const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
       setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)

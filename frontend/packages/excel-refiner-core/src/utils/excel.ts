@@ -22,12 +22,52 @@ export async function parseExcel(file: File): Promise<SheetData[]> {
 
     // 첫 번째 행은 컬럼 헤더
     const columns = (jsonData[0] || []).map(col => String(col ?? ''))
-    const data = jsonData.slice(1) as CellValue[][]
+    const rawData = jsonData.slice(1) as CellValue[][]
+
+    // 연속된 데이터만 포함 (첫 번째 빈 행이 나오면 그 이후는 무시)
+    // - 엑셀에서 데이터는 연속적으로 입력되는 것이 표준
+    // - 중간에 빈 행 후 데이터가 있으면 대부분 실수 (오타, 잘못된 입력 등)
+    const data: CellValue[][] = []
+    const skippedRows: number[] = []
+    let foundEmptyRow = false
+
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i]
+      const excelRowNumber = i + 2 // 엑셀 행 번호 (헤더가 1행)
+
+      // 빈 배열 체크
+      const isEmpty = !row || row.length === 0
+
+      // 모든 셀이 비어있는지 체크
+      const hasValue = !isEmpty && row.some(cell => {
+        if (cell === null || cell === undefined) return false
+        const str = String(cell).trim()
+        return str.length > 0
+      })
+
+      if (!foundEmptyRow) {
+        // 아직 빈 행을 만나지 않음
+        if (isEmpty || !hasValue) {
+          // 첫 번째 빈 행 발견 → 이후부터는 스킵 모드
+          foundEmptyRow = true
+        } else {
+          // 데이터 있음 → 추가
+          data.push(row)
+        }
+      } else {
+        // 빈 행 이후 모드
+        if (hasValue) {
+          // 빈 행 이후에 데이터가 있음 → 경고 대상
+          skippedRows.push(excelRowNumber)
+        }
+      }
+    }
 
     return {
       name,
       columns,
-      data
+      data,
+      ...(skippedRows.length > 0 ? { skippedRows } : {})
     }
   })
 }

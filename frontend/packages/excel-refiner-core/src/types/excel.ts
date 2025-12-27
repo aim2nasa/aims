@@ -6,6 +6,8 @@ export interface SheetData {
   name: string
   columns: string[]
   data: CellValue[][]
+  /** 빈 행 이후에 발견된 데이터 행 번호들 (경고용) */
+  skippedRows?: number[]
 }
 
 export type CellValue = string | number | boolean | Date | null | undefined
