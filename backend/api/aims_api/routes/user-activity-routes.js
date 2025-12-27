@@ -326,7 +326,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         activeCustomers,
         dormantCustomers,
         ocrTotal,
-        ocrThisMonth
+        ocrThisMonth,
+        ocrPagesTotal,
+        ocrPagesThisMonth
       ] = await Promise.all([
         filesCollection.countDocuments({ ownerId: userId }),
         filesCollection.countDocuments({
@@ -351,7 +353,26 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             { 'ocr.done_at': { $gte: startOfMonth } },
             { 'ocr.done_at': { $gte: startOfMonth.toISOString() } }
           ]
-        })
+        }),
+        // OCR 전체 페이지 수
+        filesCollection.aggregate([
+          { $match: { ownerId: userId, 'ocr.status': 'done' } },
+          { $group: { _id: null, total: { $sum: { $ifNull: ['$ocr.page_count', 1] } } } }
+        ]).toArray().then(r => r[0]?.total || 0),
+        // OCR 이번달 페이지 수
+        filesCollection.aggregate([
+          {
+            $match: {
+              ownerId: userId,
+              'ocr.status': 'done',
+              $or: [
+                { 'ocr.done_at': { $gte: startOfMonth } },
+                { 'ocr.done_at': { $gte: startOfMonth.toISOString() } }
+              ]
+            }
+          },
+          { $group: { _id: null, total: { $sum: { $ifNull: ['$ocr.page_count', 1] } } } }
+        ]).toArray().then(r => r[0]?.total || 0)
       ]);
 
       // 문서 상태별 맵
@@ -470,7 +491,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             ai_usage: aiUsage,
             ocr_usage: {
               total: ocrTotal,
-              this_month: ocrThisMonth
+              this_month: ocrThisMonth,
+              total_pages: ocrPagesTotal,
+              this_month_pages: ocrPagesThisMonth
             }
           },
           recent_activity: recentActivity

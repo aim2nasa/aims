@@ -76,6 +76,8 @@ export interface ActivitySummary {
   ocr_usage: {
     total: number;
     this_month: number;
+    total_pages: number;
+    this_month_pages: number;
   };
 }
 

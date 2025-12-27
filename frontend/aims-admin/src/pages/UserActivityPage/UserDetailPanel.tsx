@@ -221,12 +221,18 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
       <div className="user-detail-panel__section">
         <h4 className="user-detail-panel__section-title">OCR 사용량</h4>
         <div className="user-detail-panel__stats-grid">
-          <div className="stat-item">
-            <span className="stat-value">{activity_summary.ocr_usage.total}</span>
+          <div
+            className="stat-item"
+            title={`${activity_summary.ocr_usage.total_pages}페이지/${activity_summary.ocr_usage.total}문서`}
+          >
+            <span className="stat-value">{activity_summary.ocr_usage.total_pages}/{activity_summary.ocr_usage.total}</span>
             <span className="stat-label">전체</span>
           </div>
-          <div className="stat-item">
-            <span className="stat-value">{activity_summary.ocr_usage.this_month}</span>
+          <div
+            className="stat-item"
+            title={`${activity_summary.ocr_usage.this_month_pages}페이지/${activity_summary.ocr_usage.this_month}문서`}
+          >
+            <span className="stat-value">{activity_summary.ocr_usage.this_month_pages}/{activity_summary.ocr_usage.this_month}</span>
             <span className="stat-label">이번달</span>
           </div>
         </div>
