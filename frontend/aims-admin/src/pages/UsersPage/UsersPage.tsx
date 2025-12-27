@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
-import { usersApi } from '@/features/users/api';
+import { usersApi, type DeletePreviewResponse } from '@/features/users/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { Modal } from '@/shared/ui/Modal/Modal';
 import type { User } from '@/features/auth/types';
@@ -39,7 +39,31 @@ export const UsersPage = () => {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [deleteModalUser, setDeleteModalUser] = useState<User | null>(null);
+  const [deletePreview, setDeletePreview] = useState<DeletePreviewResponse['preview'] | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const limit = 10;
+
+  // 삭제 모달 열릴 때 미리보기 데이터 조회
+  useEffect(() => {
+    if (deleteModalUser) {
+      setPreviewLoading(true);
+      setDeletePreview(null);
+      usersApi.getDeletePreview(deleteModalUser._id)
+        .then((res) => {
+          if (res.success) {
+            setDeletePreview(res.preview);
+          }
+        })
+        .catch((err) => {
+          console.error('삭제 미리보기 조회 실패:', err);
+        })
+        .finally(() => {
+          setPreviewLoading(false);
+        });
+    } else {
+      setDeletePreview(null);
+    }
+  }, [deleteModalUser]);
 
   // 검색어 debounce (300ms)
   const debouncedSearch = useDebounce(search, 300);
@@ -373,14 +397,56 @@ export const UsersPage = () => {
             <p className="delete-user-modal__caution">
               이 작업은 되돌릴 수 없으며, 다음 데이터가 모두 삭제됩니다:
             </p>
-            <ul className="delete-user-modal__list">
-              <li>사용자가 등록한 모든 문서 (물리 파일 포함)</li>
-              <li>모든 고객 정보</li>
-              <li>모든 계약 정보</li>
-              <li>모든 관계 정보</li>
-              <li>벡터 임베딩 (AI 검색 데이터)</li>
-              <li>AI 사용량 기록</li>
-            </ul>
+
+            {previewLoading ? (
+              <div className="delete-user-modal__loading">데이터 조회 중...</div>
+            ) : deletePreview ? (
+              <div className="delete-user-modal__preview">
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">문서</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.documents.count}개</span>
+                </div>
+                {deletePreview.documents.folders.length > 0 && (
+                  <div className="delete-user-modal__preview-detail">
+                    <span className="delete-user-modal__preview-sublabel">파일 위치:</span>
+                    <ul className="delete-user-modal__folder-list">
+                      {deletePreview.documents.folders.map((folder, idx) => (
+                        <li key={idx}>{folder}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">고객</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.customers}명</span>
+                </div>
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">계약</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.contracts}건</span>
+                </div>
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">관계</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.relationships}건</span>
+                </div>
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">임베딩 (AI 검색 데이터)</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.embeddings}개</span>
+                </div>
+                <div className="delete-user-modal__preview-item">
+                  <span className="delete-user-modal__preview-label">AI 사용량 기록</span>
+                  <span className="delete-user-modal__preview-value">{deletePreview.tokenUsage}건</span>
+                </div>
+              </div>
+            ) : (
+              <ul className="delete-user-modal__list">
+                <li>사용자가 등록한 모든 문서 (물리 파일 포함)</li>
+                <li>모든 고객 정보</li>
+                <li>모든 계약 정보</li>
+                <li>모든 관계 정보</li>
+                <li>벡터 임베딩 (AI 검색 데이터)</li>
+                <li>AI 사용량 기록</li>
+              </ul>
+            )}
           </div>
           <div className="delete-user-modal__actions">
             <Button
@@ -393,7 +459,7 @@ export const UsersPage = () => {
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={deleteUserMutation.isPending}
+              disabled={deleteUserMutation.isPending || previewLoading}
             >
               {deleteUserMutation.isPending ? '삭제 중...' : '삭제'}
             </Button>

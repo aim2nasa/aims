@@ -5345,6 +5345,122 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
 });
 
 /**
+ * 관리자: 사용자 삭제 미리보기 (삭제될 데이터 개수 조회)
+ * - 삭제 전 어떤 데이터가 삭제될지 미리 보여줌
+ *
+ * @since 2025-12-27
+ */
+app.get('/api/admin/users/:id/delete-preview', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. 사용자 존재 확인 (ObjectId 또는 문자열 ID 모두 지원)
+    let targetUser = null;
+    let userIdQuery = null;
+
+    if (ObjectId.isValid(id)) {
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
+      userIdQuery = new ObjectId(id);
+    }
+
+    if (!targetUser) {
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: id });
+      userIdQuery = id;
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
+      });
+    }
+
+    const userId = id;
+
+    // 2. 문서 정보 조회
+    const userDocuments = await db.collection(COLLECTIONS.FILES)
+      .find({ ownerId: userId })
+      .toArray();
+
+    const filePaths = userDocuments
+      .filter(doc => doc.upload?.destPath)
+      .map(doc => doc.upload.destPath);
+
+    // 파일 폴더 경로 추출 (공통 부모 디렉토리)
+    const folders = [...new Set(filePaths.map(p => {
+      const parts = p.split('/');
+      parts.pop(); // 파일명 제거
+      return parts.join('/');
+    }))];
+
+    // 3. 고객 수 조회 (meta.created_by 필드 사용)
+    const customersCount = await db.collection(COLLECTIONS.CUSTOMERS)
+      .countDocuments({ 'meta.created_by': userId });
+
+    // 4. 계약 수 조회 (agent_id는 ObjectId, meta.created_by는 문자열 - 둘 다 조회)
+    let contractsCount = 0;
+    if (ObjectId.isValid(userId)) {
+      contractsCount = await db.collection(COLLECTIONS.CONTRACTS)
+        .countDocuments({ agent_id: new ObjectId(userId) });
+    }
+    // agent_id로 못 찾으면 meta.created_by로 시도
+    if (contractsCount === 0) {
+      contractsCount = await db.collection(COLLECTIONS.CONTRACTS)
+        .countDocuments({ 'meta.created_by': userId });
+    }
+
+    // 5. 관계 수 조회 (meta.created_by 필드 사용)
+    const relationshipsCount = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
+      .countDocuments({ 'meta.created_by': userId });
+
+    // 6. AI 사용량 조회
+    let tokenUsageCount = 0;
+    try {
+      tokenUsageCount = await db.collection('token_usage').countDocuments({ userId });
+    } catch (err) {
+      console.log('[Admin] token_usage 조회 오류:', err.message);
+    }
+
+    // 7. Qdrant 임베딩 수 조회 (추정치: 문서별 청크 수)
+    let embeddingsCount = 0;
+    for (const doc of userDocuments) {
+      embeddingsCount += doc.chunks?.length || 0;
+    }
+
+    res.json({
+      success: true,
+      preview: {
+        user: {
+          _id: targetUser._id,
+          name: targetUser.name,
+          email: targetUser.email
+        },
+        documents: {
+          count: userDocuments.length,
+          files: filePaths.slice(0, 10), // 최대 10개만 표시
+          hasMore: filePaths.length > 10,
+          totalFiles: filePaths.length,
+          folders: folders
+        },
+        customers: customersCount,
+        contracts: contractsCount,
+        relationships: relationshipsCount,
+        embeddings: embeddingsCount,
+        tokenUsage: tokenUsageCount
+      }
+    });
+
+  } catch (error) {
+    console.error('[Admin] 삭제 미리보기 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '삭제 미리보기 조회에 실패했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
  * 관리자: 사용자 삭제 (관련 모든 데이터 cascade 삭제)
  * - MongoDB: documents, customers, contracts, relationships, token_usage, users
  * - Qdrant: 모든 임베딩 벡터
@@ -5460,27 +5576,34 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
     const filesResult = await db.collection(COLLECTIONS.FILES).deleteMany({ ownerId: userId });
     console.log(`🗑️  [MongoDB] 문서 삭제: ${filesResult.deletedCount}개`);
 
-    // 5. 고객 삭제
-    const customersResult = await db.collection(COLLECTIONS.CUSTOMERS).deleteMany({ userId: userId });
+    // 5. 고객 삭제 (meta.created_by 필드 사용)
+    const customersResult = await db.collection(COLLECTIONS.CUSTOMERS).deleteMany({ 'meta.created_by': userId });
     deletionStats.customers = customersResult.deletedCount;
     console.log(`🗑️  [MongoDB] 고객 삭제: ${customersResult.deletedCount}개`);
 
-    // 6. 계약 삭제 (contracts 컬렉션이 있는 경우)
+    // 6. 계약 삭제 (agent_id는 ObjectId, meta.created_by는 문자열)
     try {
-      const contractsResult = await db.collection('contracts').deleteMany({ ownerId: userId });
-      deletionStats.contracts = contractsResult.deletedCount;
-      console.log(`🗑️  [MongoDB] 계약 삭제: ${contractsResult.deletedCount}개`);
+      let contractsDeleted = 0;
+      if (ObjectId.isValid(userId)) {
+        const byAgentId = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ agent_id: new ObjectId(userId) });
+        contractsDeleted = byAgentId.deletedCount;
+      }
+      // agent_id로 못 찾으면 meta.created_by로도 삭제
+      const byCreatedBy = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ 'meta.created_by': userId });
+      contractsDeleted += byCreatedBy.deletedCount;
+      deletionStats.contracts = contractsDeleted;
+      console.log(`🗑️  [MongoDB] 계약 삭제: ${contractsDeleted}개`);
     } catch (err) {
-      console.log(`[MongoDB] contracts 컬렉션 없음 또는 오류:`, err.message);
+      console.log(`[MongoDB] contracts 삭제 오류:`, err.message);
     }
 
-    // 7. 관계 삭제 (relationships 컬렉션이 있는 경우)
+    // 7. 관계 삭제 (meta.created_by 필드 사용)
     try {
-      const relationshipsResult = await db.collection('relationships').deleteMany({ ownerId: userId });
+      const relationshipsResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({ 'meta.created_by': userId });
       deletionStats.relationships = relationshipsResult.deletedCount;
       console.log(`🗑️  [MongoDB] 관계 삭제: ${relationshipsResult.deletedCount}개`);
     } catch (err) {
-      console.log(`[MongoDB] relationships 컬렉션 없음 또는 오류:`, err.message);
+      console.log(`[MongoDB] relationships 삭제 오류:`, err.message);
     }
 
     // 8. 토큰 사용량 삭제

@@ -59,6 +59,29 @@ export interface DeleteUserResponse {
   stats?: DeleteUserStats;
 }
 
+export interface DeletePreviewResponse {
+  success: boolean;
+  preview: {
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+    documents: {
+      count: number;
+      files: string[];
+      hasMore: boolean;
+      totalFiles: number;
+      folders: string[];
+    };
+    customers: number;
+    contracts: number;
+    relationships: number;
+    embeddings: number;
+    tokenUsage: number;
+  };
+}
+
 export const usersApi = {
   getUsers: (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     const queryParams = new URLSearchParams();
@@ -87,5 +110,9 @@ export const usersApi = {
 
   deleteUser: (userId: string): Promise<DeleteUserResponse> => {
     return apiClient.delete<DeleteUserResponse>(`/api/admin/users/${userId}`);
+  },
+
+  getDeletePreview: (userId: string): Promise<DeletePreviewResponse> => {
+    return apiClient.get<DeletePreviewResponse>(`/api/admin/users/${userId}/delete-preview`);
   },
 };
