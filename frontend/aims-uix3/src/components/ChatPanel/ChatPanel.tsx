@@ -1502,7 +1502,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   className={`chat-panel__question-tab ${questionTab === 'examples' ? 'chat-panel__question-tab--active' : ''}`}
                   onClick={() => setQuestionTab('examples')}
                 >
-                  이렇게 질문해보세요
+                  💡 질문 예시
                 </button>
                 <button
                   type="button"
@@ -1516,7 +1516,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   className={`chat-panel__question-tab ${questionTab === 'frequent' ? 'chat-panel__question-tab--active' : ''}`}
                   onClick={() => setQuestionTab('frequent')}
                 >
-                  🔥 자주 쓰는 질문
+                  🔥 자주쓰는 질문
                 </button>
               </div>
 
@@ -1891,7 +1891,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   className={`chat-panel__question-tab ${questionTab === 'examples' ? 'chat-panel__question-tab--active' : ''}`}
                   onClick={() => setQuestionTab('examples')}
                 >
-                  이렇게 질문해보세요
+                  💡 질문 예시
                 </button>
                 <button
                   type="button"
@@ -1905,7 +1905,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                   className={`chat-panel__question-tab ${questionTab === 'frequent' ? 'chat-panel__question-tab--active' : ''}`}
                   onClick={() => setQuestionTab('frequent')}
                 >
-                  🔥 자주 쓰는 질문
+                  🔥 자주쓰는 질문
                 </button>
               </div>
 
