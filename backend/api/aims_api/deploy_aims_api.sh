@@ -108,6 +108,8 @@ docker run -d --network host \
   -e MCP_SERVER_URL="${MCP_SERVER_URL:-http://localhost:3011}" \
   -e ALLOW_TEST_AUTH="${ALLOW_TEST_AUTH:-false}" \
   -v /data/files:/data/files \
+  -v /data/backup:/data/backup \
+  -v /home/rossi/aims/backend/scripts:/home/rossi/aims/backend/scripts:ro \
   -v /home/rossi/n8n-docker/n8n_data:/n8n_data:ro \
   -v /var/run/clamav:/var/run/clamav:ro \
   -v /var/lib/clamav:/var/lib/clamav:ro \
