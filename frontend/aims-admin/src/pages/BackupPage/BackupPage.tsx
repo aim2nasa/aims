@@ -357,7 +357,7 @@ export const BackupPage = () => {
       <div className="backup-page__info">
         <h2>백업 대상 (6단계)</h2>
         <ul>
-          <li><strong>1. 버전 정보:</strong> Git 커밋, Frontend/Backend 버전 (versions.json)</li>
+          <li><strong>1. 버전 정보:</strong> Git 커밋, Frontend/Backend 버전, n8n 워크플로우 메타데이터 (versions.json)</li>
           <li><strong>2. 환경 파일:</strong> aims_api.env, annual_report_api.env, aims_mcp.env</li>
           <li><strong>3. MongoDB:</strong> docupload (사용자/고객/문서/계약), aims_analytics</li>
           <li><strong>4. Qdrant 벡터 DB:</strong> 벡터 임베딩 데이터 (AI 검색용)</li>
@@ -365,7 +365,7 @@ export const BackupPage = () => {
           <li><strong>6. 압축:</strong> 위 데이터를 tar.gz로 압축 저장</li>
         </ul>
         <p className="backup-page__info-note">
-          * n8n 워크플로우는 별도 git 저장소로 관리됩니다.
+          * n8n 워크플로우 실제 데이터는 별도 git 저장소로 관리됩니다. (버전 메타데이터만 백업)
         </p>
       </div>
 

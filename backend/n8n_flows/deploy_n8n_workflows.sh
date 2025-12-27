@@ -33,6 +33,17 @@ fi
 echo "=== n8n 워크플로우 배포 시작 ==="
 echo ""
 
+# Git commit hash 수집
+AIMS_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DEPLOYED_VERSIONS_FILE="/data/backup/.n8n_deployed_versions.json"
+
+# 기존 배포 버전 파일 읽기 (없으면 빈 객체)
+if [ -f "$DEPLOYED_VERSIONS_FILE" ]; then
+  DEPLOYED_VERSIONS=$(cat "$DEPLOYED_VERSIONS_FILE")
+else
+  DEPLOYED_VERSIONS="{}"
+fi
+
 # 배포할 워크플로우 파일 목록
 WORKFLOW_FILES=(
   "$SCRIPT_DIR/DocPrepMain.json"
@@ -94,7 +105,12 @@ for file in "${WORKFLOW_FILES[@]}"; do
       echo -e "${RED}업데이트 실패 (빈 응답)${NC}"
       ((FAIL_COUNT++))
     elif echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
-      echo -e "${GREEN}업데이트 완료${NC}"
+      # 배포된 파일의 git commit hash 기록
+      RELATIVE_PATH="${file#$AIMS_DIR/}"
+      GIT_HASH=$(cd "$AIMS_DIR" && git log -1 --format="%h" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
+      DEPLOYED_VERSIONS=$(echo "$DEPLOYED_VERSIONS" | jq --arg name "$WORKFLOW_NAME" --arg hash "$GIT_HASH" --arg time "$(date -Iseconds)" \
+        '. + {($name): {"gitCommit": $hash, "deployedAt": $time}}')
+      echo -e "${GREEN}업데이트 완료 ($GIT_HASH)${NC}"
       ((SUCCESS_COUNT++))
     else
       echo -e "${RED}업데이트 실패${NC}"
@@ -112,7 +128,12 @@ for file in "${WORKFLOW_FILES[@]}"; do
       echo -e "${RED}생성 실패 (빈 응답)${NC}"
       ((FAIL_COUNT++))
     elif echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
-      echo -e "${GREEN}생성 완료${NC}"
+      # 배포된 파일의 git commit hash 기록
+      RELATIVE_PATH="${file#$AIMS_DIR/}"
+      GIT_HASH=$(cd "$AIMS_DIR" && git log -1 --format="%h" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
+      DEPLOYED_VERSIONS=$(echo "$DEPLOYED_VERSIONS" | jq --arg name "$WORKFLOW_NAME" --arg hash "$GIT_HASH" --arg time "$(date -Iseconds)" \
+        '. + {($name): {"gitCommit": $hash, "deployedAt": $time}}')
+      echo -e "${GREEN}생성 완료 ($GIT_HASH)${NC}"
       ((SUCCESS_COUNT++))
     else
       echo -e "${RED}생성 실패${NC}"
@@ -128,6 +149,13 @@ echo ""
 echo "=== 배포 완료 ==="
 echo -e "성공: ${GREEN}${SUCCESS_COUNT}${NC}개"
 echo -e "실패: ${RED}${FAIL_COUNT}${NC}개"
+
+# 배포된 버전 정보 저장
+if [ $SUCCESS_COUNT -gt 0 ]; then
+  echo "$DEPLOYED_VERSIONS" > "$DEPLOYED_VERSIONS_FILE"
+  echo ""
+  echo "배포 버전 기록: $DEPLOYED_VERSIONS_FILE"
+fi
 
 if [ $FAIL_COUNT -gt 0 ]; then
   exit 1

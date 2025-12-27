@@ -19,6 +19,10 @@ LOG_FILE="$BACKUP_BASE/backup_$DATE.log"
 # 보관 기간 (일)
 RETENTION_DAYS=7
 
+# n8n API 설정
+N8N_API_URL="http://localhost:5678/api/v1"
+N8N_API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNGI1Yzc0MC02ZmJlLTQ1NzAtYmU3Yi0zMzAzYTI4OWI3OTIiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzY2MTk0MzUzfQ.M4D0X8hNxFVgonAPu1vX19btJE40sUsWgsDOCqb3YZk"
+
 # 색상
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -75,7 +79,59 @@ AR_API_VERSION=$(cat "$AIMS_DIR/backend/api/annual_report_api/package.json" 2>/d
 PDF_PROXY_VERSION=$(cat "$AIMS_DIR/backend/api/pdf_proxy/package.json" 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/' || echo "unknown")
 MCP_VERSION=$(cat "$AIMS_DIR/backend/api/aims_mcp/package.json" 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/' || echo "unknown")
 
-# versions.json 생성
+log "  - Git: $GIT_BRANCH @ $GIT_COMMIT"
+log "  - Frontend: $FRONTEND_VERSION"
+log "  - aims_api: $AIMS_API_VERSION"
+log "  - aims_rag_api: $RAG_API_VERSION"
+log "  - annual_report_api: $AR_API_VERSION"
+log "  - pdf_proxy: $PDF_PROXY_VERSION"
+log "  - aims_mcp: $MCP_VERSION"
+
+# n8n 워크플로우 배포 버전 정보 읽기
+log "  - n8n 워크플로우 정보 수집 중..."
+N8N_WORKFLOWS_JSON=$(python3 << 'PYTHON_SCRIPT'
+import json, urllib.request
+
+API_URL = "http://localhost:5678/api/v1"
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNGI1Yzc0MC02ZmJlLTQ1NzAtYmU3Yi0zMzAzYTI4OWI3OTIiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzY2MTk0MzUzfQ.M4D0X8hNxFVgonAPu1vX19btJE40sUsWgsDOCqb3YZk"
+DEPLOYED_FILE = "/data/backup/.n8n_deployed_versions.json"
+
+def fetch(url):
+    req = urllib.request.Request(url, headers={"X-N8N-API-KEY": API_KEY, "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return json.loads(r.read().decode())
+
+# 배포 버전 파일 읽기
+try:
+    with open(DEPLOYED_FILE) as f:
+        deployed = json.load(f)
+except:
+    deployed = {}
+
+try:
+    data = fetch(f"{API_URL}/workflows")
+    result = []
+    for w in data.get("data", []):
+        name = w.get("name", "")
+        deploy_info = deployed.get(name, {})
+        result.append({
+            "id": w.get("id", ""),
+            "name": name,
+            "active": w.get("active", False),
+            "updatedAt": w.get("updatedAt", ""),
+            "gitCommit": deploy_info.get("gitCommit"),
+            "deployedAt": deploy_info.get("deployedAt")
+        })
+    print(json.dumps(result, ensure_ascii=False))
+except Exception as e:
+    print("[]")
+PYTHON_SCRIPT
+)
+
+N8N_WORKFLOW_COUNT=$(echo "$N8N_WORKFLOWS_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+log "  - n8n: $N8N_WORKFLOW_COUNT개 워크플로우"
+
+# versions.json 업데이트 (n8n 포함)
 cat > "$BACKUP_DIR/versions.json" << EOF
 {
   "backup_date": "$(date -Iseconds)",
@@ -92,17 +148,13 @@ cat > "$BACKUP_DIR/versions.json" << EOF
     "annual_report_api": "$AR_API_VERSION",
     "pdf_proxy": "$PDF_PROXY_VERSION",
     "aims_mcp": "$MCP_VERSION"
+  },
+  "n8n": {
+    "workflow_count": $N8N_WORKFLOW_COUNT,
+    "workflows": $N8N_WORKFLOWS_JSON
   }
 }
 EOF
-
-log "  - Git: $GIT_BRANCH @ $GIT_COMMIT"
-log "  - Frontend: $FRONTEND_VERSION"
-log "  - aims_api: $AIMS_API_VERSION"
-log "  - aims_rag_api: $RAG_API_VERSION"
-log "  - annual_report_api: $AR_API_VERSION"
-log "  - pdf_proxy: $PDF_PROXY_VERSION"
-log "  - aims_mcp: $MCP_VERSION"
 
 # 2. 환경 파일 백업
 log "2/6. 환경 파일 백업 중..."
