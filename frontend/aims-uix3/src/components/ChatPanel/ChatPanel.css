@@ -860,8 +860,8 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
 
 .chat-panel__question-tab {
   flex: 1;
-  padding: 8px 12px;
-  font-size: var(--font-size-caption-1);
+  padding: 6px 6px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--color-text-secondary);
   background: transparent;
@@ -869,6 +869,7 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .chat-panel__question-tab:hover {
