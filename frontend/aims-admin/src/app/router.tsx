@@ -19,6 +19,7 @@ import { InquiryDetailPage } from '@/pages/InquiryDetailPage/InquiryDetailPage';
 import { NoticesPage } from '@/pages/NoticesPage/NoticesPage';
 import { UsageGuidesPage } from '@/pages/UsageGuidesPage/UsageGuidesPage';
 import { FAQsPage } from '@/pages/FAQsPage/FAQsPage';
+import { BackupPage } from '@/pages/BackupPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -111,6 +112,10 @@ export const router = createBrowserRouter([
       {
         path: 'help/faqs',
         element: <FAQsPage />,
+      },
+      {
+        path: 'system/backup',
+        element: <BackupPage />,
       },
     ],
   },

@@ -145,6 +145,13 @@ function App() {
         { path: '/inquiries', label: '1:1 문의', badge: inquiryNotifications.unreadCount },
       ],
     },
+    {
+      path: '/system',
+      label: '시스템 관리',
+      children: [
+        { path: '/system/backup', label: '백업 관리' },
+      ],
+    },
   ];
 
   const toggleMenu = (path: string) => {

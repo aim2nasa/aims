@@ -1,0 +1,344 @@
+.backup-page {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.backup-page__loading,
+.backup-page__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+  color: var(--color-text-secondary);
+}
+
+.backup-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.backup-page__title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.backup-page__title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.backup-page__description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.backup-page__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 디스크 정보 */
+.backup-page__disk-info {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.backup-page__disk-bar {
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.backup-page__disk-used {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.backup-page__disk-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* 백업 목록 */
+.backup-page__list {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.backup-page__empty {
+  padding: 48px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.backup-page__empty p {
+  margin: 4px 0;
+}
+
+.backup-page__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.backup-page__table th,
+.backup-page__table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.backup-page__table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  text-transform: uppercase;
+}
+
+.backup-page__table tbody tr:hover {
+  background: var(--color-bg-hover);
+}
+
+.backup-page__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.backup-page__filename {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.backup-page__relative-time {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.backup-page__actions-cell {
+  display: flex;
+  gap: 4px;
+}
+
+.backup-page__delete-btn {
+  color: var(--color-error) !important;
+}
+
+/* 백업 대상 정보 */
+.backup-page__info {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.backup-page__info h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--color-text-primary);
+}
+
+.backup-page__info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.backup-page__info li {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 8px 0;
+}
+
+.backup-page__info li strong {
+  color: var(--color-text-primary);
+}
+
+/* 로그 모달 */
+.backup-page__log-modal {
+  max-height: 500px;
+  overflow: auto;
+}
+
+.backup-page__log-content {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--color-bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* 복원 모달 */
+.backup-page__restore-modal {
+  min-width: 400px;
+}
+
+.backup-page__restore-warning {
+  background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
+  color: var(--color-warning, #ff9500);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.backup-page__restore-file {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+}
+
+.backup-page__restore-file strong {
+  color: var(--color-text-primary);
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+.backup-page__restore-components {
+  margin-bottom: 20px;
+}
+
+.backup-page__restore-components h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--color-text-primary);
+}
+
+.backup-page__restore-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.backup-page__restore-option:hover {
+  background: var(--color-bg-hover);
+}
+
+.backup-page__restore-option input {
+  margin-top: 2px;
+}
+
+.backup-page__restore-option-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.backup-page__restore-option-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.backup-page__restore-error {
+  background: var(--color-error-bg, rgba(255, 59, 48, 0.1));
+  color: var(--color-error, #ff3b30);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.backup-page__restore-results {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.backup-page__restore-results h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.backup-page__restore-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.backup-page__restore-result:last-child {
+  border-bottom: none;
+}
+
+.backup-page__restore-result-comp {
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.backup-page__restore-result-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.backup-page__restore-result--success .backup-page__restore-result-status {
+  background: var(--color-success-bg, rgba(52, 199, 89, 0.1));
+  color: var(--color-success, #34c759);
+}
+
+.backup-page__restore-result--error .backup-page__restore-result-status {
+  background: var(--color-error-bg, rgba(255, 59, 48, 0.1));
+  color: var(--color-error, #ff3b30);
+}
+
+.backup-page__restore-result--skipped .backup-page__restore-result-status {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.backup-page__restore-result-msg {
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.backup-page__restore-note {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin: 12px 0 0 0;
+}
+
+.backup-page__restore-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
