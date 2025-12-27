@@ -50,6 +50,21 @@ html[data-theme="dark"] .center-pane-view__header {
   border-bottom-color: var(--color-layout-accent-dark);
 }
 
+/* 페이지 설명 */
+.center-pane-view__description {
+  margin: 0;
+  padding: 12px 24px;
+  font-size: var(--font-size-footnote); /* 13px */
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 0.5px solid var(--color-layout-accent-light);
+  line-height: 1.4;
+}
+
+html[data-theme="dark"] .center-pane-view__description {
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
 /* Breadcrumb 영역 */
 .center-pane-view__breadcrumb {
   padding: 8px 24px 0;

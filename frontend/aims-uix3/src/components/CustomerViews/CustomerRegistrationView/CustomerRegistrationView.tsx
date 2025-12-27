@@ -57,6 +57,7 @@ export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> =
       className="customer-registration-view"
       breadcrumbItems={breadcrumbItems}
       onBreadcrumbClick={onNavigate}
+      description="개인 또는 법인 고객을 등록합니다."
     >
       <RegistrationForm />
     </CenterPaneView>

@@ -47,6 +47,8 @@ interface CenterPaneViewProps {
   breadcrumbItems?: BreadcrumbItem[]
   /** Breadcrumb 항목 클릭 핸들러 */
   onBreadcrumbClick?: (key: string) => void
+  /** 페이지 설명 (제목 아래 표시) */
+  description?: string
 }
 
 /**
@@ -115,7 +117,8 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   placeholderIcon = 'doc.text',
   placeholderMessage,
   breadcrumbItems,
-  onBreadcrumbClick
+  onBreadcrumbClick,
+  description
 }) => {
   if (!visible) return null
 
@@ -161,6 +164,11 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
         )}
         {/* X 버튼 제거 - 애플의 미니멀 디자인 철학 적용 */}
       </div>
+
+      {/* 페이지 설명 */}
+      {description && (
+        <p className="center-pane-view__description">{description}</p>
+      )}
 
       {/* 콘텐츠 영역 */}
       <div className="center-pane-view__content">

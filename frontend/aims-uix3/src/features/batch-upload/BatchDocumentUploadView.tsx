@@ -522,6 +522,7 @@ export default function BatchDocumentUploadView({
       onClose={onClose}
       placeholderIcon="archivebox"
       placeholderMessage="폴더별로 정리된 문서를 고객에게 일괄 등록합니다."
+      description="각 고객의 여러 문서를 폴더별로 구분하여 일괄 업로드할 수 있습니다."
     >
       {/* 🍎 도움말 버튼 */}
       <div className="batch-upload-header">
