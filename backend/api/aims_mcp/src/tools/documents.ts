@@ -29,6 +29,18 @@ export const deleteDocumentsSchema = z.object({
   documentIds: z.array(z.string()).min(1).describe('삭제할 문서 ID 목록')
 });
 
+export const linkDocumentToCustomerSchema = z.object({
+  documentId: z.string().describe('연결할 문서의 내부 식별자'),
+  customerId: z.string().describe('연결할 고객의 내부 식별자'),
+  relationship: z.string().optional().default('general').describe('문서와 고객의 관계 유형 (예: general, contract, claim, annual_report)'),
+  notes: z.string().optional().describe('문서 관련 메모')
+});
+
+export const findDocumentByFilenameSchema = z.object({
+  filename: z.string().describe('찾을 파일명 (부분 일치 검색)'),
+  limit: z.number().optional().default(5).describe('결과 개수 제한')
+});
+
 // Tool 정의
 export const documentToolDefinitions = [
   {
@@ -93,6 +105,45 @@ export const documentToolDefinitions = [
         }
       },
       required: ['documentIds']
+    }
+  },
+  {
+    name: 'link_document_to_customer',
+    description: `문서를 고객에게 연결합니다.
+
+중요 지시사항:
+- 사용자가 파일을 업로드하면서 고객명을 언급했다면, 확인 없이 바로 연결하세요
+- "연결할까요?"라고 묻지 말고 즉시 실행하세요
+- 먼저 find_document_by_filename으로 파일을 찾고, search_customers로 고객을 찾은 후 연결하세요
+- 사용자에게 내부 식별자를 언급하지 마세요`,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        documentId: { type: 'string', description: '문서 내부 식별자 (find_document_by_filename으로 조회)' },
+        customerId: { type: 'string', description: '고객 내부 식별자 (search_customers로 조회)' },
+        relationship: {
+          type: 'string',
+          description: '문서와 고객의 관계 유형 (기본: general). 옵션: general, contract, claim, annual_report'
+        },
+        notes: { type: 'string', description: '메모 (선택)' }
+      },
+      required: ['documentId', 'customerId']
+    }
+  },
+  {
+    name: 'find_document_by_filename',
+    description: `파일명으로 최근 업로드된 문서를 검색합니다.
+
+용도: 사용자가 업로드한 파일을 고객에게 연결하기 전에 내부 식별자를 찾을 때 사용
+- 사용자에게 검색 결과의 내부 식별자를 보여주지 마세요
+- 이 도구는 내부 처리용이며, 결과를 바로 link_document_to_customer에 사용하세요`,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        filename: { type: 'string', description: '파일명 (부분 일치)' },
+        limit: { type: 'number', description: '결과 개수 (기본: 5)' }
+      },
+      required: ['filename']
     }
   }
 ];
@@ -526,6 +577,229 @@ export async function handleDeleteDocuments(args: unknown) {
       content: [{
         type: 'text' as const,
         text: `문서 삭제 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 문서를 고객에게 연결하는 핸들러
+ */
+export async function handleLinkDocumentToCustomer(args: unknown) {
+  try {
+    const params = linkDocumentToCustomerSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // 문서 ID 검증
+    const documentObjectId = toSafeObjectId(params.documentId);
+    if (!documentObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 문서 ID입니다.' }]
+      };
+    }
+
+    // 고객 ID 검증
+    const customerObjectId = toSafeObjectId(params.customerId);
+    if (!customerObjectId) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
+      };
+    }
+
+    // 문서 존재 및 소유권 확인
+    const document = await db.collection(COLLECTIONS.FILES).findOne({
+      _id: documentObjectId,
+      ownerId: userId
+    });
+
+    if (!document) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '문서를 찾을 수 없거나 접근 권한이 없습니다.' }]
+      };
+    }
+
+    // 고객 존재 및 소유권 확인
+    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: customerObjectId,
+      'meta.created_by': userId
+    });
+
+    if (!customer) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: '고객을 찾을 수 없거나 접근 권한이 없습니다.' }]
+      };
+    }
+
+    const filename = document.upload?.originalName || '알 수 없는 파일';
+    const customerName = customer.personal_info?.name || '알 수 없는 고객';
+
+    // 기존 고객 연결 해제 (이전에 다른 고객에게 연결되어 있었다면)
+    const previousCustomerId = document.customerId;
+    if (previousCustomerId && previousCustomerId.toString() !== customerObjectId.toString()) {
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: previousCustomerId },
+        {
+          $pull: { documents: { document_id: documentObjectId } } as any,
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+    }
+
+    // 문서에 고객 정보 업데이트
+    await db.collection(COLLECTIONS.FILES).updateOne(
+      { _id: documentObjectId },
+      {
+        $set: {
+          customerId: customerObjectId,
+          customer_relation: {
+            customer_id: customerObjectId,
+            customer_name: customerName,
+            relationship: params.relationship || 'general',
+            linked_at: new Date(),
+            notes: params.notes
+          }
+        }
+      }
+    );
+
+    // 고객의 documents 배열에 문서 추가 (이미 있으면 업데이트)
+    const existingDocInCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+      _id: customerObjectId,
+      'documents.document_id': documentObjectId
+    });
+
+    if (existingDocInCustomer) {
+      // 이미 있으면 업데이트
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: customerObjectId, 'documents.document_id': documentObjectId },
+        {
+          $set: {
+            'documents.$.relationship': params.relationship || 'general',
+            'documents.$.notes': params.notes,
+            'documents.$.linked_at': new Date(),
+            'meta.updated_at': new Date()
+          }
+        }
+      );
+    } else {
+      // 없으면 추가
+      await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+        { _id: customerObjectId },
+        {
+          $push: {
+            documents: {
+              document_id: documentObjectId,
+              relationship: params.relationship || 'general',
+              notes: params.notes,
+              linked_at: new Date()
+            }
+          } as any,
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+    }
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          documentId: params.documentId,
+          customerId: params.customerId,
+          filename,
+          customerName,
+          relationship: params.relationship || 'general',
+          notes: params.notes,
+          message: `문서 "${filename}"이(가) 고객 "${customerName}"에게 성공적으로 연결되었습니다.`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] link_document_to_customer 에러:', error);
+    sendErrorLog('aims_mcp', 'link_document_to_customer 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `문서 연결 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 파일명으로 문서 검색 핸들러
+ */
+export async function handleFindDocumentByFilename(args: unknown) {
+  try {
+    const params = findDocumentByFilenameSchema.parse(args);
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    const limit = params.limit || 5;
+
+    // 파일명으로 검색 (부분 일치, 최근 업로드 순)
+    const documents = await db.collection(COLLECTIONS.FILES)
+      .find({
+        ownerId: userId,
+        'upload.originalName': { $regex: escapeRegex(params.filename), $options: 'i' }
+      })
+      .sort({ 'upload.uploaded_at': -1 })
+      .limit(limit)
+      .project({
+        _id: 1,
+        'upload.originalName': 1,
+        'upload.uploaded_at': 1,
+        customerId: 1
+      })
+      .toArray();
+
+    if (documents.length === 0) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            found: false,
+            message: `"${params.filename}" 파일을 찾을 수 없습니다.`
+          }, null, 2)
+        }]
+      };
+    }
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          found: true,
+          count: documents.length,
+          documents: documents.map(doc => ({
+            id: doc._id.toString(),
+            filename: doc.upload?.originalName,
+            uploadedAt: doc.upload?.uploaded_at,
+            hasCustomer: !!doc.customerId
+          }))
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] find_document_by_filename 에러:', error);
+    sendErrorLog('aims_mcp', 'find_document_by_filename 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `파일 검색 실패: ${errorMessage}`
       }]
     };
   }

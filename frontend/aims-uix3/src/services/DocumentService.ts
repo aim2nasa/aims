@@ -614,7 +614,8 @@ export class DocumentService {
   }
 
   /**
-   * 문서 업로드 (바이러스 검사 포함)
+   * 문서 업로드 (바이러스 검사 포함, n8n webhook 사용)
+   * 새문서 등록(uploadService)과 동일한 방식으로 업로드
    */
   static async uploadDocument(file: File, metadata?: Partial<CreateDocumentData>): Promise<UploadDocumentResult> {
     if (!file) {
@@ -639,8 +640,14 @@ export class DocumentService {
       }
     }
 
+    // userId 가져오기 (localStorage에서)
+    const userId = typeof window !== 'undefined'
+      ? localStorage.getItem('aims-current-user-id') || 'tester'
+      : 'tester';
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('userId', userId);
 
     // 메타데이터가 있으면 추가
     if (metadata) {
@@ -655,9 +662,112 @@ export class DocumentService {
       });
     }
 
-    const response = await api.post<UploadDocumentResult>(ENDPOINTS.DOCUMENT_UPLOAD, formData);
+    // n8n webhook으로 직접 업로드 (새문서 등록과 동일한 방식)
+    const N8N_UPLOAD_URL = 'https://n8nd.giize.com/webhook/docprep-main';
 
-    return response;
+    console.log(`[DocumentService] 📤 업로드 시작: ${file.name} (userId: ${userId})`);
+
+    // JWT 토큰 가져오기 (uploadService와 동일한 방식)
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          token = parsed?.state?.token || null;
+        }
+      } catch {
+        // 파싱 실패 시 무시
+      }
+    }
+
+    // XMLHttpRequest 사용 (새문서 등록과 동일하게)
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.addEventListener('load', () => {
+        try {
+          const result = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log(`[DocumentService] ✅ 업로드 성공: ${file.name}`, result);
+
+            resolve({
+              success: true,
+              document: {
+                _id: result.doc_id || result.id || result._id || '',
+                filename: file.name,
+                originalName: file.name,
+                uploadDate: new Date().toISOString(),
+                status: 'active',
+                ocrStatus: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                tags: []
+              }
+            });
+          } else if (xhr.status === 415) {
+            // 지원하지 않는 파일 형식 (경고로 처리)
+            console.warn(`[DocumentService] ⚠️ 지원하지 않는 파일 형식: ${file.name}`);
+            resolve({
+              success: true,
+              document: {
+                _id: '',
+                filename: file.name,
+                originalName: file.name,
+                uploadDate: new Date().toISOString(),
+                status: 'active',
+                ocrStatus: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                tags: []
+              },
+              error: result.userMessage || '지원하지 않는 파일 형식입니다'
+            });
+          } else {
+            reject(new Error(`업로드 실패: HTTP ${xhr.status}`));
+          }
+        } catch {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // JSON 파싱 실패해도 HTTP 성공이면 OK
+            resolve({
+              success: true,
+              document: {
+                _id: '',
+                filename: file.name,
+                originalName: file.name,
+                uploadDate: new Date().toISOString(),
+                status: 'active',
+                ocrStatus: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                tags: []
+              }
+            });
+          } else {
+            reject(new Error(`업로드 실패: HTTP ${xhr.status}`));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('네트워크 오류가 발생했습니다'));
+      });
+
+      xhr.addEventListener('timeout', () => {
+        reject(new Error('업로드 시간이 초과되었습니다'));
+      });
+
+      xhr.open('POST', N8N_UPLOAD_URL);
+      xhr.timeout = 5 * 60 * 1000; // 5분 타임아웃
+
+      // JWT 인증 헤더 추가 (uploadService와 동일)
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+
+      xhr.send(formData);
+    });
   }
 
   /**

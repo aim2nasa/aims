@@ -216,20 +216,30 @@ describe('사용자별 문서 격리 - 통합 테스트', () => {
     it('업로드된 문서는 현재 사용자에게만 귀속', async () => {
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
 
-      vi.mocked(api.post).mockResolvedValue({
-        success: true,
-        document: {
-          _id: 'new-doc-1',
-          filename: 'test.pdf',
-          ownerId: 'current-user'
-        }
-      })
+      // XMLHttpRequest 모킹 (n8n webhook 방식)
+      const xhrListeners: Record<string, () => void> = {}
+      const mockXHR = {
+        open: vi.fn(),
+        send: vi.fn().mockImplementation(() => {
+          setTimeout(() => xhrListeners['load']?.(), 0)
+        }),
+        setRequestHeader: vi.fn(),
+        addEventListener: vi.fn().mockImplementation((event: string, handler: () => void) => {
+          xhrListeners[event] = handler
+        }),
+        status: 200,
+        responseText: JSON.stringify({ doc_id: 'new-doc-1' }),
+        timeout: 0
+      }
+      vi.stubGlobal('XMLHttpRequest', vi.fn(() => mockXHR))
 
       const result = await DocumentService.uploadDocument(file)
 
       expect(result.document?.filename).toBe('test.pdf')
-      // 업로드된 문서는 현재 사용자 소유
-      expect(api.post).toHaveBeenCalled()
+      // n8n webhook으로 업로드됨
+      expect(mockXHR.open).toHaveBeenCalledWith('POST', 'https://n8nd.giize.com/webhook/docprep-main')
+
+      vi.unstubAllGlobals()
     })
   })
 

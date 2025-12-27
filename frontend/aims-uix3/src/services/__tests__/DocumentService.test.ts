@@ -749,33 +749,52 @@ describe('DocumentService', () => {
   })
 
   // ============================================================================
-  // 13. uploadDocument() - 문서 업로드
+  // 13. uploadDocument() - 문서 업로드 (n8n webhook 방식)
   // ============================================================================
   describe('uploadDocument', () => {
-    it('파일을 업로드해야 함', async () => {
-      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
-      const mockResponse = {
-        success: true,
-        document: {
-          _id: 'new-doc',
-          filename: 'test.pdf',
-          originalName: 'test.pdf',
-          uploadDate: '2025-10-14T10:00:00Z',
-          status: 'active',
-          ocrStatus: 'pending',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
-          tags: [],
-        },
-      }
+    let mockXHR: {
+      open: ReturnType<typeof vi.fn>
+      send: ReturnType<typeof vi.fn>
+      setRequestHeader: ReturnType<typeof vi.fn>
+      addEventListener: ReturnType<typeof vi.fn>
+      status: number
+      responseText: string
+      timeout: number
+    }
+    let xhrListeners: Record<string, () => void>
 
-      vi.mocked(api.post).mockResolvedValue(mockResponse)
+    beforeEach(() => {
+      xhrListeners = {}
+      mockXHR = {
+        open: vi.fn(),
+        send: vi.fn().mockImplementation(() => {
+          // 즉시 load 이벤트 발생
+          setTimeout(() => xhrListeners['load']?.(), 0)
+        }),
+        setRequestHeader: vi.fn(),
+        addEventListener: vi.fn().mockImplementation((event: string, handler: () => void) => {
+          xhrListeners[event] = handler
+        }),
+        status: 200,
+        responseText: JSON.stringify({ doc_id: 'new-doc' }),
+        timeout: 0
+      }
+      vi.stubGlobal('XMLHttpRequest', vi.fn(() => mockXHR))
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('파일을 n8n webhook으로 업로드해야 함', async () => {
+      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
 
       const result = await DocumentService.uploadDocument(file)
 
-      expect(api.post).toHaveBeenCalledWith('/api/documents/upload', expect.any(FormData))
+      expect(mockXHR.open).toHaveBeenCalledWith('POST', 'https://n8nd.giize.com/webhook/docprep-main')
+      expect(mockXHR.send).toHaveBeenCalled()
       expect(result.success).toBe(true)
-      expect(result.document?._id).toBe('new-doc')
+      expect(result.document?.filename).toBe('test.pdf')
     })
 
     it('파일이 없으면 에러를 던져야 함', async () => {
@@ -784,31 +803,23 @@ describe('DocumentService', () => {
       )
     })
 
-    it('메타데이터를 FormData에 추가해야 함', async () => {
+    it('업로드 성공 시 문서 정보를 반환해야 함', async () => {
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
-      const metadata = {
-        tags: ['보험', '청구서'],
-        notes: '테스트 문서',
-      }
+      mockXHR.responseText = JSON.stringify({ doc_id: 'uploaded-doc-123' })
 
-      vi.mocked(api.post).mockResolvedValue({ success: true })
+      const result = await DocumentService.uploadDocument(file)
 
-      await DocumentService.uploadDocument(file, metadata)
-
-      const formData = vi.mocked(api.post).mock.calls[0]![1] as FormData
-      expect(formData.get('file')).toBe(file)
+      expect(result.success).toBe(true)
+      expect(result.document?._id).toBe('uploaded-doc-123')
+      expect(result.document?.filename).toBe('test.pdf')
     })
 
-    it('배열 메타데이터는 JSON.stringify해야 함', async () => {
+    it('HTTP 에러 시 reject해야 함', async () => {
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
-      const metadata = { tags: ['tag1', 'tag2'] }
+      mockXHR.status = 500
+      mockXHR.responseText = ''
 
-      vi.mocked(api.post).mockResolvedValue({ success: true })
-
-      await DocumentService.uploadDocument(file, metadata)
-
-      // FormData에 배열이 JSON 문자열로 추가되었는지 확인
-      expect(api.post).toHaveBeenCalled()
+      await expect(DocumentService.uploadDocument(file)).rejects.toThrow('업로드 실패: HTTP 500')
     })
   })
 

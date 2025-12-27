@@ -21,6 +21,7 @@ import { CustomerDocumentPreviewModal } from '@/features/customer/views/Customer
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { api } from '@/shared/lib/api';
 import './ChatPanel.css';
 
 // 데이터 변경을 유발하는 MCP 도구 목록
@@ -28,7 +29,7 @@ const DATA_MUTATING_TOOLS = {
   // 고객 관련
   customers: ['create_customer', 'update_customer', 'restore_customer'],
   // 문서 관련
-  documents: ['delete_document'],
+  documents: ['delete_document', 'link_document_to_customer'],
   // 관계 관련
   relationships: ['create_relationship'],
   // 메모 관련
@@ -262,11 +263,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     return [];
   });
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 = 현재 입력
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]); // 첨부 파일 목록
+  const [isUploading, setIsUploading] = useState(false); // 파일 업로드 중 상태
   const tempInputRef = useRef(''); // 히스토리 탐색 중 현재 작성 내용 임시 저장
   const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // 파일 입력 ref
 
   // messages 변경 시 localStorage에 저장
   useEffect(() => {
@@ -771,6 +775,74 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   }, []);
 
+  // 파일 첨부 버튼 클릭 핸들러
+  const handleFileAttachClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // 파일 유효성 검사 (최대 10MB, 최대 5개)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_FILES = 5;
+
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (attachedFiles.length + validFiles.length >= MAX_FILES) {
+        errors.push(`최대 ${MAX_FILES}개 파일만 첨부할 수 있습니다`);
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(`${file.name}: 파일 크기가 10MB를 초과합니다`);
+        return;
+      }
+      // 중복 파일 체크
+      if (attachedFiles.some(f => f.name === file.name && f.size === file.size)) {
+        errors.push(`${file.name}: 이미 첨부된 파일입니다`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+    }
+
+    if (validFiles.length > 0) {
+      setAttachedFiles(prev => [...prev, ...validFiles]);
+    }
+
+    // input 초기화 (같은 파일 다시 선택 가능하도록)
+    e.target.value = '';
+  }, [attachedFiles]);
+
+  // 첨부 파일 삭제 핸들러
+  const handleFileRemove = useCallback((index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // 파일 크기 포맷팅
+  const formatFileSize = useCallback((bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }, []);
+
+  // 파일 아이콘 가져오기
+  const getFileIcon = useCallback((mimeType: string): string => {
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType === 'application/pdf') return '📄';
+    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📽️';
+    return '📎';
+  }, []);
+
   // 파일 경로를 절대 URL로 변환
   const buildFileUrl = useCallback((path?: string | null): string | null => {
     if (!path) return null;
@@ -988,24 +1060,178 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
+    // 메시지가 없어도 파일이 있으면 전송 가능
+    if ((!trimmedInput && attachedFiles.length === 0) || isLoading || isUploading) return;
 
     // 입력 히스토리에 추가 (중복 방지, 최대 50개)
-    setInputHistory(prev => {
-      const filtered = prev.filter(h => h !== trimmedInput);
-      return [trimmedInput, ...filtered].slice(0, 50);
-    });
+    if (trimmedInput) {
+      setInputHistory(prev => {
+        const filtered = prev.filter(h => h !== trimmedInput);
+        return [trimmedInput, ...filtered].slice(0, 50);
+      });
+    }
     setHistoryIndex(-1);
     tempInputRef.current = '';
 
     // 자주 쓰는 질문 사용 추적 (비동기, 실패해도 무시)
-    FrequentQuestionsService.track(trimmedInput);
+    if (trimmedInput) {
+      FrequentQuestionsService.track(trimmedInput);
+    }
 
-    // 사용자 메시지 추가
+    // 파일 업로드 처리 (새문서등록과 동일한 방식 - customerId 포함)
+    let uploadedFileNames: string[] = [];
+    let linkedCustomerName = '';
+    if (attachedFiles.length > 0) {
+      setIsUploading(true);
+      try {
+        console.log('[ChatPanel] 파일 업로드 시작:', attachedFiles.map(f => f.name));
+
+        // 1. 메시지 또는 파일명에서 고객명 추출 및 고객 검색
+        let targetCustomerId = '';
+
+        // 한글 이름 패턴 (2-4글자) 추출 - 메시지 텍스트에서 먼저 시도
+        let koreanNameMatch = trimmedInput.match(/([가-힣]{2,4})/g);
+        console.log('[ChatPanel] 메시지에서 한글 이름 추출:', koreanNameMatch, 'from:', trimmedInput);
+
+        // 메시지에서 이름을 못 찾으면 파일명에서 추출 시도
+        if (!koreanNameMatch || koreanNameMatch.length === 0) {
+          for (const file of attachedFiles) {
+            const fileNameMatch = file.name.match(/([가-힣]{2,4})/g);
+            if (fileNameMatch && fileNameMatch.length > 0) {
+              koreanNameMatch = fileNameMatch;
+              console.log('[ChatPanel] 파일명에서 한글 이름 추출:', koreanNameMatch, 'from:', file.name);
+              break;
+            }
+          }
+        }
+
+        if (koreanNameMatch) {
+          for (const potentialName of koreanNameMatch) {
+            try {
+              console.log('[ChatPanel] 고객 검색 시도:', potentialName);
+              // CustomerService 사용 (인증 처리됨)
+              const result = await CustomerService.getCustomers({
+                search: potentialName,
+                limit: 5
+              });
+              const customers = result?.customers || [];
+              console.log('[ChatPanel] 검색 결과:', potentialName, customers.length, '건');
+              // 정확히 일치하는 고객 찾기
+              const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
+              if (exactMatch?._id) {
+                targetCustomerId = exactMatch._id;
+                linkedCustomerName = potentialName;
+                console.log('[ChatPanel] 고객 찾음:', potentialName, targetCustomerId);
+                break;
+              }
+            } catch (searchError) {
+              console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
+            }
+          }
+        }
+        console.log('[ChatPanel] 최종 타겟 고객:', targetCustomerId || '없음');
+
+        // 2. 파일 업로드 (DocumentService 사용)
+        const uploadResults = await Promise.all(
+          attachedFiles.map(async (file) => {
+            try {
+              const result = await DocumentService.uploadDocument(file);
+              if (result.success) {
+                console.log('[ChatPanel] 파일 업로드 성공:', file.name);
+                return { success: true, name: file.name };
+              } else {
+                console.error('[ChatPanel] 파일 업로드 실패:', file.name, result.error);
+                return { success: false, name: file.name, error: result.error };
+              }
+            } catch (error) {
+              console.error('[ChatPanel] 파일 업로드 실패:', file.name, error);
+              return { success: false, name: file.name, error };
+            }
+          })
+        );
+
+        // 실패한 파일이 있으면 알림
+        const failedFiles = uploadResults.filter(r => !r.success);
+        if (failedFiles.length > 0) {
+          alert(`일부 파일 업로드 실패:\n${failedFiles.map(f => f.name).join('\n')}`);
+        }
+
+        uploadedFileNames = uploadResults.filter(r => r.success).map(r => r.name);
+        console.log('[ChatPanel] 업로드 완료:', uploadedFileNames);
+
+        // 3. 고객 ID가 있으면 문서-고객 연결 (aims_api 호출)
+        if (targetCustomerId && uploadedFileNames.length > 0) {
+          console.log('[ChatPanel] 문서-고객 연결 시작:', targetCustomerId, uploadedFileNames);
+
+          // 잠시 대기 (n8n이 DB에 저장할 시간)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // 최근 문서 조회하여 업로드된 파일들의 ID 찾기
+          try {
+            const docsData = await api.get<{ success: boolean; data: { documents: Array<{ _id: string; filename: string }> } }>('/api/documents?limit=50');
+            const allDocs = docsData?.data?.documents || [];
+
+            for (const fileName of uploadedFileNames) {
+              // 파일명으로 문서 찾기
+              const doc = allDocs.find((d) => d.filename === fileName);
+              if (doc?._id) {
+                // POST /api/customers/:id/documents 호출
+                try {
+                  await DocumentService.linkDocumentToCustomer(targetCustomerId, {
+                    document_id: doc._id,
+                    relationship_type: 'general'
+                  });
+                  console.log('[ChatPanel] 문서-고객 연결 성공:', fileName, '→', linkedCustomerName);
+                } catch (linkError) {
+                  console.error('[ChatPanel] 문서-고객 연결 오류:', fileName, linkError);
+                }
+              } else {
+                console.warn('[ChatPanel] 문서 ID를 찾을 수 없음:', fileName);
+              }
+            }
+          } catch (error) {
+            console.error('[ChatPanel] 문서 조회 오류:', error);
+          }
+
+          console.log('[ChatPanel] 문서-고객 연결 완료');
+        }
+      } catch (error) {
+        console.error('[ChatPanel] 파일 업로드 오류:', error);
+        alert('파일 업로드 중 오류가 발생했습니다.');
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+        setAttachedFiles([]); // 첨부 파일 목록 초기화
+      }
+    }
+
+    // 사용자 메시지 구성 (업로드된 파일 정보 포함)
+    let messageContent = trimmedInput;
+    if (uploadedFileNames.length > 0) {
+      const fileList = uploadedFileNames.join(', ');
+      if (linkedCustomerName) {
+        // 고객에게 자동 연결된 경우
+        messageContent = trimmedInput
+          ? `${trimmedInput}\n\n[업로드 완료] ${fileList} → 고객 "${linkedCustomerName}"에게 자동 연결됨`
+          : `문서 ${fileList}이(가) 고객 "${linkedCustomerName}"에게 업로드되었습니다.`;
+      } else {
+        // 고객 없이 업로드된 경우
+        messageContent = trimmedInput
+          ? `${trimmedInput}\n\n[업로드 완료] ${fileList} (고객 미지정 - 전체 문서에서 확인 가능)`
+          : `문서 ${fileList}이(가) 업로드되었습니다. 특정 고객에게 연결하려면 고객명을 알려주세요.`;
+      }
+    }
+
+    // 사용자 메시지 추가 (화면 표시용)
+    const displayContent = uploadedFileNames.length > 0
+      ? `${trimmedInput || '문서 업로드'}\n\n📎 첨부: ${uploadedFileNames.join(', ')}`
+      : trimmedInput;
+
     const userMessage: DisplayMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: trimmedInput,
+      content: displayContent,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, userMessage]);
@@ -1017,8 +1243,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
 
     try {
-      // 대화 히스토리 구성
-      const chatMessages: ChatMessage[] = [...messages, userMessage].map(m => ({
+      // 대화 히스토리 구성 (실제 전송용 - 문서 ID 포함)
+      const chatMessages: ChatMessage[] = [...messages, { ...userMessage, content: messageContent }].map(m => ({
         role: m.role,
         content: m.content
       }));
@@ -1524,11 +1750,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               {questionTab === 'examples' && (
                 <div className="chat-panel__welcome-features">
                   {HELP_FEATURES.map((feature, idx) => (
-                    <button
+                    <div
                       key={idx}
-                      type="button"
                       className="chat-panel__welcome-feature"
                       onClick={() => handleFeatureClick(idx)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleFeatureClick(idx)}
+                      role="button"
+                      tabIndex={0}
                     >
                       <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                       <div className="chat-panel__welcome-feature-content">
@@ -1561,7 +1789,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                           </svg>
                         </button>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1693,8 +1921,67 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         <div ref={messagesEndRef} />
       </div>
 
+      {/* 첨부 파일 미리보기 */}
+      {attachedFiles.length > 0 && (
+        <div className="chat-panel__attached-files">
+          {attachedFiles.map((file, index) => (
+            <div key={`${file.name}-${index}`} className="chat-panel__attached-file">
+              <span className="chat-panel__attached-file-icon">
+                {getFileIcon(file.type)}
+              </span>
+              <span className="chat-panel__attached-file-name" title={file.name}>
+                {file.name}
+              </span>
+              <span className="chat-panel__attached-file-size">
+                {formatFileSize(file.size)}
+              </span>
+              <button
+                type="button"
+                className="chat-panel__attached-file-remove"
+                onClick={() => handleFileRemove(index)}
+                aria-label={`${file.name} 삭제`}
+              >
+                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} decorative />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 업로드 진행 표시 */}
+      {isUploading && (
+        <div className="chat-panel__uploading">
+          <span className="chat-panel__uploading-spinner" />
+          <span>파일 업로드 중...</span>
+        </div>
+      )}
+
       {/* Input */}
       <form className="chat-panel__input-area" onSubmit={handleSubmit}>
+        {/* 숨겨진 파일 입력 */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp"
+          onChange={handleFileSelect}
+          className="chat-panel__file-input-hidden"
+          aria-label="파일 선택"
+        />
+
+        {/* 파일 첨부 버튼 */}
+        <Tooltip content="파일 첨부 (최대 5개, 10MB)" placement="top">
+          <button
+            type="button"
+            className="chat-panel__input-attach"
+            onClick={handleFileAttachClick}
+            disabled={isLoading || isUploading || attachedFiles.length >= 5}
+            aria-label="파일 첨부"
+          >
+            <SFSymbol name="paperclip" size={SFSymbolSize.BODY} decorative />
+          </button>
+        </Tooltip>
+
         <div className="chat-panel__input-wrapper">
           <textarea
             ref={inputRef}
@@ -1705,12 +1992,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               adjustTextareaHeight();
             }}
             onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
-            disabled={isLoading}
+            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요... (Shift+Enter로 줄바꿈)"}
+            disabled={isLoading || isUploading}
             rows={1}
           />
           {/* 텍스트 지우기 버튼 */}
-          {input.trim() && !isLoading && (
+          {input.trim() && !isLoading && !isUploading && (
             <button
               type="button"
               className="chat-panel__input-clear"
@@ -1728,7 +2015,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           )}
         </div>
         {/* 질문 저장 버튼 */}
-        {input.trim() && !isLoading && (
+        {input.trim() && !isLoading && !isUploading && (
           <Tooltip content="나만의 질문에 저장" placement="top">
             <button
               type="button"
@@ -1744,9 +2031,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           type="submit"
           variant="primary"
           size="sm"
-          disabled={!input.trim() || isLoading}
+          disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || isUploading}
         >
-          {isLoading ? (
+          {isLoading || isUploading ? (
             <SFSymbol name="stop.fill" size={SFSymbolSize.CAPTION_1} decorative />
           ) : (
             <SFSymbol name="arrow.up" size={SFSymbolSize.CAPTION_1} decorative />
@@ -1913,11 +2200,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               {questionTab === 'examples' && (
                 <div className="chat-panel__welcome-features">
                   {HELP_FEATURES.map((feature, idx) => (
-                    <button
+                    <div
                       key={idx}
-                      type="button"
                       className="chat-panel__welcome-feature"
                       onClick={() => handleFeatureClick(idx)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleFeatureClick(idx)}
+                      role="button"
+                      tabIndex={0}
                     >
                       <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                       <div className="chat-panel__welcome-feature-content">
@@ -1949,7 +2238,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                           </svg>
                         </button>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -2079,8 +2368,67 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         <div ref={messagesEndRef} />
       </div>
 
+      {/* 첨부 파일 미리보기 (분리 모드) */}
+      {attachedFiles.length > 0 && (
+        <div className="chat-panel__attached-files">
+          {attachedFiles.map((file, index) => (
+            <div key={`${file.name}-${index}`} className="chat-panel__attached-file">
+              <span className="chat-panel__attached-file-icon">
+                {getFileIcon(file.type)}
+              </span>
+              <span className="chat-panel__attached-file-name" title={file.name}>
+                {file.name}
+              </span>
+              <span className="chat-panel__attached-file-size">
+                {formatFileSize(file.size)}
+              </span>
+              <button
+                type="button"
+                className="chat-panel__attached-file-remove"
+                onClick={() => handleFileRemove(index)}
+                aria-label={`${file.name} 삭제`}
+              >
+                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} decorative />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 업로드 진행 표시 (분리 모드) */}
+      {isUploading && (
+        <div className="chat-panel__uploading">
+          <span className="chat-panel__uploading-spinner" />
+          <span>파일 업로드 중...</span>
+        </div>
+      )}
+
       {/* Input */}
       <form className="chat-panel__input-area" onSubmit={handleSubmit}>
+        {/* 숨겨진 파일 입력 (분리 모드) */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp"
+          onChange={handleFileSelect}
+          className="chat-panel__file-input-hidden"
+          aria-label="파일 선택"
+        />
+
+        {/* 파일 첨부 버튼 (분리 모드) */}
+        <Tooltip content="파일 첨부 (최대 5개, 10MB)" placement="top">
+          <button
+            type="button"
+            className="chat-panel__input-attach"
+            onClick={handleFileAttachClick}
+            disabled={isLoading || isUploading || attachedFiles.length >= 5}
+            aria-label="파일 첨부"
+          >
+            <SFSymbol name="paperclip" size={SFSymbolSize.BODY} decorative />
+          </button>
+        </Tooltip>
+
         <div className="chat-panel__input-wrapper">
           <textarea
             ref={inputRef}
@@ -2091,11 +2439,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               adjustTextareaHeight();
             }}
             onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
-            disabled={isLoading}
+            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요... (Shift+Enter로 줄바꿈)"}
+            disabled={isLoading || isUploading}
             rows={1}
           />
-          {input.trim() && !isLoading && (
+          {input.trim() && !isLoading && !isUploading && (
             <button
               type="button"
               className="chat-panel__input-clear"
@@ -2116,9 +2464,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           type="submit"
           variant="primary"
           size="sm"
-          disabled={!input.trim() || isLoading}
+          disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || isUploading}
         >
-          {isLoading ? (
+          {isLoading || isUploading ? (
             <SFSymbol name="stop.fill" size={SFSymbolSize.CAPTION_1} decorative />
           ) : (
             <SFSymbol name="arrow.up" size={SFSymbolSize.CAPTION_1} decorative />

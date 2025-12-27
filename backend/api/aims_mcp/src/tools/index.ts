@@ -12,7 +12,7 @@ import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthday
 import { expiringToolDefinitions, handleFindExpiringContracts } from './expiring.js';
 import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
-import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleDeleteDocument, handleDeleteDocuments } from './documents.js';
+import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleDeleteDocument, handleDeleteDocuments, handleLinkDocumentToCustomer, handleFindDocumentByFilename } from './documents.js';
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
 import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
@@ -68,6 +68,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   list_customer_documents: handleListCustomerDocuments,
   delete_document: handleDeleteDocument,
   delete_documents: handleDeleteDocuments,
+  link_document_to_customer: handleLinkDocumentToCustomer,
+  find_document_by_filename: handleFindDocumentByFilename,
   // 메모 관련
   add_customer_memo: handleAddMemo,
   list_customer_memos: handleListMemos,
