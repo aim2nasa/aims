@@ -5358,14 +5358,6 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
 
   console.log(`[Admin] 사용자 삭제 요청: userId=${id}, by admin=${adminUserId}`);
 
-  // ObjectId 유효성 검사
-  if (!ObjectId.isValid(id)) {
-    return res.status(400).json({
-      success: false,
-      message: '유효하지 않은 사용자 ID입니다.'
-    });
-  }
-
   // 자기 자신 삭제 방지
   if (id === adminUserId) {
     return res.status(400).json({
@@ -5375,8 +5367,22 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
   }
 
   try {
-    // 1. 사용자 존재 및 role 확인
-    const targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
+    // 1. 사용자 존재 및 role 확인 (ObjectId 또는 문자열 ID 모두 지원)
+    let targetUser = null;
+    let userIdQuery = null;
+
+    if (ObjectId.isValid(id)) {
+      // ObjectId 형식인 경우
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
+      userIdQuery = new ObjectId(id);
+    }
+
+    if (!targetUser) {
+      // 문자열 ID로 재시도
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: id });
+      userIdQuery = id;
+    }
+
     if (!targetUser) {
       return res.status(404).json({
         success: false,
@@ -5487,7 +5493,7 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
     }
 
     // 9. 마지막으로 사용자 삭제
-    const userResult = await db.collection(COLLECTIONS.USERS).deleteOne({ _id: new ObjectId(id) });
+    const userResult = await db.collection(COLLECTIONS.USERS).deleteOne({ _id: userIdQuery });
 
     if (userResult.deletedCount === 0) {
       return res.status(500).json({

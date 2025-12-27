@@ -81,7 +81,7 @@ export const UsersPage = () => {
       const stats = result.stats;
       if (stats) {
         alert(
-          `사용자가 삭제되었습니다.\n\n삭제 통계:\n- 문서: ${stats.documents.total}개 (파일 ${stats.documents.filesDeleted}개, 임베딩 ${stats.documents.qdrantDeleted}개)\n- 고객: ${stats.customers}명\n- 계약: ${stats.contracts}건\n- AI 사용량: ${stats.tokenUsage}건`
+          `사용자가 삭제되었습니다.\n\n삭제 통계:\n- 문서: ${stats.documents.total}개 (파일 ${stats.documents.filesDeleted}개, 임베딩 ${stats.documents.qdrantDeleted}개)\n- 고객: ${stats.customers}명\n- 계약: ${stats.contracts}건\n- 관계: ${stats.relationships}건\n- AI 사용량: ${stats.tokenUsage}건`
         );
       }
     },
@@ -377,6 +377,7 @@ export const UsersPage = () => {
               <li>사용자가 등록한 모든 문서 (물리 파일 포함)</li>
               <li>모든 고객 정보</li>
               <li>모든 계약 정보</li>
+              <li>모든 관계 정보</li>
               <li>벡터 임베딩 (AI 검색 데이터)</li>
               <li>AI 사용량 기록</li>
             </ul>
