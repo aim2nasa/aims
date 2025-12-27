@@ -817,6 +817,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     if (validFiles.length === 0) return;
 
     // 🔥 파일 선택 즉시 업로드 시작 (새문서등록과 동일)
+    setAttachedFiles(validFiles); // 업로드 중인 파일 목록 표시
     setIsUploading(true);
     try {
       console.log('[ChatPanel] 🚀 파일 선택 즉시 업로드 시작:', validFiles.map(f => f.name));
@@ -974,6 +975,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       console.error('[ChatPanel] 파일 업로드 오류:', error);
     } finally {
       setIsUploading(false);
+      setAttachedFiles([]); // 업로드 완료 후 파일 목록 초기화
     }
   }, [messages]);
 
