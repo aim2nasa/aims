@@ -61,6 +61,37 @@ alert_system = AlertSystem()
 # 🔥 Phase 4: AI 토큰 사용량 추적기 초기화
 token_tracker = TokenTracker()
 
+# 🔥 AI 모델 설정 캐싱
+AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+_ai_model_cache = {"model": None, "timestamp": 0}
+_AI_MODEL_CACHE_TTL = 60  # 1분
+
+def get_rag_model() -> str:
+    """
+    aims_api에서 RAG 모델 설정 조회 (1분 캐싱)
+    """
+    import time
+    now = time.time()
+
+    # 캐시 유효성 검사
+    if _ai_model_cache["model"] and (now - _ai_model_cache["timestamp"]) < _AI_MODEL_CACHE_TTL:
+        return _ai_model_cache["model"]
+
+    # API에서 조회
+    try:
+        response = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            model = data.get("data", {}).get("rag", {}).get("model", "gpt-3.5-turbo")
+            _ai_model_cache["model"] = model
+            _ai_model_cache["timestamp"] = now
+            return model
+    except Exception as e:
+        print(f"[RAG] AI 모델 설정 조회 실패: {e}")
+
+    # 실패 시 기본값
+    return _ai_model_cache.get("model") or "gpt-3.5-turbo"
+
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
     query: str
@@ -203,8 +234,9 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> tuple:
 
     try:
         client = OpenAI()
+        rag_model = get_rag_model()
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # 답변 생성에 적합한 모델 사용
+            model=rag_model,
             messages=messages,
             max_tokens=500,
             temperature=0.1

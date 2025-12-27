@@ -12,7 +12,7 @@ import tempfile
 from openai import OpenAI
 from PyPDF2 import PdfReader, PdfWriter
 
-from config import settings
+from config import settings, get_annual_report_model
 from system_logger import send_error_log
 
 logger = logging.getLogger(__name__)
@@ -212,8 +212,12 @@ Customer name and issue date are already extracted from page 1."""
 
         user_text = f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
 
+        # AI 모델 설정 조회 (캐싱됨)
+        annual_report_model = get_annual_report_model()
+        logger.info(f"🤖 사용 모델: {annual_report_model}")
+
         response = ai_client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
+            model=annual_report_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {

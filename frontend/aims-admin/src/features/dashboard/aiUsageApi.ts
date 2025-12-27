@@ -85,6 +85,24 @@ export interface HourlyUsageResponse {
   data: HourlyUsagePoint[];
 }
 
+// AI 모델 설정 타입
+export interface AIModelServiceSettings {
+  model: string;
+  description: string;
+  availableModels: string[];
+}
+
+export interface AIModelSettings {
+  chat: AIModelServiceSettings;
+  rag: AIModelServiceSettings;
+  annualReport: AIModelServiceSettings;
+}
+
+export interface AIModelSettingsResponse {
+  success: boolean;
+  data: AIModelSettings;
+}
+
 // 숫자 포맷팅 함수들
 export function formatTokens(tokens: number): string {
   if (tokens >= 1000000) {
@@ -180,6 +198,37 @@ export const aiUsageApi = {
   getHourlyUsage: async (hours: number = 24): Promise<HourlyUsagePoint[]> => {
     const res = await apiClient.get<HourlyUsageResponse>(
       `/api/admin/ai-usage/hourly?hours=${hours}`
+    );
+    return res.data;
+  },
+
+  /**
+   * AI 모델 설정 조회
+   */
+  getAIModelSettings: async (): Promise<AIModelSettings> => {
+    const res = await apiClient.get<AIModelSettingsResponse>(
+      `/api/settings/ai-models`
+    );
+    return res.data;
+  },
+
+  /**
+   * AI 모델 설정 수정
+   */
+  updateAIModelSettings: async (updates: Partial<AIModelSettings>): Promise<AIModelSettings> => {
+    const res = await apiClient.put<AIModelSettingsResponse>(
+      `/api/settings/ai-models`,
+      updates
+    );
+    return res.data;
+  },
+
+  /**
+   * AI 모델 설정 초기화
+   */
+  resetAIModelSettings: async (): Promise<AIModelSettings> => {
+    const res = await apiClient.post<AIModelSettingsResponse>(
+      `/api/settings/ai-models/reset`
     );
     return res.data;
   },

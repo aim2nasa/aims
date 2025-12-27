@@ -9,6 +9,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { logTokenUsage, TOKEN_COSTS } = require('./tokenUsageService');
 const backendLogger = require('./backendLogger');
+const aiModelSettings = require('./aiModelSettings');
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -418,12 +419,15 @@ async function* streamChatResponse(messages, userId, analyticsDb) {
     let iterationCount = 0;
     const MAX_ITERATIONS = 5;  // 무한 루프 방지
 
+    // AI 모델 설정 조회 (캐싱됨)
+    const chatModel = await aiModelSettings.getModel('chat');
+
     while (iterationCount < MAX_ITERATIONS) {
       iterationCount++;
 
       // OpenAI API 호출
       const streamOptions = {
-        model: 'gpt-4o',
+        model: chatModel,
         messages: currentMessages,
         stream: true,
         stream_options: { include_usage: true },

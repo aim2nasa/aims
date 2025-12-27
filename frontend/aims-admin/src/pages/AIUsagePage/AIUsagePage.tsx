@@ -5,7 +5,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BarChart,
   Bar,
@@ -17,7 +17,7 @@ import {
   Legend,
 } from 'recharts';
 import { aiUsageApi, formatTokens, formatCost } from '@/features/dashboard/aiUsageApi';
-import type { DailyUsageBySourcePoint, HourlyUsagePoint } from '@/features/dashboard/aiUsageApi';
+import type { DailyUsageBySourcePoint, HourlyUsagePoint, AIModelSettings } from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -306,6 +306,7 @@ const STORAGE_KEY_YEAR = 'aims-admin:ai-usage:selectedYear';
 const STORAGE_KEY_MONTH = 'aims-admin:ai-usage:selectedMonth';
 
 export const AIUsagePage = () => {
+  const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
@@ -398,6 +399,35 @@ export const AIUsagePage = () => {
     refetchInterval: 60000,
     enabled: periodType === 'hourly',
   });
+
+  // AI 모델 설정 조회
+  const { data: modelSettings, isLoading: modelSettingsLoading } = useQuery({
+    queryKey: ['admin', 'ai-model-settings'],
+    queryFn: () => aiUsageApi.getAIModelSettings(),
+  });
+
+  // AI 모델 설정 변경 뮤테이션
+  const updateModelMutation = useMutation({
+    mutationFn: (updates: Partial<AIModelSettings>) => aiUsageApi.updateAIModelSettings(updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ai-model-settings'] });
+    },
+  });
+
+  // AI 모델 설정 초기화 뮤테이션
+  const resetModelMutation = useMutation({
+    mutationFn: () => aiUsageApi.resetAIModelSettings(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ai-model-settings'] });
+    },
+  });
+
+  // 모델 변경 핸들러
+  const handleModelChange = (service: 'chat' | 'rag' | 'annualReport', model: string) => {
+    updateModelMutation.mutate({
+      [service]: { model }
+    });
+  };
 
   // 차트 데이터 준비
   const chartData = useMemo(() => {
@@ -667,6 +697,84 @@ export const AIUsagePage = () => {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* AI 모델 설정 */}
+      <section className="ai-usage-page__section">
+        <h2 className="ai-usage-page__section-title">AI 모델 설정</h2>
+        {modelSettingsLoading ? (
+          <div className="ai-usage-page__loading">설정을 불러오는 중...</div>
+        ) : (
+          <div className="ai-usage-page__model-settings">
+            <div className="ai-usage-page__model-row">
+              <div className="ai-usage-page__model-info">
+                <span className="ai-usage-page__model-label">AI 채팅</span>
+                <span className="ai-usage-page__model-desc">{modelSettings?.chat?.description}</span>
+              </div>
+              <select
+                className="ai-usage-page__model-select"
+                value={modelSettings?.chat?.model || ''}
+                onChange={(e) => handleModelChange('chat', e.target.value)}
+                disabled={updateModelMutation.isPending}
+                aria-label="AI 채팅 모델 선택"
+              >
+                {modelSettings?.chat?.availableModels?.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ai-usage-page__model-row">
+              <div className="ai-usage-page__model-info">
+                <span className="ai-usage-page__model-label">RAG 답변</span>
+                <span className="ai-usage-page__model-desc">{modelSettings?.rag?.description}</span>
+              </div>
+              <select
+                className="ai-usage-page__model-select"
+                value={modelSettings?.rag?.model || ''}
+                onChange={(e) => handleModelChange('rag', e.target.value)}
+                disabled={updateModelMutation.isPending}
+                aria-label="RAG 답변 모델 선택"
+              >
+                {modelSettings?.rag?.availableModels?.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ai-usage-page__model-row">
+              <div className="ai-usage-page__model-info">
+                <span className="ai-usage-page__model-label">Annual Report</span>
+                <span className="ai-usage-page__model-desc">{modelSettings?.annualReport?.description}</span>
+              </div>
+              <select
+                className="ai-usage-page__model-select"
+                value={modelSettings?.annualReport?.model || ''}
+                onChange={(e) => handleModelChange('annualReport', e.target.value)}
+                disabled={updateModelMutation.isPending}
+                aria-label="Annual Report 모델 선택"
+              >
+                {modelSettings?.annualReport?.availableModels?.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ai-usage-page__model-actions">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => resetModelMutation.mutate()}
+                disabled={resetModelMutation.isPending}
+              >
+                {resetModelMutation.isPending ? '초기화 중...' : '기본값으로 초기화'}
+              </Button>
+              {updateModelMutation.isPending && (
+                <span className="ai-usage-page__model-saving">저장 중...</span>
+              )}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -61,6 +61,26 @@ const DEFAULT_FILE_VALIDATION_SETTINGS = {
 // MongoDB 컬렉션 이름
 const SETTINGS_COLLECTION = 'system_settings';
 const SETTINGS_DOC_ID = 'file_validation';
+const AI_MODELS_DOC_ID = 'ai_models';
+
+// 기본 AI 모델 설정
+const DEFAULT_AI_MODEL_SETTINGS = {
+  chat: {
+    model: 'gpt-4o',
+    description: 'AI 채팅 (MCP 도구 사용)',
+    availableModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
+  },
+  rag: {
+    model: 'gpt-3.5-turbo',
+    description: 'RAG 답변 생성',
+    availableModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
+  },
+  annualReport: {
+    model: 'gpt-4.1',
+    description: 'Annual Report PDF 파싱',
+    availableModels: ['gpt-4.1', 'gpt-4o', 'gpt-4-turbo']
+  }
+};
 
 /**
  * 라우트 설정 함수
@@ -233,8 +253,182 @@ module.exports = function(db, authenticateJWT, requireRole) {
     });
   });
 
+  // ============================================
+  // AI 모델 설정 API
+  // ============================================
+
+  /**
+   * GET /api/settings/ai-models
+   * AI 모델 설정 조회
+   *
+   * 인증 없이 조회 가능 (다른 서비스에서 호출)
+   */
+  router.get('/settings/ai-models', async (req, res) => {
+    try {
+      const collection = db.collection(SETTINGS_COLLECTION);
+      let settings = await collection.findOne({ _id: AI_MODELS_DOC_ID });
+
+      if (!settings) {
+        settings = { ...DEFAULT_AI_MODEL_SETTINGS };
+      } else {
+        delete settings._id;
+        delete settings.updatedAt;
+        delete settings.updatedBy;
+      }
+
+      res.json({
+        success: true,
+        data: settings
+      });
+    } catch (error) {
+      console.error('AI 모델 설정 조회 오류:', error);
+      backendLogger.error('SystemSettings', 'AI 모델 설정 조회 오류', error);
+      res.status(500).json({
+        success: false,
+        error: 'AI 모델 설정 조회에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * PUT /api/settings/ai-models
+   * AI 모델 설정 수정
+   *
+   * admin 역할만 수정 가능
+   */
+  router.put('/settings/ai-models', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const updates = req.body;
+
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: '잘못된 요청입니다. 설정 객체가 필요합니다.'
+        });
+      }
+
+      const collection = db.collection(SETTINGS_COLLECTION);
+
+      // 기존 설정 조회
+      let existingSettings = await collection.findOne({ _id: AI_MODELS_DOC_ID });
+      if (!existingSettings) {
+        existingSettings = { ...DEFAULT_AI_MODEL_SETTINGS };
+      }
+
+      // 설정 병합
+      const mergedSettings = {
+        chat: { ...existingSettings.chat, ...updates.chat },
+        rag: { ...existingSettings.rag, ...updates.rag },
+        annualReport: { ...existingSettings.annualReport, ...updates.annualReport }
+      };
+
+      // 유효성 검증
+      const validationError = validateAIModelSettings(mergedSettings);
+      if (validationError) {
+        return res.status(400).json({
+          success: false,
+          error: validationError
+        });
+      }
+
+      // 업데이트
+      await collection.updateOne(
+        { _id: AI_MODELS_DOC_ID },
+        {
+          $set: {
+            ...mergedSettings,
+            updatedAt: new Date(),
+            updatedBy: req.user.id
+          }
+        },
+        { upsert: true }
+      );
+
+      console.log(`✅ AI 모델 설정 수정됨 (by ${req.user.name || req.user.id})`);
+
+      res.json({
+        success: true,
+        data: mergedSettings,
+        message: 'AI 모델 설정이 저장되었습니다.'
+      });
+    } catch (error) {
+      console.error('AI 모델 설정 수정 오류:', error);
+      backendLogger.error('SystemSettings', 'AI 모델 설정 수정 오류', error);
+      res.status(500).json({
+        success: false,
+        error: 'AI 모델 설정 저장에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/settings/ai-models/reset
+   * AI 모델 설정 초기화
+   *
+   * admin 역할만 가능
+   */
+  router.post('/settings/ai-models/reset', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const collection = db.collection(SETTINGS_COLLECTION);
+
+      await collection.updateOne(
+        { _id: AI_MODELS_DOC_ID },
+        {
+          $set: {
+            ...DEFAULT_AI_MODEL_SETTINGS,
+            updatedAt: new Date(),
+            updatedBy: req.user.id,
+            resetAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+
+      console.log(`🔄 AI 모델 설정 초기화됨 (by ${req.user.name || req.user.id})`);
+
+      res.json({
+        success: true,
+        data: DEFAULT_AI_MODEL_SETTINGS,
+        message: 'AI 모델 설정이 기본값으로 초기화되었습니다.'
+      });
+    } catch (error) {
+      console.error('AI 모델 설정 초기화 오류:', error);
+      backendLogger.error('SystemSettings', 'AI 모델 설정 초기화 오류', error);
+      res.status(500).json({
+        success: false,
+        error: 'AI 모델 설정 초기화에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
   return router;
 };
+
+/**
+ * AI 모델 설정 유효성 검증
+ */
+function validateAIModelSettings(settings) {
+  const services = ['chat', 'rag', 'annualReport'];
+
+  for (const service of services) {
+    if (!settings[service]) {
+      return `${service} 설정이 없습니다.`;
+    }
+    if (!settings[service].model || typeof settings[service].model !== 'string') {
+      return `${service} 모델명이 올바르지 않습니다.`;
+    }
+    // availableModels에 포함된 모델인지 확인
+    const available = DEFAULT_AI_MODEL_SETTINGS[service].availableModels;
+    if (!available.includes(settings[service].model)) {
+      return `${service}에 사용할 수 없는 모델입니다: ${settings[service].model}`;
+    }
+  }
+
+  return null;
+}
 
 /**
  * 깊은 객체 병합

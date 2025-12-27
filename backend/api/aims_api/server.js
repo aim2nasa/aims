@@ -8956,6 +8956,10 @@ MongoClient.connect(MONGO_URI)
       console.error('[Server] ChatHistoryService 초기화 실패:', err.message);
     });
 
+    // AI 모델 설정 모듈 초기화
+    const aiModelSettings = require('./lib/aiModelSettings');
+    aiModelSettings.init(db);
+
     // Passport 초기화
     require('./config/passport')(db);
     app.use(passport.initialize());
