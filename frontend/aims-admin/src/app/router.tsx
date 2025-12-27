@@ -114,6 +114,10 @@ export const router = createBrowserRouter([
         element: <FAQsPage />,
       },
       {
+        path: 'system',
+        element: <Navigate to="/system/backup" replace />,
+      },
+      {
         path: 'system/backup',
         element: <BackupPage />,
       },
