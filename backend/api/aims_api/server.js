@@ -10247,8 +10247,8 @@ app.get('/api/admin/backups', authenticateJWT, requireRole('admin'), async (req,
   }
 });
 
-// 백업 생성 (수동) - 트리거 파일 기반
-// 호스트의 aims-backup-watcher 서비스가 트리거를 감지하여 백업 실행
+// 백업 생성 (수동) - 트리거 파일 + 폴링 방식
+// 백업 스크립트는 호스트에서 실행되어야 함 (mongodump, python3 등 필요)
 const BACKUP_TRIGGER_FILE = '/data/backup/.create_backup';
 const BACKUP_RESULT_FILE = '/data/backup/.backup_result';
 
@@ -10257,9 +10257,9 @@ app.post('/api/admin/backups', authenticateJWT, requireRole('admin'), async (req
     const fs = require('fs');
     const path = require('path');
 
-    console.log('📦 [백업 생성] 트리거 파일 생성...');
+    console.log('📦 [백업 생성] 시작...');
 
-    // 이미 진행 중인 백업이 있는지 확인
+    // 이미 진행 중인 백업이 있는지 확인 (트리거 파일 존재)
     if (fs.existsSync(BACKUP_TRIGGER_FILE)) {
       return res.status(409).json({
         success: false,
@@ -10272,23 +10272,22 @@ app.post('/api/admin/backups', authenticateJWT, requireRole('admin'), async (req
       fs.unlinkSync(BACKUP_RESULT_FILE);
     }
 
-    // 트리거 파일 생성 (타임스탬프 포함)
-    const triggerData = {
+    // 트리거 파일 생성 (호스트의 watcher가 감지하여 백업 실행)
+    fs.writeFileSync(BACKUP_TRIGGER_FILE, JSON.stringify({
       requestedAt: new Date().toISOString(),
       requestedBy: req.user?.name || 'admin',
-    };
-    fs.writeFileSync(BACKUP_TRIGGER_FILE, JSON.stringify(triggerData));
+    }));
 
-    console.log('📦 [백업 생성] 트리거 생성 완료, 백업 대기 중...');
+    console.log('📦 [백업 생성] 트리거 파일 생성, 결과 대기 중...');
 
-    // 백업 완료 대기 (최대 10분)
-    const maxWait = 600000; // 10분
-    const checkInterval = 2000; // 2초마다 확인
+    // 결과 파일 폴링 (최대 10분 대기, 2초 간격)
+    const maxWaitTime = 600000; // 10분
+    const pollInterval = 2000; // 2초
     const startTime = Date.now();
 
-    const waitForBackup = () => {
+    const waitForResult = () => {
       return new Promise((resolve, reject) => {
-        const check = () => {
+        const checkResult = () => {
           // 결과 파일 확인
           if (fs.existsSync(BACKUP_RESULT_FILE)) {
             try {
@@ -10296,83 +10295,60 @@ app.post('/api/admin/backups', authenticateJWT, requireRole('admin'), async (req
               fs.unlinkSync(BACKUP_RESULT_FILE); // 결과 파일 삭제
               resolve(result);
             } catch (e) {
-              reject(new Error('백업 결과 파싱 실패'));
+              reject(new Error('결과 파일 파싱 실패'));
             }
-            return;
-          }
-
-          // 트리거 파일이 사라졌지만 결과가 없는 경우 (비정상 종료)
-          if (!fs.existsSync(BACKUP_TRIGGER_FILE) && !fs.existsSync(BACKUP_RESULT_FILE)) {
-            // 최신 백업 파일 확인으로 성공 여부 판단
-            const files = fs.readdirSync(BACKUP_DIR)
-              .filter(f => f.startsWith('aims_backup_') && f.endsWith('.tar.gz'))
-              .sort()
-              .reverse();
-
-            if (files.length > 0) {
-              const latestBackup = files[0];
-              const filePath = path.join(BACKUP_DIR, latestBackup);
-              const stats = fs.statSync(filePath);
-              // 최근 2분 이내에 생성된 파일인지 확인
-              if (Date.now() - stats.mtime.getTime() < 120000) {
-                resolve({
-                  success: true,
-                  filename: latestBackup,
-                  size: stats.size,
-                });
-                return;
-              }
-            }
-            reject(new Error('백업 프로세스가 비정상 종료되었습니다.'));
             return;
           }
 
           // 타임아웃 확인
-          if (Date.now() - startTime > maxWait) {
-            // 트리거 파일 정리
+          if (Date.now() - startTime > maxWaitTime) {
+            // 트리거 파일도 삭제
             if (fs.existsSync(BACKUP_TRIGGER_FILE)) {
               fs.unlinkSync(BACKUP_TRIGGER_FILE);
             }
-            reject(new Error('백업 시간이 초과되었습니다 (10분).'));
+            reject(new Error('백업 타임아웃 - watcher가 실행 중인지 확인하세요'));
             return;
           }
 
-          // 계속 대기
-          setTimeout(check, checkInterval);
+          // 다시 확인
+          setTimeout(checkResult, pollInterval);
         };
-        check();
+
+        checkResult();
       });
     };
 
-    const result = await waitForBackup();
+    const result = await waitForResult();
 
-    if (result.success) {
-      // 최신 백업 정보 조회
-      const files = fs.readdirSync(BACKUP_DIR)
-        .filter(f => f.startsWith('aims_backup_') && f.endsWith('.tar.gz'))
-        .sort()
-        .reverse();
-
-      const latestBackup = files[0] || result.filename;
-      let backupInfo = null;
-      if (latestBackup) {
-        const filePath = path.join(BACKUP_DIR, latestBackup);
-        const stats = fs.statSync(filePath);
-        backupInfo = {
-          filename: latestBackup,
-          size: stats.size,
-          createdAt: stats.mtime.toISOString(),
-        };
-      }
-
-      res.json({
-        success: true,
-        message: '백업이 완료되었습니다.',
-        backup: backupInfo,
-      });
-    } else {
+    if (!result.success) {
       throw new Error(result.error || '백업 실패');
     }
+
+    console.log('📦 [백업 생성] 완료');
+
+    // 최신 백업 정보 조회
+    const files = fs.readdirSync(BACKUP_DIR)
+      .filter(f => f.startsWith('aims_backup_') && f.endsWith('.tar.gz'))
+      .sort()
+      .reverse();
+
+    let backupInfo = null;
+    if (files.length > 0) {
+      const latestBackup = files[0];
+      const filePath = path.join(BACKUP_DIR, latestBackup);
+      const stats = fs.statSync(filePath);
+      backupInfo = {
+        filename: latestBackup,
+        size: stats.size,
+        createdAt: stats.mtime.toISOString(),
+      };
+    }
+
+    res.json({
+      success: true,
+      message: '백업이 완료되었습니다.',
+      backup: backupInfo,
+    });
   } catch (error) {
     console.error('❌ [백업 생성] 실패:', error.message);
     backendLogger.error('Backup', '백업 생성 실패', error);
