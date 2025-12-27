@@ -829,7 +829,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       // messages에서 가장 최근 user 메시지들을 역순으로 확인
       const userMessages = [...messages].reverse().filter(m => m.role === 'user');
       for (const msg of userMessages) {
-        const prevMatches = msg.content.match(/([가-힣]{2,4})/g) || [];
+        // 2-10글자 한글 이름 매칭 (개인명 2-4자, 법인명 2-10자)
+        const prevMatches = msg.content.match(/([가-힣]{2,10})/g) || [];
         if (prevMatches.length > 0) {
           // 후보 이름으로 고객 검색
           for (const potentialName of prevMatches) {
