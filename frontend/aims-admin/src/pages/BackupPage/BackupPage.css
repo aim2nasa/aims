@@ -240,6 +240,12 @@
   color: var(--color-text-primary);
 }
 
+.backup-page__info-note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
 /* 로그 모달 */
 .backup-page__log-modal {
   max-height: 500px;

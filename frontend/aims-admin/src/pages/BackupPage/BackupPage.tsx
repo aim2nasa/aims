@@ -126,9 +126,10 @@ export const BackupPage = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (filename: string) => backupApi.deleteBackup(filename),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'backups'] });
+    onSuccess: async () => {
       setDeleteConfirm(null);
+      // 삭제 후 즉시 refetch하여 디스크 정보 업데이트
+      await refetch();
     },
   });
 
@@ -356,13 +357,16 @@ export const BackupPage = () => {
       <div className="backup-page__info">
         <h2>백업 대상 (6단계)</h2>
         <ul>
-          <li><strong>1. 환경 파일:</strong> aims_api.env, annual_report_api.env, aims_mcp.env</li>
-          <li><strong>2. MongoDB:</strong> docupload (사용자/고객/문서/계약), aims_analytics</li>
-          <li><strong>3. Qdrant 벡터 DB:</strong> 벡터 임베딩 데이터 (AI 검색용)</li>
-          <li><strong>4. 업로드 파일:</strong> /data/files (temp 폴더 제외)</li>
-          <li><strong>5. n8n 워크플로우:</strong> 문서 처리 파이프라인 데이터</li>
+          <li><strong>1. 버전 정보:</strong> Git 커밋, Frontend/Backend 버전 (versions.json)</li>
+          <li><strong>2. 환경 파일:</strong> aims_api.env, annual_report_api.env, aims_mcp.env</li>
+          <li><strong>3. MongoDB:</strong> docupload (사용자/고객/문서/계약), aims_analytics</li>
+          <li><strong>4. Qdrant 벡터 DB:</strong> 벡터 임베딩 데이터 (AI 검색용)</li>
+          <li><strong>5. 업로드 파일:</strong> /data/files (temp 폴더 제외)</li>
           <li><strong>6. 압축:</strong> 위 데이터를 tar.gz로 압축 저장</li>
         </ul>
+        <p className="backup-page__info-note">
+          * n8n 워크플로우는 별도 git 저장소로 관리됩니다.
+        </p>
       </div>
 
       {/* 로그 모달 */}
