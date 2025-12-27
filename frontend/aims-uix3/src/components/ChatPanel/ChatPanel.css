@@ -1395,6 +1395,11 @@ html[data-theme="dark"] .chat-panel__doc-link:hover {
 }
 
 /* ==================== Example Modal ==================== */
+/* 최대화 버튼 숨기기 */
+.chat-panel__example-modal-container .draggable-modal__maximize-button {
+  display: none;
+}
+
 .chat-panel__example-modal {
   display: flex;
   flex-direction: column;
@@ -1404,24 +1409,24 @@ html[data-theme="dark"] .chat-panel__doc-link:hover {
   padding-right: 8px;
 }
 
-/* 스크롤바 스타일 - 잘 보이게 */
+/* 스크롤바 스타일 - 항상 보이게 */
 .chat-panel__example-modal::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .chat-panel__example-modal::-webkit-scrollbar-track {
-  background: var(--color-bg-tertiary);
-  border-radius: 4px;
+  background: var(--color-border-light, #e5e7eb);
+  border-radius: 5px;
 }
 
 .chat-panel__example-modal::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
-  opacity: 0.8;
+  background: var(--color-primary, #3b82f6);
+  border-radius: 5px;
+  border: 2px solid var(--color-border-light, #e5e7eb);
 }
 
 .chat-panel__example-modal::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary-hover);
+  background: var(--color-primary-hover, #2563eb);
 }
 
 .chat-panel__example-item {
@@ -1463,6 +1468,18 @@ html[data-theme="dark"] .chat-panel__doc-link:hover {
   background: var(--color-primary-light, rgba(59, 130, 246, 0.1));
   border-radius: 6px;
   flex-shrink: 0;
+}
+
+/* 현재 선택된 예시 하이라이트 */
+.chat-panel__example-item--selected {
+  background: var(--color-primary-light, rgba(59, 130, 246, 0.15));
+  border-color: var(--color-primary);
+}
+
+.chat-panel__example-item--selected .chat-panel__example-number {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* ==================== Responsive ==================== */

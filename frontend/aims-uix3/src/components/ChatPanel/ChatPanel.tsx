@@ -2008,13 +2008,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           initialHeight={450}
           minWidth={300}
           minHeight={200}
+          className="chat-panel__example-modal-container"
         >
           <div className="chat-panel__example-modal">
             {exampleModalIdx !== null && HELP_FEATURES[exampleModalIdx].examples.map((example, i) => (
               <button
                 key={i}
                 type="button"
-                className="chat-panel__example-item"
+                className={`chat-panel__example-item ${exampleModalIdx !== null && exampleIndices[exampleModalIdx] === i ? 'chat-panel__example-item--selected' : ''}`}
                 onClick={() => handleExampleSelect(exampleModalIdx!, i, example)}
               >
                 <span className="chat-panel__example-number">{i + 1}/{HELP_FEATURES[exampleModalIdx].examples.length}</span>
