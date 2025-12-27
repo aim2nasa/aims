@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { usersApi } from '@/features/users/api';
 import { Button } from '@/shared/ui/Button/Button';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import type { User } from '@/features/auth/types';
 import './UsersPage.css';
 
 const TIER_OPTIONS = [
@@ -36,6 +38,7 @@ export const UsersPage = () => {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [deleteModalUser, setDeleteModalUser] = useState<User | null>(null);
   const limit = 10;
 
   // 검색어 debounce (300ms)
@@ -70,8 +73,41 @@ export const UsersPage = () => {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => usersApi.deleteUser(userId),
+    onSuccess: (result) => {
+      setDeleteModalUser(null);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      const stats = result.stats;
+      if (stats) {
+        alert(
+          `사용자가 삭제되었습니다.\n\n삭제 통계:\n- 문서: ${stats.documents.total}개 (파일 ${stats.documents.filesDeleted}개, 임베딩 ${stats.documents.qdrantDeleted}개)\n- 고객: ${stats.customers}명\n- 계약: ${stats.contracts}건\n- AI 사용량: ${stats.tokenUsage}건`
+        );
+      }
+    },
+    onError: (error: any) => {
+      console.error('사용자 삭제 실패:', error);
+      alert(error?.message || '사용자 삭제에 실패했습니다.');
+    },
+  });
+
   const handleTierChange = (userId: string, newTier: string) => {
     updateTierMutation.mutate({ userId, tier: newTier });
+  };
+
+  const handleDeleteClick = (user: User) => {
+    // 관리자는 삭제 불가
+    if (user.role === 'admin') {
+      alert('관리자는 삭제할 수 없습니다.');
+      return;
+    }
+    setDeleteModalUser(user);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteModalUser) {
+      deleteUserMutation.mutate(deleteModalUser._id);
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -204,6 +240,9 @@ export const UsersPage = () => {
                 <th className="users-table__th users-table__th--sortable" onClick={() => handleSort('lastLogin')}>
                   최근 로그인 <SortIcon columnKey="lastLogin" />
                 </th>
+                <th className="users-table__th users-table__th--actions">
+                  관리
+                </th>
               </tr>
             </thead>
             <tbody className="users-table__body">
@@ -233,6 +272,17 @@ export const UsersPage = () => {
                     </td>
                     <td className="users-table__td">{formatDate((user as any).createdAt)}</td>
                     <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
+                    <td className="users-table__td users-table__td--actions">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteClick(user)}
+                        disabled={user.role === 'admin' || deleteUserMutation.isPending}
+                        title={user.role === 'admin' ? '관리자는 삭제할 수 없습니다' : '사용자 삭제'}
+                      >
+                        삭제
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}
@@ -311,6 +361,47 @@ export const UsersPage = () => {
           </span>
         </div>
       )}
+
+      {/* 삭제 확인 모달 */}
+      <Modal
+        isOpen={deleteModalUser !== null}
+        onClose={() => setDeleteModalUser(null)}
+        title="사용자 삭제 확인"
+      >
+        <div className="delete-user-modal">
+          <div className="delete-user-modal__warning">
+            <p className="delete-user-modal__text">
+              <strong>{deleteModalUser?.name}</strong> ({deleteModalUser?.email}) 사용자를 정말 삭제하시겠습니까?
+            </p>
+            <p className="delete-user-modal__caution">
+              이 작업은 되돌릴 수 없으며, 다음 데이터가 모두 삭제됩니다:
+            </p>
+            <ul className="delete-user-modal__list">
+              <li>사용자가 등록한 모든 문서 (물리 파일 포함)</li>
+              <li>모든 고객 정보</li>
+              <li>모든 계약 정보</li>
+              <li>벡터 임베딩 (AI 검색 데이터)</li>
+              <li>AI 사용량 기록</li>
+            </ul>
+          </div>
+          <div className="delete-user-modal__actions">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteModalUser(null)}
+              disabled={deleteUserMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

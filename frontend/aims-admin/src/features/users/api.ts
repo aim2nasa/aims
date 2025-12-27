@@ -35,6 +35,30 @@ export interface UpdateOcrPermissionResponse {
   message: string;
 }
 
+export interface DeleteUserStats {
+  documents: {
+    total: number;
+    filesDeleted: number;
+    qdrantDeleted: number;
+    errors: { docId: string; type: string; error: string }[];
+  };
+  customers: number;
+  contracts: number;
+  relationships: number;
+  tokenUsage: number;
+}
+
+export interface DeleteUserResponse {
+  success: boolean;
+  message: string;
+  deletedUser?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  stats?: DeleteUserStats;
+}
+
 export const usersApi = {
   getUsers: (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     const queryParams = new URLSearchParams();
@@ -59,5 +83,9 @@ export const usersApi = {
 
   updateOcrPermission: (userId: string, hasOcrPermission: boolean): Promise<UpdateOcrPermissionResponse> => {
     return apiClient.put<UpdateOcrPermissionResponse>(`/api/admin/users/${userId}/ocr-permission`, { hasOcrPermission });
+  },
+
+  deleteUser: (userId: string): Promise<DeleteUserResponse> => {
+    return apiClient.delete<DeleteUserResponse>(`/api/admin/users/${userId}`);
   },
 };

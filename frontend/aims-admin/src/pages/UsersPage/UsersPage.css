@@ -309,3 +309,55 @@ html[data-theme="dark"] .tier-select option {
   background-color: #2c2c2e;
   color: #f5f5f7;
 }
+
+/* Actions Column */
+.users-table__th--actions {
+  width: 80px;
+  text-align: center;
+}
+
+.users-table__td--actions {
+  text-align: center;
+}
+
+/* Delete User Modal */
+.delete-user-modal {
+  padding: var(--spacing-md);
+}
+
+.delete-user-modal__warning {
+  margin-bottom: var(--spacing-lg);
+}
+
+.delete-user-modal__text {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.delete-user-modal__caution {
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.delete-user-modal__list {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  line-height: 1.6;
+}
+
+.delete-user-modal__list li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.delete-user-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}

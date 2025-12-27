@@ -5345,6 +5345,186 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
 });
 
 /**
+ * 관리자: 사용자 삭제 (관련 모든 데이터 cascade 삭제)
+ * - MongoDB: documents, customers, contracts, relationships, token_usage, users
+ * - Qdrant: 모든 임베딩 벡터
+ * - Filesystem: /data/files 내 물리 파일
+ *
+ * @since 2025-12-27
+ */
+app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const adminUserId = req.user.id;
+
+  console.log(`[Admin] 사용자 삭제 요청: userId=${id}, by admin=${adminUserId}`);
+
+  // ObjectId 유효성 검사
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: '유효하지 않은 사용자 ID입니다.'
+    });
+  }
+
+  // 자기 자신 삭제 방지
+  if (id === adminUserId) {
+    return res.status(400).json({
+      success: false,
+      message: '자기 자신은 삭제할 수 없습니다.'
+    });
+  }
+
+  try {
+    // 1. 사용자 존재 및 role 확인
+    const targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
+      });
+    }
+
+    // 관리자 삭제 방지 (다른 관리자도 삭제 불가)
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: '관리자는 삭제할 수 없습니다.'
+      });
+    }
+
+    const userId = id; // 문자열 형태의 userId
+    const deletionStats = {
+      documents: { total: 0, filesDeleted: 0, qdrantDeleted: 0, errors: [] },
+      customers: 0,
+      contracts: 0,
+      relationships: 0,
+      tokenUsage: 0
+    };
+
+    // 2. 사용자의 모든 문서 조회
+    const userDocuments = await db.collection(COLLECTIONS.FILES)
+      .find({ ownerId: userId })
+      .toArray();
+
+    deletionStats.documents.total = userDocuments.length;
+    console.log(`[Admin] 삭제 대상 문서: ${userDocuments.length}개`);
+
+    // 3. 각 문서별 물리 파일 + Qdrant 삭제
+    for (const doc of userDocuments) {
+      const docId = doc._id.toString();
+
+      // 3-1. 물리 파일 삭제
+      if (doc.upload?.destPath) {
+        try {
+          await fs.unlink(doc.upload.destPath);
+          deletionStats.documents.filesDeleted++;
+          console.log(`✅ 파일 삭제: ${doc.upload.destPath}`);
+        } catch (fileErr) {
+          if (fileErr.code !== 'ENOENT') {
+            console.error(`❌ 파일 삭제 실패: ${doc.upload.destPath}`, fileErr.message);
+            deletionStats.documents.errors.push({
+              docId,
+              type: 'file',
+              error: fileErr.message
+            });
+          }
+        }
+      }
+
+      // 3-2. Qdrant 임베딩 삭제
+      try {
+        await qdrantClient.delete(QDRANT_COLLECTION, {
+          filter: {
+            must: [{ key: 'doc_id', match: { value: docId } }]
+          }
+        });
+        deletionStats.documents.qdrantDeleted++;
+        console.log(`🗑️  [Qdrant] 문서 임베딩 삭제: doc_id=${docId}`);
+      } catch (qdrantErr) {
+        console.error(`❌ Qdrant 삭제 실패: doc_id=${docId}`, qdrantErr.message);
+        deletionStats.documents.errors.push({
+          docId,
+          type: 'qdrant',
+          error: qdrantErr.message
+        });
+      }
+    }
+
+    // 4. MongoDB 문서 일괄 삭제
+    const filesResult = await db.collection(COLLECTIONS.FILES).deleteMany({ ownerId: userId });
+    console.log(`🗑️  [MongoDB] 문서 삭제: ${filesResult.deletedCount}개`);
+
+    // 5. 고객 삭제
+    const customersResult = await db.collection(COLLECTIONS.CUSTOMERS).deleteMany({ userId: userId });
+    deletionStats.customers = customersResult.deletedCount;
+    console.log(`🗑️  [MongoDB] 고객 삭제: ${customersResult.deletedCount}개`);
+
+    // 6. 계약 삭제 (contracts 컬렉션이 있는 경우)
+    try {
+      const contractsResult = await db.collection('contracts').deleteMany({ ownerId: userId });
+      deletionStats.contracts = contractsResult.deletedCount;
+      console.log(`🗑️  [MongoDB] 계약 삭제: ${contractsResult.deletedCount}개`);
+    } catch (err) {
+      console.log(`[MongoDB] contracts 컬렉션 없음 또는 오류:`, err.message);
+    }
+
+    // 7. 관계 삭제 (relationships 컬렉션이 있는 경우)
+    try {
+      const relationshipsResult = await db.collection('relationships').deleteMany({ ownerId: userId });
+      deletionStats.relationships = relationshipsResult.deletedCount;
+      console.log(`🗑️  [MongoDB] 관계 삭제: ${relationshipsResult.deletedCount}개`);
+    } catch (err) {
+      console.log(`[MongoDB] relationships 컬렉션 없음 또는 오류:`, err.message);
+    }
+
+    // 8. 토큰 사용량 삭제
+    try {
+      const tokenUsageResult = await db.collection('token_usage').deleteMany({ userId: userId });
+      deletionStats.tokenUsage = tokenUsageResult.deletedCount;
+      console.log(`🗑️  [MongoDB] 토큰 사용량 삭제: ${tokenUsageResult.deletedCount}개`);
+    } catch (err) {
+      console.log(`[MongoDB] token_usage 컬렉션 없음 또는 오류:`, err.message);
+    }
+
+    // 9. 마지막으로 사용자 삭제
+    const userResult = await db.collection(COLLECTIONS.USERS).deleteOne({ _id: new ObjectId(id) });
+
+    if (userResult.deletedCount === 0) {
+      return res.status(500).json({
+        success: false,
+        message: '사용자 삭제에 실패했습니다.'
+      });
+    }
+
+    console.log(`✅ [Admin] 사용자 삭제 완료: ${targetUser.name} (${targetUser.email})`);
+    backendLogger.info('Admin', `사용자 삭제: ${targetUser.name} (${targetUser.email})`, {
+      deletedBy: adminUserId,
+      stats: deletionStats
+    });
+
+    res.json({
+      success: true,
+      message: `사용자 "${targetUser.name}"이(가) 삭제되었습니다.`,
+      deletedUser: {
+        _id: id,
+        name: targetUser.name,
+        email: targetUser.email
+      },
+      stats: deletionStats
+    });
+
+  } catch (error) {
+    console.error('[Admin] 사용자 삭제 오류:', error);
+    backendLogger.error('Admin', '사용자 삭제 오류', error);
+    res.status(500).json({
+      success: false,
+      message: '사용자 삭제 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
  * Qdrant에서 문서의 모든 청크에 customer_id를 동기화합니다.
  * @param {string} documentId - 문서 ID (ObjectId 문자열)
  * @param {string|null} customerId - 고객 ID (ObjectId 문자열, null이면 제거)
