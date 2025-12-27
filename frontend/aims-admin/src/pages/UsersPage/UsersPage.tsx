@@ -96,11 +96,6 @@ export const UsersPage = () => {
   };
 
   const handleDeleteClick = (user: User) => {
-    // 관리자는 삭제 불가
-    if (user.role === 'admin') {
-      alert('관리자는 삭제할 수 없습니다.');
-      return;
-    }
     setDeleteModalUser(user);
   };
 
@@ -273,15 +268,17 @@ export const UsersPage = () => {
                     <td className="users-table__td">{formatDate((user as any).createdAt)}</td>
                     <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
                     <td className="users-table__td users-table__td--actions">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteClick(user)}
-                        disabled={user.role === 'admin' || deleteUserMutation.isPending}
-                        title={user.role === 'admin' ? '관리자는 삭제할 수 없습니다' : '사용자 삭제'}
-                      >
-                        삭제
-                      </Button>
+                      {user.role !== 'admin' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteClick(user)}
+                          disabled={deleteUserMutation.isPending}
+                          title="사용자 삭제"
+                        >
+                          삭제
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 );
