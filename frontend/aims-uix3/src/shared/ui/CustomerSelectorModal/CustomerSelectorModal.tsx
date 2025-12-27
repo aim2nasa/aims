@@ -335,6 +335,16 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     setSelectedCustomer(customer);
   }, [disabledCustomerIds]);
 
+  // 고객 더블클릭 (선택 + 완료)
+  const handleDoubleClickCustomer = useCallback((customer: Customer) => {
+    // 선택 불가능한 고객은 무시
+    if (disabledCustomerIds?.has(customer._id)) {
+      return;
+    }
+    onSelect(customer);
+    onClose();
+  }, [disabledCustomerIds, onSelect, onClose]);
+
   // 확인 버튼
   const handleConfirm = useCallback(() => {
     if (selectedCustomer) {
@@ -701,6 +711,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                     } ${isDisabled ? 'disabled' : ''}`}
                     style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
                     onClick={() => handleSelectCustomer(customer)}
+                    onDoubleClick={() => handleDoubleClickCustomer(customer)}
                     title={isDisabled ? disabledTooltip : undefined}
                   >
                     <div className="cell-name">
