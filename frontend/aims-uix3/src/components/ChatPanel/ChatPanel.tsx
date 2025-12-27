@@ -226,6 +226,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const [exampleIndices, setExampleIndices] = useState<number[]>(
     () => HELP_FEATURES.map(() => 0)
   );
+  // 예시 목록 모달 (더블클릭으로 열기)
+  const [exampleModalIdx, setExampleModalIdx] = useState<number | null>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 컨텍스트 메뉴 (우클릭 복사)
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -419,6 +422,37 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       setInput(HELP_FEATURES[featureIdx].examples[newIdx]);
       return newIndices;
     });
+  }, [setInput]);
+
+  // 예시 기능 클릭 핸들러 (싱글클릭: 입력, 더블클릭: 모달)
+  const handleFeatureClick = useCallback((featureIdx: number) => {
+    if (clickTimerRef.current) {
+      // 더블클릭: 타이머 취소하고 모달 열기
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+      setExampleModalIdx(featureIdx);
+    } else {
+      // 싱글클릭: 타이머 시작
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+        // 현재 예시를 입력창에 입력
+        setInput(HELP_FEATURES[featureIdx].examples[exampleIndices[featureIdx]]);
+        inputRef.current?.focus();
+      }, 250);
+    }
+  }, [exampleIndices, setInput]);
+
+  // 예시 선택 (모달에서)
+  const handleExampleSelect = useCallback((featureIdx: number, exampleIdx: number, example: string) => {
+    setInput(example);
+    // 페이지네이션 인덱스도 동기화
+    setExampleIndices(prev => {
+      const newIndices = [...prev];
+      newIndices[featureIdx] = exampleIdx;
+      return newIndices;
+    });
+    setExampleModalIdx(null);
+    inputRef.current?.focus();
   }, [setInput]);
 
   // 패널 열릴 때 세션 목록 로드
@@ -1397,10 +1431,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                     key={idx}
                     type="button"
                     className="chat-panel__welcome-feature"
-                    onClick={() => {
-                      setInput(feature.examples[exampleIndices[idx]]);
-                      inputRef.current?.focus();
-                    }}
+                    onClick={() => handleFeatureClick(idx)}
                   >
                     <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                     <div className="chat-panel__welcome-feature-content">
@@ -1681,10 +1712,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
                     key={idx}
                     type="button"
                     className="chat-panel__welcome-feature"
-                    onClick={() => {
-                      setInput(feature.examples[exampleIndices[idx]]);
-                      inputRef.current?.focus();
-                    }}
+                    onClick={() => handleFeatureClick(idx)}
                   >
                     <span className="chat-panel__welcome-feature-icon">{feature.icon}</span>
                     <div className="chat-panel__welcome-feature-content">
@@ -1971,6 +1999,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           onClose={handleDocumentPreviewClose}
           onRetry={handleDocumentPreviewRetry}
         />
+        {/* 예시 질문 목록 모달 */}
+        <DraggableModal
+          visible={exampleModalIdx !== null}
+          onClose={() => setExampleModalIdx(null)}
+          title={exampleModalIdx !== null ? `${HELP_FEATURES[exampleModalIdx].icon} ${HELP_FEATURES[exampleModalIdx].title}` : ''}
+          initialWidth={400}
+          initialHeight={450}
+          minWidth={300}
+          minHeight={200}
+        >
+          <div className="chat-panel__example-modal">
+            {exampleModalIdx !== null && HELP_FEATURES[exampleModalIdx].examples.map((example, i) => (
+              <button
+                key={i}
+                type="button"
+                className="chat-panel__example-item"
+                onClick={() => handleExampleSelect(exampleModalIdx!, i, example)}
+              >
+                <span className="chat-panel__example-number">{i + 1}/{HELP_FEATURES[exampleModalIdx].examples.length}</span>
+                "{example}"
+              </button>
+            ))}
+          </div>
+        </DraggableModal>
       </>
     );
   }
@@ -1995,6 +2047,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         onClose={handleDocumentPreviewClose}
         onRetry={handleDocumentPreviewRetry}
       />
+      {/* 예시 질문 목록 모달 */}
+      <DraggableModal
+        visible={exampleModalIdx !== null}
+        onClose={() => setExampleModalIdx(null)}
+        title={exampleModalIdx !== null ? `${HELP_FEATURES[exampleModalIdx].icon} ${HELP_FEATURES[exampleModalIdx].title}` : ''}
+        initialWidth={400}
+        initialHeight={450}
+        minWidth={300}
+        minHeight={200}
+      >
+        <div className="chat-panel__example-modal">
+          {exampleModalIdx !== null && HELP_FEATURES[exampleModalIdx].examples.map((example, i) => (
+            <button
+              key={i}
+              type="button"
+              className="chat-panel__example-item"
+              onClick={() => handleExampleSelect(exampleModalIdx!, i, example)}
+            >
+              <span className="chat-panel__example-number">{i + 1}/{HELP_FEATURES[exampleModalIdx].examples.length}</span>
+              "{example}"
+            </button>
+          ))}
+        </div>
+      </DraggableModal>
     </>
   );
 };
