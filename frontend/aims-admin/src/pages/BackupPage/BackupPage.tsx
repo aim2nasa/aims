@@ -243,7 +243,7 @@ export const BackupPage = () => {
           >
             {createMutation.isPending ? '백업 생성 중...' : '새 백업 생성'}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          <Button variant="ghost" size="sm" onClick={() => refetch()}>
             새로고침
           </Button>
         </div>

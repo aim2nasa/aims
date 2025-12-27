@@ -16,9 +16,6 @@ BACKUP_DIR="$BACKUP_BASE/$DATE"
 BACKUP_FILE="$BACKUP_BASE/aims_backup_$DATE.tar.gz"
 LOG_FILE="$BACKUP_BASE/backup_$DATE.log"
 
-# 보관 기간 (일)
-RETENTION_DAYS=7
-
 # n8n API 설정
 N8N_API_URL="http://localhost:5678/api/v1"
 N8N_API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNGI1Yzc0MC02ZmJlLTQ1NzAtYmU3Yi0zMzAzYTI4OWI3OTIiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzY2MTk0MzUzfQ.M4D0X8hNxFVgonAPu1vX19btJE40sUsWgsDOCqb3YZk"
@@ -229,12 +226,6 @@ rm -rf "$BACKUP_DIR"
 # 백업 파일 크기 확인
 BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
 log "백업 완료: $BACKUP_FILE ($BACKUP_SIZE)"
-
-# 오래된 백업 삭제
-log "오래된 백업 정리 중 (${RETENTION_DAYS}일 이상)..."
-find "$BACKUP_BASE" -name "aims_backup_*.tar.gz" -mtime +$RETENTION_DAYS -delete 2>/dev/null
-find "$BACKUP_BASE" -name "backup_*.log" -mtime +$RETENTION_DAYS -delete 2>/dev/null
-log "정리 완료"
 
 # 백업 목록 출력
 log "===== 현재 백업 목록 ====="

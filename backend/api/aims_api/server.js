@@ -10103,6 +10103,76 @@ app.post("/api/webhooks/ar-status-change", async (req, res) => {
 
 const BACKUP_DIR = '/data/backup';
 const BACKUP_SCRIPT = '/home/rossi/aims/backend/scripts/backup_aims.sh';
+const BACKUP_SETTINGS_FILE = '/data/backup/.backup_settings.json';
+
+// 백업 설정 기본값
+const DEFAULT_BACKUP_SETTINGS = {
+  retentionDays: 7,
+  autoBackup: false,
+  autoBackupTime: '03:00',
+};
+
+// 백업 설정 읽기 헬퍼
+function readBackupSettings() {
+  const fs = require('fs');
+  try {
+    if (fs.existsSync(BACKUP_SETTINGS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(BACKUP_SETTINGS_FILE, 'utf8'));
+      return { ...DEFAULT_BACKUP_SETTINGS, ...data };
+    }
+  } catch (e) {
+    console.error('백업 설정 읽기 실패:', e.message);
+  }
+  return { ...DEFAULT_BACKUP_SETTINGS };
+}
+
+// 백업 설정 조회
+app.get('/api/admin/backups/settings', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const settings = readBackupSettings();
+    res.json({ success: true, settings });
+  } catch (error) {
+    console.error('❌ [백업 설정 조회] 실패:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 백업 설정 업데이트
+app.put('/api/admin/backups/settings', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const fs = require('fs');
+    const { retentionDays, autoBackup, autoBackupTime } = req.body;
+
+    // 유효성 검사
+    if (retentionDays !== undefined && (typeof retentionDays !== 'number' || retentionDays < 1 || retentionDays > 365)) {
+      return res.status(400).json({ success: false, error: '보관 기간은 1~365일 사이여야 합니다.' });
+    }
+    if (autoBackupTime !== undefined && !/^\d{2}:\d{2}$/.test(autoBackupTime)) {
+      return res.status(400).json({ success: false, error: '시간 형식이 올바르지 않습니다. (HH:mm)' });
+    }
+
+    // 현재 설정 읽기
+    const currentSettings = readBackupSettings();
+
+    // 설정 업데이트
+    const newSettings = {
+      ...currentSettings,
+      ...(retentionDays !== undefined && { retentionDays }),
+      ...(autoBackup !== undefined && { autoBackup }),
+      ...(autoBackupTime !== undefined && { autoBackupTime }),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // 파일에 저장
+    fs.writeFileSync(BACKUP_SETTINGS_FILE, JSON.stringify(newSettings, null, 2), 'utf8');
+
+    console.log('✅ [백업 설정] 업데이트 완료:', newSettings);
+    res.json({ success: true, settings: newSettings, message: '백업 설정이 업데이트되었습니다.' });
+  } catch (error) {
+    console.error('❌ [백업 설정 업데이트] 실패:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // 백업 목록 조회
 app.get('/api/admin/backups', authenticateJWT, requireRole('admin'), async (req, res) => {
