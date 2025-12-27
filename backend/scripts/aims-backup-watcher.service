@@ -1,0 +1,12 @@
+[Unit]
+Description=AIMS Backup Trigger Watcher
+After=network.target
+
+[Service]
+Type=oneshot
+User=rossi
+ExecStart=/home/rossi/aims/backend/scripts/backup_watcher.sh
+WorkingDirectory=/home/rossi/aims/backend/scripts
+
+[Install]
+WantedBy=multi-user.target
