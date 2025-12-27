@@ -33,6 +33,7 @@ export interface HealthStatus {
   aimsRagApi: ServiceHealth;
   annualReportApi: ServiceHealth;
   pdfProxy: ServiceHealth;
+  pdfConverter?: ServiceHealth;
   aimsMcp: ServiceHealth;
   // Tier 3: Workflow
   n8n: ServiceHealth;

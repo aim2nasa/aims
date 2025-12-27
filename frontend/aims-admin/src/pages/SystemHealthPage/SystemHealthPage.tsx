@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type WorkflowStatus, type SystemMetrics } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type WorkflowStatus } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
