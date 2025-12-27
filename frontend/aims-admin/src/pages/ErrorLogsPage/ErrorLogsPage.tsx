@@ -510,7 +510,12 @@ export const ErrorLogsPage = () => {
           >
             {isDeleteMode ? '삭제 모드 해제' : '삭제'}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          <Button variant="secondary" size="sm" onClick={async () => {
+            clearStats();  // SSE 통계 초기화 → 0으로 표시
+            clearNewLogs(); // SSE 새 로그 초기화
+            // 모든 관련 쿼리 무효화 후 자동으로 새로고침됨
+            await queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
+          }}>
             새로고침
           </Button>
         </div>

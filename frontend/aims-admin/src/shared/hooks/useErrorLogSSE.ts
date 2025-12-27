@@ -211,16 +211,10 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
     setNewLogs([]);
   }, []);
 
-  // 통계 초기화 (전체 삭제 시 사용)
+  // 통계 초기화 (전체 삭제/새로고침 시 사용)
+  // null로 설정하면 apiStats가 우선 사용됨
   const clearStats = useCallback(() => {
-    setStats({
-      total: 0,
-      byLevel: {},
-      bySeverity: {},
-      byCategory: {},
-      bySource: {},
-      period: '7d'
-    });
+    setStats(null);
   }, []);
 
   // 보존 기간 지난 로그 자동 제거 (10초마다 체크)
