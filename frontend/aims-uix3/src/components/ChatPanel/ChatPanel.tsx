@@ -238,8 +238,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const [isDocumentPreviewVisible, setDocumentPreviewVisible] = useState(false);
   const [isDocumentPreviewLoading, setDocumentPreviewLoading] = useState(false);
   const [documentPreviewError, setDocumentPreviewError] = useState<string | null>(null);
-  // 입력 히스토리 (위/아래 화살표로 탐색)
-  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  // 입력 히스토리 (위/아래 화살표로 탐색) - localStorage 영속화
+  const [inputHistory, setInputHistory] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('aims-chat-input-history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // 무시
+    }
+    return [];
+  });
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 = 현재 입력
   const tempInputRef = useRef(''); // 히스토리 탐색 중 현재 작성 내용 임시 저장
   const prevIsOpenRef = useRef(false);
@@ -268,6 +279,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       // 무시
     }
   }, [sessionId]);
+
+  // inputHistory 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('aims-chat-input-history', JSON.stringify(inputHistory));
+    } catch {
+      // 무시
+    }
+  }, [inputHistory]);
 
   // 분리/도킹 토글
   const handleToggleDetach = useCallback(() => {
