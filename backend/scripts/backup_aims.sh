@@ -46,7 +46,7 @@ log "===== AIMS 백업 시작 ====="
 log "백업 위치: $BACKUP_FILE"
 
 # 1. 환경 파일 백업
-log "1/4. 환경 파일 백업 중..."
+log "1/6. 환경 파일 백업 중..."
 ENV_DIR="$BACKUP_DIR/env"
 mkdir -p "$ENV_DIR"
 
@@ -64,8 +64,15 @@ else
     warn "  - annual_report_api/.env 파일 없음"
 fi
 
+if [ -f "/home/rossi/aims/backend/api/aims_mcp/.env" ]; then
+    cp /home/rossi/aims/backend/api/aims_mcp/.env "$ENV_DIR/aims_mcp.env"
+    log "  - aims_mcp.env 완료"
+else
+    warn "  - aims_mcp/.env 파일 없음"
+fi
+
 # 2. MongoDB 백업
-log "2/4. MongoDB 백업 중..."
+log "2/6. MongoDB 백업 중..."
 MONGO_DIR="$BACKUP_DIR/mongodb"
 mkdir -p "$MONGO_DIR"
 
@@ -76,7 +83,7 @@ mongodump --db aims_analytics --out "$MONGO_DIR" --quiet 2>/dev/null || warn "  
 log "  - aims_analytics DB 완료"
 
 # 3. Qdrant 백업
-log "3/4. Qdrant 벡터 DB 백업 중..."
+log "3/6. Qdrant 벡터 DB 백업 중..."
 QDRANT_DIR="$BACKUP_DIR/qdrant"
 mkdir -p "$QDRANT_DIR"
 
@@ -88,7 +95,7 @@ else
 fi
 
 # 4. 업로드 파일 백업
-log "4/4. 업로드 파일 백업 중..."
+log "4/6. 업로드 파일 백업 중..."
 FILES_DIR="$BACKUP_DIR/files"
 mkdir -p "$FILES_DIR"
 
@@ -100,7 +107,19 @@ else
     warn "  - /data/files 디렉토리 없음"
 fi
 
-# 5. tar.gz 압축
+# 5. n8n 워크플로우 백업
+log "5/6. n8n 워크플로우 백업 중..."
+N8N_DIR="$BACKUP_DIR/n8n"
+mkdir -p "$N8N_DIR"
+
+if [ -d "/home/rossi/n8n-docker/n8n_data" ]; then
+    cp -r /home/rossi/n8n-docker/n8n_data/* "$N8N_DIR/"
+    log "  - n8n_data 완료"
+else
+    warn "  - n8n_data 디렉토리 없음"
+fi
+
+# 6. tar.gz 압축
 log "압축 중..."
 cd "$BACKUP_BASE"
 tar -czf "$BACKUP_FILE" -C "$BACKUP_BASE" "$DATE"

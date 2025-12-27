@@ -268,7 +268,7 @@ export const BackupPage = () => {
 
       {/* 백업 목록 */}
       <div className="backup-page__list">
-        {backups.length === 0 ? (
+        {backups.length === 0 && !createMutation.isPending ? (
           <div className="backup-page__empty">
             <p>백업 파일이 없습니다.</p>
             <p>새 백업을 생성해 주세요.</p>
@@ -285,6 +285,21 @@ export const BackupPage = () => {
               </tr>
             </thead>
             <tbody>
+              {/* 생성 중인 백업 행 */}
+              {createMutation.isPending && (
+                <tr className="backup-page__creating-row">
+                  <td>
+                    <div className="backup-page__creating-cell">
+                      <div className="backup-page__creating-spinner" />
+                      <span>백업 생성 중...</span>
+                    </div>
+                  </td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>진행 중</td>
+                  <td>-</td>
+                </tr>
+              )}
               {backups.map((backup) => (
                 <tr key={backup.filename}>
                   <td className="backup-page__filename">{backup.filename}</td>
@@ -341,10 +356,11 @@ export const BackupPage = () => {
       <div className="backup-page__info">
         <h2>백업 대상</h2>
         <ul>
-          <li><strong>환경 파일:</strong> API 키, JWT 시크릿, OAuth 키 등</li>
+          <li><strong>환경 파일:</strong> API 키, JWT 시크릿, OAuth 키 등 (aims_api, annual_report_api, aims_mcp)</li>
           <li><strong>MongoDB:</strong> 사용자, 고객, 문서 메타데이터, 계약 정보</li>
           <li><strong>Qdrant:</strong> 벡터 임베딩 (AI 검색용)</li>
           <li><strong>업로드 파일:</strong> 사용자 업로드 문서 원본</li>
+          <li><strong>n8n 워크플로우:</strong> 문서 처리 파이프라인</li>
         </ul>
       </div>
 
