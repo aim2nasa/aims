@@ -354,13 +354,14 @@ export const BackupPage = () => {
 
       {/* 백업 대상 정보 */}
       <div className="backup-page__info">
-        <h2>백업 대상</h2>
+        <h2>백업 대상 (6단계)</h2>
         <ul>
-          <li><strong>환경 파일:</strong> API 키, JWT 시크릿, OAuth 키 등 (aims_api, annual_report_api, aims_mcp)</li>
-          <li><strong>MongoDB:</strong> 사용자, 고객, 문서 메타데이터, 계약 정보</li>
-          <li><strong>Qdrant:</strong> 벡터 임베딩 (AI 검색용)</li>
-          <li><strong>업로드 파일:</strong> 사용자 업로드 문서 원본</li>
-          <li><strong>n8n 워크플로우:</strong> 문서 처리 파이프라인</li>
+          <li><strong>1. 환경 파일:</strong> aims_api.env, annual_report_api.env, aims_mcp.env</li>
+          <li><strong>2. MongoDB:</strong> docupload (사용자/고객/문서/계약), aims_analytics</li>
+          <li><strong>3. Qdrant 벡터 DB:</strong> 벡터 임베딩 데이터 (AI 검색용)</li>
+          <li><strong>4. 업로드 파일:</strong> /data/files (temp 폴더 제외)</li>
+          <li><strong>5. n8n 워크플로우:</strong> 문서 처리 파이프라인 데이터</li>
+          <li><strong>6. 압축:</strong> 위 데이터를 tar.gz로 압축 저장</li>
         </ul>
       </div>
 
