@@ -330,6 +330,14 @@ export const AIUsagePage = () => {
   const setPeriodType = (value: PeriodType) => {
     localStorage.setItem(STORAGE_KEY_PERIOD, value);
     setPeriodTypeState(value);
+
+    // 일별 모드로 전환 시 현재 년월로 초기화
+    if (value === 'daily') {
+      setSelectedYearState(currentYear);
+      setSelectedMonthState(currentMonth);
+      localStorage.setItem(STORAGE_KEY_YEAR, String(currentYear));
+      localStorage.setItem(STORAGE_KEY_MONTH, String(currentMonth));
+    }
   };
   const setSelectedYear = (value: number) => {
     localStorage.setItem(STORAGE_KEY_YEAR, String(value));
