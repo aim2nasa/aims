@@ -1,0 +1,230 @@
+/**
+ * Toast Queue 시스템 스타일
+ * 여러 토스트를 스택으로 표시
+ */
+
+/* Container 위치별 스타일 */
+.toast-container {
+  position: fixed;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+}
+
+.toast-container--top-right {
+  top: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.toast-container--top-center {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.toast-container--bottom-right {
+  bottom: 20px;
+  right: 20px;
+  align-items: flex-end;
+  flex-direction: column-reverse;
+}
+
+.toast-container--bottom-center {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  flex-direction: column-reverse;
+}
+
+/* Toast Item */
+.toast-item {
+  pointer-events: auto;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  box-shadow: var(--shadow-popover);
+  padding: 12px 16px;
+  min-width: 280px;
+  max-width: 400px;
+
+  /* 초기 상태 */
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 위치별 애니메이션 방향 */
+.toast-container--top-center .toast-item,
+.toast-container--bottom-center .toast-item {
+  transform: translateY(-20px);
+}
+
+/* Visible 상태 */
+.toast-item--visible {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
+
+/* Exiting 상태 */
+.toast-item--exiting {
+  opacity: 0;
+  transform: translateX(100%) scale(0.95);
+}
+
+.toast-container--top-center .toast-item--exiting,
+.toast-container--bottom-center .toast-item--exiting {
+  transform: translateY(-20px) scale(0.95);
+}
+
+/* Content 레이아웃 */
+.toast-item__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Icon */
+.toast-item__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.toast-item__icon--error {
+  color: var(--color-status-error);
+}
+
+.toast-item__icon--warning {
+  color: var(--color-status-warning);
+}
+
+.toast-item__icon--info {
+  color: var(--color-accent-primary);
+}
+
+.toast-item__icon--success {
+  color: var(--color-status-success);
+}
+
+/* Message */
+.toast-item__message {
+  flex: 1;
+  font-size: var(--font-size-footnote);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+.toast-item__line {
+  margin-bottom: 2px;
+}
+
+.toast-item__line:last-child {
+  margin-bottom: 0;
+}
+
+/* Close 버튼 */
+.toast-item__close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: -2px -4px -2px 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--color-text-tertiary);
+  transition: all 0.15s ease;
+}
+
+.toast-item__close:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.toast-item__close:focus {
+  outline: none;
+  background: var(--color-bg-tertiary);
+}
+
+/* 타입별 좌측 accent bar */
+.toast-item--error {
+  border-left: 3px solid var(--color-status-error);
+}
+
+.toast-item--warning {
+  border-left: 3px solid var(--color-status-warning);
+}
+
+.toast-item--info {
+  border-left: 3px solid var(--color-accent-primary);
+}
+
+.toast-item--success {
+  border-left: 3px solid var(--color-status-success);
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+  .toast-container {
+    left: 12px;
+    right: 12px;
+  }
+
+  .toast-container--top-right,
+  .toast-container--bottom-right {
+    left: 12px;
+    right: 12px;
+    align-items: stretch;
+  }
+
+  .toast-container--top-center,
+  .toast-container--bottom-center {
+    transform: none;
+    left: 12px;
+    right: 12px;
+    align-items: stretch;
+  }
+
+  .toast-item {
+    min-width: unset;
+    max-width: unset;
+    transform: translateY(-20px);
+  }
+
+  .toast-item--exiting {
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+/* 모션 감소 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .toast-item {
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+
+  .toast-item--visible {
+    transform: none;
+  }
+
+  .toast-item--exiting {
+    transform: none;
+  }
+}
