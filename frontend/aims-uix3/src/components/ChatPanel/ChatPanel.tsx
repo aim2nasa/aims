@@ -2006,7 +2006,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               adjustTextareaHeight();
             }}
             onKeyDown={handleKeyDown}
-            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요... (Shift+Enter로 줄바꿈)"}
+            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요..."}
             disabled={isLoading || isUploading}
             rows={1}
           />
@@ -2453,7 +2453,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               adjustTextareaHeight();
             }}
             onKeyDown={handleKeyDown}
-            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요... (Shift+Enter로 줄바꿈)"}
+            placeholder={attachedFiles.length > 0 ? "메시지를 입력하거나 바로 전송하세요..." : "메시지를 입력하세요..."}
             disabled={isLoading || isUploading}
             rows={1}
           />
