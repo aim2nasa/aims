@@ -115,6 +115,13 @@ docker run -d --network host \
   $IMAGE_NAME
 
 echo "✅ AIMS Main API 재배포 완료"
+
+# 4. 미사용 Docker 이미지 정리 (dangling images)
+echo ""
+echo "🧹 미사용 Docker 이미지 정리..."
+PRUNED=$(docker image prune -f 2>/dev/null | grep "Total reclaimed space" || echo "정리할 이미지 없음")
+echo "   $PRUNED"
+
 echo ""
 echo "📖 로그 확인:"
 echo "  docker logs -f $CONTAINER_NAME"

@@ -32,7 +32,7 @@ run_step() {
     local step_cmd=$3
 
     local start=$(date +%s)
-    echo -n "[${step_num}/9] ${step_name} ... "
+    echo -n "[${step_num}/10] ${step_name} ... "
 
     eval "$step_cmd" > /dev/null 2>&1
 
@@ -70,6 +70,9 @@ run_step 8 "Frontend 배포" "cd '$AIMS_DIR/frontend/aims-uix3' && ./deploy_aims
 
 # 9. 상태 확인
 run_step 9 "서비스 상태 확인" "pm2 list"
+
+# 10. Docker 정리 (미사용 이미지 삭제)
+run_step 10 "Docker 정리" "docker image prune -f && docker container prune -f"
 
 TOTAL_END=$(date +%s)
 TOTAL_ELAPSED=$((TOTAL_END - TOTAL_START))

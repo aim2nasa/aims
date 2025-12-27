@@ -85,4 +85,20 @@ docker run -d \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   $IMAGE_NAME
 
-echo "AIMS RAG API 배포 완료: v${VERSION} (${GIT_HASH})"
+echo "✅ AIMS RAG API 배포 완료: v${VERSION} (${GIT_HASH})"
+
+# 4. 미사용 Docker 이미지 정리 (dangling images)
+echo ""
+echo "🧹 미사용 Docker 이미지 정리..."
+PRUNED=$(docker image prune -f 2>/dev/null | grep "Total reclaimed space" || echo "정리할 이미지 없음")
+echo "   $PRUNED"
+
+echo ""
+echo "📖 로그 확인:"
+echo "  docker logs -f $CONTAINER_NAME"
+echo ""
+echo "📊 상태 확인:"
+echo "  docker ps | grep $CONTAINER_NAME"
+echo ""
+echo "🌍 헬스체크:"
+echo "  curl http://localhost:8000/health"
