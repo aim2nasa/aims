@@ -9,6 +9,7 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
 const { DEFAULT_TIER } = require('../lib/storageQuotaService');
+const { OCR_PRICE_PER_PAGE_USD } = require('../lib/ocrPricing');
 
 /**
  * 라우트 설정 함수
@@ -133,8 +134,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       ]).toArray();
       const errorCountMap = new Map(errorCounts.map(e => [e._id, e.count]));
 
-      // AI 토큰 사용량 집계 (30일) - ai_token_usage 컬렉션 사용
+      // AI 토큰 사용량 및 비용 집계 (30일) - ai_token_usage 컬렉션 사용
       let aiTokenMap = new Map();
+      let aiCostMap = new Map();
       if (analyticsDb) {
         try {
           const tokenUsageCollection = analyticsDb.collection('ai_token_usage');
@@ -145,13 +147,41 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
                 timestamp: { $gte: thirtyDaysAgo }
               }
             },
-            { $group: { _id: '$user_id', total_tokens: { $sum: '$total_tokens' } } }
+            {
+              $group: {
+                _id: '$user_id',
+                total_tokens: { $sum: '$total_tokens' },
+                total_cost: { $sum: '$estimated_cost_usd' }
+              }
+            }
           ]).toArray();
           aiTokenMap = new Map(aiTokenCounts.map(a => [a._id, a.total_tokens]));
+          aiCostMap = new Map(aiTokenCounts.map(a => [a._id, a.total_cost]));
         } catch (err) {
           console.warn('[user-activity] AI 토큰 집계 실패:', err.message);
         }
       }
+
+      // 30일 OCR 페이지 수 집계
+      const ocrPageCounts = await filesCollection.aggregate([
+        {
+          $match: {
+            ownerId: { $in: userIds },
+            'ocr.status': 'done',
+            $or: [
+              { 'ocr.done_at': { $gte: thirtyDaysAgo } },
+              { 'ocr.done_at': { $gte: thirtyDaysAgo.toISOString() } }
+            ]
+          }
+        },
+        {
+          $group: {
+            _id: '$ownerId',
+            page_count: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
+          }
+        }
+      ]).toArray();
+      const ocrPageMap = new Map(ocrPageCounts.map(o => [o._id, o.page_count]));
 
       // 마지막 활동 시간 집계
       const lastActivityList = await filesCollection.aggregate([
@@ -177,20 +207,24 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       // 결과 조합
       const enrichedUsers = users.map(user => {
         const odlId = user._id.toString();
+        const ocrPages = ocrPageMap.get(odlId) || 0;
         return {
-          user_id: user._id.toString(),
+          user_id: odlId,
           name: user.name || '-',
           email: user.email || '-',
           role: user.role,
           tier: user.storage?.tier || DEFAULT_TIER,
-          document_count: docCountMap.get(user._id.toString()) || 0,
-          customer_count: customerCountMap.get(user._id.toString()) || 0,
-          ai_tokens_30d: aiTokenMap.get(user._id.toString()) || 0,
-          ocr_count_30d: ocrCountMap.get(user._id.toString()) || 0,
-          storage_used_bytes: storageMap.get(user._id.toString()) || 0,
+          document_count: docCountMap.get(odlId) || 0,
+          customer_count: customerCountMap.get(odlId) || 0,
+          ai_tokens_30d: aiTokenMap.get(odlId) || 0,
+          ai_cost_30d: Math.round((aiCostMap.get(odlId) || 0) * 10000) / 10000,
+          ocr_count_30d: ocrCountMap.get(odlId) || 0,
+          ocr_pages_30d: ocrPages,
+          ocr_cost_30d: Math.round(ocrPages * OCR_PRICE_PER_PAGE_USD * 10000) / 10000,
+          storage_used_bytes: storageMap.get(odlId) || 0,
           storage_quota_bytes: user.storage?.quota_bytes || 0,
-          error_count_7d: errorCountMap.get(user._id.toString()) || 0,
-          last_activity_at: lastActivityMap.get(user._id.toString()) || user.lastLogin || null,
+          error_count_7d: errorCountMap.get(odlId) || 0,
+          last_activity_at: lastActivityMap.get(odlId) || user.lastLogin || null,
           created_at: user.createdAt
         };
       });
@@ -202,7 +236,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         'document_count': 'document_count',
         'customer_count': 'customer_count',
         'ai_tokens_30d': 'ai_tokens_30d',
+        'ai_cost_30d': 'ai_cost_30d',
         'ocr_count_30d': 'ocr_count_30d',
+        'ocr_pages_30d': 'ocr_pages_30d',
+        'ocr_cost_30d': 'ocr_cost_30d',
         'storage_used_bytes': 'storage_used_bytes',
         'error_count_7d': 'error_count_7d',
         'last_activity_at': 'last_activity_at'

@@ -11,6 +11,7 @@ import {
   userActivityApi,
   formatBytes,
   formatTokens,
+  formatCost,
   formatRelativeTime,
   type UserActivitySummary,
 } from '@/features/users/userActivityApi';
@@ -28,7 +29,9 @@ const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   document: 50,
   customer: 50,
   ai: 60,
-  ocr: 50,
+  aiCost: 65,
+  ocr: 55,
+  ocrCost: 65,
   storage: 110,
   error: 50,
   lastActivity: 70,
@@ -60,7 +63,9 @@ const SORT_OPTIONS = [
   { value: 'document_count', label: '문서 많은순' },
   { value: 'customer_count', label: '고객 많은순' },
   { value: 'ai_tokens_30d', label: 'AI 사용량순' },
+  { value: 'ai_cost_30d', label: 'AI 비용순' },
   { value: 'ocr_count_30d', label: 'OCR 사용량순' },
+  { value: 'ocr_cost_30d', label: 'OCR 비용순' },
   { value: 'storage_used_bytes', label: '스토리지순' },
   { value: 'tier', label: '등급순' },
   { value: 'name', label: '이름순' },
@@ -274,7 +279,9 @@ export const UserActivityPage = () => {
                     <col style={{ width: columnWidths.document }} />
                     <col style={{ width: columnWidths.customer }} />
                     <col style={{ width: columnWidths.ai }} />
+                    <col style={{ width: columnWidths.aiCost }} />
                     <col style={{ width: columnWidths.ocr }} />
+                    <col style={{ width: columnWidths.ocrCost }} />
                     <col style={{ width: columnWidths.storage }} />
                     <col style={{ width: columnWidths.error }} />
                     <col style={{ width: columnWidths.lastActivity }} />
@@ -301,9 +308,17 @@ export const UserActivityPage = () => {
                         <span className="th-content">AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
                         <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ai', e)} />
                       </th>
+                      <th onClick={() => handleSort('ai_cost_30d')}>
+                        <span className="th-content">AI비용 {sortBy === 'ai_cost_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('aiCost', e)} />
+                      </th>
                       <th onClick={() => handleSort('ocr_count_30d')}>
                         <span className="th-content">OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
                         <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ocr', e)} />
+                      </th>
+                      <th onClick={() => handleSort('ocr_cost_30d')}>
+                        <span className="th-content">OCR비용 {sortBy === 'ocr_cost_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ocrCost', e)} />
                       </th>
                       <th onClick={() => handleSort('storage_used_bytes')}>
                         <span className="th-content">스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
@@ -352,7 +367,15 @@ export const UserActivityPage = () => {
                           <td className="user-activity-page__cell-number">
                             {formatTokens(user.ai_tokens_30d)}
                           </td>
-                          <td className="user-activity-page__cell-number">{user.ocr_count_30d}</td>
+                          <td className="user-activity-page__cell-number user-activity-page__cell-cost">
+                            {formatCost(user.ai_cost_30d)}
+                          </td>
+                          <td className="user-activity-page__cell-number">
+                            {user.ocr_pages_30d}/{user.ocr_count_30d}
+                          </td>
+                          <td className="user-activity-page__cell-number user-activity-page__cell-cost">
+                            {formatCost(user.ocr_cost_30d)}
+                          </td>
                           <td
                             className={`user-activity-page__cell-storage ${storageWarning ? 'user-activity-page__cell-storage--warning' : ''}`}
                           >

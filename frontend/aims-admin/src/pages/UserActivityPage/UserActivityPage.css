@@ -173,13 +173,17 @@
 .user-activity-page__table th:nth-child(5),
 .user-activity-page__table td:nth-child(5) { width: 60px; text-align: right; } /* AI */
 .user-activity-page__table th:nth-child(6),
-.user-activity-page__table td:nth-child(6) { width: 50px; text-align: right; } /* OCR */
+.user-activity-page__table td:nth-child(6) { width: 65px; text-align: right; } /* AI비용 */
 .user-activity-page__table th:nth-child(7),
-.user-activity-page__table td:nth-child(7) { width: 110px; } /* 스토리지 */
+.user-activity-page__table td:nth-child(7) { width: 55px; text-align: right; } /* OCR */
 .user-activity-page__table th:nth-child(8),
-.user-activity-page__table td:nth-child(8) { width: 50px; text-align: center; } /* 오류 */
+.user-activity-page__table td:nth-child(8) { width: 65px; text-align: right; } /* OCR비용 */
 .user-activity-page__table th:nth-child(9),
-.user-activity-page__table td:nth-child(9) { width: 70px; text-align: right; } /* 최근활동 */
+.user-activity-page__table td:nth-child(9) { width: 110px; text-align: right; } /* 스토리지 */
+.user-activity-page__table th:nth-child(10),
+.user-activity-page__table td:nth-child(10) { width: 50px; text-align: right; } /* 오류 */
+.user-activity-page__table th:nth-child(11),
+.user-activity-page__table td:nth-child(11) { width: 70px; text-align: right; } /* 최근활동 */
 
 .user-activity-page__table th {
   position: relative;
@@ -277,6 +281,11 @@
   text-align: right;
 }
 
+.user-activity-page__cell-cost {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
 .user-activity-page__cell-storage {
   font-size: 10px;
 }
@@ -294,7 +303,7 @@
 }
 
 .user-activity-page__cell-error {
-  text-align: center;
+  text-align: right;
 }
 
 .user-activity-page__cell-error--has-errors {

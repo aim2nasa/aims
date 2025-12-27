@@ -19,7 +19,10 @@ export interface UserActivitySummary {
   document_count: number;
   customer_count: number;
   ai_tokens_30d: number;
+  ai_cost_30d: number;
   ocr_count_30d: number;
+  ocr_pages_30d: number;
+  ocr_cost_30d: number;
   storage_used_bytes: number;
   storage_quota_bytes: number;
   error_count_7d: number;
@@ -356,6 +359,17 @@ export const formatTokens = (tokens: number): string => {
     return (tokens / 1000).toFixed(1) + 'K';
   }
   return tokens.toString();
+};
+
+/**
+ * 비용을 USD 형식으로 변환
+ */
+export const formatCost = (cost: number): string => {
+  if (cost === 0) return '-';
+  if (cost < 0.01) {
+    return `$${cost.toFixed(4)}`;
+  }
+  return `$${cost.toFixed(2)}`;
 };
 
 /**
