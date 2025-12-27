@@ -63,22 +63,91 @@ const SETTINGS_COLLECTION = 'system_settings';
 const SETTINGS_DOC_ID = 'file_validation';
 const AI_MODELS_DOC_ID = 'ai_models';
 
+// 사용 가능한 AI 모델 목록 (모든 서비스 공통) - OpenAI 전체 모델
+const AVAILABLE_AI_MODELS = [
+  // === GPT-4.1 시리즈 (2025 최신) ===
+  'gpt-4.1',
+  'gpt-4.1-mini',
+  'gpt-4.1-nano',
+
+  // === GPT-4.5 시리즈 ===
+  'gpt-4.5-preview',
+  'gpt-4.5-preview-2025-02-27',
+
+  // === GPT-4o 시리즈 ===
+  'gpt-4o',
+  'gpt-4o-2024-11-20',
+  'gpt-4o-2024-08-06',
+  'gpt-4o-2024-05-13',
+  'gpt-4o-mini',
+  'gpt-4o-mini-2024-07-18',
+  'gpt-4o-audio-preview',
+  'gpt-4o-audio-preview-2024-12-17',
+  'gpt-4o-audio-preview-2024-10-01',
+  'gpt-4o-realtime-preview',
+  'gpt-4o-realtime-preview-2024-12-17',
+  'gpt-4o-realtime-preview-2024-10-01',
+  'gpt-4o-mini-audio-preview',
+  'gpt-4o-mini-audio-preview-2024-12-17',
+  'gpt-4o-mini-realtime-preview',
+  'gpt-4o-mini-realtime-preview-2024-12-17',
+  'chatgpt-4o-latest',
+
+  // === GPT-4 Turbo 시리즈 ===
+  'gpt-4-turbo',
+  'gpt-4-turbo-2024-04-09',
+  'gpt-4-turbo-preview',
+  'gpt-4-0125-preview',
+  'gpt-4-1106-preview',
+  'gpt-4-vision-preview',
+  'gpt-4-1106-vision-preview',
+
+  // === GPT-4 기본 시리즈 ===
+  'gpt-4',
+  'gpt-4-0613',
+  'gpt-4-32k',
+  'gpt-4-32k-0613',
+
+  // === GPT-3.5 Turbo 시리즈 ===
+  'gpt-3.5-turbo',
+  'gpt-3.5-turbo-0125',
+  'gpt-3.5-turbo-1106',
+  'gpt-3.5-turbo-16k',
+  'gpt-3.5-turbo-instruct',
+
+  // === o-시리즈 (Reasoning Models) ===
+  'o1',
+  'o1-2024-12-17',
+  'o1-preview',
+  'o1-preview-2024-09-12',
+  'o1-mini',
+  'o1-mini-2024-09-12',
+  'o3-mini',
+  'o3-mini-2025-01-31',
+  'o4-mini',
+  'o4-mini-2025-04-16',
+
+  // === o1-pro 시리즈 (고성능) ===
+  'o1-pro',
+  'o1-pro-2025-03-19'
+];
+
 // 기본 AI 모델 설정
 const DEFAULT_AI_MODEL_SETTINGS = {
   chat: {
     model: 'gpt-4o',
     description: 'AI 채팅 (MCP 도구 사용)',
-    availableModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
+    availableModels: AVAILABLE_AI_MODELS
   },
   rag: {
     model: 'gpt-3.5-turbo',
     description: 'RAG 답변 생성',
-    availableModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo']
+    availableModels: AVAILABLE_AI_MODELS
   },
   annualReport: {
     model: 'gpt-4.1',
     description: 'Annual Report PDF 파싱',
-    availableModels: ['gpt-4.1', 'gpt-4o', 'gpt-4-turbo']
+    availableModels: AVAILABLE_AI_MODELS
   }
 };
 
@@ -274,6 +343,12 @@ module.exports = function(db, authenticateJWT, requireRole) {
         delete settings._id;
         delete settings.updatedAt;
         delete settings.updatedBy;
+        // 항상 최신 availableModels 사용
+        for (const service of ['chat', 'rag', 'annualReport']) {
+          if (settings[service]) {
+            settings[service].availableModels = AVAILABLE_AI_MODELS;
+          }
+        }
       }
 
       res.json({
