@@ -856,10 +856,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         }
       }
 
-      // 고객 없으면 업로드 불가
+      // 🔥 고객 없으면 업로드 취소하고 사용자에게 안내
       if (!targetCustomerId) {
         console.warn('[ChatPanel] 고객을 찾을 수 없어 업로드 취소');
         setIsUploading(false);
+        setAttachedFiles([]); // 첨부 파일 목록 초기화
+
+        // 사용자에게 안내 메시지 표시
+        const fileNames = validFiles.map(f => f.name).join(', ');
+        const askMessage: DisplayMessage = {
+          id: `ask-${Date.now()}`,
+          role: 'assistant',
+          content: `📎 **첨부 파일:** ${fileNames}\n\n❌ **고객명을 확인할 수 없어 업로드가 취소되었습니다.**\n\n먼저 고객명을 입력해주세요. 예:\n- "캐치업코리아 문서 등록해줘"\n- "김철수 고객에게 문서 업로드해줘"\n\n그 후 다시 파일을 첨부해주세요.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, askMessage]);
         return;
       }
 
