@@ -370,7 +370,10 @@ export const UserActivityPage = () => {
                           <td className="user-activity-page__cell-number user-activity-page__cell-cost">
                             {formatCost(user.ai_cost_30d)}
                           </td>
-                          <td className="user-activity-page__cell-number">
+                          <td
+                            className="user-activity-page__cell-number"
+                            title={`${user.ocr_pages_30d}페이지/${user.ocr_count_30d}문서`}
+                          >
                             {user.ocr_pages_30d}/{user.ocr_count_30d}
                           </td>
                           <td className="user-activity-page__cell-number user-activity-page__cell-cost">
