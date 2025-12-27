@@ -8,7 +8,6 @@ import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
-import { useDevModeStore } from './shared/store/useDevModeStore'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
 import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
@@ -58,8 +57,8 @@ import type { PreviewDocumentInfo } from './features/customer/controllers/useCus
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
 import type { SearchResultItem } from './entities/search'
-import { getMyStorageInfo, type StorageInfo } from './services/userService'
-import { getMyAIUsage, type AIUsageData } from './services/aiUsageService'
+import type { StorageInfo } from './services/userService'
+import type { AIUsageData } from './services/aiUsageService'
 import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
@@ -68,6 +67,8 @@ import { toSmartSearchDocumentResponse, buildSelectedDocument } from './utils/do
 import { adaptToDownloadHelper, convertToPreviewDocumentInfo } from './utils/documentAdapters'
 import { useRightPaneContent } from './hooks/useRightPaneContent'
 import { usePersistentTheme } from './hooks/usePersistentTheme'
+import { useAppUsageData } from './hooks/useAppUsageData'
+import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { API_CONFIG, getAuthHeaders, api } from './shared/lib/api'
 import type { Document as StatusDocument } from './types/documentStatus'
 import { ContextMenu, useContextMenu, type ContextMenuSection } from './shared/ui/ContextMenu'
@@ -144,9 +145,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [centerWidth, setCenterWidth] = useState(DEFAULT_CENTER_WIDTH_PERCENT)
   const [paginationVisible, setPaginationVisible] = useState(true)
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
-
-  // Developer Mode - Global State
-  const { toggleDevMode } = useDevModeStore()
 
   // User Store - 사용자 정보 전역 관리
   const { updateCurrentUser } = useUserStore()
@@ -260,10 +258,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
 
-  // 사용량 요약 위젯 상태 (LeftPane 하단)
-  const [usageStorageInfo, setUsageStorageInfo] = useState<StorageInfo | null>(null)
-  const [usageAIUsage, setUsageAIUsage] = useState<AIUsageData | null>(null)
-  const [usageLoading, setUsageLoading] = useState(true)
+  // 사용량 요약 위젯 상태 (LeftPane 하단) - useAppUsageData 훅으로 분리
+  const {
+    storageInfo: usageStorageInfo,
+    aiUsage: usageAIUsage,
+    loading: usageLoading
+  } = useAppUsageData()
 
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
@@ -405,17 +405,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [activeDocumentView, selectedDocument, selectedCustomer])
 
-  // Developer Mode - Global Keyboard Handler (Ctrl+Alt+Shift+D)
-  useEffect(() => {
-    const handleDevMode = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault()
-        toggleDevMode()
-      }
-    }
-    window.addEventListener('keydown', handleDevMode)
-    return () => window.removeEventListener('keydown', handleDevMode)
-  }, [toggleDevMode])
 
   useEffect(() => {
     if (rightPaneVisible && centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT) {
@@ -558,32 +547,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     logVersionInfo()
   }, [])
 
-  // 사용량 요약 위젯 데이터 패칭 (마운트 시 + 5분 간격 갱신)
-  useEffect(() => {
-    const fetchUsageData = async () => {
-      try {
-        setUsageLoading(true)
-        const [storageResult, aiResult] = await Promise.all([
-          getMyStorageInfo(),
-          getMyAIUsage()
-        ])
-        setUsageStorageInfo(storageResult)
-        setUsageAIUsage(aiResult)
-      } catch (error) {
-        console.error('[App] 사용량 데이터 로드 실패:', error)
-        errorReporter.reportApiError(error as Error, { component: 'App.fetchUsageData' })
-      } finally {
-        setUsageLoading(false)
-      }
-    }
-
-    fetchUsageData()
-
-    // 5분마다 갱신 (300000ms)
-    const intervalId = setInterval(fetchUsageData, 5 * 60 * 1000)
-
-    return () => clearInterval(intervalId)
-  }, [])
 
   const { currentSize, scaleFactor, isAccessibilitySize } = dynamicType
   const { isHapticEnabled } = haptic
@@ -724,47 +687,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [updateURLParams])
 
-  // 🎹 전역 단축키 핸들러
-  useEffect(() => {
-    const handleGlobalShortcuts = (e: KeyboardEvent) => {
-      // 입력 필드에서는 단축키 비활성화
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return
-      }
-
-      // Ctrl+K: 고객 검색 (검색창 포커스)
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === 'k') {
-        e.preventDefault()
-        const searchInput = document.querySelector<HTMLInputElement>('.quick-search__input')
-        searchInput?.focus()
-        return
-      }
-
-      // Ctrl+Shift+F: 문서 검색
-      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'F') {
-        e.preventDefault()
-        handleMenuClick('documents-search')
-        return
-      }
-
-      // Ctrl+Shift+U: 문서 등록
-      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'U') {
-        e.preventDefault()
-        handleMenuClick('documents-register')
-        return
-      }
-
-      // Ctrl+Shift+C: 고객 등록
-      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key === 'C') {
-        e.preventDefault()
-        handleMenuClick('customers-register')
-        return
-      }
-    }
-    window.addEventListener('keydown', handleGlobalShortcuts)
-    return () => window.removeEventListener('keydown', handleGlobalShortcuts)
-  }, [handleMenuClick])
+  // 🎹 전역 단축키 핸들러 - useGlobalShortcuts 훅으로 분리
+  useGlobalShortcuts({ onMenuClick: handleMenuClick })
 
   // 최근 검색 고객 스토어
   const addRecentCustomer = useRecentCustomersStore((state) => state.addRecentCustomer)
