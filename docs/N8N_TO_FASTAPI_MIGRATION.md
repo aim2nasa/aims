@@ -2567,3 +2567,119 @@ server {
 - 핵심 안전망: Shadow Mode (병행 운영)
 - 자동화 수준: Claude-in-the-Loop (Haiku + Sonnet 하이브리드)
 - 예상 자동화 비용: ~$16/월 (1000건 mismatch 기준)
+
+---
+
+## 13. 진행 기록
+
+### 13.1 Shadow Mode 구현 완료 (2025-12-28)
+
+#### 구현 내용
+
+| 항목 | 상태 |
+|------|------|
+| document_pipeline API | ✅ localhost:8100 |
+| Shadow Mode 미들웨어 | ✅ 구현 완료 |
+| Claude 자동 분석 | ✅ 구현 (비활성화 상태) |
+| nginx 프록시 | ✅ `/shadow/*` 경로 |
+| 외부 접근 | ✅ `https://aims.giize.com/shadow/*` |
+
+#### 구현된 Shadow 엔드포인트
+
+| 엔드포인트 | n8n 워크플로우 | 테스트 결과 |
+|------------|---------------|-------------|
+| `/shadow/docsummary` | DocSummary | ✅ Match |
+| `/shadow/docupload` | DocUpload | ✅ Match |
+| `/shadow/dococr` | DocOCR | ✅ Match |
+| `/shadow/docmeta` | DocMeta | ✅ Match |
+| `/shadow/smart-search` | SmartSearch | ✅ Match |
+| `/shadow/docprep-main` | DocPrepMain | ✅ Match |
+
+#### 생성된 파일
+
+```
+backend/api/document_pipeline/
+├── middleware/
+│   └── shadow_mode.py       # Shadow call 로직
+├── contracts/
+│   └── dynamic_fields.py    # 응답 비교 로직 (IGNORE_FIELDS)
+├── routers/
+│   └── shadow_router.py     # Shadow 엔드포인트
+└── services/
+    └── anthropic_service.py # Claude 분석
+```
+
+#### IGNORE_FIELDS (응답 비교 시 무시)
+
+동적 생성값, 시간 필드, AI 생성 필드 등 비교에서 제외:
+- 파일 경로: `path`, `saved_name`, `dest_path`, `sourcePath`
+- 시간: `created_at`, `timestamp`, `queued_at`, `done_at`
+- ID: `file_hash`, `_id`, `id`, `document_id`
+- AI 생성: `summary`, `tags`, `length`
+- 메타데이터: `pdf_pages`, `extracted_text`, `mime`, `extension` 등
+
+#### 사용 방법
+
+```bash
+# 상태 확인
+curl https://aims.giize.com/shadow/status
+
+# Shadow 모드 비활성화 (n8n만 호출)
+curl -X POST https://aims.giize.com/shadow/disable
+
+# Shadow 모드 활성화 (기본값)
+curl -X POST https://aims.giize.com/shadow/enable
+
+# Claude 자동 분석 활성화
+curl -X POST https://aims.giize.com/shadow/auto-fix/true
+```
+
+#### 모니터링
+
+```bash
+# Mismatch 로그 확인
+mongosh docupload --eval "db.shadow_mismatches.find().sort({timestamp:-1}).limit(5).pretty()"
+
+# FastAPI 에러 로그
+mongosh docupload --eval "db.shadow_errors.find().sort({timestamp:-1}).limit(5).pretty()"
+```
+
+---
+
+## 14. 다음 단계 옵션
+
+Shadow Mode 구현이 완료되었습니다. 아래 옵션 중 선택하세요:
+
+### Option A: 프론트엔드 Shadow 연동 (검증 강화)
+
+프론트엔드에서 `/shadow/*` 엔드포인트를 사용하여 실제 운영 환경에서 검증.
+
+**변경 대상**: `frontend/aims-uix3/src/services/DocumentService.ts`
+- `n8nd.giize.com/webhook/*` → `aims.giize.com/shadow/*`
+
+**장점**: 실제 사용자 트래픽으로 검증
+**단점**: 추가 구현 필요
+
+### Option B: n8n 완전 교체 (직접 전환)
+
+Shadow Mode 검증이 충분하다면 n8n을 FastAPI로 직접 교체.
+
+**변경 대상**: nginx 설정
+- `/webhook/*` → `localhost:8100/webhook/*`
+
+**장점**: 빠른 마이그레이션 완료
+**단점**: 롤백 시 nginx 재설정 필요
+
+### Option C: 병행 운영 유지 (안정화)
+
+현재 상태 유지. Shadow 엔드포인트로 간헐적 테스트만 수행.
+
+**장점**: 리스크 최소화
+**단점**: n8n + FastAPI 이중 운영 비용
+
+### Option D: OCRWorker 마이그레이션
+
+아직 마이그레이션되지 않은 **OCRWorker**(Redis 큐 폴링)를 FastAPI로 구현.
+
+**복잡도**: ⭐⭐⭐ 높음 (5초 폴링, Consumer Group)
+**장점**: 전체 파이프라인 FastAPI화 완성
