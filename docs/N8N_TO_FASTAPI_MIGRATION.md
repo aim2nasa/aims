@@ -2683,3 +2683,86 @@ Shadow Mode 검증이 충분하다면 n8n을 FastAPI로 직접 교체.
 
 **복잡도**: ⭐⭐⭐ 높음 (5초 폴링, Consumer Group)
 **장점**: 전체 파이프라인 FastAPI화 완성
+
+---
+
+## 15. 판단 지표 및 전환 기준 (2025-12-28)
+
+### 15.1 전환 판단 기준
+
+| 항목 | 기준값 | 설명 |
+|------|--------|------|
+| 최소 호출 수 | 100건 | 통계적 유의미성 확보 |
+| Match Rate | >= 99% | n8n과 FastAPI 응답 일치율 |
+| Error Rate | <= 1% | FastAPI 에러 발생률 |
+| 관측 기간 | 7일 | 충분한 검증 기간 |
+
+### 15.2 통계 엔드포인트
+
+```bash
+# 전체 통계 조회 (최근 7일)
+curl https://aims.giize.com/shadow/stats
+
+# 기간 지정 (최근 30일)
+curl https://aims.giize.com/shadow/stats?days=30
+
+# 불일치 목록 조회
+curl https://aims.giize.com/shadow/mismatches
+
+# 워크플로우별 불일치
+curl https://aims.giize.com/shadow/mismatches?workflow=docsummary
+```
+
+### 15.3 응답 예시
+
+```json
+{
+  "summary": {
+    "total_calls": 150,
+    "match": 148,
+    "mismatch": 1,
+    "error": 1,
+    "match_rate": 98.67,
+    "error_rate": 0.67
+  },
+  "by_workflow": {
+    "docsummary": {"match": 50, "mismatch": 0, "match_rate": 100.0},
+    "docupload": {"match": 48, "mismatch": 1, "match_rate": 97.96}
+  },
+  "switch_readiness": {
+    "ready": false,
+    "checks": {
+      "min_calls": {"required": 100, "actual": 150, "passed": true},
+      "match_rate": {"required": ">= 99%", "actual": "98.67%", "passed": false}
+    },
+    "recommendation": "추가 검증 필요"
+  }
+}
+```
+
+### 15.4 Claude-in-the-Loop 자동 수정
+
+Mismatch 발생 시 Claude가 자동으로 원인 분석:
+
+```bash
+# 자동 분석 활성화
+curl -X POST https://aims.giize.com/shadow/auto-fix/true
+
+# 분석 결과 확인
+curl https://aims.giize.com/shadow/mismatches | jq '.mismatches[0].analysis'
+```
+
+### 15.5 MongoDB 컬렉션
+
+| 컬렉션 | 용도 |
+|--------|------|
+| `shadow_calls` | 모든 호출 기록 (match/mismatch/error) |
+| `shadow_mismatches` | 불일치 상세 (요청/응답, diff, 분석) |
+| `shadow_errors` | FastAPI 에러 기록 |
+
+### 15.6 전환 절차
+
+1. **통계 확인**: `/shadow/stats`에서 `switch_readiness.ready: true` 확인
+2. **nginx 전환**: `/webhook/*` → `localhost:8100/webhook/*`
+3. **모니터링**: 24시간 운영 모니터링
+4. **롤백 대비**: nginx 설정 백업

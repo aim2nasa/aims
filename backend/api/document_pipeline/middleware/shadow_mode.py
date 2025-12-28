@@ -148,12 +148,18 @@ async def shadow_call(
                         fastapi_response=fastapi_response,
                         diffs=diffs
                     )
+                    # 호출 로깅 (mismatch)
+                    await _log_call(workflow, "mismatch", len(diffs))
                 else:
                     logger.debug(f"[SHADOW MATCH] {workflow}")
+                    # 호출 로깅 (match)
+                    await _log_call(workflow, "match", 0)
 
             else:
                 logger.warning(f"FastAPI call failed: {fastapi_result}")
                 await _log_fastapi_error(workflow, request_data, str(fastapi_result))
+                # 호출 로깅 (error)
+                await _log_call(workflow, "error", 0)
 
             return n8n_response
 
@@ -230,6 +236,20 @@ async def _log_mismatch(
     except Exception as e:
         logger.error(f"Failed to log mismatch: {e}")
         return ""
+
+
+async def _log_call(workflow: str, result: str, diff_count: int):
+    """모든 Shadow 호출 로깅 (통계용)"""
+    try:
+        collection = MongoService.get_collection("shadow_calls")
+        await collection.insert_one({
+            "workflow": workflow,
+            "result": result,  # "match", "mismatch", "error"
+            "diff_count": diff_count,
+            "timestamp": datetime.utcnow()
+        })
+    except Exception as e:
+        logger.error(f"Failed to log call: {e}")
 
 
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
