@@ -14,6 +14,7 @@ IGNORE_FIELDS = {
     "_id", "id", "document_id",  # ID
     "length",  # summary 길이 (AI 생성 텍스트 길이, 항상 다름)
     "_empty_response", "_status_code", "_parse_error", "_raw",  # 내부 메타데이터
+    "code", "message",  # Optional 에러 필드 (None일 때만 존재)
 }
 
 # 시맨틱 비교 필드 (AI 생성, 정확히 같을 필요 없음)
@@ -59,28 +60,30 @@ def compare_responses(
     n8n_norm = normalize_response(n8n_response)
     fastapi_norm = normalize_response(fastapi_response)
 
-    # 1. 필드 존재 여부 비교
-    n8n_keys = set(n8n_norm.keys())
-    fastapi_keys = set(fastapi_norm.keys())
+    # 1. 필드 존재 여부 비교 (IGNORE_FIELDS 제외)
+    n8n_keys = set(n8n_norm.keys()) - IGNORE_FIELDS
+    fastapi_keys = set(fastapi_norm.keys()) - IGNORE_FIELDS
 
     missing_in_fastapi = n8n_keys - fastapi_keys
     extra_in_fastapi = fastapi_keys - n8n_keys
 
     for field in missing_in_fastapi:
-        diffs.append({
-            "path": field,
-            "n8n_value": str(n8n_response.get(field)),
-            "fastapi_value": None,
-            "diff_type": "missing"
-        })
+        if field not in IGNORE_FIELDS:  # 이중 체크
+            diffs.append({
+                "path": field,
+                "n8n_value": str(n8n_response.get(field)),
+                "fastapi_value": None,
+                "diff_type": "missing"
+            })
 
     for field in extra_in_fastapi:
-        diffs.append({
-            "path": field,
-            "n8n_value": None,
-            "fastapi_value": str(fastapi_response.get(field)),
-            "diff_type": "extra"
-        })
+        if field not in IGNORE_FIELDS:  # 이중 체크
+            diffs.append({
+                "path": field,
+                "n8n_value": None,
+                "fastapi_value": str(fastapi_response.get(field)),
+                "diff_type": "extra"
+            })
 
     # 2. 값 비교 (동적 필드 제외)
     common_keys = n8n_keys & fastapi_keys
