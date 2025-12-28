@@ -7175,8 +7175,8 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       if (doc) {
         let newOverallStatus = 'processing';
 
-        // 에러 상태 처리
-        if (status === 'error' || status === 'failed') {
+        // 에러 상태 처리 (quota_exceeded도 에러로 처리)
+        if (status === 'error' || status === 'failed' || status === 'quota_exceeded') {
           newOverallStatus = 'error';
         }
         // 임베딩까지 완료된 경우에만 completed
@@ -7188,12 +7188,22 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
           newOverallStatus = 'processing';
         }
 
+        // 업데이트할 필드 구성
+        const updateFields = {
+          overallStatus: newOverallStatus,
+          overallStatusUpdatedAt: new Date()
+        };
+
+        // quota_exceeded인 경우 stages.ocr도 업데이트
+        if (status === 'quota_exceeded') {
+          updateFields['stages.ocr.status'] = 'error';
+          updateFields['stages.ocr.message'] = 'OCR 한도 초과';
+          updateFields['stages.ocr.timestamp'] = new Date().toISOString();
+        }
+
         await db.collection(COLLECTIONS.FILES).updateOne(
           { _id: new ObjectId(documentIdStr) },
-          { $set: {
-            overallStatus: newOverallStatus,
-            overallStatusUpdatedAt: new Date()
-          } }
+          { $set: updateFields }
         );
         console.log(`[SSE-DocStatus] overallStatus 업데이트: ${documentIdStr} → ${newOverallStatus} (docembed: ${doc.docembed?.status || 'none'})`);
       }

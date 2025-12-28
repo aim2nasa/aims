@@ -370,7 +370,7 @@ export class DocumentProcessingModule {
       return 'completed'
     }
 
-    if (ocrStatus === 'error') {
+    if (ocrStatus === 'error' || ocrStatus === 'quota_exceeded') {
       return 'error'
     }
 

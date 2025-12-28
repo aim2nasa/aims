@@ -14,7 +14,7 @@ export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending' | 
 /**
  * 처리 단계 상태
  */
-export type StageStatus = 'completed' | 'processing' | 'error' | 'pending' | 'skipped' | 'done' | 'failed' | 'running'
+export type StageStatus = 'completed' | 'processing' | 'error' | 'pending' | 'skipped' | 'done' | 'failed' | 'running' | 'quota_exceeded'
 
 /**
  * 문서 처리 경로 타입

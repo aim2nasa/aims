@@ -235,11 +235,17 @@ function prepareDocumentResponse(doc) {
       displayMessages.ocr = `OCR 완료 (신뢰도: ${doc.ocr.confidence || 'N/A'})`;
       currentStage = 4;
       progress = 80;
-    } else if (doc.ocr.status === 'error') {
+    } else if (doc.ocr.status === 'error' || doc.ocr.status === 'quota_exceeded') {
       uiStages.ocr.status = 'error';
-      const errorMsg = doc.ocr.statusMessage
-        ? `OCR 실패: ${doc.ocr.statusMessage}`
-        : `OCR 실패 (${doc.ocr.statusCode || '알 수 없는 오류'})`;
+      // quota_exceeded인 경우 별도 메시지 처리
+      let errorMsg;
+      if (doc.ocr.status === 'quota_exceeded') {
+        errorMsg = doc.ocr.quota_message || 'OCR 한도 초과';
+      } else {
+        errorMsg = doc.ocr.statusMessage
+          ? `OCR 실패: ${doc.ocr.statusMessage}`
+          : `OCR 실패 (${doc.ocr.statusCode || '알 수 없는 오류'})`;
+      }
       uiStages.ocr.message = errorMsg;
       displayMessages.ocr = errorMsg;
 

@@ -432,6 +432,17 @@ html[data-theme="dark"] .status-item--selected:hover {
   opacity: 0.7;
 }
 
+/* 🔒 quota_exceeded 상태: 비활성화 (클릭 불가) */
+.status-cell-inner--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.status-cell-inner--disabled .status-icon {
+  opacity: 0.7;
+}
+
 html[data-theme="dark"] .status-cell-inner--clickable:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.15);
 }

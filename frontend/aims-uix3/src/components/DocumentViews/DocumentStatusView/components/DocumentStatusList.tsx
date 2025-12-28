@@ -127,6 +127,30 @@ export const formatErrorMessage = (message: string): string => {
 }
 
 /**
+ * quota_exceeded 에러인지 확인
+ * OCR 한도 초과 에러는 수동 재시도 불가
+ */
+export const isQuotaExceededError = (document: Document): boolean => {
+  // 1. ocr.status 확인 (타입에 없는 값도 체크 가능하도록 as string 사용)
+  if (document.ocr && typeof document.ocr !== 'string') {
+    const ocrStatus = document.ocr.status as string | undefined
+    if (ocrStatus === 'quota_exceeded') {
+      return true
+    }
+  }
+
+  // 2. stages.ocr.message 확인
+  if (document.stages?.ocr && typeof document.stages.ocr !== 'string') {
+    const message = document.stages.ocr.message
+    if (message && typeof message === 'string' && message.includes('한도 초과')) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
  * Document에서 에러 메시지 추출
  */
 export const getErrorMessage = (document: Document): string | null => {
@@ -163,9 +187,16 @@ export const getErrorMessage = (document: Document): string | null => {
     }
   }
 
-  // 3. OCR 에러
+  // 3. OCR 에러 (quota_exceeded 포함)
   if (document.ocr && typeof document.ocr !== 'string') {
     const ocr = document.ocr as Record<string, unknown>
+    // quota_exceeded인 경우 quota_message 사용
+    if (ocr['status'] === 'quota_exceeded') {
+      if (ocr['quota_message'] && typeof ocr['quota_message'] === 'string') {
+        return 'OCR 한도 초과'
+      }
+      return 'OCR 한도 초과'
+    }
     if (ocr['status'] === 'error' && ocr['message'] && typeof ocr['message'] === 'string') {
       return formatErrorMessage(ocr['message'])
     }
@@ -679,7 +710,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       {documents.map((document, index) => {
         const status = DocumentStatusService.extractStatus(document)
         const progress = DocumentStatusService.extractProgress(document)
-        const statusLabel = DocumentStatusService.getStatusLabel(status)
+        // quota_exceeded 에러인 경우 "한도초과"로 표시
+        const isQuotaExceeded = isQuotaExceededError(document)
+        const statusLabel = isQuotaExceeded ? '한도초과' : DocumentStatusService.getStatusLabel(status)
         const statusIcon = DocumentStatusService.getStatusIcon(status)
         const isLinked = Boolean(document.customer_relation)
         const isAnnualReport = document.is_annual_report === true
@@ -993,23 +1026,29 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             {/* 상태 (아이콘 + 텍스트) */}
             <div className="status-cell">
               {status === 'error' ? (
-                // 에러 상태: 클릭하여 재시도
+                // 에러 상태: 클릭하여 재시도 (quota_exceeded는 재시도 불가)
                 (() => {
                   const docId = document._id || document.id
                   const isRetryingOcr = retryingOcrDocumentId === docId
+                  const isQuotaExceeded = isQuotaExceededError(document)
                   const errorMsg = getErrorMessage(document) || statusLabel
                   const tooltipContent = isRetryingOcr
                     ? 'OCR 재시도 중...'
-                    : `${errorMsg}\n\n클릭하여 재시도`
+                    : isQuotaExceeded
+                      ? `${errorMsg}\n\nOCR 한도 해제 후 재시도 가능`
+                      : `${errorMsg}\n\n클릭하여 재시도`
+
+                  // quota_exceeded: 버튼 비활성화 (클릭 불가)
+                  const isDisabled = isRetryingOcr || !docId || isQuotaExceeded
 
                   return (
                     <Tooltip content={tooltipContent}>
                       <button
                         type="button"
-                        className={`status-cell-inner status-cell-inner--clickable ${isRetryingOcr ? 'status-cell-inner--retrying' : ''}`}
-                        onClick={(e) => docId && handleRetryOcr(docId, e)}
-                        disabled={isRetryingOcr || !docId}
-                        aria-label="OCR 재시도"
+                        className={`status-cell-inner ${!isQuotaExceeded ? 'status-cell-inner--clickable' : 'status-cell-inner--disabled'} ${isRetryingOcr ? 'status-cell-inner--retrying' : ''}`}
+                        onClick={(e) => !isQuotaExceeded && docId && handleRetryOcr(docId, e)}
+                        disabled={isDisabled}
+                        aria-label={isQuotaExceeded ? 'OCR 한도 초과' : 'OCR 재시도'}
                       >
                         <div className={"status-icon status-" + status}>
                           {isRetryingOcr ? (

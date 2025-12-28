@@ -188,7 +188,7 @@
           "conditions": [
             {
               "id": "quota-exceeded-condition-001",
-              "leftValue": "={{ $json.body.allowed }}",
+              "leftValue": "={{ $json.allowed }}",
               "rightValue": false,
               "operator": {
                 "type": "boolean",
@@ -222,13 +222,37 @@
             {
               "id": "quota-exceeded-reason-001",
               "name": "ocr.quota_message",
-              "value": "={{ $('Check OCR Quota').item.json.body.reason }}: 현재 {{ $('Check OCR Quota').item.json.body.current_usage }}p / {{ $('Check OCR Quota').item.json.body.quota }}p, 요청 {{ $('Check OCR Quota').item.json.body.requested }}p",
+              "value": "={{ $('Check OCR Quota').item.json.reason }}: 현재 {{ $('Check OCR Quota').item.json.current_usage }}p / {{ $('Check OCR Quota').item.json.quota }}p, 요청 {{ $('Check OCR Quota').item.json.requested }}p",
               "type": "string"
             },
             {
               "id": "quota-exceeded-id-001",
               "name": "_id",
               "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-overall-status-001",
+              "name": "overallStatus",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-stage-status-001",
+              "name": "stages.ocr.status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-stage-message-001",
+              "name": "stages.ocr.message",
+              "value": "OCR 한도 초과",
+              "type": "string"
+            },
+            {
+              "id": "quota-exceeded-stage-timestamp-001",
+              "name": "stages.ocr.timestamp",
+              "value": "={{ $now.toISO() }}",
               "type": "string"
             }
           ]
@@ -250,7 +274,7 @@
         "operation": "findOneAndUpdate",
         "collection": "files",
         "updateKey": "_id",
-        "fields": "ocr",
+        "fields": "ocr,overallStatus,stages",
         "options": {}
       },
       "type": "n8n-nodes-base.mongoDb",
@@ -271,7 +295,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "url": "http://localhost:3010/api/webhooks/document-processing-complete",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -689,7 +713,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "url": "http://localhost:3010/api/webhooks/document-processing-complete",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -722,7 +746,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://aims.giize.com/api/webhooks/document-processing-complete",
+        "url": "http://localhost:3010/api/webhooks/document-processing-complete",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
