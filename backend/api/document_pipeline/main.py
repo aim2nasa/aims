@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from config import get_settings
 from services.mongo_service import MongoService
-from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router
+from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router
 from workers.error_logger import error_logger
 
 # Configure logging
@@ -92,6 +92,7 @@ app.include_router(doc_upload_router, prefix="/webhook", tags=["Document Upload"
 app.include_router(doc_summary_router, prefix="/webhook", tags=["Document Summary"])
 app.include_router(doc_ocr_router, prefix="/webhook", tags=["Document OCR"])
 app.include_router(doc_meta_router, prefix="/webhook", tags=["Document Metadata"])
+app.include_router(smart_search_router, prefix="/webhook", tags=["Smart Search"])
 
 
 if __name__ == "__main__":

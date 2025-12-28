@@ -12,7 +12,7 @@
 |-------|------|------|--------|
 | Phase 1 | DocUpload, DocSummary, ErrorLogger | ✅ 완료 | 2025-12-28 |
 | Phase 2 | DocOCR, DocMeta | ✅ 완료 | 2025-12-28 |
-| Phase 3 | OCRWorker, SmartSearch | ⏳ 대기 | - |
+| Phase 3 | OCRWorker, SmartSearch | ✅ 완료 | 2025-12-28 |
 | Phase 4 | DocPrepMain | ⏳ 대기 | - |
 
 ---
@@ -222,16 +222,100 @@ curl -X POST http://localhost:8100/webhook/docmeta \
 
 ---
 
-## Phase 3: 워커 + 검색
+## Phase 3: 워커 + 검색 (2025-12-28)
 
-> 상태: ⏳ 대기
+> 상태: ✅ 완료
 
 ### 목표
 - OCRWorker: Redis Consumer + 비동기 처리
 - SmartSearch: MongoDB 쿼리
 
-### 진행 기록
-_(Phase 3 시작 시 기록 예정)_
+### 완료 항목
+
+#### 1. 신규 파일 추가
+```
+backend/api/document_pipeline/
+├── routers/
+│   └── smart_search.py     # POST /webhook/smartsearch
+│
+├── services/
+│   └── redis_service.py    # Redis Stream 연동
+│
+└── workers/
+    └── ocr_worker.py       # Redis Stream Consumer
+```
+
+#### 2. SmartSearch 엔드포인트
+
+**기능:**
+- ID로 문서 검색
+- 키워드로 다중 필드 검색 (OR/AND 모드)
+- 소유자(user_id) + 고객(customer_id) 필터링
+
+**검색 대상 필드:**
+- `upload.originalName`
+- `ocr.full_text`, `ocr.summary`, `ocr.tags`
+- `meta.filename`, `meta.full_text`, `meta.summary`, `meta.tags`
+- `text.full_text`
+- `customer_relation.notes`
+
+**테스트 결과** ✅
+```bash
+# ID 검색
+curl -X POST http://localhost:8100/webhook/smartsearch \
+  -H "Content-Type: application/json" \
+  -d '{"id": "694fe165907ae2a0bd0bf979", "user_id": "694f9415a0f94f0a13f49894"}'
+# → 1개 문서 반환
+
+# 키워드 검색
+curl -X POST http://localhost:8100/webhook/smartsearch \
+  -H "Content-Type: application/json" \
+  -d '{"query": "김보성", "user_id": "694f9415a0f94f0a13f49894"}'
+# → 27개 문서 반환
+```
+
+#### 3. OCRWorker 구현
+
+**기능:**
+- Redis Stream (`ocr_stream`) polling (XREADGROUP)
+- OCR 할당량 체크 (AIMS API 연동)
+- Upstage OCR + OpenAI 요약 처리
+- MongoDB 상태 업데이트 (running → done/error)
+- 처리 완료 알림 (webhook)
+
+**처리 플로우:**
+```
+Redis Stream → 할당량 체크 → OCR 처리 → MongoDB 업데이트 → 알림
+```
+
+**상태 관리:**
+- `ocr.status`: queued → running → done/error/quota_exceeded
+- `ocr.queued_at`, `ocr.started_at`, `ocr.done_at` 타임스탬프
+
+#### 4. 배포 상태
+| 항목 | 값 |
+|------|-----|
+| 서비스명 | document_pipeline |
+| 포트 | 8100 |
+| PM2 상태 | ✅ online |
+| SmartSearch | ✅ 정상 동작 |
+| OCRWorker | ✅ 코드 완료 (별도 프로세스로 실행 필요) |
+
+### 기술 상세
+
+#### RedisService
+- `redis.asyncio` 기반 비동기 클라이언트
+- Consumer Group: `ocr_consumer_group`
+- Stream Name: `ocr_stream`
+- XREADGROUP + XACK + XDEL 패턴
+
+#### SmartSearch 쿼리 빌더
+- Pydantic 모델 기반 요청 검증
+- MongoDB $regex 검색 (case-insensitive)
+- ObjectId 자동 변환
+
+### 다음 단계 (Phase 4)
+1. DocPrepMain: 전체 문서 처리 흐름 조율
 
 ---
 
@@ -254,6 +338,7 @@ _(Phase 4 시작 시 기록 예정)_
 | `pre-fastapi-migration` | 마이그레이션 시작 전 | 034efed1 |
 | `fastapi-phase-1` | Phase 1 완료 | f440738c |
 | `fastapi-phase-2` | Phase 2 완료 | 0ce58d35 |
+| `fastapi-phase-3` | Phase 3 완료 | e2a44899 |
 
 ---
 

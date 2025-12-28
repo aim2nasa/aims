@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_STREAM: str = "ocr_stream"
 
+    @property
+    def REDIS_URL(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
+
     # File Storage
     FILE_BASE_PATH: str = "/data/files"
 
@@ -37,7 +41,8 @@ class Settings(BaseSettings):
 
     # Internal API
     AIMS_API_KEY: str = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
-    AIMS_API_URL: str = "https://aims.giize.com/api"
+    AIMS_API_URL: str = "http://localhost:3010"
+    WEBHOOK_API_KEY: str = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
 
     # Server
     HOST: str = "0.0.0.0"

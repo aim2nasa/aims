@@ -37,6 +37,12 @@ class MongoService:
         return cls._db
 
     @classmethod
+    def get_collection(cls, name: str):
+        """Get collection by name"""
+        db = cls.get_db()
+        return db[name]
+
+    @classmethod
     async def insert_file(cls, owner_id: str, customer_id: Optional[str] = None) -> str:
         """Insert new file document and return ID"""
         db = cls.get_db()
