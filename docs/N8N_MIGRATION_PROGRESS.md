@@ -338,7 +338,7 @@ _(Phase 4 시작 시 기록 예정)_
 | `pre-fastapi-migration` | 마이그레이션 시작 전 | 034efed1 |
 | `fastapi-phase-1` | Phase 1 완료 | f440738c |
 | `fastapi-phase-2` | Phase 2 완료 | 0ce58d35 |
-| `fastapi-phase-3` | Phase 3 완료 | e2a44899 |
+| `fastapi-phase-3` | Phase 3 완료 | ec58f454 |
 
 ---
 
