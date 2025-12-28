@@ -147,6 +147,8 @@ async def shadow_call(
                     logger.debug(f"[SHADOW MATCH] {workflow}")
                     # 호출 로깅 (match)
                     await _log_call(workflow, "match", 0)
+                    # 자동 Resolved: 같은 workflow의 open mismatch 해결
+                    await _auto_resolve_mismatches(workflow)
 
             else:
                 logger.warning(f"FastAPI call failed: {fastapi_result}")
@@ -227,6 +229,29 @@ async def _log_call(workflow: str, result: str, diff_count: int):
         })
     except Exception as e:
         logger.error(f"Failed to log call: {e}")
+
+
+async def _auto_resolve_mismatches(workflow: str):
+    """Match 발생 시 같은 workflow의 open mismatch 자동 해결"""
+    try:
+        collection = MongoService.get_collection("shadow_mismatches")
+
+        result = await collection.update_many(
+            {"workflow": workflow, "status": "open"},
+            {
+                "$set": {
+                    "status": "resolved",
+                    "resolution": "Auto-resolved: Match confirmed",
+                    "resolved_at": datetime.utcnow()
+                }
+            }
+        )
+
+        if result.modified_count > 0:
+            logger.info(f"[SHADOW] Auto-resolved {result.modified_count} mismatches for {workflow}")
+
+    except Exception as e:
+        logger.error(f"Failed to auto-resolve mismatches: {e}")
 
 
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):

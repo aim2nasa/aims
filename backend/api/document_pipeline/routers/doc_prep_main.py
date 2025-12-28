@@ -159,11 +159,10 @@ async def doc_prep_main(
                 {"$set": {"text.full_text": text_content}}
             )
 
+            # Match n8n response format exactly
             return {
-                "result": "success",
-                "document_id": doc_id,
-                "status": "completed",
-                "mime_type": mime_type
+                "exitCode": 0,
+                "stderr": ""
             }
 
         # Case 2: Unsupported MIME type

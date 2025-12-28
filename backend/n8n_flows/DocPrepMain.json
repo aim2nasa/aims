@@ -185,7 +185,7 @@
             {
               "id": "dbc183dd-ac7c-4628-b2a2-38b4a0e5ed5f",
               "name": "_id",
-              "value": "={{ $('Merge1').item.json._id }}",
+              "value": "={{ String($('Merge1').item.json._id).replace(/\"/g, '') }}",
               "type": "string"
             }
           ]
@@ -457,7 +457,7 @@
     },
     {
       "parameters": {
-        "fileSelector": "={{ $('DocUpload Request').item.json.path }}",
+        "fileSelector": "={{ $('DocUpload Request').item.json.body.path }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
