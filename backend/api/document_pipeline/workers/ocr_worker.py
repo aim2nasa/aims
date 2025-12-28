@@ -6,16 +6,25 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
-from bson import ObjectId
 import httpx
 import os
+import sys
 
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from bson import ObjectId
 from config import get_settings
 from services.redis_service import RedisService
 from services.mongo_service import MongoService
 from services.upstage_service import UpstageService
 from services.openai_service import OpenAIService
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
@@ -25,8 +34,6 @@ class OCRWorker:
 
     def __init__(self):
         self.running = False
-        self.upstage_service = UpstageService()
-        self.openai_service = OpenAIService()
         self.poll_interval = 5  # seconds
         self.aims_api_url = settings.AIMS_API_URL
 

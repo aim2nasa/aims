@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # External APIs
     OPENAI_API_KEY: str = ""
     UPSTAGE_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
 
     # Slack
     SLACK_WEBHOOK_URL: str = ""
