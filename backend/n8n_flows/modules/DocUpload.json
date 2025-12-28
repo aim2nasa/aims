@@ -1,5 +1,6 @@
 {
   "name": "DocUpload",
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -56,7 +57,7 @@
       "typeVersion": 1,
       "position": [
         -160,
-        -96
+        -104
       ],
       "id": "caa98258-f310-4fce-8fda-1b324c57b154",
       "name": "Exec mkdir",
@@ -69,8 +70,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        528,
-        80
+        512,
+        64
       ],
       "id": "a3391ef6-a213-4dd4-ad58-1dae9f0650ee",
       "name": "Exec mv",
@@ -87,8 +88,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        976,
-        176
+        960,
+        160
       ],
       "id": "4951207a-2fc2-4960-afac-39ccbd3e11df",
       "name": "Respond to Webhook"
@@ -219,7 +220,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        528,
+        512,
         -128
       ],
       "id": "e33ee8e4-26d3-4325-a5e4-dba285a729e2",
@@ -253,7 +254,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        304,
+        288,
         -32
       ],
       "id": "aa40110a-fb44-4b25-bec1-9a0a8cf1d56c",
@@ -286,8 +287,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        752,
-        80
+        736,
+        64
       ],
       "id": "6581d1f8-ce2f-4c27-9608-c7602d85c513",
       "name": "Mv Error?"
@@ -303,7 +304,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        976,
+        960,
         -32
       ],
       "id": "870d6a72-217e-4787-b14d-efad7d11ee1b",
@@ -318,14 +319,13 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        80,
+        64,
         -32
       ],
       "id": "51908c49-fc88-40aa-8c28-75f7cd62172e",
       "name": "mkdir+Final Path"
     }
   ],
-  "pinData": {},
   "connections": {
     "DocUpload Webhook": {
       "main": [
@@ -482,18 +482,71 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "8be331cc-b54e-462e-a06c-44995169f580",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+    "templateCredsSetupCompleted": true
   },
-  "id": "eg09B1KNSHi8pvpJ",
+  "pinData": {},
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-07-28T22:03:57.578Z",
+      "updatedAt": "2025-07-28T22:03:57.578Z",
+      "role": "workflow:owner",
+      "workflowId": "eg09B1KNSHi8pvpJ",
+      "projectId": "09282RsGeMMUJreV",
+      "project": {
+        "createdAt": "2025-07-28T21:14:12.127Z",
+        "updatedAt": "2025-07-28T21:15:56.913Z",
+        "id": "09282RsGeMMUJreV",
+        "name": "Rossi Kwak <rossi.kwak@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-07-28T21:14:12.127Z",
+            "updatedAt": "2025-07-28T21:14:12.127Z",
+            "userId": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+            "projectId": "09282RsGeMMUJreV",
+            "user": {
+              "createdAt": "2025-07-28T21:14:10.836Z",
+              "updatedAt": "2025-12-27T16:12:17.000Z",
+              "id": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+              "email": "rossi.kwak@gmail.com",
+              "firstName": "Rossi",
+              "lastName": "Kwak",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-07-28T21:16:00.455Z",
+                "personalization_survey_n8n_version": "1.100.1"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "nOAbvrST5mG0ksJt",
+                "userActivatedAt": 1753746589786,
+                "easyAIWorkflowOnboarded": true,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1755591450515
+                },
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-28",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }

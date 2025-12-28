@@ -1,5 +1,6 @@
 {
   "name": "ErrorLogger",
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,7 +8,7 @@
       "typeVersion": 1,
       "position": [
         240,
-        96
+        176
       ],
       "id": "42702fdb-4b7c-4b44-b853-8481841a0e81",
       "name": "Error Trigger"
@@ -130,7 +131,7 @@
       "typeVersion": 2.3,
       "position": [
         464,
-        192
+        176
       ],
       "id": "0c43bdad-f48a-4220-a890-c12bde8ea60e",
       "name": "Send a message",
@@ -166,14 +167,13 @@
       "typeVersion": 4.2,
       "position": [
         464,
-        400
+        368
       ],
       "id": "a1b2c3d4-e5f6-4a5b-9c8d-7e6f5a4b3c2d",
       "name": "Log to AIMS",
       "continueOnFail": true
     }
   ],
-  "pinData": {},
   "connections": {
     "Error Trigger": {
       "main": [
@@ -197,18 +197,71 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "c0843708-87d1-4e79-af08-4f0d4b1ce7da",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+    "templateCredsSetupCompleted": true
   },
-  "id": "pbOS7kBxmfv07Cb7",
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-08-06T00:34:36.536Z",
+      "updatedAt": "2025-08-06T00:34:36.536Z",
+      "role": "workflow:owner",
+      "workflowId": "pbOS7kBxmfv07Cb7",
+      "projectId": "09282RsGeMMUJreV",
+      "project": {
+        "createdAt": "2025-07-28T21:14:12.127Z",
+        "updatedAt": "2025-07-28T21:15:56.913Z",
+        "id": "09282RsGeMMUJreV",
+        "name": "Rossi Kwak <rossi.kwak@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-07-28T21:14:12.127Z",
+            "updatedAt": "2025-07-28T21:14:12.127Z",
+            "userId": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+            "projectId": "09282RsGeMMUJreV",
+            "user": {
+              "createdAt": "2025-07-28T21:14:10.836Z",
+              "updatedAt": "2025-12-27T16:12:17.000Z",
+              "id": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+              "email": "rossi.kwak@gmail.com",
+              "firstName": "Rossi",
+              "lastName": "Kwak",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-07-28T21:16:00.455Z",
+                "personalization_survey_n8n_version": "1.100.1"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "nOAbvrST5mG0ksJt",
+                "userActivatedAt": 1753746589786,
+                "easyAIWorkflowOnboarded": true,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1755591450515
+                },
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-28",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }

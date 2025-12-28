@@ -1,5 +1,6 @@
 {
   "name": "DocReadAI",
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -12,7 +13,7 @@
       "typeVersion": 2,
       "position": [
         -128,
-        -400
+        -40
       ],
       "id": "cf85026b-5a71-427a-99a4-8ad5b932c5d7",
       "name": "DocReadAI Webhook",
@@ -28,8 +29,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        288,
-        96
+        320,
+        128
       ],
       "id": "7e57fc9f-b38e-4fe0-8203-e405d7f46620",
       "name": "Load File for AI Input",
@@ -58,8 +59,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2096,
-        -320
+        2112,
+        -328
       ],
       "id": "858d8b45-2b20-42ca-9057-dcfd6b60319d",
       "name": "Create Assistant Thread",
@@ -96,8 +97,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        512,
-        96
+        544,
+        128
       ],
       "id": "100780fc-e531-4489-aada-b7cf9fb6c1dd",
       "name": "Upload File to OpenAI",
@@ -131,7 +132,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2320,
+        2336,
         -112
       ],
       "id": "8f6f15ad-c57e-4d77-933e-475f27b4d59b",
@@ -166,7 +167,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2544,
+        2560,
         -112
       ],
       "id": "9d4be1f6-62f2-4c05-ada2-00f3c6a02ebe",
@@ -197,7 +198,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2768,
+        2784,
         -112
       ],
       "id": "51244705-4cb7-480c-9470-aead29f09979",
@@ -228,8 +229,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3216,
-        -224
+        3232,
+        -232
       ],
       "id": "e8efb1cb-052b-49ed-80e9-c24ec5f7f44f",
       "name": "Get Final Response",
@@ -249,7 +250,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        4112,
+        4128,
         -400
       ],
       "id": "fa3adda8-e6b1-40d7-afc7-54f38ffd4b47",
@@ -282,8 +283,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1184,
-        192
+        1216,
+        224
       ],
       "id": "c33a4480-0f33-4673-9062-7add1f69f594",
       "name": "Attach File to VectorStore",
@@ -302,8 +303,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2096,
-        96
+        2112,
+        80
       ],
       "id": "e5c830ea-7ba5-4cc6-8395-7d2545207268",
       "name": "Wait",
@@ -328,8 +329,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2320,
-        96
+        2336,
+        80
       ],
       "id": "8f4c3c4b-3d5d-4fb3-a10a-986a6d3e51bb",
       "name": "Check File Indexing Status",
@@ -349,8 +350,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        736,
-        96
+        768,
+        128
       ],
       "id": "7abe1bf3-497c-4d0b-b916-e5dc23c77bb4",
       "name": "Save Uploaded File ID"
@@ -372,8 +373,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1696,
-        -96
+        1664,
+        56
       ],
       "id": "3f3d3866-6421-4f46-9a0d-2a1c784a20d2",
       "name": "Merge Uploaded ID with Index Status"
@@ -388,8 +389,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        960,
-        96
+        992,
+        128
       ],
       "id": "ab2225f1-3f4d-4eb4-97cc-4c764b1f8151",
       "name": "Set Retry Counter"
@@ -422,8 +423,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1872,
-        -96
+        1888,
+        -112
       ],
       "id": "42713448-74fc-44dc-81e0-27f15b5c1c4a",
       "name": "Is Indexing Completed?"
@@ -438,8 +439,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1184,
-        -32
+        1216,
+        -328
       ],
       "id": "1cb7a829-3fc0-4e04-a01c-7171da470cef",
       "name": "Keep uploaded_file_id"
@@ -453,8 +454,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1408,
-        96
+        1440,
+        128
       ],
       "id": "ff143a60-87f9-4213-8f10-f7dd2f892366",
       "name": "Merge uploaded_file_id with Attach Response"
@@ -466,8 +467,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2544,
-        160
+        2560,
+        152
       ],
       "id": "32821287-c74e-410a-af13-4881cc4d2054",
       "name": "Extract Indexed File Items"
@@ -490,7 +491,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2096,
+        2112,
         -112
       ],
       "id": "9a644788-b2b0-47b0-bc6e-07684e0c1adf",
@@ -524,8 +525,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2992,
-        -176
+        3008,
+        -184
       ],
       "id": "2830c772-abe5-40ef-99d0-923f33c32909",
       "name": "Is Run Completed?"
@@ -535,7 +536,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3216,
+        3232,
         -16
       ],
       "id": "f79ffd34-b132-4019-9f76-8a854755ed79",
@@ -553,7 +554,7 @@
       "typeVersion": 3.4,
       "position": [
         96,
-        -400
+        -40
       ],
       "id": "76bc66a0-ed93-4668-8e64-c8a6bfbc23ef",
       "name": "Keep _id"
@@ -567,7 +568,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        3664,
+        3680,
         -400
       ],
       "id": "9ad24e81-f63e-4381-9c1e-50630361a76e",
@@ -580,8 +581,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3440,
-        -224
+        3456,
+        -232
       ],
       "id": "8157797d-a9e9-4ccc-87a5-57ae9670edb3",
       "name": "Extract AI Output JSON"
@@ -593,14 +594,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3888,
+        3904,
         -400
       ],
       "id": "6c9a654c-75d2-44b4-b0a3-d33d0cc7fee6",
       "name": "Build Final Summary JSON"
     }
   ],
-  "pinData": {},
   "connections": {
     "DocReadAI Webhook": {
       "main": [
@@ -901,17 +901,69 @@
       ]
     }
   },
-  "active": true,
   "settings": {
-    "callerPolicy": "workflowsFromSameOwner",
     "executionOrder": "v0",
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "1e01cc67-9d5d-49db-aa9a-413c390f2197",
-  "meta": {
-    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
-  },
-  "id": "199Frc7wzvgtWS7N",
+  "meta": null,
+  "pinData": {},
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-07-30T12:07:09.805Z",
+      "updatedAt": "2025-07-30T12:07:09.805Z",
+      "role": "workflow:owner",
+      "workflowId": "199Frc7wzvgtWS7N",
+      "projectId": "09282RsGeMMUJreV",
+      "project": {
+        "createdAt": "2025-07-28T21:14:12.127Z",
+        "updatedAt": "2025-07-28T21:15:56.913Z",
+        "id": "09282RsGeMMUJreV",
+        "name": "Rossi Kwak <rossi.kwak@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-07-28T21:14:12.127Z",
+            "updatedAt": "2025-07-28T21:14:12.127Z",
+            "userId": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+            "projectId": "09282RsGeMMUJreV",
+            "user": {
+              "createdAt": "2025-07-28T21:14:10.836Z",
+              "updatedAt": "2025-12-27T16:12:17.000Z",
+              "id": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+              "email": "rossi.kwak@gmail.com",
+              "firstName": "Rossi",
+              "lastName": "Kwak",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-07-28T21:16:00.455Z",
+                "personalization_survey_n8n_version": "1.100.1"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "nOAbvrST5mG0ksJt",
+                "userActivatedAt": 1753746589786,
+                "easyAIWorkflowOnboarded": true,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1755591450515
+                },
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-28",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }

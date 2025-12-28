@@ -85,9 +85,42 @@ for file in "${WORKFLOW_FILES[@]}"; do
   # 기존 워크플로우 ID 찾기 (동일 이름이 여러개면 첫번째 사용)
   WORKFLOW_ID=$(echo "$EXISTING_WORKFLOWS" | jq -r --arg name "$WORKFLOW_NAME" '[.data[] | select(.name == $name) | .id][0] // empty')
 
-  # 임시 파일에 필터링된 JSON 저장 (쉘 변수 크기 제한 우회)
+  # Git 커밋 해시 추출
+  RELATIVE_PATH="${file#$AIMS_DIR/}"
+  GIT_HASH=$(cd "$AIMS_DIR" && git log -1 --format="%h" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
+  GIT_HASH_FULL=$(cd "$AIMS_DIR" && git log -1 --format="%H" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
+  GIT_DATE=$(cd "$AIMS_DIR" && git log -1 --format="%ci" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
+  DEPLOY_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+
+  # Sticky Note 노드 내용 (Git 정보 표시)
+  STICKY_CONTENT="## 🔖 Git Version Info\n\n**Commit:** ${GIT_HASH}\n**Full:** ${GIT_HASH_FULL}\n**Committed:** ${GIT_DATE}\n**Deployed:** ${DEPLOY_TIME}"
+
+  # 임시 파일에 필터링된 JSON 저장
+  # 1) Sticky Note로 시각적 표시 + 2) staticData에 프로그래밍 접근용 저장
   TEMP_JSON=$(mktemp)
-  if ! jq 'del(.id, .versionId, .meta, .tags, .pinData, .active, .settings.callerPolicy)' "$file" > "$TEMP_JSON" 2>/dev/null; then
+  if ! jq --arg content "$STICKY_CONTENT" \
+          --arg hash "$GIT_HASH" \
+          --arg hashFull "$GIT_HASH_FULL" \
+          --arg gitDate "$GIT_DATE" \
+          --arg deployTime "$DEPLOY_TIME" '
+    del(.id, .versionId, .meta, .tags, .pinData, .active, .settings.callerPolicy) |
+    .staticData = {
+      "git": {
+        "commit": $hash,
+        "commitFull": $hashFull,
+        "committedAt": $gitDate,
+        "deployedAt": $deployTime
+      }
+    } |
+    .nodes = [(.nodes // [])[] | select(.name != "Git Version Info")] + [{
+      "parameters": { "content": $content, "height": 180, "width": 280 },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-600, -400],
+      "id": "git-version-info",
+      "name": "Git Version Info"
+    }]
+  ' "$file" > "$TEMP_JSON" 2>/dev/null; then
     echo -e "${RED}JSON 필터링 실패${NC}"
     ((FAIL_COUNT++))
     rm -f "$TEMP_JSON"

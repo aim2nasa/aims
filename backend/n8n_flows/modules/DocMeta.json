@@ -1,5 +1,6 @@
 {
   "name": "DocMeta",
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -210,7 +211,7 @@
       "typeVersion": 2.2,
       "position": [
         1056,
-        304
+        296
       ],
       "id": "18439df7-9a57-49c5-b49e-f50d9a445e85",
       "name": "Parsed?"
@@ -227,7 +228,7 @@
       "typeVersion": 1.4,
       "position": [
         1280,
-        208
+        200
       ],
       "id": "85dbaa3f-cee6-4e0a-9231-9ac758276124",
       "name": "Respond 500 AnalyzerOutputFail"
@@ -425,7 +426,7 @@
       "typeVersion": 3.2,
       "position": [
         1952,
-        640
+        632
       ],
       "id": "c4b81fd3-d230-4954-8a90-18580261ac01",
       "name": "Merge"
@@ -538,7 +539,7 @@
       "typeVersion": 3.4,
       "position": [
         2176,
-        640
+        632
       ],
       "id": "73697a37-fb67-4816-85c0-72819d776a01",
       "name": "Response Data"
@@ -572,7 +573,7 @@
       "typeVersion": 2.2,
       "position": [
         1280,
-        400
+        392
       ],
       "id": "5b43befb-7b8c-4012-bc8c-3685b147c25f",
       "name": "extracted_text Empty?"
@@ -685,7 +686,6 @@
       "name": "Empty extracted_text Response Data"
     }
   ],
-  "pinData": {},
   "connections": {
     "DocMeta Webhook": {
       "main": [
@@ -918,17 +918,69 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "eee73d3d-eaea-40eb-95e8-713969ccd43a",
-  "meta": {
-    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
-  },
-  "id": "nOAbvrST5mG0ksJt",
+  "meta": null,
+  "pinData": {},
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-07-28T22:39:30.113Z",
+      "updatedAt": "2025-07-28T22:39:30.113Z",
+      "role": "workflow:owner",
+      "workflowId": "nOAbvrST5mG0ksJt",
+      "projectId": "09282RsGeMMUJreV",
+      "project": {
+        "createdAt": "2025-07-28T21:14:12.127Z",
+        "updatedAt": "2025-07-28T21:15:56.913Z",
+        "id": "09282RsGeMMUJreV",
+        "name": "Rossi Kwak <rossi.kwak@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-07-28T21:14:12.127Z",
+            "updatedAt": "2025-07-28T21:14:12.127Z",
+            "userId": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+            "projectId": "09282RsGeMMUJreV",
+            "user": {
+              "createdAt": "2025-07-28T21:14:10.836Z",
+              "updatedAt": "2025-12-27T16:12:17.000Z",
+              "id": "a4b5c740-6fbe-4570-be7b-3303a289b792",
+              "email": "rossi.kwak@gmail.com",
+              "firstName": "Rossi",
+              "lastName": "Kwak",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-07-28T21:16:00.455Z",
+                "personalization_survey_n8n_version": "1.100.1"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "nOAbvrST5mG0ksJt",
+                "userActivatedAt": 1753746589786,
+                "easyAIWorkflowOnboarded": true,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1755591450515
+                },
+                "dismissedCallouts": {
+                  "aiAgentStarterCallout": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-28",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }
