@@ -13,11 +13,10 @@ from config import get_settings
 
 
 class FileService:
-    def __init__(self):
-        self.settings = get_settings()
-        self.base_path = Path(self.settings.FILE_BASE_PATH)
+    """File storage service with class methods"""
 
-    def _generate_filename(self, original_name: str) -> str:
+    @classmethod
+    def _generate_filename(cls, original_name: str) -> str:
         """Generate unique filename with timestamp prefix"""
         timestamp = datetime.now().strftime("%y%m%d%H%M%S")
         random_suffix = hashlib.md5(
@@ -26,23 +25,27 @@ class FileService:
         ext = Path(original_name).suffix
         return f"{timestamp}_{random_suffix}{ext}"
 
-    def _get_user_path(self, user_id: str) -> Path:
+    @classmethod
+    def _get_user_path(cls, user_id: str) -> Path:
         """Get user-specific storage path"""
+        settings = get_settings()
+        base_path = Path(settings.FILE_BASE_PATH)
         now = datetime.now()
-        return self.base_path / "users" / user_id / str(now.year) / f"{now.month:02d}"
+        return base_path / "users" / user_id / str(now.year) / f"{now.month:02d}"
 
+    @classmethod
     async def save_file(
-        self,
-        file_content: bytes,
+        cls,
+        content: bytes,
         original_name: str,
         user_id: str,
         source_path: Optional[str] = None
-    ) -> Tuple[str, str, str]:
+    ) -> Tuple[str, str]:
         """
-        Save file and return (saved_name, dest_path, source_path)
+        Save file and return (saved_name, dest_path)
         """
-        saved_name = self._generate_filename(original_name)
-        user_path = self._get_user_path(user_id)
+        saved_name = cls._generate_filename(original_name)
+        user_path = cls._get_user_path(user_id)
 
         # Create directory if not exists
         os.makedirs(user_path, exist_ok=True)
@@ -50,16 +53,29 @@ class FileService:
         dest_path = user_path / saved_name
 
         async with aiofiles.open(dest_path, 'wb') as f:
-            await f.write(file_content)
+            await f.write(content)
 
-        return saved_name, str(dest_path), source_path or ""
+        return saved_name, str(dest_path)
 
-    async def read_file(self, file_path: str) -> bytes:
-        """Read file content"""
+    @classmethod
+    async def read_file(cls, file_path: str) -> bytes:
+        """Read file content as bytes"""
         async with aiofiles.open(file_path, 'rb') as f:
             return await f.read()
 
-    def get_file_info(self, file_path: str) -> dict:
+    @classmethod
+    async def read_file_as_text(cls, file_path: str, encoding: str = "utf-8") -> str:
+        """Read file content as text"""
+        try:
+            async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
+                return await f.read()
+        except UnicodeDecodeError:
+            # Try with latin-1 as fallback
+            async with aiofiles.open(file_path, 'r', encoding='latin-1') as f:
+                return await f.read()
+
+    @classmethod
+    def get_file_info(cls, file_path: str) -> dict:
         """Get file metadata"""
         path = Path(file_path)
         if not path.exists():
@@ -76,6 +92,7 @@ class FileService:
             "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
         }
 
-    def compute_hash(self, content: bytes) -> str:
+    @classmethod
+    def compute_hash(cls, content: bytes) -> str:
         """Compute SHA-256 hash of content"""
         return hashlib.sha256(content).hexdigest()

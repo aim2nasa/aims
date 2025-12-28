@@ -15,8 +15,6 @@ from models.document import MetaRequest, MetaResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-meta_service = MetaService()
-openai_service = OpenAIService()
 
 
 class MetaPathRequest(BaseModel):
@@ -57,20 +55,20 @@ async def extract_metadata(
             if len(content) == 0:
                 return _error_response(400, "NO_CONTENT", "빈 파일입니다.")
 
-            meta = await meta_service.extract_metadata(
+            meta = await MetaService.extract_metadata(
                 file_content=content,
                 filename=file.filename
             )
         elif path:
             # Path mode
-            meta = await meta_service.extract_metadata(file_path=path)
+            meta = await MetaService.extract_metadata(file_path=path)
         else:
             return _error_response(400, "NO_INPUT", "파일 또는 경로가 필요합니다.")
 
-        if meta.get("status") == "ERROR":
+        if meta.get("error"):
             return _error_response(
-                500,
-                meta.get("error", "UNKNOWN"),
+                meta.get("status", 500),
+                meta.get("code", "UNKNOWN"),
                 meta.get("message", "메타데이터 추출 실패")
             )
 
@@ -83,27 +81,29 @@ async def extract_metadata(
         extracted_text = meta.get("extracted_text")
         if extracted_text:
             try:
-                summary, tags = await openai_service.summarize_text(extracted_text)
+                summary_result = await OpenAIService.summarize_text(extracted_text)
+                summary = summary_result.get("summary")
+                tags = summary_result.get("tags", [])
                 length = len(summary) if summary else 0
-                truncated = len(extracted_text) > 10000
+                truncated = summary_result.get("truncated", False)
             except Exception as e:
                 logger.warning(f"Summary generation failed: {e}")
 
         logger.info(
             f"Metadata extracted: {meta.get('filename')}, "
-            f"mime: {meta.get('mime')}, "
-            f"pages: {meta.get('pdf_pages')}"
+            f"mime: {meta.get('mime_type')}, "
+            f"pages: {meta.get('num_pages')}"
         )
 
         return {
             "filename": meta.get("filename"),
             "extension": meta.get("extension"),
-            "mime": meta.get("mime"),
-            "size_bytes": meta.get("size_bytes"),
+            "mime": meta.get("mime_type"),
+            "size_bytes": meta.get("file_size"),
             "created_at": meta.get("created_at"),
             "status": "OK",
             "exif": meta.get("exif"),
-            "pdf_pages": meta.get("pdf_pages"),
+            "pdf_pages": meta.get("num_pages"),
             "extracted_text": extracted_text,
             "pdf_text_ratio": meta.get("pdf_text_ratio"),
             "summary": summary,
@@ -126,12 +126,12 @@ async def extract_metadata_json(request: MetaPathRequest):
     Alternative endpoint for JSON body requests.
     """
     try:
-        meta = await meta_service.extract_metadata(file_path=request.path)
+        meta = await MetaService.extract_metadata(file_path=request.path)
 
-        if meta.get("status") == "ERROR":
+        if meta.get("error"):
             return _error_response(
-                500,
-                meta.get("error", "UNKNOWN"),
+                meta.get("status", 500),
+                meta.get("code", "UNKNOWN"),
                 meta.get("message", "메타데이터 추출 실패")
             )
 
@@ -144,21 +144,23 @@ async def extract_metadata_json(request: MetaPathRequest):
         extracted_text = meta.get("extracted_text")
         if extracted_text:
             try:
-                summary, tags = await openai_service.summarize_text(extracted_text)
+                summary_result = await OpenAIService.summarize_text(extracted_text)
+                summary = summary_result.get("summary")
+                tags = summary_result.get("tags", [])
                 length = len(summary) if summary else 0
-                truncated = len(extracted_text) > 10000
+                truncated = summary_result.get("truncated", False)
             except Exception as e:
                 logger.warning(f"Summary generation failed: {e}")
 
         return {
             "filename": meta.get("filename"),
             "extension": meta.get("extension"),
-            "mime": meta.get("mime"),
-            "size_bytes": meta.get("size_bytes"),
+            "mime": meta.get("mime_type"),
+            "size_bytes": meta.get("file_size"),
             "created_at": meta.get("created_at"),
             "status": "OK",
             "exif": meta.get("exif"),
-            "pdf_pages": meta.get("pdf_pages"),
+            "pdf_pages": meta.get("num_pages"),
             "extracted_text": extracted_text,
             "pdf_text_ratio": meta.get("pdf_text_ratio"),
             "summary": summary,

@@ -128,3 +128,46 @@ class RedisService:
             logger.debug(f"Deleted message: {message_id}")
         except Exception as e:
             logger.error(f"Redis ack/delete error: {e}")
+
+    @classmethod
+    async def add_to_stream(
+        cls,
+        file_id: str,
+        file_path: str,
+        doc_id: str,
+        owner_id: str,
+        queued_at: str
+    ) -> str:
+        """
+        Add a new message to the OCR stream.
+
+        Args:
+            file_id: File ID
+            file_path: Path to the file
+            doc_id: Document ID
+            owner_id: Owner (user) ID
+            queued_at: ISO timestamp when queued
+
+        Returns:
+            The Redis message ID
+        """
+        if cls._client is None:
+            await cls.connect()
+
+        try:
+            # XADD ocr_stream * file_id <id> file_path <path> ...
+            message_id = await cls._client.xadd(
+                cls.STREAM_NAME,
+                {
+                    "file_id": file_id,
+                    "file_path": file_path,
+                    "doc_id": doc_id,
+                    "owner_id": owner_id,
+                    "queued_at": queued_at
+                }
+            )
+            logger.info(f"Added message to stream: {message_id}")
+            return message_id
+        except Exception as e:
+            logger.error(f"Redis XADD error: {e}")
+            raise

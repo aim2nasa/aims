@@ -22,10 +22,11 @@ except ImportError:
 
 
 class MetaService:
-    """Extract metadata from documents"""
+    """Extract metadata from documents using class methods"""
 
+    @classmethod
     async def extract_metadata(
-        self,
+        cls,
         file_path: Optional[str] = None,
         file_content: Optional[bytes] = None,
         filename: Optional[str] = None
@@ -45,9 +46,9 @@ class MetaService:
             if file_path:
                 path = Path(file_path)
                 if not path.exists():
-                    return self._error_response("FILE_NOT_FOUND", f"File not found: {file_path}")
+                    return cls._error_response("FILE_NOT_FOUND", f"File not found: {file_path}")
 
-                content = await self._read_file(file_path)
+                content = await cls._read_file(file_path)
                 name = path.name
                 stat = path.stat()
                 size = stat.st_size
@@ -58,7 +59,7 @@ class MetaService:
                 size = len(file_content)
                 created_at = datetime.utcnow().isoformat()
             else:
-                return self._error_response("NO_INPUT", "No file path or content provided")
+                return cls._error_response("NO_INPUT", "No file path or content provided")
 
             # Basic metadata
             extension = Path(name).suffix.lower()
@@ -73,20 +74,20 @@ class MetaService:
                 "status": "OK",
                 "filename": name,
                 "extension": extension,
-                "mime": mime_type,
-                "size_bytes": size,
+                "mime_type": mime_type,
+                "file_size": size,
                 "created_at": created_at,
                 "file_hash": file_hash,
                 "extracted_text": None,
-                "pdf_pages": None,
+                "num_pages": None,
                 "pdf_text_ratio": None,
                 "exif": None,
-                "error": None
+                "error": False
             }
 
             # Extract text based on file type
             if mime_type == "application/pdf":
-                pdf_info = await self._extract_pdf_info(content)
+                pdf_info = await cls._extract_pdf_info(content)
                 result.update(pdf_info)
             elif mime_type.startswith("text/"):
                 result["extracted_text"] = content.decode("utf-8", errors="ignore")
@@ -95,17 +96,19 @@ class MetaService:
 
         except Exception as e:
             logger.error(f"Metadata extraction error: {e}")
-            return self._error_response("EXTRACTION_ERROR", str(e))
+            return cls._error_response("EXTRACTION_ERROR", str(e))
 
-    async def _read_file(self, file_path: str) -> bytes:
+    @classmethod
+    async def _read_file(cls, file_path: str) -> bytes:
         """Read file content"""
         async with aiofiles.open(file_path, 'rb') as f:
             return await f.read()
 
-    async def _extract_pdf_info(self, content: bytes) -> Dict[str, Any]:
+    @classmethod
+    async def _extract_pdf_info(cls, content: bytes) -> Dict[str, Any]:
         """Extract PDF-specific information"""
         result = {
-            "pdf_pages": None,
+            "num_pages": None,
             "extracted_text": None,
             "pdf_text_ratio": None
         }
@@ -115,7 +118,7 @@ class MetaService:
 
         try:
             doc = fitz.open(stream=content, filetype="pdf")
-            result["pdf_pages"] = len(doc)
+            result["num_pages"] = len(doc)
 
             # Extract text from all pages
             text_parts = []
@@ -126,8 +129,8 @@ class MetaService:
             result["extracted_text"] = full_text
 
             # Calculate text ratio (characters per page)
-            if result["pdf_pages"] > 0:
-                result["pdf_text_ratio"] = len(full_text) / result["pdf_pages"]
+            if result["num_pages"] > 0:
+                result["pdf_text_ratio"] = len(full_text) / result["num_pages"]
 
             doc.close()
 
@@ -137,20 +140,22 @@ class MetaService:
 
         return result
 
-    def _error_response(self, error_code: str, message: str) -> Dict[str, Any]:
+    @classmethod
+    def _error_response(cls, error_code: str, message: str) -> Dict[str, Any]:
         """Generate error response"""
         return {
-            "status": "ERROR",
-            "error": error_code,
+            "status": 500,
+            "error": True,
+            "code": error_code,
             "message": message,
             "filename": None,
             "extension": None,
-            "mime": None,
-            "size_bytes": None,
+            "mime_type": None,
+            "file_size": None,
             "created_at": None,
             "file_hash": None,
             "extracted_text": None,
-            "pdf_pages": None,
+            "num_pages": None,
             "pdf_text_ratio": None,
             "exif": None
         }

@@ -2,25 +2,34 @@
 OpenAI Service for Text Summarization
 """
 import openai
-from typing import List, Tuple
+from typing import List, Dict, Any, Optional
 import re
 
 from config import get_settings
 
 
 class OpenAIService:
-    def __init__(self):
-        self.settings = get_settings()
-        self.client = openai.AsyncOpenAI(api_key=self.settings.OPENAI_API_KEY)
+    """OpenAI service using class methods"""
 
+    _client: Optional[openai.AsyncOpenAI] = None
+
+    @classmethod
+    def _get_client(cls) -> openai.AsyncOpenAI:
+        """Get or create OpenAI client"""
+        if cls._client is None:
+            settings = get_settings()
+            cls._client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        return cls._client
+
+    @classmethod
     async def summarize_text(
-        self,
+        cls,
         text: str,
         max_length: int = 500
-    ) -> Tuple[str, List[str]]:
+    ) -> Dict[str, Any]:
         """
         Summarize text and extract tags.
-        Returns (summary, tags)
+        Returns {"summary": str, "tags": list}
         """
         # Truncate if too long
         truncated = len(text) > 10000
@@ -37,7 +46,8 @@ class OpenAIService:
 태그: [태그1], [태그2], [태그3]"""
 
         try:
-            response = await self.client.chat.completions.create(
+            client = cls._get_client()
+            response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "당신은 문서 요약 전문가입니다."},
@@ -65,13 +75,14 @@ class OpenAIService:
             if not summary:
                 summary = content[:500]
 
-            return summary, tags
+            return {"summary": summary, "tags": tags, "truncated": truncated}
 
         except Exception as e:
             # Return error message as summary
-            return f"요약 생성 실패: {str(e)}", []
+            return {"summary": f"요약 생성 실패: {str(e)}", "tags": [], "truncated": truncated}
 
-    async def extract_tags(self, text: str) -> List[str]:
+    @classmethod
+    async def extract_tags(cls, text: str) -> List[str]:
         """Extract keywords as tags from text"""
-        _, tags = await self.summarize_text(text)
-        return tags
+        result = await cls.summarize_text(text)
+        return result.get("tags", [])

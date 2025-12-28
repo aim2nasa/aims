@@ -11,7 +11,6 @@ from models.document import UploadResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-file_service = FileService()
 
 
 @router.post("/docupload", response_model=UploadResponse)
@@ -48,8 +47,8 @@ async def upload_document(
             )
 
         # Save file
-        saved_name, dest_path, src_path = await file_service.save_file(
-            file_content=content,
+        saved_name, dest_path = await FileService.save_file(
+            content=content,
             original_name=file.filename,
             user_id=userId,
             source_path=source_path
@@ -60,7 +59,7 @@ async def upload_document(
         return UploadResponse(
             result="success",
             original=file.filename,
-            sourcePath=src_path,
+            sourcePath=source_path or "",
             saved_name=saved_name,
             path=dest_path
         )
