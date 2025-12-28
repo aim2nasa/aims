@@ -2771,28 +2771,23 @@ curl https://aims.giize.com/shadow/mismatches | jq '.mismatches[0].analysis'
 
 ## 16. 사용자 운영 가이드
 
-### 평상시: 아무것도 안 해도 됨
+### 자동 알림 (Slack)
 
-Shadow Mode가 자동으로 n8n과 FastAPI를 비교하고 로깅함.
-
-### 하루 1회 확인 (선택)
-
-```bash
-curl -s https://aims.giize.com/shadow/stats | jq '.switch_readiness'
+Mismatch 발생 시 Slack으로 자동 알림:
+```
+🚨 Shadow Mode Mismatch 발생
+Workflow: docsummary
+Diff Count: 2
 ```
 
-- `ready: true` → 전환 가능
-- `ready: false` → 계속 대기
+### 알림 받으면
 
-### 문제 발생 시: Claude에게 요청
-
+Claude에게 복붙:
 ```
 Shadow Mode mismatch 발생함. 확인하고 수정해줘.
 ```
 
-Claude가 `/shadow/mismatches` 조회 → 원인 분석 → 코드 수정
-
-### 전환 준비 완료 시
+### 전환할 때
 
 ```
 n8n을 FastAPI로 전환해줘
@@ -2800,4 +2795,4 @@ n8n을 FastAPI로 전환해줘
 
 ---
 
-**요약: 평소엔 신경 안 써도 됨. 문제 생기면 Claude한테 말하면 됨.**
+**요약: Slack 알림 오면 Claude한테 복붙.**

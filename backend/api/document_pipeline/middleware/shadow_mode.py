@@ -187,6 +187,9 @@ async def _handle_mismatch(
         diffs=diffs
     )
 
+    # Slack 알림
+    await _send_slack_alert(workflow, diffs, mismatch_id)
+
     # 자동 수정 활성화 시 Claude 분석
     if ShadowMode.auto_fix:
         try:
@@ -250,6 +253,49 @@ async def _log_call(workflow: str, result: str, diff_count: int):
         })
     except Exception as e:
         logger.error(f"Failed to log call: {e}")
+
+
+async def _send_slack_alert(workflow: str, diffs: list, mismatch_id: str):
+    """Slack으로 mismatch 알림 전송"""
+    try:
+        slack_url = settings.SLACK_WEBHOOK_URL
+        if not slack_url:
+            logger.debug("Slack webhook URL not configured, skipping alert")
+            return
+
+        diff_summary = ", ".join([d.get("path", "unknown") for d in diffs[:5]])
+        if len(diffs) > 5:
+            diff_summary += f" 외 {len(diffs) - 5}개"
+
+        message = {
+            "text": f"🚨 *Shadow Mode Mismatch*",
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": "🚨 Shadow Mode Mismatch 발생"}
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*Workflow:*\n{workflow}"},
+                        {"type": "mrkdwn", "text": f"*Diff Count:*\n{len(diffs)}"},
+                        {"type": "mrkdwn", "text": f"*Fields:*\n{diff_summary}"},
+                        {"type": "mrkdwn", "text": f"*ID:*\n{mismatch_id[:8]}..."}
+                    ]
+                },
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "Claude에게: `Shadow Mode mismatch 발생함. 확인하고 수정해줘`"}
+                }
+            ]
+        }
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(slack_url, json=message)
+            logger.info(f"Slack alert sent for {workflow} mismatch")
+
+    except Exception as e:
+        logger.error(f"Failed to send Slack alert: {e}")
 
 
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
