@@ -646,6 +646,162 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
   });
 
   /**
+   * POST /api/admin/ocr/reprocess-all
+   * 모든 OCR 실패 문서 일괄 재처리 (429 에러 등)
+   *
+   * Query:
+   * - statusCode: string (선택, 특정 에러 코드만 필터링, 예: '429')
+   * - interval: number (기본값: 5000, 문서 간 간격 ms, 429 방지용)
+   * - maxRetry: number (기본값: 3, 최대 재시도 횟수 초과 시 제외)
+   *
+   * 처리 로직:
+   * 1. OCR 실패 문서 전체 조회
+   * 2. 순차적으로 interval 간격으로 Redis에 재등록
+   * 3. 결과 반환
+   */
+  router.post('/admin/ocr/reprocess-all', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { statusCode, interval = 5000, maxRetry = 3 } = req.body;
+
+      const filesCollection = db.collection('files');
+
+      // 쿼리 조건
+      const matchCondition = {
+        'ocr.status': 'error',
+        $or: [
+          { 'ocr.retry_count': { $exists: false } },
+          { 'ocr.retry_count': { $lt: maxRetry } }
+        ]
+      };
+      if (statusCode) {
+        matchCondition['ocr.statusCode'] = statusCode;
+      }
+
+      // 실패 문서 조회
+      const failedDocs = await filesCollection.find(matchCondition)
+        .sort({ 'ocr.failed_at': 1 }) // 오래된 것부터
+        .project({
+          _id: 1,
+          'upload.originalName': 1,
+          'upload.destPath': 1,
+          ownerId: 1,
+          'ocr.retry_count': 1
+        })
+        .toArray();
+
+      if (failedDocs.length === 0) {
+        return res.json({
+          success: true,
+          message: '재처리할 실패 문서가 없습니다.',
+          data: { queued_count: 0 }
+        });
+      }
+
+      const now = new Date().toISOString();
+      const results = [];
+
+      // Redis 연결
+      try {
+        await redis.connect().catch(() => {});
+      } catch {
+        // 이미 연결된 경우 무시
+      }
+
+      // 순차적으로 큐에 추가 (interval 간격)
+      for (let i = 0; i < failedDocs.length; i++) {
+        const doc = failedDocs[i];
+        const documentId = doc._id.toString();
+        const filePath = doc.upload?.destPath;
+
+        if (!filePath) {
+          results.push({ document_id: documentId, success: false, reason: 'no_file_path' });
+          continue;
+        }
+
+        try {
+          // Redis XADD
+          const messageId = await redis.xadd(
+            'ocr_stream',
+            '*',
+            'file_id', documentId,
+            'file_path', filePath,
+            'doc_id', documentId,
+            'owner_id', doc.ownerId || '',
+            'queued_at', now
+          );
+
+          // MongoDB 상태 업데이트
+          const retryCount = (doc.ocr?.retry_count || 0) + 1;
+          await filesCollection.updateOne(
+            { _id: doc._id },
+            {
+              $set: {
+                'ocr.status': 'queued',
+                'ocr.queued_at': now,
+                'ocr.retry_count': retryCount,
+                'ocr.last_retry_at': now
+              },
+              $unset: {
+                'ocr.failed_at': '',
+                'ocr.statusCode': '',
+                'ocr.statusMessage': '',
+                'ocr.errorBody': ''
+              }
+            }
+          );
+
+          results.push({
+            document_id: documentId,
+            originalName: doc.upload?.originalName,
+            success: true,
+            retry_count: retryCount,
+            message_id: messageId
+          });
+
+          console.log(`[OCR Reprocess All] ${i + 1}/${failedDocs.length} ${doc.upload?.originalName} 큐 등록 완료`);
+
+          // 마지막 문서가 아니면 interval만큼 대기 (429 방지)
+          if (i < failedDocs.length - 1 && interval > 0) {
+            await new Promise(resolve => setTimeout(resolve, interval));
+          }
+        } catch (err) {
+          results.push({
+            document_id: documentId,
+            originalName: doc.upload?.originalName,
+            success: false,
+            reason: err.message
+          });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      console.log(`[OCR Reprocess All] 완료: ${successCount}건 성공, ${failCount}건 실패`);
+
+      res.json({
+        success: true,
+        message: `${successCount}건의 문서가 재처리 큐에 등록되었습니다.`,
+        data: {
+          total_count: failedDocs.length,
+          queued_count: successCount,
+          failed_count: failCount,
+          interval_ms: interval,
+          results
+        }
+      });
+    } catch (error) {
+      console.error('[POST /api/admin/ocr/reprocess-all] 오류:', error);
+      backendLogger.error('OcrUsage', 'OCR 일괄 재처리 요청 오류', error);
+      res.status(500).json({
+        success: false,
+        error: 'OCR 일괄 재처리 요청에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
    * POST /api/internal/ocr/log-usage
    * OCR 사용량 기록 (n8n 워크플로우에서 호출)
    *
