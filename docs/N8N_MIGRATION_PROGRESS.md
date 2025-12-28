@@ -163,7 +163,7 @@ _(Phase 4 시작 시 기록 예정)_
 | 태그 | 설명 | 커밋 |
 |------|------|------|
 | `pre-fastapi-migration` | 마이그레이션 시작 전 | 034efed1 |
-| `fastapi-phase-1` | Phase 1 완료 | _(현재 커밋)_ |
+| `fastapi-phase-1` | Phase 1 완료 | f440738c |
 
 ---
 
