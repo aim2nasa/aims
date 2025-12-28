@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from config import get_settings
 from services.mongo_service import MongoService
-from routers import doc_upload_router, doc_summary_router
+from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router
 from workers.error_logger import error_logger
 
 # Configure logging
@@ -90,6 +90,8 @@ async def health_check():
 # Mount routers with /webhook prefix for n8n compatibility
 app.include_router(doc_upload_router, prefix="/webhook", tags=["Document Upload"])
 app.include_router(doc_summary_router, prefix="/webhook", tags=["Document Summary"])
+app.include_router(doc_ocr_router, prefix="/webhook", tags=["Document OCR"])
+app.include_router(doc_meta_router, prefix="/webhook", tags=["Document Metadata"])
 
 
 if __name__ == "__main__":

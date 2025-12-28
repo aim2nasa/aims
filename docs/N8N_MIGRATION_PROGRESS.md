@@ -11,7 +11,7 @@
 | Phase | 대상 | 상태 | 완료일 |
 |-------|------|------|--------|
 | Phase 1 | DocUpload, DocSummary, ErrorLogger | ✅ 완료 | 2025-12-28 |
-| Phase 2 | DocOCR, DocMeta | ⏳ 대기 | - |
+| Phase 2 | DocOCR, DocMeta | ✅ 완료 | 2025-12-28 |
 | Phase 3 | OCRWorker, SmartSearch | ⏳ 대기 | - |
 | Phase 4 | DocPrepMain | ⏳ 대기 | - |
 
@@ -120,16 +120,105 @@ curl -X POST http://localhost:8100/webhook/docsummary \
 
 ---
 
-## Phase 2: OCR 파이프라인
+## Phase 2: OCR 파이프라인 (2025-12-28)
 
-> 상태: ⏳ 대기
+> 상태: ✅ 완료
 
 ### 목표
 - DocOCR: Upstage API 연동
 - DocMeta: 메타데이터 추출 + DocSummary 호출
 
-### 진행 기록
-_(Phase 2 시작 시 기록 예정)_
+### 완료 항목
+
+#### 1. 신규 파일 추가
+```
+backend/api/document_pipeline/
+├── routers/
+│   ├── doc_ocr.py          # POST /webhook/dococr
+│   └── doc_meta.py         # POST /webhook/docmeta
+│
+└── services/
+    ├── upstage_service.py  # Upstage OCR API 연동
+    └── meta_service.py     # PDF 메타데이터 추출 (PyMuPDF)
+```
+
+#### 2. 의존성 추가
+```
+# requirements.txt에 추가
+PyMuPDF>=1.24.0
+```
+
+#### 3. 엔드포인트 테스트
+
+**DocOCR** ✅ (Upstage OCR API)
+```bash
+curl -X POST http://localhost:8100/webhook/dococr \
+  -F "file=@image.jpg"
+
+# 응답
+{
+  "status": 200,
+  "error": false,
+  "userMessage": "OCR 성공",
+  "confidence": 0.95,
+  "summary": "이 이미지는...",
+  "tags": ["태그1", "태그2"],
+  "full_text": "추출된 텍스트...",
+  "num_pages": 1,
+  "pages": [...]
+}
+```
+
+**DocMeta** ✅ (메타데이터 + 요약)
+```bash
+# 파일 업로드 모드
+curl -X POST http://localhost:8100/webhook/docmeta \
+  -F "file=@document.pdf"
+
+# 파일 경로 모드
+curl -X POST http://localhost:8100/webhook/docmeta \
+  -F "path=/data/files/document.pdf"
+
+# 응답
+{
+  "status": 200,
+  "error": false,
+  "filename": "document.pdf",
+  "mime_type": "application/pdf",
+  "file_size": 123456,
+  "file_hash": "sha256:...",
+  "num_pages": 28,
+  "extracted_text_length": 37344,
+  "summary": "문서 요약...",
+  "tags": ["태그1", "태그2", ...]
+}
+```
+
+#### 4. 배포 상태
+| 항목 | 값 |
+|------|-----|
+| 서비스명 | document_pipeline |
+| 포트 | 8100 |
+| PM2 상태 | ✅ online |
+| 환경변수 | UPSTAGE_API_KEY 추가 |
+
+### 기술 상세
+
+#### UpstageService
+- API: `https://api.upstage.ai/v1/document-digitization`
+- 모델: `document-parse`
+- 지원 형식: PDF, 이미지 (JPG, PNG 등)
+- 에러 핸들링: 할당량 초과, 빈 파일, API 오류 처리
+
+#### MetaService
+- PyMuPDF 기반 PDF 텍스트 추출
+- SHA256 파일 해시 생성
+- MIME 타입 자동 감지
+- 페이지 수 / 텍스트 길이 추출
+
+### 다음 단계 (Phase 3)
+1. OCRWorker: Redis Consumer + 비동기 처리
+2. SmartSearch: MongoDB 쿼리
 
 ---
 
@@ -164,6 +253,7 @@ _(Phase 4 시작 시 기록 예정)_
 |------|------|------|
 | `pre-fastapi-migration` | 마이그레이션 시작 전 | 034efed1 |
 | `fastapi-phase-1` | Phase 1 완료 | f440738c |
+| `fastapi-phase-2` | Phase 2 완료 | 0ce58d35 |
 
 ---
 
