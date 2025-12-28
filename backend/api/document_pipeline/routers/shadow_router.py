@@ -168,8 +168,7 @@ async def shadow_docprep_main(
 async def shadow_status():
     """Get shadow mode status"""
     return {
-        "enabled": ShadowMode.enabled,
-        "auto_fix": ShadowMode.auto_fix
+        "enabled": ShadowMode.enabled
     }
 
 
@@ -185,13 +184,6 @@ async def shadow_disable():
     """Disable shadow mode"""
     ShadowMode.disable()
     return {"status": "disabled"}
-
-
-@router.post("/auto-fix/{enabled}")
-async def shadow_auto_fix(enabled: bool):
-    """Enable/disable auto-fix with Claude"""
-    ShadowMode.set_auto_fix(enabled)
-    return {"auto_fix": enabled}
 
 
 @router.get("/stats")

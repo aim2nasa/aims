@@ -12,7 +12,6 @@ from functools import wraps
 
 from config import get_settings
 from contracts.dynamic_fields import compare_responses, normalize_response
-from services.anthropic_service import AnthropicService
 from services.mongo_service import MongoService
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,6 @@ class ShadowMode:
     """Shadow Mode 관리 클래스"""
 
     enabled: bool = True
-    auto_fix: bool = False  # Claude 자동 수정 활성화 여부
 
     @classmethod
     def enable(cls):
@@ -37,11 +35,6 @@ class ShadowMode:
     def disable(cls):
         cls.enabled = False
         logger.info("Shadow Mode disabled")
-
-    @classmethod
-    def set_auto_fix(cls, value: bool):
-        cls.auto_fix = value
-        logger.info(f"Shadow Mode auto_fix: {value}")
 
 
 def _safe_json(response: httpx.Response) -> dict:
@@ -175,10 +168,10 @@ async def _handle_mismatch(
     fastapi_response: dict,
     diffs: list
 ):
-    """불일치 처리"""
+    """불일치 처리 - DB에 기록 (aims-admin에서 확인)"""
     logger.warning(f"[SHADOW MISMATCH] {workflow}: {len(diffs)} differences")
 
-    # MongoDB에 로깅
+    # MongoDB에 로깅 (aims-admin에서 /shadow/mismatches로 확인)
     mismatch_id = await _log_mismatch(
         workflow=workflow,
         request_data=request_data,
@@ -187,26 +180,7 @@ async def _handle_mismatch(
         diffs=diffs
     )
 
-    # Slack 알림
-    await _send_slack_alert(workflow, diffs, mismatch_id)
-
-    # 자동 수정 활성화 시 Claude 분석
-    if ShadowMode.auto_fix:
-        try:
-            analysis = await AnthropicService.analyze_mismatch(
-                workflow=workflow,
-                n8n_response=n8n_response,
-                fastapi_response=fastapi_response,
-                diffs=diffs
-            )
-
-            # 분석 결과 저장
-            await _update_mismatch_analysis(mismatch_id, analysis)
-
-            logger.info(f"[SHADOW AUTO-FIX] Analysis complete: {analysis.get('cause', 'N/A')}")
-
-        except Exception as e:
-            logger.error(f"Auto-fix analysis failed: {e}")
+    logger.info(f"[SHADOW] Mismatch saved: {mismatch_id} - Check /shadow/mismatches")
 
 
 async def _log_mismatch(
@@ -255,49 +229,6 @@ async def _log_call(workflow: str, result: str, diff_count: int):
         logger.error(f"Failed to log call: {e}")
 
 
-async def _send_slack_alert(workflow: str, diffs: list, mismatch_id: str):
-    """Slack으로 mismatch 알림 전송"""
-    try:
-        slack_url = settings.SLACK_WEBHOOK_URL
-        if not slack_url:
-            logger.debug("Slack webhook URL not configured, skipping alert")
-            return
-
-        diff_summary = ", ".join([d.get("path", "unknown") for d in diffs[:5]])
-        if len(diffs) > 5:
-            diff_summary += f" 외 {len(diffs) - 5}개"
-
-        message = {
-            "text": f"🚨 *Shadow Mode Mismatch*",
-            "blocks": [
-                {
-                    "type": "header",
-                    "text": {"type": "plain_text", "text": "🚨 Shadow Mode Mismatch 발생"}
-                },
-                {
-                    "type": "section",
-                    "fields": [
-                        {"type": "mrkdwn", "text": f"*Workflow:*\n{workflow}"},
-                        {"type": "mrkdwn", "text": f"*Diff Count:*\n{len(diffs)}"},
-                        {"type": "mrkdwn", "text": f"*Fields:*\n{diff_summary}"},
-                        {"type": "mrkdwn", "text": f"*ID:*\n{mismatch_id[:8]}..."}
-                    ]
-                },
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Claude에게: `Shadow Mode mismatch 발생함. 확인하고 수정해줘`"}
-                }
-            ]
-        }
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            await client.post(slack_url, json=message)
-            logger.info(f"Slack alert sent for {workflow} mismatch")
-
-    except Exception as e:
-        logger.error(f"Failed to send Slack alert: {e}")
-
-
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
     """FastAPI 오류 로깅"""
     try:
@@ -313,24 +244,6 @@ async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
 
     except Exception as e:
         logger.error(f"Failed to log error: {e}")
-
-
-async def _update_mismatch_analysis(mismatch_id: str, analysis: dict):
-    """불일치 분석 결과 업데이트"""
-    try:
-        from bson import ObjectId
-        collection = MongoService.get_collection("shadow_mismatches")
-
-        await collection.update_one(
-            {"_id": ObjectId(mismatch_id)},
-            {"$set": {
-                "analysis": analysis,
-                "analyzed_at": datetime.utcnow()
-            }}
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to update analysis: {e}")
 
 
 def _sanitize_for_mongo(data: Any) -> Any:

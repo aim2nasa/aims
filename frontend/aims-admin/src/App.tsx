@@ -150,6 +150,7 @@ function App() {
       label: '시스템 관리',
       children: [
         { path: '/system/backup', label: '백업 관리' },
+        { path: '/system/shadow-monitor', label: 'Shadow Monitor' },
       ],
     },
   ];
