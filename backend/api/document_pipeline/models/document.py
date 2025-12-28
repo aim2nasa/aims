@@ -23,9 +23,11 @@ class UploadResponse(BaseModel):
 
 
 class SummaryRequest(BaseModel):
-    full_text: str
+    # n8n 호환: doc_id로 DB에서 조회하거나 full_text 직접 전달
+    doc_id: Optional[str] = None
+    full_text: Optional[str] = None
     user_id: Optional[str] = None
-    document_id: Optional[str] = None
+    document_id: Optional[str] = None  # legacy alias for doc_id
 
 
 class SummaryResponse(BaseModel):

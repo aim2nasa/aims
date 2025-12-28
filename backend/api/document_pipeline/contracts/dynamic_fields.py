@@ -12,6 +12,8 @@ IGNORE_FIELDS = {
     "created_at", "timestamp", "queued_at", "done_at", "started_at",  # 시간
     "file_hash",  # 해시값
     "_id", "id", "document_id",  # ID
+    "length",  # summary 길이 (AI 생성 텍스트 길이, 항상 다름)
+    "_empty_response", "_status_code", "_parse_error", "_raw",  # 내부 메타데이터
 }
 
 # 시맨틱 비교 필드 (AI 생성, 정확히 같을 필요 없음)
