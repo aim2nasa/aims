@@ -85,13 +85,15 @@ for name in "${!WORKFLOW_MAP[@]}"; do
     continue
   fi
 
-  # JSON 정리 (배포 시 추가되는 필드 제거)
+  # JSON 정리 (n8n API에서 거부하는 필드 제거)
   # - id, versionId: n8n 내부 ID
+  # - meta, tags, pinData: n8n API가 거부
+  # - triggerCount, shared: n8n 런타임 데이터
+  # - active, updatedAt, createdAt: 런타임 상태
   # - staticData.git: 배포 시 자동 추가
   # - "Git Version Info" Sticky Note: 배포 시 자동 추가
-  # - active, updatedAt, createdAt: 런타임 상태
   CLEANED_JSON=$(echo "$WORKFLOW_JSON" | jq '
-    del(.id, .versionId, .active, .updatedAt, .createdAt) |
+    del(.id, .versionId, .active, .updatedAt, .createdAt, .meta, .tags, .pinData, .triggerCount, .shared, .isArchived) |
     if .staticData.git then .staticData = (.staticData | del(.git)) else . end |
     if (.staticData | keys | length) == 0 then del(.staticData) else . end |
     .nodes = [.nodes[] | select(.name != "Git Version Info")]

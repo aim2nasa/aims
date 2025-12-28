@@ -103,7 +103,7 @@ for file in "${WORKFLOW_FILES[@]}"; do
           --arg hashFull "$GIT_HASH_FULL" \
           --arg gitDate "$GIT_DATE" \
           --arg deployTime "$DEPLOY_TIME" '
-    del(.id, .versionId, .meta, .tags, .pinData, .active, .settings.callerPolicy) |
+    del(.id, .versionId, .meta, .tags, .pinData, .active, .isArchived, .settings.callerPolicy) |
     .staticData = {
       "git": {
         "commit": $hash,
