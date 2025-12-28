@@ -422,3 +422,43 @@ html[data-theme="dark"] .tier-select option {
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
+
+/* Tier Change Modal */
+.tier-change-modal {
+  padding: var(--spacing-md);
+}
+
+.tier-change-modal__text {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.tier-change-modal__change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.tier-change-modal__arrow {
+  font-size: var(--font-size-xl);
+  color: var(--color-text-tertiary);
+}
+
+.tier-change-modal__change .tier-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.tier-change-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}

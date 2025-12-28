@@ -41,6 +41,13 @@ export const UsersPage = () => {
   const [deleteModalUser, setDeleteModalUser] = useState<User | null>(null);
   const [deletePreview, setDeletePreview] = useState<DeletePreviewResponse['preview'] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  // 등급 변경 확인 모달 상태
+  const [tierChangeModal, setTierChangeModal] = useState<{
+    user: User;
+    currentTier: string;
+    newTier: string;
+  } | null>(null);
   const limit = 10;
 
   // 삭제 모달 열릴 때 미리보기 데이터 조회
@@ -86,6 +93,7 @@ export const UsersPage = () => {
       setUpdatingUserId(userId);
     },
     onSuccess: () => {
+      setTierChangeModal(null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
     onSettled: () => {
@@ -115,8 +123,20 @@ export const UsersPage = () => {
     },
   });
 
-  const handleTierChange = (userId: string, newTier: string) => {
-    updateTierMutation.mutate({ userId, tier: newTier });
+  // 등급 변경 시 확인 모달 표시
+  const handleTierChange = (user: User, currentTier: string, newTier: string) => {
+    if (currentTier === newTier) return; // 같은 등급이면 무시
+    setTierChangeModal({ user, currentTier, newTier });
+  };
+
+  // 등급 변경 확인
+  const handleTierChangeConfirm = () => {
+    if (tierChangeModal) {
+      updateTierMutation.mutate({
+        userId: tierChangeModal.user._id,
+        tier: tierChangeModal.newTier,
+      });
+    }
   };
 
   const handleDeleteClick = (user: User) => {
@@ -277,7 +297,7 @@ export const UsersPage = () => {
                       <select
                         className={`tier-select tier-select--${tier}`}
                         value={tier}
-                        onChange={(e) => handleTierChange(user._id, e.target.value)}
+                        onChange={(e) => handleTierChange(user, tier, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                         disabled={isUpdating}
                         aria-label="등급 변경"
@@ -382,6 +402,46 @@ export const UsersPage = () => {
           </span>
         </div>
       )}
+
+      {/* 등급 변경 확인 모달 */}
+      <Modal
+        isOpen={tierChangeModal !== null}
+        onClose={() => setTierChangeModal(null)}
+        title="등급 변경 확인"
+      >
+        {tierChangeModal && (
+          <div className="tier-change-modal">
+            <p className="tier-change-modal__text">
+              <strong>{tierChangeModal.user.name}</strong> ({tierChangeModal.user.email}) 사용자의 등급을 변경하시겠습니까?
+            </p>
+            <div className="tier-change-modal__change">
+              <span className={`tier-badge tier-badge--${tierChangeModal.currentTier}`}>
+                {TIER_OPTIONS.find(t => t.value === tierChangeModal.currentTier)?.label || tierChangeModal.currentTier}
+              </span>
+              <span className="tier-change-modal__arrow">→</span>
+              <span className={`tier-badge tier-badge--${tierChangeModal.newTier}`}>
+                {TIER_OPTIONS.find(t => t.value === tierChangeModal.newTier)?.label || tierChangeModal.newTier}
+              </span>
+            </div>
+            <div className="tier-change-modal__actions">
+              <Button
+                variant="secondary"
+                onClick={() => setTierChangeModal(null)}
+                disabled={updateTierMutation.isPending}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleTierChangeConfirm}
+                disabled={updateTierMutation.isPending}
+              >
+                {updateTierMutation.isPending ? '변경 중...' : '변경'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* 삭제 확인 모달 */}
       <Modal
