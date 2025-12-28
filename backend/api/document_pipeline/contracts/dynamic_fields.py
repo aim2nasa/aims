@@ -17,7 +17,7 @@ IGNORE_FIELDS = {
     # AI 생성 필드 길이
     "length",
     # 내부 메타데이터
-    "_empty_response", "_status_code", "_parse_error", "_raw",
+    "_empty_response", "_status_code", "_parse_error", "_raw", "raw",
     # 에러 관련 필드 (형식이 n8n과 다름)
     "code", "message", "error", "detail", "hint", "userMessage", "status",
     # Optional 메타데이터 필드 (None일 때 차이 발생)
