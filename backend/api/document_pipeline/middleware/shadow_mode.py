@@ -44,6 +44,17 @@ class ShadowMode:
         logger.info(f"Shadow Mode auto_fix: {value}")
 
 
+def _safe_json(response: httpx.Response) -> dict:
+    """안전하게 JSON 파싱, 빈 응답은 빈 dict 반환"""
+    try:
+        text = response.text.strip()
+        if not text:
+            return {"_empty_response": True, "_status_code": response.status_code}
+        return response.json()
+    except Exception:
+        return {"_parse_error": True, "_raw": response.text[:500], "_status_code": response.status_code}
+
+
 async def shadow_call(
     workflow: str,
     request_data: dict,
@@ -74,7 +85,7 @@ async def shadow_call(
                     f"{N8N_BASE}/{workflow}",
                     json=request_data
                 )
-            return response.json()
+            return _safe_json(response)
 
     # Shadow mode: 병렬 호출
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -115,14 +126,14 @@ async def shadow_call(
                 logger.error(f"n8n call failed: {n8n_result}")
                 # n8n 실패 시 FastAPI 응답 반환 (fallback)
                 if not isinstance(fastapi_result, Exception):
-                    return fastapi_result.json()
+                    return _safe_json(fastapi_result)
                 raise n8n_result
 
-            n8n_response = n8n_result.json()
+            n8n_response = _safe_json(n8n_result)
 
             # FastAPI 응답 추출 및 비교
             if not isinstance(fastapi_result, Exception):
-                fastapi_response = fastapi_result.json()
+                fastapi_response = _safe_json(fastapi_result)
 
                 # 비교
                 is_match, diffs = compare_responses(
