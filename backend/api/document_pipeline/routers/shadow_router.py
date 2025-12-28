@@ -405,3 +405,34 @@ async def delete_resolved_mismatches():
     except Exception as e:
         logger.error(f"Delete resolved error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/stats/reset")
+async def reset_shadow_stats():
+    """Shadow Mode 통계 초기화 (모든 호출 기록 삭제)"""
+    try:
+        calls_collection = MongoService.get_collection("shadow_calls")
+        mismatches_collection = MongoService.get_collection("shadow_mismatches")
+        errors_collection = MongoService.get_collection("shadow_errors")
+
+        calls_result = await calls_collection.delete_many({})
+        mismatches_result = await mismatches_collection.delete_many({})
+        errors_result = await errors_collection.delete_many({})
+
+        total_deleted = calls_result.deleted_count + mismatches_result.deleted_count + errors_result.deleted_count
+
+        logger.info(f"Reset shadow stats: {calls_result.deleted_count} calls, {mismatches_result.deleted_count} mismatches, {errors_result.deleted_count} errors")
+
+        return {
+            "deleted": {
+                "calls": calls_result.deleted_count,
+                "mismatches": mismatches_result.deleted_count,
+                "errors": errors_result.deleted_count
+            },
+            "total_deleted": total_deleted,
+            "message": f"통계가 초기화되었습니다. (호출: {calls_result.deleted_count}, 불일치: {mismatches_result.deleted_count}, 오류: {errors_result.deleted_count})"
+        }
+
+    except Exception as e:
+        logger.error(f"Reset stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -84,6 +84,14 @@ const deleteResolvedMismatches = async (): Promise<{ deleted_count: number; mess
   return response.json();
 };
 
+const resetShadowStats = async (): Promise<{ message: string }> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/stats/reset`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to reset stats');
+  return response.json();
+};
+
 const formatRelativeTime = (isoString: string): string => {
   const date = new Date(isoString);
   const now = new Date();
@@ -103,6 +111,7 @@ export const ShadowMonitorPage = () => {
   const [selectedMismatch, setSelectedMismatch] = useState<Mismatch | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Claude에게 보낼 프롬프트 생성
   const generateClaudePrompt = (mismatch: Mismatch): string => {
@@ -185,6 +194,25 @@ ${diffsText}
     }
   };
 
+  const handleResetStats = async () => {
+    if (!confirm('모든 Shadow Mode 통계를 초기화하시겠습니까?\n(호출 기록, 불일치 기록, 오류 기록이 모두 삭제됩니다)')) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const result = await resetShadowStats();
+      alert(result.message);
+      refetchStats();
+      refetchMismatches();
+    } catch (err) {
+      alert('초기화에 실패했습니다.');
+      console.error(err);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (statsLoading) {
     return <div className="shadow-monitor__loading">로딩 중...</div>;
   }
@@ -208,6 +236,14 @@ ${diffsText}
           <span className="shadow-monitor__refresh-info">30초마다 자동 갱신</span>
           <Button variant="secondary" size="sm" onClick={handleRefresh}>
             새로고침
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetStats}
+            disabled={isResetting}
+          >
+            {isResetting ? '초기화 중...' : '통계 초기화'}
           </Button>
         </div>
       </div>
