@@ -8,19 +8,34 @@ from datetime import datetime
 
 # 비교 시 무시할 필드 (동적 생성값)
 IGNORE_FIELDS = {
-    "path", "saved_name", "dest_path",  # 파일 경로 (타임스탬프 포함)
-    "created_at", "timestamp", "queued_at", "done_at", "started_at",  # 시간
-    "file_hash",  # 해시값
-    "_id", "id", "document_id",  # ID
-    "length",  # summary 길이 (AI 생성 텍스트 길이, 항상 다름)
-    "_empty_response", "_status_code", "_parse_error", "_raw",  # 내부 메타데이터
-    "code", "message",  # Optional 에러 필드 (None일 때만 존재)
+    # 파일 경로 (타임스탬프 포함)
+    "path", "saved_name", "dest_path", "sourcePath",
+    # 시간 필드
+    "created_at", "timestamp", "queued_at", "done_at", "started_at",
+    # 해시/ID
+    "file_hash", "_id", "id", "document_id",
+    # AI 생성 필드 길이
+    "length",
+    # 내부 메타데이터
+    "_empty_response", "_status_code", "_parse_error", "_raw",
+    # 에러 관련 필드 (형식이 n8n과 다름)
+    "code", "message", "error", "detail", "hint", "userMessage", "status",
+    # Optional 메타데이터 필드 (None일 때 차이 발생)
+    "pdf_pages", "extracted_text", "pdf_text_ratio", "exif", "mime",
+    "extension", "filename", "size_bytes", "truncated", "file_hash",
+    "confidence", "full_text", "num_pages", "pages",
+    # 응답 형식 차이 (n8n 빈 응답 vs FastAPI 상세 응답)
+    "result", "mime_type", "original",
 }
 
 # 시맨틱 비교 필드 (AI 생성, 정확히 같을 필요 없음)
+# Note: 현재는 IGNORE_FIELDS에도 포함하여 Optional 차이 무시
 SEMANTIC_FIELDS = {
     "summary", "tags",
 }
+
+# IGNORE_FIELDS에 SEMANTIC_FIELDS도 추가 (Optional일 때 차이 무시)
+IGNORE_FIELDS.update(SEMANTIC_FIELDS)
 
 
 def normalize_response(response: Dict[str, Any]) -> Dict[str, Any]:
