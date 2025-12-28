@@ -269,6 +269,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
 
+  // OCR 재시도 중인 문서 ID
+  const [retryingOcrDocumentId, setRetryingOcrDocumentId] = useState<string | null>(null)
+
   // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
   const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 🍎 문서 행 싱글클릭/더블클릭 구분용 타이머
@@ -318,6 +321,51 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       setRetryingDocumentId(null)
     }
   }, [retryingDocumentId, onRefresh, showAlert])
+
+  /**
+   * OCR 재시도 핸들러
+   */
+  const handleRetryOcr = useCallback(async (documentId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 이벤트 버블링 방지
+
+    if (retryingOcrDocumentId) return // 이미 재시도 중이면 무시
+
+    setRetryingOcrDocumentId(documentId)
+    try {
+      const result = await api.post<{ success: boolean; message?: string; error?: string }>(
+        `/api/admin/ocr/reprocess`,
+        { document_id: documentId }
+      )
+
+      if (result.success) {
+        await showAlert({
+          title: 'OCR 재시도 시작',
+          message: 'OCR 처리를 다시 시도하고 있습니다.',
+          confirmText: '확인'
+        })
+        // 목록 새로고침
+        if (onRefresh) {
+          await onRefresh()
+        }
+      } else {
+        await showAlert({
+          title: '재시도 실패',
+          message: result.error || '재시도에 실패했습니다.',
+          confirmText: '확인'
+        })
+      }
+    } catch (error) {
+      console.error('[DocumentStatusList] OCR 재시도 오류:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleRetryOcr' })
+      await showAlert({
+        title: '오류',
+        message: '재시도 중 오류가 발생했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setRetryingOcrDocumentId(null)
+    }
+  }, [retryingOcrDocumentId, onRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -945,17 +993,38 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             {/* 상태 (아이콘 + 텍스트) */}
             <div className="status-cell">
               {status === 'error' ? (
-                // 에러 상태: 아이콘 + 텍스트 전체에 툴팁
-                <Tooltip content={getErrorMessage(document) || statusLabel}>
-                  <div className="status-cell-inner">
-                    <div className={"status-icon status-" + status}>
-                      {statusIcon}
-                    </div>
-                    <div className="status-text">
-                      <span className="status-label">{statusLabel}</span>
-                    </div>
-                  </div>
-                </Tooltip>
+                // 에러 상태: 클릭하여 재시도
+                (() => {
+                  const docId = document._id || document.id
+                  const isRetryingOcr = retryingOcrDocumentId === docId
+                  const errorMsg = getErrorMessage(document) || statusLabel
+                  const tooltipContent = isRetryingOcr
+                    ? 'OCR 재시도 중...'
+                    : `${errorMsg}\n\n클릭하여 재시도`
+
+                  return (
+                    <Tooltip content={tooltipContent}>
+                      <button
+                        type="button"
+                        className={`status-cell-inner status-cell-inner--clickable ${isRetryingOcr ? 'status-cell-inner--retrying' : ''}`}
+                        onClick={(e) => docId && handleRetryOcr(docId, e)}
+                        disabled={isRetryingOcr || !docId}
+                        aria-label="OCR 재시도"
+                      >
+                        <div className={"status-icon status-" + status}>
+                          {isRetryingOcr ? (
+                            <svg className="retry-spinner" viewBox="0 0 16 16" width="12" height="12">
+                              <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10" />
+                            </svg>
+                          ) : statusIcon}
+                        </div>
+                        <div className="status-text">
+                          <span className="status-label">{isRetryingOcr ? '재시도 중' : statusLabel}</span>
+                        </div>
+                      </button>
+                    </Tooltip>
+                  )
+                })()
               ) : (
                 // 일반 상태: 아이콘만 툴팁
                 <>

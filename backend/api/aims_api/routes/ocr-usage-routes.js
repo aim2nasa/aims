@@ -861,7 +861,86 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
       console.log(`[OCR Usage Log] 기록 완료: file_id=${file_id}, status=${status}, pages=${page_count}`);
 
-      res.json(result);
+      // 🔄 에러 상태인 경우 자동 재시도 처리 (최대 3회)
+      let retryScheduled = false;
+      if (status === 'error') {
+        try {
+          const filesCollection = db.collection('files');
+          const { ObjectId } = require('mongodb');
+          const docId = ObjectId.isValid(file_id) ? new ObjectId(file_id) : file_id;
+
+          const file = await filesCollection.findOne({ _id: docId });
+          const retryCount = file?.ocr?.retry_count || 0;
+          const filePath = file?.upload?.destPath;
+
+          // 429 에러(Rate Limit)이거나 5xx 서버 에러인 경우만 재시도
+          const isRetryableError = error_code === '429' ||
+                                   (error_code && parseInt(error_code) >= 500);
+
+          if (isRetryableError && retryCount < 3 && filePath) {
+            const newRetryCount = retryCount + 1;
+            const retryDelay = 10000 * newRetryCount; // 10초, 20초, 30초 (점진적 증가)
+
+            console.log(`[OCR Auto Retry] ${file?.upload?.originalName} 재시도 예약 (${newRetryCount}/3, ${retryDelay/1000}초 후)`);
+
+            // 비동기로 재시도 스케줄링 (응답 지연 없이)
+            setTimeout(async () => {
+              try {
+                // Redis 연결
+                try {
+                  await redis.connect().catch(() => {});
+                } catch {
+                  // 이미 연결된 경우 무시
+                }
+
+                const now = new Date().toISOString();
+
+                // Redis XADD
+                await redis.xadd(
+                  'ocr_stream',
+                  '*',
+                  'file_id', file_id,
+                  'file_path', filePath,
+                  'doc_id', file_id,
+                  'owner_id', owner_id,
+                  'queued_at', now
+                );
+
+                // MongoDB 상태 업데이트
+                await filesCollection.updateOne(
+                  { _id: docId },
+                  {
+                    $set: {
+                      'ocr.status': 'queued',
+                      'ocr.queued_at': now,
+                      'ocr.retry_count': newRetryCount,
+                      'ocr.last_retry_at': now
+                    },
+                    $unset: {
+                      'ocr.failed_at': '',
+                      'ocr.statusCode': '',
+                      'ocr.statusMessage': '',
+                      'ocr.errorBody': ''
+                    }
+                  }
+                );
+
+                console.log(`[OCR Auto Retry] ${file?.upload?.originalName} 재시도 큐 등록 완료 (${newRetryCount}/3)`);
+              } catch (retryErr) {
+                console.error(`[OCR Auto Retry] 재시도 실패:`, retryErr.message);
+              }
+            }, retryDelay);
+
+            retryScheduled = true;
+          } else if (retryCount >= 3) {
+            console.log(`[OCR Auto Retry] ${file?.upload?.originalName} 최대 재시도 횟수 초과 (${retryCount}/3)`);
+          }
+        } catch (retryCheckErr) {
+          console.error('[OCR Auto Retry] 재시도 체크 오류:', retryCheckErr.message);
+        }
+      }
+
+      res.json({ ...result, retry_scheduled: retryScheduled });
     } catch (error) {
       console.error('[POST /api/internal/ocr/log-usage] 오류:', error);
       backendLogger.error('OcrUsage', 'OCR 사용량 기록 오류', error);

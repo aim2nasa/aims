@@ -404,6 +404,58 @@ html[data-theme="dark"] .status-item--selected:hover {
   align-items: center;
   gap: 8px;
   cursor: help;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+
+/* 🔄 에러 상태 클릭 가능 버튼 */
+.status-cell-inner--clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.status-cell-inner--clickable:hover:not(:disabled) {
+  background-color: var(--color-error-50, rgba(239, 68, 68, 0.1));
+}
+
+.status-cell-inner--clickable:active:not(:disabled) {
+  background-color: var(--color-error-100, rgba(239, 68, 68, 0.2));
+}
+
+.status-cell-inner--clickable:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .status-cell-inner--clickable:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+html[data-theme="dark"] .status-cell-inner--clickable:active:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+/* 🔄 OCR 재시도 스피너 */
+.retry-spinner {
+  animation: retry-spin 1s linear infinite;
+}
+
+@keyframes retry-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.status-cell-inner--retrying .status-icon {
+  color: var(--color-primary-500);
+}
+
+.status-cell-inner--retrying .status-text {
+  color: var(--color-primary-500);
 }
 
 /* === 상태 아이콘 === */
