@@ -1,7 +1,7 @@
 # n8n → FastAPI 마이그레이션 진행 보고서
 
 > 시작일: 2025-12-28
-> 마지막 업데이트: 2025-12-28
+> 마지막 업데이트: 2025-12-29
 > 기준 문서: [N8N_TO_FASTAPI_MIGRATION.md](./N8N_TO_FASTAPI_MIGRATION.md)
 
 ---
@@ -14,6 +14,7 @@
 | Phase 2 | DocOCR, DocMeta | ✅ 완료 | 2025-12-28 |
 | Phase 3 | OCRWorker, SmartSearch | ✅ 완료 | 2025-12-28 |
 | Phase 4 | DocPrepMain | ✅ 완료 | 2025-12-28 |
+| Phase 5 | Shadow Mode 검증 | 🔄 진행 중 | - |
 
 ---
 
@@ -407,9 +408,81 @@ else:
 
 ---
 
+## Phase 5: Shadow Mode 검증 (2025-12-29 ~)
+
+> 상태: 🔄 진행 중
+
+### 목표
+- n8n과 FastAPI 병렬 호출로 응답 일치 여부 검증
+- Match Rate 99% 이상, Error Rate 1% 미만 달성
+- 최소 100회 이상 호출, 7일 이상 관측 후 전환 결정
+
+### Shadow Mode 아키텍처
+```
+요청 → Shadow Router → n8n (운영)     → 응답 반환
+                    └→ FastAPI (검증) → 비교 후 로깅
+```
+
+- **운영**: n8n 워크플로우가 실제 요청 처리 (응답 반환)
+- **검증**: FastAPI가 백그라운드에서 동일 요청 처리 후 비교만 수행
+
+### Switch Readiness 조건
+| 항목 | 기준 | 현재 |
+|------|------|------|
+| 최소 호출 수 | ≥ 100 | - |
+| Match Rate | ≥ 99% | - |
+| Error Rate | ≤ 1% | - |
+| 관측 기간 | ≥ 7일 | - |
+
+### Shadow Monitor 기능 (aims-admin)
+| 기능 | 설명 |
+|------|------|
+| 통계 조회 | Match/Mismatch/Error 비율, 워크플로우별 통계 |
+| 불일치 분석 | diff 상세 보기, Claude 프롬프트 복사 |
+| Resolved 정리 | 해결된 불일치 기록 일괄 삭제 |
+| 통계 초기화 | 모든 호출/불일치/오류 기록 삭제 후 재시작 |
+| 자동 갱신 | 30초마다 데이터 자동 새로고침 |
+
+### 주요 수정 사항 (2025-12-29)
+
+#### 1. n8n DocMeta analyzer 의존성 수정
+- `form-data`, `mongodb` npm 패키지 누락 → 서버에 설치
+- `tools/mime_type_analyzer/package.json` 업데이트
+
+#### 2. IGNORE_FIELDS 추가
+- `raw` 필드 추가 (n8n 템플릿 미평가 시 발생하는 차이 무시)
+- `contracts/dynamic_fields.py` 업데이트
+
+#### 3. Shadow Monitor UI 개선
+- "Resolved 정리" 버튼 추가 (해결된 기록 삭제)
+- "통계 초기화" 버튼 추가 (전체 초기화 후 재집계)
+- 수동 Resolved 방지 (자동 Resolved만 허용)
+- 불일치 목록에 번호 표시 추가
+
+#### 4. 자동 Resolved 기능
+- Match 발생 시 동일 workflow의 open mismatch 자동 해결
+- `shadow_mode.py`의 `_auto_resolve_mismatches()` 함수
+
+### Shadow Mode 활용 프로세스
+```
+1. 통계 관찰: Match Rate, Error Rate 모니터링
+2. Mismatch 분석: diff 확인 → 원인 파악
+3. 수정: FastAPI 코드 또는 IGNORE_FIELDS 조정
+4. 재검증: Match 확인 → 자동 Resolved
+5. 정리: Resolved 기록 삭제, 필요시 통계 초기화
+6. 전환 판단: Switch Readiness "Ready" 시 FastAPI 전환
+```
+
+### 다음 단계
+1. [ ] 운영 환경에서 지속적 모니터링
+2. [ ] Switch Readiness 조건 충족 확인
+3. [ ] n8n 비활성화 및 FastAPI 직접 호출로 전환
+
+---
+
 ## 마이그레이션 완료
 
-> 🎉 모든 n8n 워크플로우가 FastAPI로 마이그레이션되었습니다.
+> 🎉 모든 n8n 워크플로우가 FastAPI로 마이그레이션되었습니다. (Phase 5 검증 진행 중)
 
 ### 최종 프로젝트 구조
 ```
