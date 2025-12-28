@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button/Button';
 import './ShadowMonitorPage.css';
 
@@ -61,6 +61,7 @@ interface Mismatch {
   status: string;
   analysis: unknown;
   resolution: string | null;
+  _index?: number;  // UI에서 사용하는 번호
 }
 
 const fetchStats = async (days: number): Promise<ShadowStats> => {
@@ -75,16 +76,9 @@ const fetchMismatches = async (): Promise<{ count: number; mismatches: Mismatch[
   return response.json();
 };
 
-const resolveMismatchApi = async ({ id, resolution }: { id: string; resolution: string }) => {
-  const formData = new FormData();
-  formData.append('resolution', resolution);
-  const response = await fetch(`${PIPELINE_API_URL}/shadow/mismatches/${id}/resolve`, {
-    method: 'POST',
-    body: formData,
-  });
-  if (!response.ok) throw new Error('Failed to resolve');
-  return response.json();
-};
+// resolve/reopen API는 Claude가 직접 호출 (UI 버튼 제거됨)
+// POST /shadow/mismatches/{id}/resolve - body: resolution=fixed
+// POST /shadow/mismatches/{id}/reopen
 
 const formatRelativeTime = (isoString: string): string => {
   const date = new Date(isoString);
@@ -101,7 +95,6 @@ const formatRelativeTime = (isoString: string): string => {
 };
 
 export const ShadowMonitorPage = () => {
-  const queryClient = useQueryClient();
   const [days, setDays] = useState(7);
   const [selectedMismatch, setSelectedMismatch] = useState<Mismatch | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -156,14 +149,6 @@ ${diffsText}
     queryKey: ['shadow', 'mismatches'],
     queryFn: fetchMismatches,
     refetchInterval: 30000,
-  });
-
-  const resolveMutation = useMutation({
-    mutationFn: resolveMismatchApi,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shadow'] });
-      setSelectedMismatch(null);
-    },
   });
 
   const handleRefresh = () => {
@@ -313,13 +298,14 @@ ${diffsText}
           </div>
         ) : (
           <div className="shadow-monitor__mismatches">
-            {mismatches.map(mismatch => (
+            {mismatches.map((mismatch, index) => (
               <div
                 key={mismatch.id}
                 className={`shadow-monitor__mismatch ${mismatch.status === 'resolved' ? 'shadow-monitor__mismatch--resolved' : ''}`}
-                onClick={() => setSelectedMismatch(mismatch)}
+                onClick={() => setSelectedMismatch({ ...mismatch, _index: index + 1 })}
               >
                 <div className="shadow-monitor__mismatch-header">
+                  <span className="shadow-monitor__mismatch-number">#{index + 1}</span>
                   <code className="shadow-monitor__mismatch-workflow">{mismatch.workflow}</code>
                   <span className={`shadow-monitor__mismatch-status shadow-monitor__mismatch-status--${mismatch.status}`}>
                     {mismatch.status === 'open' ? 'Open' : mismatch.status === 'resolved' ? 'Resolved' : 'Ignored'}
@@ -340,7 +326,7 @@ ${diffsText}
         <div className="shadow-monitor__modal-overlay" onClick={() => setSelectedMismatch(null)}>
           <div className="shadow-monitor__modal" onClick={e => e.stopPropagation()}>
             <div className="shadow-monitor__modal-header">
-              <h3>불일치 상세: {selectedMismatch.workflow}</h3>
+              <h3>#{selectedMismatch._index} {selectedMismatch.workflow}</h3>
               <button className="shadow-monitor__modal-close" onClick={() => setSelectedMismatch(null)}>
                 ✕
               </button>
@@ -381,28 +367,10 @@ ${diffsText}
                   >
                     {copySuccess ? '복사됨!' : 'Claude에게 보내기'}
                   </Button>
-                  {selectedMismatch.status === 'open' && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        onClick={() => resolveMutation.mutate({ id: selectedMismatch.id, resolution: 'fixed' })}
-                        disabled={resolveMutation.isPending}
-                      >
-                        수정 완료
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => resolveMutation.mutate({ id: selectedMismatch.id, resolution: 'ignored - acceptable difference' })}
-                        disabled={resolveMutation.isPending}
-                      >
-                        무시
-                      </Button>
-                    </>
-                  )}
                 </div>
-              {selectedMismatch.resolution && (
+              {selectedMismatch.status === 'resolved' && (
                 <div className="shadow-monitor__resolution">
-                  <strong>해결:</strong> {selectedMismatch.resolution}
+                  <strong>상태:</strong> Claude가 코드 수정 후 Resolved 처리함
                 </div>
               )}
             </div>
