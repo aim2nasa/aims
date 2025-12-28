@@ -1,0 +1,76 @@
+"""
+Document Models
+"""
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+
+class UploadRequest(BaseModel):
+    userId: str
+    customerId: Optional[str] = None
+    source_path: Optional[str] = None
+
+
+class UploadResponse(BaseModel):
+    result: str
+    original: Optional[str] = None
+    sourcePath: Optional[str] = None
+    saved_name: Optional[str] = None
+    path: Optional[str] = None
+    code: Optional[str] = None
+    message: Optional[str] = None
+
+
+class SummaryRequest(BaseModel):
+    full_text: str
+    user_id: Optional[str] = None
+    document_id: Optional[str] = None
+
+
+class SummaryResponse(BaseModel):
+    summary: str
+    length: int
+    truncated: bool = False
+    tags: List[str] = []
+
+
+class MetaRequest(BaseModel):
+    path: Optional[str] = None
+    saved_name: Optional[str] = None
+    original: Optional[str] = None
+    owner_id: Optional[str] = None
+    document_id: Optional[str] = None
+
+
+class MetaResponse(BaseModel):
+    filename: str
+    extension: str
+    mime: str
+    size_bytes: int
+    created_at: str
+    status: str
+    pdf_pages: Optional[int] = None
+    extracted_text: Optional[str] = None
+    summary: Optional[str] = None
+    tags: List[str] = []
+    file_hash: Optional[str] = None
+    pdf_text_ratio: Optional[float] = None
+    length: Optional[int] = None
+    truncated: Optional[bool] = None
+
+
+class OCRRequest(BaseModel):
+    pass  # File is sent as binary
+
+
+class OCRResponse(BaseModel):
+    status: int
+    error: bool
+    userMessage: str
+    confidence: Optional[float] = None
+    summary: Optional[str] = None
+    tags: List[str] = []
+    full_text: Optional[str] = None
+    num_pages: Optional[int] = None
+    pages: List[dict] = []

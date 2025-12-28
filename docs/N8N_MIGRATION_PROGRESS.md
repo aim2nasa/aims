@@ -1,0 +1,186 @@
+# n8n → FastAPI 마이그레이션 진행 보고서
+
+> 시작일: 2025-12-28
+> 마지막 업데이트: 2025-12-28
+> 기준 문서: [N8N_TO_FASTAPI_MIGRATION.md](./N8N_TO_FASTAPI_MIGRATION.md)
+
+---
+
+## 진행 현황 요약
+
+| Phase | 대상 | 상태 | 완료일 |
+|-------|------|------|--------|
+| Phase 1 | DocUpload, DocSummary, ErrorLogger | ✅ 완료 | 2025-12-28 |
+| Phase 2 | DocOCR, DocMeta | ⏳ 대기 | - |
+| Phase 3 | OCRWorker, SmartSearch | ⏳ 대기 | - |
+| Phase 4 | DocPrepMain | ⏳ 대기 | - |
+
+---
+
+## Phase 1: 독립 모듈 (2025-12-28)
+
+### 목표
+- DocUpload: 파일 저장
+- DocSummary: 텍스트 요약 (OpenAI)
+- ErrorLogger: 에러 로깅
+
+### 완료 항목
+
+#### 1. 프로젝트 구조 생성
+```
+backend/api/document_pipeline/
+├── main.py                 # FastAPI 앱 진입점
+├── config.py               # 설정 (환경변수)
+├── pyproject.toml          # 프로젝트 메타데이터
+├── pytest.ini              # 테스트 설정
+├── requirements.txt        # 의존성
+├── .env.example            # 환경변수 템플릿
+│
+├── routers/
+│   ├── doc_upload.py       # POST /webhook/docupload
+│   └── doc_summary.py      # POST /webhook/docsummary
+│
+├── services/
+│   ├── file_service.py     # 파일 저장/읽기
+│   ├── mongo_service.py    # MongoDB CRUD
+│   └── openai_service.py   # OpenAI 요약 API
+│
+├── workers/
+│   └── error_logger.py     # 에러 로깅 + Slack 알림
+│
+├── models/
+│   ├── document.py         # Pydantic 모델
+│   └── responses.py        # 응답 스키마
+│
+└── tests/
+    ├── conftest.py         # pytest fixtures
+    ├── test_doc_upload.py  # 5개 테스트
+    └── test_doc_summary.py # 3개 테스트
+```
+
+#### 2. 테스트 결과
+```
+========================= 8 passed in 1.35s =========================
+- test_upload_success ✅
+- test_upload_no_file ✅
+- test_upload_no_user_id ✅
+- test_upload_with_customer_id ✅
+- test_upload_with_source_path ✅
+- test_summary_success ✅
+- test_summary_empty_text ✅
+- test_summary_with_document_id ✅
+```
+
+#### 3. 배포 상태
+| 항목 | 값 |
+|------|-----|
+| 서비스명 | document_pipeline |
+| 포트 | 8100 |
+| PM2 상태 | ✅ online |
+| 헬스체크 | ✅ `/health` 정상 |
+
+#### 4. 엔드포인트 테스트
+
+**DocUpload** ✅
+```bash
+curl -X POST http://localhost:8100/webhook/docupload \
+  -F "file=@test.txt" \
+  -F "userId=test_user_123"
+
+# 응답
+{
+  "result": "success",
+  "original": "test.txt",
+  "saved_name": "251228192821_78f44c2b.txt",
+  "path": "/data/files/users/test_user_123/2025/12/251228192821_78f44c2b.txt"
+}
+```
+
+**DocSummary** ✅
+```bash
+curl -X POST http://localhost:8100/webhook/docsummary \
+  -H "Content-Type: application/json" \
+  -d '{"full_text": "인공지능은 컴퓨터가 인간의 지능을 모방하는 기술입니다."}'
+
+# 응답
+{
+  "summary": "인공지능은 컴퓨터가 인간의 지능을 모방하여...",
+  "length": 51,
+  "truncated": false,
+  "tags": ["인공지능", "컴퓨터", "지능", "기술", "모방"]
+}
+```
+
+### 미완료 항목
+- [ ] nginx 라우팅 설정 (n8n → FastAPI 전환)
+
+### 다음 단계 (Phase 2)
+1. DocOCR: Upstage OCR API 연동
+2. DocMeta: 메타데이터 추출 + DocSummary 호출
+
+---
+
+## Phase 2: OCR 파이프라인
+
+> 상태: ⏳ 대기
+
+### 목표
+- DocOCR: Upstage API 연동
+- DocMeta: 메타데이터 추출 + DocSummary 호출
+
+### 진행 기록
+_(Phase 2 시작 시 기록 예정)_
+
+---
+
+## Phase 3: 워커 + 검색
+
+> 상태: ⏳ 대기
+
+### 목표
+- OCRWorker: Redis Consumer + 비동기 처리
+- SmartSearch: MongoDB 쿼리
+
+### 진행 기록
+_(Phase 3 시작 시 기록 예정)_
+
+---
+
+## Phase 4: 메인 오케스트레이터
+
+> 상태: ⏳ 대기
+
+### 목표
+- DocPrepMain: 전체 흐름 조율
+
+### 진행 기록
+_(Phase 4 시작 시 기록 예정)_
+
+---
+
+## 태그 기록
+
+| 태그 | 설명 | 커밋 |
+|------|------|------|
+| `pre-fastapi-migration` | 마이그레이션 시작 전 | 034efed1 |
+| `fastapi-phase-1` | Phase 1 완료 | _(현재 커밋)_ |
+
+---
+
+## 참고 사항
+
+### 롤백 절차
+```bash
+# Phase 1 이전으로 롤백
+git reset --hard pre-fastapi-migration
+
+# 서비스 중지
+ssh tars.giize.com 'pm2 delete document_pipeline'
+```
+
+### 환경 변수 설정
+```bash
+# 서버에서 .env 파일 생성
+ssh tars.giize.com 'cd ~/aims/backend/api/document_pipeline && cp .env.example .env'
+# .env 파일 편집하여 API 키 설정
+```
