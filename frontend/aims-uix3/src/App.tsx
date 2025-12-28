@@ -15,6 +15,7 @@ import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
 import { useInquiryNotifications } from './shared/hooks/useInquiryNotifications'
+import { useUserAccountSSE } from './shared/hooks/useUserAccountSSE'
 import { useNoticeNotifications } from './hooks/useNoticeNotifications'
 import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
@@ -147,7 +148,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
 
   // User Store - 사용자 정보 전역 관리
-  const { updateCurrentUser } = useUserStore()
+  const { userId, updateCurrentUser } = useUserStore()
 
   // 현재 보고 있는 문의 ID (카카오톡 스타일: 열린 채팅방은 카운트 증가 안함)
   const [currentViewingInquiryId, setCurrentViewingInquiryId] = useState<string | null>(null)
@@ -262,8 +263,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const {
     storageInfo: usageStorageInfo,
     aiUsage: usageAIUsage,
-    loading: usageLoading
+    loading: usageLoading,
+    refresh: refreshUsageData
   } = useAppUsageData()
+
+  // 사용자 계정 SSE - 관리자가 티어 변경 시 실시간 새로고침
+  // localStorage에서 직접 읽어서 SSE 연결 (PersonalFilesView와 동일한 방식)
+  const sseUserId = typeof window !== 'undefined'
+    ? localStorage.getItem('aims-current-user-id') || ''
+    : ''
+
+  useUserAccountSSE(sseUserId, refreshUsageData, {
+    enabled: !!sseUserId,
+    onTierChanged: (event) => {
+      console.log('[App] 티어 변경 알림 수신:', event)
+    }
+  })
+
+  // 디버그: storageInfo 상태 변화 로그
+  useEffect(() => {
+    console.log('[App] usageStorageInfo 변경됨:', usageStorageInfo?.tier, usageStorageInfo?.tierName)
+  }, [usageStorageInfo])
 
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)

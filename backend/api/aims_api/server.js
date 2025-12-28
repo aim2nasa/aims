@@ -395,6 +395,30 @@ function notifyDocumentListSubscribers(userId, event, data) {
   }
 }
 
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - 사용자 계정 (티어/스토리지 변경 알림)
+// ========================================
+const userAccountSSEClients = new Map(); // userId(string) -> Set<response>
+
+/**
+ * 특정 사용자의 계정 정보 구독자들에게 알림 전송
+ * @param {string} userId - 사용자 ID
+ * @param {string} event - 이벤트 이름 (tier-changed, storage-updated 등)
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyUserAccountSubscribers(userId, event, data) {
+  const userIdStr = userId.toString();
+  const clients = userAccountSSEClients.get(userIdStr);
+  const totalClients = Array.from(userAccountSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-UserAccount] notifyUserAccountSubscribers 호출 - userId: ${userIdStr}, 해당 사용자 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-UserAccount] 사용자 ${userIdStr}의 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-UserAccount] 사용자 ${userIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
 // ========================
 // PDF 변환 백그라운드 처리
 // ========================
@@ -7074,6 +7098,57 @@ app.post('/api/webhooks/personal-files-change', (req, res) => {
 });
 
 /**
+ * 사용자 계정 실시간 업데이트 SSE 스트림
+ * @route GET /api/user/account/stream
+ * @description 사용자의 계정 정보(티어, 스토리지 등) 변경을 실시간으로 전달
+ */
+app.get('/api/user/account/stream', (req, res) => {
+  // x-user-id 헤더 또는 쿼리 파라미터에서 userId 추출
+  const userId = req.headers['x-user-id'] || req.query.userId;
+
+  if (!userId) {
+    return res.status(401).json({ success: false, error: '사용자 ID가 필요합니다.' });
+  }
+
+  console.log(`[SSE-UserAccount] 계정 정보 스트림 연결 - userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!userAccountSSEClients.has(userId)) {
+    userAccountSSEClients.set(userId, new Set());
+  }
+  userAccountSSEClients.get(userId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-UserAccount] 계정 정보 스트림 연결 종료 - userId: ${userId}`);
+    clearInterval(keepAliveInterval);
+    userAccountSSEClients.get(userId)?.delete(res);
+    if (userAccountSSEClients.get(userId)?.size === 0) {
+      userAccountSSEClients.delete(userId);
+    }
+  });
+});
+
+/**
  * 문서 처리 상태 실시간 업데이트 SSE 스트림
  * @route GET /api/documents/:documentId/status/stream
  * @description 특정 문서의 처리 완료를 실시간으로 전달 (1회성)
@@ -9328,7 +9403,7 @@ MongoClient.connect(MONGO_URI)
     console.log('[Server] userActivityRoutes 등록 완료');
 
     // 스토리지 쿼터 라우트 설정
-    const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole);
+    const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole, notifyUserAccountSubscribers);
     app.use('/api', storageRoutes);
 
     // 테스트: storage routes 바로 다음에 직접 라우트 등록

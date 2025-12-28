@@ -22,8 +22,9 @@ const backendLogger = require('../lib/backendLogger');
  * @param {Db} db - MongoDB 인스턴스
  * @param {Function} authenticateJWT - JWT 인증 미들웨어
  * @param {Function} requireRole - 역할 검증 미들웨어
+ * @param {Function} notifyUserAccountSubscribers - SSE 사용자 계정 알림 함수
  */
-module.exports = function(db, authenticateJWT, requireRole) {
+module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSubscribers) {
 
   /**
    * GET /api/users/me/storage
@@ -128,6 +129,16 @@ module.exports = function(db, authenticateJWT, requireRole) {
         return res.status(400).json({
           success: false,
           error: '티어 변경에 실패했습니다.'
+        });
+      }
+
+      // SSE로 해당 사용자에게 티어 변경 알림
+      if (notifyUserAccountSubscribers) {
+        notifyUserAccountSubscribers(id, 'tier-changed', {
+          tier: result.tier,
+          quota_bytes: result.quota_bytes,
+          formatted_quota: formatBytes(result.quota_bytes),
+          timestamp: new Date().toISOString()
         });
       }
 

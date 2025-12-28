@@ -26,6 +26,7 @@ import { useAuthStore } from '@/shared/stores/authStore'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { formatPhoneNumber } from '@/shared/lib/phoneUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { useUserAccountSSE } from '@/shared/hooks/useUserAccountSSE'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -227,26 +228,35 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     setAvatarPreview(currentUser.avatarUrl)
   }, [currentUser, visible, isEditing])
 
+  // 스토리지 정보 로드 함수
+  const loadStorageInfo = React.useCallback(async () => {
+    try {
+      setStorageLoading(true)
+      const info = await getMyStorageInfo()
+      setStorageInfo(info)
+    } catch (error) {
+      console.error('스토리지 정보 로드 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.loadStorageInfo' })
+      setStorageInfo(null)
+    } finally {
+      setStorageLoading(false)
+    }
+  }, [])
+
   // 스토리지 정보 로드 (데이터 탭 선택 시)
   useEffect(() => {
     if (!visible || activeTab !== 'data') return
-
-    const loadStorageInfo = async () => {
-      try {
-        setStorageLoading(true)
-        const info = await getMyStorageInfo()
-        setStorageInfo(info)
-      } catch (error) {
-        console.error('스토리지 정보 로드 실패:', error)
-        errorReporter.reportApiError(error as Error, { component: 'AccountSettingsView.loadStorageInfo' })
-        setStorageInfo(null)
-      } finally {
-        setStorageLoading(false)
-      }
-    }
-
     loadStorageInfo()
-  }, [visible, activeTab])
+  }, [visible, activeTab, loadStorageInfo])
+
+  // SSE로 티어 변경 감지하여 스토리지 정보 새로고침
+  const sseUserId = typeof window !== 'undefined'
+    ? localStorage.getItem('aims-current-user-id') || ''
+    : ''
+
+  useUserAccountSSE(sseUserId, loadStorageInfo, {
+    enabled: visible && activeTab === 'data' && !!sseUserId
+  })
 
   // AI 사용량 로드 (데이터 탭 선택 시)
   useEffect(() => {

@@ -29,11 +29,13 @@ export function useAppUsageData(): UseAppUsageDataReturn {
 
   const fetchUsageData = useCallback(async () => {
     try {
+      console.log('[useAppUsageData] 사용량 데이터 로드 시작')
       setLoading(true)
       const [storageResult, aiResult] = await Promise.all([
         getMyStorageInfo(),
         getMyAIUsage()
       ])
+      console.log('[useAppUsageData] 사용량 데이터 로드 완료:', { tier: storageResult.tier, tierName: storageResult.tierName })
       setStorageInfo(storageResult)
       setAIUsage(aiResult)
     } catch (error) {
