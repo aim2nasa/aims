@@ -68,7 +68,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        280,
+        288,
         176
       ],
       "id": "2607be1c-99a2-4a84-aff1-3ada21b0353a",

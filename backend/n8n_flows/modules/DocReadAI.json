@@ -12,7 +12,7 @@
       "typeVersion": 2,
       "position": [
         -128,
-        -40
+        -48
       ],
       "id": "cf85026b-5a71-427a-99a4-8ad5b932c5d7",
       "name": "DocReadAI Webhook",
@@ -59,7 +59,7 @@
       "typeVersion": 4.2,
       "position": [
         2112,
-        -328
+        -336
       ],
       "id": "858d8b45-2b20-42ca-9057-dcfd6b60319d",
       "name": "Create Assistant Thread",
@@ -229,7 +229,7 @@
       "typeVersion": 4.2,
       "position": [
         3232,
-        -232
+        -240
       ],
       "id": "e8efb1cb-052b-49ed-80e9-c24ec5f7f44f",
       "name": "Get Final Response",
@@ -373,7 +373,7 @@
       "typeVersion": 3.2,
       "position": [
         1664,
-        56
+        64
       ],
       "id": "3f3d3866-6421-4f46-9a0d-2a1c784a20d2",
       "name": "Merge Uploaded ID with Index Status"
@@ -439,7 +439,7 @@
       "typeVersion": 3.4,
       "position": [
         1216,
-        -328
+        -336
       ],
       "id": "1cb7a829-3fc0-4e04-a01c-7171da470cef",
       "name": "Keep uploaded_file_id"
@@ -467,7 +467,7 @@
       "typeVersion": 2,
       "position": [
         2560,
-        152
+        160
       ],
       "id": "32821287-c74e-410a-af13-4881cc4d2054",
       "name": "Extract Indexed File Items"
@@ -525,7 +525,7 @@
       "typeVersion": 2.2,
       "position": [
         3008,
-        -184
+        -192
       ],
       "id": "2830c772-abe5-40ef-99d0-923f33c32909",
       "name": "Is Run Completed?"
@@ -553,7 +553,7 @@
       "typeVersion": 3.4,
       "position": [
         96,
-        -40
+        -48
       ],
       "id": "76bc66a0-ed93-4668-8e64-c8a6bfbc23ef",
       "name": "Keep _id"
@@ -581,7 +581,7 @@
       "typeVersion": 2,
       "position": [
         3456,
-        -232
+        -240
       ],
       "id": "8157797d-a9e9-4ccc-87a5-57ae9670edb3",
       "name": "Extract AI Output JSON"

@@ -85,6 +85,36 @@ for file in "${WORKFLOW_FILES[@]}"; do
   # 기존 워크플로우 ID 찾기 (동일 이름이 여러개면 첫번째 사용)
   WORKFLOW_ID=$(echo "$EXISTING_WORKFLOWS" | jq -r --arg name "$WORKFLOW_NAME" '[.data[] | select(.name == $name) | .id][0] // empty')
 
+  # 기존 Sticky Note 위치/크기 가져오기 (있으면 보존)
+  STICKY_POS_X=-600
+  STICKY_POS_Y=-400
+  STICKY_WIDTH=280
+  STICKY_HEIGHT=180
+
+  if [ -n "$WORKFLOW_ID" ] && [ "$WORKFLOW_ID" != "null" ]; then
+    CURRENT_WORKFLOW=$(curl -sf -X GET "$N8N_URL/workflows/$WORKFLOW_ID" \
+      -H "X-N8N-API-KEY: $N8N_API_KEY" \
+      -H "Content-Type: application/json" 2>/dev/null)
+
+    if [ -n "$CURRENT_WORKFLOW" ]; then
+      # 기존 Git Version Info Sticky Note에서 위치/크기 추출
+      EXISTING_POS=$(echo "$CURRENT_WORKFLOW" | jq -r '.nodes[] | select(.name == "Git Version Info") | .position | @json' 2>/dev/null)
+      EXISTING_WIDTH=$(echo "$CURRENT_WORKFLOW" | jq -r '.nodes[] | select(.name == "Git Version Info") | .parameters.width // empty' 2>/dev/null)
+      EXISTING_HEIGHT=$(echo "$CURRENT_WORKFLOW" | jq -r '.nodes[] | select(.name == "Git Version Info") | .parameters.height // empty' 2>/dev/null)
+
+      if [ -n "$EXISTING_POS" ] && [ "$EXISTING_POS" != "null" ]; then
+        STICKY_POS_X=$(echo "$EXISTING_POS" | jq -r '.[0]')
+        STICKY_POS_Y=$(echo "$EXISTING_POS" | jq -r '.[1]')
+      fi
+      if [ -n "$EXISTING_WIDTH" ] && [ "$EXISTING_WIDTH" != "null" ]; then
+        STICKY_WIDTH=$EXISTING_WIDTH
+      fi
+      if [ -n "$EXISTING_HEIGHT" ] && [ "$EXISTING_HEIGHT" != "null" ]; then
+        STICKY_HEIGHT=$EXISTING_HEIGHT
+      fi
+    fi
+  fi
+
   # Git 커밋 해시 추출
   RELATIVE_PATH="${file#$AIMS_DIR/}"
   GIT_HASH=$(cd "$AIMS_DIR" && git log -1 --format="%h" -- "$RELATIVE_PATH" 2>/dev/null || echo "unknown")
@@ -102,7 +132,11 @@ for file in "${WORKFLOW_FILES[@]}"; do
           --arg hash "$GIT_HASH" \
           --arg hashFull "$GIT_HASH_FULL" \
           --arg gitDate "$GIT_DATE" \
-          --arg deployTime "$DEPLOY_TIME" '
+          --arg deployTime "$DEPLOY_TIME" \
+          --argjson posX "$STICKY_POS_X" \
+          --argjson posY "$STICKY_POS_Y" \
+          --argjson width "$STICKY_WIDTH" \
+          --argjson height "$STICKY_HEIGHT" '
     del(.id, .versionId, .meta, .tags, .pinData, .active, .isArchived, .settings.callerPolicy) |
     .staticData = {
       "git": {
@@ -113,10 +147,10 @@ for file in "${WORKFLOW_FILES[@]}"; do
       }
     } |
     .nodes = [(.nodes // [])[] | select(.name != "Git Version Info")] + [{
-      "parameters": { "content": $content, "height": 180, "width": 280 },
+      "parameters": { "content": $content, "height": $height, "width": $width },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-600, -400],
+      "position": [$posX, $posY],
       "id": "git-version-info",
       "name": "Git Version Info"
     }]
