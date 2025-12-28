@@ -385,3 +385,23 @@ async def resolve_mismatch(mismatch_id: str, resolution: str = Form(...)):
     except Exception as e:
         logger.error(f"Resolve error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/mismatches/resolved")
+async def delete_resolved_mismatches():
+    """해결된 불일치 기록 모두 삭제"""
+    try:
+        collection = MongoService.get_collection("shadow_mismatches")
+
+        result = await collection.delete_many({"status": "resolved"})
+
+        logger.info(f"Deleted {result.deleted_count} resolved mismatches")
+
+        return {
+            "deleted_count": result.deleted_count,
+            "message": f"{result.deleted_count}건의 resolved 기록이 삭제되었습니다."
+        }
+
+    except Exception as e:
+        logger.error(f"Delete resolved error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

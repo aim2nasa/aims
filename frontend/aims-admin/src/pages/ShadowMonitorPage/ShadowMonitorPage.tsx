@@ -76,9 +76,13 @@ const fetchMismatches = async (): Promise<{ count: number; mismatches: Mismatch[
   return response.json();
 };
 
-// resolve/reopen API는 Claude가 직접 호출 (UI 버튼 제거됨)
-// POST /shadow/mismatches/{id}/resolve - body: resolution=fixed
-// POST /shadow/mismatches/{id}/reopen
+const deleteResolvedMismatches = async (): Promise<{ deleted_count: number; message: string }> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/mismatches/resolved`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete resolved mismatches');
+  return response.json();
+};
 
 const formatRelativeTime = (isoString: string): string => {
   const date = new Date(isoString);
@@ -98,6 +102,7 @@ export const ShadowMonitorPage = () => {
   const [days, setDays] = useState(7);
   const [selectedMismatch, setSelectedMismatch] = useState<Mismatch | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Claude에게 보낼 프롬프트 생성
   const generateClaudePrompt = (mismatch: Mismatch): string => {
@@ -154,6 +159,30 @@ ${diffsText}
   const handleRefresh = () => {
     refetchStats();
     refetchMismatches();
+  };
+
+  const handleDeleteResolved = async () => {
+    const resolvedCount = mismatches.filter(m => m.status === 'resolved').length;
+    if (resolvedCount === 0) {
+      alert('삭제할 Resolved 항목이 없습니다.');
+      return;
+    }
+
+    if (!confirm(`${resolvedCount}건의 Resolved 기록을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteResolvedMismatches();
+      alert(result.message);
+      refetchMismatches();
+    } catch (err) {
+      alert('삭제에 실패했습니다.');
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (statsLoading) {
@@ -286,9 +315,21 @@ ${diffsText}
 
       {/* 최근 불일치 */}
       <section className="shadow-monitor__section">
-        <h2 className="shadow-monitor__section-title">
-          최근 불일치 ({mismatches.filter(m => m.status === 'open').length}건 미해결)
-        </h2>
+        <div className="shadow-monitor__section-header">
+          <h2 className="shadow-monitor__section-title">
+            최근 불일치 ({mismatches.filter(m => m.status === 'open').length}건 미해결)
+          </h2>
+          {mismatches.filter(m => m.status === 'resolved').length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeleteResolved}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '삭제 중...' : `Resolved 정리 (${mismatches.filter(m => m.status === 'resolved').length}건)`}
+            </Button>
+          )}
+        </div>
         {mismatchesLoading ? (
           <div className="shadow-monitor__loading">로딩 중...</div>
         ) : mismatches.length === 0 ? (
