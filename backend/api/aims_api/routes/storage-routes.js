@@ -182,11 +182,11 @@ module.exports = function(db, authenticateJWT, requireRole) {
   });
 
   /**
-   * OCR 할당량 포맷팅
+   * OCR 할당량 포맷팅 (페이지 기준)
    */
-  function formatOcrQuota(quota) {
+  function formatOcrPageQuota(quota) {
     if (quota === -1) return '무제한';
-    return `${quota}회`;
+    return `${quota.toLocaleString()}p`;
   }
 
   /**
@@ -198,11 +198,12 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const tiers = await getTierDefinitions(db);
 
       // 객체를 배열로 변환하고 formatted 추가
+      // ocr_page_quota: 페이지 기준 (현재 사용)
       const tierList = Object.entries(tiers).map(([id, tier]) => ({
         id,
         ...tier,
         formatted_quota: formatBytes(tier.quota_bytes),
-        formatted_ocr_quota: formatOcrQuota(tier.ocr_quota ?? 100)
+        formatted_ocr_page_quota: formatOcrPageQuota(tier.ocr_page_quota ?? 500)
       }));
 
       res.json({
@@ -228,7 +229,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
   router.put('/admin/tiers/:tierId', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const { tierId } = req.params;
-      const { name, quota_bytes, ocr_quota, description } = req.body;
+      const { name, quota_bytes, ocr_page_quota, description } = req.body;
 
       if (!tierId) {
         return res.status(400).json({
@@ -248,7 +249,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const updates = {};
       if (name !== undefined) updates.name = name;
       if (quota_bytes !== undefined) updates.quota_bytes = quota_bytes;
-      if (ocr_quota !== undefined) updates.ocr_quota = ocr_quota;
+      if (ocr_page_quota !== undefined) updates.ocr_page_quota = ocr_page_quota;
       if (description !== undefined) updates.description = description;
 
       const updatedTier = await updateTierDefinition(db, tierId, updates);
@@ -260,7 +261,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
           id: tierId,
           ...updatedTier,
           formatted_quota: formatBytes(updatedTier.quota_bytes),
-          formatted_ocr_quota: formatOcrQuota(updatedTier.ocr_quota ?? 100)
+          formatted_ocr_page_quota: formatOcrPageQuota(updatedTier.ocr_page_quota ?? 500)
         }
       });
 

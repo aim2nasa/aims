@@ -472,8 +472,10 @@ async function updateUserTier(db, userId, tier) {
     }
   );
 
+  // matchedCount > 0: 사용자가 존재함 (티어가 이미 같더라도 성공으로 처리)
+  // modifiedCount === 0인 경우는 이미 해당 티어인 경우
   return {
-    success: result.modifiedCount > 0,
+    success: result.matchedCount > 0,
     tier,
     quota_bytes: quotaBytes
   };
