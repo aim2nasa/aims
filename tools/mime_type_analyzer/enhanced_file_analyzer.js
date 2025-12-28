@@ -66,28 +66,66 @@ const xml2js = require('xml2js'); // XML 파싱
 const http = require('http');
 const https = require('https');
 const FormData = require('form-data');
+const { MongoClient } = require('mongodb');
 
 // AIMS 시스템 로그 API
 const AIMS_API_URL = process.env.AIMS_API_URL || 'https://aims.giize.com';
 
+// MongoDB 연결 (Docker 환경에서는 172.17.0.1, 로컬에서는 localhost)
+const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://172.17.0.1:27017';
+const MONGODB_DB = process.env.MONGODB_DB || 'docupload';
+
 /**
- * 시스템 로그 API로 에러 전송
- * @param {string} filename - 파일명
- * @param {string} mimeType - MIME 타입
- * @param {string} errorMessage - 에러 메시지
+ * saveName으로 MongoDB files 컬렉션에서 originalName 조회
+ * @param {string} saveName - 저장된 파일명 (예: 251228025939_i4thsl8x.jpg)
+ * @returns {Promise<string|null>} originalName 또는 null
  */
-function sendErrorToSystemLog(filename, mimeType, errorMessage) {
+async function getOriginalName(saveName) {
+  let client;
+  try {
+    client = new MongoClient(MONGODB_URL, {
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000
+    });
+    await client.connect();
+    const db = client.db(MONGODB_DB);
+    const file = await db.collection('files').findOne(
+      { 'upload.saveName': saveName },
+      { projection: { 'upload.originalName': 1 } }
+    );
+    return file?.upload?.originalName || null;
+  } catch (err) {
+    // MongoDB 연결 실패 시 null 반환 (로그 전송은 saveName으로 진행)
+    return null;
+  } finally {
+    if (client) {
+      await client.close().catch(() => {});
+    }
+  }
+}
+
+/**
+ * 시스템 로그 API로 정보 로그 전송
+ * @param {string} saveName - 저장된 파일명
+ * @param {string} mimeType - MIME 타입
+ * @param {string} reason - 사유
+ */
+async function sendInfoToSystemLog(saveName, mimeType, reason) {
+  // MongoDB에서 originalName 조회 (실패 시 saveName 사용)
+  const originalName = await getOriginalName(saveName) || saveName;
+
   const logData = JSON.stringify({
-    level: 'error',
+    level: 'info',
     source: {
       type: 'backend',
       component: 'document'
     },
-    message: `텍스트 추출 실패: ${filename}`,
+    message: `텍스트 추출 안됨: ${originalName}`,
     data: {
-      filename,
+      originalName,
+      saveName,
       mimeType,
-      error: errorMessage
+      reason
     }
   });
 
@@ -574,10 +612,8 @@ async function getFileMetadata(filePath, extractText = true) {
     } catch (error) {
       meta.error = error.message;
       meta.extracted_text = null;
-      // 에러 로그를 stderr에 출력 (서버 로그에 남김)
-      console.error(`[TEXT-EXTRACT-ERROR] ${meta.filename} (${mimeType}): ${error.message}`);
-      // AIMS 시스템 로그로 전송
-      sendErrorToSystemLog(meta.filename, mimeType, error.message);
+      // 텍스트 추출 실패는 정보 로그로 기록 (에러가 아님)
+      sendInfoToSystemLog(meta.filename, mimeType, error.message);
     }
   }
 
