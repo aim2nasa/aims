@@ -129,6 +129,21 @@
   color: #ff3b30;
 }
 
+/* Clickable status cards */
+.status-card--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.status-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-card--clickable:active {
+  transform: translateY(0);
+}
+
 /* Info Cards - Compact */
 .document-processing-page__info-cards {
   display: grid;

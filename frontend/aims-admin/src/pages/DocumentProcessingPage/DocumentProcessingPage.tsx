@@ -1,10 +1,17 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '@/features/dashboard/api';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
+import { OCRFailedModal } from '@/pages/OCRUsagePage/OCRFailedModal';
+import { EmbedFailedModal } from './EmbedFailedModal';
 import './DocumentProcessingPage.css';
 
+type ModalType = 'ocr' | 'embed' | 'overall' | null;
+
 export const DocumentProcessingPage = () => {
+  const [openModal, setOpenModal] = useState<ModalType>(null);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
@@ -27,6 +34,12 @@ export const DocumentProcessingPage = () => {
 
   const docs = data?.documents;
   const stats = data?.stats;
+
+  const handleErrorClick = (type: ModalType, count: number) => {
+    if (count > 0) {
+      setOpenModal(type);
+    }
+  };
 
   return (
     <div className="document-processing-page">
@@ -66,7 +79,11 @@ export const DocumentProcessingPage = () => {
             <span className="status-card__label">처리 중</span>
             <span className="status-card__value">{docs?.overall?.processing || 0}</span>
           </div>
-          <div className="status-card status-card--error">
+          <div
+            className={`status-card status-card--error ${(docs?.overall?.error || 0) > 0 ? 'status-card--clickable' : ''}`}
+            onClick={() => handleErrorClick('overall', docs?.overall?.error || 0)}
+            title={(docs?.overall?.error || 0) > 0 ? '클릭하여 오류 상세 보기' : undefined}
+          >
             <span className="status-card__label">오류</span>
             <span className="status-card__value">{docs?.overall?.error || 0}</span>
           </div>
@@ -95,7 +112,11 @@ export const DocumentProcessingPage = () => {
             <span className="status-card__label">처리 중</span>
             <span className="status-card__value">{docs?.ocr?.processing || 0}</span>
           </div>
-          <div className="status-card status-card--failed">
+          <div
+            className={`status-card status-card--failed ${(docs?.ocr?.failed || 0) > 0 ? 'status-card--clickable' : ''}`}
+            onClick={() => handleErrorClick('ocr', docs?.ocr?.failed || 0)}
+            title={(docs?.ocr?.failed || 0) > 0 ? '클릭하여 실패 상세 보기' : undefined}
+          >
             <span className="status-card__label">실패</span>
             <span className="status-card__value">{docs?.ocr?.failed || 0}</span>
           </div>
@@ -121,7 +142,11 @@ export const DocumentProcessingPage = () => {
             <span className="status-card__label">처리 중</span>
             <span className="status-card__value">{docs?.embed?.processing || 0}</span>
           </div>
-          <div className="status-card status-card--failed">
+          <div
+            className={`status-card status-card--failed ${(docs?.embed?.failed || 0) > 0 ? 'status-card--clickable' : ''}`}
+            onClick={() => handleErrorClick('embed', docs?.embed?.failed || 0)}
+            title={(docs?.embed?.failed || 0) > 0 ? '클릭하여 실패 상세 보기' : undefined}
+          >
             <span className="status-card__label">실패</span>
             <span className="status-card__value">{docs?.embed?.failed || 0}</span>
           </div>
@@ -150,11 +175,21 @@ export const DocumentProcessingPage = () => {
             <h3 className="info-card__title">오류 발생 시</h3>
             <p className="info-card__description">
               OCR 또는 임베딩 처리 중 오류가 발생한 문서입니다.
-              시스템 관리자의 확인이 필요할 수 있습니다.
+              각 상태의 오류/실패 숫자를 클릭하면 상세 내용을 확인할 수 있습니다.
             </p>
           </div>
         </div>
       </section>
+
+      {/* 모달들 */}
+      <OCRFailedModal
+        isOpen={openModal === 'ocr' || openModal === 'overall'}
+        onClose={() => setOpenModal(null)}
+      />
+      <EmbedFailedModal
+        isOpen={openModal === 'embed'}
+        onClose={() => setOpenModal(null)}
+      />
     </div>
   );
 };
