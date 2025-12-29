@@ -1326,6 +1326,34 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
           console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, meta.full_text=${hasMetaFullText}, ocr.full_text=${hasOcrFullText}, ocr.confidence=${doc.ocr?.confidence}`);
         });
       }
+    } else if (sort === 'docType_asc' || sort === 'docType_desc') {
+      // 🏷️ docType 정렬: 문서 유형별 정렬 (미지정은 맨 뒤로)
+      const sortOrder = sort === 'docType_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            // document_type이 없거나 'unspecified'면 정렬 시 맨 뒤로
+            docType_sortable: {
+              $cond: {
+                if: {
+                  $or: [
+                    { $eq: [{ $ifNull: ['$document_type', null] }, null] },
+                    { $eq: ['$document_type', 'unspecified'] },
+                    { $eq: ['$document_type', ''] }
+                  ]
+                },
+                then: 'zzz_unspecified', // 알파벳 정렬 시 맨 뒤로
+                else: '$document_type'
+              }
+            }
+          }
+        },
+        { $sort: { docType_sortable: sortOrder, 'upload.uploaded_at': -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        { $project: { docType_sortable: 0 } }
+      ]).toArray();
     } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
       // 🔧 uploadDate 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
       const sortOrder = sort === 'uploadDate_asc' ? 1 : -1;
