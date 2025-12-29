@@ -101,25 +101,43 @@ const resetShadowStats = async (): Promise<{ message: string }> => {
 
 /**
  * KST 시간 포맷: YYYY.MM.DD HH:mm:ss (24시간제)
- * 서버가 이미 KST timestamp를 반환하므로 변환 없이 포맷만 적용
+ * 서버 timestamp가 UTC인 경우 KST(+9시간)로 변환하여 표시
  */
 const formatKSTDateTime = (isoString: string): string => {
-  // 서버 timestamp는 이미 KST (예: "2025-12-29T17:03:43.066000")
-  // timezone offset이 없으므로 로컬 시간으로 해석됨
-  const date = new Date(isoString);
+  // 서버 timestamp를 UTC로 명시적 파싱 (timezone offset이 없으면 UTC로 간주)
+  const utcString = isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
+    ? isoString
+    : isoString + 'Z';
+  const date = new Date(utcString);
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const mins = String(date.getMinutes()).padStart(2, '0');
-  const secs = String(date.getSeconds()).padStart(2, '0');
+  // KST (UTC+9) 포맷으로 변환
+  const kstFormatter = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 
-  return `${year}.${month}.${day} ${hours}:${mins}:${secs}`;
+  const parts = kstFormatter.formatToParts(date);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+
+  return `${getPart('year')}.${getPart('month')}.${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
 };
 
+/**
+ * 상대 시간 표시 (KST 기준)
+ * 서버 timestamp가 UTC인 경우 'Z' suffix가 없으면 추가하여 UTC로 파싱
+ */
 const formatRelativeTime = (isoString: string): string => {
-  const date = new Date(isoString);
+  // 서버 timestamp를 UTC로 명시적 파싱 (timezone offset이 없으면 UTC로 간주)
+  const utcString = isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
+    ? isoString
+    : isoString + 'Z';
+  const date = new Date(utcString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
