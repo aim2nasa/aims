@@ -1073,33 +1073,54 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               })()}
             </div>
 
-            {/* 🍎 문서 유형 드롭다운 */}
+            {/* 🍎 문서 유형 드롭다운 (annual_report는 읽기 전용) */}
             <div className="document-doctype" onClick={(e) => e.stopPropagation()}>
-              {documentTypes.length > 0 ? (
-                <select
-                  className="doctype-select"
-                  value={document.docType || document.document_type || 'unspecified'}
-                  onChange={(e) => {
-                    const docId = document._id || document.id
-                    if (docId) {
-                      handleDocTypeChange(docId, e.target.value)
-                    }
-                  }}
-                  disabled={updatingDocTypeId === (document._id || document.id)}
-                  aria-label="문서 유형 선택"
-                >
-                  <option value="unspecified">미지정</option>
-                  {documentTypes.map((dt) => (
-                    <option key={dt._id} value={dt.value}>
-                      {dt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="doctype-label">
-                  {document.docTypeLabel || document.docType || document.document_type || '미지정'}
-                </span>
-              )}
+              {(() => {
+                const docType = document.docType || document.document_type
+                const isAnnualReportType = docType === 'annual_report' || document.is_annual_report === true
+
+                // 🔒 연간보고서(AR)는 시스템 전용 - 읽기 전용으로 표시
+                if (isAnnualReportType) {
+                  return (
+                    <Tooltip content="시스템 전용 유형 (변경 불가)">
+                      <span className="doctype-label doctype-label--readonly">
+                        연간보고서
+                      </span>
+                    </Tooltip>
+                  )
+                }
+
+                // 일반 문서: 드롭다운으로 유형 변경 가능
+                if (documentTypes.length > 0) {
+                  return (
+                    <select
+                      className="doctype-select"
+                      value={docType || 'unspecified'}
+                      onChange={(e) => {
+                        const docId = document._id || document.id
+                        if (docId) {
+                          handleDocTypeChange(docId, e.target.value)
+                        }
+                      }}
+                      disabled={updatingDocTypeId === (document._id || document.id)}
+                      aria-label="문서 유형 선택"
+                    >
+                      <option value="unspecified">미지정</option>
+                      {documentTypes.map((dt) => (
+                        <option key={dt._id} value={dt.value}>
+                          {dt.label}
+                        </option>
+                      ))}
+                    </select>
+                  )
+                }
+
+                return (
+                  <span className="doctype-label">
+                    {document.docTypeLabel || docType || '미지정'}
+                  </span>
+                )
+              })()}
             </div>
 
             {/* 크기 */}

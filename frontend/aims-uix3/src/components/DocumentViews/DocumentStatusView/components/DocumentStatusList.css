@@ -1692,3 +1692,23 @@ html[data-theme="dark"] .doctype-select:focus {
 html[data-theme="dark"] .doctype-label {
   color: var(--color-ios-text-secondary-dark);
 }
+
+/* 🔒 읽기 전용 문서 유형 (시스템 전용 - annual_report 등) */
+.doctype-label--readonly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  background-color: var(--color-semantic-info-light);
+  color: var(--color-ios-blue-light);
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: not-allowed;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html[data-theme="dark"] .doctype-label--readonly {
+  background-color: rgba(10, 132, 255, 0.15);
+  color: var(--color-ios-blue-dark);
+}
