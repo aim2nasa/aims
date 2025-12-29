@@ -40,7 +40,8 @@ export default defineConfig({
     proxy: {
       // SSE 스트리밍 엔드포인트 - 별도 설정 필요
       '^/api/.*/stream$': {
-        target: 'http://tars.giize.com:3010',
+        target: 'https://aims.giize.com',
+        secure: true,
         changeOrigin: true,
         // SSE 스트리밍을 위한 설정
         configure: (proxy) => {
@@ -51,7 +52,8 @@ export default defineConfig({
       },
       // AI 채팅 SSE 엔드포인트
       '/api/chat': {
-        target: 'http://tars.giize.com:3010',
+        target: 'https://aims.giize.com',
+        secure: true,
         changeOrigin: true,
         configure: (proxy) => {
           // SSE 스트리밍을 위한 버퍼링 비활성화
@@ -67,7 +69,8 @@ export default defineConfig({
       },
       // API 요청을 백엔드 서버로 프록시
       '/api': {
-        target: 'http://tars.giize.com:3010',
+        target: 'https://aims.giize.com',
+        secure: true,
         changeOrigin: true
       }
     },
