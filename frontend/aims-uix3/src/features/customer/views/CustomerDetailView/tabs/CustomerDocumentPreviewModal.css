@@ -234,3 +234,77 @@
   display: flex;
   flex-direction: column;
 }
+
+/* === 문서 유형 선택기 === */
+.customer-document-preview__title-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.customer-document-preview__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-secondary);
+}
+
+.customer-document-preview__type-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-1);
+}
+
+.customer-document-preview__type-selector label {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.customer-document-preview__type-dropdown {
+  padding: 4px 8px;
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  color: var(--color-text-primary);
+  background-color: var(--color-layout-secondary-light);
+  border: 1px solid var(--color-layout-border);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.customer-document-preview__type-dropdown:hover:not(:disabled) {
+  border-color: var(--color-accent-blue);
+}
+
+.customer-document-preview__type-dropdown:focus {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 0 2px var(--color-accent-blue-subtle);
+}
+
+.customer-document-preview__type-dropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .customer-document-preview__type-dropdown {
+  background-color: var(--color-layout-secondary-dark);
+  color: var(--color-text-primary);
+  border-color: var(--color-layout-border);
+}
+
+/* AI 자동 분류 배지 */
+.customer-document-preview__auto-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-green);
+  background-color: var(--color-accent-green-subtle);
+  border-radius: 4px;
+}

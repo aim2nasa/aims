@@ -47,9 +47,83 @@ export function toDropdownOptions(
     }))
 }
 
+// ========================================
+// 문서 유형 변경/자동분류 API
+// ========================================
+
+interface UpdateDocumentTypeResponse {
+  success: boolean
+  data: {
+    documentId: string
+    type: string
+    typeLabel: string
+  }
+}
+
+interface AutoClassifyResponse {
+  success: boolean
+  data: {
+    documentId: string
+    currentType: string
+    type: string | null
+    suggestedType: string | null
+    confidence: number
+    matchedKeywords: string[]
+    autoApplied: boolean
+    applied: boolean
+  }
+}
+
+/**
+ * 문서 유형 수동 변경
+ * @param documentId 문서 ID
+ * @param type 새 문서 유형 value
+ */
+export async function updateDocumentType(
+  documentId: string,
+  type: string
+): Promise<UpdateDocumentTypeResponse['data']> {
+  const response = await api.patch<UpdateDocumentTypeResponse>(
+    `/api/documents/${documentId}/type`,
+    { type }
+  )
+  return response.data
+}
+
+/**
+ * 문서 유형 자동 분류
+ * @param documentId 문서 ID
+ * @param autoApply 자동 적용 여부 (기본: true)
+ */
+export async function autoClassifyDocument(
+  documentId: string,
+  autoApply = true
+): Promise<AutoClassifyResponse['data']> {
+  const response = await api.post<AutoClassifyResponse>(
+    `/api/documents/${documentId}/auto-classify`,
+    { autoApply }
+  )
+  return response.data
+}
+
+/**
+ * 문서 유형 value로 label 찾기
+ */
+export function getTypeLabel(
+  documentTypes: DocumentType[],
+  typeValue: string | null | undefined
+): string {
+  if (!typeValue) return '미지정'
+  const found = documentTypes.find(dt => dt.value === typeValue)
+  return found?.label ?? typeValue
+}
+
 export const documentTypesService = {
   getDocumentTypes,
-  toDropdownOptions
+  toDropdownOptions,
+  updateDocumentType,
+  autoClassifyDocument,
+  getTypeLabel
 }
 
 export default documentTypesService

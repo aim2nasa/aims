@@ -61,6 +61,7 @@ import type { SearchResultItem } from './entities/search'
 import type { StorageInfo } from './services/userService'
 import type { AIUsageData } from './services/aiUsageService'
 import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
+import { getDocumentTypes, updateDocumentType, type DocumentType } from './services/documentTypesService'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
 import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
@@ -259,6 +260,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
 
+  // RightPane 문서 유형 선택 상태
+  const [rightPaneDocTypes, setRightPaneDocTypes] = useState<DocumentType[]>([])
+  const [rightPaneDocType, setRightPaneDocType] = useState<string>('unspecified')
+  const [isRightPaneTypeChanging, setIsRightPaneTypeChanging] = useState(false)
+
   // 사용량 요약 위젯 상태 (LeftPane 하단) - useAppUsageData 훅으로 분리
   const {
     storageInfo: usageStorageInfo,
@@ -380,6 +386,38 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     loadCurrentUser()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // RightPane 문서 유형 목록 로드
+  useEffect(() => {
+    getDocumentTypes(true)
+      .then(types => setRightPaneDocTypes(types))
+      .catch(err => console.error('문서 유형 로드 실패:', err))
+  }, [])
+
+  // RightPane 문서 유형 동기화 (selectedDocument 변경 시)
+  useEffect(() => {
+    if (selectedDocument) {
+      const docType = selectedDocument.document_type || 'unspecified'
+      setRightPaneDocType(docType)
+    }
+  }, [selectedDocument])
+
+  // RightPane 문서 유형 변경 핸들러
+  const handleRightPaneTypeChange = useCallback(async (newType: string) => {
+    if (!selectedDocument || newType === rightPaneDocType) return
+    const docId = selectedDocument._id
+    if (!docId) return
+
+    setIsRightPaneTypeChanging(true)
+    try {
+      await updateDocumentType(docId, newType)
+      setRightPaneDocType(newType)
+    } catch (err) {
+      console.error('문서 유형 변경 실패:', err)
+    } finally {
+      setIsRightPaneTypeChanging(false)
+    }
+  }, [selectedDocument, rightPaneDocType])
 
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
@@ -1832,45 +1870,78 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const isConverted = selectedDocument.isConverted
                   const originalExt = selectedDocument.originalExtension?.toUpperCase()
 
-                  // 부가 정보가 있으면 서브타이틀로 표시
-                  if (ocrInfo || isConverted) {
-                    return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <div>{fileName}</div>
-                        <div style={{
-                          fontSize: '11px',
-                          fontWeight: '400',
-                          color: 'var(--color-text-tertiary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          {isConverted && (
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px',
-                              padding: '1px 5px',
-                              backgroundColor: 'var(--color-accent-blue-subtle)',
-                              color: 'var(--color-accent-blue)',
-                              borderRadius: '4px',
-                              fontSize: '10px',
-                              fontWeight: '500'
-                            }}>
-                              PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
-                            </span>
-                          )}
-                          {ocrInfo && (
-                            <span style={{ opacity: 0.7 }}>
-                              OCR {ocrInfo.percent}% · {ocrInfo.label}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  }
+                  // 문서 유형 옵션 생성 (시스템 유형 제외, unspecified만 포함)
+                  const typeOptions = rightPaneDocTypes
+                    .filter(dt => !dt.isSystem || dt.value === 'unspecified')
+                    .sort((a, b) => a.order - b.order)
 
-                  return fileName
+                  // 항상 서브타이틀 영역 표시 (문서 유형 드롭다운 포함)
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div>{fileName}</div>
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: '400',
+                        color: 'var(--color-text-tertiary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flexWrap: 'wrap'
+                      }}>
+                        {isConverted && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '1px 5px',
+                            backgroundColor: 'var(--color-accent-blue-subtle)',
+                            color: 'var(--color-accent-blue)',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: '500'
+                          }}>
+                            PDF 변환됨{originalExt ? ` · 원본 ${originalExt}` : ''}
+                          </span>
+                        )}
+                        {ocrInfo && (
+                          <span style={{ opacity: 0.7 }}>
+                            OCR {ocrInfo.percent}% · {ocrInfo.label}
+                          </span>
+                        )}
+                        {/* 문서 유형 선택 드롭다운 */}
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          marginLeft: (isConverted || ocrInfo) ? '4px' : '0'
+                        }}>
+                          <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>유형:</span>
+                          <select
+                            title="문서 유형 선택"
+                            value={rightPaneDocType}
+                            onChange={(e) => handleRightPaneTypeChange(e.target.value)}
+                            disabled={isRightPaneTypeChanging}
+                            style={{
+                              padding: '2px 6px',
+                              fontSize: '11px',
+                              fontFamily: 'var(--font-family-text)',
+                              color: 'var(--color-text-primary)',
+                              backgroundColor: 'var(--color-layout-secondary-light)',
+                              border: '1px solid var(--color-layout-border)',
+                              borderRadius: '4px',
+                              cursor: isRightPaneTypeChanging ? 'not-allowed' : 'pointer',
+                              outline: 'none',
+                              opacity: isRightPaneTypeChanging ? 0.6 : 1
+                            }}
+                          >
+                            {typeOptions.map(dt => (
+                              <option key={dt.value} value={dt.value}>{dt.label}</option>
+                            ))}
+                          </select>
+                        </span>
+                      </div>
+                    </div>
+                  )
                 })()}
                 onClose={() => {
                   // 🍎 미닫이문 UX: 애니메이션 먼저 시작

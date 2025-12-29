@@ -87,7 +87,9 @@ function prepareDocumentResponse(doc) {
     docembed: doc.docembed || null,
     customer_relation: doc.customer_relation || null,
     ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
-    customerId: doc.customerId || null  // 🆕 내 파일 기능
+    customerId: doc.customerId || null,  // 🆕 내 파일 기능
+    document_type: doc.document_type || null,  // 🏷️ 문서 유형
+    document_type_auto: doc.document_type_auto || false  // 🏷️ 자동 분류 여부
   };
 
   // ========================

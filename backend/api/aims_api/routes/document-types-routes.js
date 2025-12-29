@@ -353,5 +353,192 @@ module.exports = (db, authenticateJWT, requireRole) => {
     }
   });
 
+  // ========================================
+  // 문서 자동 분류 API
+  // ========================================
+
+  const { classifyDocument, classifyDocuments } = require('../lib/documentTypeClassifier');
+
+  /**
+   * 단일 문서 자동 분류
+   * POST /api/documents/:id/auto-classify
+   *
+   * meta.tags와 meta.summary를 기반으로 문서 유형 자동 분류
+   * autoApply=true (기본값)이면 신뢰도 70% 이상 시 자동 적용
+   */
+  router.post('/documents/:id/auto-classify', authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { autoApply = true } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: '유효하지 않은 문서 ID입니다' });
+      }
+
+      const document = await filesCollection.findOne({ _id: new ObjectId(id) });
+      if (!document) {
+        return res.status(404).json({ success: false, message: '문서를 찾을 수 없습니다' });
+      }
+
+      const tags = document.meta?.tags || [];
+      const summary = document.meta?.summary || '';
+      const filename = document.upload?.originalName || '';
+
+      const result = classifyDocument(tags, summary, filename);
+
+      // 자동 적용 (신뢰도 70% 이상)
+      if (autoApply && result.autoApplied && result.type) {
+        await filesCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              document_type: result.type,
+              document_type_auto: true,
+              document_type_confidence: result.confidence,
+              document_type_updated_at: new Date()
+            }
+          }
+        );
+
+        console.log(`[AutoClassify] 문서 ${id} → ${result.type} (신뢰도: ${result.confidence})`);
+      }
+
+      res.json({
+        success: true,
+        data: {
+          documentId: id,
+          currentType: document.document_type || 'unspecified',
+          ...result,
+          applied: autoApply && result.autoApplied
+        }
+      });
+    } catch (error) {
+      console.error('문서 자동 분류 오류:', error);
+      backendLogger.error('DocumentTypes', '문서 자동 분류 오류', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 문서 유형 수동 변경
+   * PATCH /api/documents/:id/type
+   *
+   * 사용자가 수동으로 문서 유형 변경
+   */
+  router.patch('/documents/:id/type', authenticateJWT, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { type } = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: '유효하지 않은 문서 ID입니다' });
+      }
+
+      if (!type) {
+        return res.status(400).json({ success: false, message: '문서 유형을 지정해주세요' });
+      }
+
+      // 유효한 문서 유형인지 확인
+      const validType = await documentTypesCollection.findOne({ value: type });
+      if (!validType) {
+        return res.status(400).json({ success: false, message: '유효하지 않은 문서 유형입니다' });
+      }
+
+      const result = await filesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            document_type: type,
+            document_type_auto: false, // 수동 변경
+            document_type_updated_at: new Date()
+          },
+          $unset: {
+            document_type_confidence: ''
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ success: false, message: '문서를 찾을 수 없습니다' });
+      }
+
+      console.log(`[ManualClassify] 문서 ${id} → ${type} (수동)`);
+
+      res.json({
+        success: true,
+        data: {
+          documentId: id,
+          type,
+          typeLabel: validType.label
+        }
+      });
+    } catch (error) {
+      console.error('문서 유형 변경 오류:', error);
+      backendLogger.error('DocumentTypes', '문서 유형 변경 오류', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
+  /**
+   * 여러 문서 일괄 자동 분류
+   * POST /api/documents/bulk-auto-classify
+   *
+   * 미분류 문서들을 일괄 분류
+   */
+  router.post('/documents/bulk-auto-classify', authenticateJWT, async (req, res) => {
+    try {
+      const { documentIds, autoApply = true } = req.body;
+
+      let query = {};
+      if (documentIds && Array.isArray(documentIds)) {
+        query._id = { $in: documentIds.map(id => new ObjectId(id)) };
+      } else {
+        // documentIds가 없으면 미분류 문서만
+        query.$or = [
+          { document_type: { $exists: false } },
+          { document_type: null },
+          { document_type: 'unspecified' }
+        ];
+      }
+
+      const documents = await filesCollection.find(query).toArray();
+      const results = classifyDocuments(documents);
+
+      let appliedCount = 0;
+      if (autoApply) {
+        for (const result of results) {
+          if (result.autoApplied && result.type) {
+            await filesCollection.updateOne(
+              { _id: new ObjectId(result.documentId) },
+              {
+                $set: {
+                  document_type: result.type,
+                  document_type_auto: true,
+                  document_type_confidence: result.confidence,
+                  document_type_updated_at: new Date()
+                }
+              }
+            );
+            appliedCount++;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          total: documents.length,
+          classified: results.filter(r => r.type || r.suggestedType).length,
+          applied: appliedCount,
+          results
+        }
+      });
+    } catch (error) {
+      console.error('문서 일괄 분류 오류:', error);
+      backendLogger.error('DocumentTypes', '문서 일괄 분류 오류', error);
+      res.status(500).json({ success: false, message: '서버 오류가 발생했습니다' });
+    }
+  });
+
   return router;
 };

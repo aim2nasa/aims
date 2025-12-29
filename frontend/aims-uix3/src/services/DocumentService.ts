@@ -98,6 +98,10 @@ export interface CustomerDocumentItem {
   // PDF 변환 상태 필드
   conversionStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'not_required' | null;
   isConvertible?: boolean;
+  // 문서 유형 필드
+  document_type?: string;
+  document_type_auto?: boolean;
+  document_type_confidence?: number;
 }
 
 export interface CustomerDocumentsResult {

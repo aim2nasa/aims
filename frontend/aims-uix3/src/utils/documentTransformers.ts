@@ -39,6 +39,8 @@ export interface SmartSearchDocumentResponse {
   payload?: SmartSearchPayloadRaw
   meta?: SmartSearchMetaRaw
   ocr?: unknown
+  document_type?: string
+  document_type_auto?: boolean
 }
 
 // Internal Document Types
@@ -80,6 +82,10 @@ export interface SelectedDocument {
   isConverted?: boolean
   /** 원본 파일 확장자 (예: 'xlsx', 'pptx') */
   originalExtension?: string
+  /** 문서 유형 (예: 'contract', 'application', 'general') */
+  document_type?: string
+  /** 문서 유형 자동 분류 여부 */
+  document_type_auto?: boolean
 }
 
 /**
@@ -157,7 +163,11 @@ export const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocume
     : ({} as SmartSearchMetaRaw)
   const ocr = isPlainObject(record['ocr']) ? record['ocr'] : undefined
 
-  return { upload, payload, meta, ocr }
+  // 문서 유형 필드 추출
+  const document_type = typeof record['document_type'] === 'string' ? record['document_type'] : undefined
+  const document_type_auto = typeof record['document_type_auto'] === 'boolean' ? record['document_type_auto'] : undefined
+
+  return { upload, payload, meta, ocr, document_type, document_type_auto }
 }
 
 /** API computed 응답 타입 */
@@ -271,6 +281,14 @@ export const buildSelectedDocument = (
   const extMatch = originalName.match(/\.([^.]+)$/)
   if (extMatch) {
     selected.originalExtension = extMatch[1].toLowerCase()
+  }
+
+  // 문서 유형 필드 복사
+  if (raw.document_type) {
+    selected.document_type = raw.document_type
+  }
+  if (raw.document_type_auto !== undefined) {
+    selected.document_type_auto = raw.document_type_auto
   }
 
   return selected

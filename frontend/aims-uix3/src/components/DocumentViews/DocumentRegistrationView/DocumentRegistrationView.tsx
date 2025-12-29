@@ -36,6 +36,7 @@ import {
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
 import DuplicateDialog, { type DuplicateAction, type DuplicateFile } from '@/features/batch-upload/components/DuplicateDialog'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { autoClassifyDocument } from '@/services/documentTypesService'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -68,7 +69,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 }) => {
   // 고객 파일 등록 상태
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
-  const [customerFileDocType, setCustomerFileDocType] = useState<string>('unspecified')
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
@@ -621,20 +621,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
 
       // 🔗 고객이 선택되어 있으면 추적 목록에 추가 (업로드 후 자동 연결)
-      // 문서유형은 기본값 'unspecified'가 있으므로 체크 불필요
+      // 문서유형은 자동 분류로 처리되므로 'unspecified'로 설정
       if (customerFileCustomer) {
         validFiles.forEach(f => {
           customerFileUploadMappingRef.current.set(f.file.name, {
             customerId: customerFileCustomer._id,
             customerName: customerFileCustomer.personal_info?.name || '이름 없음',
-            documentType: customerFileDocType
+            documentType: 'unspecified'
           })
-          console.log(`🔗 [고객 파일 자동 연결] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}, 문서유형: ${customerFileDocType}`)
+          console.log(`🔗 [고객 파일 자동 연결] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}`)
         })
       }
     }
 
-  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, promptDuplicateAction])
+  }, [generateFileId, addLog, customerFileCustomer, promptDuplicateAction])
 
   /**
    * 파일 재시도 핸들러
@@ -866,6 +866,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         console.log(`✅ [고객 파일 자동 연결] 문서 처리 완료 (n8n이 이미 연결 처리함)`);
         addLog('success', `[4/4] 문서 처리 완료: ${fileName}`, undefined, customerFileInfo.customerName);
 
+        // 🏷️ 문서 유형 자동 분류 호출
+        try {
+          console.log(`🏷️ [자동 분류] 호출 시작: ${documentId}`);
+          const classifyResult = await autoClassifyDocument(documentId, true);
+          if (classifyResult.autoApplied && classifyResult.type) {
+            console.log(`✅ [자동 분류] 자동 적용됨: ${classifyResult.type} (신뢰도: ${classifyResult.confidence})`);
+          } else if (classifyResult.suggestedType) {
+            console.log(`💡 [자동 분류] 제안됨: ${classifyResult.suggestedType} (신뢰도: ${classifyResult.confidence})`);
+          }
+        } catch (classifyError) {
+          console.warn(`⚠️ [자동 분류] 실패:`, classifyError);
+        }
+
         // 🔔 SSE 알림 트리거: 문서-고객 연결 완료 알림
         try {
           const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
@@ -946,6 +959,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       if (result.success && result.status === 'completed') {
         console.log(`✅ [일반 문서] 백그라운드 처리 완료: ${fileName}`);
         addLog('success', `[4/4] 백그라운드 처리 완료 - 일반 문서 처리 최종 완료: ${fileName}`);
+
+        // 🏷️ 문서 유형 자동 분류 호출
+        try {
+          console.log(`🏷️ [자동 분류] 호출 시작: ${documentId}`);
+          const classifyResult = await autoClassifyDocument(documentId, true);
+          if (classifyResult.autoApplied && classifyResult.type) {
+            console.log(`✅ [자동 분류] 자동 적용됨: ${classifyResult.type} (신뢰도: ${classifyResult.confidence})`);
+          } else if (classifyResult.suggestedType) {
+            console.log(`💡 [자동 분류] 제안됨: ${classifyResult.suggestedType} (신뢰도: ${classifyResult.confidence})`);
+          }
+        } catch (classifyError) {
+          console.warn(`⚠️ [자동 분류] 실패:`, classifyError);
+        }
       } else if (result.status === 'timeout') {
         console.warn(`⚠️ [일반 문서] 처리 대기 시간 초과: ${fileName}`);
         addLog('warning', `백그라운드 처리 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 확인해주세요.');
@@ -1266,8 +1292,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <CustomerFileUploadArea
               selectedCustomer={customerFileCustomer}
               onCustomerSelect={setCustomerFileCustomer}
-              documentType={customerFileDocType}
-              onDocumentTypeChange={setCustomerFileDocType}
               disabled={false}
             />
           </div>
@@ -1325,7 +1349,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 })
                 setIsLogVisible(false)
                 setCustomerFileCustomer(null)
-                setCustomerFileDocType('미지정')
               }}
             >
               <span className="icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>

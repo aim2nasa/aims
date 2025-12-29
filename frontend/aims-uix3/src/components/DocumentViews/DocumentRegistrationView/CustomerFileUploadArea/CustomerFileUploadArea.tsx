@@ -1,19 +1,18 @@
 /**
  * CustomerFileUploadArea Component
  * @since 1.0.0
+ * @updated 2025-12-29 - 문서 유형 수동 선택 UI 제거 (자동 분류로 대체)
  *
- * 고객 파일 등록 시 고객 선택과 문서 유형 선택 UI
+ * 고객 파일 등록 시 고객 선택 UI
  * - 고객 선택 (최근 고객 드롭다운 + 고객 검색 모달)
- * - 문서 유형 선택 (API에서 동적으로 로드)
+ * - 문서 유형은 업로드 후 자동 분류 → 프리뷰 모달에서 수정 가능
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useState, useCallback, useMemo } from 'react'
 import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
-import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import './CustomerFileUploadArea.css'
 
 interface CustomerFileUploadAreaProps {
@@ -21,24 +20,9 @@ interface CustomerFileUploadAreaProps {
   selectedCustomer: Customer | null
   /** 고객 선택 핸들러 */
   onCustomerSelect: (customer: Customer | null) => void
-  /** 선택된 문서 유형 */
-  documentType: string
-  /** 문서 유형 선택 핸들러 */
-  onDocumentTypeChange: (type: string) => void
   /** 비활성화 여부 */
   disabled: boolean
 }
-
-// 폴백용 기본 문서 유형 (API 실패 시 사용)
-const FALLBACK_DOCUMENT_TYPE_OPTIONS: DropdownOption[] = [
-  { value: 'unspecified', label: '미지정' },
-  { value: 'general', label: '일반 문서' },
-  { value: 'contract', label: '계약서' },
-  { value: 'claim', label: '보험금청구서' },
-  { value: 'proposal', label: '제안서' },
-  { value: 'id_verification', label: '신분증명서' },
-  { value: 'medical', label: '의료서류' }
-]
 
 /**
  * CustomerFileUploadArea React 컴포넌트
@@ -46,42 +30,12 @@ const FALLBACK_DOCUMENT_TYPE_OPTIONS: DropdownOption[] = [
 export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   selectedCustomer,
   onCustomerSelect,
-  documentType,
-  onDocumentTypeChange,
   disabled
 }) => {
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
   // 최근 선택한 고객 목록 (전역 상태)
   const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
-
-  // 문서 유형 API 조회 (5분 캐시)
-  const { data: documentTypes } = useQuery({
-    queryKey: ['document-types'],
-    queryFn: () => documentTypesService.getDocumentTypes(true),
-    staleTime: 5 * 60 * 1000, // 5분
-    gcTime: 10 * 60 * 1000, // 10분
-  })
-
-  // 문서 유형 드롭다운 옵션 생성
-  const documentTypeOptions = useMemo<DropdownOption[]>(() => {
-    if (!documentTypes || documentTypes.length === 0) {
-      return FALLBACK_DOCUMENT_TYPE_OPTIONS
-    }
-    return documentTypesService.toDropdownOptions(documentTypes)
-  }, [documentTypes])
-
-  // 문서유형 기본값 보장 (빈 문자열이면 'unspecified'로 설정)
-  const effectiveDocumentType = documentType || 'unspecified'
-
-  /**
-   * 고객 선택 해제 시 문서유형을 "미지정"으로 리셋
-   */
-  useEffect(() => {
-    if (!selectedCustomer && documentType !== 'unspecified') {
-      onDocumentTypeChange('unspecified')
-    }
-  }, [selectedCustomer, documentType, onDocumentTypeChange])
 
   /**
    * 최근 고객 드롭다운 옵션 생성 (DocumentLinkModal과 동일)
@@ -185,22 +139,6 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
           </div>
         </div>
 
-        {/* 문서 유형 선택 - 고객 선택 시에만 표시 */}
-        {selectedCustomer && (
-          <div className="options-section">
-            <div className="options-content">
-              <div className="options-field">
-                <label className="options-field__label">문서 유형</label>
-                <Dropdown
-                  value={effectiveDocumentType}
-                  options={documentTypeOptions}
-                  onChange={onDocumentTypeChange}
-                  aria-label="문서 유형 선택"
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 고객 선택 모달 */}
