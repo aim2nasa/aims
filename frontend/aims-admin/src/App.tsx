@@ -142,7 +142,6 @@ function App() {
         { path: '/help/notices', label: '공지사항' },
         { path: '/help/guides', label: '사용 가이드' },
         { path: '/help/faqs', label: 'FAQ' },
-        { path: '/help/document-types', label: '문서 유형' },
         { path: '/inquiries', label: '1:1 문의', badge: inquiryNotifications.unreadCount },
       ],
     },
@@ -150,6 +149,7 @@ function App() {
       path: '/system',
       label: '시스템 관리',
       children: [
+        { path: '/system/document-types', label: '문서 유형' },
         { path: '/system/backup', label: '백업 관리' },
         { path: '/system/shadow-monitor', label: 'Shadow Monitor' },
       ],

@@ -116,12 +116,12 @@ export const router = createBrowserRouter([
         element: <FAQsPage />,
       },
       {
-        path: 'help/document-types',
-        element: <DocumentTypesPage />,
+        path: 'system',
+        element: <Navigate to="/system/document-types" replace />,
       },
       {
-        path: 'system',
-        element: <Navigate to="/system/backup" replace />,
+        path: 'system/document-types',
+        element: <DocumentTypesPage />,
       },
       {
         path: 'system/backup',
