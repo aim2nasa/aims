@@ -33,7 +33,9 @@ async def doc_prep_main(
     userId: str = Form(...),
     customerId: Optional[str] = Form(None),
     source_path: Optional[str] = Form(None),
-    shadow: bool = False  # Shadow mode: 문서 생성 없이 응답만 시뮬레이션
+    shadow: bool = False,  # Shadow mode: 문서 생성 없이 응답만 시뮬레이션
+    shadow_saved_name: Optional[str] = Form(None),  # n8n이 생성한 파일명 (shadow mode용)
+    shadow_created_at: Optional[str] = Form(None),  # n8n이 생성한 created_at (shadow mode용)
 ):
     """
     Main document processing orchestrator.
@@ -54,12 +56,18 @@ async def doc_prep_main(
     # Shadow mode: 문서 생성 없이 메타데이터 추출 및 응답 시뮬레이션만 수행
     if shadow:
         logger.info(f"[SHADOW] Processing file for comparison (no DB write)")
+        logger.info(f"[SHADOW] Using n8n values - saved_name: {shadow_saved_name}, created_at: {shadow_created_at}")
         try:
             file_content = await file.read()
             original_name = file.filename or "unknown"
 
-            # n8n과 동일한 파일명 패턴 생성 (YYMMDDHHMMSS_randomhash.ext)
-            simulated_filename = FileService._generate_filename(original_name)
+            # n8n이 전달한 파일명 사용 (없으면 자체 생성 - 비교용)
+            if shadow_saved_name:
+                simulated_filename = shadow_saved_name
+            else:
+                # Fallback: n8n 파일명이 없으면 자체 생성 (비교 불일치 예상)
+                simulated_filename = FileService._generate_filename(original_name)
+                logger.warning(f"[SHADOW] No shadow_saved_name provided, generated: {simulated_filename}")
 
             # 임시 파일로 메타데이터 추출
             import tempfile
@@ -70,7 +78,7 @@ async def doc_prep_main(
 
             try:
                 meta_result = await MetaService.extract_metadata(tmp_path)
-                # 임시 파일명 대신 시뮬레이션된 파일명으로 교체
+                # n8n이 생성한 파일명으로 교체
                 meta_result["filename"] = simulated_filename
             finally:
                 os.unlink(tmp_path)  # 임시 파일 삭제
@@ -114,6 +122,12 @@ async def doc_prep_main(
             # 텍스트 추출 성공 - 요약 생성
             summary_result = await OpenAIService.summarize_text(full_text)
 
+            # n8n이 전달한 created_at 사용 (없으면 현재 시간)
+            if shadow_created_at:
+                created_at_value = shadow_created_at
+            else:
+                created_at_value = datetime.utcnow().isoformat() + "Z"
+
             return {
                 "result": "success",
                 "document_id": "shadow_simulated",
@@ -123,7 +137,7 @@ async def doc_prep_main(
                     "extension": meta_result.get("extension"),
                     "mime": meta_result.get("mime_type"),
                     "size_bytes": str(meta_result.get("file_size", "")),
-                    "created_at": datetime.utcnow().isoformat() + "Z",
+                    "created_at": created_at_value,
                     "meta_status": "ok",
                     "exif": "{}",
                     "pdf_pages": str(meta_result.get("num_pages", "")),

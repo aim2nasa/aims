@@ -8,6 +8,8 @@ from datetime import datetime
 
 # 비교 시 무시할 필드 (동적 생성값)
 IGNORE_FIELDS = {
+    # 전체 객체 무시 (내부 필드 대부분이 동적)
+    "meta", "upload", "ocr",
     # 파일 경로 (타임스탬프 포함)
     "path", "saved_name", "dest_path", "sourcePath",
     # 시간 필드
