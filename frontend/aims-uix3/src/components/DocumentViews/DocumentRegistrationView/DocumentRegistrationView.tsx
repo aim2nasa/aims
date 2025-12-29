@@ -70,6 +70,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 }) => {
   // 고객 파일 등록 상태
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
+  // 고객 ID 변경 추적용 (이전 고객 ID)
+  const prevCustomerIdRef = useRef<string | null>(null)
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
@@ -1207,6 +1209,36 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       setUploadState(prev => ({ ...prev, uploading: false }))
     }
   }, [stats.uploading, uploadState.uploading, uploadState.files.length])
+
+  /**
+   * 🔴 고객 변경 시 상태 초기화
+   * 고객이 변경되면(해제 또는 다른 고객 선택) 로그 영역을 숨기고 드래그존이 표시되도록 함
+   */
+  useEffect(() => {
+    const currentCustomerId = customerFileCustomer?._id ?? null
+    const prevCustomerId = prevCustomerIdRef.current
+
+    // 고객이 변경되었으면 상태 초기화
+    if (prevCustomerId !== null && currentCustomerId !== prevCustomerId) {
+      console.log('[DocumentRegistrationView] 🔄 고객 변경 감지, 상태 초기화:', prevCustomerId, '→', currentCustomerId)
+      setIsLogVisible(false)
+      setProcessingLogs([])
+      setUploadState({
+        uploading: false,
+        files: [],
+        totalProgress: 0,
+        completedCount: 0,
+        errors: [],
+        context: {
+          identifierType: 'userId',
+          identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
+        }
+      })
+    }
+
+    // 현재 고객 ID를 이전 값으로 저장
+    prevCustomerIdRef.current = currentCustomerId
+  }, [customerFileCustomer])
 
   // 제목에 진행 상태 표시
   const getTitle = () => {
