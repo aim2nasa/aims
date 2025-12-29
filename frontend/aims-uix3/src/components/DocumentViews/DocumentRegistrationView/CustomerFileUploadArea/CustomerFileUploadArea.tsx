@@ -4,14 +4,16 @@
  *
  * 고객 파일 등록 시 고객 선택과 문서 유형 선택 UI
  * - 고객 선택 (최근 고객 드롭다운 + 고객 검색 모달)
- * - 문서 유형 선택
+ * - 문서 유형 선택 (API에서 동적으로 로드)
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
+import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import './CustomerFileUploadArea.css'
 
 interface CustomerFileUploadAreaProps {
@@ -27,8 +29,8 @@ interface CustomerFileUploadAreaProps {
   disabled: boolean
 }
 
-// 문서 유형 옵션 (DocumentLinkModal과 동일)
-const DOCUMENT_TYPE_OPTIONS: DropdownOption[] = [
+// 폴백용 기본 문서 유형 (API 실패 시 사용)
+const FALLBACK_DOCUMENT_TYPE_OPTIONS: DropdownOption[] = [
   { value: 'unspecified', label: '미지정' },
   { value: 'general', label: '일반 문서' },
   { value: 'contract', label: '계약서' },
@@ -52,6 +54,22 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
   // 최근 선택한 고객 목록 (전역 상태)
   const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
+
+  // 문서 유형 API 조회 (5분 캐시)
+  const { data: documentTypes } = useQuery({
+    queryKey: ['document-types'],
+    queryFn: () => documentTypesService.getDocumentTypes(true),
+    staleTime: 5 * 60 * 1000, // 5분
+    gcTime: 10 * 60 * 1000, // 10분
+  })
+
+  // 문서 유형 드롭다운 옵션 생성
+  const documentTypeOptions = useMemo<DropdownOption[]>(() => {
+    if (!documentTypes || documentTypes.length === 0) {
+      return FALLBACK_DOCUMENT_TYPE_OPTIONS
+    }
+    return documentTypesService.toDropdownOptions(documentTypes)
+  }, [documentTypes])
 
   // 문서유형 기본값 보장 (빈 문자열이면 'unspecified'로 설정)
   const effectiveDocumentType = documentType || 'unspecified'
@@ -175,7 +193,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
                 <label className="options-field__label">문서 유형</label>
                 <Dropdown
                   value={effectiveDocumentType}
-                  options={DOCUMENT_TYPE_OPTIONS}
+                  options={documentTypeOptions}
                   onChange={onDocumentTypeChange}
                   aria-label="문서 유형 선택"
                 />

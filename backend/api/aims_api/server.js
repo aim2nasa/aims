@@ -9439,6 +9439,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', savedQuestionsRoutes);
     console.log('[Server] savedQuestionsRoutes 등록 완료');
 
+    // 문서 유형 라우트 설정
+    const documentTypesRoutes = require('./routes/document-types-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', documentTypesRoutes);
+    console.log('[Server] documentTypesRoutes 등록 완료');
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })
