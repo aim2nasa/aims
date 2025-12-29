@@ -58,6 +58,9 @@ async def doc_prep_main(
             file_content = await file.read()
             original_name = file.filename or "unknown"
 
+            # n8n과 동일한 파일명 패턴 생성 (YYMMDDHHMMSS_randomhash.ext)
+            simulated_filename = FileService._generate_filename(original_name)
+
             # 임시 파일로 메타데이터 추출
             import tempfile
             import os
@@ -67,6 +70,8 @@ async def doc_prep_main(
 
             try:
                 meta_result = await MetaService.extract_metadata(tmp_path)
+                # 임시 파일명 대신 시뮬레이션된 파일명으로 교체
+                meta_result["filename"] = simulated_filename
             finally:
                 os.unlink(tmp_path)  # 임시 파일 삭제
 
