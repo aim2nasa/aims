@@ -23,16 +23,8 @@ interface CustomerFileUploadAreaProps {
   documentType: string
   /** 문서 유형 선택 핸들러 */
   onDocumentTypeChange: (type: string) => void
-  /** 메모 */
-  notes: string
-  /** 메모 변경 핸들러 */
-  onNotesChange: (notes: string) => void
   /** 비활성화 여부 */
   disabled: boolean
-  /** 메모 영역 펼침 상태 */
-  isNotesExpanded: boolean
-  /** 메모 영역 토글 핸들러 */
-  onToggleNotes: () => void
 }
 
 // 문서 유형 옵션 (DocumentLinkModal과 동일)
@@ -54,11 +46,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   onCustomerSelect,
   documentType,
   onDocumentTypeChange,
-  notes,
-  onNotesChange,
-  disabled,
-  isNotesExpanded,
-  onToggleNotes
+  disabled
 }) => {
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
@@ -179,38 +167,20 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
           </div>
         </div>
 
-        {/* 추가 옵션 (문서 유형 + 메모) - 고객 선택 시에만 표시 */}
+        {/* 문서 유형 선택 - 고객 선택 시에만 표시 */}
         {selectedCustomer && (
-          <div className={`options-section ${isNotesExpanded ? 'options-section--expanded' : 'options-section--collapsed'}`}>
-            <button
-              type="button"
-              className="options-section__toggle"
-              onClick={onToggleNotes}
-              aria-expanded={isNotesExpanded ? "true" : "false"}
-              aria-label={isNotesExpanded ? '추가 옵션 접기' : '추가 옵션 펼치기'}
-            >
-              <div className="options-header">
-                <span className="options-label">추가 옵션</span>
-                <span className="options-toggle-icon" aria-hidden="true">
-                  {isNotesExpanded ? '▲' : '▼'}
-                </span>
+          <div className="options-section">
+            <div className="options-content">
+              <div className="options-field">
+                <label className="options-field__label">문서 유형</label>
+                <Dropdown
+                  value={effectiveDocumentType}
+                  options={DOCUMENT_TYPE_OPTIONS}
+                  onChange={onDocumentTypeChange}
+                  aria-label="문서 유형 선택"
+                />
               </div>
-            </button>
-
-            {isNotesExpanded && (
-              <div className="options-content">
-                {/* 문서 유형 */}
-                <div className="options-field">
-                  <label className="options-field__label">문서 유형</label>
-                  <Dropdown
-                    value={effectiveDocumentType}
-                    options={DOCUMENT_TYPE_OPTIONS}
-                    onChange={onDocumentTypeChange}
-                    aria-label="문서 유형 선택"
-                  />
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>

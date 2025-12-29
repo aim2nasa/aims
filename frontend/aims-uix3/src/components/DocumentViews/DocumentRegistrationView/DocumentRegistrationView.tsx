@@ -69,7 +69,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 고객 파일 등록 상태
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
   const [customerFileDocType, setCustomerFileDocType] = useState<string>('unspecified')
-  const [customerFileNotes, setCustomerFileNotes] = useState<string>('')
 
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
@@ -98,25 +97,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const saved = localStorage.getItem('doc-reg-guide-expanded')
     return saved === null ? true : saved === 'true' // 기본값: 펼친 상태
   })
-  const [isNotesExpanded, setIsNotesExpanded] = useState(() => {
-    const saved = localStorage.getItem('doc-reg-notes-expanded')
-    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
-  })
 
   // 가이드 접기/펼치기 토글
   const toggleGuide = useCallback(() => {
     setIsGuideExpanded(prev => {
       const newValue = !prev
       localStorage.setItem('doc-reg-guide-expanded', String(newValue))
-      return newValue
-    })
-  }, [])
-
-  // 메모 접기/펼치기 토글
-  const toggleNotes = useCallback(() => {
-    setIsNotesExpanded(prev => {
-      const newValue = !prev
-      localStorage.setItem('doc-reg-notes-expanded', String(newValue))
       return newValue
     })
   }, [])
@@ -210,7 +196,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     customerId: string
     customerName: string
     documentType: string
-    notes: string
   }>>(new Map())
 
   // 📝 처리 로그 상태 (sessionStorage에서 복원)
@@ -642,15 +627,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           customerFileUploadMappingRef.current.set(f.file.name, {
             customerId: customerFileCustomer._id,
             customerName: customerFileCustomer.personal_info?.name || '이름 없음',
-            documentType: customerFileDocType,
-            notes: customerFileNotes
+            documentType: customerFileDocType
           })
           console.log(`🔗 [고객 파일 자동 연결] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}, 문서유형: ${customerFileDocType}`)
         })
       }
     }
 
-  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, customerFileNotes, promptDuplicateAction])
+  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, promptDuplicateAction])
 
   /**
    * 파일 재시도 핸들러
@@ -1284,28 +1268,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               onCustomerSelect={setCustomerFileCustomer}
               documentType={customerFileDocType}
               onDocumentTypeChange={setCustomerFileDocType}
-              notes={customerFileNotes}
-              onNotesChange={setCustomerFileNotes}
               disabled={false}
-              isNotesExpanded={isNotesExpanded}
-              onToggleNotes={toggleNotes}
             />
           </div>
         </div>
-
-        {/* 🎯 메모 영역 - 별도 컨테이너로 분리하여 전체 너비 사용 */}
-        {customerFileCustomer && isNotesExpanded && !isLogVisible && (
-          <div className="memo-section-wrapper">
-            <label className="memo-section-wrapper__label">메모</label>
-            <textarea
-              className="memo-section-wrapper__textarea"
-              value={customerFileNotes}
-              onChange={(e) => setCustomerFileNotes(e.target.value)}
-              placeholder="이 문서에 대한 참고 메모를 남겨주세요."
-              aria-label="메모"
-            />
-          </div>
-        )}
 
         {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시 & 로그 미표시 시에만 표시 */}
         {customerFileCustomer && !isLogVisible && (
@@ -1360,8 +1326,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 setIsLogVisible(false)
                 setCustomerFileCustomer(null)
                 setCustomerFileDocType('미지정')
-                setCustomerFileNotes('')
-                setIsNotesExpanded(true)
               }}
             >
               새 문서 등록

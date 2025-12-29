@@ -420,55 +420,6 @@ html[data-theme="dark"] .customer-info-toggle-icon {
   padding: 0;
 }
 
-/* 🎯 메모 영역 - FileUploadArea와 동일한 너비 */
-.memo-section-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-width: 800px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 0 var(--spacing-2);
-  box-sizing: border-box;
-}
-
-.memo-section-wrapper__label {
-  font-size: var(--font-size-caption-1);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.memo-section-wrapper__textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 10px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-footnote);
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  resize: none;
-  height: 32px;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .memo-section-wrapper__textarea {
-  background: var(--color-layout-content-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.memo-section-wrapper__textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus-ring);
-}
-
-.memo-section-wrapper__textarea::placeholder {
-  color: var(--color-text-tertiary);
-}
-
 /* 🍎 처리 상태 보기 버튼 */
 .view-status-button-container {
   display: flex;
