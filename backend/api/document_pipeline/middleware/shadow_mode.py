@@ -84,6 +84,7 @@ async def shadow_call(
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
             # 병렬 호출 준비
+            # FastAPI는 shadow=true로 호출 → 문서 생성 없이 응답만 시뮬레이션
             if files:
                 n8n_coro = client.post(
                     f"{N8N_BASE}/{workflow}",
@@ -91,7 +92,7 @@ async def shadow_call(
                     files=files
                 )
                 fastapi_coro = client.post(
-                    f"{FASTAPI_BASE}/{workflow}",
+                    f"{FASTAPI_BASE}/{workflow}?shadow=true",
                     data=request_data,
                     files=files
                 )
@@ -101,7 +102,7 @@ async def shadow_call(
                     json=request_data
                 )
                 fastapi_coro = client.post(
-                    f"{FASTAPI_BASE}/{workflow}",
+                    f"{FASTAPI_BASE}/{workflow}?shadow=true",
                     json=request_data
                 )
 

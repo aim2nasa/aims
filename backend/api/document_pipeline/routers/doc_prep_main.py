@@ -32,7 +32,8 @@ async def doc_prep_main(
     file: UploadFile = File(...),
     userId: str = Form(...),
     customerId: Optional[str] = Form(None),
-    source_path: Optional[str] = Form(None)
+    source_path: Optional[str] = Form(None),
+    shadow: bool = False  # Shadow mode: 문서 생성 없이 응답만 시뮬레이션
 ):
     """
     Main document processing orchestrator.
@@ -49,6 +50,84 @@ async def doc_prep_main(
     """
     settings = get_settings()
     doc_id = None
+
+    # Shadow mode: 문서 생성 없이 메타데이터 추출 및 응답 시뮬레이션만 수행
+    if shadow:
+        logger.info(f"[SHADOW] Processing file for comparison (no DB write)")
+        try:
+            file_content = await file.read()
+            original_name = file.filename or "unknown"
+
+            # 임시 파일로 메타데이터 추출
+            import tempfile
+            import os
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(original_name)[1]) as tmp:
+                tmp.write(file_content)
+                tmp_path = tmp.name
+
+            try:
+                meta_result = await MetaService.extract_metadata(tmp_path)
+            finally:
+                os.unlink(tmp_path)  # 임시 파일 삭제
+
+            if meta_result.get("error"):
+                return JSONResponse(
+                    status_code=meta_result.get("status", 500),
+                    content=meta_result
+                )
+
+            mime_type = meta_result.get("mime_type", "")
+            full_text = meta_result.get("extracted_text", "")
+
+            # MIME 타입별 응답 시뮬레이션
+            if mime_type == "text/plain":
+                return {"exitCode": 0, "stderr": ""}
+
+            if mime_type in UNSUPPORTED_MIME_TYPES:
+                return JSONResponse(
+                    status_code=415,
+                    content={
+                        "warn": True,
+                        "status": 415,
+                        "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
+                        "mime": mime_type,
+                        "filename": original_name,
+                        "document_id": "shadow_simulated"
+                    }
+                )
+
+            if not full_text or len(full_text.strip()) == 0:
+                return {
+                    "result": "success",
+                    "document_id": "shadow_simulated",
+                    "ocr": {
+                        "status": "queued",
+                        "queued_at": datetime.utcnow().isoformat()
+                    }
+                }
+
+            # 텍스트 추출 성공 - 요약 생성
+            summary_result = await OpenAIService.summarize_text(full_text)
+
+            return {
+                "result": "success",
+                "document_id": "shadow_simulated",
+                "status": "completed",
+                "meta": {
+                    "filename": meta_result.get("filename"),
+                    "extension": meta_result.get("extension"),
+                    "mime": meta_result.get("mime_type"),
+                    "size_bytes": str(meta_result.get("file_size", "")),
+                    "created_at": datetime.utcnow().isoformat() + "Z",
+                    "meta_status": "ok",
+                    "exif": "{}",
+                    "pdf_pages": str(meta_result.get("num_pages", "")),
+                    "full_text": (full_text[:10000] + "...") if len(full_text) > 10000 else full_text
+                }
+            }
+        except Exception as e:
+            logger.error(f"[SHADOW] Error: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
 
     try:
         # Step 1: Create document in MongoDB

@@ -63,8 +63,11 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
 
   // 파일 상태별 분류
+  const pendingFiles = uploadState?.files.filter(f => f.status === 'pending') || []
+  const uploadingFiles = uploadState?.files.filter(f => f.status === 'uploading') || []
   const completedFiles = uploadState?.files.filter(f => f.status === 'completed' || f.status === 'warning') || []
   const errorFiles = uploadState?.files.filter(f => f.status === 'error') || []
+  const skippedFiles = uploadState?.files.filter(f => f.status === 'skipped') || []
 
   // 파일 크기 포맷팅
   const formatFileSize = (bytes: number): string => {
@@ -157,6 +160,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           return <span className="file-item__check-circle">✓</span>
         case 'error':
           return <span className="file-item__error-icon">!</span>
+        case 'skipped':
+          return <span className="file-item__skipped-icon">⊘</span>
         case 'uploading':
           return <span className="file-item__spinner" />
         default:
@@ -181,6 +186,10 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         {/* 완료: 완료 텍스트 */}
         {(file.status === 'completed' || file.status === 'warning') && (
           <span className="file-item__status-text file-item__status-text--success">완료</span>
+        )}
+        {/* 건너뜀: 사유 표시 */}
+        {file.status === 'skipped' && file.error && (
+          <span className="file-item__skipped">{file.error}</span>
         )}
         {file.status === 'error' && file.error && (
           <span className="file-item__error">{file.error}</span>
@@ -212,8 +221,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         </div>
       )}
 
-      {/* 업로드 파일 요약 (파일이 있을 때만) */}
-      {hasFiles && !isUploading && (
+      {/* 업로드 파일 요약 (파일이 있을 때 항상 표시) */}
+      {hasFiles && (
         <div className="processing-log__file-summary">
           <button
             type="button"
@@ -228,13 +237,23 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                 weight={SFSymbolWeight.MEDIUM}
                 className="file-summary__icon"
               />
-              <span className="file-summary__title">업로드 결과</span>
+              <span className="file-summary__title">{isUploading ? '업로드 진행' : '업로드 결과'}</span>
               <span className="file-summary__count">
                 {completedFiles.length}/{uploadState?.files.length || 0}
               </span>
+              {uploadingFiles.length > 0 && (
+                <span className="file-summary__uploading-count">
+                  {uploadingFiles.length} 진행중
+                </span>
+              )}
               {errorFiles.length > 0 && (
                 <span className="file-summary__error-count">
                   {errorFiles.length} 실패
+                </span>
+              )}
+              {skippedFiles.length > 0 && (
+                <span className="file-summary__skipped-count">
+                  {skippedFiles.length} 건너뜀
                 </span>
               )}
               <span className="file-summary__chevron" aria-hidden="true">
@@ -245,6 +264,32 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
 
           {isFileSummaryExpanded && (
             <div className="file-summary__content">
+              {/* 업로드 중인 파일 */}
+              {uploadingFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <span className="file-summary__spinner" />
+                    <span>업로드 중 ({uploadingFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {uploadingFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
+              {/* 대기 중인 파일 */}
+              {pendingFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <SFSymbol name="clock" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-summary__section-icon file-summary__section-icon--pending" />
+                    <span>대기 중 ({pendingFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {pendingFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
               {/* 완료된 파일 */}
               {completedFiles.length > 0 && (
                 <div className="file-summary__section">
@@ -267,6 +312,19 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                   </div>
                   <div className="file-summary__list">
                     {errorFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
+              {/* 건너뛴 파일 (중복 등) */}
+              {skippedFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <span className="file-summary__skipped-icon">⊘</span>
+                    <span className="file-summary__section-title--skipped">건너뜀 ({skippedFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {skippedFiles.map(renderFileItem)}
                   </div>
                 </div>
               )}

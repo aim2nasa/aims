@@ -538,6 +538,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
                 )
                 console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
+                // 건너뛴 파일도 결과에 표시
+                newUploadFiles.push({
+                  id: generateFileId(),
+                  file,
+                  fileSize: file.size,
+                  status: 'skipped',
+                  progress: 0,
+                  error: `중복 파일 - ${customerName} 고객에게 이미 등록됨`
+                })
                 continue
               }
             }
