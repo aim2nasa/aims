@@ -210,9 +210,41 @@ module.exports = function(db, authenticateJWT, requireRole) {
     // 연결 확인 이벤트
     sendSSE(res, 'connected', { message: 'System logs stream connected' });
 
-    // 초기 통계 전송
+    // 초기 통계 전송 (activity 통계 포함)
     try {
       const stats = await systemLogger.getStats(7);
+
+      // 활동 로그 통계 추가 (API stats와 동일한 로직)
+      try {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 7);
+
+        const activityResult = await activityLogger.getLogs({
+          startDate: startDate.toISOString(),
+          page: 1,
+          limit: 1  // 총 개수만 필요
+        });
+
+        // 활동 로그 개수를 통계에 추가
+        stats.activity = {
+          total: activityResult.pagination?.total || 0
+        };
+
+        // byLevel에 activity 추가
+        stats.byLevel = stats.byLevel || {};
+        stats.byLevel.activity = activityResult.pagination?.total || 0;
+
+        // total에 activity 추가
+        stats.total = (stats.total || 0) + (activityResult.pagination?.total || 0);
+
+        // bySource에 activity 추가
+        stats.bySource = stats.bySource || {};
+        stats.bySource.activity = activityResult.pagination?.total || 0;
+      } catch (actErr) {
+        console.warn('[ErrorLogs-SSE] activity 통계 조회 실패:', actErr.message);
+        stats.activity = { total: 0 };
+      }
+
       sendSSE(res, 'init', { stats });
     } catch (err) {
       console.error('[ErrorLogs-SSE] 초기 통계 전송 실패:', err.message);
