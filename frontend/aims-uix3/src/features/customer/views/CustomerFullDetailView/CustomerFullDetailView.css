@@ -1039,7 +1039,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 .customer-full-detail__section-content--documents .customer-documents-list-header {
   display: grid;
   /* 🍎 7칼럼: 아이콘 | 파일명 | 문서유형 | 크기 | 타입 | 연결일 | 작업 */
-  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 42px 102px 50px;
+  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 64px 102px 50px;
   gap: 4px 6px; /* row-gap: 4px, column-gap: 6px */
   padding: 0 10px;
   height: var(--row-height);
@@ -1066,7 +1066,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
 .customer-full-detail__section-content--documents .customer-documents-item {
   display: grid;
   /* 🍎 7칼럼: 아이콘 | 파일명 | 문서유형 | 크기 | 타입 | 연결일 | 작업 */
-  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 42px 102px 50px;
+  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 64px 102px 50px;
   gap: 4px 6px; /* row-gap: 4px, column-gap: 6px */
   padding: 0 10px;
   height: var(--row-height);

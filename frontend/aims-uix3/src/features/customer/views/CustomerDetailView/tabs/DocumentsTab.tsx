@@ -80,7 +80,7 @@ const DEFAULT_LIST_HEADER_HEIGHT = 32
 const DEFAULT_PAGINATION_HEIGHT = 26
 
 // 🍎 정렬 필드 타입
-type SortField = 'originalName' | 'fileSize' | 'linkedAt'
+type SortField = 'originalName' | 'fileSize' | 'linkedAt' | 'mimeType'
 type SortDirection = 'asc' | 'desc'
 
 export const DocumentsTab: React.FC<DocumentsTabProps> = ({
@@ -452,6 +452,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         case 'linkedAt':
           aValue = a.linkedAt ?? a.uploadedAt ?? ''
           bValue = b.linkedAt ?? b.uploadedAt ?? ''
+          break
+        case 'mimeType':
+          aValue = a.mimeType ?? ''
+          bValue = b.mimeType ?? ''
           break
         default:
           return 0
@@ -1077,12 +1081,21 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
               </div>
-              <div className="header-type">
+              <div
+                className="header-type header-sortable"
+                onClick={() => handleSort('mimeType')}
+                role="button"
+                tabIndex={0}
+                aria-label="타입으로 정렬"
+              >
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                   <path d="M5 5h2M5 8h4M5 11h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 <span>타입</span>
+                {sortField === 'mimeType' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
               <div
                 className="header-date header-sortable"
