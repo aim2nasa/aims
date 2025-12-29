@@ -425,12 +425,13 @@
   width: 90%;
   max-width: 800px;
   max-height: 80vh;
-  background: var(--bg-primary);
+  background: #1c1c1e;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .shadow-monitor__modal-header {
@@ -438,13 +439,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
+  background: #2c2c2e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .shadow-monitor__modal-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  color: #ffffff;
 }
 
 .shadow-monitor__modal-close {
@@ -452,31 +455,32 @@
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.6);
   padding: 4px 8px;
 }
 
 .shadow-monitor__modal-close:hover {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .shadow-monitor__modal-content {
   padding: 20px;
   overflow-y: auto;
+  background: #1c1c1e;
 }
 
 .shadow-monitor__modal-content h4 {
   margin: 16px 0 8px 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .shadow-monitor__modal-meta {
   display: flex;
   gap: 20px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 16px;
 }
 
@@ -489,7 +493,7 @@
 
 .shadow-monitor__diff {
   padding: 12px;
-  background: var(--bg-secondary);
+  background: #2c2c2e;
   border-radius: 8px;
 }
 
@@ -502,7 +506,7 @@
 
 .shadow-monitor__diff-path code {
   font-weight: 600;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .shadow-monitor__diff-type {
@@ -541,17 +545,18 @@
 
 .shadow-monitor__diff-label {
   font-size: 10px;
-  color: var(--text-tertiary);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .shadow-monitor__diff-values code {
   font-size: 11px;
   padding: 8px;
-  background: var(--bg-primary);
+  background: #1c1c1e;
   border-radius: 4px;
   word-break: break-all;
   max-height: 100px;
   overflow-y: auto;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Modal Actions */
@@ -560,7 +565,7 @@
   gap: 8px;
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .shadow-monitor__resolution {
