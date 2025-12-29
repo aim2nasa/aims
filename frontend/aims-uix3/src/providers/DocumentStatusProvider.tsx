@@ -194,7 +194,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
             const customerRelation = doc.customer_relation?.customer_id || ''
             // 🔥 PDF 변환 상태도 fingerprint에 포함 (변환 완료 시 UI 즉시 반영)
             const convStatus = doc.conversionStatus || (typeof doc.upload === 'object' ? doc.upload?.conversion_status : null) || ''
-            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}`
+            // 🏷️ 문서 유형도 fingerprint에 포함 (유형 변경 시 UI 즉시 반영)
+            const docType = doc.document_type || doc.docType || ''
+            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}:${docType}`
           }
 
           // 🔧 정렬 순서도 반영하기 위해 sort() 제거

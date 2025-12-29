@@ -475,6 +475,7 @@ const DocumentLibraryContent: React.FC<{
         {...(onCustomerClick ? { onCustomerClick } : {})}
         {...(onCustomerDoubleClick ? { onCustomerDoubleClick } : {})}
         {...(onNavigate ? { onNavigate } : {})}
+        onRefresh={controller.refreshDocuments}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}

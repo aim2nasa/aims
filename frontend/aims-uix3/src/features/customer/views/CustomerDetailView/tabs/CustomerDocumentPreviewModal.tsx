@@ -1,13 +1,12 @@
 /**
  * CustomerDocumentPreviewModal
  * @since 2025-10-25
- * @updated 2025-12-29 - 문서 유형 표시/변경 기능 추가
  *
  * 고객 문서 프리뷰 모달 (PDF / 이미지 / 기타)
  * react-pdf 기반 PDF 뷰어 + 이미지 프리뷰 제공
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/shared/ui/Button'
 import DraggableModal from '@/shared/ui/DraggableModal'
 import SFSymbol, {
@@ -20,12 +19,6 @@ import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { formatDateTime } from '@/shared/lib/timeUtils'
-import {
-  getDocumentTypes,
-  updateDocumentType,
-  getTypeLabel,
-  type DocumentType
-} from '@/services/documentTypesService'
 import './CustomerDocumentPreviewModal.css'
 
 interface CustomerDocumentPreviewModalProps {
@@ -36,8 +29,6 @@ interface CustomerDocumentPreviewModalProps {
   onClose: () => void
   onRetry?: () => void
   onDownload?: () => void
-  /** 문서 유형 변경 시 콜백 (목록 갱신용) */
-  onDocumentTypeChange?: (documentId: string, newType: string) => void
 }
 
 // App.tsx와 완전히 동일한 방식
@@ -58,48 +49,10 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   document: previewDocument,
   onClose,
   onRetry,
-  onDownload,
-  onDocumentTypeChange
+  onDownload
 }) => {
   // Fit to page를 위한 scale 계산 (DraggableModal에서 크기 변경 이벤트 받지 않으므로 고정값 사용)
   const [fitScale] = useState<number>(0.9)
-
-  // 문서 유형 관련 상태
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
-  const [selectedType, setSelectedType] = useState<string>('unspecified')
-  const [isTypeChanging, setIsTypeChanging] = useState(false)
-
-  // 문서 유형 목록 로드
-  useEffect(() => {
-    getDocumentTypes(true)
-      .then(types => setDocumentTypes(types))
-      .catch(err => console.error('문서 유형 로드 실패:', err))
-  }, [])
-
-  // 문서 변경 시 유형 초기화
-  useEffect(() => {
-    if (previewDocument?.document?.document_type) {
-      setSelectedType(previewDocument.document.document_type)
-    } else {
-      setSelectedType('unspecified')
-    }
-  }, [previewDocument])
-
-  // 문서 유형 변경 핸들러
-  const handleTypeChange = async (newType: string) => {
-    if (!previewDocument?.id || newType === selectedType) return
-
-    setIsTypeChanging(true)
-    try {
-      await updateDocumentType(previewDocument.id, newType)
-      setSelectedType(newType)
-      onDocumentTypeChange?.(previewDocument.id, newType)
-    } catch (err) {
-      console.error('문서 유형 변경 실패:', err)
-    } finally {
-      setIsTypeChanging(false)
-    }
-  }
 
   // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
   const previewUrl = previewDocument?.previewFileUrl ?? previewDocument?.fileUrl ?? null
@@ -196,11 +149,6 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
     )
   }
 
-  // 드롭다운 옵션 생성 (시스템 유형 제외, unspecified만 포함)
-  const typeOptions = documentTypes
-    .filter(dt => !dt.isSystem || dt.value === 'unspecified')
-    .sort((a, b) => a.order - b.order)
-
   return (
     <DraggableModal
       visible={visible}
@@ -222,35 +170,6 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
               {previewDocument?.isConverted && (
                 <span className="customer-document-preview__conversion-badge">
                   PDF 변환됨{previewDocument.originalExtension ? ` · 원본 ${previewDocument.originalExtension.toUpperCase()}` : ''}
-                </span>
-              )}
-            </div>
-            {/* 문서 유형 선택 드롭다운 */}
-            <div className="customer-document-preview__type-selector">
-              <label>문서 유형:</label>
-              <select
-                title="문서 유형 선택"
-                value={selectedType}
-                onChange={(e) => handleTypeChange(e.target.value)}
-                disabled={isTypeChanging || !previewDocument}
-                className="customer-document-preview__type-dropdown"
-              >
-                {typeOptions.map(dt => (
-                  <option key={dt.value} value={dt.value}>
-                    {dt.label}
-                  </option>
-                ))}
-              </select>
-              {isTypeChanging && (
-                <SFSymbol
-                  name="arrow.triangle.2.circlepath"
-                  animation={SFSymbolAnimation.ROTATE}
-                  size={SFSymbolSize.FOOTNOTE}
-                />
-              )}
-              {previewDocument?.document?.document_type_auto && (
-                <span className="customer-document-preview__auto-badge" title="AI 자동 분류">
-                  자동
                 </span>
               )}
             </div>
