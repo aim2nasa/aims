@@ -449,15 +449,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-/* ✅ 완료 아이콘: 초록색 원형 체크마크 */
+/* ✅ 완료 아이콘: 초록색 원형 체크마크 (크고 눈에 띄게) */
 .file-item__icon--success {
   color: var(--color-ios-green);
-  font-size: 14px;
+  font-size: 18px;
+}
+
+/* ✅ 초록색 원형 체크마크 (filled circle) */
+.file-item__check-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--color-ios-green);
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .file-item__icon--error {
@@ -555,4 +570,17 @@
 .file-item__retry:hover {
   background: var(--color-primary-500);
   color: var(--color-button-primary-text);
+}
+
+/* 상태 텍스트 (완료) */
+.file-item__status-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: var(--font-size-caption-1);
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.file-item__status-text--success {
+  color: var(--color-ios-green);
 }

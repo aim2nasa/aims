@@ -92,14 +92,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
     switch (file.status) {
       case 'completed':
       case 'warning':
-        return (
-          <SFSymbol
-            name="checkmark"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-            className="progress-file__icon progress-file__icon--success"
-          />
-        )
+        // ✅ 완료: 초록색 원형 체크마크 (눈에 잘 띄게)
+        return <span className="progress-file__check-circle">✓</span>
       case 'error':
         return <span className="progress-file__error-icon">!</span>
       case 'uploading':

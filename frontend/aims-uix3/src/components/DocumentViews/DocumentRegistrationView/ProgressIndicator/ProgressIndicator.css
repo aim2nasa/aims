@@ -273,13 +273,30 @@ html[data-theme="dark"] .progress-file--uploading:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
+/* ✅ 완료 아이콘: 초록색 원형 체크마크 (크고 눈에 띄게) */
 .progress-file__icon--success {
   color: var(--color-ios-green);
+  font-size: 18px;
+}
+
+/* ✅ 초록색 원형 체크마크 (filled circle) */
+.progress-file__check-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--color-ios-green);
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .progress-file__icon--pending {
