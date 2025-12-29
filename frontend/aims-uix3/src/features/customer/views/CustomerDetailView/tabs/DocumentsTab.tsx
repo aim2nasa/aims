@@ -80,7 +80,7 @@ const DEFAULT_LIST_HEADER_HEIGHT = 32
 const DEFAULT_PAGINATION_HEIGHT = 26
 
 // 🍎 정렬 필드 타입
-type SortField = 'originalName' | 'fileSize' | 'linkedAt' | 'mimeType'
+type SortField = 'originalName' | 'fileSize' | 'linkedAt' | 'mimeType' | 'docType'
 type SortDirection = 'asc' | 'desc'
 
 export const DocumentsTab: React.FC<DocumentsTabProps> = ({
@@ -456,6 +456,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         case 'mimeType':
           aValue = a.mimeType ?? ''
           bValue = b.mimeType ?? ''
+          break
+        case 'docType':
+          // 🍎 연간보고서는 isAnnualReport 플래그도 확인
+          aValue = a.document_type || (a.isAnnualReport ? 'annual_report' : '')
+          bValue = b.document_type || (b.isAnnualReport ? 'annual_report' : '')
           break
         default:
           return 0
@@ -1059,11 +1064,20 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 )}
               </div>
               {/* 🍎 문서 유형 칼럼 헤더 */}
-              <div className="header-doctype">
+              <div
+                className="header-doctype header-sortable"
+                onClick={() => handleSort('docType')}
+                role="button"
+                tabIndex={0}
+                aria-label="문서유형으로 정렬"
+              >
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M2 3h12v2H2V3zm0 4h8v2H2V7zm0 4h10v2H2v-2z" fill="currentColor"/>
                 </svg>
                 <span>문서유형</span>
+                {sortField === 'docType' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
               <div
                 className="header-size header-sortable"
