@@ -449,13 +449,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
+/* ✅ 완료 아이콘: 초록색 원형 체크마크 */
 .file-item__icon--success {
   color: var(--color-ios-green);
+  font-size: 14px;
 }
 
 .file-item__icon--error {

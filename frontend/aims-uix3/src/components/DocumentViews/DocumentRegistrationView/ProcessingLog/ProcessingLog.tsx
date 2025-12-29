@@ -153,7 +153,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
       switch (file.status) {
         case 'completed':
         case 'warning':
-          return <SFSymbol name="checkmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--success" />
+          // ✅ 완료: 원형 체크마크로 명확하게 표시
+          return <SFSymbol name="checkmark.circle.fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--success" />
         case 'error':
           return <span className="file-item__error-icon">!</span>
         case 'uploading':
