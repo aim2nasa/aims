@@ -41,6 +41,7 @@ import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
 import { useCustomerDocumentsSSE } from '@/shared/hooks/useCustomerDocumentsSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -126,6 +127,47 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
+
+  // 🍎 문서 유형 목록 상태
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
+  const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
+
+  // 🍎 문서 유형 목록 로드
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const types = await documentTypesService.getDocumentTypes(false) // 시스템 유형 제외
+        setDocumentTypes(types)
+      } catch (error) {
+        console.error('[DocumentsTab] 문서 유형 로드 실패:', error)
+      }
+    }
+    loadDocumentTypes()
+  }, [])
+
+  /**
+   * 🍎 문서 유형 변경 핸들러
+   */
+  const handleDocTypeChange = useCallback(async (documentId: string, newType: string) => {
+    if (updatingDocTypeId) return // 이미 업데이트 중이면 무시
+
+    setUpdatingDocTypeId(documentId)
+    try {
+      await documentTypesService.updateDocumentType(documentId, newType)
+      // 목록 새로고침
+      await refresh()
+    } catch (error) {
+      console.error('[DocumentsTab] 문서 유형 변경 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDocTypeChange' })
+      await showAlert({
+        title: '변경 실패',
+        message: '문서 유형 변경에 실패했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setUpdatingDocTypeId(null)
+    }
+  }, [updatingDocTypeId, refresh, showAlert])
 
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
@@ -1012,6 +1054,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
               </div>
+              {/* 🍎 문서 유형 칼럼 헤더 */}
+              <div className="header-doctype">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M2 3h12v2H2V3zm0 4h8v2H2V7zm0 4h10v2H2v-2z" fill="currentColor"/>
+                </svg>
+                <span>문서유형</span>
+              </div>
               <div
                 className="header-size header-sortable"
                 onClick={() => handleSort('fileSize')}
@@ -1098,7 +1147,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     </div>
                     {/* 🍎 AR BADGE: Annual Report 표시 */}
                     {document.isAnnualReport && (
-                      <Tooltip content="Annual Report">
+                      <Tooltip content="연간보고서">
                         <div className="document-ar-badge">
                           AR
                         </div>
@@ -1240,6 +1289,46 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         </button>
                       </Tooltip>
                     )}
+                  </div>
+
+                  {/* 🍎 문서 유형 드롭다운 */}
+                  <div className="document-doctype" onClick={(e) => e.stopPropagation()}>
+                    {(() => {
+                      const docType = document.document_type
+                      const isAnnualReportType = docType === 'annual_report' || document.isAnnualReport === true
+
+                      // Annual Report는 읽기 전용으로 표시
+                      if (isAnnualReportType) {
+                        return (
+                          <span className="doctype-readonly doctype-readonly--ar">
+                            연간보고서
+                          </span>
+                        )
+                      }
+
+                      // 일반 문서는 드롭다운으로 표시
+                      return (
+                        <select
+                          className="doctype-select"
+                          value={docType || 'unspecified'}
+                          onChange={(e) => {
+                            const docId = document._id
+                            if (docId) {
+                              handleDocTypeChange(docId, e.target.value)
+                            }
+                          }}
+                          disabled={updatingDocTypeId === document._id}
+                          aria-label="문서 유형 선택"
+                        >
+                          <option value="unspecified">미지정</option>
+                          {documentTypes.map((dt) => (
+                            <option key={dt._id} value={dt.value}>
+                              {dt.label}
+                            </option>
+                          ))}
+                        </select>
+                      )
+                    })()}
                   </div>
 
                   {/* 크기 */}
