@@ -292,11 +292,11 @@
 }
 
 .ocr-usage-page__tooltip-item--done {
-  color: #34C759;
+  color: #1a8035;
 }
 
 .ocr-usage-page__tooltip-item--error {
-  color: #FF3B30;
+  color: #c41e16;
 }
 
 /* Table - Compact */

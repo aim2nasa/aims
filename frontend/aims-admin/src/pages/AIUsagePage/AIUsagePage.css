@@ -400,15 +400,15 @@
 }
 
 .ai-usage-page__tooltip-item--rag {
-  color: #007AFF;
+  color: #0055b3;
 }
 
 .ai-usage-page__tooltip-item--summary {
-  color: #34C759;
+  color: #1a8035;
 }
 
 .ai-usage-page__tooltip-item--embed {
-  color: #FF9500;
+  color: #b36b00;
 }
 
 /* Year/Month Selector */
