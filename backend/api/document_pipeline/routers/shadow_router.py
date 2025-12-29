@@ -117,7 +117,7 @@ async def shadow_smart_search(request: Request):
     try:
         body = await request.json()
         result = await shadow_call(
-            workflow="smart-search",
+            workflow="smartsearch",  # n8n과 FastAPI 모두 하이픈 없이 사용
             request_data=body
         )
         return JSONResponse(content=result)

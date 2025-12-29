@@ -9640,17 +9640,19 @@ process.on('SIGINT', () => {
 // =============================================================================
 
 const N8N_INTERNAL_URL = 'http://localhost:5678';
+const DOCUMENT_PIPELINE_URL = 'http://localhost:8100';
 
 /**
- * 스마트 검색 프록시 - n8n smartsearch webhook
+ * 스마트 검색 프록시 - Shadow Mode로 n8n과 FastAPI 동시 비교
  * 외부에서 직접 n8n에 접근하지 못하도록 aims_api를 통해 프록시
  */
 app.post('/api/n8n/smartsearch', authenticateJWT, async (req, res) => {
   try {
-    console.log(`[n8n Proxy] smartsearch 요청 - userId: ${req.user.userId}`);
+    console.log(`[Shadow Proxy] smartsearch 요청 - userId: ${req.user.userId}`);
 
+    // Shadow 엔드포인트로 프록시 (n8n과 FastAPI 동시 비교)
     const response = await axios.post(
-      `${N8N_INTERNAL_URL}/webhook/smartsearch`,
+      `${DOCUMENT_PIPELINE_URL}/shadow/smart-search`,
       {
         ...req.body,
         userId: req.user.userId  // 인증된 사용자 정보 주입
@@ -9663,8 +9665,8 @@ app.post('/api/n8n/smartsearch', authenticateJWT, async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error('[n8n Proxy] smartsearch 오류:', error.message);
-    backendLogger.error('n8nProxy', 'smartsearch 오류', error);
+    console.error('[Shadow Proxy] smartsearch 오류:', error.message);
+    backendLogger.error('shadowProxy', 'smartsearch 오류', error);
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
