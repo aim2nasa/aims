@@ -441,44 +441,61 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     )
   }, [documents, searchTerm])
 
+  // 🍎 문서유형 정렬용 라벨 맵 생성 (한글 라벨 기준 가나다순 - 백엔드와 동일)
+  const docTypeLabelMap = useMemo(() => {
+    const map = new Map<string, string>()
+    // 미지정은 '미지정' 한글 라벨로 변환 (백엔드와 동일)
+    map.set('', '미지정')
+    map.set('unspecified', '미지정')
+    // DB에서 가져온 문서유형의 value → label 매핑
+    documentTypes.forEach((dt) => {
+      map.set(dt.value, dt.label)
+    })
+    // 연간보고서는 '연간보고서' 라벨
+    map.set('annual_report', '연간보고서')
+    return map
+  }, [documentTypes])
+
   // 🍎 정렬된 문서 목록
   const sortedDocuments = useMemo(() => {
     const sorted = [...filteredDocuments].sort((a, b) => {
-      let aValue: string | number | null
-      let bValue: string | number | null
+      let compareResult = 0
 
       switch (sortField) {
         case 'originalName':
-          aValue = a.originalName ?? ''
-          bValue = b.originalName ?? ''
+          compareResult = (a.originalName ?? '').localeCompare(b.originalName ?? '', 'ko')
           break
         case 'fileSize':
-          aValue = a.fileSize ?? 0
-          bValue = b.fileSize ?? 0
+          compareResult = (a.fileSize ?? 0) - (b.fileSize ?? 0)
           break
-        case 'linkedAt':
-          aValue = a.linkedAt ?? a.uploadedAt ?? ''
-          bValue = b.linkedAt ?? b.uploadedAt ?? ''
+        case 'linkedAt': {
+          const aDate = a.linkedAt ?? a.uploadedAt ?? ''
+          const bDate = b.linkedAt ?? b.uploadedAt ?? ''
+          compareResult = aDate.localeCompare(bDate)
           break
+        }
         case 'mimeType':
-          aValue = a.mimeType ?? ''
-          bValue = b.mimeType ?? ''
+          compareResult = (a.mimeType ?? '').localeCompare(b.mimeType ?? '')
           break
-        case 'docType':
-          // 🍎 연간보고서는 isAnnualReport 플래그도 확인
-          aValue = a.document_type || (a.isAnnualReport ? 'annual_report' : '')
-          bValue = b.document_type || (b.isAnnualReport ? 'annual_report' : '')
+        case 'docType': {
+          // 🍎 한글 라벨 기준 가나다순 정렬 (백엔드와 100% 동일)
+          const aType = a.document_type || (a.isAnnualReport ? 'annual_report' : '')
+          const bType = b.document_type || (b.isAnnualReport ? 'annual_report' : '')
+          // value를 한글 라벨로 변환
+          const aLabel = docTypeLabelMap.get(aType) ?? aType
+          const bLabel = docTypeLabelMap.get(bType) ?? bType
+          // 한글 가나다순 정렬
+          compareResult = aLabel.localeCompare(bLabel, 'ko')
           break
+        }
         default:
           return 0
       }
 
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-      return 0
+      return sortDirection === 'asc' ? compareResult : -compareResult
     })
     return sorted
-  }, [filteredDocuments, sortField, sortDirection])
+  }, [filteredDocuments, sortField, sortDirection, docTypeLabelMap])
 
   // 🍎 페이지네이션 계산
   const totalPages = Math.ceil(sortedDocuments.length / itemsPerPage)
