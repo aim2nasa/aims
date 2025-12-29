@@ -1293,8 +1293,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         </div>
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시에만 표시 */}
-        {customerFileCustomer && (
+        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시 & 로그 미표시 시에만 표시 */}
+        {customerFileCustomer && !isLogVisible && (
           <FileUploadArea
             onFilesSelected={handleFilesSelected}
             options={fileSelectionOptions}
