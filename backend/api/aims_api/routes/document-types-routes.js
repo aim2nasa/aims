@@ -14,14 +14,31 @@ const backendLogger = require('../lib/backendLogger');
 
 // 기본 문서 유형 (초기 데이터)
 const DEFAULT_DOCUMENT_TYPES = [
+  // 시스템 유형
   { value: 'unspecified', label: '미지정', description: '유형이 지정되지 않은 문서', isSystem: true, order: 0 },
-  { value: 'general', label: '일반 문서', description: '일반적인 문서', isSystem: false, order: 1 },
-  { value: 'contract', label: '계약서', description: '보험 계약 관련 문서', isSystem: false, order: 2 },
-  { value: 'claim', label: '보험금청구서', description: '보험금 청구 관련 문서', isSystem: false, order: 3 },
+
+  // 계약 체결 관련
+  { value: 'application', label: '청약서', description: '보험 가입 신청서, 청약서 부본', isSystem: false, order: 1 },
+  { value: 'policy', label: '보험증권', description: '계약 체결 증명서, 보험가입증명서', isSystem: false, order: 2 },
+  { value: 'terms', label: '약관', description: '보험약관, 상품설명서, 상품안내장', isSystem: false, order: 3 },
   { value: 'proposal', label: '제안서', description: '보험 상품 제안서', isSystem: false, order: 4 },
-  { value: 'id_verification', label: '신분증명서', description: '신분 확인용 문서', isSystem: false, order: 5 },
-  { value: 'medical', label: '의료서류', description: '의료 관련 문서', isSystem: false, order: 6 },
-  { value: 'annual_report', label: '연간보고서(AR)', description: '보험사 연간 보고서 (시스템 전용)', isSystem: true, order: 7 }
+
+  // 보험금 청구 관련
+  { value: 'claim', label: '보험금청구서', description: '보험금 청구 관련 문서', isSystem: false, order: 5 },
+  { value: 'diagnosis', label: '진단서', description: '의사 진단서, 소견서, 진료확인서, 입퇴원확인서', isSystem: false, order: 6 },
+  { value: 'medical_receipt', label: '진료비영수증', description: '진료비 영수증, 세부내역서, 처방전', isSystem: false, order: 7 },
+  { value: 'accident_cert', label: '사고증명서', description: '교통사고사실확인서, 상해진단서', isSystem: false, order: 8 },
+
+  // 신분/증빙 관련
+  { value: 'id_card', label: '신분증', description: '주민등록증, 운전면허증, 여권', isSystem: false, order: 9 },
+  { value: 'family_cert', label: '가족관계서류', description: '주민등록등본, 가족관계증명서', isSystem: false, order: 10 },
+  { value: 'seal_signature', label: '인감/서명', description: '인감증명서, 본인서명사실확인서', isSystem: false, order: 11 },
+  { value: 'bank_account', label: '통장사본', description: '통장사본, 계좌개설확인서', isSystem: false, order: 12 },
+  { value: 'income_employment', label: '소득/재직증빙', description: '원천징수영수증, 재직증명서, 사업자등록증', isSystem: false, order: 13 },
+
+  // 기타
+  { value: 'annual_report', label: '연간보고서(AR)', description: '보험사 연간 보고서 (시스템 전용)', isSystem: true, order: 14 },
+  { value: 'general', label: '일반 문서', description: '일반적인 문서', isSystem: false, order: 15 }
 ];
 
 module.exports = (db, authenticateJWT, requireRole) => {
