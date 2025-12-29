@@ -225,11 +225,22 @@ async def doc_prep_main(
         # Send completion notification (async, don't wait)
         await _notify_document_complete(doc_id, userId)
 
+        # Match n8n response format exactly (include meta, exclude has_text)
         return {
             "result": "success",
             "document_id": doc_id,
             "status": "completed",
-            "has_text": True
+            "meta": {
+                "filename": meta_result.get("filename"),
+                "extension": meta_result.get("extension"),
+                "mime": meta_result.get("mime_type"),
+                "size_bytes": str(meta_result.get("file_size", "")),
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "meta_status": "ok",
+                "exif": "{}",
+                "pdf_pages": str(meta_result.get("num_pages", "")),
+                "full_text": (full_text[:10000] + "...") if len(full_text) > 10000 else full_text
+            }
         }
 
     except Exception as e:
