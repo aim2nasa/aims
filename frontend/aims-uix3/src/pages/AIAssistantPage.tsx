@@ -59,14 +59,23 @@ export default function AIAssistantPage() {
     };
 
     window.addEventListener('message', handleMessage);
-
-    // 부모 창에 준비 완료 알림
-    if (window.opener) {
-      window.opener.postMessage({ type: 'AIMS_POPUP_READY' }, '*');
-    }
-
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // 🔴 ChatPanel 마운트 후 부모 창에 준비 완료 알림
+  useEffect(() => {
+    if (!isAuthenticated || isLoading) return;
+
+    // ChatPanel이 렌더링된 후 약간의 딜레이를 주고 준비 완료 알림
+    const timer = setTimeout(() => {
+      if (window.opener && !window.opener.closed) {
+        console.log('[AIAssistantPage] 팝업 준비 완료, 부모에 알림');
+        window.opener.postMessage({ type: 'AIMS_POPUP_READY' }, '*');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, isLoading]);
 
   // 창 닫기 핸들러
   const handleClose = () => {

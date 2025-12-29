@@ -197,7 +197,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       const saved = localStorage.getItem('aims-chat-messages');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // timestamp 문자열을 Date 객체로 변환
+          return parsed.map((msg: DisplayMessage) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+        }
       }
     } catch {
       // 무시
@@ -279,14 +285,82 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const panelRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // 파일 입력 ref
 
-  // messages 변경 시 localStorage에 저장
+  // 🔴 팝업 모드에서 localStorage 전용 키로부터 메시지 로드
   useEffect(() => {
+    if (!isPopup) return;
+
+    // postMessage로부터 메시지 동기화
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'AIMS_MESSAGES_SYNC') {
+        try {
+          const parsed = JSON.parse(event.data.messages);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const loadedMessages = parsed.map((msg: DisplayMessage) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }));
+            console.log('[ChatPanel] 팝업 - postMessage로 메시지 수신:', loadedMessages.length);
+            setMessages(loadedMessages);
+          }
+        } catch (error) {
+          console.error('[ChatPanel] postMessage 동기화 실패:', error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    // 🔴 팝업 전용 localStorage 키에서 즉시 로드 시도
+    const loadFromLocalStorage = () => {
+      try {
+        const popupData = localStorage.getItem('aims-chat-messages-for-popup');
+        if (popupData) {
+          const parsed = JSON.parse(popupData);
+          if (parsed.messages && Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+            const loadedMessages = parsed.messages.map((msg: DisplayMessage) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }));
+            console.log('[ChatPanel] 팝업 - localStorage에서 메시지 로드:', loadedMessages.length, 'timestamp:', parsed.timestamp);
+            setMessages(loadedMessages);
+            // 사용 후 정리
+            localStorage.removeItem('aims-chat-messages-for-popup');
+            localStorage.removeItem('aims-chat-popup-timestamp');
+          }
+        }
+      } catch (error) {
+        console.error('[ChatPanel] localStorage 로드 실패:', error);
+      }
+    };
+
+    // 즉시 시도
+    loadFromLocalStorage();
+
+    // 100ms 후 재시도 (브라우저 동기화 지연 대비)
+    const timer = setTimeout(loadFromLocalStorage, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [isPopup]);
+
+  // messages 변경 시 localStorage에 저장 (팝업 모드에서는 저장하지 않음 - 메인 창과 충돌 방지)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    // 팝업 모드에서는 저장하지 않음
+    if (isPopup) return;
+    // 초기 마운트 시에는 저장하지 않음 (빈 배열로 덮어쓰기 방지)
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     try {
       localStorage.setItem('aims-chat-messages', JSON.stringify(messages));
     } catch {
       // 무시
     }
-  }, [messages]);
+  }, [messages, isPopup]);
 
   // sessionId 변경 시 localStorage에 저장
   useEffect(() => {
@@ -337,6 +411,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
     }
 
+    // 🔴 팝업 열기 전에 현재 메시지를 localStorage에 강제 저장 (타임스탬프 포함)
+    const timestamp = Date.now();
+    const messagesWithTimestamp = {
+      messages: messages,
+      timestamp: timestamp,
+    };
+    try {
+      localStorage.setItem('aims-chat-messages', JSON.stringify(messages));
+      localStorage.setItem('aims-chat-messages-for-popup', JSON.stringify(messagesWithTimestamp));
+      localStorage.setItem('aims-chat-popup-timestamp', timestamp.toString());
+      console.log('[ChatPanel] 팝업용 메시지 저장:', messages.length, 'timestamp:', timestamp);
+    } catch (error) {
+      console.error('[ChatPanel] 메시지 저장 실패:', error);
+    }
+
     // 현재 세션 ID를 localStorage에 저장 (팝업에서 복원용)
     if (sessionId) {
       localStorage.setItem('aims-chat-resume-session', sessionId);
@@ -347,31 +436,48 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     const left = window.screenX + window.innerWidth - width - 20;
     const top = window.screenY + 80;
 
-    // 주소창 숨기기 옵션 추가 (브라우저에 따라 동작이 다를 수 있음)
-    const popup = window.open(
-      '/ai-assistant',
-      'AIMS_AI_Assistant',
-      `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
-    );
+    // 🔴 localStorage 쓰기 완료 보장을 위한 200ms 딜레이 후 팝업 열기
+    setTimeout(() => {
+      // 주소창 숨기기 옵션 추가 (브라우저에 따라 동작이 다를 수 있음)
+      const popup = window.open(
+        '/ai-assistant',
+        'AIMS_AI_Assistant',
+        `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
 
-    if (popup) {
-      // 팝업 열림 상태 저장
-      localStorage.setItem('aims-ai-popup-open', 'true');
+      if (popup) {
+        // 팝업 열림 상태 저장
+        localStorage.setItem('aims-ai-popup-open', 'true');
 
-      // 팝업 닫힘 감지
-      const checkPopupClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkPopupClosed);
-          localStorage.removeItem('aims-ai-popup-open');
-          // 팝업 닫힘 이벤트 발생 (메인 창에서 감지 가능)
-          window.dispatchEvent(new CustomEvent('aiAssistantPopupClosed'));
-        }
-      }, 500);
+        // 🔴 팝업이 준비되면 메시지 전달
+        const handlePopupReady = (event: MessageEvent) => {
+          if (event.data?.type === 'AIMS_POPUP_READY' && event.source === popup) {
+            console.log('[ChatPanel] 팝업 준비 완료, 메시지 전달:', messages.length);
+            popup.postMessage({
+              type: 'AIMS_MESSAGES_SYNC',
+              messages: JSON.stringify(messages),
+            }, '*');
+            window.removeEventListener('message', handlePopupReady);
+          }
+        };
+        window.addEventListener('message', handlePopupReady);
 
-      // 팝업 열린 후 현재 창의 ChatPanel 닫기
-      onClose();
-    }
-  }, [onClose, sessionId]);
+        // 팝업 닫힘 감지
+        const checkPopupClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkPopupClosed);
+            localStorage.removeItem('aims-ai-popup-open');
+            window.removeEventListener('message', handlePopupReady);
+            // 팝업 닫힘 이벤트 발생 (메인 창에서 감지 가능)
+            window.dispatchEvent(new CustomEvent('aiAssistantPopupClosed'));
+          }
+        }, 500);
+
+        // 팝업 열린 후 현재 창의 ChatPanel 닫기
+        onClose();
+      }
+    }, 200);
+  }, [onClose, sessionId, messages]);
 
   // 브라우저 내로 이동 (팝업 창에서 사용)
   const handleMoveToMainWindow = useCallback(() => {
