@@ -431,6 +431,9 @@ html[data-theme="dark"] .customer-info-toggle-icon {
 }
 
 .view-status-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 20px;
   font-family: var(--font-family-text);
   font-size: var(--font-size-footnote);
@@ -469,6 +472,15 @@ html[data-theme="dark"] .view-status-button--secondary {
 
 html[data-theme="dark"] .view-status-button--secondary:hover {
   background: var(--color-bg-quaternary);
+}
+
+/* 🍎 버튼 아이콘 색상 */
+.icon-orange {
+  color: var(--color-icon-doc-register);
+}
+
+.icon-purple {
+  color: var(--color-icon-doc-library);
 }
 
 /* 🍎 RESPONSIVE: Minimal changes */

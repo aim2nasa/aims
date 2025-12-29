@@ -1328,6 +1328,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 setCustomerFileDocType('미지정')
               }}
             >
+              <span className="icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
               새 문서 등록
             </button>
             <button
@@ -1341,7 +1342,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 window.dispatchEvent(new PopStateEvent('popstate'))
               }}
             >
-              처리 상태 보기
+              <span className="icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
+              전체 문서 보기
             </button>
           </div>
         )}
