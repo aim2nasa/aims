@@ -29,18 +29,17 @@ describe('MCP 소스 코드 검증', () => {
 
     describe('create_customer 핸들러', () => {
       it('DB에 mobile_phone 필드로 저장해야 함 (phone 아님)', () => {
-        // newCustomer 객체에서 mobile_phone 사용 확인
-        expect(sourceCode).toContain('mobile_phone: params.phone');
+        // newCustomer 객체에서 mobile_phone 사용 확인 (formatPhoneNumber 적용)
+        expect(sourceCode).toContain('mobile_phone: formatPhoneNumber(params.phone)');
 
         // newCustomer 객체 내에서 phone: params.phone 직접 사용 금지
-        // (mobile_phone: params.phone 이어야 함)
         const newCustomerMatch = sourceCode.match(/const newCustomer = \{[\s\S]*?insertOne/);
         expect(newCustomerMatch).not.toBeNull();
         if (newCustomerMatch) {
           // newCustomer 객체 내에 "phone:" 패턴이 없어야 함 (mobile_phone은 OK)
           expect(newCustomerMatch[0]).not.toMatch(/\bphone:\s*params\.phone/);
-          // mobile_phone은 있어야 함
-          expect(newCustomerMatch[0]).toContain('mobile_phone: params.phone');
+          // mobile_phone은 있어야 함 (formatPhoneNumber 적용)
+          expect(newCustomerMatch[0]).toContain('mobile_phone: formatPhoneNumber(params.phone)');
         }
       });
 
@@ -66,7 +65,7 @@ describe('MCP 소스 코드 검증', () => {
 
     describe('update_customer 핸들러', () => {
       it('업데이트 시 personal_info.mobile_phone 경로 사용해야 함', () => {
-        expect(sourceCode).toContain("updateFields['personal_info.mobile_phone'] = params.phone");
+        expect(sourceCode).toContain("updateFields['personal_info.mobile_phone'] = formattedPhone");
         // personal_info.phone 경로 사용 금지
         expect(sourceCode).not.toContain("updateFields['personal_info.phone']");
       });
@@ -78,10 +77,10 @@ describe('MCP 소스 코드 검증', () => {
 
     describe('get_customer 핸들러', () => {
       it('응답에서 mobile_phone을 읽어야 함 (phone 아님)', () => {
-        // phone: customer.personal_info?.mobile_phone 패턴 확인
-        expect(sourceCode).toContain('phone: customer.personal_info?.mobile_phone');
-        // phone: customer.personal_info?.phone 패턴 금지
-        expect(sourceCode).not.toMatch(/phone:\s*customer\.personal_info\?\.phone[^_]/);
+        // mobilePhone: customer.personal_info?.mobile_phone 패턴 확인
+        expect(sourceCode).toContain('mobilePhone: customer.personal_info?.mobile_phone');
+        // personal_info?.phone 패턴 금지 (mobile_phone 사용해야 함)
+        expect(sourceCode).not.toMatch(/customer\.personal_info\?\.phone[^_]/);
       });
     });
 

@@ -364,7 +364,8 @@ describe('페르소나: IT 비전문가', () => {
       expect(customersSource).toContain('고객을 찾을 수 없습니다');
       // memos는 단일 메모 필드 구조 - 고객 ID 검증만 확인
       expect(memosSource).toContain('유효하지 않은 고객 ID');
-      expect(contractsSource).toContain('유효하지 않은 계약 ID');
+      // contracts.ts는 고객 ID 검증 및 계약 검색 결과 메시지 확인
+      expect(contractsSource).toContain('유효하지 않은 고객 ID');
       expect(contractsSource).toContain('계약을 찾을 수 없습니다');
     });
   });

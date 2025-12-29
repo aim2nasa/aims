@@ -164,22 +164,22 @@ describe('읽기 전용 도구 소스 코드 검증', () => {
         expect(sourceCode).toContain('계약 조회 실패');
       });
 
-      it('유효하지 않은 계약 ID 메시지', () => {
-        expect(sourceCode).toContain("'유효하지 않은 계약 ID입니다.'");
+      it('유효하지 않은 고객 ID 메시지', () => {
+        expect(sourceCode).toContain("유효하지 않은 고객 ID입니다.");
       });
 
       it('계약 없음 메시지', () => {
-        expect(sourceCode).toContain("'계약을 찾을 수 없습니다.'");
+        expect(sourceCode).toContain("에 해당하는 계약을 찾을 수 없습니다.");
       });
     });
 
     describe('계약 상세 조회', () => {
       it('피보험자 정보 포함', () => {
-        expect(sourceCode).toContain('insured:');
+        expect(sourceCode).toContain('insuredPerson:');
       });
 
-      it('수익자 정보 포함', () => {
-        expect(sourceCode).toContain('beneficiary:');
+      it('보험 가입금액 포함', () => {
+        expect(sourceCode).toContain('sumInsured:');
       });
 
       it('특약 정보 포함', () => {

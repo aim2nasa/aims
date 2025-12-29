@@ -230,7 +230,7 @@ console.log('\n📋 Test Suite 5: Integration - Complete Cascade Delete Flow\n')
 
 // 15. 삭제 순서가 올바른지 확인 (백엔드)
 const deletionSteps = [
-  { name: 'Relationships', pattern: 'customer_relationships.*deleteMany' },
+  { name: 'Relationships', pattern: 'CUSTOMER_RELATIONSHIPS.*deleteMany' },
   { name: 'Contracts', pattern: 'contracts.*deleteMany' },
   { name: 'Documents', pattern: 'for \\(const document of customerDocuments\\)' },
   { name: 'Customer', pattern: 'CUSTOMERS_COLLECTION.*deleteOne.*customerId' }

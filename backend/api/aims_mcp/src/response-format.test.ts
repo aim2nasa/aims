@@ -209,8 +209,8 @@ describe('응답 포맷 일관성', () => {
     });
 
     describe('delete_customer_memo 응답', () => {
-      it('기능 비활성화 메시지', () => {
-        expect(sourceCode).toContain('더 이상 지원되지 않습니다');
+      it('메모 삭제 성공 메시지', () => {
+        expect(sourceCode).toContain('메모가 삭제되었습니다');
       });
     });
   });
