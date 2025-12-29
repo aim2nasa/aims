@@ -6379,6 +6379,10 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
         badgeType: badgeType,
         conversionStatus: doc.upload?.conversion_status || null,
         isConvertible: isConvertibleFile(doc.upload?.destPath || doc.upload?.originalName),
+        // 🍎 문서 유형 필드 추가 (CustomerFullDetailView 문서 카드에서 사용)
+        document_type: doc.document_type || null,
+        document_type_auto: doc.document_type_auto || false,
+        document_type_confidence: doc.document_type_confidence || null,
         ...statusInfo
       };
     });

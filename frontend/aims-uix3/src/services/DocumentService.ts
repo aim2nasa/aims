@@ -450,6 +450,14 @@ export class DocumentService {
           if (conversionStatus) result.conversionStatus = conversionStatus;  // 🍎 PDF 변환 상태
           if (isConvertible) result.isConvertible = isConvertible;  // 🍎 PDF 변환 대상 여부
 
+          // 🍎 문서 유형 필드 추출 (CustomerFullDetailView 문서 카드에서 사용)
+          const documentType = toString(item['document_type']);
+          const documentTypeAuto = item['document_type_auto'] === true;
+          const documentTypeConfidence = toNumber(item['document_type_confidence']);
+          if (documentType) result.document_type = documentType;
+          if (documentTypeAuto) result.document_type_auto = documentTypeAuto;
+          if (typeof documentTypeConfidence === 'number') result.document_type_confidence = documentTypeConfidence;
+
           return result;
         })
         .filter((item): item is CustomerDocumentItem => item !== null);

@@ -358,6 +358,13 @@ export const useCustomerDocumentsController = (
     }, {})
   }, [documents])
 
+  // 🍎 낙관적 업데이트: 문서 로컬 상태 즉시 업데이트
+  const updateDocumentLocally = useCallback((documentId: string, updates: Partial<CustomerDocumentItem>) => {
+    setDocuments(prev => prev.map(doc =>
+      doc._id === documentId ? { ...doc, ...updates } : doc
+    ))
+  }, [])
+
   return {
     documents,
     documentCount,
@@ -371,6 +378,7 @@ export const useCustomerDocumentsController = (
     // Actions
     refresh,
     unlinkDocument,
+    updateDocumentLocally,
 
     // Preview
     previewState,

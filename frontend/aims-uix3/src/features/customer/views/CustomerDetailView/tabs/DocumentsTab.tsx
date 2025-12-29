@@ -108,6 +108,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     lastUpdated,
     refresh,
     unlinkDocument,
+    updateDocumentLocally,
     previewState,
     previewTarget,
     retryPreview,
@@ -151,13 +152,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const handleDocTypeChange = useCallback(async (documentId: string, newType: string) => {
     if (updatingDocTypeId) return // 이미 업데이트 중이면 무시
 
+    // 🍎 낙관적 업데이트: UI 즉시 반영
+    const previousType = documents.find(d => d._id === documentId)?.document_type
+    updateDocumentLocally(documentId, { document_type: newType === 'unspecified' ? undefined : newType })
+
     setUpdatingDocTypeId(documentId)
     try {
       await documentTypesService.updateDocumentType(documentId, newType)
-      // 목록 새로고침
-      await refresh()
+      // 백그라운드에서 동기화 (선택적)
+      void refresh()
     } catch (error) {
       console.error('[DocumentsTab] 문서 유형 변경 실패:', error)
+      // 🍎 실패 시 롤백
+      updateDocumentLocally(documentId, { document_type: previousType })
       errorReporter.reportApiError(error as Error, { component: 'DocumentsTab.handleDocTypeChange' })
       await showAlert({
         title: '변경 실패',
@@ -167,7 +174,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     } finally {
       setUpdatingDocTypeId(null)
     }
-  }, [updatingDocTypeId, refresh, showAlert])
+  }, [updatingDocTypeId, documents, updateDocumentLocally, refresh, showAlert])
 
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
