@@ -663,15 +663,89 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   font-size: var(--font-icon);
 }
 
-/* 메모 영역 */
+/* ============================================
+   🍎 고객 정보 탭 스타일
+   ============================================ */
+
+.customer-info-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 2px;
+}
+
+.customer-info-tabs__tab {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-title);
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.customer-info-tabs__tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.customer-info-tabs__tab--active {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* 활성 탭 하단 인디케이터 */
+.customer-info-tabs__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  background: var(--color-primary-500);
+  border-radius: 1px;
+}
+
+html[data-theme="dark"] .customer-info-tabs__tab:hover {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .customer-info-tabs__tab--active {
+  color: var(--color-text-primary);
+}
+
+/* 메모 영역 - 탭 내부 전체 높이 사용 */
 .customer-info-memos {
-  margin-top: var(--spacing-3);
-  padding-top: var(--spacing-3);
-  border-top: 1px solid var(--color-ios-separator-light);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.customer-info-memos--full {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  height: 100%;
+}
+
+/* 🍎 메모 탭에서 memo-field가 전체 높이 채우기 */
+.customer-info-memos--full .memo-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.customer-info-memos--full .memo-field__textarea {
+  flex: 1;
+  min-height: 100px;
+  resize: none;
 }
 
 html[data-theme="dark"] .customer-info-memos {
-  border-top-color: var(--color-ios-separator-dark);
+  /* 다크 모드 스타일 */
 }
 
 /* ============================================

@@ -93,6 +93,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 Annual Report 검색 상태
   const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
 
+  // 🍎 고객 정보 탭 상태 ('info' | 'memo')
+  const [customerInfoTab, setCustomerInfoTab] = useState<'info' | 'memo'>('info')
+
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
 
@@ -741,76 +744,99 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     <circle cx="8" cy="5" r="2.5"/>
                     <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
                   </svg>
-                  <span>고객 정보</span>
+                  {/* 🍎 탭 버튼 영역 */}
+                  <div className="customer-info-tabs">
+                    <button
+                      type="button"
+                      className={`customer-info-tabs__tab ${customerInfoTab === 'info' ? 'customer-info-tabs__tab--active' : ''}`}
+                      onClick={() => setCustomerInfoTab('info')}
+                    >
+                      고객 정보
+                    </button>
+                    <button
+                      type="button"
+                      className={`customer-info-tabs__tab ${customerInfoTab === 'memo' ? 'customer-info-tabs__tab--active' : ''}`}
+                      onClick={() => setCustomerInfoTab('memo')}
+                    >
+                      메모
+                    </button>
+                  </div>
                 </h2>
                 <div className="customer-full-detail__section-content customer-full-detail__section-content--customer-info">
-                  {/* 🍎 기본정보 테이블 (3행 컴팩트 레이아웃) */}
-                  <table className="customer-info-table customer-info-table--compact">
-                    <tbody>
-                      {/* Row 1: 이름, 생년월일, 성별, 유형 (모두 짧은 필드) */}
-                      <tr>
-                        <td className="customer-info-table__label">이름</td>
-                        <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
-                        <td className="customer-info-table__label">생년월일</td>
-                        <td className="customer-info-table__value">{formatDate(customer.personal_info?.birth_date)}</td>
-                        <td className="customer-info-table__label">성별</td>
-                        <td className="customer-info-table__value">
-                          {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
-                        </td>
-                        <td className="customer-info-table__label">유형</td>
-                        <td className="customer-info-table__value">
-                          <span className="customer-info-table__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
-                        </td>
-                      </tr>
-                      {/* Row 2: 휴대폰, 이메일 (중간 길이 필드) */}
-                      <tr>
-                        <td className="customer-info-table__label">휴대폰</td>
-                        <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
-                        <td className="customer-info-table__label">이메일</td>
-                        <td className="customer-info-table__value" colSpan={5}>{customer.personal_info?.email || '-'}</td>
-                      </tr>
-                      {/* Row 3: 주소 (긴 필드, 전체 행 사용) */}
-                      <tr>
-                        <td className="customer-info-table__label">주소</td>
-                        <td className="customer-info-table__value" colSpan={7}>
-                          <div className="customer-info-table__address-wrapper">
-                            <span className="customer-info-table__address-text">
-                              {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
-                              {customer.personal_info?.address?.address1 || '-'}
-                              {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
-                            </span>
-                            <Tooltip content="주소 변경 이력 보기">
-                              <button
-                                className="customer-info-table__address-history-btn"
-                                onClick={addressArchiveController.open}
-                                aria-label="주소 변경 이력"
-                                type="button"
-                              >
-                                <span className="customer-info-table__address-history-label">
-                                  이력({addressArchiveController.addressHistory.length})
+                  {/* 🍎 고객 정보 탭 콘텐츠 */}
+                  {customerInfoTab === 'info' && (
+                    <>
+                      {/* 🍎 기본정보 테이블 (3행 컴팩트 레이아웃) */}
+                      <table className="customer-info-table customer-info-table--compact">
+                        <tbody>
+                          {/* Row 1: 이름, 생년월일, 성별, 유형 (모두 짧은 필드) */}
+                          <tr>
+                            <td className="customer-info-table__label">이름</td>
+                            <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
+                            <td className="customer-info-table__label">생년월일</td>
+                            <td className="customer-info-table__value">{formatDate(customer.personal_info?.birth_date)}</td>
+                            <td className="customer-info-table__label">성별</td>
+                            <td className="customer-info-table__value">
+                              {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
+                            </td>
+                            <td className="customer-info-table__label">유형</td>
+                            <td className="customer-info-table__value">
+                              <span className="customer-info-table__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
+                            </td>
+                          </tr>
+                          {/* Row 2: 휴대폰, 이메일 (중간 길이 필드) */}
+                          <tr>
+                            <td className="customer-info-table__label">휴대폰</td>
+                            <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
+                            <td className="customer-info-table__label">이메일</td>
+                            <td className="customer-info-table__value" colSpan={5}>{customer.personal_info?.email || '-'}</td>
+                          </tr>
+                          {/* Row 3: 주소 (긴 필드, 전체 행 사용) */}
+                          <tr>
+                            <td className="customer-info-table__label">주소</td>
+                            <td className="customer-info-table__value" colSpan={7}>
+                              <div className="customer-info-table__address-wrapper">
+                                <span className="customer-info-table__address-text">
+                                  {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
+                                  {customer.personal_info?.address?.address1 || '-'}
+                                  {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
                                 </span>
-                                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="customer-info-table__address-history-icon">
-                                  <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
-                                </svg>
-                              </button>
-                            </Tooltip>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  {/* 가족 리스트 - 구분선 없이 바로 아래 */}
-                  <div className="customer-info-family-list">
-                    <RelationshipsTab
-                      customer={customer}
-                      {...(onSelectCustomer ? { onSelectCustomer } : {})}
-                      {...(onNavigateToFullDetail ? { onNavigateToFullDetail } : {})}
-                    />
-                  </div>
-                  {/* 메모 영역 */}
-                  <div className="customer-info-memos">
-                    <MemosTab customer={customer} />
-                  </div>
+                                <Tooltip content="주소 변경 이력 보기">
+                                  <button
+                                    className="customer-info-table__address-history-btn"
+                                    onClick={addressArchiveController.open}
+                                    aria-label="주소 변경 이력"
+                                    type="button"
+                                  >
+                                    <span className="customer-info-table__address-history-label">
+                                      이력({addressArchiveController.addressHistory.length})
+                                    </span>
+                                    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="customer-info-table__address-history-icon">
+                                      <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      {/* 가족 리스트 - 구분선 없이 바로 아래 */}
+                      <div className="customer-info-family-list">
+                        <RelationshipsTab
+                          customer={customer}
+                          {...(onSelectCustomer ? { onSelectCustomer } : {})}
+                          {...(onNavigateToFullDetail ? { onNavigateToFullDetail } : {})}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {/* 🍎 메모 탭 콘텐츠 */}
+                  {customerInfoTab === 'memo' && (
+                    <div className="customer-info-memos customer-info-memos--full">
+                      <MemosTab customer={customer} />
+                    </div>
+                  )}
                 </div>
               </section>
 
