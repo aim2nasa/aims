@@ -1293,6 +1293,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         </div>
 
+        {/* 🎯 메모 영역 - 별도 컨테이너로 분리하여 전체 너비 사용 */}
+        {customerFileCustomer && isNotesExpanded && !isLogVisible && (
+          <div className="memo-section-wrapper">
+            <label className="memo-section-wrapper__label">메모</label>
+            <textarea
+              className="memo-section-wrapper__textarea"
+              value={customerFileNotes}
+              onChange={(e) => setCustomerFileNotes(e.target.value)}
+              placeholder="이 문서에 대한 참고 메모를 남겨주세요."
+              aria-label="메모"
+            />
+          </div>
+        )}
+
         {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시 & 로그 미표시 시에만 표시 */}
         {customerFileCustomer && !isLogVisible && (
           <FileUploadArea
@@ -1323,9 +1337,35 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🍎 처리 상태 보기 버튼 (업로드 진행/완료 후 표시) */}
+        {/* 🍎 처리 상태 보기 & 새 문서 등록 버튼 (업로드 진행/완료 후 표시) */}
         {isLogVisible && uploadState.files.length > 0 && (
           <div className="view-status-button-container">
+            <button
+              type="button"
+              className="view-status-button view-status-button--secondary"
+              onClick={() => {
+                // 초기 상태로 되돌리기
+                setProcessingLogs([])
+                setUploadState({
+                  uploading: false,
+                  files: [],
+                  totalProgress: 0,
+                  completedCount: 0,
+                  errors: [],
+                  context: {
+                    identifierType: 'userId',
+                    identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
+                  }
+                })
+                setIsLogVisible(false)
+                setCustomerFileCustomer(null)
+                setCustomerFileDocType('미지정')
+                setCustomerFileNotes('')
+                setIsNotesExpanded(true)
+              }}
+            >
+              새 문서 등록
+            </button>
             <button
               type="button"
               className="view-status-button"

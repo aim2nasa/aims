@@ -209,20 +209,6 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
                     aria-label="문서 유형 선택"
                   />
                 </div>
-
-                {/* 메모 */}
-                <div className="options-field">
-                  <label className="options-field__label">메모</label>
-                  <textarea
-                    className="options-field__textarea"
-                    value={notes}
-                    onChange={(e) => onNotesChange(e.target.value)}
-                    placeholder="이 문서에 대한 참고 메모를 남겨주세요."
-                    rows={2}
-                    disabled={disabled}
-                    aria-label="메모"
-                  />
-                </div>
               </div>
             )}
           </div>

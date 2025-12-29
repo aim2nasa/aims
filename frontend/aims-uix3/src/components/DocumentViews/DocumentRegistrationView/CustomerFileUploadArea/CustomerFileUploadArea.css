@@ -177,6 +177,14 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   min-width: 0; /* flexbox 축소 활성화 */
 }
 
+/* 드롭다운 트리거 높이 */
+.customer-file-upload-area .ios-dropdown__trigger {
+  height: 32px;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-size-footnote);
+}
+
 /* 드롭다운 메뉴 높이 제한 */
 .customer-file-upload-area .ios-dropdown__menu {
   max-height: 300px;
@@ -287,15 +295,15 @@ html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-t
 .options-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3) var(--spacing-3);
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3) var(--spacing-2);
 }
 
 /* 추가 옵션 필드 */
 .options-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: 2px;
 }
 
 .options-field__label {
@@ -306,15 +314,15 @@ html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-t
 
 /* 메모 입력창 */
 .options-field__textarea {
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--color-bg-primary);
-  border: 1.5px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-footnote);
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  resize: vertical;
-  min-height: 48px;
+  resize: none;
+  height: 36px;
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
