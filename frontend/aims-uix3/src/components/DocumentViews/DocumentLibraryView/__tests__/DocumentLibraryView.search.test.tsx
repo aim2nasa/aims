@@ -116,6 +116,11 @@ vi.mock('../../../../controllers/useDocumentsController', () => ({
   })
 }))
 
+// Mock DocumentLinkModal (uses useQuery which requires QueryClientProvider)
+vi.mock('../../DocumentStatusView/components/DocumentLinkModal', () => ({
+  default: () => null,
+}))
+
 // Mock useAppleConfirmController
 vi.mock('../../../../controllers/useAppleConfirmController', () => ({
   useAppleConfirmController: () => ({

@@ -84,31 +84,31 @@ vi.mock('../../CenterPaneView/CenterPaneView', () => ({
   ),
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentStatusHeader', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentStatusHeader', () => ({
   default: () => <div data-testid="document-status-header">Header</div>,
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentStatusList', () => ({
-  default: () => <div data-testid="document-status-list">List</div>,
+vi.mock('../../DocumentStatusView/components/DocumentStatusList', () => ({
+  default: () => <div data-testid="document-status-list" className="document-status-list">List</div>,
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentDetailModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentDetailModal', () => ({
   default: () => null,
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentSummaryModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentSummaryModal', () => ({
   default: () => null,
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentFullTextModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentFullTextModal', () => ({
   default: () => null,
 }))
 
-vi.mock('../DocumentStatusView/components/DocumentLinkModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentLinkModal', () => ({
   default: () => null,
 }))
 
-vi.mock('../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal', () => ({
+vi.mock('../../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal', () => ({
   AppleConfirmModal: () => null,
 }))
 

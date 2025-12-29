@@ -39,16 +39,16 @@ vi.mock('@/services/DocumentStatusService', () => ({
 }))
 
 // Modal mocks
-vi.mock('../DocumentStatusView/components/DocumentDetailModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentDetailModal', () => ({
   default: () => null
 }))
-vi.mock('../DocumentStatusView/components/DocumentSummaryModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentSummaryModal', () => ({
   default: () => null
 }))
-vi.mock('../DocumentStatusView/components/DocumentFullTextModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentFullTextModal', () => ({
   default: () => null
 }))
-vi.mock('../DocumentStatusView/components/DocumentLinkModal', () => ({
+vi.mock('../../DocumentStatusView/components/DocumentLinkModal', () => ({
   default: () => null
 }))
 

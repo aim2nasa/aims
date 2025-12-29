@@ -61,6 +61,11 @@ vi.mock('@/utils/recentSearchQueries', () => ({
   addRecentSearchQuery: vi.fn()
 }))
 
+// Mock DocumentLinkModal (uses useQuery which requires QueryClientProvider)
+vi.mock('../../DocumentStatusView/components/DocumentLinkModal', () => ({
+  default: () => null,
+}))
+
 const mockSearchDocuments = SearchService.SearchService.searchDocuments as ReturnType<typeof vi.fn>
 
 describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {

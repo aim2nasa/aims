@@ -86,6 +86,11 @@ vi.mock('../DocumentRegistrationView/services/uploadService', () => ({
   },
 }))
 
+// Mock DocumentLinkModal (uses useQuery which requires QueryClientProvider)
+vi.mock('../../DocumentStatusView/components/DocumentLinkModal', () => ({
+  default: () => null,
+}))
+
 /**
  * 모킹된 폴더 아이템 생성
  */
