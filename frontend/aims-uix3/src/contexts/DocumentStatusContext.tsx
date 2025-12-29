@@ -26,7 +26,7 @@ export interface DocumentStatusState {
   totalCount: number
   paginatedDocuments: Document[]
   // 🍎 Sort State
-  sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null
+  sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null
   sortDirection: 'asc' | 'desc'
 }
 
@@ -57,9 +57,9 @@ export interface DocumentStatusActions {
     relation: DocumentCustomerRelation | undefined
   ) => void
   // 🍎 Sort Actions
-  setSortField: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null) => void
+  setSortField: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null) => void
   setSortDirection: (direction: 'asc' | 'desc') => void
-  handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType') => void
+  handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => void
   // 🍎 Optimistic Update Actions
   removeDocuments: (docIds: Set<string>) => void
 }

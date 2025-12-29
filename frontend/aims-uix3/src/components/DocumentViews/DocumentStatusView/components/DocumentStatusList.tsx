@@ -5,7 +5,7 @@
  * 공간 효율적인 리스트 레이아웃
  */
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { Tooltip } from '@/shared/ui'
@@ -25,6 +25,7 @@ import {
 import { DocumentNotesModal } from './DocumentNotesModal'
 import { useUserStore } from '../../../../stores/user'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { documentTypesService, type DocumentType } from '../../../../services/documentTypesService'
 import './DocumentStatusList.css'
 
 export interface DocumentStatusListProps {
@@ -39,9 +40,9 @@ export interface DocumentStatusListProps {
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
   // 🍎 Sort props
-  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null
+  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null
   sortDirection?: 'asc' | 'desc'
-  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType') => void
+  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => void
   // 🍎 Delete mode props
   isDeleteMode?: boolean
   selectedDocumentIds?: Set<string>
@@ -287,6 +288,23 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // 현재 로그인한 사용자 ID (내 파일 기능용)
   const { userId } = useUserStore()
 
+  // 🍎 문서 유형 목록 상태
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
+  const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
+
+  // 🍎 문서 유형 목록 로드
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const types = await documentTypesService.getDocumentTypes(false) // 시스템 유형 제외
+        setDocumentTypes(types)
+      } catch (error) {
+        console.error('[DocumentStatusList] 문서 유형 로드 실패:', error)
+      }
+    }
+    loadDocumentTypes()
+  }, [])
+
   // 메모 모달 상태 관리
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{
@@ -471,6 +489,32 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
     }
   }, [selectedNotes, onRefresh, showAlert])
 
+  /**
+   * 🍎 문서 유형 변경 핸들러
+   */
+  const handleDocTypeChange = useCallback(async (documentId: string, newType: string) => {
+    if (updatingDocTypeId) return // 이미 업데이트 중이면 무시
+
+    setUpdatingDocTypeId(documentId)
+    try {
+      await documentTypesService.updateDocumentType(documentId, newType)
+      // 목록 새로고침
+      if (onRefresh) {
+        await onRefresh()
+      }
+    } catch (error) {
+      console.error('[DocumentStatusList] 문서 유형 변경 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentStatusList.handleDocTypeChange' })
+      await showAlert({
+        title: '변경 실패',
+        message: '문서 유형 변경에 실패했습니다.',
+        confirmText: '확인'
+      })
+    } finally {
+      setUpdatingDocTypeId(null)
+    }
+  }, [updatingDocTypeId, onRefresh, showAlert])
+
   // 로딩 상태
   if (isLoading && isEmpty) {
     return (
@@ -575,6 +619,29 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           <span>파일명</span>
           {onColumnSort && (
             sortField === 'filename' ? (
+              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+            ) : (
+              <span className="sort-indicator sort-indicator--both">
+                <span className="sort-arrow">▲</span>
+                <span className="sort-arrow">▼</span>
+              </span>
+            )
+          )}
+        </div>
+        {/* 🍎 문서 유형 칼럼 (새 칼럼) */}
+        <div
+          className={`header-doctype ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('docType')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '문서 유형으로 정렬' : undefined}
+        >
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <path d="M2 3h12v2H2V3zm0 4h8v2H2V7zm0 4h10v2H2v-2z" fill="currentColor"/>
+          </svg>
+          <span>문서 유형</span>
+          {onColumnSort && (
+            sortField === 'docType' ? (
               <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
             ) : (
               <span className="sort-indicator sort-indicator--both">
@@ -1004,6 +1071,35 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </Tooltip>
                 )
               })()}
+            </div>
+
+            {/* 🍎 문서 유형 드롭다운 */}
+            <div className="document-doctype" onClick={(e) => e.stopPropagation()}>
+              {documentTypes.length > 0 ? (
+                <select
+                  className="doctype-select"
+                  value={document.docType || document.document_type || 'unspecified'}
+                  onChange={(e) => {
+                    const docId = document._id || document.id
+                    if (docId) {
+                      handleDocTypeChange(docId, e.target.value)
+                    }
+                  }}
+                  disabled={updatingDocTypeId === (document._id || document.id)}
+                  aria-label="문서 유형 선택"
+                >
+                  <option value="unspecified">미지정</option>
+                  {documentTypes.map((dt) => (
+                    <option key={dt._id} value={dt.value}>
+                      {dt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="doctype-label">
+                  {document.docTypeLabel || document.docType || document.document_type || '미지정'}
+                </span>
+              )}
             </div>
 
             {/* 크기 */}

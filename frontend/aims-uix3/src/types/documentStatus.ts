@@ -188,6 +188,12 @@ export interface Document {
   // Badge Type (TXT, OCR, BIN)
   badgeType?: 'TXT' | 'OCR' | 'BIN'
 
+  // 문서 유형 (docType / document_type)
+  docType?: string | null
+  docTypeLabel?: string | null
+  document_type?: string | null  // 백엔드 API 응답 필드명
+  document_type_auto?: boolean   // 자동 분류 여부
+
   // PDF 변환 상태 (computed에서 가져옴)
   conversionStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'not_required' | null
   isConvertible?: boolean

@@ -63,7 +63,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [totalCount, setTotalCount] = useState<number>(0)
 
   // 🍎 Sort State
-  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null>('uploadDate')
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null>('uploadDate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   /**
@@ -96,6 +96,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         } else if (sortField === 'badgeType') {
           // badgeType은 백엔드에서 정렬 (전체 DB 대상)
           sortParam = sortDirection === 'asc' ? 'badgeType_asc' : 'badgeType_desc'
+        } else if (sortField === 'docType') {
+          // docType은 백엔드에서 정렬 (전체 DB 대상)
+          sortParam = sortDirection === 'asc' ? 'docType_asc' : 'docType_desc'
         }
 
         // 🔍 검색어 준비 (trim 처리)
@@ -409,7 +412,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [])
 
   // 🍎 Sort Handler
-  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType') => {
+  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => {
     console.log(`🔍 [정렬 클릭] field=${field}, 현재 sortField=${sortField}, sortDirection=${sortDirection}`)
     if (sortField === field) {
       // Same field: toggle direction
