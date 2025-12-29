@@ -1327,33 +1327,54 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         });
       }
     } else if (sort === 'docType_asc' || sort === 'docType_desc') {
-      // 🏷️ docType 정렬: 문서 유형별 정렬 (미지정은 맨 뒤로)
+      // 🏷️ docType 정렬: 한글 라벨 기준 가나다순 정렬 (미지정은 맨 뒤로)
       const sortOrder = sort === 'docType_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
         { $match: filter },
+        // 1단계: is_annual_report 문서의 document_type 정규화
         {
           $addFields: {
-            // document_type이 없거나 'unspecified'면 정렬 시 맨 뒤로
-            docType_sortable: {
+            _normalized_docType: {
               $cond: {
-                if: {
-                  $or: [
-                    { $eq: [{ $ifNull: ['$document_type', null] }, null] },
-                    { $eq: ['$document_type', 'unspecified'] },
-                    { $eq: ['$document_type', ''] }
-                  ]
-                },
-                then: 'zzz_unspecified', // 알파벳 정렬 시 맨 뒤로
+                if: { $eq: ['$is_annual_report', true] },
+                then: 'annual_report',
                 else: '$document_type'
               }
             }
           }
         },
-        { $sort: { docType_sortable: sortOrder, 'upload.uploaded_at': -1 } },
+        // 2단계: document_types 컬렉션과 join하여 한글 라벨 가져오기
+        {
+          $lookup: {
+            from: 'document_types',
+            localField: '_normalized_docType',
+            foreignField: 'value',
+            as: 'docType_info'
+          }
+        },
+        // 3단계: 정렬용 한글 라벨 생성
+        {
+          $addFields: {
+            docType_label: {
+              $cond: {
+                if: {
+                  $or: [
+                    { $eq: [{ $ifNull: ['$_normalized_docType', null] }, null] },
+                    { $eq: ['$_normalized_docType', 'unspecified'] },
+                    { $eq: ['$_normalized_docType', ''] }
+                  ]
+                },
+                then: '미지정', // 한글 가나다순 정렬
+                else: { $ifNull: [{ $arrayElemAt: ['$docType_info.label', 0] }, '$_normalized_docType'] }
+              }
+            }
+          }
+        },
+        { $sort: { docType_label: sortOrder, 'upload.uploaded_at': -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
-        { $project: { docType_sortable: 0 } }
-      ]).toArray();
+        { $project: { docType_info: 0, docType_label: 0, _normalized_docType: 0 } }
+      ], { collation: { locale: 'ko' } }).toArray();
     } else if (sort === 'uploadDate_asc' || sort === 'uploadDate_desc' || !sort) {
       // 🔧 uploadDate 정렬: Date/String 혼합 타입 대응을 위해 $toDate 사용
       const sortOrder = sort === 'uploadDate_asc' ? 1 : -1;
