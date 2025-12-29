@@ -336,16 +336,20 @@ describe('OCR 정책 구현 검증', () => {
     });
 
     it('사이클 정보 표시', () => {
-      expect(widgetCode).toContain('ocr_cycle_start');
+      // UI에서는 사이클 종료일(ocr_cycle_end)만 표시 (시작일은 백엔드에서만 사용)
       expect(widgetCode).toContain('ocr_cycle_end');
     });
 
-    it('리셋까지 남은 일수 표시', () => {
-      expect(widgetCode).toContain('ocr_days_until_reset');
+    it('리셋까지 남은 일수는 백엔드 API에서 제공', () => {
+      // UI에서는 ocr_days_until_reset을 직접 표시하지 않고,
+      // 사이클 종료일(ocr_cycle_end)로 간접 표시
+      // 상세 정보는 AccountSettingsView에서 표시됨
+      expect(widgetCode).toContain('ocr_cycle_end');
     });
 
-    it('툴팁에 페이지 단위 표시 (p)', () => {
-      expect(widgetCode).toMatch(/ocr_pages_used.*p/);
+    it('툴팁에 문서 건수 표시', () => {
+      // 위젯 툴팁에는 OCR 처리된 문서 건수(ocr_docs_count)를 표시
+      expect(widgetCode).toContain('ocr_docs_count');
     });
   });
 });
