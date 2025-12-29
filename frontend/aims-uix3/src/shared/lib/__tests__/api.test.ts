@@ -642,7 +642,8 @@ describe('API_CONFIG', () => {
   it('API 설정이 올바르게 정의되어야 함', () => {
     expect(API_CONFIG).toBeDefined();
     expect(API_CONFIG.BASE_URL).toBeDefined();
-    expect(API_CONFIG.TIMEOUT).toBe(30000);
+    expect(API_CONFIG.TIMEOUT).toBe(60000); // 60초 (대량 문서 처리 대응)
+    expect(API_CONFIG.TIMEOUT_LONG).toBe(120000); // 120초 (무거운 작업용)
     expect(API_CONFIG.DEFAULT_HEADERS).toEqual({
       'Content-Type': 'application/json'
     });

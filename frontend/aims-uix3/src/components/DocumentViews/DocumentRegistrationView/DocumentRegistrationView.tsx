@@ -18,7 +18,7 @@ import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './ty
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
-import { api } from '@/shared/lib/api'
+import { api, API_CONFIG } from '@/shared/lib/api'
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
 import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
@@ -835,8 +835,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     console.log(`🔗 [고객 파일 자동 연결] 시작: ${fileName} → 고객: ${customerFileInfo.customerName}`);
 
     try {
-      // 1. 파일명으로 문서 조회
-      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`);
+      // 1. 파일명으로 문서 조회 (대량 문서 처리 시 응답 지연 대응)
+      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG });
 
       if (!searchData.success || !searchData.data || !searchData.data.documents) {
         console.warn(`⚠️ [고객 파일 자동 연결] 문서 목록 조회 실패`);
@@ -927,8 +927,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   const checkNormalDocumentCompletion = useCallback(async (fileName: string) => {
     try {
-      // 1. 파일명으로 문서 조회 (/api/documents에서 최근 문서 목록 조회)
-      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`);
+      // 1. 파일명으로 문서 조회 (대량 문서 처리 시 응답 지연 대응)
+      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG });
 
       if (!searchData.success || !searchData.data || !searchData.data.documents) {
         console.warn(`⚠️ [일반 문서] 문서 목록 조회 실패`);

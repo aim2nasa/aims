@@ -95,7 +95,8 @@ export function getAuthHeaders(): Record<string, string> {
 // API 설정
 export const API_CONFIG = {
   BASE_URL: import.meta.env['VITE_API_BASE_URL'] || '',
-  TIMEOUT: 30000, // 30초
+  TIMEOUT: 60000, // 60초 (대량 문서 처리 시 서버 응답 지연 대응)
+  TIMEOUT_LONG: 120000, // 120초 (무거운 작업용)
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
   },
