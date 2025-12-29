@@ -674,8 +674,8 @@ export class DocumentService {
       });
     }
 
-    // n8n webhook으로 직접 업로드 (새문서 등록과 동일한 방식)
-    const N8N_UPLOAD_URL = 'https://n8nd.giize.com/webhook/docprep-main';
+    // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교, n8n 응답 반환)
+    const UPLOAD_URL = 'https://aims.giize.com/shadow/docprep-main';
 
     console.log(`[DocumentService] 📤 업로드 시작: ${file.name} (userId: ${userId})`);
 
@@ -770,7 +770,7 @@ export class DocumentService {
         reject(new Error('업로드 시간이 초과되었습니다'));
       });
 
-      xhr.open('POST', N8N_UPLOAD_URL);
+      xhr.open('POST', UPLOAD_URL);
       xhr.timeout = 5 * 60 * 1000; // 5분 타임아웃
 
       // JWT 인증 헤더 추가 (uploadService와 동일)

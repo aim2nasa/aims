@@ -192,6 +192,7 @@ async def shadow_stats(days: int = Query(default=7, ge=1, le=90)):
     Shadow Mode 통계 및 전환 판단 지표
 
     Returns:
+        - shadow_mode: Shadow Mode 활성화 상태 및 진단 정보
         - summary: 전체 통계
         - by_workflow: 워크플로우별 통계
         - recent_mismatches: 최근 불일치 목록
@@ -202,6 +203,22 @@ async def shadow_stats(days: int = Query(default=7, ge=1, le=90)):
 
         # 호출 통계 집계
         calls_collection = MongoService.get_collection("shadow_calls")
+
+        # 전체 기간 첫 호출/마지막 호출 시간 조회
+        first_call_doc = await calls_collection.find_one(
+            {},
+            sort=[("timestamp", 1)]
+        )
+        last_call_doc = await calls_collection.find_one(
+            {},
+            sort=[("timestamp", -1)]
+        )
+
+        first_call_time = first_call_doc["timestamp"].isoformat() if first_call_doc else None
+        last_call_time = last_call_doc["timestamp"].isoformat() if last_call_doc else None
+
+        # 전체 호출 수 (기간 무관)
+        total_calls_all_time = await calls_collection.count_documents({})
 
         # 전체 통계
         pipeline = [
@@ -294,7 +311,32 @@ async def shadow_stats(days: int = Query(default=7, ge=1, le=90)):
 
         all_passed = all(c["passed"] for c in checks.values())
 
+        # 상태 해석 메시지 생성
+        enabled = ShadowMode.enabled
+        if total_calls_all_time == 0:
+            if enabled:
+                status_interpretation = "Shadow Mode 활성화됨 - 아직 호출 없음 (문서 업로드 경로가 /shadow/* 엔드포인트를 사용하는지 확인 필요)"
+            else:
+                status_interpretation = "Shadow Mode 비활성화됨 - 비교 기능이 꺼져 있음"
+        else:
+            if enabled:
+                if total_calls == 0:
+                    status_interpretation = f"Shadow Mode 활성화됨 - 선택 기간({days}일) 내 호출 없음 (전체: {total_calls_all_time}건)"
+                elif mismatch_count == 0 and error_count == 0:
+                    status_interpretation = f"Shadow Mode 활성화됨 - 완벽한 상태 (100% Match, {total_calls}건 호출)"
+                else:
+                    status_interpretation = f"Shadow Mode 활성화됨 - 검증 진행 중 ({mismatch_count} mismatch, {error_count} errors)"
+            else:
+                status_interpretation = f"Shadow Mode 비활성화됨 - 과거 데이터 {total_calls_all_time}건 존재"
+
         return {
+            "shadow_mode": {
+                "enabled": enabled,
+                "first_call_time": first_call_time,
+                "last_call_time": last_call_time,
+                "total_calls_all_time": total_calls_all_time,
+                "status_interpretation": status_interpretation
+            },
             "period": {
                 "days": days,
                 "since": since.isoformat(),

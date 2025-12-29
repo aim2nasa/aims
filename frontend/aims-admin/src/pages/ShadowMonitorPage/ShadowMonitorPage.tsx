@@ -11,6 +11,13 @@ import './ShadowMonitorPage.css';
 const PIPELINE_API_URL = 'https://aims.giize.com';
 
 interface ShadowStats {
+  shadow_mode: {
+    enabled: boolean;
+    first_call_time: string | null;
+    last_call_time: string | null;
+    total_calls_all_time: number;
+    status_interpretation: string;
+  };
   period: {
     days: number;
     since: string;
@@ -247,6 +254,38 @@ ${diffsText}
           </Button>
         </div>
       </div>
+
+      {/* Shadow Mode 상태 */}
+      {stats?.shadow_mode && (
+        <section className="shadow-monitor__section">
+          <div className={`shadow-monitor__status ${stats.shadow_mode.enabled ? 'shadow-monitor__status--enabled' : 'shadow-monitor__status--disabled'}`}>
+            <div className="shadow-monitor__status-indicator">
+              <span className={`shadow-monitor__status-dot ${stats.shadow_mode.enabled ? 'shadow-monitor__status-dot--enabled' : 'shadow-monitor__status-dot--disabled'}`}></span>
+              <span className="shadow-monitor__status-label">
+                Shadow Mode: {stats.shadow_mode.enabled ? '활성화' : '비활성화'}
+              </span>
+            </div>
+            <div className="shadow-monitor__status-interpretation">
+              {stats.shadow_mode.status_interpretation}
+            </div>
+            <div className="shadow-monitor__status-times">
+              <span>
+                <strong>전체 호출:</strong> {stats.shadow_mode.total_calls_all_time.toLocaleString()}건
+              </span>
+              {stats.shadow_mode.first_call_time && (
+                <span>
+                  <strong>첫 호출:</strong> {new Date(stats.shadow_mode.first_call_time).toLocaleString('ko-KR')}
+                </span>
+              )}
+              {stats.shadow_mode.last_call_time && (
+                <span>
+                  <strong>마지막 호출:</strong> {formatRelativeTime(stats.shadow_mode.last_call_time)} ({new Date(stats.shadow_mode.last_call_time).toLocaleString('ko-KR')})
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 전환 준비 상태 */}
       {stats?.switch_readiness && (

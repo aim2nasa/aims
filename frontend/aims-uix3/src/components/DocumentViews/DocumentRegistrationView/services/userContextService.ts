@@ -163,9 +163,9 @@ export class UserContextService {
  * 🔮 미래 확장: 설정 파일로 분리 예정
  */
 export const uploadConfig = {
-  // 현재 설정 - n8n webhook 직접 호출
+  // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교, n8n 응답 반환)
   endpoints: {
-    upload: 'https://n8nd.giize.com/webhook/docprep-main'
+    upload: 'https://aims.giize.com/shadow/docprep-main'
   },
 
   // 🔮 미래 확장 설정 (현재는 비활성화)

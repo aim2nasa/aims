@@ -12,8 +12,8 @@ import { errorReporter } from '../../../shared/lib/errorReporter'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 
-// n8n webhook 직접 호출
-const UPLOAD_ENDPOINT = 'https://n8nd.giize.com/webhook/docprep-main'
+// Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교, n8n 응답 반환)
+const UPLOAD_ENDPOINT = 'https://aims.giize.com/shadow/docprep-main'
 
 // ==================== 타입 정의 ====================
 
