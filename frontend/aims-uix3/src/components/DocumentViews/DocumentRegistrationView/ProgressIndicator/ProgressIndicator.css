@@ -1,9 +1,9 @@
 /**
  * 🍎 TRUE APPLE STYLE PROGRESS INDICATOR
- * "Invisible until you need it" - Pure minimalism
+ * 전체 파일 목록을 보여주고 개별 진행 상황 표시
  */
 
-/* 🍎 FINDER STYLE: Invisible container */
+/* 🍎 FINDER STYLE: Container */
 .progress-indicator {
   width: 100%;
   margin: 8px 0;
@@ -12,6 +12,52 @@
   align-items: center;
   justify-content: center;
   min-height: 20px;
+}
+
+/* 🍎 LIST VIEW: 파일 목록 표시 모드 */
+.progress-indicator--list-view {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* 🍎 HEADER: 전체 진행률 + 통계 */
+.progress-indicator__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--color-section-header-bg);
+  border-radius: 6px;
+}
+
+.progress-indicator__track-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-indicator__percent {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ios-system-blue);
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-indicator__stat {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-indicator__stat--error {
+  color: var(--color-ios-red);
+  font-weight: 500;
 }
 
 /* 🍎 PROGRESS TRACK: macOS native progress bar */
@@ -143,10 +189,240 @@ html[data-theme="dark"] .progress-indicator__cancel:hover {
   background: rgba(255, 59, 48, 0.2);
 }
 
-/* 🍎 COMPLETION: Barely visible */
+/* 🍎 COMPLETION: 완료 메시지 */
 .progress-indicator__done {
-  color: var(--color-success);
-  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: var(--color-ios-green);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ============================================
+ * 🍎 FILE LIST: 스크롤 가능한 파일 목록
+ * ============================================ */
+.progress-indicator__file-list {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-section-bg);
+  border-radius: 6px;
+}
+
+/* 🍎 macOS-style scrollbar */
+.progress-indicator__file-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.progress-indicator__file-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.progress-indicator__file-list::-webkit-scrollbar-thumb {
+  background: var(--color-section-scrollbar);
+  border-radius: 3px;
+}
+
+.progress-indicator__file-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-section-scrollbar-hover);
+}
+
+/* ============================================
+ * 🍎 FILE ITEM: 개별 파일 행
+ * ============================================ */
+.progress-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--color-section-item-bg);
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.progress-file:hover {
+  background: var(--color-section-item-bg-hover);
+}
+
+/* 업로드 중인 파일 하이라이트 */
+.progress-file--uploading {
+  background: var(--color-ios-system-blue-subtle);
+}
+
+html[data-theme="dark"] .progress-file--uploading {
+  background: var(--color-ios-system-blue-subtle-dark);
+}
+
+.progress-file--uploading:hover {
+  background: var(--color-ios-system-blue-subtle);
+}
+
+html[data-theme="dark"] .progress-file--uploading:hover {
+  background: var(--color-ios-system-blue-subtle-dark);
+}
+
+/* 상태 아이콘 영역 */
+.progress-file__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.progress-file__icon--success {
+  color: var(--color-ios-green);
+}
+
+.progress-file__icon--pending {
+  color: var(--color-text-tertiary);
+}
+
+.progress-file__icon--cancelled {
+  color: var(--color-text-tertiary);
+}
+
+.progress-file__error-icon {
+  color: var(--color-ios-red);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* 스피너 (업로드 중) */
+.progress-file__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-ios-system-blue);
+  border-radius: 50%;
+  animation: progress-file-spin 0.8s linear infinite;
+}
+
+@keyframes progress-file-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 파일 정보 */
+.progress-file__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-file__name {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-file__size {
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* 개별 진행률 바 */
+.progress-file__progress-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.progress-file__progress {
+  width: 60px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-file__progress-bar {
+  height: 100%;
+  background: var(--color-ios-system-blue);
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.progress-file__progress-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-ios-system-blue);
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 상태 텍스트 */
+.progress-file__status-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.progress-file__status-text--success {
+  color: var(--color-ios-green);
+}
+
+.progress-file__status-text--pending {
+  color: var(--color-text-tertiary);
+}
+
+.progress-file__status-text--cancelled {
+  color: var(--color-text-tertiary);
+}
+
+/* 에러 메시지 */
+.progress-file__error {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-ios-red);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* 재시도 버튼 */
+.progress-file__retry {
+  padding: 2px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-ios-system-blue);
+  background: transparent;
+  border: 1px solid var(--color-ios-system-blue);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.progress-file__retry:hover {
+  background: var(--color-ios-system-blue);
+  color: white;
 }
 
 
