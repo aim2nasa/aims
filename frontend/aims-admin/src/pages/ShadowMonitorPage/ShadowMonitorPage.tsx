@@ -99,6 +99,25 @@ const resetShadowStats = async (): Promise<{ message: string }> => {
   return response.json();
 };
 
+/**
+ * KST 시간 포맷: YYYY.MM.DD HH:mm:ss (24시간제)
+ * 서버가 이미 KST timestamp를 반환하므로 변환 없이 포맷만 적용
+ */
+const formatKSTDateTime = (isoString: string): string => {
+  // 서버 timestamp는 이미 KST (예: "2025-12-29T17:03:43.066000")
+  // timezone offset이 없으므로 로컬 시간으로 해석됨
+  const date = new Date(isoString);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const mins = String(date.getMinutes()).padStart(2, '0');
+  const secs = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}.${month}.${day} ${hours}:${mins}:${secs}`;
+};
+
 const formatRelativeTime = (isoString: string): string => {
   const date = new Date(isoString);
   const now = new Date();
@@ -274,12 +293,12 @@ ${diffsText}
               </span>
               {stats.shadow_mode.first_call_time && (
                 <span>
-                  <strong>첫 호출:</strong> {new Date(stats.shadow_mode.first_call_time).toLocaleString('ko-KR')}
+                  <strong>첫 호출:</strong> {formatKSTDateTime(stats.shadow_mode.first_call_time)}
                 </span>
               )}
               {stats.shadow_mode.last_call_time && (
                 <span>
-                  <strong>마지막 호출:</strong> {formatRelativeTime(stats.shadow_mode.last_call_time)} ({new Date(stats.shadow_mode.last_call_time).toLocaleString('ko-KR')})
+                  <strong>마지막 호출:</strong> {formatRelativeTime(stats.shadow_mode.last_call_time)} ({formatKSTDateTime(stats.shadow_mode.last_call_time)})
                 </span>
               )}
             </div>
@@ -450,7 +469,7 @@ ${diffsText}
             <div className="shadow-monitor__modal-content">
               <div className="shadow-monitor__modal-meta">
                 <span>ID: {selectedMismatch.id}</span>
-                <span>시간: {new Date(selectedMismatch.timestamp).toLocaleString('ko-KR')}</span>
+                <span>시간: {formatKSTDateTime(selectedMismatch.timestamp)}</span>
                 <span>상태: {selectedMismatch.status}</span>
               </div>
               <h4>차이점 ({selectedMismatch.diffs.length}개)</h4>
