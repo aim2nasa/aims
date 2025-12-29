@@ -16,6 +16,7 @@ import ProgressIndicator from '../ProgressIndicator/ProgressIndicator'
 import Tooltip from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './ProcessingLog.css'
 
 interface ProcessingLogProps {
@@ -49,6 +50,9 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   onCancelUpload,
   onRetryFile
 }) => {
+  // 개발자 모드 확인
+  const { isDevMode } = useDevModeStore()
+
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest-first') // 기본값: 최신순 (위→아래로 최신이 맨 위)
   const [isFileSummaryExpanded, setIsFileSummaryExpanded] = useState(true) // 파일 요약 펼침 상태
   const logContainerRef = useRef<HTMLDivElement>(null)
@@ -266,126 +270,131 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         </div>
       )}
 
-      {/* Header */}
-      <div className="processing-log__header">
-        <div className="processing-log__header-left">
-          <span className="processing-log__title">처리 로그</span>
-          <span className="processing-log__count">{logs.length}</span>
-          <span className="processing-log__separator">·</span>
-          <span className="processing-log__sort-status">
-            {sortOrder === 'oldest-first' ? '오래된순' : '최신순'}
-          </span>
-        </div>
-        <div className="processing-log__header-right">
-          <Tooltip content={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}>
-            <div style={{ display: 'inline-block' }}>
-              <button
-                className="processing-log__sort processing-log__sort--primary"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSortOrder(prev => prev === 'oldest-first' ? 'newest-first' : 'oldest-first')
-                }}
-                aria-label={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}
-              >
-                <span className="processing-log__button-icon">
-                  {sortOrder === 'oldest-first' ? '↑' : '↓'}
-                </span>
-              </button>
+      {/* Header + Log List: 개발자 모드에서만 표시 */}
+      {isDevMode && (
+        <>
+          {/* Header */}
+          <div className="processing-log__header">
+            <div className="processing-log__header-left">
+              <span className="processing-log__title">처리 로그</span>
+              <span className="processing-log__count">{logs.length}</span>
+              <span className="processing-log__separator">·</span>
+              <span className="processing-log__sort-status">
+                {sortOrder === 'oldest-first' ? '오래된순' : '최신순'}
+              </span>
             </div>
-          </Tooltip>
-          <Tooltip content="로그 복사">
-            <div style={{ display: 'inline-block' }}>
-              <button
-                className="processing-log__sort processing-log__sort--success"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  copyLogsToClipboard()
-                }}
-                aria-label="로그 복사"
-              >
-                <span className="processing-log__button-icon">
-                  📋
-                </span>
-              </button>
-            </div>
-          </Tooltip>
-          <Tooltip content="로그 다운로드">
-            <div style={{ display: 'inline-block' }}>
-              <button
-                className="processing-log__sort processing-log__sort--info"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  downloadLogsAsText()
-                }}
-                aria-label="로그 다운로드"
-              >
-                <span className="processing-log__button-icon">
-                  💾
-                </span>
-              </button>
-            </div>
-          </Tooltip>
-          <Tooltip content="로그 지우기">
-            <div style={{ display: 'inline-block' }}>
-              <button
-                className="processing-log__clear processing-log__clear--danger"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onClear?.()
-                }}
-                aria-label="로그 지우기"
-              >
-                <span className="processing-log__button-icon">
-                  🗑️
-                </span>
-              </button>
-            </div>
-          </Tooltip>
-        </div>
-      </div>
-
-      {/* Log List */}
-      <div
-        ref={logContainerRef}
-        className="processing-log__container"
-        style={{ maxHeight: `${maxHeight}px` }}
-      >
-          {sortedLogs.map((log) => {
-            const config = LOG_CONFIG[log.level]
-
-            return (
-              <div key={log.id} className="processing-log__item">
-                <div className="processing-log__item-header">
-                  <div
-                    className="processing-log__icon"
-                    style={{
-                      color: config.color,
-                      backgroundColor: config.bgColor
+            <div className="processing-log__header-right">
+              <Tooltip content={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}>
+                <div style={{ display: 'inline-block' }}>
+                  <button
+                    className="processing-log__sort processing-log__sort--primary"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSortOrder(prev => prev === 'oldest-first' ? 'newest-first' : 'oldest-first')
                     }}
+                    aria-label={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}
                   >
-                    <span className="processing-log__icon-symbol">
-                      {config.icon}
+                    <span className="processing-log__button-icon">
+                      {sortOrder === 'oldest-first' ? '↑' : '↓'}
                     </span>
-                  </div>
-                  <span className="processing-log__time">
-                    {formatTime(log.timestamp)}
-                  </span>
-                  <span
-                    className="processing-log__message"
-                    style={{ color: config.color }}
-                  >
-                    {log.message}
-                    {log.details && (
-                      <span className="processing-log__details">
-                        {log.details}
-                      </span>
-                    )}
-                  </span>
+                  </button>
                 </div>
-              </div>
-            )
-          })}
-      </div>
+              </Tooltip>
+              <Tooltip content="로그 복사">
+                <div style={{ display: 'inline-block' }}>
+                  <button
+                    className="processing-log__sort processing-log__sort--success"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      copyLogsToClipboard()
+                    }}
+                    aria-label="로그 복사"
+                  >
+                    <span className="processing-log__button-icon">
+                      📋
+                    </span>
+                  </button>
+                </div>
+              </Tooltip>
+              <Tooltip content="로그 다운로드">
+                <div style={{ display: 'inline-block' }}>
+                  <button
+                    className="processing-log__sort processing-log__sort--info"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      downloadLogsAsText()
+                    }}
+                    aria-label="로그 다운로드"
+                  >
+                    <span className="processing-log__button-icon">
+                      💾
+                    </span>
+                  </button>
+                </div>
+              </Tooltip>
+              <Tooltip content="로그 지우기">
+                <div style={{ display: 'inline-block' }}>
+                  <button
+                    className="processing-log__clear processing-log__clear--danger"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onClear?.()
+                    }}
+                    aria-label="로그 지우기"
+                  >
+                    <span className="processing-log__button-icon">
+                      🗑️
+                    </span>
+                  </button>
+                </div>
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Log List */}
+          <div
+            ref={logContainerRef}
+            className="processing-log__container"
+            style={{ maxHeight: `${maxHeight}px` }}
+          >
+              {sortedLogs.map((log) => {
+                const config = LOG_CONFIG[log.level]
+
+                return (
+                  <div key={log.id} className="processing-log__item">
+                    <div className="processing-log__item-header">
+                      <div
+                        className="processing-log__icon"
+                        style={{
+                          color: config.color,
+                          backgroundColor: config.bgColor
+                        }}
+                      >
+                        <span className="processing-log__icon-symbol">
+                          {config.icon}
+                        </span>
+                      </div>
+                      <span className="processing-log__time">
+                        {formatTime(log.timestamp)}
+                      </span>
+                      <span
+                        className="processing-log__message"
+                        style={{ color: config.color }}
+                      >
+                        {log.message}
+                        {log.details && (
+                          <span className="processing-log__details">
+                            {log.details}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

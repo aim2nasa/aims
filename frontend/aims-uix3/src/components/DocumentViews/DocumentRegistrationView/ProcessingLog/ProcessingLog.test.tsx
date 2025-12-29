@@ -17,6 +17,11 @@ import userEvent from '@testing-library/user-event';
 import ProcessingLog from './ProcessingLog';
 import type { ProcessingLog as Log } from '../types/logTypes';
 
+// 개발자 모드 활성화 상태로 모킹 (처리 로그가 표시되려면 개발자 모드 필요)
+vi.mock('@/shared/store/useDevModeStore', () => ({
+  useDevModeStore: () => ({ isDevMode: true })
+}));
+
 describe('ProcessingLog Component', () => {
   const mockLogs: Log[] = [
     {
