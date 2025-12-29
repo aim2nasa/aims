@@ -250,9 +250,10 @@ export const OCRUsagePage = () => {
   // localStorage에서 초기값 로드
   const [periodType, setPeriodTypeState] = useState<PeriodType>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PERIOD);
-    // 기존 'daily' 값이 저장되어 있으면 'hourly'로 변환
-    if (saved === 'daily') return 'hourly';
-    return (saved as PeriodType) || 'monthly';
+    if (saved && ['hourly', 'daily', 'weekly', 'monthly', 'yearly'].includes(saved)) {
+      return saved as PeriodType;
+    }
+    return 'monthly';
   });
   const [selectedYear, setSelectedYearState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_YEAR);
