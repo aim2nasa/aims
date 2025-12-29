@@ -19,6 +19,7 @@ import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
 import { api, API_CONFIG } from '@/shared/lib/api'
+import { cachedRequest } from '@/shared/lib/requestCache'
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
 import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
@@ -835,8 +836,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     console.log(`🔗 [고객 파일 자동 연결] 시작: ${fileName} → 고객: ${customerFileInfo.customerName}`);
 
     try {
-      // 1. 파일명으로 문서 조회 (대량 문서 처리 시 응답 지연 대응)
-      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG });
+      // 1. 파일명으로 문서 조회 (캐시 사용으로 중복 호출 방지)
+      const searchData = await cachedRequest(
+        'documents-list-100',
+        () => api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG }),
+        3000 // 3초 캐시 (업로드 중 빠른 갱신 필요)
+      );
 
       if (!searchData.success || !searchData.data || !searchData.data.documents) {
         console.warn(`⚠️ [고객 파일 자동 연결] 문서 목록 조회 실패`);
@@ -927,8 +932,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   const checkNormalDocumentCompletion = useCallback(async (fileName: string) => {
     try {
-      // 1. 파일명으로 문서 조회 (대량 문서 처리 시 응답 지연 대응)
-      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG });
+      // 1. 파일명으로 문서 조회 (캐시 사용으로 중복 호출 방지)
+      const searchData = await cachedRequest(
+        'documents-list-100',
+        () => api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`, { timeout: API_CONFIG.TIMEOUT_LONG }),
+        3000 // 3초 캐시 (업로드 중 빠른 갱신 필요)
+      );
 
       if (!searchData.success || !searchData.data || !searchData.data.documents) {
         console.warn(`⚠️ [일반 문서] 문서 목록 조회 실패`);
