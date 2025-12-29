@@ -96,7 +96,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-reg-guide-expanded')
-    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
+    return saved === null ? true : saved === 'true' // 기본값: 펼친 상태
   })
   const [isNotesExpanded, setIsNotesExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-reg-notes-expanded')
