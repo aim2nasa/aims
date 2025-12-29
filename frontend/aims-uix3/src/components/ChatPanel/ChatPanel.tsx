@@ -270,6 +270,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 = 현재 입력
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]); // 첨부 파일 목록
   const [isUploading, setIsUploading] = useState(false); // 파일 업로드 중 상태
+  // 최소화 상태
+  const [isMinimized, setIsMinimized] = useState(false);
   const tempInputRef = useRef(''); // 히스토리 탐색 중 현재 작성 내용 임시 저장
   const prevIsOpenRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -315,6 +317,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       localStorage.setItem('aims-chat-detached', newValue ? 'true' : 'false');
       return newValue;
     });
+  }, []);
+
+  // 최소화 토글
+  const handleToggleMinimize = useCallback(() => {
+    setIsMinimized(prev => !prev);
   }, []);
 
   // 팝업 창으로 열기
@@ -1875,6 +1882,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
               </button>
             </Tooltip>
           )}
+          {/* 최소화 버튼 (팝업 모드에서는 숨김) */}
+          {!isPopup && (
+            <Tooltip content="최소화" placement="bottom">
+              <button
+                type="button"
+                className="chat-panel__header-btn"
+                onClick={handleToggleMinimize}
+                aria-label="최소화"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <rect x="2" y="7" width="12" height="2" rx="1" />
+                </svg>
+              </button>
+            </Tooltip>
+          )}
           <Tooltip content="닫기" placement="bottom">
             <button
               type="button"
@@ -2891,25 +2913,64 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
 
   // 분리 모드: DraggableModal 사용
   if (isDetached) {
+    // 최소화 상태: 플로팅 버튼만 표시 (분리 모드용)
+    const minimizedIndicatorDetached = isMinimized && isOpen && (
+      <button
+        type="button"
+        className="chat-panel__minimized-indicator"
+        onClick={handleToggleMinimize}
+        aria-label="AI 어시스턴트 열기"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="robotGradientMiniDetached" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="100%" stopColor="#06B6D4" />
+            </linearGradient>
+          </defs>
+          <rect x="4" y="5" width="16" height="14" rx="4" fill="url(#robotGradientMiniDetached)" />
+          <rect x="7" y="9" width="3" height="4" rx="1" fill="white" />
+          <rect x="14" y="9" width="3" height="4" rx="1" fill="white" />
+          <line x1="12" y1="5" x2="12" y2="2" stroke="url(#robotGradientMiniDetached)" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="1.5" r="1.5" fill="url(#robotGradientMiniDetached)" />
+        </svg>
+        {messages.length > 0 && (
+          <span className="chat-panel__minimized-badge">{messages.length}</span>
+        )}
+      </button>
+    );
+
     return (
       <>
-        <DraggableModal
-          visible={isOpen}
-          onClose={handlePanelClose}
-          title={detachedHeaderTitle}
-          showHeader={true}
-          initialWidth={450}
-          initialHeight={820}
-          minWidth={360}
-          minHeight={550}
-          className="chat-panel-modal"
-          escapeToClose={false}
-          backdropClosable={false}
-        >
-          <div className="chat-panel chat-panel--detached">
-            {detachedPanelContent}
-          </div>
-        </DraggableModal>
+        {/* 최소화 상태면 인디케이터만 표시 */}
+        {minimizedIndicatorDetached}
+        {/* 최소화되지 않은 상태일 때만 모달 표시 */}
+        {!isMinimized && (
+          <DraggableModal
+            visible={isOpen}
+            onClose={handlePanelClose}
+            title={detachedHeaderTitle}
+            showHeader={true}
+            initialWidth={450}
+            initialHeight={820}
+            minWidth={360}
+            minHeight={550}
+            className="chat-panel-modal"
+            escapeToClose={false}
+            backdropClosable={false}
+          >
+            <div className="chat-panel chat-panel--detached">
+              {detachedPanelContent}
+            </div>
+          </DraggableModal>
+        )}
         {contextMenuUI}
         {/* 문서 프리뷰 모달 */}
         <CustomerDocumentPreviewModal
@@ -2949,16 +3010,57 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     );
   }
 
+  // 최소화 상태: 플로팅 버튼만 표시
+  const minimizedIndicator = isMinimized && isOpen && (
+    <button
+      type="button"
+      className="chat-panel__minimized-indicator"
+      onClick={handleToggleMinimize}
+      aria-label="AI 어시스턴트 열기"
+    >
+      {/* AI 로봇 아이콘 */}
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="robotGradientMini" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8B5CF6" />
+            <stop offset="100%" stopColor="#06B6D4" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="5" width="16" height="14" rx="4" fill="url(#robotGradientMini)" />
+        <rect x="7" y="9" width="3" height="4" rx="1" fill="white" />
+        <rect x="14" y="9" width="3" height="4" rx="1" fill="white" />
+        <line x1="12" y1="5" x2="12" y2="2" stroke="url(#robotGradientMini)" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="12" cy="1.5" r="1.5" fill="url(#robotGradientMini)" />
+      </svg>
+      {/* 메시지 개수 표시 (대화가 있을 때만) */}
+      {messages.length > 0 && (
+        <span className="chat-panel__minimized-badge">{messages.length}</span>
+      )}
+    </button>
+  );
+
   // 도킹 모드: 기존 슬라이드 패널
   return (
     <>
-      <div
-        ref={panelRef}
-        className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
-        style={{ width: panelWidth }}
-      >
-        {panelContent}
-      </div>
+      {/* 최소화 상태면 인디케이터만 표시 */}
+      {minimizedIndicator}
+      {/* 최소화되지 않은 상태일 때만 패널 표시 */}
+      {!isMinimized && (
+        <div
+          ref={panelRef}
+          className={`chat-panel ${isOpen ? 'chat-panel--open' : ''} ${isResizing ? 'chat-panel--resizing' : ''}`}
+          style={{ width: panelWidth }}
+        >
+          {panelContent}
+        </div>
+      )}
       {contextMenuUI}
       {/* 문서 프리뷰 모달 */}
       <CustomerDocumentPreviewModal
