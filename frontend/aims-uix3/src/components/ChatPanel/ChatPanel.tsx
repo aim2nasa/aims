@@ -15,6 +15,7 @@ import type { CreateDocumentData } from '@/entities/document';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser';
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing';
+import { getCustomerFileHashes, checkDuplicateFile, type ExistingFileHash } from '@/shared/lib/fileValidation';
 import { ContractService } from '@/services/contractService';
 import { SavedQuestionsService, SavedQuestion, FrequentQuestionsService, FrequentQuestion } from '@/services/savedQuestionsService';
 import Button from '@/shared/ui/Button';
@@ -819,6 +820,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     // 🔥 파일 선택 즉시 업로드 시작 (새문서등록과 동일)
     setAttachedFiles(validFiles); // 업로드 중인 파일 목록 표시
     setIsUploading(true);
+    let shouldClearFiles = false; // 업로드 완료 시에만 true로 설정
     try {
       console.log('[ChatPanel] 🚀 파일 선택 즉시 업로드 시작:', validFiles.map(f => f.name));
 
@@ -888,25 +890,70 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
 
       // 🔥 고객 없으면 업로드 취소하고 사용자에게 안내
       if (!targetCustomerId) {
-        console.warn('[ChatPanel] 고객을 찾을 수 없어 업로드 취소');
+        console.warn('[ChatPanel] 고객을 찾을 수 없음 - 고객명 질문');
+        console.log('[ChatPanel] 🔥 파일 유지 중:', validFiles.map(f => f.name));
         setIsUploading(false);
-        setAttachedFiles([]); // 첨부 파일 목록 초기화
-
-        // 사용자에게 안내 메시지 표시
+        // 🔥 파일은 attachedFiles에 유지 (setAttachedFiles([]) 제거하지 않음)
+        // 파일을 다시 명시적으로 설정
+        setAttachedFiles(validFiles);
         const fileNames = validFiles.map(f => f.name).join(', ');
         const askMessage: DisplayMessage = {
           id: `ask-${Date.now()}`,
           role: 'assistant',
-          content: `📎 **첨부 파일:** ${fileNames}\n\n❌ **고객명을 확인할 수 없어 업로드가 취소되었습니다.**\n\n먼저 고객명을 입력해주세요. 예:\n- "캐치업코리아 문서 등록해줘"\n- "김철수 고객에게 문서 업로드해줘"\n\n그 후 다시 파일을 첨부해주세요.`,
+          content: `📎 **첨부 파일:** ${fileNames}\n\n어떤 고객에게 업로드할까요? 고객명을 입력해주세요.\n\n예: "곽승철", "라이콘코리아"`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, askMessage]);
+        // 파일은 attachedFiles에 유지됨 - 다음 메시지에서 고객명과 함께 처리
         return;
       }
 
-      // 2. PDF 파일 AR 감지
+      // 2. 🔴 중복 파일 검사
+      let existingHashes: ExistingFileHash[] = [];
+      const duplicateFiles: string[] = [];
+      let filesToUpload = validFiles;
+
+      if (targetCustomerId) {
+        try {
+          console.log('[ChatPanel] 🔍 중복 파일 검사 시작:', targetCustomerId);
+          existingHashes = await getCustomerFileHashes(targetCustomerId);
+          console.log('[ChatPanel] 기존 파일 해시 조회 완료:', existingHashes.length, '개');
+
+          // 각 파일 중복 검사
+          const nonDuplicateFiles: File[] = [];
+          for (const file of validFiles) {
+            const duplicateResult = await checkDuplicateFile(file, existingHashes);
+            if (duplicateResult.isDuplicate) {
+              console.log('[ChatPanel] 🔴 중복 파일 발견:', file.name);
+              duplicateFiles.push(file.name);
+            } else {
+              nonDuplicateFiles.push(file);
+            }
+          }
+          filesToUpload = nonDuplicateFiles;
+
+          // 모든 파일이 중복인 경우
+          if (filesToUpload.length === 0 && duplicateFiles.length > 0) {
+            setIsUploading(false);
+            const dupMessage: DisplayMessage = {
+              id: `dup-${Date.now()}`,
+              role: 'assistant',
+              content: `🔴 **중복 파일 감지**\n\n다음 파일은 이미 ${linkedCustomerName} 고객에게 등록되어 있습니다:\n\n📄 ${duplicateFiles.join('\n📄 ')}\n\n동일한 파일은 다시 업로드할 수 없습니다.`,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, dupMessage]);
+            setAttachedFiles([]);
+            return;
+          }
+        } catch (error) {
+          console.error('[ChatPanel] 중복 검사 실패:', error);
+          // 중복 검사 실패 시에도 업로드 진행
+        }
+      }
+
+      // 3. PDF 파일 AR 감지
       const arInfoMap = new Map<string, { isAR: boolean; metadata: { report_title?: string; issue_date?: string } | null }>();
-      for (const file of validFiles) {
+      for (const file of filesToUpload) {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           try {
             console.log('[ChatPanel] 🔍 AR 감지 시작:', file.name);
@@ -922,9 +969,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         }
       }
 
-      // 3. 파일 업로드 (customerId 포함 - n8n이 자동 연결)
+      // 4. 파일 업로드 (customerId 포함 - n8n이 자동 연결)
+      shouldClearFiles = true; // 업로드 시작 - 완료 후 파일 초기화 예정
       const uploadResults = await Promise.all(
-        validFiles.map(async (file) => {
+        filesToUpload.map(async (file) => {
           try {
             // 🔥 customerId를 전달하여 n8n이 자동으로 고객에 연결
             const result = await DocumentService.uploadDocument(file, { customerId: targetCustomerId } as Partial<CreateDocumentData>);
@@ -1005,19 +1053,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         console.log('[ChatPanel] 문서 처리 완료');
 
         // 5. 업로드 완료 메시지 추가
+        let successContent = `✅ ${linkedCustomerName} 고객에게 문서가 업로드되었습니다.\n\n📎 ${uploadedFileNames.join(', ')}`;
+
+        // 중복으로 건너뛴 파일이 있으면 표시
+        if (duplicateFiles.length > 0) {
+          successContent += `\n\n🔴 **중복 파일 건너뜀:**\n📄 ${duplicateFiles.join('\n📄 ')}`;
+        }
+
         const successMessage: DisplayMessage = {
           id: `upload-${Date.now()}`,
           role: 'assistant',
-          content: `✅ ${linkedCustomerName} 고객에게 문서가 업로드되었습니다.\n\n📎 ${uploadedFileNames.join(', ')}`,
+          content: successContent,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, successMessage]);
       }
     } catch (error) {
       console.error('[ChatPanel] 파일 업로드 오류:', error);
+      shouldClearFiles = true; // 오류 시에도 파일 초기화
     } finally {
       setIsUploading(false);
-      setAttachedFiles([]); // 업로드 완료 후 파일 목록 초기화
+      if (shouldClearFiles) {
+        setAttachedFiles([]); // 업로드 완료 후 파일 목록 초기화
+      }
     }
   }, [messages]);
 
@@ -1260,8 +1318,187 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmedInput = input.trim();
+
+    console.log('[ChatPanel] handleSubmit 호출:', { trimmedInput, attachedFilesCount: attachedFiles.length, attachedFiles: attachedFiles.map(f => f.name) });
+
     // 메시지가 없어도 파일이 있으면 전송 가능
     if ((!trimmedInput && attachedFiles.length === 0) || isLoading || isUploading) return;
+
+    // 🔥 첨부 파일이 있고 입력이 있으면 → 고객명으로 해석하여 업로드 시도
+    if (attachedFiles.length > 0 && trimmedInput) {
+      console.log('[ChatPanel] 🔥 파일+고객명 업로드 모드 진입');
+      // 입력을 고객명으로 해석하여 검색
+      const potentialNames = trimmedInput.match(/([가-힣a-zA-Z0-9]{2,20})/g) || [];
+      let targetCustomerId = '';
+      let linkedCustomerName = '';
+
+      for (const potentialName of potentialNames) {
+        try {
+          console.log('[ChatPanel] 입력에서 고객 검색:', potentialName);
+          const result = await CustomerService.getCustomers({
+            search: potentialName,
+            limit: 5
+          });
+          const customers = result?.customers || [];
+          const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
+          if (exactMatch?._id) {
+            targetCustomerId = exactMatch._id;
+            linkedCustomerName = potentialName;
+            console.log('[ChatPanel] 고객 찾음:', potentialName, targetCustomerId);
+            break;
+          }
+        } catch (searchError) {
+          console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
+        }
+      }
+
+      if (targetCustomerId) {
+        // 사용자 메시지 표시
+        const userMessage: DisplayMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content: trimmedInput,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+
+        // 🔥 파일 업로드 실행
+        setIsUploading(true);
+        try {
+          // 중복 파일 검사
+          let existingHashes: ExistingFileHash[] = [];
+          const duplicateFiles: string[] = [];
+          let filesToUpload = [...attachedFiles];
+
+          try {
+            console.log('[ChatPanel] 🔍 중복 파일 검사 시작:', targetCustomerId);
+            existingHashes = await getCustomerFileHashes(targetCustomerId);
+            console.log('[ChatPanel] 기존 파일 해시 조회 완료:', existingHashes.length, '개');
+
+            const nonDuplicateFiles: File[] = [];
+            for (const file of attachedFiles) {
+              const duplicateResult = await checkDuplicateFile(file, existingHashes);
+              if (duplicateResult.isDuplicate) {
+                console.log('[ChatPanel] 🔴 중복 파일 발견:', file.name);
+                duplicateFiles.push(file.name);
+              } else {
+                nonDuplicateFiles.push(file);
+              }
+            }
+            filesToUpload = nonDuplicateFiles;
+
+            // 모든 파일이 중복인 경우
+            if (filesToUpload.length === 0 && duplicateFiles.length > 0) {
+              setIsUploading(false);
+              const dupMessage: DisplayMessage = {
+                id: `dup-${Date.now()}`,
+                role: 'assistant',
+                content: `🔴 **중복 파일 감지**\n\n다음 파일은 이미 ${linkedCustomerName} 고객에게 등록되어 있습니다:\n\n📄 ${duplicateFiles.join('\n📄 ')}\n\n동일한 파일은 다시 업로드할 수 없습니다.`,
+                timestamp: new Date()
+              };
+              setMessages(prev => [...prev, dupMessage]);
+              setAttachedFiles([]);
+              return;
+            }
+          } catch (error) {
+            console.error('[ChatPanel] 중복 검사 실패:', error);
+          }
+
+          // AR 감지
+          const arInfoMap = new Map<string, { isAR: boolean; metadata: { report_title?: string; issue_date?: string } | null }>();
+          for (const file of filesToUpload) {
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+              try {
+                const arResult = await checkAnnualReportFromPDF(file);
+                arInfoMap.set(file.name, { isAR: arResult.is_annual_report, metadata: arResult.metadata });
+              } catch {
+                arInfoMap.set(file.name, { isAR: false, metadata: null });
+              }
+            }
+          }
+
+          // 파일 업로드
+          const uploadResults = await Promise.all(
+            filesToUpload.map(async (file) => {
+              try {
+                const result = await DocumentService.uploadDocument(file, { customerId: targetCustomerId } as Partial<CreateDocumentData>);
+                if (result.success) {
+                  const docId = result.document?._id || '';
+                  const arInfo = arInfoMap.get(file.name);
+                  return { success: true, name: file.name, docId, isAR: arInfo?.isAR || false, arMetadata: arInfo?.metadata };
+                }
+                return { success: false, name: file.name, docId: '', isAR: false, arMetadata: null };
+              } catch {
+                return { success: false, name: file.name, docId: '', isAR: false, arMetadata: null };
+              }
+            })
+          );
+
+          const uploadedFileNames = uploadResults.filter(r => r.success).map(r => r.name);
+
+          // AR 후처리
+          if (targetCustomerId && uploadedFileNames.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            for (const uploadResult of uploadResults.filter(r => r.success && r.isAR)) {
+              try {
+                const setArResult = await api.patch<{ success: boolean; document_id?: string }>(
+                  '/api/documents/set-annual-report',
+                  { filename: uploadResult.name, metadata: uploadResult.arMetadata, customer_id: targetCustomerId }
+                );
+                const documentId = setArResult.document_id;
+                if (documentId) {
+                  const processingResult = await waitForDocumentProcessing(documentId);
+                  if (processingResult.success && processingResult.status === 'completed') {
+                    await api.post('/api/ar-background/trigger-parsing', { customer_id: targetCustomerId, file_id: documentId });
+                  }
+                }
+              } catch (arError) {
+                console.error('[ChatPanel] AR 처리 실패:', arError);
+              }
+            }
+          }
+
+          // 성공 메시지
+          let successContent = `✅ ${linkedCustomerName} 고객에게 문서가 업로드되었습니다.\n\n📎 ${uploadedFileNames.join(', ')}`;
+          if (duplicateFiles.length > 0) {
+            successContent += `\n\n🔴 **중복 파일 건너뜀:**\n📄 ${duplicateFiles.join('\n📄 ')}`;
+          }
+          const successMessage: DisplayMessage = {
+            id: `upload-${Date.now()}`,
+            role: 'assistant',
+            content: successContent,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, successMessage]);
+        } catch (error) {
+          console.error('[ChatPanel] 파일 업로드 오류:', error);
+        } finally {
+          setIsUploading(false);
+          setAttachedFiles([]);
+        }
+        return;
+      } else {
+        // 고객을 못 찾았으면 다시 질문
+        const userMessage: DisplayMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content: trimmedInput,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+
+        const askAgainMessage: DisplayMessage = {
+          id: `ask-${Date.now()}`,
+          role: 'assistant',
+          content: `❌ "${trimmedInput}" 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, askAgainMessage]);
+        return;
+      }
+    }
 
     // 입력 히스토리에 추가 (중복 방지, 최대 50개)
     if (trimmedInput) {
