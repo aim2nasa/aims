@@ -100,6 +100,7 @@ export interface VirusScanLog {
   collectionName: string;
   documentId: string;
   filePath: string;
+  originalName?: string;  // 원본 파일명
   userId: string;
   result: {
     status: 'clean' | 'infected' | 'error' | 'deleted';

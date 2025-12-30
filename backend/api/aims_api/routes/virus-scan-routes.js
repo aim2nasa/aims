@@ -355,9 +355,41 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).countDocuments(query)
       ]);
 
+      // 각 로그의 documentId로 원본 파일명 조회
+      const logsWithOriginalName = await Promise.all(
+        logs.map(async (log) => {
+          if (!log.documentId) return log;
+
+          try {
+            const { ObjectId } = require('mongodb');
+            const docId = new ObjectId(log.documentId);
+
+            // files 또는 personal_files에서 조회
+            const collection = log.collectionName === 'personal_files'
+              ? COLLECTIONS.PERSONAL_FILES
+              : COLLECTIONS.FILES;
+
+            const file = await db.collection(collection).findOne(
+              { _id: docId },
+              { projection: { 'upload.originalName': 1, filename: 1, name: 1 } }
+            );
+
+            if (file) {
+              return {
+                ...log,
+                originalName: file.upload?.originalName || file.filename || file.name || null
+              };
+            }
+          } catch (err) {
+            // ObjectId 변환 실패 등 무시
+          }
+          return log;
+        })
+      );
+
       res.json({
         success: true,
-        data: logs,
+        data: logsWithOriginalName,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),

@@ -212,7 +212,8 @@
 }
 
 .filename,
-.file-path {
+.file-path,
+.original-name {
   max-width: 200px;
   white-space: nowrap;
   overflow: hidden;

@@ -23,10 +23,12 @@ export interface VirusDetectedData {
 }
 
 export interface ScanProgressData {
+  is_running?: boolean;
   isComplete?: boolean;
   totalFiles: number;
   scannedFiles: number;
   infectedFiles: number;
+  progress_percent?: number;
   completedAt?: string;
 }
 
@@ -143,7 +145,8 @@ export function useVirusScanSSE(): UseVirusScanSSEReturn {
     });
   }, [queryClient]);
 
-  const addEvent = (type: VirusScanEvent['type'], data: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const addEvent = (type: VirusScanEvent['type'], data: any) => {
     setEvents((prev) => {
       const newEvents = [...prev, { type, data, timestamp: new Date() }];
       // 최대 100개 유지

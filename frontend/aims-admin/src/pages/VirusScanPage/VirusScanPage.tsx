@@ -12,13 +12,10 @@ import {
   SCAN_STATUS_LABELS,
   SCAN_TYPE_LABELS,
   INFECTED_ACTION_LABELS,
-  type VirusScanStats,
   type VirusScanStatus,
   type VirusScanSettings,
   type InfectedFile,
   type VirusScanLog,
-  type ScanProgress,
-  type SystemInfo,
 } from '@/features/virus-scan/api';
 import { useVirusScanSSE } from '@/shared/hooks/useVirusScanSSE';
 import { Button } from '@/shared/ui/Button';
@@ -34,7 +31,7 @@ export function VirusScanPage() {
   const queryClient = useQueryClient();
 
   // SSE 연결
-  const { isConnected, events, lastVirusDetected, scanProgress: sseProgress } = useVirusScanSSE();
+  const { isConnected, events, scanProgress: sseProgress } = useVirusScanSSE();
 
   // 서비스 상태 조회
   const { data: status } = useQuery({
@@ -44,7 +41,7 @@ export function VirusScanPage() {
   });
 
   // 통계 조회
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ['virus-scan', 'stats'],
     queryFn: virusScanApi.getStats,
     refetchInterval: 60000, // 1분마다 갱신
@@ -425,6 +422,7 @@ function ScanLogsTab({
             <th>시간</th>
             <th>유형</th>
             <th>파일 경로</th>
+            <th>원본 이름</th>
             <th>결과</th>
             <th>위협명</th>
             <th>소요시간</th>
@@ -441,6 +439,9 @@ function ScanLogsTab({
               </td>
               <td className="file-path" title={log.filePath}>
                 {log.filePath?.split('/').pop() || '-'}
+              </td>
+              <td className="original-name" title={log.originalName || ''}>
+                {log.originalName || '-'}
               </td>
               <td>
                 <span className={`status-badge ${log.result?.status}`}>
@@ -779,7 +780,7 @@ function SettingsModal({
           <label>감염 파일 처리</label>
           <select
             value={formData.onInfectedAction}
-            onChange={(e) => setFormData({ ...formData, onInfectedAction: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, onInfectedAction: e.target.value as 'delete' | 'quarantine' | 'notify_only' })}
           >
             <option value="delete">즉시 삭제</option>
             <option value="quarantine">격리</option>
