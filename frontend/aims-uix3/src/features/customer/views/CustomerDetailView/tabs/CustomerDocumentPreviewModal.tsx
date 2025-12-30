@@ -112,81 +112,89 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       )
     }
 
-    // 🔴 바이러스 감염 파일 경고
+    // 🔴 바이러스 감염 여부 확인
     const virusScan = previewDocument.virusScan
     const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
-    if (isVirusInfected) {
-      return (
-        <div className="viewer-container">
-          <div className="customer-document-preview__virus-warning">
-            <div className="virus-warning__icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
-                <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div className="virus-warning__title">바이러스 감염 파일</div>
-            <div className="virus-warning__description">
-              <div>이 파일에서 바이러스가 감지되어</div>
-              <div>다운로드할 수 없습니다.</div>
-            </div>
-            <div className="virus-warning__threat">
-              {virusScan?.threatName || '알 수 없는 위협'}
-            </div>
-            <div className="virus-warning__filename">
-              {previewDocument.originalName}
-            </div>
-          </div>
-          {/* 🔴 비활성화된 다운로드 버튼 */}
-          <ViewerControls
-            scale={1}
-            isModified={false}
-            onZoomIn={() => {}}
-            onZoomOut={() => {}}
-            onReset={() => {}}
-            downloadDisabled={true}
-            downloadDisabledReason="바이러스 감염 파일로 삭제되어 다운로드할 수 없습니다"
+
+    // 🔴 바이러스 오버레이 컴포넌트
+    const virusOverlay = isVirusInfected ? (
+      <div className="viewer-virus-overlay">
+        <div className="viewer-virus-overlay__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
+            <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <div className="viewer-virus-overlay__title">바이러스 감염 파일</div>
+        <div className="viewer-virus-overlay__description">
+          <div>이 파일에서 바이러스가 감지되어</div>
+          <div>다운로드할 수 없습니다.</div>
+        </div>
+        <div className="viewer-virus-overlay__threat">
+          {virusScan?.threatName || '알 수 없는 위협'}
+        </div>
+        <div className="viewer-virus-overlay__filename">{previewDocument.originalName}</div>
+      </div>
+    ) : null
+
+    // 다운로드 핸들러 (바이러스 감염 시 비활성화)
+    const downloadHandler = isVirusInfected ? undefined : onDownload
+
+    // 뷰어 렌더링
+    const renderViewer = () => {
+      if (isPdf && previewUrl) {
+        return (
+          <PDFViewer
+            file={previewUrl}
+            initialScale={fitScale}
+            {...(downloadHandler ? { onDownload: downloadHandler } : {})}
+            downloadDisabled={isVirusInfected}
+            downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
           />
+        )
+      }
+
+      if (isImage && previewUrl) {
+        return (
+          <ImageViewer
+            file={previewUrl}
+            alt={previewDocument.originalName}
+            initialScale={fitScale}
+            {...(downloadHandler ? { onDownload: downloadHandler } : {})}
+            downloadDisabled={isVirusInfected}
+            downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
+          />
+        )
+      }
+
+      return (
+        <div className="customer-document-preview__placeholder">
+          <SFSymbol
+            name="doc.richtext"
+            size={SFSymbolSize.LARGE_TITLE}
+            weight={SFSymbolWeight.MEDIUM}
+          />
+          <p>미리보기를 지원하지 않는 형식입니다.</p>
+          {downloadHandler && !isVirusInfected && (
+            <Button variant="primary" size="sm" onClick={downloadHandler}>
+              다운로드
+            </Button>
+          )}
         </div>
       )
     }
 
-    if (isPdf && previewUrl) {
+    // 바이러스 감염 시 오버레이와 함께 렌더링
+    if (isVirusInfected) {
       return (
-        <PDFViewer
-          file={previewUrl}
-          initialScale={fitScale}
-          {...(onDownload ? { onDownload } : {})}
-        />
+        <div className="viewer-virus-overlay-container">
+          {renderViewer()}
+          {virusOverlay}
+        </div>
       )
     }
 
-    if (isImage && previewUrl) {
-      return (
-        <ImageViewer
-          file={previewUrl}
-          alt={previewDocument.originalName}
-          initialScale={fitScale}
-          {...(onDownload ? { onDownload } : {})}
-        />
-      )
-    }
-
-    return (
-      <div className="customer-document-preview__placeholder">
-        <SFSymbol
-          name="doc.richtext"
-          size={SFSymbolSize.LARGE_TITLE}
-          weight={SFSymbolWeight.MEDIUM}
-        />
-        <p>미리보기를 지원하지 않는 형식입니다.</p>
-        {onDownload && (
-          <Button variant="primary" size="sm" onClick={onDownload}>
-            다운로드
-          </Button>
-        )}
-      </div>
-    )
+    return renderViewer()
   }
 
   return (

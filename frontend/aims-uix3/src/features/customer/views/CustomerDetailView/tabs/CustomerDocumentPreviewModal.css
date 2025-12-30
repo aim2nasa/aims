@@ -309,52 +309,9 @@
   border-radius: 4px;
 }
 
-/* === 바이러스 감염 경고 === */
-.customer-document-preview__virus-warning {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: var(--spacing-8);
-  text-align: center;
-  gap: var(--spacing-4);
-}
-
-.virus-warning__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: rgba(255, 59, 48, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.virus-warning__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.virus-warning__description {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.virus-warning__threat {
-  margin-top: var(--spacing-2);
-  padding: var(--spacing-3) var(--spacing-4);
-  background-color: rgba(255, 59, 48, 0.1);
-  border-radius: 8px;
-  font-size: 13px;
-  color: #ff3b30;
-  font-weight: 500;
-}
-
-.virus-warning__filename {
-  font-size: 12px;
-  color: var(--color-text-tertiary);
-  margin-top: var(--spacing-2);
+/* === 바이러스 오버레이 컨테이너 === */
+/* viewer-common.css의 .viewer-virus-overlay-container 사용 */
+.customer-document-preview__content .viewer-virus-overlay-container {
+  flex: 1;
+  min-height: 0;
 }

@@ -1891,129 +1891,101 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   const virusScan = (selectedDocument as any).virusScan
                   const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
 
-                  // 다운로드 함수 정의
-                  const download = () => {
+                  // 다운로드 함수 정의 (바이러스 감염 시 undefined)
+                  const download = isVirusInfected ? undefined : () => {
                     DownloadHelper.downloadDocument(adaptToDownloadHelper({ ...selectedDocument, fileUrl: selectedDocument.fileUrl ?? '' } as typeof selectedDocument & { fileUrl: string }))
                   }
 
-                  // 🔴 바이러스 감염 경고 메시지 (파일 삭제되어 프리뷰 불가)
-                  if (isVirusInfected) {
-                    const fileName =
-                      selectedDocument.upload?.originalName ||
-                      selectedDocument.payload?.originalName ||
-                      '파일'
-                    const threatName = virusScan?.threatName || '알 수 없는 위협'
-
-                    return (
-                      <div className="viewer-container">
-                        <div style={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 'var(--spacing-8)',
-                          textAlign: 'center',
-                          gap: 'var(--spacing-4)'
-                        }}>
-                          <div style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
-                              <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                          <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
-                            바이러스 감염 파일
-                          </div>
-                          <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                            <div>이 파일에서 바이러스가 감지되어</div>
-                            <div>다운로드할 수 없습니다.</div>
-                          </div>
-                          <div style={{
-                            marginTop: 'var(--spacing-2)',
-                            padding: 'var(--spacing-3) var(--spacing-4)',
-                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            color: '#ff3b30',
-                            fontWeight: '500'
-                          }}>
-                            {threatName}
-                          </div>
-                          <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 'var(--spacing-2)' }}>
-                            {fileName}
-                          </div>
-                        </div>
-                        {/* 🔴 비활성화된 다운로드 버튼 */}
-                        <ViewerControls
-                          scale={1}
-                          isModified={false}
-                          onZoomIn={() => {}}
-                          onZoomOut={() => {}}
-                          onReset={() => {}}
-                          downloadDisabled={true}
-                          downloadDisabledReason="바이러스 감염 파일로 삭제되어 다운로드할 수 없습니다"
-                        />
-                      </div>
-                    )
-                  }
+                  // 파일명 추출
+                  const fileName =
+                    selectedDocument.upload?.originalName ||
+                    selectedDocument.payload?.originalName ||
+                    '파일'
 
                   // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
                   const previewUrl = selectedDocument.previewFileUrl ?? selectedDocument.fileUrl
-                  if (!previewUrl) {
-                    const fileName =
-                      selectedDocument.upload?.originalName ||
-                      selectedDocument.payload?.originalName ||
-                      '파일'
+
+                  // 🔴 바이러스 오버레이 컴포넌트
+                  const virusOverlay = isVirusInfected ? (
+                    <div className="viewer-virus-overlay">
+                      <div className="viewer-virus-overlay__icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
+                          <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div className="viewer-virus-overlay__title">바이러스 감염 파일</div>
+                      <div className="viewer-virus-overlay__description">
+                        <div>이 파일에서 바이러스가 감지되어</div>
+                        <div>다운로드할 수 없습니다.</div>
+                      </div>
+                      <div className="viewer-virus-overlay__threat">
+                        {virusScan?.threatName || '알 수 없는 위협'}
+                      </div>
+                      <div className="viewer-virus-overlay__filename">{fileName}</div>
+                    </div>
+                  ) : null
+
+                  // 뷰어 렌더링 함수
+                  const renderViewer = () => {
+                    if (!previewUrl) {
+                      return (
+                        <DownloadOnlyViewer
+                          fileName={fileName}
+                          onDownload={download}
+                          downloadDisabled={isVirusInfected}
+                          downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
+                        />
+                      )
+                    }
+
+                    const normalizedUrl = previewUrl.toLowerCase()
+                    const isPdf = normalizedUrl.endsWith('.pdf')
+                    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
+
+                    if (isPdf) {
+                      return (
+                        <PDFViewer
+                          file={previewUrl}
+                          onDownload={download}
+                          downloadDisabled={isVirusInfected}
+                          downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
+                        />
+                      )
+                    }
+
+                    if (isImage) {
+                      return (
+                        <ImageViewer
+                          file={previewUrl}
+                          onDownload={download}
+                          downloadDisabled={isVirusInfected}
+                          downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
+                        />
+                      )
+                    }
 
                     return (
                       <DownloadOnlyViewer
                         fileName={fileName}
                         onDownload={download}
+                        downloadDisabled={isVirusInfected}
+                        downloadDisabledReason={isVirusInfected ? "바이러스 감염 파일로 다운로드할 수 없습니다" : undefined}
                       />
                     )
                   }
 
-                  const normalizedUrl = previewUrl.toLowerCase()
-                  const isPdf = normalizedUrl.endsWith('.pdf')
-                  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
-
-                  if (isPdf) {
+                  // 바이러스 감염 시 오버레이와 함께 렌더링
+                  if (isVirusInfected) {
                     return (
-                      <PDFViewer
-                        file={previewUrl}
-                        onDownload={download}
-                      />
+                      <div className="viewer-virus-overlay-container">
+                        {renderViewer()}
+                        {virusOverlay}
+                      </div>
                     )
                   }
 
-                  if (isImage) {
-                    return (
-                      <ImageViewer
-                        file={previewUrl}
-                        onDownload={download}
-                      />
-                    )
-                  }
-
-                  const fileName =
-                    selectedDocument.upload?.originalName ||
-                    selectedDocument.payload?.originalName ||
-                    '파일'
-                  return (
-                    <DownloadOnlyViewer
-                      fileName={fileName}
-                      onDownload={download}
-                    />
-                  )
+                  return renderViewer()
                 })()}
               </BaseViewer>
             </Suspense>

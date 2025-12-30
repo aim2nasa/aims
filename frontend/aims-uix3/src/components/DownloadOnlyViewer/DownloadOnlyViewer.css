@@ -87,6 +87,17 @@ html[data-theme="dark"] .file-name-badge--clickable:hover {
   box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
 }
 
+/* 비활성화된 배지 스타일 (바이러스 감염 등) */
+.file-name-badge--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.file-name-badge--disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .file-name-text {
   display: block;
   color: var(--color-ios-text-primary-light);

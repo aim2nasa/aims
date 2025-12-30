@@ -18,7 +18,11 @@ interface DownloadOnlyViewerProps {
   /** 파일명 */
   fileName: string
   /** 다운로드 핸들러 */
-  onDownload: () => void
+  onDownload?: () => void
+  /** 다운로드 비활성화 여부 (바이러스 감염 등) */
+  downloadDisabled?: boolean
+  /** 다운로드 비활성화 사유 - 툴팁에 표시 */
+  downloadDisabledReason?: string
 }
 
 /**
@@ -35,7 +39,9 @@ interface DownloadOnlyViewerProps {
  */
 export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
   fileName,
-  onDownload
+  onDownload,
+  downloadDisabled,
+  downloadDisabledReason
 }) => {
   return (
     <div className="viewer-container"> {/* 공통 CSS */}
@@ -52,12 +58,13 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
             미리보기를 지원하지 않는 형식입니다
           </p>
 
-          {/* 파일명 - 클릭 가능 */}
-          <Tooltip content="클릭하여 다운로드">
+          {/* 파일명 - 클릭 가능 (비활성화 시 클릭 불가) */}
+          <Tooltip content={downloadDisabled ? (downloadDisabledReason || '다운로드 불가') : '클릭하여 다운로드'}>
             <button
-              className="file-name-badge file-name-badge--clickable"
-              onClick={onDownload}
-              aria-label={`${fileName} 다운로드`}
+              className={`file-name-badge ${downloadDisabled ? 'file-name-badge--disabled' : 'file-name-badge--clickable'}`}
+              onClick={downloadDisabled ? undefined : onDownload}
+              disabled={downloadDisabled}
+              aria-label={`${fileName} ${downloadDisabled ? '다운로드 불가' : '다운로드'}`}
             >
               <span className="file-name-text">
                 {fileName}
@@ -74,7 +81,9 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
         onZoomIn={() => {}}
         onZoomOut={() => {}}
         onReset={() => {}}
-        onDownload={onDownload}
+        {...(onDownload && !downloadDisabled ? { onDownload } : {})}
+        downloadDisabled={downloadDisabled}
+        downloadDisabledReason={downloadDisabledReason}
         // pageNav 없음, zoom 없음 (다운로드만)
       />
     </div>
