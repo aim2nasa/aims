@@ -359,6 +359,19 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       console.warn('[SSE] 파일 업로드 알림 실패:', sseErr.message);
     }
 
+    // 바이러스 스캔 요청
+    try {
+      const virusScanService = require('../lib/virusScanService');
+      await virusScanService.requestScan({
+        filePath: newFile.storagePath,
+        documentId: result.insertedId.toString(),
+        collectionName: 'personal_files',
+        userId
+      });
+    } catch (scanErr) {
+      console.warn('[VirusScan] 스캔 요청 실패 (무시):', scanErr.message);
+    }
+
     res.json({
       success: true,
       data: {
