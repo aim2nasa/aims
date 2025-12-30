@@ -101,6 +101,10 @@ export interface VirusScanLog {
   documentId: string;
   filePath: string;
   originalName?: string;  // 원본 파일명
+  ownerId?: string;       // 소유자(설계사) ID
+  ownerName?: string;     // 소유자(설계사) 이름
+  customerId?: string;    // 고객 ID
+  customerName?: string;  // 고객 이름
   userId: string;
   result: {
     status: 'clean' | 'infected' | 'error' | 'deleted';

@@ -213,8 +213,10 @@
 
 .filename,
 .file-path,
-.original-name {
-  max-width: 200px;
+.original-name,
+.owner-name,
+.customer-name {
+  max-width: 120px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

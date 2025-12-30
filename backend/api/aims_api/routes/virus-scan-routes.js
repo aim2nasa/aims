@@ -355,13 +355,13 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).countDocuments(query)
       ]);
 
-      // 각 로그의 documentId로 원본 파일명 조회
-      const logsWithOriginalName = await Promise.all(
+      // 각 로그의 documentId로 원본 파일명, 사용자, 고객 정보 조회
+      const { ObjectId } = require('mongodb');
+      const logsWithDetails = await Promise.all(
         logs.map(async (log) => {
           if (!log.documentId) return log;
 
           try {
-            const { ObjectId } = require('mongodb');
             const docId = new ObjectId(log.documentId);
 
             // files 또는 personal_files에서 조회
@@ -371,14 +371,44 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
 
             const file = await db.collection(collection).findOne(
               { _id: docId },
-              { projection: { 'upload.originalName': 1, filename: 1, name: 1 } }
+              { projection: { 'upload.originalName': 1, filename: 1, name: 1, ownerId: 1, userId: 1, customerId: 1 } }
             );
 
             if (file) {
-              return {
+              const result = {
                 ...log,
-                originalName: file.upload?.originalName || file.filename || file.name || null
+                originalName: file.upload?.originalName || file.filename || file.name || null,
+                ownerId: file.ownerId || file.userId || null,
+                customerId: file.customerId || null,
+                ownerName: null,
+                customerName: null
               };
+
+              // 사용자(설계사) 이름 조회
+              if (result.ownerId) {
+                try {
+                  const ownerId = typeof result.ownerId === 'string' ? new ObjectId(result.ownerId) : result.ownerId;
+                  const user = await db.collection(COLLECTIONS.USERS).findOne(
+                    { _id: ownerId },
+                    { projection: { name: 1 } }
+                  );
+                  if (user) result.ownerName = user.name;
+                } catch (e) { /* ignore */ }
+              }
+
+              // 고객 이름 조회
+              if (result.customerId) {
+                try {
+                  const customerId = typeof result.customerId === 'string' ? new ObjectId(result.customerId) : result.customerId;
+                  const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+                    { _id: customerId },
+                    { projection: { name: 1 } }
+                  );
+                  if (customer) result.customerName = customer.name;
+                } catch (e) { /* ignore */ }
+              }
+
+              return result;
             }
           } catch (err) {
             // ObjectId 변환 실패 등 무시
@@ -389,7 +419,7 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
 
       res.json({
         success: true,
-        data: logsWithOriginalName,
+        data: logsWithDetails,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),

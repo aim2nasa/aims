@@ -421,7 +421,8 @@ function ScanLogsTab({
           <tr>
             <th>시간</th>
             <th>유형</th>
-            <th>파일 경로</th>
+            <th>설계사</th>
+            <th>고객</th>
             <th>원본 이름</th>
             <th>결과</th>
             <th>위협명</th>
@@ -437,8 +438,11 @@ function ScanLogsTab({
                   {SCAN_TYPE_LABELS[log.scanType] || log.scanType}
                 </span>
               </td>
-              <td className="file-path" title={log.filePath}>
-                {log.filePath?.split('/').pop() || '-'}
+              <td className="owner-name" title={log.ownerName || ''}>
+                {log.ownerName || '-'}
+              </td>
+              <td className="customer-name" title={log.customerName || ''}>
+                {log.customerName || '-'}
               </td>
               <td className="original-name" title={log.originalName || ''}>
                 {log.originalName || '-'}
