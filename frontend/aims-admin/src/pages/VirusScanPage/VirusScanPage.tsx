@@ -109,10 +109,14 @@ export function VirusScanPage() {
   // 전체 재스캔 (이미 스캔한 파일 포함)
   const fullScanMutation = useMutation({
     mutationFn: virusScanApi.startFullScan,
-    onSuccess: () => {
-      setIsScanStarted(true);
+    onSuccess: (data) => {
+      if (data.file_count > 0) {
+        setIsScanStarted(true);
+        alert(`${data.file_count}개 파일 재스캔이 시작되었습니다.`);
+      } else {
+        alert('스캔할 파일이 없습니다.');
+      }
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
-      alert('전체 재스캔이 시작되었습니다.');
     },
     onError: (error: Error) => {
       alert(`전체 재스캔 시작 실패: ${error.message}`);

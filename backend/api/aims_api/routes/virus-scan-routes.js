@@ -665,25 +665,105 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
 
   /**
    * POST /api/admin/virus-scan/scan-all
-   * 전체 파일 스캔 시작 요청
+   * 전체 파일 재스캔 시작 (이미 스캔된 파일 포함)
+   * DB에서 모든 파일을 조회하여 yuri에 배치 스캔 요청
    */
   router.post('/admin/virus-scan/scan-all', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const response = await axios.post(`${VIRUS_SCAN_SERVICE_URL}/scan/full`, {}, {
+      // 모든 파일 조회 (files 컬렉션)
+      const allFiles = await db.collection(COLLECTIONS.FILES)
+        .find({})
+        .project({ _id: 1, 'upload.destPath': 1, 'upload.originalName': 1, storagePath: 1, ownerId: 1, userId: 1, customerId: 1 })
+        .toArray();
+
+      // 모든 파일 조회 (personal_files 컬렉션)
+      const allPersonalFiles = await db.collection(COLLECTIONS.PERSONAL_FILES)
+        .find({ type: 'file' })
+        .project({ _id: 1, storagePath: 1, name: 1, ownerId: 1, userId: 1 })
+        .toArray();
+
+      const filesToScan = [];
+
+      // files 컬렉션 파일들
+      for (const file of allFiles) {
+        const filePath = file.upload?.destPath || file.storagePath;
+        if (filePath) {
+          filesToScan.push({
+            file_path: filePath,
+            document_id: file._id.toString(),
+            collection_name: 'files',
+            user_id: (file.ownerId || file.userId)?.toString() || null
+          });
+        }
+      }
+
+      // personal_files 컬렉션 파일들
+      for (const file of allPersonalFiles) {
+        if (file.storagePath) {
+          filesToScan.push({
+            file_path: file.storagePath,
+            document_id: file._id.toString(),
+            collection_name: 'personal_files',
+            user_id: (file.ownerId || file.userId)?.toString() || null
+          });
+        }
+      }
+
+      if (filesToScan.length === 0) {
+        return res.json({
+          success: true,
+          message: '스캔할 파일이 없습니다.',
+          data: { file_count: 0 }
+        });
+      }
+
+      // DB에서 상태를 scanning으로 업데이트
+      const fileIds = filesToScan.filter(f => f.collection_name === 'files').map(f => new ObjectId(f.document_id));
+      const personalFileIds = filesToScan.filter(f => f.collection_name === 'personal_files').map(f => new ObjectId(f.document_id));
+
+      if (fileIds.length > 0) {
+        await db.collection(COLLECTIONS.FILES).updateMany(
+          { _id: { $in: fileIds } },
+          { $set: { 'virusScan.status': 'scanning', 'virusScan.scannedAt': new Date() } }
+        );
+      }
+      if (personalFileIds.length > 0) {
+        await db.collection(COLLECTIONS.PERSONAL_FILES).updateMany(
+          { _id: { $in: personalFileIds } },
+          { $set: { 'virusScan.status': 'scanning', 'virusScan.scannedAt': new Date() } }
+        );
+      }
+
+      console.log(`[VirusScan] 전체 재스캔 시작: ${filesToScan.length}개 파일`);
+
+      // yuri에 배치 스캔 요청 (비동기)
+      axios.post(`${VIRUS_SCAN_SERVICE_URL}/scan/batch`, {
+        files: filesToScan
+      }, {
         headers: { 'X-Scan-Secret': VIRUS_SCAN_SECRET },
-        timeout: 10000
+        timeout: 30000
+      }).catch(err => {
+        console.error('[VirusScan] 배치 스캔 요청 실패:', err.message);
+      });
+
+      // SSE로 스캔 시작 브로드캐스트
+      broadcastVirusScanEvent('virus-scan-progress', {
+        is_running: true,
+        totalFiles: filesToScan.length,
+        scannedFiles: 0,
+        infectedFiles: 0
       });
 
       res.json({
         success: true,
-        message: '전체 스캔이 시작되었습니다.',
-        data: response.data
+        message: `${filesToScan.length}개 파일 재스캔이 시작되었습니다.`,
+        data: { file_count: filesToScan.length }
       });
     } catch (error) {
-      console.error('[VirusScan] 전체 스캔 시작 실패:', error);
+      console.error('[VirusScan] 전체 재스캔 시작 실패:', error);
       res.status(500).json({
         success: false,
-        error: '전체 스캔 시작에 실패했습니다.',
+        error: '전체 재스캔 시작에 실패했습니다.',
         details: error.message
       });
     }

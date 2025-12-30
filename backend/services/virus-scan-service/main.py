@@ -208,6 +208,51 @@ async def get_version():
     return {"version": version}
 
 
+@app.get("/mount/list")
+async def list_mount_files(path: str = "", limit: int = 100):
+    """마운트된 파일 목록 조회 (디버그용)"""
+    try:
+        mount_path = Path(settings.mount_path)
+        if path:
+            target_path = mount_path / path
+        else:
+            target_path = mount_path
+
+        if not target_path.exists():
+            return {"error": f"Path not found: {target_path}", "exists": False}
+
+        files = []
+        dirs = []
+
+        if target_path.is_file():
+            return {
+                "path": str(target_path),
+                "is_file": True,
+                "size": target_path.stat().st_size
+            }
+
+        for item in target_path.iterdir():
+            if len(files) + len(dirs) >= limit:
+                break
+            if item.is_file():
+                files.append({"name": item.name, "size": item.stat().st_size})
+            else:
+                dirs.append({"name": item.name, "type": "dir"})
+
+        # 전체 파일 수 (rglob으로)
+        total_files = sum(1 for _ in mount_path.rglob("*") if _.is_file())
+
+        return {
+            "path": str(target_path),
+            "exists": True,
+            "total_files_recursive": total_files,
+            "directories": dirs,
+            "files": files
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.post("/scan", response_model=ScanResponse)
 async def scan_file(
     request: ScanRequest,
