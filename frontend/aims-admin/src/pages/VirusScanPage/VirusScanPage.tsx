@@ -92,9 +92,10 @@ export function VirusScanPage() {
   // 전체 스캔 시작
   const startScanMutation = useMutation({
     mutationFn: virusScanApi.startFullScan,
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsScanStarted(true);
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert(`전체 스캔이 시작되었습니다.\n${data.message || ''}`);
     },
     onError: (error: Error) => {
       alert(`전체 스캔 시작 실패: ${error.message}`);
@@ -107,6 +108,9 @@ export function VirusScanPage() {
     onSuccess: (data) => {
       if (data.file_count > 0) {
         setIsScanStarted(true);
+        alert(`미스캔 파일 ${data.file_count}개 스캔이 시작되었습니다.`);
+      } else {
+        alert('스캔할 미스캔 파일이 없습니다.');
       }
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
     },
