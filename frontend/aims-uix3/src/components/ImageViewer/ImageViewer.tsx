@@ -21,6 +21,10 @@ interface ImageViewerProps {
   alt?: string
   /** 다운로드 핸들러 */
   onDownload?: () => void
+  /** 다운로드 비활성화 여부 (바이러스 감염 등) */
+  downloadDisabled?: boolean
+  /** 다운로드 비활성화 사유 - 툴팁에 표시 */
+  downloadDisabledReason?: string
   /** 초기 scale (fit to page) */
   initialScale?: number
 }
@@ -39,7 +43,14 @@ interface ImageViewerProps {
  * />
  * ```
  */
-export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지', onDownload, initialScale }) => {
+export const ImageViewer: React.FC<ImageViewerProps> = ({
+  file,
+  alt = '이미지',
+  onDownload,
+  downloadDisabled,
+  downloadDisabledReason,
+  initialScale
+}) => {
   // 🎯 공통 Hook 사용 (확대/축소/드래그)
   const controls = useViewerControls(initialScale)
 
@@ -110,6 +121,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지
         onRotateLeft={controls.rotateLeft}
         onRotateRight={controls.rotateRight}
         {...(onDownload ? { onDownload } : {})}
+        downloadDisabled={downloadDisabled}
+        downloadDisabledReason={downloadDisabledReason}
         // pageNav 없음 (이미지는 페이지 없음)
       />
     </div>

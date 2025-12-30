@@ -137,6 +137,31 @@ html[data-theme="dark"] .viewer-controls__button.viewer-controls__button--primar
   color: white;
 }
 
+/* === 🔴 DISABLED PRIMARY BUTTON: Virus/Error === */
+
+.viewer-controls__button--primary.viewer-controls__button--disabled {
+  background-color: var(--color-neutral-400);
+  color: var(--color-neutral-200);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.viewer-controls__button--primary.viewer-controls__button--disabled:hover {
+  background-color: var(--color-neutral-400);
+  color: var(--color-neutral-200);
+  transform: none;
+}
+
+html[data-theme="dark"] .viewer-controls__button--primary.viewer-controls__button--disabled {
+  background-color: var(--color-neutral-600);
+  color: var(--color-neutral-400);
+}
+
+html[data-theme="dark"] .viewer-controls__button--primary.viewer-controls__button--disabled:hover {
+  background-color: var(--color-neutral-600);
+  color: var(--color-neutral-400);
+}
+
 /* === 🍎 INFO TEXT: Subtle Typography === */
 
 .viewer-controls__info {

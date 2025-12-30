@@ -41,6 +41,14 @@ export interface SmartSearchDocumentResponse {
   ocr?: unknown
   document_type?: string
   document_type_auto?: boolean
+  // 🔴 바이러스 스캔 정보
+  virusScan?: {
+    status?: 'pending' | 'clean' | 'infected' | 'deleted' | 'error'
+    threatName?: string
+    scannedAt?: string
+    deletedAt?: string
+    deletedReason?: string
+  }
 }
 
 // Internal Document Types
@@ -167,7 +175,12 @@ export const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocume
   const document_type = typeof record['document_type'] === 'string' ? record['document_type'] : undefined
   const document_type_auto = typeof record['document_type_auto'] === 'boolean' ? record['document_type_auto'] : undefined
 
-  return { upload, payload, meta, ocr, document_type, document_type_auto }
+  // 🔴 바이러스 스캔 정보 추출
+  const virusScan = isPlainObject(record['virusScan'])
+    ? (record['virusScan'] as SmartSearchDocumentResponse['virusScan'])
+    : undefined
+
+  return { upload, payload, meta, ocr, document_type, document_type_auto, virusScan }
 }
 
 /** API computed 응답 타입 */
@@ -289,6 +302,11 @@ export const buildSelectedDocument = (
   }
   if (raw.document_type_auto !== undefined) {
     selected.document_type_auto = raw.document_type_auto
+  }
+
+  // 🔴 바이러스 스캔 정보 복사
+  if ((raw as any).virusScan) {
+    (selected as any).virusScan = (raw as any).virusScan
   }
 
   return selected

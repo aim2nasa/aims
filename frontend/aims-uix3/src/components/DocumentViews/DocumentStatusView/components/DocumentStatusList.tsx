@@ -1071,6 +1071,31 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </Tooltip>
                 )
               })()}
+              {/* 🔴 바이러스 감염 배지 */}
+              {(() => {
+                const virusScan = (document as any).virusScan
+                if (!virusScan) return null
+
+                // 감염 또는 삭제된 파일만 배지 표시
+                if (virusScan.status === 'infected' || virusScan.status === 'deleted') {
+                  const tooltipMsg = virusScan.status === 'deleted'
+                    ? `바이러스 감염으로 삭제됨: ${virusScan.threatName || '알 수 없는 위협'}`
+                    : `바이러스 감염: ${virusScan.threatName || '알 수 없는 위협'}`
+
+                  return (
+                    <Tooltip content={tooltipMsg}>
+                      <span className="virus-badge">
+                        <svg className="virus-badge-icon" viewBox="0 0 12 12" width="10" height="10">
+                          <circle cx="6" cy="6" r="5" fill="#ff3b30"/>
+                          <path d="M6 3v4M6 8.5v.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                        <span className="virus-badge-text">바이러스</span>
+                      </span>
+                    </Tooltip>
+                  )
+                }
+                return null
+              })()}
             </div>
 
             {/* 🍎 문서 유형 드롭다운 (annual_report는 읽기 전용) */}

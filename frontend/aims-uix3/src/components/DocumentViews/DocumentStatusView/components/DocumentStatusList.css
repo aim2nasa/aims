@@ -1712,3 +1712,42 @@ html[data-theme="dark"] .doctype-label--readonly {
   background-color: rgba(10, 132, 255, 0.15);
   color: var(--color-ios-blue-dark);
 }
+
+/* === 바이러스 감염 배지 === */
+.virus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  background: #ff3b30;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: virus-badge-pulse 1.5s ease-in-out infinite;
+}
+
+html[data-theme="dark"] .virus-badge {
+  background: #ff453a;
+}
+
+.virus-badge-icon {
+  flex-shrink: 0;
+}
+
+.virus-badge-text {
+  white-space: nowrap;
+}
+
+@keyframes virus-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.status-item:hover .virus-badge {
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+}

@@ -69,5 +69,14 @@ export const convertToPreviewDocumentInfo = (doc: SelectedDocument): PreviewDocu
     result.conversionStatus = doc.conversionStatus
   }
 
+  // 바이러스 스캔 정보
+  const virusScan = (doc as any).virusScan
+  if (virusScan) {
+    result.virusScan = {
+      status: virusScan.status,
+      threatName: virusScan.threatName
+    }
+  }
+
   return result
 }

@@ -16,6 +16,7 @@ import SFSymbol, {
 } from '../../../../../components/SFSymbol'
 import { PDFViewer } from '../../../../../components/PDFViewer/PDFViewer'
 import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
+import { ViewerControls } from '../../../../../components/ViewerControls'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { formatDateTime } from '@/shared/lib/timeUtils'
@@ -107,6 +108,45 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
             weight={SFSymbolWeight.MEDIUM}
           />
           <span>문서 정보를 찾을 수 없습니다.</span>
+        </div>
+      )
+    }
+
+    // 🔴 바이러스 감염 파일 경고
+    const virusScan = previewDocument.virusScan
+    const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
+    if (isVirusInfected) {
+      return (
+        <div className="viewer-container">
+          <div className="customer-document-preview__virus-warning">
+            <div className="virus-warning__icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
+                <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div className="virus-warning__title">바이러스 감염 파일</div>
+            <div className="virus-warning__description">
+              <div>이 파일에서 바이러스가 감지되어</div>
+              <div>다운로드할 수 없습니다.</div>
+            </div>
+            <div className="virus-warning__threat">
+              {virusScan?.threatName || '알 수 없는 위협'}
+            </div>
+            <div className="virus-warning__filename">
+              {previewDocument.originalName}
+            </div>
+          </div>
+          {/* 🔴 비활성화된 다운로드 버튼 */}
+          <ViewerControls
+            scale={1}
+            isModified={false}
+            onZoomIn={() => {}}
+            onZoomOut={() => {}}
+            onReset={() => {}}
+            downloadDisabled={true}
+            downloadDisabledReason="바이러스 감염 파일로 삭제되어 다운로드할 수 없습니다"
+          />
         </div>
       )
     }

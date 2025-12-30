@@ -199,6 +199,15 @@ export interface Document {
   isConvertible?: boolean
   canPreview?: boolean
   previewFilePath?: string
+
+  // 바이러스 스캔 정보
+  virusScan?: {
+    status?: 'pending' | 'clean' | 'infected' | 'deleted' | 'error'
+    threatName?: string
+    scannedAt?: string
+    deletedAt?: string
+    deletedReason?: string
+  }
 }
 
 /**

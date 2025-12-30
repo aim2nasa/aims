@@ -31,6 +31,10 @@ export interface ViewerControlsProps {
   onReset: () => void
   /** 다운로드 핸들러 (선택적) */
   onDownload?: () => void
+  /** 다운로드 비활성화 여부 (선택적) */
+  downloadDisabled?: boolean
+  /** 다운로드 비활성화 사유 - 툴팁에 표시 (선택적) */
+  downloadDisabledReason?: string
   /** 페이지 네비게이션 (PDF 전용, 선택적) */
   pageNav?: PageNavigation
   /** 시계방향 회전 핸들러 (이미지 전용, 선택적) */
@@ -80,6 +84,8 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
   onZoomOut,
   onReset,
   onDownload,
+  downloadDisabled,
+  downloadDisabledReason,
   pageNav,
   onRotateRight,
   onRotateLeft
@@ -191,12 +197,13 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
       {/* Right - Download Button */}
       <div className="viewer-controls__right">
-        {onDownload && (
-          <Tooltip content="다운로드">
+        {(onDownload || downloadDisabled) && (
+          <Tooltip content={downloadDisabled ? (downloadDisabledReason || '다운로드 불가') : '다운로드'}>
             <button
-              className="viewer-controls__button viewer-controls__button--primary"
-              onClick={onDownload}
-              aria-label="다운로드"
+              className={`viewer-controls__button viewer-controls__button--primary ${downloadDisabled ? 'viewer-controls__button--disabled' : ''}`}
+              onClick={downloadDisabled ? undefined : onDownload}
+              disabled={downloadDisabled}
+              aria-label={downloadDisabled ? (downloadDisabledReason || '다운로드 불가') : '다운로드'}
             >
               <span aria-hidden="true">↓</span>
             </button>

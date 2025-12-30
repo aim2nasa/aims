@@ -43,6 +43,11 @@ export interface PreviewDocumentInfo {
   originalExtension?: string
   document: CustomerDocumentItem
   rawDetail: Record<string, unknown> | null
+  /** 바이러스 스캔 정보 */
+  virusScan?: {
+    status?: 'pending' | 'clean' | 'infected' | 'deleted' | 'error'
+    threatName?: string
+  }
 }
 
 interface PreviewState {

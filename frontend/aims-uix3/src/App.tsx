@@ -54,6 +54,7 @@ const FAQView = lazy(() => import('./components/HelpViews/FAQView/FAQView'))
 const HelpDashboardView = lazy(() => import('./components/HelpViews/HelpDashboardView/HelpDashboardView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 const ChatPanel = lazy(() => import('./components/ChatPanel'))
+import { ViewerControls } from './components/ViewerControls'
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
 import { SearchService } from './services/searchService'
@@ -1886,8 +1887,83 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 }}
               >
                 {(() => {
+                  // 🔴 바이러스 감염 여부 확인
+                  const virusScan = (selectedDocument as any).virusScan
+                  const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
+
+                  // 다운로드 함수 정의
                   const download = () => {
                     DownloadHelper.downloadDocument(adaptToDownloadHelper({ ...selectedDocument, fileUrl: selectedDocument.fileUrl ?? '' } as typeof selectedDocument & { fileUrl: string }))
+                  }
+
+                  // 🔴 바이러스 감염 경고 메시지 (파일 삭제되어 프리뷰 불가)
+                  if (isVirusInfected) {
+                    const fileName =
+                      selectedDocument.upload?.originalName ||
+                      selectedDocument.payload?.originalName ||
+                      '파일'
+                    const threatName = virusScan?.threatName || '알 수 없는 위협'
+
+                    return (
+                      <div className="viewer-container">
+                        <div style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 'var(--spacing-8)',
+                          textAlign: 'center',
+                          gap: 'var(--spacing-4)'
+                        }}>
+                          <div style={{
+                            width: '64px',
+                            height: '64px',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" fill="#ff3b30"/>
+                              <path d="M12 7v6M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+                            바이러스 감염 파일
+                          </div>
+                          <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                            <div>이 파일에서 바이러스가 감지되어</div>
+                            <div>다운로드할 수 없습니다.</div>
+                          </div>
+                          <div style={{
+                            marginTop: 'var(--spacing-2)',
+                            padding: 'var(--spacing-3) var(--spacing-4)',
+                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            color: '#ff3b30',
+                            fontWeight: '500'
+                          }}>
+                            {threatName}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 'var(--spacing-2)' }}>
+                            {fileName}
+                          </div>
+                        </div>
+                        {/* 🔴 비활성화된 다운로드 버튼 */}
+                        <ViewerControls
+                          scale={1}
+                          isModified={false}
+                          onZoomIn={() => {}}
+                          onZoomOut={() => {}}
+                          onReset={() => {}}
+                          downloadDisabled={true}
+                          downloadDisabledReason="바이러스 감염 파일로 삭제되어 다운로드할 수 없습니다"
+                        />
+                      </div>
+                    )
                   }
 
                   // 프리뷰용 URL: 변환된 PDF가 있으면 사용, 없으면 원본 사용
@@ -1993,12 +2069,22 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             setPreviewModalVisible(false);
             setPreviewModalDocument(null);
           }}
-          {...(previewModalDocument?.fileUrl ? {
-            onDownload: () => {
-              // 새 창에서 파일 열기 (다운로드)
-              window.open(previewModalDocument.fileUrl!, '_blank');
+          {...(() => {
+            // 🔴 바이러스 감염 파일은 다운로드 비활성화
+            const virusScan = previewModalDocument?.virusScan
+            const isVirusInfected = virusScan?.status === 'infected' || virusScan?.status === 'deleted'
+
+            if (isVirusInfected) {
+              return {} // 다운로드 버튼 없음
             }
-          } : {})}
+
+            return previewModalDocument?.fileUrl ? {
+              onDownload: () => {
+                // 새 창에서 파일 열기 (다운로드)
+                window.open(previewModalDocument.fileUrl!, '_blank');
+              }
+            } : {}
+          })()}
         />
       </Suspense>
 

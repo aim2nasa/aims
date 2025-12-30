@@ -30,6 +30,10 @@ interface PDFViewerProps {
   file: string
   /** 다운로드 핸들러 */
   onDownload?: () => void
+  /** 다운로드 비활성화 여부 (바이러스 감염 등) */
+  downloadDisabled?: boolean
+  /** 다운로드 비활성화 사유 - 툴팁에 표시 */
+  downloadDisabledReason?: string
   /** 초기 scale (fit to page) */
   initialScale?: number
 }
@@ -46,7 +50,13 @@ interface PDFViewerProps {
  * />
  * ```
  */
-export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialScale }) => {
+export const PDFViewer: React.FC<PDFViewerProps> = ({
+  file,
+  onDownload,
+  downloadDisabled,
+  downloadDisabledReason,
+  initialScale
+}) => {
   // 🎯 공통 Hook 사용 (확대/축소/드래그)
   const controls = useViewerControls(initialScale)
 
@@ -164,6 +174,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialS
         onZoomOut={controls.zoomOut}
         onReset={controls.resetView}
         {...(onDownload ? { onDownload } : {})}
+        downloadDisabled={downloadDisabled}
+        downloadDisabledReason={downloadDisabledReason}
         pageNav={{
           currentPage: pageNumber,
           totalPages: numPages,
