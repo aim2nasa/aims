@@ -375,6 +375,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🔴 중복 처리 일괄 적용 설정 초기화
     duplicateApplyAllRef.current = null
 
+    // 🚀 [UX 개선] 파일 선택 즉시 목록 표시 (analyzing 상태)
+    const initialUploadFiles: UploadFile[] = files.map(file => ({
+      id: generateFileId(),
+      file,
+      fileSize: file.size,
+      status: 'analyzing' as const,
+      progress: 0,
+      error: undefined,
+      completedAt: undefined,
+      relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
+    }))
+
+    // 즉시 UI 업데이트 - 파일 목록 표시
+    setUploadState(prev => ({
+      ...prev,
+      files: initialUploadFiles
+    }))
+    setIsLogVisible(true)
+    addLog('info', `${files.length}개 파일 분석 시작...`)
+
     // 🍎 스토리지 용량 체크 (공통 모듈 사용)
     try {
       const storage = await getMyStorageInfo()
@@ -387,6 +407,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 용량 초과 시 다이얼로그 표시
       if (!storageCheck.canUpload) {
         console.log('[DocumentRegistration] Storage exceeded, showing dialog')
+
+        // 파일 목록 초기화 (다이얼로그 표시 전)
+        setUploadState(prev => ({ ...prev, files: [] }))
+        setIsLogVisible(false)
 
         // 다이얼로그 상태 설정
         setPendingFilesForUpload(files)
@@ -420,10 +444,27 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     }
 
+    // 🔄 파일 ID 매핑 (초기 파일 → 분석 후 상태 업데이트용)
+    const fileIdMap = new Map<File, string>()
+    initialUploadFiles.forEach(uf => fileIdMap.set(uf.file, uf.id))
+
     const newUploadFiles: UploadFile[] = []
+
+    // 🔄 개별 파일 상태 업데이트 헬퍼
+    const updateFileStatus = (file: File, status: UploadStatus, error?: string) => {
+      const fileId = fileIdMap.get(file)
+      if (fileId) {
+        setUploadState(prev => ({
+          ...prev,
+          files: prev.files.map(f => f.id === fileId ? { ...f, status, error } : f)
+        }))
+      }
+    }
 
     // 🔍 PDF 파일 중 Annual Report 체크 (파일 선택 직후, 업로드 전!)
     for (const file of files) {
+      const fileId = fileIdMap.get(file) || generateFileId()
+
       // 파일 검증 (공통 모듈 사용: 확장자, 크기, MIME 검증)
       const validation = validateFile(file)
 
@@ -441,6 +482,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 🎯 사전 선택된 고객 확인 (고객 검색 불필요)
               if (!customerFileCustomer) {
                 addLog('warning', `AR 문서 감지됨: ${file.name}`, '고객을 먼저 선택해주세요');
+                updateFileStatus(file, 'error', '고객을 먼저 선택해주세요')
                 continue;
               }
 
@@ -450,18 +492,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 중복 문서 체크
               const processResult = await processAnnualReportFile(file, customerId);
               if (processResult.isDuplicateDoc) {
-                // 🍎 중복 감지 시 로그 영역 표시 (사용자에게 피드백 필수!)
-                setIsLogVisible(true)
                 addLog(
                   'warning',
                   `🔴 중복 파일 건너뜀: ${file.name}`,
                   `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
                 );
+                updateFileStatus(file, 'skipped', '중복 파일 - 이미 등록됨')
                 continue;
               }
 
-              // 🍎 AR 처리 시작 시 처리 로그 표시
-              setIsLogVisible(true)
               addLog('success', `[1/4] PDF 분석 완료: ${file.name}`)
               addLog(
                 'ar-detect',
@@ -478,9 +517,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // ✅ 사전 선택된 고객으로 AR 등록
               const result = await registerArDocument(file, customerId, checkResult.metadata?.issue_date, {
                 addLog,
-                generateFileId,
+                generateFileId: () => fileId, // 기존 ID 유지
                 addToUploadQueue: (uploadFile) => {
-                  newUploadFiles.push(uploadFile);
+                  // 기존 파일의 상태를 pending으로 업데이트
+                  updateFileStatus(file, 'pending')
+                  newUploadFiles.push({ ...uploadFile, id: fileId });
                 },
                 trackArFile: (fileName, custId) => {
                   arFilenamesRef.current.add(fileName);
@@ -520,9 +561,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
               const customerName = customerFileCustomer.personal_info?.name || '알 수 없음'
 
-              // 🍎 중복 감지 시 로그 영역 표시
-              setIsLogVisible(true)
-
               // 🔴 사용자에게 중복 처리 방법 선택 요청 (모달)
               const action = await promptDuplicateAction(
                 file,
@@ -538,15 +576,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
                 )
                 console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
-                // 건너뛴 파일도 결과에 표시
-                newUploadFiles.push({
-                  id: generateFileId(),
-                  file,
-                  fileSize: file.size,
-                  status: 'skipped',
-                  progress: 0,
-                  error: `중복 파일 - ${customerName} 고객에게 이미 등록됨`
-                })
+                // 🔄 개별 파일 상태 업데이트
+                updateFileStatus(file, 'skipped', `중복 파일 - ${customerName} 고객에게 이미 등록됨`)
                 continue
               }
             }
@@ -557,9 +588,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           }
         }
 
-        // 일반 문서 또는 Annual Report가 아닌 PDF
+        // 일반 문서 또는 Annual Report가 아닌 PDF - 상태를 pending으로 업데이트
+        updateFileStatus(file, 'pending')
         newUploadFiles.push({
-          id: generateFileId(),
+          id: fileId,
           file,
           fileSize: file.size,
           status: 'pending',
@@ -570,9 +602,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           customerId: customerFileCustomer?._id  // 🔗 고객 선택 시 자동 연결
         })
       } else {
-        // 검증 실패한 파일은 에러로 표시
+        // 검증 실패한 파일은 에러로 표시 - 🔄 개별 파일 상태 업데이트
+        updateFileStatus(file, 'error', validation.message || '파일 검증 실패')
         const errorFile: UploadFile = {
-          id: generateFileId(),
+          id: fileId,
           file,
           fileSize: file.size,
           status: 'error',
@@ -614,21 +647,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       )
 
       if (!confirmed) {
-        return // 사용자가 취소하면 아무것도 하지 않음
+        // 사용자가 취소하면 파일 목록 초기화
+        setUploadState(prev => ({ ...prev, files: [] }))
+        setIsLogVisible(false)
+        return
       }
     }
 
-    // 상태 업데이트 - 이전 업로드 기록 초기화 후 새 파일만
-    setUploadState(prev => ({
-      ...prev,
-      files: newUploadFiles
-    }))
-
-    // 유효한 파일들만 업로드 큐에 추가
+    // 🔄 유효한 파일들만 업로드 큐에 추가 (상태는 이미 개별적으로 업데이트됨)
     const validFiles = newUploadFiles.filter(f => f.status === 'pending')
     if (validFiles.length > 0) {
-      // 🍎 업로드 시작 시 처리 로그 표시
-      setIsLogVisible(true)
       uploadService.queueFiles(validFiles)
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
 

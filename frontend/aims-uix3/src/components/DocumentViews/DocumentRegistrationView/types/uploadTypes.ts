@@ -24,7 +24,7 @@ export interface UploadContext {
 }
 
 // 파일 업로드 상태
-export type UploadStatus = 'pending' | 'uploading' | 'completed' | 'warning' | 'error' | 'cancelled' | 'skipped'
+export type UploadStatus = 'analyzing' | 'pending' | 'uploading' | 'completed' | 'warning' | 'error' | 'cancelled' | 'skipped'
 
 // 업로드할 파일 정보
 export interface UploadFile {

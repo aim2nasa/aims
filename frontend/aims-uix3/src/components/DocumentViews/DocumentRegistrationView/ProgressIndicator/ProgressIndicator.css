@@ -324,10 +324,24 @@ html[data-theme="dark"] .progress-file--uploading:hover {
   animation: progress-file-spin 0.8s linear infinite;
 }
 
+/* 분석 중 스피너 (보라색) */
+.progress-file__spinner--analyzing {
+  border-top-color: #5856d6;
+}
+
 @keyframes progress-file-spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 분석 중 파일 하이라이트 */
+.progress-file--analyzing {
+  background: rgba(88, 86, 214, 0.05);
+}
+
+.progress-file--analyzing:hover {
+  background: rgba(88, 86, 214, 0.08);
 }
 
 /* 파일 정보 */
@@ -404,6 +418,11 @@ html[data-theme="dark"] .progress-file--uploading:hover {
 
 .progress-file__status-text--pending {
   color: var(--color-text-tertiary);
+}
+
+.progress-file__status-text--analyzing {
+  color: #5856d6;
+  font-weight: 500;
 }
 
 .progress-file__status-text--cancelled {

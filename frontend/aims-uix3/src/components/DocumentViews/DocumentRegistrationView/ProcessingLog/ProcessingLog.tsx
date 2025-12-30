@@ -63,6 +63,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
 
   // 파일 상태별 분류
+  const analyzingFiles = uploadState?.files.filter(f => f.status === 'analyzing') || []
   const pendingFiles = uploadState?.files.filter(f => f.status === 'pending') || []
   const uploadingFiles = uploadState?.files.filter(f => f.status === 'uploading') || []
   const completedFiles = uploadState?.files.filter(f => f.status === 'completed' || f.status === 'warning') || []
@@ -164,6 +165,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           return <span className="file-item__skipped-icon">⊘</span>
         case 'uploading':
           return <span className="file-item__spinner" />
+        case 'analyzing':
+          return <span className="file-item__spinner file-item__spinner--analyzing" />
         default:
           return <SFSymbol name="clock" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--pending" />
       }
@@ -221,8 +224,8 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         </div>
       )}
 
-      {/* 업로드 파일 요약 (파일이 있을 때 항상 표시) */}
-      {hasFiles && (
+      {/* 업로드 파일 요약 (업로드 중이 아닐 때만 표시 - ProgressIndicator와 중복 방지) */}
+      {hasFiles && !isUploading && (
         <div className="processing-log__file-summary">
           <button
             type="button"
@@ -237,10 +240,15 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                 weight={SFSymbolWeight.MEDIUM}
                 className="file-summary__icon"
               />
-              <span className="file-summary__title">{isUploading ? '업로드 진행' : '업로드 결과'}</span>
+              <span className="file-summary__title">{analyzingFiles.length > 0 ? '파일 분석' : isUploading ? '업로드 진행' : '업로드 결과'}</span>
               <span className="file-summary__count">
                 {completedFiles.length}/{uploadState?.files.length || 0}
               </span>
+              {analyzingFiles.length > 0 && (
+                <span className="file-summary__analyzing-count">
+                  {analyzingFiles.length} 분석중
+                </span>
+              )}
               {uploadingFiles.length > 0 && (
                 <span className="file-summary__uploading-count">
                   {uploadingFiles.length} 진행중
@@ -264,6 +272,19 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
 
           {isFileSummaryExpanded && (
             <div className="file-summary__content">
+              {/* 분석 중인 파일 (파일 선택 직후) */}
+              {analyzingFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <span className="file-summary__spinner file-summary__spinner--analyzing" />
+                    <span>분석 중 ({analyzingFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {analyzingFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
               {/* 업로드 중인 파일 */}
               {uploadingFiles.length > 0 && (
                 <div className="file-summary__section">

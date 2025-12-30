@@ -98,6 +98,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         return <span className="progress-file__error-icon">!</span>
       case 'uploading':
         return <span className="progress-file__spinner" />
+      case 'analyzing':
+        return <span className="progress-file__spinner progress-file__spinner--analyzing" />
       case 'cancelled':
         return (
           <SFSymbol
@@ -214,6 +216,12 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                   </button>
                 )}
               </>
+            )}
+            {/* 분석 중: 분석 텍스트 */}
+            {file.status === 'analyzing' && (
+              <span className="progress-file__status-text progress-file__status-text--analyzing">
+                분석중
+              </span>
             )}
             {/* 대기: 대기 텍스트 */}
             {file.status === 'pending' && (
