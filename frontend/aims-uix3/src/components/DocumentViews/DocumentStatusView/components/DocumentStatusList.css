@@ -1742,6 +1742,9 @@ html[data-theme="dark"] .virus-badge {
 }
 
 .virus-badge-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 
