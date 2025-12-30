@@ -70,7 +70,7 @@ class ClamAVScanner:
         """clamd 데몬 실행 여부 확인"""
         try:
             result = subprocess.run(
-                ["clamdscan", "--ping"],
+                ["clamdscan", "--version"],
                 capture_output=True,
                 text=True,
                 timeout=5
