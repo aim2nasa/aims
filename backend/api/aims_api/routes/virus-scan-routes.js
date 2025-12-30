@@ -1073,6 +1073,7 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
 
       // SSE 브로드캐스트
       broadcastVirusScanEvent('virus-scan-progress', {
+        is_running: false,
         isComplete: true,
         totalFiles,
         scannedFiles,

@@ -26,8 +26,10 @@ class FullScanState:
         self.total_files = 0
         self.scanned_files = 0
         self.infected_files = 0
+        self.error_files = 0  # 파일을 찾을 수 없는 경우
         self.started_at: Optional[datetime] = None
         self.current_file: Optional[str] = None
+        self.error: Optional[str] = None  # 에러 메시지
 
 
 full_scan_state = FullScanState()
@@ -92,9 +94,11 @@ class FullScanProgress(BaseModel):
     total_files: int
     scanned_files: int
     infected_files: int
+    error_files: int = 0  # 파일을 찾을 수 없는 경우
     progress_percent: float
     started_at: Optional[str]
     current_file: Optional[str]
+    error: Optional[str] = None  # 에러 메시지
 
 
 class FreshclamResponse(BaseModel):
@@ -341,10 +345,11 @@ async def scan_batch(
     if x_scan_secret != settings.scan_secret:
         raise HTTPException(status_code=401, detail="Invalid scan secret")
 
-    if len(request.files) > 100:
-        raise HTTPException(status_code=400, detail="Too many files (max 100)")
+    # 이미 스캔 중이면 거부
+    if full_scan_state.is_running:
+        raise HTTPException(status_code=409, detail="Scan already in progress")
 
-    # 백그라운드에서 배치 스캔
+    # 백그라운드에서 배치 스캔 (full_scan_state로 진행률 추적)
     background_tasks.add_task(batch_scan_task, request.files)
 
     return {
@@ -387,9 +392,11 @@ async def get_scan_progress():
         total_files=full_scan_state.total_files,
         scanned_files=full_scan_state.scanned_files,
         infected_files=full_scan_state.infected_files,
+        error_files=full_scan_state.error_files,
         progress_percent=round(progress_percent, 1),
         started_at=full_scan_state.started_at.isoformat() if full_scan_state.started_at else None,
-        current_file=full_scan_state.current_file
+        current_file=full_scan_state.current_file,
+        error=full_scan_state.error
     )
 
 
@@ -489,8 +496,8 @@ async def scan_and_report(
     document_id: str,
     collection_name: str,
     user_id: Optional[str]
-):
-    """파일 스캔 후 aims_api로 결과 전송"""
+) -> Optional[ScanResult]:
+    """파일 스캔 후 aims_api로 결과 전송. 스캔 결과를 반환."""
     result = await scanner.scan_file(full_path)
 
     # aims_api로 결과 전송 (requests 사용 - 더 안정적)
@@ -521,10 +528,40 @@ async def scan_and_report(
         print(f"Failed to report scan result: {type(e).__name__}: {e}")
         traceback.print_exc()
 
+    return result
+
 
 async def batch_scan_task(files: List[ScanRequest]):
-    """배치 스캔 태스크"""
+    """배치 스캔 태스크 (full_scan_state로 진행률 추적)"""
+    global full_scan_state
+
+    # 진행률 추적 시작
+    full_scan_state.is_running = True
+    full_scan_state.started_at = datetime.now()
+    full_scan_state.total_files = len(files)
+    full_scan_state.scanned_files = 0
+    full_scan_state.infected_files = 0
+    full_scan_state.error_files = 0
+    full_scan_state.error = None
+
+    print(f"Batch scan started: {len(files)} files")
+
+    # 마운트 확인 (첫 번째 파일로 테스트)
+    mount_path = Path(settings.mount_path)
+    if not mount_path.exists() or not any(mount_path.iterdir()):
+        error_msg = f"마운트 경로가 비어있거나 접근 불가: {settings.mount_path}"
+        print(f"ERROR: {error_msg}")
+        full_scan_state.error = error_msg
+        full_scan_state.is_running = False
+        return
+
     for file_req in files:
+        if not full_scan_state.is_running:
+            print("Batch scan stopped by user")
+            break
+
+        full_scan_state.current_file = file_req.file_path
+
         relative_path = file_req.file_path.lstrip("/")
         if relative_path.startswith("data/files/"):
             relative_path = relative_path[len("data/files/"):]
@@ -532,16 +569,51 @@ async def batch_scan_task(files: List[ScanRequest]):
         full_path = Path(settings.mount_path) / relative_path
 
         if full_path.exists():
-            await scan_and_report(
+            result = await scan_and_report(
                 str(full_path),
                 file_req.file_path,
                 file_req.document_id,
                 file_req.collection_name,
                 file_req.user_id
             )
+            full_scan_state.scanned_files += 1
+            if result and result.status == "infected":
+                full_scan_state.infected_files += 1
+        else:
+            print(f"File not found: {full_path}")
+            full_scan_state.error_files += 1
+            full_scan_state.scanned_files += 1  # 없는 파일도 처리됨으로 카운트
 
         # 부하 분산을 위한 짧은 딜레이
         await asyncio.sleep(0.1)
+
+    # 스캔 완료
+    full_scan_state.is_running = False
+    full_scan_state.current_file = None
+
+    # 에러 요약
+    if full_scan_state.error_files > 0:
+        full_scan_state.error = f"{full_scan_state.error_files}개 파일을 찾을 수 없음 (마운트 확인 필요)"
+
+    print(f"Batch scan completed: {full_scan_state.scanned_files}/{full_scan_state.total_files} files scanned, {full_scan_state.error_files} not found")
+
+    # aims_api에 완료 보고 (SSE 브로드캐스트 트리거)
+    try:
+        import requests
+        requests.post(
+            f"{settings.aims_api_url}/api/admin/virus-scan/scan/complete",
+            json={
+                "total_files": full_scan_state.total_files,
+                "scanned_files": full_scan_state.scanned_files,
+                "infected_files": full_scan_state.infected_files,
+                "error_files": full_scan_state.error_files
+            },
+            headers={"X-Scan-Secret": settings.scan_secret},
+            timeout=10
+        )
+        print("Scan completion reported to aims_api")
+    except Exception as e:
+        print(f"Failed to report scan completion: {e}")
 
 
 async def full_scan_task():

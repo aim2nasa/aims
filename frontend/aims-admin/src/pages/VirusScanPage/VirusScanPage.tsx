@@ -81,25 +81,46 @@ export function VirusScanPage() {
     enabled: isScanStarted,
   });
 
-  // 스캔 완료 감지
+  // 스캔 완료 감지 (API 폴링 또는 SSE에서)
   useEffect(() => {
-    if (isScanStarted && scanProgress && !scanProgress.is_running) {
-      setIsScanStarted(false);
-      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+    if (isScanStarted) {
+      // API 폴링 결과 확인
+      if (scanProgress && !scanProgress.is_running) {
+        setIsScanStarted(false);
+        queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+        return;
+      }
+      // SSE 결과 확인
+      if (sseProgress && (sseProgress.isComplete || sseProgress.is_running === false)) {
+        setIsScanStarted(false);
+        queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      }
     }
-  }, [scanProgress, isScanStarted, queryClient]);
+  }, [scanProgress, sseProgress, isScanStarted, queryClient]);
 
   // 미스캔 파일 스캔
   const scanUnscannedMutation = useMutation({
     mutationFn: virusScanApi.scanUnscanned,
     onSuccess: (data) => {
       if (data.file_count > 0) {
+        // progress 캐시를 is_running: true로 초기화 (useEffect가 즉시 false로 바꾸는 것 방지)
+        queryClient.setQueryData(['virus-scan', 'progress'], {
+          is_running: true,
+          total_files: data.file_count,
+          scanned_files: 0,
+          infected_files: 0,
+          progress_percent: 0,
+          started_at: new Date().toISOString(),
+          current_file: null,
+          error: null
+        });
         setIsScanStarted(true);
         alert(`${data.file_count}개 파일 스캔이 시작되었습니다.`);
       } else {
         alert('스캔할 파일이 없습니다.');
       }
-      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      queryClient.invalidateQueries({ queryKey: ['virus-scan', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['virus-scan', 'logs'] });
     },
     onError: (error: Error) => {
       alert(`스캔 시작 실패: ${error.message}`);
@@ -111,12 +132,24 @@ export function VirusScanPage() {
     mutationFn: virusScanApi.startFullScan,
     onSuccess: (data) => {
       if (data.file_count > 0) {
+        // progress 캐시를 is_running: true로 초기화 (useEffect가 즉시 false로 바꾸는 것 방지)
+        queryClient.setQueryData(['virus-scan', 'progress'], {
+          is_running: true,
+          total_files: data.file_count,
+          scanned_files: 0,
+          infected_files: 0,
+          progress_percent: 0,
+          started_at: new Date().toISOString(),
+          current_file: null,
+          error: null
+        });
         setIsScanStarted(true);
         alert(`${data.file_count}개 파일 재스캔이 시작되었습니다.`);
       } else {
         alert('스캔할 파일이 없습니다.');
       }
-      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      queryClient.invalidateQueries({ queryKey: ['virus-scan', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['virus-scan', 'logs'] });
     },
     onError: (error: Error) => {
       alert(`전체 재스캔 시작 실패: ${error.message}`);
@@ -174,7 +207,10 @@ export function VirusScanPage() {
     },
   });
 
-  const isScanning = isScanStarted || scanProgress?.is_running || sseProgress?.is_running || false;
+  // isScanStarted: 로컬 상태 (버튼 클릭 시 true, 완료 감지 시 false)
+  // scanProgress: API 폴링 결과
+  // sseProgress는 완료 감지용으로만 사용 (isScanning 판단에서 제외)
+  const isScanning = isScanStarted || (scanProgress?.is_running ?? false);
   const system = status?.system;
 
   return (
