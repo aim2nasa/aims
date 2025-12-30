@@ -443,50 +443,58 @@ function ScanLogsTab({
 function SettingsTab({ settings }: { settings: VirusScanSettings }) {
   return (
     <div className="settings-view compact">
-      <div className="settings-grid">
-        <div className="settings-section">
-          <h4>실시간 스캔</h4>
-          <div className="setting-row">
-            <span>상태</span>
-            <span className={settings.realtimeScan?.enabled ? 'enabled' : 'disabled'}>
-              {settings.realtimeScan?.enabled ? '활성화' : '비활성화'}
-            </span>
-          </div>
-        </div>
-        <div className="settings-section">
-          <h4>정기 스캔</h4>
-          <div className="setting-row">
-            <span>상태</span>
-            <span className={settings.scheduledScan?.enabled ? 'enabled' : 'disabled'}>
-              {settings.scheduledScan?.enabled ? '활성화' : '비활성화'}
-            </span>
-          </div>
-          <div className="setting-row">
-            <span>마지막 실행</span>
-            <span>{formatDateTime(settings.scheduledScan?.lastRunAt) || '-'}</span>
-          </div>
-        </div>
-        <div className="settings-section">
-          <h4>감염 처리</h4>
-          <div className="setting-row">
-            <span>방식</span>
-            <span>{INFECTED_ACTION_LABELS[settings.onInfectedAction] || settings.onInfectedAction}</span>
-          </div>
-        </div>
-        <div className="settings-section">
-          <h4>바이러스 DB</h4>
-          <div className="setting-row">
-            <span>자동 업데이트</span>
-            <span className={settings.freshclam?.autoUpdate ? 'enabled' : 'disabled'}>
-              {settings.freshclam?.autoUpdate ? '활성화' : '비활성화'}
-            </span>
-          </div>
-          <div className="setting-row">
-            <span>마지막 업데이트</span>
-            <span>{formatDateTime(settings.freshclam?.lastUpdateAt) || '-'}</span>
-          </div>
-        </div>
-      </div>
+      <table className="settings-table">
+        <tbody>
+          <tr>
+            <th>실시간 스캔</th>
+            <td>
+              <span className={`status-indicator ${settings.realtimeScan?.enabled ? 'on' : 'off'}`}>
+                {settings.realtimeScan?.enabled ? 'ON' : 'OFF'}
+              </span>
+              <span className="setting-desc">파일 업로드 시 자동 스캔</span>
+            </td>
+          </tr>
+          <tr>
+            <th>정기 스캔</th>
+            <td>
+              <span className={`status-indicator ${settings.scheduledScan?.enabled ? 'on' : 'off'}`}>
+                {settings.scheduledScan?.enabled ? 'ON' : 'OFF'}
+              </span>
+              <span className="setting-desc">매일 새벽 4시</span>
+              {settings.scheduledScan?.lastRunAt && (
+                <span className="setting-meta">마지막: {formatDateTime(settings.scheduledScan.lastRunAt)}</span>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <th>감염 파일 처리</th>
+            <td>
+              <span className="setting-value">{INFECTED_ACTION_LABELS[settings.onInfectedAction] || settings.onInfectedAction}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>바이러스 DB 자동 업데이트</th>
+            <td>
+              <span className={`status-indicator ${settings.freshclam?.autoUpdate ? 'on' : 'off'}`}>
+                {settings.freshclam?.autoUpdate ? 'ON' : 'OFF'}
+              </span>
+              <span className="setting-desc">매일 새벽 3시</span>
+              {settings.freshclam?.lastUpdateAt && (
+                <span className="setting-meta">마지막: {formatDateTime(settings.freshclam.lastUpdateAt)}</span>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <th>관리자 알림</th>
+            <td>
+              <span className={`status-indicator ${settings.notifyAdmin ? 'on' : 'off'}`}>
+                {settings.notifyAdmin ? 'ON' : 'OFF'}
+              </span>
+              <span className="setting-desc">감염 발견 시 알림</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
