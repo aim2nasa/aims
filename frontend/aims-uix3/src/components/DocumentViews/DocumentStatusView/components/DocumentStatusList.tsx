@@ -1085,11 +1085,19 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   return (
                     <Tooltip content={tooltipMsg}>
                       <span className="virus-badge">
-                        <svg className="virus-badge-icon" viewBox="0 0 12 12" width="10" height="10">
-                          <circle cx="6" cy="6" r="5" fill="#ff3b30"/>
-                          <path d="M6 3v4M6 8.5v.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                        <svg className="virus-badge-icon" viewBox="0 0 12 12" width="8" height="8">
+                          {/* Virus icon - center circle with spikes */}
+                          <circle cx="6" cy="6" r="2.5" fill="#fff"/>
+                          <circle cx="6" cy="1.2" r="1" fill="#fff"/>
+                          <circle cx="6" cy="10.8" r="1" fill="#fff"/>
+                          <circle cx="1.2" cy="6" r="1" fill="#fff"/>
+                          <circle cx="10.8" cy="6" r="1" fill="#fff"/>
+                          <circle cx="2.6" cy="2.6" r="0.8" fill="#fff"/>
+                          <circle cx="9.4" cy="2.6" r="0.8" fill="#fff"/>
+                          <circle cx="2.6" cy="9.4" r="0.8" fill="#fff"/>
+                          <circle cx="9.4" cy="9.4" r="0.8" fill="#fff"/>
                         </svg>
-                        <span className="virus-badge-text">바이러스</span>
+                        <span className="virus-badge-text">virus</span>
                       </span>
                     </Tooltip>
                   )
