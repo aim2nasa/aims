@@ -89,33 +89,33 @@ export function VirusScanPage() {
     }
   }, [scanProgress, isScanStarted, queryClient]);
 
-  // 전체 스캔 시작
-  const startScanMutation = useMutation({
-    mutationFn: virusScanApi.startFullScan,
-    onSuccess: (data) => {
-      setIsScanStarted(true);
-      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
-      alert(`전체 스캔이 시작되었습니다.\n${data.message || ''}`);
-    },
-    onError: (error: Error) => {
-      alert(`전체 스캔 시작 실패: ${error.message}`);
-    },
-  });
-
-  // 미스캔 파일만 스캔
+  // 미스캔 파일 스캔
   const scanUnscannedMutation = useMutation({
     mutationFn: virusScanApi.scanUnscanned,
     onSuccess: (data) => {
       if (data.file_count > 0) {
         setIsScanStarted(true);
-        alert(`미스캔 파일 ${data.file_count}개 스캔이 시작되었습니다.`);
+        alert(`${data.file_count}개 파일 스캔이 시작되었습니다.`);
       } else {
-        alert('스캔할 미스캔 파일이 없습니다.');
+        alert('스캔할 파일이 없습니다.');
       }
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
     },
     onError: (error: Error) => {
-      alert(`미스캔 스캔 시작 실패: ${error.message}`);
+      alert(`스캔 시작 실패: ${error.message}`);
+    },
+  });
+
+  // 전체 재스캔 (이미 스캔한 파일 포함)
+  const fullScanMutation = useMutation({
+    mutationFn: virusScanApi.startFullScan,
+    onSuccess: () => {
+      setIsScanStarted(true);
+      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert('전체 재스캔이 시작되었습니다.');
+    },
+    onError: (error: Error) => {
+      alert(`전체 재스캔 시작 실패: ${error.message}`);
     },
   });
 
@@ -204,25 +204,24 @@ export function VirusScanPage() {
         <div className="page-actions">
           {isScanning ? (
             <Button variant="destructive" onClick={() => stopScanMutation.mutate()} disabled={stopScanMutation.isPending}>
-              스캔 중지
+              {stopScanMutation.isPending ? '중지 중...' : '스캔 중지'}
+            </Button>
+          ) : (stats?.statusCounts?.notScanned || 0) > 0 ? (
+            <Button
+              variant="primary"
+              onClick={() => scanUnscannedMutation.mutate()}
+              disabled={scanUnscannedMutation.isPending || status?.status === 'offline'}
+            >
+              {scanUnscannedMutation.isPending ? '스캔 시작 중...' : `스캔 시작 (${stats?.statusCounts?.notScanned}개)`}
             </Button>
           ) : (
-            <>
-              <Button
-                variant="primary"
-                onClick={() => scanUnscannedMutation.mutate()}
-                disabled={scanUnscannedMutation.isPending || status?.status === 'offline' || (stats?.statusCounts?.notScanned || 0) === 0}
-              >
-                {scanUnscannedMutation.isPending ? '스캔 시작 중...' : `미스캔 스캔 (${stats?.statusCounts?.notScanned || 0})`}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => startScanMutation.mutate()}
-                disabled={startScanMutation.isPending || status?.status === 'offline'}
-              >
-                {startScanMutation.isPending ? '스캔 시작 중...' : '전체 스캔'}
-              </Button>
-            </>
+            <Button
+              variant="primary"
+              onClick={() => fullScanMutation.mutate()}
+              disabled={fullScanMutation.isPending || status?.status === 'offline'}
+            >
+              {fullScanMutation.isPending ? '재스캔 시작 중...' : '전체 재스캔'}
+            </Button>
           )}
           <Button variant="ghost" onClick={() => updateDbMutation.mutate()} disabled={updateDbMutation.isPending}>
             {updateDbMutation.isPending ? 'DB 업데이트 중...' : 'DB 업데이트'}
