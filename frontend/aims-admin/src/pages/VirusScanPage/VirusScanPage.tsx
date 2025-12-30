@@ -78,24 +78,36 @@ export function VirusScanPage() {
   // 전체 스캔 시작
   const startScanMutation = useMutation({
     mutationFn: virusScanApi.startFullScan,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert(data.message || '전체 스캔이 시작되었습니다.');
+    },
+    onError: (error: Error) => {
+      alert(`전체 스캔 시작 실패: ${error.message}`);
     },
   });
 
   // 미스캔 파일만 스캔
   const scanUnscannedMutation = useMutation({
     mutationFn: virusScanApi.scanUnscanned,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert(data.message || `${data.file_count}개 파일 스캔이 시작되었습니다.`);
+    },
+    onError: (error: Error) => {
+      alert(`미스캔 스캔 시작 실패: ${error.message}`);
     },
   });
 
   // 스캔 중지
   const stopScanMutation = useMutation({
     mutationFn: virusScanApi.stopFullScan,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert(data.message || '스캔이 중지되었습니다.');
+    },
+    onError: (error: Error) => {
+      alert(`스캔 중지 실패: ${error.message}`);
     },
   });
 
@@ -111,8 +123,19 @@ export function VirusScanPage() {
   // DB 업데이트
   const updateDbMutation = useMutation({
     mutationFn: virusScanApi.updateVirusDb,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      if (data.success) {
+        alert(`바이러스 DB 업데이트 완료!\n\n${data.output || data.message || ''}`);
+      } else {
+        // 실패 시 현재 DB 버전 정보와 함께 안내
+        const dbInfo = status?.clam_version ? `\n\n현재 DB: ${status.clam_version}` : '';
+        alert(`수동 업데이트 실패 (권한 문제)\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.${dbInfo}`);
+      }
+    },
+    onError: () => {
+      const dbInfo = status?.clam_version ? `\n\n현재 DB: ${status.clam_version}` : '';
+      alert(`수동 업데이트 실패\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.${dbInfo}`);
     },
   });
 
@@ -182,7 +205,7 @@ export function VirusScanPage() {
             onClick={() => updateDbMutation.mutate()}
             disabled={updateDbMutation.isPending}
           >
-            DB 업데이트
+            {updateDbMutation.isPending ? 'DB 업데이트 중...' : 'DB 업데이트'}
           </Button>
           <Button variant="ghost" onClick={() => setShowSettingsModal(true)}>
             설정

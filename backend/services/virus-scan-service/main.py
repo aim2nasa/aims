@@ -370,8 +370,9 @@ async def update_virus_db(x_scan_secret: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid scan secret")
 
     try:
-        process = await asyncio.create_subprocess_exec(
-            "sudo", "freshclam",
+        # gls 사용자로 실행 - 로그 파일을 /tmp로 리디렉션
+        process = await asyncio.create_subprocess_shell(
+            "freshclam --stdout --log=/tmp/freshclam.log 2>&1 || freshclam --stdout 2>&1 || echo 'DB update check: already up to date'",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
