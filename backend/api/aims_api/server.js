@@ -9501,6 +9501,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', documentTypesRoutes);
     console.log('[Server] documentTypesRoutes 등록 완료');
 
+    // 바이러스 스캔 라우트 설정 (관리자용)
+    const virusScanRoutes = require('./routes/virus-scan-routes')(db, authenticateJWT, requireRole);
+    app.use('/api', virusScanRoutes);
+    console.log('[Server] virusScanRoutes 등록 완료');
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
   })
