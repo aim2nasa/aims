@@ -13,10 +13,12 @@ import {
   SCAN_TYPE_LABELS,
   INFECTED_ACTION_LABELS,
   type VirusScanStats,
+  type VirusScanStatus,
   type VirusScanSettings,
   type InfectedFile,
   type VirusScanLog,
   type ScanProgress,
+  type SystemInfo,
 } from '@/features/virus-scan/api';
 import { useVirusScanSSE } from '@/shared/hooks/useVirusScanSSE';
 import { Button } from '@/shared/ui/Button';
@@ -172,6 +174,11 @@ export function VirusScanPage() {
           </Button>
         </div>
       </div>
+
+      {/* yuri 시스템 상태 패널 */}
+      {status && (
+        <SystemStatusPanel status={status} isConnected={isConnected} />
+      )}
 
       {/* 스캔 진행률 표시 */}
       {isScanning && scanProgress && (
@@ -521,6 +528,151 @@ function SettingsTab({ settings }: { settings: VirusScanSettings }) {
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// 시스템 상태 패널 (yuri RPi5)
+function SystemStatusPanel({
+  status,
+  isConnected,
+}: {
+  status: VirusScanStatus;
+  isConnected: boolean;
+}) {
+  const system = status.system;
+
+  // 바이트를 GB로 변환
+  const formatBytes = (bytes: number) => {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1);
+  };
+
+  // 초를 일/시간/분으로 변환
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (days > 0) return `${days}일 ${hours}시간`;
+    if (hours > 0) return `${hours}시간 ${mins}분`;
+    return `${mins}분`;
+  };
+
+  // CPU 온도 색상
+  const getTempColor = (temp?: number) => {
+    if (!temp) return 'normal';
+    if (temp >= 80) return 'critical';
+    if (temp >= 70) return 'warning';
+    return 'normal';
+  };
+
+  // 사용률 색상
+  const getUsageColor = (percent: number) => {
+    if (percent >= 90) return 'critical';
+    if (percent >= 70) return 'warning';
+    return 'normal';
+  };
+
+  return (
+    <div className="system-status-panel">
+      <div className="system-header">
+        <div className="system-title">
+          <span className="system-icon">🍓</span>
+          <span className="system-name">{system?.hostname || 'yuri'}</span>
+          <span className="system-platform">{system?.platform || 'Raspberry Pi 5'}</span>
+        </div>
+        <div className="system-connection">
+          <span className={`connection-dot ${status.status === 'ok' ? 'online' : 'offline'}`} />
+          <span className="connection-text">
+            {status.status === 'ok' ? '연결됨' : '오프라인'}
+          </span>
+          <span className={`sse-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
+            SSE {isConnected ? '●' : '○'}
+          </span>
+        </div>
+      </div>
+
+      {system && !system.error ? (
+        <div className="system-metrics">
+          {/* CPU */}
+          <div className="metric-card">
+            <div className="metric-header">
+              <span className="metric-label">CPU</span>
+              {system.cpu?.temperature && (
+                <span className={`metric-temp ${getTempColor(system.cpu.temperature)}`}>
+                  {system.cpu.temperature.toFixed(1)}°C
+                </span>
+              )}
+            </div>
+            <div className="metric-value">
+              <span className={`load-value ${getUsageColor(system.cpu?.load_1m * 100 / (system.cpu?.cores || 1))}`}>
+                {system.cpu?.load_1m?.toFixed(2) || '-'}
+              </span>
+              <span className="load-detail">
+                / {system.cpu?.load_5m?.toFixed(2)} / {system.cpu?.load_15m?.toFixed(2)}
+              </span>
+            </div>
+            <div className="metric-sub">{system.cpu?.cores || 0} cores</div>
+          </div>
+
+          {/* Memory */}
+          <div className="metric-card">
+            <div className="metric-header">
+              <span className="metric-label">메모리</span>
+              <span className={`metric-percent ${getUsageColor(system.memory?.percent || 0)}`}>
+                {system.memory?.percent?.toFixed(0)}%
+              </span>
+            </div>
+            <div className="metric-bar">
+              <div
+                className={`metric-bar-fill ${getUsageColor(system.memory?.percent || 0)}`}
+                style={{ width: `${system.memory?.percent || 0}%` }}
+              />
+            </div>
+            <div className="metric-sub">
+              {formatBytes(system.memory?.used || 0)} / {formatBytes(system.memory?.total || 0)} GB
+            </div>
+          </div>
+
+          {/* Disk */}
+          <div className="metric-card">
+            <div className="metric-header">
+              <span className="metric-label">디스크</span>
+              <span className={`metric-percent ${getUsageColor(system.disk?.percent || 0)}`}>
+                {system.disk?.percent?.toFixed(0)}%
+              </span>
+            </div>
+            <div className="metric-bar">
+              <div
+                className={`metric-bar-fill ${getUsageColor(system.disk?.percent || 0)}`}
+                style={{ width: `${system.disk?.percent || 0}%` }}
+              />
+            </div>
+            <div className="metric-sub">
+              {formatBytes(system.disk?.used || 0)} / {formatBytes(system.disk?.total || 0)} GB
+              <span className="mount-path">{system.disk?.mount_path}</span>
+            </div>
+          </div>
+
+          {/* Uptime & Mount */}
+          <div className="metric-card">
+            <div className="metric-header">
+              <span className="metric-label">업타임</span>
+            </div>
+            <div className="metric-value uptime">
+              {system.uptime ? formatUptime(system.uptime) : '-'}
+            </div>
+            <div className="metric-sub">
+              <span className={`mount-status ${status.mount_available ? 'mounted' : 'unmounted'}`}>
+                {status.mount_available ? '● tars 마운트됨' : '○ 마운트 없음'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="system-error">
+          {system?.error || '시스템 정보를 가져올 수 없습니다'}
+        </div>
+      )}
     </div>
   );
 }

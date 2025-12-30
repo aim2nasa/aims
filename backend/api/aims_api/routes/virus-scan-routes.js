@@ -62,15 +62,16 @@ function broadcastVirusScanEvent(event, data) {
 /**
  * 라우트 설정 함수
  */
-module.exports = function(db, authenticateJWT, requireRole) {
+module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQuery) {
 
   // ==================== SSE 스트림 ====================
 
   /**
    * GET /api/admin/virus-scan/stream
    * SSE 실시간 바이러스 스캔 알림
+   * 인증: ?token=xxx 쿼리 파라미터 (EventSource는 헤더 설정 불가)
    */
-  router.get('/admin/virus-scan/stream', authenticateJWT, requireRole('admin'), (req, res) => {
+  router.get('/admin/virus-scan/stream', authenticateJWTWithQuery, requireRole('admin'), (req, res) => {
     console.log('[VirusScan-SSE] 클라이언트 연결');
 
     // SSE 헤더 설정
@@ -105,19 +106,22 @@ module.exports = function(db, authenticateJWT, requireRole) {
 
   /**
    * GET /api/admin/virus-scan/status
-   * yuri 스캔 서비스 상태 확인
+   * yuri 스캔 서비스 상태 확인 (헬스 + 시스템 정보)
    */
   router.get('/admin/virus-scan/status', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      const response = await axios.get(`${VIRUS_SCAN_SERVICE_URL}/health`, {
-        timeout: 5000
-      });
+      // 헬스체크와 시스템 정보 동시 요청
+      const [healthRes, systemRes] = await Promise.all([
+        axios.get(`${VIRUS_SCAN_SERVICE_URL}/health`, { timeout: 5000 }),
+        axios.get(`${VIRUS_SCAN_SERVICE_URL}/system`, { timeout: 5000 }).catch(() => null)
+      ]);
 
       res.json({
         success: true,
         data: {
           serviceUrl: VIRUS_SCAN_SERVICE_URL,
-          ...response.data
+          ...healthRes.data,
+          system: systemRes?.data || null
         }
       });
     } catch (error) {
@@ -128,7 +132,8 @@ module.exports = function(db, authenticateJWT, requireRole) {
           serviceUrl: VIRUS_SCAN_SERVICE_URL,
           status: 'offline',
           clamd_running: false,
-          error: error.message
+          error: error.message,
+          system: null
         }
       });
     }

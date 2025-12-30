@@ -122,6 +122,83 @@ async def health_check():
     )
 
 
+@app.get("/system")
+async def get_system_status():
+    """시스템 상태 - CPU, 메모리, 디스크 사용량"""
+    import subprocess
+
+    system_info = {
+        "hostname": "yuri",
+        "platform": "Raspberry Pi 5",
+        "cpu": {},
+        "memory": {},
+        "disk": {},
+        "uptime": None
+    }
+
+    try:
+        # CPU 사용량 (/proc/stat에서 계산)
+        with open('/proc/loadavg', 'r') as f:
+            load = f.read().split()
+            system_info["cpu"] = {
+                "load_1m": float(load[0]),
+                "load_5m": float(load[1]),
+                "load_15m": float(load[2]),
+                "cores": os.cpu_count() or 4
+            }
+
+        # 메모리 사용량
+        with open('/proc/meminfo', 'r') as f:
+            meminfo = {}
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 2:
+                    meminfo[parts[0].rstrip(':')] = int(parts[1]) * 1024  # KB to bytes
+
+            total = meminfo.get('MemTotal', 0)
+            available = meminfo.get('MemAvailable', 0)
+            used = total - available
+
+            system_info["memory"] = {
+                "total": total,
+                "used": used,
+                "available": available,
+                "percent": round((used / total) * 100, 1) if total > 0 else 0
+            }
+
+        # 디스크 사용량 (마운트 경로)
+        stat = os.statvfs(settings.mount_path)
+        total_disk = stat.f_blocks * stat.f_frsize
+        free_disk = stat.f_bavail * stat.f_frsize
+        used_disk = total_disk - free_disk
+
+        system_info["disk"] = {
+            "total": total_disk,
+            "used": used_disk,
+            "free": free_disk,
+            "percent": round((used_disk / total_disk) * 100, 1) if total_disk > 0 else 0,
+            "mount_path": settings.mount_path
+        }
+
+        # 업타임
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.read().split()[0])
+            system_info["uptime"] = int(uptime_seconds)
+
+        # CPU 온도 (Raspberry Pi)
+        try:
+            with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+                temp = int(f.read().strip()) / 1000.0
+                system_info["cpu"]["temperature"] = round(temp, 1)
+        except:
+            pass
+
+    except Exception as e:
+        system_info["error"] = str(e)
+
+    return system_info
+
+
 @app.get("/version")
 async def get_version():
     """ClamAV 버전 정보"""

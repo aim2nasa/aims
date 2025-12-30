@@ -10,6 +10,33 @@ import { apiClient } from '@/shared/api/apiClient';
 // Types
 // ============================================================
 
+export interface SystemInfo {
+  hostname: string;
+  platform: string;
+  cpu: {
+    load_1m: number;
+    load_5m: number;
+    load_15m: number;
+    cores: number;
+    temperature?: number;
+  };
+  memory: {
+    total: number;
+    used: number;
+    available: number;
+    percent: number;
+  };
+  disk: {
+    total: number;
+    used: number;
+    free: number;
+    percent: number;
+    mount_path: string;
+  };
+  uptime: number;
+  error?: string;
+}
+
 export interface VirusScanStatus {
   serviceUrl: string;
   status: 'ok' | 'degraded' | 'offline';
@@ -18,6 +45,7 @@ export interface VirusScanStatus {
   mount_available?: boolean;
   mount_path?: string;
   error?: string;
+  system?: SystemInfo | null;
 }
 
 export interface VirusScanStats {
