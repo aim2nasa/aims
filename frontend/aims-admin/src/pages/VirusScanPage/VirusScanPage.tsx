@@ -126,16 +126,20 @@ export function VirusScanPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
       if (data.success) {
-        alert(`바이러스 DB 업데이트 완료!\n\n${data.output || data.message || ''}`);
+        const output = data.output || '';
+        // "up-to-date"가 포함되어 있으면 이미 최신 상태 (로그 생략)
+        if (output.toLowerCase().includes('up-to-date')) {
+          alert('바이러스 DB가 이미 최신 상태입니다.');
+        } else {
+          // 실제 업데이트가 있으면 상세 내용 표시
+          alert(`바이러스 DB 업데이트 완료!\n\n${output}`);
+        }
       } else {
-        // 실패 시 현재 DB 버전 정보와 함께 안내
-        const dbInfo = status?.clam_version ? `\n\n현재 DB: ${status.clam_version}` : '';
-        alert(`수동 업데이트 실패 (권한 문제)\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.${dbInfo}`);
+        alert('수동 업데이트 실패\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.');
       }
     },
     onError: () => {
-      const dbInfo = status?.clam_version ? `\n\n현재 DB: ${status.clam_version}` : '';
-      alert(`수동 업데이트 실패\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.${dbInfo}`);
+      alert('수동 업데이트 실패\n\n바이러스 DB는 매일 새벽 3시에 자동 업데이트됩니다.');
     },
   });
 
