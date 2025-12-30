@@ -235,6 +235,27 @@ export function VirusScanPage() {
   const isScanning = isScanStarted || (scanProgress?.is_running ?? false);
   const system = status?.system;
 
+  // 🔴 실시간 스캔 자동 트리거
+  // 실시간 스캔 ON + 미스캔 파일 있음 → 자동으로 "스캔 시작" 버튼 효과
+  const [autoScanTriggered, setAutoScanTriggered] = useState(false);
+  useEffect(() => {
+    const notScannedCount = stats?.statusCounts?.notScanned || 0;
+    const realtimeEnabled = settings?.realtimeScan?.enabled === true;
+    const serviceOnline = status?.status === 'ok';
+
+    // 조건: 실시간 ON + 미스캔 있음 + 서비스 정상 + 스캔 중 아님 + 아직 자동 트리거 안함
+    if (realtimeEnabled && notScannedCount > 0 && serviceOnline && !isScanning && !autoScanTriggered) {
+      console.log(`[VirusScan] 실시간 스캔 자동 트리거: ${notScannedCount}개 파일`);
+      setAutoScanTriggered(true);
+      scanUnscannedMutation.mutate();
+    }
+
+    // 미스캔이 0이 되면 다음 번을 위해 리셋
+    if (notScannedCount === 0 && autoScanTriggered) {
+      setAutoScanTriggered(false);
+    }
+  }, [stats, settings, status, isScanning, autoScanTriggered, scanUnscannedMutation]);
+
   return (
     <div className="virus-scan-page compact">
       {/* 헤더 */}

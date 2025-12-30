@@ -21,6 +21,7 @@ const errorLogger = require('./lib/errorLogger');
 const backendLogger = require('./lib/backendLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
+const virusScanService = require('./lib/virusScanService');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
@@ -7379,8 +7380,15 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       console.log(`[SSE-DocList] 문서 처리 완료 → 목록 변경 알림 전송 - userId: ${ownerIdStr}`);
     }
 
-    // 🔒 바이러스 스캔은 full_pipeline.py (임베딩 완료 시점)에서 트리거
-    // 모든 정상 파일은 임베딩을 거치므로, 단일 소스에서 스캔 요청
+    // 🔒 바이러스 스캔 트리거 (임베딩 완료 시점)
+    // 실시간 스캔 ON: 즉시 yuri에 스캔 요청
+    // 실시간 스캔 OFF: pending 상태로 누적 (수동 스캔 대기)
+    try {
+      await virusScanService.scanAfterUpload(db, documentIdStr, 'files');
+    } catch (scanError) {
+      console.error('[VirusScan] 스캔 트리거 오류:', scanError.message);
+      // 스캔 오류는 무시하고 계속 진행
+    }
 
     res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
   } catch (error) {

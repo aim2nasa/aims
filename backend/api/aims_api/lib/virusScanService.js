@@ -93,8 +93,24 @@ async function checkServiceStatus() {
 }
 
 /**
- * 문서 업로드 완료 시 스캔 요청
- * 업로드 처리 흐름에서 호출
+ * 실시간 스캔 설정 확인
+ * @param {Object} db - MongoDB 인스턴스
+ * @returns {Promise<boolean>} 실시간 스캔 활성화 여부
+ */
+async function isRealtimeScanEnabled(db) {
+  try {
+    const settings = await db.collection('virus_scan_settings').findOne({ _id: 'virus_scan_config' });
+    return settings?.realtimeScan?.enabled === true;
+  } catch (error) {
+    console.error('[VirusScan] 설정 조회 실패:', error.message);
+    return false; // 설정 조회 실패 시 기본값 false (수동 스캔)
+  }
+}
+
+/**
+ * 문서 업로드 완료 시 스캔 처리
+ * - 실시간 스캔 ON: 즉시 yuri에 스캔 요청
+ * - 실시간 스캔 OFF: pending 상태로 누적 (수동 스캔 대기)
  *
  * @param {Object} db - MongoDB 인스턴스
  * @param {string} documentId - 문서 ID
@@ -127,7 +143,10 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
       return;
     }
 
-    // 스캔 상태 초기화
+    // 실시간 스캔 설정 확인
+    const realtimeEnabled = await isRealtimeScanEnabled(db);
+
+    // 스캔 상태 초기화 (pending)
     await collection.updateOne(
       { _id: documentId },
       {
@@ -138,14 +157,20 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
       }
     );
 
-    // 스캔 요청
-    const userId = doc.ownerId || doc.userId;
-    await requestScan({
-      filePath,
-      documentId: documentId.toString(),
-      collectionName,
-      userId
-    });
+    if (realtimeEnabled) {
+      // 실시간 스캔 ON → 즉시 스캔 요청
+      console.log(`[VirusScan] 실시간 스캔: ${documentId}`);
+      const userId = doc.ownerId || doc.userId;
+      await requestScan({
+        filePath,
+        documentId: documentId.toString(),
+        collectionName,
+        userId
+      });
+    } else {
+      // 실시간 스캔 OFF → pending 상태로 누적 (수동 스캔 대기)
+      console.log(`[VirusScan] 스캔 대기 (수동): ${documentId}`);
+    }
 
   } catch (error) {
     console.error(`[VirusScan] scanAfterUpload 오류:`, error);
