@@ -31,7 +31,9 @@ const COLLECTIONS = {
   PERSONAL_FILES: 'personal_files',
   INQUIRIES: 'inquiries',
   VIRUS_SCAN_LOGS: 'virus_scan_logs',
-  VIRUS_SCAN_SETTINGS: 'virus_scan_settings'
+  VIRUS_SCAN_SETTINGS: 'virus_scan_settings',
+  USERS: 'users',
+  CUSTOMERS: 'customers'
 };
 
 // SSE 클라이언트 (바이러스 스캔 전용)
@@ -402,9 +404,9 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
                   const customerId = typeof result.customerId === 'string' ? new ObjectId(result.customerId) : result.customerId;
                   const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
                     { _id: customerId },
-                    { projection: { name: 1 } }
+                    { projection: { 'personal_info.name': 1 } }
                   );
-                  if (customer) result.customerName = customer.name;
+                  if (customer) result.customerName = customer.personal_info?.name;
                 } catch (e) { /* ignore */ }
               }
 
