@@ -148,8 +148,9 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
    */
   router.get('/admin/virus-scan/stats', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 각 컬렉션별 스캔 상태 집계
+      // 각 컬렉션별 스캔 상태 집계 (files는 완료된 파일만)
       const filesStats = await db.collection(COLLECTIONS.FILES).aggregate([
+        { $match: { overallStatus: 'completed' } },
         {
           $group: {
             _id: '$virusScan.status',
@@ -671,20 +672,27 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
    */
   router.post('/admin/virus-scan/scan-all', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 🔒 deleted/infected 상태 파일은 재스캔에서 제외 (이미 바이러스로 삭제된 파일)
-      const excludeDeletedQuery = {
+      // 🔒 스캔 대상 조건:
+      // 1. 문서 처리가 완료된 파일만 (overallStatus: 'completed')
+      // 2. deleted/infected 상태는 제외 (이미 바이러스로 삭제된 파일)
+      const scanTargetQuery = {
+        overallStatus: 'completed',
         'virusScan.status': { $nin: ['deleted', 'infected'] }
       };
 
-      // 모든 파일 조회 (files 컬렉션) - deleted/infected 제외
+      // 모든 파일 조회 (files 컬렉션) - 완료된 파일만, deleted/infected 제외
       const allFiles = await db.collection(COLLECTIONS.FILES)
-        .find(excludeDeletedQuery)
+        .find(scanTargetQuery)
         .project({ _id: 1, 'upload.destPath': 1, 'upload.originalName': 1, storagePath: 1, ownerId: 1, userId: 1, customerId: 1 })
         .toArray();
 
-      // 모든 파일 조회 (personal_files 컬렉션) - deleted/infected 제외
+      // 모든 파일 조회 (personal_files 컬렉션) - personal_files는 overallStatus 없으므로 deleted/infected만 제외
+      const personalFilesQuery = {
+        type: 'file',
+        'virusScan.status': { $nin: ['deleted', 'infected'] }
+      };
       const allPersonalFiles = await db.collection(COLLECTIONS.PERSONAL_FILES)
-        .find({ type: 'file', ...excludeDeletedQuery })
+        .find(personalFilesQuery)
         .project({ _id: 1, storagePath: 1, name: 1, ownerId: 1, userId: 1 })
         .toArray();
 
@@ -782,8 +790,11 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
    */
   router.post('/admin/virus-scan/scan-unscanned', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 미스캔 파일 조회 (virusScan.status가 없거나 pending인 파일)
+      // 🔒 미스캔 파일 조회 조건:
+      // 1. 문서 처리가 완료된 파일만 (overallStatus: 'completed')
+      // 2. virusScan.status가 없거나 pending인 파일
       const unscannedQuery = {
+        overallStatus: 'completed',
         $or: [
           { 'virusScan.status': { $exists: false } },
           { 'virusScan.status': null },
@@ -791,15 +802,23 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         ]
       };
 
-      // files 컬렉션에서 미스캔 파일 조회
+      // files 컬렉션에서 미스캔 파일 조회 (완료된 파일만)
       const unscannedFiles = await db.collection(COLLECTIONS.FILES)
         .find(unscannedQuery)
         .project({ _id: 1, 'upload.destPath': 1, storagePath: 1, ownerId: 1, userId: 1 })
         .toArray();
 
-      // personal_files 컬렉션에서 미스캔 파일 조회
+      // personal_files 컬렉션에서 미스캔 파일 조회 (personal_files는 overallStatus 없음)
+      const unscannedPersonalFilesQuery = {
+        type: 'file',
+        $or: [
+          { 'virusScan.status': { $exists: false } },
+          { 'virusScan.status': null },
+          { 'virusScan.status': 'pending' }
+        ]
+      };
       const unscannedPersonalFiles = await db.collection(COLLECTIONS.PERSONAL_FILES)
-        .find({ ...unscannedQuery, type: 'file' })
+        .find(unscannedPersonalFilesQuery)
         .project({ _id: 1, storagePath: 1, ownerId: 1, userId: 1 })
         .toArray();
 
