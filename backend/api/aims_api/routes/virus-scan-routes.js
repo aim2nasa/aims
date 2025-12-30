@@ -1133,6 +1133,62 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
     }
   });
 
+  // ==================== 로그 관리 ====================
+
+  /**
+   * DELETE /api/admin/virus-scan/logs
+   * 스캔 로그 전체 삭제
+   */
+  router.delete('/admin/virus-scan/logs', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const result = await db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).deleteMany({});
+
+      console.log(`[VirusScan] 스캔 로그 삭제: ${result.deletedCount}개`);
+
+      res.json({
+        success: true,
+        deletedCount: result.deletedCount,
+        message: `${result.deletedCount}개의 로그가 삭제되었습니다.`
+      });
+    } catch (error) {
+      console.error('[VirusScan] 로그 삭제 실패:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/virus-scan/infected-files
+   * 감염 파일 기록 초기화 (virusScan.status가 infected/deleted인 파일들의 상태 초기화)
+   */
+  router.delete('/admin/virus-scan/infected-files', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      // files 컬렉션에서 감염/삭제 상태 파일의 virusScan 정보 초기화
+      const filesResult = await db.collection(COLLECTIONS.FILES).updateMany(
+        { 'virusScan.status': { $in: ['infected', 'deleted'] } },
+        { $unset: { virusScan: '' } }
+      );
+
+      // personal_files 컬렉션에서도 동일 처리
+      const personalFilesResult = await db.collection(COLLECTIONS.PERSONAL_FILES).updateMany(
+        { 'virusScan.status': { $in: ['infected', 'deleted'] } },
+        { $unset: { virusScan: '' } }
+      );
+
+      const totalCleared = filesResult.modifiedCount + personalFilesResult.modifiedCount;
+
+      console.log(`[VirusScan] 감염 파일 기록 초기화: files ${filesResult.modifiedCount}개, personal_files ${personalFilesResult.modifiedCount}개`);
+
+      res.json({
+        success: true,
+        clearedCount: totalCleared,
+        message: `${totalCleared}개의 감염 파일 기록이 초기화되었습니다.`
+      });
+    } catch (error) {
+      console.error('[VirusScan] 감염 파일 기록 초기화 실패:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // ==================== Freshclam ====================
 
   /**

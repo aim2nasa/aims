@@ -175,6 +175,30 @@ export function VirusScanPage() {
     },
   });
 
+  // 스캔 로그 전체 삭제
+  const clearLogsMutation = useMutation({
+    mutationFn: virusScanApi.clearLogs,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['virus-scan', 'logs'] });
+      alert(data.message || '스캔 로그가 삭제되었습니다.');
+    },
+    onError: (error: Error) => {
+      alert(`로그 삭제 실패: ${error.message}`);
+    },
+  });
+
+  // 감염 파일 기록 초기화
+  const clearInfectedRecordsMutation = useMutation({
+    mutationFn: virusScanApi.clearInfectedRecords,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+      alert(data.message || '감염 파일 기록이 초기화되었습니다.');
+    },
+    onError: (error: Error) => {
+      alert(`감염 파일 기록 초기화 실패: ${error.message}`);
+    },
+  });
+
   // DB 업데이트
   const updateDbMutation = useMutation({
     mutationFn: virusScanApi.updateVirusDb,
@@ -328,6 +352,12 @@ export function VirusScanPage() {
               isLoading={infectedLoading}
               onDelete={(id, source) => deleteMutation.mutate({ id, source })}
               isDeleting={deleteMutation.isPending}
+              onClearAll={() => {
+                if (confirm('모든 감염 파일 기록을 초기화하시겠습니까?')) {
+                  clearInfectedRecordsMutation.mutate();
+                }
+              }}
+              isClearing={clearInfectedRecordsMutation.isPending}
             />
           )}
 
@@ -338,6 +368,12 @@ export function VirusScanPage() {
               isLoading={logsLoading}
               page={logPage}
               onPageChange={setLogPage}
+              onClearLogs={() => {
+                if (confirm('모든 스캔 로그를 삭제하시겠습니까?')) {
+                  clearLogsMutation.mutate();
+                }
+              }}
+              isClearing={clearLogsMutation.isPending}
             />
           )}
 
@@ -391,11 +427,15 @@ function InfectedFilesTab({
   isLoading,
   onDelete,
   isDeleting,
+  onClearAll,
+  isClearing,
 }: {
   files: InfectedFile[];
   isLoading: boolean;
   onDelete: (id: string, source: 'files' | 'personal_files') => void;
   isDeleting: boolean;
+  onClearAll: () => void;
+  isClearing: boolean;
 }) {
   const [sortKey, setSortKey] = useState<InfectedSortKey | null>('scannedAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -446,11 +486,23 @@ function InfectedFilesTab({
   }
 
   if (files.length === 0) {
-    return <div className="empty-state">감염된 파일이 없습니다.</div>;
+    return (
+      <div className="empty-state">
+        감염된 파일이 없습니다.
+        <Button variant="ghost" size="sm" onClick={onClearAll} disabled={isClearing} style={{ marginLeft: '12px' }}>
+          {isClearing ? '초기화 중...' : '기록 초기화'}
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="table-wrapper">
+      <div className="table-actions">
+        <Button variant="ghost" size="sm" onClick={onClearAll} disabled={isClearing}>
+          {isClearing ? '초기화 중...' : '기록 전체 초기화'}
+        </Button>
+      </div>
       <table className="data-table">
         <thead>
           <tr>
@@ -494,12 +546,16 @@ function ScanLogsTab({
   isLoading,
   page,
   onPageChange,
+  onClearLogs,
+  isClearing,
 }: {
   logs: VirusScanLog[];
   pagination?: { page: number; limit: number; total: number; totalPages: number };
   isLoading: boolean;
   page: number;
   onPageChange: (page: number) => void;
+  onClearLogs: () => void;
+  isClearing: boolean;
 }) {
   const [sortKey, setSortKey] = useState<LogSortKey | null>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -571,6 +627,16 @@ function ScanLogsTab({
 
   return (
     <div className="table-wrapper">
+      <div className="table-actions">
+        <button
+          type="button"
+          className="btn-ghost btn-sm"
+          onClick={onClearLogs}
+          disabled={isClearing || logs.length === 0}
+        >
+          {isClearing ? '삭제 중...' : '로그 전체 삭제'}
+        </button>
+      </div>
       <table className="data-table compact">
         <thead>
           <tr>

@@ -346,6 +346,26 @@ export const virusScanApi = {
     );
     return response.data;
   },
+
+  /**
+   * 스캔 로그 전체 삭제
+   */
+  clearLogs: async (): Promise<{ success: boolean; deletedCount: number; message: string }> => {
+    const response = await apiClient.delete<{ success: boolean; deletedCount: number; message: string }>(
+      '/api/admin/virus-scan/logs'
+    );
+    return response;
+  },
+
+  /**
+   * 감염 파일 기록 초기화
+   */
+  clearInfectedRecords: async (): Promise<{ success: boolean; clearedCount: number; message: string }> => {
+    const response = await apiClient.delete<{ success: boolean; clearedCount: number; message: string }>(
+      '/api/admin/virus-scan/infected-files'
+    );
+    return response;
+  },
 };
 
 // ============================================================
