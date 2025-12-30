@@ -493,6 +493,13 @@ function SettingsTab({ settings }: { settings: VirusScanSettings }) {
               <span className="setting-desc">감염 발견 시 알림</span>
             </td>
           </tr>
+          <tr>
+            <th>스캔 로그 보관</th>
+            <td>
+              <span className="setting-value">{settings.logRetentionDays || 30}일</span>
+              <span className="setting-desc">이후 자동 삭제</span>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -516,11 +523,13 @@ function SettingsModal({
     scheduledScanEnabled: boolean;
     onInfectedAction: 'delete' | 'quarantine' | 'notify_only';
     notifyAdmin: boolean;
+    logRetentionDays: number;
   }>({
     realtimeScanEnabled: settings.realtimeScan?.enabled ?? true,
     scheduledScanEnabled: settings.scheduledScan?.enabled ?? true,
     onInfectedAction: settings.onInfectedAction || 'delete',
     notifyAdmin: settings.notifyAdmin ?? true,
+    logRetentionDays: settings.logRetentionDays || 30,
   });
 
   const handleSave = () => {
@@ -529,6 +538,7 @@ function SettingsModal({
       scheduledScan: { ...settings.scheduledScan, enabled: formData.scheduledScanEnabled },
       onInfectedAction: formData.onInfectedAction,
       notifyAdmin: formData.notifyAdmin,
+      logRetentionDays: formData.logRetentionDays,
     });
   };
 
@@ -579,6 +589,23 @@ function SettingsModal({
             />
             감염 발견 시 관리자 알림
           </label>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="logRetentionDays">스캔 로그 보관 기간</label>
+          <select
+            id="logRetentionDays"
+            value={formData.logRetentionDays}
+            onChange={(e) => setFormData({ ...formData, logRetentionDays: parseInt(e.target.value, 10) })}
+          >
+            <option value={7}>7일</option>
+            <option value={14}>14일</option>
+            <option value={30}>30일</option>
+            <option value={60}>60일</option>
+            <option value={90}>90일</option>
+            <option value={180}>180일</option>
+            <option value={365}>365일</option>
+          </select>
         </div>
 
         <div className="modal-actions">

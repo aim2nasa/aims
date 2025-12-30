@@ -90,6 +90,7 @@ export interface VirusScanSettings {
   };
   onInfectedAction: 'delete' | 'quarantine' | 'notify_only';
   notifyAdmin: boolean;
+  logRetentionDays: number;  // 스캔 로그 보관 기간 (일)
   updatedAt?: string;
   updatedBy?: string;
 }

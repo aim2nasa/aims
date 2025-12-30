@@ -253,6 +253,7 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
           },
           onInfectedAction: 'delete',
           notifyAdmin: true,
+          logRetentionDays: 30,  // 스캔 로그 보관 기간 (일) - 기본 30일
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -288,7 +289,8 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         'scheduledScan',
         'freshclam',
         'onInfectedAction',
-        'notifyAdmin'
+        'notifyAdmin',
+        'logRetentionDays'
       ];
 
       const updateData = {};
@@ -1064,10 +1066,74 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
     }
   });
 
+  // ==================== 로그 정리 ====================
+
+  /**
+   * POST /api/admin/virus-scan/cleanup-logs
+   * 오래된 스캔 로그 수동 정리
+   */
+  router.post('/admin/virus-scan/cleanup-logs', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const deletedCount = await cleanupOldLogs(db);
+      res.json({
+        success: true,
+        message: deletedCount > 0
+          ? `오래된 로그 ${deletedCount}건이 삭제되었습니다.`
+          : '삭제할 로그가 없습니다.',
+        deletedCount
+      });
+    } catch (error) {
+      console.error('[VirusScan] 로그 정리 실패:', error);
+      res.status(500).json({
+        success: false,
+        error: '로그 정리에 실패했습니다.'
+      });
+    }
+  });
+
+  // 매일 새벽 1시에 로그 정리 실행 (24시간마다)
+  // 서버 시작 시 1시간 후에 첫 실행
+  setTimeout(() => {
+    cleanupOldLogs(db);
+    setInterval(() => cleanupOldLogs(db), 24 * 60 * 60 * 1000);
+  }, 60 * 60 * 1000);
+
+  console.log('[VirusScan] 로그 자동 정리 스케줄러 시작됨 (24시간 주기)');
+
   return router;
 };
 
 // ==================== 헬퍼 함수 ====================
+
+/**
+ * 오래된 스캔 로그 정리 (보관 기간 초과 로그 삭제)
+ * 매일 새벽 1시에 자동 실행되도록 설정됨
+ */
+async function cleanupOldLogs(db) {
+  try {
+    // 설정에서 보관 기간 조회
+    const settings = await db.collection(COLLECTIONS.VIRUS_SCAN_SETTINGS)
+      .findOne({ _id: 'virus_scan_config' });
+
+    const retentionDays = settings?.logRetentionDays || 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    // 오래된 로그 삭제
+    const result = await db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).deleteMany({
+      createdAt: { $lt: cutoffDate }
+    });
+
+    if (result.deletedCount > 0) {
+      console.log(`[VirusScan] 오래된 로그 ${result.deletedCount}건 삭제됨 (보관 기간: ${retentionDays}일)`);
+    }
+
+    return result.deletedCount;
+  } catch (error) {
+    console.error('[VirusScan] 로그 정리 실패:', error);
+    return 0;
+  }
+}
 
 /**
  * 감염 파일 처리
