@@ -577,6 +577,113 @@
   color: var(--color-success);
 }
 
+/* Services Status */
+.shadow-monitor__services {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.shadow-monitor__service {
+  flex: 1;
+  min-width: 280px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.shadow-monitor__service--healthy {
+  border-color: rgba(52, 199, 89, 0.3);
+  background: rgba(52, 199, 89, 0.05);
+}
+
+.shadow-monitor__service--unhealthy,
+.shadow-monitor__service--error {
+  border-color: rgba(255, 59, 48, 0.3);
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.shadow-monitor__service--timeout {
+  border-color: rgba(255, 149, 0, 0.3);
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.shadow-monitor__service-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shadow-monitor__service-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.shadow-monitor__service-dot--healthy {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.5);
+}
+
+.shadow-monitor__service-dot--unhealthy,
+.shadow-monitor__service-dot--error {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+}
+
+.shadow-monitor__service-dot--timeout {
+  background: var(--color-warning);
+  box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
+}
+
+.shadow-monitor__service-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.shadow-monitor__service-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.shadow-monitor__service-badge--healthy {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--color-success);
+}
+
+.shadow-monitor__service-badge--unhealthy,
+.shadow-monitor__service-badge--error {
+  background: rgba(255, 59, 48, 0.15);
+  color: var(--color-danger);
+}
+
+.shadow-monitor__service-badge--timeout {
+  background: rgba(255, 149, 0, 0.15);
+  color: var(--color-warning);
+}
+
+.shadow-monitor__service-details {
+  margin-top: 8px;
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.shadow-monitor__service-latency {
+  color: var(--text-secondary);
+}
+
+.shadow-monitor__service-error {
+  color: var(--color-danger);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .shadow-monitor__stats-grid {
@@ -585,5 +692,13 @@
 
   .shadow-monitor__diff-values {
     grid-template-columns: 1fr;
+  }
+
+  .shadow-monitor__services {
+    flex-direction: column;
+  }
+
+  .shadow-monitor__service {
+    min-width: auto;
   }
 }

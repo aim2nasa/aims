@@ -99,6 +99,25 @@ const resetShadowStats = async (): Promise<{ message: string }> => {
   return response.json();
 };
 
+interface ServiceStatus {
+  name: string;
+  status: 'healthy' | 'unhealthy' | 'timeout' | 'error';
+  latency_ms?: number;
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
+interface ServicesStatusResponse {
+  timestamp: string;
+  services: ServiceStatus[];
+}
+
+const fetchServicesStatus = async (): Promise<ServicesStatusResponse> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/services-status`);
+  if (!response.ok) throw new Error('Failed to fetch services status');
+  return response.json();
+};
+
 /**
  * KST 시간 포맷: YYYY.MM.DD HH:mm:ss (24시간제)
  * 서버 timestamp가 UTC인 경우 KST(+9시간)로 변환하여 표시
@@ -209,9 +228,16 @@ ${diffsText}
     refetchInterval: 30000,
   });
 
+  const { data: servicesStatus, refetch: refetchServicesStatus } = useQuery({
+    queryKey: ['shadow', 'services-status'],
+    queryFn: fetchServicesStatus,
+    refetchInterval: 10000, // 10초마다 서비스 상태 확인
+  });
+
   const handleRefresh = () => {
     refetchStats();
     refetchMismatches();
+    refetchServicesStatus();
   };
 
   const handleDeleteResolved = async () => {
@@ -291,6 +317,43 @@ ${diffsText}
           </Button>
         </div>
       </div>
+
+      {/* 서비스 상태 */}
+      {servicesStatus && (
+        <section className="shadow-monitor__section">
+          <h2 className="shadow-monitor__section-title">서비스 상태</h2>
+          <div className="shadow-monitor__services">
+            {servicesStatus.services.map((service) => (
+              <div
+                key={service.name}
+                className={`shadow-monitor__service shadow-monitor__service--${service.status}`}
+              >
+                <div className="shadow-monitor__service-header">
+                  <span className={`shadow-monitor__service-dot shadow-monitor__service-dot--${service.status}`}></span>
+                  <span className="shadow-monitor__service-name">{service.name}</span>
+                  <span className={`shadow-monitor__service-badge shadow-monitor__service-badge--${service.status}`}>
+                    {service.status === 'healthy' ? '정상' :
+                     service.status === 'unhealthy' ? '비정상' :
+                     service.status === 'timeout' ? '타임아웃' : '오류'}
+                  </span>
+                </div>
+                <div className="shadow-monitor__service-details">
+                  {service.latency_ms !== undefined && (
+                    <span className="shadow-monitor__service-latency">
+                      응답시간: {service.latency_ms}ms
+                    </span>
+                  )}
+                  {service.error && (
+                    <span className="shadow-monitor__service-error">
+                      {service.error}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Shadow Mode 상태 */}
       {stats?.shadow_mode && (

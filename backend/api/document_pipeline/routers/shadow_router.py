@@ -478,3 +478,59 @@ async def reset_shadow_stats():
     except Exception as e:
         logger.error(f"Reset stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/services-status")
+async def get_services_status():
+    """
+    n8n과 FastAPI 서비스 상태 확인
+    """
+    import httpx
+    from datetime import datetime
+
+    async def check_service(name: str, url: str, timeout: float = 5.0):
+        """개별 서비스 상태 확인"""
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                start = datetime.now()
+                response = await client.get(url)
+                latency_ms = (datetime.now() - start).total_seconds() * 1000
+
+                if response.status_code == 200:
+                    return {
+                        "name": name,
+                        "status": "healthy",
+                        "latency_ms": round(latency_ms, 1),
+                        "details": response.json() if response.headers.get("content-type", "").startswith("application/json") else {"raw": response.text[:100]}
+                    }
+                else:
+                    return {
+                        "name": name,
+                        "status": "unhealthy",
+                        "error": f"HTTP {response.status_code}",
+                        "latency_ms": round(latency_ms, 1)
+                    }
+        except httpx.TimeoutException:
+            return {
+                "name": name,
+                "status": "timeout",
+                "error": "Connection timeout"
+            }
+        except Exception as e:
+            return {
+                "name": name,
+                "status": "error",
+                "error": str(e)
+            }
+
+    # 각 서비스 상태 확인 (병렬 실행)
+    import asyncio
+    n8n_status, fastapi_status = await asyncio.gather(
+        check_service("n8n", "http://localhost:5678/healthz"),
+        check_service("FastAPI (document_pipeline)", "http://localhost:8100/health")
+    )
+
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "services": [n8n_status, fastapi_status]
+    }
