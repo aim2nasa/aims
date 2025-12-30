@@ -18,8 +18,22 @@ const { authenticateJWTWithQuery } = require('../middleware/auth');
 const backendLogger = require('../lib/backendLogger');
 const { DEFAULT_TIER } = require('../lib/storageQuotaService');
 
-// 첨부파일 저장 경로
-const INQUIRY_FILES_PATH = '/data/files/inquiries';
+// 첨부파일 저장 경로 (사용자별 폴더 구조)
+// /data/files/users/[userId]/inquiries/[inquiryId]/파일들
+const USER_FILES_BASE_PATH = '/data/files/users';
+
+// 사용자별 inquiries 경로 생성 헬퍼
+const getInquiryFilesPath = (userId, inquiryId) => {
+  if (inquiryId) {
+    return path.join(USER_FILES_BASE_PATH, userId.toString(), 'inquiries', inquiryId.toString());
+  }
+  return path.join(USER_FILES_BASE_PATH, userId.toString(), 'inquiries');
+};
+
+// 임시 파일 경로 (업로드 중)
+const getTempFilesPath = (userId) => {
+  return path.join(USER_FILES_BASE_PATH, userId.toString(), 'inquiries', 'temp');
+};
 
 // 디렉토리 생성 헬퍼
 const ensureDirectoryExists = async (dirPath) => {
@@ -30,11 +44,15 @@ const ensureDirectoryExists = async (dirPath) => {
   }
 };
 
-// Multer 파일 업로드 설정
+// Multer 파일 업로드 설정 (userId 기반 임시 폴더)
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    // 임시 디렉토리에 저장 (나중에 inquiryId로 이동)
-    const tempDir = path.join(INQUIRY_FILES_PATH, 'temp');
+    // 임시 디렉토리에 저장 (나중에 inquiryId 폴더로 이동)
+    const userId = req.user?.id;
+    if (!userId) {
+      return cb(new Error('사용자 인증이 필요합니다'));
+    }
+    const tempDir = getTempFilesPath(userId);
     await ensureDirectoryExists(tempDir);
     cb(null, tempDir);
   },
@@ -580,7 +598,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
 
       // 첨부파일 처리
       if (req.files && req.files.length > 0) {
-        const inquiryDir = path.join(INQUIRY_FILES_PATH, inquiryId.toString());
+        const inquiryDir = getInquiryFilesPath(userId, inquiryId);
         await ensureDirectoryExists(inquiryDir);
 
         for (const file of req.files) {
@@ -706,7 +724,7 @@ module.exports = (db, authenticateJWT, requireRole) => {
       // 첨부파일 처리
       const attachments = [];
       if (req.files && req.files.length > 0) {
-        const inquiryDir = path.join(INQUIRY_FILES_PATH, id);
+        const inquiryDir = getInquiryFilesPath(userId, id);
         await ensureDirectoryExists(inquiryDir);
 
         for (const file of req.files) {
@@ -840,7 +858,9 @@ module.exports = (db, authenticateJWT, requireRole) => {
       }
 
       // 파일 경로 확인
-      const filePath = path.join(INQUIRY_FILES_PATH, inquiryId, filename);
+      // 파일 경로 확인 (문의 소유자의 폴더에서 찾기)
+      const inquiryOwnerId = inquiry.userId.toString();
+      const filePath = path.join(getInquiryFilesPath(inquiryOwnerId, inquiryId), filename);
 
       try {
         await fs.access(filePath);
@@ -1132,10 +1152,11 @@ module.exports = (db, authenticateJWT, requireRole) => {
       // 관리자 정보 조회
       const admin = await usersCollection.findOne({ _id: new ObjectId(adminId) });
 
-      // 첨부파일 처리
+      // 첨부파일 처리 (문의 소유자의 폴더에 저장)
+      const inquiryOwnerId = inquiry.userId.toString();
       const attachments = [];
       if (req.files && req.files.length > 0) {
-        const inquiryDir = path.join(INQUIRY_FILES_PATH, id);
+        const inquiryDir = getInquiryFilesPath(inquiryOwnerId, id);
         await ensureDirectoryExists(inquiryDir);
 
         for (const file of req.files) {
