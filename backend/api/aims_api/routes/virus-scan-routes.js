@@ -63,8 +63,9 @@ function broadcastVirusScanEvent(event, data) {
 
 /**
  * 라우트 설정 함수
+ * @param {*} notifyDocumentListSubscribers - 문서 목록 SSE 알림 함수 (바이러스 감지 시 프론트엔드 실시간 업데이트용)
  */
-module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQuery) {
+module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQuery, notifyDocumentListSubscribers) {
 
   // ==================== SSE 스트림 ====================
 
@@ -670,15 +671,20 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
    */
   router.post('/admin/virus-scan/scan-all', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 모든 파일 조회 (files 컬렉션)
+      // 🔒 deleted/infected 상태 파일은 재스캔에서 제외 (이미 바이러스로 삭제된 파일)
+      const excludeDeletedQuery = {
+        'virusScan.status': { $nin: ['deleted', 'infected'] }
+      };
+
+      // 모든 파일 조회 (files 컬렉션) - deleted/infected 제외
       const allFiles = await db.collection(COLLECTIONS.FILES)
-        .find({})
+        .find(excludeDeletedQuery)
         .project({ _id: 1, 'upload.destPath': 1, 'upload.originalName': 1, storagePath: 1, ownerId: 1, userId: 1, customerId: 1 })
         .toArray();
 
-      // 모든 파일 조회 (personal_files 컬렉션)
+      // 모든 파일 조회 (personal_files 컬렉션) - deleted/infected 제외
       const allPersonalFiles = await db.collection(COLLECTIONS.PERSONAL_FILES)
-        .find({ type: 'file' })
+        .find({ type: 'file', ...excludeDeletedQuery })
         .project({ _id: 1, storagePath: 1, name: 1, ownerId: 1, userId: 1 })
         .toArray();
 
@@ -989,10 +995,18 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
       await db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).insertOne(logEntry);
 
       // 문서 업데이트 (documentId가 있는 경우)
+      let documentOwnerId = null;
       if (documentId && collectionName) {
         const collection = collectionName === 'personal_files'
           ? COLLECTIONS.PERSONAL_FILES
           : COLLECTIONS.FILES;
+
+        // 문서 소유자 조회 (SSE 알림용)
+        const doc = await db.collection(collection).findOne(
+          { _id: new ObjectId(documentId) },
+          { projection: { ownerId: 1, userId: 1 } }
+        );
+        documentOwnerId = doc?.ownerId || doc?.userId;
 
         await db.collection(collection).updateOne(
           { _id: new ObjectId(documentId) },
@@ -1013,7 +1027,7 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         }
       }
 
-      // SSE 브로드캐스트
+      // SSE 브로드캐스트 (aims-admin용)
       if (status === 'infected') {
         broadcastVirusScanEvent('virus-detected', {
           documentId,
@@ -1030,6 +1044,18 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
           status,
           scanDurationMs
         });
+      }
+
+      // 🔄 aims-uix3 문서 목록 SSE 알림 (실시간 바이러스 배지 업데이트)
+      if (documentOwnerId && notifyDocumentListSubscribers) {
+        const ownerIdStr = documentOwnerId.toString();
+        notifyDocumentListSubscribers(ownerIdStr, 'document-list-change', {
+          type: 'status-changed',
+          documentId,
+          status: `virus-${status}`,  // virus-clean, virus-infected, virus-deleted
+          timestamp: new Date().toISOString()
+        });
+        console.log(`[VirusScan] 문서 목록 SSE 알림 전송 - userId: ${ownerIdStr}, status: virus-${status}`);
       }
 
       res.json({ success: true });
@@ -1246,7 +1272,10 @@ async function handleInfectedFile(db, documentId, collectionName, threatName, fi
             'virusScan.status': 'deleted',
             'virusScan.deletedAt': new Date(),
             'virusScan.deletedBy': 'system',
-            'virusScan.deletedReason': `바이러스 감염: ${threatName}`
+            'virusScan.deletedReason': `바이러스 감염: ${threatName}`,
+            // 🔴 바이러스 삭제 시 문서 처리 상태도 업데이트 (프론트엔드 로딩 해제)
+            'overallStatus': 'error',
+            'overallStatusUpdatedAt': new Date()
           }
         }
       );

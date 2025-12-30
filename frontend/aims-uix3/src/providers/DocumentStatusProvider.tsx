@@ -196,7 +196,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
             const convStatus = doc.conversionStatus || (typeof doc.upload === 'object' ? doc.upload?.conversion_status : null) || ''
             // 🏷️ 문서 유형도 fingerprint에 포함 (유형 변경 시 UI 즉시 반영)
             const docType = doc.document_type || doc.docType || ''
-            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}:${docType}`
+            // 🔴 바이러스 스캔 상태도 fingerprint에 포함 (바이러스 감지 시 UI 즉시 반영)
+            const virusScanStatus = doc.virusScan?.status || ''
+            return `${id}:${status}:${progress}:${customerRelation}:${convStatus}:${docType}:${virusScanStatus}`
           }
 
           // 🔧 정렬 순서도 반영하기 위해 sort() 제거

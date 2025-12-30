@@ -9514,7 +9514,8 @@ MongoClient.connect(MONGO_URI)
     console.log('[Server] documentTypesRoutes 등록 완료');
 
     // 바이러스 스캔 라우트 설정 (관리자용)
-    const virusScanRoutes = require('./routes/virus-scan-routes')(db, authenticateJWT, requireRole, authenticateJWTWithQuery);
+    // notifyDocumentListSubscribers 전달하여 바이러스 감지 시 프론트엔드 실시간 업데이트
+    const virusScanRoutes = require('./routes/virus-scan-routes')(db, authenticateJWT, requireRole, authenticateJWTWithQuery, notifyDocumentListSubscribers);
     app.use('/api', virusScanRoutes);
     console.log('[Server] virusScanRoutes 등록 완료');
 

@@ -253,6 +253,20 @@ export interface DocumentStatusResponse {
 }
 
 /**
+ * 바이러스 스캔 정보
+ */
+export interface VirusScanData {
+  status: 'pending' | 'scanning' | 'clean' | 'infected' | 'deleted' | 'error'
+  scannedAt?: string
+  clamVersion?: string
+  threatName?: string
+  scanDurationMs?: number
+  deletedAt?: string
+  deletedBy?: string
+  deletedReason?: string
+}
+
+/**
  * DB 원본 데이터 구조 (조작되지 않은 MongoDB 문서)
  */
 export interface RawDocumentData {
@@ -265,6 +279,7 @@ export interface RawDocumentData {
   customer_relation?: DocumentCustomerRelation
   ownerId?: string  // 🆕 내 파일 기능
   customerId?: string  // 🆕 내 파일 기능
+  virusScan?: VirusScanData  // 🔴 바이러스 스캔 정보
 }
 
 /**
