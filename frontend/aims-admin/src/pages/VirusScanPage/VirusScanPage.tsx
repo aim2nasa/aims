@@ -3,7 +3,7 @@
  * @since 2025-12-30
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   virusScanApi,
@@ -20,6 +20,11 @@ import { useVirusScanSSE } from '@/shared/hooks/useVirusScanSSE';
 import { Button } from '@/shared/ui/Button';
 import { Modal } from '@/shared/ui/Modal';
 import './VirusScanPage.css';
+
+// 정렬 타입
+type SortDirection = 'asc' | 'desc';
+type InfectedSortKey = 'filename' | 'threatName' | 'scannedAt' | 'status';
+type LogSortKey = 'createdAt' | 'scanType' | 'ownerName' | 'customerName' | 'originalName' | 'status' | 'duration';
 
 type TabType = 'infected' | 'logs' | 'settings';
 
@@ -314,6 +319,31 @@ export function VirusScanPage() {
   );
 }
 
+// 정렬 헤더 컴포넌트
+function SortableHeader<T extends string>({
+  label,
+  sortKey,
+  currentSort,
+  currentDirection,
+  onSort,
+}: {
+  label: string;
+  sortKey: T;
+  currentSort: T | null;
+  currentDirection: SortDirection;
+  onSort: (key: T) => void;
+}) {
+  const isActive = currentSort === sortKey;
+  return (
+    <th className="sortable" onClick={() => onSort(sortKey)}>
+      {label}
+      <span className={`sort-icon ${isActive ? 'active' : ''}`}>
+        {isActive ? (currentDirection === 'asc' ? '▲' : '▼') : '▽'}
+      </span>
+    </th>
+  );
+}
+
 // 감염 파일 탭
 function InfectedFilesTab({
   files,
@@ -326,6 +356,50 @@ function InfectedFilesTab({
   onDelete: (id: string, source: 'files' | 'personal_files') => void;
   isDeleting: boolean;
 }) {
+  const [sortKey, setSortKey] = useState<InfectedSortKey | null>('scannedAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (key: InfectedSortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedFiles = useMemo(() => {
+    if (!sortKey) return files;
+    return [...files].sort((a, b) => {
+      let aVal: string | number | null = null;
+      let bVal: string | number | null = null;
+
+      switch (sortKey) {
+        case 'filename':
+          aVal = a.upload?.originalName || a.name || a.filename || '';
+          bVal = b.upload?.originalName || b.name || b.filename || '';
+          break;
+        case 'threatName':
+          aVal = a.virusScan?.threatName || '';
+          bVal = b.virusScan?.threatName || '';
+          break;
+        case 'scannedAt':
+          aVal = a.virusScan?.scannedAt ? new Date(a.virusScan.scannedAt).getTime() : 0;
+          bVal = b.virusScan?.scannedAt ? new Date(b.virusScan.scannedAt).getTime() : 0;
+          break;
+        case 'status':
+          aVal = a.virusScan?.status || '';
+          bVal = b.virusScan?.status || '';
+          break;
+      }
+
+      if (aVal === null || bVal === null) return 0;
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [files, sortKey, sortDirection]);
+
   if (isLoading) {
     return <div className="loading">로딩 중...</div>;
   }
@@ -339,15 +413,15 @@ function InfectedFilesTab({
       <table className="data-table">
         <thead>
           <tr>
-            <th>파일명</th>
-            <th>위협명</th>
-            <th>발견일</th>
-            <th>상태</th>
+            <SortableHeader label="파일명" sortKey="filename" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="위협명" sortKey="threatName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="발견일" sortKey="scannedAt" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="상태" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <th>작업</th>
           </tr>
         </thead>
         <tbody>
-          {files.map((file) => (
+          {sortedFiles.map((file) => (
             <tr key={file._id}>
               <td className="filename">{file.upload?.originalName || file.name || file.filename || '-'}</td>
               <td className="threat-name">{file.virusScan?.threatName || '-'}</td>
@@ -386,6 +460,62 @@ function ScanLogsTab({
   page: number;
   onPageChange: (page: number) => void;
 }) {
+  const [sortKey, setSortKey] = useState<LogSortKey | null>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (key: LogSortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedLogs = useMemo(() => {
+    if (!sortKey) return logs;
+    return [...logs].sort((a, b) => {
+      let aVal: string | number | null = null;
+      let bVal: string | number | null = null;
+
+      switch (sortKey) {
+        case 'createdAt':
+          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        case 'scanType':
+          aVal = a.scanType || '';
+          bVal = b.scanType || '';
+          break;
+        case 'ownerName':
+          aVal = a.ownerName || '';
+          bVal = b.ownerName || '';
+          break;
+        case 'customerName':
+          aVal = a.customerName || '';
+          bVal = b.customerName || '';
+          break;
+        case 'originalName':
+          aVal = a.originalName || '';
+          bVal = b.originalName || '';
+          break;
+        case 'status':
+          aVal = a.result?.status || '';
+          bVal = b.result?.status || '';
+          break;
+        case 'duration':
+          aVal = a.result?.scanDurationMs || 0;
+          bVal = b.result?.scanDurationMs || 0;
+          break;
+      }
+
+      if (aVal === null || bVal === null) return 0;
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [logs, sortKey, sortDirection]);
+
   if (isLoading) {
     return <div className="loading">로딩 중...</div>;
   }
@@ -399,17 +529,17 @@ function ScanLogsTab({
       <table className="data-table compact">
         <thead>
           <tr>
-            <th>시간</th>
-            <th>유형</th>
-            <th>설계사</th>
-            <th>고객</th>
-            <th>파일명</th>
-            <th>결과</th>
-            <th>소요</th>
+            <SortableHeader label="시간" sortKey="createdAt" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="유형" sortKey="scanType" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="설계사" sortKey="ownerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="고객" sortKey="customerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="파일명" sortKey="originalName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="결과" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="소요" sortKey="duration" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
           </tr>
         </thead>
         <tbody>
-          {logs.map((log) => (
+          {sortedLogs.map((log) => (
             <tr key={log._id} className={log.result?.status === 'infected' ? 'infected-row' : ''}>
               <td>{formatDateTime(log.createdAt)}</td>
               <td>

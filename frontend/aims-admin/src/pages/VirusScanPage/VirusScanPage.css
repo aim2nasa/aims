@@ -269,6 +269,29 @@
   z-index: 1;
 }
 
+.data-table th.sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.data-table th.sortable:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.sort-icon {
+  margin-left: 4px;
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+}
+
+.sort-icon.active {
+  color: var(--color-primary);
+  opacity: 1;
+}
+
 .data-table tr:hover td {
   background: var(--color-bg-secondary);
 }
