@@ -1,0 +1,282 @@
+[
+  {
+    "file": "TalkFile_00038235_cm_19.pdf.pdf",
+    "contract": {
+      "product_name": "",
+      "policy_number": "0011423761",
+      "contract_date": "2013-11-12",
+      "insured_amount": 50000000,
+      "accumulated_amount": 19336631,
+      "investment_return": 64.15,
+      "surrender_value": 19336631,
+      "surrender_rate": 132.5,
+      "accumulation_rate": 623.8,
+      "monthly_premium": 0
+    },
+    "premium": {
+      "basic_premium": 50000000,
+      "irregular_additional": 0,
+      "regular_additional": 0,
+      "withdrawal": 46900000,
+      "total": 3100000,
+      "policy_loan": 0
+    },
+    "funds": [
+      {
+        "fund_name": "성장주식형",
+        "basic_amount": 14580820,
+        "additional_amount": 0,
+        "basic_ratio": 75.4,
+        "additional_ratio": 0.0,
+        "basic_return": 56.64,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 9308205,
+        "additional_principal": 0
+      },
+      {
+        "fund_name": "채권형",
+        "basic_amount": 4755811,
+        "additional_amount": 0,
+        "basic_ratio": 100.0,
+        "additional_ratio": 0.0,
+        "basic_return": 34.43,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 3537801,
+        "additional_principal": 0
+      }
+    ],
+    "summary": {
+      "total_pages": 4,
+      "total_funds": 2,
+      "total_fund_amount": 19336631
+    }
+  },
+  {
+    "file": "TalkFile_00038235_cm_20.pdf.pdf",
+    "contract": {
+      "product_name": "",
+      "policy_number": "0011409925",
+      "contract_date": "2013-10-29",
+      "insured_amount": 10000000,
+      "accumulated_amount": 62246158,
+      "investment_return": 28.43,
+      "surrender_value": 62246158,
+      "surrender_rate": 110.9,
+      "accumulation_rate": 172.3,
+      "monthly_premium": 0
+    },
+    "premium": {
+      "basic_premium": 42900000,
+      "irregular_additional": 131390000,
+      "regular_additional": 65800000,
+      "withdrawal": 203960000,
+      "total": 36130000,
+      "policy_loan": 0
+    },
+    "funds": [
+      {
+        "fund_name": "가치주식형",
+        "basic_amount": 43583076,
+        "additional_amount": 18663082,
+        "basic_ratio": 100.0,
+        "additional_ratio": 100.0,
+        "basic_return": 8.94,
+        "additional_return": 8.6,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 40007196,
+        "additional_principal": 17184377
+      }
+    ],
+    "summary": {
+      "total_pages": 26,
+      "total_funds": 1,
+      "total_fund_amount": 62246158
+    }
+  },
+  {
+    "file": "TalkFile_00038235_cm_21.pdf.pdf",
+    "contract": {
+      "product_name": "",
+      "policy_number": "0011409939",
+      "contract_date": "2013-10-29",
+      "insured_amount": 10000000,
+      "accumulated_amount": 55025572,
+      "investment_return": 31.05,
+      "surrender_value": 55025572,
+      "surrender_rate": 116.8,
+      "accumulation_rate": 164.3,
+      "monthly_premium": 0
+    },
+    "premium": {
+      "basic_premium": 28600000,
+      "irregular_additional": 54210000,
+      "regular_additional": 45400000,
+      "withdrawal": 94720000,
+      "total": 33490000,
+      "policy_loan": 0
+    },
+    "funds": [
+      {
+        "fund_name": "가치주식형",
+        "basic_amount": 29689650,
+        "additional_amount": 25335922,
+        "basic_ratio": 100.0,
+        "additional_ratio": 100.0,
+        "basic_return": 8.94,
+        "additional_return": 8.92,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 27252214,
+        "additional_principal": 23260792
+      }
+    ],
+    "summary": {
+      "total_pages": 22,
+      "total_funds": 1,
+      "total_fund_amount": 55025572
+    }
+  },
+  {
+    "file": "TalkFile_00038235_cm_22.pdf.pdf",
+    "contract": {
+      "product_name": "",
+      "policy_number": "0011375656",
+      "contract_date": "2013-09-10",
+      "insured_amount": 10000000,
+      "accumulated_amount": 38405005,
+      "investment_return": 65.58,
+      "surrender_value": 38405005,
+      "surrender_rate": 127.8,
+      "accumulation_rate": 145.6,
+      "monthly_premium": 0
+    },
+    "premium": {
+      "basic_premium": 43200000,
+      "irregular_additional": 0,
+      "regular_additional": 0,
+      "withdrawal": 16820000,
+      "total": 26380000,
+      "policy_loan": 3000000
+    },
+    "funds": [
+      {
+        "fund_name": "미국주식형",
+        "basic_amount": 26567772,
+        "additional_amount": 0,
+        "basic_ratio": 70.0,
+        "additional_ratio": 0.0,
+        "basic_return": 74.5,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 15224875,
+        "additional_principal": 0
+      },
+      {
+        "fund_name": "배당주식형",
+        "basic_amount": 4061119,
+        "additional_amount": 0,
+        "basic_ratio": 10.0,
+        "additional_ratio": 0.0,
+        "basic_return": 23.2,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 3296384,
+        "additional_principal": 0
+      },
+      {
+        "fund_name": "글로벌IT섹터",
+        "basic_amount": 7776114,
+        "additional_amount": 0,
+        "basic_ratio": 20.0,
+        "additional_ratio": 0.0,
+        "basic_return": 24.08,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 6266847,
+        "additional_principal": 0
+      }
+    ],
+    "summary": {
+      "total_pages": 8,
+      "total_funds": 3,
+      "total_fund_amount": 38405005
+    }
+  },
+  {
+    "file": "TalkFile_00038235_cm_23.pdf.pdf",
+    "contract": {
+      "product_name": "",
+      "policy_number": "0011348919",
+      "contract_date": "2013-08-06",
+      "insured_amount": 10000000,
+      "accumulated_amount": 23302427,
+      "investment_return": 13.08,
+      "surrender_value": 23302427,
+      "surrender_rate": 96.9,
+      "accumulation_rate": 94.5,
+      "monthly_premium": 0
+    },
+    "premium": {
+      "basic_premium": 43500000,
+      "irregular_additional": 0,
+      "regular_additional": 0,
+      "withdrawal": 18830000,
+      "total": 24670000,
+      "policy_loan": 0
+    },
+    "funds": [
+      {
+        "fund_name": "미국주식형",
+        "basic_amount": 16532136,
+        "additional_amount": 0,
+        "basic_ratio": 100.0,
+        "additional_ratio": 0.0,
+        "basic_return": 5.88,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 15614133,
+        "additional_principal": 0
+      },
+      {
+        "fund_name": "글로벌주식형",
+        "basic_amount": 1964477,
+        "additional_amount": 0,
+        "basic_ratio": 8.4,
+        "additional_ratio": 0.0,
+        "basic_return": 4.93,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 1872090,
+        "additional_principal": 0
+      },
+      {
+        "fund_name": "배당주식형",
+        "basic_amount": 4805814,
+        "additional_amount": 0,
+        "basic_ratio": 20.6,
+        "additional_ratio": 0.0,
+        "basic_return": 28.37,
+        "additional_return": 0.0,
+        "basic_input_ratio": 0.0,
+        "additional_input_ratio": 0.0,
+        "basic_principal": 3743626,
+        "additional_principal": 0
+      }
+    ],
+    "summary": {
+      "total_pages": 7,
+      "total_funds": 3,
+      "total_fund_amount": 23302427
+    }
+  }
+]
