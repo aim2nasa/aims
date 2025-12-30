@@ -24,7 +24,7 @@ import './VirusScanPage.css';
 // 정렬 타입
 type SortDirection = 'asc' | 'desc';
 type InfectedSortKey = 'filename' | 'threatName' | 'scannedAt' | 'status';
-type LogSortKey = 'createdAt' | 'scanType' | 'ownerName' | 'customerName' | 'originalName' | 'status' | 'duration';
+type LogSortKey = 'createdAt' | 'scanType' | 'ownerName' | 'customerName' | 'originalName' | 'filePath' | 'status' | 'duration';
 
 type TabType = 'infected' | 'logs' | 'settings';
 
@@ -542,6 +542,10 @@ function ScanLogsTab({
           aVal = a.originalName || '';
           bVal = b.originalName || '';
           break;
+        case 'filePath':
+          aVal = a.filePath || '';
+          bVal = b.filePath || '';
+          break;
         case 'status':
           aVal = a.result?.status || '';
           bVal = b.result?.status || '';
@@ -577,6 +581,7 @@ function ScanLogsTab({
             <SortableHeader label="설계사" sortKey="ownerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="고객" sortKey="customerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="파일명" sortKey="originalName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            <SortableHeader label="물리적 파일명" sortKey="filePath" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="결과" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="소요" sortKey="duration" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
           </tr>
@@ -591,6 +596,7 @@ function ScanLogsTab({
               <td className="owner-name" title={log.ownerName || ''}>{log.ownerName || '-'}</td>
               <td className="customer-name" title={log.customerName || ''}>{log.customerName || '-'}</td>
               <td className="original-name" title={log.originalName || ''}>{log.originalName || '-'}</td>
+              <td className="file-path" title={log.filePath || ''}>{log.filePath ? log.filePath.split('/').pop() : '-'}</td>
               <td>
                 <span className={`status-badge ${log.result?.status}`}>
                   {SCAN_STATUS_LABELS[log.result?.status] || log.result?.status}
