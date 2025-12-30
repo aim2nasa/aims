@@ -209,14 +209,14 @@ export function VirusScanPage() {
                 onClick={() => scanUnscannedMutation.mutate()}
                 disabled={scanUnscannedMutation.isPending || status?.status === 'offline' || (stats?.statusCounts?.notScanned || 0) === 0}
               >
-                미스캔 스캔 ({stats?.statusCounts?.notScanned || 0})
+                {scanUnscannedMutation.isPending ? '스캔 시작 중...' : `미스캔 스캔 (${stats?.statusCounts?.notScanned || 0})`}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => startScanMutation.mutate()}
                 disabled={startScanMutation.isPending || status?.status === 'offline'}
               >
-                전체 스캔
+                {startScanMutation.isPending ? '스캔 시작 중...' : '전체 스캔'}
               </Button>
             </>
           )}
