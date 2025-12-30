@@ -1694,15 +1694,24 @@ html[data-theme="dark"] .doctype-label {
 }
 
 /* 🔒 읽기 전용 문서 유형 (시스템 전용 - annual_report 등) */
+/* 드롭다운(.doctype-select)과 동일한 크기/정렬로 텍스트 위치 일치 */
 .doctype-label--readonly {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  background-color: var(--color-semantic-info-light);
+  display: block;
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  font-size: var(--font-size-caption-2);
+  font-family: var(--font-family-text);
+  font-weight: 400;
   color: var(--color-ios-blue-light);
+  background-color: var(--color-semantic-info-light);
+  border: 1px solid transparent;
   border-radius: 4px;
-  font-weight: 500;
+  text-align: left;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: not-allowed;
   -webkit-user-select: none;
   user-select: none;

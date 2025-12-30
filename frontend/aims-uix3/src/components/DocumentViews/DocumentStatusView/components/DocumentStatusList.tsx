@@ -1115,11 +1115,12 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                 // 🔒 연간보고서(AR)는 시스템 전용 - 읽기 전용으로 표시
                 if (isAnnualReportType) {
                   return (
-                    <Tooltip content="시스템 전용 유형 (변경 불가)">
-                      <span className="doctype-label doctype-label--readonly">
-                        연간보고서
-                      </span>
-                    </Tooltip>
+                    <span
+                      className="doctype-label doctype-label--readonly"
+                      title="시스템 전용 유형 (변경 불가)"
+                    >
+                      연간보고서
+                    </span>
                   )
                 }
 
