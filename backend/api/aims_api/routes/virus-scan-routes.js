@@ -361,10 +361,16 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
         db.collection(COLLECTIONS.VIRUS_SCAN_LOGS).countDocuments(query)
       ]);
 
-      // 각 로그의 documentId로 원본 파일명, 사용자, 고객 정보 조회
+      // 🔴 로그에 저장된 정보 우선 사용, 없으면 원본 파일에서 조회
       const { ObjectId } = require('mongodb');
       const logsWithDetails = await Promise.all(
         logs.map(async (log) => {
+          // 로그에 이미 정보가 있으면 그대로 반환
+          if (log.originalName || log.ownerName || log.customerName) {
+            return log;
+          }
+
+          // 정보가 없고 documentId가 있으면 원본 파일에서 조회 시도
           if (!log.documentId) return log;
 
           try {
@@ -990,13 +996,71 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
 
       console.log(`[VirusScan] 스캔 결과 수신: ${filePath} - ${status}`);
 
-      // 스캔 로그 저장
+      // 🔴 로그 저장 전에 파일/설계사/고객 정보 조회 (나중에 파일 삭제되어도 로그에 남도록)
+      let originalName = null;
+      let ownerId = null;
+      let ownerName = null;
+      let customerId = null;
+      let customerName = null;
+
+      if (documentId && collectionName) {
+        try {
+          const collection = collectionName === 'personal_files'
+            ? COLLECTIONS.PERSONAL_FILES
+            : COLLECTIONS.FILES;
+
+          const file = await db.collection(collection).findOne(
+            { _id: new ObjectId(documentId) },
+            { projection: { 'upload.originalName': 1, filename: 1, name: 1, ownerId: 1, userId: 1, customerId: 1 } }
+          );
+
+          if (file) {
+            originalName = file.upload?.originalName || file.filename || file.name || null;
+            ownerId = file.ownerId || file.userId || null;
+            customerId = file.customerId || null;
+
+            // 설계사 이름 조회
+            if (ownerId) {
+              try {
+                const ownerObjId = typeof ownerId === 'string' ? new ObjectId(ownerId) : ownerId;
+                const user = await db.collection(COLLECTIONS.USERS).findOne(
+                  { _id: ownerObjId },
+                  { projection: { name: 1 } }
+                );
+                if (user) ownerName = user.name;
+              } catch (e) { /* ignore */ }
+            }
+
+            // 고객 이름 조회
+            if (customerId) {
+              try {
+                const customerObjId = typeof customerId === 'string' ? new ObjectId(customerId) : customerId;
+                const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+                  { _id: customerObjId },
+                  { projection: { 'personal_info.name': 1 } }
+                );
+                if (customer) customerName = customer.personal_info?.name;
+              } catch (e) { /* ignore */ }
+            }
+          }
+        } catch (e) {
+          console.error('[VirusScan] 파일 정보 조회 실패:', e.message);
+        }
+      }
+
+      // 스캔 로그 저장 (파일/설계사/고객 정보 포함)
       const logEntry = {
         scanType,
         collectionName,
         documentId: documentId ? new ObjectId(documentId) : null,
         filePath,
         userId,
+        // 🔴 파일 삭제 후에도 조회 가능하도록 정보 저장
+        originalName,
+        ownerId: ownerId?.toString() || null,
+        ownerName,
+        customerId: customerId?.toString() || null,
+        customerName,
         result: {
           status,
           threatName,
