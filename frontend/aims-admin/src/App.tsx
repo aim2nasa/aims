@@ -152,6 +152,7 @@ function App() {
         { path: '/system/document-types', label: '문서 유형' },
         { path: '/system/backup', label: '백업 관리' },
         { path: '/system/shadow-monitor', label: 'Shadow Monitor' },
+        { path: '/system/virus-scan', label: '바이러스 검사' },
       ],
     },
   ];

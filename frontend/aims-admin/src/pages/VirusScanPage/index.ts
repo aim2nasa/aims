@@ -1,0 +1,1 @@
+export { VirusScanPage } from './VirusScanPage';

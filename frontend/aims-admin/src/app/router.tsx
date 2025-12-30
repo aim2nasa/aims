@@ -22,6 +22,7 @@ import { FAQsPage } from '@/pages/FAQsPage/FAQsPage';
 import { DocumentTypesPage } from '@/pages/DocumentTypesPage/DocumentTypesPage';
 import { BackupPage } from '@/pages/BackupPage';
 import { ShadowMonitorPage } from '@/pages/ShadowMonitorPage';
+import { VirusScanPage } from '@/pages/VirusScanPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -130,6 +131,10 @@ export const router = createBrowserRouter([
       {
         path: 'system/shadow-monitor',
         element: <ShadowMonitorPage />,
+      },
+      {
+        path: 'system/virus-scan',
+        element: <VirusScanPage />,
       },
     ],
   },
