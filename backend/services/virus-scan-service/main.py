@@ -447,26 +447,33 @@ async def scan_and_report(
     """파일 스캔 후 aims_api로 결과 전송"""
     result = await scanner.scan_file(full_path)
 
-    # aims_api로 결과 전송
+    # aims_api로 결과 전송 (requests 사용 - 더 안정적)
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            await client.post(
-                f"{settings.aims_api_url}/api/admin/virus-scan/result",
-                json={
-                    "documentId": document_id,
-                    "collectionName": collection_name,
-                    "filePath": original_path,
-                    "userId": user_id,
-                    "status": result.status,
-                    "threatName": result.threat_name,
-                    "clamVersion": result.clam_version,
-                    "scanDurationMs": result.scan_duration_ms,
-                    "errorMessage": result.error_message
-                },
-                headers={"X-Scan-Secret": settings.scan_secret}
-            )
+        import requests
+        response = requests.post(
+            f"{settings.aims_api_url}/api/admin/virus-scan/result",
+            json={
+                "documentId": document_id,
+                "collectionName": collection_name,
+                "filePath": original_path,
+                "userId": user_id,
+                "status": result.status,
+                "threatName": result.threat_name,
+                "clamVersion": result.clam_version,
+                "scanDurationMs": result.scan_duration_ms,
+                "errorMessage": result.error_message
+            },
+            headers={"X-Scan-Secret": settings.scan_secret},
+            timeout=30
+        )
+        if response.status_code != 200:
+            print(f"Failed to report scan result: HTTP {response.status_code} - {response.text}")
+        else:
+            print(f"Scan result reported: {document_id} -> {result.status}")
     except Exception as e:
-        print(f"Failed to report scan result: {e}")
+        import traceback
+        print(f"Failed to report scan result: {type(e).__name__}: {e}")
+        traceback.print_exc()
 
 
 async def batch_scan_task(files: List[ScanRequest]):

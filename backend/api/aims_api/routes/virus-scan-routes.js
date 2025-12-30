@@ -624,6 +624,123 @@ module.exports = function(db, authenticateJWT, requireRole, authenticateJWTWithQ
   });
 
   /**
+   * POST /api/admin/virus-scan/scan-unscanned
+   * 미스캔 파일만 스캔 시작
+   * DB에서 virusScan.status가 없는 파일들만 선별하여 스캔
+   */
+  router.post('/admin/virus-scan/scan-unscanned', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      // 미스캔 파일 조회 (virusScan.status가 없거나 pending인 파일)
+      const unscannedQuery = {
+        $or: [
+          { 'virusScan.status': { $exists: false } },
+          { 'virusScan.status': null },
+          { 'virusScan.status': 'pending' }
+        ]
+      };
+
+      // files 컬렉션에서 미스캔 파일 조회
+      const unscannedFiles = await db.collection(COLLECTIONS.FILES)
+        .find(unscannedQuery)
+        .project({ _id: 1, 'upload.destPath': 1, storagePath: 1, ownerId: 1, userId: 1 })
+        .toArray();
+
+      // personal_files 컬렉션에서 미스캔 파일 조회
+      const unscannedPersonalFiles = await db.collection(COLLECTIONS.PERSONAL_FILES)
+        .find({ ...unscannedQuery, type: 'file' })
+        .project({ _id: 1, storagePath: 1, ownerId: 1, userId: 1 })
+        .toArray();
+
+      const filesToScan = [];
+
+      // files 컬렉션 파일들
+      for (const file of unscannedFiles) {
+        const filePath = file.upload?.destPath || file.storagePath;
+        if (filePath) {
+          filesToScan.push({
+            file_path: filePath,
+            document_id: file._id.toString(),
+            collection_name: 'files',
+            user_id: file.ownerId || file.userId
+          });
+        }
+      }
+
+      // personal_files 컬렉션 파일들
+      for (const file of unscannedPersonalFiles) {
+        if (file.storagePath) {
+          filesToScan.push({
+            file_path: file.storagePath,
+            document_id: file._id.toString(),
+            collection_name: 'personal_files',
+            user_id: file.ownerId || file.userId
+          });
+        }
+      }
+
+      if (filesToScan.length === 0) {
+        return res.json({
+          success: true,
+          message: '미스캔 파일이 없습니다.',
+          data: { file_count: 0 }
+        });
+      }
+
+      console.log(`[VirusScan] 미스캔 파일 ${filesToScan.length}개 스캔 시작`);
+
+      // DB 상태를 scanning으로 업데이트
+      const fileIds = unscannedFiles.map(f => f._id);
+      const personalFileIds = unscannedPersonalFiles.map(f => f._id);
+
+      if (fileIds.length > 0) {
+        await db.collection(COLLECTIONS.FILES).updateMany(
+          { _id: { $in: fileIds } },
+          { $set: { 'virusScan.status': 'scanning' } }
+        );
+      }
+
+      if (personalFileIds.length > 0) {
+        await db.collection(COLLECTIONS.PERSONAL_FILES).updateMany(
+          { _id: { $in: personalFileIds } },
+          { $set: { 'virusScan.status': 'scanning' } }
+        );
+      }
+
+      // SSE로 스캔 시작 알림
+      broadcastVirusScanEvent('virus-scan-progress', {
+        isComplete: false,
+        totalFiles: filesToScan.length,
+        scannedFiles: 0,
+        infectedFiles: 0
+      });
+
+      // yuri에 배치 스캔 요청
+      const response = await axios.post(`${VIRUS_SCAN_SERVICE_URL}/scan/batch`, {
+        files: filesToScan
+      }, {
+        headers: { 'X-Scan-Secret': VIRUS_SCAN_SECRET },
+        timeout: 10000
+      });
+
+      res.json({
+        success: true,
+        message: `미스캔 파일 ${filesToScan.length}개 스캔이 시작되었습니다.`,
+        data: {
+          file_count: filesToScan.length,
+          ...response.data
+        }
+      });
+    } catch (error) {
+      console.error('[VirusScan] 미스캔 스캔 시작 실패:', error);
+      res.status(500).json({
+        success: false,
+        error: '미스캔 스캔 시작에 실패했습니다.',
+        details: error.message
+      });
+    }
+  });
+
+  /**
    * GET /api/admin/virus-scan/scan-progress
    * 전체 스캔 진행률 조회
    */

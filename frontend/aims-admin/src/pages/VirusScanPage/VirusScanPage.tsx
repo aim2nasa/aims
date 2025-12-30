@@ -86,6 +86,14 @@ export function VirusScanPage() {
     },
   });
 
+  // 미스캔 파일만 스캔
+  const scanUnscannedMutation = useMutation({
+    mutationFn: virusScanApi.scanUnscanned,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['virus-scan'] });
+    },
+  });
+
   // 스캔 중지
   const stopScanMutation = useMutation({
     mutationFn: virusScanApi.stopFullScan,
@@ -154,16 +162,26 @@ export function VirusScanPage() {
               스캔 중지
             </Button>
           ) : (
-            <Button
-              variant="primary"
-              onClick={() => startScanMutation.mutate()}
-              disabled={startScanMutation.isPending || status?.status === 'offline'}
-            >
-              전체 스캔
-            </Button>
+            <>
+              <Button
+                variant="primary"
+                onClick={() => scanUnscannedMutation.mutate()}
+                disabled={scanUnscannedMutation.isPending || status?.status === 'offline' || (stats?.statusCounts?.notScanned || 0) === 0}
+                title={`미스캔 파일 ${stats?.statusCounts?.notScanned || 0}개 스캔`}
+              >
+                미스캔 스캔 ({stats?.statusCounts?.notScanned || 0})
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => startScanMutation.mutate()}
+                disabled={startScanMutation.isPending || status?.status === 'offline'}
+              >
+                전체 스캔
+              </Button>
+            </>
           )}
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={() => updateDbMutation.mutate()}
             disabled={updateDbMutation.isPending}
           >

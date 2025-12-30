@@ -292,6 +292,16 @@ export const virusScanApi = {
   },
 
   /**
+   * 미스캔 파일만 스캔 시작
+   */
+  scanUnscanned: async (): Promise<{ message: string; file_count: number }> => {
+    const response = await apiClient.post<{ success: boolean; message: string; data: { file_count: number } }>(
+      '/api/admin/virus-scan/scan-unscanned'
+    );
+    return { message: response.message, file_count: response.data?.file_count || 0 };
+  },
+
+  /**
    * 전체 스캔 진행률 조회
    */
   getScanProgress: async (): Promise<ScanProgress> => {

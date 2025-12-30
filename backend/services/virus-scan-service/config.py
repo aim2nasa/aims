@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8100
 
-    # AIMS API 설정
-    aims_api_url: str = "http://tars.giize.com:3010"
+    # AIMS API 설정 (tars Tailscale IP - yuri에서 본 tars IP)
+    aims_api_url: str = "http://100.110.215.65:3010"
     scan_secret: str = os.environ.get("VIRUS_SCAN_SECRET", "aims-virus-scan-secret-key")
 
     # 파일 경로
