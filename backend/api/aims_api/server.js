@@ -7379,16 +7379,8 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       console.log(`[SSE-DocList] 문서 처리 완료 → 목록 변경 알림 전송 - userId: ${ownerIdStr}`);
     }
 
-    // 🔒 바이러스 스캔 요청 (문서 처리 완료 시)
-    if (status === 'completed' || status === 'done') {
-      try {
-        const virusScanService = require('./lib/virusScanService');
-        await virusScanService.scanAfterUpload(db, new ObjectId(documentIdStr), COLLECTIONS.FILES);
-      } catch (scanError) {
-        console.error('[VirusScan] 스캔 요청 실패 (무시):', scanError.message);
-        // 스캔 실패해도 문서 처리는 정상 완료 처리
-      }
-    }
+    // 🔒 바이러스 스캔은 full_pipeline.py (임베딩 완료 시점)에서 트리거
+    // 모든 정상 파일은 임베딩을 거치므로, 단일 소스에서 스캔 요청
 
     res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
   } catch (error) {

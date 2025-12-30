@@ -120,6 +120,13 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
       return;
     }
 
+    // 🔒 이미 스캔 요청된 파일은 스킵 (중복 요청 방지)
+    const currentStatus = doc.virusScan?.status;
+    if (currentStatus && ['pending', 'scanning', 'clean', 'infected', 'deleted'].includes(currentStatus)) {
+      console.log(`[VirusScan] 이미 스캔 처리됨 (${currentStatus}), 스킵: ${documentId}`);
+      return;
+    }
+
     // 스캔 상태 초기화
     await collection.updateOne(
       { _id: documentId },

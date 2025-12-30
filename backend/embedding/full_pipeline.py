@@ -16,6 +16,52 @@ AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
 
+# 바이러스 스캔 트리거용 webhook 설정
+PROCESSING_COMPLETE_WEBHOOK_URL = f"{AIMS_API_BASE_URL}/api/webhooks/document-processing-complete"
+N8N_WEBHOOK_API_KEY = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+
+
+def trigger_virus_scan(doc_id: str, owner_id: str) -> bool:
+    """
+    문서 처리 완료 webhook을 호출하여 바이러스 스캔을 트리거합니다.
+
+    Args:
+        doc_id: 문서 ID
+        owner_id: 문서 소유자 ID
+
+    Returns:
+        bool: 성공 여부
+    """
+    try:
+        payload = {
+            "document_id": doc_id,
+            "status": "completed",
+            "owner_id": owner_id or "unknown"
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": N8N_WEBHOOK_API_KEY
+        }
+
+        response = requests.post(
+            PROCESSING_COMPLETE_WEBHOOK_URL,
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            print(f"[VirusScan] 스캔 트리거 성공: {doc_id}")
+            return True
+        else:
+            print(f"[VirusScan] 스캔 트리거 실패: {response.status_code}")
+            return False
+
+    except Exception as e:
+        print(f"[VirusScan] 스캔 트리거 오류: {e}")
+        return False
+
 
 def log_token_usage(user_id: str, doc_id: str, token_usage: Dict) -> bool:
     """
@@ -159,6 +205,9 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     }}
                 )
                 print(f"--- 문서 ID: {doc_id} 처리 완료 (overallStatus: completed) ---")
+
+                # 바이러스 스캔 트리거 (임베딩 완료 후 자동 스캔)
+                trigger_virus_scan(doc_id, owner_id)
             except EmbeddingError as e:
                 # OpenAI API 크레딧 소진 등 명확한 임베딩 에러
                 print(f"!!! 문서 ID: {doc_id} 임베딩 에러: [{e.error_code}] {e.message} !!!")
