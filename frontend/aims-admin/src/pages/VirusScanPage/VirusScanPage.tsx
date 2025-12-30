@@ -144,7 +144,6 @@ export function VirusScanPage() {
           error: null
         });
         setIsScanStarted(true);
-        alert(`${data.file_count}개 파일 재스캔이 시작되었습니다.`);
       } else {
         alert('스캔할 파일이 없습니다.');
       }
