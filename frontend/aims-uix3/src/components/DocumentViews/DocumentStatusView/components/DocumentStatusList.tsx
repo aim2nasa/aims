@@ -1267,18 +1267,21 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 액션 버튼 */}
             <div className="status-actions">
-              <Tooltip content="상세 보기">
-                <button
-                  className="action-btn action-btn--detail"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDetailClick?.(document)
-                  }}
-                  aria-label="상세 보기"
-                >
-                  <EyeIcon />
-                </button>
-              </Tooltip>
+              {/* 상세 보기는 DEV 모드에서만 표시 */}
+              {isDevMode && (
+                <Tooltip content="상세 보기">
+                  <button
+                    className="action-btn action-btn--detail"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDetailClick?.(document)
+                    }}
+                    aria-label="상세 보기"
+                  >
+                    <EyeIcon />
+                  </button>
+                </Tooltip>
+              )}
               <Tooltip content="요약 보기">
                 <button
                   className="action-btn action-btn--summary"
