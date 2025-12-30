@@ -1410,7 +1410,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           <div className="view-status-button-container">
             <button
               type="button"
-              className="view-status-button view-status-button--secondary"
+              className="view-status-button"
               onClick={() => {
                 // 초기 상태로 되돌리기
                 setProcessingLogs([])
