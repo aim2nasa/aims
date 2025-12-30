@@ -86,7 +86,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지
           className="image-container"
           style={{
             // ⚠️ 예외: 런타임 동적 계산 (CSS로 불가능)
-            transform: `translate(${controls.position.x}px, ${controls.position.y}px) scale(${controls.scale})`,
+            transform: `translate(${controls.position.x}px, ${controls.position.y}px) scale(${controls.scale}) rotate(${controls.rotation}deg)`,
             display: isLoading || error ? 'none' : 'block'
           }}
         >
@@ -107,6 +107,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지
         onZoomIn={controls.zoomIn}
         onZoomOut={controls.zoomOut}
         onReset={controls.resetView}
+        onRotateLeft={controls.rotateLeft}
+        onRotateRight={controls.rotateRight}
         {...(onDownload ? { onDownload } : {})}
         // pageNav 없음 (이미지는 페이지 없음)
       />

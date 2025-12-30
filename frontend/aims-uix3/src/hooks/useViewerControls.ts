@@ -13,6 +13,7 @@ export interface ViewerControlsState {
   position: { x: number; y: number }
   isDragging: boolean
   isModified: boolean
+  rotation: number
 }
 
 export interface ViewerControlsActions {
@@ -20,6 +21,8 @@ export interface ViewerControlsActions {
   zoomOut: () => void
   resetView: () => void
   resetPosition: () => void
+  rotateRight: () => void
+  rotateLeft: () => void
   handleMouseDown: (e: React.MouseEvent) => void
   handleMouseMove: (e: React.MouseEvent) => void
   handleMouseUp: () => void
@@ -49,6 +52,7 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [rotation, setRotation] = useState(0)
 
   // 확대
   const zoomIn = useCallback(() => {
@@ -64,7 +68,18 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
   const resetView = useCallback(() => {
     setScale(initialScale)
     setPosition({ x: 0, y: 0 })
+    setRotation(0)
   }, [initialScale])
+
+  // 시계방향 90도 회전
+  const rotateRight = useCallback(() => {
+    setRotation(prev => (prev + 90) % 360)
+  }, [])
+
+  // 반시계방향 90도 회전
+  const rotateLeft = useCallback(() => {
+    setRotation(prev => (prev - 90 + 360) % 360)
+  }, [])
 
   // 위치만 리셋 (scale은 유지)
   const resetPosition = useCallback(() => {
@@ -101,7 +116,7 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
   }, [scale])
 
   // 뷰가 기본 상태에서 벗어났는지 확인
-  const isModified = scale !== initialScale || position.x !== 0 || position.y !== 0
+  const isModified = scale !== initialScale || position.x !== 0 || position.y !== 0 || rotation !== 0
 
   return {
     // State
@@ -109,11 +124,14 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
     position,
     isDragging,
     isModified,
+    rotation,
     // Actions
     zoomIn,
     zoomOut,
     resetView,
     resetPosition,
+    rotateRight,
+    rotateLeft,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp

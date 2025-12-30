@@ -33,6 +33,10 @@ export interface ViewerControlsProps {
   onDownload?: () => void
   /** 페이지 네비게이션 (PDF 전용, 선택적) */
   pageNav?: PageNavigation
+  /** 시계방향 회전 핸들러 (이미지 전용, 선택적) */
+  onRotateRight?: () => void
+  /** 반시계방향 회전 핸들러 (이미지 전용, 선택적) */
+  onRotateLeft?: () => void
 }
 
 /**
@@ -76,7 +80,9 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
   onZoomOut,
   onReset,
   onDownload,
-  pageNav
+  pageNav,
+  onRotateRight,
+  onRotateLeft
 }) => {
   return (
     <div
@@ -153,6 +159,34 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
             </button>
           </Tooltip>
         </div>
+
+        {/* Rotation Controls - 이미지 전용 */}
+        {(onRotateLeft || onRotateRight) && (
+          <div className="viewer-controls__section">
+            {onRotateLeft && (
+              <Tooltip content="반시계방향 회전">
+                <button
+                  className="viewer-controls__button"
+                  onClick={onRotateLeft}
+                  aria-label="반시계방향 회전"
+                >
+                  <span aria-hidden="true">↺</span>
+                </button>
+              </Tooltip>
+            )}
+            {onRotateRight && (
+              <Tooltip content="시계방향 회전">
+                <button
+                  className="viewer-controls__button"
+                  onClick={onRotateRight}
+                  aria-label="시계방향 회전"
+                >
+                  <span aria-hidden="true">↻</span>
+                </button>
+              </Tooltip>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right - Download Button */}
