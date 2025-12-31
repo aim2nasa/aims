@@ -5,6 +5,26 @@ import { ChatEvent, ApiResponse } from '../types';
 // 프로덕션: https://aims.giize.com (nginx 프록시 → 3010)
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://aims.giize.com';
 
+/**
+ * 기존 파일 해시 정보
+ */
+export interface ExistingFileHash {
+  documentId: string;
+  fileName: string;
+  fileHash: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+/**
+ * 중복 검사 결과
+ */
+export interface DuplicateCheckResult {
+  isDuplicate: boolean;
+  existingDoc?: ExistingFileHash;
+  newFileHash: string;
+}
+
 // API 에러 클래스
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -373,3 +393,222 @@ class ApiClient {
 
 // 싱글톤 인스턴스 export
 export const api = new ApiClient();
+
+// ============================================
+// 중복 파일 검사 유틸리티
+// ============================================
+
+/**
+ * 고객 문서 목록 응답 타입
+ */
+interface CustomerDocumentsResponse {
+  success?: boolean;
+  data?: {
+    customer_id?: string;
+    documents?: Array<{
+      _id: string;
+      originalName?: string;
+      filename?: string;
+      fileSize?: number;
+      uploadedAt?: string;
+      linkedAt?: string;
+    }>;
+    total?: number;
+  };
+}
+
+/**
+ * 문서 상태 응답 타입
+ */
+interface DocumentStatusResponse {
+  success?: boolean;
+  data?: {
+    raw?: {
+      meta?: {
+        file_hash?: string;
+      };
+    };
+  };
+}
+
+/**
+ * 고객의 기존 문서 해시 목록 조회
+ *
+ * @param customerId 고객 ID
+ * @returns 기존 문서 해시 목록
+ */
+export async function getCustomerFileHashes(customerId: string): Promise<ExistingFileHash[]> {
+  if (!customerId?.trim()) {
+    return [];
+  }
+
+  try {
+    // 1. 고객의 문서 목록 조회
+    const response = await api.get<CustomerDocumentsResponse>(
+      `/api/customers/${customerId}/documents`
+    );
+
+    const documents = response?.data?.documents || [];
+
+    if (documents.length === 0) {
+      return [];
+    }
+
+    // 2. 각 문서의 해시 조회 (병렬 처리)
+    // 해시가 없어도 파일명 기반 비교를 위해 정보 반환
+    const hashPromises = documents.map(async (doc): Promise<ExistingFileHash> => {
+      const fileName = doc.originalName || doc.filename || 'unknown';
+      const fileSize = doc.fileSize || 0;
+      const uploadedAt = doc.uploadedAt || doc.linkedAt || '';
+
+      try {
+        const statusResponse = await api.get<DocumentStatusResponse>(
+          `/api/documents/${doc._id}/status`
+        );
+
+        const fileHash = statusResponse?.data?.raw?.meta?.file_hash || '';
+
+        return {
+          documentId: doc._id,
+          fileName,
+          fileHash,
+          fileSize,
+          uploadedAt,
+        };
+      } catch {
+        // 해시 조회 실패 시에도 파일명 정보는 반환 (fallback용)
+        return {
+          documentId: doc._id,
+          fileName,
+          fileHash: '',
+          fileSize,
+          uploadedAt,
+        };
+      }
+    });
+
+    const results = await Promise.all(hashPromises);
+    return results;
+  } catch (error) {
+    console.error('[duplicateChecker] 고객 문서 해시 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
+ * 파일의 SHA-256 해시 계산 (React Native + Web 호환)
+ *
+ * @param fileUri 파일 URI
+ * @param mimeType 파일 MIME 타입
+ * @returns SHA-256 해시 (64자 hex string)
+ */
+export async function calculateFileHash(fileUri: string, mimeType?: string): Promise<string> {
+  try {
+    // 파일을 fetch로 읽어서 ArrayBuffer로 변환
+    const response = await fetch(fileUri);
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+
+    // SHA-256 해시 계산 (Web Crypto API)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+
+    // ArrayBuffer를 hex string으로 변환
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+  } catch (error) {
+    console.error('[duplicateChecker] 파일 해시 계산 실패:', error);
+    // 해시 계산 실패 시 빈 문자열 반환 (파일명 비교로 fallback)
+    return '';
+  }
+}
+
+/**
+ * 파일이 중복인지 확인
+ *
+ * 검사 우선순위:
+ * 1. SHA-256 해시 비교 (정확한 중복 검사)
+ * 2. 파일명 비교 (fallback - 백엔드에서 해시 미제공 시)
+ *
+ * @param file 확인할 파일 { uri, name, mimeType }
+ * @param existingHashes 기존 문서 해시 목록
+ * @returns 중복 검사 결과
+ */
+export async function checkDuplicateFile(
+  file: { uri: string; name: string; mimeType?: string },
+  existingHashes: ExistingFileHash[]
+): Promise<DuplicateCheckResult> {
+  // 파일 해시 계산
+  const newFileHash = await calculateFileHash(file.uri, file.mimeType);
+
+  // 1차: 해시 비교 (가장 정확)
+  if (newFileHash) {
+    const hashMatch = existingHashes.find(
+      (doc) => doc.fileHash && doc.fileHash === newFileHash
+    );
+
+    if (hashMatch) {
+      return {
+        isDuplicate: true,
+        existingDoc: hashMatch,
+        newFileHash,
+      };
+    }
+  }
+
+  // 2차: 파일명 비교 (fallback - 해시가 없는 기존 문서와 비교)
+  // 해시가 없는 문서들 중에서 파일명이 일치하는 것 찾기
+  const nameMatch = existingHashes.find(
+    (doc) => !doc.fileHash && doc.fileName === file.name
+  );
+
+  if (nameMatch) {
+    return {
+      isDuplicate: true,
+      existingDoc: nameMatch,
+      newFileHash: newFileHash || '',
+    };
+  }
+
+  return {
+    isDuplicate: false,
+    newFileHash: newFileHash || '',
+  };
+}
+
+/**
+ * 여러 파일의 중복 일괄 검사
+ *
+ * @param files 검사할 파일 목록
+ * @param existingHashes 기존 문서 해시 목록
+ * @returns { duplicates: 중복 파일명[], nonDuplicates: 중복 아닌 파일[] }
+ */
+export async function filterDuplicateFiles(
+  files: Array<{ uri: string; name: string; mimeType?: string }>,
+  existingHashes: ExistingFileHash[]
+): Promise<{
+  duplicates: string[];
+  nonDuplicates: Array<{ uri: string; name: string; mimeType?: string }>;
+}> {
+  const duplicates: string[] = [];
+  const nonDuplicates: Array<{ uri: string; name: string; mimeType?: string }> = [];
+
+  // 병렬로 모든 파일 해시 계산 및 비교
+  const checkPromises = files.map(async (file) => {
+    const result = await checkDuplicateFile(file, existingHashes);
+    return { file, result };
+  });
+
+  const checkResults = await Promise.all(checkPromises);
+
+  for (const { file, result } of checkResults) {
+    if (result.isDuplicate) {
+      duplicates.push(file.name);
+    } else {
+      nonDuplicates.push(file);
+    }
+  }
+
+  return { duplicates, nonDuplicates };
+}

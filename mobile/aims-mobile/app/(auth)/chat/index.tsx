@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useChatSSE } from '../../../src/hooks/useChatSSE';
 import { ChatBubble, ChatInput, AttachedFile } from '../../../src/components/chat';
-import { api } from '../../../src/services/api';
+import { api, getCustomerFileHashes, filterDuplicateFiles } from '../../../src/services/api';
 import { colors, spacing, fontSize, borderRadius, fontWeight } from '../../../src/utils/theme';
 
 // 도움말 기능 목록 (MCP 도구 100% 커버리지) - aims-uix3 동기화
@@ -209,13 +209,37 @@ export default function ChatScreen() {
     return { customer: null, extractedName: null };
   };
 
-  // 파일 업로드 실행
+  // 파일 업로드 실행 (중복 파일 필터링 포함 - aims-uix3 동일)
   const uploadFilesToCustomer = async (files: AttachedFile[], customer: { id: string; name: string }) => {
     setIsUploading(true);
-    const fileNames = files.map(f => f.name).join(', ');
     try {
+      // 🔥 1. 고객의 기존 문서 해시 조회
+      console.log('[Chat] 중복 검사 시작:', customer.name);
+      const existingHashes = await getCustomerFileHashes(customer.id);
+      console.log('[Chat] 기존 문서 수:', existingHashes.length);
+
+      // 🔥 2. 중복 파일 필터링
+      const { duplicates, nonDuplicates } = await filterDuplicateFiles(
+        files.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType })),
+        existingHashes
+      );
+
+      console.log('[Chat] 중복 파일:', duplicates);
+      console.log('[Chat] 신규 파일:', nonDuplicates.map(f => f.name));
+
+      // 🔥 3. 모두 중복인 경우
+      if (nonDuplicates.length === 0) {
+        const duplicateList = duplicates.join(', ');
+        setMessages(prev => [...prev, {
+          role: 'assistant' as const,
+          content: `⚠️ **${customer.name}** 고객에게 이미 등록된 파일입니다.\n\n중복 파일: ${duplicateList}`
+        }]);
+        return;
+      }
+
+      // 🔥 4. 중복 아닌 파일만 업로드
       const uploadResults = await Promise.all(
-        files.map(file => api.uploadDocument(
+        nonDuplicates.map(file => api.uploadDocument(
           { uri: file.uri, name: file.name, mimeType: file.mimeType },
           customer.id
         ))
@@ -233,8 +257,13 @@ export default function ChatScreen() {
         return;
       }
 
-      // 성공 메시지 표시 (채팅 내에서)
-      let successContent = `✅ **${customer.name}** 고객에게 문서가 업로드되었습니다.\n\n📎 ${fileNames}`;
+      // 🔥 5. 성공 메시지 (중복 파일 정보 포함)
+      const uploadedNames = nonDuplicates.map(f => f.name).join(', ');
+      let successContent = `✅ **${customer.name}** 고객에게 문서가 업로드되었습니다.\n\n📎 ${uploadedNames}`;
+
+      if (duplicates.length > 0) {
+        successContent += `\n\n⚠️ 중복 제외: ${duplicates.join(', ')}`;
+      }
       if (failedFiles.length > 0) {
         successContent += `\n\n❌ 업로드 실패: ${failedFiles.length}개`;
       }
