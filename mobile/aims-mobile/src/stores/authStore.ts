@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { api, API_BASE_URL } from '../services/api';
 import * as authService from '../services/authService';
 import { User } from '../types';
@@ -7,6 +8,30 @@ import { User } from '../types';
 const TOKEN_KEY = 'aims_auth_token';
 const USER_KEY = 'aims_user_data';
 const TOKEN_EXPIRY_KEY = 'aims_token_expiry';
+
+// 웹에서는 localStorage, 네이티브에서는 SecureStore 사용
+const storage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+      return;
+    }
+    await SecureStore.setItemAsync(key, value);
+  },
+  deleteItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+      return;
+    }
+    await SecureStore.deleteItemAsync(key);
+  },
+};
 
 // 토큰 만료 시간 (7일, 밀리초)
 const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
@@ -24,7 +49,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   devLogin: () => Promise<boolean>;  // 개발자 로그인
-  setAuth: (token: string, user: User) => void;  // 외부 로그인 (카카오 등)
+  setAuth: (token: string, user: User) => Promise<void>;  // 외부 로그인 (카카오 등)
   logout: () => Promise<void>;
   refreshTokenIfNeeded: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
@@ -41,9 +66,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // 앱 시작 시 저장된 토큰 로드
   initialize: async () => {
     try {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      const userJson = await SecureStore.getItemAsync(USER_KEY);
-      const expiryStr = await SecureStore.getItemAsync(TOKEN_EXPIRY_KEY);
+      const token = await storage.getItem(TOKEN_KEY);
+      const userJson = await storage.getItem(USER_KEY);
+      const expiryStr = await storage.getItem(TOKEN_EXPIRY_KEY);
 
       if (token && userJson) {
         const user = JSON.parse(userJson) as User;
@@ -94,10 +119,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // 만료 시간 계산
       const expiry = Date.now() + TOKEN_EXPIRY_MS;
 
-      // SecureStore에 저장
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, expiry.toString());
+      // 스토리지에 저장
+      await storage.setItem(TOKEN_KEY, token);
+      await storage.setItem(USER_KEY, JSON.stringify(user));
+      await storage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
 
       // API 클라이언트에 토큰 설정
       api.setToken(token);
@@ -139,10 +164,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // 만료 시간 계산
       const expiry = Date.now() + TOKEN_EXPIRY_MS;
 
-      // SecureStore에 저장
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, expiry.toString());
+      // 스토리지에 저장
+      await storage.setItem(TOKEN_KEY, token);
+      await storage.setItem(USER_KEY, JSON.stringify(user));
+      await storage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
 
       // API 클라이언트에 토큰 설정
       api.setToken(token);
@@ -164,7 +189,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   // 외부 로그인 (카카오 등) - 이미 토큰과 유저 정보가 있을 때
-  setAuth: (token: string, user: User) => {
+  setAuth: async (token: string, user: User) => {
+    const expiry = Date.now() + TOKEN_EXPIRY_MS;
+
+    // 스토리지에 저장
+    await storage.setItem(TOKEN_KEY, token);
+    await storage.setItem(USER_KEY, JSON.stringify(user));
+    await storage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
+
     api.setToken(token);
     set({
       token,
@@ -178,9 +210,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // 로그아웃
   logout: async () => {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(USER_KEY);
-      await SecureStore.deleteItemAsync(TOKEN_EXPIRY_KEY);
+      await storage.deleteItem(TOKEN_KEY);
+      await storage.deleteItem(USER_KEY);
+      await storage.deleteItem(TOKEN_EXPIRY_KEY);
       api.setToken(null);
 
       set({
@@ -198,7 +230,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // 토큰 갱신 (만료 임박 시)
   refreshTokenIfNeeded: async () => {
     try {
-      const expiryStr = await SecureStore.getItemAsync(TOKEN_EXPIRY_KEY);
+      const expiryStr = await storage.getItem(TOKEN_EXPIRY_KEY);
       if (!expiryStr) return;
 
       const expiry = parseInt(expiryStr, 10);
@@ -211,8 +243,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { token: newToken } = await authService.refreshToken();
         const newExpiry = Date.now() + TOKEN_EXPIRY_MS;
 
-        await SecureStore.setItemAsync(TOKEN_KEY, newToken);
-        await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, newExpiry.toString());
+        await storage.setItem(TOKEN_KEY, newToken);
+        await storage.setItem(TOKEN_EXPIRY_KEY, newExpiry.toString());
 
         api.setToken(newToken);
         set({ token: newToken });
@@ -231,7 +263,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (user) {
       const updatedUser = { ...user, ...userData };
       set({ user: updatedUser });
-      SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
+      storage.setItem(USER_KEY, JSON.stringify(updatedUser));
     }
   },
 

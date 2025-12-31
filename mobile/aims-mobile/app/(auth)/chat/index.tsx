@@ -10,93 +10,117 @@ import {
   Platform,
   Alert,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useChatSSE } from '../../../src/hooks/useChatSSE';
-import { ChatBubble, ChatInput, ToolIndicator } from '../../../src/components/chat';
+import { ChatBubble, ChatInput, AttachedFile } from '../../../src/components/chat';
+import { api } from '../../../src/services/api';
 import { colors, spacing, fontSize, borderRadius, fontWeight } from '../../../src/utils/theme';
 
-// MCP 도구 카테고리 및 목록 (18개) - 대화식 예시 (AI가 후속 질문)
-const TOOL_CATEGORIES = [
+// 도움말 기능 목록 (MCP 도구 100% 커버리지) - aims-uix3 동기화
+const HELP_FEATURES = [
+  // 고객 관리
   {
-    name: '고객 관리',
-    icon: 'people-outline' as const,
-    tools: [
-      { name: 'search_customers', label: '고객 검색', icon: 'search-outline' as const, example: '고객 찾아줘' },
-      { name: 'get_customer', label: '고객 상세', icon: 'person-outline' as const, example: '고객 정보 알려줘' },
-      { name: 'create_customer', label: '고객 등록', icon: 'person-add-outline' as const, example: '고객 등록해줘' },
-      { name: 'update_customer', label: '정보 수정', icon: 'create-outline' as const, example: '연락처 수정해줘' },
-    ],
+    icon: '🔍', title: '고객 조회', desc: '고객 검색 및 상세 정보 조회',
+    examples: [
+      '최근 등록한 고객 보여줘',
+      '김씨 성을 가진 고객 찾아줘',
+      '서울 지역 고객 목록 보여줘',
+      '법인 고객 목록 보여줘',
+      '휴면 고객 목록 조회해줘',
+      '고객 상세 정보 알려줘',
+    ]
   },
   {
-    name: '계약 관리',
-    icon: 'document-text-outline' as const,
-    tools: [
-      { name: 'list_contracts', label: '계약 목록', icon: 'list-outline' as const, example: '계약 목록 보여줘' },
-      { name: 'get_contract_details', label: '계약 상세', icon: 'document-outline' as const, example: '계약 상세 보여줘' },
-    ],
+    icon: '➕', title: '고객 등록', desc: '새 고객 추가',
+    examples: [
+      '새 고객 등록해줘',
+      '법인 고객 등록해줘',
+      '개인 고객 등록해줘',
+    ]
   },
   {
-    name: '일정',
-    icon: 'calendar-outline' as const,
-    tools: [
-      { name: 'find_birthday_customers', label: '생일 고객', icon: 'gift-outline' as const, example: '생일 고객 알려줘' },
-      { name: 'find_expiring_contracts', label: '만기 예정', icon: 'alarm-outline' as const, example: '만기 예정 계약 알려줘' },
-    ],
+    icon: '📁', title: '고객별 문서', desc: '특정 고객의 문서 목록',
+    examples: [
+      '고객 문서 등록해줘',
+      '고객 문서 목록 보여줘',
+      '고객 최근 업로드 문서 보여줘',
+    ]
   },
   {
-    name: '문서',
-    icon: 'folder-outline' as const,
-    tools: [
-      { name: 'search_documents', label: 'AI 검색', icon: 'search-circle-outline' as const, example: '문서 검색해줘' },
-      { name: 'get_document', label: '문서 상세', icon: 'document-attach-outline' as const, example: '문서 보여줘' },
-      { name: 'list_customer_documents', label: '고객별 문서', icon: 'documents-outline' as const, example: '문서 목록 보여줘' },
-    ],
+    icon: '✏️', title: '고객 수정', desc: '고객 연락처, 주소 등 수정',
+    examples: [
+      '고객 전화번호 수정해줘',
+      '고객 이메일 수정해줘',
+      '고객 주소 변경해줘',
+    ]
   },
+  // 계약 관리
   {
-    name: '메모',
-    icon: 'create-outline' as const,
-    tools: [
-      { name: 'add_customer_memo', label: '메모 추가', icon: 'add-circle-outline' as const, example: '메모 추가해줘' },
-      { name: 'list_customer_memos', label: '메모 조회', icon: 'reader-outline' as const, example: '메모 보여줘' },
-      { name: 'delete_customer_memo', label: '메모 삭제', icon: 'trash-outline' as const, example: '메모 삭제해줘' },
-    ],
+    icon: '📄', title: '계약 조회', desc: '목록, 상세, 피보험자 조회',
+    examples: [
+      '전체 계약 목록 보여줘',
+      '고객 계약 현황 알려줘',
+      '종신보험 계약만 보여줘',
+      '계약 상세 정보 보여줘',
+    ]
   },
+  // 생일
   {
-    name: '분석',
-    icon: 'analytics-outline' as const,
-    tools: [
-      { name: 'get_statistics', label: '통계', icon: 'bar-chart-outline' as const, example: '통계 보여줘' },
-      { name: 'get_customer_network', label: '관계 조회', icon: 'git-network-outline' as const, example: '가족 관계 보여줘' },
-    ],
+    icon: '🎂', title: '생일 고객', desc: '특정 월/일의 생일 고객 조회',
+    examples: [
+      '이번 달 생일 고객 알려줘',
+      '오늘 생일인 고객 있어?',
+      '다음 주 생일인 고객 보여줘',
+    ]
   },
+  // 문서 검색
   {
-    name: '상품',
-    icon: 'pricetag-outline' as const,
-    tools: [
-      { name: 'search_products', label: '상품 검색', icon: 'search-outline' as const, example: '상품 검색해줘' },
-      { name: 'get_product_details', label: '상품 상세', icon: 'information-circle-outline' as const, example: '상품 정보 보여줘' },
-    ],
+    icon: '🔎', title: '문서 검색', desc: '키워드 + AI 의미 통합 검색',
+    examples: [
+      '퇴직연금 관련 서류 찾아줘',
+      '자동차보험 문서 검색해줘',
+      '청구서 관련 문서 찾아줘',
+    ]
+  },
+  // 메모
+  {
+    icon: '📝', title: '고객 메모', desc: '메모 추가 및 조회',
+    examples: [
+      '고객 메모 추가해줘',
+      '고객 메모 보여줘',
+      '메모 삭제해줘',
+    ]
+  },
+  // 관계
+  {
+    icon: '🔗', title: '고객 관계', desc: '관계 조회 및 등록',
+    examples: [
+      '고객 관계 보여줘',
+      '가족관계 조회해줘',
+      '관계 등록해줘',
+    ]
   },
 ];
 
 export default function ChatScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  // 각 기능별 현재 예시 인덱스 (페이지네이션용)
+  const [exampleIndices, setExampleIndices] = useState<number[]>(
+    () => HELP_FEATURES.map(() => 0)
+  );
   const scrollViewRef = useRef<ScrollView>(null);
 
   const {
     messages,
     isStreaming,
     streamingContent,
-    activeTools,
-    currentTool,
     error,
     sendMessage,
     setMessages,
     setSessionId,
-    abort,
     clearError,
   } = useChatSSE();
 
@@ -127,10 +151,20 @@ export default function ChatScreen() {
     };
   }, []);
 
-  // 도구 예시 클릭
-  const handleToolPress = (example: string) => {
+  // 예시 클릭 - 메시지 전송
+  const handleExamplePress = (example: string) => {
     setShowWelcome(false);
     sendMessage(example);
+  };
+
+  // 예시 넘기기 (페이지네이션)
+  const handleNextExample = (featureIdx: number) => {
+    setExampleIndices(prev => {
+      const newIndices = [...prev];
+      const feature = HELP_FEATURES[featureIdx];
+      newIndices[featureIdx] = (newIndices[featureIdx] + 1) % feature.examples.length;
+      return newIndices;
+    });
   };
 
   // 바로 채팅하기
@@ -145,12 +179,140 @@ export default function ChatScreen() {
     setShowWelcome(true);
   };
 
-  // 메시지 전송
-  const handleSend = (content: string) => {
+  // 파일 업로드 상태
+  const [isUploading, setIsUploading] = useState(false);
+  // 대기 중인 파일 (고객명 입력 대기)
+  const [pendingFiles, setPendingFiles] = useState<AttachedFile[]>([]);
+
+  // 최근 메시지에서 고객명 자동 추출 (aims-uix3 동일)
+  const extractCustomerFromMessages = async (): Promise<{ id: string; name: string } | null> => {
+    // 1. AI 응답에서 "{고객명} 고객 문서를 첨부해주세요" 패턴 추출
+    const assistantMsgs = [...messages].reverse().filter(m => m.role === 'assistant');
+    for (const msg of assistantMsgs) {
+      const attachMatch = msg.content.match(/([가-힣a-zA-Z0-9]{2,20})\s*고객\s*문서를\s*첨부해주세요/);
+      if (attachMatch) {
+        const customerName = attachMatch[1];
+        console.log('[Chat] AI 응답에서 고객명 추출:', customerName);
+        const customer = await api.findCustomerByName(customerName);
+        if (customer) return customer;
+        break; // AI가 언급한 고객을 못 찾으면 다른 메시지로 fallback하지 않음
+      }
+    }
+
+    // 2. 가장 최근 user 메시지에서 추출
+    const latestUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (latestUserMsg) {
+      const matches = latestUserMsg.content.match(/([가-힣a-zA-Z0-9]{2,20})/g) || [];
+      for (const name of matches) {
+        const customer = await api.findCustomerByName(name);
+        if (customer) {
+          console.log('[Chat] 최근 user 메시지에서 고객 찾음:', name);
+          return customer;
+        }
+      }
+    }
+    return null;
+  };
+
+  // 파일 업로드 실행
+  const uploadFilesToCustomer = async (files: AttachedFile[], customer: { id: string; name: string }) => {
+    setIsUploading(true);
+    const fileNames = files.map(f => f.name).join(', ');
+    try {
+      const uploadResults = await Promise.all(
+        files.map(file => api.uploadDocument(
+          { uri: file.uri, name: file.name, mimeType: file.mimeType },
+          customer.id
+        ))
+      );
+
+      const successFiles = uploadResults.filter(r => r.success);
+      const failedFiles = uploadResults.filter(r => !r.success);
+
+      if (successFiles.length === 0) {
+        // 업로드 실패 메시지
+        setMessages(prev => [...prev, {
+          role: 'assistant' as const,
+          content: `❌ 파일 업로드에 실패했습니다.\n\n다시 시도해주세요.`
+        }]);
+        return;
+      }
+
+      // 성공 메시지 표시 (채팅 내에서)
+      let successContent = `✅ **${customer.name}** 고객에게 문서가 업로드되었습니다.\n\n📎 ${fileNames}`;
+      if (failedFiles.length > 0) {
+        successContent += `\n\n❌ 업로드 실패: ${failedFiles.length}개`;
+      }
+      setMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: successContent
+      }]);
+    } catch (error) {
+      console.error('[Chat] 파일 업로드 오류:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: `❌ 파일 업로드 중 오류가 발생했습니다.`
+      }]);
+    } finally {
+      setIsUploading(false);
+      setPendingFiles([]);
+    }
+  };
+
+  // 메시지 전송 (파일 첨부 포함) - aims-uix3 동일 로직
+  const handleSend = async (content: string, files?: AttachedFile[]) => {
     if (showWelcome) {
       setShowWelcome(false);
     }
-    sendMessage(content);
+
+    // 🔥 Case 1: 대기 중인 파일이 있고 사용자가 고객명 입력
+    if (pendingFiles.length > 0 && content.trim()) {
+      const customerName = content.trim();
+      console.log('[Chat] 대기 파일 있음, 고객명 검색:', customerName);
+
+      // 사용자 메시지 표시
+      setMessages(prev => [...prev, { role: 'user' as const, content: customerName }]);
+
+      const customer = await api.findCustomerByName(customerName);
+      if (customer) {
+        await uploadFilesToCustomer(pendingFiles, customer);
+      } else {
+        // 고객 못 찾음 - 다시 질문
+        setMessages(prev => [...prev, {
+          role: 'assistant' as const,
+          content: `❌ **"${customerName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요.\n\n예: "홍길동", "라이콘코리아"`
+        }]);
+      }
+      return;
+    }
+
+    // 🔥 Case 2: 새 파일 첨부
+    if (files && files.length > 0) {
+      const fileNames = files.map(f => f.name).join(', ');
+      console.log('[Chat] 새 파일 첨부:', fileNames);
+
+      // 먼저 최근 메시지에서 고객 자동 추출 시도
+      const customer = await extractCustomerFromMessages();
+      if (customer) {
+        console.log('[Chat] 자동 추출된 고객:', customer.name);
+        await uploadFilesToCustomer(files, customer);
+        return;
+      }
+
+      // 고객 못 찾음 - 파일 대기 상태로 전환하고 질문
+      console.log('[Chat] 고객 못 찾음, 파일 대기 상태로 전환');
+      setPendingFiles(files);
+      setMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: `📎 **첨부 파일:** ${fileNames}\n\n어떤 고객에게 업로드할까요? 고객명을 입력해주세요.\n\n예: "홍길동", "라이콘코리아"`
+      }]);
+      return;
+    }
+
+    // 🔥 Case 3: 일반 메시지 (파일 없음)
+    if (content.trim()) {
+      sendMessage(content);
+    }
   };
 
   // 음성 버튼
@@ -158,7 +320,7 @@ export default function ChatScreen() {
     router.push('/(auth)/voice');
   };
 
-  // 환영 화면 렌더링
+  // 환영 화면 렌더링 (aims-uix3 스타일)
   const renderWelcome = () => (
     <>
       {/* 환영 메시지 */}
@@ -189,43 +351,50 @@ export default function ChatScreen() {
         <View style={styles.divider} />
       </View>
 
-      {/* 기능 카테고리 */}
-      {TOOL_CATEGORIES.map((category, categoryIndex) => (
-        <View key={category.name} style={styles.categoryContainer}>
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() => setSelectedCategory(
-              selectedCategory === categoryIndex ? null : categoryIndex
-            )}
-          >
-            <View style={styles.categoryLeft}>
-              <Ionicons name={category.icon} size={18} color={colors.primary} />
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Text style={styles.categoryCount}>{category.tools.length}</Text>
-            </View>
-            <Ionicons
-              name={selectedCategory === categoryIndex ? 'chevron-up' : 'chevron-down'}
-              size={18}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
+      {/* 기능 카드 그리드 (aims-uix3 스타일) */}
+      <View style={styles.featuresGrid}>
+        {HELP_FEATURES.map((feature, featureIdx) => {
+          const currentExampleIdx = exampleIndices[featureIdx];
+          const currentExample = feature.examples[currentExampleIdx];
+          const hasMultipleExamples = feature.examples.length > 1;
 
-          {selectedCategory === categoryIndex && (
-            <View style={styles.toolsGrid}>
-              {category.tools.map((tool) => (
+          return (
+            <View key={feature.title} style={styles.featureCard}>
+              {/* 헤더: 아이콘 + 제목 */}
+              <View style={styles.featureHeader}>
+                <Text style={styles.featureIcon}>{feature.icon}</Text>
+                <View style={styles.featureTitleWrap}>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  <Text style={styles.featureDesc}>{feature.desc}</Text>
+                </View>
+              </View>
+
+              {/* 예시 버튼 */}
+              <TouchableOpacity
+                style={styles.exampleButton}
+                onPress={() => handleExamplePress(currentExample)}
+              >
+                <Text style={styles.exampleText} numberOfLines={1}>
+                  "{currentExample}"
+                </Text>
+              </TouchableOpacity>
+
+              {/* 예시 넘기기 버튼 */}
+              {hasMultipleExamples && (
                 <TouchableOpacity
-                  key={tool.name}
-                  style={styles.toolCard}
-                  onPress={() => handleToolPress(tool.example)}
+                  style={styles.nextExampleButton}
+                  onPress={() => handleNextExample(featureIdx)}
                 >
-                  <Ionicons name={tool.icon} size={18} color={colors.primary} />
-                  <Text style={styles.toolLabel}>{tool.label}</Text>
+                  <Text style={styles.nextExampleText}>
+                    다른 예시 ({currentExampleIdx + 1}/{feature.examples.length})
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
                 </TouchableOpacity>
-              ))}
+              )}
             </View>
-          )}
-        </View>
-      ))}
+          );
+        })}
+      </View>
     </>
   );
 
@@ -244,9 +413,19 @@ export default function ChatScreen() {
         />
       )}
 
-      {/* 도구 사용 표시 */}
-      {activeTools.length > 0 && (
-        <ToolIndicator tools={activeTools} currentTool={currentTool} />
+      {/* 로딩 인디케이터 (도구 사용 시 표시하지 않음 - aims-uix3 스타일) */}
+      {isStreaming && !streamingContent && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
+
+      {/* 업로드 중 표시 */}
+      {isUploading && (
+        <View style={styles.uploadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.uploadingText}>파일 업로드 중...</Text>
+        </View>
       )}
     </>
   );
@@ -260,11 +439,18 @@ export default function ChatScreen() {
       >
         {/* 헤더 */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          {/* 타이틀 클릭 시 홈으로 */}
+          <TouchableOpacity style={styles.headerLeft} onPress={handleNewChat}>
             <Ionicons name="chatbubble-ellipses" size={24} color={colors.primary} />
             <Text style={styles.headerTitle}>AI 어시스턴트</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerRight}>
+            {/* 홈 버튼 (채팅 중일 때만 표시) */}
+            {(messages.length > 0 || !showWelcome) && (
+              <TouchableOpacity style={styles.headerButton} onPress={handleNewChat}>
+                <Ionicons name="home-outline" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
               <Ionicons name="time-outline" size={22} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -289,12 +475,44 @@ export default function ChatScreen() {
           {showWelcome && messages.length === 0 ? renderWelcome() : renderChat()}
         </ScrollView>
 
+        {/* 대기 중인 파일 배너 */}
+        {pendingFiles.length > 0 && (
+          <View style={styles.pendingFilesBanner}>
+            <View style={styles.pendingFilesInfo}>
+              <Ionicons name="document-attach" size={18} color={colors.primary} />
+              <Text style={styles.pendingFilesText}>
+                {pendingFiles.length}개 파일 대기 중
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.pendingFilesCancelButton}
+              onPress={() => {
+                setPendingFiles([]);
+                setMessages(prev => [...prev, {
+                  role: 'assistant' as const,
+                  content: '📎 파일 첨부가 취소되었습니다.'
+                }]);
+              }}
+            >
+              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              <Text style={styles.pendingFilesCancelText}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* 입력창 */}
         <ChatInput
           onSend={handleSend}
           onVoice={handleVoice}
-          isLoading={isStreaming}
-          disabled={isStreaming}
+          isLoading={isStreaming || isUploading}
+          disabled={isStreaming || isUploading}
+          placeholder={
+            isUploading
+              ? '업로드 중...'
+              : pendingFiles.length > 0
+                ? '고객명을 입력하세요 (예: 홍길동)'
+                : undefined
+          }
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -410,52 +628,112 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginHorizontal: spacing.md,
   },
-  categoryContainer: {
-    marginBottom: spacing.sm,
+  // 기능 카드 그리드 (aims-uix3 스타일)
+  featuresGrid: {
+    gap: spacing.sm,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  featureCard: {
     backgroundColor: colors.backgroundSecondary,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
+    marginBottom: spacing.xs,
   },
-  categoryLeft: {
+  featureHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
   },
-  categoryName: {
+  featureIcon: {
+    fontSize: 24,
+    marginRight: spacing.sm,
+  },
+  featureTitleWrap: {
+    flex: 1,
+  },
+  featureTitle: {
     fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
+    fontWeight: fontWeight.semibold,
     color: colors.text,
   },
-  categoryCount: {
+  featureDesc: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
-    backgroundColor: colors.backgroundTertiary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.full,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
-  toolsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.sm,
-    gap: spacing.sm,
-  },
-  toolCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  exampleButton: {
     backgroundColor: colors.backgroundTertiary,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
+  },
+  exampleText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontStyle: 'italic',
+  },
+  nextExampleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  nextExampleText: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+  },
+  // 로딩 인디케이터
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+  },
+  // 업로드 중 표시
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: borderRadius.lg,
+    marginVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  uploadingText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  // 대기 중인 파일 배너
+  pendingFilesBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.backgroundSecondary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  pendingFilesInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.xs,
   },
-  toolLabel: {
+  pendingFilesText: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.primary,
+    fontWeight: fontWeight.medium,
+  },
+  pendingFilesCancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    padding: spacing.xs,
+  },
+  pendingFilesCancelText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
   },
 });

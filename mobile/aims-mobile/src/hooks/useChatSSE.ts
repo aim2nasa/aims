@@ -2,6 +2,9 @@ import { useState, useRef, useCallback } from 'react';
 import { ChatMessage, ChatEvent } from '../types';
 import { api } from '../services/api';
 
+// React.Dispatch<SetStateAction<T>> 와 동일한 타입
+type SetMessagesAction = ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[]);
+
 interface UseChatSSEReturn {
   messages: ChatMessage[];
   isStreaming: boolean;
@@ -13,7 +16,7 @@ interface UseChatSSEReturn {
   lastUsage: ChatEvent['usage'] | null;
 
   sendMessage: (content: string) => Promise<void>;
-  setMessages: (messages: ChatMessage[]) => void;
+  setMessages: (action: SetMessagesAction) => void;
   setSessionId: (id: string | null) => void;
   abort: () => void;
   clearError: () => void;
