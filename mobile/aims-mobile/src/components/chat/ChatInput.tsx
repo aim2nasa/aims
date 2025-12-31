@@ -24,7 +24,8 @@ export interface AttachedFile {
 }
 
 interface ChatInputProps {
-  onSend: (message: string, files?: AttachedFile[]) => void;
+  onSend: (message: string) => void;
+  onFilesSelected?: (files: AttachedFile[]) => void; // 파일 선택 즉시 호출
   onVoice?: () => void;
   isLoading?: boolean;
   placeholder?: string;
@@ -33,13 +34,13 @@ interface ChatInputProps {
 
 export function ChatInput({
   onSend,
+  onFilesSelected,
   onVoice,
   isLoading = false,
   placeholder = '메시지를 입력하세요...',
   disabled = false,
 }: ChatInputProps) {
   const [text, setText] = useState('');
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   // 웹에서 파일 피커 열 때 텍스트가 사라지는 버그 방지용 ref
   const textRef = useRef('');
@@ -53,12 +54,19 @@ export function ChatInput({
   const handleSend = () => {
     // 웹에서 state가 사라질 수 있으므로 ref에서도 확인
     const currentText = text || textRef.current;
-    if ((currentText.trim() || attachedFiles.length > 0) && !isLoading && !disabled) {
-      console.log('[ChatInput] 전송:', currentText, 'files:', attachedFiles.length);
-      onSend(currentText.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
+    if (currentText.trim() && !isLoading && !disabled) {
+      console.log('[ChatInput] 전송:', currentText);
+      onSend(currentText.trim());
       setText('');
       textRef.current = '';
-      setAttachedFiles([]);
+    }
+  };
+
+  // 🔥 파일 선택 완료 시 즉시 부모에게 전달 (aims-uix3 동일)
+  const handleFilesReady = (files: AttachedFile[]) => {
+    if (files.length > 0 && onFilesSelected) {
+      console.log('[ChatInput] 🚀 파일 선택 즉시 업로드 시작:', files.map(f => f.name));
+      onFilesSelected(files);
     }
   };
 
@@ -76,19 +84,17 @@ export function ChatInput({
         mediaTypes: ['images'],
         allowsMultipleSelection: true,
         quality: 0.8,
-        selectionLimit: 5 - attachedFiles.length,
+        selectionLimit: 5,
       });
 
       if (!result.canceled && result.assets) {
-        const newFiles: AttachedFile[] = result.assets.map((asset, idx) => ({
+        const newFiles: AttachedFile[] = result.assets.slice(0, 5).map((asset, idx) => ({
           uri: asset.uri,
           name: asset.fileName || `image_${Date.now()}_${idx}.jpg`,
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
         }));
-
-        const totalFiles = [...attachedFiles, ...newFiles].slice(0, 5);
-        setAttachedFiles(totalFiles);
+        handleFilesReady(newFiles);
       }
     } catch (error) {
       console.error('Image picker error:', error);
@@ -117,8 +123,7 @@ export function ChatInput({
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
         };
-
-        setAttachedFiles(prev => [...prev, newFile].slice(0, 5));
+        handleFilesReady([newFile]);
       }
     } catch (error) {
       console.error('Camera error:', error);
@@ -135,19 +140,17 @@ export function ChatInput({
       });
 
       if (!result.canceled && result.assets) {
-        const newFiles: AttachedFile[] = result.assets.map(asset => ({
+        const newFiles: AttachedFile[] = result.assets.slice(0, 5).map(asset => ({
           uri: asset.uri,
           name: asset.name,
           size: asset.size,
           mimeType: asset.mimeType,
         }));
 
-        const totalFiles = [...attachedFiles, ...newFiles].slice(0, 5);
-        setAttachedFiles(totalFiles);
-
-        if (attachedFiles.length + newFiles.length > 5) {
+        if (result.assets.length > 5) {
           Alert.alert('알림', '파일은 최대 5개까지 첨부할 수 있습니다.');
         }
+        handleFilesReady(newFiles);
       }
     } catch (error) {
       console.error('File picker error:', error);
@@ -170,12 +173,7 @@ export function ChatInput({
     }, 100);
   };
 
-  // 첨부 파일 제거
-  const removeFile = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const canSend = (text.trim().length > 0 || attachedFiles.length > 0) && !isLoading && !disabled;
+  const canSend = text.trim().length > 0 && !isLoading && !disabled;
 
   return (
     <View style={styles.container}>
@@ -227,38 +225,19 @@ export function ChatInput({
         </Pressable>
       </Modal>
 
-      {/* 첨부 파일 미리보기 */}
-      {attachedFiles.length > 0 && (
-        <View style={styles.attachedFilesContainer}>
-          {attachedFiles.map((file, index) => (
-            <View key={index} style={styles.attachedFile}>
-              <Ionicons
-                name={file.mimeType?.startsWith('image/') ? 'image' : 'document'}
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={styles.attachedFileName} numberOfLines={1}>
-                {file.name}
-              </Text>
-              <TouchableOpacity onPress={() => removeFile(index)}>
-                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      )}
+      {/* 첨부 파일 미리보기는 부모 컴포넌트(pendingFiles)에서 처리 */}
 
       <View style={styles.inputWrapper}>
         {/* 첨부 버튼 */}
         <TouchableOpacity
           style={styles.attachButton}
           onPress={handleAttach}
-          disabled={disabled || isLoading || attachedFiles.length >= 5}
+          disabled={disabled || isLoading}
         >
           <Ionicons
             name="attach"
             size={24}
-            color={disabled || attachedFiles.length >= 5 ? colors.textMuted : colors.textSecondary}
+            color={disabled ? colors.textMuted : colors.textSecondary}
           />
         </TouchableOpacity>
 
@@ -266,7 +245,7 @@ export function ChatInput({
           style={styles.input}
           value={text}
           onChangeText={handleTextChange}
-          placeholder={attachedFiles.length > 0 ? '고객명을 입력하고 전송하세요 (예: 홍길동)' : placeholder}
+          placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
@@ -326,28 +305,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.background,
-  },
-  // 첨부 파일 미리보기
-  attachedFilesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  attachedFile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    gap: spacing.xs,
-    maxWidth: '48%',
-  },
-  attachedFileName: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    color: colors.text,
   },
   inputWrapper: {
     flexDirection: 'row',

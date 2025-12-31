@@ -254,8 +254,46 @@ export default function ChatScreen() {
     }
   };
 
-  // 메시지 전송 (파일 첨부 포함) - aims-uix3 동일 로직
-  const handleSend = async (content: string, files?: AttachedFile[]) => {
+  // 🔥 파일 선택 즉시 업로드 시작 (aims-uix3 동일 - handleFileSelect)
+  const handleFilesSelected = async (files: AttachedFile[]) => {
+    if (showWelcome) {
+      setShowWelcome(false);
+    }
+
+    const fileNames = files.map(f => f.name).join(', ');
+    console.log('[Chat] 🚀 파일 선택 즉시 업로드 시작:', fileNames);
+
+    // 먼저 최근 메시지에서 고객 자동 추출 시도
+    const { customer, extractedName } = await extractCustomerFromMessages();
+    if (customer) {
+      // AI 응답에서 고객명 추출 성공 + 고객 검색도 성공
+      console.log('[Chat] 자동 추출된 고객:', customer.name);
+      await uploadFilesToCustomer(files, customer);
+      return;
+    }
+
+    if (extractedName) {
+      // AI 응답에서 고객명은 추출했지만 검색 실패
+      console.log('[Chat] AI가 언급한 고객을 찾을 수 없음:', extractedName);
+      setPendingFiles(files);
+      setMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: `📎 **첨부 파일:** ${fileNames}\n\n❌ **"${extractedName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요. (${MAX_SEARCH_ATTEMPTS}회 남음)`
+      }]);
+      return;
+    }
+
+    // AI 응답에 고객명 패턴 없음 - 파일 대기 상태로 전환하고 질문
+    console.log('[Chat] AI 응답에 고객명 없음, 파일 대기 상태로 전환');
+    setPendingFiles(files);
+    setMessages(prev => [...prev, {
+      role: 'assistant' as const,
+      content: `📎 **첨부 파일:** ${fileNames}\n\n어떤 고객에게 업로드할까요? 고객명을 입력해주세요.\n\n예: "홍길동", "라이콘코리아"`
+    }]);
+  };
+
+  // 메시지 전송 - aims-uix3 동일 로직
+  const handleSend = async (content: string) => {
     if (showWelcome) {
       setShowWelcome(false);
     }
@@ -299,42 +337,7 @@ export default function ChatScreen() {
       return;
     }
 
-    // 🔥 Case 2: 새 파일 첨부
-    if (files && files.length > 0) {
-      const fileNames = files.map(f => f.name).join(', ');
-      console.log('[Chat] 새 파일 첨부:', fileNames);
-
-      // 먼저 최근 메시지에서 고객 자동 추출 시도
-      const { customer, extractedName } = await extractCustomerFromMessages();
-      if (customer) {
-        // AI 응답에서 고객명 추출 성공 + 고객 검색도 성공
-        console.log('[Chat] 자동 추출된 고객:', customer.name);
-        await uploadFilesToCustomer(files, customer);
-        return;
-      }
-
-      if (extractedName) {
-        // AI 응답에서 고객명은 추출했지만 검색 실패
-        console.log('[Chat] AI가 언급한 고객을 찾을 수 없음:', extractedName);
-        setPendingFiles(files);
-        setMessages(prev => [...prev, {
-          role: 'assistant' as const,
-          content: `📎 **첨부 파일:** ${fileNames}\n\n❌ **"${extractedName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요. (${MAX_SEARCH_ATTEMPTS}회 남음)`
-        }]);
-        return;
-      }
-
-      // AI 응답에 고객명 패턴 없음 - 파일 대기 상태로 전환하고 질문
-      console.log('[Chat] AI 응답에 고객명 없음, 파일 대기 상태로 전환');
-      setPendingFiles(files);
-      setMessages(prev => [...prev, {
-        role: 'assistant' as const,
-        content: `📎 **첨부 파일:** ${fileNames}\n\n어떤 고객에게 업로드할까요? 고객명을 입력해주세요.\n\n예: "홍길동", "라이콘코리아"`
-      }]);
-      return;
-    }
-
-    // 🔥 Case 3: 일반 메시지 (파일 없음)
+    // 🔥 Case 2: 일반 메시지 (파일 없음)
     if (content.trim()) {
       sendMessage(content);
     }
@@ -529,6 +532,7 @@ export default function ChatScreen() {
         {/* 입력창 */}
         <ChatInput
           onSend={handleSend}
+          onFilesSelected={handleFilesSelected}
           onVoice={handleVoice}
           isLoading={isStreaming || isUploading}
           disabled={isStreaming || isUploading}
