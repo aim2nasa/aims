@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { ChatEvent, ApiResponse } from '../types';
 
 // API 기본 URL (환경 변수 또는 기본값)
@@ -222,19 +223,12 @@ class ApiClient {
     return response.json();
   }
 
-  // 문서 업로드 (React Native용)
+  // 문서 업로드 (React Native + Web 호환)
   async uploadDocument(
     file: { uri: string; name: string; mimeType?: string },
     customerId?: string
   ): Promise<{ success: boolean; docId?: string; error?: string }> {
     const formData = new FormData();
-
-    // React Native에서 파일 추가 방식
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: file.mimeType || 'application/octet-stream',
-    } as any);
 
     // 토큰에서 userId 추출 (JWT 디코드)
     let userId = 'mobile-user';
@@ -246,16 +240,37 @@ class ApiClient {
         console.warn('Failed to decode JWT for userId');
       }
     }
+
+    const UPLOAD_URL = `${API_BASE_URL}/shadow/docprep-main`;
+    console.log(`[API] 📤 업로드 시작: ${file.name} (userId: ${userId}, customerId: ${customerId || 'none'}, platform: ${Platform.OS})`);
+
+    try {
+      // 웹에서는 blob URI를 실제 파일로 변환
+      if (Platform.OS === 'web') {
+        const response = await fetch(file.uri);
+        const blob = await response.blob();
+        const webFile = new File([blob], file.name, { type: file.mimeType || 'application/octet-stream' });
+        formData.append('file', webFile);
+        console.log('[API] 웹 파일 변환 완료:', webFile.name, webFile.size, webFile.type);
+      } else {
+        // React Native에서 파일 추가 방식
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType || 'application/octet-stream',
+        } as any);
+      }
+    } catch (e) {
+      console.error('[API] 파일 변환 실패:', e);
+      return { success: false, error: '파일 변환 실패' };
+    }
+
     formData.append('userId', userId);
 
     // 고객 ID가 있으면 추가
     if (customerId) {
       formData.append('customerId', customerId);
     }
-
-    const UPLOAD_URL = `${API_BASE_URL}/shadow/docprep-main`;
-
-    console.log(`[API] 📤 업로드 시작: ${file.name} (userId: ${userId}, customerId: ${customerId || 'none'})`);
 
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
@@ -278,7 +293,7 @@ class ApiClient {
             console.error(`[API] ❌ 업로드 실패: HTTP ${xhr.status}`, result);
             resolve({
               success: false,
-              error: result.message || `HTTP ${xhr.status}`,
+              error: result.message || result.detail?.[0]?.msg || `HTTP ${xhr.status}`,
             });
           }
         } catch (e) {
@@ -296,7 +311,7 @@ class ApiClient {
     });
   }
 
-  // 고객 검색 (이름으로)
+  // 고객 검색 (이름으로) - aims-uix3 동일 로직
   async findCustomerByName(name: string): Promise<{ id: string; name: string } | null> {
     console.log('[API] 고객 검색 시작:', name);
     try {
@@ -305,22 +320,47 @@ class ApiClient {
         .replace(/고객|문서|를|을|에게|첨부|해줘|등록|보여줘/g, '')
         .trim();
 
+      if (!cleanName) {
+        console.log('[API] 정제 후 빈 문자열');
+        return null;
+      }
+
       console.log('[API] 정제된 검색어:', cleanName);
 
-      const response = await this.get<{ customers: Array<{ _id: string; name: string }> }>(
-        `/api/customers?search=${encodeURIComponent(cleanName)}&limit=5`
-      );
+      const response = await this.get<{
+        success?: boolean;
+        data?: {
+          customers: Array<{
+            _id: string;
+            name?: string;
+            personal_info?: { name?: string };
+          }>;
+        };
+        customers?: Array<{
+          _id: string;
+          name?: string;
+          personal_info?: { name?: string };
+        }>;
+      }>(`/api/customers?search=${encodeURIComponent(cleanName)}&limit=5`);
 
       console.log('[API] 고객 검색 응답:', JSON.stringify(response));
 
-      if (response.customers && response.customers.length > 0) {
-        // 정확히 일치하는 고객 우선, 없으면 첫 번째 결과
-        const exactMatch = response.customers.find(
-          c => c.name === cleanName || c.name.includes(cleanName)
-        );
-        const customer = exactMatch || response.customers[0];
-        console.log('[API] 찾은 고객:', customer);
-        return { id: customer._id, name: customer.name };
+      // API 응답 구조: response.data.customers 또는 response.customers
+      const customers = response.data?.customers || response.customers || [];
+
+      if (customers.length > 0) {
+        // 정확히 일치하는 고객만 반환 (aims-uix3 동일)
+        // 고객명은 personal_info.name 또는 name에 있을 수 있음
+        const exactMatch = customers.find(c => {
+          const customerName = c.personal_info?.name || c.name;
+          return customerName === cleanName;
+        });
+        if (exactMatch) {
+          const matchedName = exactMatch.personal_info?.name || exactMatch.name || cleanName;
+          console.log('[API] 정확 매칭:', exactMatch._id, matchedName);
+          return { id: exactMatch._id, name: matchedName };
+        }
+        console.log('[API] 검색 결과 있으나 정확 매칭 없음');
       }
       console.log('[API] 고객을 찾을 수 없음');
       return null;

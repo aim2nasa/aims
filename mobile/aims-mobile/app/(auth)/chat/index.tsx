@@ -183,10 +183,17 @@ export default function ChatScreen() {
   const [isUploading, setIsUploading] = useState(false);
   // 대기 중인 파일 (고객명 입력 대기)
   const [pendingFiles, setPendingFiles] = useState<AttachedFile[]>([]);
+  // 고객명 입력 실패 횟수 (3번 실패 시 취소)
+  const [customerSearchAttempts, setCustomerSearchAttempts] = useState(0);
+  const MAX_SEARCH_ATTEMPTS = 3;
 
   // 최근 메시지에서 고객명 자동 추출 (aims-uix3 동일)
-  const extractCustomerFromMessages = async (): Promise<{ id: string; name: string } | null> => {
-    // 1. AI 응답에서 "{고객명} 고객 문서를 첨부해주세요" 패턴 추출
+  // 반환: { customer, extractedName } - customer가 null이어도 extractedName은 있을 수 있음
+  const extractCustomerFromMessages = async (): Promise<{
+    customer: { id: string; name: string } | null;
+    extractedName: string | null;
+  }> => {
+    // AI 응답에서 "{고객명} 고객 문서를 첨부해주세요" 패턴 추출
     const assistantMsgs = [...messages].reverse().filter(m => m.role === 'assistant');
     for (const msg of assistantMsgs) {
       const attachMatch = msg.content.match(/([가-힣a-zA-Z0-9]{2,20})\s*고객\s*문서를\s*첨부해주세요/);
@@ -194,24 +201,12 @@ export default function ChatScreen() {
         const customerName = attachMatch[1];
         console.log('[Chat] AI 응답에서 고객명 추출:', customerName);
         const customer = await api.findCustomerByName(customerName);
-        if (customer) return customer;
-        break; // AI가 언급한 고객을 못 찾으면 다른 메시지로 fallback하지 않음
+        // AI가 언급한 고객명과 검색 결과 모두 반환
+        return { customer, extractedName: customerName };
       }
     }
-
-    // 2. 가장 최근 user 메시지에서 추출
-    const latestUserMsg = [...messages].reverse().find(m => m.role === 'user');
-    if (latestUserMsg) {
-      const matches = latestUserMsg.content.match(/([가-힣a-zA-Z0-9]{2,20})/g) || [];
-      for (const name of matches) {
-        const customer = await api.findCustomerByName(name);
-        if (customer) {
-          console.log('[Chat] 최근 user 메시지에서 고객 찾음:', name);
-          return customer;
-        }
-      }
-    }
-    return null;
+    // AI 응답에 패턴 없으면 둘 다 null
+    return { customer: null, extractedName: null };
   };
 
   // 파일 업로드 실행
@@ -268,20 +263,38 @@ export default function ChatScreen() {
     // 🔥 Case 1: 대기 중인 파일이 있고 사용자가 고객명 입력
     if (pendingFiles.length > 0 && content.trim()) {
       const customerName = content.trim();
-      console.log('[Chat] 대기 파일 있음, 고객명 검색:', customerName);
+      console.log('[Chat] 대기 파일 있음, 고객명 검색:', customerName, '시도:', customerSearchAttempts + 1);
 
       // 사용자 메시지 표시
       setMessages(prev => [...prev, { role: 'user' as const, content: customerName }]);
 
       const customer = await api.findCustomerByName(customerName);
       if (customer) {
+        // 성공 - 업로드 후 카운터 초기화
+        setCustomerSearchAttempts(0);
         await uploadFilesToCustomer(pendingFiles, customer);
       } else {
-        // 고객 못 찾음 - 다시 질문
-        setMessages(prev => [...prev, {
-          role: 'assistant' as const,
-          content: `❌ **"${customerName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요.\n\n예: "홍길동", "라이콘코리아"`
-        }]);
+        // 고객 못 찾음
+        const newAttempts = customerSearchAttempts + 1;
+        setCustomerSearchAttempts(newAttempts);
+
+        if (newAttempts >= MAX_SEARCH_ATTEMPTS) {
+          // 3번 실패 - 등록 취소
+          console.log('[Chat] 고객 검색 3회 실패, 등록 취소');
+          setPendingFiles([]);
+          setCustomerSearchAttempts(0);
+          setMessages(prev => [...prev, {
+            role: 'assistant' as const,
+            content: `❌ 고객을 찾을 수 없어 문서 등록을 취소합니다.\n\n등록된 고객명을 확인 후 다시 시도해주세요.`
+          }]);
+        } else {
+          // 다시 질문 (남은 시도 횟수 표시)
+          const remaining = MAX_SEARCH_ATTEMPTS - newAttempts;
+          setMessages(prev => [...prev, {
+            role: 'assistant' as const,
+            content: `❌ **"${customerName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요. (${remaining}회 남음)\n\n예: "홍길동", "라이콘코리아"`
+          }]);
+        }
       }
       return;
     }
@@ -292,15 +305,27 @@ export default function ChatScreen() {
       console.log('[Chat] 새 파일 첨부:', fileNames);
 
       // 먼저 최근 메시지에서 고객 자동 추출 시도
-      const customer = await extractCustomerFromMessages();
+      const { customer, extractedName } = await extractCustomerFromMessages();
       if (customer) {
+        // AI 응답에서 고객명 추출 성공 + 고객 검색도 성공
         console.log('[Chat] 자동 추출된 고객:', customer.name);
         await uploadFilesToCustomer(files, customer);
         return;
       }
 
-      // 고객 못 찾음 - 파일 대기 상태로 전환하고 질문
-      console.log('[Chat] 고객 못 찾음, 파일 대기 상태로 전환');
+      if (extractedName) {
+        // AI 응답에서 고객명은 추출했지만 검색 실패
+        console.log('[Chat] AI가 언급한 고객을 찾을 수 없음:', extractedName);
+        setPendingFiles(files);
+        setMessages(prev => [...prev, {
+          role: 'assistant' as const,
+          content: `📎 **첨부 파일:** ${fileNames}\n\n❌ **"${extractedName}"** 고객을 찾을 수 없습니다.\n\n정확한 고객명을 입력해주세요. (${MAX_SEARCH_ATTEMPTS}회 남음)`
+        }]);
+        return;
+      }
+
+      // AI 응답에 고객명 패턴 없음 - 파일 대기 상태로 전환하고 질문
+      console.log('[Chat] AI 응답에 고객명 없음, 파일 대기 상태로 전환');
       setPendingFiles(files);
       setMessages(prev => [...prev, {
         role: 'assistant' as const,
@@ -488,6 +513,7 @@ export default function ChatScreen() {
               style={styles.pendingFilesCancelButton}
               onPress={() => {
                 setPendingFiles([]);
+                setCustomerSearchAttempts(0);
                 setMessages(prev => [...prev, {
                   role: 'assistant' as const,
                   content: '📎 파일 첨부가 취소되었습니다.'
