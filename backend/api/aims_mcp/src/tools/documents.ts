@@ -372,7 +372,9 @@ export async function handleListCustomerDocuments(args: unknown) {
         'upload.size': 1,
         'upload.uploaded_at': 1,
         'meta.tags': 1,
+        'meta.summary': 1,
         'ocr.tags': 1,
+        'ocr.summary': 1,
         status: 1
       })
       .toArray();
@@ -407,6 +409,7 @@ export async function handleListCustomerDocuments(args: unknown) {
             size: doc.upload?.size,
             uploadedAt: doc.upload?.uploaded_at,
             tags: doc.meta?.tags || doc.ocr?.tags || [],
+            summary: doc.meta?.summary || doc.ocr?.summary || null,
             status: doc.status
           }))
         }, null, 2)
