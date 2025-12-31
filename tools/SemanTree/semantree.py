@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 SemanTree - Semantic Tree Document Viewer
 AIMS 문서 뷰어 및 시맨틱 트리 분석 도구
@@ -92,26 +92,19 @@ class SSHTunnel:
 class QdrantConnection:
     """Qdrant 연결 관리 클래스"""
 
-    def __init__(self, host: str = "localhost", port: int = 6333):
+    def __init__(self, host: str = "tars", port: int = 6333):
         self.host = host
         self.port = port
         self.client: Optional[QdrantClient] = None
-        self.ssh_tunnel: Optional[SSHTunnel] = None
 
-    def connect(self, use_ssh_tunnel: bool = True) -> bool:
+    def connect(self) -> bool:
         """Qdrant 연결"""
         if not QDRANT_AVAILABLE:
             print("Qdrant client is not available")
             return False
 
         try:
-            # SSH 터널 시작
-            if use_ssh_tunnel:
-                self.ssh_tunnel = SSHTunnel(remote_port=6333, local_port=6333)
-                if not self.ssh_tunnel.start():
-                    print("SSH tunnel failed, trying direct connection...")
-
-            # Qdrant 연결
+            print(f"Connecting to Qdrant: {self.host}:{self.port}")
             self.client = QdrantClient(host=self.host, port=self.port, timeout=5.0, check_compatibility=False)
             # 연결 테스트
             self.client.get_collections()
@@ -124,10 +117,7 @@ class QdrantConnection:
         """Qdrant 연결 종료"""
         if self.client:
             self.client.close()
-
-        # SSH 터널 종료
-        if self.ssh_tunnel:
-            self.ssh_tunnel.stop()
+            self.client = None
 
     def get_collection_list(self) -> List[str]:
         """Qdrant 컬렉션 목록 반환"""
@@ -207,24 +197,17 @@ class QdrantConnection:
 class MongoDBConnection:
     """MongoDB 연결 관리 클래스"""
 
-    def __init__(self, host: str = "localhost", port: int = 27017, db_name: str = "docupload"):
+    def __init__(self, host: str = "tars", port: int = 27017, db_name: str = "docupload"):
         self.host = host
         self.port = port
         self.db_name = db_name
         self.client: Optional[MongoClient] = None
         self.db = None
-        self.ssh_tunnel: Optional[SSHTunnel] = None
 
-    def connect(self, use_ssh_tunnel: bool = True) -> bool:
+    def connect(self) -> bool:
         """MongoDB 연결"""
         try:
-            # SSH 터널 시작
-            if use_ssh_tunnel:
-                self.ssh_tunnel = SSHTunnel()
-                if not self.ssh_tunnel.start():
-                    print("SSH tunnel failed, trying direct connection...")
-
-            # MongoDB 연결
+            print(f"Connecting to MongoDB: {self.host}:{self.port}")
             self.client = MongoClient(
                 self.host,
                 self.port,
@@ -243,10 +226,8 @@ class MongoDBConnection:
         """MongoDB 연결 종료"""
         if self.client:
             self.client.close()
-
-        # SSH 터널 종료
-        if self.ssh_tunnel:
-            self.ssh_tunnel.stop()
+            self.client = None
+            self.db = None
 
     def get_database_list(self) -> List[str]:
         """MongoDB 데이터베이스 목록 반환"""
@@ -382,6 +363,9 @@ class DocumentViewer:
         # 다중 선택 모드
         self.multi_select_mode: tk.StringVar = tk.StringVar(value="AND")  # AND 또는 OR
 
+        # 호스트 설정 (기본값: tars)
+        self.host_var: tk.StringVar = tk.StringVar(value="tars")
+
         # UI 구성
         self.setup_ui()
 
@@ -393,6 +377,12 @@ class DocumentViewer:
         # 상단 프레임: 연결 상태 및 컨트롤
         top_frame = ttk.Frame(self.root, padding="10")
         top_frame.pack(fill=tk.X)
+
+        # 호스트 입력
+        ttk.Label(top_frame, text="Host:", font=("Arial", 10)).pack(side=tk.LEFT, padx=(0, 2))
+        self.host_entry = ttk.Entry(top_frame, textvariable=self.host_var, width=15)
+        self.host_entry.pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(top_frame, text="연결", command=self.reconnect, width=6).pack(side=tk.LEFT, padx=(0, 10))
 
         # 연결 상태 레이블
         self.status_label = ttk.Label(top_frame, text="연결 중...", font=("Arial", 10))
@@ -735,24 +725,42 @@ class DocumentViewer:
             )
             self.qdrant_text_area.pack(fill=tk.BOTH, expand=True)
 
+    def reconnect(self):
+        """호스트 변경 후 재연결"""
+        # 기존 연결 종료
+        self.mongo.disconnect()
+        if self.qdrant:
+            self.qdrant.disconnect()
+
+        # 새 호스트로 연결 객체 재생성
+        host = self.host_var.get().strip()
+        self.mongo = MongoDBConnection(host=host)
+        if QDRANT_AVAILABLE:
+            self.qdrant = QdrantConnection(host=host)
+
+        # 연결
+        self.connect_and_load()
+
     def connect_and_load(self):
         """MongoDB 연결 및 문서 로드"""
-        self.status_label.config(text="SSH tunnel connecting...", foreground="orange")
+        host = self.host_var.get().strip()
+        self.status_label.config(text=f"Connecting to {host}...", foreground="orange")
         self.root.update()
 
-        if self.mongo.connect(use_ssh_tunnel=True):
-            self.status_label.config(text=f"✓ Connected: MongoDB localhost:{self.mongo.port} (via SSH)", foreground="green")
+        if self.mongo.connect():
+            self.status_label.config(text=f"✓ Connected: MongoDB {host}:{self.mongo.port}", foreground="green")
             self.reload_documents()
             # Raw 탭의 DB/Collection 선택기 초기화
             self.initialize_raw_selectors()
         else:
             self.status_label.config(text="✗ MongoDB Connection Failed", foreground="red")
-            messagebox.showerror("Connection Error", "Failed to connect to MongoDB.\n\nMake sure you can SSH to tars.giize.com")
+            messagebox.showerror("Connection Error", f"Failed to connect to MongoDB at {host}:{self.mongo.port}")
+            return
 
         # Qdrant 연결 시도 (선택적)
         if QDRANT_AVAILABLE and self.qdrant:
-            if self.qdrant.connect(use_ssh_tunnel=True):
-                self.status_label.config(text=f"✓ Connected: MongoDB + Qdrant (via SSH)", foreground="green")
+            if self.qdrant.connect():
+                self.status_label.config(text=f"✓ Connected: MongoDB + Qdrant ({host})", foreground="green")
                 self.initialize_qdrant_selectors()
             else:
                 # Qdrant 연결 실패해도 MongoDB는 사용 가능
