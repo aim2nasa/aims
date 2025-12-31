@@ -291,10 +291,17 @@ export const virusScanApi = {
    * 전체 스캔 시작
    */
   startFullScan: async (): Promise<{ message: string; file_count: number }> => {
-    const response = await apiClient.post<{ success: boolean; message: string; data: { file_count: number } }>(
-      '/api/admin/virus-scan/scan-all'
-    );
-    return { message: response.message, file_count: response.data?.file_count || 0 };
+    console.log('[VirusScan API] startFullScan 호출');
+    try {
+      const response = await apiClient.post<{ success: boolean; message: string; data: { file_count: number } }>(
+        '/api/admin/virus-scan/scan-all'
+      );
+      console.log('[VirusScan API] startFullScan 응답:', response);
+      return { message: response.message, file_count: response.data?.file_count || 0 };
+    } catch (error) {
+      console.error('[VirusScan API] startFullScan 에러:', error);
+      throw error;
+    }
   },
 
   /**

@@ -129,7 +129,11 @@ export function VirusScanPage() {
   // 전체 재스캔 (이미 스캔한 파일 포함)
   const fullScanMutation = useMutation({
     mutationFn: virusScanApi.startFullScan,
+    onMutate: () => {
+      console.log('[VirusScan] 전체 재스캔 시작 요청...');
+    },
     onSuccess: (data) => {
+      console.log('[VirusScan] 전체 재스캔 성공:', data);
       if (data.file_count > 0) {
         // progress 캐시를 is_running: true로 초기화 (useEffect가 즉시 false로 바꾸는 것 방지)
         queryClient.setQueryData(['virus-scan', 'progress'], {
@@ -150,6 +154,7 @@ export function VirusScanPage() {
       queryClient.invalidateQueries({ queryKey: ['virus-scan', 'logs'] });
     },
     onError: (error: Error) => {
+      console.error('[VirusScan] 전체 재스캔 실패:', error);
       alert(`전체 재스캔 시작 실패: ${error.message}`);
     },
   });
@@ -300,7 +305,10 @@ export function VirusScanPage() {
           ) : (
             <Button
               variant="primary"
-              onClick={() => fullScanMutation.mutate()}
+              onClick={() => {
+                console.log('[VirusScan] 전체 재스캔 버튼 클릭!', { isPending: fullScanMutation.isPending, status: status?.status });
+                fullScanMutation.mutate();
+              }}
               disabled={fullScanMutation.isPending || status?.status === 'offline'}
             >
               {fullScanMutation.isPending ? '재스캔 시작 중...' : '전체 재스캔'}
