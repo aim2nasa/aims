@@ -161,10 +161,27 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     full_text = doc_data['text']['full_text']
                     text_source = 'text'
                 
-                if not full_text:
-                    print(f"!!! 문서 ID: {doc_id}에서 full_text를 찾을 수 없습니다 !!!")
+                # 텍스트가 없거나 비어있으면 임베딩 스킵 (완료로 처리)
+                if not full_text or (isinstance(full_text, str) and len(full_text.strip()) == 0):
+                    print(f"[SKIP] 문서 ID: {doc_id} - 텍스트 없음 또는 비어있음 (임베딩 건너뜀)")
+                    collection.update_one(
+                        {'_id': ObjectId(doc_id)},
+                        {'$set': {
+                            'docembed': {
+                                'status': 'skipped',
+                                'skip_reason': 'no_text',
+                                'chunks': 0,
+                                'updated_at': datetime.now(timezone.utc).isoformat()
+                            },
+                            'overallStatus': 'completed',
+                            'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                        }}
+                    )
+                    # 바이러스 스캔 트리거 (임베딩 스킵이라도 완료 처리)
+                    owner_id = doc_data.get('ownerId')
+                    trigger_virus_scan(doc_id, owner_id)
                     continue
-                    
+
                 print(f"텍스트 소스: {text_source}.full_text (길이: {len(full_text)})")
                 
                 # 1단계: 로딩 및 청크 생성
