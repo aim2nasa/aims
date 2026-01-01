@@ -503,6 +503,11 @@ export async function getCustomerFileHashes(customerId: string): Promise<Existin
  * @returns SHA-256 해시 (64자 hex string)
  */
 export async function calculateFileHash(fileUri: string, mimeType?: string): Promise<string> {
+  // React Native에서는 Web Crypto API가 없음 - 조용히 fallback
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    return '';
+  }
+
   try {
     // 파일을 fetch로 읽어서 ArrayBuffer로 변환
     const response = await fetch(fileUri);
@@ -518,7 +523,7 @@ export async function calculateFileHash(fileUri: string, mimeType?: string): Pro
 
     return hashHex;
   } catch (error) {
-    console.error('[duplicateChecker] 파일 해시 계산 실패:', error);
+    // 조용히 fallback
     // 해시 계산 실패 시 빈 문자열 반환 (파일명 비교로 fallback)
     return '';
   }

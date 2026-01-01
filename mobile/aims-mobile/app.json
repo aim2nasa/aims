@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aims.mobile",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "음성 입력을 위해 마이크 접근이 필요합니다."
+        "NSMicrophoneUsageDescription": "음성 입력을 위해 마이크 접근이 필요합니다.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -28,7 +29,9 @@
       "package": "com.aims.mobile",
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -50,8 +53,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "aims-mobile"
+        "projectId": "97f43cfd-fc2a-44e9-b894-9bcd355fbfe3"
       }
-    }
+    },
+    "owner": "rossi.kwak"
   }
 }
