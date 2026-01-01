@@ -188,18 +188,53 @@ export default function ChatScreen() {
   const MAX_SEARCH_ATTEMPTS = 3;
 
   // 최근 메시지에서 고객명 자동 추출
-  // 사용자 메시지에서 "XXX 고객에게 문서 등록" 패턴 추출
+  // AI 응답 또는 사용자 메시지에서 고객명 추출
   const extractCustomerFromMessages = async (): Promise<{
     customer: { id: string; name: string } | null;
     extractedName: string | null;
   }> => {
-    // 1. 사용자 메시지에서 고객명 추출 (최근 메시지부터)
-    const userMsgs = [...messages].reverse().filter(m => m.role === 'user');
+    // 1. AI 응답에서 "XXX 고객" 패턴 추출 (가장 신뢰도 높음)
+    const assistantMsgs = [...messages].reverse().filter(m => m.role === 'assistant');
+    for (const msg of assistantMsgs) {
+      // "곽승철 고객 문서를" 또는 "곽승철 고객님" 패턴
+      const aiPatterns = [
+        /([가-힣]{2,10})\s*고객\s*(문서|파일)/,
+        /([가-힣]{2,10})\s*고객님/,
+      ];
+      for (const pattern of aiPatterns) {
+        const match = msg.content.match(pattern);
+        if (match) {
+          const customerName = match[1];
+          console.log('[Chat] AI 응답에서 고객명 추출:', customerName);
+          const customer = await api.findCustomerByName(customerName);
+          if (customer) {
+            return { customer, extractedName: customerName };
+          }
+        }
+      }
+    }
+
+    // 2. 사용자 메시지에서 고객명 추출 (최근 5개 메시지)
+    const userMsgs = [...messages].reverse().filter(m => m.role === 'user').slice(0, 5);
+
+    // 2-1. 먼저 단순 이름부터 시도 (가장 흔한 케이스)
     for (const msg of userMsgs) {
-      // "XXX 고객에게 문서", "XXX에게 문서", "XXX 문서 등록" 등의 패턴
+      const trimmed = msg.content.trim();
+      // 2-10글자의 한글 이름만 있는 경우 (예: "곽승철", "김보성")
+      if (/^[가-힣]{2,10}$/.test(trimmed)) {
+        console.log('[Chat] 단순 이름으로 고객 검색:', trimmed);
+        const customer = await api.findCustomerByName(trimmed);
+        if (customer) {
+          return { customer, extractedName: trimmed };
+        }
+      }
+    }
+
+    // 2-2. "XXX 고객에게 문서", "XXX 문서 등록" 패턴
+    for (const msg of userMsgs) {
       const patterns = [
-        /([가-힣a-zA-Z0-9]{2,20})\s*(고객에게|에게)\s*(문서|파일)/,
-        /([가-힣a-zA-Z0-9]{2,20})\s*(문서|파일)\s*(등록|업로드)/,
+        /([가-힣]{2,10})\s*(고객에게|에게)\s*(문서|파일)/,
+        /([가-힣]{2,10})\s*(문서|파일)\s*(등록|업로드)/,
       ];
       for (const pattern of patterns) {
         const match = msg.content.match(pattern);
@@ -207,10 +242,13 @@ export default function ChatScreen() {
           const customerName = match[1];
           console.log('[Chat] 사용자 메시지에서 고객명 추출:', customerName);
           const customer = await api.findCustomerByName(customerName);
-          return { customer, extractedName: customerName };
+          if (customer) {
+            return { customer, extractedName: customerName };
+          }
         }
       }
     }
+
     return { customer: null, extractedName: null };
   };
 
