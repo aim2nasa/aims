@@ -213,6 +213,7 @@ export function ChatInput({
             <Text style={styles.attachMenuTitle}>첨부하기</Text>
 
             <TouchableOpacity
+              testID="attach-gallery"
               style={styles.attachMenuItem}
               onPress={() => handleAttachOption('gallery')}
             >
@@ -221,6 +222,7 @@ export function ChatInput({
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="attach-camera"
               style={styles.attachMenuItem}
               onPress={() => handleAttachOption('camera')}
             >
@@ -229,6 +231,7 @@ export function ChatInput({
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="attach-document"
               style={styles.attachMenuItem}
               onPress={() => handleAttachOption('document')}
             >
@@ -251,6 +254,7 @@ export function ChatInput({
       <View style={styles.inputWrapper}>
         {/* 첨부 버튼 */}
         <TouchableOpacity
+          testID="attach-button"
           style={styles.attachButton}
           onPress={handleAttach}
           disabled={disabled || isLoading}
@@ -263,6 +267,7 @@ export function ChatInput({
         </TouchableOpacity>
 
         <TextInput
+          testID="chat-input"
           style={styles.input}
           value={text}
           onChangeText={handleTextChange}
@@ -300,6 +305,7 @@ export function ChatInput({
         )}
 
         <TouchableOpacity
+          testID="send-button"
           style={[styles.sendButton, canSend && styles.sendButtonActive]}
           onPress={handleSend}
           disabled={!canSend}

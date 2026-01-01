@@ -76,6 +76,7 @@ export default function LoginScreen() {
         <View style={styles.form}>
           {/* 카카오 로그인 버튼 */}
           <TouchableOpacity
+            testID="kakao-login-button"
             style={[styles.kakaoButton, isLoading && styles.buttonDisabled]}
             onPress={handleKakaoLogin}
             disabled={isLoading}
@@ -102,6 +103,7 @@ export default function LoginScreen() {
           {/* 개발 모드 토글 */}
           {!showDevLogin ? (
             <TouchableOpacity
+              testID="dev-mode-toggle"
               style={styles.devModeToggle}
               onPress={() => setShowDevLogin(true)}
             >
@@ -110,6 +112,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
+              testID="dev-login-button"
               style={[styles.devButton, isLoading && styles.buttonDisabled]}
               onPress={handleDevLogin}
               disabled={isLoading}
