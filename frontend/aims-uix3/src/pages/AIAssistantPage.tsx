@@ -27,7 +27,7 @@ export default function AIAssistantPage() {
   // 팝업 창 식별 + 팝업 열림 상태 관리
   useEffect(() => {
     document.body.classList.add('ai-assistant-popup');
-    document.title = 'AI 어시스턴트 - AIMS';
+    document.title = 'AI 어시스턴트';
 
     // 팝업 열림 상태 설정
     localStorage.setItem('aims-ai-popup-open', 'true');

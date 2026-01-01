@@ -186,7 +186,6 @@ export default function LoginPage() {
       <div className="login-page">
         <div className="login-container">
           <div className="login-header">
-            <h1>AIMS</h1>
             <p>로그인 처리 중...</p>
           </div>
         </div>
@@ -198,8 +197,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <h1>AIMS</h1>
-          <p>보험 문서 관리 시스템</p>
+          <p>보험 문서 AI 플랫폼</p>
         </div>
 
         <div className="login-content">

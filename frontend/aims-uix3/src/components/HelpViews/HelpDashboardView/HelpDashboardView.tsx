@@ -90,7 +90,7 @@ export const HelpDashboardView: React.FC<HelpDashboardViewProps> = ({
             도움이 필요하신가요?
           </h2>
           <p className="help-dashboard-view__section-description">
-            AIMS 사용에 관한 다양한 도움을 받으실 수 있습니다.
+            서비스 사용에 관한 다양한 도움을 받으실 수 있습니다.
           </p>
 
           <div className="help-dashboard-view__cards">

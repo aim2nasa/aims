@@ -2102,7 +2102,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           activeDocumentView === 'documents-register' ? '📄 새 문서 등록 사용법' :
           activeDocumentView === 'batch-document-upload' ? '📦 문서 일괄등록 사용법' :
           activeDocumentView === 'documents-my-files' ? '📁 내 보관함 사용법' :
-          '🚀 AIMS 시작하기'
+          '🚀 시작하기'
         }
         size="md"
       >
@@ -2381,7 +2381,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             </>
           )}
 
-          {/* 기본 도움말 (AIMS 시작하기) */}
+          {/* 기본 도움말 (시작하기) */}
           {!activeDocumentView || ![
             'customers-regional', 'customers-relationship', 'customers-all',
             'contracts-all', 'contracts-import',
@@ -2389,7 +2389,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             'batch-document-upload', 'documents-my-files'
           ].includes(activeDocumentView) && (
             <>
-              <p><strong>AIMS는 보험 설계사를 위한 지능형 문서 관리 시스템입니다.</strong></p>
+              <p><strong>보험 설계사를 위한 지능형 문서 관리 시스템입니다.</strong></p>
               <div className="help-modal-section">
                 <p><strong>문서 관리</strong></p>
                 <ul>
