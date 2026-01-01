@@ -7313,13 +7313,34 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
         if (status === 'error' || status === 'failed' || status === 'quota_exceeded') {
           newOverallStatus = 'error';
         }
-        // 임베딩까지 완료된 경우에만 completed
-        else if (doc.docembed && doc.docembed.status === 'done') {
+        // 임베딩까지 완료된 경우에만 completed (skipped도 완료로 처리)
+        else if (doc.docembed && (doc.docembed.status === 'done' || doc.docembed.status === 'skipped')) {
           newOverallStatus = 'completed';
         }
         // OCR만 완료된 상태는 processing 유지
         else if (status === 'completed' || status === 'done') {
           newOverallStatus = 'processing';
+        }
+
+        // 🔥 빈 텍스트 체크: OCR 완료 + 텍스트 없음 → 임베딩 스킵하고 바로 완료 처리
+        const hasText = (doc.meta?.full_text && doc.meta.full_text.trim() !== '') ||
+                        (doc.ocr?.full_text && doc.ocr.full_text.trim() !== '') ||
+                        (doc.text?.full_text && doc.text.full_text.trim() !== '');
+
+        if ((status === 'completed' || status === 'done') && !hasText &&
+            (!doc.docembed || (doc.docembed.status !== 'done' && doc.docembed.status !== 'skipped'))) {
+          console.log(`[SSE-DocStatus] 빈 텍스트 감지 → 임베딩 스킵 처리: ${documentIdStr}`);
+          newOverallStatus = 'completed';
+          // docembed도 바로 skip 처리
+          await db.collection(COLLECTIONS.FILES).updateOne(
+            { _id: new ObjectId(documentIdStr) },
+            { $set: {
+              'docembed.status': 'skipped',
+              'docembed.skip_reason': 'no_text',
+              'docembed.chunks': 0,
+              'docembed.updated_at': new Date().toISOString()
+            }}
+          );
         }
 
         // 업데이트할 필드 구성

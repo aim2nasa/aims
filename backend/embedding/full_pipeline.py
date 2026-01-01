@@ -127,15 +127,41 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
         db = client[db_name]
         collection = db[collection_name]
 
-        # docembed.status 필드가 없고 full_text가 있는 문서를 찾습니다.
-        # (meta.full_text, ocr.full_text, text.full_text 중 하나라도 있으면)
-        query_filter = {
+        # 1단계: 불일치 상태 자동 수정
+        # docembed.status가 done/skipped인데 overallStatus가 completed가 아닌 경우 수정
+        inconsistent_filter = {
             '$or': [
-                {'meta.full_text': {'$exists': True}},
-                {'ocr.full_text': {'$exists': True}},
-                {'text.full_text': {'$exists': True}}
+                {'docembed.status': 'done'},
+                {'docembed.status': 'skipped'}
             ],
-            'docembed.status': {'$exists': False}
+            'overallStatus': {'$ne': 'completed'}
+        }
+        inconsistent_count = collection.count_documents(inconsistent_filter)
+        if inconsistent_count > 0:
+            print(f"[FIX] 불일치 상태 문서 {inconsistent_count}개 수정 중...")
+            collection.update_many(
+                inconsistent_filter,
+                {'$set': {
+                    'overallStatus': 'completed',
+                    'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                }}
+            )
+            print(f"[FIX] 불일치 상태 수정 완료")
+
+        # 2단계: full_text가 있고, 임베딩이 아직 완료되지 않은 문서를 찾습니다.
+        # docembed.status가 없거나 'pending'인 경우 처리 대상
+        query_filter = {
+            '$and': [
+                {'$or': [
+                    {'meta.full_text': {'$exists': True}},
+                    {'ocr.full_text': {'$exists': True}},
+                    {'text.full_text': {'$exists': True}}
+                ]},
+                {'$or': [
+                    {'docembed.status': {'$exists': False}},
+                    {'docembed.status': 'pending'}
+                ]}
+            ]
         }
         documents_to_process = collection.find(query_filter)
         total_docs = collection.count_documents(query_filter)
