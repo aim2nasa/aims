@@ -187,25 +187,30 @@ export default function ChatScreen() {
   const [customerSearchAttempts, setCustomerSearchAttempts] = useState(0);
   const MAX_SEARCH_ATTEMPTS = 3;
 
-  // 최근 메시지에서 고객명 자동 추출 (aims-uix3 동일)
-  // 반환: { customer, extractedName } - customer가 null이어도 extractedName은 있을 수 있음
+  // 최근 메시지에서 고객명 자동 추출
+  // 사용자 메시지에서 "XXX 고객에게 문서 등록" 패턴 추출
   const extractCustomerFromMessages = async (): Promise<{
     customer: { id: string; name: string } | null;
     extractedName: string | null;
   }> => {
-    // AI 응답에서 "{고객명} 고객 문서를 첨부해주세요" 패턴 추출
-    const assistantMsgs = [...messages].reverse().filter(m => m.role === 'assistant');
-    for (const msg of assistantMsgs) {
-      const attachMatch = msg.content.match(/([가-힣a-zA-Z0-9]{2,20})\s*고객\s*문서를\s*첨부해주세요/);
-      if (attachMatch) {
-        const customerName = attachMatch[1];
-        console.log('[Chat] AI 응답에서 고객명 추출:', customerName);
-        const customer = await api.findCustomerByName(customerName);
-        // AI가 언급한 고객명과 검색 결과 모두 반환
-        return { customer, extractedName: customerName };
+    // 1. 사용자 메시지에서 고객명 추출 (최근 메시지부터)
+    const userMsgs = [...messages].reverse().filter(m => m.role === 'user');
+    for (const msg of userMsgs) {
+      // "XXX 고객에게 문서", "XXX에게 문서", "XXX 문서 등록" 등의 패턴
+      const patterns = [
+        /([가-힣a-zA-Z0-9]{2,20})\s*(고객에게|에게)\s*(문서|파일)/,
+        /([가-힣a-zA-Z0-9]{2,20})\s*(문서|파일)\s*(등록|업로드)/,
+      ];
+      for (const pattern of patterns) {
+        const match = msg.content.match(pattern);
+        if (match) {
+          const customerName = match[1];
+          console.log('[Chat] 사용자 메시지에서 고객명 추출:', customerName);
+          const customer = await api.findCustomerByName(customerName);
+          return { customer, extractedName: customerName };
+        }
       }
     }
-    // AI 응답에 패턴 없으면 둘 다 null
     return { customer: null, extractedName: null };
   };
 

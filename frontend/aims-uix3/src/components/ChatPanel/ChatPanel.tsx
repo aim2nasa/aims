@@ -942,64 +942,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       let targetCustomerId = '';
       let linkedCustomerName = '';
 
-      // 🔥 방법 1: 가장 최근 assistant 응답에서 "{고객명} 고객 문서를 첨부해주세요" 패턴 추출
-      // AI가 이미 사용자 의도를 파악해서 응답했으므로 가장 정확함
-      const assistantMessages = [...messages].reverse().filter(m => m.role === 'assistant');
-      for (const msg of assistantMessages) {
-        // "XXX 고객 문서를 첨부해주세요" 패턴에서 고객명 추출
-        const attachMatch = msg.content.match(/([가-힣a-zA-Z0-9]{2,20})\s*고객\s*문서를\s*첨부해주세요/);
-        if (attachMatch) {
-          const customerName = attachMatch[1];
-          console.log('[ChatPanel] AI 응답에서 고객명 추출:', customerName);
-          try {
-            const result = await CustomerService.getCustomers({
-              search: customerName,
-              limit: 5
-            });
-            const customers = result?.customers || [];
-            const exactMatch = customers.find((c) => c.personal_info?.name === customerName);
-            if (exactMatch?._id) {
-              targetCustomerId = exactMatch._id;
-              linkedCustomerName = customerName;
-              console.log('[ChatPanel] AI 응답 기반 고객 찾음:', customerName, targetCustomerId);
-              break;
-            }
-          } catch (searchError) {
-            console.warn('[ChatPanel] AI 응답 기반 고객 검색 실패:', customerName, searchError);
-          }
-          // AI가 언급한 고객을 못 찾았으면 다른 메시지로 fallback하지 않음!
-          // (잘못된 고객에게 연결되는 것 방지)
-          break;
-        }
-      }
-
-      // 🔥 방법 2: AI 응답에서 못 찾았으면 가장 최근 user 메시지만 확인 (fallback 없음!)
-      if (!targetCustomerId) {
-        const latestUserMessage = [...messages].reverse().find(m => m.role === 'user');
-        if (latestUserMessage) {
-          // 2-20글자 한글/영문/숫자 이름 매칭 (법인명 포함)
-          const prevMatches = latestUserMessage.content.match(/([가-힣a-zA-Z0-9]{2,20})/g) || [];
-          for (const potentialName of prevMatches) {
+      // 🔥 사용자 메시지에서 고객명 추출 (최근 메시지부터)
+      const userMessages = [...messages].reverse().filter(m => m.role === 'user');
+      for (const msg of userMessages) {
+        // "XXX 고객에게 문서", "XXX에게 문서", "XXX 문서 등록" 등의 패턴
+        const patterns = [
+          /([가-힣a-zA-Z0-9]{2,20})\s*(고객에게|에게)\s*(문서|파일)/,
+          /([가-힣a-zA-Z0-9]{2,20})\s*(문서|파일)\s*(등록|업로드)/,
+        ];
+        for (const pattern of patterns) {
+          const match = msg.content.match(pattern);
+          if (match) {
+            const customerName = match[1];
+            console.log('[ChatPanel] 사용자 메시지에서 고객명 추출:', customerName);
             try {
-              console.log('[ChatPanel] 최근 user 메시지에서 고객 검색 시도:', potentialName);
               const result = await CustomerService.getCustomers({
-                search: potentialName,
+                search: customerName,
                 limit: 5
               });
               const customers = result?.customers || [];
-              const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
+              const exactMatch = customers.find((c) => c.personal_info?.name === customerName);
               if (exactMatch?._id) {
                 targetCustomerId = exactMatch._id;
-                linkedCustomerName = potentialName;
-                console.log('[ChatPanel] 최근 user 메시지 기반 고객 찾음:', potentialName, targetCustomerId);
+                linkedCustomerName = customerName;
+                console.log('[ChatPanel] 사용자 메시지 기반 고객 찾음:', customerName, targetCustomerId);
                 break;
               }
             } catch (searchError) {
-              console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
+              console.warn('[ChatPanel] 고객 검색 실패:', customerName, searchError);
             }
           }
-          // 🚫 이전 메시지로 fallback하지 않음 - 잘못된 고객 연결 방지
         }
+        if (targetCustomerId) break;
       }
 
       // 🔥 고객 없으면 업로드 취소하고 사용자에게 안내

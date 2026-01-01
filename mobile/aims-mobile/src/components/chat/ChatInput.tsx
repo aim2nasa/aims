@@ -72,33 +72,41 @@ export function ChatInput({
 
   // 사진 앨범에서 선택
   const pickFromGallery = async () => {
+    console.log('[ChatInput] pickFromGallery 시작');
+
+    // 권한 요청 없이 바로 picker 열기 (iOS가 자동 처리)
+    // 타임아웃 추가로 hang 방지
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error('Picker timeout')), 10000)
+    );
+
+    const pickerPromise = ImagePicker.launchImageLibraryAsync({
+      quality: 0.8,
+    });
+
     try {
-      // 권한 요청
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('권한 필요', '사진 앨범 접근 권한이 필요합니다.');
-        return;
+      const result = await Promise.race([pickerPromise, timeoutPromise]);
+
+      if (result === null) {
+        throw new Error('Picker timeout');
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: true,
-        quality: 0.8,
-        selectionLimit: 5,
-      });
+      console.log('[ChatInput] pickFromGallery 결과:', result.canceled ? 'canceled' : `${result.assets?.length} files`);
 
-      if (!result.canceled && result.assets) {
-        const newFiles: AttachedFile[] = result.assets.slice(0, 5).map((asset, idx) => ({
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const newFile: AttachedFile = {
           uri: asset.uri,
-          name: asset.fileName || `image_${Date.now()}_${idx}.jpg`,
+          name: asset.fileName || `image_${Date.now()}.jpg`,
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
-        }));
-        handleFilesReady(newFiles);
+        };
+        handleFilesReady([newFile]);
       }
     } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert('오류', '사진을 선택하는 중 오류가 발생했습니다.');
+      console.error('[ChatInput] Image picker error:', error);
+      const message = error instanceof Error ? error.message : '알 수 없는 오류';
+      Alert.alert('오류', `사진 선택 오류: ${message}\n\n설정 > Expo Go > 사진 권한을 확인해주세요.`);
     }
   };
 
@@ -134,27 +142,32 @@ export function ChatInput({
   // 파일 선택 (PDF 등)
   const pickDocument = async () => {
     try {
+      console.log('[ChatInput] pickDocument 시작');
+
+      // iOS에서 multiple: true가 문제를 일으킬 수 있음
+      // copyToCacheDirectory: true로 파일 접근 보장
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
-        multiple: true,
+        type: '*/*', // iOS 호환성을 위해 모든 파일 허용
+        copyToCacheDirectory: true,
+        multiple: false, // iOS에서 multiple 지원 불안정
       });
 
-      if (!result.canceled && result.assets) {
-        const newFiles: AttachedFile[] = result.assets.slice(0, 5).map(asset => ({
+      console.log('[ChatInput] pickDocument 결과:', result.canceled ? 'canceled' : 'selected');
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const newFile: AttachedFile = {
           uri: asset.uri,
           name: asset.name,
           size: asset.size,
-          mimeType: asset.mimeType,
-        }));
-
-        if (result.assets.length > 5) {
-          Alert.alert('알림', '파일은 최대 5개까지 첨부할 수 있습니다.');
-        }
-        handleFilesReady(newFiles);
+          mimeType: asset.mimeType || 'application/octet-stream',
+        };
+        console.log('[ChatInput] 선택된 파일:', newFile.name);
+        handleFilesReady([newFile]);
       }
     } catch (error) {
-      console.error('File picker error:', error);
-      Alert.alert('오류', '파일을 선택하는 중 오류가 발생했습니다.');
+      console.error('[ChatInput] File picker error:', error);
+      Alert.alert('오류', `파일 선택 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -164,13 +177,21 @@ export function ChatInput({
   };
 
   // 첨부 메뉴에서 옵션 선택
-  const handleAttachOption = (option: 'gallery' | 'camera' | 'document') => {
+  const handleAttachOption = async (option: 'gallery' | 'camera' | 'document') => {
+    console.log('[ChatInput] handleAttachOption 호출:', option);
     setShowAttachMenu(false);
-    setTimeout(() => {
-      if (option === 'gallery') pickFromGallery();
-      else if (option === 'camera') takePhoto();
-      else if (option === 'document') pickDocument();
-    }, 100);
+
+    // iOS에서 Modal 닫힌 후 picker 열기 위해 더 긴 딜레이 필요
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    console.log('[ChatInput] 딜레이 후 picker 호출:', option);
+    if (option === 'gallery') {
+      await pickFromGallery();
+    } else if (option === 'camera') {
+      await takePhoto();
+    } else if (option === 'document') {
+      await pickDocument();
+    }
   };
 
   const canSend = text.trim().length > 0 && !isLoading && !disabled;
