@@ -10,6 +10,7 @@ import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
 import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
+import { RightClickGuide } from './shared/components/RightClickGuide'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useRecentCustomersStore } from './shared/store/useRecentCustomersStore'
 import { useUserStore } from './stores/user'
@@ -2071,6 +2072,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           handleMenuClick('documents-register')
         }}
       />
+
+      {/* 우클릭 가이드 - OnboardingTour 완료 후 표시 */}
+      <RightClickGuide />
 
       {/* 🍎 전역 컨텍스트 메뉴 */}
       <ContextMenu

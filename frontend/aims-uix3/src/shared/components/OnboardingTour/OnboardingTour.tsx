@@ -75,6 +75,17 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
     return undefined
   }, [forceShow])
 
+  // 'show-onboarding-tour' 이벤트 리스너 (다시 보기 기능)
+  useEffect(() => {
+    const handleShowTour = () => {
+      setCurrentStep(0)
+      setIsActive(true)
+    }
+
+    window.addEventListener('show-onboarding-tour', handleShowTour)
+    return () => window.removeEventListener('show-onboarding-tour', handleShowTour)
+  }, [])
+
   // 현재 스텝의 타겟 요소 위치 계산
   useEffect(() => {
     if (!isActive || !steps[currentStep]) return
@@ -331,6 +342,15 @@ export const resetOnboardingTour = () => {
  */
 export const hasCompletedOnboarding = () => {
   return localStorage.getItem(STORAGE_KEY) === 'true'
+}
+
+/**
+ * 투어 강제 표시 (설정에서 호출)
+ */
+export const showOnboardingTour = () => {
+  localStorage.removeItem(STORAGE_KEY)
+  // 컴포넌트에 이벤트 발생
+  window.dispatchEvent(new CustomEvent('show-onboarding-tour'))
 }
 
 export default OnboardingTour

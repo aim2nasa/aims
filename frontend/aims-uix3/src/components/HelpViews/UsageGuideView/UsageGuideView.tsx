@@ -10,6 +10,8 @@ import { useState, ReactNode, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CenterPaneView } from '../../CenterPaneView/CenterPaneView';
 import { helpApi, type UsageGuide } from '@/features/help/api';
+import { showRightClickGuide } from '@/shared/components/RightClickGuide';
+import { showOnboardingTour } from '@/shared/components/OnboardingTour';
 import './UsageGuideView.css';
 
 // 책 아이콘 (타이틀용)
@@ -229,6 +231,57 @@ export default function UsageGuideView({
               ) : (
                 <span>검색 결과가 없습니다.</span>
               )}
+            </div>
+          )}
+
+          {/* 인터랙티브 가이드 섹션 */}
+          {!searchQuery && (
+            <div className="usage-guide-view__interactive">
+              <h3 className="usage-guide-view__interactive-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4H8v-2h4V7h2v4h4v2h-4v4z" opacity="0.85"/>
+                </svg>
+                인터랙티브 가이드
+              </h3>
+              <p className="usage-guide-view__interactive-desc">
+                주요 기능을 직접 체험하며 배울 수 있습니다
+              </p>
+              <div className="usage-guide-view__interactive-cards">
+                <button
+                  type="button"
+                  className="usage-guide-view__interactive-card"
+                  onClick={() => {
+                    showRightClickGuide()
+                  }}
+                >
+                  <div className="usage-guide-view__interactive-icon usage-guide-view__interactive-icon--blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13.54 12c.27-.39.46-.79.55-1.22.08-.43.03-.88-.15-1.29-.18-.41-.47-.76-.84-1.01-.37-.25-.82-.38-1.32-.38-1.31 0-2.38 1.07-2.38 2.38 0 .47.14.92.4 1.29l3.74-.77zm7.96 5.5L9 22l-7-3.5v-13L9 2l12.5 5L9 12.5V22l5-2.5 5 2.5V9.5l-1.5-.6v9.1z" opacity="0.85"/>
+                    </svg>
+                  </div>
+                  <div className="usage-guide-view__interactive-content">
+                    <span className="usage-guide-view__interactive-name">마우스 우클릭 가이드</span>
+                    <span className="usage-guide-view__interactive-sub">컨텍스트 메뉴 사용법 보기</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="usage-guide-view__interactive-card"
+                  onClick={() => {
+                    showOnboardingTour()
+                  }}
+                >
+                  <div className="usage-guide-view__interactive-icon usage-guide-view__interactive-icon--purple">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" opacity="0.85"/>
+                    </svg>
+                  </div>
+                  <div className="usage-guide-view__interactive-content">
+                    <span className="usage-guide-view__interactive-name">시작 가이드</span>
+                    <span className="usage-guide-view__interactive-sub">처음 사용자 튜토리얼 다시 보기</span>
+                  </div>
+                </button>
+              </div>
             </div>
           )}
 

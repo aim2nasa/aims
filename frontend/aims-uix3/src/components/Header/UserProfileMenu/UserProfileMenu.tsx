@@ -20,7 +20,6 @@ import { deleteAccount } from '../../../entities/auth/api';
 import { AccountSettingsModal } from '../../../features/AccountSettings';
 import { AppleConfirmModal } from '../../DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController';
-import { resetOnboardingTour } from '../../../shared/components/OnboardingTour';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './UserProfileMenu.css';
 
@@ -160,13 +159,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  const handleRestartGuide = () => {
-    resetOnboardingTour();
-    onClose();
-    // 페이지 새로고침하여 가이드 다시 시작
-    window.location.reload();
-  };
-
   const handleLogout = async () => {
     onClose();
     const confirmed = await confirmActions.openModal({
@@ -281,11 +273,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               icon="gearshape"
               label="계정 설정"
               onClick={handleAccountSettings}
-            />
-            <UserProfileMenuItem
-              icon="arrow.clockwise"
-              label="가이드 다시 보기"
-              onClick={handleRestartGuide}
               showDivider={true}
             />
 

@@ -6,6 +6,7 @@ export {
   OnboardingTour,
   resetOnboardingTour,
   hasCompletedOnboarding,
+  showOnboardingTour,
   type TourStep
 } from './OnboardingTour'
 export { OnboardingTour as default } from './OnboardingTour'
