@@ -1,0 +1,8 @@
+# Maestro 설정
+appId: com.aims.mobile
+name: AIMS Mobile E2E Tests
+
+# 테스트 환경
+env:
+  API_URL: https://aims.giize.com
+  TEST_USER: test@example.com

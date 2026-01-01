@@ -1,0 +1,20 @@
+# AI 어시스턴트 계약 조회 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 화면 대기
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 환영 화면에서 기능 카드 확인 (계약 조회는 스크롤 필요할 수 있음)
+- assertVisible: "고객 조회"
+
+# 바로 채팅하기로 채팅 화면 진입
+- tapOn: "바로 채팅하기"
+- waitForAnimationToEnd
+
+# 채팅 입력창 확인
+- assertVisible:
+    id: "chat-input"

@@ -1,0 +1,22 @@
+# AI 어시스턴트 고객 등록 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 화면 대기
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 환영 화면에서 고객 등록 카드 확인
+- assertVisible: "고객 등록"
+
+# 고객 등록 예시 클릭 (따옴표 포함된 텍스트)
+- tapOn:
+    text: ".*새 고객 등록.*"
+
+# AI 응답 대기 (최대 60초)
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 60000

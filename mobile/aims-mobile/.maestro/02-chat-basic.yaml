@@ -1,0 +1,36 @@
+# AI 어시스턴트 기본 채팅 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# 로그인 상태 가정 (이미 로그인된 상태에서 테스트)
+# AI 어시스턴트 탭 확인
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 환영 화면 표시 확인
+- assertVisible: "무엇이든 물어보세요!"
+
+# 바로 채팅하기 클릭 (환영 화면 닫기)
+- tapOn: "바로 채팅하기"
+- waitForAnimationToEnd
+
+# 채팅 입력 영역 확인
+- assertVisible:
+    id: "chat-input"
+
+# 간단한 인사 메시지 입력 (영어 사용 - Maestro 유니코드 미지원)
+- tapOn:
+    id: "chat-input"
+- inputText: "hello"
+
+# 전송 버튼 클릭
+- tapOn:
+    id: "send-button"
+
+# AI 응답 대기 (최대 30초) - 입력창이 다시 보이면 응답 완료
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 30000

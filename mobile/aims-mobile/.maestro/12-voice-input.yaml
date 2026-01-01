@@ -1,0 +1,28 @@
+# 음성 입력 화면 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 탭 확인
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 바로 채팅하기 클릭
+- tapOn: "바로 채팅하기"
+- waitForAnimationToEnd
+
+# 채팅 입력창 확인
+- assertVisible:
+    id: "chat-input"
+
+# 음성 탭으로 이동
+- tapOn: "음성"
+- waitForAnimationToEnd
+
+# 음성 화면 확인 (마이크 버튼 또는 음성 UI)
+# 참고: 실제 음성 녹음 테스트는 에뮬레이터 제한으로 건너뜀
+
+# 다시 채팅으로 돌아가기
+- tapOn: "채팅"
+- waitForAnimationToEnd

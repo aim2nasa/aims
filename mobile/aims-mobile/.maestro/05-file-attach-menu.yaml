@@ -1,0 +1,32 @@
+# 파일 첨부 메뉴 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 탭 확인
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 바로 채팅하기 클릭 (환영 화면 닫기)
+- tapOn: "바로 채팅하기"
+- waitForAnimationToEnd
+
+# 첨부 버튼 클릭
+- tapOn:
+    id: "attach-button"
+- waitForAnimationToEnd
+
+# 첨부 메뉴 옵션 확인
+- assertVisible: "첨부하기"
+- assertVisible: "사진 앨범"
+- assertVisible: "카메라"
+- assertVisible: "파일 선택"
+- assertVisible: "취소"
+
+# 취소 버튼 클릭
+- tapOn: "취소"
+- waitForAnimationToEnd
+
+# 메뉴가 닫혔는지 확인
+- assertNotVisible: "첨부하기"

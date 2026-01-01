@@ -1,0 +1,20 @@
+# AI 어시스턴트 고객 조회 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 화면 대기
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 환영 화면에서 고객 조회 예시 버튼 클릭
+- assertVisible: "고객 조회"
+- tapOn:
+    text: ".*최근 등록한 고객.*"
+
+# AI 응답 대기 (최대 60초)
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 60000

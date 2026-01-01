@@ -1,0 +1,30 @@
+# 로그아웃 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 탭 확인 (로그인 상태)
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 설정 탭으로 이동
+- tapOn: "설정"
+- waitForAnimationToEnd
+
+# 설정 화면 확인
+- assertVisible: "계정"
+- assertVisible: "앱 설정"
+- assertVisible: "정보"
+
+# 로그아웃 버튼 확인
+- assertVisible: "로그아웃"
+
+# 로그아웃 버튼 클릭 (실제 로그아웃은 건너뜀 - 세션 유지 필요)
+# - tapOn: "로그아웃"
+# - waitForAnimationToEnd
+# - tapOn: "로그아웃"
+
+# 다시 채팅으로 돌아가기
+- tapOn: "채팅"
+- waitForAnimationToEnd

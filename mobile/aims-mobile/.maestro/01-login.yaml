@@ -1,0 +1,25 @@
+# 로그인 상태 확인 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# 이미 로그인된 상태면 AI 어시스턴트 화면이 보임
+# 로그인 안된 상태면 AIMS 로고가 보임
+- runFlow:
+    when:
+      visible: "AIMS"
+    commands:
+      # 개발자 모드 토글 클릭
+      - tapOn:
+          id: "dev-mode-toggle"
+      - extendedWaitUntil:
+          visible: "개발자 로그인"
+          timeout: 5000
+      # 개발자 로그인 버튼 클릭
+      - tapOn:
+          id: "dev-login-button"
+
+# 로그인 성공 확인 (AI 어시스턴트 탭 보이면 성공)
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000

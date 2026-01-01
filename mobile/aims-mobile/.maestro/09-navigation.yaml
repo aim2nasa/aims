@@ -1,0 +1,28 @@
+# 네비게이션 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# 하단 탭 네비게이션 확인 (탭 이름: 채팅, 음성, 설정)
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 15000
+
+# 채팅 화면 요소 확인
+- assertVisible:
+    id: "chat-input"
+
+# 설정 탭으로 이동
+- tapOn: "설정"
+- waitForAnimationToEnd
+
+# 설정 화면 요소 확인
+- assertVisible: "로그아웃"
+
+# 다시 채팅 탭으로
+- tapOn: "채팅"
+- waitForAnimationToEnd
+
+# 채팅 화면 복귀 확인
+- assertVisible:
+    id: "chat-input"

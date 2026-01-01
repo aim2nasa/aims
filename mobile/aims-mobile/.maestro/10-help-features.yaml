@@ -1,0 +1,26 @@
+# 도움말 기능 카드 테스트
+appId: com.aims.mobile
+---
+- launchApp
+
+# AI 어시스턴트 탭 확인 (앱 로딩 대기)
+- extendedWaitUntil:
+    visible: "AI 어시스턴트"
+    timeout: 30000
+
+# 환영 화면 확인
+- assertVisible: "무엇이든 물어보세요!"
+
+# 기능 카드들 확인 (스크롤 필요할 수 있음)
+- assertVisible: "고객 조회"
+- assertVisible: "고객 등록"
+- assertVisible: "고객별 문서"
+
+# 바로 채팅하기 클릭
+- tapOn: "바로 채팅하기"
+
+# 채팅 화면으로 전환 확인
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 10000
