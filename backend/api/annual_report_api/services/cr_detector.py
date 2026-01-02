@@ -162,14 +162,18 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
 
         # 1. 상품명 추출
         # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 0년납"
-        # "무)" 또는 "유)" 로 시작하는 상품명
-        product_pattern = r"([무유]\)\s*[^\n]+(?:종신|년납|만기)[^\n]*)"
+        # "무)" 또는 "유)" 로 시작하는 상품명 (종신/년납/만기에서 끝남)
+        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기)[,\s]*\d*년?납?)"
         product_match = re.search(product_pattern, first_page_text)
         if product_match:
-            result["product_name"] = product_match.group(1).strip()
+            product_name = product_match.group(1).strip()
+            # 발행일 이후 텍스트 제거
+            if "발행" in product_name:
+                product_name = product_name.split("발행")[0].strip()
+            result["product_name"] = product_name
         else:
-            # 대체 패턴: 변액 보험 상품명
-            alt_product_pattern = r"([가-힣]+\s*변액[^\n]+보험[^\n]*)"
+            # 대체 패턴: 변액 보험 상품명 (더 정확하게)
+            alt_product_pattern = r"([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)"
             alt_match = re.search(alt_product_pattern, first_page_text)
             if alt_match:
                 result["product_name"] = alt_match.group(1).strip()
@@ -204,14 +208,18 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
             result["insured_name"] = insured_match.group(1).strip()
 
         # 5. 사망 수익자 추출
-        # 패턴: "사망 수익자 : 상속인" 또는 "사망수익자: 상속인"
-        beneficiary_pattern = r"사망\s*수익자\s*[:\s]+([가-힣]{2,6})"
+        # 패턴: "사망 수익자 : 상속인" 또는 "사망수익자: 상속인" 또는 "사망 수익자 :   상속인"
+        beneficiary_pattern = r"사망\s*수익자\s*[:：]\s*([가-힣]{2,6})"
         beneficiary_match = re.search(beneficiary_pattern, first_page_text)
         if beneficiary_match:
             result["death_beneficiary"] = beneficiary_match.group(1).strip()
+        else:
+            # 기본값: 상속인
+            if "상속인" in first_page_text:
+                result["death_beneficiary"] = "상속인"
 
         # 6. FSR 이름 추출
-        # 패턴 1: "송유미FSR" 또는 "송 유 미 FSR"
+        # 패턴 1: "송유미FSR" 또는 "송 유 미 FSR" 또는 "송유미 FSR"
         fsr_pattern1 = r"([가-힣]{2,4})\s*FSR"
         fsr_match1 = re.search(fsr_pattern1, first_page_text)
         if fsr_match1:
@@ -222,6 +230,12 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
             fsr_match2 = re.search(fsr_pattern2, first_page_text)
             if fsr_match2:
                 result["fsr_name"] = fsr_match2.group(1).replace(" ", "").strip()
+            else:
+                # 패턴 3: "FSR\n송유미" 또는 "FSR 송유미" (FSR이 이름 앞에 있는 경우)
+                fsr_pattern3 = r"FSR\s*\n?\s*([가-힣]{2,4})"
+                fsr_match3 = re.search(fsr_pattern3, first_page_text)
+                if fsr_match3:
+                    result["fsr_name"] = fsr_match3.group(1).replace(" ", "").strip()
 
         logger.info(f"📄 Customer Review 1페이지 메타데이터 추출: {result}")
         return result

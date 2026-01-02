@@ -6,6 +6,45 @@
  * Annual Report와 동일한 레이아웃 형식
  */
 
+/* ==================== Persons Row ==================== */
+.crm-persons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+}
+
+.crm-persons__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crm-persons__label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.crm-persons__value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+/* ==================== Value Colors ==================== */
+.crm-value--success {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.crm-value--error {
+  color: var(--color-error);
+  font-weight: 500;
+}
+
 /* ==================== Card ==================== */
 .crm-card {
   background: var(--color-bg-secondary);

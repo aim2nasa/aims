@@ -77,12 +77,12 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         ) : (
           <>
-            {/* Summary Section - Annual Report와 동일한 형식 */}
+            {/* Summary Section - 상품명, 총적립금, 펀드수 */}
             <div className="annual-report-summary">
-              <div className="annual-report-summary__item">
-                <span className="annual-report-summary__label">발행일</span>
+              <div className="annual-report-summary__item annual-report-summary__item--wide">
+                <span className="annual-report-summary__label">상품명</span>
                 <span className="annual-report-summary__value">
-                  {review.issue_date ? formatDate(review.issue_date) : '-'}
+                  {review.product_name || '-'}
                 </span>
               </div>
               <div className="annual-report-summary__item">
@@ -99,41 +99,59 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
               </div>
             </div>
 
-            {/* 계약사항 */}
+            {/* 인적사항 - 계약자, 피보험자, 사망수익자, FSR */}
+            <div className="crm-persons">
+              <div className="crm-persons__item">
+                <span className="crm-persons__label">계약자</span>
+                <span className="crm-persons__value">{review.contractor_name || '-'}</span>
+              </div>
+              <div className="crm-persons__item">
+                <span className="crm-persons__label">피보험자</span>
+                <span className="crm-persons__value">{review.insured_name || '-'}</span>
+              </div>
+              <div className="crm-persons__item">
+                <span className="crm-persons__label">사망수익자</span>
+                <span className="crm-persons__value">{review.death_beneficiary || '상속인'}</span>
+              </div>
+              <div className="crm-persons__item">
+                <span className="crm-persons__label">FSR</span>
+                <span className="crm-persons__value">{review.fsr_name || '-'}</span>
+              </div>
+            </div>
+
+            {/* 계약사항 - 리스트 형식 */}
             <section className="crm-card">
               <h2 className="crm-card__title">계약사항</h2>
-              <div className="crm-stats">
-                <div className="crm-stat">
-                  <span className="crm-stat__label">증권번호</span>
-                  <span className="crm-stat__value">{contract_info?.policy_number || '-'}</span>
+              <div className="crm-list">
+                <div className="crm-list__item">
+                  <span>증권번호</span>
+                  <span>{contract_info?.policy_number || '-'}</span>
                 </div>
-                <div className="crm-stat">
-                  <span className="crm-stat__label">계약일자</span>
-                  <span className="crm-stat__value">
-                    {contract_info?.contract_date ? formatDate(contract_info.contract_date) : '-'}
-                  </span>
+                <div className="crm-list__item">
+                  <span>계약일자</span>
+                  <span>{contract_info?.contract_date ? formatDate(contract_info.contract_date) : '-'}</span>
                 </div>
-                <div className="crm-stat">
-                  <span className="crm-stat__label">보험가입금액</span>
-                  <span className="crm-stat__value">{CustomerReviewApi.formatCurrency(contract_info?.insured_amount)}</span>
+                <div className="crm-list__item">
+                  <span>보험가입금액</span>
+                  <span>{CustomerReviewApi.formatCurrency(contract_info?.insured_amount)}</span>
                 </div>
-                <div className="crm-stat crm-stat--primary">
-                  <span className="crm-stat__label">적립금</span>
-                  <span className="crm-stat__value">{CustomerReviewApi.formatCurrency(contract_info?.accumulated_amount)}</span>
+                <div className="crm-list__item">
+                  <span>적립금</span>
+                  <span>{CustomerReviewApi.formatCurrency(contract_info?.accumulated_amount)}</span>
                 </div>
-                <div className="crm-stat">
-                  <span className="crm-stat__label">투자수익률</span>
-                  <span className={`crm-stat__value ${(contract_info?.investment_return_rate || 0) >= 0 ? 'crm-stat__value--success' : 'crm-stat__value--error'}`}>
+                <div className="crm-list__item">
+                  <span>투자수익률</span>
+                  <span className={(contract_info?.investment_return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}>
                     {CustomerReviewApi.formatPercent(contract_info?.investment_return_rate)}
                   </span>
                 </div>
-                <div className="crm-stat">
-                  <span className="crm-stat__label">해지환급금</span>
-                  <span className="crm-stat__value">{CustomerReviewApi.formatCurrency(contract_info?.surrender_value)}</span>
+                <div className="crm-list__item">
+                  <span>해지환급금(세전)</span>
+                  <span>{CustomerReviewApi.formatCurrency(contract_info?.surrender_value)}</span>
                 </div>
-                <div className="crm-stat">
-                  <span className="crm-stat__label">해지환급율</span>
-                  <span className="crm-stat__value">{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
+                <div className="crm-list__item">
+                  <span>해지환급율</span>
+                  <span>{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
                 </div>
               </div>
             </section>
