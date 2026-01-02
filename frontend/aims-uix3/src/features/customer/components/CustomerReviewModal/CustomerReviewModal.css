@@ -1,107 +1,17 @@
 /**
  * Customer Review Modal Styles
  * @since 2026-01-02
- * @version 3.0.0
+ * @version 4.0.0
  *
- * 모던하고 깔끔한 Apple 스타일 디자인
+ * Annual Report와 동일한 레이아웃 형식
  */
-
-/* ==================== Container ==================== */
-.crm {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
-  background: var(--color-bg-primary);
-}
-
-/* ==================== Hero Header ==================== */
-.crm-hero {
-  text-align: center;
-  padding: 24px 20px;
-  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 16px;
-  border: 1px solid var(--color-border-light);
-}
-
-.crm-hero__badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-tertiary);
-  padding: 4px 10px;
-  border-radius: 100px;
-  margin-bottom: 12px;
-}
-
-.crm-hero__name {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-}
-
-.crm-hero__name span {
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  font-size: 20px;
-}
-
-.crm-hero__product {
-  margin: 0 0 6px 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.crm-hero__date {
-  font-size: 12px;
-  color: var(--color-text-tertiary);
-}
-
-/* ==================== Info Row ==================== */
-.crm-info-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.crm-info-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px;
-  background: var(--color-bg-secondary);
-  border-radius: 12px;
-}
-
-.crm-info-item__label {
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.crm-info-item__value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
 
 /* ==================== Card ==================== */
 .crm-card {
   background: var(--color-bg-secondary);
   border-radius: 12px;
   padding: 16px;
+  margin-bottom: 16px;
 }
 
 .crm-card__header {
@@ -346,14 +256,5 @@
 .crm-empty__desc {
   margin: 0;
   font-size: 13px;
-  color: var(--color-text-tertiary);
-}
-
-/* ==================== Footer ==================== */
-.crm-footer {
-  margin-top: auto;
-  padding-top: 12px;
-  text-align: right;
-  font-size: 10px;
   color: var(--color-text-tertiary);
 }

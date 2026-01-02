@@ -1,15 +1,18 @@
 /**
  * AIMS UIX-3 Customer Review Modal
  * @since 2026-01-02
- * @version 3.0.0
+ * @version 4.0.0
  *
  * Customer Review Service 상세 모달 컴포넌트
- * - 모던하고 깔끔한 Apple 스타일 디자인
+ * - Annual Report와 동일한 레이아웃 형식 적용
  */
 
 import React from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
+import Button from '@/shared/ui/Button';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { CustomerReviewApi, type CustomerReview } from '../../api/customerReviewApi';
+import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
 import './CustomerReviewModal.css';
 
 interface CustomerReviewModalProps {
@@ -32,38 +35,40 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
     <DraggableModal
       visible={isOpen}
       onClose={onClose}
-      title="Customer Review Service"
-      className="customer-review-modal"
-      initialWidth={720}
-      initialHeight={680}
-    >
-      <div className="crm">
-        {/* 히어로 헤더 */}
-        <header className="crm-hero">
-          <div className="crm-hero__badge">Customer Review Service</div>
-          <h1 className="crm-hero__name">{review.contractor_name || '고객'}<span>님</span></h1>
-          <p className="crm-hero__product">{review.product_name || '상품명 없음'}</p>
-          <div className="crm-hero__date">
-            {review.issue_date ? CustomerReviewApi.formatDate(review.issue_date) : '-'}
-          </div>
-        </header>
-
-        {/* 계약자 정보 */}
-        <div className="crm-info-row">
-          <div className="crm-info-item">
-            <span className="crm-info-item__label">계약자</span>
-            <span className="crm-info-item__value">{review.contractor_name || '-'}</span>
-          </div>
-          <div className="crm-info-item">
-            <span className="crm-info-item__label">피보험자</span>
-            <span className="crm-info-item__value">{review.insured_name || '-'}</span>
-          </div>
-          <div className="crm-info-item">
-            <span className="crm-info-item__label">사망수익자</span>
-            <span className="crm-info-item__value">{review.death_beneficiary || '-'}</span>
+      title={
+        <div className="customer-document-preview__title">
+          <SFSymbol
+            name="doc.text.magnifyingglass"
+            size={SFSymbolSize.BODY}
+            weight={SFSymbolWeight.REGULAR}
+          />
+          <div>
+            <h2>{review.contractor_name || '고객'}님의 Customer Review Service</h2>
+            <p>
+              {review.issue_date ? `발행일: ${formatDate(review.issue_date)}` : '정보 없음'}
+            </p>
           </div>
         </div>
-
+      }
+      initialWidth={720}
+      initialHeight={680}
+      minWidth={600}
+      minHeight={500}
+      footer={
+        <div className="fulltext-modal-footer">
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={onClose}
+            className="fulltext-modal-button"
+          >
+            닫기
+          </Button>
+        </div>
+      }
+      className="customer-document-preview"
+    >
+      <main className="customer-document-preview__content">
         {!isParsed ? (
           <div className="crm-empty">
             <div className="crm-empty__icon">📄</div>
@@ -72,6 +77,28 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         ) : (
           <>
+            {/* Summary Section - Annual Report와 동일한 형식 */}
+            <div className="annual-report-summary">
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">발행일</span>
+                <span className="annual-report-summary__value">
+                  {review.issue_date ? formatDate(review.issue_date) : '-'}
+                </span>
+              </div>
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">총 적립금</span>
+                <span className="annual-report-summary__value annual-report-summary__value--primary">
+                  {CustomerReviewApi.formatCurrency(review.total_accumulated_amount || contract_info?.accumulated_amount)}
+                </span>
+              </div>
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">펀드 수</span>
+                <span className="annual-report-summary__value">
+                  {review.fund_count || fund_allocations?.length || 0}개
+                </span>
+              </div>
+            </div>
+
             {/* 계약사항 */}
             <section className="crm-card">
               <h2 className="crm-card__title">계약사항</h2>
@@ -83,7 +110,7 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                 <div className="crm-stat">
                   <span className="crm-stat__label">계약일자</span>
                   <span className="crm-stat__value">
-                    {contract_info?.contract_date ? CustomerReviewApi.formatDate(contract_info.contract_date) : '-'}
+                    {contract_info?.contract_date ? formatDate(contract_info.contract_date) : '-'}
                   </span>
                 </div>
                 <div className="crm-stat">
@@ -180,16 +207,18 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                 </div>
               </section>
             )}
+
+            {/* Footer Info */}
+            {review.parsed_at && (
+              <div className="annual-report-modal__footer">
+                <span className="annual-report-modal__footer-text">
+                  파싱일시: {formatDateTime(review.parsed_at)}
+                </span>
+              </div>
+            )}
           </>
         )}
-
-        {/* 푸터 */}
-        {review.parsed_at && (
-          <footer className="crm-footer">
-            파싱일시: {CustomerReviewApi.formatDateTime(review.parsed_at)}
-          </footer>
-        )}
-      </div>
+      </main>
     </DraggableModal>
   );
 };
