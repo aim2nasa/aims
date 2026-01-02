@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { checkAnnualReportFromPDF } from '../pdfParser'
+import { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from '../pdfParser'
 
 // pdfjs-dist 모킹
 vi.mock('pdfjs-dist', () => {
@@ -223,6 +223,252 @@ describe('pdfParser', () => {
 
       // 대소문자가 다르므로 매칭 실패
       expect(result.is_annual_report).toBe(false)
+    })
+  })
+})
+
+/**
+ * Customer Review Service 파싱 테스트
+ */
+describe('checkCustomerReviewFromPDF', () => {
+  let mockPdf: {
+    getPage: ReturnType<typeof vi.fn>
+  }
+  let mockPage: {
+    getTextContent: ReturnType<typeof vi.fn>
+  }
+
+  beforeEach(async () => {
+    mockPage = {
+      getTextContent: vi.fn()
+    }
+
+    mockPdf = {
+      getPage: vi.fn().mockResolvedValue(mockPage)
+    }
+
+    const pdfjsLib = await import('pdfjs-dist')
+    vi.mocked(pdfjsLib.getDocument).mockReturnValue({
+      promise: Promise.resolve(mockPdf)
+    } as any)
+  })
+
+  describe('Customer Review 감지', () => {
+    it('Customer Review Service 키워드와 메트라이프가 있으면 true를 반환해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '변액' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.confidence).toBe(1.0)
+    })
+
+    it('Customer Review Service 키워드가 없으면 false를 반환해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: '메트라이프' },
+          { str: '변액' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'not-crs.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(false)
+    })
+
+    it('Customer Review Service만 있고 선택 키워드가 없으면 false를 반환해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' }
+          // 메트라이프, 변액 등 선택 키워드 없음
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-only.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(false)
+    })
+
+    it('줄바꿈이 있는 Customer  Review Service도 감지해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer  Review Service' }, // 공백 2개 (줄바꿈 정규화)
+          { str: '메트라이프' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-newline.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+    })
+  })
+
+  describe('Customer Review 메타데이터 추출', () => {
+    it('상품명을 추출해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '무) 실버플랜 변액유니버셜V보험 종신' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-product.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.metadata?.product_name).toContain('변액')
+    })
+
+    it('발행일을 추출해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '발행(기준)일: 2025년 9월 9일' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-date.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.metadata?.issue_date).toBe('2025-09-09')
+    })
+
+    it('계약자를 추출해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '계약자 : 홍길동' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-contractor.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.metadata?.contractor_name).toBe('홍길동')
+    })
+
+    it('피보험자를 추출해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '피보험자 : 김철수' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-insured.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.metadata?.insured_name).toBe('김철수')
+    })
+
+    it('FSR 이름을 추출해야 함', async () => {
+      const mockText = {
+        items: [
+          { str: 'Customer Review Service' },
+          { str: '메트라이프' },
+          { str: '송유미FSR' }
+        ]
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'crs-fsr.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(true)
+      expect(result.metadata?.fsr_name).toBe('송유미')
+    })
+  })
+
+  describe('에러 처리', () => {
+    it('PDF 읽기 실패 시 false를 반환해야 함', async () => {
+      mockPdf.getPage.mockRejectedValue(new Error('PDF 읽기 실패'))
+
+      const file = new File(['invalid pdf'], 'broken.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(false)
+      expect(result.confidence).toBe(0)
+      expect(result.metadata).toBeNull()
+    })
+
+    it('빈 PDF는 false를 반환해야 함', async () => {
+      const mockText = {
+        items: []
+      }
+
+      mockPage.getTextContent.mockResolvedValue(mockText)
+
+      const file = new File(['pdf content'], 'empty.pdf', {
+        type: 'application/pdf'
+      })
+
+      const result = await checkCustomerReviewFromPDF(file)
+
+      expect(result.is_customer_review).toBe(false)
     })
   })
 })

@@ -1084,6 +1084,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
         progress: progress,
         filePath: doc.upload?.destPath,
         is_annual_report: doc.is_annual_report || false,
+        is_customer_review: doc.is_customer_review || false,
         customer_relation: customerRelation,
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
@@ -1332,14 +1333,16 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       const sortOrder = sort === 'docType_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
         { $match: filter },
-        // 1단계: is_annual_report 문서의 document_type 정규화
+        // 1단계: is_annual_report, is_customer_review 문서의 document_type 정규화
         {
           $addFields: {
             _normalized_docType: {
-              $cond: {
-                if: { $eq: ['$is_annual_report', true] },
-                then: 'annual_report',
-                else: '$document_type'
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$is_annual_report', true] }, then: 'annual_report' },
+                  { case: { $eq: ['$is_customer_review', true] }, then: 'customer_review' }
+                ],
+                default: '$document_type'
               }
             }
           }
@@ -1524,6 +1527,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
+        is_customer_review: doc.is_customer_review,
         customer_relation: customerRelation,
         badgeType: badgeType,  // 🔥 항상 badgeType 포함
         conversionStatus: doc.upload?.conversion_status || null,  // 🔥 PDF 변환 상태
@@ -2074,6 +2078,140 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
     res.status(500).json({
       success: false,
       error: 'is_annual_report 설정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Customer Review 플래그 설정 API
+ * - is_customer_review = true 설정
+ * - CRS 메타데이터 저장
+ * - 설계사별 데이터 격리
+ */
+app.post('/api/documents/set-cr-flag', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { filename, customer_id, metadata } = req.body;
+
+    console.log(`📋 [Set CR Flag] 요청: filename=${filename}, customer_id=${customer_id}, userId=${userId}`);
+
+    if (!filename) {
+      return res.status(400).json({
+        success: false,
+        error: 'filename이 필요합니다.'
+      });
+    }
+
+    // 파일 조회 (소유권 검증)
+    const documents = await db.collection(COLLECTION_NAME).aggregate([
+      {
+        $addFields: {
+          uploaded_at_normalized: {
+            $dateToString: {
+              format: '%Y-%m-%dT%H:%M:%S.%LZ',
+              date: { $toDate: '$upload.uploaded_at' }
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          ownerId: userId,
+          'upload.originalName': filename
+        }
+      },
+      { $sort: { uploaded_at_normalized: -1 } },
+      { $limit: 1 },
+      { $project: { uploaded_at_normalized: 0 } }
+    ]).toArray();
+    const document = documents[0];
+
+    if (!document) {
+      console.log(`❌ [Set CR Flag] 문서를 찾을 수 없음: ${filename}`);
+      return res.status(403).json({
+        success: false,
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
+      });
+    }
+
+    // is_customer_review 필드 및 메타데이터 설정
+    const updateFields = { is_customer_review: true };
+
+    // 고객 ID가 제공된 경우 customerId 설정
+    if (customer_id && ObjectId.isValid(customer_id)) {
+      updateFields.customerId = new ObjectId(customer_id);
+      console.log(`🔗 [Set CR Flag] customerId 설정: ${customer_id}`);
+    }
+
+    // 초기 overallStatus 설정
+    updateFields.overallStatus = 'processing';
+    updateFields.overallStatusUpdatedAt = new Date();
+
+    // 메타데이터가 제공된 경우 추가
+    if (metadata) {
+      updateFields.cr_metadata = {
+        product_name: metadata.product_name || null,
+        issue_date: metadata.issue_date || null,
+        contractor_name: metadata.contractor_name || null,
+        insured_name: metadata.insured_name || null,
+        death_beneficiary: metadata.death_beneficiary || null,
+        fsr_name: metadata.fsr_name || null
+      };
+      // CR 파싱 상태 초기화
+      updateFields.cr_parsing_status = 'pending';
+    }
+
+    await db.collection(COLLECTION_NAME)
+      .updateOne(
+        { _id: document._id },
+        { $set: updateFields }
+      );
+
+    console.log(`✅ [Set CR Flag] is_customer_review=true 설정 완료: ${document._id}`, updateFields);
+
+    // 고객의 documents 배열에도 추가
+    if (customer_id && ObjectId.isValid(customer_id)) {
+      try {
+        const customerObjectId = new ObjectId(customer_id);
+        const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+          _id: customerObjectId,
+          'documents.document_id': document._id
+        });
+
+        if (!customer) {
+          await db.collection(COLLECTIONS.CUSTOMERS).updateOne(
+            { _id: customerObjectId },
+            {
+              $push: {
+                documents: {
+                  document_id: document._id,
+                  linked_at: new Date(),
+                  link_type: 'auto'
+                }
+              }
+            }
+          );
+          console.log(`🔗 [Set CR Flag] 고객 documents 배열에 추가: ${customer_id}`);
+        }
+      } catch (linkError) {
+        console.error(`⚠️ [Set CR Flag] 고객 documents 연결 실패:`, linkError);
+        backendLogger.error('Documents', `[Set CR Flag] 고객 documents 연결 실패: ${customer_id}`, linkError);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'is_customer_review 필드가 설정되었습니다.',
+      document_id: document._id
+    });
+
+  } catch (error) {
+    console.error('❌ [Set CR Flag] 오류:', error);
+    backendLogger.error('Documents', '[Set CR Flag] 오류', error);
+    res.status(500).json({
+      success: false,
+      error: 'is_customer_review 설정에 실패했습니다.',
       details: error.message
     });
   }
@@ -6689,6 +6827,63 @@ app.post('/api/annual-report/check', upload.single('file'), async (req, res) => 
     // 에러 시에도 조용히 실패 (모달이 나타나지 않도록)
     res.json({
       is_annual_report: false,
+      confidence: 0,
+      metadata: null
+    });
+  }
+});
+
+/**
+ * Customer Review 체크 프록시 (파일 업로드 시 자동 감지)
+ * 프론트엔드 → Node.js (3010) → Python (8004)
+ */
+app.post('/api/customer-review/check', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        is_customer_review: false,
+        confidence: 0,
+        metadata: null,
+        error: 'No file uploaded'
+      });
+    }
+
+    console.log(`📄 [Customer Review Check] 파일: ${req.file.originalname}, 크기: ${req.file.size} bytes`);
+
+    // Python API로 전달할 FormData 생성
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    const pythonApiUrl = 'http://localhost:8004/customer-review/check';
+    console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
+
+    const response = await axios.post(pythonApiUrl, formData, {
+      headers: formData.getHeaders(),
+      timeout: 10000 // 10초 타임아웃
+    });
+
+    console.log(`✅ [Customer Review Check] 결과:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Customer Review Check] 오류:', error.message);
+    backendLogger.error('CustomerReview', '[Customer Review Check] 오류', error);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        is_customer_review: false,
+        confidence: 0,
+        metadata: null,
+        error: 'Python API 서버에 연결할 수 없습니다. (포트 8004)'
+      });
+    }
+
+    // 에러 시에도 조용히 실패
+    res.json({
+      is_customer_review: false,
       confidence: 0,
       metadata: null
     });

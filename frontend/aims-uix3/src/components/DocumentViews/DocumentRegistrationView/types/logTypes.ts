@@ -5,7 +5,7 @@
  * 문서 등록 처리 로그 타입 정의
  */
 
-export type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'ar-detect' | 'ar-auto'
+export type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'ar-detect' | 'ar-auto' | 'cr-detect' | 'cr-auto'
 
 export interface ProcessingLog {
   id: string
@@ -45,6 +45,16 @@ export const LOG_CONFIG = {
     bgColor: 'transparent'
   },
   'ar-auto': {
+    icon: '●',
+    color: 'rgba(52, 199, 89, 1)',
+    bgColor: 'transparent'
+  },
+  'cr-detect': {
+    icon: '●',
+    color: 'rgba(175, 82, 222, 1)',
+    bgColor: 'transparent'
+  },
+  'cr-auto': {
     icon: '●',
     color: 'rgba(52, 199, 89, 1)',
     bgColor: 'transparent'

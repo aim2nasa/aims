@@ -21,7 +21,7 @@ import { uploadConfig, UserContextService } from './services/userContextService'
 import { api, API_CONFIG } from '@/shared/lib/api'
 import { cachedRequest } from '@/shared/lib/requestCache'
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
-import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
+import { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
@@ -541,7 +541,64 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
               continue;
             } else {
-              addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report 아님 - 일반 문서로 처리')
+              // AR이 아닌 경우 Customer Review 체크
+              console.log('[DocumentRegistrationView] 🔍 Annual Report 아님, Customer Review 체크:', file.name);
+              const crCheckResult = await checkCustomerReviewFromPDF(file);
+
+              if (crCheckResult.is_customer_review) {
+                console.log('[DocumentRegistrationView] ✅ Customer Review 감지!', crCheckResult.metadata);
+
+                // 🎯 사전 선택된 고객 확인
+                if (!customerFileCustomer) {
+                  addLog('warning', `CRS 문서 감지됨: ${file.name}`, '고객을 먼저 선택해주세요');
+                  updateFileStatus(file, 'error', '고객을 먼저 선택해주세요');
+                  continue;
+                }
+
+                const customerId = customerFileCustomer._id;
+                const customerName = customerFileCustomer.personal_info?.name || '알 수 없음';
+
+                addLog('success', `[1/4] PDF 분석 완료: ${file.name}`);
+                addLog(
+                  'cr-detect',
+                  `[2/5] Customer Review 감지`,
+                  `사전 선택된 고객: ${customerName} → CRS 전용 처리로 전환`
+                );
+
+                // CRS 문서 등록 (AR과 유사한 방식)
+                try {
+                  // 1. 파일 업로드
+                  const uploadResult = await DocumentService.uploadDocument(file, { customerId });
+
+                  if (uploadResult.success && uploadResult.document?._id) {
+                    // 2. set-cr-flag 호출
+                    await api.post('/api/documents/set-cr-flag', {
+                      filename: file.name,
+                      customer_id: customerId,
+                      metadata: crCheckResult.metadata
+                    });
+
+                    addLog(
+                      'cr-auto',
+                      `CRS 자동 등록: ${file.name}`,
+                      `사전 선택된 고객: ${customerName}`
+                    );
+                    updateFileStatus(file, 'completed', 'Customer Review 등록 완료');
+                    console.log('[DocumentRegistrationView] CRS 문서 등록 성공:', file.name);
+                  } else {
+                    throw new Error('파일 업로드 실패');
+                  }
+                } catch (crError) {
+                  console.error('[DocumentRegistrationView] CRS 등록 실패:', crError);
+                  errorReporter.reportApiError(crError as Error, { component: 'DocumentRegistrationView.handleFilesSelected.crRegister' });
+                  addLog('warning', `CRS 등록 실패: ${file.name}`, crError instanceof Error ? crError.message : String(crError));
+                  updateFileStatus(file, 'error', 'CRS 등록 실패');
+                }
+
+                continue;
+              } else {
+                addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report/Customer Review 아님 - 일반 문서로 처리');
+              }
             }
           } catch (error) {
             console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);

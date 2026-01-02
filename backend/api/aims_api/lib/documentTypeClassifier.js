@@ -77,8 +77,8 @@ const TYPE_KEYWORDS = {
     secondary: ['소득금액증명', '소득증빙', '재직', '급여명세'],
     weight: 1.0
   }
-  // ⚠️ annual_report는 자동분류 대상에서 제외
-  // AR 문서는 AR 파싱 과정에서만 시스템이 자동으로 분류함
+  // ⚠️ annual_report, customer_review는 자동분류 대상에서 제외
+  // AR/CRS 문서는 각각의 파싱 과정에서만 시스템이 자동으로 분류함
 };
 
 /**

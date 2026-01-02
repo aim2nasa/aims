@@ -57,6 +57,10 @@ def is_customer_review(pdf_path: str) -> Dict[str, any]:
                 "matched_keywords": []
             }
 
+        # 2.5. 텍스트 정규화 (줄바꿈/공백 통합)
+        # PDF에서 "Customer\nReview Service"로 추출되는 경우 처리
+        normalized_text = re.sub(r'\s+', ' ', first_page_text)
+
         # 3. 필수 키워드 정의
         # 메트라이프 Customer Review Service 특징적인 키워드들
         required_keywords = [
@@ -75,9 +79,9 @@ def is_customer_review(pdf_path: str) -> Dict[str, any]:
             "피보험자"
         ]
 
-        # 4. 키워드 매칭
-        matched_required = [kw for kw in required_keywords if kw in first_page_text]
-        matched_optional = [kw for kw in optional_keywords if kw in first_page_text]
+        # 4. 키워드 매칭 (정규화된 텍스트 사용)
+        matched_required = [kw for kw in required_keywords if kw in normalized_text]
+        matched_optional = [kw for kw in optional_keywords if kw in normalized_text]
 
         all_matched = matched_required + matched_optional
 
@@ -92,7 +96,7 @@ def is_customer_review(pdf_path: str) -> Dict[str, any]:
         # 6. 판단 기준
         # "Customer Review Service" 필수 + 다른 키워드 1개 이상
         # 또는 confidence >= 0.7
-        has_cr_keyword = "Customer Review Service" in first_page_text
+        has_cr_keyword = "Customer Review Service" in normalized_text
         is_review = (has_cr_keyword and len(all_matched) >= 2) or confidence >= 0.7
 
         # 7. 결과 로깅

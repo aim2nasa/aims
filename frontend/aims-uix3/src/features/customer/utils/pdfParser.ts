@@ -19,6 +19,18 @@ export interface CheckAnnualReportResult {
   } | null;
 }
 
+export interface CheckCustomerReviewResult {
+  is_customer_review: boolean;
+  confidence: number;
+  metadata: {
+    product_name?: string;
+    issue_date?: string;
+    contractor_name?: string;
+    insured_name?: string;
+    fsr_name?: string;
+  } | null;
+}
+
 /**
  * PDF 첫 페이지 텍스트 추출
  */
@@ -127,5 +139,138 @@ export async function checkAnnualReportFromPDF(
     errorReporter.reportApiError(error as Error, { component: 'pdfParser.checkAnnualReportFromPDF', payload: { fileName: file.name } });
     // 에러 발생 시 일반 문서로 처리
     return { is_annual_report: false, confidence: 0, metadata: null };
+  }
+}
+
+/**
+ * Customer Review 메타데이터 추출
+ */
+function extractCRMetadata(text: string) {
+  const metadata: {
+    product_name?: string;
+    issue_date?: string;
+    contractor_name?: string;
+    insured_name?: string;
+    fsr_name?: string;
+  } = {};
+
+  // 1. 상품명 추출: "무) 실버플랜 변액유니버셜V보험..." 패턴
+  const productPattern = /([무유]\)\s*[^\n]+(?:종신|년납|만기)[^\n]*)/;
+  const productMatch = text.match(productPattern);
+  if (productMatch) {
+    metadata.product_name = productMatch[1].trim();
+  } else {
+    // 대체 패턴: 변액 보험 상품명
+    const altProductPattern = /([가-힣]+\s*변액[^\n]+보험[^\n]*)/;
+    const altMatch = text.match(altProductPattern);
+    if (altMatch) {
+      metadata.product_name = altMatch[1].trim();
+    }
+  }
+
+  // 2. 발행일 추출: "발행(기준)일: 2025년 9월 9일"
+  const datePattern = /발행\s*(?:\(기준\))?\s*일[:\s]*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
+  const dateMatch = text.match(datePattern);
+  if (dateMatch && dateMatch[1] && dateMatch[2] && dateMatch[3]) {
+    const year = dateMatch[1];
+    const month = dateMatch[2].padStart(2, '0');
+    const day = dateMatch[3].padStart(2, '0');
+    metadata.issue_date = `${year}-${month}-${day}`;
+  } else {
+    // 대체 패턴: 일반 날짜
+    const altDatePattern = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
+    const altDateMatch = text.match(altDatePattern);
+    if (altDateMatch && altDateMatch[1] && altDateMatch[2] && altDateMatch[3]) {
+      const year = altDateMatch[1];
+      const month = altDateMatch[2].padStart(2, '0');
+      const day = altDateMatch[3].padStart(2, '0');
+      metadata.issue_date = `${year}-${month}-${day}`;
+    }
+  }
+
+  // 3. 계약자 추출: "계약자 : 홍길동"
+  const contractorPattern = /계약자\s*[:\s]+([가-힣]{2,4})/;
+  const contractorMatch = text.match(contractorPattern);
+  if (contractorMatch) {
+    metadata.contractor_name = contractorMatch[1].trim();
+  }
+
+  // 4. 피보험자 추출: "피보험자 : 홍길동"
+  const insuredPattern = /피보험자\s*[:\s]+([가-힣]{2,4})/;
+  const insuredMatch = text.match(insuredPattern);
+  if (insuredMatch) {
+    metadata.insured_name = insuredMatch[1].trim();
+  }
+
+  // 5. FSR 이름 추출: "송유미FSR"
+  const fsrPattern = /([가-힣]{2,4})\s*FSR/;
+  const fsrMatch = text.match(fsrPattern);
+  if (fsrMatch) {
+    metadata.fsr_name = fsrMatch[1].replace(/\s/g, '').trim();
+  }
+
+  return metadata;
+}
+
+/**
+ * Customer Review Service 여부 체크 (프론트엔드)
+ */
+export async function checkCustomerReviewFromPDF(
+  file: File
+): Promise<CheckCustomerReviewResult> {
+  if (import.meta.env.DEV) {
+    console.log('[pdfParser] 🔍 Customer Review 체크 시작:', file.name);
+  }
+
+  try {
+    // 1. 첫 페이지 텍스트 추출
+    const text = await extractFirstPageText(file);
+
+    // 2. 키워드 매칭
+    // 필수 키워드: "Customer Review Service" 또는 "Customer\nReview Service" (줄바꿈 포함)
+    const requiredKeywords = ['Customer Review Service', 'Customer  Review Service'];
+    const optionalKeywords = ['메트라이프', '변액', '적립금', '투자수익률', '펀드', '해지환급금', '계약자', '피보험자'];
+
+    // 줄바꿈/공백 정규화하여 체크
+    const normalizedText = text.replace(/\s+/g, ' ');
+    const hasCustomerReview = requiredKeywords.some(kw =>
+      normalizedText.includes(kw.replace(/\s+/g, ' '))
+    ) || normalizedText.includes('Customer Review Service');
+
+    const matchedOptional = optionalKeywords.filter((kw) => text.includes(kw));
+
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] Customer Review 키워드 발견:', hasCustomerReview);
+      console.log('[pdfParser] 매칭된 선택 키워드:', matchedOptional);
+    }
+
+    // 3. 신뢰도 계산 ("Customer Review Service" 필수 + 선택 키워드 1개 이상)
+    const isCustomerReview = hasCustomerReview && matchedOptional.length >= 1;
+    const confidence = hasCustomerReview ? 1.0 : 0;
+
+    if (!isCustomerReview) {
+      if (import.meta.env.DEV) {
+        console.log('[pdfParser] ❌ Customer Review 아님');
+      }
+      return { is_customer_review: false, confidence, metadata: null };
+    }
+
+    // 4. 메타데이터 추출
+    const metadata = extractCRMetadata(text);
+
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] ✅ Customer Review 판단: true, metadata:', metadata);
+    }
+
+    return {
+      is_customer_review: true,
+      confidence,
+      metadata
+    };
+  } catch (error) {
+    console.error('[pdfParser] ❌ Customer Review 체크 실패:', error);
+    errorReporter.reportApiError(error as Error, { component: 'pdfParser.checkCustomerReviewFromPDF', payload: { fileName: file.name } });
+    // 에러 발생 시 일반 문서로 처리
+    return { is_customer_review: false, confidence: 0, metadata: null };
   }
 }
