@@ -154,14 +154,20 @@ function extractCRMetadata(text: string) {
     fsr_name?: string;
   } = {};
 
-  // 1. 상품명 추출: "무) 실버플랜 변액유니버셜V보험..." 패턴
-  const productPattern = /([무유]\)\s*[^\n]+(?:종신|년납|만기)[^\n]*)/;
+  // 1. 상품명 추출: "무) 실버플랜 변액유니버셜V보험(월납) 종신, 전기납" 패턴
+  // 납입기간: 숫자+년납 (10년납) 또는 한글+납 (전기납, 단기납)
+  const productPattern = /([무유]\)\s*.+?(?:종신|년납|만기)(?:[,\s]*(?:\d+년?납?|[가-힣]+납))?)/;
   const productMatch = text.match(productPattern);
   if (productMatch) {
-    metadata.product_name = productMatch[1].trim();
+    let productName = productMatch[1].trim();
+    // 발행일 이후 텍스트 제거
+    if (productName.includes('발행')) {
+      productName = productName.split('발행')[0].trim();
+    }
+    metadata.product_name = productName;
   } else {
     // 대체 패턴: 변액 보험 상품명
-    const altProductPattern = /([가-힣]+\s*변액[^\n]+보험[^\n]*)/;
+    const altProductPattern = /([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)/;
     const altMatch = text.match(altProductPattern);
     if (altMatch) {
       metadata.product_name = altMatch[1].trim();

@@ -161,9 +161,10 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
         result = {}
 
         # 1. 상품명 추출
-        # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 0년납"
-        # "무)" 또는 "유)" 로 시작하는 상품명 (종신/년납/만기에서 끝남)
-        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기)[,\s]*\d*년?납?)"
+        # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 또는 "무) xxx 종신, 10년납"
+        # "무)" 또는 "유)" 로 시작하는 상품명
+        # 납입기간: 숫자+년납 (10년납) 또는 한글+납 (전기납, 단기납)
+        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기)(?:[,\s]*(?:\d+년?납?|[가-힣]+납))?)"
         product_match = re.search(product_pattern, first_page_text)
         if product_match:
             product_name = product_match.group(1).strip()

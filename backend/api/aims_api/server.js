@@ -2404,6 +2404,67 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
     }
     // ===================================================
 
+    // ========== Customer Review 파싱 데이터 삭제 ==========
+    // 매칭 조건: source_file_id가 같으면 삭제 (Annual Report와 동일한 로직)
+    if (document.is_customer_review) {
+      try {
+        console.log(`🗑️  [CR 삭제] Customer Review 문서 삭제 감지: file_id=${id}`);
+
+        // 1. 고객 ID 및 CR 메타데이터 추출
+        const customerId = document.customerId;
+        const fileObjectId = document._id;  // ObjectId
+        const policyNumber = document.cr_metadata?.policy_number;
+        const issueDate = document.cr_metadata?.issue_date;
+
+        if (!customerId) {
+          console.warn('⚠️ [CR 삭제] customerId를 찾을 수 없음 - CR 파싱 삭제 건너뜀');
+        } else {
+          // 2. source_file_id (ObjectId)로 정확히 매칭하여 삭제
+          console.log(`🗓️  [CR 삭제] source_file_id=${fileObjectId}로 CR 파싱 삭제 시도`);
+
+          const crDeleteResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+            { '_id': customerId },
+            {
+              $pull: { customer_reviews: { source_file_id: fileObjectId } },
+              $set: { 'meta.updated_at': utcNowDate() }
+            }
+          );
+
+          if (crDeleteResult.modifiedCount > 0) {
+            console.log(`✅ [CR 삭제] CR 파싱 데이터 삭제 완료 (source_file_id 매칭): customer_id=${customerId}`);
+          } else {
+            // fallback: policy_number + issue_date로 매칭
+            if (policyNumber && issueDate) {
+              console.log(`🗓️  [CR 삭제] source_file_id 매칭 실패, policy_number=${policyNumber} + issue_date=${issueDate}로 fallback 삭제 시도`);
+              const fallbackResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+                { '_id': customerId },
+                {
+                  $pull: {
+                    customer_reviews: {
+                      'contract_info.policy_number': policyNumber,
+                      issue_date: new Date(issueDate)
+                    }
+                  },
+                  $set: { 'meta.updated_at': utcNowDate() }
+                }
+              );
+              if (fallbackResult.modifiedCount > 0) {
+                console.log(`✅ [CR 삭제] CR 파싱 데이터 삭제 완료 (policy_number + issue_date 매칭)`);
+              } else {
+                console.log(`ℹ️  [CR 삭제] 삭제할 CR 파싱 데이터 없음`);
+              }
+            } else {
+              console.log(`ℹ️  [CR 삭제] 삭제할 CR 파싱 데이터 없음 (source_file_id 매칭 실패, policy_number 또는 issue_date 없음)`);
+            }
+          }
+        }
+      } catch (crError) {
+        console.warn('⚠️ [CR 삭제] CR 파싱 데이터 삭제 실패:', crError.message);
+        // CR 삭제 실패해도 문서 삭제는 진행
+      }
+    }
+    // ===================================================
+
     // 파일 시스템에서 파일 삭제
     const fs = require('fs').promises;
     if (document.upload?.destPath) {
