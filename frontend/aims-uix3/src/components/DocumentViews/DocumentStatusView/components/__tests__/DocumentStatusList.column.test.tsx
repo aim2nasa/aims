@@ -46,10 +46,13 @@ vi.mock('../../../../SFSymbol', () => ({
   },
 }))
 
-// Mock Tooltip
+// Mock Tooltip and DocumentTypeCell
 vi.mock('@/shared/ui', () => ({
   Tooltip: ({ children, content }: any) => (
     <div data-tooltip={content}>{children}</div>
+  ),
+  DocumentTypeCell: ({ documentType }: any) => (
+    <span data-testid="document-type-cell">{documentType || '미지정'}</span>
   ),
 }))
 

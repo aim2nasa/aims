@@ -182,6 +182,9 @@ vi.mock('@/shared/ui', () => ({
   ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
   ContextMenuDivider: () => <hr />,
   Modal: ({ children, visible }: any) => visible ? <div data-testid="modal">{children}</div> : null,
+  DocumentTypeCell: ({ documentType }: any) => (
+    <span data-testid="document-type-cell">{documentType || '미지정'}</span>
+  ),
 }))
 
 // Mock SFSymbol - using @/components path alias

@@ -62,3 +62,6 @@ export type { Toast, ToastType, ToastOptions, UseToastReturn } from './Toast';
 
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps, EmptyStateAction } from './EmptyState';
+
+export { DocumentTypeCell } from './DocumentTypeCell';
+export type { DocumentTypeCellProps } from './DocumentTypeCell';

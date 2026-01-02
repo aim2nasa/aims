@@ -12,7 +12,7 @@ import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
-import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui'
+import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, DocumentTypeCell } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import SFSymbol, {
@@ -1342,44 +1342,20 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     )}
                   </div>
 
-                  {/* 🍎 문서 유형 드롭다운 */}
+                  {/* 🍎 문서 유형 - 공통 컴포넌트 사용 (Single Source of Truth) */}
                   <div className="document-doctype" onClick={(e) => e.stopPropagation()}>
-                    {(() => {
-                      const docType = document.document_type
-                      const isAnnualReportType = docType === 'annual_report' || document.isAnnualReport === true
-
-                      // Annual Report는 읽기 전용으로 표시
-                      if (isAnnualReportType) {
-                        return (
-                          <span className="doctype-readonly doctype-readonly--ar">
-                            연간보고서
-                          </span>
-                        )
-                      }
-
-                      // 일반 문서는 드롭다운으로 표시
-                      return (
-                        <select
-                          className="doctype-select"
-                          value={docType || 'unspecified'}
-                          onChange={(e) => {
-                            const docId = document._id
-                            if (docId) {
-                              handleDocTypeChange(docId, e.target.value)
-                            }
-                          }}
-                          disabled={updatingDocTypeId === document._id}
-                          aria-label="문서 유형 선택"
-                        >
-                          <option value="unspecified">미지정</option>
-                          {documentTypes.map((dt) => (
-                            <option key={dt._id} value={dt.value}>
-                              {dt.label}
-                            </option>
-                          ))}
-                        </select>
-                      )
-                    })()}
+                    <DocumentTypeCell
+                      documentType={document.document_type}
+                      isAnnualReport={document.isAnnualReport}
+                      documentTypes={documentTypes}
+                      onChange={(newType) => {
+                        const docId = document._id
+                        if (docId) {
+                          handleDocTypeChange(docId, newType)
+                        }
+                      }}
+                      isUpdating={updatingDocTypeId === document._id}
+                    />
                   </div>
 
                   {/* 크기 */}
