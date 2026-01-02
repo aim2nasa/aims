@@ -46,10 +46,12 @@ export interface FundAllocation {
   fund_name: string;               // 펀드명
   basic_accumulated: number;       // 기본적립금 (원)
   additional_accumulated?: number; // 추가적립금 (원, optional)
-  allocation_ratio: number;        // 구성비율 (%)
-  return_rate: number;             // 수익률/기본수익률 (%)
+  allocation_ratio: number;        // 기본 구성비율 (%)
+  additional_allocation_ratio?: number | null; // 추가 구성비율 (%, optional)
+  return_rate: number;             // 기본수익률 (%)
   additional_return_rate?: number | null; // 추가수익률 (%, optional)
-  invested_principal: number;      // 투입원금 (원)
+  invested_principal: number;      // 기본 투입원금 (원)
+  additional_invested_principal?: number | null; // 추가 투입원금 (원, optional)
 }
 
 /**

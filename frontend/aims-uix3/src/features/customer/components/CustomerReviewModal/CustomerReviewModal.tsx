@@ -32,6 +32,31 @@ const extractProductName = (productName: string | undefined): string => {
   return productName.trim();
 };
 
+// 기본/추가 값 표시 헬퍼 (추가납입이 있을 경우 "기본 / 추가" 형식)
+const formatDualValue = (
+  basicValue: number | undefined | null,
+  additionalValue: number | undefined | null,
+  formatter: (v: number | undefined | null) => string
+): { basic: string; additional: string | null; hasAdditional: boolean } => {
+  const basic = formatter(basicValue);
+  const hasAdditional = additionalValue !== undefined && additionalValue !== null && additionalValue !== 0;
+  return {
+    basic,
+    additional: hasAdditional ? formatter(additionalValue) : null,
+    hasAdditional,
+  };
+};
+
+// 펀드에 추가납입 데이터가 있는지 확인
+const hasAnyAdditionalData = (funds: CustomerReview['fund_allocations']): boolean => {
+  if (!funds) return false;
+  return funds.some(f =>
+    (f.additional_accumulated && f.additional_accumulated > 0) ||
+    (f.additional_return_rate !== undefined && f.additional_return_rate !== null && f.additional_return_rate !== 0) ||
+    (f.additional_invested_principal && f.additional_invested_principal > 0)
+  );
+};
+
 export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
   isOpen,
   onClose,
@@ -138,13 +163,13 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                     <span>해지환급율</span>
                     <span>{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
                   </div>
-                  {contract_info?.initial_premium && (
+                  {(contract_info?.initial_premium ?? 0) > 0 && (
                     <div className="crm-list__item">
                       <span>초회 납입 보험료</span>
                       <span>{CustomerReviewApi.formatCurrency(contract_info.initial_premium)}</span>
                     </div>
                   )}
-                  {contract_info?.accumulation_rate && (
+                  {(contract_info?.accumulation_rate ?? 0) > 0 && (
                     <div className="crm-list__item crm-list__item--highlight">
                       <span>적립금비율</span>
                       <span>{CustomerReviewApi.formatPercent(contract_info.accumulation_rate)}</span>
@@ -191,35 +216,90 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                   <span className="crm-card__badge">{review.fund_count || fund_allocations?.length || 0}개</span>
                 </div>
                 {fund_allocations && fund_allocations.length > 0 ? (
-                  <div className="crm-table crm-table--compact">
-                    <div className="crm-table__head">
-                      <div className="crm-table__cell crm-table__cell--name">펀드명</div>
-                      <div className="crm-table__cell">적립금</div>
-                      <div className="crm-table__cell">구성비</div>
-                      <div className="crm-table__cell">수익률</div>
-                      <div className="crm-table__cell">투입원금</div>
-                    </div>
-                    <div className="crm-table__body">
-                      {fund_allocations.map((fund, index) => (
-                        <div key={index} className="crm-table__row">
-                          <div className="crm-table__cell crm-table__cell--name">{fund.fund_name || '-'}</div>
-                          <div className="crm-table__cell">{CustomerReviewApi.formatCurrency(fund.basic_accumulated)}</div>
-                          <div className="crm-table__cell">{CustomerReviewApi.formatPercent(fund.allocation_ratio)}</div>
-                          <div className={`crm-table__cell ${(fund.return_rate || 0) >= 0 ? 'crm-table__cell--success' : 'crm-table__cell--error'}`}>
-                            {CustomerReviewApi.formatPercent(fund.return_rate)}
-                          </div>
-                          <div className="crm-table__cell">{CustomerReviewApi.formatCurrency(fund.invested_principal)}</div>
+                  (() => {
+                    const showAdditional = hasAnyAdditionalData(fund_allocations);
+                    return (
+                      <div className={`crm-table crm-table--compact ${showAdditional ? 'crm-table--dual' : ''}`}>
+                        <div className="crm-table__head">
+                          <div className="crm-table__cell crm-table__cell--name">펀드명</div>
+                          {showAdditional ? (
+                            <>
+                              <div className="crm-table__cell">적립금</div>
+                              <div className="crm-table__cell">구성비율</div>
+                              <div className="crm-table__cell">수익률</div>
+                              <div className="crm-table__cell">투입원금</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="crm-table__cell">적립금</div>
+                              <div className="crm-table__cell">구성비</div>
+                              <div className="crm-table__cell">수익률</div>
+                              <div className="crm-table__cell">투입원금</div>
+                            </>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <div className="crm-table__foot">
-                      <div className="crm-table__cell crm-table__cell--name">합계</div>
-                      <div className="crm-table__cell crm-table__cell--primary">{CustomerReviewApi.formatCurrency(review.total_accumulated_amount)}</div>
-                      <div className="crm-table__cell">-</div>
-                      <div className="crm-table__cell">-</div>
-                      <div className="crm-table__cell">-</div>
-                    </div>
-                  </div>
+                        <div className="crm-table__body">
+                          {fund_allocations.map((fund, index) => {
+                            if (showAdditional) {
+                              // 추가납입 모드: 기본/추가 값을 함께 표시
+                              const accum = formatDualValue(fund.basic_accumulated, fund.additional_accumulated, CustomerReviewApi.formatCurrency);
+                              const ratio = formatDualValue(fund.allocation_ratio, fund.additional_allocation_ratio, CustomerReviewApi.formatPercent);
+                              const returnRate = formatDualValue(fund.return_rate, fund.additional_return_rate, CustomerReviewApi.formatPercent);
+                              const principal = formatDualValue(fund.invested_principal, fund.additional_invested_principal, CustomerReviewApi.formatCurrency);
+
+                              return (
+                                <div key={index} className="crm-table__row">
+                                  <div className="crm-table__cell crm-table__cell--name">{fund.fund_name || '-'}</div>
+                                  <div className="crm-table__cell crm-table__cell--dual">
+                                    <span className="crm-dual-value__basic"><span className="crm-dual-value__label">기본납입</span><span className="crm-dual-value__amount">{accum.basic}</span></span>
+                                    {accum.hasAdditional && <span className="crm-dual-value__additional"><span className="crm-dual-value__label">추가납입</span><span className="crm-dual-value__amount">{accum.additional}</span></span>}
+                                  </div>
+                                  <div className="crm-table__cell crm-table__cell--dual">
+                                    <span className="crm-dual-value__basic"><span className="crm-dual-value__label">기본납입</span><span className="crm-dual-value__amount">{ratio.basic}</span></span>
+                                    {ratio.hasAdditional && <span className="crm-dual-value__additional"><span className="crm-dual-value__label">추가납입</span><span className="crm-dual-value__amount">{ratio.additional}</span></span>}
+                                  </div>
+                                  <div className="crm-table__cell crm-table__cell--dual">
+                                    <span className={`crm-dual-value__basic ${(fund.return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}`}>
+                                      <span className="crm-dual-value__label">기본납입</span><span className="crm-dual-value__amount">{returnRate.basic}</span>
+                                    </span>
+                                    {returnRate.hasAdditional && (
+                                      <span className={`crm-dual-value__additional ${(fund.additional_return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}`}>
+                                        <span className="crm-dual-value__label">추가납입</span><span className="crm-dual-value__amount">{returnRate.additional}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="crm-table__cell crm-table__cell--dual">
+                                    <span className="crm-dual-value__basic"><span className="crm-dual-value__label">기본납입</span><span className="crm-dual-value__amount">{principal.basic}</span></span>
+                                    {principal.hasAdditional && <span className="crm-dual-value__additional"><span className="crm-dual-value__label">추가납입</span><span className="crm-dual-value__amount">{principal.additional}</span></span>}
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              // 기본 모드: 기존 형식 유지
+                              return (
+                                <div key={index} className="crm-table__row">
+                                  <div className="crm-table__cell crm-table__cell--name">{fund.fund_name || '-'}</div>
+                                  <div className="crm-table__cell">{CustomerReviewApi.formatCurrency(fund.basic_accumulated)}</div>
+                                  <div className="crm-table__cell">{CustomerReviewApi.formatPercent(fund.allocation_ratio)}</div>
+                                  <div className={`crm-table__cell ${(fund.return_rate || 0) >= 0 ? 'crm-table__cell--success' : 'crm-table__cell--error'}`}>
+                                    {CustomerReviewApi.formatPercent(fund.return_rate)}
+                                  </div>
+                                  <div className="crm-table__cell">{CustomerReviewApi.formatCurrency(fund.invested_principal)}</div>
+                                </div>
+                              );
+                            }
+                          })}
+                        </div>
+                        <div className="crm-table__foot">
+                          <div className="crm-table__cell crm-table__cell--name">합계</div>
+                          <div className="crm-table__cell crm-table__cell--primary">{CustomerReviewApi.formatCurrency(review.total_accumulated_amount)}</div>
+                          <div className="crm-table__cell">-</div>
+                          <div className="crm-table__cell">-</div>
+                          <div className="crm-table__cell">-</div>
+                        </div>
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="crm-empty-small">펀드 정보 없음</div>
                 )}

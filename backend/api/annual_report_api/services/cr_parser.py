@@ -119,9 +119,9 @@ def extract_contract_info(text: str) -> Dict:
     if acc_rate_match:
         info["accumulation_rate"] = parse_float(acc_rate_match.group(1))
 
-    # 초회 납입 보험료: "(1회차 납입) 50,000,000" 또는 "50,000,000"
-    # "(N회차 납입)" 패턴을 명시적으로 건너뛰어야 함
-    initial_match = re.search(r'초회\s*납입\s*보험료[:\s]*(?:\(\d+회차[^)]*\)\s*)?([\d,]+)', text)
+    # 초회 납입 보험료: "(1회차 납입) 50,000,000" 또는 "(143개월차 납입) 300,000"
+    # "N회차" 또는 "N개월차" 패턴 모두 처리
+    initial_match = re.search(r'초회\s*납입\s*보험료[:\s]*(?:\(\d+(?:회차|개월차)[^)]*\)\s*)?([\d,]+)', text)
     if initial_match:
         info["initial_premium"] = parse_number(initial_match.group(1))
 
@@ -446,9 +446,11 @@ def parse_customer_review(pdf_path: str, end_page: int = 4) -> Dict:
                             "basic_accumulated": data['amount'],
                             "additional_accumulated": data.get('additional_amount', 0),
                             "allocation_ratio": data['ratio'],
+                            "additional_allocation_ratio": data.get('additional_ratio', 0.0) if data.get('additional_ratio', 0.0) != 0 else None,
                             "return_rate": data['return'],
                             "additional_return_rate": data.get('additional_return', 0.0) if data.get('additional_return', 0.0) != 0 else None,
-                            "invested_principal": data['principal']
+                            "invested_principal": data['principal'],
+                            "additional_invested_principal": data.get('additional_principal', 0) if data.get('additional_principal', 0) != 0 else None,
                         })
 
             # 총 적립금 계산

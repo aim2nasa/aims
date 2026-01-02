@@ -404,7 +404,7 @@
 /* ==================== Three Columns Layout ==================== */
 .crm-three-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr;
+  grid-template-columns: 1fr 1fr 1.5fr;
   gap: 12px;
   flex: 1;
   min-height: 0;
@@ -515,4 +515,97 @@
   background: var(--color-bg-tertiary);
   border-radius: 6px;
   flex: 1;
+}
+
+/* ==================== Dual Value Table (기본/추가 납입 표시) ==================== */
+.crm-table--dual .crm-table__head,
+.crm-table--dual .crm-table__row,
+.crm-table--dual .crm-table__foot {
+  grid-template-columns: 1fr 1.4fr 1fr 1fr 1.4fr;
+  gap: 4px;
+}
+
+.crm-table--compact.crm-table--dual .crm-table__head,
+.crm-table--compact.crm-table--dual .crm-table__row,
+.crm-table--compact.crm-table--dual .crm-table__foot {
+  grid-template-columns: 1fr 1.4fr 1fr 1fr 1.4fr;
+  gap: 4px;
+}
+
+/* Dual header with main/sub text */
+.crm-table__cell--dual-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.crm-table__header-main {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.crm-table__header-sub {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+}
+
+/* Dual value cell */
+.crm-table__cell--dual {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Dual value row (기본납입/추가납입) */
+.crm-dual-value__basic,
+.crm-dual-value__additional {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.crm-dual-value__basic {
+  font-size: 10px;
+  color: var(--color-text-primary);
+}
+
+.crm-dual-value__additional {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+/* Label for dual values */
+.crm-dual-value__label {
+  flex-shrink: 0;
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+}
+
+/* Amount for dual values */
+.crm-dual-value__amount {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-dual-value__additional .crm-dual-value__amount {
+  font-weight: 400;
+}
+
+/* Success/Error colors for dual values */
+.crm-dual-value__basic.crm-value--success .crm-dual-value__amount,
+.crm-dual-value__additional.crm-value--success .crm-dual-value__amount {
+  color: var(--color-success);
+}
+
+.crm-dual-value__basic.crm-value--error .crm-dual-value__amount,
+.crm-dual-value__additional.crm-value--error .crm-dual-value__amount {
+  color: var(--color-error);
 }
