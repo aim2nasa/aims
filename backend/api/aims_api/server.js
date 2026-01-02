@@ -10586,6 +10586,100 @@ app.post("/api/ar-background/retry-parsing", authenticateJWT, async (req, res) =
   }
 });
 
+// ==================== CR Background Parsing Proxy ====================
+/**
+ * CR 백그라운드 파싱 프록시 엔드포인트
+ * Customer Review Service 파싱 트리거
+ */
+app.post("/api/cr-background/trigger-parsing", authenticateJWT, async (req, res) => {
+  try {
+    // userId 추출 및 검증
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log("🚀 [CR 백그라운드 파싱 프록시] 요청 수신, userId:", userId);
+
+    // localhost:8004로 요청 전달
+    const response = await axios.post(
+      "http://localhost:8004/cr-background/trigger-parsing",
+      req.body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId
+        },
+        timeout: 60000  // CR 파싱은 pdfplumber 사용하므로 빠름
+      }
+    );
+
+    console.log("✅ [CR 백그라운드 파싱 프록시] 성공:", response.data);
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [CR 백그라운드 파싱 프록시] 실패:", error.message);
+    backendLogger.error('CustomerReview', 'CR 백그라운드 파싱 프록시 실패', error);
+    res.status(500).json({
+      success: false,
+      error: "CR 파싱 트리거 실패",
+      details: error.message
+    });
+  }
+});
+
+/**
+ * CR 파싱 재시도 프록시 엔드포인트
+ * 파싱 실패한 CR 문서를 다시 파싱 요청
+ */
+app.post("/api/cr-background/retry-parsing", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    const { file_id } = req.body;
+    if (!file_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'file_id required'
+      });
+    }
+
+    console.log("🔄 [CR 파싱 재시도 프록시] 요청 수신, file_id:", file_id, "userId:", userId);
+
+    // localhost:8004로 요청 전달
+    const response = await axios.post(
+      "http://localhost:8004/cr-background/retry-parsing",
+      req.body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId
+        },
+        timeout: 60000
+      }
+    );
+
+    console.log("✅ [CR 파싱 재시도 프록시] 성공:", response.data);
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [CR 파싱 재시도 프록시] 실패:", error.message);
+    backendLogger.error('CustomerReview', 'CR 파싱 재시도 프록시 실패', error);
+    res.status(500).json({
+      success: false,
+      error: "CR 파싱 재시도 트리거 실패",
+      details: error.message
+    });
+  }
+});
+
 /**
  * AR 파싱 상태 변경 웹훅 (Python API에서 호출)
  * @route POST /api/webhooks/ar-status-change

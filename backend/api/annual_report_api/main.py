@@ -349,7 +349,7 @@ async def health_check():
         }
 
 # 라우터 등록
-from routes import parse, query, background, cr_routes
+from routes import parse, query, background, cr_routes, cr_background
 
 app.include_router(
     parse.router,
@@ -371,6 +371,12 @@ app.include_router(
 app.include_router(
     cr_routes.router,
     tags=["Customer Review Service"]
+)
+
+app.include_router(
+    cr_background.router,
+    prefix="/cr-background",
+    tags=["Customer Review - Background"]
 )
 
 if __name__ == "__main__":

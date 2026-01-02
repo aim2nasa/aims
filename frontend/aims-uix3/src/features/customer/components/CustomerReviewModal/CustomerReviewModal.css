@@ -1,6 +1,7 @@
 /**
  * Customer Review Modal Styles
  * @since 2026-01-02
+ * @version 1.1.0
  */
 
 /* Modal Content */
@@ -69,6 +70,39 @@
   font-weight: 500;
 }
 
+/* Empty State (when parsing not complete) */
+.cr-modal-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  flex: 1;
+}
+
+.cr-modal-empty-state__icon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.cr-modal-empty-state__title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.cr-modal-empty-state__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Section */
 .cr-modal-section {
   display: flex;
@@ -95,7 +129,57 @@
   border-radius: var(--border-radius-sm);
 }
 
-/* Grid Layout */
+/* Table Style (Contract Info & Premium Info) */
+.cr-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.cr-modal-table th,
+.cr-modal-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.cr-modal-table tr:last-child th,
+.cr-modal-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cr-modal-table th {
+  width: 100px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  white-space: nowrap;
+}
+
+.cr-modal-table td {
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-modal-table td.value--highlight {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.cr-modal-table td.value--positive {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.cr-modal-table td.value--negative {
+  color: var(--color-error);
+  font-weight: 500;
+}
+
+/* Grid Layout (legacy - kept for backward compatibility) */
 .cr-modal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
