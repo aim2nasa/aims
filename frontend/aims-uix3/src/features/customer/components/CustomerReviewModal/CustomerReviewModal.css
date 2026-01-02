@@ -1,237 +1,238 @@
 /**
  * Customer Review Modal Styles
  * @since 2026-01-02
- * @version 1.1.0
+ * @version 2.0.0
+ *
+ * 원본 PDF 스타일 기반 디자인
  */
 
-/* Modal Content */
-.customer-review-modal__content {
+/* ==================== Container ==================== */
+.crm {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   height: 100%;
   overflow-y: auto;
+  background: var(--color-bg-primary);
 }
 
-/* Header Section */
-.cr-modal-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border);
+/* ==================== Hero Header ==================== */
+.crm-hero {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+  border-radius: var(--border-radius-lg);
+  color: white;
 }
 
-.cr-modal-header__main {
+.crm-hero__customer {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  justify-content: center;
   gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
 }
 
-.cr-modal-header__product {
-  font-size: var(--font-size-lg);
+.crm-hero__name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.crm-hero__suffix {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.crm-hero__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* ==================== Product Banner ==================== */
+.crm-product-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  border-left: 4px solid var(--color-accent);
+}
+
+.crm-product-banner__name {
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0;
-  line-height: 1.3;
 }
 
-.cr-modal-header__meta {
-  display: flex;
-  gap: var(--spacing-md);
+.crm-product-banner__date {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-.cr-modal-header__fsr {
-  font-weight: 500;
+/* ==================== Person Cards ==================== */
+.crm-person-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
 }
 
-.cr-modal-header__people {
+.crm-person-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
-.cr-modal-header__person {
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
+  gap: 4px;
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  text-align: center;
 }
 
-.cr-modal-header__person .label {
+.crm-person-card__label {
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.cr-modal-header__person .value {
+.crm-person-card__value {
+  font-size: var(--font-size-base);
+  font-weight: 600;
   color: var(--color-text-primary);
-  font-weight: 500;
 }
 
-/* Empty State (when parsing not complete) */
-.cr-modal-empty-state {
+/* ==================== Empty State ==================== */
+.crm-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xl) var(--spacing-lg);
+  padding: var(--spacing-xl);
   background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-lg);
   text-align: center;
   flex: 1;
 }
 
-.cr-modal-empty-state__icon {
+.crm-empty-state__icon {
   font-size: 48px;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-.cr-modal-empty-state__title {
-  font-size: var(--font-size-base);
+.crm-empty-state__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0;
 }
 
-.cr-modal-empty-state__desc {
+.crm-empty-state__desc {
+  margin: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* Section */
-.cr-modal-section {
+/* ==================== Section ==================== */
+.crm-section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.cr-modal-section__title {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
+.crm-section__title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.cr-modal-section__badge {
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-tertiary);
-  padding: 2px 6px;
-  border-radius: var(--border-radius-sm);
-}
-
-/* Table Style (Contract Info & Premium Info) */
-.cr-modal-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-}
-
-.cr-modal-table th,
-.cr-modal-table td {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  text-align: left;
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.cr-modal-table tr:last-child th,
-.cr-modal-table tr:last-child td {
-  border-bottom: none;
-}
-
-.cr-modal-table th {
-  width: 100px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-tertiary);
-  white-space: nowrap;
-}
-
-.cr-modal-table td {
-  color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.cr-modal-table td.value--highlight {
-  color: var(--color-accent);
-  font-weight: 600;
-}
-
-.cr-modal-table td.value--positive {
-  color: var(--color-success);
-  font-weight: 500;
-}
-
-.cr-modal-table td.value--negative {
-  color: var(--color-error);
-  font-weight: 500;
-}
-
-/* Grid Layout (legacy - kept for backward compatibility) */
-.cr-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: var(--spacing-sm);
-}
-
-.cr-modal-grid__item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-sm);
-}
-
-.cr-modal-grid__item .label {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-}
-
-.cr-modal-grid__item .value {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-.cr-modal-grid__item .value.highlight {
-  color: var(--color-accent);
+  margin: 0;
+  font-size: var(--font-size-base);
   font-weight: 600;
+  color: var(--color-text-primary);
 }
 
-.cr-modal-grid__item .value.positive {
-  color: var(--color-success);
+.crm-section__bar {
+  width: 4px;
+  height: 16px;
+  background: var(--color-accent);
+  border-radius: 2px;
 }
 
-.cr-modal-grid__item .value.negative {
-  color: var(--color-error);
+.crm-section__badge {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  margin-left: auto;
 }
 
-/* Fund Table */
-.cr-modal-fund-table {
-  display: flex;
-  flex-direction: column;
+/* ==================== Contract Grid ==================== */
+.crm-contract-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--color-border-light);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
   overflow: hidden;
 }
 
-.cr-modal-fund-table__header {
+.crm-contract-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-primary);
+}
+
+.crm-contract-item--highlight {
+  background: var(--color-accent-subtle);
+}
+
+.crm-contract-item__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.crm-contract-item__value {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-contract-item__value--accent {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.crm-contract-item__value--positive {
+  color: var(--color-success);
+}
+
+.crm-contract-item__value--negative {
+  color: var(--color-error);
+}
+
+/* ==================== Premium Table ==================== */
+.crm-premium-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.crm-premium-table__header {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  grid-template-columns: 80px 1fr 120px;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   background: var(--color-bg-tertiary);
@@ -239,34 +240,104 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
-.cr-modal-fund-table__body {
+.crm-premium-table__header .text-right {
+  text-align: right;
+}
+
+.crm-premium-table__body {
   display: flex;
   flex-direction: column;
 }
 
-.cr-modal-fund-table__row {
+.crm-premium-row {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  grid-template-columns: 80px 1fr 120px;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-sm);
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.cr-modal-fund-table__row:last-child {
+.crm-premium-row:last-child {
   border-bottom: none;
 }
 
-.cr-modal-fund-table__row:hover {
+.crm-premium-row--total {
+  background: var(--color-bg-secondary);
+  font-weight: 600;
+}
+
+.crm-premium-row__category {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.crm-premium-row__label {
+  color: var(--color-text-primary);
+}
+
+.crm-premium-row__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.crm-premium-row__value--negative {
+  color: var(--color-error);
+}
+
+.crm-premium-row__value--highlight {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+/* ==================== Fund Table ==================== */
+.crm-fund-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.crm-fund-table__header {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.crm-fund-table__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.crm-fund-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background 0.15s ease;
+}
+
+.crm-fund-row:last-child {
+  border-bottom: none;
+}
+
+.crm-fund-row:hover {
   background: var(--color-bg-hover);
 }
 
-.cr-modal-fund-table__footer {
+.crm-fund-table__footer {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 1fr;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   background: var(--color-bg-secondary);
@@ -276,7 +347,9 @@
 }
 
 /* Fund Table Columns */
-.cr-modal-fund-table .col-name {
+.crm-fund-table .col-name,
+.crm-fund-row .col-name,
+.crm-fund-table__footer .col-name {
   font-weight: 500;
   color: var(--color-text-primary);
   white-space: nowrap;
@@ -284,53 +357,56 @@
   text-overflow: ellipsis;
 }
 
-.cr-modal-fund-table .col-accumulated,
-.cr-modal-fund-table .col-ratio,
-.cr-modal-fund-table .col-return,
-.cr-modal-fund-table .col-principal {
+.crm-fund-table .col-amount,
+.crm-fund-table .col-ratio,
+.crm-fund-table .col-return,
+.crm-fund-table .col-principal,
+.crm-fund-row .col-amount,
+.crm-fund-row .col-ratio,
+.crm-fund-row .col-return,
+.crm-fund-row .col-principal,
+.crm-fund-table__footer .col-amount,
+.crm-fund-table__footer .col-ratio,
+.crm-fund-table__footer .col-return,
+.crm-fund-table__footer .col-principal {
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
 }
 
-.cr-modal-fund-table .col-accumulated .sub-value,
-.cr-modal-fund-table .col-return .sub-value {
-  display: block;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
-.cr-modal-fund-table .col-return.positive {
+.crm-fund-row .col-return.positive {
   color: var(--color-success);
 }
 
-.cr-modal-fund-table .col-return.negative {
+.crm-fund-row .col-return.negative {
   color: var(--color-error);
 }
 
-.cr-modal-fund-table .col-accumulated.highlight {
+.crm-fund-table__footer .col-amount.highlight {
   color: var(--color-accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Empty State */
-.cr-modal-empty {
-  padding: var(--spacing-lg);
-  text-align: center;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-md);
-}
-
-/* Footer */
-.cr-modal-footer {
+/* ==================== Footer ==================== */
+.crm-footer {
   margin-top: auto;
   padding-top: var(--spacing-sm);
   border-top: 1px solid var(--color-border-light);
+  text-align: right;
 }
 
-.cr-modal-footer__text {
+.crm-footer__text {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 640px) {
+  .crm-person-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-contract-grid {
+    grid-template-columns: 1fr;
+  }
 }
