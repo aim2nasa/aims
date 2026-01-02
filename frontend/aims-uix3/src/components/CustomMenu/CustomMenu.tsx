@@ -374,6 +374,14 @@ const CustomMenu = ({
         }
         setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents'])
       }, 800)
+
+      // 5단계: 1000ms 후 도움말도 펼침
+      setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 5단계 - 도움말 추가 펼침')
+        }
+        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents', 'help'])
+      }, 1000)
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
