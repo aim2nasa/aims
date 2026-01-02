@@ -126,7 +126,14 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
 
         # 4. 1페이지 메타데이터 추출 (상품명, 발행일, 계약자, 피보험자 등)
         metadata = doc.get("cr_metadata", {})
-        if not metadata:
+        # 메타데이터가 없거나 핵심 필드가 누락된 경우 재추출
+        needs_reextract = (
+            not metadata or
+            not metadata.get("death_beneficiary") or
+            not metadata.get("fsr_name")
+        )
+        if needs_reextract:
+            logger.info(f"📄 [CR Parsing] 메타데이터 재추출 필요: {file_path}")
             metadata = extract_cr_metadata_from_first_page(file_path)
 
         # 5. MongoDB 저장
