@@ -382,7 +382,7 @@
   padding: 0;
   background: transparent;
   border-radius: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -390,7 +390,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-secondary);
 }
 
@@ -427,7 +427,7 @@
 
 .crm-card--compact .crm-card__title {
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .crm-card--compact .crm-card__header {
@@ -437,6 +437,10 @@
 .crm-list--compact .crm-list__item {
   padding: 6px 0;
   font-size: 11px;
+}
+
+.crm-card--compact .crm-card__badge {
+  font-size: 10px;
 }
 
 .crm-list__item--highlight {
@@ -473,8 +477,8 @@
 .crm-table--compact .crm-table__head,
 .crm-table--compact .crm-table__row,
 .crm-table--compact .crm-table__foot {
-  grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr;
-  gap: 6px;
+  grid-template-columns: 1.8fr 1fr 0.6fr 0.6fr 1fr;
+  gap: 4px;
 }
 
 .crm-table--compact .crm-table__head {
@@ -482,7 +486,7 @@
 }
 
 .crm-table--compact .crm-table__head .crm-table__cell {
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .crm-table--compact .crm-table__row {
@@ -490,7 +494,7 @@
 }
 
 .crm-table--compact .crm-table__cell {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .crm-table--compact .crm-table__foot {

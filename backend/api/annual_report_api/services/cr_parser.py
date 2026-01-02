@@ -75,6 +75,7 @@ def extract_contract_info(text: str) -> Dict:
         "surrender_value": 0,
         "surrender_rate": 0.0,
         "accumulation_rate": 0.0,
+        "initial_premium": 0,
         "monthly_premium": 0
     }
 
@@ -117,6 +118,12 @@ def extract_contract_info(text: str) -> Dict:
     acc_rate_match = re.search(r'적립금비율[^:]*[:\s]*([\d.]+)\s*[％%]', text)
     if acc_rate_match:
         info["accumulation_rate"] = parse_float(acc_rate_match.group(1))
+
+    # 초회 납입 보험료: "(1회차 납입) 50,000,000" 또는 "50,000,000"
+    # "(N회차 납입)" 패턴을 명시적으로 건너뛰어야 함
+    initial_match = re.search(r'초회\s*납입\s*보험료[:\s]*(?:\(\d+회차[^)]*\)\s*)?([\d,]+)', text)
+    if initial_match:
+        info["initial_premium"] = parse_number(initial_match.group(1))
 
     # 월납보험료
     monthly_match = re.search(r'보험료\s*[:\s]*([\d,]+)\s*원', text)

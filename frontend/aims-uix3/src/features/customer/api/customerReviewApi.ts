@@ -24,6 +24,7 @@ export interface ContractInfo {
   surrender_value: number;         // 해지환급금 (원)
   surrender_rate: number;          // 해지환급율 (%)
   accumulation_rate?: number;      // 적립금비율(납입원금대비) (%)
+  initial_premium?: number;        // 초회 납입 보험료 (원)
 }
 
 /**

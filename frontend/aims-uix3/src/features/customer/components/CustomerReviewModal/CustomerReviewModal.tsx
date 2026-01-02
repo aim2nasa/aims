@@ -126,6 +126,12 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                     <span>해지환급율</span>
                     <span>{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
                   </div>
+                  {contract_info?.initial_premium && (
+                    <div className="crm-list__item">
+                      <span>초회 납입 보험료</span>
+                      <span>{CustomerReviewApi.formatCurrency(contract_info.initial_premium)}</span>
+                    </div>
+                  )}
                   {contract_info?.accumulation_rate && (
                     <div className="crm-list__item crm-list__item--highlight">
                       <span>적립금비율</span>
@@ -179,6 +185,7 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                       <div className="crm-table__cell">적립금</div>
                       <div className="crm-table__cell">구성비</div>
                       <div className="crm-table__cell">수익률</div>
+                      <div className="crm-table__cell">투입원금</div>
                     </div>
                     <div className="crm-table__body">
                       {fund_allocations.map((fund, index) => (
@@ -189,12 +196,14 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                           <div className={`crm-table__cell ${(fund.return_rate || 0) >= 0 ? 'crm-table__cell--success' : 'crm-table__cell--error'}`}>
                             {CustomerReviewApi.formatPercent(fund.return_rate)}
                           </div>
+                          <div className="crm-table__cell">{CustomerReviewApi.formatCurrency(fund.invested_principal)}</div>
                         </div>
                       ))}
                     </div>
                     <div className="crm-table__foot">
                       <div className="crm-table__cell crm-table__cell--name">합계</div>
                       <div className="crm-table__cell crm-table__cell--primary">{CustomerReviewApi.formatCurrency(review.total_accumulated_amount)}</div>
+                      <div className="crm-table__cell">-</div>
                       <div className="crm-table__cell">-</div>
                       <div className="crm-table__cell">-</div>
                     </div>
