@@ -208,25 +208,27 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
             result["insured_name"] = insured_match.group(1).strip()
 
         # 5. 사망 수익자 추출
-        # 패턴: "사망 수익자 : 상속인" 또는 "사망수익자: 상속인" 또는 "사망 수익자 :   상속인"
-        beneficiary_pattern = r"사망\s*수익자\s*[:：]\s*([가-힣]{2,6})"
+        # 패턴: "사망 수익자 :상속인" 또는 "사망수익자: 상속인" 등
+        # 더 유연한 패턴 사용 - colon 후 공백 없이 바로 이름이 오는 경우 처리
+        beneficiary_pattern = r"사망\s*수익자\s*[:：\s]+([가-힣]{2,6})"
         beneficiary_match = re.search(beneficiary_pattern, first_page_text)
         if beneficiary_match:
             result["death_beneficiary"] = beneficiary_match.group(1).strip()
         else:
-            # 기본값: 상속인
-            if "상속인" in first_page_text:
+            # 대체 패턴: "상속인" 키워드가 사망수익자 근처에 있는 경우
+            if re.search(r"사망\s*수익자.*상속인", first_page_text):
                 result["death_beneficiary"] = "상속인"
 
         # 6. FSR 이름 추출
-        # 패턴 1: "송유미FSR" 또는 "송 유 미 FSR" 또는 "송유미 FSR"
-        fsr_pattern1 = r"([가-힣]{2,4})\s*FSR"
+        # 패턴 1: "송 유 미\nFSR" (이름이 FSR 바로 위 줄에 있는 경우 - 가장 흔함)
+        # 이름에 공백이 있을 수 있음 (예: "송 유 미") - 줄바꿈은 포함하면 안됨
+        fsr_pattern1 = r"([가-힣][ ]*[가-힣](?:[ ]*[가-힣])?(?:[ ]*[가-힣])?)\s*\n\s*FSR"
         fsr_match1 = re.search(fsr_pattern1, first_page_text)
         if fsr_match1:
             result["fsr_name"] = fsr_match1.group(1).replace(" ", "").strip()
         else:
-            # 패턴 2: "송 유 미\nFSR" (이름이 FSR 위에 있는 경우)
-            fsr_pattern2 = r"([가-힣]\s*[가-힣]\s*[가-힣])\s*\n\s*FSR"
+            # 패턴 2: "송유미FSR" 또는 "송유미 FSR" (같은 줄에 있는 경우)
+            fsr_pattern2 = r"([가-힣]{2,4})\s*FSR"
             fsr_match2 = re.search(fsr_pattern2, first_page_text)
             if fsr_match2:
                 result["fsr_name"] = fsr_match2.group(1).replace(" ", "").strip()

@@ -83,9 +83,8 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                 {review.product_name || '상품명 없음'}
               </div>
               <div className="crm-persons-inline">
-                <span><b>계약자</b> {review.contractor_name || '-'}</span>
                 <span><b>피보험자</b> {review.insured_name || '-'}</span>
-                <span><b>사망수익자</b> {review.death_beneficiary || '상속인'}</span>
+                <span><b>사망수익자</b> {review.death_beneficiary || '-'}</span>
                 <span><b>FSR</b> {review.fsr_name || '-'}</span>
               </div>
             </div>
