@@ -96,6 +96,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 고객 정보 탭 상태 ('info' | 'memo')
   const [customerInfoTab, setCustomerInfoTab] = useState<'info' | 'memo'>('info')
 
+  // 🍎 보고서 탭 상태 ('annual' | 'review')
+  const [reportTab, setReportTab] = useState<'annual' | 'review'>('annual')
+
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
 
@@ -992,8 +995,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   aria-label="문서와 Annual Report 사이 크기 조절"
                 />
 
-                {/* 🍎 Annual Report 섹션 */}
-                <section className="customer-full-detail__section customer-full-detail__section--annual-report">
+                {/* 🍎 보고서 섹션 (탭 구조: 연간, 고객리뷰 등) */}
+                <section className="customer-full-detail__section customer-full-detail__section--report">
                 <h2 className="customer-full-detail__section-title">
                   <svg
                     width="16"
@@ -1007,51 +1010,84 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/>
                     <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/>
                   </svg>
-                  <span>Annual Report</span>
-                  {annualReportCount > 0 && (
-                    <span className="customer-full-detail__section-count">{annualReportCount}</span>
-                  )}
-                  {/* 🍎 Annual Report 검색 */}
-                  <div className="customer-full-detail__section-search">
-                    <SFSymbol
-                      name="magnifyingglass"
-                      size={SFSymbolSize.CAPTION_2}
-                      weight={SFSymbolWeight.MEDIUM}
-                      className="section-search-icon"
-                      decorative={true}
-                    />
-                    <input
-                      type="text"
-                      value={annualReportSearchTerm}
-                      onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
-                      placeholder="검색"
-                      className="section-search-input"
-                    />
-                    {annualReportSearchTerm && (
-                      <button
-                        type="button"
-                        className="section-search-clear"
-                        onClick={() => setAnnualReportSearchTerm('')}
-                        aria-label="검색어 지우기"
-                      >
-                        <SFSymbol
-                          name="xmark.circle.fill"
-                          size={SFSymbolSize.CAPTION_2}
-                          weight={SFSymbolWeight.REGULAR}
-                          decorative={true}
-                        />
-                      </button>
-                    )}
+                  {/* 🍎 보고서 탭 버튼 */}
+                  <div className="report-tabs">
+                    <button
+                      type="button"
+                      className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`}
+                      onClick={() => setReportTab('annual')}
+                    >
+                      연간보고서
+                      {reportTab === 'annual' && annualReportCount > 0 && (
+                        <span className="report-tabs__count">{annualReportCount}</span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}
+                      onClick={() => setReportTab('review')}
+                    >
+                      고객리뷰
+                    </button>
                   </div>
+                  {/* 🍎 검색 (연간 탭에서만 표시) */}
+                  {reportTab === 'annual' && (
+                    <div className="customer-full-detail__section-search">
+                      <SFSymbol
+                        name="magnifyingglass"
+                        size={SFSymbolSize.CAPTION_2}
+                        weight={SFSymbolWeight.MEDIUM}
+                        className="section-search-icon"
+                        decorative={true}
+                      />
+                      <input
+                        type="text"
+                        value={annualReportSearchTerm}
+                        onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
+                        placeholder="검색"
+                        className="section-search-input"
+                      />
+                      {annualReportSearchTerm && (
+                        <button
+                          type="button"
+                          className="section-search-clear"
+                          onClick={() => setAnnualReportSearchTerm('')}
+                          aria-label="검색어 지우기"
+                        >
+                          <SFSymbol
+                            name="xmark.circle.fill"
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.REGULAR}
+                            decorative={true}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </h2>
-                  <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
-                    <AnnualReportTab
-                      customer={customer}
-                      onAnnualReportCountChange={setAnnualReportCount}
-                      refreshTrigger={annualReportRefreshTrigger}
-                      searchTerm={annualReportSearchTerm}
-                      onSearchChange={setAnnualReportSearchTerm}
-                    />
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--report">
+                    {/* 🍎 연간 보고서 탭 */}
+                    {reportTab === 'annual' && (
+                      <AnnualReportTab
+                        customer={customer}
+                        onAnnualReportCountChange={setAnnualReportCount}
+                        refreshTrigger={annualReportRefreshTrigger}
+                        searchTerm={annualReportSearchTerm}
+                        onSearchChange={setAnnualReportSearchTerm}
+                      />
+                    )}
+                    {/* 🍎 고객리뷰 탭 (준비 중) */}
+                    {reportTab === 'review' && (
+                      <div className="report-placeholder">
+                        <SFSymbol
+                          name="doc.text.magnifyingglass"
+                          size={SFSymbolSize.TITLE_1}
+                          weight={SFSymbolWeight.LIGHT}
+                          className="report-placeholder__icon"
+                        />
+                        <span className="report-placeholder__text">고객리뷰 기능 준비 중</span>
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>
