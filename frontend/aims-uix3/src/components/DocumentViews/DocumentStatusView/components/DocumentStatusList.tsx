@@ -1111,6 +1111,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {(() => {
                 const docType = document.docType || document.document_type
                 const isAnnualReportType = docType === 'annual_report' || document.is_annual_report === true
+                const isCustomerReviewType = docType === 'customer_review' || document.is_customer_review === true
 
                 // 🔒 연간보고서(AR)는 시스템 전용 - 읽기 전용으로 표시
                 if (isAnnualReportType) {
@@ -1120,6 +1121,18 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                       title="시스템 전용 유형 (변경 불가)"
                     >
                       연간보고서
+                    </span>
+                  )
+                }
+
+                // 🔒 고객리뷰(CRS)는 시스템 전용 - 읽기 전용으로 표시
+                if (isCustomerReviewType) {
+                  return (
+                    <span
+                      className="doctype-label doctype-label--readonly"
+                      title="시스템 전용 유형 (변경 불가)"
+                    >
+                      고객리뷰
                     </span>
                   )
                 }

@@ -191,6 +191,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 📊 AR 처리 성공 카운터 (중복 건너뛴 건 제외)
   const arProcessedCountRef = useRef<number>(0)
 
+  // 🏷️ CRS 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
+  const crFilenamesRef = useRef<Set<string>>(new Set())
+
+  // 🔗 CRS 파일명 → 고객 ID 매핑 (자동 연결용)
+  const crCustomerMappingRef = useRef<Map<string, string>>(new Map())
+
+  // 📝 CRS 파일명 → metadata 매핑 (발행일 등 DB 저장용)
+  const crMetadataMappingRef = useRef<Map<string, { product_name?: string; issue_date?: string; contractor_name?: string; insured_name?: string; fsr_name?: string }>>(new Map())
+
   // 📄 일반 문서 파일명 → 문서 ID 매핑 (백그라운드 처리 완료 확인용)
   const normalDocumentMappingRef = useRef<Map<string, string>>(new Map())
 
@@ -565,35 +574,35 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   `사전 선택된 고객: ${customerName} → CRS 전용 처리로 전환`
                 );
 
-                // CRS 문서 등록 (AR과 유사한 방식)
-                try {
-                  // 1. 파일 업로드
-                  const uploadResult = await DocumentService.uploadDocument(file, { customerId });
+                addLog(
+                  'cr-auto',
+                  `CRS 자동 등록: ${file.name}`,
+                  `사전 선택된 고객: ${customerName}`
+                );
 
-                  if (uploadResult.success && uploadResult.document?._id) {
-                    // 2. set-cr-flag 호출
-                    await api.post('/api/documents/set-cr-flag', {
-                      filename: file.name,
-                      customer_id: customerId,
-                      metadata: crCheckResult.metadata
-                    });
-
-                    addLog(
-                      'cr-auto',
-                      `CRS 자동 등록: ${file.name}`,
-                      `사전 선택된 고객: ${customerName}`
-                    );
-                    updateFileStatus(file, 'completed', 'Customer Review 등록 완료');
-                    console.log('[DocumentRegistrationView] CRS 문서 등록 성공:', file.name);
-                  } else {
-                    throw new Error('파일 업로드 실패');
-                  }
-                } catch (crError) {
-                  console.error('[DocumentRegistrationView] CRS 등록 실패:', crError);
-                  errorReporter.reportApiError(crError as Error, { component: 'DocumentRegistrationView.handleFilesSelected.crRegister' });
-                  addLog('warning', `CRS 등록 실패: ${file.name}`, crError instanceof Error ? crError.message : String(crError));
-                  updateFileStatus(file, 'error', 'CRS 등록 실패');
+                // ✅ CRS 파일 추적 등록 (AR과 동일한 패턴)
+                crFilenamesRef.current.add(file.name);
+                crCustomerMappingRef.current.set(file.name, customerId);
+                if (crCheckResult.metadata) {
+                  crMetadataMappingRef.current.set(file.name, crCheckResult.metadata);
                 }
+                // 고객명 매핑 저장 (자동 연결 로그에서 사용)
+                customerNameMappingRef.current.set(customerId, customerName);
+
+                // ✅ 문서 업로드 큐에 추가 (AR과 동일한 패턴)
+                const uploadFile: UploadFile = {
+                  id: fileId,
+                  file,
+                  fileSize: file.size,
+                  status: 'pending',
+                  progress: 0,
+                  error: undefined,
+                  completedAt: undefined,
+                };
+                updateFileStatus(file, 'pending');
+                newUploadFiles.push(uploadFile);
+
+                console.log('[DocumentRegistrationView] CRS 문서 업로드 큐에 추가:', file.name);
 
                 continue;
               } else {
@@ -920,6 +929,86 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, []);
 
   /**
+   * 업로드 완료 후 CRS DB 플래그 설정 + 문서 처리 완료 대기 후 자동 연결
+   */
+  const setCustomerReviewFlag = useCallback(async (fileName: string) => {
+    // 🔒 중복 실행 방지: 이미 처리 중이면 건너뛰기
+    if (!crFilenamesRef.current.has(fileName)) {
+      console.log(`⚠️ [CRS] 이미 처리 중이거나 완료된 파일: ${fileName}`);
+      return;
+    }
+
+    // 🔒 즉시 추적 목록에서 제거 (중복 실행 방지)
+    crFilenamesRef.current.delete(fileName);
+    console.log(`🔒 [CRS] 추적 목록에서 제거: ${fileName}, 남은 파일: ${crFilenamesRef.current.size}`);
+
+    try {
+      // 매핑된 metadata 가져오기
+      const metadata = crMetadataMappingRef.current.get(fileName);
+
+      // 🔗 고객 ID 가져오기 (CRS 문서가 처음부터 고객에 연결되도록)
+      const customerId = crCustomerMappingRef.current.get(fileName);
+
+      // 👤 고객명 가져오기
+      const customerName = customerNameMappingRef.current.get(customerId || '');
+
+      // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+      const responseData = await api.post<{ success: boolean; document_id?: string }>(
+        '/api/documents/set-cr-flag',
+        { filename: fileName, metadata, customer_id: customerId }
+      );
+      console.log(`✅ [CRS] is_customer_review=true 설정 완료 (metadata 포함):`, responseData);
+
+      // 🔗 문서 처리 완료 대기 후 자동 연결
+      const documentId = responseData.document_id;
+
+      console.log(`🔍 [CRS] 매핑 조회: fileName="${fileName}", customerId="${customerId}", documentId="${documentId}"`);
+
+      if (customerId && documentId) {
+        console.log(`⏳ [CRS] 문서 처리 완료 대기 시작 (SSE): ${documentId}`);
+
+        // 문서 처리 완료될 때까지 SSE로 대기
+        const result = await waitForDocumentProcessing(documentId);
+
+        if (result.success && result.status === 'completed') {
+          console.log(`✅ [CRS 자동 연결] 문서 처리 완료`);
+          addLog('success', `[5/5] CRS 처리 최종 완료: ${fileName}`, undefined, customerName);
+
+          // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거
+          try {
+            console.log(`🚀 [CRS 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}`);
+            const bgParseData = await api.post<{ success: boolean; message?: string }>(
+              '/api/cr-background/trigger-parsing',
+              {
+                customer_id: customerId,
+                file_id: documentId
+              }
+            );
+            console.log(`✅ [CRS 백그라운드 파싱] 트리거 완료:`, bgParseData);
+          } catch (bgError) {
+            console.error(`❌ [CRS 백그라운드 파싱] 트리거 실패:`, bgError);
+            errorReporter.reportApiError(bgError as Error, { component: 'DocumentRegistrationView.setCustomerReviewFlag.triggerParsing' });
+          }
+        } else if (result.status === 'timeout') {
+          console.warn(`⚠️ [CRS] 문서 처리 대기 시간 초과`);
+        } else {
+          console.error(`❌ [CRS] 문서 처리 실패:`, result);
+          errorReporter.reportApiError(new Error(`CRS 문서 처리 실패: ${result.status}`), { component: 'DocumentRegistrationView.setCustomerReviewFlag.result', payload: { documentId, result } });
+        }
+      } else {
+        console.warn(`⚠️ [CRS] 매핑을 찾을 수 없어서 자동 연결을 건너뜁니다. customerId=${customerId}, documentId=${documentId}`);
+      }
+
+      // 매핑에서 제거
+      crCustomerMappingRef.current.delete(fileName);
+      crMetadataMappingRef.current.delete(fileName);
+    } catch (error) {
+      console.error(`❌ [CRS] 처리 실패:`, error);
+      errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.setCustomerReviewFlag' });
+    }
+  }, [addLog]);
+
+  /**
    * 고객 파일 등록 탭에서 업로드된 문서를 고객에게 자동 연결
    */
   const linkCustomerFile = useCallback(async (fileName: string) => {
@@ -1121,6 +1210,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 즉시 실행 (arCustomerMappingRef는 setAnnualReportFlag 내부에서 사용됨)
               setTimeout(() => setAnnualReportFlag(fileName), 0);
             }
+
+            // 🏷️ Customer Review 파일이면 DB 플래그 설정 및 고객 자동 연결
+            if (status === 'completed' && crFilenamesRef.current.has(f.file.name)) {
+              console.log(`✅ [handleStatusChange] CRS 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
+              const fileName = f.file.name;
+              // ⚠️ 중요: crFilenamesRef 삭제를 setCustomerReviewFlag로 이동
+              // (handleStatusChange가 두 번 호출될 때 race condition 방지)
+              setTimeout(() => setCustomerReviewFlag(fileName), 0);
+            }
           }
           return updatedFile
         }
@@ -1144,22 +1242,33 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     // ✅ 로그는 상태 업데이트 함수 밖에서 호출 (부작용 제거)
     if (currentFile) {
-      // 👤 AR 파일이면 고객명 가져오기
-      const customerId = arCustomerMappingRef.current.get(currentFile.file.name);
+      // 👤 AR/CRS 파일이면 고객명 가져오기
+      const arCustomerId = arCustomerMappingRef.current.get(currentFile.file.name);
+      const crCustomerId = crCustomerMappingRef.current.get(currentFile.file.name);
+      const customerId = arCustomerId || crCustomerId;
       const customerName = customerId ? customerNameMappingRef.current.get(customerId) : undefined;
 
+      // AR/CRS 파일 여부 확인
+      const isArFile = arFilenamesRef.current.has(currentFile.file.name);
+      const isCrFile = crFilenamesRef.current.has(currentFile.file.name);
+
       if (status === 'uploading') {
-        // AR 파일이면 AR 단계 표시, 일반 파일이면 일반 단계 표시
-        if (arFilenamesRef.current.has(currentFile.file.name)) {
+        // AR/CRS 파일이면 특수 단계 표시, 일반 파일이면 일반 단계 표시
+        if (isArFile) {
+          addLog('info', `[4/5] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
+        } else if (isCrFile) {
           addLog('info', `[4/5] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
         } else {
           addLog('info', `[2/4] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
         }
       } else if (status === 'completed') {
-        // AR 파일이면 AR 단계 표시, 일반 파일이면 일반 단계 표시
-        if (arFilenamesRef.current.has(currentFile.file.name)) {
+        // AR/CRS 파일이면 특수 단계 표시, 일반 파일이면 일반 단계 표시
+        if (isArFile) {
           addLog('success', `[4/5] 문서 업로드 완료: ${currentFile.file.name}`, undefined, customerName)
           addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객 자동 연결 대기 중...', customerName)
+        } else if (isCrFile) {
+          addLog('success', `[4/5] 문서 업로드 완료: ${currentFile.file.name}`, undefined, customerName)
+          addLog('cr-detect', `CRS 문서 처리 중: ${currentFile.file.name}`, '고객 자동 연결 대기 중...', customerName)
         } else {
           // 🔗 고객 파일 등록 탭에서 업로드된 파일인지 확인
           const isCustomerFile = customerFileUploadMappingRef.current.has(currentFile.file.name);
@@ -1193,7 +1302,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog('warning', `업로드 경고: ${currentFile.file.name}`, error, customerName)
       }
     }
-  }, [uploadState.files, setAnnualReportFlag, addLog, linkCustomerFile, checkNormalDocumentCompletion])
+  }, [uploadState.files, setAnnualReportFlag, setCustomerReviewFlag, addLog, linkCustomerFile, checkNormalDocumentCompletion])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지

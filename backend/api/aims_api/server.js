@@ -1999,7 +1999,12 @@ app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) 
     }
 
     // is_annual_report 필드 및 메타데이터 설정
-    const updateFields = { is_annual_report: true };
+    const updateFields = {
+      is_annual_report: true,
+      document_type: 'annual_report',        // 문서 유형 직접 설정
+      document_type_auto: true,              // 시스템 자동 분류
+      document_type_confidence: 1.0          // 신뢰도 100%
+    };
 
     // 🔗 고객 ID가 제공된 경우 customerId 설정 (고객 문서함에서 보이도록)
     if (customer_id && ObjectId.isValid(customer_id)) {
@@ -2136,7 +2141,12 @@ app.post('/api/documents/set-cr-flag', authenticateJWT, async (req, res) => {
     }
 
     // is_customer_review 필드 및 메타데이터 설정
-    const updateFields = { is_customer_review: true };
+    const updateFields = {
+      is_customer_review: true,
+      document_type: 'customer_review',      // 문서 유형 직접 설정
+      document_type_auto: true,              // 시스템 자동 분류
+      document_type_confidence: 1.0          // 신뢰도 100%
+    };
 
     // 고객 ID가 제공된 경우 customerId 설정
     if (customer_id && ObjectId.isValid(customer_id)) {

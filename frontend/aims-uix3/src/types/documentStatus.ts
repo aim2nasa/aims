@@ -185,6 +185,9 @@ export interface Document {
   // Annual Report 여부
   is_annual_report?: boolean
 
+  // Customer Review 여부
+  is_customer_review?: boolean
+
   // Badge Type (TXT, OCR, BIN)
   badgeType?: 'TXT' | 'OCR' | 'BIN'
 
