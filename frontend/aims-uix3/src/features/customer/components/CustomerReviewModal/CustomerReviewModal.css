@@ -6,6 +6,12 @@
  * Annual Report와 동일한 레이아웃 형식
  */
 
+/* ==================== Content Scroll Override ==================== */
+.customer-document-preview .customer-document-preview__content {
+  overflow-y: auto;
+  padding: 16px;
+}
+
 /* ==================== Product Name ==================== */
 .crm-product-name {
   text-align: center;

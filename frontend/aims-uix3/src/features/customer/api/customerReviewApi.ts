@@ -23,6 +23,7 @@ export interface ContractInfo {
   investment_return_rate: number;  // 투자수익률 (%)
   surrender_value: number;         // 해지환급금 (원)
   surrender_rate: number;          // 해지환급율 (%)
+  accumulation_rate?: number;      // 적립금비율(납입원금대비) (%)
 }
 
 /**

@@ -51,9 +51,9 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
         </div>
       }
       initialWidth={720}
-      initialHeight={680}
+      initialHeight={800}
       minWidth={600}
-      minHeight={500}
+      minHeight={600}
       footer={
         <div className="fulltext-modal-footer">
           <Button
@@ -154,6 +154,12 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
                   <span>해지환급율</span>
                   <span>{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
                 </div>
+                {contract_info?.accumulation_rate && (
+                  <div className="crm-list__item crm-list__item--total">
+                    <span>적립금비율(납입원금대비)</span>
+                    <span>{CustomerReviewApi.formatPercent(contract_info.accumulation_rate)}</span>
+                  </div>
+                )}
               </div>
             </section>
 
