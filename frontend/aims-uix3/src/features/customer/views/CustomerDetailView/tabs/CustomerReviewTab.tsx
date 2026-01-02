@@ -448,7 +448,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       {/* 테이블 컨테이너 */}
       <div className="customer-review-table-container">
         {/* 테이블 헤더 */}
-        <div className="customer-review-table-header">
+        <div className={`customer-review-table-header ${isDevMode ? 'has-checkbox' : ''}`}>
           {isDevMode && (
             <div className="header-checkbox">
               <input
@@ -518,7 +518,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             return (
               <div
                 key={review.source_file_id || `review_${idx}`}
-                className={`customer-review-row ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
+                className={`customer-review-row ${isDevMode ? 'has-checkbox' : ''} ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
                 onClick={() => handleViewReview(review)}
               >
                 {isDevMode && (
