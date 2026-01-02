@@ -74,7 +74,7 @@
 
 .customer-full-detail__retry,
 .customer-full-detail__back {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--color-primary-200);
   background: transparent;
@@ -96,7 +96,6 @@
   padding: 6px 12px;
   border-bottom: 1px solid var(--color-ios-separator-light);
   background: var(--color-ios-bg-primary-light);
-  flex-shrink: 0;
 }
 
 html[data-theme="dark"] .customer-full-detail__actions {
@@ -224,7 +223,6 @@ html[data-theme="dark"] .customer-full-detail__resize-handle::after {
   cursor: row-resize;
   width: 100%;
   height: 6px;
-  flex-shrink: 0;
 }
 
 .customer-full-detail__resize-handle--vertical::after {
@@ -284,7 +282,6 @@ html[data-theme="dark"] .customer-full-detail__section {
   color: var(--color-text-primary);
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
   height: var(--header-height);
 }
 
@@ -405,7 +402,6 @@ html[data-theme="dark"] .customer-full-detail__section-search .section-search-in
   color: var(--color-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
-  flex-shrink: 0;
   opacity: 0.6;
 }
 
@@ -487,12 +483,10 @@ html[data-theme="dark"] .customer-info-table__label {
   min-width: 50px;
   max-width: 60px;
   padding: 0 6px;
-  white-space: nowrap;
 }
 
 .customer-info-table--compact .customer-info-table__value {
   padding: 0 8px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -523,7 +517,6 @@ html[data-theme="dark"] .customer-info-table__type-badge {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 🍎 주소 변경 이력 버튼 */
@@ -539,8 +532,6 @@ html[data-theme="dark"] .customer-info-table__type-badge {
   font-size: var(--font-header);
   cursor: pointer;
   transition: all 0.15s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
   margin-left: auto; /* 🍎 우측 정렬 */
 }
 
@@ -551,7 +542,6 @@ html[data-theme="dark"] .customer-info-table__type-badge {
 }
 
 .customer-info-table__address-history-btn svg {
-  flex-shrink: 0;
 }
 
 /* 🍎 주소 변경 이력 아이콘 색상 (RightPane과 동일) */
@@ -946,7 +936,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
 
 /* 상품명 - 전체 표시 (말줄임 제거) */
 .customer-full-detail__section-content--contracts .contract-product {
-  white-space: nowrap;
 }
 
 /* 계약일, 증권번호 - 통일 규칙에서 처리됨 (UNIFIED TYPOGRAPHY 섹션 참조) */
@@ -1002,7 +991,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
   box-sizing: border-box;
   margin-top: auto;
 }
@@ -1034,7 +1022,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__value {
   font-size: var(--font-micro);
-  white-space: nowrap;
 }
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__arrow {
@@ -1198,7 +1185,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
 
 /* 파일명 */
 .customer-full-detail__section-content--documents .status-filename {
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: var(--font-body);
@@ -1232,7 +1218,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   max-height: 26px;
   font-size: var(--font-micro);
   border-top: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
   align-items: center;
   box-sizing: border-box;
 }
@@ -1298,7 +1283,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__value {
   font-size: var(--font-micro);
-  white-space: nowrap;
 }
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__arrow {
@@ -1445,7 +1429,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail__section-content--report .row-parsed-at,
 .customer-full-detail__section-content--report .row-premium,
 .customer-full-detail__section-content--report .row-count {
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1495,7 +1478,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
   font-size: var(--font-micro);
   border-top: 1px solid var(--color-ios-separator-light);
   justify-content: space-between;
-  flex-shrink: 0;
   align-items: center;
   box-sizing: border-box;
 }
@@ -1527,7 +1509,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 
 .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__value {
   font-size: var(--font-micro);
-  white-space: nowrap;
 }
 
 .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__arrow {
@@ -1564,7 +1545,6 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
    ============================================ */
 
 .customer-full-detail-icon {
-  flex-shrink: 0;
 }
 
 .customer-icon--personal {
@@ -1643,13 +1623,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
   text-align: center;
   text-transform: uppercase;
   font-size: 10px;
-  white-space: nowrap;
 }
 
 /* 🍎 연결일 컬럼 스타일 - 날짜+시간 한 줄 표시 */
 .customer-full-detail__section-content--documents .status-date {
   text-align: center;
-  white-space: nowrap;
   font-size: 10px;
 }
 

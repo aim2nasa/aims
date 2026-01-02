@@ -22,6 +22,7 @@ import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
 import { CustomerReviewTab } from '../CustomerDetailView/tabs/CustomerReviewTab'
+import { CustomerReviewApi } from '../../api/customerReviewApi'
 import { useAddressArchiveController } from '../../controllers/useAddressArchiveController'
 import { AddressArchiveModal } from '../../components/AddressArchiveModal'
 import { DocumentContentSearchModal } from '../../components/DocumentContentSearchModal'
@@ -335,6 +336,22 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
     checkCanAddFamilyRelation()
   }, [customer])
+  // 🍎 고객리뷰 count 미리 로드 (탭 선택 전에도 표시하기 위함)
+  useEffect(() => {
+    if (!customer?._id) return
+
+    const loadCustomerReviewCount = async () => {
+      try {
+        const result = await CustomerReviewApi.getCustomerReviews(customer._id)
+        if (result.success && result.data) { setCustomerReviewCount(result.data.reviews.length) }
+      } catch (error) {
+        console.error('[CustomerFullDetailView] 고객리뷰 count 로드 실패:', error)
+      }
+    }
+
+    loadCustomerReviewCount()
+  }, [customer?._id])
+
 
   // 🍎 수정 핸들러
   const handleEditClick = useCallback(() => {
@@ -1023,7 +1040,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => setReportTab('annual')}
                     >
                       연간보고서
-                      {reportTab === 'annual' && annualReportCount > 0 && (
+                      {annualReportCount > 0 && (
                         <span className="report-tabs__count">{annualReportCount}</span>
                       )}
                     </button>
@@ -1033,7 +1050,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => setReportTab('review')}
                     >
                       고객리뷰
-                      {reportTab === 'review' && customerReviewCount > 0 && (
+                      {customerReviewCount > 0 && (
                         <span className="report-tabs__count">{customerReviewCount}</span>
                       )}
                     </button>
