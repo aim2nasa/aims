@@ -248,3 +248,76 @@ export function getUniqueFileName(fileName: string, existingNames: string[]): st
 
   return newName
 }
+
+/**
+ * 🔴 시스템 전체 해시 중복 검사 결과
+ */
+export interface SystemDuplicateResult {
+  isDuplicate: boolean
+  existingDocument?: {
+    documentId: string
+    fileName: string
+    customerId: string | null
+    customerName: string | null
+    uploadedAt: string | null
+  }
+  fileHash: string
+}
+
+/**
+ * 🔴 시스템 전체 해시 중복 검사 API 응답
+ */
+interface CheckHashResponse {
+  success: boolean
+  isDuplicate: boolean
+  existingDocument?: {
+    documentId: string
+    fileName: string
+    customerId: string | null
+    customerName: string | null
+    uploadedAt: string | null
+  }
+}
+
+/**
+ * 🔴 시스템 전체에서 파일 해시 중복 검사
+ *
+ * 고객 선택 여부와 관계없이, 현재 사용자의 모든 파일에서 동일 해시 검색
+ *
+ * @param file 검사할 파일
+ * @returns 중복 검사 결과
+ */
+export async function checkSystemDuplicate(file: File): Promise<SystemDuplicateResult> {
+  // 파일 해시 계산
+  const fileHash = await calculateFileHash(file)
+
+  try {
+    const response = await api.post<CheckHashResponse>('/api/documents/check-hash', {
+      fileHash
+    })
+
+    if (response?.isDuplicate && response?.existingDocument) {
+      return {
+        isDuplicate: true,
+        existingDocument: response.existingDocument,
+        fileHash
+      }
+    }
+
+    return {
+      isDuplicate: false,
+      fileHash
+    }
+  } catch (error) {
+    console.error('[duplicateChecker] 시스템 해시 중복 검사 실패:', error)
+    errorReporter.reportApiError(error as Error, {
+      component: 'duplicateChecker.checkSystemDuplicate',
+      payload: { fileName: file.name }
+    })
+    // API 실패 시 중복 아님으로 처리 (업로드 허용, 백엔드에서 최종 차단)
+    return {
+      isDuplicate: false,
+      fileHash
+    }
+  }
+}

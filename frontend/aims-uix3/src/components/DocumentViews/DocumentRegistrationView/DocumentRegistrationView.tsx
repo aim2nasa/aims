@@ -32,6 +32,7 @@ import {
   checkStorageWithInfo,
   getCustomerFileHashes,
   checkDuplicateFile,
+  checkSystemDuplicate,
   type ExistingFileHash,
 } from '@/shared/lib/fileValidation'
 import StorageExceededDialog from '@/features/batch-upload/components/StorageExceededDialog'
@@ -478,6 +479,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const validation = validateFile(file)
 
       if (validation.valid) {
+        // 🔴🔴🔴 시스템 전체 해시 중복 검사 (문서 유형 상관없이 최우선 실행!) 🔴🔴🔴
+        try {
+          const systemDupResult = await checkSystemDuplicate(file)
+          if (systemDupResult.isDuplicate && systemDupResult.existingDocument) {
+            const existingInfo = systemDupResult.existingDocument
+            const customerInfo = existingInfo.customerName
+              ? `"${existingInfo.customerName}" 고객에게`
+              : '시스템에'
+
+            addLog(
+              'error',
+              `🔴 중복 파일 거부: ${file.name}`,
+              `이미 ${customerInfo} 동일한 파일이 등록되어 있습니다. (${existingInfo.fileName})`
+            )
+            console.error(`[DocumentRegistration] 🔴🔴🔴 시스템 해시 중복 거부: ${file.name} (기존: ${existingInfo.fileName})`)
+            updateFileStatus(file, 'error', `중복 파일 - 이미 ${customerInfo} 등록됨`)
+            continue
+          }
+        } catch (error) {
+          console.error('[DocumentRegistration] 시스템 해시 중복 검사 실패:', error)
+          // 검사 실패 시 업로드 계속 진행 (백엔드에서 최종 차단)
+        }
+
         // PDF 파일이면 Annual Report 체크
         if (file.type === 'application/pdf') {
           try {
@@ -567,6 +591,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 const customerId = customerFileCustomer._id;
                 const customerName = customerFileCustomer.personal_info?.name || '알 수 없음';
 
+                // 🔴 CRS 문서도 중복 검사 필수!
+                if (existingHashes.length > 0) {
+                  try {
+                    const duplicateResult = await checkDuplicateFile(file, existingHashes)
+                    if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
+                      addLog(
+                        'error',
+                        `🔴 중복 파일 거부: ${file.name}`,
+                        `"${customerName}" 고객에게 이미 동일한 파일이 등록되어 있습니다.`
+                      )
+                      console.error(`[DocumentRegistration] 🔴 CRS 중복 파일 거부: ${file.name}`)
+                      updateFileStatus(file, 'error', `중복 파일 - "${customerName}" 고객에게 이미 등록됨`)
+                      continue
+                    }
+                  } catch (error) {
+                    console.error('[DocumentRegistration] CRS 중복 검사 실패:', error)
+                  }
+                }
+
                 addLog('success', `[1/4] PDF 분석 완료: ${file.name}`);
                 addLog(
                   'cr-detect',
@@ -627,25 +670,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
               const customerName = customerFileCustomer.personal_info?.name || '알 수 없음'
 
-              // 🔴 사용자에게 중복 처리 방법 선택 요청 (모달)
-              const action = await promptDuplicateAction(
-                file,
-                duplicateResult.existingDoc,
-                customerName
+              // 🔴 중복 파일 무조건 거부! (선택권 없음!)
+              addLog(
+                'error',
+                `🔴 중복 파일 거부: ${file.name}`,
+                `"${customerName}" 고객에게 이미 동일한 파일이 등록되어 있습니다.`
               )
-
-              // hash 기반 중복 검사: skip만 가능 (동일 파일이므로 덮어쓰기/둘다유지 무의미)
-              if (action === 'skip') {
-                addLog(
-                  'warning',
-                  `🔴 중복 파일 건너뜀: ${file.name}`,
-                  `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
-                )
-                console.log(`[DocumentRegistration] 🔴 중복 파일 건너뜀: ${file.name}`)
-                // 🔄 개별 파일 상태 업데이트
-                updateFileStatus(file, 'skipped', `중복 파일 - ${customerName} 고객에게 이미 등록됨`)
-                continue
-              }
+              console.error(`[DocumentRegistration] 🔴 중복 파일 거부: ${file.name}`)
+              updateFileStatus(file, 'error', `중복 파일 - "${customerName}" 고객에게 이미 등록됨`)
+              continue
             }
           } catch (error) {
             console.error('[DocumentRegistration] 중복 검사 실패:', error)

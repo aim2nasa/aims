@@ -753,6 +753,78 @@ app.get('/api/documents/stats', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 🔴 파일 해시 중복 검사 API
+ * 동일한 해시를 가진 파일이 이미 존재하는지 확인 (전체 시스템에서)
+ * @route POST /api/documents/check-hash
+ */
+app.post('/api/documents/check-hash', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'userId required' });
+    }
+
+    const { fileHash } = req.body;
+    if (!fileHash || typeof fileHash !== 'string') {
+      return res.status(400).json({ success: false, error: 'fileHash required (SHA-256)' });
+    }
+
+    const db = mongoClient.db('docupload');
+
+    // 현재 사용자(ownerId)의 모든 파일 중 동일 해시 검색
+    const existingDoc = await db.collection(COLLECTION_NAME).findOne(
+      {
+        ownerId: userId,
+        'meta.file_hash': fileHash
+      },
+      {
+        projection: {
+          _id: 1,
+          'upload.originalName': 1,
+          customerId: 1,
+          'meta.file_hash': 1,
+          'upload.uploaded_at': 1
+        }
+      }
+    );
+
+    if (existingDoc) {
+      // 고객 정보 조회 (있는 경우)
+      let customerName = null;
+      if (existingDoc.customerId) {
+        const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne(
+          { _id: new ObjectId(existingDoc.customerId) },
+          { projection: { 'personal_info.name': 1 } }
+        );
+        customerName = customer?.personal_info?.name || null;
+      }
+
+      return res.json({
+        success: true,
+        isDuplicate: true,
+        existingDocument: {
+          documentId: existingDoc._id.toString(),
+          fileName: existingDoc.upload?.originalName || 'unknown',
+          customerId: existingDoc.customerId || null,
+          customerName,
+          uploadedAt: existingDoc.upload?.uploaded_at || null
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      isDuplicate: false
+    });
+  } catch (error) {
+    console.error('[Documents Check Hash] Error:', error);
+    backendLogger.error('Documents', '해시 중복 검사 오류', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+/**
  * 모든 문서 목록 조회 API (문서검색View용)
  */
 app.get('/api/documents', authenticateJWT, async (req, res) => {
@@ -6023,6 +6095,29 @@ app.post('/api/customers/:id/documents', authenticateJWTorAPIKey, async (req, re
         success: false,
         error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
+    }
+
+    // 🔴 중복 파일 검사: 같은 고객에게 같은 해시의 파일이 이미 연결되어 있는지 확인
+    const newFileHash = document.meta?.file_hash;
+    if (newFileHash) {
+      const existingDocs = customer.documents || [];
+      if (existingDocs.length > 0) {
+        const existingDocIds = existingDocs.map(d => d.document_id);
+        const duplicateDoc = await db.collection(COLLECTION_NAME).findOne({
+          _id: { $in: existingDocIds },
+          'meta.file_hash': newFileHash
+        }, { projection: { _id: 1, 'upload.originalName': 1 } });
+
+        if (duplicateDoc) {
+          const existingFileName = duplicateDoc.upload?.originalName || '알 수 없는 파일';
+          return res.status(409).json({
+            success: false,
+            error: 'DUPLICATE_FILE',
+            message: `이미 동일한 파일이 이 고객에게 연결되어 있습니다: ${existingFileName}`,
+            existingDocumentId: duplicateDoc._id.toString()
+          });
+        }
+      }
     }
 
     // 고객에 문서 연결 추가

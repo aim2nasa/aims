@@ -106,8 +106,10 @@ export {
   checkDuplicateFile,
   checkDuplicateFiles,
   getUniqueFileName,
+  checkSystemDuplicate,
   type ExistingFileHash,
   type DuplicateCheckResult,
+  type SystemDuplicateResult,
 } from './duplicateChecker'
 
 // Types from userService for convenience
