@@ -77,27 +77,12 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         ) : (
           <>
-            {/* Summary Section - 상품명, 총적립금, 펀드수 */}
-            <div className="annual-report-summary">
-              <div className="annual-report-summary__item annual-report-summary__item--wide">
-                <span className="annual-report-summary__label">상품명</span>
-                <span className="annual-report-summary__value">
-                  {review.product_name || '-'}
-                </span>
+            {/* 상품명 - 맨 위 중앙 */}
+            {review.product_name && (
+              <div className="crm-product-name">
+                {review.product_name}
               </div>
-              <div className="annual-report-summary__item">
-                <span className="annual-report-summary__label">총 적립금</span>
-                <span className="annual-report-summary__value annual-report-summary__value--primary">
-                  {CustomerReviewApi.formatCurrency(review.total_accumulated_amount || contract_info?.accumulated_amount)}
-                </span>
-              </div>
-              <div className="annual-report-summary__item">
-                <span className="annual-report-summary__label">펀드 수</span>
-                <span className="annual-report-summary__value">
-                  {review.fund_count || fund_allocations?.length || 0}개
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* 인적사항 - 계약자, 피보험자, 사망수익자, FSR */}
             <div className="crm-persons">
@@ -116,6 +101,22 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
               <div className="crm-persons__item">
                 <span className="crm-persons__label">FSR</span>
                 <span className="crm-persons__value">{review.fsr_name || '-'}</span>
+              </div>
+            </div>
+
+            {/* Summary - 총적립금, 펀드수 */}
+            <div className="crm-summary">
+              <div className="crm-summary__item">
+                <span className="crm-summary__label">총 적립금</span>
+                <span className="crm-summary__value crm-summary__value--primary">
+                  {CustomerReviewApi.formatCurrency(review.total_accumulated_amount || contract_info?.accumulated_amount)}
+                </span>
+              </div>
+              <div className="crm-summary__item">
+                <span className="crm-summary__label">펀드 수</span>
+                <span className="crm-summary__value">
+                  {review.fund_count || fund_allocations?.length || 0}개
+                </span>
               </div>
             </div>
 
