@@ -1570,6 +1570,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               selectedCustomer={customerFileCustomer}
               onCustomerSelect={setCustomerFileCustomer}
               disabled={false}
+              showResetButton={isLogVisible && uploadState.files.length > 0}
+              onReset={() => {
+                // 초기 상태로 되돌리기 (새 문서 등록 버튼과 동일)
+                setProcessingLogs([])
+                setUploadState({
+                  uploading: false,
+                  files: [],
+                  totalProgress: 0,
+                  completedCount: 0,
+                  errors: [],
+                  context: {
+                    identifierType: 'userId',
+                    identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
+                  }
+                })
+                setIsLogVisible(false)
+                setCustomerFileCustomer(null)
+              }}
             />
           </div>
         </div>

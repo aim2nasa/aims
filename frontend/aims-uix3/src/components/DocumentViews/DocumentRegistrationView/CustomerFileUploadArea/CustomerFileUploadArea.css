@@ -345,3 +345,41 @@ html[data-theme="dark"] .options-field__textarea {
 .options-field__textarea::placeholder {
   color: var(--color-text-tertiary);
 }
+
+/* ===== 초기화 버튼 (아이콘만) ===== */
+
+.customer-file-upload-area__reset-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .customer-file-upload-area__reset-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.customer-file-upload-area__reset-button:hover {
+  background: var(--color-ios-fill-tertiary-light);
+  color: var(--color-ios-text-primary-light);
+  transform: rotate(180deg);
+}
+
+html[data-theme="dark"] .customer-file-upload-area__reset-button:hover {
+  background: var(--color-ios-fill-tertiary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.customer-file-upload-area__reset-button:active {
+  transform: rotate(180deg) scale(0.9);
+}

@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
+import { Button, Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
@@ -22,6 +22,10 @@ interface CustomerFileUploadAreaProps {
   onCustomerSelect: (customer: Customer | null) => void
   /** 비활성화 여부 */
   disabled: boolean
+  /** 초기화 버튼 표시 여부 */
+  showResetButton?: boolean
+  /** 초기화 핸들러 */
+  onReset?: () => void
 }
 
 /**
@@ -30,7 +34,9 @@ interface CustomerFileUploadAreaProps {
 export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   selectedCustomer,
   onCustomerSelect,
-  disabled
+  disabled,
+  showResetButton = false,
+  onReset
 }) => {
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
@@ -137,6 +143,20 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
               />
             )}
           </div>
+
+          {/* 초기화 버튼 - 업로드 결과가 있을 때만 표시 */}
+          {showResetButton && onReset && (
+            <Tooltip content="처음부터 다시 시작">
+              <button
+                type="button"
+                className="customer-file-upload-area__reset-button"
+                onClick={onReset}
+                aria-label="처음부터 다시 시작"
+              >
+                ↻
+              </button>
+            </Tooltip>
+          )}
         </div>
 
       </div>
