@@ -311,7 +311,10 @@ async def root():
             "health": "/health",
             "docs": "/docs",
             "parse": "/annual-report/parse (POST)",
-            "query": "/customers/{customer_id}/annual-reports (GET)"
+            "query": "/customers/{customer_id}/annual-reports (GET)",
+            "cr_check": "/customer-review/check (POST)",
+            "cr_parse": "/customer-review/parse (POST)",
+            "cr_query": "/customers/{customer_id}/customer-reviews (GET)"
         }
     }
 
@@ -346,7 +349,7 @@ async def health_check():
         }
 
 # 라우터 등록
-from routes import parse, query, background
+from routes import parse, query, background, cr_routes
 
 app.include_router(
     parse.router,
@@ -363,6 +366,11 @@ app.include_router(
     background.router,
     prefix="/ar-background",
     tags=["Annual Report - Background"]
+)
+
+app.include_router(
+    cr_routes.router,
+    tags=["Customer Review Service"]
 )
 
 if __name__ == "__main__":

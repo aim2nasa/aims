@@ -1,0 +1,252 @@
+/**
+ * Customer Review Modal Styles
+ * @since 2026-01-02
+ */
+
+/* Modal Content */
+.customer-review-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header Section */
+.cr-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cr-modal-header__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.cr-modal-header__product {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.cr-modal-header__meta {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.cr-modal-header__fsr {
+  font-weight: 500;
+}
+
+.cr-modal-header__people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.cr-modal-header__person {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.cr-modal-header__person .label {
+  color: var(--color-text-tertiary);
+}
+
+.cr-modal-header__person .value {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* Section */
+.cr-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.cr-modal-section__title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.cr-modal-section__badge {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Grid Layout */
+.cr-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.cr-modal-grid__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-sm);
+}
+
+.cr-modal-grid__item .label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.cr-modal-grid__item .value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-modal-grid__item .value.highlight {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.cr-modal-grid__item .value.positive {
+  color: var(--color-success);
+}
+
+.cr-modal-grid__item .value.negative {
+  color: var(--color-error);
+}
+
+/* Fund Table */
+.cr-modal-fund-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.cr-modal-fund-table__header {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.cr-modal-fund-table__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-modal-fund-table__row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.cr-modal-fund-table__row:last-child {
+  border-bottom: none;
+}
+
+.cr-modal-fund-table__row:hover {
+  background: var(--color-bg-hover);
+}
+
+.cr-modal-fund-table__footer {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Fund Table Columns */
+.cr-modal-fund-table .col-name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-modal-fund-table .col-accumulated,
+.cr-modal-fund-table .col-ratio,
+.cr-modal-fund-table .col-return,
+.cr-modal-fund-table .col-principal {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.cr-modal-fund-table .col-accumulated .sub-value,
+.cr-modal-fund-table .col-return .sub-value {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.cr-modal-fund-table .col-return.positive {
+  color: var(--color-success);
+}
+
+.cr-modal-fund-table .col-return.negative {
+  color: var(--color-error);
+}
+
+.cr-modal-fund-table .col-accumulated.highlight {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Empty State */
+.cr-modal-empty {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+/* Footer */
+.cr-modal-footer {
+  margin-top: auto;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.cr-modal-footer__text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}

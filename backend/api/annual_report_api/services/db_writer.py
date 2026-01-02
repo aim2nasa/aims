@@ -779,3 +779,539 @@ def cleanup_duplicate_annual_reports(
             "message": f"정리 실패: {str(e)}",
             "deleted_count": 0
         }
+
+
+# ================================================================================
+# Customer Review Service 관련 함수
+# ================================================================================
+
+def notify_cr_status_change(customer_id: str, file_id: Optional[str], status: str, error_message: Optional[str] = None):
+    """
+    CR 상태 변경을 aims_api에 알림 (SSE 실시간 업데이트용)
+    """
+    try:
+        webhook_url = f"{AIMS_API_URL}/api/webhooks/cr-status-change"
+        payload = {
+            "customer_id": customer_id,
+            "file_id": file_id,
+            "status": status,
+            "error_message": error_message
+        }
+        response = requests.post(webhook_url, json=payload, timeout=5)
+        if response.ok:
+            logger.info(f"✅ [SSE] CR 상태 변경 알림 전송: customer_id={customer_id}, status={status}")
+        else:
+            logger.warning(f"⚠️ [SSE] CR 알림 전송 실패: {response.status_code} - {response.text}")
+    except Exception as e:
+        # 알림 실패는 무시 (파싱 자체는 성공)
+        logger.warning(f"⚠️ [SSE] CR 알림 전송 실패 (무시됨): {e}")
+
+
+def save_customer_review(
+    db,
+    customer_id: str,
+    report_data: Dict,
+    metadata: Optional[Dict] = None,
+    source_file_id: Optional[str] = None
+) -> Dict[str, any]:
+    """
+    customers 컬렉션에 customer_reviews 추가
+
+    Args:
+        db: MongoDB database 객체
+        customer_id: 고객 ObjectId (문자열)
+        report_data: parse_customer_review() 결과 (2~4페이지 계약 데이터)
+        metadata: 1페이지 메타데이터 (product_name, issue_date, contractor_name, insured_name, death_beneficiary, fsr_name)
+        source_file_id: 원본 PDF 파일 ID (선택)
+
+    Returns:
+        dict: {
+            "success": bool,
+            "message": str,
+            "summary": dict (저장된 데이터 요약)
+        }
+
+    Raises:
+        ValueError: customer_id가 유효하지 않을 때
+        PyMongoError: DB 저장 실패
+    """
+    logger.info(f"Customer Review 저장 시작: customer_id={customer_id}")
+
+    try:
+        # 1. ObjectId 유효성 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except Exception as e:
+            raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
+
+        # 2. 고객 존재 확인
+        customers_collection = db["customers"]
+        customer = customers_collection.find_one({"_id": customer_obj_id})
+
+        if not customer:
+            logger.error(f"고객을 찾을 수 없습니다: {customer_id}")
+            return {
+                "success": False,
+                "message": f"고객을 찾을 수 없습니다 (ID: {customer_id})"
+            }
+
+        # 3. 파싱 데이터 검증
+        if "error" in report_data:
+            logger.error(f"파싱 실패한 데이터를 저장할 수 없습니다: {report_data['error']}")
+            return {
+                "success": False,
+                "message": f"파싱 실패: {report_data['error']}"
+            }
+
+        # 4. 1페이지 메타데이터 처리
+        product_name = None
+        issue_date_str = None
+        contractor_name = None
+        insured_name = None
+        death_beneficiary = None
+        fsr_name = None
+
+        if metadata:
+            product_name = metadata.get("product_name")
+            issue_date_str = metadata.get("issue_date")
+            contractor_name = metadata.get("contractor_name")
+            insured_name = metadata.get("insured_name")
+            death_beneficiary = metadata.get("death_beneficiary")
+            fsr_name = metadata.get("fsr_name")
+
+        # 발행일 파싱
+        try:
+            if issue_date_str:
+                naive_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
+                issue_date = naive_date.replace(tzinfo=timezone.utc)
+            else:
+                issue_date = None
+        except Exception as e:
+            logger.warning(f"발행일 파싱 실패: {issue_date_str} ({e})")
+            issue_date = None
+
+        # 5. Customer Review 문서 생성
+        contract_info = report_data.get("contract_info", {})
+        premium_info = report_data.get("premium_info", {})
+        fund_allocations = report_data.get("fund_allocations", [])
+        total_accumulated_amount = report_data.get("total_accumulated_amount", 0)
+        fund_count = report_data.get("fund_count", len(fund_allocations))
+
+        customer_review = {
+            # 1페이지 메타데이터 (AI 불사용)
+            "product_name": product_name,
+            "issue_date": issue_date,
+            "contractor_name": contractor_name,
+            "insured_name": insured_name,
+            "death_beneficiary": death_beneficiary,
+            "fsr_name": fsr_name,
+
+            # 2~4페이지 파싱 데이터 (AI 사용)
+            "contract_info": contract_info,
+            "premium_info": premium_info,
+            "fund_allocations": fund_allocations,
+
+            # 요약 정보
+            "total_accumulated_amount": total_accumulated_amount,
+            "fund_count": fund_count,
+
+            # 타임스탬프
+            "uploaded_at": utc_now_iso(),
+            "parsed_at": utc_now_iso(),
+        }
+
+        # 원본 파일 ID 추가 (있는 경우)
+        if source_file_id:
+            try:
+                customer_review["source_file_id"] = ObjectId(source_file_id)
+            except Exception as e:
+                logger.warning(f"source_file_id 변환 실패: {source_file_id} ({e})")
+
+        # 5.5 중복 체크: policy_number + issue_date 둘 다 같으면 중복
+        policy_number = contract_info.get("policy_number")
+        if policy_number and issue_date:
+            existing_reviews = customer.get("customer_reviews", [])
+            for existing in existing_reviews:
+                existing_policy = existing.get("contract_info", {}).get("policy_number", "")
+                existing_issue_date = existing.get("issue_date")
+
+                # issue_date 비교 (날짜만)
+                if existing_issue_date:
+                    if isinstance(existing_issue_date, datetime):
+                        existing_date_str = existing_issue_date.strftime("%Y-%m-%d")
+                    elif isinstance(existing_issue_date, str):
+                        existing_date_str = existing_issue_date.split('T')[0]
+                    else:
+                        existing_date_str = None
+
+                    if existing_date_str == issue_date_str and existing_policy == policy_number:
+                        logger.info(
+                            f"⏭️  중복 CR 건너뜀: policy_number={policy_number}, issue_date={issue_date_str}"
+                        )
+                        return {
+                            "success": True,
+                            "message": "이미 동일한 Customer Review가 존재합니다 (중복 건너뜀)",
+                            "duplicate": True,
+                            "summary": {
+                                "policy_number": policy_number,
+                                "issue_date": issue_date_str
+                            }
+                        }
+
+        # 6. customers 컬렉션 업데이트
+        result = customers_collection.update_one(
+            {"_id": customer_obj_id},
+            {
+                "$push": {
+                    "customer_reviews": customer_review
+                }
+            }
+        )
+
+        # 7. 결과 확인
+        if result.modified_count > 0:
+            logger.info(
+                f"✅ Customer Review 저장 성공: contractor={contractor_name}, "
+                f"product={product_name}, 펀드={fund_count}개, 총적립금={total_accumulated_amount:,}원"
+            )
+
+            # 🔔 SSE 알림: CR 파싱 완료
+            notify_cr_status_change(
+                customer_id=customer_id,
+                file_id=source_file_id,
+                status="completed"
+            )
+
+            return {
+                "success": True,
+                "message": "Customer Review 저장 완료",
+                "summary": {
+                    "product_name": product_name,
+                    "issue_date": issue_date_str,
+                    "contractor_name": contractor_name,
+                    "insured_name": insured_name,
+                    "fsr_name": fsr_name,
+                    "policy_number": policy_number,
+                    "total_accumulated_amount": total_accumulated_amount,
+                    "fund_count": fund_count
+                }
+            }
+        else:
+            logger.warning(f"⚠️  DB 업데이트 실패 (modified_count=0): {customer_id}")
+            return {
+                "success": False,
+                "message": "DB 업데이트 실패 (문서가 수정되지 않음)"
+            }
+
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise
+
+    except PyMongoError as e:
+        logger.error(f"❌ MongoDB 오류: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"❌ Customer Review 저장 중 예상치 못한 오류: {e}")
+        send_error_log("annual_report_api", f"Customer Review 저장 중 예상치 못한 오류: {e}", e)
+        return {
+            "success": False,
+            "message": f"저장 실패: {str(e)}"
+        }
+
+
+def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
+    """
+    고객의 Customer Reviews 조회 (최신순)
+    - 파싱 완료된 CR (customers.customer_reviews[])
+    - 파싱 실패한 CR (files.cr_parsing_status: error)
+    - 파싱 진행중인 CR (files.cr_parsing_status: processing)
+
+    Args:
+        db: MongoDB database 객체
+        customer_id: 고객 ObjectId (문자열)
+        limit: 최대 조회 개수
+
+    Returns:
+        dict: {
+            "success": bool,
+            "data": list,  # customer_reviews 배열 (status 필드 포함)
+            "count": int
+        }
+    """
+    logger.info(f"Customer Reviews 조회: customer_id={customer_id}")
+
+    try:
+        # ObjectId 변환
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except Exception as e:
+            raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
+
+        # 고객 조회
+        customers_collection = db["customers"]
+        customer = customers_collection.find_one(
+            {"_id": customer_obj_id},
+            {"customer_reviews": 1, "name": 1}
+        )
+
+        if not customer:
+            logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
+            return {
+                "success": False,
+                "message": "고객을 찾을 수 없습니다",
+                "data": []
+            }
+
+        # customer_reviews 배열 가져오기 (파싱 완료된 것들)
+        reviews = customer.get("customer_reviews", [])
+
+        # 🔧 이미 완료된 source_file_id 수집 (중복 방지)
+        completed_file_ids = set()
+        for cr in reviews:
+            source_id = cr.get("source_file_id")
+            if source_id:
+                try:
+                    completed_file_ids.add(ObjectId(source_id))
+                except Exception as e:
+                    logger.debug(f"유효하지 않은 ObjectId 무시: {source_id} - {e}")
+
+        # files 컬렉션 참조
+        files_collection = db["files"]
+
+        # 🔥 파싱 미완료 CR 문서 조회 (files 컬렉션에서)
+        query = {
+            "customerId": customer_obj_id,
+            "is_customer_review": True,
+            "$or": [
+                {"cr_parsing_status": {"$exists": False}},
+                {"cr_parsing_status": {"$in": ["pending", "processing", "error"]}}
+            ]
+        }
+        # 이미 완료된 파일은 제외
+        if completed_file_ids:
+            query["_id"] = {"$nin": list(completed_file_ids)}
+
+        not_completed_cr_files = list(files_collection.find(
+            query,
+            {
+                "_id": 1,
+                "upload.originalName": 1,
+                "upload.uploaded_at": 1,
+                "cr_parsing_status": 1,
+                "cr_parsing_error": 1,
+                "cr_retry_count": 1,
+                "cr_metadata": 1,
+                "meta.file_hash": 1
+            }
+        ))
+
+        # 파싱 미완료 문서를 customer_reviews 형식으로 변환
+        for file_doc in not_completed_cr_files:
+            cr_metadata = file_doc.get("cr_metadata", {}) or {}
+            upload_info = file_doc.get("upload", {}) or {}
+
+            # cr_parsing_status가 없으면 "pending"으로 처리
+            cr_status = file_doc.get("cr_parsing_status") or "pending"
+
+            pending_review = {
+                "source_file_id": str(file_doc["_id"]),
+                "file_id": str(file_doc["_id"]),
+                "product_name": cr_metadata.get("product_name"),
+                "issue_date": cr_metadata.get("issue_date"),
+                "contractor_name": cr_metadata.get("contractor_name"),
+                "insured_name": cr_metadata.get("insured_name"),
+                "fsr_name": cr_metadata.get("fsr_name"),
+                "uploaded_at": upload_info.get("uploaded_at"),
+                "parsed_at": None,
+                "contract_info": {},
+                "premium_info": {},
+                "fund_allocations": [],
+                "total_accumulated_amount": None,
+                "fund_count": None,
+                "status": cr_status,
+                "error_message": file_doc.get("cr_parsing_error"),
+                "retry_count": file_doc.get("cr_retry_count"),
+                "file_hash": file_doc.get("meta", {}).get("file_hash")
+            }
+            reviews.append(pending_review)
+
+        # 최신순 정렬 (uploaded_at 기준)
+        def get_uploaded_at(r):
+            uploaded_at = r.get("uploaded_at")
+            min_dt = datetime.min.replace(tzinfo=timezone.utc)
+
+            if uploaded_at is None:
+                return min_dt
+            if isinstance(uploaded_at, datetime):
+                if uploaded_at.tzinfo is None:
+                    return uploaded_at.replace(tzinfo=timezone.utc)
+                return uploaded_at
+            if isinstance(uploaded_at, str):
+                try:
+                    return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                except Exception as e:
+                    logger.debug(f"uploaded_at 파싱 실패, 기본값 사용: {uploaded_at} - {e}")
+                    return min_dt
+            return min_dt
+
+        sorted_reviews = sorted(
+            reviews,
+            key=get_uploaded_at,
+            reverse=True
+        )
+
+        # limit 적용
+        limited_reviews = sorted_reviews[:limit]
+
+        # ObjectId를 문자열로 변환 및 상태 정보 추가
+        for review in limited_reviews:
+            source_file_id = None
+            if "source_file_id" in review and isinstance(review["source_file_id"], ObjectId):
+                source_file_id = review["source_file_id"]
+                review["source_file_id"] = str(source_file_id)
+
+            # 파싱 완료된 리뷰에는 status: "completed" 추가
+            if "status" not in review:
+                review["status"] = "completed"
+
+            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회
+            if source_file_id and "file_hash" not in review:
+                try:
+                    file_doc = files_collection.find_one(
+                        {"_id": source_file_id if isinstance(source_file_id, ObjectId) else ObjectId(source_file_id)},
+                        {"meta.file_hash": 1}
+                    )
+                    if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
+                        review["file_hash"] = file_doc["meta"]["file_hash"]
+                except Exception as e:
+                    logger.warning(f"file_hash 조회 실패: source_file_id={source_file_id}, 오류={e}")
+
+            # datetime을 ISO 형식 문자열로 변환
+            if "issue_date" in review and isinstance(review["issue_date"], datetime):
+                review["issue_date"] = review["issue_date"].isoformat()
+            if "uploaded_at" in review and isinstance(review["uploaded_at"], datetime):
+                review["uploaded_at"] = review["uploaded_at"].isoformat()
+            if "parsed_at" in review and isinstance(review["parsed_at"], datetime):
+                review["parsed_at"] = review["parsed_at"].isoformat()
+
+        logger.info(f"✅ Customer Reviews 조회 완료: {len(limited_reviews)}건 (미완료 CR {len(not_completed_cr_files)}건 포함)")
+
+        return {
+            "success": True,
+            "data": limited_reviews,
+            "count": len(limited_reviews),
+            "total": len(reviews)
+        }
+
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"❌ Customer Reviews 조회 중 오류: {e}")
+        return {
+            "success": False,
+            "message": f"조회 실패: {str(e)}",
+            "data": []
+        }
+
+
+def delete_customer_reviews(
+    db,
+    customer_id: str,
+    review_indices: list[int]
+) -> Dict[str, any]:
+    """
+    고객의 Customer Reviews 삭제 (배열 인덱스 기반)
+
+    Args:
+        db: MongoDB database 객체
+        customer_id: 고객 ObjectId (문자열)
+        review_indices: 삭제할 리뷰의 인덱스 리스트 (최신순 기준)
+
+    Returns:
+        dict: {
+            "success": bool,
+            "message": str,
+            "deleted_count": int
+        }
+    """
+    logger.info(f"Customer Reviews 삭제: customer_id={customer_id}, indices={review_indices}")
+
+    try:
+        # ObjectId 변환
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except Exception as e:
+            raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
+
+        # 고객 조회
+        customers_collection = db["customers"]
+        customer = customers_collection.find_one(
+            {"_id": customer_obj_id},
+            {"customer_reviews": 1}
+        )
+
+        if not customer:
+            logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
+            return {
+                "success": False,
+                "message": "고객을 찾을 수 없습니다",
+                "deleted_count": 0
+            }
+
+        # customer_reviews 배열 가져오기
+        reviews = customer.get("customer_reviews", [])
+
+        # 최신순 정렬 (uploaded_at 기준)
+        sorted_reviews = sorted(
+            reviews,
+            key=lambda r: r.get("uploaded_at", datetime.min),
+            reverse=True
+        )
+
+        # 삭제할 리뷰 선택
+        reviews_to_keep = [
+            review for idx, review in enumerate(sorted_reviews)
+            if idx not in review_indices
+        ]
+
+        # 고객 문서 업데이트 (customer_reviews 배열 교체)
+        result = customers_collection.update_one(
+            {"_id": customer_obj_id},
+            {"$set": {"customer_reviews": reviews_to_keep}}
+        )
+
+        deleted_count = len(reviews) - len(reviews_to_keep)
+
+        if result.modified_count > 0:
+            logger.info(f"✅ Customer Reviews 삭제 성공: {deleted_count}건")
+            return {
+                "success": True,
+                "message": f"{deleted_count}건의 Customer Review가 삭제되었습니다",
+                "deleted_count": deleted_count
+            }
+        else:
+            logger.warning(f"⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
+            return {
+                "success": False,
+                "message": "삭제할 항목이 없거나 변경사항이 없습니다",
+                "deleted_count": 0
+            }
+
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise
+
+    except PyMongoError as e:
+        logger.error(f"❌ MongoDB 오류: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"❌ Customer Reviews 삭제 중 오류: {e}")
+        return {
+            "success": False,
+            "message": f"삭제 실패: {str(e)}",
+            "deleted_count": 0
+        }

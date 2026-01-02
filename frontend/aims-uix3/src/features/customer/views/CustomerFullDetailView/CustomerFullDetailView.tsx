@@ -21,6 +21,7 @@ import { MemosTab } from '../CustomerDetailView/tabs/MemosTab'
 import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
+import { CustomerReviewTab } from '../CustomerDetailView/tabs/CustomerReviewTab'
 import { useAddressArchiveController } from '../../controllers/useAddressArchiveController'
 import { AddressArchiveModal } from '../../components/AddressArchiveModal'
 import { DocumentContentSearchModal } from '../../components/DocumentContentSearchModal'
@@ -83,6 +84,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [contractCount, setContractCount] = useState(0)
   const [documentCount, setDocumentCount] = useState(0)
   const [annualReportCount, setAnnualReportCount] = useState(0)
+  const [customerReviewCount, setCustomerReviewCount] = useState(0)
 
   // 🍎 계약 검색 상태
   const [contractSearchTerm, setContractSearchTerm] = useState('')
@@ -92,6 +94,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 Annual Report 검색 상태
   const [annualReportSearchTerm, setAnnualReportSearchTerm] = useState('')
+
+  // 🍎 Customer Review 검색 상태
+  const [customerReviewSearchTerm, setCustomerReviewSearchTerm] = useState('')
 
   // 🍎 고객 정보 탭 상태 ('info' | 'memo')
   const [customerInfoTab, setCustomerInfoTab] = useState<'info' | 'memo'>('info')
@@ -1028,42 +1033,49 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => setReportTab('review')}
                     >
                       고객리뷰
+                      {reportTab === 'review' && customerReviewCount > 0 && (
+                        <span className="report-tabs__count">{customerReviewCount}</span>
+                      )}
                     </button>
                   </div>
-                  {/* 🍎 검색 (연간 탭에서만 표시) */}
-                  {reportTab === 'annual' && (
-                    <div className="customer-full-detail__section-search">
-                      <SFSymbol
-                        name="magnifyingglass"
-                        size={SFSymbolSize.CAPTION_2}
-                        weight={SFSymbolWeight.MEDIUM}
-                        className="section-search-icon"
-                        decorative={true}
-                      />
-                      <input
-                        type="text"
-                        value={annualReportSearchTerm}
-                        onChange={(e) => setAnnualReportSearchTerm(e.target.value)}
-                        placeholder="검색"
-                        className="section-search-input"
-                      />
-                      {annualReportSearchTerm && (
-                        <button
-                          type="button"
-                          className="section-search-clear"
-                          onClick={() => setAnnualReportSearchTerm('')}
-                          aria-label="검색어 지우기"
-                        >
-                          <SFSymbol
-                            name="xmark.circle.fill"
-                            size={SFSymbolSize.CAPTION_2}
-                            weight={SFSymbolWeight.REGULAR}
-                            decorative={true}
-                          />
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  {/* 🍎 검색 (보고서 탭별) */}
+                  <div className="customer-full-detail__section-search">
+                    <SFSymbol
+                      name="magnifyingglass"
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      className="section-search-icon"
+                      decorative={true}
+                    />
+                    <input
+                      type="text"
+                      value={reportTab === 'annual' ? annualReportSearchTerm : customerReviewSearchTerm}
+                      onChange={(e) => reportTab === 'annual'
+                        ? setAnnualReportSearchTerm(e.target.value)
+                        : setCustomerReviewSearchTerm(e.target.value)
+                      }
+                      placeholder="검색"
+                      className="section-search-input"
+                    />
+                    {(reportTab === 'annual' ? annualReportSearchTerm : customerReviewSearchTerm) && (
+                      <button
+                        type="button"
+                        className="section-search-clear"
+                        onClick={() => reportTab === 'annual'
+                          ? setAnnualReportSearchTerm('')
+                          : setCustomerReviewSearchTerm('')
+                        }
+                        aria-label="검색어 지우기"
+                      >
+                        <SFSymbol
+                          name="xmark.circle.fill"
+                          size={SFSymbolSize.CAPTION_2}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      </button>
+                    )}
+                  </div>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--report">
                     {/* 🍎 연간 보고서 탭 */}
@@ -1076,17 +1088,14 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         onSearchChange={setAnnualReportSearchTerm}
                       />
                     )}
-                    {/* 🍎 고객리뷰 탭 (준비 중) */}
+                    {/* 🍎 고객리뷰 탭 */}
                     {reportTab === 'review' && (
-                      <div className="report-placeholder">
-                        <SFSymbol
-                          name="doc.text.magnifyingglass"
-                          size={SFSymbolSize.TITLE_1}
-                          weight={SFSymbolWeight.LIGHT}
-                          className="report-placeholder__icon"
-                        />
-                        <span className="report-placeholder__text">고객리뷰 기능 준비 중</span>
-                      </div>
+                      <CustomerReviewTab
+                        customer={customer}
+                        onCustomerReviewCountChange={setCustomerReviewCount}
+                        searchTerm={customerReviewSearchTerm}
+                        onSearchChange={setCustomerReviewSearchTerm}
+                      />
                     )}
                   </div>
                 </section>

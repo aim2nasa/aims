@@ -7751,6 +7751,147 @@ app.delete('/api/customers/:customerId/annual-reports', authenticateJWT, async (
   }
 });
 
+// ==================== Customer Review API Proxy ====================
+/**
+ * 고객의 Customer Reviews 목록 조회 프록시
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
+app.get('/api/customers/:customerId/customer-reviews', authenticateJWT, async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { limit } = req.query;
+
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    // ⭐ 고객 소유권 검증: 해당 설계사의 고객만 조회 가능
+    if (ObjectId.isValid(customerId)) {
+      const customer = await db.collection(CUSTOMERS_COLLECTION)
+        .findOne({ _id: new ObjectId(customerId), 'meta.created_by': userId });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
+    }
+
+    console.log(`📋 [Customer Review] 고객 Customer Reviews 조회: ${customerId}, userId: ${userId}`);
+
+    const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/customer-reviews`;
+
+    const response = await axios.get(pythonApiUrl, {
+      params: { limit },
+      headers: {
+        'x-user-id': userId
+      },
+      timeout: 3000
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ [Customer Review] 조회 오류:', error.message);
+    backendLogger.error('CustomerReview', '[Customer Review] 조회 오류', error);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Customer Review API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Customer Review 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 고객의 Customer Reviews 삭제 프록시
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
+app.delete('/api/customers/:customerId/customer-reviews', authenticateJWT, async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { indices } = req.body;
+
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    // ⭐ 고객 소유권 검증: 해당 설계사의 고객만 삭제 가능
+    if (ObjectId.isValid(customerId)) {
+      const customer = await db.collection(CUSTOMERS_COLLECTION)
+        .findOne({ _id: new ObjectId(customerId), 'meta.created_by': userId });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
+    }
+
+    console.log(`🗑️  [Customer Review] 삭제 요청: customer=${customerId}, userId=${userId}, indices=${JSON.stringify(indices)}`);
+
+    if (!indices || !Array.isArray(indices) || indices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '삭제할 리뷰 인덱스가 필요합니다.'
+      });
+    }
+
+    const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/customer-reviews`;
+
+    const response = await axios.delete(pythonApiUrl, {
+      data: { indices },
+      headers: {
+        'x-user-id': userId
+      },
+      timeout: 5000
+    });
+
+    console.log(`✅ [Customer Review] 삭제 완료:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Customer Review] 삭제 오류:', error.message);
+    backendLogger.error('CustomerReview', '[Customer Review] 삭제 오류', error);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Customer Review API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        success: false,
+        message: error.response.data?.message || '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Customer Review 삭제 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
 /**
  * 고객의 중복 Annual Reports 정리 프록시
  */
