@@ -21,6 +21,17 @@ interface CustomerReviewModalProps {
   review: CustomerReview | null;
 }
 
+// 상품명에서 "발행" 이후 텍스트 제거
+const extractProductName = (productName: string | undefined): string => {
+  if (!productName) return '상품명 없음';
+  // "발행" 이전까지만 추출
+  const idx = productName.indexOf('발행');
+  if (idx > 0) {
+    return productName.substring(0, idx).trim();
+  }
+  return productName.trim();
+};
+
 export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
   isOpen,
   onClose,
@@ -30,6 +41,7 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
 
   const { contract_info, premium_info, fund_allocations } = review;
   const isParsed = contract_info?.policy_number || (fund_allocations && fund_allocations.length > 0);
+  const cleanProductName = extractProductName(review.product_name);
 
   return (
     <DraggableModal
@@ -77,16 +89,17 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         ) : (
           <>
-            {/* 헤더: 상품명 + 인적사항 한 줄 */}
-            <div className="crm-header-row">
-              <div className="crm-product-name">
-                {review.product_name || '상품명 없음'}
-              </div>
-              <div className="crm-persons-inline">
-                <span><b>피보험자</b> {review.insured_name || '-'}</span>
-                <span><b>사망수익자</b> {review.death_beneficiary || '-'}</span>
-                <span><b>FSR</b> {review.fsr_name || '-'}</span>
-              </div>
+            {/* 상품명 (중앙 정렬) */}
+            <div className="crm-product-name crm-product-name--centered">
+              {cleanProductName}
+            </div>
+
+            {/* 인적사항 */}
+            <div className="crm-persons-inline">
+              <span><b>계약자</b> {review.contractor_name || '-'}</span>
+              <span><b>피보험자</b> {review.insured_name || '-'}</span>
+              <span><b>사망수익자</b> {review.death_beneficiary || '-'}</span>
+              <span><b>FSR</b> {review.fsr_name || '-'}</span>
             </div>
 
             {/* 3컬럼 레이아웃: 계약사항 + 보험료 납입현황 + 펀드 구성 현황 */}
