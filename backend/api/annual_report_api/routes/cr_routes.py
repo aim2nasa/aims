@@ -534,6 +534,14 @@ async def delete_customer_reviews_api(
                     status_code=404,
                     detail=result["message"]
                 )
+            # "삭제할 항목이 없습니다"는 성공으로 처리 (0건 삭제)
+            elif "삭제할 항목이 없" in result.get("message", ""):
+                logger.info(f"ℹ️  삭제할 항목 없음 (이미 삭제되었거나 존재하지 않음)")
+                return DeleteCustomerReviewsResponse(
+                    success=True,
+                    message="삭제할 항목이 없습니다 (이미 삭제되었거나 존재하지 않음)",
+                    deleted_count=0
+                )
             else:
                 raise HTTPException(
                     status_code=500,
