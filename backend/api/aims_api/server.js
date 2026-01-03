@@ -2406,7 +2406,8 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
 
     // ========== Customer Review 파싱 데이터 삭제 ==========
     // 매칭 조건: source_file_id가 같으면 삭제 (Annual Report와 동일한 로직)
-    if (document.is_customer_review) {
+    // is_customer_review 플래그 또는 doc_type이 "고객리뷰"인 경우 모두 처리
+    if (document.is_customer_review || document.doc_type === '고객리뷰') {
       try {
         console.log(`🗑️  [CR 삭제] Customer Review 문서 삭제 감지: file_id=${id}`);
 
