@@ -22,6 +22,7 @@ const backendLogger = require('./lib/backendLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 const virusScanService = require('./lib/virusScanService');
+const serviceHealthMonitor = require('./lib/serviceHealthMonitor');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
@@ -5597,6 +5598,83 @@ app.get('/api/admin/ports', authenticateJWT, requireRole('admin'), async (req, r
 });
 
 /**
+ * 관리자: 서비스 상태 이력 조회
+ * 서비스 장애/복구 이력 조회
+ */
+app.get('/api/admin/health-history', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const { service, eventType, startDate, endDate, limit = 100, skip = 0 } = req.query;
+
+    const result = await serviceHealthMonitor.getHealthHistory({
+      service: service || null,
+      eventType: eventType || null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      limit: parseInt(limit, 10),
+      skip: parseInt(skip, 10)
+    });
+
+    res.json({
+      success: true,
+      data: result.logs,
+      totalCount: result.totalCount
+    });
+  } catch (error) {
+    console.error('[Admin Health History] 조회 실패:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 서비스 다운타임 통계
+ * 지정 기간 동안 서비스별 장애 횟수 및 복구 횟수 통계
+ */
+app.get('/api/admin/health-stats', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+
+    const stats = await serviceHealthMonitor.getDowntimeStats(parseInt(days, 10));
+
+    res.json({
+      success: true,
+      data: stats,
+      period: `${days}일`
+    });
+  } catch (error) {
+    console.error('[Admin Health Stats] 조회 실패:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 현재 서비스 상태 조회 (실시간 체크)
+ * 모든 서비스 상태를 실시간으로 체크하여 반환
+ */
+app.get('/api/admin/health-current', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const results = await serviceHealthMonitor.checkAllServices();
+
+    res.json({
+      success: true,
+      data: results,
+      checkedAt: utcNowISO()
+    });
+  } catch (error) {
+    console.error('[Admin Health Current] 조회 실패:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * 관리자: 사용자 목록 조회 (페이징, 검색, 필터)
  */
 app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, res) => {
@@ -10701,6 +10779,10 @@ app.listen(PORT, '0.0.0.0', async () => {
     await collectAndSaveMetrics();
     metricsCollectionInterval = setInterval(collectAndSaveMetrics, 60 * 1000);
     console.log('[Metrics] 시스템 메트릭 수집 시작 (1분 간격)');
+
+    // 서비스 상태 모니터링 시작
+    serviceHealthMonitor.init(db);
+    serviceHealthMonitor.startMonitoring();
   }
 
   console.log(`📋 API 엔드포인트:`);

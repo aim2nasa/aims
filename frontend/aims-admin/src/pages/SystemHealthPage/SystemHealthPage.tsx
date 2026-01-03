@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type WorkflowStatus } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
@@ -298,6 +298,120 @@ const ServerResourcesSection = () => {
   );
 };
 
+// 상태 이력 날짜 포맷
+const formatHistoryDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  return date.toLocaleString('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+};
+
+// 서비스 상태 이력 섹션
+const HealthHistorySection = () => {
+  const [filter, setFilter] = useState<'all' | 'down' | 'recovered'>('all');
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'health-history', filter],
+    queryFn: () => dashboardApi.getHealthHistory({
+      eventType: filter === 'all' ? undefined : filter,
+      limit: 50,
+    }),
+    refetchInterval: 60000,
+  });
+
+  if (isLoading) {
+    return (
+      <section className="health-history-section">
+        <div className="health-history-section__header">
+          <h2 className="health-history-section__title">서비스 상태 이력</h2>
+        </div>
+        <div className="health-history-section__loading">로딩 중...</div>
+      </section>
+    );
+  }
+
+  const logs = data?.logs || [];
+
+  return (
+    <section className="health-history-section">
+      <div className="health-history-section__header">
+        <h2 className="health-history-section__title">서비스 상태 이력</h2>
+        <div className="health-history-section__filters">
+          <button
+            type="button"
+            className={`health-history-section__filter-btn ${filter === 'all' ? 'health-history-section__filter-btn--active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            전체
+          </button>
+          <button
+            type="button"
+            className={`health-history-section__filter-btn ${filter === 'down' ? 'health-history-section__filter-btn--active' : ''}`}
+            onClick={() => setFilter('down')}
+          >
+            장애
+          </button>
+          <button
+            type="button"
+            className={`health-history-section__filter-btn ${filter === 'recovered' ? 'health-history-section__filter-btn--active' : ''}`}
+            onClick={() => setFilter('recovered')}
+          >
+            복구
+          </button>
+        </div>
+      </div>
+
+      {logs.length === 0 ? (
+        <div className="health-history-section__empty">
+          <span className="health-history-section__empty-icon">✓</span>
+          <span className="health-history-section__empty-text">
+            기록된 상태 변경 이력이 없습니다
+          </span>
+        </div>
+      ) : (
+        <div className="health-history-section__list">
+          {logs.map((log: HealthHistoryLog) => (
+            <div
+              key={log._id}
+              className={`health-history-section__item health-history-section__item--${log.eventType}`}
+            >
+              <span className={`health-history-section__event-icon health-history-section__event-icon--${log.eventType}`}>
+                {log.eventType === 'down' ? '✕' : '✓'}
+              </span>
+              <div className="health-history-section__item-content">
+                <div className="health-history-section__item-header">
+                  <span className="health-history-section__item-service">
+                    {log.service}
+                    <span className="health-history-section__item-port">:{log.port}</span>
+                  </span>
+                  <span className={`health-history-section__item-event health-history-section__item-event--${log.eventType}`}>
+                    {log.eventType === 'down' ? '장애 발생' : '복구됨'}
+                  </span>
+                </div>
+                <div className="health-history-section__item-details">
+                  <span className="health-history-section__item-time">
+                    {formatHistoryDate(log.timestamp)}
+                  </span>
+                  {log.error && (
+                    <span className="health-history-section__item-error">
+                      {log.error}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
 // 포트 현황 섹션 컴포넌트 (컴팩트 칩 형태)
 const PortsSection = () => {
   const { data: ports, isLoading } = useQuery({
@@ -519,9 +633,10 @@ export const SystemHealthPage = () => {
           ))}
         </div>
 
-        {/* 우측: 포트 현황 */}
+        {/* 우측: 포트 현황 + 상태 이력 */}
         <div className="system-health-page__ports-column">
           <PortsSection />
+          <HealthHistorySection />
         </div>
       </div>
 

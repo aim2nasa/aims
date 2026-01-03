@@ -518,3 +518,199 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Health History Section */
+.health-history-section {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.health-history-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+}
+
+.health-history-section__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.health-history-section__filters {
+  display: flex;
+  gap: 2px;
+}
+
+.health-history-section__filter-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.health-history-section__filter-btn:hover {
+  background-color: var(--color-surface);
+}
+
+.health-history-section__filter-btn--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.health-history-section__loading {
+  padding: var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.health-history-section__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg) var(--spacing-sm);
+  color: var(--color-text-tertiary);
+}
+
+.health-history-section__empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(52, 199, 89, 0.1);
+  color: var(--color-success);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-xs);
+}
+
+.health-history-section__empty-text {
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+.health-history-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.health-history-section__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.health-history-section__item--down {
+  border-color: rgba(255, 59, 48, 0.3);
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+.health-history-section__item--recovered {
+  border-color: rgba(52, 199, 89, 0.3);
+  background-color: rgba(52, 199, 89, 0.05);
+}
+
+.health-history-section__event-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.health-history-section__event-icon--down {
+  background-color: var(--color-error);
+  color: white;
+}
+
+.health-history-section__event-icon--recovered {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.health-history-section__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.health-history-section__item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.health-history-section__item-service {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.health-history-section__item-port {
+  font-size: 10px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  font-family: monospace;
+  margin-left: 2px;
+}
+
+.health-history-section__item-event {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.health-history-section__item-event--down {
+  background-color: rgba(255, 59, 48, 0.15);
+  color: var(--color-error);
+}
+
+.health-history-section__item-event--recovered {
+  background-color: rgba(52, 199, 89, 0.15);
+  color: var(--color-success);
+}
+
+.health-history-section__item-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.health-history-section__item-time {
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+}
+
+.health-history-section__item-error {
+  font-size: 9px;
+  color: var(--color-error);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -211,6 +211,40 @@ export interface MetricsHistoryResponse {
   };
 }
 
+// 서비스 상태 이력 타입
+export interface HealthHistoryLog {
+  _id: string;
+  service: string;
+  port: number;
+  description: string;
+  eventType: 'down' | 'recovered';
+  previousStatus: 'healthy' | 'unhealthy';
+  currentStatus: 'healthy' | 'unhealthy';
+  error: string | null;
+  responseTime: number;
+  timestamp: string;
+  timestampISO: string;
+}
+
+export interface HealthHistoryResponse {
+  success: boolean;
+  data: HealthHistoryLog[];
+  totalCount: number;
+}
+
+export interface HealthStatsItem {
+  _id: string;
+  downCount: number;
+  recoveryCount: number;
+  lastEvent: string;
+}
+
+export interface HealthStatsResponse {
+  success: boolean;
+  data: HealthStatsItem[];
+  period: string;
+}
+
 export const dashboardApi = {
   getDashboard: (): Promise<DashboardData> => {
     return apiClient.get<DashboardData>('/api/admin/dashboard');
@@ -245,6 +279,28 @@ export const dashboardApi = {
   // 포트 현황 API
   getPorts: (): Promise<PortStatus[]> => {
     return apiClient.get<PortsResponse>('/api/admin/ports')
+      .then((res) => res.data);
+  },
+
+  // 서비스 상태 이력 API
+  getHealthHistory: (options?: {
+    service?: string;
+    eventType?: 'down' | 'recovered';
+    limit?: number;
+  }): Promise<{ logs: HealthHistoryLog[]; totalCount: number }> => {
+    const params = new URLSearchParams();
+    if (options?.service) params.append('service', options.service);
+    if (options?.eventType) params.append('eventType', options.eventType);
+    if (options?.limit) params.append('limit', String(options.limit));
+
+    const query = params.toString();
+    return apiClient.get<HealthHistoryResponse>(`/api/admin/health-history${query ? `?${query}` : ''}`)
+      .then((res) => ({ logs: res.data, totalCount: res.totalCount }));
+  },
+
+  // 서비스 다운타임 통계 API
+  getHealthStats: (days: number = 30): Promise<HealthStatsItem[]> => {
+    return apiClient.get<HealthStatsResponse>(`/api/admin/health-stats?days=${days}`)
       .then((res) => res.data);
   },
 };
