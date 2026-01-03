@@ -325,6 +325,30 @@ function notifyARSubscribers(customerId, event, data) {
 }
 
 // ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - Customer Review
+// ========================================
+const crSSEClients = new Map(); // customerId(string) -> Set<response>
+
+/**
+ * 특정 고객 CR 구독자들에게 알림 전송
+ * @param {string} customerId - 고객 ID
+ * @param {string} event - 이벤트 이름
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyCRSubscribers(customerId, event, data) {
+  const customerIdStr = customerId.toString();
+  const clients = crSSEClients.get(customerIdStr);
+  const totalClients = Array.from(crSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-CR] notifyCRSubscribers 호출 - customerId: ${customerIdStr}, 해당 고객 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-CR] 고객 ${customerIdStr}의 CR 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-CR] 고객 ${customerIdStr}에 연결된 CR 구독자 없음 - 이벤트 미전송`);
+  }
+}
+
+// ========================================
 // SSE (Server-Sent Events) 클라이언트 관리 - Personal Files
 // ========================================
 const personalFilesSSEClients = new Map(); // userId(string) -> Set<response>
@@ -7461,6 +7485,58 @@ app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQ
 });
 
 /**
+ * 고객의 Customer Review 실시간 업데이트 SSE 스트림
+ * @route GET /api/customers/:customerId/customer-reviews/stream
+ * @description 고객의 CR 상태 변경을 실시간으로 전달
+ */
+app.get('/api/customers/:customerId/customer-reviews/stream', authenticateJWTWithQuery, (req, res) => {
+  const { customerId } = req.params;
+  const userId = req.user.id;
+
+  if (!ObjectId.isValid(customerId)) {
+    return res.status(400).json({ success: false, error: '유효하지 않은 고객 ID입니다.' });
+  }
+
+  console.log(`[SSE-CR] CR 스트림 연결 - customerId: ${customerId}, userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!crSSEClients.has(customerId)) {
+    crSSEClients.set(customerId, new Set());
+  }
+  crSSEClients.get(customerId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    customerId,
+    userId,
+    timestamp: utcNowISO()
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-CR] CR 스트림 연결 종료 - customerId: ${customerId}`);
+    clearInterval(keepAliveInterval);
+    crSSEClients.get(customerId)?.delete(res);
+    if (crSSEClients.get(customerId)?.size === 0) {
+      crSSEClients.delete(customerId);
+    }
+  });
+});
+
+/**
  * Personal Files 실시간 업데이트 SSE 스트림
  * @route GET /api/personal-files/stream
  * @description 사용자의 개인 파일 변경을 실시간으로 전달
@@ -10819,6 +10895,18 @@ app.post("/api/cr-background/trigger-parsing", authenticateJWT, async (req, res)
     );
 
     console.log("✅ [CR 백그라운드 파싱 프록시] 성공:", response.data);
+
+    // SSE 알림 전송 (customer_id가 있는 경우)
+    const customerId = req.body.customer_id;
+    if (customerId && response.data.success) {
+      notifyCRSubscribers(customerId, 'cr-change', {
+        type: 'parsing-complete',
+        fileId: req.body.file_id,
+        processingCount: response.data.processing_count,
+        timestamp: utcNowISO()
+      });
+    }
+
     res.json(response.data);
   } catch (error) {
     console.error("❌ [CR 백그라운드 파싱 프록시] 실패:", error.message);
@@ -10869,6 +10957,23 @@ app.post("/api/cr-background/retry-parsing", authenticateJWT, async (req, res) =
     );
 
     console.log("✅ [CR 파싱 재시도 프록시] 성공:", response.data);
+
+    // SSE 알림 전송 (file_id로 customerId 조회)
+    if (response.data.success && file_id) {
+      try {
+        const fileDoc = await db.collection(FILES_COLLECTION).findOne({ _id: new ObjectId(file_id) });
+        if (fileDoc && fileDoc.customerId) {
+          notifyCRSubscribers(fileDoc.customerId.toString(), 'cr-change', {
+            type: 'retry-complete',
+            fileId: file_id,
+            timestamp: utcNowISO()
+          });
+        }
+      } catch (lookupError) {
+        console.warn('[CR 파싱 재시도] customerId 조회 실패:', lookupError.message);
+      }
+    }
+
     res.json(response.data);
   } catch (error) {
     console.error("❌ [CR 파싱 재시도 프록시] 실패:", error.message);
@@ -10918,6 +11023,47 @@ app.post("/api/webhooks/ar-status-change", async (req, res) => {
   } catch (error) {
     console.error("❌ [AR 웹훅] 실패:", error.message);
     backendLogger.error('AnnualReport', 'AR 웹훅 실패', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * CR 파싱 상태 변경 웹훅 (Python API에서 호출)
+ * @route POST /api/webhooks/cr-status-change
+ * @description CR 파싱 완료/실패 시 SSE 알림 트리거
+ */
+app.post("/api/webhooks/cr-status-change", async (req, res) => {
+  try {
+    const { customer_id, file_id, status, error_message } = req.body;
+
+    if (!customer_id) {
+      return res.status(400).json({ success: false, error: 'customer_id required' });
+    }
+
+    console.log(`[CR 웹훅] 상태 변경 - customer_id: ${customer_id}, file_id: ${file_id}, status: ${status}`);
+
+    // SSE 알림 전송: CR 탭용
+    notifyCRSubscribers(customer_id, 'cr-change', {
+      type: status === 'completed' ? 'parsing-complete' : status === 'error' ? 'parsing-error' : 'status-change',
+      fileId: file_id,
+      status,
+      errorMessage: error_message,
+      timestamp: utcNowISO()
+    });
+
+    // SSE 알림 전송: 문서 탭용 (CR도 문서이므로 문서 탭도 갱신)
+    notifyCustomerDocSubscribers(customer_id, 'document-change', {
+      type: 'linked',
+      customerId: customer_id,
+      documentId: file_id || 'unknown',
+      documentName: 'Customer Review',
+      timestamp: utcNowISO()
+    });
+
+    res.json({ success: true, message: 'SSE notification sent' });
+  } catch (error) {
+    console.error("❌ [CR 웹훅] 실패:", error.message);
+    backendLogger.error('CustomerReview', 'CR 웹훅 실패', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -16,6 +16,7 @@ import { CustomerReviewApi, type CustomerReview } from '@/features/customer/api/
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { useCustomerReviewSSE } from '@/shared/hooks/useCustomerReviewSSE';
 import type { Customer } from '@/entities/customer/model';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerReviewTab.css';
@@ -85,6 +86,16 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
 
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
+
+  // SSE 새로고침 콜백
+  const handleSSERefresh = useCallback(() => {
+    loadCustomerReviews();
+  }, []);
+
+  // SSE 실시간 업데이트 (폴링 대체)
+  useCustomerReviewSSE(customer._id, handleSSERefresh, {
+    enabled: Boolean(customer._id),
+  });
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
