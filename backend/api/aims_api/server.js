@@ -1198,6 +1198,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         filename: doc.upload?.originalName || 'Unknown File',
+        displayName: doc.displayName || null,  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
         fileSize: doc.meta?.size_bytes || 0,
         mimeType: doc.meta?.mime || 'unknown',
         uploadTime: doc.upload?.uploaded_at || doc.createdAt,

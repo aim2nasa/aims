@@ -1344,6 +1344,17 @@ html[data-theme="dark"] .document-bin-badge {
   min-width: 0;
 }
 
+/* === 🍎 고객리뷰 displayName 표시 (파일명 뒤 괄호) === */
+.display-name-suffix {
+  flex-shrink: 1;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pdf-conversion-badge {
   display: inline-flex;
   align-items: center;

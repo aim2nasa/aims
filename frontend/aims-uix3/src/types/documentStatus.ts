@@ -144,6 +144,7 @@ export interface Document {
 
   // 기본 필드들
   originalName?: string
+  displayName?: string  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
   filename?: string
   file_name?: string
   name?: string

@@ -981,6 +981,10 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               <span className="status-filename-text">
                 {DocumentStatusService.extractFilename(document)}
               </span>
+              {/* 🍎 고객리뷰 파일만 displayName 표시 */}
+              {(document.docType === 'customer_review' || document.document_type === 'customer_review') && document.displayName && (
+                <span className="display-name-suffix">({document.displayName})</span>
+              )}
               {/* PDF 변환 상태 배지 (변환 대상 파일에만 표시) */}
               {(() => {
                 const uploadData = typeof document.upload === 'object' ? document.upload : null
