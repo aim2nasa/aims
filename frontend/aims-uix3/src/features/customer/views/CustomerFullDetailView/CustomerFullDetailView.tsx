@@ -1097,8 +1097,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   </div>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--report">
-                    {/* 🍎 연간 보고서 탭 */}
-                    {reportTab === 'annual' && (
+                    {/* 🍎 연간 보고서 탭 - 항상 렌더링하여 SSE 실시간 업데이트 유지 */}
+                    <div className={`report-tab-panel ${reportTab === 'annual' ? 'report-tab-panel--active' : ''}`}>
                       <AnnualReportTab
                         customer={customer}
                         onAnnualReportCountChange={setAnnualReportCount}
@@ -1106,9 +1106,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         searchTerm={annualReportSearchTerm}
                         onSearchChange={setAnnualReportSearchTerm}
                       />
-                    )}
-                    {/* 🍎 고객리뷰 탭 */}
-                    {reportTab === 'review' && (
+                    </div>
+                    {/* 🍎 고객리뷰 탭 - 항상 렌더링하여 SSE 실시간 업데이트 유지 */}
+                    <div className={`report-tab-panel ${reportTab === 'review' ? 'report-tab-panel--active' : ''}`}>
                       <CustomerReviewTab
                         customer={customer}
                         onCustomerReviewCountChange={setCustomerReviewCount}
@@ -1116,7 +1116,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         searchTerm={customerReviewSearchTerm}
                         onSearchChange={setCustomerReviewSearchTerm}
                       />
-                    )}
+                    </div>
                   </div>
                 </section>
               </div>

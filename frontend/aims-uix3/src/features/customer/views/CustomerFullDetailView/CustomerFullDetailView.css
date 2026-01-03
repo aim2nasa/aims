@@ -814,6 +814,15 @@ html[data-theme="dark"] .report-tabs__tab--active {
   color: var(--color-text-primary);
 }
 
+/* 🍎 보고서 탭 패널 (항상 렌더링, 비활성 시 숨김 - SSE 실시간 업데이트 유지) */
+.report-tab-panel {
+  display: none;
+}
+
+.report-tab-panel--active {
+  display: block;
+}
+
 /* 🍎 보고서 placeholder (준비 중 상태) */
 .report-placeholder {
   display: flex;
