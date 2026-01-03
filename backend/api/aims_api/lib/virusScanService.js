@@ -178,10 +178,148 @@ async function scanAfterUpload(db, documentId, collectionName = 'files') {
   }
 }
 
+// DB 참조 (외부에서 주입)
+let db = null;
+
+// Elastic interval 설정
+const MIN_INTERVAL = 3 * 1000;   // 최소 3초
+const MAX_INTERVAL = 60 * 1000;  // 최대 60초
+let currentInterval = MIN_INTERVAL;
+let intervalId = null;
+
+// 스캔 진행 중 플래그 (중복 실행 방지)
+let isAutoScanRunning = false;
+
+/**
+ * DB 초기화
+ * @param {Object} database - MongoDB database 인스턴스
+ */
+function init(database) {
+  db = database;
+  console.log('[VirusScan] 서비스 초기화 완료');
+}
+
+/**
+ * 미스캔 파일 자동 스캔 (Elastic interval)
+ * 실시간 스캔 ON일 때, virusScan.status가 없는 파일을 찾아 스캔
+ * @returns {Promise<{found: number, scanned: number}>} 발견/스캔 파일 수
+ */
+async function autoScanUnscannedFiles() {
+  if (!VIRUS_SCAN_ENABLED || !db) {
+    return { found: 0, scanned: 0 };
+  }
+
+  // 이전 스캔이 진행 중이면 interval 증가 (백오프)
+  if (isAutoScanRunning) {
+    currentInterval = Math.min(currentInterval * 2, MAX_INTERVAL);
+    return { found: 0, scanned: 0 };
+  }
+
+  try {
+    // 실시간 스캔 설정 확인
+    const realtimeEnabled = await isRealtimeScanEnabled(db);
+    if (!realtimeEnabled) {
+      currentInterval = MAX_INTERVAL; // 실시간 OFF면 최대 간격
+      return { found: 0, scanned: 0 };
+    }
+
+    // yuri 서비스 상태 확인
+    const serviceStatus = await checkServiceStatus();
+    if (!serviceStatus.available) {
+      currentInterval = Math.min(currentInterval * 1.5, MAX_INTERVAL);
+      return { found: 0, scanned: 0 };
+    }
+
+    isAutoScanRunning = true;
+
+    // 미스캔 파일 조회 (virusScan 필드가 없거나 status가 없는 파일)
+    const unscannedFiles = await db.collection('files').find({
+      $or: [
+        { virusScan: { $exists: false } },
+        { 'virusScan.status': { $exists: false } }
+      ],
+      'upload.destPath': { $exists: true }
+    }).limit(10).toArray();
+
+    if (unscannedFiles.length > 0) {
+      console.log(`[VirusScan] 미스캔 파일 ${unscannedFiles.length}개 발견, 자동 스캔 시작 (interval: ${currentInterval/1000}s)`);
+
+      for (const doc of unscannedFiles) {
+        const filePath = doc.upload?.destPath || doc.storagePath;
+        if (!filePath) continue;
+
+        // pending 상태로 업데이트
+        await db.collection('files').updateOne(
+          { _id: doc._id },
+          {
+            $set: {
+              'virusScan.status': 'pending',
+              'virusScan.requestedAt': new Date()
+            }
+          }
+        );
+
+        // yuri에 스캔 요청
+        const userId = doc.ownerId || doc.userId;
+        await requestScan({
+          filePath,
+          documentId: doc._id.toString(),
+          collectionName: 'files',
+          userId
+        });
+
+        // 요청 간 약간의 딜레이 (yuri 부하 방지)
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // 파일 있으면 interval 리셋 (빠르게 다음 체크)
+      currentInterval = MIN_INTERVAL;
+      return { found: unscannedFiles.length, scanned: unscannedFiles.length };
+    } else {
+      // 파일 없으면 interval 증가
+      currentInterval = Math.min(currentInterval * 1.5, MAX_INTERVAL);
+      return { found: 0, scanned: 0 };
+    }
+
+  } catch (error) {
+    console.error('[VirusScan] 자동 스캔 오류:', error.message);
+    currentInterval = Math.min(currentInterval * 1.5, MAX_INTERVAL);
+    return { found: 0, scanned: 0 };
+  } finally {
+    isAutoScanRunning = false;
+  }
+}
+
+/**
+ * 다음 스캔 스케줄링 (Elastic interval)
+ */
+function scheduleNextScan() {
+  intervalId = setTimeout(async () => {
+    await autoScanUnscannedFiles();
+    scheduleNextScan(); // 재귀적으로 다음 스캔 예약
+  }, currentInterval);
+}
+
+/**
+ * 주기적 자동 스캔 시작 (Elastic interval)
+ */
+function startAutoScan() {
+  console.log(`[VirusScan] 자동 스캔 모니터링 시작 (elastic: ${MIN_INTERVAL/1000}s ~ ${MAX_INTERVAL/1000}s)`);
+
+  // 초기 실행 (3초 후)
+  setTimeout(() => {
+    autoScanUnscannedFiles();
+    scheduleNextScan();
+  }, 3000);
+}
+
 module.exports = {
+  init,
   requestScan,
   checkServiceStatus,
   scanAfterUpload,
+  startAutoScan,
+  autoScanUnscannedFiles,
   VIRUS_SCAN_ENABLED,
   VIRUS_SCAN_SERVICE_URL
 };

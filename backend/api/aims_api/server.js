@@ -8253,6 +8253,18 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
 
     console.log(`[SSE] 문서 업로드 알림 전송 - customerId: ${customerId}, userId: ${userId}`);
 
+    // 🔒 바이러스 스캔 트리거 (파일 업로드 직후)
+    // 이미지 등 임베딩 스킵되는 파일도 즉시 스캔되도록 함
+    if (documentId) {
+      try {
+        await virusScanService.scanAfterUpload(db, documentId, 'files');
+        console.log(`[VirusScan] 파일 업로드 직후 스캔 트리거: ${documentId}`);
+      } catch (scanError) {
+        console.error('[VirusScan] 업로드 후 스캔 트리거 오류:', scanError.message);
+        // 스캔 오류는 무시하고 계속 진행
+      }
+    }
+
     res.json({ success: true, message: '알림이 전송되었습니다.' });
   } catch (error) {
     console.error('문서 업로드 알림 오류:', error);
@@ -10932,6 +10944,10 @@ app.listen(PORT, '0.0.0.0', async () => {
     // 서비스 상태 모니터링 시작
     serviceHealthMonitor.init(db);
     serviceHealthMonitor.startMonitoring();
+
+    // 바이러스 스캔 자동 모니터링 시작
+    virusScanService.init(db);
+    virusScanService.startAutoScan();
   }
 
   console.log(`📋 API 엔드포인트:`);
