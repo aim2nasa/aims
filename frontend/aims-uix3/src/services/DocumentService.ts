@@ -11,6 +11,7 @@
 import { api } from '@/shared/lib/api';
 import { utcNowISO } from '@/shared/lib/timeUtils';
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
+import { checkSystemDuplicate } from '@/shared/lib/fileValidation/duplicateChecker';
 import {
   Document,
   CreateDocumentData,
@@ -629,13 +630,26 @@ export class DocumentService {
   }
 
   /**
-   * 문서 업로드 (바이러스 검사 포함, n8n webhook 사용)
+   * 문서 업로드 (중복 체크 + 바이러스 검사 포함, n8n webhook 사용)
    * 새문서 등록(uploadService)과 동일한 방식으로 업로드
    */
   static async uploadDocument(file: File, metadata?: Partial<CreateDocumentData>): Promise<UploadDocumentResult> {
     if (!file) {
       throw new Error('파일이 필요합니다');
     }
+
+    // 🔴 시스템 전체 파일 해시 중복 검사 (E11000 에러 방지)
+    console.log(`[DocumentService] 🔍 중복 검사 중: ${file.name}`);
+    const duplicateResult = await checkSystemDuplicate(file);
+    if (duplicateResult.isDuplicate && duplicateResult.existingDocument) {
+      const existing = duplicateResult.existingDocument;
+      const errorMessage = existing.customerName
+        ? `이미 등록된 파일입니다. (고객: ${existing.customerName}, 파일: ${existing.fileName})`
+        : `이미 등록된 파일입니다. (파일: ${existing.fileName})`;
+      console.warn(`[DocumentService] ⚠️ 중복 파일 감지: ${file.name}`);
+      throw new Error(errorMessage);
+    }
+    console.log(`[DocumentService] ✅ 중복 검사 통과: ${file.name}`);
 
     // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
     const scanAvailable = await isScanAvailable();

@@ -19,6 +19,20 @@ vi.mock('@/shared/lib/api', () => ({
   },
 }))
 
+// 바이러스 검사 모킹
+vi.mock('@/shared/lib/fileValidation/virusScanApi', () => ({
+  isScanAvailable: vi.fn().mockResolvedValue(false),
+  scanFile: vi.fn(),
+}))
+
+// 중복 체크 모킹
+vi.mock('@/shared/lib/fileValidation/duplicateChecker', () => ({
+  checkSystemDuplicate: vi.fn().mockResolvedValue({
+    isDuplicate: false,
+    fileHash: 'mock-hash',
+  }),
+}))
+
 describe('DocumentService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
