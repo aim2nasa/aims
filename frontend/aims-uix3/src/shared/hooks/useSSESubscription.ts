@@ -4,7 +4,7 @@
  * @since 2025-01-04
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { sseClient, type SSEEvent } from '../lib/sseWorkerClient'
 
 export interface UseSSESubscriptionOptions<T = unknown> {
@@ -45,7 +45,7 @@ export function useSSESubscription<T = unknown>(
   const {
     streamKey,
     endpoint,
-    params = {},
+    params,
     enabled = true,
     onEvent,
     onConnect,
@@ -55,13 +55,21 @@ export function useSSESubscription<T = unknown>(
 
   const [isConnected, setIsConnected] = useState(false)
 
+  // params를 안정화 (JSON 직렬화로 비교)
+  const paramsKey = useMemo(() => JSON.stringify(params || {}), [params])
+  const stableParams = useMemo(() => params || {}, [paramsKey])
+
   // 콜백을 ref로 저장하여 의존성 문제 해결
   const onEventRef = useRef(onEvent)
   const onConnectRef = useRef(onConnect)
   const onDisconnectRef = useRef(onDisconnect)
   const onErrorRef = useRef(onError)
 
-  // 최신 콜백 참조 유지
+  // endpoint와 params를 ref로 저장 (connect 함수 안정화)
+  const endpointRef = useRef(endpoint)
+  const paramsRef = useRef(stableParams)
+
+  // 최신 콜백/값 참조 유지
   useEffect(() => {
     onEventRef.current = onEvent
   }, [onEvent])
@@ -78,15 +86,23 @@ export function useSSESubscription<T = unknown>(
     onErrorRef.current = onError
   }, [onError])
 
+  useEffect(() => {
+    endpointRef.current = endpoint
+  }, [endpoint])
+
+  useEffect(() => {
+    paramsRef.current = stableParams
+  }, [stableParams])
+
   // 구독 해제 함수
   const disconnect = useCallback(() => {
     sseClient.unsubscribe(streamKey)
     setIsConnected(false)
   }, [streamKey])
 
-  // 구독 함수
+  // 구독 함수 (ref 사용으로 의존성 최소화)
   const connect = useCallback(() => {
-    if (!enabled) return
+    if (!enabled || !streamKey) return
 
     // 인증 토큰 동기화
     sseClient.syncAuthToken()
@@ -107,11 +123,11 @@ export function useSSESubscription<T = unknown>(
       }
     })
 
-    // 구독 요청
-    sseClient.subscribe(streamKey, endpoint, params)
+    // 구독 요청 (ref 사용)
+    sseClient.subscribe(streamKey, endpointRef.current, paramsRef.current)
 
     return unsubscribe
-  }, [enabled, streamKey, endpoint, params])
+  }, [enabled, streamKey])
 
   // 재연결 함수
   const reconnect = useCallback(() => {
@@ -121,9 +137,9 @@ export function useSSESubscription<T = unknown>(
     }, 100)
   }, [disconnect, connect])
 
-  // Page Visibility API 처리
+  // SSE 연결 관리 (streamKey, enabled 변경 시만 재연결)
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || !streamKey) return
 
     let unsubscribe: (() => void) | undefined
 
