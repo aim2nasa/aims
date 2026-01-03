@@ -29,10 +29,11 @@ pm2 delete "$SERVICE_NAME" 2>/dev/null || true
 
 # Start with PM2
 echo "Starting $SERVICE_NAME on port $PORT..."
-pm2 start "uvicorn main:app --host 0.0.0.0 --port $PORT" \
+pm2 start "$VENV_DIR/bin/uvicorn" \
     --name "$SERVICE_NAME" \
     --cwd "$SERVICE_DIR" \
-    --interpreter "$VENV_DIR/bin/python"
+    --interpreter "$VENV_DIR/bin/python" \
+    -- main:app --host 0.0.0.0 --port $PORT
 
 pm2 save
 
