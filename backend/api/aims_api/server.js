@@ -2828,7 +2828,7 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
 });
 
 /**
- * 헬스체크 API
+ * 헬스체크 API (간단한 ping)
  */
 app.get('/api/health', async (req, res) => {
   try {
@@ -2849,6 +2849,50 @@ app.get('/api/health', async (req, res) => {
       success: false,
       message: 'API 서버에 문제가 있습니다.',
       error: error.message,
+      version: VERSION_INFO.fullVersion
+    });
+  }
+});
+
+/**
+ * Deep 헬스체크 API (좀비 상태 감지용)
+ * - MongoDB ping + 실제 쿼리 수행
+ * - Docker HEALTHCHECK에서 사용
+ */
+app.get('/api/health/deep', async (req, res) => {
+  const startTime = Date.now();
+  const checks = {
+    mongodb: { status: 'unknown', latency: 0 },
+    fileQuery: { status: 'unknown', latency: 0 },
+    timestamp: utcNowISO()
+  };
+
+  try {
+    // 1. MongoDB 연결 확인 (ping)
+    const mongoStart = Date.now();
+    await db.admin().ping();
+    checks.mongodb = { status: 'ok', latency: Date.now() - mongoStart };
+
+    // 2. 실제 쿼리 수행 (좀비 상태 감지용)
+    const queryStart = Date.now();
+    await db.collection(COLLECTIONS.FILES).findOne({}, { maxTimeMS: 3000 });
+    checks.fileQuery = { status: 'ok', latency: Date.now() - queryStart };
+
+    const totalLatency = Date.now() - startTime;
+    res.json({
+      status: 'healthy',
+      checks,
+      totalLatency,
+      version: VERSION_INFO.fullVersion
+    });
+  } catch (error) {
+    const totalLatency = Date.now() - startTime;
+    backendLogger.error('Server', 'Deep health check 실패', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      checks,
+      error: error.message,
+      totalLatency,
       version: VERSION_INFO.fullVersion
     });
   }
@@ -5672,6 +5716,76 @@ app.get('/api/admin/health-current', authenticateJWT, requireRole('admin'), asyn
       error: error.message
     });
   }
+});
+
+/**
+ * 서비스 이벤트 기록 API (배포/재시작 등)
+ * 배포 스크립트에서 호출하여 이벤트 기록
+ * 인증 없이 localhost에서만 호출 가능
+ */
+app.post('/api/admin/service-event', async (req, res) => {
+  // localhost에서만 호출 허용 (보안)
+  const clientIp = req.ip || req.connection.remoteAddress || '';
+  const isLocalhost = clientIp === '::1' || clientIp === '127.0.0.1' || clientIp === '::ffff:127.0.0.1';
+
+  if (!isLocalhost) {
+    return res.status(403).json({ success: false, error: 'Only localhost allowed' });
+  }
+
+  const { serviceName, eventType, reason, triggeredBy } = req.body;
+
+  if (!serviceName || !eventType) {
+    return res.status(400).json({ success: false, error: 'serviceName and eventType required' });
+  }
+
+  try {
+    await db.collection('service_health_logs').insertOne({
+      serviceName,
+      status: eventType,  // 'restart-initiated', 'restart-completed', 'deploy' 등
+      reason: reason || 'Manual deployment',
+      triggeredBy: triggeredBy || 'deploy-script',
+      timestamp: new Date(),
+      metadata: {
+        source: 'deploy-script',
+        hostname: require('os').hostname()
+      }
+    });
+
+    console.log(`[Service Event] ${serviceName}: ${eventType} - ${reason || 'No reason'}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[Service Event] 기록 실패:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 시스템 메트릭 API (실시간 성능 모니터링)
+ * CPU, 메모리, 연결 상태 등 실시간 메트릭 제공
+ */
+app.get('/api/admin/metrics', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const memUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+
+  res.json({
+    success: true,
+    data: {
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB',
+        external: Math.round(memUsage.external / 1024 / 1024) + 'MB',
+        rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+        raw: memUsage
+      },
+      cpu: cpuUsage,
+      uptime: Math.round(process.uptime()) + 's',
+      uptimeMinutes: Math.round(process.uptime() / 60),
+      nodeVersion: process.version,
+      platform: process.platform,
+      pid: process.pid,
+      timestamp: utcNowISO()
+    }
+  });
 });
 
 /**

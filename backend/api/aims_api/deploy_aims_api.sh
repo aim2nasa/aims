@@ -59,6 +59,23 @@ else
 fi
 echo "========================================="
 
+# 서비스 이벤트 기록 함수
+record_event() {
+  local event_type=$1
+  local reason=$2
+  curl -s -X POST "http://localhost:3010/api/admin/service-event" \
+    -H "Content-Type: application/json" \
+    -d "{\"serviceName\":\"aims-api\",\"eventType\":\"$event_type\",\"reason\":\"$reason\",\"triggeredBy\":\"deploy-script\"}" \
+    2>/dev/null || true
+}
+
+# 배포 전 이벤트 기록 (API가 살아있을 때만)
+if [ "$NEED_BUILD" = true ]; then
+  record_event "restart-initiated" "Deploy script - FULL BUILD"
+else
+  record_event "restart-initiated" "Deploy script - QUICK RESTART"
+fi
+
 # 1. 기존 컨테이너 중지 및 제거
 echo "기존 컨테이너 중지..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
@@ -118,7 +135,20 @@ docker run -d --network host \
 
 echo "✅ AIMS Main API 재배포 완료"
 
-# 4. 미사용 Docker 이미지 정리 (dangling images)
+# 4. 배포 완료 이벤트 기록 (API가 준비될 때까지 대기)
+echo "서비스 시작 대기 중..."
+sleep 5
+for i in {1..10}; do
+  if curl -sf http://localhost:3010/api/health > /dev/null 2>&1; then
+    record_event "restart-completed" "Deploy completed - v${VERSION}"
+    echo "✅ 서비스 이벤트 기록 완료"
+    break
+  fi
+  echo "  서비스 시작 대기... ($i/10)"
+  sleep 2
+done
+
+# 5. 미사용 Docker 이미지 정리 (dangling images)
 echo ""
 echo "🧹 미사용 Docker 이미지 정리..."
 PRUNED=$(docker image prune -f 2>/dev/null | grep "Total reclaimed space" || echo "정리할 이미지 없음")

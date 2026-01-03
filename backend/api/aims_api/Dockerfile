@@ -10,11 +10,13 @@ WORKDIR /app
 ENV GIT_HASH=${GIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
 
-# sqlite3 및 ClamAV 설치
+# sqlite3, ClamAV, curl 설치
 # clamdscan은 호스트의 clamd 데몬에 소켓으로 연결하여 스캔
+# curl은 HEALTHCHECK에서 사용
 RUN apt-get update && apt-get install -y \
     sqlite3 \
     clamav \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 환경변수 기본값 설정
@@ -50,6 +52,14 @@ RUN mkdir -p logs
 
 # 포트 노출
 EXPOSE ${PORT}
+
+# 헬스체크 (좀비 상태 감지)
+# - interval: 30초마다 체크
+# - timeout: 10초 이내 응답 필요
+# - start-period: 시작 후 60초간 실패 무시 (초기화 시간)
+# - retries: 3회 연속 실패 시 unhealthy
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/api/health/deep || exit 1
 
 # 애플리케이션 실행
 CMD ["node", "server.js"]

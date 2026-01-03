@@ -12,7 +12,8 @@ const { utcNowISO } = require('./timeUtils');
 
 // 모니터링할 서비스 목록
 const MONITORED_SERVICES = [
-  { port: 3010, service: 'aims_api', description: 'AIMS 메인 API', healthEndpoint: '/api/health' },
+  // aims_api: deep health check 사용 (좀비 상태 감지)
+  { port: 3010, service: 'aims_api', description: 'AIMS 메인 API', healthEndpoint: '/api/health/deep', timeout: 10000 },
   { port: 3011, service: 'aims_mcp', description: 'MCP 서버 (AI 도구)', healthEndpoint: '/health' },
   { port: 8000, service: 'aims_rag_api', description: 'RAG/문서 처리 API', healthEndpoint: '/health' },
   { port: 8002, service: 'pdf_proxy', description: 'PDF 프록시', healthEndpoint: '/health' },
@@ -52,9 +53,10 @@ function init(database) {
  * HTTP 헬스 체크
  * @param {number} port 포트
  * @param {string} path 헬스 엔드포인트 경로
+ * @param {number} timeout 타임아웃 (ms, 기본값: HEALTH_TIMEOUT)
  * @returns {Promise<{healthy: boolean, responseTime: number, error?: string}>}
  */
-function checkHttpHealth(port, path) {
+function checkHttpHealth(port, path, timeout = HEALTH_TIMEOUT) {
   return new Promise((resolve) => {
     const startTime = Date.now();
     const options = {
@@ -62,7 +64,7 @@ function checkHttpHealth(port, path) {
       port,
       path,
       method: 'GET',
-      timeout: HEALTH_TIMEOUT
+      timeout: timeout
     };
 
     const req = http.request(options, (res) => {
@@ -132,11 +134,11 @@ function checkTcpHealth(port) {
  * @returns {Promise<Object>} 상태 결과
  */
 async function checkService(service) {
-  const { port, healthEndpoint } = service;
+  const { port, healthEndpoint, timeout } = service;
 
   let result;
   if (healthEndpoint) {
-    result = await checkHttpHealth(port, healthEndpoint);
+    result = await checkHttpHealth(port, healthEndpoint, timeout || HEALTH_TIMEOUT);
   } else {
     result = await checkTcpHealth(port);
   }
