@@ -87,9 +87,9 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         </div>
       }
-      initialWidth={1200}
+      initialWidth={1350}
       initialHeight={640}
-      minWidth={1000}
+      minWidth={1100}
       minHeight={500}
       footer={
         <div className="fulltext-modal-footer">
