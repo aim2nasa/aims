@@ -638,7 +638,7 @@ export const SystemHealthPage = () => {
 
       {/* 서비스 상태 + 포트 현황 2열 레이아웃 */}
       <div className="system-health-page__two-column">
-        {/* 좌측: Tier 서비스 상태 */}
+        {/* 좌측: Tier 서비스 상태 + n8n 워크플로우 */}
         <div className="system-health-page__services-column">
           {serviceTiers.map((tierGroup) => (
             <section key={tierGroup.tier} className="system-health-page__section">
@@ -659,6 +659,23 @@ export const SystemHealthPage = () => {
               </div>
             </section>
           ))}
+
+          {/* n8n 워크플로우 상태 - Tier3 바로 아래 */}
+          {data?.workflows && data.workflows.length > 0 && (
+            <section className="system-health-page__section">
+              <div className="system-health-page__tier-header">
+                <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
+                <span className="system-health-page__tier-description">
+                  {data.workflows.filter(w => w.active).length}/{data.workflows.length} 활성화
+                </span>
+              </div>
+              <div className="system-health-page__workflow-grid">
+                {data.workflows.map((workflow) => (
+                  <WorkflowCard key={workflow.id} workflow={workflow} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* 우측: 포트 현황 + 상태 이력 */}
@@ -667,23 +684,6 @@ export const SystemHealthPage = () => {
           <HealthHistorySection />
         </div>
       </div>
-
-      {/* n8n 워크플로우 상태 */}
-      {data?.workflows && data.workflows.length > 0 && (
-        <section className="system-health-page__section">
-          <div className="system-health-page__tier-header">
-            <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
-            <span className="system-health-page__tier-description">
-              {data.workflows.filter(w => w.active).length}/{data.workflows.length} 활성화
-            </span>
-          </div>
-          <div className="system-health-page__workflow-grid">
-            {data.workflows.map((workflow) => (
-              <WorkflowCard key={workflow.id} workflow={workflow} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 };
