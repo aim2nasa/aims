@@ -21,7 +21,7 @@ import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerReviewTab.css';
 
 // 정렬 필드 타입
-type SortField = 'contractor_name' | 'product_name' | 'issue_date' | 'parsed_at' | 'status';
+type SortField = 'contractor_name' | 'policy_number' | 'product_name' | 'issue_date' | 'parsed_at' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 interface CustomerReviewTabProps {
@@ -307,11 +307,13 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     const term = searchTerm.toLowerCase().trim();
     return reviews.filter(review => {
       const contractorName = (review.contractor_name || '').toLowerCase();
+      const policyNumber = (review.contract_info?.policy_number || '').toLowerCase();
       const productName = (review.product_name || '').toLowerCase();
       const issueDate = CustomerReviewApi.formatDate(review.issue_date).toLowerCase();
       const parsedAt = CustomerReviewApi.formatDateTime(review.parsed_at).toLowerCase();
 
       return contractorName.includes(term) ||
+             policyNumber.includes(term) ||
              productName.includes(term) ||
              issueDate.includes(term) ||
              parsedAt.includes(term);
@@ -326,6 +328,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       switch (sortField) {
         case 'contractor_name':
           comparison = (a.contractor_name || '').localeCompare(b.contractor_name || '', 'ko');
+          break;
+        case 'policy_number':
+          comparison = (a.contract_info?.policy_number || '').localeCompare(b.contract_info?.policy_number || '', 'ko');
           break;
         case 'product_name':
           comparison = (a.product_name || '').localeCompare(b.product_name || '', 'ko');
@@ -471,6 +476,17 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             </span>
           </div>
           <div
+            className="header-policy-number customer-review-table__sortable"
+            onClick={() => handleSort('policy_number')}
+          >
+            <span className="customer-review-table__header-content">
+              증권번호
+              <span className={`customer-review-table__sort-icon ${sortField === 'policy_number' ? 'customer-review-table__sort-icon--active' : ''}`}>
+                {sortField === 'policy_number' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+              </span>
+            </span>
+          </div>
+          <div
             className="header-product customer-review-table__sortable"
             onClick={() => handleSort('product_name')}
           >
@@ -532,6 +548,9 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                   </div>
                 )}
                 <div className="row-contractor">{review.contractor_name || '-'}</div>
+                <div className="row-policy-number" title={review.contract_info?.policy_number || ''}>
+                  {review.contract_info?.policy_number || '-'}
+                </div>
                 <div className="row-product" title={review.product_name || ''}>
                   {review.product_name || '-'}
                 </div>

@@ -117,7 +117,7 @@
 /* 테이블 헤더 */
 .customer-review-table-header {
   display: grid;
-  grid-template-columns: 80px 1fr 90px 140px;
+  grid-template-columns: 70px 110px 1fr 90px 140px;
   gap: 8px;
   padding: 6px 8px;
   background: var(--color-bg-secondary);
@@ -130,7 +130,7 @@
 }
 
 .customer-review-table-header.has-checkbox {
-  grid-template-columns: 24px 80px 1fr 90px 140px;
+  grid-template-columns: 24px 70px 110px 1fr 90px 140px;
 }
 
 .header-checkbox {
@@ -183,7 +183,7 @@
 /* 테이블 행 */
 .customer-review-row {
   display: grid;
-  grid-template-columns: 80px 1fr 90px 140px;
+  grid-template-columns: 70px 110px 1fr 90px 140px;
   gap: 8px;
   padding: 0 8px;
   height: 32px;
@@ -201,7 +201,7 @@
 }
 
 .customer-review-row.has-checkbox {
-  grid-template-columns: 24px 80px 1fr 90px 140px;
+  grid-template-columns: 24px 70px 110px 1fr 90px 140px;
 }
 
 .customer-review-row--selected {
@@ -318,4 +318,12 @@
 
 .pagination-total {
   opacity: 0.7;
+}
+
+.row-policy-number {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
 }
