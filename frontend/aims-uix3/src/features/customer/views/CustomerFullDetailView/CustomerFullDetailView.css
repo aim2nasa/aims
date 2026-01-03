@@ -1336,8 +1336,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   display: none;
 }
 
-.customer-full-detail__section-content--report .annual-report-actions {
-  display: none;
+/* 삭제 버튼은 컴포넌트의 isDevMode 조건으로 제어됨 - 숨기지 않음 */
+.customer-full-detail__section-content--report .annual-report-actions,
+.customer-full-detail__section-content--report .customer-review-actions {
+  padding: 4px 8px;
+  justify-content: flex-end;
 }
 
 /* 테이블 컨테이너 - 수직 스크롤 (문서 섹션과 동일) */
