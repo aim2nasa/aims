@@ -114,19 +114,31 @@
   overflow: hidden;
 }
 
-/* 테이블 헤더 */
+/* 테이블 헤더 - 연간보고서 스타일과 동일 */
 .customer-review-table-header {
   display: grid;
   grid-template-columns: 70px 110px 1fr 90px 140px;
-  gap: 8px;
-  padding: 6px 8px;
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
   font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
-  color: var(--color-text-secondary);
-  height: 32px;
+  color: var(--color-ios-text-tertiary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  min-height: 32px;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+html[data-theme="dark"] .customer-review-table-header {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 .customer-review-table-header.has-checkbox {
@@ -180,24 +192,34 @@
   gap: 2px;
 }
 
-/* 테이블 행 */
+/* 테이블 행 - 연간보고서 스타일과 동일 */
 .customer-review-row {
   display: grid;
   grid-template-columns: 70px 110px 1fr 90px 140px;
-  gap: 8px;
-  padding: 0 8px;
+  gap: 12px;
+  padding: 6px 12px;
   height: 32px;
   align-items: center;
   font-size: 12px;
-  color: var(--color-text-primary);
-  background: var(--color-bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-primary-light);
+  background: var(--color-ios-bg-primary-light);
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .customer-review-row {
+  background: var(--color-ios-bg-primary-dark);
+  color: var(--color-ios-text-primary-dark);
 }
 
 .customer-review-row:hover {
-  background: var(--color-bg-secondary);
+  background: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .customer-review-row:hover {
+  background: var(--color-ios-bg-hover-dark);
 }
 
 .customer-review-row.has-checkbox {
