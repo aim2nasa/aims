@@ -280,20 +280,23 @@ interface CheckHashResponse {
 }
 
 /**
- * 🔴 시스템 전체에서 파일 해시 중복 검사
+ * 🔴 시스템에서 파일 해시 중복 검사
  *
- * 고객 선택 여부와 관계없이, 현재 사용자의 모든 파일에서 동일 해시 검색
+ * customerId가 제공되면 해당 고객에게만 중복 체크
+ * customerId가 없으면 미분류 문서에서만 중복 체크
  *
  * @param file 검사할 파일
+ * @param customerId 선택된 고객 ID (없으면 미분류)
  * @returns 중복 검사 결과
  */
-export async function checkSystemDuplicate(file: File): Promise<SystemDuplicateResult> {
+export async function checkSystemDuplicate(file: File, customerId?: string | null): Promise<SystemDuplicateResult> {
   // 파일 해시 계산
   const fileHash = await calculateFileHash(file)
 
   try {
     const response = await api.post<CheckHashResponse>('/api/documents/check-hash', {
-      fileHash
+      fileHash,
+      customerId: customerId || null
     })
 
     if (response?.isDuplicate && response?.existingDocument) {

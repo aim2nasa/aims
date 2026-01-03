@@ -479,9 +479,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const validation = validateFile(file)
 
       if (validation.valid) {
-        // 🔴🔴🔴 시스템 전체 해시 중복 검사 (문서 유형 상관없이 최우선 실행!) 🔴🔴🔴
+        // 🔴🔴🔴 해당 고객에게 해시 중복 검사 (문서 유형 상관없이 최우선 실행!) 🔴🔴🔴
         try {
-          const systemDupResult = await checkSystemDuplicate(file)
+          const systemDupResult = await checkSystemDuplicate(file, customerFileCustomer?._id)
           if (systemDupResult.isDuplicate && systemDupResult.existingDocument) {
             const existingInfo = systemDupResult.existingDocument
             const customerInfo = existingInfo.customerName

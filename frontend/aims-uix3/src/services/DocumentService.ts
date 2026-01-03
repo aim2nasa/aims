@@ -638,9 +638,9 @@ export class DocumentService {
       throw new Error('파일이 필요합니다');
     }
 
-    // 🔴 시스템 전체 파일 해시 중복 검사 (E11000 에러 방지)
+    // 🔴 해당 고객에게 파일 해시 중복 검사 (E11000 에러 방지)
     console.log(`[DocumentService] 🔍 중복 검사 중: ${file.name}`);
-    const duplicateResult = await checkSystemDuplicate(file);
+    const duplicateResult = await checkSystemDuplicate(file, metadata?.customerId);
     if (duplicateResult.isDuplicate && duplicateResult.existingDocument) {
       const existing = duplicateResult.existingDocument;
       const errorMessage = existing.customerName

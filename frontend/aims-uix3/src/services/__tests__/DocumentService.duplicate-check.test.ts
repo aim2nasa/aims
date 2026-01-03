@@ -76,8 +76,8 @@ describe('DocumentService.uploadDocument() 중복 체크', () => {
       '이미 등록된 파일입니다. (고객: 홍길동, 파일: 테스트파일.pdf)'
     );
 
-    // checkSystemDuplicate가 호출되었는지 확인
-    expect(checkSystemDuplicate).toHaveBeenCalledWith(testFile);
+    // checkSystemDuplicate가 호출되었는지 확인 (metadata 없으므로 customerId는 undefined)
+    expect(checkSystemDuplicate).toHaveBeenCalledWith(testFile, undefined);
   });
 
   it('고객 없는 중복 파일 업로드 시 에러 메시지에 고객명 없음', async () => {
@@ -138,7 +138,7 @@ describe('DocumentService.uploadDocument() 중복 체크', () => {
 
     // Then: 업로드 성공
     expect(result.success).toBe(true);
-    expect(checkSystemDuplicate).toHaveBeenCalledWith(testFile);
+    expect(checkSystemDuplicate).toHaveBeenCalledWith(testFile, undefined);
   });
 
   it('checkSystemDuplicate API 실패 시에도 업로드 진행 (fallback)', async () => {

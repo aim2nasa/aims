@@ -814,19 +814,30 @@ app.post('/api/documents/check-hash', authenticateJWT, async (req, res) => {
       return res.status(400).json({ success: false, error: 'userId required' });
     }
 
-    const { fileHash } = req.body;
+    const { fileHash, customerId } = req.body;
     if (!fileHash || typeof fileHash !== 'string') {
       return res.status(400).json({ success: false, error: 'fileHash required (SHA-256)' });
     }
 
     const db = mongoClient.db('docupload');
 
-    // 현재 사용자(ownerId)의 모든 파일 중 동일 해시 검색
+    // 🔴 customerId가 제공되면 해당 고객에게만 중복 체크
+    // customerId가 없으면 미분류 문서(customerId=null)에서만 체크
+    const query = {
+      ownerId: userId,
+      'meta.file_hash': fileHash
+    };
+
+    if (customerId) {
+      // 특정 고객에게 업로드하는 경우: 해당 고객의 문서만 체크
+      query.customerId = customerId;
+    } else {
+      // 미분류로 업로드하는 경우: 미분류 문서만 체크
+      query.customerId = null;
+    }
+
     const existingDoc = await db.collection(COLLECTION_NAME).findOne(
-      {
-        ownerId: userId,
-        'meta.file_hash': fileHash
-      },
+      query,
       {
         projection: {
           _id: 1,
