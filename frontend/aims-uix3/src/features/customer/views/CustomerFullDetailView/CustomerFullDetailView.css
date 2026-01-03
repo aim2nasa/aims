@@ -1531,8 +1531,16 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
   grid-template-columns: 60px 90px 1fr 80px 130px;
 }
 
+.customer-full-detail__section-content--report .customer-review-table-header.has-checkbox {
+  grid-template-columns: 28px 60px 90px 1fr 80px 130px;
+}
+
 .customer-full-detail__section-content--report .customer-review-row {
   grid-template-columns: 60px 90px 1fr 80px 130px;
+}
+
+.customer-full-detail__section-content--report .customer-review-row.has-checkbox {
+  grid-template-columns: 28px 60px 90px 1fr 80px 130px;
 }
 
 /* 셀 스타일 - nowrap으로 데이터 한 줄 유지 */
