@@ -121,11 +121,11 @@ assertIncludes(
 
 console.log('\n📋 Test Suite 2: Single Document Deletion (DELETE /api/documents/:id)\n');
 
-// 단일 문서 삭제 API 블록 추출 (Qdrant 삭제까지 포함하려면 6000자 이상 필요)
+// 단일 문서 삭제 API 블록 추출 (Qdrant 삭제까지 포함하려면 7500자 이상 필요)
 const singleDeleteBlock = findCodeBlock(
   serverContent,
   "app\\.delete\\('/api/documents/:id'",
-  6000  // 약 6000자 추출 (Qdrant 삭제 코드 포함)
+  7500  // 약 7500자 추출 (Qdrant 삭제 코드 포함)
 );
 
 if (!singleDeleteBlock) {
