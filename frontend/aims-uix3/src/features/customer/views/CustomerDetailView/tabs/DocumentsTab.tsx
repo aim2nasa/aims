@@ -50,6 +50,7 @@ interface DocumentsTabProps {
   onDocumentCountChange?: (count: number) => void
   onDocumentLibraryRefresh?: () => Promise<void>
   onAnnualReportNeedRefresh?: () => void
+  onCustomerReviewNeedRefresh?: () => void
   /** 외부에서 전달받는 검색어 (CustomerFullDetailView에서 사용) */
   searchTerm?: string
   /** 검색어 변경 핸들러 */
@@ -89,6 +90,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onDocumentCountChange,
   onDocumentLibraryRefresh,
   onAnnualReportNeedRefresh,
+  onCustomerReviewNeedRefresh,
   searchTerm: externalSearchTerm,
   onSearchChange,
   onNavigate,
@@ -573,6 +575,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       if (document.isAnnualReport) {
         onAnnualReportNeedRefresh?.()
       }
+      // 🍎 Customer Review 문서인 경우 고객리뷰 탭 즉시 새로고침
+      if (document.document_type === 'customer_review') {
+        onCustomerReviewNeedRefresh?.()
+      }
 
       onRefresh?.()
       // 🍎 문서 라이브러리 즉시 새로고침
@@ -580,7 +586,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         await onDocumentLibraryRefresh()
       }
     },
-    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh, onAnnualReportNeedRefresh]
+    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh]
   )
 
   const handleDownload = useCallback(async () => {
@@ -708,6 +714,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
               // 🍎 AR 문서인지 먼저 확인 (삭제 전에)
               const isArDocument = contextMenuDocument?.isAnnualReport
+              const isCustomerReview = contextMenuDocument?.document_type === 'customer_review'
 
               try {
                 await api.delete(`/api/documents/${documentId}`)
@@ -719,6 +726,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 // 🍎 AR 문서 삭제 시 Annual Report 탭 즉시 새로고침
                 if (isArDocument) {
                   onAnnualReportNeedRefresh?.()
+                }
+                // 🍎 Customer Review 문서 삭제 시 고객리뷰 탭 즉시 새로고침
+                if (isCustomerReview) {
+                  onCustomerReviewNeedRefresh?.()
                 }
               } catch (error) {
                 console.error('[DocumentsTab] 문서 삭제 실패:', error)
@@ -734,7 +745,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         ]
       }
     ]
-  }, [contextMenuDocument, handlePreview, confirmController.actions, refresh, onRefresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, showAlert])
+  }, [contextMenuDocument, handlePreview, confirmController.actions, refresh, onRefresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh, showAlert])
 
   /**
    * 메모 저장 핸들러
@@ -867,6 +878,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     const hasArDocument = documents.some(
       doc => selectedDocumentIds.has(doc._id) && doc.isAnnualReport
     )
+    // 🍎 삭제될 문서 중 Customer Review 문서가 있는지 확인
+    const hasCustomerReview = documents.some(
+      doc => selectedDocumentIds.has(doc._id) && doc.document_type === 'customer_review'
+    )
 
     try {
       setIsDeleting(true)
@@ -907,6 +922,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       if (hasArDocument) {
         onAnnualReportNeedRefresh?.()
       }
+      // 🍎 Customer Review 문서가 삭제되었으면 고객리뷰 탭 즉시 새로고침
+      if (hasCustomerReview) {
+        onCustomerReviewNeedRefresh?.()
+      }
 
       // 실패한 경우만 오류 모달 표시
       if (failedDeletes.length > 0) {
@@ -929,7 +948,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         showCancel: false,
       })
     }
-  }, [selectedDocumentIds, documents, confirmController, onRefresh, refresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh])
+  }, [selectedDocumentIds, documents, confirmController, onRefresh, refresh, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh])
 
   const renderState = () => {
     if (isLoading && documents.length === 0) {

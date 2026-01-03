@@ -80,6 +80,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false)
   const [isCorporateModalVisible, setIsCorporateModalVisible] = useState(false)
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0)
+  const [customerReviewRefreshTrigger, setCustomerReviewRefreshTrigger] = useState(0)
 
   // 🍎 개수 상태
   const [contractCount, setContractCount] = useState(0)
@@ -1001,6 +1002,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       customer={customer}
                       onDocumentCountChange={setDocumentCount}
                       onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
+                      onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)}
                       searchTerm={documentSearchTerm}
                       onSearchChange={setDocumentSearchTerm}
                       onNavigate={onNavigate}
@@ -1110,6 +1112,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       <CustomerReviewTab
                         customer={customer}
                         onCustomerReviewCountChange={setCustomerReviewCount}
+                        refreshTrigger={customerReviewRefreshTrigger}
                         searchTerm={customerReviewSearchTerm}
                         onSearchChange={setCustomerReviewSearchTerm}
                       />
