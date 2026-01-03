@@ -153,6 +153,39 @@ ssh tars 'cd ~/aims && ./deploy_all.sh'
 - 복잡한 이벤트 기반 부분 새로고침 ❌
 - 단순하게 `window.location.reload()` 사용 ✅
 
+### 13. 🔐 네트워크 보안 아키텍처 (Tailscale VPN)
+**개발 환경에서 프론트엔드 → 백엔드 접속은 반드시 Tailscale VPN 경유!**
+
+```
+[프론트엔드 localhost:5177] ══> Tailscale VPN ══> [백엔드 100.110.215.65:3010]
+```
+
+| 항목 | 설정값 |
+|------|--------|
+| Tailscale IP | `100.110.215.65` (tars 서버) |
+| aims_api | `http://100.110.215.65:3010` |
+| aims_rag_api | `http://100.110.215.65:8000` |
+| aims_mcp | `http://100.110.215.65:3011` |
+
+**vite.config.ts 프록시 설정:**
+```typescript
+proxy: {
+  '/api': {
+    target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
+    secure: false,
+    changeOrigin: true
+  }
+}
+```
+
+**왜 Tailscale인가?**
+- 백엔드 포트 (3010, 8000 등)는 **UFW 방화벽으로 외부 차단**
+- 공인 IP (tars.giize.com)로 직접 접근 불가
+- Tailscale 인증된 기기만 접속 가능 (보안 강화)
+- 공유기/방화벽 설정 불필요
+
+**상세 문서**: [docs/NETWORK_SECURITY_ARCHITECTURE.md](docs/NETWORK_SECURITY_ARCHITECTURE.md)
+
 ---
 
 ## System Overview
@@ -280,5 +313,6 @@ npm run dev
 | [DENSE_TYPOGRAPHY_SYSTEM.md](frontend/aims-uix3/docs/DENSE_TYPOGRAPHY_SYSTEM.md) | 타이포그래피 |
 | [ICON_IMPLEMENTATION_TROUBLESHOOTING.md](docs/ICON_IMPLEMENTATION_TROUBLESHOOTING.md) | 아이콘 문제 해결 |
 | [SECURITY_ROADMAP.md](docs/SECURITY_ROADMAP.md) | 보안 로드맵 |
+| [NETWORK_SECURITY_ARCHITECTURE.md](docs/NETWORK_SECURITY_ARCHITECTURE.md) | 네트워크 보안 (Tailscale VPN) |
 | [EXCEL_IMPORT_SPECIFICATION.md](docs/EXCEL_IMPORT_SPECIFICATION.md) | 고객/계약 일괄등록 엑셀 입력 표준 |
 | [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP 서버 (LLM 연동) |

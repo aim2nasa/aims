@@ -32,7 +32,6 @@
   flex-direction: column;
   flex: 1; /* 🍎 남은 공간 모두 차지 */
   min-height: 0; /* flex 자식이 overflow 되도록 */
-  margin-bottom: 50px; /* 🍎 아래 공백 50px 확보 */
   gap: 0;
   max-width: 800px;
   margin-left: auto;

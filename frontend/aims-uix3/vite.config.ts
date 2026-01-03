@@ -40,8 +40,8 @@ export default defineConfig({
     proxy: {
       // SSE 스트리밍 엔드포인트 - 별도 설정 필요
       '^/api/.*/stream$': {
-        target: 'https://aims.giize.com',
-        secure: true,
+        target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
+        secure: false,
         changeOrigin: true,
         // SSE 스트리밍을 위한 설정
         configure: (proxy) => {
@@ -52,8 +52,8 @@ export default defineConfig({
       },
       // AI 채팅 SSE 엔드포인트
       '/api/chat': {
-        target: 'https://aims.giize.com',
-        secure: true,
+        target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
+        secure: false,
         changeOrigin: true,
         configure: (proxy) => {
           // SSE 스트리밍을 위한 버퍼링 비활성화
@@ -69,8 +69,8 @@ export default defineConfig({
       },
       // API 요청을 백엔드 서버로 프록시
       '/api': {
-        target: 'https://aims.giize.com',
-        secure: true,
+        target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
+        secure: false,
         changeOrigin: true
       }
     },

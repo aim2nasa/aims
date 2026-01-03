@@ -266,6 +266,10 @@
  * 파일 요약 영역
  * ============================================ */
 .processing-log__file-summary {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 남은 공간 모두 활용 */
+  min-height: 0; /* flex 스크롤 활성화 */
   border-bottom: 1px solid var(--color-section-border);
 }
 
@@ -362,7 +366,8 @@
 .file-summary__content {
   padding: 8px 12px;
   background: var(--color-section-bg);
-  max-height: 350px;
+  flex: 1; /* 남은 공간 모두 활용 */
+  min-height: 0; /* flex 스크롤 활성화 */
   overflow-y: auto;
 }
 
@@ -481,7 +486,6 @@
   flex-direction: column;
   gap: 4px;
   margin-top: 4px;
-  max-height: 300px;
   overflow-y: auto;
 }
 
