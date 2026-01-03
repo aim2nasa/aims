@@ -77,6 +77,7 @@ export interface DocumentStages {
 export interface CustomerDocumentItem {
   _id: string;
   originalName?: string;
+  displayName?: string;  // CR 등 파싱 후 생성된 사용자 친화적 이름
   uploadedAt?: string;
   fileSize?: number;
   mimeType?: string;
@@ -391,6 +392,7 @@ export class DocumentService {
           }
 
           const originalName = toString(item['originalName']) ?? toString(item['filename']);
+          const displayName = toString(item['displayName']);  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
           const uploadedAt = toString(item['uploadedAt']) ?? toString(item['linkedAt']);
           const fileSize = toNumber(item['fileSize']);
           const mimeType = toString(item['mimeType']);
@@ -435,6 +437,7 @@ export class DocumentService {
           };
 
           if (originalName) result.originalName = originalName;
+          if (displayName) result.displayName = displayName;  // 🍎 CR 파싱 후 생성된 사용자 친화적 이름
           if (uploadedAt) result.uploadedAt = uploadedAt;
           if (typeof fileSize === 'number') result.fileSize = fileSize;
           if (mimeType) result.mimeType = mimeType;

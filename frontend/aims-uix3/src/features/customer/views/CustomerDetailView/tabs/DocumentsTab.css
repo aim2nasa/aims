@@ -377,12 +377,21 @@
 
 /* === 파일명 === */
 .status-filename {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   color: var(--color-text-primary);
   font-weight: 500;
   min-width: 0; /* flex/grid item 텍스트 오버플로우 처리 */
+  overflow: hidden;
+}
+
+.status-filename-text {
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 80px;
 }
 
 .status-filename--clickable {
@@ -1253,4 +1262,15 @@ html[data-theme="dark"] .doctype-select option {
 html[data-theme="dark"] .doctype-readonly--ar {
   background-color: rgba(10, 132, 255, 0.15);
   color: var(--color-ios-blue-dark);
+}
+
+/* === 🍎 고객리뷰 displayName 표시 (파일명 뒤 괄호) === */
+.display-name-suffix {
+  flex-shrink: 1;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

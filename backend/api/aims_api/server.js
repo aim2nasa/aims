@@ -1644,6 +1644,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
+        displayName: doc.displayName || null,  // CR 등 파싱 후 생성된 사용자 친화적 이름
         uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
@@ -2061,6 +2062,7 @@ app.get('/api/documents/status/live', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
+        displayName: doc.displayName || null,  // CR 등 파싱 후 생성된 사용자 친화적 이름
         ...statusInfo
       };
     });
@@ -6724,6 +6726,7 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
+        displayName: doc.displayName || null,  // CR 등 파싱 후 생성된 사용자 친화적 이름
         uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
