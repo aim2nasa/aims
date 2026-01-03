@@ -432,12 +432,33 @@ function notifyUserAccountSubscribers(userId, event, data) {
 async function convertDocumentInBackground(fileId, inputPath) {
   const fileIdStr = fileId.toString();
 
+  // 🔔 SSE 알림용: 문서의 customerId 조회
+  const notifyDocumentStatusChange = async (status) => {
+    try {
+      const doc = await db.collection(COLLECTION_NAME).findOne({ _id: new ObjectId(fileIdStr) });
+      if (doc && doc.customerId) {
+        notifyCustomerDocSubscribers(doc.customerId.toString(), 'document-status-change', {
+          type: 'conversion',
+          status: status,
+          customerId: doc.customerId.toString(),
+          documentId: fileIdStr,
+          documentName: doc.upload?.originalName || 'Unknown',
+          timestamp: utcNowISO()
+        });
+      }
+    } catch (err) {
+      console.error(`[PDF변환] SSE 알림 실패 (${fileIdStr}):`, err.message);
+    }
+  };
+
   try {
     // 1. 상태를 processing으로 업데이트
     await db.collection(COLLECTION_NAME).updateOne(
       { _id: new ObjectId(fileIdStr) },
       { $set: { 'upload.conversion_status': 'processing' } }
     );
+    // 🔔 SSE 알림: processing 시작
+    await notifyDocumentStatusChange('processing');
 
     console.log(`[PDF변환] 변환 시작: ${inputPath}`);
 
@@ -455,6 +476,8 @@ async function convertDocumentInBackground(fileId, inputPath) {
         }
       }
     );
+    // 🔔 SSE 알림: 변환 완료
+    await notifyDocumentStatusChange('completed');
 
     console.log(`[PDF변환] 변환 완료: ${pdfPath}`);
   } catch (error) {
@@ -471,6 +494,8 @@ async function convertDocumentInBackground(fileId, inputPath) {
         }
       }
     );
+    // 🔔 SSE 알림: 변환 실패
+    await notifyDocumentStatusChange('failed');
   }
 }
 
@@ -7761,6 +7786,25 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
         timestamp: utcNowISO()
       });
       console.log(`[SSE-DocList] 문서 처리 완료 → 목록 변경 알림 전송 - userId: ${ownerIdStr}`);
+    }
+
+    // 🔄 고객 문서 SSE 알림도 함께 발송 (customerId가 있는 경우)
+    try {
+      const docForCustomer = await db.collection(COLLECTIONS.FILES).findOne({ _id: new ObjectId(documentIdStr) });
+      if (docForCustomer && docForCustomer.customerId) {
+        const customerIdStr = docForCustomer.customerId.toString();
+        notifyCustomerDocSubscribers(customerIdStr, 'document-status-change', {
+          type: 'processing',
+          status: status || 'completed',
+          customerId: customerIdStr,
+          documentId: documentIdStr,
+          documentName: docForCustomer.upload?.originalName || 'Unknown',
+          timestamp: utcNowISO()
+        });
+        console.log(`[SSE-CustomerDoc] 문서 처리 완료 → 고객 문서 알림 전송 - customerId: ${customerIdStr}`);
+      }
+    } catch (customerNotifyError) {
+      console.error('[SSE-CustomerDoc] 고객 문서 알림 실패:', customerNotifyError.message);
     }
 
     // 🔒 바이러스 스캔 트리거 (임베딩 완료 시점)

@@ -18,11 +18,22 @@ interface DocumentChangeEvent {
   timestamp: string;
 }
 
+interface DocumentStatusChangeEvent {
+  type: 'conversion' | 'processing';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'error' | 'done';
+  customerId: string;
+  documentId: string;
+  documentName: string;
+  timestamp: string;
+}
+
 interface UseCustomerDocumentsSSEOptions {
   /** SSE 활성화 여부 (기본: true) */
   enabled?: boolean;
-  /** 문서 변경 시 호출할 콜백 */
+  /** 문서 연결/해제 시 호출할 콜백 */
   onDocumentChange?: (event: DocumentChangeEvent) => void;
+  /** 문서 처리 상태 변경 시 호출할 콜백 */
+  onDocumentStatusChange?: (event: DocumentStatusChangeEvent) => void;
 }
 
 /**
@@ -36,7 +47,7 @@ export function useCustomerDocumentsSSE(
   onRefresh: () => void,
   options: UseCustomerDocumentsSSEOptions = {}
 ) {
-  const { enabled = true, onDocumentChange } = options;
+  const { enabled = true, onDocumentChange, onDocumentStatusChange } = options;
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +56,7 @@ export function useCustomerDocumentsSSE(
   // 콜백을 ref로 저장하여 의존성 문제 해결
   const onRefreshRef = useRef(onRefresh);
   const onDocumentChangeRef = useRef(onDocumentChange);
+  const onDocumentStatusChangeRef = useRef(onDocumentStatusChange);
 
   // 최신 콜백 참조 유지
   useEffect(() => {
@@ -54,6 +66,10 @@ export function useCustomerDocumentsSSE(
   useEffect(() => {
     onDocumentChangeRef.current = onDocumentChange;
   }, [onDocumentChange]);
+
+  useEffect(() => {
+    onDocumentStatusChangeRef.current = onDocumentStatusChange;
+  }, [onDocumentStatusChange]);
 
   // 연결 해제 함수
   const disconnect = useCallback(() => {
@@ -97,7 +113,7 @@ export function useCustomerDocumentsSSE(
       }
     });
 
-    // 문서 변경 이벤트
+    // 문서 변경 이벤트 (연결/해제)
     eventSource.addEventListener('document-change', (e) => {
       try {
         const data: DocumentChangeEvent = JSON.parse(e.data);
@@ -109,6 +125,22 @@ export function useCustomerDocumentsSSE(
       } catch (error) {
         console.error('[CustomerDocumentsSSE] document-change 이벤트 파싱 실패:', error);
         errorReporter.reportApiError(error as Error, { component: 'useCustomerDocumentsSSE.documentChange', payload: { customerId } });
+      }
+    });
+
+    // 문서 처리 상태 변경 이벤트 (PDF 변환, OCR 등)
+    eventSource.addEventListener('document-status-change', (e) => {
+      try {
+        const data: DocumentStatusChangeEvent = JSON.parse(e.data);
+        console.log('[CustomerDocumentsSSE] 문서 처리 상태 변경:', data);
+
+        // ref를 통해 최신 콜백 호출
+        onDocumentStatusChangeRef.current?.(data);
+        // 상태 변경 시 목록 새로고침
+        onRefreshRef.current();
+      } catch (error) {
+        console.error('[CustomerDocumentsSSE] document-status-change 이벤트 파싱 실패:', error);
+        errorReporter.reportApiError(error as Error, { component: 'useCustomerDocumentsSSE.documentStatusChange', payload: { customerId } });
       }
     });
 
