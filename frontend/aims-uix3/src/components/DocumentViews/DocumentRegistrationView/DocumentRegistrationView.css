@@ -51,7 +51,7 @@
 .registration-guide {
   background: transparent; /* 투명 배경 */
   border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
-  max-width: 800px;
+  max-width: 1000px; /* 설명 텍스트 줄바꿈 최소화 */
   margin-left: auto;
   margin-right: auto;
   margin-bottom: -6px; /* 간격 대폭 축소 */
@@ -172,9 +172,19 @@ html[data-theme="dark"] .registration-guide .guide-title {
 
 .registration-guide .guide-step {
   display: flex;
-  flex: 1;
   gap: 12px;
   align-items: flex-start;
+}
+
+/* 1번 항목: 텍스트가 짧으므로 고정 폭 */
+.registration-guide .guide-step:first-child {
+  flex: 0 0 auto;
+  min-width: 280px;
+}
+
+/* 2번 항목: 텍스트가 길므로 남은 공간 차지 */
+.registration-guide .guide-step:last-child {
+  flex: 1;
 }
 
 .registration-guide .step-number {
