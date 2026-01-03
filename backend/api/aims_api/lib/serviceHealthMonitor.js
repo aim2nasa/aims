@@ -359,6 +359,23 @@ function getCurrentStatus() {
   return { ...previousStatus };
 }
 
+/**
+ * 서비스 상태 이력 삭제
+ * @returns {Promise<{deletedCount: number}>} 삭제 결과
+ */
+async function clearHistory() {
+  if (!db) {
+    throw new Error('DB 미초기화');
+  }
+
+  const collection = db.collection(COLLECTION_NAME);
+  const result = await collection.deleteMany({});
+
+  console.log(`[ServiceHealthMonitor] ${result.deletedCount}건 이력 삭제됨`);
+
+  return { deletedCount: result.deletedCount };
+}
+
 module.exports = {
   init,
   startMonitoring,
@@ -367,5 +384,6 @@ module.exports = {
   getHealthHistory,
   getDowntimeStats,
   getCurrentStatus,
+  clearHistory,
   MONITORED_SERVICES
 };

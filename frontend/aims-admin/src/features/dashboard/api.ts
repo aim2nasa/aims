@@ -303,4 +303,10 @@ export const dashboardApi = {
     return apiClient.get<HealthStatsResponse>(`/api/admin/health-stats?days=${days}`)
       .then((res) => res.data);
   },
+
+  // 서비스 상태 이력 삭제 API
+  clearHealthHistory: (): Promise<{ message: string; deletedCount: number }> => {
+    return apiClient.delete<{ success: boolean; message: string; deletedCount: number }>('/api/admin/health-history')
+      .then((res) => ({ message: res.message, deletedCount: res.deletedCount }));
+  },
 };

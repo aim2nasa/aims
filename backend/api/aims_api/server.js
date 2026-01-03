@@ -5687,6 +5687,27 @@ app.get('/api/admin/health-history', authenticateJWT, requireRole('admin'), asyn
 });
 
 /**
+ * 관리자: 서비스 상태 이력 삭제
+ */
+app.delete('/api/admin/health-history', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const result = await serviceHealthMonitor.clearHistory();
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount}건의 이력이 삭제되었습니다`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('[Admin Health History] 삭제 실패:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * 관리자: 서비스 다운타임 통계
  * 지정 기간 동안 서비스별 장애 횟수 및 복구 횟수 통계
  */

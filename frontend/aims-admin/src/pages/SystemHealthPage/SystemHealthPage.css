@@ -568,6 +568,29 @@
   color: white;
 }
 
+.health-history-section__clear-btn {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.health-history-section__clear-btn:hover:not(:disabled) {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.health-history-section__clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .health-history-section__loading {
   padding: var(--spacing-xs);
   color: var(--color-text-secondary);

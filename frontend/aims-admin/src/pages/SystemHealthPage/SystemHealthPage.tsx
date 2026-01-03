@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
@@ -314,6 +314,7 @@ const formatHistoryDate = (isoString: string): string => {
 // 서비스 상태 이력 섹션
 const HealthHistorySection = () => {
   const [filter, setFilter] = useState<'all' | 'down' | 'recovered'>('all');
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'health-history', filter],
@@ -323,6 +324,24 @@ const HealthHistorySection = () => {
     }),
     refetchInterval: 60000,
   });
+
+  const clearMutation = useMutation({
+    mutationFn: dashboardApi.clearHealthHistory,
+    onSuccess: (result) => {
+      // 모든 필터의 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'] });
+      alert(`${result.deletedCount}건의 이력이 삭제되었습니다`);
+    },
+    onError: (error) => {
+      alert(`삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    },
+  });
+
+  const handleClear = () => {
+    if (window.confirm('모든 서비스 상태 이력을 삭제하시겠습니까?')) {
+      clearMutation.mutate();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -362,6 +381,15 @@ const HealthHistorySection = () => {
             onClick={() => setFilter('recovered')}
           >
             복구
+          </button>
+          <button
+            type="button"
+            className="health-history-section__clear-btn"
+            onClick={handleClear}
+            disabled={clearMutation.isPending || logs.length === 0}
+            title="모든 이력 삭제"
+          >
+            {clearMutation.isPending ? '삭제 중...' : '지우기'}
           </button>
         </div>
       </div>
