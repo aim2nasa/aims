@@ -1546,7 +1546,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   <div className="step-content">
                     <h4 className="step-title">고객 선택하기 (필수)</h4>
                     <p className="step-description">• 문서를 등록할 고객을 먼저 선택해주세요</p>
-                    <p className="step-description">• 문서 유형과 메모는 선택사항이에요</p>
                   </div>
                 </div>
 
