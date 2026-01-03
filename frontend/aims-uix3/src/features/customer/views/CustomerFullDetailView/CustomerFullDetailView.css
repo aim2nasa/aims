@@ -1359,11 +1359,13 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   padding: 0;
 }
 
-/* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */
-/* 🍎 계약수 칼럼: 45px → 70px (정렬 아이콘 + "계약 수" 텍스트 1줄 표시) */
-/* 🍎 스타일 통일: 보험계약 헤더와 동일 (font-weight, color, background, border) */
-.customer-full-detail__section-content--report .annual-report-table-header {
-  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+/* ============================================
+   🍎 공통 테이블 스타일 (연간보고서 + 고객리뷰)
+   ============================================ */
+
+/* 공통 테이블 헤더 */
+.customer-full-detail__section-content--report .annual-report-table-header,
+.customer-full-detail__section-content--report .customer-review-table-header {
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
@@ -1380,31 +1382,26 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   top: 0;
   z-index: 1;
   box-sizing: border-box;
-  /* 🍎 AnnualReportTab.css 오버라이드: uppercase/letter-spacing 제거 (보험계약과 통일) */
   text-transform: none;
   letter-spacing: normal;
 }
 
-html[data-theme="dark"] .customer-full-detail__section-content--report .annual-report-table-header {
+html[data-theme="dark"] .customer-full-detail__section-content--report .annual-report-table-header,
+html[data-theme="dark"] .customer-full-detail__section-content--report .customer-review-table-header {
   background: var(--color-ios-bg-secondary-dark);
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
-/* 🍎 DEV 모드: 체크박스 칼럼 추가 시 grid 레이아웃 조정 */
-.customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
-  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
-}
-
-/* 테이블 바디 */
-.customer-full-detail__section-content--report .annual-report-table-body {
+/* 공통 테이블 바디 */
+.customer-full-detail__section-content--report .annual-report-table-body,
+.customer-full-detail__section-content--report .customer-review-table-body {
   gap: 0;
   padding: 0;
 }
 
-/* 테이블 행 - 6개 칼럼 */
-/* 🍎 계약수 칼럼: 45px → 70px (헤더와 동일) */
-.customer-full-detail__section-content--report .annual-report-row {
-  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+/* 공통 테이블 행 */
+.customer-full-detail__section-content--report .annual-report-row,
+.customer-full-detail__section-content--report .customer-review-row {
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
@@ -1418,21 +1415,51 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
   box-sizing: border-box;
 }
 
-html[data-theme="dark"] .customer-full-detail__section-content--report .annual-report-row {
+html[data-theme="dark"] .customer-full-detail__section-content--report .annual-report-row,
+html[data-theme="dark"] .customer-full-detail__section-content--report .customer-review-row {
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
-/* 🍎 DEV 모드: 체크박스 칼럼 추가 시 grid 레이아웃 조정 */
+.customer-full-detail__section-content--report .annual-report-row:last-child,
+.customer-full-detail__section-content--report .customer-review-row:last-child {
+  border-bottom: none;
+}
+
+.customer-full-detail__section-content--report .annual-report-row:hover,
+.customer-full-detail__section-content--report .customer-review-row:hover {
+  transform: none;
+}
+
+/* ============================================
+   🍎 연간보고서 전용 (칼럼 폭)
+   ============================================ */
+
+.customer-full-detail__section-content--report .annual-report-table-header {
+  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+}
+
+.customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
+  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
+}
+
+.customer-full-detail__section-content--report .annual-report-row {
+  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+}
+
 .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
   grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
 }
 
-.customer-full-detail__section-content--report .annual-report-row:last-child {
-  border-bottom: none;
+/* ============================================
+   🍎 고객리뷰 전용 (칼럼 폭)
+   ============================================ */
+
+.customer-full-detail__section-content--report .customer-review-table-header {
+  grid-template-columns: 60px 90px 1fr 80px 130px;
 }
 
-.customer-full-detail__section-content--report .annual-report-row:hover {
-  transform: none;
+.customer-full-detail__section-content--report .customer-review-row {
+  grid-template-columns: 60px 90px 1fr 80px 130px;
 }
 
 /* 셀 스타일 - nowrap으로 데이터 한 줄 유지 */
