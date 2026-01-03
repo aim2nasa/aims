@@ -927,36 +927,44 @@ def save_customer_review(
             except Exception as e:
                 logger.warning(f"source_file_id 변환 실패: {source_file_id} ({e})")
 
-        # 5.5 중복 체크: policy_number + issue_date 둘 다 같으면 중복
+        # 5.5 중복 체크: contractor_name + policy_number + product_name + issue_date 4가지 모두 같으면 중복
         policy_number = contract_info.get("policy_number")
-        if policy_number and issue_date:
+        if contractor_name and policy_number and product_name and issue_date:
             existing_reviews = customer.get("customer_reviews", [])
             for existing in existing_reviews:
+                existing_contractor = existing.get("contractor_name", "")
                 existing_policy = existing.get("contract_info", {}).get("policy_number", "")
+                existing_product = existing.get("product_name", "")
                 existing_issue_date = existing.get("issue_date")
 
                 # issue_date 비교 (날짜만)
+                existing_date_str = None
                 if existing_issue_date:
                     if isinstance(existing_issue_date, datetime):
                         existing_date_str = existing_issue_date.strftime("%Y-%m-%d")
                     elif isinstance(existing_issue_date, str):
                         existing_date_str = existing_issue_date.split('T')[0]
-                    else:
-                        existing_date_str = None
 
-                    if existing_date_str == issue_date_str and existing_policy == policy_number:
-                        logger.info(
-                            f"⏭️  중복 CR 건너뜀: policy_number={policy_number}, issue_date={issue_date_str}"
-                        )
-                        return {
-                            "success": True,
-                            "message": "이미 동일한 Customer Review가 존재합니다 (중복 건너뜀)",
-                            "duplicate": True,
-                            "summary": {
-                                "policy_number": policy_number,
-                                "issue_date": issue_date_str
-                            }
+                # 4가지 모두 일치해야 중복
+                if (existing_contractor == contractor_name and
+                    existing_policy == policy_number and
+                    existing_product == product_name and
+                    existing_date_str == issue_date_str):
+                    logger.info(
+                        f"⏭️  중복 CR 건너뜀: contractor={contractor_name}, policy_number={policy_number}, "
+                        f"product={product_name}, issue_date={issue_date_str}"
+                    )
+                    return {
+                        "success": True,
+                        "message": "이미 동일한 Customer Review가 존재합니다 (중복 건너뜀)",
+                        "duplicate": True,
+                        "summary": {
+                            "contractor_name": contractor_name,
+                            "policy_number": policy_number,
+                            "product_name": product_name,
+                            "issue_date": issue_date_str
                         }
+                    }
 
         # 6. customers 컬렉션 업데이트
         result = customers_collection.update_one(

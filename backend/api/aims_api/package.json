@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test:migration": "node tests/test_customer_relation_fix.js && node tests/test_customer_cascade_delete.js && node tests/test_qdrant_deletion.js && node tests/ocr-auto-retry.test.js",
-    "test": "npm run test:migration && node scripts/setup-test-env.js && cross-env MONGO_URI=mongodb://localhost:27017 jest --runInBand && node scripts/teardown-test-env.js",
+    "test:cr-duplicate": "cd ../annual_report_api && ./venv/bin/python -m pytest tests/test_cr_duplicate_check.py -v",
+    "test:cr-duplicate-integration": "cd ../annual_report_api && ./venv/bin/python tests/test_cr_duplicate_integration.py",
+    "test:annual-report-api": "cd ../annual_report_api && ./venv/bin/python -m pytest tests/ -v --ignore=tests/test_cr_detector_real_files.py",
+    "test": "npm run test:migration && npm run test:cr-duplicate && node scripts/setup-test-env.js && cross-env MONGO_URI=mongodb://localhost:27017 jest --runInBand && node scripts/teardown-test-env.js",
     "test:ci": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
