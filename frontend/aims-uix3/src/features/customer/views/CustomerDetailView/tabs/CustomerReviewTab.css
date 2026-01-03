@@ -79,19 +79,16 @@
   background: var(--color-bg-tertiary);
   color: var(--color-text-tertiary);
   border-radius: 12px;
-  font-size: 24px;
   font-weight: 300;
 }
 
 .customer-review-tab__empty-title {
-  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
 }
 
 .customer-review-tab__empty-description {
-  font-size: 12px;
   color: var(--color-text-secondary);
   margin: 0;
   max-width: 280px;
@@ -148,9 +145,8 @@
 }
 
 .customer-review-table__sort-icon {
-  font-size: 9px;
-  opacity: 0.3;
-  transition: opacity 0.15s;
+  opacity: 0.4;
+  transition: opacity 0.15s ease-out, color 0.15s ease-out;
 }
 
 .customer-review-table__sort-icon--active {
@@ -219,14 +215,11 @@
   color: var(--color-text-secondary);
 }
 
-/* 페이지네이션 */
+/* 페이지네이션 - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) */
 .customer-review-pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 0;
-  height: 26px;
-  font-size: 11px;
 }
 
 .pagination-limit {
@@ -265,7 +258,6 @@
 }
 
 .pagination-arrow {
-  font-size: 12px;
   line-height: 1;
 }
 

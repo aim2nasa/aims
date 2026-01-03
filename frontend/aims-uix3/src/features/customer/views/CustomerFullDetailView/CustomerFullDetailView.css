@@ -1430,6 +1430,74 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
   transform: none;
 }
 
+/* 공통 정렬 아이콘 */
+.customer-full-detail__section-content--report .annual-report-table__sort-icon,
+.customer-full-detail__section-content--report .customer-review-table__sort-icon {
+  font-size: var(--font-micro);
+  opacity: 0.4;
+  transition: opacity 0.15s ease-out, color 0.15s ease-out;
+}
+
+.customer-full-detail__section-content--report .annual-report-table__sort-icon--active,
+.customer-full-detail__section-content--report .customer-review-table__sort-icon--active {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+/* 공통 빈 상태 */
+.customer-full-detail__section-content--report .annual-report-tab__empty,
+.customer-full-detail__section-content--report .customer-review-tab__empty {
+  min-height: 0;
+  padding: 16px 10px;
+  font-size: var(--font-body);
+}
+
+.customer-full-detail__section-content--report .annual-report-tab__empty-icon,
+.customer-full-detail__section-content--report .customer-review-tab__empty-icon {
+  font-size: var(--font-icon-large);
+  margin-bottom: 8px;
+}
+
+.customer-full-detail__section-content--report .annual-report-tab__empty-title,
+.customer-full-detail__section-content--report .customer-review-tab__empty-title {
+  font-size: var(--font-title);
+}
+
+.customer-full-detail__section-content--report .annual-report-tab__empty-description,
+.customer-full-detail__section-content--report .customer-review-tab__empty-description {
+  font-size: var(--font-body);
+}
+
+/* 공통 로딩/에러 상태 */
+.customer-full-detail__section-content--report .annual-report-tab__loading,
+.customer-full-detail__section-content--report .annual-report-tab__error,
+.customer-full-detail__section-content--report .customer-review-tab__loading,
+.customer-full-detail__section-content--report .customer-review-tab__error {
+  min-height: 0;
+  padding: 16px 10px;
+  font-size: var(--font-body);
+}
+
+/* 공통 페이지네이션 */
+.customer-full-detail__section-content--report .annual-report-pagination,
+.customer-full-detail__section-content--report .customer-review-pagination {
+  padding: 2px 8px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  margin-top: 0;
+  font-size: var(--font-micro);
+  border-top: 1px solid var(--color-ios-separator-light);
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--report .annual-report-pagination,
+html[data-theme="dark"] .customer-full-detail__section-content--report .customer-review-pagination {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
 /* ============================================
    🍎 연간보고서 전용 (칼럼 폭)
    ============================================ */
@@ -1693,7 +1761,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header,
 .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header span,
 .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header,
-.customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header div {
+.customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header div,
+.customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header,
+.customer-full-detail .customer-full-detail__section-content--report .customer-review-table-header div {
   font-size: var(--font-header);
   font-weight: var(--weight-semibold);
 }
@@ -1709,6 +1779,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail .contract-pagination,
 .customer-full-detail .document-pagination,
 .customer-full-detail .annual-report-pagination,
+.customer-full-detail .customer-review-pagination,
 .customer-full-detail .pagination-info,
 .customer-full-detail .pagination-limit {
   font-size: var(--font-micro);
@@ -1731,9 +1802,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 }
 
 /* ============================================
-   🍎 Annual Report 헤더 강제 오버라이드 (보험계약 기준 통일)
-   AnnualReportTab.css의 .header-owner 등을 덮어쓰기
+   🍎 연간보고서/고객리뷰 헤더 강제 오버라이드 (보험계약 기준 통일)
    ============================================ */
+/* Annual Report 헤더 셀 */
 .customer-full-detail .customer-full-detail__section-content--report .header-owner,
 .customer-full-detail .customer-full-detail__section-content--report .header-issue-date,
 .customer-full-detail .customer-full-detail__section-content--report .header-parsed-at,
@@ -1741,7 +1812,13 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail .customer-full-detail__section-content--report .header-count,
 .customer-full-detail .customer-full-detail__section-content--report .header-status,
 .customer-full-detail .customer-full-detail__section-content--report .annual-report-table__header-content,
-.customer-full-detail .customer-full-detail__section-content--report .annual-report-table__header-content span {
+.customer-full-detail .customer-full-detail__section-content--report .annual-report-table__header-content span,
+/* Customer Review 헤더 셀 */
+.customer-full-detail .customer-full-detail__section-content--report .header-contractor,
+.customer-full-detail .customer-full-detail__section-content--report .header-policy-number,
+.customer-full-detail .customer-full-detail__section-content--report .header-product,
+.customer-full-detail .customer-full-detail__section-content--report .customer-review-table__header-content,
+.customer-full-detail .customer-full-detail__section-content--report .customer-review-table__header-content span {
   font-size: var(--font-header);
   font-weight: 600;
   color: var(--color-text-tertiary);
@@ -1791,7 +1868,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail .customer-full-detail__section-content--report .row-issue-date,
 .customer-full-detail .customer-full-detail__section-content--report .row-parsed-at,
 .customer-full-detail .customer-full-detail__section-content--report .row-premium,
-.customer-full-detail .customer-full-detail__section-content--report .row-count {
+.customer-full-detail .customer-full-detail__section-content--report .row-count,
+/* 🍎 Customer Review 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--report .row-contractor,
+.customer-full-detail .customer-full-detail__section-content--report .row-policy-number,
+.customer-full-detail .customer-full-detail__section-content--report .row-product {
   font-size: var(--font-body);
   font-weight: var(--weight-normal);
 }

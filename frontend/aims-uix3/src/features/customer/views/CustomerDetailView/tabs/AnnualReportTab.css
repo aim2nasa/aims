@@ -280,38 +280,11 @@ html[data-theme="dark"] .parsing-file-name {
   overflow-y: auto;
 }
 
-/* ==================== 🍎 TABLE HEADER - macOS Finder 스타일 ==================== */
+/* ==================== 🍎 TABLE HEADER - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) ==================== */
 
 .annual-report-table-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
-  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
-  gap: 12px;
   align-items: center;
-  padding: 8px 12px;
-  min-height: 32px;
-  background: var(--color-ios-bg-secondary-light);
-  border-bottom: 1px solid var(--color-ios-separator-light);
-  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md: 10px deprecated (접근성) ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-/* 개발자 모드가 아닐 때 (체크박스 없음) */
-.annual-report-table-header:not(:has(.header-checkbox)) {
-  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
-}
-
-html[data-theme="dark"] .annual-report-table-header {
-  background: var(--color-ios-bg-secondary-dark);
-  border-bottom-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-tertiary-dark);
 }
 
 .annual-report-table-header > div {
@@ -359,55 +332,15 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
   background-color: var(--color-ios-scrollbar-hover-dark);
 }
 
-/* ==================== 🍎 TABLE ROW - iOS table row 스타일 ==================== */
+/* ==================== 🍎 TABLE ROW - 기본 구조만 (스타일은 CustomerFullDetailView.css에서) ==================== */
 
 .annual-report-row {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
-  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
-  gap: 12px;
   align-items: center;
-  height: 32px;
-  padding: 6px 12px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease-out;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  animation: rowFadeIn 0.3s ease-out;
 }
 
-/* 개발자 모드가 아닐 때 (체크박스 없음) */
-.annual-report-row:not(:has(.row-checkbox)) {
-  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 90px;
-}
-
-/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
-@keyframes rowFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-html[data-theme="dark"] .annual-report-row {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-.annual-report-row:hover {
-  background: var(--color-ios-bg-hover-light);
-  transform: translateY(-1px);
-}
-
-html[data-theme="dark"] .annual-report-row:hover {
-  background: var(--color-ios-bg-hover-dark);
-}
-
-/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+/* === 상태별 스타일 === */
 .annual-report-row--latest {
   background: var(--color-ios-bg-selected-light);
 }
@@ -520,152 +453,75 @@ html[data-theme="dark"] .row-count {
   white-space: nowrap;
 }
 
-/* ==================== 🍎 PAGINATION - iOS Style (전체보기와 통일) ==================== */
+/* ==================== 🍎 PAGINATION - 기본 구조만 (스타일은 CustomerFullDetailView.css에서) ==================== */
 
 .annual-report-pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  margin-top: 8px;
-  border-top: 1px solid var(--color-ios-separator-subtle-light);
 }
 
-html[data-theme="dark"] .annual-report-pagination {
-  border-top-color: var(--color-ios-separator-subtle-dark);
-}
-
-/* 🍎 PAGINATION LIMIT - Dropdown 컴포넌트 사용 */
 .pagination-limit {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-controls {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* 🍎 PAGINATION CONTROLS - Center group */
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: center;
-  flex: 1;
-}
-
-/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
 .pagination-spacer {
   flex: 1;
 }
 
-/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
 .pagination-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-ios-text-primary-light);
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html[data-theme="dark"] .pagination-button {
-  color: var(--color-ios-text-primary-dark);
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: transparent;
-}
-
-.pagination-button:hover:not(:disabled) .pagination-arrow {
-  color: var(--color-primary-700);
-  transform: scale(1.15);
-}
-
-html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
-  color: var(--color-primary-300);
-}
-
-.pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-light);
-  transform: scale(0.96);
-}
-
-html[data-theme="dark"] .pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-dark);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .pagination-button:disabled {
-  cursor: not-allowed;
   opacity: 0.3;
+  cursor: not-allowed;
 }
 
-/* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 ) */
-  font-weight: 300;
   line-height: 1;
-  color: inherit;
-  user-select: none;
-  display: inline-block;
-  transition: transform 0.15s ease-out, color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .pagination-arrow {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-dark);
 }
 
 .pagination-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
-  color: var(--color-ios-text-secondary-light);
-  min-width: 60px;
-  justify-content: center;
-}
-
-html[data-theme="dark"] .pagination-info {
-  color: var(--color-ios-text-secondary-dark);
+  gap: 4px;
+  color: var(--color-text-secondary);
 }
 
 .pagination-current {
-  color: var(--color-ios-text-primary-light);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .pagination-current {
-  color: var(--color-ios-text-primary-dark);
+  font-weight: 500;
+  color: var(--color-text-primary);
 }
 
 .pagination-separator {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .pagination-separator {
-  color: var(--color-ios-text-quaternary-dark);
+  opacity: 0.5;
 }
 
 .pagination-total {
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .pagination-total {
-  color: var(--color-ios-text-tertiary-dark);
+  opacity: 0.7;
 }
 
 /* ==================== Summary Section (Legacy) ==================== */
@@ -854,54 +710,32 @@ html[data-theme="dark"] .pagination-total {
   }
 }
 
-/* ==================== 🍎 정렬 가능한 헤더 스타일 ==================== */
+/* ==================== 🍎 정렬 가능한 헤더 - 기본 구조만 (스타일은 CustomerFullDetailView.css에서) ==================== */
 
 .annual-report-table__sortable {
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
-  transition: background-color var(--duration-micro-quick, 0.1s) ease-out;
-  border-radius: 4px;
-  padding: 4px 8px;
-  margin: -4px -8px;
 }
 
 .annual-report-table__sortable:hover {
-  background-color: rgba(0, 0, 0, 0.06);
-}
-
-html[data-theme="dark"] .annual-report-table__sortable:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
 }
 
 .annual-report-table__header-content {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .annual-report-table__sort-icon {
-  font-size: 10px;
-  color: var(--color-ios-text-quaternary-light);
   opacity: 0.4;
   transition: opacity 0.15s ease-out, color 0.15s ease-out;
 }
 
-html[data-theme="dark"] .annual-report-table__sort-icon {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.annual-report-table__sortable:hover .annual-report-table__sort-icon {
-  opacity: 0.7;
-}
-
 .annual-report-table__sort-icon--active {
   opacity: 1;
-  color: var(--color-primary);
-}
-
-html[data-theme="dark"] .annual-report-table__sort-icon--active {
-  color: var(--color-primary-400);
+  color: var(--color-accent);
 }
 
 /* ==================== 🔄 파싱 실패/진행중 상태 스타일 ==================== */
