@@ -1,0 +1,160 @@
+/**
+ * SSE Subscription Hook
+ * SharedWorker 기반 SSE 구독 공통 훅
+ * @since 2025-01-04
+ */
+
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { sseClient, type SSEEvent } from '../lib/sseWorkerClient'
+
+export interface UseSSESubscriptionOptions<T = unknown> {
+  /** 스트림 고유 키 (예: 'documents:status-list', 'customer:123:documents') */
+  streamKey: string
+  /** SSE 엔드포인트 (예: '/api/documents/status-list/stream') */
+  endpoint: string
+  /** 추가 파라미터 */
+  params?: Record<string, string>
+  /** SSE 활성화 여부 (기본: true) */
+  enabled?: boolean
+  /** 이벤트 수신 시 콜백 */
+  onEvent?: (eventType: string, data: T) => void
+  /** 연결 성공 시 콜백 */
+  onConnect?: (data?: unknown) => void
+  /** 연결 해제 시 콜백 */
+  onDisconnect?: () => void
+  /** 오류 발생 시 콜백 */
+  onError?: (error: Error) => void
+}
+
+export interface UseSSESubscriptionReturn {
+  /** 연결 상태 */
+  isConnected: boolean
+  /** 수동 재연결 */
+  reconnect: () => void
+  /** 수동 연결 해제 */
+  disconnect: () => void
+}
+
+/**
+ * SSE 구독 훅
+ * SharedWorker를 통해 SSE 연결을 공유하여 HTTP 연결 제한 문제 해결
+ */
+export function useSSESubscription<T = unknown>(
+  options: UseSSESubscriptionOptions<T>
+): UseSSESubscriptionReturn {
+  const {
+    streamKey,
+    endpoint,
+    params = {},
+    enabled = true,
+    onEvent,
+    onConnect,
+    onDisconnect,
+    onError
+  } = options
+
+  const [isConnected, setIsConnected] = useState(false)
+
+  // 콜백을 ref로 저장하여 의존성 문제 해결
+  const onEventRef = useRef(onEvent)
+  const onConnectRef = useRef(onConnect)
+  const onDisconnectRef = useRef(onDisconnect)
+  const onErrorRef = useRef(onError)
+
+  // 최신 콜백 참조 유지
+  useEffect(() => {
+    onEventRef.current = onEvent
+  }, [onEvent])
+
+  useEffect(() => {
+    onConnectRef.current = onConnect
+  }, [onConnect])
+
+  useEffect(() => {
+    onDisconnectRef.current = onDisconnect
+  }, [onDisconnect])
+
+  useEffect(() => {
+    onErrorRef.current = onError
+  }, [onError])
+
+  // 구독 해제 함수
+  const disconnect = useCallback(() => {
+    sseClient.unsubscribe(streamKey)
+    setIsConnected(false)
+  }, [streamKey])
+
+  // 구독 함수
+  const connect = useCallback(() => {
+    if (!enabled) return
+
+    // 인증 토큰 동기화
+    sseClient.syncAuthToken()
+
+    // 이벤트 리스너 등록
+    const unsubscribe = sseClient.on(streamKey, (event: SSEEvent) => {
+      const { eventType, data } = event
+
+      if (eventType === 'connected') {
+        setIsConnected(true)
+        onConnectRef.current?.(data)
+      } else if (eventType === 'error') {
+        setIsConnected(false)
+        onErrorRef.current?.(new Error((data as { message?: string })?.message || 'SSE error'))
+      } else {
+        // 일반 이벤트
+        onEventRef.current?.(eventType, data as T)
+      }
+    })
+
+    // 구독 요청
+    sseClient.subscribe(streamKey, endpoint, params)
+
+    return unsubscribe
+  }, [enabled, streamKey, endpoint, params])
+
+  // 재연결 함수
+  const reconnect = useCallback(() => {
+    disconnect()
+    setTimeout(() => {
+      connect()
+    }, 100)
+  }, [disconnect, connect])
+
+  // Page Visibility API 처리
+  useEffect(() => {
+    if (!enabled) return
+
+    let unsubscribe: (() => void) | undefined
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 탭 비활성화 시 연결 해제
+        sseClient.unsubscribe(streamKey)
+        setIsConnected(false)
+        onDisconnectRef.current?.()
+      } else {
+        // 탭 활성화 시 재연결
+        unsubscribe = connect()
+      }
+    }
+
+    // 초기 연결
+    unsubscribe = connect()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      unsubscribe?.()
+      sseClient.unsubscribe(streamKey)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [enabled, streamKey, connect])
+
+  return {
+    isConnected,
+    reconnect,
+    disconnect
+  }
+}
+
+export default useSSESubscription
