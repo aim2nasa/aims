@@ -482,7 +482,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             <span className="customer-review-table__header-content">
               계약자
               <span className={`customer-review-table__sort-icon ${sortField === 'contractor_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'contractor_name' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+                {sortField === 'contractor_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
           </div>
@@ -493,7 +493,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             <span className="customer-review-table__header-content">
               증권번호
               <span className={`customer-review-table__sort-icon ${sortField === 'policy_number' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'policy_number' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+                {sortField === 'policy_number' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
           </div>
@@ -504,7 +504,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             <span className="customer-review-table__header-content">
               상품명
               <span className={`customer-review-table__sort-icon ${sortField === 'product_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'product_name' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+                {sortField === 'product_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
           </div>
@@ -515,7 +515,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             <span className="customer-review-table__header-content">
               발행일
               <span className={`customer-review-table__sort-icon ${sortField === 'issue_date' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'issue_date' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+                {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
           </div>
@@ -526,7 +526,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             <span className="customer-review-table__header-content">
               파싱일시
               <span className={`customer-review-table__sort-icon ${sortField === 'parsed_at' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '+' : '-') : '-'}
+                {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
           </div>
