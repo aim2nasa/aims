@@ -51,10 +51,52 @@ export interface DocumentExplorerTreeProps {
   recentDocuments?: Document[]
   sortBy?: DocumentSortBy
   sortDirection?: SortDirection
+  /** 검색어 (하이라이트용) */
+  searchTerm?: string
 }
 
 // 더블클릭 감지를 위한 타이머
 const DOUBLE_CLICK_DELAY = 250
+
+/**
+ * 검색어 하이라이트 함수
+ * 텍스트에서 검색어와 매칭되는 부분을 하이라이트 처리
+ */
+const highlightText = (text: string, searchTerm: string): React.ReactNode => {
+  if (!searchTerm || !text) return text
+
+  const lowerText = text.toLowerCase()
+  const lowerSearch = searchTerm.toLowerCase().trim()
+
+  if (!lowerSearch || !lowerText.includes(lowerSearch)) return text
+
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let matchIndex = lowerText.indexOf(lowerSearch)
+  let keyIndex = 0
+
+  while (matchIndex !== -1) {
+    // 매칭 전 부분
+    if (matchIndex > lastIndex) {
+      parts.push(text.slice(lastIndex, matchIndex))
+    }
+    // 매칭 부분 (하이라이트)
+    parts.push(
+      <mark key={keyIndex++} className="doc-explorer-highlight">
+        {text.slice(matchIndex, matchIndex + lowerSearch.length)}
+      </mark>
+    )
+    lastIndex = matchIndex + lowerSearch.length
+    matchIndex = lowerText.indexOf(lowerSearch, lastIndex)
+  }
+
+  // 남은 부분
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts.length > 0 ? <>{parts}</> : text
+}
 
 export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   nodes,
@@ -68,6 +110,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   recentDocuments = [],
   sortBy = 'date',
   sortDirection = 'desc',
+  searchTerm = '',
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -204,7 +247,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
           {/* 그룹 라벨 + 문서 수 */}
           <span className="doc-explorer-tree__group-label">
-            {node.label}
+            {highlightText(node.label, searchTerm)}
             {node.count !== undefined && (
               <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
             )}
@@ -270,7 +313,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
         {/* 문서명 */}
         <span className="doc-explorer-tree__doc-name" title={node.label}>
-          {node.label}
+          {highlightText(node.label, searchTerm)}
         </span>
 
         {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
@@ -279,7 +322,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           title={customerName ? `${customerName} 문서만 보기` : '-'}
           onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
         >
-          {customerName || '-'}
+          {customerName ? highlightText(customerName, searchTerm) : '-'}
         </span>
 
         {/* 날짜/시간 */}
@@ -413,7 +456,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
                   {/* 문서명 */}
                   <span className="doc-explorer-tree__doc-name" title={displayName}>
-                    {displayName}
+                    {highlightText(displayName, searchTerm)}
                   </span>
 
                   {/* 고객명 */}
@@ -422,7 +465,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     title={customerName ? `${customerName} 문서만 보기` : '-'}
                     onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
                   >
-                    {customerName || '-'}
+                    {customerName ? highlightText(customerName, searchTerm) : '-'}
                   </span>
 
                   {/* 날짜/시간 */}

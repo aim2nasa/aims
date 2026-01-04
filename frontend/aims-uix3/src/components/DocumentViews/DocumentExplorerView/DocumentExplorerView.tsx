@@ -147,6 +147,7 @@ const DocumentExplorerContent: React.FC<{
             recentDocuments={recentDocuments}
             sortBy={sortBy}
             sortDirection={sortDirection}
+            searchTerm={searchTerm}
           />
         )}
       </div>
