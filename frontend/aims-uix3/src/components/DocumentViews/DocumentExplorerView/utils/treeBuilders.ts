@@ -161,9 +161,9 @@ function buildBadgeTypeTree(documents: Document[]): DocumentTreeData {
 
 /**
  * 태그별 트리: 태그명 → 문서들
- * - 태그 없음: 맨 위
- * - 나머지: 문서 수 내림차순 정렬
- * - minTagCount 이하 태그는 "기타"로 묶음
+ * - 메인 태그: 문서 수 내림차순 정렬
+ * - 기타: minTagCount 이하 태그들
+ * - 태그 없음: 맨 아래
  */
 function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentTreeData {
   const tagGroups = new Map<string, Document[]>()
@@ -216,20 +216,7 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
     })
   })
 
-  // 3. 태그 없음 (기타 위에 배치)
-  if (noTag.length > 0) {
-    nodes.push({
-      key: 'no-tag',
-      label: '태그 없음',
-      type: 'group',
-      icon: 'tag.slash.fill',
-      count: noTag.length,
-      children: noTag.map(createDocumentNode),
-      metadata: { isSpecial: true },
-    })
-  }
-
-  // 4. 기타 폴더 (minTagCount건 이하 태그들)
+  // 3. 기타 폴더 (minTagCount건 이하 태그들)
   if (otherTags.length > 0) {
     const otherChildren: DocumentTreeNode[] = otherTags.map(([tag, docs]) => ({
       key: `tag-${tag}`,
@@ -248,6 +235,19 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
       icon: 'ellipsis.circle.fill',
       count: otherTags.reduce((sum, [, docs]) => sum + docs.length, 0),
       children: otherChildren,
+      metadata: { isSpecial: true },
+    })
+  }
+
+  // 4. 태그 없음 (맨 아래)
+  if (noTag.length > 0) {
+    nodes.push({
+      key: 'no-tag',
+      label: '태그 없음',
+      type: 'group',
+      icon: 'tag.slash.fill',
+      count: noTag.length,
+      children: noTag.map(createDocumentNode),
       metadata: { isSpecial: true },
     })
   }
