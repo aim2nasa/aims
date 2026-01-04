@@ -66,6 +66,8 @@ export function buildTree(documents: Document[], groupBy: DocumentGroupBy, minTa
   switch (groupBy) {
     case 'customer':
       return buildCustomerTree(documents)
+    case 'customerTag':
+      return buildCustomerTagTree(documents)
     case 'badgeType':
       return buildBadgeTypeTree(documents)
     case 'tag':
@@ -139,6 +141,137 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
     groupStats: {
       groupCount: groups.size + (unlinked.length ? 1 : 0),
     },
+  }
+}
+
+/**
+ * 고객>태그별 트리: 고객명 → 태그 → 문서들
+ */
+function buildCustomerTagTree(documents: Document[]): DocumentTreeData {
+  const customerGroups = new Map<string, { docs: Document[]; customerId?: string; customerType?: string }>()
+  const unlinked: Document[] = []
+
+  // 1단계: 고객별로 문서 분류
+  documents.forEach((doc) => {
+    const customerName = doc.customer_relation?.customer_name
+    if (customerName) {
+      if (!customerGroups.has(customerName)) {
+        customerGroups.set(customerName, {
+          docs: [],
+          customerId: doc.customer_relation?.customer_id,
+          customerType: doc.customer_relation?.customer_type || undefined,
+        })
+      }
+      customerGroups.get(customerName)!.docs.push(doc)
+    } else {
+      unlinked.push(doc)
+    }
+  })
+
+  const nodes: DocumentTreeNode[] = []
+  let totalSubgroups = 0
+
+  // 미연결 문서 (맨 위) - 태그별 서브그룹
+  if (unlinked.length > 0) {
+    const { tagNodes, subgroupCount } = buildTagSubgroups(unlinked)
+    totalSubgroups += subgroupCount
+    nodes.push({
+      key: 'unlinked',
+      label: '미연결 문서',
+      type: 'group',
+      icon: 'exclamationmark.triangle.fill',
+      count: unlinked.length,
+      children: tagNodes,
+    })
+  }
+
+  // 고객별 그룹 (가나다순)
+  Array.from(customerGroups.entries())
+    .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
+    .forEach(([customerName, { docs, customerId, customerType }]) => {
+      const isCorpo = customerType === 'corporate'
+      const { tagNodes, subgroupCount } = buildTagSubgroups(docs)
+      totalSubgroups += subgroupCount
+
+      nodes.push({
+        key: `customer-${customerId || customerName}`,
+        label: customerName,
+        type: 'group',
+        icon: isCorpo ? 'building.2.fill' : 'person.fill',
+        count: docs.length,
+        metadata: {
+          customerId,
+          customerType: isCorpo ? 'corporate' : 'personal',
+        },
+        children: tagNodes,
+      })
+    })
+
+  return {
+    nodes,
+    totalDocuments: documents.length,
+    groupStats: {
+      groupCount: customerGroups.size + (unlinked.length ? 1 : 0),
+      subgroupCount: totalSubgroups,
+    },
+  }
+}
+
+/**
+ * 문서 목록을 태그별 서브그룹으로 분류 (고객>태그별용)
+ */
+function buildTagSubgroups(docs: Document[]): { tagNodes: DocumentTreeNode[]; subgroupCount: number } {
+  const tagGroups = new Map<string, Document[]>()
+  const noTag: Document[] = []
+
+  docs.forEach((doc) => {
+    const meta = (doc as unknown as { meta?: { tags?: string[] } }).meta
+    const tags = meta?.tags
+    if (tags && tags.length > 0) {
+      // 첫 번째 태그만 사용 (중복 방지)
+      const tag = tags[0]
+      if (!tagGroups.has(tag)) {
+        tagGroups.set(tag, [])
+      }
+      tagGroups.get(tag)!.push(doc)
+    } else {
+      noTag.push(doc)
+    }
+  })
+
+  const tagNodes: DocumentTreeNode[] = []
+
+  // 태그별 서브그룹 (문서 수 내림차순)
+  Array.from(tagGroups.entries())
+    .sort((a, b) => b[1].length - a[1].length)
+    .forEach(([tag, tagDocs]) => {
+      tagNodes.push({
+        key: `tag-${tag}`,
+        label: tag,
+        type: 'subgroup',
+        icon: 'tag.fill',
+        count: tagDocs.length,
+        metadata: { tag },
+        children: tagDocs.map((doc) => createDocumentNode(doc)),
+      })
+    })
+
+  // 태그 없음 (맨 아래)
+  if (noTag.length > 0) {
+    tagNodes.push({
+      key: 'no-tag',
+      label: '태그 없음',
+      type: 'subgroup',
+      icon: 'tag.slash',
+      count: noTag.length,
+      metadata: { isSpecial: true },
+      children: noTag.map((doc) => createDocumentNode(doc)),
+    })
+  }
+
+  return {
+    tagNodes,
+    subgroupCount: tagGroups.size + (noTag.length ? 1 : 0),
   }
 }
 

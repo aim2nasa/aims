@@ -8,7 +8,7 @@ import type { Document } from '@/types/documentStatus'
 /**
  * 문서 분류 기준
  */
-export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date'
+export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date' | 'customerTag'
 
 /**
  * 빠른 필터 타입
@@ -52,6 +52,7 @@ export const GROUP_BY_LABELS: Record<DocumentGroupBy, string> = {
   badgeType: '문서유형별',
   tag: '태그별',
   date: '날짜별',
+  customerTag: '고객>태그별',
 }
 
 /**

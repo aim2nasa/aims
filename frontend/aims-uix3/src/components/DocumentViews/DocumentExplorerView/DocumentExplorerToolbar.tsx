@@ -51,6 +51,7 @@ export interface DocumentExplorerToolbarProps {
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
   { value: 'customer', label: '고객별' },
+  { value: 'customerTag', label: '고객>태그별' },
   { value: 'badgeType', label: '문서유형별' },
   { value: 'tag', label: '태그별' },
   { value: 'date', label: '날짜별' },
