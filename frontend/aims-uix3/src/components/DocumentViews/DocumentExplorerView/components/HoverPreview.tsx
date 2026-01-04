@@ -16,9 +16,13 @@ export interface HoverPreviewProps {
   position: { x: number; y: number } | null
 }
 
+// 지원하는 이미지 MIME 타입
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/tiff']
+
 /**
- * 문서에서 썸네일 API용 PDF 경로 추출
+ * 문서에서 썸네일 API용 파일 경로 추출
  * - PDF 파일: destPath 사용
+ * - 이미지 파일: destPath 직접 사용
  * - 기타 파일: convPdfPath 사용 (변환된 PDF)
  */
 function getThumbnailPath(doc: Document): string | null {
@@ -38,13 +42,17 @@ function getThumbnailPath(doc: Document): string | null {
     return destPath.replace(/^\/data\/files\//, '')
   }
 
+  // 이미지 파일인 경우 직접 destPath 사용
+  if (IMAGE_MIME_TYPES.some(type => mimeType.includes(type)) && destPath) {
+    return destPath.replace(/^\/data\/files\//, '')
+  }
+
   // 변환된 PDF가 있는 경우
   if (convPdfPath) {
     return convPdfPath.replace(/^\/data\/files\//, '')
   }
 
-  // PDF가 아니고 변환도 안 된 경우 (이미지 등)
-  // 이미지는 별도 처리 필요 - 현재는 null 반환
+  // 지원하지 않는 파일 타입
   return null
 }
 

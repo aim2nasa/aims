@@ -128,7 +128,16 @@ THUMBNAIL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_THUMBNAIL_WIDTH = 200
 
 
-def generate_thumbnail(pdf_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> bytes:
+# 지원하는 이미지 확장자
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'}
+
+
+def is_image_file(path: Path) -> bool:
+    """이미지 파일인지 확인"""
+    return path.suffix.lower() in IMAGE_EXTENSIONS
+
+
+def generate_pdf_thumbnail(pdf_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> bytes:
     """
     PDF 첫 페이지를 JPEG 썸네일로 변환
 
@@ -165,23 +174,61 @@ def generate_thumbnail(pdf_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> 
         doc.close()
 
 
-def get_cached_thumbnail(pdf_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> bytes:
+def generate_image_thumbnail(image_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> bytes:
+    """
+    이미지 파일을 JPEG 썸네일로 변환
+
+    Args:
+        image_path: 이미지 파일 경로
+        width: 썸네일 너비 (높이는 비율 유지)
+
+    Returns:
+        JPEG 이미지 바이트
+    """
+    img = Image.open(image_path)
+
+    # RGBA -> RGB 변환 (PNG 투명 배경 처리)
+    if img.mode in ('RGBA', 'LA', 'P'):
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    # 비율 유지하며 리사이즈
+    ratio = width / img.width
+    new_height = int(img.height * ratio)
+    img = img.resize((width, new_height), Image.Resampling.LANCZOS)
+
+    # JPEG로 인코딩
+    output = io.BytesIO()
+    img.save(output, format="JPEG", quality=85, optimize=True)
+    return output.getvalue()
+
+
+def get_cached_thumbnail(file_path: Path, width: int = DEFAULT_THUMBNAIL_WIDTH) -> bytes:
     """
     캐시된 썸네일 반환, 없으면 생성 후 캐시
 
-    캐시 키: PDF 경로 + 수정시간 + 너비의 해시
+    캐시 키: 파일 경로 + 수정시간 + 너비의 해시
+    PDF와 이미지 파일 모두 지원
     """
     # 캐시 키 생성
-    mtime = pdf_path.stat().st_mtime
-    cache_key = hashlib.md5(f"{pdf_path}:{mtime}:{width}".encode()).hexdigest()
+    mtime = file_path.stat().st_mtime
+    cache_key = hashlib.md5(f"{file_path}:{mtime}:{width}".encode()).hexdigest()
     cache_file = THUMBNAIL_CACHE_DIR / f"{cache_key}.jpg"
 
     # 캐시 확인
     if cache_file.exists():
         return cache_file.read_bytes()
 
-    # 썸네일 생성
-    thumbnail_bytes = generate_thumbnail(pdf_path, width)
+    # 파일 타입에 따라 썸네일 생성
+    if is_image_file(file_path):
+        thumbnail_bytes = generate_image_thumbnail(file_path, width)
+    else:
+        thumbnail_bytes = generate_pdf_thumbnail(file_path, width)
 
     # 캐시에 저장
     cache_file.write_bytes(thumbnail_bytes)
@@ -273,10 +320,10 @@ async def serve_thumbnail(
     width: int = Query(DEFAULT_THUMBNAIL_WIDTH, ge=50, le=800, description="썸네일 너비 (50-800)")
 ):
     """
-    PDF 파일의 첫 페이지 썸네일 반환
+    PDF 또는 이미지 파일의 썸네일 반환
 
     Args:
-        file_path: /data/files 기준 상대 경로 (PDF 파일)
+        file_path: /data/files 기준 상대 경로 (PDF 또는 이미지 파일)
         width: 썸네일 너비 (기본 200px)
 
     Returns:
@@ -297,9 +344,12 @@ async def serve_thumbnail(
     if not full_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
 
-    # PDF 파일인지 확인
-    if not str(full_path).lower().endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Not a PDF file")
+    # PDF 또는 이미지 파일인지 확인
+    is_pdf = str(full_path).lower().endswith('.pdf')
+    is_image = is_image_file(full_path)
+
+    if not is_pdf and not is_image:
+        raise HTTPException(status_code=400, detail="Not a supported file type (PDF or image)")
 
     # 썸네일 생성 (캐시 사용)
     try:
