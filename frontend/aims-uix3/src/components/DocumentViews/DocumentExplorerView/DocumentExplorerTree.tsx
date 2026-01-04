@@ -93,14 +93,18 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           }}
           aria-expanded={isExpanded}
         >
-          {/* 펼치기/접기 아이콘 */}
-          <span className="doc-explorer-tree__chevron">
-            <SFSymbol
-              name={isExpanded ? 'chevron.down' : 'chevron.right'}
-              size={SFSymbolSize.CAPTION_2}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-          </span>
+          {/* 펼치기/접기 아이콘 - 자식이 있을 때만 표시 (윈도우 탐색기 스타일) */}
+          {hasChildren ? (
+            <span className="doc-explorer-tree__chevron">
+              <SFSymbol
+                name={isExpanded ? 'chevron.down' : 'chevron.right'}
+                size={SFSymbolSize.CAPTION_2}
+                weight={SFSymbolWeight.MEDIUM}
+              />
+            </span>
+          ) : (
+            <span className="doc-explorer-tree__chevron-placeholder" />
+          )}
 
           {/* 폴더 아이콘 (내 보관함 스타일) */}
           <span className="doc-explorer-tree__folder-icon">
@@ -191,7 +195,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   }
 
   return (
-    <div className="doc-explorer-tree" role="tree">
+    <div className="doc-explorer-tree">
       {nodes.map((node) => renderNode(node, 0))}
     </div>
   )

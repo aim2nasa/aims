@@ -294,6 +294,13 @@
   transition: transform var(--explorer-transition);
 }
 
+/* Chevron Placeholder (자식 없을 때 정렬용) */
+.doc-explorer-tree__chevron-placeholder {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
 /* Folder Icon (내 보관함 스타일) */
 .doc-explorer-tree__folder-icon {
   flex-shrink: 0;
