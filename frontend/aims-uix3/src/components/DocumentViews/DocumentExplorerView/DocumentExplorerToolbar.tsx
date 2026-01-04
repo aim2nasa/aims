@@ -205,8 +205,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
         />
       </div>
 
-      {/* 기타 분류 기준 (태그별 분류 시에만 표시) */}
-      {groupBy === 'tag' && (
+      {/* 기타 분류 기준 (태그별/고객>태그별 분류 시에만 표시) */}
+      {(groupBy === 'tag' || groupBy === 'customerTag') && (
         <Tooltip content={`${minTagCount}건 이하 태그는 기타로 분류`} placement="bottom">
           <div className="doc-explorer-toolbar__min-count">
             <button
