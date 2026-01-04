@@ -87,6 +87,7 @@ ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m js
 | annual_report_api | `backend/api/annual_report_api/deploy_annual_report_api.sh` |
 | pdf_proxy | `backend/api/pdf_proxy/deploy_pdf_proxy.sh` |
 | aims_mcp | `backend/api/aims_mcp/deploy_aims_mcp.sh` |
+| pdf_converter | `tools/convert/deploy_pdf_converter.sh` |
 
 ```bash
 # 사용 예시 (서버에서)
@@ -109,9 +110,12 @@ ssh tars 'cd ~/aims && ./deploy_all.sh'
 4. annual_report_api 배포
 5. pdf_proxy 배포
 6. aims_mcp 배포
-7. n8n 워크플로우 배포
-8. Frontend 배포
-9. 서비스 상태 확인
+7. pdf_converter 배포
+8. n8n 워크플로우 배포
+9. Frontend 배포
+10. Admin 배포
+11. 서비스 상태 확인
+12. Docker 정리
 
 **스마트 빌드**: 소스 변경이 없는 서비스는 QUICK RESTART 모드로 빠르게 재시작
 
