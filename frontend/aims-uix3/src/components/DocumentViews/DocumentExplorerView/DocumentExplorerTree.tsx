@@ -170,6 +170,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       e.stopPropagation()
       const docId = doc._id || doc.id || ''
 
+      // 클릭 후에도 hover 유지 (리렌더링으로 인한 mouseLeave 방지)
+      setHoverDocument(doc)
+      setHoverPosition({ x: e.clientX, y: e.clientY })
+
       // 클릭한 노드로 포커스 이동
       if (nodeKey) {
         setFocusedKey(nodeKey)

@@ -5,11 +5,28 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import type { Document } from '@/types/documentStatus'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 
 const HOVER_DELAY = 300 // 호버 후 프리뷰 표시까지 딜레이 (ms)
 const THUMBNAIL_WIDTH = 200
 const THUMBNAIL_HEIGHT = 283 // A4 비율 (200 * 1.414)
 const PDF_PROXY_BASE = '/pdf-proxy' // Vite proxy를 통해 접근
+
+// 파일 확장자별 아이콘 매핑
+const FILE_TYPE_ICONS: Record<string, { icon: string; color: string; label: string }> = {
+  xlsx: { icon: '📊', color: '#217346', label: 'Excel' },
+  xls: { icon: '📊', color: '#217346', label: 'Excel' },
+  docx: { icon: '📄', color: '#2B579A', label: 'Word' },
+  doc: { icon: '📄', color: '#2B579A', label: 'Word' },
+  pptx: { icon: '📽️', color: '#D24726', label: 'PowerPoint' },
+  ppt: { icon: '📽️', color: '#D24726', label: 'PowerPoint' },
+  hwp: { icon: '📝', color: '#0085CA', label: '한글' },
+  hwpx: { icon: '📝', color: '#0085CA', label: '한글' },
+  txt: { icon: '📃', color: '#666666', label: 'Text' },
+  csv: { icon: '📋', color: '#217346', label: 'CSV' },
+  zip: { icon: '🗜️', color: '#FFB900', label: 'ZIP' },
+  rar: { icon: '🗜️', color: '#FFB900', label: 'RAR' },
+}
 
 export interface HoverPreviewProps {
   document: Document | null
@@ -20,21 +37,46 @@ export interface HoverPreviewProps {
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/tiff']
 
 /**
+ * 파일명에서 확장자 추출
+ */
+function getFileExtension(filename: string): string {
+  const parts = filename.split('.')
+  if (parts.length < 2) return ''
+  return parts[parts.length - 1].toLowerCase()
+}
+
+/**
+ * 파일 타입 아이콘 정보 가져오기
+ */
+function getFileTypeIcon(doc: Document): { icon: string; color: string; label: string } | null {
+  const filename = DocumentStatusService.extractFilename(doc)
+  const ext = getFileExtension(filename)
+  return FILE_TYPE_ICONS[ext] || null
+}
+
+/**
  * 문서에서 썸네일 API용 파일 경로 추출
  * - PDF 파일: destPath 사용
  * - 이미지 파일: destPath 직접 사용
  * - 기타 파일: convPdfPath 사용 (변환된 PDF)
  */
 function getThumbnailPath(doc: Document): string | null {
-  // upload이 string인 경우도 있으므로 체크
-  const upload = doc.upload
-  if (!upload || typeof upload === 'string') {
+  // upload이 string인 경우 JSON 파싱 시도
+  let uploadData = doc.upload
+  if (typeof uploadData === 'string') {
+    try {
+      uploadData = JSON.parse(uploadData) as typeof doc.upload
+    } catch {
+      return null
+    }
+  }
+  if (!uploadData || typeof uploadData === 'string') {
     return null
   }
 
-  const destPath = upload.destPath
-  const convPdfPath = upload.convPdfPath
-  const mimeType = doc.mimeType || upload.mimeType || ''
+  const destPath = uploadData.destPath
+  const convPdfPath = uploadData.convPdfPath
+  const mimeType = doc.mimeType || uploadData.mimeType || ''
 
   // PDF 파일인 경우 직접 destPath 사용
   if (mimeType.includes('pdf') && destPath) {
@@ -108,6 +150,9 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
     ? `${PDF_PROXY_BASE}/thumbnail/${thumbnailPath}?width=${THUMBNAIL_WIDTH}`
     : null
 
+  // 파일 타입 아이콘 (썸네일 없을 때 fallback)
+  const fileTypeIcon = document ? getFileTypeIcon(document) : null
+
   // 현재 문서 ID
   const docId = document?._id || document?.id || null
 
@@ -118,7 +163,8 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       timerRef.current = null
     }
 
-    if (document && thumbnailUrl) {
+    // 썸네일이 있거나 파일 타입 아이콘이 있으면 표시
+    if (document && (thumbnailUrl || fileTypeIcon)) {
       // 문서가 변경되었으면 이미지 상태 초기화
       if (currentDocIdRef.current !== docId) {
         setImageLoaded(false)
@@ -139,15 +185,41 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
         clearTimeout(timerRef.current)
       }
     }
-  }, [document, thumbnailUrl, docId])
+  }, [document, thumbnailUrl, fileTypeIcon, docId])
 
-  // 표시할 조건 체크
-  if (!visible || !thumbnailUrl || !position) {
+  // 표시할 조건 체크: 썸네일이나 파일 타입 아이콘이 있어야 함
+  if (!visible || !position || (!thumbnailUrl && !fileTypeIcon)) {
     return null
   }
 
   // 마우스 위치 기반으로 실시간 계산
   const displayPosition = calculatePosition(position.x, position.y)
+
+  // 파일 타입 아이콘 fallback (썸네일 없을 때)
+  if (!thumbnailUrl && fileTypeIcon) {
+    return (
+      <div
+        className="hover-preview hover-preview--icon"
+        style={{
+          position: 'fixed',
+          left: displayPosition.x,
+          top: displayPosition.y,
+          zIndex: 10000,
+        }}
+      >
+        <div
+          className="hover-preview__file-icon"
+          style={{ backgroundColor: fileTypeIcon.color }}
+        >
+          <span className="hover-preview__file-icon-emoji">{fileTypeIcon.icon}</span>
+          <span className="hover-preview__file-icon-label">{fileTypeIcon.label}</span>
+          <span className="hover-preview__file-icon-name">
+            {document ? DocumentStatusService.extractFilename(document) : ''}
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -171,7 +243,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
           </div>
         )}
         <img
-          src={thumbnailUrl}
+          src={thumbnailUrl!}
           alt="문서 미리보기"
           className={`hover-preview__image ${imageLoaded ? 'hover-preview__image--loaded' : ''}`}
           onLoad={() => setImageLoaded(true)}
