@@ -229,10 +229,12 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     []
   )
 
-  // 마우스 이동 시 위치 업데이트
+  // 마우스 이동 시 위치 업데이트 (+ 모달 닫힌 후 복구용 문서 설정)
   const handleDocumentMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+    (doc: Document, e: React.MouseEvent) => {
       setHoverPosition({ x: e.clientX, y: e.clientY })
+      // 모달/RightPane 닫힌 후 마우스가 이미 문서 위에 있는 경우 복구
+      setHoverDocument(doc)
     },
     []
   )
@@ -335,7 +337,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
         onClick={(e) => handleDocumentClick(doc, e, node.key)}
         onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-        onMouseMove={handleDocumentMouseMove}
+        onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
         onMouseLeave={handleDocumentMouseLeave}
         role="treeitem"
         tabIndex={-1}
@@ -468,7 +470,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
                   onClick={(e) => handleDocumentClick(doc, e)}
                   onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
-                  onMouseMove={handleDocumentMouseMove}
+                  onMouseMove={(e) => handleDocumentMouseMove(doc, e)}
                   onMouseLeave={handleDocumentMouseLeave}
                   role="button"
                   tabIndex={0}
@@ -539,6 +541,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         {renderRecentDocuments()}
         {nodes.map((node) => renderNode(node, 0))}
       </div>
+      {/* 호버 시 항상 썸네일 표시 */}
       <HoverPreview
         document={hoverDocument}
         position={hoverPosition}
