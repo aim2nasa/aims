@@ -81,12 +81,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
 
   // 문서 클릭 핸들러 (싱글/더블클릭 구분)
   const handleDocumentClick = useCallback(
-    (doc: Document, e: React.MouseEvent) => {
+    (doc: Document, e: React.MouseEvent, nodeKey?: string) => {
       e.stopPropagation()
       const docId = doc._id || doc.id || ''
 
       // 클릭한 노드로 포커스 이동
-      setFocusedKey(`doc-${docId}`)
+      if (nodeKey) {
+        setFocusedKey(nodeKey)
+      }
 
       if (clickTimerRef.current && lastClickedIdRef.current === docId) {
         // 더블클릭
@@ -205,9 +207,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     if (!doc) return null
 
     const docId = doc._id || doc.id || ''
-    const nodeKey = `doc-${docId}`
     const isSelected = selectedDocumentId === docId
-    const isFocused = focusedKey === nodeKey
+    const isFocused = focusedKey === node.key
     const badgeType = doc.badgeType || 'BIN'
     const customerName = doc.customer_relation?.customer_name
     const documentDate = getDocumentDate(doc)
@@ -215,9 +216,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     return (
       <div
         key={node.key}
-        data-node-key={nodeKey}
+        data-node-key={node.key}
         className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
-        onClick={(e) => handleDocumentClick(doc, e)}
+        onClick={(e) => handleDocumentClick(doc, e, node.key)}
         role="treeitem"
         tabIndex={-1}
         aria-selected={isSelected}

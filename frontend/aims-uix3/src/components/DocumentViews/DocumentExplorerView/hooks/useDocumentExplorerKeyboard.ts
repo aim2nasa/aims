@@ -110,6 +110,19 @@ export function useDocumentExplorerKeyboard({
     }
   }, [focusedKey])
 
+  // selectedDocumentId 변경 시 해당 문서로 포커스 이동 (검색 시 자동 포커스)
+  useEffect(() => {
+    if (!selectedDocumentId) return
+
+    const selectedNode = flattenedNodes.find(
+      fn => fn.node.document?._id === selectedDocumentId || fn.node.document?.id === selectedDocumentId
+    )
+    if (selectedNode) {
+      focusedKeyRef.current = selectedNode.node.key
+      setFocusedKeyState(selectedNode.node.key)
+    }
+  }, [selectedDocumentId, flattenedNodes])
+
   // 포커스 설정 함수
   const setFocusedKey = useCallback((key: string | null) => {
     focusedKeyRef.current = key

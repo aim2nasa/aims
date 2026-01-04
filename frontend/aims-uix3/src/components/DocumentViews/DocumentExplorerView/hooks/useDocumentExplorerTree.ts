@@ -163,6 +163,40 @@ export function useDocumentExplorerTree({
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
 
+  // 검색어 변경 시 첫 번째 결과로 자동 이동 및 폴더 펼치기
+  useEffect(() => {
+    if (!searchTerm || filteredDocuments.length === 0) return
+
+    // 첫 번째 문서 찾기
+    const firstDoc = filteredDocuments[0]
+    const firstDocId = firstDoc._id || firstDoc.id
+    if (!firstDocId) return
+
+    // 해당 문서가 속한 그룹을 찾아서 펼치기
+    const findParentKeys = (nodes: typeof treeData.nodes, targetId: string, path: string[] = []): string[] | null => {
+      for (const node of nodes) {
+        if (node.type === 'document' && (node.document?._id === targetId || node.document?.id === targetId)) {
+          return path
+        }
+        if (node.children) {
+          const result = findParentKeys(node.children, targetId, [...path, node.key])
+          if (result) return result
+        }
+      }
+      return null
+    }
+
+    const parentKeys = findParentKeys(treeData.nodes, firstDocId)
+    if (parentKeys && parentKeys.length > 0) {
+      setExpandedKeys((prev) => {
+        const newSet = new Set(prev)
+        parentKeys.forEach((key) => newSet.add(key))
+        return Array.from(newSet)
+      })
+    }
+    setSelectedDocumentId(firstDocId)
+  }, [searchTerm, filteredDocuments, treeData.nodes, setExpandedKeys])
+
   // 분류 기준 변경 (확장 상태 초기화)
   const setGroupBy = useCallback(
     (newGroupBy: DocumentGroupBy) => {
