@@ -204,6 +204,33 @@
   gap: var(--explorer-spacing-xs);
 }
 
+/* Expand/Collapse Button */
+.doc-explorer-toolbar__expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--explorer-border-radius);
+  background: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 150ms ease;
+  opacity: 0.7;
+}
+
+.doc-explorer-toolbar__expand-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.doc-explorer-toolbar__expand-btn:active {
+  transform: scale(0.95);
+}
+
 .doc-explorer-toolbar__actions .spinning {
   animation: spin 1s linear infinite;
 }

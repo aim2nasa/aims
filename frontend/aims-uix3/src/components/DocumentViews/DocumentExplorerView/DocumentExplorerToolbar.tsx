@@ -5,7 +5,6 @@
 
 import React, { useCallback, useRef } from 'react'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
-import Button from '@/shared/ui/Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS } from './types/documentExplorer'
@@ -138,18 +137,28 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
       {/* 액션 버튼들 */}
       <div className="doc-explorer-toolbar__actions">
-        <Button
-          variant="ghost"
+        <button
+          type="button"
+          className="doc-explorer-toolbar__expand-btn"
           onClick={onToggleExpandAll}
           title={isAllExpanded ? '모두 접기' : '모두 펼치기'}
         >
-          <SFSymbol
-            name={isAllExpanded ? 'arrow.down.right.and.arrow.up.left' : 'arrow.up.left.and.arrow.down.right'}
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-          <span>{isAllExpanded ? '접기' : '펼치기'}</span>
-        </Button>
+          {isAllExpanded ? (
+            /* 접기: 트리가 접힌 모양 (평평한 리스트) */
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          ) : (
+            /* 펼치기: 트리가 펼쳐진 모양 (들여쓰기 리스트) */
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
 
       </div>
 
