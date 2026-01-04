@@ -130,6 +130,22 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     )
   }
 
+  // 날짜/시간 포맷 (MM.DD HH:mm:ss)
+  const formatDateTime = (dateStr: string): string => {
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return ''
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${month}.${day} ${hours}:${minutes}:${seconds}`
+    } catch {
+      return ''
+    }
+  }
+
   // 문서 노드 렌더링
   const renderDocumentNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
     const doc = node.document
@@ -138,6 +154,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     const docId = doc._id || doc.id || ''
     const isSelected = selectedDocumentId === docId
     const badgeType = doc.badgeType || 'BIN'
+    const uploadedAt = node.metadata?.uploadedAt
 
     return (
       <div
@@ -162,6 +179,13 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         <span className="doc-explorer-tree__doc-name" title={node.label}>
           {node.label}
         </span>
+
+        {/* 날짜/시간 (날짜별 분류 시) */}
+        {uploadedAt && (
+          <span className="doc-explorer-tree__doc-date" title={uploadedAt}>
+            {formatDateTime(uploadedAt)}
+          </span>
+        )}
 
         {/* 배지 */}
         <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>

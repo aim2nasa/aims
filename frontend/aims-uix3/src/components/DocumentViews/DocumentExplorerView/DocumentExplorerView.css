@@ -416,6 +416,16 @@
   white-space: nowrap;
 }
 
+/* Document Date (날짜별 분류 시) */
+.doc-explorer-tree__doc-date {
+  flex-shrink: 0;
+  margin-left: var(--explorer-spacing-sm);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Badge */
 .doc-explorer-tree__badge {
   flex-shrink: 0;

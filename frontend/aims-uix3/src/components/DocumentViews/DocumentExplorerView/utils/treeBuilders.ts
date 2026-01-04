@@ -14,14 +14,39 @@ function getDocumentDisplayName(doc: Document): string {
 }
 
 /**
+ * 문서에서 날짜를 추출합니다
+ * 우선순위: upload.uploaded_at > uploaded_at > created_at > timestamp
+ */
+function getDocumentDate(doc: Document): string | undefined {
+  // upload 객체 내의 uploaded_at (실제 데이터 위치)
+  const upload = doc.upload
+  if (upload && typeof upload === 'object') {
+    const uploadData = upload as { uploaded_at?: string; timestamp?: string }
+    if (uploadData.uploaded_at) return uploadData.uploaded_at
+    if (uploadData.timestamp) return uploadData.timestamp
+  }
+  // 문서 루트 레벨의 날짜 필드들
+  return doc.uploaded_at || doc.created_at || doc.timestamp
+}
+
+/**
  * 문서를 리프 노드로 변환합니다
  */
-function createDocumentNode(doc: Document): DocumentTreeNode {
+function createDocumentNode(doc: Document, includeDate = false): DocumentTreeNode {
   const badgeType = doc.badgeType || 'BIN'
   const iconMap: Record<string, string> = {
     TXT: 'doc.text.fill',
     OCR: 'doc.viewfinder.fill',
     BIN: 'doc.fill',
+  }
+
+  const metadata: DocumentTreeNode['metadata'] = {
+    badgeType: badgeType as 'TXT' | 'OCR' | 'BIN',
+  }
+
+  // 날짜별 분류 시 uploadedAt 포함
+  if (includeDate) {
+    metadata.uploadedAt = getDocumentDate(doc)
   }
 
   return {
@@ -30,9 +55,7 @@ function createDocumentNode(doc: Document): DocumentTreeNode {
     type: 'document',
     icon: iconMap[badgeType],
     document: doc,
-    metadata: {
-      badgeType: badgeType as 'TXT' | 'OCR' | 'BIN',
-    },
+    metadata,
   }
 }
 
@@ -87,7 +110,7 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
       type: 'group',
       icon: 'exclamationmark.triangle.fill',
       count: unlinked.length,
-      children: unlinked.map(createDocumentNode),
+      children: unlinked.map((doc) => createDocumentNode(doc)),
     })
   }
 
@@ -106,7 +129,7 @@ function buildCustomerTree(documents: Document[]): DocumentTreeData {
           customerId,
           customerType: isCorpo ? 'corporate' : 'personal',
         },
-        children: docs.map(createDocumentNode),
+        children: docs.map((doc) => createDocumentNode(doc)),
       })
     })
 
@@ -149,7 +172,7 @@ function buildBadgeTypeTree(documents: Document[]): DocumentTreeData {
       icon: cfg.icon,
       count: groups[cfg.key].length,
       metadata: { badgeType: cfg.key },
-      children: groups[cfg.key].map(createDocumentNode),
+      children: groups[cfg.key].map((doc) => createDocumentNode(doc)),
     }))
 
   return {
@@ -212,7 +235,7 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
       icon: 'tag.fill',
       count: docs.length,
       metadata: { tag },
-      children: docs.map(createDocumentNode),
+      children: docs.map((doc) => createDocumentNode(doc)),
     })
   })
 
@@ -225,7 +248,7 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
       icon: 'tag',
       count: docs.length,
       metadata: { tag },
-      children: docs.map(createDocumentNode),
+      children: docs.map((doc) => createDocumentNode(doc)),
     }))
 
     nodes.push({
@@ -247,7 +270,7 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
       type: 'group',
       icon: 'tag.slash.fill',
       count: noTag.length,
-      children: noTag.map(createDocumentNode),
+      children: noTag.map((doc) => createDocumentNode(doc)),
       metadata: { isSpecial: true },
     })
   }
@@ -257,22 +280,6 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
     totalDocuments: documents.length,
     groupStats: { groupCount: mainTags.length + (noTag.length ? 1 : 0) + (otherTags.length ? 1 : 0) },
   }
-}
-
-/**
- * 문서에서 날짜를 추출합니다
- * 우선순위: upload.uploaded_at > uploaded_at > created_at > timestamp
- */
-function getDocumentDate(doc: Document): string | undefined {
-  // upload 객체 내의 uploaded_at (실제 데이터 위치)
-  const upload = doc.upload
-  if (upload && typeof upload === 'object') {
-    const uploadData = upload as { uploaded_at?: string; timestamp?: string }
-    if (uploadData.uploaded_at) return uploadData.uploaded_at
-    if (uploadData.timestamp) return uploadData.timestamp
-  }
-  // 문서 루트 레벨의 날짜 필드들
-  return doc.uploaded_at || doc.created_at || doc.timestamp
 }
 
 /**
@@ -313,7 +320,8 @@ function buildDateTree(documents: Document[]): DocumentTreeData {
       type: 'group',
       icon: 'calendar.badge.exclamationmark',
       count: noDate.length,
-      children: noDate.map(createDocumentNode),
+      children: noDate.map((doc) => createDocumentNode(doc, true)),
+      metadata: { isSpecial: true },
     })
   }
 
@@ -332,7 +340,8 @@ function buildDateTree(documents: Document[]): DocumentTreeData {
           icon: 'calendar',
           count: docs.length,
           metadata: { year, month },
-          children: docs.map(createDocumentNode),
+          // 날짜별 분류: 문서에 날짜/시간 포함
+          children: docs.map((doc) => createDocumentNode(doc, true)),
         }))
 
       nodes.push({

@@ -53,6 +53,8 @@ export interface DocumentTreeNode {
     month?: number
     /** 특수 폴더 여부 (태그 없음, 기타 등) */
     isSpecial?: boolean
+    /** 업로드 날짜 (날짜별 분류 시) */
+    uploadedAt?: string
   }
 }
 
