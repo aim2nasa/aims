@@ -76,11 +76,12 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const renderGroupNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
     const isExpanded = expandedKeys.has(node.key)
     const hasChildren = node.children && node.children.length > 0
+    const isSpecial = node.metadata?.isSpecial
 
     return (
       <div key={node.key} className="doc-explorer-tree__group">
         <div
-          className={`doc-explorer-tree__group-header doc-explorer-tree__group-header--level-${level}`}
+          className={`doc-explorer-tree__group-header doc-explorer-tree__group-header--level-${level}${isSpecial ? ' doc-explorer-tree__group-header--special' : ''}`}
           onClick={() => onToggleNode(node.key)}
           role="button"
           tabIndex={0}
@@ -106,13 +107,13 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             {isExpanded ? '📂' : '📁'}
           </span>
 
-          {/* 그룹 라벨 */}
-          <span className="doc-explorer-tree__group-label">{node.label}</span>
-
-          {/* 문서 수 배지 */}
-          {node.count !== undefined && (
-            <span className="doc-explorer-tree__count">{node.count}</span>
-          )}
+          {/* 그룹 라벨 + 문서 수 */}
+          <span className="doc-explorer-tree__group-label">
+            {node.label}
+            {node.count !== undefined && (
+              <span className="doc-explorer-tree__count-inline"> ({node.count}건)</span>
+            )}
+          </span>
         </div>
 
         {/* 자식 노드 */}

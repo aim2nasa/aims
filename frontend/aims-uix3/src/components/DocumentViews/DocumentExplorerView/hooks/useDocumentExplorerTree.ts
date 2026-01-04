@@ -24,6 +24,7 @@ export interface UseDocumentExplorerTreeResult {
   treeData: DocumentTreeData
   filteredDocuments: Document[]
   isLoading: boolean
+  minTagCount: number
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -32,6 +33,7 @@ export interface UseDocumentExplorerTreeResult {
   setSearchTerm: (term: string) => void
   setSelectedDocumentId: (id: string | null) => void
   expandToDocument: (documentId: string) => void
+  setMinTagCount: (value: number) => void
 }
 
 /**
@@ -54,6 +56,10 @@ export function useDocumentExplorerTree({
     'doc-explorer-search',
     ''
   )
+  const [minTagCount, setMinTagCountState] = usePersistedState<number>(
+    'doc-explorer-min-tag-count',
+    1
+  )
 
   // Non-persisted states
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
@@ -66,8 +72,8 @@ export function useDocumentExplorerTree({
 
   // 트리 데이터 빌드
   const treeData = useMemo(() => {
-    return buildTree(filteredDocuments, groupBy)
-  }, [filteredDocuments, groupBy])
+    return buildTree(filteredDocuments, groupBy, minTagCount)
+  }, [filteredDocuments, groupBy, minTagCount])
 
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
@@ -118,6 +124,14 @@ export function useDocumentExplorerTree({
     [setSearchTermState]
   )
 
+  // 기타 분류 최소 기준 설정
+  const setMinTagCount = useCallback(
+    (value: number) => {
+      setMinTagCountState(value)
+    },
+    [setMinTagCountState]
+  )
+
   // 특정 문서까지 트리 펼치기
   const expandToDocument = useCallback(
     (documentId: string) => {
@@ -158,6 +172,7 @@ export function useDocumentExplorerTree({
     treeData,
     filteredDocuments,
     isLoading,
+    minTagCount,
 
     // Actions
     setGroupBy,
@@ -166,5 +181,6 @@ export function useDocumentExplorerTree({
     setSearchTerm,
     setSelectedDocumentId,
     expandToDocument,
+    setMinTagCount,
   }
 }

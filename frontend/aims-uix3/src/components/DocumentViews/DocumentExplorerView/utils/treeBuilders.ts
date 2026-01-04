@@ -39,14 +39,14 @@ function createDocumentNode(doc: Document): DocumentTreeNode {
 /**
  * 분류 기준에 따라 트리를 빌드합니다
  */
-export function buildTree(documents: Document[], groupBy: DocumentGroupBy): DocumentTreeData {
+export function buildTree(documents: Document[], groupBy: DocumentGroupBy, minTagCount: number = 1): DocumentTreeData {
   switch (groupBy) {
     case 'customer':
       return buildCustomerTree(documents)
     case 'badgeType':
       return buildBadgeTypeTree(documents)
     case 'tag':
-      return buildTagTree(documents)
+      return buildTagTree(documents, minTagCount)
     case 'date':
       return buildDateTree(documents)
     default:
@@ -161,8 +161,11 @@ function buildBadgeTypeTree(documents: Document[]): DocumentTreeData {
 
 /**
  * 태그별 트리: 태그명 → 문서들
+ * - 태그 없음: 맨 위
+ * - 나머지: 문서 수 내림차순 정렬
+ * - minTagCount 이하 태그는 "기타"로 묶음
  */
-function buildTagTree(documents: Document[]): DocumentTreeData {
+function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentTreeData {
   const tagGroups = new Map<string, Document[]>()
   const noTag: Document[] = []
 
@@ -184,7 +187,36 @@ function buildTagTree(documents: Document[]): DocumentTreeData {
 
   const nodes: DocumentTreeNode[] = []
 
-  // 태그 없음 (맨 위)
+  // 문서 수 기준 내림차순 정렬
+  const sortedTags = Array.from(tagGroups.entries())
+    .sort((a, b) => b[1].length - a[1].length)
+
+  // 1. 메인 태그와 기타 태그 분리
+  const mainTags: Array<[string, Document[]]> = []
+  const otherTags: Array<[string, Document[]]> = []
+
+  sortedTags.forEach(([tag, docs]) => {
+    if (docs.length > minTagCount) {
+      mainTags.push([tag, docs])
+    } else {
+      otherTags.push([tag, docs])
+    }
+  })
+
+  // 2. 메인 태그 노드 (문서 수 내림차순)
+  mainTags.forEach(([tag, docs]) => {
+    nodes.push({
+      key: `tag-${tag}`,
+      label: tag,
+      type: 'group',
+      icon: 'tag.fill',
+      count: docs.length,
+      metadata: { tag },
+      children: docs.map(createDocumentNode),
+    })
+  })
+
+  // 3. 태그 없음 (기타 위에 배치)
   if (noTag.length > 0) {
     nodes.push({
       key: 'no-tag',
@@ -193,28 +225,37 @@ function buildTagTree(documents: Document[]): DocumentTreeData {
       icon: 'tag.slash.fill',
       count: noTag.length,
       children: noTag.map(createDocumentNode),
+      metadata: { isSpecial: true },
     })
   }
 
-  // 태그별 그룹 (가나다순)
-  Array.from(tagGroups.entries())
-    .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
-    .forEach(([tag, docs]) => {
-      nodes.push({
-        key: `tag-${tag}`,
-        label: tag,
-        type: 'group',
-        icon: 'tag.fill',
-        count: docs.length,
-        metadata: { tag },
-        children: docs.map(createDocumentNode),
-      })
+  // 4. 기타 폴더 (minTagCount건 이하 태그들)
+  if (otherTags.length > 0) {
+    const otherChildren: DocumentTreeNode[] = otherTags.map(([tag, docs]) => ({
+      key: `tag-${tag}`,
+      label: tag,
+      type: 'subgroup' as const,
+      icon: 'tag',
+      count: docs.length,
+      metadata: { tag },
+      children: docs.map(createDocumentNode),
+    }))
+
+    nodes.push({
+      key: 'other-tags',
+      label: '기타',
+      type: 'group',
+      icon: 'ellipsis.circle.fill',
+      count: otherTags.reduce((sum, [, docs]) => sum + docs.length, 0),
+      children: otherChildren,
+      metadata: { isSpecial: true },
     })
+  }
 
   return {
     nodes,
     totalDocuments: documents.length,
-    groupStats: { groupCount: tagGroups.size + (noTag.length ? 1 : 0) },
+    groupStats: { groupCount: mainTags.length + (noTag.length ? 1 : 0) + (otherTags.length ? 1 : 0) },
   }
 }
 

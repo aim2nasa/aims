@@ -21,6 +21,9 @@ export interface DocumentExplorerToolbarProps {
   totalDocuments: number
   groupCount: number
   isLoading?: boolean
+  /** 기타 분류 최소 기준 (태그별 분류 시) */
+  minTagCount: number
+  onMinTagCountChange: (value: number) => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -41,6 +44,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   totalDocuments,
   groupCount,
   isLoading = false,
+  minTagCount,
+  onMinTagCountChange,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -67,6 +72,29 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           onChange={handleGroupByChange}
         />
       </div>
+
+      {/* 기타 분류 기준 (태그별 분류 시에만 표시) */}
+      {groupBy === 'tag' && (
+        <div className="doc-explorer-toolbar__min-count" title={`${minTagCount}건 이하 태그는 기타로 분류`}>
+          <button
+            type="button"
+            className="doc-explorer-toolbar__stepper-btn"
+            onClick={() => minTagCount > 1 && onMinTagCountChange(minTagCount - 1)}
+            disabled={minTagCount <= 1}
+          >
+            −
+          </button>
+          <span className="doc-explorer-toolbar__stepper-value">{minTagCount}</span>
+          <button
+            type="button"
+            className="doc-explorer-toolbar__stepper-btn"
+            onClick={() => minTagCount < 99 && onMinTagCountChange(minTagCount + 1)}
+            disabled={minTagCount >= 99}
+          >
+            +
+          </button>
+        </div>
+      )}
 
       {/* 검색 입력 */}
       <div className="doc-explorer-toolbar__search">

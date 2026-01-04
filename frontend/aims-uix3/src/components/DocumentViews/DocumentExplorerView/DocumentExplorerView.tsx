@@ -48,11 +48,13 @@ const DocumentExplorerContent: React.FC<{
     isAllExpanded,
     treeData,
     isLoading,
+    minTagCount,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
     setSearchTerm,
     setSelectedDocumentId,
+    setMinTagCount,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -95,6 +97,8 @@ const DocumentExplorerContent: React.FC<{
         totalDocuments={treeData.totalDocuments}
         groupCount={treeData.groupStats.groupCount}
         isLoading={isLoading}
+        minTagCount={minTagCount}
+        onMinTagCountChange={setMinTagCount}
       />
 
       {/* 트리 뷰 */}

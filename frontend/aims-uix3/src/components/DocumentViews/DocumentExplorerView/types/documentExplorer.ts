@@ -51,6 +51,8 @@ export interface DocumentTreeNode {
     tag?: string
     year?: number
     month?: number
+    /** 특수 폴더 여부 (태그 없음, 기타 등) */
+    isSpecial?: boolean
   }
 }
 

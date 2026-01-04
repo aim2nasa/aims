@@ -52,6 +52,46 @@
   min-width: 140px;
 }
 
+/* 기타 분류 기준 (Stepper) */
+.doc-explorer-toolbar__min-count {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-xs);
+}
+
+.doc-explorer-toolbar__stepper-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__stepper-btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-text-tertiary);
+}
+
+.doc-explorer-toolbar__stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.doc-explorer-toolbar__stepper-value {
+  min-width: 24px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 /* Search */
 .doc-explorer-toolbar__search {
   position: relative;
@@ -169,6 +209,7 @@
    Tree
    ============================================ */
 .doc-explorer-tree {
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -218,6 +259,16 @@
   background: var(--color-bg-hover);
 }
 
+/* 특수 폴더 (태그 없음, 기타) */
+.doc-explorer-tree__group-header--special .doc-explorer-tree__group-label {
+  color: var(--color-text-tertiary);
+  transform: skewX(-8deg);
+}
+
+.doc-explorer-tree__group-header--special .doc-explorer-tree__folder-icon {
+  opacity: 0.6;
+}
+
 /* Indentation by level */
 .doc-explorer-tree__group-header--level-0 {
   padding-left: var(--explorer-spacing-md);
@@ -261,7 +312,7 @@
   white-space: nowrap;
 }
 
-/* Count Badge */
+/* Count Badge (legacy) */
 .doc-explorer-tree__count {
   flex-shrink: 0;
   padding: 1px 6px;
@@ -270,6 +321,12 @@
   color: var(--color-text-tertiary);
   background: var(--color-bg-tertiary);
   border-radius: 10px;
+}
+
+/* Count Inline (폴더명 옆 인라인 표시) */
+.doc-explorer-tree__count-inline {
+  font-weight: 400;
+  color: var(--color-text-tertiary);
 }
 
 /* Children Container */
