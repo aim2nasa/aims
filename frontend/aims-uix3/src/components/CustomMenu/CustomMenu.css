@@ -49,8 +49,8 @@
 .custom-menu-item {
   display: flex;
   align-items: center;
-  padding: 6px 16px;
-  margin: 1px 0;
+  padding: 4px 16px;
+  margin: 0;
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-primary);

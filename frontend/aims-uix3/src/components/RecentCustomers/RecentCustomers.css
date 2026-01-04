@@ -13,7 +13,7 @@
 .recent-customers__header {
   display: flex;
   align-items: center;
-  padding: 6px 16px; /* custom-menu-item과 동일 */
+  padding: 4px 16px; /* custom-menu-item과 동일 */
   color: var(--color-text-tertiary);
   font-size: 10px;
   font-weight: 600;
@@ -65,7 +65,7 @@
 .recent-customers__list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
 }
 
 /* 개별 고객 아이템 - 서브메뉴와 동일한 들여쓰기 */
