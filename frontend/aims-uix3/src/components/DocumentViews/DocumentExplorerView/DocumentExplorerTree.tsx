@@ -17,6 +17,8 @@ export interface DocumentExplorerTreeProps {
   onToggleNode: (key: string) => void
   onDocumentClick: (document: Document) => void
   onDocumentDoubleClick: (document: Document) => void
+  onCustomerClick?: (customerName: string) => void
+  recentDocuments?: Document[]
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -30,6 +32,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   onToggleNode,
   onDocumentClick,
   onDocumentDoubleClick,
+  onCustomerClick,
+  recentDocuments = [],
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -71,6 +75,15 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       }
     },
     [onDocumentClick]
+  )
+
+  // 고객명 클릭 핸들러
+  const handleCustomerBadgeClick = useCallback(
+    (e: React.MouseEvent, customerName: string) => {
+      e.stopPropagation() // 문서 클릭 이벤트 방지
+      onCustomerClick?.(customerName)
+    },
+    [onCustomerClick]
   )
 
   // 그룹 노드 렌더링
@@ -182,10 +195,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           {node.label}
         </span>
 
-        {/* 고객명 */}
+        {/* 고객명 (클릭 시 해당 고객 문서만 필터) */}
         <span
-          className={`doc-explorer-tree__doc-customer${!customerName ? ' doc-explorer-tree__doc-customer--empty' : ''}`}
-          title={customerName || '-'}
+          className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
+          title={customerName ? `${customerName} 문서만 보기` : '-'}
+          onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
         >
           {customerName || '-'}
         </span>
@@ -229,8 +243,55 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     )
   }
 
+  // 최근 본 문서 렌더링
+  const renderRecentDocuments = () => {
+    if (recentDocuments.length === 0) return null
+
+    return (
+      <div className="doc-explorer-tree__recent">
+        <div className="doc-explorer-tree__recent-header">
+          <SFSymbol
+            name="clock.fill"
+            size={SFSymbolSize.CAPTION_1}
+            weight={SFSymbolWeight.REGULAR}
+          />
+          <span>최근 본 문서</span>
+        </div>
+        <div className="doc-explorer-tree__recent-list">
+          {recentDocuments.map((doc) => {
+            const docId = doc._id || doc.id || ''
+            const isSelected = selectedDocumentId === docId
+            const badgeType = doc.badgeType || 'BIN'
+            const displayName = doc.displayName || doc.originalName || doc.filename || doc.name || '이름 없음'
+
+            return (
+              <div
+                key={`recent-${docId}`}
+                className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
+                onClick={(e) => handleDocumentClick(doc, e)}
+                role="button"
+                tabIndex={0}
+              >
+                <SFSymbol
+                  name="doc.fill"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.REGULAR}
+                  className={`doc-explorer-tree__doc-icon--${badgeType.toLowerCase()}`}
+                />
+                <span className="doc-explorer-tree__recent-name" title={displayName}>
+                  {displayName}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="doc-explorer-tree">
+      {renderRecentDocuments()}
       {nodes.map((node) => renderNode(node, 0))}
     </div>
   )

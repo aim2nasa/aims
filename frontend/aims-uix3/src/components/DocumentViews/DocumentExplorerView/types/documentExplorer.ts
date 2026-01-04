@@ -11,6 +11,23 @@ import type { Document } from '@/types/documentStatus'
 export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date'
 
 /**
+ * 빠른 필터 타입
+ */
+export type QuickFilterType = 'none' | 'today' | 'thisWeek' | 'unlinked' | 'ocrPending' | 'recentViewed'
+
+/**
+ * 빠른 필터 라벨
+ */
+export const QUICK_FILTER_LABELS: Record<QuickFilterType, string> = {
+  none: '전체',
+  today: '오늘',
+  thisWeek: '이번주',
+  unlinked: '미연결',
+  ocrPending: 'BIN',
+  recentViewed: '최근본문서',
+}
+
+/**
  * 문서 정렬 기준
  */
 export type DocumentSortBy = 'name' | 'date' | 'badgeType' | 'customer'

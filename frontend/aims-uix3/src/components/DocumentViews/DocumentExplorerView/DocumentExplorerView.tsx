@@ -51,6 +51,9 @@ const DocumentExplorerContent: React.FC<{
     minTagCount,
     sortBy,
     sortDirection,
+    quickFilter,
+    recentDocuments,
+    customerFilter,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -58,6 +61,10 @@ const DocumentExplorerContent: React.FC<{
     setSelectedDocumentId,
     setMinTagCount,
     setSortBy,
+    setQuickFilter,
+    addToRecentDocuments,
+    setCustomerFilter,
+    clearAllFilters,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -68,9 +75,18 @@ const DocumentExplorerContent: React.FC<{
     (doc: Document) => {
       const docId = doc._id || doc.id || ''
       setSelectedDocumentId(docId)
+      addToRecentDocuments(docId) // 최근 본 문서에 추가
       onDocumentClick?.(docId)
     },
-    [onDocumentClick, setSelectedDocumentId]
+    [onDocumentClick, setSelectedDocumentId, addToRecentDocuments]
+  )
+
+  // 고객명 클릭 핸들러 (해당 고객 문서만 필터)
+  const handleCustomerClick = useCallback(
+    (customerName: string) => {
+      setCustomerFilter(customerName)
+    },
+    [setCustomerFilter]
   )
 
   // 문서 더블클릭 핸들러
@@ -105,6 +121,10 @@ const DocumentExplorerContent: React.FC<{
         sortBy={sortBy}
         sortDirection={sortDirection}
         onSortByChange={setSortBy}
+        quickFilter={quickFilter}
+        onQuickFilterChange={setQuickFilter}
+        customerFilter={customerFilter}
+        onCustomerFilterClear={() => setCustomerFilter(null)}
       />
 
       {/* 트리 뷰 */}
@@ -123,6 +143,8 @@ const DocumentExplorerContent: React.FC<{
             onToggleNode={toggleNode}
             onDocumentClick={handleDocumentClick}
             onDocumentDoubleClick={handleDocumentDoubleClick}
+            onCustomerClick={handleCustomerClick}
+            recentDocuments={recentDocuments}
           />
         )}
       </div>
