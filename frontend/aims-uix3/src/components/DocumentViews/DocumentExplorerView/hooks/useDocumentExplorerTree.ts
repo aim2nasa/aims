@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, QuickFilterType } from '../types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData, DocumentTreeNode, QuickFilterType } from '../types/documentExplorer'
 import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes, getDocumentDate } from '../utils/treeBuilders'
 
 const MAX_RECENT_DOCUMENTS = 5
@@ -153,12 +153,26 @@ export function useDocumentExplorerTree({
   }, [documents, searchTerm, quickFilter, customerFilter, applyQuickFilter, applyCustomerFilter])
 
   // 트리 데이터 빌드 (정렬 적용)
+  // 검색어가 있을 때도 그룹핑 유지, 매칭 그룹을 상단에 표시
   const treeData = useMemo(() => {
     const tree = buildTree(filteredDocuments, groupBy, minTagCount)
+
+    // 검색어가 있을 때 매칭 그룹을 상단으로 정렬
+    let sortedNodes = tree.nodes
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase()
+      sortedNodes = [...tree.nodes].sort((a, b) => {
+        // 그룹명이 검색어와 매칭되면 상단으로
+        const aMatch = a.label.toLowerCase().includes(term) ? 1 : 0
+        const bMatch = b.label.toLowerCase().includes(term) ? 1 : 0
+        return bMatch - aMatch
+      })
+    }
+
     // 문서 노드에 정렬 적용
-    const sortedNodes = sortTreeNodes(tree.nodes, sortBy, sortDirection)
+    sortedNodes = sortTreeNodes(sortedNodes, sortBy, sortDirection)
     return { ...tree, nodes: sortedNodes }
-  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection])
+  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection, searchTerm])
 
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])

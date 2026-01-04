@@ -386,16 +386,33 @@ export function collectAllKeys(nodes: DocumentTreeNode[]): string[] {
 
 /**
  * 검색어로 문서를 필터링합니다
+ * 파일명 매칭 문서를 우선 정렬합니다
  */
 export function filterDocuments(documents: Document[], searchTerm: string): Document[] {
   if (!searchTerm.trim()) return documents
 
   const term = searchTerm.toLowerCase()
-  return documents.filter((doc) => {
-    const name = getDocumentDisplayName(doc).toLowerCase()
-    const customerName = doc.customer_relation?.customer_name?.toLowerCase() || ''
-    return name.includes(term) || customerName.includes(term)
-  })
+
+  // 필터링 + 관련도 점수 계산
+  const filtered = documents
+    .map((doc) => {
+      const name = getDocumentDisplayName(doc).toLowerCase()
+      const customerName = doc.customer_relation?.customer_name?.toLowerCase() || ''
+      const nameMatch = name.includes(term)
+      const customerMatch = customerName.includes(term)
+
+      if (!nameMatch && !customerMatch) return null
+
+      // 점수: 파일명 매칭 = 2, 고객명만 매칭 = 1
+      const score = nameMatch ? 2 : 1
+      return { doc, score }
+    })
+    .filter((item): item is { doc: Document; score: number } => item !== null)
+
+  // 점수 내림차순 정렬 (파일명 매칭 우선)
+  filtered.sort((a, b) => b.score - a.score)
+
+  return filtered.map((item) => item.doc)
 }
 
 /**

@@ -344,22 +344,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     return renderGroupNode(node, level)
   }
 
-  // 빈 상태
-  if (nodes.length === 0) {
-    return (
-      <div className="doc-explorer-tree__empty">
-        <SFSymbol
-          name="doc.text.magnifyingglass"
-          size={SFSymbolSize.TITLE_1}
-          weight={SFSymbolWeight.LIGHT}
-          className="doc-explorer-tree__empty-icon"
-        />
-        <p className="doc-explorer-tree__empty-text">문서가 없습니다</p>
-      </div>
-    )
-  }
-
-  // 최근 본 문서 정렬
+  // 최근 본 문서 정렬 (훅은 조건부 리턴 전에 호출해야 함)
   const sortedRecentDocuments = useMemo(() => {
     if (recentDocuments.length === 0) return []
 
@@ -401,9 +386,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     return sorted
   }, [recentDocuments, sortBy, sortDirection])
 
-  // 최근 본 문서 렌더링
+  // 최근 본 문서 렌더링 (검색 중일 때는 숨김)
   const renderRecentDocuments = () => {
     if (sortedRecentDocuments.length === 0) return null
+    if (searchTerm.trim()) return null // 검색 중에는 최근 본 문서 숨김
 
     return (
       <div className={`doc-explorer-tree__recent ${!isRecentExpanded ? 'doc-explorer-tree__recent--collapsed' : ''}`}>
@@ -480,6 +466,21 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             })}
           </div>
         )}
+      </div>
+    )
+  }
+
+  // 빈 상태 (모든 훅 호출 이후에 체크)
+  if (nodes.length === 0) {
+    return (
+      <div className="doc-explorer-tree__empty">
+        <SFSymbol
+          name="doc.text.magnifyingglass"
+          size={SFSymbolSize.TITLE_1}
+          weight={SFSymbolWeight.LIGHT}
+          className="doc-explorer-tree__empty-icon"
+        />
+        <p className="doc-explorer-tree__empty-text">문서가 없습니다</p>
       </div>
     )
   }
