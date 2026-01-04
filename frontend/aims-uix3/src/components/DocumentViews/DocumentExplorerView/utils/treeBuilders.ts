@@ -161,15 +161,15 @@ function buildBadgeTypeTree(documents: Document[]): DocumentTreeData {
 
 /**
  * 태그별 트리: 태그명 → 문서들
- * TODO: 현재 문서에 태그 정보가 없으면 "태그 없음" 그룹으로 분류
  */
 function buildTagTree(documents: Document[]): DocumentTreeData {
   const tagGroups = new Map<string, Document[]>()
   const noTag: Document[] = []
 
   documents.forEach((doc) => {
-    // Document 타입에서 tags 필드 확인 (현재는 없을 수 있음)
-    const tags = (doc as unknown as { tags?: string[] }).tags
+    // 태그는 meta.tags에 저장됨
+    const meta = (doc as unknown as { meta?: { tags?: string[] } }).meta
+    const tags = meta?.tags
     if (tags && tags.length > 0) {
       tags.forEach((tag: string) => {
         if (!tagGroups.has(tag)) {
