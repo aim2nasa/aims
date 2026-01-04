@@ -256,6 +256,10 @@
   gap: var(--explorer-spacing-sm);
   font-size: 11px;
   color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 150px;
+  justify-content: flex-end;
 }
 
 .doc-explorer-toolbar__stat-separator {

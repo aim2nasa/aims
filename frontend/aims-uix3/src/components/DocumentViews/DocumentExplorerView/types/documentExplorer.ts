@@ -48,7 +48,7 @@ export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
  * 분류 기준별 라벨
  */
 export const GROUP_BY_LABELS: Record<DocumentGroupBy, string> = {
-  customer: '고객별',
+  customer: '고객',
   badgeType: '문서유형별',
   tag: '태그별',
   date: '날짜별',
