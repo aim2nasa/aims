@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef, memo } from 'react'
+import { createPortal } from 'react-dom'
 import type { Document } from '@/types/documentStatus'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 
@@ -206,36 +207,34 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
   // 마우스 위치 기반으로 실시간 계산
   const displayPosition = calculatePosition(position.x, position.y)
 
-  // 파일 타입 아이콘 fallback (썸네일 없을 때)
-  if (!thumbnailUrl && fileTypeIcon) {
-    return (
-      <div
-        className="hover-preview hover-preview--icon"
-        style={{
-          position: 'fixed',
-          left: displayPosition.x,
-          top: displayPosition.y,
-          zIndex: 10000,
-        }}
-      >
-        <div
-          className="hover-preview__file-icon"
-          style={{ backgroundColor: fileTypeIcon.color }}
-        >
-          <span className="hover-preview__file-icon-emoji">{fileTypeIcon.icon}</span>
-          <span className="hover-preview__file-icon-label">{fileTypeIcon.label}</span>
-          <span className="hover-preview__file-icon-name">
-            {document ? DocumentStatusService.extractFilename(document) : ''}
-          </span>
-        </div>
-      </div>
-    )
-  }
-
   // ★ 캐시된 이미지이거나 이미 로드된 경우: 로딩 스피너 없이 즉시 표시
   const showSpinner = !isImageCached && !imageLoaded && !imageError
 
-  return (
+  // Portal로 body에 직접 렌더링하여 부모 컴포넌트의 overflow 영향을 받지 않음
+  const previewContent = !thumbnailUrl && fileTypeIcon ? (
+    // 파일 타입 아이콘 fallback (썸네일 없을 때)
+    <div
+      className="hover-preview hover-preview--icon"
+      style={{
+        position: 'fixed',
+        left: displayPosition.x,
+        top: displayPosition.y,
+        zIndex: 10000,
+      }}
+    >
+      <div
+        className="hover-preview__file-icon"
+        style={{ backgroundColor: fileTypeIcon.color }}
+      >
+        <span className="hover-preview__file-icon-emoji">{fileTypeIcon.icon}</span>
+        <span className="hover-preview__file-icon-label">{fileTypeIcon.label}</span>
+        <span className="hover-preview__file-icon-name">
+          {document ? DocumentStatusService.extractFilename(document) : ''}
+        </span>
+      </div>
+    </div>
+  ) : (
+    // 썸네일 이미지
     <div
       className="hover-preview"
       style={{
@@ -266,6 +265,9 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
       </div>
     </div>
   )
+
+  // createPortal로 body에 직접 렌더링 (CenterPane overflow 무시)
+  return createPortal(previewContent, globalThis.document.body)
 }
 
 // React.memo로 최적화 - props가 변경되지 않으면 리렌더링 안함
