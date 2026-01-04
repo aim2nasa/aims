@@ -28,6 +28,7 @@ const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
 const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
 const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
+const DocumentExplorerView = lazy(() => import('./components/DocumentViews/DocumentExplorerView/DocumentExplorerView'))
 const DocumentSearchView = lazy(() => import('./components/DocumentViews/DocumentSearchView/DocumentSearchView'))
 const PersonalFilesView = lazy(() => import('./components/DocumentViews/PersonalFilesView/PersonalFilesView'))
 const DocumentManagementView = lazy(() => import('./components/DocumentViews/DocumentManagementView/DocumentManagementView'))
@@ -397,6 +398,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     } else if (activeDocumentView === "documents" ||
         activeDocumentView === "documents-register" ||
         activeDocumentView === "documents-library" ||
+        activeDocumentView === "documents-explorer" ||
         activeDocumentView === "documents-search" ||
         activeDocumentView === "documents-my-files" ||
         activeDocumentView === "dsd" ||
@@ -683,7 +685,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 빠른 작업
       'quick-actions',
       // 문서 관리 View들
-      'documents', 'documents-register', 'documents-library', 'documents-search', 'documents-my-files', 'dsd',
+      'documents', 'documents-register', 'documents-library', 'documents-explorer', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
       'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship', 'customers-full-detail',
       // 계약 관리 View들
@@ -1440,6 +1442,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 documentLibraryRefreshRef.current = refreshFn
               }}
               onNavigate={handleMenuClick}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <DocumentExplorerView
+              visible={activeDocumentView === 'documents-explorer'}
+              onClose={closeDocumentView}
+              onDocumentClick={handleDocumentClick}
+              onDocumentDoubleClick={handleDocumentPreviewModal}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 

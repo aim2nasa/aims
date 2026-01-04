@@ -89,6 +89,15 @@ const MenuIcons = {
       weight={SFSymbolWeight.MEDIUM}
     />
   ),
+  // 문서 탐색기 아이콘 (폴더 트리 구조) - SVG 직접 사용
+  FolderTree: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="menu-icon--folder-tree">
+      <path d="M2 4h6l2 2h10a1 1 0 011 1v3H2V5a1 1 0 011-1z" opacity="0.9"/>
+      <path d="M6 12v8M6 14h4M6 18h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      <rect x="10" y="12" width="6" height="4" rx="0.5" opacity="0.7"/>
+      <rect x="10" y="17" width="6" height="4" rx="0.5" opacity="0.7"/>
+    </svg>
+  ),
   // 계약 관리 아이콘
   Contract: () => (
     <SFSymbol
@@ -547,6 +556,12 @@ const CustomMenu = ({
           tooltipTitle: '모든 문서를 보여줍니다',
         },
         {
+          key: 'documents-explorer',
+          icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
+          label: '문서 탐색기',
+          tooltipTitle: '트리 구조로 문서를 탐색합니다',
+        },
+        {
           key: 'documents-search',
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
           label: '상세 문서검색',
@@ -562,6 +577,12 @@ const CustomMenu = ({
         icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
         label: '',
         tooltipTitle: '모든 문서를 보여줍니다',
+      },
+      {
+        key: 'documents-explorer',
+        icon: <span className="menu-icon-green"><MenuIcons.FolderTree /></span>,
+        label: '',
+        tooltipTitle: '트리 구조로 문서를 탐색합니다',
       },
       {
         key: 'documents-search',

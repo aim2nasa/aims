@@ -32,6 +32,7 @@ const MENU_LABELS: Record<string, { parent?: string; label: string }> = {
   // 문서
   'documents': { label: '문서' },
   'documents-library': { parent: 'documents', label: '전체 문서 보기' },
+  'documents-explorer': { parent: 'documents', label: '문서 탐색기' },
   'documents-search': { parent: 'documents', label: '상세 문서검색' },
   'documents-my-files': { parent: 'documents', label: '내 파일' },
 

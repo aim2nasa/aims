@@ -1,0 +1,394 @@
+/**
+ * DocumentExplorerView Styles
+ * @description 문서 탐색기 스타일 - Windows 11 Fluent Design
+ */
+
+/* ============================================
+   Variables (CSS 변수 시스템 사용)
+   ============================================ */
+.doc-explorer-content {
+  --explorer-spacing-xs: 4px;
+  --explorer-spacing-sm: 8px;
+  --explorer-spacing-md: 12px;
+  --explorer-spacing-lg: 16px;
+  --explorer-spacing-xl: 20px;
+
+  --explorer-border-radius: 6px;
+  --explorer-transition: 150ms ease;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ============================================
+   Toolbar
+   ============================================ */
+.doc-explorer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-md);
+  padding: var(--explorer-spacing-md) var(--explorer-spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  flex-shrink: 0;
+}
+
+.doc-explorer-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-sm);
+}
+
+.doc-explorer-toolbar__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+/* Dropdown 폭 조정 */
+.doc-explorer-toolbar__group .ios-dropdown {
+  min-width: 140px;
+}
+
+/* Search */
+.doc-explorer-toolbar__search {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+}
+
+.doc-explorer-toolbar__search-icon {
+  position: absolute;
+  left: var(--explorer-spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+.doc-explorer-toolbar__search-input {
+  width: 100%;
+  padding: 6px 28px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--explorer-border-radius);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: border-color var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__search-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.doc-explorer-toolbar__search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.doc-explorer-toolbar__search-clear {
+  position: absolute;
+  right: var(--explorer-spacing-xs);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__search-clear:hover {
+  opacity: 1;
+}
+
+/* Actions */
+.doc-explorer-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-xs);
+}
+
+.doc-explorer-toolbar__actions .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Stats */
+.doc-explorer-toolbar__stats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-sm);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.doc-explorer-toolbar__stat-separator {
+  opacity: 0.5;
+}
+
+/* ============================================
+   Tree Container
+   ============================================ */
+.doc-explorer-tree-container {
+  flex: 1;
+  overflow: auto;
+  padding: var(--explorer-spacing-md);
+}
+
+/* Loading */
+.doc-explorer-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--explorer-spacing-md);
+  padding: var(--explorer-spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.doc-explorer-loading__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ============================================
+   Tree
+   ============================================ */
+.doc-explorer-tree {
+  user-select: none;
+}
+
+/* Empty State */
+.doc-explorer-tree__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--explorer-spacing-md);
+  padding: var(--explorer-spacing-xl) * 2;
+  color: var(--color-text-tertiary);
+}
+
+.doc-explorer-tree__empty-icon {
+  opacity: 0.5;
+}
+
+.doc-explorer-tree__empty-text {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ============================================
+   Group Node (폴더)
+   ============================================ */
+.doc-explorer-tree__group {
+  margin-bottom: 2px;
+}
+
+.doc-explorer-tree__group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-sm);
+  padding: var(--explorer-spacing-sm) var(--explorer-spacing-md);
+  border-radius: var(--explorer-border-radius);
+  cursor: pointer;
+  transition: background-color var(--explorer-transition);
+}
+
+.doc-explorer-tree__group-header:hover {
+  background: var(--color-bg-hover);
+}
+
+.doc-explorer-tree__group-header:focus {
+  outline: none;
+  background: var(--color-bg-hover);
+}
+
+/* Indentation by level */
+.doc-explorer-tree__group-header--level-0 {
+  padding-left: var(--explorer-spacing-md);
+}
+
+.doc-explorer-tree__group-header--level-1 {
+  padding-left: calc(var(--explorer-spacing-md) + 20px);
+}
+
+.doc-explorer-tree__group-header--level-2 {
+  padding-left: calc(var(--explorer-spacing-md) + 40px);
+}
+
+/* Chevron */
+.doc-explorer-tree__chevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  transition: transform var(--explorer-transition);
+}
+
+/* Folder Icon (내 보관함 스타일) */
+.doc-explorer-tree__folder-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Group Label */
+.doc-explorer-tree__group-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Count Badge */
+.doc-explorer-tree__count {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  border-radius: 10px;
+}
+
+/* Children Container */
+.doc-explorer-tree__children {
+  overflow: hidden;
+}
+
+/* ============================================
+   Document Node (파일)
+   ============================================ */
+.doc-explorer-tree__document {
+  display: flex;
+  align-items: center;
+  gap: var(--explorer-spacing-sm);
+  padding: var(--explorer-spacing-xs) var(--explorer-spacing-md);
+  border-radius: var(--explorer-border-radius);
+  cursor: pointer;
+  transition: background-color var(--explorer-transition);
+}
+
+.doc-explorer-tree__document:hover {
+  background: var(--color-bg-hover);
+}
+
+.doc-explorer-tree__document:focus {
+  outline: none;
+  background: var(--color-bg-hover);
+}
+
+.doc-explorer-tree__document--selected {
+  background: var(--color-accent-bg);
+}
+
+.doc-explorer-tree__document--selected:hover {
+  background: var(--color-accent-bg-hover);
+}
+
+/* Indentation by level */
+.doc-explorer-tree__document--level-1 {
+  padding-left: calc(var(--explorer-spacing-md) + 36px);
+}
+
+.doc-explorer-tree__document--level-2 {
+  padding-left: calc(var(--explorer-spacing-md) + 56px);
+}
+
+.doc-explorer-tree__document--level-3 {
+  padding-left: calc(var(--explorer-spacing-md) + 76px);
+}
+
+/* Document Icon */
+.doc-explorer-tree__doc-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-explorer-tree__doc-icon--txt {
+  color: var(--color-green);
+}
+
+.doc-explorer-tree__doc-icon--ocr {
+  color: var(--color-purple);
+}
+
+.doc-explorer-tree__doc-icon--bin {
+  color: var(--color-text-tertiary);
+}
+
+/* Document Name */
+.doc-explorer-tree__doc-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badge */
+.doc-explorer-tree__badge {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.doc-explorer-tree__badge--txt {
+  color: var(--color-green);
+  background: var(--color-green-bg);
+}
+
+.doc-explorer-tree__badge--ocr {
+  color: var(--color-purple);
+  background: var(--color-purple-bg);
+}
+
+.doc-explorer-tree__badge--bin {
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+}
+
+/* ============================================
+   Dark Mode Overrides
+   ============================================ */
+html[data-theme="dark"] .doc-explorer-toolbar {
+  background: var(--color-bg-tertiary);
+}
+
+html[data-theme="dark"] .doc-explorer-tree__group-header:hover,
+html[data-theme="dark"] .doc-explorer-tree__document:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="dark"] .doc-explorer-tree__document--selected {
+  background: rgba(var(--color-accent-rgb), 0.15);
+}
