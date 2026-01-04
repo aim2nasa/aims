@@ -11,7 +11,8 @@
  * - Home/End: 처음/마지막으로 이동
  */
 
-import React, { useCallback, useRef, useMemo, useEffect, useState } from 'react'
+import React, { useCallback, useRef, useMemo, useEffect, useState, useReducer } from 'react'
+import { flushSync } from 'react-dom'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
@@ -117,10 +118,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const lastClickedIdRef = useRef<string | null>(null)
   const treeContainerRef = useRef<HTMLDivElement>(null)
 
-  // 호버 프리뷰 상태
-  const [hoverDocument, setHoverDocument] = useState<Document | null>(null)
-  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 호버 프리뷰 상태 (useRef로 동기적 업데이트 + forceUpdate로 즉시 렌더링)
+  // useState는 비동기적이라 빠른 마우스 이동 시 batching으로 누락될 수 있음
+  const [, forceHoverUpdate] = useReducer(x => x + 1, 0)
+  const hoverStateRef = useRef<{
+    document: Document
+    position: { x: number; y: number }
+  } | null>(null)
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 최근 본 문서 섹션 펼침/접힘 상태 (localStorage에 저장)
   const [isRecentExpanded, setIsRecentExpanded] = useState(() => {
@@ -171,8 +176,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       const docId = doc._id || doc.id || ''
 
       // 클릭 후에도 hover 유지 (리렌더링으로 인한 mouseLeave 방지)
-      setHoverDocument(doc)
-      setHoverPosition({ x: e.clientX, y: e.clientY })
+      hoverStateRef.current = { document: doc, position: { x: e.clientX, y: e.clientY } }
+      forceHoverUpdate()
 
       // 클릭한 노드로 포커스 이동
       if (nodeKey) {
@@ -219,36 +224,59 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     [onCustomerClick]
   )
 
-  // 문서 호버 핸들러
+  // 문서 호버 핸들러 (mouseEnter 시 즉시 표시)
   const handleDocumentMouseEnter = useCallback(
     (doc: Document, e: React.MouseEvent) => {
-      // 기존 타이머 취소
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current)
+      // Leave 타이머 취소 (문서 간 이동 시 깜빡임 방지)
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current)
+        leaveTimerRef.current = null
       }
-      // 마우스 위치 저장
-      setHoverPosition({ x: e.clientX, y: e.clientY })
-      setHoverDocument(doc)
+      // ref로 동기적 업데이트 + flushSync로 즉시 렌더링 (batching 방지)
+      hoverStateRef.current = { document: doc, position: { x: e.clientX, y: e.clientY } }
+      flushSync(() => {
+        forceHoverUpdate()
+      })
     },
     []
   )
 
-  // 마우스 이동 시 위치 업데이트 (+ 모달 닫힌 후 복구용 문서 설정)
+  // 마우스 이동 시 위치 업데이트 (+ leave 타이머 취소)
   const handleDocumentMouseMove = useCallback(
     (doc: Document, e: React.MouseEvent) => {
-      setHoverPosition({ x: e.clientX, y: e.clientY })
-      // 모달/RightPane 닫힌 후 마우스가 이미 문서 위에 있는 경우 복구
-      setHoverDocument(doc)
+      // mouseEnter가 안 들어올 수 있으므로, mouseMove에서도 leave 타이머 취소
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current)
+        leaveTimerRef.current = null
+      }
+
+      // hover 상태가 없으면 flushSync로 즉시 표시 (mouseEnter가 누락된 경우)
+      const needsFlush = !hoverStateRef.current
+      hoverStateRef.current = { document: doc, position: { x: e.clientX, y: e.clientY } }
+
+      if (needsFlush) {
+        flushSync(() => {
+          forceHoverUpdate()
+        })
+      } else {
+        forceHoverUpdate()
+      }
     },
     []
   )
 
+  // mouseLeave 디바운싱 (문서 간 빠른 이동 시 경쟁 조건 방지)
   const handleDocumentMouseLeave = useCallback(() => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current)
+    // 이미 타이머가 있으면 취소
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current)
     }
-    setHoverDocument(null)
-    setHoverPosition(null)
+    // 30ms 후에 null로 설정 (다른 문서로 Enter하면 취소됨)
+    leaveTimerRef.current = setTimeout(() => {
+      hoverStateRef.current = null
+      forceHoverUpdate()
+      leaveTimerRef.current = null
+    }, 30)
   }, [])
 
   // 그룹 노드 렌더링
@@ -545,10 +573,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         {renderRecentDocuments()}
         {nodes.map((node) => renderNode(node, 0))}
       </div>
-      {/* 호버 시 항상 썸네일 표시 */}
+      {/* 호버 시 항상 썸네일 표시 (ref로 동기적 상태 관리) */}
       <HoverPreview
-        document={hoverDocument}
-        position={hoverPosition}
+        document={hoverStateRef.current?.document ?? null}
+        position={hoverStateRef.current?.position ?? null}
       />
     </>
   )

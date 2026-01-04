@@ -1,16 +1,24 @@
 /**
  * HoverPreview
  * @description 문서 호버 시 썸네일 프리뷰를 표시하는 컴포넌트
+ *
+ * 핵심 최적화:
+ * 1. 모듈 레벨 이미지 캐시 - 한 번 로드된 이미지 URL 기억
+ * 2. 캐시된 이미지는 로딩 스피너 없이 즉시 표시
+ * 3. React.memo로 불필요한 리렌더링 방지
  */
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, memo } from 'react'
 import type { Document } from '@/types/documentStatus'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 
-const HOVER_DELAY = 300 // 호버 후 프리뷰 표시까지 딜레이 (ms)
+// 딜레이 없이 즉시 표시
 const THUMBNAIL_WIDTH = 200
 const THUMBNAIL_HEIGHT = 283 // A4 비율 (200 * 1.414)
 const PDF_PROXY_BASE = '/pdf-proxy' // Vite proxy를 통해 접근
+
+// ★ 모듈 레벨 이미지 캐시 - 컴포넌트가 언마운트되어도 유지됨
+const loadedImageCache = new Set<string>()
 
 // 파일 확장자별 아이콘 매핑
 const FILE_TYPE_ICONS: Record<string, { icon: string; color: string; label: string }> = {
@@ -134,15 +142,16 @@ function calculatePosition(mouseX: number, mouseY: number): { x: number; y: numb
   return { x, y }
 }
 
-export const HoverPreview: React.FC<HoverPreviewProps> = ({
+/**
+ * HoverPreview 컴포넌트 (memo로 최적화)
+ */
+const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
   document,
   position,
 }) => {
-  const [visible, setVisible] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const currentDocIdRef = useRef<string | null>(null)
+  const prevDocIdRef = useRef<string | null>(null)
 
   // 썸네일 경로 계산
   const thumbnailPath = document ? getThumbnailPath(document) : null
@@ -150,45 +159,47 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
     ? `${PDF_PROXY_BASE}/thumbnail/${thumbnailPath}?width=${THUMBNAIL_WIDTH}`
     : null
 
+  // ★ 캐시 확인 - 이미 로드된 이미지는 즉시 표시
+  const isImageCached = thumbnailUrl ? loadedImageCache.has(thumbnailUrl) : false
+
   // 파일 타입 아이콘 (썸네일 없을 때 fallback)
   const fileTypeIcon = document ? getFileTypeIcon(document) : null
 
   // 현재 문서 ID
   const docId = document?._id || document?.id || null
 
-  // 호버 딜레이 처리
+  // 문서 변경 시 이미지 상태 리셋 (캐시된 이미지는 즉시 로드됨으로 표시)
   useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-
-    // 썸네일이 있거나 파일 타입 아이콘이 있으면 표시
-    if (document && (thumbnailUrl || fileTypeIcon)) {
-      // 문서가 변경되었으면 이미지 상태 초기화
-      if (currentDocIdRef.current !== docId) {
+    if (prevDocIdRef.current !== docId) {
+      // ★ 캐시된 이미지는 즉시 로드 완료 상태로 설정
+      if (thumbnailUrl && loadedImageCache.has(thumbnailUrl)) {
+        setImageLoaded(true)
+        setImageError(false)
+      } else {
         setImageLoaded(false)
         setImageError(false)
-        currentDocIdRef.current = docId
       }
-
-      timerRef.current = setTimeout(() => {
-        setVisible(true)
-      }, HOVER_DELAY)
-    } else {
-      setVisible(false)
-      currentDocIdRef.current = null
+      prevDocIdRef.current = docId
     }
+  }, [docId, thumbnailUrl])
 
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-      }
+  // 이미지 로드 완료 핸들러
+  const handleImageLoad = () => {
+    setImageLoaded(true)
+    // ★ 캐시에 URL 추가
+    if (thumbnailUrl) {
+      loadedImageCache.add(thumbnailUrl)
     }
-  }, [document, thumbnailUrl, fileTypeIcon, docId])
+  }
 
-  // 표시할 조건 체크: 썸네일이나 파일 타입 아이콘이 있어야 함
-  if (!visible || !position || (!thumbnailUrl && !fileTypeIcon)) {
+  // 이미지 로드 에러 핸들러
+  const handleImageError = () => {
+    setImageError(true)
+    setImageLoaded(false)
+  }
+
+  // 표시 조건: document + position 있고, 썸네일이나 아이콘 있어야 함
+  if (!document || !position || (!thumbnailUrl && !fileTypeIcon)) {
     return null
   }
 
@@ -221,6 +232,9 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
     )
   }
 
+  // ★ 캐시된 이미지이거나 이미 로드된 경우: 로딩 스피너 없이 즉시 표시
+  const showSpinner = !isImageCached && !imageLoaded && !imageError
+
   return (
     <div
       className="hover-preview"
@@ -232,7 +246,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       }}
     >
       <div className="hover-preview__content">
-        {!imageLoaded && !imageError && (
+        {showSpinner && (
           <div className="hover-preview__loading">
             <span className="hover-preview__spinner" />
           </div>
@@ -245,16 +259,29 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
         <img
           src={thumbnailUrl!}
           alt="문서 미리보기"
-          className={`hover-preview__image ${imageLoaded ? 'hover-preview__image--loaded' : ''}`}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => {
-            setImageError(true)
-            setImageLoaded(false)
-          }}
+          className={`hover-preview__image ${(imageLoaded || isImageCached) ? 'hover-preview__image--loaded' : ''}`}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       </div>
     </div>
   )
 }
+
+// React.memo로 최적화 - props가 변경되지 않으면 리렌더링 안함
+export const HoverPreview = memo(HoverPreviewComponent, (prevProps, nextProps) => {
+  // document ID와 position이 같으면 리렌더링 안함
+  const prevDocId = prevProps.document?._id || prevProps.document?.id
+  const nextDocId = nextProps.document?._id || nextProps.document?.id
+
+  if (prevDocId !== nextDocId) return false
+  if (!prevProps.position && !nextProps.position) return true
+  if (!prevProps.position || !nextProps.position) return false
+
+  // 위치 변화가 10px 미만이면 리렌더링 안함 (성능 최적화)
+  const dx = Math.abs(prevProps.position.x - nextProps.position.x)
+  const dy = Math.abs(prevProps.position.y - nextProps.position.y)
+  return dx < 10 && dy < 10
+})
 
 export default HoverPreview
