@@ -11,12 +11,31 @@
  * - Home/End: 처음/마지막으로 이동
  */
 
-import React, { useCallback, useRef, useMemo, useEffect } from 'react'
+import React, { useCallback, useRef, useMemo, useEffect, useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
 import { getDocumentDate } from './utils/treeBuilders'
+
+// 최근 본 문서 아이콘 (시계 + 문서)
+const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    {/* 시계 */}
+    <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M6 3V6L8 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* 문서 (오른쪽 하단) */}
+    <path d="M10 9V14.5C10 15.05 10.45 15.5 11 15.5H14.5C15.05 15.5 15.5 15.05 15.5 14.5V11L13 9H10Z" fill="currentColor" opacity="0.3" />
+    <path d="M10 9H13L15.5 11V14.5C15.5 15.05 15.05 15.5 14.5 15.5H11C10.45 15.5 10 15.05 10 14.5V9Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
 export interface DocumentExplorerTreeProps {
   nodes: DocumentTreeNode[]
@@ -51,6 +70,21 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
   const treeContainerRef = useRef<HTMLDivElement>(null)
+
+  // 최근 본 문서 섹션 펼침/접힘 상태 (localStorage에 저장)
+  const [isRecentExpanded, setIsRecentExpanded] = useState(() => {
+    const saved = localStorage.getItem('doc-explorer-recent-expanded')
+    return saved !== null ? saved === 'true' : true // 기본값: 펼침
+  })
+
+  // 상태 변경 시 localStorage에 저장
+  const toggleRecentExpanded = useCallback(() => {
+    setIsRecentExpanded(prev => {
+      const newValue = !prev
+      localStorage.setItem('doc-explorer-recent-expanded', String(newValue))
+      return newValue
+    })
+  }, [])
 
   // 키보드 네비게이션 훅
   const {
@@ -332,71 +366,85 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     if (sortedRecentDocuments.length === 0) return null
 
     return (
-      <div className="doc-explorer-tree__recent">
-        <div className="doc-explorer-tree__recent-header">
-          <SFSymbol
-            name="clock.fill"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.REGULAR}
-          />
+      <div className={`doc-explorer-tree__recent ${!isRecentExpanded ? 'doc-explorer-tree__recent--collapsed' : ''}`}>
+        <div
+          className="doc-explorer-tree__recent-header"
+          onClick={toggleRecentExpanded}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isRecentExpanded ? 'true' : 'false'}
+        >
+          {/* 펼침/접힘 화살표 */}
+          <span className="doc-explorer-tree__recent-chevron">
+            <SFSymbol
+              name={isRecentExpanded ? 'chevron.down' : 'chevron.right'}
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+          </span>
+          {/* 커스텀 아이콘 */}
+          <RecentDocumentsIcon className="doc-explorer-tree__recent-icon" />
           <span>최근 본 문서</span>
+          <span className="doc-explorer-tree__recent-count">({sortedRecentDocuments.length})</span>
         </div>
-        <div className="doc-explorer-tree__recent-list">
-          {sortedRecentDocuments.map((doc) => {
-            const docId = doc._id || doc.id || ''
-            const isSelected = selectedDocumentId === docId
-            const badgeType = doc.badgeType || 'BIN'
-            const displayName = doc.displayName || doc.originalName || doc.filename || doc.name || '이름 없음'
-            const customerName = doc.customer_relation?.customer_name
-            const documentDate = getDocumentDate(doc)
+        {isRecentExpanded && (
+          <div className="doc-explorer-tree__recent-list">
+            {sortedRecentDocuments.map((doc) => {
+              const docId = doc._id || doc.id || ''
+              const isSelected = selectedDocumentId === docId
+              const badgeType = doc.badgeType || 'BIN'
+              const displayName = doc.displayName || doc.originalName || doc.filename || doc.name || '이름 없음'
+              const customerName = doc.customer_relation?.customer_name
+              const documentDate = getDocumentDate(doc)
 
-            return (
-              <div
-                key={`recent-${docId}`}
-                className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
-                onClick={(e) => handleDocumentClick(doc, e)}
-                role="button"
-                tabIndex={0}
-              >
-                {/* 문서 아이콘 */}
-                <span className={`doc-explorer-tree__doc-icon doc-explorer-tree__doc-icon--${badgeType.toLowerCase()}`}>
-                  <SFSymbol
-                    name="doc.fill"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.REGULAR}
-                  />
-                </span>
-
-                {/* 문서명 */}
-                <span className="doc-explorer-tree__doc-name" title={displayName}>
-                  {displayName}
-                </span>
-
-                {/* 고객명 */}
-                <span
-                  className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
-                  title={customerName ? `${customerName} 문서만 보기` : '-'}
-                  onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
+              return (
+                <div
+                  key={`recent-${docId}`}
+                  className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
+                  onClick={(e) => handleDocumentClick(doc, e)}
+                  role="button"
+                  tabIndex={0}
                 >
-                  {customerName || '-'}
-                </span>
+                  {/* 문서 아이콘 */}
+                  <span className={`doc-explorer-tree__doc-icon doc-explorer-tree__doc-icon--${badgeType.toLowerCase()}`}>
+                    <SFSymbol
+                      name="doc.fill"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.REGULAR}
+                    />
+                  </span>
 
-                {/* 날짜/시간 */}
-                <span
-                  className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
-                  title={documentDate || '-'}
-                >
-                  {documentDate ? formatDateTime(documentDate) : '-'}
-                </span>
+                  {/* 문서명 */}
+                  <span className="doc-explorer-tree__doc-name" title={displayName}>
+                    {displayName}
+                  </span>
 
-                {/* 문서유형 배지 */}
-                <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>
-                  {badgeType}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+                  {/* 고객명 */}
+                  <span
+                    className={`doc-explorer-tree__doc-customer${customerName ? ' doc-explorer-tree__doc-customer--clickable' : ' doc-explorer-tree__doc-customer--empty'}`}
+                    title={customerName ? `${customerName} 문서만 보기` : '-'}
+                    onClick={customerName ? (e) => handleCustomerBadgeClick(e, customerName) : undefined}
+                  >
+                    {customerName || '-'}
+                  </span>
+
+                  {/* 날짜/시간 */}
+                  <span
+                    className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
+                    title={documentDate || '-'}
+                  >
+                    {documentDate ? formatDateTime(documentDate) : '-'}
+                  </span>
+
+                  {/* 문서유형 배지 */}
+                  <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>
+                    {badgeType}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     )
   }

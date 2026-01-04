@@ -675,9 +675,14 @@
    Recent Documents Section
    ============================================ */
 .doc-explorer-tree__recent {
-  margin-bottom: var(--explorer-spacing-lg);
-  padding-bottom: var(--explorer-spacing-md);
+  margin-bottom: var(--explorer-spacing-sm);
+  padding-bottom: var(--explorer-spacing-xs);
   border-bottom: 1px solid var(--color-border);
+}
+
+.doc-explorer-tree__recent--collapsed {
+  margin-bottom: var(--explorer-spacing-xs);
+  padding-bottom: var(--explorer-spacing-xs);
 }
 
 .doc-explorer-tree__recent-header {
@@ -690,6 +695,34 @@
   color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: var(--explorer-border-radius);
+  transition: background-color var(--explorer-transition);
+}
+
+.doc-explorer-tree__recent-header:hover {
+  background: var(--color-bg-hover);
+}
+
+.doc-explorer-tree__recent-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  color: var(--color-text-quaternary);
+}
+
+.doc-explorer-tree__recent-icon {
+  color: var(--color-ios-blue-light);
+}
+
+html[data-theme="dark"] .doc-explorer-tree__recent-icon {
+  color: var(--color-ios-blue-dark);
+}
+
+.doc-explorer-tree__recent-count {
+  color: var(--color-text-quaternary);
+  font-weight: 400;
 }
 
 .doc-explorer-tree__recent-list {
