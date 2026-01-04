@@ -49,7 +49,7 @@
 
 /* Dropdown 폭/높이 조정 - 검색 입력과 높이 맞춤 */
 .doc-explorer-toolbar__group .ios-dropdown {
-  min-width: 140px;
+  min-width: 98px;
 }
 
 .doc-explorer-toolbar__group .ios-dropdown__trigger {
@@ -119,24 +119,19 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--color-text-secondary);
-  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all var(--explorer-transition);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .doc-explorer-toolbar__sort-btn:hover {
-  color: var(--color-text-primary);
-  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
-  border-color: var(--color-border-strong);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  color: var(--color-accent);
 }
 
 .doc-explorer-toolbar__sort-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  transform: scale(0.95);
 }
 
 .doc-explorer-toolbar__sort-btn--active {
@@ -230,17 +225,15 @@
   padding: 0;
   border: none;
   border-radius: var(--explorer-border-radius);
-  background: none;
-  background-color: transparent;
+  background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: opacity 150ms ease, transform 150ms ease;
-  opacity: 0.7;
+  transition: all var(--explorer-transition);
 }
 
 .doc-explorer-toolbar__expand-btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
 }
 
 .doc-explorer-toolbar__expand-btn:active {
@@ -1191,21 +1184,19 @@ html[data-theme="dark"] .hover-preview__file-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg-primary);
+  border: none;
+  border-radius: var(--explorer-border-radius);
+  background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--explorer-transition);
 }
 
 .doc-explorer-toolbar__date-btn:hover:not(:disabled) {
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
+  color: var(--color-accent);
 }
 
 .doc-explorer-toolbar__date-btn:disabled {
@@ -1215,8 +1206,6 @@ html[data-theme="dark"] .hover-preview__file-icon {
 
 .doc-explorer-toolbar__date-btn--active {
   color: var(--color-accent);
-  border-color: var(--color-accent);
-  background: var(--color-accent-bg);
 }
 
 /* Date Picker Backdrop */
@@ -1236,10 +1225,12 @@ html[data-theme="dark"] .hover-preview__file-icon {
   left: 50%;
   transform: translateX(-50%);
   width: 280px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-strong);
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   z-index: 1000;
   animation: calendarFadeIn 150ms ease-out;
@@ -1257,8 +1248,9 @@ html[data-theme="dark"] .hover-preview__file-icon {
 }
 
 html[data-theme="dark"] .doc-explorer-toolbar__calendar {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: rgba(30, 30, 30, 0.85);
   border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Calendar Header */

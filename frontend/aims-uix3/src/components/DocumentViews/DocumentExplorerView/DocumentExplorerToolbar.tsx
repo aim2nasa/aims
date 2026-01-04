@@ -206,25 +206,29 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
       {/* 기타 분류 기준 (태그별 분류 시에만 표시) */}
       {groupBy === 'tag' && (
-        <div className="doc-explorer-toolbar__min-count" title={`${minTagCount}건 이하 태그는 기타로 분류`}>
-          <button
-            type="button"
-            className="doc-explorer-toolbar__stepper-btn"
-            onClick={() => minTagCount > 1 && onMinTagCountChange(minTagCount - 1)}
-            disabled={minTagCount <= 1}
-          >
-            −
-          </button>
-          <span className="doc-explorer-toolbar__stepper-value">{minTagCount}</span>
-          <button
-            type="button"
-            className="doc-explorer-toolbar__stepper-btn"
-            onClick={() => minTagCount < 99 && onMinTagCountChange(minTagCount + 1)}
-            disabled={minTagCount >= 99}
-          >
-            +
-          </button>
-        </div>
+        <Tooltip content={`${minTagCount}건 이하 태그는 기타로 분류`} placement="bottom">
+          <div className="doc-explorer-toolbar__min-count">
+            <button
+              type="button"
+              className="doc-explorer-toolbar__stepper-btn"
+              onClick={() => minTagCount > 1 && onMinTagCountChange(minTagCount - 1)}
+              disabled={minTagCount <= 1}
+              aria-label="기타 분류 기준 감소"
+            >
+              −
+            </button>
+            <span className="doc-explorer-toolbar__stepper-value">{minTagCount}</span>
+            <button
+              type="button"
+              className="doc-explorer-toolbar__stepper-btn"
+              onClick={() => minTagCount < 99 && onMinTagCountChange(minTagCount + 1)}
+              disabled={minTagCount >= 99}
+              aria-label="기타 분류 기준 증가"
+            >
+              +
+            </button>
+          </div>
+        </Tooltip>
       )}
 
       {/* 검색 입력 */}
@@ -239,7 +243,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           ref={searchInputRef}
           type="text"
           className="doc-explorer-toolbar__search-input"
-          placeholder="문서 검색..."
+          placeholder="검색..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -275,7 +279,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
         {/* 날짜 점프 버튼 */}
         <div className="doc-explorer-toolbar__date-jump">
-          <Tooltip content="캘린더에서 날짜 선택하여 이동" placement="bottom">
+          <Tooltip content="날짜로 이동" placement="bottom">
             <button
               ref={dateButtonRef}
               type="button"
@@ -288,6 +292,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                 name="calendar"
                 size={SFSymbolSize.CAPTION_1}
                 weight={SFSymbolWeight.REGULAR}
+                decorative
               />
             </button>
           </Tooltip>
@@ -313,14 +318,16 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                   >
                     ‹
                   </button>
-                  <button
-                    type="button"
-                    className="doc-explorer-toolbar__calendar-title"
-                    onClick={goToToday}
-                    title="오늘로 이동"
-                  >
-                    {calendarYear}년 {monthNames[calendarMonth]}
-                  </button>
+                  <Tooltip content="오늘로 이동" placement="bottom">
+                    <button
+                      type="button"
+                      className="doc-explorer-toolbar__calendar-title"
+                      onClick={goToToday}
+                      aria-label="오늘로 이동"
+                    >
+                      {calendarYear}년 {monthNames[calendarMonth]}
+                    </button>
+                  </Tooltip>
                   <button
                     type="button"
                     className="doc-explorer-toolbar__calendar-nav"
@@ -382,21 +389,25 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               name="person.fill"
               size={SFSymbolSize.CAPTION_2}
               weight={SFSymbolWeight.REGULAR}
+              decorative
             />
             {customerFilter}
           </span>
-          <button
-            type="button"
-            className="doc-explorer-toolbar__customer-filter-clear"
-            onClick={onCustomerFilterClear}
-            title="필터 해제"
-          >
-            <SFSymbol
-              name="xmark.circle.fill"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.REGULAR}
-            />
-          </button>
+          <Tooltip content="필터 해제" placement="bottom">
+            <button
+              type="button"
+              className="doc-explorer-toolbar__customer-filter-clear"
+              onClick={onCustomerFilterClear}
+              aria-label="고객 필터 해제"
+            >
+              <SFSymbol
+                name="xmark.circle.fill"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+                decorative
+              />
+            </button>
+          </Tooltip>
         </div>
       )}
 
@@ -408,72 +419,79 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
               name="calendar"
               size={SFSymbolSize.CAPTION_2}
               weight={SFSymbolWeight.REGULAR}
+              decorative
             />
             {dateFilter.getFullYear()}.{String(dateFilter.getMonth() + 1).padStart(2, '0')}.{String(dateFilter.getDate()).padStart(2, '0')}
           </span>
-          <button
-            type="button"
-            className="doc-explorer-toolbar__date-filter-clear"
-            onClick={onDateFilterClear}
-            title="날짜 필터 해제"
-          >
-            <SFSymbol
-              name="xmark.circle.fill"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.REGULAR}
-            />
-          </button>
+          <Tooltip content="날짜 필터 해제" placement="bottom">
+            <button
+              type="button"
+              className="doc-explorer-toolbar__date-filter-clear"
+              onClick={onDateFilterClear}
+              aria-label="날짜 필터 해제"
+            >
+              <SFSymbol
+                name="xmark.circle.fill"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+                decorative
+              />
+            </button>
+          </Tooltip>
         </div>
       )}
 
       {/* 액션 버튼들 */}
       <div className="doc-explorer-toolbar__actions">
-        <button
-          type="button"
-          className="doc-explorer-toolbar__expand-btn"
-          onClick={onToggleExpandAll}
-          title={isAllExpanded ? '모두 접기' : '모두 펼치기'}
-        >
-          {isAllExpanded ? (
-            /* 접기: 트리가 접힌 모양 (평평한 리스트) */
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          ) : (
-            /* 펼치기: 트리가 펼쳐진 모양 (들여쓰기 리스트) */
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          )}
-        </button>
-
+        <Tooltip content={isAllExpanded ? '모두 접기' : '모두 펼치기'} placement="bottom">
+          <button
+            type="button"
+            className="doc-explorer-toolbar__expand-btn"
+            onClick={onToggleExpandAll}
+            aria-label={isAllExpanded ? '모두 접기' : '모두 펼치기'}
+          >
+            {isAllExpanded ? (
+              /* 접기: 트리가 접힌 모양 (평평한 리스트) */
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            ) : (
+              /* 펼치기: 트리가 펼쳐진 모양 (들여쓰기 리스트) */
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            )}
+          </button>
+        </Tooltip>
       </div>
 
       {/* 정렬 기준 */}
       <div className="doc-explorer-toolbar__sort">
         <div className="doc-explorer-toolbar__sort-buttons">
           {SORT_OPTIONS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={`doc-explorer-toolbar__sort-btn ${sortBy === option ? 'doc-explorer-toolbar__sort-btn--active' : ''}`}
-              onClick={() => onSortByChange(option)}
-              title={`${SORT_BY_LABELS[option]}순 정렬`}
-            >
-              {SORT_BY_LABELS[option]}
-              {sortBy === option && (
-                <SFSymbol
-                  name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  className="doc-explorer-toolbar__sort-icon"
-                />
-              )}
-            </button>
+            <Tooltip key={option} content={`${SORT_BY_LABELS[option]}순 정렬`} placement="bottom">
+              <button
+                type="button"
+                className={`doc-explorer-toolbar__sort-btn ${sortBy === option ? 'doc-explorer-toolbar__sort-btn--active' : ''}`}
+                onClick={() => onSortByChange(option)}
+                aria-label={`${SORT_BY_LABELS[option]}순 정렬`}
+              >
+                {SORT_BY_LABELS[option]}
+                {sortBy === option && (
+                  <SFSymbol
+                    name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+                    size={SFSymbolSize.CAPTION_2}
+                    weight={SFSymbolWeight.MEDIUM}
+                    className="doc-explorer-toolbar__sort-icon"
+                    decorative
+                  />
+                )}
+              </button>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -481,11 +499,11 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 통계 */}
       <div className="doc-explorer-toolbar__stats">
         <span className="doc-explorer-toolbar__stat">
-          {GROUP_BY_LABELS[groupBy]} {groupCount}개
+          {GROUP_BY_LABELS[groupBy]} {groupCount}
         </span>
         <span className="doc-explorer-toolbar__stat-separator">·</span>
         <span className="doc-explorer-toolbar__stat">
-          문서 {totalDocuments}개
+          문서 {totalDocuments}
         </span>
       </div>
     </div>

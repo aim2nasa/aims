@@ -40,7 +40,7 @@ export type SortDirection = 'asc' | 'desc'
 export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
   name: '제목',
   date: '날짜',
-  badgeType: '문서유형',
+  badgeType: '유형',
   customer: '고객명',
 }
 
