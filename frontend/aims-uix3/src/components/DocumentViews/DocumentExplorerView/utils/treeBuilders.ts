@@ -229,12 +229,13 @@ function buildTagSubgroups(docs: Document[], minTagCount: number = 1): { tagNode
     const meta = (doc as unknown as { meta?: { tags?: string[] } }).meta
     const tags = meta?.tags
     if (tags && tags.length > 0) {
-      // 첫 번째 태그만 사용 (중복 방지)
-      const tag = tags[0]
-      if (!tagGroups.has(tag)) {
-        tagGroups.set(tag, [])
-      }
-      tagGroups.get(tag)!.push(doc)
+      // 모든 태그에 문서 추가 (중복 표시)
+      tags.forEach((tag) => {
+        if (!tagGroups.has(tag)) {
+          tagGroups.set(tag, [])
+        }
+        tagGroups.get(tag)!.push(doc)
+      })
     } else {
       noTag.push(doc)
     }
