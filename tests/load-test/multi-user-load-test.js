@@ -23,7 +23,7 @@ const path = require('path');
 // ========================================
 const MONGO_URI = 'mongodb://localhost:27017/docupload';
 const BASE_URL = process.env.BASE_URL || 'https://aims.giize.com';
-const TEST_USER_COUNT = parseInt(process.env.USER_COUNT || '100');
+const TEST_USER_COUNT = parseInt(process.env.USER_COUNT || '200');
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '100');
 const STEP_DURATION = parseInt(process.env.STEP_DURATION || '30');
 const INCLUDE_UPLOAD = process.env.INCLUDE_UPLOAD !== 'false';
@@ -436,7 +436,7 @@ async function main() {
       stages: [],
     };
 
-    const steps = [10, 20, 30, 50, 75, 100].filter(n => n <= MAX_CONCURRENT);
+    const steps = [10, 20, 30, 50, 75, 100, 150, 200].filter(n => n <= MAX_CONCURRENT);
 
     for (const userCount of steps) {
       const stageResult = await runStage(userCount, tokens, users, STEP_DURATION, sampleFiles);
