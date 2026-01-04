@@ -260,6 +260,22 @@ function buildTagTree(documents: Document[], minTagCount: number = 1): DocumentT
 }
 
 /**
+ * 문서에서 날짜를 추출합니다
+ * 우선순위: upload.uploaded_at > uploaded_at > created_at > timestamp
+ */
+function getDocumentDate(doc: Document): string | undefined {
+  // upload 객체 내의 uploaded_at (실제 데이터 위치)
+  const upload = doc.upload
+  if (upload && typeof upload === 'object') {
+    const uploadData = upload as { uploaded_at?: string; timestamp?: string }
+    if (uploadData.uploaded_at) return uploadData.uploaded_at
+    if (uploadData.timestamp) return uploadData.timestamp
+  }
+  // 문서 루트 레벨의 날짜 필드들
+  return doc.uploaded_at || doc.created_at || doc.timestamp
+}
+
+/**
  * 날짜별 트리: 연도 → 월 → 문서들
  */
 function buildDateTree(documents: Document[]): DocumentTreeData {
@@ -267,7 +283,7 @@ function buildDateTree(documents: Document[]): DocumentTreeData {
   const noDate: Document[] = []
 
   documents.forEach((doc) => {
-    const dateStr = doc.uploaded_at || doc.created_at || doc.timestamp
+    const dateStr = getDocumentDate(doc)
     if (dateStr) {
       const date = new Date(dateStr)
       if (!isNaN(date.getTime())) {
