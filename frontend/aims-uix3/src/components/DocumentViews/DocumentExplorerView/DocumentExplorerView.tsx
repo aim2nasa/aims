@@ -145,6 +145,8 @@ const DocumentExplorerContent: React.FC<{
             onDocumentDoubleClick={handleDocumentDoubleClick}
             onCustomerClick={handleCustomerClick}
             recentDocuments={recentDocuments}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
           />
         )}
       </div>

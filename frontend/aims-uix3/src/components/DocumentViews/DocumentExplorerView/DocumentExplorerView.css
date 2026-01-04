@@ -669,6 +669,7 @@
   gap: 2px;
 }
 
+/* Recent item - 일반 문서와 동일한 레이아웃 */
 .doc-explorer-tree__recent-item {
   display: flex;
   align-items: center;
@@ -684,6 +685,11 @@
   background: var(--color-bg-hover);
 }
 
+.doc-explorer-tree__recent-item:focus {
+  outline: none;
+  background: var(--color-bg-hover);
+}
+
 .doc-explorer-tree__recent-item--selected {
   background: var(--color-accent-bg);
 }
@@ -692,13 +698,24 @@
   background: var(--color-accent-bg-hover);
 }
 
-.doc-explorer-tree__recent-name {
+/* Recent item 내 문서명, 고객명, 날짜, 배지 - 일반 문서와 동일 */
+.doc-explorer-tree__recent-item .doc-explorer-tree__doc-name {
   flex: 1;
-  font-size: 12px;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+}
+
+.doc-explorer-tree__recent-item .doc-explorer-tree__doc-customer {
+  flex-shrink: 0;
+  width: 80px;
+}
+
+.doc-explorer-tree__recent-item .doc-explorer-tree__doc-date {
+  flex-shrink: 0;
+  width: 110px;
+}
+
+.doc-explorer-tree__recent-item .doc-explorer-tree__badge {
+  flex-shrink: 0;
 }
 
 /* ============================================
@@ -715,4 +732,66 @@ html[data-theme="dark"] .doc-explorer-tree__document:hover {
 
 html[data-theme="dark"] .doc-explorer-tree__document--selected {
   background: rgba(var(--color-accent-rgb), 0.15);
+}
+
+/* ============================================
+   Keyboard Navigation Focus Styles
+   ============================================ */
+
+/* 트리 컨테이너 포커스 시 아웃라인 제거 (내부 요소에서 표시) */
+.doc-explorer-tree:focus {
+  outline: none;
+}
+
+/* 문서 노드 포커스 상태 - 항상 눈에 띄게 표시 */
+.doc-explorer-tree__document--focused {
+  background: #e3f2fd;
+  outline: 2px solid #2196f3;
+  outline-offset: -2px;
+  position: relative;
+  z-index: 1;
+}
+
+.doc-explorer-tree__document--focused:hover {
+  background: #e3f2fd;
+}
+
+.doc-explorer-tree__document--focused.doc-explorer-tree__document--selected {
+  background: #bbdefb;
+}
+
+/* 그룹 헤더 포커스 상태 */
+.doc-explorer-tree__group-header--focused {
+  background: #e3f2fd;
+  outline: 2px solid #2196f3;
+  outline-offset: -2px;
+  position: relative;
+  z-index: 1;
+}
+
+.doc-explorer-tree__group-header--focused:hover {
+  background: #e3f2fd;
+}
+
+/* 다크모드 포커스 스타일 */
+html[data-theme="dark"] .doc-explorer-tree__document--focused {
+  background: rgba(33, 150, 243, 0.2);
+  outline-color: #64b5f6;
+}
+
+html[data-theme="dark"] .doc-explorer-tree__document--focused:hover {
+  background: rgba(33, 150, 243, 0.2);
+}
+
+html[data-theme="dark"] .doc-explorer-tree__document--focused.doc-explorer-tree__document--selected {
+  background: rgba(33, 150, 243, 0.3);
+}
+
+html[data-theme="dark"] .doc-explorer-tree__group-header--focused {
+  background: rgba(33, 150, 243, 0.2);
+  outline-color: #64b5f6;
+}
+
+html[data-theme="dark"] .doc-explorer-tree__group-header--focused:hover {
+  background: rgba(33, 150, 243, 0.2);
 }
