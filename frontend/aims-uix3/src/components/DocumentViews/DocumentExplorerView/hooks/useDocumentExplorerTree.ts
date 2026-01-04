@@ -128,19 +128,11 @@ export function useDocumentExplorerTree({
             const date = new Date(dateStr)
             return date >= weekStart
           })
-        case 'unlinked':
-          return docs.filter((doc) => !doc.customer_relation?.customer_name)
-        case 'ocrPending':
-          return docs.filter((doc) => doc.badgeType === 'BIN')
-        case 'recentViewed':
-          return recentDocumentIds
-            .map((id) => docs.find((doc) => (doc._id || doc.id) === id))
-            .filter((doc): doc is Document => doc !== undefined)
         default:
           return docs
       }
     },
-    [recentDocumentIds]
+    []
   )
 
   // 고객 필터 적용

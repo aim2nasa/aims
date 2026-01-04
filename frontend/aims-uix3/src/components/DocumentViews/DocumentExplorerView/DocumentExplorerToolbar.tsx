@@ -45,7 +45,7 @@ const GROUP_BY_OPTIONS: DropdownOption[] = [
 const SORT_OPTIONS: DocumentSortBy[] = ['name', 'customer', 'date', 'badgeType']
 
 // 빠른 필터 칩 옵션 (전체 제외)
-const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today', 'thisWeek', 'ocrPending']
+const QUICK_FILTER_OPTIONS: QuickFilterType[] = ['today', 'thisWeek']
 
 export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = ({
   groupBy,
