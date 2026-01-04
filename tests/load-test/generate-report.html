@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIMS Load Test Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+    .subtitle { color: #86868b; margin-bottom: 24px; }
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card-label { font-size: 12px; color: #86868b; margin-bottom: 4px; }
+    .card-value { font-size: 28px; font-weight: 600; }
+    .card-value.good { color: #34c759; }
+    .card-value.warn { color: #ff9500; }
+    .card-value.bad { color: #ff3b30; }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .chart-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    canvas { max-height: 300px; }
+    .data-input {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .instructions {
+      background: #fff3cd;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .instructions code {
+      background: rgba(0,0,0,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 AIMS Load Test Report</h1>
+    <p class="subtitle">동시접속자 수용량 분석</p>
+
+    <div class="instructions">
+      <strong>사용 방법:</strong><br>
+      1. <code>k6 run --out csv=results.csv aims-capacity-test.js</code> 실행<br>
+      2. 생성된 <code>results.csv</code> 내용을 아래에 붙여넣기<br>
+      3. "분석 실행" 버튼 클릭
+    </div>
+
+    <div class="data-input">
+      <textarea id="csvData" placeholder="k6 CSV 결과를 여기에 붙여넣으세요...
+
+예시:
+metric_name,timestamp,metric_value,extra_tags
+http_req_duration,1704364800000,125,
+vus,1704364800000,10,
+..."></textarea>
+      <button onclick="analyzeData()">📊 분석 실행</button>
+      <button onclick="loadSampleData()" style="background:#34c759;">샘플 데이터 로드</button>
+    </div>
+
+    <div id="results" style="display:none;">
+      <div class="summary-cards" id="summaryCards"></div>
+      <div class="charts-grid" id="chartsGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    let charts = {};
+
+    function loadSampleData() {
+      // 샘플 데이터 (실제 테스트 결과 형식)
+      const sampleData = `metric_name,timestamp,metric_value,extra_tags
+vus,1704364800000,10,
+http_req_duration,1704364800000,85,
+http_reqs,1704364800000,1,
+vus,1704364810000,10,
+http_req_duration,1704364810000,92,
+http_reqs,1704364810000,1,
+vus,1704364860000,20,
+http_req_duration,1704364860000,110,
+http_reqs,1704364860000,1,
+vus,1704364870000,20,
+http_req_duration,1704364870000,125,
+http_reqs,1704364870000,1,
+vus,1704364920000,30,
+http_req_duration,1704364920000,180,
+http_reqs,1704364920000,1,
+vus,1704364930000,30,
+http_req_duration,1704364930000,195,
+http_reqs,1704364930000,1,
+vus,1704364980000,50,
+http_req_duration,1704364980000,320,
+http_reqs,1704364980000,1,
+vus,1704364990000,50,
+http_req_duration,1704364990000,385,
+http_reqs,1704364990000,1,
+vus,1704365040000,75,
+http_req_duration,1704365040000,580,
+http_reqs,1704365040000,1,
+vus,1704365050000,75,
+http_req_duration,1704365050000,720,
+http_reqs,1704365050000,1,
+vus,1704365100000,100,
+http_req_duration,1704365100000,1250,
+http_reqs,1704365100000,1,
+vus,1704365110000,100,
+http_req_duration,1704365110000,1580,
+http_reqs,1704365110000,1,
+http_req_failed,1704365110000,0.02,`;
+
+      document.getElementById('csvData').value = sampleData;
+      analyzeData();
+    }
+
+    function analyzeData() {
+      const csv = document.getElementById('csvData').value;
+      if (!csv.trim()) {
+        alert('CSV 데이터를 입력해주세요.');
+        return;
+      }
+
+      const data = parseCSV(csv);
+      if (!data || data.length === 0) {
+        alert('CSV 파싱에 실패했습니다.');
+        return;
+      }
+
+      // 데이터 그룹화
+      const grouped = groupByVUs(data);
+
+      // 결과 표시
+      document.getElementById('results').style.display = 'block';
+      renderSummary(grouped);
+      renderCharts(grouped);
+    }
+
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      if (lines.length < 2) return null;
+
+      const headers = lines[0].split(',');
+      const data = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        const row = {};
+        headers.forEach((h, idx) => {
+          row[h.trim()] = values[idx]?.trim() || '';
+        });
+        data.push(row);
+      }
+
+      return data;
+    }
+
+    function groupByVUs(data) {
+      const vuData = {};
+      let currentVU = 0;
+
+      data.forEach(row => {
+        const metric = row.metric_name;
+        const value = parseFloat(row.metric_value);
+
+        if (metric === 'vus') {
+          currentVU = value;
+        }
+
+        if (!vuData[currentVU]) {
+          vuData[currentVU] = { durations: [], requests: 0, errors: 0 };
+        }
+
+        if (metric === 'http_req_duration') {
+          vuData[currentVU].durations.push(value);
+        } else if (metric === 'http_reqs') {
+          vuData[currentVU].requests += value;
+        } else if (metric === 'http_req_failed' && value > 0) {
+          vuData[currentVU].errors = value;
+        }
+      });
+
+      // 통계 계산
+      Object.keys(vuData).forEach(vu => {
+        const d = vuData[vu].durations;
+        if (d.length > 0) {
+          d.sort((a, b) => a - b);
+          vuData[vu].avg = d.reduce((a, b) => a + b, 0) / d.length;
+          vuData[vu].p50 = d[Math.floor(d.length * 0.5)];
+          vuData[vu].p95 = d[Math.floor(d.length * 0.95)] || d[d.length - 1];
+          vuData[vu].p99 = d[Math.floor(d.length * 0.99)] || d[d.length - 1];
+          vuData[vu].max = d[d.length - 1];
+        }
+      });
+
+      return vuData;
+    }
+
+    function renderSummary(grouped) {
+      const vus = Object.keys(grouped).map(Number).filter(v => v > 0).sort((a, b) => a - b);
+      const maxVU = Math.max(...vus);
+      const lastData = grouped[maxVU] || {};
+
+      const cards = [
+        { label: '최대 동시접속자', value: `${maxVU}명`, class: '' },
+        { label: '평균 응답시간', value: `${Math.round(lastData.avg || 0)}ms`, class: getClass(lastData.avg, 500, 1000) },
+        { label: 'P95 응답시간', value: `${Math.round(lastData.p95 || 0)}ms`, class: getClass(lastData.p95, 1000, 2000) },
+        { label: '에러율', value: `${((lastData.errors || 0) * 100).toFixed(1)}%`, class: getClass(lastData.errors * 100, 5, 10) },
+      ];
+
+      document.getElementById('summaryCards').innerHTML = cards.map(c => `
+        <div class="card">
+          <div class="card-label">${c.label}</div>
+          <div class="card-value ${c.class}">${c.value}</div>
+        </div>
+      `).join('');
+    }
+
+    function getClass(value, warnThreshold, badThreshold) {
+      if (value < warnThreshold) return 'good';
+      if (value < badThreshold) return 'warn';
+      return 'bad';
+    }
+
+    function renderCharts(grouped) {
+      const vus = Object.keys(grouped).map(Number).filter(v => v > 0).sort((a, b) => a - b);
+
+      const chartsGrid = document.getElementById('chartsGrid');
+      chartsGrid.innerHTML = `
+        <div class="chart-card">
+          <div class="chart-title">📈 동시접속자 vs 응답시간</div>
+          <canvas id="chart1"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📊 응답시간 분포 (P50/P95/P99)</div>
+          <canvas id="chart2"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">⚡ 처리량 (Requests)</div>
+          <canvas id="chart3"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🎯 권장 동시접속자 분석</div>
+          <canvas id="chart4"></canvas>
+        </div>
+      `;
+
+      // 차트 1: VU vs 평균 응답시간
+      charts.chart1 = new Chart(document.getElementById('chart1'), {
+        type: 'line',
+        data: {
+          labels: vus.map(v => `${v}명`),
+          datasets: [{
+            label: '평균 응답시간 (ms)',
+            data: vus.map(v => Math.round(grouped[v]?.avg || 0)),
+            borderColor: '#007aff',
+            backgroundColor: 'rgba(0,122,255,0.1)',
+            fill: true,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'ms' } },
+            x: { title: { display: true, text: '동시접속자' } }
+          }
+        }
+      });
+
+      // 차트 2: 퍼센타일 분포
+      charts.chart2 = new Chart(document.getElementById('chart2'), {
+        type: 'bar',
+        data: {
+          labels: vus.map(v => `${v}명`),
+          datasets: [
+            { label: 'P50', data: vus.map(v => Math.round(grouped[v]?.p50 || 0)), backgroundColor: '#34c759' },
+            { label: 'P95', data: vus.map(v => Math.round(grouped[v]?.p95 || 0)), backgroundColor: '#ff9500' },
+            { label: 'P99', data: vus.map(v => Math.round(grouped[v]?.p99 || 0)), backgroundColor: '#ff3b30' },
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, title: { display: true, text: 'ms' } } }
+        }
+      });
+
+      // 차트 3: 처리량
+      charts.chart3 = new Chart(document.getElementById('chart3'), {
+        type: 'line',
+        data: {
+          labels: vus.map(v => `${v}명`),
+          datasets: [{
+            label: '처리 요청 수',
+            data: vus.map(v => Math.round(grouped[v]?.requests || 0)),
+            borderColor: '#34c759',
+            backgroundColor: 'rgba(52,199,89,0.1)',
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+
+      // 차트 4: 권장 분석 (임계점)
+      const threshold2s = vus.map(v => 2000);
+      const threshold1s = vus.map(v => 1000);
+      charts.chart4 = new Chart(document.getElementById('chart4'), {
+        type: 'line',
+        data: {
+          labels: vus.map(v => `${v}명`),
+          datasets: [
+            { label: 'P95 응답시간', data: vus.map(v => Math.round(grouped[v]?.p95 || 0)), borderColor: '#007aff', borderWidth: 3 },
+            { label: '권장 임계치 (1초)', data: threshold1s, borderColor: '#34c759', borderDash: [5, 5], borderWidth: 2 },
+            { label: '경고 임계치 (2초)', data: threshold2s, borderColor: '#ff3b30', borderDash: [5, 5], borderWidth: 2 },
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, title: { display: true, text: 'ms' } } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
