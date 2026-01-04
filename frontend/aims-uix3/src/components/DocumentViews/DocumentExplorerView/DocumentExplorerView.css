@@ -573,15 +573,148 @@
   justify-content: center;
 }
 
-.doc-explorer-tree__doc-icon--txt {
-  color: var(--color-green);
+/* ============================================
+   File Type Icon Colors (확장자별 아이콘 색상)
+   ============================================ */
+
+/* PDF - Red theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  color: var(--color-file-pdf-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  color: var(--color-file-pdf-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  color: var(--color-file-pdf-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--pdf {
+  color: var(--color-file-pdf-hover-dark);
 }
 
-.doc-explorer-tree__doc-icon--ocr {
-  color: var(--color-purple);
+/* Image - Blue theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  color: var(--color-file-image-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  color: var(--color-file-image-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  color: var(--color-file-image-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--image {
+  color: var(--color-file-image-hover-dark);
 }
 
-.doc-explorer-tree__doc-icon--bin {
+/* Word - Blue theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  color: var(--color-file-word-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  color: var(--color-file-word-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  color: var(--color-file-word-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--word {
+  color: var(--color-file-word-hover-dark);
+}
+
+/* Excel - Green theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  color: var(--color-file-excel-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  color: var(--color-file-excel-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  color: var(--color-file-excel-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--excel {
+  color: var(--color-file-excel-hover-dark);
+}
+
+/* PowerPoint - Orange theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-hover-dark);
+}
+
+/* Text - Gray theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  color: var(--color-file-text-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  color: var(--color-file-text-dark);
+}
+.doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
+.doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  color: var(--color-file-text-hover-light);
+}
+html[data-theme="dark"] .doc-explorer-tree__document:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text,
+html[data-theme="dark"] .doc-explorer-tree__recent-item:hover .doc-explorer-tree__doc-icon.document-icon.file-icon--text {
+  color: var(--color-file-text-hover-dark);
+}
+
+/* Archive - Orange theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--archive {
+  color: var(--color-file-archive-light, #f09000);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--archive {
+  color: var(--color-file-archive-dark, #ffa500);
+}
+
+/* Video - Purple theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--video {
+  color: var(--color-file-video-light, #9c27b0);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--video {
+  color: var(--color-file-video-dark, #ce93d8);
+}
+
+/* Audio - Pink theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--audio {
+  color: var(--color-file-audio-light, #e91e63);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--audio {
+  color: var(--color-file-audio-dark, #f48fb1);
+}
+
+/* Code - Indigo theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--code {
+  color: var(--color-file-code-light, #3f51b5);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--code {
+  color: var(--color-file-code-dark, #9fa8da);
+}
+
+/* Executable - Dark theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--executable {
+  color: var(--color-file-executable-light, #424242);
+}
+html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--executable {
+  color: var(--color-file-executable-dark, #9e9e9e);
+}
+
+/* Default - Neutral theme */
+.doc-explorer-tree__doc-icon.document-icon.file-icon--default {
   color: var(--color-text-tertiary);
 }
 

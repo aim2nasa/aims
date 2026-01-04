@@ -13,6 +13,8 @@
 
 import React, { useCallback, useRef, useMemo, useEffect, useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
+import { DocumentUtils } from '@/entities/document'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
@@ -243,9 +245,9 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     const docId = doc._id || doc.id || ''
     const isSelected = selectedDocumentId === docId
     const isFocused = focusedKey === node.key
-    const badgeType = doc.badgeType || 'BIN'
     const customerName = doc.customer_relation?.customer_name
     const documentDate = getDocumentDate(doc)
+    const filename = DocumentStatusService.extractFilename(doc)
 
     return (
       <div
@@ -257,10 +259,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         tabIndex={-1}
         aria-selected={isSelected}
       >
-        {/* 문서 아이콘 */}
-        <span className={`doc-explorer-tree__doc-icon doc-explorer-tree__doc-icon--${badgeType.toLowerCase()}`}>
+        {/* 문서 아이콘 (확장자에 따른 아이콘) */}
+        <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
           <SFSymbol
-            name={node.icon || 'doc.fill'}
+            name={DocumentUtils.getFileIcon(doc.mimeType, filename)}
             size={SFSymbolSize.CAPTION_1}
             weight={SFSymbolWeight.REGULAR}
           />
@@ -286,11 +288,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           title={documentDate || '-'}
         >
           {documentDate ? formatDateTime(documentDate) : '-'}
-        </span>
-
-        {/* 문서유형 배지 */}
-        <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>
-          {badgeType}
         </span>
       </div>
     )
@@ -392,10 +389,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
             {sortedRecentDocuments.map((doc) => {
               const docId = doc._id || doc.id || ''
               const isSelected = selectedDocumentId === docId
-              const badgeType = doc.badgeType || 'BIN'
               const displayName = doc.displayName || doc.originalName || doc.filename || doc.name || '이름 없음'
               const customerName = doc.customer_relation?.customer_name
               const documentDate = getDocumentDate(doc)
+              const filename = DocumentStatusService.extractFilename(doc)
 
               return (
                 <div
@@ -405,10 +402,10 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   role="button"
                   tabIndex={0}
                 >
-                  {/* 문서 아이콘 */}
-                  <span className={`doc-explorer-tree__doc-icon doc-explorer-tree__doc-icon--${badgeType.toLowerCase()}`}>
+                  {/* 문서 아이콘 (확장자에 따른 아이콘) */}
+                  <span className={`doc-explorer-tree__doc-icon document-icon ${DocumentUtils.getFileTypeClass(doc.mimeType, filename)}`}>
                     <SFSymbol
-                      name="doc.fill"
+                      name={DocumentUtils.getFileIcon(doc.mimeType, filename)}
                       size={SFSymbolSize.CAPTION_1}
                       weight={SFSymbolWeight.REGULAR}
                     />
@@ -434,11 +431,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     title={documentDate || '-'}
                   >
                     {documentDate ? formatDateTime(documentDate) : '-'}
-                  </span>
-
-                  {/* 문서유형 배지 */}
-                  <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>
-                    {badgeType}
                   </span>
                 </div>
               )
