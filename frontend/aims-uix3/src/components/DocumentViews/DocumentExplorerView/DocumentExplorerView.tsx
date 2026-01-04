@@ -49,12 +49,15 @@ const DocumentExplorerContent: React.FC<{
     treeData,
     isLoading,
     minTagCount,
+    sortBy,
+    sortDirection,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
     setSearchTerm,
     setSelectedDocumentId,
     setMinTagCount,
+    setSortBy,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -99,6 +102,9 @@ const DocumentExplorerContent: React.FC<{
         isLoading={isLoading}
         minTagCount={minTagCount}
         onMinTagCountChange={setMinTagCount}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortByChange={setSortBy}
       />
 
       {/* 트리 뷰 */}

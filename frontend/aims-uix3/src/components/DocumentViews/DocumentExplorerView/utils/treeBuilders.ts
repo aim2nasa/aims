@@ -4,7 +4,7 @@
  */
 
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentTreeNode, DocumentTreeData } from '../types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeNode, DocumentTreeData } from '../types/documentExplorer'
 
 /**
  * 문서의 표시 이름을 가져옵니다
@@ -17,7 +17,7 @@ function getDocumentDisplayName(doc: Document): string {
  * 문서에서 날짜를 추출합니다
  * 우선순위: upload.uploaded_at > uploaded_at > created_at > timestamp
  */
-function getDocumentDate(doc: Document): string | undefined {
+export function getDocumentDate(doc: Document): string | undefined {
   // upload 객체 내의 uploaded_at (실제 데이터 위치)
   const upload = doc.upload
   if (upload && typeof upload === 'object') {
@@ -395,5 +395,81 @@ export function filterDocuments(documents: Document[], searchTerm: string): Docu
     const name = getDocumentDisplayName(doc).toLowerCase()
     const customerName = doc.customer_relation?.customer_name?.toLowerCase() || ''
     return name.includes(term) || customerName.includes(term)
+  })
+}
+
+/**
+ * 문서 노드들을 정렬합니다
+ */
+function sortDocumentNodes(
+  nodes: DocumentTreeNode[],
+  sortBy: DocumentSortBy,
+  sortDirection: SortDirection
+): DocumentTreeNode[] {
+  const multiplier = sortDirection === 'asc' ? 1 : -1
+
+  return [...nodes].sort((a, b) => {
+    const docA = a.document
+    const docB = b.document
+
+    if (!docA || !docB) return 0
+
+    switch (sortBy) {
+      case 'name': {
+        const nameA = getDocumentDisplayName(docA).toLowerCase()
+        const nameB = getDocumentDisplayName(docB).toLowerCase()
+        return nameA.localeCompare(nameB, 'ko') * multiplier
+      }
+      case 'date': {
+        const dateA = getDocumentDate(docA) || ''
+        const dateB = getDocumentDate(docB) || ''
+        // 날짜가 없는 문서는 맨 뒤로
+        if (!dateA && !dateB) return 0
+        if (!dateA) return 1
+        if (!dateB) return -1
+        return dateA.localeCompare(dateB) * multiplier
+      }
+      case 'badgeType': {
+        const typeOrder = { TXT: 1, OCR: 2, BIN: 3 }
+        const typeA = (docA.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
+        const typeB = (docB.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
+        return (typeOrder[typeA] - typeOrder[typeB]) * multiplier
+      }
+      default:
+        return 0
+    }
+  })
+}
+
+/**
+ * 트리의 모든 문서 노드에 정렬을 적용합니다 (재귀)
+ */
+export function sortTreeNodes(
+  nodes: DocumentTreeNode[],
+  sortBy: DocumentSortBy,
+  sortDirection: SortDirection
+): DocumentTreeNode[] {
+  return nodes.map((node) => {
+    if (node.type === 'document') {
+      return node
+    }
+
+    // 그룹/서브그룹 노드: 자식 노드 정렬
+    const children = node.children || []
+
+    // 문서 노드와 그룹 노드 분리
+    const documentNodes = children.filter((child) => child.type === 'document')
+    const groupNodes = children.filter((child) => child.type !== 'document')
+
+    // 문서 노드만 정렬
+    const sortedDocumentNodes = sortDocumentNodes(documentNodes, sortBy, sortDirection)
+
+    // 그룹 노드는 재귀적으로 처리
+    const sortedGroupNodes = sortTreeNodes(groupNodes, sortBy, sortDirection)
+
+    return {
+      ...node,
+      children: [...sortedGroupNodes, ...sortedDocumentNodes],
+    }
   })
 }

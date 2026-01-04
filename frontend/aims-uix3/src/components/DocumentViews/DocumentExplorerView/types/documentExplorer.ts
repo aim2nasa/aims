@@ -11,6 +11,25 @@ import type { Document } from '@/types/documentStatus'
 export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date'
 
 /**
+ * 문서 정렬 기준
+ */
+export type DocumentSortBy = 'name' | 'date' | 'badgeType'
+
+/**
+ * 정렬 방향
+ */
+export type SortDirection = 'asc' | 'desc'
+
+/**
+ * 정렬 기준별 라벨
+ */
+export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
+  name: '제목',
+  date: '날짜',
+  badgeType: '문서유형',
+}
+
+/**
  * 분류 기준별 라벨
  */
 export const GROUP_BY_LABELS: Record<DocumentGroupBy, string> = {

@@ -6,8 +6,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentTreeData } from '../types/documentExplorer'
-import { buildTree, collectAllKeys, filterDocuments } from '../utils/treeBuilders'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeData } from '../types/documentExplorer'
+import { buildTree, collectAllKeys, filterDocuments, sortTreeNodes } from '../utils/treeBuilders'
 
 export interface UseDocumentExplorerTreeOptions {
   documents: Document[]
@@ -25,6 +25,8 @@ export interface UseDocumentExplorerTreeResult {
   filteredDocuments: Document[]
   isLoading: boolean
   minTagCount: number
+  sortBy: DocumentSortBy
+  sortDirection: SortDirection
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -34,6 +36,8 @@ export interface UseDocumentExplorerTreeResult {
   setSelectedDocumentId: (id: string | null) => void
   expandToDocument: (documentId: string) => void
   setMinTagCount: (value: number) => void
+  setSortBy: (sortBy: DocumentSortBy) => void
+  toggleSortDirection: () => void
 }
 
 /**
@@ -60,6 +64,14 @@ export function useDocumentExplorerTree({
     'doc-explorer-min-tag-count',
     1
   )
+  const [sortBy, setSortByState] = usePersistedState<DocumentSortBy>(
+    'doc-explorer-sort-by',
+    'date'
+  )
+  const [sortDirection, setSortDirectionState] = usePersistedState<SortDirection>(
+    'doc-explorer-sort-direction',
+    'desc'
+  )
 
   // Non-persisted states
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
@@ -70,10 +82,13 @@ export function useDocumentExplorerTree({
     return filterDocuments(documents, searchTerm)
   }, [documents, searchTerm])
 
-  // 트리 데이터 빌드
+  // 트리 데이터 빌드 (정렬 적용)
   const treeData = useMemo(() => {
-    return buildTree(filteredDocuments, groupBy, minTagCount)
-  }, [filteredDocuments, groupBy, minTagCount])
+    const tree = buildTree(filteredDocuments, groupBy, minTagCount)
+    // 문서 노드에 정렬 적용
+    const sortedNodes = sortTreeNodes(tree.nodes, sortBy, sortDirection)
+    return { ...tree, nodes: sortedNodes }
+  }, [filteredDocuments, groupBy, minTagCount, sortBy, sortDirection])
 
   // expandedKeys를 Set으로 변환
   const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
@@ -132,6 +147,26 @@ export function useDocumentExplorerTree({
     [setMinTagCountState]
   )
 
+  // 정렬 기준 설정
+  const setSortBy = useCallback(
+    (newSortBy: DocumentSortBy) => {
+      if (newSortBy === sortBy) {
+        // 같은 기준 클릭 시 방향 토글
+        setSortDirectionState((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortByState(newSortBy)
+        // 새 기준 선택 시 기본 방향: 날짜는 desc(최신순), 나머지는 asc
+        setSortDirectionState(newSortBy === 'date' ? 'desc' : 'asc')
+      }
+    },
+    [sortBy, setSortByState, setSortDirectionState]
+  )
+
+  // 정렬 방향 토글
+  const toggleSortDirection = useCallback(() => {
+    setSortDirectionState((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+  }, [setSortDirectionState])
+
   // 특정 문서까지 트리 펼치기
   const expandToDocument = useCallback(
     (documentId: string) => {
@@ -173,6 +208,8 @@ export function useDocumentExplorerTree({
     filteredDocuments,
     isLoading,
     minTagCount,
+    sortBy,
+    sortDirection,
 
     // Actions
     setGroupBy,
@@ -182,5 +219,7 @@ export function useDocumentExplorerTree({
     setSelectedDocumentId,
     expandToDocument,
     setMinTagCount,
+    setSortBy,
+    toggleSortDirection,
   }
 }

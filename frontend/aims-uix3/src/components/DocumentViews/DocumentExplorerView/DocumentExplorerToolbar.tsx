@@ -7,8 +7,8 @@ import React, { useCallback, useRef } from 'react'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import Button from '@/shared/ui/Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
-import type { DocumentGroupBy } from './types/documentExplorer'
-import { GROUP_BY_LABELS } from './types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
+import { GROUP_BY_LABELS, SORT_BY_LABELS } from './types/documentExplorer'
 
 export interface DocumentExplorerToolbarProps {
   groupBy: DocumentGroupBy
@@ -24,6 +24,10 @@ export interface DocumentExplorerToolbarProps {
   /** 기타 분류 최소 기준 (태그별 분류 시) */
   minTagCount: number
   onMinTagCountChange: (value: number) => void
+  /** 정렬 기준 */
+  sortBy: DocumentSortBy
+  sortDirection: SortDirection
+  onSortByChange: (sortBy: DocumentSortBy) => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -32,6 +36,8 @@ const GROUP_BY_OPTIONS: DropdownOption[] = [
   { value: 'tag', label: '태그별' },
   { value: 'date', label: '날짜별' },
 ]
+
+const SORT_OPTIONS: DocumentSortBy[] = ['name', 'date', 'badgeType']
 
 export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = ({
   groupBy,
@@ -46,6 +52,9 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   isLoading = false,
   minTagCount,
   onMinTagCountChange,
+  sortBy,
+  sortDirection,
+  onSortByChange,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -65,7 +74,6 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
     <div className="doc-explorer-toolbar">
       {/* 분류 기준 드롭다운 */}
       <div className="doc-explorer-toolbar__group">
-        <span className="doc-explorer-toolbar__label">분류:</span>
         <Dropdown
           options={GROUP_BY_OPTIONS}
           value={groupBy}
@@ -143,19 +151,31 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
           <span>{isAllExpanded ? '접기' : '펼치기'}</span>
         </Button>
 
-        <Button
-          variant="ghost"
-          onClick={onRefresh}
-          disabled={isLoading}
-          title="새로고침"
-        >
-          <SFSymbol
-            name="arrow.clockwise"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-            className={isLoading ? 'spinning' : ''}
-          />
-        </Button>
+      </div>
+
+      {/* 정렬 기준 */}
+      <div className="doc-explorer-toolbar__sort">
+        <div className="doc-explorer-toolbar__sort-buttons">
+          {SORT_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`doc-explorer-toolbar__sort-btn ${sortBy === option ? 'doc-explorer-toolbar__sort-btn--active' : ''}`}
+              onClick={() => onSortByChange(option)}
+              title={`${SORT_BY_LABELS[option]}순 정렬`}
+            >
+              {SORT_BY_LABELS[option]}
+              {sortBy === option && (
+                <SFSymbol
+                  name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  className="doc-explorer-toolbar__sort-icon"
+                />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 통계 */}
