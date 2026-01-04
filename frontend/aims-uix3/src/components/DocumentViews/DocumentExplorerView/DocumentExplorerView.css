@@ -47,9 +47,15 @@
   color: var(--color-text-secondary);
 }
 
-/* Dropdown 폭 조정 */
+/* Dropdown 폭/높이 조정 - 검색 입력과 높이 맞춤 */
 .doc-explorer-toolbar__group .ios-dropdown {
   min-width: 140px;
+}
+
+.doc-explorer-toolbar__group .ios-dropdown__trigger {
+  min-height: unset;
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 /* 기타 분류 기준 (Stepper) */
