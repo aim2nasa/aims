@@ -3,11 +3,19 @@
  * @description 문서 탐색기 툴바 - 분류 기준 선택, 검색, 펼치기/접기, 빠른 필터
  */
 
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useRef, useState, useMemo } from 'react'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType } from './types/documentExplorer'
 import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
+
+// 빠른 필터 툴팁 설명
+const QUICK_FILTER_TOOLTIPS: Record<QuickFilterType, string> = {
+  none: '',
+  today: '오늘 등록된 문서만 표시',
+  thisWeek: '이번 주 등록된 문서만 표시',
+}
 
 export interface DocumentExplorerToolbarProps {
   groupBy: DocumentGroupBy
@@ -33,6 +41,12 @@ export interface DocumentExplorerToolbarProps {
   /** 고객 필터 */
   customerFilter: string | null
   onCustomerFilterClear: () => void
+  /** 날짜 점프 */
+  onJumpToDate: (date: Date) => boolean
+  getAvailableDates: () => Date[]
+  /** 날짜 필터 */
+  dateFilter: Date | null
+  onDateFilterClear: () => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -67,8 +81,101 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   onQuickFilterChange,
   customerFilter,
   onCustomerFilterClear,
+  onJumpToDate,
+  getAvailableDates,
+  dateFilter,
+  onDateFilterClear,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const datePickerRef = useRef<HTMLDivElement>(null)
+  const dateButtonRef = useRef<HTMLButtonElement>(null)
+
+  // 문서가 있는 날짜 Set (빠른 조회용)
+  const availableDatesSet = useMemo(() => {
+    const dates = getAvailableDates()
+    const set = new Set<string>()
+    dates.forEach((date) => {
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      set.add(key)
+    })
+    return set
+  }, [getAvailableDates])
+
+  // 현재 보고 있는 달력의 년월
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear())
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth())
+
+  // 날짜 선택 핸들러
+  const handleDateSelect = useCallback(
+    (year: number, month: number, day: number) => {
+      const date = new Date(year, month, day)
+      const success = onJumpToDate(date)
+      if (success) {
+        setShowDatePicker(false)
+      }
+    },
+    [onJumpToDate]
+  )
+
+  // 이전/다음 달 이동
+  const goToPrevMonth = useCallback(() => {
+    if (calendarMonth === 0) {
+      setCalendarYear((y) => y - 1)
+      setCalendarMonth(11)
+    } else {
+      setCalendarMonth((m) => m - 1)
+    }
+  }, [calendarMonth])
+
+  const goToNextMonth = useCallback(() => {
+    if (calendarMonth === 11) {
+      setCalendarYear((y) => y + 1)
+      setCalendarMonth(0)
+    } else {
+      setCalendarMonth((m) => m + 1)
+    }
+  }, [calendarMonth])
+
+  // 오늘로 이동
+  const goToToday = useCallback(() => {
+    const today = new Date()
+    setCalendarYear(today.getFullYear())
+    setCalendarMonth(today.getMonth())
+  }, [])
+
+  // 달력 데이터 생성
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(calendarYear, calendarMonth, 1)
+    const lastDay = new Date(calendarYear, calendarMonth + 1, 0)
+    const startDayOfWeek = firstDay.getDay() // 0 = 일요일
+
+    const days: Array<{ day: number; hasDocuments: boolean; isToday: boolean } | null> = []
+
+    // 이전 달의 빈 칸
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null)
+    }
+
+    // 현재 달의 날짜들
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      days.push({
+        day,
+        hasDocuments: availableDatesSet.has(dateStr),
+        isToday: dateStr === todayStr,
+      })
+    }
+
+    return days
+  }, [calendarYear, calendarMonth, availableDatesSet])
+
+  // 월 이름
+  const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토']
 
   const handleGroupByChange = useCallback(
     (value: string) => {
@@ -151,15 +258,124 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 빠른 필터 칩 */}
       <div className="doc-explorer-toolbar__quick-filters">
         {QUICK_FILTER_OPTIONS.map((filter) => (
-          <button
-            key={filter}
-            type="button"
-            className={`doc-explorer-toolbar__filter-chip ${quickFilter === filter ? 'doc-explorer-toolbar__filter-chip--active' : ''}`}
-            onClick={() => onQuickFilterChange(quickFilter === filter ? 'none' : filter)}
-          >
-            {QUICK_FILTER_LABELS[filter]}
-          </button>
+          <Tooltip key={filter} content={QUICK_FILTER_TOOLTIPS[filter]} placement="bottom">
+            <button
+              type="button"
+              className={`doc-explorer-toolbar__filter-chip ${quickFilter === filter ? 'doc-explorer-toolbar__filter-chip--active' : ''}`}
+              onClick={() => onQuickFilterChange(quickFilter === filter ? 'none' : filter)}
+            >
+              {QUICK_FILTER_LABELS[filter]}
+            </button>
+          </Tooltip>
         ))}
+
+        {/* 날짜 점프 버튼 */}
+        <div className="doc-explorer-toolbar__date-jump">
+          <Tooltip content="캘린더에서 날짜 선택하여 이동" placement="bottom">
+            <button
+              ref={dateButtonRef}
+              type="button"
+              className={`doc-explorer-toolbar__date-btn ${showDatePicker ? 'doc-explorer-toolbar__date-btn--active' : ''}`}
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              disabled={availableDatesSet.size === 0}
+              aria-label="날짜로 이동"
+            >
+              <SFSymbol
+                name="calendar"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+              />
+            </button>
+          </Tooltip>
+
+          {/* 달력 팝오버 */}
+          {showDatePicker && (
+            <>
+              <div
+                className="doc-explorer-toolbar__date-backdrop"
+                onClick={() => setShowDatePicker(false)}
+              />
+              <div
+                ref={datePickerRef}
+                className="doc-explorer-toolbar__calendar"
+              >
+                {/* 달력 헤더 */}
+                <div className="doc-explorer-toolbar__calendar-header">
+                  <button
+                    type="button"
+                    className="doc-explorer-toolbar__calendar-nav"
+                    onClick={goToPrevMonth}
+                    aria-label="이전 달"
+                  >
+                    <SFSymbol
+                      name="chevron.left"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className="doc-explorer-toolbar__calendar-title"
+                    onClick={goToToday}
+                    title="오늘로 이동"
+                  >
+                    {calendarYear}년 {monthNames[calendarMonth]}
+                  </button>
+                  <button
+                    type="button"
+                    className="doc-explorer-toolbar__calendar-nav"
+                    onClick={goToNextMonth}
+                    aria-label="다음 달"
+                  >
+                    <SFSymbol
+                      name="chevron.right"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                </div>
+
+                {/* 요일 헤더 */}
+                <div className="doc-explorer-toolbar__calendar-weekdays">
+                  {dayNames.map((day, i) => (
+                    <div
+                      key={day}
+                      className={`doc-explorer-toolbar__calendar-weekday ${i === 0 ? 'doc-explorer-toolbar__calendar-weekday--sunday' : ''}`}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* 날짜 그리드 */}
+                <div className="doc-explorer-toolbar__calendar-grid">
+                  {calendarDays.map((dayInfo, index) => (
+                    <div key={index} className="doc-explorer-toolbar__calendar-cell">
+                      {dayInfo && (
+                        <button
+                          type="button"
+                          className={`doc-explorer-toolbar__calendar-day ${dayInfo.hasDocuments ? 'doc-explorer-toolbar__calendar-day--has-docs' : ''} ${dayInfo.isToday ? 'doc-explorer-toolbar__calendar-day--today' : ''}`}
+                          onClick={() => dayInfo.hasDocuments && handleDateSelect(calendarYear, calendarMonth, dayInfo.day)}
+                          disabled={!dayInfo.hasDocuments}
+                        >
+                          {dayInfo.day}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* 범례 */}
+                <div className="doc-explorer-toolbar__calendar-legend">
+                  <span className="doc-explorer-toolbar__calendar-legend-item">
+                    <span className="doc-explorer-toolbar__calendar-legend-dot" />
+                    문서 있음
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 고객 필터 표시 (활성화 시) */}
@@ -178,6 +394,32 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             className="doc-explorer-toolbar__customer-filter-clear"
             onClick={onCustomerFilterClear}
             title="필터 해제"
+          >
+            <SFSymbol
+              name="xmark.circle.fill"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.REGULAR}
+            />
+          </button>
+        </div>
+      )}
+
+      {/* 날짜 필터 표시 (활성화 시) */}
+      {dateFilter && (
+        <div className="doc-explorer-toolbar__date-filter">
+          <span className="doc-explorer-toolbar__date-filter-label">
+            <SFSymbol
+              name="calendar"
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.REGULAR}
+            />
+            {dateFilter.getFullYear()}.{String(dateFilter.getMonth() + 1).padStart(2, '0')}.{String(dateFilter.getDate()).padStart(2, '0')}
+          </span>
+          <button
+            type="button"
+            className="doc-explorer-toolbar__date-filter-clear"
+            onClick={onDateFilterClear}
+            title="날짜 필터 해제"
           >
             <SFSymbol
               name="xmark.circle.fill"

@@ -355,6 +355,43 @@
   opacity: 1;
 }
 
+/* Date Filter Indicator */
+.doc-explorer-toolbar__date-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  background: var(--color-accent-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+}
+
+.doc-explorer-toolbar__date-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+.doc-explorer-toolbar__date-filter-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__date-filter-clear:hover {
+  opacity: 1;
+}
+
 /* ============================================
    Tree Container
    ============================================ */
@@ -1092,4 +1129,248 @@ html[data-theme="dark"] .hover-preview__content {
 
 .hover-preview__image--loaded {
   opacity: 1;
+}
+
+/* ============================================
+   Date Jump (날짜 점프)
+   ============================================ */
+.doc-explorer-toolbar__date-jump {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.doc-explorer-toolbar__date-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__date-btn:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
+}
+
+.doc-explorer-toolbar__date-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.doc-explorer-toolbar__date-btn--active {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+/* Date Picker Backdrop */
+.doc-explorer-toolbar__date-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* Calendar Popover */
+.doc-explorer-toolbar__calendar {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 1000;
+  animation: calendarFadeIn 150ms ease-out;
+}
+
+@keyframes calendarFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+html[data-theme="dark"] .doc-explorer-toolbar__calendar {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Calendar Header */
+.doc-explorer-toolbar__calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+.doc-explorer-toolbar__calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__calendar-nav:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.doc-explorer-toolbar__calendar-title {
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--explorer-transition);
+}
+
+.doc-explorer-toolbar__calendar-title:hover {
+  background: var(--color-bg-hover);
+}
+
+/* Weekday Header */
+.doc-explorer-toolbar__calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 8px 8px 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.doc-explorer-toolbar__calendar-weekday {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+}
+
+.doc-explorer-toolbar__calendar-weekday--sunday {
+  color: #ff3b30;
+}
+
+/* Calendar Grid */
+.doc-explorer-toolbar__calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 8px;
+}
+
+.doc-explorer-toolbar__calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-explorer-toolbar__calendar-day {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  cursor: default;
+  transition: all var(--explorer-transition);
+  position: relative;
+}
+
+.doc-explorer-toolbar__calendar-day:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 문서가 있는 날짜 */
+.doc-explorer-toolbar__calendar-day--has-docs {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  opacity: 1;
+}
+
+.doc-explorer-toolbar__calendar-day--has-docs::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.doc-explorer-toolbar__calendar-day--has-docs:hover {
+  background: #007aff !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.doc-explorer-toolbar__calendar-day--has-docs:hover::after {
+  background: white;
+}
+
+/* 오늘 */
+.doc-explorer-toolbar__calendar-day--today {
+  border: 2px solid var(--color-accent);
+}
+
+/* Calendar Legend */
+.doc-explorer-toolbar__calendar-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.doc-explorer-toolbar__calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.doc-explorer-toolbar__calendar-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
 }

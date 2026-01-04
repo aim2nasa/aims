@@ -33,6 +33,7 @@ export interface UseDocumentExplorerTreeResult {
   recentDocumentIds: string[]
   recentDocuments: Document[]
   customerFilter: string | null
+  dateFilter: Date | null
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -48,6 +49,9 @@ export interface UseDocumentExplorerTreeResult {
   addToRecentDocuments: (documentId: string) => void
   setCustomerFilter: (customerName: string | null) => void
   clearAllFilters: () => void
+  jumpToDate: (date: Date) => boolean
+  getAvailableDates: () => Date[]
+  clearDateFilter: () => void
 }
 
 /**
@@ -95,6 +99,7 @@ export function useDocumentExplorerTree({
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [isAllExpanded, setIsAllExpanded] = useState(false)
   const [customerFilter, setCustomerFilterState] = useState<string | null>(null)
+  const [dateFilter, setDateFilter] = useState<Date | null>(null)
 
   // 최근 본 문서 객체 목록
   const recentDocuments = useMemo(() => {
@@ -144,13 +149,30 @@ export function useDocumentExplorerTree({
     []
   )
 
-  // 검색어 + 빠른 필터 + 고객 필터로 필터링된 문서
+  // 날짜 필터 적용 (캘린더에서 선택한 특정 날짜)
+  const applyDateFilter = useCallback(
+    (docs: Document[], filterDate: Date | null): Document[] => {
+      if (!filterDate) return docs
+      const targetDateStr = `${filterDate.getFullYear()}-${String(filterDate.getMonth() + 1).padStart(2, '0')}-${String(filterDate.getDate()).padStart(2, '0')}`
+      return docs.filter((doc) => {
+        const dateStr = getDocumentDate(doc)
+        if (!dateStr) return false
+        const date = new Date(dateStr)
+        const docDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        return docDateStr === targetDateStr
+      })
+    },
+    []
+  )
+
+  // 검색어 + 빠른 필터 + 고객 필터 + 날짜 필터로 필터링된 문서
   const filteredDocuments = useMemo(() => {
     let result = filterDocuments(documents, searchTerm)
     result = applyQuickFilter(result, quickFilter)
     result = applyCustomerFilter(result, customerFilter)
+    result = applyDateFilter(result, dateFilter)
     return result
-  }, [documents, searchTerm, quickFilter, customerFilter, applyQuickFilter, applyCustomerFilter])
+  }, [documents, searchTerm, quickFilter, customerFilter, dateFilter, applyQuickFilter, applyCustomerFilter, applyDateFilter])
 
   // 트리 데이터 빌드 (정렬 적용)
   // 검색어가 있을 때도 그룹핑 유지, 매칭 그룹을 상단에 표시
@@ -289,9 +311,10 @@ export function useDocumentExplorerTree({
   const setQuickFilter = useCallback(
     (filter: QuickFilterType) => {
       setQuickFilterState(filter)
-      // 필터 변경 시 고객 필터 해제
+      // 필터 변경 시 고객 필터, 날짜 필터 해제
       if (filter !== 'none') {
         setCustomerFilterState(null)
+        setDateFilter(null)
       }
     },
     [setQuickFilterState]
@@ -327,8 +350,14 @@ export function useDocumentExplorerTree({
   const clearAllFilters = useCallback(() => {
     setQuickFilterState('none')
     setCustomerFilterState(null)
+    setDateFilter(null)
     setSearchTermState('')
   }, [setQuickFilterState, setSearchTermState])
+
+  // 날짜 필터 해제
+  const clearDateFilter = useCallback(() => {
+    setDateFilter(null)
+  }, [])
 
   // 특정 문서까지 트리 펼치기
   const expandToDocument = useCallback(
@@ -360,6 +389,52 @@ export function useDocumentExplorerTree({
     [treeData.nodes, setExpandedKeys]
   )
 
+  // 문서가 있는 날짜 목록 반환
+  const getAvailableDates = useCallback((): Date[] => {
+    const dateSet = new Set<string>()
+    documents.forEach((doc) => {
+      const dateStr = getDocumentDate(doc)
+      if (dateStr) {
+        // YYYY-MM-DD 형식으로 변환
+        const date = new Date(dateStr)
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        dateSet.add(key)
+      }
+    })
+    return Array.from(dateSet)
+      .map((str) => new Date(str))
+      .sort((a, b) => b.getTime() - a.getTime()) // 최신순 정렬
+  }, [documents])
+
+  // 특정 날짜로 점프 (날짜 필터 설정)
+  const jumpToDate = useCallback(
+    (targetDate: Date): boolean => {
+      // 해당 날짜의 문서가 있는지 확인
+      const targetDateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
+
+      const hasMatchingDocs = documents.some((doc) => {
+        const dateStr = getDocumentDate(doc)
+        if (!dateStr) return false
+        const date = new Date(dateStr)
+        const docDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        return docDateStr === targetDateStr
+      })
+
+      if (!hasMatchingDocs) {
+        return false
+      }
+
+      // 다른 필터들 해제하고 날짜 필터 설정
+      setQuickFilterState('none')
+      setCustomerFilterState(null)
+      setSearchTermState('')
+      setDateFilter(targetDate)
+
+      return true
+    },
+    [documents, setQuickFilterState, setSearchTermState]
+  )
+
   return {
     // State
     groupBy,
@@ -377,6 +452,7 @@ export function useDocumentExplorerTree({
     recentDocumentIds,
     recentDocuments,
     customerFilter,
+    dateFilter,
 
     // Actions
     setGroupBy,
@@ -392,5 +468,8 @@ export function useDocumentExplorerTree({
     addToRecentDocuments,
     setCustomerFilter,
     clearAllFilters,
+    jumpToDate,
+    getAvailableDates,
+    clearDateFilter,
   }
 }

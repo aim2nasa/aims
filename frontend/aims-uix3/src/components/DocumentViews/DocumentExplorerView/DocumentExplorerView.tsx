@@ -6,7 +6,7 @@
  * 윈도우 탐색기 스타일의 트리 구조로 문서를 분류별로 탐색
  */
 
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { getBreadcrumbItems } from '@/shared/lib/breadcrumbUtils'
 import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
@@ -54,6 +54,7 @@ const DocumentExplorerContent: React.FC<{
     quickFilter,
     recentDocuments,
     customerFilter,
+    dateFilter,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -64,7 +65,9 @@ const DocumentExplorerContent: React.FC<{
     setQuickFilter,
     addToRecentDocuments,
     setCustomerFilter,
-    clearAllFilters,
+    jumpToDate,
+    getAvailableDates,
+    clearDateFilter,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -125,6 +128,10 @@ const DocumentExplorerContent: React.FC<{
         onQuickFilterChange={setQuickFilter}
         customerFilter={customerFilter}
         onCustomerFilterClear={() => setCustomerFilter(null)}
+        onJumpToDate={jumpToDate}
+        getAvailableDates={getAvailableDates}
+        dateFilter={dateFilter}
+        onDateFilterClear={clearDateFilter}
       />
 
       {/* 트리 뷰 */}
