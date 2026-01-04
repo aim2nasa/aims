@@ -102,9 +102,14 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
     return set
   }, [getAvailableDates])
 
-  // 현재 보고 있는 달력의 년월
-  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear())
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth())
+  // 현재 보고 있는 달력의 년월 (단일 상태로 원자적 업데이트)
+  const [calendarDate, setCalendarDate] = useState(() => ({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth()
+  }))
+
+  const calendarYear = calendarDate.year
+  const calendarMonth = calendarDate.month
 
   // 날짜 선택 핸들러
   const handleDateSelect = useCallback(
@@ -118,30 +123,29 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
     [onJumpToDate]
   )
 
-  // 이전/다음 달 이동
+  // 이전/다음 달 이동 (단일 상태로 원자적 업데이트)
   const goToPrevMonth = useCallback(() => {
-    if (calendarMonth === 0) {
-      setCalendarYear((y) => y - 1)
-      setCalendarMonth(11)
-    } else {
-      setCalendarMonth((m) => m - 1)
-    }
-  }, [calendarMonth])
+    setCalendarDate((prev) => {
+      if (prev.month === 0) {
+        return { year: prev.year - 1, month: 11 }
+      }
+      return { ...prev, month: prev.month - 1 }
+    })
+  }, [])
 
   const goToNextMonth = useCallback(() => {
-    if (calendarMonth === 11) {
-      setCalendarYear((y) => y + 1)
-      setCalendarMonth(0)
-    } else {
-      setCalendarMonth((m) => m + 1)
-    }
-  }, [calendarMonth])
+    setCalendarDate((prev) => {
+      if (prev.month === 11) {
+        return { year: prev.year + 1, month: 0 }
+      }
+      return { ...prev, month: prev.month + 1 }
+    })
+  }, [])
 
   // 오늘로 이동
   const goToToday = useCallback(() => {
     const today = new Date()
-    setCalendarYear(today.getFullYear())
-    setCalendarMonth(today.getMonth())
+    setCalendarDate({ year: today.getFullYear(), month: today.getMonth() })
   }, [])
 
   // 달력 데이터 생성
@@ -307,11 +311,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                     onClick={goToPrevMonth}
                     aria-label="이전 달"
                   >
-                    <SFSymbol
-                      name="chevron.left"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
+                    ‹
                   </button>
                   <button
                     type="button"
@@ -327,11 +327,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                     onClick={goToNextMonth}
                     aria-label="다음 달"
                   >
-                    <SFSymbol
-                      name="chevron.right"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
+                    ›
                   </button>
                 </div>
 
