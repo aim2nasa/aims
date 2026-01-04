@@ -72,6 +72,13 @@ export default defineConfig({
         target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
         secure: false,
         changeOrigin: true
+      },
+      // PDF Proxy (썸네일, PDF 메타데이터 수정)
+      '/pdf-proxy': {
+        target: 'http://100.110.215.65:8002',  // pdf_proxy 서비스
+        secure: false,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/pdf-proxy/, '')
       }
     },
     // HMR 설정 최적화

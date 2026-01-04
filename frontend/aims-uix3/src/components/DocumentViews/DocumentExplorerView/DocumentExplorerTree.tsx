@@ -19,6 +19,7 @@ import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy, DocumentSortBy, SortDirection } from './types/documentExplorer'
 import { useDocumentExplorerKeyboard } from './hooks/useDocumentExplorerKeyboard'
 import { getDocumentDate } from './utils/treeBuilders'
+import { HoverPreview } from './components/HoverPreview'
 
 // 최근 본 문서 아이콘 (시계 + 문서)
 const RecentDocumentsIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -116,6 +117,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   const lastClickedIdRef = useRef<string | null>(null)
   const treeContainerRef = useRef<HTMLDivElement>(null)
 
+  // 호버 프리뷰 상태
+  const [hoverDocument, setHoverDocument] = useState<Document | null>(null)
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // 최근 본 문서 섹션 펼침/접힘 상태 (localStorage에 저장)
   const [isRecentExpanded, setIsRecentExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-explorer-recent-expanded')
@@ -209,6 +215,28 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     [onCustomerClick]
   )
 
+  // 문서 호버 핸들러
+  const handleDocumentMouseEnter = useCallback(
+    (doc: Document, e: React.MouseEvent) => {
+      // 기존 타이머 취소
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current)
+      }
+      // 마우스 위치 저장
+      setHoverPosition({ x: e.clientX, y: e.clientY })
+      setHoverDocument(doc)
+    },
+    []
+  )
+
+  const handleDocumentMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+    }
+    setHoverDocument(null)
+    setHoverPosition(null)
+  }, [])
+
   // 그룹 노드 렌더링
   const renderGroupNode = (node: DocumentTreeNode, level: number): React.ReactNode => {
     const isExpanded = expandedKeys.has(node.key)
@@ -298,6 +326,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         data-node-key={node.key}
         className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
         onClick={(e) => handleDocumentClick(doc, e, node.key)}
+        onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+        onMouseLeave={handleDocumentMouseLeave}
         role="treeitem"
         tabIndex={-1}
         aria-selected={isSelected}
@@ -428,6 +458,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   key={`recent-${docId}`}
                   className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
                   onClick={(e) => handleDocumentClick(doc, e)}
+                  onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+                  onMouseLeave={handleDocumentMouseLeave}
                   role="button"
                   tabIndex={0}
                 >
@@ -486,15 +518,22 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   }
 
   return (
-    <div
-      ref={treeContainerRef}
-      className="doc-explorer-tree"
-      role="tree"
-      tabIndex={0}
-      onKeyDown={keyboardHandleKeyDown}
-    >
-      {renderRecentDocuments()}
-      {nodes.map((node) => renderNode(node, 0))}
-    </div>
+    <>
+      <div
+        ref={treeContainerRef}
+        className="doc-explorer-tree"
+        role="tree"
+        tabIndex={0}
+        onKeyDown={keyboardHandleKeyDown}
+      >
+        {renderRecentDocuments()}
+        {nodes.map((node) => renderNode(node, 0))}
+      </div>
+      <HoverPreview
+        document={hoverDocument}
+        position={hoverPosition}
+        containerRef={treeContainerRef}
+      />
+    </>
   )
 }
