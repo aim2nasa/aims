@@ -13,7 +13,7 @@ export type DocumentGroupBy = 'customer' | 'badgeType' | 'tag' | 'date'
 /**
  * 문서 정렬 기준
  */
-export type DocumentSortBy = 'name' | 'date' | 'badgeType'
+export type DocumentSortBy = 'name' | 'date' | 'badgeType' | 'customer'
 
 /**
  * 정렬 방향
@@ -27,6 +27,7 @@ export const SORT_BY_LABELS: Record<DocumentSortBy, string> = {
   name: '제목',
   date: '날짜',
   badgeType: '문서유형',
+  customer: '고객',
 }
 
 /**

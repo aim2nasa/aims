@@ -493,7 +493,30 @@
   white-space: nowrap;
 }
 
-/* Document Date (날짜별 분류 시) */
+/* Document Customer */
+.doc-explorer-tree__doc-customer {
+  flex-shrink: 0;
+  margin-left: var(--explorer-spacing-sm);
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+  border-radius: 8px;
+  min-width: 50px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.doc-explorer-tree__doc-customer--empty {
+  color: var(--color-text-tertiary);
+  background: transparent;
+}
+
+/* Document Date */
 .doc-explorer-tree__doc-date {
   flex-shrink: 0;
   margin-left: var(--explorer-spacing-sm);
@@ -501,6 +524,12 @@
   font-weight: 400;
   color: var(--color-text-tertiary);
   font-variant-numeric: tabular-nums;
+  min-width: 100px;
+  text-align: right;
+}
+
+.doc-explorer-tree__doc-date--empty {
+  text-align: center;
 }
 
 /* Badge */

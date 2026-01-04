@@ -7,6 +7,7 @@ import React, { useCallback, useRef } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type { Document } from '@/types/documentStatus'
 import type { DocumentTreeNode, DocumentGroupBy } from './types/documentExplorer'
+import { getDocumentDate } from './utils/treeBuilders'
 
 export interface DocumentExplorerTreeProps {
   nodes: DocumentTreeNode[]
@@ -154,7 +155,8 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     const docId = doc._id || doc.id || ''
     const isSelected = selectedDocumentId === docId
     const badgeType = doc.badgeType || 'BIN'
-    const uploadedAt = node.metadata?.uploadedAt
+    const customerName = doc.customer_relation?.customer_name
+    const documentDate = getDocumentDate(doc)
 
     return (
       <div
@@ -180,14 +182,23 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
           {node.label}
         </span>
 
-        {/* 날짜/시간 (날짜별 분류 시) */}
-        {uploadedAt && (
-          <span className="doc-explorer-tree__doc-date" title={uploadedAt}>
-            {formatDateTime(uploadedAt)}
-          </span>
-        )}
+        {/* 고객명 */}
+        <span
+          className={`doc-explorer-tree__doc-customer${!customerName ? ' doc-explorer-tree__doc-customer--empty' : ''}`}
+          title={customerName || '-'}
+        >
+          {customerName || '-'}
+        </span>
 
-        {/* 배지 */}
+        {/* 날짜/시간 */}
+        <span
+          className={`doc-explorer-tree__doc-date${!documentDate ? ' doc-explorer-tree__doc-date--empty' : ''}`}
+          title={documentDate || '-'}
+        >
+          {documentDate ? formatDateTime(documentDate) : '-'}
+        </span>
+
+        {/* 문서유형 배지 */}
         <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${badgeType.toLowerCase()}`}>
           {badgeType}
         </span>

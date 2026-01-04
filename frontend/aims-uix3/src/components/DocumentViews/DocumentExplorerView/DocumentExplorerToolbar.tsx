@@ -36,7 +36,7 @@ const GROUP_BY_OPTIONS: DropdownOption[] = [
   { value: 'date', label: '날짜별' },
 ]
 
-const SORT_OPTIONS: DocumentSortBy[] = ['name', 'date', 'badgeType']
+const SORT_OPTIONS: DocumentSortBy[] = ['name', 'customer', 'date', 'badgeType']
 
 export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = ({
   groupBy,

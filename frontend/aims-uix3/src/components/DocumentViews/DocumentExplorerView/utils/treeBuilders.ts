@@ -435,6 +435,15 @@ function sortDocumentNodes(
         const typeB = (docB.badgeType || 'BIN') as 'TXT' | 'OCR' | 'BIN'
         return (typeOrder[typeA] - typeOrder[typeB]) * multiplier
       }
+      case 'customer': {
+        const customerA = docA.customer_relation?.customer_name?.toLowerCase() || ''
+        const customerB = docB.customer_relation?.customer_name?.toLowerCase() || ''
+        // 고객 없는 문서는 맨 뒤로
+        if (!customerA && !customerB) return 0
+        if (!customerA) return 1
+        if (!customerB) return -1
+        return customerA.localeCompare(customerB, 'ko') * multiplier
+      }
       default:
         return 0
     }
