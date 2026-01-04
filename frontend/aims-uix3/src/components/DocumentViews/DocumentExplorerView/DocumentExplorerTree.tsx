@@ -229,6 +229,14 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
     []
   )
 
+  // 마우스 이동 시 위치 업데이트
+  const handleDocumentMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      setHoverPosition({ x: e.clientX, y: e.clientY })
+    },
+    []
+  )
+
   const handleDocumentMouseLeave = useCallback(() => {
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current)
@@ -327,6 +335,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         className={`doc-explorer-tree__document doc-explorer-tree__document--level-${level}${isSelected ? ' doc-explorer-tree__document--selected' : ''}${isFocused ? ' doc-explorer-tree__document--focused' : ''}`}
         onClick={(e) => handleDocumentClick(doc, e, node.key)}
         onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+        onMouseMove={handleDocumentMouseMove}
         onMouseLeave={handleDocumentMouseLeave}
         role="treeitem"
         tabIndex={-1}
@@ -459,6 +468,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                   className={`doc-explorer-tree__recent-item ${isSelected ? 'doc-explorer-tree__recent-item--selected' : ''}`}
                   onClick={(e) => handleDocumentClick(doc, e)}
                   onMouseEnter={(e) => handleDocumentMouseEnter(doc, e)}
+                  onMouseMove={handleDocumentMouseMove}
                   onMouseLeave={handleDocumentMouseLeave}
                   role="button"
                   tabIndex={0}
@@ -532,7 +542,6 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
       <HoverPreview
         document={hoverDocument}
         position={hoverPosition}
-        containerRef={treeContainerRef}
       />
     </>
   )

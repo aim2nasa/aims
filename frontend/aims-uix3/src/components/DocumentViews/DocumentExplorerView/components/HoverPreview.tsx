@@ -8,12 +8,12 @@ import type { Document } from '@/types/documentStatus'
 
 const HOVER_DELAY = 300 // 호버 후 프리뷰 표시까지 딜레이 (ms)
 const THUMBNAIL_WIDTH = 200
+const THUMBNAIL_HEIGHT = 283 // A4 비율 (200 * 1.414)
 const PDF_PROXY_BASE = '/pdf-proxy' // Vite proxy를 통해 접근
 
 export interface HoverPreviewProps {
   document: Document | null
   position: { x: number; y: number } | null
-  containerRef?: React.RefObject<HTMLElement | null>
 }
 
 /**
@@ -48,23 +48,60 @@ function getThumbnailPath(doc: Document): string | null {
   return null
 }
 
+/**
+ * 화면 경계를 고려한 위치 계산
+ * 썸네일을 마우스 오른쪽 옆에 표시 (수직 중앙 정렬)
+ */
+function calculatePosition(mouseX: number, mouseY: number): { x: number; y: number } {
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const gap = 12 // 마우스와 썸네일 사이 간격
+
+  // 기본: 마우스 오른쪽, 수직 중앙 정렬
+  let x = mouseX + gap
+  let y = mouseY - THUMBNAIL_HEIGHT / 2
+
+  // 오른쪽으로 넘어가면 왼쪽에 표시
+  if (x + THUMBNAIL_WIDTH > viewportWidth - 10) {
+    x = mouseX - THUMBNAIL_WIDTH - gap
+  }
+
+  // 아래로 넘어가면 위로 조정
+  if (y + THUMBNAIL_HEIGHT > viewportHeight - 10) {
+    y = viewportHeight - THUMBNAIL_HEIGHT - 10
+  }
+
+  // 위로 넘어가면 아래로 조정
+  if (y < 10) {
+    y = 10
+  }
+
+  // 왼쪽으로 넘어가면 오른쪽으로 조정
+  if (x < 10) {
+    x = 10
+  }
+
+  return { x, y }
+}
+
 export const HoverPreview: React.FC<HoverPreviewProps> = ({
   document,
   position,
-  containerRef,
 }) => {
   const [visible, setVisible] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const [adjustedPosition, setAdjustedPosition] = useState<{ x: number; y: number } | null>(null)
-  const previewRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const currentDocIdRef = useRef<string | null>(null)
 
   // 썸네일 경로 계산
   const thumbnailPath = document ? getThumbnailPath(document) : null
   const thumbnailUrl = thumbnailPath
     ? `${PDF_PROXY_BASE}/thumbnail/${thumbnailPath}?width=${THUMBNAIL_WIDTH}`
     : null
+
+  // 현재 문서 ID
+  const docId = document?._id || document?.id || null
 
   // 호버 딜레이 처리
   useEffect(() => {
@@ -73,14 +110,20 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       timerRef.current = null
     }
 
-    if (document && thumbnailUrl && position) {
-      setImageLoaded(false)
-      setImageError(false)
+    if (document && thumbnailUrl) {
+      // 문서가 변경되었으면 이미지 상태 초기화
+      if (currentDocIdRef.current !== docId) {
+        setImageLoaded(false)
+        setImageError(false)
+        currentDocIdRef.current = docId
+      }
+
       timerRef.current = setTimeout(() => {
         setVisible(true)
       }, HOVER_DELAY)
     } else {
       setVisible(false)
+      currentDocIdRef.current = null
     }
 
     return () => {
@@ -88,59 +131,18 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
         clearTimeout(timerRef.current)
       }
     }
-  }, [document, thumbnailUrl, position])
-
-  // 위치 조정 (화면 밖으로 나가지 않도록)
-  useEffect(() => {
-    if (!visible || !position || !previewRef.current) {
-      setAdjustedPosition(null)
-      return
-    }
-
-    const preview = previewRef.current
-    const rect = preview.getBoundingClientRect()
-    const containerRect = containerRef?.current?.getBoundingClientRect()
-
-    let x = position.x + 16 // 커서 오른쪽에 표시
-    let y = position.y
-
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // 오른쪽으로 넘어가면 왼쪽에 표시
-    if (x + rect.width > viewportWidth - 20) {
-      x = position.x - rect.width - 16
-    }
-
-    // 아래로 넘어가면 위로 조정
-    if (y + rect.height > viewportHeight - 20) {
-      y = viewportHeight - rect.height - 20
-    }
-
-    // 위로 넘어가면 아래로 조정
-    if (y < 20) {
-      y = 20
-    }
-
-    // 컨테이너 기준 제한 (있는 경우)
-    if (containerRect) {
-      if (x < containerRect.left) x = containerRect.left
-      if (y < containerRect.top) y = containerRect.top
-    }
-
-    setAdjustedPosition({ x, y })
-  }, [visible, position, containerRef])
+  }, [document, thumbnailUrl, docId])
 
   // 표시할 조건 체크
   if (!visible || !thumbnailUrl || !position) {
     return null
   }
 
-  const displayPosition = adjustedPosition || position
+  // 마우스 위치 기반으로 실시간 계산
+  const displayPosition = calculatePosition(position.x, position.y)
 
   return (
     <div
-      ref={previewRef}
       className="hover-preview"
       style={{
         position: 'fixed',
