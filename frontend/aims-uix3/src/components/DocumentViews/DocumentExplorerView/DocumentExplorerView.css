@@ -28,17 +28,18 @@
 .doc-explorer-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-md);
-  padding: var(--explorer-spacing-md) var(--explorer-spacing-lg);
+  gap: 6px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-secondary);
   flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .doc-explorer-toolbar__group {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
+  gap: 4px;
 }
 
 .doc-explorer-toolbar__label {
@@ -47,33 +48,51 @@
   color: var(--color-text-secondary);
 }
 
-/* Dropdown 폭/높이 조정 - 검색 입력과 높이 맞춤 */
-.doc-explorer-toolbar__group .ios-dropdown {
-  min-width: 98px;
+/* Dropdown 폭/높이 조정 - 컴팩트 버전 */
+.doc-explorer-dropdown--compact.ios-dropdown {
+  min-width: 88px;
 }
 
-.doc-explorer-toolbar__group .ios-dropdown__trigger {
+.doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__trigger {
   min-height: unset;
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__value {
+  font-size: 10px;
+}
+
+.doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__arrow {
+  font-size: 8px;
+  margin-left: 4px;
+}
+
+.doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__menu {
+  min-width: 80px;
+}
+
+.doc-explorer-dropdown--compact.ios-dropdown .ios-dropdown__option {
+  padding: 4px 8px;
+  font-size: 10px;
 }
 
 /* 기타 분류 기준 (Stepper) */
 .doc-explorer-toolbar__min-count {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-xs);
+  gap: 2px;
 }
 
 .doc-explorer-toolbar__stepper-btn {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -91,9 +110,9 @@
 }
 
 .doc-explorer-toolbar__stepper-value {
-  min-width: 24px;
+  min-width: 16px;
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -102,26 +121,26 @@
 .doc-explorer-toolbar__sort {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
+  gap: 4px;
   margin-left: auto;
 }
 
 .doc-explorer-toolbar__sort-buttons {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .doc-explorer-toolbar__sort-btn {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 5px 10px;
-  font-size: 11px;
+  padding: 3px 7px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-secondary);
   background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all var(--explorer-transition);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -163,6 +182,8 @@
 .doc-explorer-toolbar__search {
   position: relative;
   flex: 1;
+  min-width: 80px;
+  max-width: 150px;
 }
 
 .doc-explorer-toolbar__search-icon {
@@ -176,10 +197,10 @@
 
 .doc-explorer-toolbar__search-input {
   width: 100%;
-  padding: 6px 28px;
-  font-size: 12px;
+  padding: 4px 24px;
+  font-size: 10px;
   border: 1px solid var(--color-border);
-  border-radius: var(--explorer-border-radius);
+  border-radius: 4px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   transition: border-color var(--explorer-transition);
@@ -257,8 +278,8 @@
 .doc-explorer-toolbar__stats {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
-  font-size: 11px;
+  gap: 4px;
+  font-size: 9px;
   color: var(--color-text-tertiary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -272,18 +293,17 @@
 .doc-explorer-toolbar__quick-filters {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-left: auto;
+  gap: 2px;
 }
 
 .doc-explorer-toolbar__filter-chip {
-  padding: 5px 12px;
-  font-size: 11px;
+  padding: 3px 8px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-secondary);
   background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all var(--explorer-transition);
   white-space: nowrap;

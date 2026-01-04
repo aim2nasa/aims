@@ -199,6 +199,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
       {/* 분류 기준 드롭다운 */}
       <div className="doc-explorer-toolbar__group">
         <Dropdown
+          className="doc-explorer-dropdown--compact"
           options={GROUP_BY_OPTIONS}
           value={groupBy}
           onChange={handleGroupByChange}
