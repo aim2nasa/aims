@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/shared/api/apiClient';
 import { Button } from '@/shared/ui/Button/Button';
+import { virusScanApi, type VirusScanStatus } from '@/features/virus-scan/api';
 import './FileValidationPage.css';
 
 // ============================================
@@ -140,6 +141,66 @@ const SettingCard = ({ title, description, enabled, onToggle, children, disabled
   </div>
 );
 
+// yuri 상태 표시 카드 (토글 없음, 모니터링 전용)
+interface YuriStatusCardProps {
+  status: VirusScanStatus | undefined;
+  isLoading: boolean;
+}
+
+const YuriStatusCard = ({ status, isLoading }: YuriStatusCardProps) => {
+  const isOnline = status?.status === 'ok';
+  const system = status?.system;
+
+  return (
+    <div className="setting-card">
+      <div className="setting-card__header">
+        <div className="setting-card__info">
+          <h3 className="setting-card__title">바이러스 검사</h3>
+          <p className="setting-card__description">파일 업로드 시 yuri 서버에서 실시간 검사</p>
+        </div>
+        <div className="yuri-status-badge">
+          <span className={`yuri-status-dot ${isOnline ? 'online' : 'offline'}`} />
+          <span className="yuri-status-text">yuri 연동</span>
+        </div>
+      </div>
+      <div className="setting-card__content">
+        {isLoading ? (
+          <div className="yuri-status-info">상태 확인 중...</div>
+        ) : isOnline ? (
+          <div className="yuri-status-info yuri-status-info--online">
+            <span className="yuri-metric">
+              <span className="yuri-metric-label">상태</span>
+              <span className="yuri-metric-value">정상</span>
+            </span>
+            {system?.cpu?.temperature !== undefined && (
+              <span className={`yuri-metric ${system.cpu.temperature >= 70 ? 'warning' : ''}`}>
+                <span className="yuri-metric-label">온도</span>
+                <span className="yuri-metric-value">{system.cpu.temperature.toFixed(0)}°C</span>
+              </span>
+            )}
+            {system?.memory?.percent !== undefined && (
+              <span className={`yuri-metric ${system.memory.percent >= 70 ? 'warning' : ''}`}>
+                <span className="yuri-metric-label">메모리</span>
+                <span className="yuri-metric-value">{system.memory.percent.toFixed(0)}%</span>
+              </span>
+            )}
+            {system?.disk?.percent !== undefined && (
+              <span className={`yuri-metric ${system.disk.percent >= 70 ? 'warning' : ''}`}>
+                <span className="yuri-metric-label">디스크</span>
+                <span className="yuri-metric-value">{system.disk.percent.toFixed(0)}%</span>
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="yuri-status-info yuri-status-info--offline">
+            <span className="yuri-warning">⚠️ yuri 서버에 연결할 수 없습니다.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const FileValidationPage = () => {
   const queryClient = useQueryClient();
   const [editingExtensions, setEditingExtensions] = useState(false);
@@ -150,6 +211,13 @@ export const FileValidationPage = () => {
   const { data: settings, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'settings', 'file-validation'],
     queryFn: settingsApi.getSettings,
+  });
+
+  // yuri 서비스 상태 조회
+  const { data: yuriStatus, isLoading: yuriLoading } = useQuery({
+    queryKey: ['virus-scan', 'status'],
+    queryFn: virusScanApi.getStatus,
+    refetchInterval: 30000, // 30초마다 갱신
   });
 
   // 설정 업데이트
@@ -378,19 +446,8 @@ export const FileValidationPage = () => {
           disabled={isPending}
         />
 
-        {/* 바이러스 검사 - ClamAV 불안정으로 비활성화 */}
-        <SettingCard
-          title="바이러스 검사"
-          description="ClamAV 서비스 불안정으로 일시 비활성화됨"
-          enabled={false}
-          onToggle={() => {}}
-          disabled={true}
-          alwaysShowContent={true}
-        >
-          <div className="setting-card__warning">
-            ⚠️ ClamAV 서비스가 서버 리소스 과부하를 일으켜 현재 비활성화되어 있습니다.
-          </div>
-        </SettingCard>
+        {/* 바이러스 검사 - yuri 연동 */}
+        <YuriStatusCard status={yuriStatus} isLoading={yuriLoading} />
       </div>
     </div>
   );
