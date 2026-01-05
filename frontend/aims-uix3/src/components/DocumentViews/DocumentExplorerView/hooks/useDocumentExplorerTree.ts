@@ -34,6 +34,7 @@ export interface UseDocumentExplorerTreeResult {
   recentDocuments: Document[]
   customerFilter: string | null
   dateFilter: Date | null
+  thumbnailEnabled: boolean
 
   // Actions
   setGroupBy: (groupBy: DocumentGroupBy) => void
@@ -52,6 +53,7 @@ export interface UseDocumentExplorerTreeResult {
   jumpToDate: (date: Date) => boolean
   getAvailableDates: () => Date[]
   clearDateFilter: () => void
+  setThumbnailEnabled: (enabled: boolean) => void
 }
 
 /**
@@ -93,6 +95,10 @@ export function useDocumentExplorerTree({
   const [recentDocumentIds, setRecentDocumentIds] = usePersistedState<string[]>(
     'doc-explorer-recent-docs',
     []
+  )
+  const [thumbnailEnabled, setThumbnailEnabledState] = usePersistedState<boolean>(
+    'doc-explorer-thumbnail-enabled',
+    true // 기본값: 활성화
   )
 
   // Non-persisted states
@@ -359,6 +365,14 @@ export function useDocumentExplorerTree({
     setDateFilter(null)
   }, [])
 
+  // 썸네일 활성화/비활성화
+  const setThumbnailEnabled = useCallback(
+    (enabled: boolean) => {
+      setThumbnailEnabledState(enabled)
+    },
+    [setThumbnailEnabledState]
+  )
+
   // 특정 문서까지 트리 펼치기
   const expandToDocument = useCallback(
     (documentId: string) => {
@@ -453,6 +467,7 @@ export function useDocumentExplorerTree({
     recentDocuments,
     customerFilter,
     dateFilter,
+    thumbnailEnabled,
 
     // Actions
     setGroupBy,
@@ -471,5 +486,6 @@ export function useDocumentExplorerTree({
     jumpToDate,
     getAvailableDates,
     clearDateFilter,
+    setThumbnailEnabled,
   }
 }

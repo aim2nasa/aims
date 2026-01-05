@@ -55,6 +55,7 @@ const DocumentExplorerContent: React.FC<{
     recentDocuments,
     customerFilter,
     dateFilter,
+    thumbnailEnabled,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -68,6 +69,7 @@ const DocumentExplorerContent: React.FC<{
     jumpToDate,
     getAvailableDates,
     clearDateFilter,
+    setThumbnailEnabled,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -132,6 +134,8 @@ const DocumentExplorerContent: React.FC<{
         getAvailableDates={getAvailableDates}
         dateFilter={dateFilter}
         onDateFilterClear={clearDateFilter}
+        thumbnailEnabled={thumbnailEnabled}
+        onThumbnailEnabledChange={setThumbnailEnabled}
       />
 
       {/* 트리 뷰 */}
@@ -155,6 +159,7 @@ const DocumentExplorerContent: React.FC<{
             sortBy={sortBy}
             sortDirection={sortDirection}
             searchTerm={searchTerm}
+            thumbnailEnabled={thumbnailEnabled}
           />
         )}
       </div>

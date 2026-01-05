@@ -47,6 +47,9 @@ export interface DocumentExplorerToolbarProps {
   /** 날짜 필터 */
   dateFilter: Date | null
   onDateFilterClear: () => void
+  /** 썸네일 미리보기 활성화 */
+  thumbnailEnabled: boolean
+  onThumbnailEnabledChange: (enabled: boolean) => void
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -86,6 +89,8 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   getAvailableDates,
   dateFilter,
   onDateFilterClear,
+  thumbnailEnabled,
+  onThumbnailEnabledChange,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -465,6 +470,33 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
                 <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M6 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M9 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            )}
+          </button>
+        </Tooltip>
+
+        {/* 썸네일 미리보기 토글 */}
+        <Tooltip content={thumbnailEnabled ? '썸네일 끄기' : '썸네일 켜기'} placement="bottom">
+          <button
+            type="button"
+            className={`doc-explorer-toolbar__thumbnail-btn ${thumbnailEnabled ? 'doc-explorer-toolbar__thumbnail-btn--active' : ''}`}
+            onClick={() => onThumbnailEnabledChange(!thumbnailEnabled)}
+            aria-label={thumbnailEnabled ? '썸네일 끄기' : '썸네일 켜기'}
+            aria-pressed={thumbnailEnabled ? 'true' : 'false'}
+          >
+            {thumbnailEnabled ? (
+              /* 썸네일 켜짐: 채워진 사진 아이콘 */
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="3" width="12" height="10" rx="1.5" fill="currentColor"/>
+                <circle cx="5.5" cy="6" r="1.5" fill="var(--color-bg-primary)"/>
+                <path d="M2 10.5L5 8L7 10L10 7L14 11V11.5C14 12.33 13.33 13 12.5 13H3.5C2.67 13 2 12.33 2 11.5V10.5Z" fill="var(--color-bg-primary)"/>
+              </svg>
+            ) : (
+              /* 썸네일 꺼짐: 빈 사진 아이콘 */
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                <circle cx="5.5" cy="6" r="1.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+                <path d="M2 10.5L5 8L7 10L10 7L14 11" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
             )}
           </button>

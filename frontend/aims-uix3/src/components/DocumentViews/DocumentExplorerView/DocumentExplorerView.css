@@ -264,15 +264,16 @@
   padding: 0;
   border: none;
   border-radius: var(--explorer-border-radius);
-  background: transparent;
+  background: none;
+  background-color: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--explorer-transition);
+  transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .doc-explorer-toolbar__expand-btn:hover {
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
+  opacity: 0.7;
+  transform: scale(1.05);
 }
 
 .doc-explorer-toolbar__expand-btn:active {
@@ -286,6 +287,41 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Thumbnail Toggle Button */
+.doc-explorer-toolbar__thumbnail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--explorer-border-radius);
+  background: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.doc-explorer-toolbar__thumbnail-btn:hover {
+  opacity: 0.7;
+  transform: scale(1.05);
+}
+
+.doc-explorer-toolbar__thumbnail-btn:active {
+  transform: scale(0.95);
+}
+
+.doc-explorer-toolbar__thumbnail-btn--active {
+  color: var(--color-accent);
+}
+
+.doc-explorer-toolbar__thumbnail-btn--active:hover {
+  color: var(--color-accent);
+  opacity: 0.7;
 }
 
 /* Stats */
@@ -1231,14 +1267,17 @@ html[data-theme="dark"] .hover-preview__file-icon {
   padding: 0;
   border: none;
   border-radius: var(--explorer-border-radius);
-  background: transparent;
+  background: none;
+  background-color: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--explorer-transition);
+  transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .doc-explorer-toolbar__date-btn:hover:not(:disabled) {
   color: var(--color-accent);
+  opacity: 0.7;
+  transform: scale(1.05);
 }
 
 .doc-explorer-toolbar__date-btn:disabled {

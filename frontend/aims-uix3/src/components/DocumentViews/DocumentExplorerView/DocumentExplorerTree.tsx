@@ -55,6 +55,8 @@ export interface DocumentExplorerTreeProps {
   sortDirection?: SortDirection
   /** 검색어 (하이라이트용) */
   searchTerm?: string
+  /** 썸네일 미리보기 활성화 여부 */
+  thumbnailEnabled?: boolean
 }
 
 // 더블클릭 감지를 위한 타이머
@@ -113,6 +115,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
   sortBy = 'date',
   sortDirection = 'desc',
   searchTerm = '',
+  thumbnailEnabled = true,
 }) => {
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastClickedIdRef = useRef<string | null>(null)
@@ -585,11 +588,13 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         {renderRecentDocuments()}
         {nodes.map((node) => renderNode(node, 0))}
       </div>
-      {/* 호버 시 항상 썸네일 표시 (ref로 동기적 상태 관리) */}
-      <HoverPreview
-        document={hoverStateRef.current?.document ?? null}
-        position={hoverStateRef.current?.position ?? null}
-      />
+      {/* 호버 시 썸네일 표시 (thumbnailEnabled일 때만) */}
+      {thumbnailEnabled && (
+        <HoverPreview
+          document={hoverStateRef.current?.document ?? null}
+          position={hoverStateRef.current?.position ?? null}
+        />
+      )}
     </>
   )
 }
