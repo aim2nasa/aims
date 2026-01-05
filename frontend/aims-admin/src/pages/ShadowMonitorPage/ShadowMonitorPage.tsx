@@ -7,8 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button/Button';
 import './ShadowMonitorPage.css';
 
-// aims.giize.com의 nginx에서 /shadow/ → localhost:8100으로 프록시
-const PIPELINE_API_URL = 'https://aims.giize.com';
+// 개발환경: Vite 프록시 → Tailscale VPN (100.110.215.65:8100)
+// 프로덕션: nginx /shadow/ → localhost:8100 프록시
+const PIPELINE_API_URL = '';
 
 interface ShadowStats {
   shadow_mode: {
