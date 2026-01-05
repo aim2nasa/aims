@@ -30,9 +30,9 @@
   --color-text-disabled: var(--color-neutral-300);
   --color-text-inverse: var(--color-neutral-0);
 
-  /* Border Colors */
-  --color-border-primary: var(--color-neutral-200);
-  --color-border-secondary: var(--color-neutral-300);
+  /* Border Colors - 라이트 테마 대비 강화 */
+  --color-border-primary: #d4d6dc;      /* 더 진한 경계선 */
+  --color-border-secondary: #c1c4cc;    /* 더 진한 보조 경계선 */
   --color-border-focus: var(--color-primary-500);
   --color-border-error: var(--color-error-500);
   --color-border-disabled: var(--color-neutral-200);
@@ -98,6 +98,14 @@
 
   /* Icon Colors */
   --color-hamburger-icon: var(--color-hamburger-icon-light);
+
+  /* Folder Icon Colors - 라이트 테마 */
+  --color-folder: var(--color-folder-light);
+  --color-folder-open: var(--color-folder-light-open);
+
+  /* Selection Colors - 라이트 테마 강화 */
+  --color-selection-border: var(--color-selection-border-light);
+  --color-selection-text: var(--color-selection-text-light);
 
   /* Sort Indicator Colors */
   --color-sort-indicator-active: var(--color-error-600); /* 선택된 정렬 컬럼 강조 */
@@ -285,6 +293,10 @@
 
   /* Icon Colors - Dark Theme */
   --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+  /* Folder Icon Colors - 다크 테마 */
+  --color-folder: var(--color-folder-dark);
+  --color-folder-open: var(--color-folder-dark-open);
 
   /* Sort Indicator Colors - Dark Theme */
   --color-sort-indicator-active: var(--color-error); /* 선택된 정렬 컬럼 강조 */

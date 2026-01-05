@@ -547,8 +547,13 @@
   transition: background-color var(--explorer-transition);
 }
 
+/* 그룹 헤더 호버 - 라이트 테마 대비 강화 */
 .doc-explorer-tree__group-header:hover {
   background: var(--color-bg-hover);
+}
+
+html:not([data-theme="dark"]) .doc-explorer-tree__group-header:hover {
+  background: rgba(0, 0, 0, 0.045);
 }
 
 .doc-explorer-tree__group-header:focus {
@@ -598,11 +603,20 @@
   height: 12px;
 }
 
-/* Folder Icon (내 보관함 스타일) */
+/* Folder Icon (내 보관함 스타일) - 라이트 테마 가시성 강화 */
 .doc-explorer-tree__folder-icon {
   flex-shrink: 0;
   font-size: 12px;
   line-height: 1;
+  /* 라이트 테마에서 이모지 색상 강화 */
+  filter: saturate(1.4) contrast(1.15);
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* 다크 테마에서는 원래대로 */
+html[data-theme="dark"] .doc-explorer-tree__folder-icon {
+  filter: saturate(1.1) brightness(1.05);
+  text-shadow: none;
 }
 
 /* Group Label */
@@ -651,8 +665,13 @@
   transition: background-color var(--explorer-transition);
 }
 
+/* 문서 호버 - 라이트 테마 대비 강화 */
 .doc-explorer-tree__document:hover {
   background: var(--color-bg-hover);
+}
+
+html:not([data-theme="dark"]) .doc-explorer-tree__document:hover {
+  background: rgba(0, 0, 0, 0.045);
 }
 
 .doc-explorer-tree__document:focus {
@@ -660,12 +679,21 @@
   background: var(--color-bg-hover);
 }
 
+/* 선택된 문서 - 라이트 테마 대비 강화 */
 .doc-explorer-tree__document--selected {
-  background: var(--color-accent-bg);
+  background: var(--color-selection-bg);
+  border-left: 3px solid var(--color-primary-500);
+  padding-left: calc(var(--explorer-spacing-md) - 3px); /* 테두리 보정 */
 }
 
 .doc-explorer-tree__document--selected:hover {
-  background: var(--color-accent-bg-hover);
+  background: var(--color-selection-bg-hover);
+}
+
+/* 선택된 문서명 강조 (라이트 테마) */
+html:not([data-theme="dark"]) .doc-explorer-tree__document--selected .doc-explorer-tree__doc-name {
+  color: var(--color-primary-700);
+  font-weight: 500;
 }
 
 /* Indentation by level */
@@ -1600,6 +1628,12 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
   transition: all var(--explorer-transition);
 }
 
+/* 라이트 테마 초성 버튼 대비 강화 */
+html:not([data-theme="dark"]) .initial-filter-bar__initial {
+  border-color: var(--color-border-secondary);
+  color: #4b5563;  /* neutral-600 보다 약간 진하게 */
+}
+
 .initial-filter-bar__initial:hover:not(:disabled) {
   background: var(--color-bg-hover);
   border-color: var(--color-border-strong);
@@ -1630,9 +1664,9 @@ html:not([data-theme="dark"]) .initial-filter-bar__initial--active {
   transform: scale(1.05);
 }
 
-/* 고객이 없는 초성 (비활성) */
+/* 고객이 없는 초성 (비활성) - 라이트 테마 가시성 개선 */
 .initial-filter-bar__initial--empty {
-  opacity: 0.35;
+  opacity: 0.5;  /* 0.35에서 상향 - 더 잘 보이도록 */
   cursor: not-allowed;
 }
 

@@ -22,11 +22,11 @@
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
 
-  /* Neutral Colors */
+  /* Neutral Colors - Apple Cool Gray 스타일 (라이트 테마 대비 강화) */
   --color-neutral-0: #ffffff;
-  --color-neutral-50: #f9fafb;
-  --color-neutral-75: #f6f7f9;  /* 중간 톤: 카드/리스트 배경용 */
-  --color-neutral-100: #f3f4f6;
+  --color-neutral-50: #f5f5f7;      /* iOS systemGray6 느낌 - 대비 강화 */
+  --color-neutral-75: #ebebf0;      /* 더 구분되는 중간톤 */
+  --color-neutral-100: #e5e5ea;     /* iOS systemGray5 - 명확한 구분 */
   --color-neutral-200: #e5e7eb;
   --color-neutral-300: #d1d5db;
   --color-neutral-400: #9ca3af;
@@ -102,9 +102,11 @@
   --color-accent-blue-alpha-30: rgba(59, 130, 246, 0.3);       /* 30% opacity - subtle glow */
   --color-accent-blue-translucent: rgba(59, 130, 246, 0.25);   /* 25% opacity - box-shadow for active tabs */
 
-  /* Selection/Highlight Colors (for selected rows/items) */
-  --color-selection-bg-light: rgba(59, 130, 246, 0.45);         /* Light mode: selected item background */
-  --color-selection-bg-light-hover: rgba(59, 130, 246, 0.52);   /* Light mode: selected item hover background */
+  /* Selection/Highlight Colors (for selected rows/items) - 라이트 테마 대비 강화 */
+  --color-selection-bg-light: rgba(59, 130, 246, 0.15);         /* Light mode: 더 선명한 선택 배경 */
+  --color-selection-bg-light-hover: rgba(59, 130, 246, 0.22);   /* Light mode: 선택 호버 배경 */
+  --color-selection-border-light: rgba(59, 130, 246, 0.5);      /* Light mode: 선택 테두리 */
+  --color-selection-text-light: #1e40af;                         /* Light mode: 선택된 텍스트 강조 */
   --color-selection-bg-dark: rgba(59, 130, 246, 0.35);          /* Dark mode: selected item background */
   --color-selection-bg-dark-hover: rgba(59, 130, 246, 0.40);    /* Dark mode: selected item hover background */
   --color-selection-glow-light: rgba(59, 130, 246, 0.4);        /* Light mode: selection glow effect */
@@ -217,6 +219,12 @@
   --color-icon-lightbulb-fill: #ffc107;        /* Lightbulb icon yellow fill */
   --color-icon-lightbulb-stroke: #424242;      /* Lightbulb icon dark stroke */
   --color-icon-pdf-stroke: #f5f6f7;            /* PDF icon light stroke */
+
+  /* Folder Icon Colors - 테마별 최적화 (이모지 가시성 강화) */
+  --color-folder-light: #D4A017;               /* 라이트: 진한 골든 옐로우 (대비 4.5:1+) */
+  --color-folder-light-open: #C49A1A;          /* 라이트: 열린 폴더 */
+  --color-folder-dark: #FFD700;                /* 다크: 밝은 골드 */
+  --color-folder-dark-open: #FFCC00;           /* 다크: 열린 폴더 */
 
   /* Step Number Badge Colors (라이트벌브 색상 통일) */
   --color-step-number-bg-light: #ffe082;       /* Light mode: 밝은 노란색 배경 (라이트벌브 계열) */
@@ -809,7 +817,7 @@
   /* 후보 6: 애플 아이폰/맥 스타일 - 미니멀하고 세련된 애플 디자인 */
 
   /* Main Background Colors - 애플 시그니처 배경 */
-  --color-layout-main-light: #f2f2f7; /* Light Theme: iOS 라이트 그레이 */
+  --color-layout-main-light: #ededf2; /* Light Theme: iOS 라이트 그레이 - 대비 강화 */
   --color-layout-main-dark: #1c1c1e;  /* Dark Theme: 순수 블랙 */
 
   /* Content Background Colors - 깔끔한 카드형 배경 */
@@ -825,7 +833,7 @@
   --color-layout-accent-dark: #2c2c2e;      /* Dark Theme: iOS systemGray5 정확한 색상 */
 
   /* LeftPane Colors */
-  --color-layout-leftpane-light: #e5e5ea;  /* Light Theme: iOS 시스템 그레이 */
+  --color-layout-leftpane-light: #dfdfe6;  /* Light Theme: iOS 시스템 그레이 - 대비 강화 */
   --color-layout-leftpane-dark: #1c1c1e;   /* Dark Theme: iOS 다크 그레이 */
 
   /* Header Colors - 후보6.1: 애플 스타일 미니멀 헤더 */
