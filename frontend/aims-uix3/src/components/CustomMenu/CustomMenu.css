@@ -476,7 +476,10 @@
 - 결론: 메뉴 시스템에서 호버 효과는 애플 디자인이 아님
 */
 
-/* 호버 효과 완전 제거 - 애플 네이티브 방식 */
+/* 라이트 테마에서는 호버 효과 추가 - 비즈니스 앱 생산성 */
+html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
+  background: rgba(0, 0, 0, 0.06);
+}
 
 /* === 🍎 APPLE STANDARD SELECTION STATES === */
 .custom-menu-item.selected {

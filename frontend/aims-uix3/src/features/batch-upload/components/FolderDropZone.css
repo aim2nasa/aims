@@ -192,6 +192,11 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
+/* 라이트 테마에서 폴더 아이콘 가시성 강화 */
+html:not([data-theme="dark"]) .guide-icon.folder {
+  filter: saturate(1.4) contrast(1.15) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
 .guide-icon.file {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
