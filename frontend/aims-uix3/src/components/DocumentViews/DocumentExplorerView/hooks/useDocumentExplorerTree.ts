@@ -133,14 +133,9 @@ export function useDocumentExplorerTree({
       .filter((doc): doc is Document => doc !== undefined)
   }, [recentDocumentIds, documents])
 
-  // 초성별 고객 카운트 계산 (고객별/고객>태그별 분류에서만 유효)
+  // 초성별 고객 카운트 계산
   const initialCustomerCounts = useMemo(() => {
     const counts = new Map<string, number>()
-
-    // 고객명 기준으로 그룹핑할 경우에만 초성 필터 의미있음
-    if (groupBy !== 'customer' && groupBy !== 'customerTag') {
-      return counts
-    }
 
     // 고객명 목록 추출 (중복 제거)
     const customerNames = new Set<string>()
@@ -167,24 +162,19 @@ export function useDocumentExplorerTree({
     })
 
     return counts
-  }, [documents, groupBy, initialType])
+  }, [documents, initialType])
 
-  // 초성 필터 적용
+  // 초성 필터 적용 (고객명 기준)
   const applyInitialFilter = useCallback(
     (docs: Document[], initial: string | null, type: InitialType): Document[] => {
       if (!initial) return docs
-
-      // 고객별/고객>태그별 분류에서만 적용
-      if (groupBy !== 'customer' && groupBy !== 'customerTag') {
-        return docs
-      }
 
       return docs.filter((doc) => {
         const customerName = doc.customer_relation?.customer_name || ''
         return getNameInitial(customerName, type) === initial
       })
     },
-    [groupBy]
+    []
   )
 
   // 빠른 필터 적용
