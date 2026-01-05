@@ -510,16 +510,17 @@ function InfectedFilesTab({
   }
 
   return (
-    <div className="table-wrapper">
+    <div className="tab-panel-container">
       <div className="table-actions">
         <Button variant="ghost" size="sm" onClick={onClearAll} disabled={isClearing}>
           {isClearing ? '초기화 중...' : '기록 전체 초기화'}
         </Button>
       </div>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <SortableHeader label="파일명" sortKey="filename" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <SortableHeader label="파일명" sortKey="filename" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="위협명" sortKey="threatName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="발견일" sortKey="scannedAt" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="상태" sortKey="status" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
@@ -544,10 +545,11 @@ function InfectedFilesTab({
                   </Button>
                 )}
               </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -639,7 +641,7 @@ function ScanLogsTab({
   }
 
   return (
-    <div className="table-wrapper">
+    <div className="tab-panel-container">
       <div className="table-actions">
         <button
           type="button"
@@ -650,10 +652,11 @@ function ScanLogsTab({
           {isClearing ? '삭제 중...' : '로그 전체 삭제'}
         </button>
       </div>
-      <table className="data-table compact">
-        <thead>
-          <tr>
-            <SortableHeader label="시간" sortKey="createdAt" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+      <div className="table-wrapper">
+        <table className="data-table compact">
+          <thead>
+            <tr>
+              <SortableHeader label="시간" sortKey="createdAt" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="유형" sortKey="scanType" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="설계사" sortKey="ownerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             <SortableHeader label="고객" sortKey="customerName" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
@@ -680,10 +683,11 @@ function ScanLogsTab({
                 </span>
               </td>
               <td>{log.result?.scanDurationMs ? `${log.result.scanDurationMs}ms` : '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {pagination && pagination.totalPages > 1 && (
         <div className="pagination">
           <button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>이전</button>
