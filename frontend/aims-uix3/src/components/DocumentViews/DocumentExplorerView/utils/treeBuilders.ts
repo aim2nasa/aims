@@ -4,7 +4,65 @@
  */
 
 import type { Document } from '@/types/documentStatus'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeNode, DocumentTreeData } from '../types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, DocumentTreeNode, DocumentTreeData, InitialType } from '../types/documentExplorer'
+
+/**
+ * 한글 초성 추출 함수
+ * 완성형 한글(가-힣)에서 초성을 추출하거나, 자음(ㄱ-ㅎ)은 그대로 반환
+ */
+export function getKoreanInitial(name: string): string {
+  if (!name) return ''
+  const firstChar = name.charAt(0)
+  const code = firstChar.charCodeAt(0)
+
+  // 1. 한글 완성형 문자 (가-힣: 0xAC00-0xD7A3)
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const initialIndex = Math.floor((code - 0xAC00) / 588)
+    const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+    return initials[initialIndex] || ''
+  }
+
+  // 2. 한글 자음 (ㄱ-ㅎ: 0x3131-0x314E)
+  if (code >= 0x3131 && code <= 0x314E) {
+    return firstChar
+  }
+
+  return ''
+}
+
+/**
+ * 영문 알파벳 초성 추출 함수 (대소문자 구분 없음)
+ */
+export function getAlphabetInitial(name: string): string {
+  if (!name) return ''
+  const firstChar = name.charAt(0).toUpperCase()
+  if (firstChar >= 'A' && firstChar <= 'Z') {
+    return firstChar
+  }
+  return ''
+}
+
+/**
+ * 숫자 초성 추출 함수
+ */
+export function getNumberInitial(name: string): string {
+  if (!name) return ''
+  const firstChar = name.charAt(0)
+  if (firstChar >= '0' && firstChar <= '9') {
+    return firstChar
+  }
+  return ''
+}
+
+/**
+ * 이름의 초성 추출 (타입에 따라)
+ */
+export function getNameInitial(name: string, type: InitialType): string {
+  if (type === 'korean') return getKoreanInitial(name)
+  if (type === 'alphabet') return getAlphabetInitial(name)
+  if (type === 'number') return getNumberInitial(name)
+  return ''
+}
 
 /**
  * 문서의 표시 이름을 가져옵니다

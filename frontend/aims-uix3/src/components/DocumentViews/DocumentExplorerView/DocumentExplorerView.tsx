@@ -56,6 +56,9 @@ const DocumentExplorerContent: React.FC<{
     customerFilter,
     dateFilter,
     thumbnailEnabled,
+    initialType,
+    selectedInitial,
+    initialCustomerCounts,
     setGroupBy,
     toggleNode,
     toggleExpandAll,
@@ -70,6 +73,8 @@ const DocumentExplorerContent: React.FC<{
     getAvailableDates,
     clearDateFilter,
     setThumbnailEnabled,
+    setInitialType,
+    setSelectedInitial,
   } = useDocumentExplorerTree({
     documents: state.documents,
     isLoading: state.isLoading,
@@ -136,6 +141,11 @@ const DocumentExplorerContent: React.FC<{
         onDateFilterClear={clearDateFilter}
         thumbnailEnabled={thumbnailEnabled}
         onThumbnailEnabledChange={setThumbnailEnabled}
+        initialType={initialType}
+        onInitialTypeChange={setInitialType}
+        selectedInitial={selectedInitial}
+        onSelectedInitialChange={setSelectedInitial}
+        initialCustomerCounts={initialCustomerCounts}
       />
 
       {/* 트리 뷰 */}

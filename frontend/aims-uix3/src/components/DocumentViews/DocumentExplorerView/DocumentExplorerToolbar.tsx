@@ -7,8 +7,8 @@ import React, { useCallback, useRef, useState, useMemo } from 'react'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
-import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType } from './types/documentExplorer'
-import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS } from './types/documentExplorer'
+import type { DocumentGroupBy, DocumentSortBy, SortDirection, QuickFilterType, InitialType } from './types/documentExplorer'
+import { GROUP_BY_LABELS, SORT_BY_LABELS, QUICK_FILTER_LABELS, KOREAN_INITIALS, ALPHABET_INITIALS, NUMBER_INITIALS } from './types/documentExplorer'
 
 // 빠른 필터 툴팁 설명
 const QUICK_FILTER_TOOLTIPS: Record<QuickFilterType, string> = {
@@ -50,6 +50,14 @@ export interface DocumentExplorerToolbarProps {
   /** 썸네일 미리보기 활성화 */
   thumbnailEnabled: boolean
   onThumbnailEnabledChange: (enabled: boolean) => void
+  /** 초성 필터 타입 */
+  initialType: InitialType
+  onInitialTypeChange: (type: InitialType) => void
+  /** 선택된 초성 */
+  selectedInitial: string | null
+  onSelectedInitialChange: (initial: string | null) => void
+  /** 초성별 고객 카운트 (호버 시 표시) */
+  initialCustomerCounts: Map<string, number>
 }
 
 const GROUP_BY_OPTIONS: DropdownOption[] = [
@@ -91,6 +99,11 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
   onDateFilterClear,
   thumbnailEnabled,
   onThumbnailEnabledChange,
+  initialType,
+  onInitialTypeChange,
+  selectedInitial,
+  onSelectedInitialChange,
+  initialCustomerCounts,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -236,6 +249,85 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             </button>
           </div>
         </Tooltip>
+      )}
+
+      {/* 초성 필터 (고객별/고객>태그별 분류 시에만 표시) */}
+      {(groupBy === 'customer' || groupBy === 'customerTag') && (
+        <div className="doc-explorer-toolbar__initials">
+          {/* 초성 타입 토글 버튼 */}
+          <Tooltip
+            content={`초성 타입: ${initialType === 'korean' ? '한글' : initialType === 'alphabet' ? '영문' : '숫자'} (클릭하여 전환)`}
+            placement="bottom"
+          >
+            <button
+              type="button"
+              className="doc-explorer-toolbar__initial-type-toggle"
+              onClick={() => {
+                const nextType = initialType === 'korean' ? 'alphabet' : initialType === 'alphabet' ? 'number' : 'korean'
+                onInitialTypeChange(nextType)
+              }}
+              aria-label="초성 타입 전환"
+            >
+              <svg
+                className="doc-explorer-toolbar__globe-icon"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ stroke: 'currentColor' }}
+              >
+                <circle cx="12" cy="12" r="10" fill="none" strokeWidth="2" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" fill="none" strokeWidth="2" />
+              </svg>
+              <span className="doc-explorer-toolbar__initial-type-label">
+                {initialType === 'korean' ? 'ㄱㄴ' : initialType === 'alphabet' ? 'AB' : '12'}
+              </span>
+            </button>
+          </Tooltip>
+
+          {/* 초성 버튼들 */}
+          {(initialType === 'korean' ? KOREAN_INITIALS : initialType === 'alphabet' ? ALPHABET_INITIALS : NUMBER_INITIALS).map((initial) => {
+            const count = initialCustomerCounts.get(initial) || 0
+            const hasCustomers = count > 0
+            return (
+              <Tooltip
+                key={initial}
+                content={hasCustomers ? `${initial}: ${count}명` : `${initial}: 해당 고객 없음`}
+                placement="bottom"
+              >
+                <button
+                  type="button"
+                  className={`doc-explorer-toolbar__initial ${selectedInitial === initial ? 'doc-explorer-toolbar__initial--active' : ''} ${!hasCustomers ? 'doc-explorer-toolbar__initial--empty' : ''}`}
+                  onClick={() => onSelectedInitialChange(selectedInitial === initial ? null : initial)}
+                  disabled={!hasCustomers}
+                  aria-label={`${initial}로 시작하는 고객`}
+                >
+                  {initial}
+                </button>
+              </Tooltip>
+            )
+          })}
+
+          {/* 선택된 초성 표시 및 해제 */}
+          {selectedInitial && (
+            <div className="doc-explorer-toolbar__initial-badge">
+              <span>{selectedInitial}</span>
+              <button
+                type="button"
+                className="doc-explorer-toolbar__initial-clear"
+                onClick={() => onSelectedInitialChange(null)}
+                aria-label="초성 필터 해제"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative
+                />
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* 검색 입력 */}
