@@ -2796,3 +2796,60 @@ n8n을 FastAPI로 전환해줘
 ---
 
 **요약: Slack 알림 오면 Claude한테 복붙.**
+
+## 17. 트러블슈팅 (Troubleshooting)
+
+### 17.1 OpenAI/httpx 버전 호환성 문제 (2025-01-05)
+
+#### 증상
+FastAPI 모드에서 문서 요약 생성 실패:
+```
+요약 생성 실패: AsyncClient.__init__() got an unexpected keyword argument 'proxies'
+```
+
+#### 원인
+- openai 1.30.0 내부에서 httpx.AsyncClient 초기화 시 `proxies` 파라미터 사용
+- httpx 0.28.x에서 해당 파라미터가 제거됨
+- openai 구버전과 httpx 신버전 간 호환성 문제
+
+#### 해결
+```bash
+# document_pipeline venv에서 openai 업그레이드
+cd /home/rossi/aims/backend/api/document_pipeline
+source venv/bin/activate
+pip install --upgrade openai
+
+# 서비스 재시작
+pm2 restart document_pipeline
+```
+
+#### 예방
+`requirements.txt`에서 openai 최소 버전을 2.0.0으로 상향:
+```
+openai>=2.0.0  # httpx 0.28+ 호환성 필요
+```
+
+#### 검증
+```bash
+# OpenAI API 연동 테스트
+cd /home/rossi/aims/backend/api/document_pipeline
+source venv/bin/activate
+python -c "
+import asyncio
+import openai
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+async def test():
+    client = openai.AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    response = await client.chat.completions.create(
+        model='gpt-4o-mini',
+        messages=[{'role': 'user', 'content': 'Hi, respond with just OK'}],
+        max_tokens=10
+    )
+    print(f'OpenAI 테스트 성공: {response.choices[0].message.content}')
+
+asyncio.run(test())
+"
+```
