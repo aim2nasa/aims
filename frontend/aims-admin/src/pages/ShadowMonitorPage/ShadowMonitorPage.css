@@ -1,8 +1,11 @@
-/* Shadow Monitor Page - Full Width Layout */
+/* Shadow Monitor Page - Compact Layout */
 .shadow-page {
-  padding: 24px 32px;
-  min-height: 100vh;
+  padding: 16px 24px;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==================== Header ==================== */
@@ -10,9 +13,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .shadow-page__header-left {
@@ -23,7 +27,7 @@
 
 .shadow-page__title {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -89,12 +93,13 @@
 /* ==================== Mode Section ==================== */
 .shadow-page__mode-section {
   display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  padding: 20px;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .shadow-page__mode-control {
@@ -102,24 +107,24 @@
 }
 
 .shadow-page__mode-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .shadow-page__mode-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shadow-page__mode-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 8px 12px;
   background: var(--bg-primary);
   border: 2px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -147,20 +152,20 @@
 }
 
 .shadow-page__mode-btn-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .shadow-page__mode-btn-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-tertiary);
 }
 
 .shadow-page__mode-btn-badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 2px 8px;
   background: var(--color-primary);
   color: white;
   border-radius: 4px;
@@ -168,9 +173,9 @@
 
 /* Readiness */
 .shadow-page__readiness {
-  min-width: 320px;
-  padding: 16px 20px;
-  border-radius: 10px;
+  min-width: 280px;
+  padding: 10px 14px;
+  border-radius: 8px;
   border: 2px solid;
 }
 
@@ -187,18 +192,18 @@
 .shadow-page__readiness-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .shadow-page__readiness-icon {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
   color: white;
 }
@@ -212,7 +217,7 @@
 }
 
 .shadow-page__readiness-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -220,17 +225,17 @@
 .shadow-page__readiness-checks {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shadow-page__check {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 4px;
+  padding: 4px 8px;
   background: var(--bg-primary);
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 11px;
 }
 
 .shadow-page__check--pass {
@@ -258,53 +263,59 @@
 .shadow-page__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .shadow-page__col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ==================== Card ==================== */
 .shadow-page__card {
   background: var(--bg-secondary);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 12px;
   border: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .shadow-page__card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .shadow-page__card-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shadow-page__card-period {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
-  padding: 4px 8px;
+  padding: 2px 6px;
   background: var(--bg-tertiary);
   border-radius: 4px;
 }
 
 .shadow-page__select {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 12px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -313,28 +324,28 @@
 .shadow-page__stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 8px;
 }
 
 .shadow-page__stat {
   text-align: center;
-  padding: 16px;
+  padding: 10px 8px;
   background: var(--bg-primary);
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .shadow-page__stat-value {
   display: block;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .shadow-page__stat-label {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-secondary);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .shadow-page__stat--success .shadow-page__stat-value {
@@ -350,9 +361,9 @@
 }
 
 .shadow-page__last-call {
-  margin-top: 12px;
+  margin-top: 8px;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
 }
 
@@ -360,23 +371,23 @@
 .shadow-page__perf {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .shadow-page__perf-summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  padding: 10px 12px;
   background: var(--bg-primary);
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .shadow-page__perf-winner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-warning);
 }
@@ -386,43 +397,43 @@
 }
 
 .shadow-page__perf-improvement {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 2px 8px;
   background: rgba(52, 199, 89, 0.15);
   color: var(--color-success);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .shadow-page__perf-total {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
 .shadow-page__perf-bars {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .shadow-page__perf-bar {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .shadow-page__perf-bar-header {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .shadow-page__perf-bar-track {
-  height: 24px;
+  height: 16px;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -442,8 +453,8 @@
 
 .shadow-page__perf-errors {
   display: flex;
-  gap: 24px;
-  font-size: 13px;
+  gap: 16px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -455,12 +466,12 @@
 .shadow-page__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .shadow-page__table th,
 .shadow-page__table td {
-  padding: 12px 16px;
+  padding: 6px 10px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
@@ -469,14 +480,14 @@
   font-weight: 600;
   color: var(--text-secondary);
   background: var(--bg-tertiary);
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .shadow-page__table code {
-  padding: 2px 6px;
+  padding: 1px 4px;
   background: var(--bg-tertiary);
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 3px;
+  font-size: 10px;
 }
 
 .shadow-page__cell--success {
@@ -491,27 +502,27 @@
 
 /* ==================== Mismatch List ==================== */
 .shadow-page__badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 1px 6px;
   background: var(--color-warning);
   color: white;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .shadow-page__mismatch-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
+  gap: 6px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
 .shadow-page__mismatch {
-  padding: 14px 16px;
+  padding: 8px 10px;
   background: var(--bg-primary);
-  border-radius: 10px;
-  border-left: 4px solid var(--color-warning);
+  border-radius: 6px;
+  border-left: 3px solid var(--color-warning);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -528,28 +539,28 @@
 .shadow-page__mismatch-main {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .shadow-page__mismatch-num {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .shadow-page__mismatch-workflow {
-  font-size: 13px;
-  padding: 2px 8px;
+  font-size: 11px;
+  padding: 1px 6px;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .shadow-page__mismatch-status {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 .shadow-page__mismatch-status--open {
@@ -564,17 +575,17 @@
 
 .shadow-page__mismatch-meta {
   display: flex;
-  gap: 16px;
-  font-size: 12px;
+  gap: 12px;
+  font-size: 10px;
   color: var(--text-tertiary);
 }
 
 /* ==================== Empty State ==================== */
 .shadow-page__empty {
-  padding: 32px;
+  padding: 16px;
   text-align: center;
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .shadow-page__empty--success {
@@ -582,9 +593,9 @@
 }
 
 .shadow-page__empty--success span {
-  font-size: 24px;
+  font-size: 18px;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 /* ==================== Modal ==================== */
