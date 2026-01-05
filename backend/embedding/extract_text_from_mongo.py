@@ -20,14 +20,20 @@ def extract_text_from_mongo(doc_id: str, mongo_uri: str = 'mongodb://localhost:2
         document = collection.find_one({'_id': ObjectId(doc_id)})
 
         if document:
-            # 1. meta.full_text 우선 확인
-            if 'meta' in document and 'full_text' in document['meta']:
-                full_text = document['meta']['full_text']
+            # 1. meta.full_text 우선 확인 (빈 값이 아닌 경우만)
+            meta_text = document.get('meta', {}).get('full_text', '') or ''
+            if meta_text.strip():  # 빈 문자열이나 줄바꿈만 있는 경우 제외
+                full_text = meta_text
                 text_source = 'meta'
-            # 2. ocr.full_text 대안 확인
-            elif 'ocr' in document and 'full_text' in document['ocr']:
-                full_text = document['ocr']['full_text']
-                text_source = 'ocr'
+            # 2. ocr.full_text 대안 확인 (빈 값이 아닌 경우만)
+            elif document.get('ocr', {}).get('full_text', ''):
+                ocr_text = document['ocr']['full_text']
+                if ocr_text and ocr_text.strip():
+                    full_text = ocr_text
+                    text_source = 'ocr'
+                else:
+                    print(f"문서 ID '{doc_id}'에 유효한 full_text가 없습니다. (OCR 텍스트 비어있음)")
+                    return None
             else:
                 print(f"문서 ID '{doc_id}'에 full_text가 없습니다.")
                 return None
