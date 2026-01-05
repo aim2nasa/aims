@@ -224,28 +224,33 @@ export const ShadowMonitorPage = () => {
       {/* 서비스 모드 컨트롤 */}
       <section className="shadow-page__mode-section">
         <div className="shadow-page__mode-control">
-          <h2>서비스 모드</h2>
+          <div className="shadow-page__mode-desc">
+            n8n(기존)에서 FastAPI(신규)로 마이그레이션 진행중입니다. 병렬 비교 모드에서 두 시스템의 응답을 비교합니다.
+          </div>
           <div className="shadow-page__mode-buttons">
-            {(['n8n', 'fastapi', 'shadow'] as ServiceModeType[]).map(m => (
-              <button
-                type="button"
-                key={m}
-                className={`shadow-page__mode-btn ${serviceModeData?.mode === m ? 'shadow-page__mode-btn--active' : ''}`}
-                onClick={() => handleModeChange(m)}
-                disabled={isChangingMode}
-              >
-                <span className="shadow-page__mode-btn-label">
-                  {m === 'n8n' && '🔧 n8n'}
-                  {m === 'fastapi' && '⚡ FastAPI'}
-                  {m === 'shadow' && '👁️ Shadow'}
-                </span>
-                <span className="shadow-page__mode-btn-desc">
-                  {m === 'n8n' && '현재 운영'}
-                  {m === 'fastapi' && '신규 서비스'}
-                  {m === 'shadow' && '병렬 비교'}
-                </span>
-              </button>
-            ))}
+            {(['n8n', 'fastapi', 'shadow'] as ServiceModeType[]).map(m => {
+              const isActive = serviceModeData?.mode === m;
+              const labels: Record<ServiceModeType, { name: string; desc: string }> = {
+                n8n: { name: 'n8n', desc: '기존 시스템' },
+                fastapi: { name: 'FastAPI', desc: '신규 시스템' },
+                shadow: { name: '병렬 비교', desc: 'n8n + FastAPI' },
+              };
+              return (
+                <button
+                  type="button"
+                  key={m}
+                  className={`shadow-page__mode-btn shadow-page__mode-btn--${m} ${isActive ? 'shadow-page__mode-btn--active' : ''}`}
+                  onClick={() => handleModeChange(m)}
+                  disabled={isChangingMode}
+                >
+                  <div className="shadow-page__mode-btn-content">
+                    <span className="shadow-page__mode-btn-label">{labels[m].name}</span>
+                    <span className="shadow-page__mode-btn-sub">{labels[m].desc}</span>
+                  </div>
+                  {isActive && <span className="shadow-page__mode-btn-badge">운영중</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
 
