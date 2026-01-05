@@ -335,7 +335,12 @@
   flex-shrink: 0;
 }
 
+.doc-explorer-toolbar__stat {
+  font-size: 10px;
+}
+
 .doc-explorer-toolbar__stat-separator {
+  font-size: 10px;
   opacity: 0.5;
 }
 
