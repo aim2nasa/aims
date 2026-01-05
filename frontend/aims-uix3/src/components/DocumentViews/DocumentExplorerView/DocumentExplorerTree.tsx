@@ -304,6 +304,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                 name={isExpanded ? 'chevron.down' : 'chevron.right'}
                 size={SFSymbolSize.CAPTION_2}
                 weight={SFSymbolWeight.MEDIUM}
+                decorative
               />
             </span>
           ) : (
@@ -479,6 +480,7 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
               name={isRecentExpanded ? 'chevron.down' : 'chevron.right'}
               size={SFSymbolSize.CAPTION_2}
               weight={SFSymbolWeight.MEDIUM}
+              decorative
             />
           </span>
           {/* 커스텀 아이콘 */}
