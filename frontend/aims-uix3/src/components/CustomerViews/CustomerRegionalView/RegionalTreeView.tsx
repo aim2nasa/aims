@@ -646,7 +646,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     })
 
     return { groups, noAddressCustomers }
-  }, [filteredCustomers])
+  }, [initialFilteredCustomers])
 
   // 통계 계산
   const stats = useMemo(() => {

@@ -4238,6 +4238,19 @@ app.put('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
     }
 
     // 기존 고객 정보 업데이트 로직
+    // ⭐ 기존 고객의 address가 null인 경우 처리
+    // MongoDB는 null 내부에 필드를 생성할 수 없으므로 전체 객체를 한번에 설정해야 함
+    if (updateData.personal_info?.address && existingCustomer.personal_info?.address === null) {
+      // address 전체를 덮어쓰기 위해 flattenObject 대신 직접 설정
+      await db.collection(CUSTOMERS_COLLECTION).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { 'personal_info.address': updateData.personal_info.address } }
+      );
+      console.log(`✅ 고객 ${id}의 주소가 신규 설정됨 (기존 null → 새 주소)`);
+      // 이미 처리했으므로 updateData에서 제거
+      delete updateData.personal_info.address;
+    }
+
     // ⭐ flattenObject로 중첩 객체를 dot notation으로 변환
     // 예: { personal_info: { mobile_phone: '010-1234' } }
     //  → { 'personal_info.mobile_phone': '010-1234' }
