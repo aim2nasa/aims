@@ -151,7 +151,7 @@ export default function () {
         try {
           const body = JSON.parse(r.body);
           return body.documents || body.data;
-        } catch { return false; }
+        } catch (e) { return false; }
       },
     });
     if (!success) errorRate.add(1);
@@ -173,7 +173,7 @@ export default function () {
             })
           );
         }
-      } catch { /* ignore */ }
+      } catch (e) { /* ignore */ }
     }
   });
 
@@ -209,7 +209,7 @@ export default function () {
             })
           );
         }
-      } catch { /* ignore */ }
+      } catch (e) { /* ignore */ }
     }
   });
 
@@ -238,6 +238,17 @@ export default function () {
 // ========================================
 // 결과 요약 및 그래프 데이터 생성
 // ========================================
+// 안전한 값 접근 헬퍼
+function safeGet(obj, path, defaultVal) {
+  var keys = path.split('.');
+  var current = obj;
+  for (var i = 0; i < keys.length; i++) {
+    if (current === null || current === undefined) return defaultVal;
+    current = current[keys[i]];
+  }
+  return current !== null && current !== undefined ? current : defaultVal;
+}
+
 export function handleSummary(data) {
   const m = data.metrics;
 
@@ -246,27 +257,27 @@ export function handleSummary(data) {
     timestamp: new Date().toISOString(),
     maxVUs: MAX_VUS,
     results: {
-      totalRequests: m.http_reqs?.values?.count || 0,
-      throughput: (m.http_reqs?.values?.rate || 0).toFixed(2),
-      avgResponseTime: Math.round(m.http_req_duration?.values?.avg || 0),
-      p95ResponseTime: Math.round(m.http_req_duration?.values?.['p(95)'] || 0),
-      p99ResponseTime: Math.round(m.http_req_duration?.values?.['p(99)'] || 0),
-      maxResponseTime: Math.round(m.http_req_duration?.values?.max || 0),
-      errorRate: ((m.http_req_failed?.values?.rate || 0) * 100).toFixed(2),
+      totalRequests: safeGet(m, 'http_reqs.values.count', 0),
+      throughput: safeGet(m, 'http_reqs.values.rate', 0).toFixed(2),
+      avgResponseTime: Math.round(safeGet(m, 'http_req_duration.values.avg', 0)),
+      p95ResponseTime: Math.round(safeGet(m, 'http_req_duration.values.p(95)', 0)),
+      p99ResponseTime: Math.round(safeGet(m, 'http_req_duration.values.p(99)', 0)),
+      maxResponseTime: Math.round(safeGet(m, 'http_req_duration.values.max', 0)),
+      errorRate: (safeGet(m, 'http_req_failed.values.rate', 0) * 100).toFixed(2),
     },
     apiPerformance: {
-      health: Math.round(m.api_health?.values?.avg || 0),
-      documents: Math.round(m.api_documents?.values?.avg || 0),
-      documentDetail: Math.round(m.api_document_detail?.values?.avg || 0),
-      customers: Math.round(m.api_customers?.values?.avg || 0),
-      customerDetail: Math.round(m.api_customer_detail?.values?.avg || 0),
-      search: Math.round(m.api_search?.values?.avg || 0),
+      health: Math.round(safeGet(m, 'api_health.values.avg', 0)),
+      documents: Math.round(safeGet(m, 'api_documents.values.avg', 0)),
+      documentDetail: Math.round(safeGet(m, 'api_document_detail.values.avg', 0)),
+      customers: Math.round(safeGet(m, 'api_customers.values.avg', 0)),
+      customerDetail: Math.round(safeGet(m, 'api_customer_detail.values.avg', 0)),
+      search: Math.round(safeGet(m, 'api_search.values.avg', 0)),
     },
   };
 
   // 용량 추정
-  const p95 = m.http_req_duration?.values?.['p(95)'] || 0;
-  const errRate = (m.http_req_failed?.values?.rate || 0) * 100;
+  const p95 = safeGet(m, 'http_req_duration.values.p(95)', 0);
+  const errRate = safeGet(m, 'http_req_failed.values.rate', 0) * 100;
 
   let capacityEstimate = '';
   if (p95 < 1000 && errRate < 1) {
