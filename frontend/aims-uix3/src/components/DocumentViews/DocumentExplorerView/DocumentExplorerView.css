@@ -479,8 +479,8 @@
 .doc-explorer-tree__group-header {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
-  padding: var(--explorer-spacing-sm) var(--explorer-spacing-md);
+  gap: 6px;
+  padding: 4px var(--explorer-spacing-md);
   border-radius: var(--explorer-border-radius);
   cursor: pointer;
   transition: background-color var(--explorer-transition);
@@ -521,8 +521,8 @@
 /* Chevron */
 .doc-explorer-tree__chevron {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -533,21 +533,21 @@
 /* Chevron Placeholder (자식 없을 때 정렬용) */
 .doc-explorer-tree__chevron-placeholder {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 /* Folder Icon (내 보관함 스타일) */
 .doc-explorer-tree__folder-icon {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
 }
 
 /* Group Label */
 .doc-explorer-tree__group-label {
   flex: 1;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--color-text-primary);
   overflow: hidden;
@@ -583,8 +583,8 @@
 .doc-explorer-tree__document {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
-  padding: var(--explorer-spacing-xs) var(--explorer-spacing-md);
+  gap: 6px;
+  padding: 3px var(--explorer-spacing-md);
   border-radius: var(--explorer-border-radius);
   cursor: pointer;
   transition: background-color var(--explorer-transition);
@@ -623,11 +623,12 @@
 /* Document Icon */
 .doc-explorer-tree__doc-icon {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
 }
 
 /* ============================================
@@ -778,7 +779,7 @@ html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--ex
 /* Document Name */
 .doc-explorer-tree__doc-name {
   flex: 1;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -880,7 +881,7 @@ html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--ex
   align-items: center;
   gap: var(--explorer-spacing-xs);
   padding: var(--explorer-spacing-xs) var(--explorer-spacing-md);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-tertiary);
   text-transform: uppercase;
@@ -898,7 +899,7 @@ html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--ex
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
+  width: 10px;
   color: var(--color-text-quaternary);
 }
 
@@ -925,9 +926,9 @@ html[data-theme="dark"] .doc-explorer-tree__recent-icon {
 .doc-explorer-tree__recent-item {
   display: flex;
   align-items: center;
-  gap: var(--explorer-spacing-sm);
-  padding: var(--explorer-spacing-xs) var(--explorer-spacing-md);
-  padding-left: calc(var(--explorer-spacing-md) + 16px);
+  gap: 6px;
+  padding: 3px var(--explorer-spacing-md);
+  padding-left: calc(var(--explorer-spacing-md) + 14px);
   border-radius: var(--explorer-border-radius);
   cursor: pointer;
   transition: background-color var(--explorer-transition);
