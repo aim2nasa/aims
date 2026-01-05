@@ -473,6 +473,7 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
 
       {/* 정렬 기준 */}
       <div className="doc-explorer-toolbar__sort">
+        <span className="doc-explorer-toolbar__sort-label">정렬</span>
         <div className="doc-explorer-toolbar__sort-buttons">
           {SORT_OPTIONS.map((option) => (
             <Tooltip key={option} content={`${SORT_BY_LABELS[option]}순 정렬`} placement="bottom">

@@ -406,6 +406,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
         >
           {documentDate ? formatDateTime(documentDate) : '-'}
         </span>
+
+        {/* 유형 배지 */}
+        <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
+          {doc.badgeType || 'BIN'}
+        </span>
       </div>
     )
   }
@@ -538,6 +543,11 @@ export const DocumentExplorerTree: React.FC<DocumentExplorerTreeProps> = ({
                     title={documentDate || '-'}
                   >
                     {documentDate ? formatDateTime(documentDate) : '-'}
+                  </span>
+
+                  {/* 유형 배지 */}
+                  <span className={`doc-explorer-tree__badge doc-explorer-tree__badge--${(doc.badgeType || 'BIN').toLowerCase()}`}>
+                    {doc.badgeType || 'BIN'}
                   </span>
                 </div>
               )
