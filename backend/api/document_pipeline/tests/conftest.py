@@ -9,8 +9,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 from io import BytesIO
+from datetime import datetime
+from bson import ObjectId
 
 from main import app
 
@@ -53,6 +56,24 @@ startxref
 
 
 @pytest.fixture
+def sample_image():
+    """Create a minimal PNG image for testing"""
+    # 1x1 transparent PNG
+    png_content = bytes([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,  # PNG signature
+        0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,  # IHDR chunk
+        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  # 1x1 pixels
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+        0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,  # IDAT chunk
+        0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+        0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+        0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,  # IEND chunk
+        0x42, 0x60, 0x82
+    ])
+    return BytesIO(png_content)
+
+
+@pytest.fixture
 def sample_text():
     """Sample text for summarization testing"""
     return """
@@ -63,3 +84,263 @@ def sample_text():
     딥러닝은 머신러닝의 한 종류로, 인공 신경망을 기반으로 하며
     대량의 데이터에서 복잡한 패턴을 학습할 수 있습니다.
     """
+
+
+# ========================================
+# Sample Data Fixtures
+# ========================================
+
+@pytest.fixture
+def sample_document():
+    """Sample MongoDB document for testing"""
+    return {
+        "_id": "507f1f77bcf86cd799439011",
+        "ownerId": "test_user_123",
+        "customerId": "test_customer_456",
+        "createdAt": datetime.utcnow(),
+        "upload": {
+            "originalName": "test_document.pdf",
+            "saveName": "20260105_143022_test_document.pdf",
+            "destPath": "/data/uploads/test_user_123/20260105_143022_test_document.pdf",
+            "uploaded_at": datetime.utcnow().isoformat()
+        },
+        "meta": {
+            "filename": "20260105_143022_test_document.pdf",
+            "extension": "pdf",
+            "mime": "application/pdf",
+            "size_bytes": 12345,
+            "pdf_pages": 5,
+            "full_text": "Sample document text content",
+            "summary": "테스트 문서 요약입니다.",
+            "tags": ["테스트", "문서"],
+            "meta_status": "done"
+        },
+        "ocr": {
+            "status": "completed"
+        }
+    }
+
+
+@pytest.fixture
+def sample_customer():
+    """Sample customer data for testing"""
+    return {
+        "_id": "test_customer_456",
+        "name": "테스트 고객",
+        "ownerId": "test_user_123",
+        "customer_type": "personal",
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+
+# ========================================
+# Mock Fixtures - MongoDB
+# ========================================
+
+@pytest.fixture
+def mock_mongo_collection():
+    """Mock MongoDB collection with common operations"""
+    mock_collection = AsyncMock()
+
+    # Default find_one response
+    mock_collection.find_one.return_value = {
+        "_id": "test_doc_id",
+        "ownerId": "test_user_123",
+        "meta": {"status": "pending"}
+    }
+
+    # Default update_one response
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_collection.update_one.return_value = mock_result
+
+    # Default insert_one response
+    mock_insert = MagicMock()
+    mock_insert.inserted_id = ObjectId()
+    mock_collection.insert_one.return_value = mock_insert
+
+    # Default find response (returns async iterator)
+    async def mock_find_to_list(*args, **kwargs):
+        return []
+
+    mock_cursor = AsyncMock()
+    mock_cursor.to_list = mock_find_to_list
+    mock_collection.find.return_value = mock_cursor
+
+    return mock_collection
+
+
+@pytest.fixture
+def mock_mongo_service(mock_mongo_collection):
+    """Mock MongoService.get_collection()"""
+    with patch("services.mongo_service.MongoService.get_collection") as mock:
+        mock.return_value = mock_mongo_collection
+        yield mock_mongo_collection
+
+
+# ========================================
+# Mock Fixtures - External APIs
+# ========================================
+
+@pytest.fixture
+def mock_openai_service():
+    """Mock OpenAI service for summarization"""
+    with patch("services.openai_service.OpenAIService.summarize_text") as mock:
+        mock.return_value = {
+            "summary": "테스트 문서 요약입니다.",
+            "tags": ["테스트", "문서", "AI"],
+            "truncated": False
+        }
+        yield mock
+
+
+@pytest.fixture
+def mock_upstage_service():
+    """Mock Upstage OCR service"""
+    with patch("services.upstage_service.UpstageService.process_ocr") as mock:
+        mock.return_value = {
+            "error": False,
+            "status": 200,
+            "full_text": "OCR로 추출된 텍스트입니다.",
+            "confidence": 0.95,
+            "num_pages": 3,
+            "pages": [
+                {"page": 1, "text": "페이지 1 텍스트"},
+                {"page": 2, "text": "페이지 2 텍스트"},
+                {"page": 3, "text": "페이지 3 텍스트"}
+            ]
+        }
+        yield mock
+
+
+@pytest.fixture
+def mock_upstage_service_error():
+    """Mock Upstage OCR service with error response"""
+    with patch("services.upstage_service.UpstageService.process_ocr") as mock:
+        mock.return_value = {
+            "error": True,
+            "status": 500,
+            "userMessage": "OCR 처리 실패: API 오류"
+        }
+        yield mock
+
+
+# ========================================
+# Mock Fixtures - File Service
+# ========================================
+
+@pytest.fixture
+def mock_file_service():
+    """Mock FileService for file operations"""
+    with patch("services.file_service.FileService.save_file") as mock_save:
+        mock_save.return_value = (
+            "20260105_143022_test.pdf",
+            "/data/uploads/test_user/20260105_143022_test.pdf"
+        )
+
+        with patch("services.file_service.FileService.read_file_as_text") as mock_read:
+            mock_read.return_value = "파일 내용입니다."
+            yield {"save_file": mock_save, "read_file_as_text": mock_read}
+
+
+# ========================================
+# Mock Fixtures - Meta Service
+# ========================================
+
+@pytest.fixture
+def mock_meta_service():
+    """Mock MetaService for metadata extraction"""
+    with patch("services.meta_service.MetaService.extract_metadata") as mock:
+        mock.return_value = {
+            "filename": "test_document.pdf",
+            "extension": "pdf",
+            "mime_type": "application/pdf",
+            "file_size": 12345,
+            "file_hash": "abc123def456",
+            "num_pages": 5,
+            "extracted_text": "추출된 텍스트 내용입니다.",
+            "created_at": datetime.utcnow().isoformat(),
+            "error": None
+        }
+        yield mock
+
+
+@pytest.fixture
+def mock_meta_service_no_text():
+    """Mock MetaService returning no text (OCR needed)"""
+    with patch("services.meta_service.MetaService.extract_metadata") as mock:
+        mock.return_value = {
+            "filename": "scanned_document.pdf",
+            "extension": "pdf",
+            "mime_type": "application/pdf",
+            "file_size": 54321,
+            "file_hash": "xyz789",
+            "num_pages": 3,
+            "extracted_text": "",  # No text - OCR needed
+            "created_at": datetime.utcnow().isoformat(),
+            "error": None
+        }
+        yield mock
+
+
+@pytest.fixture
+def mock_meta_service_error():
+    """Mock MetaService with error response"""
+    with patch("services.meta_service.MetaService.extract_metadata") as mock:
+        mock.return_value = {
+            "error": True,
+            "status": 500,
+            "code": "EXTRACTION_FAILED",
+            "message": "메타데이터 추출 실패"
+        }
+        yield mock
+
+
+# ========================================
+# Mock Fixtures - Redis Service
+# ========================================
+
+@pytest.fixture
+def mock_redis_service():
+    """Mock RedisService for OCR queue operations"""
+    with patch("services.redis_service.RedisService.add_to_stream") as mock_add:
+        mock_add.return_value = "stream_message_id_123"
+
+        with patch("services.redis_service.RedisService.read_from_stream") as mock_read:
+            mock_read.return_value = []
+            yield {"add_to_stream": mock_add, "read_from_stream": mock_read}
+
+
+# ========================================
+# Mock Fixtures - Shadow Mode
+# ========================================
+
+@pytest.fixture
+def reset_shadow_mode():
+    """Reset Shadow Mode state before/after tests"""
+    from middleware.shadow_mode import ShadowMode, ServiceMode
+    original_mode = ShadowMode.service_mode
+    original_enabled = ShadowMode.enabled
+    yield
+    ShadowMode.service_mode = original_mode
+    ShadowMode.enabled = original_enabled
+
+
+# ========================================
+# Integration Test Fixtures
+# ========================================
+
+@pytest.fixture
+def mock_httpx_client():
+    """Mock httpx.AsyncClient for external API calls"""
+    with patch("httpx.AsyncClient") as mock:
+        mock_client = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"status": "success"}
+        mock_client.post.return_value = mock_response
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+        mock.return_value = mock_client
+        yield mock_client
