@@ -341,22 +341,24 @@ html[data-theme="dark"] .header-right-section .dot-inactive {
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
-  background: var(--color-neutral-100);  /* 완전 불투명 배경 */
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
   border-radius: 4px;
   margin-bottom: 4px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
+  color: #4a5568;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(0, 120, 212, 0.15);
 }
 
 html[data-theme="dark"] .document-list-header {
-  background: var(--color-neutral-700);  /* 완전 불투명 다크 배경 */
-  color: var(--color-ios-text-secondary-dark);
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 /* 삭제 모드일 때 체크박스 칼럼 추가 */
@@ -633,13 +635,31 @@ html[data-theme="dark"] .document-item {
   background: var(--color-ios-bg-primary-dark);
 }
 
+/* Zebra striping - Apple Mail 스타일 */
+.document-item:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.document-item:nth-child(even) {
+  background: rgba(0, 120, 212, 0.03);
+}
+
+html[data-theme="dark"] .document-item:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html[data-theme="dark"] .document-item:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .document-item:hover {
-  background: var(--color-ios-bg-hover-light);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 html[data-theme="dark"] .document-item:hover {
-  background: var(--color-ios-bg-hover-dark);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */

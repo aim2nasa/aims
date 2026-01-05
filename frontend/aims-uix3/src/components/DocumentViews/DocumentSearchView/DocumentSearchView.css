@@ -544,17 +544,18 @@ html[data-theme="dark"] .search-results-header {
   gap: 12px;
   align-items: center;
   padding: 8px 16px;
-  background: var(--color-neutral-100);
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
   border-radius: 4px;
   margin-bottom: 4px;
   font-family: var(--font-family-text);
   font-weight: 600;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
-  color: var(--color-ios-text-secondary-light);
+  color: #4a5568;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(0, 120, 212, 0.15);
 }
 
 /* 🍎 키워드 검색 시 유사도 칼럼 제거 */
@@ -568,9 +569,10 @@ html[data-theme="dark"] .search-results-header {
 }
 
 html[data-theme="dark"] .search-results-column-header {
-  background: var(--color-neutral-700);
-  color: var(--color-ios-text-secondary-dark);
-  box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .search-results-column-header > div {
@@ -757,12 +759,30 @@ html[data-theme="dark"] .search-result-row {
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
+/* Zebra striping - Apple Mail 스타일 */
+.search-result-row:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.search-result-row:nth-child(even) {
+  background: rgba(0, 120, 212, 0.025);
+}
+
+html[data-theme="dark"] .search-result-row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html[data-theme="dark"] .search-result-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .search-result-row:hover {
-  background-color: var(--color-ios-bg-hover-light);
+  background-color: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 html[data-theme="dark"] .search-result-row:hover {
-  background-color: var(--color-ios-bg-hover-dark);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .search-result-row:active {

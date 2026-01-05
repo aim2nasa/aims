@@ -197,12 +197,13 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
   padding: 8px 12px;
   height: 32px;          /* AllCustomersView와 동일 */
   min-width: 1145px;     /* 최소 너비 - 수평 스크롤 트리거 */
-  background: #f5f6f7;   /* 완전 불투명 배경 */
-  border-bottom: 1px solid var(--color-ios-separator-light);
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
+  border-bottom: 1px solid rgba(0, 120, 212, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   font-size: var(--font-size-caption-1); /* 12px */
   font-family: var(--font-family-text);
   font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
+  color: #4a5568;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   position: sticky;
@@ -211,9 +212,10 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
 }
 
 html[data-theme="dark"] .contract-list-header {
-  background: #374151;   /* 완전 불투명 다크 배경 */
-  border-bottom-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-tertiary-dark);
+  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .contract-list-header > div {
@@ -453,12 +455,30 @@ html[data-theme="dark"] .contract-item {
   background: var(--color-ios-bg-primary-dark);
 }
 
+/* Zebra striping - Apple Mail 스타일 */
+.contract-item:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.contract-item:nth-child(even) {
+  background: rgba(0, 120, 212, 0.03);
+}
+
+html[data-theme="dark"] .contract-item:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html[data-theme="dark"] .contract-item:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .contract-item:hover {
-  background: var(--color-ios-bg-tertiary-light);
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 html[data-theme="dark"] .contract-item:hover {
-  background: var(--color-ios-bg-tertiary-dark);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .contract-item > span {
