@@ -21,7 +21,7 @@
   --color-border: rgba(0, 0, 0, 0.08);
   --color-text-primary: rgba(0, 0, 0, 0.9);
   --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-hover-bg: rgba(0, 0, 0, 0.04);
+  --color-hover-bg: rgba(0, 0, 0, 0.06);  /* 라이트 테마 호버 강화 */
   --color-pressed-bg: rgba(0, 0, 0, 0.06);
   --color-accent: #0078d4;
   --color-accent-light: rgba(0, 120, 212, 0.1);
@@ -200,15 +200,48 @@ html[data-theme="dark"] .regional-tree-container {
 }
 
 .tree-node:hover {
-  background-color: var(--color-hover-bg);
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 .tree-node:hover::before {
-  opacity: 0.3;
+  opacity: 0.6;
+}
+
+/* 라이트 테마 호버 - Finder 스타일 */
+html:not([data-theme="dark"]) .tree-node:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme="dark"] .tree-node:hover {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .tree-node:active {
   background-color: var(--color-pressed-bg);
+}
+
+/* 선택 상태 - macOS Finder 스타일 */
+.tree-node.selected,
+.tree-node--selected {
+  background-color: rgba(0, 120, 212, 0.12);
+}
+
+.tree-node.selected::before,
+.tree-node--selected::before {
+  opacity: 1;
+}
+
+html:not([data-theme="dark"]) .tree-node.selected,
+html:not([data-theme="dark"]) .tree-node--selected {
+  background-color: rgba(0, 120, 212, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+html:not([data-theme="dark"]) .tree-node.selected .tree-node-label,
+html:not([data-theme="dark"]) .tree-node--selected .tree-node-label {
+  color: #0055a5;
+  font-weight: 500;
 }
 
 /* 아이콘 */
@@ -225,6 +258,11 @@ html[data-theme="dark"] .regional-tree-container {
   font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘/모달 헤더 */
   opacity: 0.7;
   transition: opacity 0.1s ease;
+}
+
+/* 라이트 테마에서 폴더 아이콘 가시성 강화 */
+html:not([data-theme="dark"]) .tree-node-folder-icon {
+  filter: saturate(1.4) contrast(1.15);
 }
 
 .tree-node:hover .tree-node-folder-icon {

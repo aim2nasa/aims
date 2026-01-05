@@ -266,12 +266,13 @@ html[data-theme="dark"] .type-filter-separator {
   gap: 12px;
   padding: 8px 12px;
   min-height: 32px;
-  background: #f5f6f7;  /* 완전 불투명 배경 */
-  border-bottom: 1px solid var(--color-ios-separator-light);
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
+  border-bottom: 1px solid rgba(0, 120, 212, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 */
   font-family: var(--font-family-text);
   font-weight: 600;
-  color: var(--color-ios-text-tertiary-light);
+  color: #4a5568;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   position: sticky;
@@ -280,9 +281,10 @@ html[data-theme="dark"] .type-filter-separator {
 }
 
 html[data-theme="dark"] .customer-list-header {
-  background: #374151;  /* 완전 불투명 다크 배경 */
-  border-bottom-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-tertiary-dark);
+  background: linear-gradient(180deg, #374151 0%, #2d3748 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .customer-list-header > div {
@@ -547,26 +549,53 @@ html[data-theme="dark"] .customer-item {
   background: var(--color-ios-bg-primary-dark);
 }
 
+/* Zebra striping - Apple Mail 스타일 (더 강한 대비) */
+.customer-item:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.customer-item:nth-child(even) {
+  background: rgba(0, 120, 212, 0.04);
+}
+
+html[data-theme="dark"] .customer-item:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html[data-theme="dark"] .customer-item:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .customer-item:hover {
-  background: var(--color-ios-bg-hover-light);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 html[data-theme="dark"] .customer-item:hover {
-  background: var(--color-ios-bg-hover-dark);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+/* === 🍎 SELECTED STATE: macOS Finder 스타일 === */
 .customer-item.selected,
 .customer-item[data-selected="true"],
 .customer-item:active {
-  background: var(--color-ios-bg-selected-light);
+  background: rgba(0, 120, 212, 0.15);
+  box-shadow: inset 3px 0 0 0 #0078d4, inset 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+.customer-item.selected .customer-name,
+.customer-item[data-selected="true"] .customer-name {
+  color: #0055a5;
+  font-weight: 500;
 }
 
 html[data-theme="dark"] .customer-item.selected,
 html[data-theme="dark"] .customer-item[data-selected="true"],
 html[data-theme="dark"] .customer-item:active {
-  background: var(--color-ios-bg-selected-dark);
+  background: rgba(142, 142, 147, 0.2);
+  box-shadow: inset 3px 0 0 0 #8e8e93, inset 0 0 0 1px rgba(142, 142, 147, 0.2);
 }
 
 /* === 🍎 CUSTOMER ICON: Person icon (16px - CLAUDE.md 준수) === */
