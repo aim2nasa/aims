@@ -245,6 +245,60 @@ export interface HealthStatsResponse {
   period: string;
 }
 
+// 실시간 메트릭 타입
+export interface RealtimeConcurrency {
+  activeRequests: number;
+  activeUsers: number;
+  peakRequests: number;
+}
+
+export interface RealtimeThroughput {
+  requestsPerSecond: number;
+  requestsLast60s: number;
+  totalRequests: number;
+  totalErrors: number;
+  errorRate: number;
+}
+
+export interface RealtimeResponseTime {
+  avg: number;
+  p50: number;
+  p95: number;
+  p99: number;
+  sampleCount: number;
+}
+
+export interface RealtimeLoadIndex {
+  value: number;
+  status: 'normal' | 'warning' | 'critical';
+  components: {
+    cpu: number;
+    memory: number;
+    loadAvg: number;
+    activeRequests: number;
+  };
+}
+
+export interface RealtimeSystem {
+  cpu: number;
+  memory: number;
+  loadAvg: number[];
+}
+
+export interface RealtimeMetrics {
+  timestamp: string;
+  concurrency: RealtimeConcurrency;
+  throughput: RealtimeThroughput;
+  responseTime: RealtimeResponseTime;
+  loadIndex: RealtimeLoadIndex;
+  system: RealtimeSystem;
+}
+
+export interface RealtimeMetricsResponse {
+  success: boolean;
+  data: RealtimeMetrics;
+}
+
 export const dashboardApi = {
   getDashboard: (): Promise<DashboardData> => {
     return apiClient.get<DashboardData>('/api/admin/dashboard');
@@ -308,5 +362,11 @@ export const dashboardApi = {
   clearHealthHistory: (): Promise<{ message: string; deletedCount: number }> => {
     return apiClient.delete<{ success: boolean; message: string; deletedCount: number }>('/api/admin/health-history')
       .then((res) => ({ message: res.message, deletedCount: res.deletedCount }));
+  },
+
+  // 실시간 메트릭 API (동시접속, 처리량, 부하지수)
+  getMetricsRealtime: (): Promise<RealtimeMetrics> => {
+    return apiClient.get<RealtimeMetricsResponse>('/api/admin/metrics/realtime')
+      .then((res) => res.data);
   },
 };

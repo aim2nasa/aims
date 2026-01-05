@@ -23,6 +23,7 @@ const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 const virusScanService = require('./lib/virusScanService');
 const serviceHealthMonitor = require('./lib/serviceHealthMonitor');
+const realtimeMetrics = require('./lib/realtimeMetrics');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
 
@@ -76,6 +77,9 @@ app.use((req, res, next) => {
 
 // 백엔드 로거 미들웨어 (요청 컨텍스트 캡처)
 app.use(backendLogger.middleware);
+
+// 실시간 메트릭 추적 미들웨어
+app.use(realtimeMetrics.trackingMiddleware);
 
 /**
  * 정규식 특수문자 이스케이프 함수
@@ -5489,6 +5493,27 @@ app.get('/api/admin/metrics/current', authenticateJWT, requireRole('admin'), asy
     res.status(500).json({
       success: false,
       message: '시스템 메트릭 조회에 실패했습니다',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 관리자: 실시간 시스템 메트릭 조회 (동시접속, 처리량, 부하지수)
+ */
+app.get('/api/admin/metrics/realtime', authenticateJWT, requireRole('admin'), async (req, res) => {
+  try {
+    const metrics = realtimeMetrics.getRealtimeMetrics();
+    res.json({
+      success: true,
+      data: metrics
+    });
+  } catch (error) {
+    console.error('[Admin] 실시간 메트릭 조회 오류:', error);
+    backendLogger.error('Admin', '실시간 메트릭 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      message: '실시간 메트릭 조회에 실패했습니다',
       error: error.message
     });
   }

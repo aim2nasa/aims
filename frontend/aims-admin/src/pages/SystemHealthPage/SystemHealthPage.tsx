@@ -298,6 +298,182 @@ const ServerResourcesSection = () => {
   );
 };
 
+// 실시간 메트릭 섹션 컴포넌트
+const RealtimeMetricsSection = () => {
+  const { data: metrics, isLoading } = useQuery({
+    queryKey: ['admin', 'metrics', 'realtime'],
+    queryFn: dashboardApi.getMetricsRealtime,
+    refetchInterval: 3000, // 3초마다 갱신
+  });
+
+  // 부하 지수 상태별 색상
+  const getLoadStatusColor = (status: string): string => {
+    switch (status) {
+      case 'normal': return 'var(--color-success)';
+      case 'warning': return 'var(--color-warning)';
+      case 'critical': return 'var(--color-danger)';
+      default: return 'var(--color-text-secondary)';
+    }
+  };
+
+  // 부하 지수 상태별 텍스트
+  const getLoadStatusText = (status: string): string => {
+    switch (status) {
+      case 'normal': return '정상';
+      case 'warning': return '주의';
+      case 'critical': return '위험';
+      default: return '-';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <section className="realtime-metrics-section">
+        <div className="realtime-metrics-section__header">
+          <h2 className="realtime-metrics-section__title">실시간 모니터링</h2>
+        </div>
+        <div className="realtime-metrics-section__loading">로딩 중...</div>
+      </section>
+    );
+  }
+
+  if (!metrics) {
+    return null;
+  }
+
+  return (
+    <section className="realtime-metrics-section">
+      <div className="realtime-metrics-section__header">
+        <h2 className="realtime-metrics-section__title">실시간 모니터링</h2>
+        <span className="realtime-metrics-section__subtitle">3초마다 자동 갱신</span>
+      </div>
+
+      <div className="realtime-metrics-section__grid">
+        {/* 동시접속 */}
+        <div className="realtime-metrics-section__card">
+          <div className="realtime-metrics-section__card-header">
+            <span className="realtime-metrics-section__card-icon">👥</span>
+            <span className="realtime-metrics-section__card-title">동시접속</span>
+          </div>
+          <div className="realtime-metrics-section__card-content">
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">활성 요청</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.concurrency.activeRequests}
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">활성 사용자</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.concurrency.activeUsers}명
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
+              <span className="realtime-metrics-section__stat-label">피크 요청</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.concurrency.peakRequests}/s
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 처리량 */}
+        <div className="realtime-metrics-section__card">
+          <div className="realtime-metrics-section__card-header">
+            <span className="realtime-metrics-section__card-icon">⚡</span>
+            <span className="realtime-metrics-section__card-title">처리량</span>
+          </div>
+          <div className="realtime-metrics-section__card-content">
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">요청/초</span>
+              <span className="realtime-metrics-section__stat-value realtime-metrics-section__stat-value--highlight">
+                {metrics.throughput.requestsPerSecond}
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">최근 60초</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.throughput.requestsLast60s}건
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
+              <span className="realtime-metrics-section__stat-label">에러율</span>
+              <span className={`realtime-metrics-section__stat-value ${metrics.throughput.errorRate > 0 ? 'realtime-metrics-section__stat-value--error' : ''}`}>
+                {metrics.throughput.errorRate}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 응답시간 */}
+        <div className="realtime-metrics-section__card">
+          <div className="realtime-metrics-section__card-header">
+            <span className="realtime-metrics-section__card-icon">⏱️</span>
+            <span className="realtime-metrics-section__card-title">응답시간</span>
+          </div>
+          <div className="realtime-metrics-section__card-content">
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">평균</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.responseTime.avg}ms
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row">
+              <span className="realtime-metrics-section__stat-label">P95</span>
+              <span className={`realtime-metrics-section__stat-value ${metrics.responseTime.p95 > 1000 ? 'realtime-metrics-section__stat-value--warning' : ''}`}>
+                {metrics.responseTime.p95}ms
+              </span>
+            </div>
+            <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
+              <span className="realtime-metrics-section__stat-label">P99</span>
+              <span className="realtime-metrics-section__stat-value">
+                {metrics.responseTime.p99}ms
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 부하 지수 */}
+        <div className="realtime-metrics-section__card realtime-metrics-section__card--load-index">
+          <div className="realtime-metrics-section__card-header">
+            <span className="realtime-metrics-section__card-icon">📊</span>
+            <span className="realtime-metrics-section__card-title">부하 지수</span>
+          </div>
+          <div className="realtime-metrics-section__card-content">
+            <div className="realtime-metrics-section__load-gauge">
+              <div
+                className="realtime-metrics-section__load-value"
+                style={{ color: getLoadStatusColor(metrics.loadIndex.status) }}
+              >
+                {metrics.loadIndex.value}
+              </div>
+              <div
+                className="realtime-metrics-section__load-status"
+                style={{ color: getLoadStatusColor(metrics.loadIndex.status) }}
+              >
+                {getLoadStatusText(metrics.loadIndex.status)}
+              </div>
+            </div>
+            <div className="realtime-metrics-section__load-bar">
+              <div
+                className="realtime-metrics-section__load-bar-fill"
+                style={{
+                  width: `${Math.min(100, metrics.loadIndex.value)}%`,
+                  backgroundColor: getLoadStatusColor(metrics.loadIndex.status)
+                }}
+              />
+            </div>
+            <div className="realtime-metrics-section__load-components">
+              <span>CPU: {metrics.loadIndex.components.cpu.toFixed(1)}%</span>
+              <span>MEM: {metrics.loadIndex.components.memory.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // 상태 이력 날짜 포맷
 const formatHistoryDate = (isoString: string): string => {
   const date = new Date(isoString);
@@ -635,6 +811,9 @@ export const SystemHealthPage = () => {
 
       {/* 서버 리소스 섹션 */}
       <ServerResourcesSection />
+
+      {/* 실시간 메트릭 섹션 */}
+      <RealtimeMetricsSection />
 
       {/* 서비스 상태 + 포트 현황 2열 레이아웃 */}
       <div className="system-health-page__two-column">
