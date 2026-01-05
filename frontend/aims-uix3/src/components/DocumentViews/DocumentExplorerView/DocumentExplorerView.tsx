@@ -13,6 +13,7 @@ import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '@/contexts/DocumentStatusContext'
 import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
+import { InitialFilterBar } from './InitialFilterBar'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.css'
@@ -141,12 +142,18 @@ const DocumentExplorerContent: React.FC<{
         onDateFilterClear={clearDateFilter}
         thumbnailEnabled={thumbnailEnabled}
         onThumbnailEnabledChange={setThumbnailEnabled}
-        initialType={initialType}
-        onInitialTypeChange={setInitialType}
-        selectedInitial={selectedInitial}
-        onSelectedInitialChange={setSelectedInitial}
-        initialCustomerCounts={initialCustomerCounts}
       />
+
+      {/* 초성 필터 바 (고객별/고객>태그별 분류 시에만 표시) */}
+      {(groupBy === 'customer' || groupBy === 'customerTag') && (
+        <InitialFilterBar
+          initialType={initialType}
+          onInitialTypeChange={setInitialType}
+          selectedInitial={selectedInitial}
+          onSelectedInitialChange={setSelectedInitial}
+          initialCustomerCounts={initialCustomerCounts}
+        />
+      )}
 
       {/* 트리 뷰 */}
       <div className="doc-explorer-tree-container">
