@@ -3,13 +3,57 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button/Button';
 import './ShadowMonitorPage.css';
 
 // 개발환경: Vite 프록시 → Tailscale VPN (100.110.215.65:8100)
 // 프로덕션: nginx /shadow/ → localhost:8100 프록시
 const PIPELINE_API_URL = '';
+
+// Service Mode 타입
+type ServiceModeType = 'n8n' | 'fastapi' | 'shadow';
+
+interface ServiceModeResponse {
+  mode: ServiceModeType;
+  shadow_enabled: boolean;
+  description: string;
+  available_modes: ServiceModeType[];
+}
+
+interface MetricsResponse {
+  period: { days: number; since: string; until: string };
+  current_mode: ServiceModeType;
+  summary: {
+    total_calls: number;
+    n8n: {
+      avg_response_time_ms: number;
+      success_count: number;
+      error_count: number;
+      error_rate: number;
+    };
+    fastapi: {
+      avg_response_time_ms: number;
+      success_count: number;
+      error_count: number;
+      error_rate: number;
+    };
+  };
+  by_workflow: Record<string, {
+    call_count: number;
+    n8n_avg_ms: number;
+    fastapi_avg_ms: number;
+    n8n_max_ms: number;
+    fastapi_max_ms: number;
+    improvement_pct: number;
+  }>;
+  comparison: {
+    faster_service: string;
+    improvement_pct: number;
+    n8n_avg_ms: number;
+    fastapi_avg_ms: number;
+  } | null;
+}
 
 interface ShadowStats {
   shadow_mode: {
@@ -119,6 +163,30 @@ const fetchServicesStatus = async (): Promise<ServicesStatusResponse> => {
   return response.json();
 };
 
+// 서비스 모드 관련 API
+const fetchServiceMode = async (): Promise<ServiceModeResponse> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/service-mode`);
+  if (!response.ok) throw new Error('Failed to fetch service mode');
+  return response.json();
+};
+
+const setServiceMode = async (mode: ServiceModeType): Promise<{ current_mode: string; message: string }> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/service-mode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
+  if (!response.ok) throw new Error('Failed to set service mode');
+  return response.json();
+};
+
+// 성능 메트릭 API
+const fetchMetrics = async (days: number): Promise<MetricsResponse> => {
+  const response = await fetch(`${PIPELINE_API_URL}/shadow/metrics?days=${days}`);
+  if (!response.ok) throw new Error('Failed to fetch metrics');
+  return response.json();
+};
+
 /**
  * KST 시간 포맷: YYYY.MM.DD HH:mm:ss (24시간제)
  * 서버 timestamp가 UTC인 경우 KST(+9시간)로 변환하여 표시
@@ -172,10 +240,13 @@ const formatRelativeTime = (isoString: string): string => {
 
 export const ShadowMonitorPage = () => {
   const [days, setDays] = useState(7);
+  const [metricsDays, setMetricsDays] = useState(7);
   const [selectedMismatch, setSelectedMismatch] = useState<Mismatch | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isChangingMode, setIsChangingMode] = useState(false);
+  const queryClient = useQueryClient();
 
   // Claude에게 보낼 프롬프트 생성
   const generateClaudePrompt = (mismatch: Mismatch): string => {
@@ -235,10 +306,64 @@ ${diffsText}
     refetchInterval: 10000, // 10초마다 서비스 상태 확인
   });
 
+  // 서비스 모드 쿼리
+  const { data: serviceModeData, refetch: refetchServiceMode } = useQuery({
+    queryKey: ['shadow', 'service-mode'],
+    queryFn: fetchServiceMode,
+    refetchInterval: 30000,
+  });
+
+  // 성능 메트릭 쿼리
+  const { data: metricsData, refetch: refetchMetrics } = useQuery({
+    queryKey: ['shadow', 'metrics', metricsDays],
+    queryFn: () => fetchMetrics(metricsDays),
+    refetchInterval: 30000,
+  });
+
+  // 서비스 모드 변경 mutation
+  const changeModeMutation = useMutation({
+    mutationFn: setServiceMode,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shadow', 'service-mode'] });
+      queryClient.invalidateQueries({ queryKey: ['shadow', 'metrics'] });
+    },
+  });
+
+  // 모드 변경 핸들러
+  const handleModeChange = async (newMode: ServiceModeType) => {
+    if (isChangingMode) return;
+
+    const modeNames: Record<ServiceModeType, string> = {
+      n8n: 'n8n만 사용 (현재 운영 모드)',
+      fastapi: 'FastAPI만 사용 (전환 완료 모드)',
+      shadow: 'Shadow Mode (병렬 비교)',
+    };
+
+    const confirmMessage = newMode === 'fastapi'
+      ? `⚠️ FastAPI 전용 모드로 전환합니다.\n\n이 모드에서는 n8n을 거치지 않고 FastAPI로 직접 처리됩니다.\n전환 준비 상태를 확인했나요?\n\n계속하시겠습니까?`
+      : `서비스 모드를 변경합니다:\n\n${modeNames[newMode]}\n\n계속하시겠습니까?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    setIsChangingMode(true);
+    try {
+      await changeModeMutation.mutateAsync(newMode);
+      refetchServiceMode();
+      refetchStats();
+    } catch (err) {
+      alert('모드 변경에 실패했습니다.');
+      console.error(err);
+    } finally {
+      setIsChangingMode(false);
+    }
+  };
+
   const handleRefresh = () => {
     refetchStats();
     refetchMismatches();
     refetchServicesStatus();
+    refetchServiceMode();
+    refetchMetrics();
   };
 
   const handleDeleteResolved = async () => {
@@ -353,6 +478,166 @@ ${diffsText}
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* 서비스 모드 제어 */}
+      {serviceModeData && (
+        <section className="shadow-monitor__section">
+          <h2 className="shadow-monitor__section-title">서비스 모드 제어</h2>
+          <div className="shadow-monitor__mode-control">
+            <div className="shadow-monitor__mode-options">
+              {(['n8n', 'fastapi', 'shadow'] as ServiceModeType[]).map((mode) => (
+                <label
+                  key={mode}
+                  className={`shadow-monitor__mode-option ${serviceModeData.mode === mode ? 'shadow-monitor__mode-option--selected' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="service-mode"
+                    value={mode}
+                    checked={serviceModeData.mode === mode}
+                    onChange={() => handleModeChange(mode)}
+                    disabled={isChangingMode}
+                  />
+                  <div className="shadow-monitor__mode-info">
+                    <span className="shadow-monitor__mode-name">
+                      {mode === 'n8n' ? 'n8n' : mode === 'fastapi' ? 'FastAPI' : 'Shadow Mode'}
+                    </span>
+                    <span className="shadow-monitor__mode-desc">
+                      {mode === 'n8n' && '현재 운영 모드 - n8n만 사용'}
+                      {mode === 'fastapi' && '전환 완료 모드 - FastAPI만 사용'}
+                      {mode === 'shadow' && '병렬 비교 모드 - 양쪽 호출 후 비교'}
+                    </span>
+                  </div>
+                  {serviceModeData.mode === mode && (
+                    <span className="shadow-monitor__mode-badge">현재</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {isChangingMode && (
+              <div className="shadow-monitor__mode-changing">모드 변경 중...</div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 성능 비교 */}
+      {metricsData && (
+        <section className="shadow-monitor__section">
+          <div className="shadow-monitor__section-header">
+            <h2 className="shadow-monitor__section-title">성능 비교</h2>
+            <select
+              value={metricsDays}
+              onChange={(e) => setMetricsDays(Number(e.target.value))}
+              className="shadow-monitor__days-select"
+            >
+              <option value={1}>최근 1일</option>
+              <option value={7}>최근 7일</option>
+              <option value={14}>최근 14일</option>
+              <option value={30}>최근 30일</option>
+            </select>
+          </div>
+          <div className="shadow-monitor__performance">
+            {metricsData.comparison ? (
+              <>
+                <div className="shadow-monitor__perf-summary">
+                  <div className={`shadow-monitor__perf-winner ${metricsData.comparison.faster_service === 'fastapi' ? 'shadow-monitor__perf-winner--fastapi' : 'shadow-monitor__perf-winner--n8n'}`}>
+                    <span className="shadow-monitor__perf-winner-icon">
+                      {metricsData.comparison.faster_service === 'fastapi' ? '⚡' : '🔧'}
+                    </span>
+                    <span className="shadow-monitor__perf-winner-text">
+                      {metricsData.comparison.faster_service === 'fastapi' ? 'FastAPI' : 'n8n'}가
+                      {metricsData.comparison.improvement_pct > 0 ? ` ${Math.abs(metricsData.comparison.improvement_pct)}% 더 빠름` : ' 동등'}
+                    </span>
+                  </div>
+                  <div className="shadow-monitor__perf-total">
+                    총 {metricsData.summary.total_calls.toLocaleString()}건 호출
+                  </div>
+                </div>
+                <div className="shadow-monitor__perf-bars">
+                  <div className="shadow-monitor__perf-bar">
+                    <div className="shadow-monitor__perf-bar-label">
+                      <span>n8n</span>
+                      <span>{metricsData.comparison.n8n_avg_ms.toLocaleString()}ms</span>
+                    </div>
+                    <div className="shadow-monitor__perf-bar-track">
+                      <div
+                        className="shadow-monitor__perf-bar-fill shadow-monitor__perf-bar-fill--n8n"
+                        style={{
+                          width: `${Math.min(100, (metricsData.comparison.n8n_avg_ms / Math.max(metricsData.comparison.n8n_avg_ms, metricsData.comparison.fastapi_avg_ms)) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="shadow-monitor__perf-bar">
+                    <div className="shadow-monitor__perf-bar-label">
+                      <span>FastAPI</span>
+                      <span>{metricsData.comparison.fastapi_avg_ms.toLocaleString()}ms</span>
+                    </div>
+                    <div className="shadow-monitor__perf-bar-track">
+                      <div
+                        className="shadow-monitor__perf-bar-fill shadow-monitor__perf-bar-fill--fastapi"
+                        style={{
+                          width: `${Math.min(100, (metricsData.comparison.fastapi_avg_ms / Math.max(metricsData.comparison.n8n_avg_ms, metricsData.comparison.fastapi_avg_ms)) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="shadow-monitor__perf-details">
+                  <div className="shadow-monitor__perf-detail">
+                    <span className="shadow-monitor__perf-detail-label">n8n 에러율</span>
+                    <span className={`shadow-monitor__perf-detail-value ${metricsData.summary.n8n.error_rate > 1 ? 'shadow-monitor__perf-detail-value--error' : ''}`}>
+                      {metricsData.summary.n8n.error_rate}%
+                    </span>
+                  </div>
+                  <div className="shadow-monitor__perf-detail">
+                    <span className="shadow-monitor__perf-detail-label">FastAPI 에러율</span>
+                    <span className={`shadow-monitor__perf-detail-value ${metricsData.summary.fastapi.error_rate > 1 ? 'shadow-monitor__perf-detail-value--error' : ''}`}>
+                      {metricsData.summary.fastapi.error_rate}%
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="shadow-monitor__empty">
+                <span>성능 데이터가 없습니다</span>
+              </div>
+            )}
+          </div>
+
+          {/* 워크플로우별 성능 */}
+          {metricsData.by_workflow && Object.keys(metricsData.by_workflow).length > 0 && (
+            <div className="shadow-monitor__perf-workflow">
+              <h3 className="shadow-monitor__subsection-title">워크플로우별 응답시간</h3>
+              <table className="shadow-monitor__table">
+                <thead>
+                  <tr>
+                    <th>Workflow</th>
+                    <th>호출수</th>
+                    <th>n8n 평균</th>
+                    <th>FastAPI 평균</th>
+                    <th>개선율</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(metricsData.by_workflow).map(([workflow, data]) => (
+                    <tr key={workflow}>
+                      <td><code>{workflow}</code></td>
+                      <td>{data.call_count}</td>
+                      <td>{data.n8n_avg_ms}ms</td>
+                      <td>{data.fastapi_avg_ms}ms</td>
+                      <td className={data.improvement_pct > 0 ? 'shadow-monitor__cell--success' : data.improvement_pct < 0 ? 'shadow-monitor__cell--error' : ''}>
+                        {data.improvement_pct > 0 ? '+' : ''}{data.improvement_pct}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 

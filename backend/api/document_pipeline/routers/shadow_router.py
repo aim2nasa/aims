@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from middleware.shadow_mode import shadow_call, ShadowMode
+from middleware.shadow_mode import shadow_call, ShadowMode, ServiceMode
 from services.mongo_service import MongoService
 
 logger = logging.getLogger(__name__)
@@ -184,6 +184,357 @@ async def shadow_disable():
     """Disable shadow mode"""
     ShadowMode.disable()
     return {"status": "disabled"}
+
+
+# ==================== 서비스 모드 제어 API ====================
+
+@router.get("/service-mode")
+async def get_service_mode():
+    """
+    현재 서비스 모드 조회
+
+    Returns:
+        - mode: 현재 서비스 모드 (n8n, fastapi, shadow)
+        - shadow_enabled: Shadow Mode 활성화 상태
+        - description: 모드 설명
+    """
+    mode = ShadowMode.get_mode()
+    descriptions = {
+        ServiceMode.N8N: "n8n만 사용 (현재 운영 모드)",
+        ServiceMode.FASTAPI: "FastAPI만 사용 (전환 완료 모드)",
+        ServiceMode.SHADOW: "n8n + FastAPI 병렬 비교 모드"
+    }
+    return {
+        "mode": mode.value,
+        "shadow_enabled": ShadowMode.enabled,
+        "description": descriptions.get(mode, "알 수 없음"),
+        "available_modes": [m.value for m in ServiceMode]
+    }
+
+
+@router.post("/service-mode")
+async def set_service_mode(request: Request):
+    """
+    서비스 모드 변경
+
+    Request Body:
+        - mode: "n8n" | "fastapi" | "shadow"
+
+    Returns:
+        - previous_mode: 이전 모드
+        - current_mode: 변경된 현재 모드
+        - shadow_enabled: Shadow Mode 활성화 상태
+    """
+    try:
+        body = await request.json()
+        mode_str = body.get("mode", "").lower()
+
+        # 모드 유효성 검사
+        mode_map = {
+            "n8n": ServiceMode.N8N,
+            "fastapi": ServiceMode.FASTAPI,
+            "shadow": ServiceMode.SHADOW
+        }
+
+        if mode_str not in mode_map:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid mode: {mode_str}. Must be one of: n8n, fastapi, shadow"
+            )
+
+        previous_mode = ShadowMode.get_mode()
+        new_mode = mode_map[mode_str]
+
+        # 모드 변경
+        ShadowMode.set_mode(new_mode)
+
+        # 모드 변경 로깅
+        await _log_mode_change(previous_mode.value, new_mode.value)
+
+        logger.info(f"Service mode changed: {previous_mode.value} -> {new_mode.value}")
+
+        return {
+            "previous_mode": previous_mode.value,
+            "current_mode": new_mode.value,
+            "shadow_enabled": ShadowMode.enabled,
+            "message": f"서비스 모드가 {new_mode.value}로 변경되었습니다."
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Set service mode error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _log_mode_change(previous_mode: str, new_mode: str):
+    """서비스 모드 변경 이력 로깅"""
+    try:
+        collection = MongoService.get_collection("service_mode_history")
+        await collection.insert_one({
+            "previous_mode": previous_mode,
+            "new_mode": new_mode,
+            "timestamp": datetime.utcnow()
+        })
+    except Exception as e:
+        logger.error(f"Failed to log mode change: {e}")
+
+
+# ==================== 성능 메트릭 API ====================
+
+@router.get("/metrics")
+async def get_metrics(days: int = Query(default=7, ge=1, le=90)):
+    """
+    성능 메트릭 통계 조회
+
+    Args:
+        days: 조회 기간 (일)
+
+    Returns:
+        - period: 조회 기간
+        - summary: 전체 요약 (평균 응답시간, 호출수, 에러율)
+        - by_workflow: 워크플로우별 통계
+        - comparison: n8n vs FastAPI 비교
+    """
+    try:
+        since = datetime.utcnow() - timedelta(days=days)
+        collection = MongoService.get_collection("shadow_metrics")
+
+        # 전체 통계
+        pipeline = [
+            {"$match": {"timestamp": {"$gte": since}}},
+            {"$group": {
+                "_id": None,
+                "count": {"$sum": 1},
+                "n8n_avg_ms": {"$avg": "$n8n_response_time_ms"},
+                "fastapi_avg_ms": {"$avg": "$fastapi_response_time_ms"},
+                "n8n_success": {"$sum": {"$cond": [{"$eq": ["$n8n_status", "success"]}, 1, 0]}},
+                "n8n_error": {"$sum": {"$cond": [{"$eq": ["$n8n_status", "error"]}, 1, 0]}},
+                "fastapi_success": {"$sum": {"$cond": [{"$eq": ["$fastapi_status", "success"]}, 1, 0]}},
+                "fastapi_error": {"$sum": {"$cond": [{"$eq": ["$fastapi_status", "error"]}, 1, 0]}}
+            }}
+        ]
+
+        summary = None
+        async for doc in collection.aggregate(pipeline):
+            total = doc["count"]
+            summary = {
+                "total_calls": total,
+                "n8n": {
+                    "avg_response_time_ms": round(doc["n8n_avg_ms"] or 0, 1),
+                    "success_count": doc["n8n_success"],
+                    "error_count": doc["n8n_error"],
+                    "error_rate": round(doc["n8n_error"] / total * 100, 2) if total > 0 else 0
+                },
+                "fastapi": {
+                    "avg_response_time_ms": round(doc["fastapi_avg_ms"] or 0, 1),
+                    "success_count": doc["fastapi_success"],
+                    "error_count": doc["fastapi_error"],
+                    "error_rate": round(doc["fastapi_error"] / total * 100, 2) if total > 0 else 0
+                }
+            }
+
+        if not summary:
+            summary = {
+                "total_calls": 0,
+                "n8n": {"avg_response_time_ms": 0, "success_count": 0, "error_count": 0, "error_rate": 0},
+                "fastapi": {"avg_response_time_ms": 0, "success_count": 0, "error_count": 0, "error_rate": 0}
+            }
+
+        # 워크플로우별 통계
+        workflow_pipeline = [
+            {"$match": {"timestamp": {"$gte": since}}},
+            {"$group": {
+                "_id": "$workflow",
+                "count": {"$sum": 1},
+                "n8n_avg_ms": {"$avg": "$n8n_response_time_ms"},
+                "fastapi_avg_ms": {"$avg": "$fastapi_response_time_ms"},
+                "n8n_max_ms": {"$max": "$n8n_response_time_ms"},
+                "fastapi_max_ms": {"$max": "$fastapi_response_time_ms"}
+            }}
+        ]
+
+        by_workflow = {}
+        async for doc in collection.aggregate(workflow_pipeline):
+            wf = doc["_id"]
+            by_workflow[wf] = {
+                "call_count": doc["count"],
+                "n8n_avg_ms": round(doc["n8n_avg_ms"] or 0, 1),
+                "fastapi_avg_ms": round(doc["fastapi_avg_ms"] or 0, 1),
+                "n8n_max_ms": doc["n8n_max_ms"] or 0,
+                "fastapi_max_ms": doc["fastapi_max_ms"] or 0,
+                "improvement_pct": _calc_improvement(doc["n8n_avg_ms"], doc["fastapi_avg_ms"])
+            }
+
+        # 성능 비교 계산
+        comparison = None
+        if summary["total_calls"] > 0:
+            n8n_avg = summary["n8n"]["avg_response_time_ms"]
+            fastapi_avg = summary["fastapi"]["avg_response_time_ms"]
+            comparison = {
+                "faster_service": "fastapi" if fastapi_avg < n8n_avg else "n8n",
+                "improvement_pct": _calc_improvement(n8n_avg, fastapi_avg),
+                "n8n_avg_ms": n8n_avg,
+                "fastapi_avg_ms": fastapi_avg
+            }
+
+        return {
+            "period": {
+                "days": days,
+                "since": since.isoformat(),
+                "until": datetime.utcnow().isoformat()
+            },
+            "current_mode": ShadowMode.get_mode().value,
+            "summary": summary,
+            "by_workflow": by_workflow,
+            "comparison": comparison
+        }
+
+    except Exception as e:
+        logger.error(f"Metrics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _calc_improvement(n8n_ms: Optional[float], fastapi_ms: Optional[float]) -> float:
+    """n8n 대비 FastAPI 성능 개선율 (%) - 양수면 FastAPI가 빠름"""
+    if not n8n_ms or not fastapi_ms or n8n_ms == 0:
+        return 0
+    return round((n8n_ms - fastapi_ms) / n8n_ms * 100, 1)
+
+
+@router.get("/metrics/realtime")
+async def get_realtime_metrics(limit: int = Query(default=100, ge=10, le=500)):
+    """
+    실시간 성능 메트릭 (최근 N건)
+
+    Args:
+        limit: 조회할 최근 데이터 수 (기본 100건)
+
+    Returns:
+        - data: 최근 메트릭 데이터 배열
+        - stats: 실시간 통계
+    """
+    try:
+        collection = MongoService.get_collection("shadow_metrics")
+
+        cursor = collection.find({}).sort("timestamp", -1).limit(limit)
+
+        data = []
+        n8n_times = []
+        fastapi_times = []
+
+        async for doc in cursor:
+            record = {
+                "timestamp": doc["timestamp"].isoformat(),
+                "workflow": doc["workflow"],
+                "n8n_ms": doc.get("n8n_response_time_ms"),
+                "fastapi_ms": doc.get("fastapi_response_time_ms"),
+                "n8n_status": doc.get("n8n_status"),
+                "fastapi_status": doc.get("fastapi_status"),
+                "service_mode": doc.get("service_mode", "shadow")
+            }
+            data.append(record)
+
+            if doc.get("n8n_response_time_ms"):
+                n8n_times.append(doc["n8n_response_time_ms"])
+            if doc.get("fastapi_response_time_ms"):
+                fastapi_times.append(doc["fastapi_response_time_ms"])
+
+        # 실시간 통계 계산
+        stats = {
+            "count": len(data),
+            "n8n": {
+                "avg_ms": round(sum(n8n_times) / len(n8n_times), 1) if n8n_times else 0,
+                "min_ms": min(n8n_times) if n8n_times else 0,
+                "max_ms": max(n8n_times) if n8n_times else 0
+            },
+            "fastapi": {
+                "avg_ms": round(sum(fastapi_times) / len(fastapi_times), 1) if fastapi_times else 0,
+                "min_ms": min(fastapi_times) if fastapi_times else 0,
+                "max_ms": max(fastapi_times) if fastapi_times else 0
+            }
+        }
+
+        return {
+            "current_mode": ShadowMode.get_mode().value,
+            "data": data,
+            "stats": stats
+        }
+
+    except Exception as e:
+        logger.error(f"Realtime metrics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/metrics/history")
+async def get_metrics_history(
+    days: int = Query(default=7, ge=1, le=30),
+    interval: str = Query(default="hour", regex="^(hour|day)$")
+):
+    """
+    시간별/일별 성능 메트릭 히스토리 (차트용)
+
+    Args:
+        days: 조회 기간 (일)
+        interval: 집계 단위 (hour 또는 day)
+
+    Returns:
+        - data: 시간별/일별 집계 데이터
+    """
+    try:
+        since = datetime.utcnow() - timedelta(days=days)
+        collection = MongoService.get_collection("shadow_metrics")
+
+        # 시간별 또는 일별 집계
+        if interval == "hour":
+            date_format = {
+                "year": {"$year": "$timestamp"},
+                "month": {"$month": "$timestamp"},
+                "day": {"$dayOfMonth": "$timestamp"},
+                "hour": {"$hour": "$timestamp"}
+            }
+        else:  # day
+            date_format = {
+                "year": {"$year": "$timestamp"},
+                "month": {"$month": "$timestamp"},
+                "day": {"$dayOfMonth": "$timestamp"}
+            }
+
+        pipeline = [
+            {"$match": {"timestamp": {"$gte": since}}},
+            {"$group": {
+                "_id": date_format,
+                "count": {"$sum": 1},
+                "n8n_avg_ms": {"$avg": "$n8n_response_time_ms"},
+                "fastapi_avg_ms": {"$avg": "$fastapi_response_time_ms"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+
+        data = []
+        async for doc in collection.aggregate(pipeline):
+            id_parts = doc["_id"]
+            if interval == "hour":
+                time_label = f"{id_parts['year']}-{id_parts['month']:02d}-{id_parts['day']:02d} {id_parts['hour']:02d}:00"
+            else:
+                time_label = f"{id_parts['year']}-{id_parts['month']:02d}-{id_parts['day']:02d}"
+
+            data.append({
+                "time": time_label,
+                "count": doc["count"],
+                "n8n_avg_ms": round(doc["n8n_avg_ms"] or 0, 1),
+                "fastapi_avg_ms": round(doc["fastapi_avg_ms"] or 0, 1)
+            })
+
+        return {
+            "period": {"days": days, "interval": interval},
+            "current_mode": ShadowMode.get_mode().value,
+            "data": data
+        }
+
+    except Exception as e:
+        logger.error(f"Metrics history error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/stats")

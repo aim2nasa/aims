@@ -1,17 +1,19 @@
 """
 Shadow Mode Middleware
-- n8n과 FastAPI 동시 호출
-- n8n 응답 반환, FastAPI 응답은 비교 로깅
+- n8n과 FastAPI 동시 호출 (Shadow Mode)
+- 서비스 모드 전환 지원 (n8n / fastapi / shadow)
+- 성능 메트릭 수집
 """
 import asyncio
 import httpx
 import logging
+import time
 from datetime import datetime
-from typing import Dict, Any, Optional, Callable
-from functools import wraps
+from enum import Enum
+from typing import Dict, Any, Optional
 
 from config import get_settings
-from contracts.dynamic_fields import compare_responses, normalize_response
+from contracts.dynamic_fields import compare_responses
 from services.mongo_service import MongoService
 
 logger = logging.getLogger(__name__)
@@ -21,20 +23,49 @@ N8N_BASE = "https://n8nd.giize.com/webhook"
 FASTAPI_BASE = "http://localhost:8100/webhook"
 
 
+class ServiceMode(Enum):
+    """서비스 모드"""
+    N8N = "n8n"           # n8n만 사용 (현재 운영)
+    FASTAPI = "fastapi"   # FastAPI만 사용 (전환 후)
+    SHADOW = "shadow"     # 병렬 비교 모드
+
+
 class ShadowMode:
-    """Shadow Mode 관리 클래스"""
+    """Shadow Mode 및 서비스 모드 관리 클래스"""
 
     enabled: bool = True
+    service_mode: ServiceMode = ServiceMode.SHADOW
 
     @classmethod
     def enable(cls):
         cls.enabled = True
+        cls.service_mode = ServiceMode.SHADOW
         logger.info("Shadow Mode enabled")
 
     @classmethod
     def disable(cls):
         cls.enabled = False
         logger.info("Shadow Mode disabled")
+
+    @classmethod
+    def set_mode(cls, mode: ServiceMode):
+        """서비스 모드 변경"""
+        cls.service_mode = mode
+        cls.enabled = (mode == ServiceMode.SHADOW)
+        logger.info(f"Service mode changed to: {mode.value}")
+
+    @classmethod
+    def get_mode(cls) -> ServiceMode:
+        """현재 서비스 모드 조회"""
+        return cls.service_mode
+
+    @classmethod
+    def get_status(cls) -> dict:
+        """현재 상태 조회"""
+        return {
+            "enabled": cls.enabled,
+            "service_mode": cls.service_mode.value
+        }
 
 
 def _safe_json(response: httpx.Response) -> dict:
@@ -48,13 +79,68 @@ def _safe_json(response: httpx.Response) -> dict:
         return {"_parse_error": True, "_raw": response.text[:500], "_status_code": response.status_code}
 
 
+async def _call_n8n(
+    client: httpx.AsyncClient,
+    workflow: str,
+    request_data: dict,
+    files: Optional[dict] = None
+) -> tuple[dict, int, str]:
+    """n8n 호출 (응답, 소요시간ms, 상태)"""
+    start = time.time()
+    try:
+        if files:
+            response = await client.post(
+                f"{N8N_BASE}/{workflow}",
+                data=request_data,
+                files=files
+            )
+        else:
+            response = await client.post(
+                f"{N8N_BASE}/{workflow}",
+                json=request_data
+            )
+        elapsed_ms = int((time.time() - start) * 1000)
+        return _safe_json(response), elapsed_ms, "success"
+    except Exception as e:
+        elapsed_ms = int((time.time() - start) * 1000)
+        logger.error(f"n8n call failed: {e}")
+        return {"_error": str(e)}, elapsed_ms, "error"
+
+
+async def _call_fastapi(
+    client: httpx.AsyncClient,
+    workflow: str,
+    request_data: dict,
+    files: Optional[dict] = None,
+    shadow: bool = False
+) -> tuple[dict, int, str]:
+    """FastAPI 호출 (응답, 소요시간ms, 상태)"""
+    start = time.time()
+    try:
+        url = f"{FASTAPI_BASE}/{workflow}"
+        if shadow:
+            url += "?shadow=true"
+
+        if files:
+            response = await client.post(url, data=request_data, files=files)
+        else:
+            response = await client.post(url, json=request_data)
+
+        elapsed_ms = int((time.time() - start) * 1000)
+        return _safe_json(response), elapsed_ms, "success"
+    except Exception as e:
+        elapsed_ms = int((time.time() - start) * 1000)
+        logger.error(f"FastAPI call failed: {e}")
+        return {"_error": str(e)}, elapsed_ms, "error"
+
+
 async def shadow_call(
     workflow: str,
     request_data: dict,
     files: Optional[dict] = None
 ) -> dict:
     """
-    n8n과 FastAPI 동시 호출, 결과 비교
+    서비스 모드에 따라 호출 라우팅
 
     Args:
         workflow: 워크플로우 이름 (예: "docprep-main")
@@ -62,106 +148,124 @@ async def shadow_call(
         files: 파일 업로드용
 
     Returns:
-        n8n 응답 (운영 응답)
+        서비스 응답
     """
-    if not ShadowMode.enabled:
-        # Shadow mode 비활성화 시 n8n만 호출
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            if files:
-                response = await client.post(
-                    f"{N8N_BASE}/{workflow}",
-                    data=request_data,
-                    files=files
-                )
-            else:
-                response = await client.post(
-                    f"{N8N_BASE}/{workflow}",
-                    json=request_data
-                )
-            return _safe_json(response)
+    mode = ShadowMode.service_mode
 
-    # Shadow mode: 병렬 호출
     async with httpx.AsyncClient(timeout=60.0) as client:
-        try:
-            # 병렬 호출 준비
-            # FastAPI는 shadow=true로 호출 → 문서 생성 없이 응답만 시뮬레이션
-            if files:
-                n8n_coro = client.post(
-                    f"{N8N_BASE}/{workflow}",
-                    data=request_data,
-                    files=files
-                )
-                fastapi_coro = client.post(
-                    f"{FASTAPI_BASE}/{workflow}?shadow=true",
-                    data=request_data,
-                    files=files
-                )
-            else:
-                n8n_coro = client.post(
-                    f"{N8N_BASE}/{workflow}",
-                    json=request_data
-                )
-                fastapi_coro = client.post(
-                    f"{FASTAPI_BASE}/{workflow}?shadow=true",
-                    json=request_data
-                )
+        if mode == ServiceMode.N8N:
+            # n8n만 호출
+            response, elapsed_ms, status = await _call_n8n(
+                client, workflow, request_data, files
+            )
+            await _log_metrics(workflow, elapsed_ms, None, status, None)
+            return response
 
-            # 병렬 실행
-            results = await asyncio.gather(
-                n8n_coro, fastapi_coro,
-                return_exceptions=True
+        elif mode == ServiceMode.FASTAPI:
+            # FastAPI만 호출 (운영 모드, shadow=false)
+            response, elapsed_ms, status = await _call_fastapi(
+                client, workflow, request_data, files, shadow=False
+            )
+            await _log_metrics(workflow, None, elapsed_ms, None, status)
+            return response
+
+        else:  # SHADOW mode
+            return await _shadow_call_internal(
+                client, workflow, request_data, files
             )
 
-            n8n_result = results[0]
-            fastapi_result = results[1]
 
-            # n8n 응답 추출
-            if isinstance(n8n_result, Exception):
-                logger.error(f"n8n call failed: {n8n_result}")
-                # n8n 실패 시 FastAPI 응답 반환 (fallback)
-                if not isinstance(fastapi_result, Exception):
-                    return _safe_json(fastapi_result)
-                raise n8n_result
+async def _shadow_call_internal(
+    client: httpx.AsyncClient,
+    workflow: str,
+    request_data: dict,
+    files: Optional[dict] = None
+) -> dict:
+    """Shadow mode: 병렬 호출 및 비교"""
+    try:
+        # 병렬 호출
+        n8n_task = asyncio.create_task(
+            _call_n8n(client, workflow, request_data, files)
+        )
+        fastapi_task = asyncio.create_task(
+            _call_fastapi(client, workflow, request_data, files, shadow=True)
+        )
 
-            n8n_response = _safe_json(n8n_result)
+        # 병렬 실행
+        results = await asyncio.gather(n8n_task, fastapi_task, return_exceptions=True)
 
-            # FastAPI 응답 추출 및 비교
-            if not isinstance(fastapi_result, Exception):
-                fastapi_response = _safe_json(fastapi_result)
+        # n8n 결과
+        if isinstance(results[0], Exception):
+            n8n_response, n8n_time, n8n_status = {"_error": str(results[0])}, 0, "error"
+        else:
+            n8n_response, n8n_time, n8n_status = results[0]
 
-                # 비교
-                is_match, diffs = compare_responses(
-                    workflow, n8n_response, fastapi_response
+        # FastAPI 결과
+        if isinstance(results[1], Exception):
+            fastapi_response, fastapi_time, fastapi_status = {"_error": str(results[1])}, 0, "error"
+        else:
+            fastapi_response, fastapi_time, fastapi_status = results[1]
+
+        # 메트릭 로깅
+        await _log_metrics(
+            workflow, n8n_time, fastapi_time, n8n_status, fastapi_status
+        )
+
+        # n8n 실패 시 FastAPI fallback
+        if n8n_status == "error":
+            logger.warning(f"n8n failed, using FastAPI response for {workflow}")
+            if fastapi_status == "success":
+                return fastapi_response
+            raise Exception(f"Both n8n and FastAPI failed for {workflow}")
+
+        # 비교 (FastAPI가 성공한 경우만)
+        if fastapi_status == "success":
+            is_match, diffs = compare_responses(workflow, n8n_response, fastapi_response)
+
+            if not is_match:
+                await _handle_mismatch(
+                    workflow=workflow,
+                    request_data=request_data,
+                    n8n_response=n8n_response,
+                    fastapi_response=fastapi_response,
+                    diffs=diffs
                 )
-
-                if not is_match:
-                    await _handle_mismatch(
-                        workflow=workflow,
-                        request_data=request_data,
-                        n8n_response=n8n_response,
-                        fastapi_response=fastapi_response,
-                        diffs=diffs
-                    )
-                    # 호출 로깅 (mismatch)
-                    await _log_call(workflow, "mismatch", len(diffs))
-                else:
-                    logger.debug(f"[SHADOW MATCH] {workflow}")
-                    # 호출 로깅 (match)
-                    await _log_call(workflow, "match", 0)
-                    # NOTE: 자동 해결 제거 - mismatch는 수동으로만 해결
-                    # (Match가 발생해도 이전 mismatch 원인이 사라진 것은 아님)
-
+                await _log_call(workflow, "mismatch", len(diffs))
             else:
-                logger.warning(f"FastAPI call failed: {fastapi_result}")
-                await _log_fastapi_error(workflow, request_data, str(fastapi_result))
-                # 호출 로깅 (error)
-                await _log_call(workflow, "error", 0)
+                logger.debug(f"[SHADOW MATCH] {workflow}")
+                await _log_call(workflow, "match", 0)
+        else:
+            await _log_fastapi_error(workflow, request_data, str(fastapi_response.get("_error", "unknown")))
+            await _log_call(workflow, "error", 0)
 
-            return n8n_response
+        return n8n_response
 
-        except Exception as e:
-            logger.error(f"Shadow call error: {e}")
-            raise
+    except Exception as e:
+        logger.error(f"Shadow call error: {e}")
+        raise
+
+
+async def _log_metrics(
+    workflow: str,
+    n8n_time_ms: Optional[int],
+    fastapi_time_ms: Optional[int],
+    n8n_status: Optional[str],
+    fastapi_status: Optional[str]
+):
+    """성능 메트릭 로깅"""
+    try:
+        collection = MongoService.get_collection("shadow_metrics")
+        await collection.insert_one({
+            "workflow": workflow,
+            "timestamp": datetime.utcnow(),
+            "n8n_response_time_ms": n8n_time_ms,
+            "fastapi_response_time_ms": fastapi_time_ms,
+            "n8n_status": n8n_status,
+            "fastapi_status": fastapi_status,
+            "service_mode": ShadowMode.service_mode.value
+        })
+    except Exception as e:
+        logger.error(f"Failed to log metrics: {e}")
 
 
 async def _handle_mismatch(
@@ -174,7 +278,6 @@ async def _handle_mismatch(
     """불일치 처리 - DB에 기록 (aims-admin에서 확인)"""
     logger.warning(f"[SHADOW MISMATCH] {workflow}: {len(diffs)} differences")
 
-    # MongoDB에 로깅 (aims-admin에서 /shadow/mismatches로 확인)
     mismatch_id = await _log_mismatch(
         workflow=workflow,
         request_data=request_data,
@@ -232,8 +335,6 @@ async def _log_call(workflow: str, result: str, diff_count: int):
         logger.error(f"Failed to log call: {e}")
 
 
-
-
 async def _log_fastapi_error(workflow: str, request_data: dict, error: str):
     """FastAPI 오류 로깅"""
     try:
@@ -263,7 +364,3 @@ def _sanitize_for_mongo(data: Any) -> Any:
         return f"<file>"
     else:
         return data
-
-
-# Type hint for _sanitize_for_mongo
-from typing import Any

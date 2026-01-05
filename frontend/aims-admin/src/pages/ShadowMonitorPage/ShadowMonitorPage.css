@@ -684,6 +684,210 @@
   color: var(--color-danger);
 }
 
+/* Service Mode Control */
+.shadow-monitor__mode-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shadow-monitor__mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shadow-monitor__mode-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shadow-monitor__mode-option:hover {
+  border-color: var(--color-primary);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.shadow-monitor__mode-option--selected {
+  border-color: var(--color-primary);
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.shadow-monitor__mode-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.shadow-monitor__mode-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.shadow-monitor__mode-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shadow-monitor__mode-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.shadow-monitor__mode-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 12px;
+}
+
+.shadow-monitor__mode-changing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Performance Comparison */
+.shadow-monitor__performance {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shadow-monitor__perf-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--bg-primary);
+  border-radius: 10px;
+}
+
+.shadow-monitor__perf-winner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shadow-monitor__perf-winner-icon {
+  font-size: 24px;
+}
+
+.shadow-monitor__perf-winner-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shadow-monitor__perf-winner--fastapi .shadow-monitor__perf-winner-text {
+  color: var(--color-success);
+}
+
+.shadow-monitor__perf-winner--n8n .shadow-monitor__perf-winner-text {
+  color: var(--color-warning);
+}
+
+.shadow-monitor__perf-total {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shadow-monitor__perf-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shadow-monitor__perf-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shadow-monitor__perf-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shadow-monitor__perf-bar-track {
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.shadow-monitor__perf-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.shadow-monitor__perf-bar-fill--n8n {
+  background: linear-gradient(90deg, #ff9500, #ff6b00);
+}
+
+.shadow-monitor__perf-bar-fill--fastapi {
+  background: linear-gradient(90deg, #34c759, #30d158);
+}
+
+.shadow-monitor__perf-details {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+}
+
+.shadow-monitor__perf-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shadow-monitor__perf-detail-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.shadow-monitor__perf-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.shadow-monitor__perf-detail-value--error {
+  color: var(--color-error);
+}
+
+.shadow-monitor__perf-workflow {
+  margin-top: 16px;
+}
+
+.shadow-monitor__subsection-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .shadow-monitor__stats-grid {
@@ -700,5 +904,16 @@
 
   .shadow-monitor__service {
     min-width: auto;
+  }
+
+  .shadow-monitor__perf-summary {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .shadow-monitor__perf-details {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }
