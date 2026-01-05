@@ -341,28 +341,38 @@ html[data-theme="dark"] .detail-info-card:hover {
   position: relative;
 }
 
-/* iOS 스타일 스크롤바 - 원본 데이터용 */
+/* 스크롤바 - 원본 데이터용 (눈에 잘 띄게) */
 .detail-raw-scroll-container::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .detail-raw-scroll-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  margin: 4px 0;
 }
 
 .detail-raw-scroll-container::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 5px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-html[data-theme="dark"] .detail-raw-scroll-container::-webkit-scrollbar-thumb {
-  background-color: var(--color-text-tertiary);
+.detail-raw-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
-.detail-raw-scroll-container::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-secondary);
+html[data-theme="dark"] .detail-raw-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="dark"] .detail-raw-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+html[data-theme="dark"] .detail-raw-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 /* 원본 데이터 코드 블록 컨테이너 */
