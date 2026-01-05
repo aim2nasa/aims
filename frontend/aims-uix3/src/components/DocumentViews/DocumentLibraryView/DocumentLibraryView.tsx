@@ -100,14 +100,13 @@ const DocumentLibraryContent: React.FC<{
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
-  // 초성 필터가 적용된 문서 목록
+  // 초성 필터가 적용된 문서 목록 (연결된 고객명 기준)
   const initialFilteredDocuments = React.useMemo(() => {
-    const getDocumentName = (doc: Document) => {
-      // 문서명에서 필터 (displayName, name, originalName, filename 등)
-      const uploadData = typeof doc.upload === 'object' ? doc.upload : null
-      return doc.displayName || doc.name || doc.originalName || doc.filename || uploadData?.originalName || ''
+    const getCustomerName = (doc: Document) => {
+      // 연결된 고객명으로 필터 (초성 필터는 고객명에만 적용)
+      return doc.customer_relation?.customer_name || ''
     }
-    return filterByInitial(controller.filteredDocuments, selectedInitial, getDocumentName)
+    return filterByInitial(controller.filteredDocuments, selectedInitial, getCustomerName)
   }, [controller.filteredDocuments, selectedInitial])
 
   // 페이지네이션이 적용된 초성 필터 결과
@@ -122,13 +121,13 @@ const DocumentLibraryContent: React.FC<{
     return Math.max(1, Math.ceil(initialFilteredDocuments.length / controller.itemsPerPage))
   }, [initialFilteredDocuments.length, controller.itemsPerPage])
 
-  // 초성 카운트 계산
+  // 초성 카운트 계산 (연결된 고객명 기준)
   const initialCounts = React.useMemo(() => {
-    const getDocumentName = (doc: Document) => {
-      const uploadData = typeof doc.upload === 'object' ? doc.upload : null
-      return doc.displayName || doc.name || doc.originalName || doc.filename || uploadData?.originalName || ''
+    const getCustomerName = (doc: Document) => {
+      // 연결된 고객명으로 카운트 (초성 필터는 고객명에만 적용)
+      return doc.customer_relation?.customer_name || ''
     }
-    return calculateInitialCounts(controller.filteredDocuments, getDocumentName)
+    return calculateInitialCounts(controller.filteredDocuments, getCustomerName)
   }, [controller.filteredDocuments])
 
   // 🍎 Optimistic Update 함수를 외부로 노출

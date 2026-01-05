@@ -1641,26 +1641,29 @@ html:not([data-theme="dark"]) .initial-filter-bar__initial {
   transform: scale(1.05);
 }
 
-/* 선택된 초성 */
-.initial-filter-bar__initial--active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-text-on-accent);
+/* 선택된 초성 - 최고 우선순위로 스타일 적용 */
+button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+.initial-filter-bar__initial.initial-filter-bar__initial--active {
+  background: #007aff;
+  border-color: #007aff;
+  color: #FFFFFF;
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
 }
 
-/* 라이트모드 선택된 초성 - 명시적 강조 */
-html:not([data-theme="dark"]) .initial-filter-bar__initial--active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+/* 라이트모드 선택된 초성 - 최고 우선순위로 흰색 텍스트 보장 */
+html:not([data-theme="dark"]) button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+html:not([data-theme="dark"]) .initial-filter-bar__initial.initial-filter-bar__initial--active {
+  background: #007aff;
+  border-color: #007aff;
   color: #FFFFFF;
 }
 
-.initial-filter-bar__initial--active:hover:not(:disabled) {
+button.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled),
+.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled) {
   background: #0066DD;
   border-color: #0055CC;
-  color: white;
+  color: #FFFFFF;
   transform: scale(1.05);
 }
 
