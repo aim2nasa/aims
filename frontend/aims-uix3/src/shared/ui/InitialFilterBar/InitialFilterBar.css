@@ -1,0 +1,219 @@
+/**
+ * 초성 필터 바 스타일
+ * @description 공용 초성 필터 컴포넌트
+ */
+
+.initial-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+  flex-shrink: 0;
+}
+
+/* 컴팩트 모드 */
+.initial-filter-bar--compact {
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+/* 초성 타입 섹션 */
+.initial-filter-bar__type-section {
+  flex-shrink: 0;
+}
+
+/* 초성 타입 토글 버튼 */
+.initial-filter-bar__type-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 48px;
+  height: 28px;
+  padding: 0 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.initial-filter-bar--compact .initial-filter-bar__type-toggle {
+  min-width: 42px;
+  height: 24px;
+  padding: 0 6px;
+}
+
+.initial-filter-bar__type-toggle:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+  border-color: var(--color-primary-500, #007aff);
+}
+
+.initial-filter-bar__type-toggle:hover .initial-filter-bar__globe-icon {
+  color: var(--color-primary-500, #007aff);
+}
+
+.initial-filter-bar__type-toggle:hover .initial-filter-bar__type-label {
+  color: var(--color-primary-500, #007aff);
+}
+
+.initial-filter-bar__globe-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.initial-filter-bar__type-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+/* 초성 버튼 컨테이너 */
+.initial-filter-bar__initials {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* 초성 버튼 */
+.initial-filter-bar__initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.initial-filter-bar--compact .initial-filter-bar__initial {
+  min-width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+
+/* 라이트 테마 초성 버튼 대비 강화 */
+html:not([data-theme="dark"]) .initial-filter-bar__initial {
+  border-color: var(--color-border-secondary, #c1c4cc);
+  color: #4b5563;
+}
+
+.initial-filter-bar__initial:hover:not(:disabled) {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+  border-color: var(--color-border-secondary, #9ca3af);
+  color: var(--color-text-primary);
+  transform: scale(1.05);
+}
+
+/* 선택된 초성 - 최고 우선순위로 스타일 적용 */
+button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+.initial-filter-bar__initial.initial-filter-bar__initial--active {
+  background: #007aff;
+  border-color: #007aff;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+}
+
+/* 라이트모드 선택된 초성 - 최고 우선순위로 흰색 텍스트 보장 */
+html:not([data-theme="dark"]) button.initial-filter-bar__initial.initial-filter-bar__initial--active,
+html:not([data-theme="dark"]) .initial-filter-bar__initial.initial-filter-bar__initial--active {
+  background: #007aff;
+  border-color: #007aff;
+  color: #FFFFFF;
+}
+
+button.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled),
+.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled) {
+  background: #0066DD;
+  border-color: #0055CC;
+  color: #FFFFFF;
+  transform: scale(1.05);
+}
+
+/* 항목이 없는 초성 (비활성) */
+.initial-filter-bar__initial--empty {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.initial-filter-bar__initial--empty:hover {
+  transform: none;
+  background: var(--color-bg-primary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-secondary);
+}
+
+/* 선택된 초성 표시 영역 */
+.initial-filter-bar__selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  background: rgba(0, 122, 255, 0.1);
+  border: 1px solid var(--color-primary-500, #007aff);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.initial-filter-bar__selected-label {
+  font-size: 11px;
+  color: var(--color-primary-500, #007aff);
+}
+
+.initial-filter-bar__selected-label strong {
+  font-weight: 700;
+}
+
+.initial-filter-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-primary-500, #007aff);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.initial-filter-bar__clear:hover {
+  opacity: 1;
+}
+
+/* 다크모드 */
+html[data-theme="dark"] .initial-filter-bar {
+  background: var(--color-bg-tertiary);
+}
+
+html[data-theme="dark"] .initial-filter-bar__type-toggle {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+html[data-theme="dark"] .initial-filter-bar__initial {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+html[data-theme="dark"] .initial-filter-bar__selected {
+  background: rgba(0, 122, 255, 0.2);
+}

@@ -11,7 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, u
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
-import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui';
+import { Dropdown, Tooltip, Modal, ContextMenu, useContextMenu, type ContextMenuSection, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -61,6 +61,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // 고객 타입 필터는 항상 'all'로 고정 (개인/법인 모두 표시)
     const customerTypeFilter: 'all' | 'personal' | 'corporate' = 'all';
     const [statusFilter, setStatusFilter] = usePersistedState<'all' | 'active' | 'inactive'>('customer-all-status-filter', 'all');
+
+    // 초성 필터 상태
+    const [initialType, setInitialType] = usePersistedState<InitialType>('customer-all-initial-type', 'korean');
+    const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('customer-all-selected-initial', null);
 
     // 칼럼 정렬 상태
     const [sortField, setSortField] = usePersistedState<SortField | null>('customer-all-sort-field', null);
@@ -221,9 +225,41 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       return customers;
     }, [allCustomers, searchValue, customerTypeFilter, statusFilter]);
 
+
+
+    // 초성별 고객 카운트 계산 (초성 필터 적용 전 기준)
+    const initialCounts = useMemo(() => {
+      let baseCustomers = allCustomers;
+
+      // 상태 필터링 적용
+      if (statusFilter === 'active') {
+        baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active');
+      } else if (statusFilter === 'inactive') {
+        baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive');
+      }
+
+      // 검색 필터링 적용
+      if (searchValue.trim()) {
+        const searchLower = searchValue.toLowerCase().trim();
+        baseCustomers = baseCustomers.filter(customer => {
+          const name = customer.personal_info?.name?.toLowerCase() || '';
+          const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
+          const email = customer.personal_info?.email?.toLowerCase() || '';
+          return name.includes(searchLower) || phone.includes(searchLower) || email.includes(searchLower);
+        });
+      }
+
+      return calculateInitialCounts(baseCustomers, (c) => c.personal_info?.name || '');
+    }, [allCustomers, statusFilter, searchValue]);
+
+    // 초성 필터 적용된 고객 목록
+    const initialFilteredCustomers = useMemo(() => {
+      return filterByInitial(filteredCustomers, selectedInitial, (c) => c.personal_info?.name || '');
+    }, [filteredCustomers, selectedInitial]);
+
     // 정렬된 고객 목록 (페이지네이션 적용 전)
     const sortedCustomers = useMemo(() => {
-      const sorted = [...filteredCustomers];
+      const sorted = [...initialFilteredCustomers];
 
       // 칼럼 정렬이 활성화된 경우
       if (sortField) {
@@ -299,7 +335,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
 
       return sorted;
-    }, [filteredCustomers, sortField, sortDirection]);
+    }, [initialFilteredCustomers, sortField, sortDirection]);
 
     const itemsPerPageNumber = useMemo(() => {
       const parsed = parseInt(itemsPerPage, 10);
@@ -918,6 +954,23 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               )}
             </div>
           </div>
+        )}
+
+        {/* 초성 필터 바 */}
+        {!isLoading && (
+          <InitialFilterBar
+            initialType={initialType}
+            onInitialTypeChange={setInitialType}
+            selectedInitial={selectedInitial}
+            onSelectedInitialChange={(initial) => {
+              setSelectedInitial(initial);
+              setCurrentPage(1); // 초성 필터 변경 시 첫 페이지로 이동
+            }}
+            initialCounts={initialCounts}
+            countLabel="명"
+            targetLabel="고객"
+            className="customer-all-initial-filter"
+          />
         )}
 
         {/* 고객 목록 */}

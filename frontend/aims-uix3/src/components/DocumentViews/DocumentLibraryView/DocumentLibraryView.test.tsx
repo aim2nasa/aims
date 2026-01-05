@@ -133,12 +133,21 @@ vi.mock('@/controllers/useDocumentStatusController', () => ({
     filteredDocuments: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
     paginatedDocuments: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
     totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 10,
     isEmpty: false,
     isLoading: false,
     error: null,
+    sortField: null,
+    sortDirection: 'asc',
     handleColumnSort: vi.fn(),
     handlePageChange: vi.fn(),
     handleItemsPerPageChange: vi.fn(),
+    handleLimitChange: vi.fn(),
+    handleDocumentClick: vi.fn(),
+    handleDocumentSummary: vi.fn(),
+    handleDocumentFullText: vi.fn(),
+    handleDocumentLink: vi.fn(),
   }),
 }))
 
@@ -220,6 +229,13 @@ vi.mock('@/shared/ui', () => ({
   DocumentTypeCell: ({ documentType }: any) => (
     <span data-testid="document-type-cell">{documentType || '미지정'}</span>
   ),
+}))
+
+// Mock InitialFilterBar
+vi.mock('@/shared/ui/InitialFilterBar', () => ({
+  InitialFilterBar: () => <div data-testid="initial-filter-bar">InitialFilterBar</div>,
+  calculateInitialCounts: () => new Map(),
+  filterByInitial: (items: any[]) => items,
 }))
 
 vi.mock('../components/DocumentActionIcons', () => ({

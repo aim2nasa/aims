@@ -65,3 +65,14 @@ export type { EmptyStateProps, EmptyStateAction } from './EmptyState';
 
 export { DocumentTypeCell } from './DocumentTypeCell';
 export type { DocumentTypeCellProps } from './DocumentTypeCell';
+
+export { InitialFilterBar } from './InitialFilterBar';
+export type { InitialFilterBarProps, InitialType } from './InitialFilterBar';
+export {
+  extractInitial,
+  calculateInitialCounts,
+  filterByInitial,
+  KOREAN_INITIALS,
+  ALPHABET_INITIALS,
+  NUMBER_INITIALS,
+} from './InitialFilterBar';

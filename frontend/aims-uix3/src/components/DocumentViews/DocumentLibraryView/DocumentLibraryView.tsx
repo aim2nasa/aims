@@ -34,6 +34,8 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import DownloadHelper from '../../../utils/downloadHelper'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
+import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
+import { usePersistedState } from '@/hooks/usePersistedState'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -70,6 +72,10 @@ const ITEMS_PER_PAGE_OPTIONS = [
  * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
  */
 const DocumentLibraryContent: React.FC<{
+  initialType: InitialType
+  onInitialTypeChange: (type: InitialType) => void
+  selectedInitial: string | null
+  onSelectedInitialChange: (initial: string | null) => void
   isDeleteMode: boolean
   isBulkLinkMode: boolean
   selectedDocumentIds: Set<string>
@@ -87,12 +93,43 @@ const DocumentLibraryContent: React.FC<{
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 초성 필터가 적용된 문서 목록
+  const initialFilteredDocuments = React.useMemo(() => {
+    const getDocumentName = (doc: Document) => {
+      // 문서명에서 필터 (displayName, name, originalName, filename 등)
+      const uploadData = typeof doc.upload === 'object' ? doc.upload : null
+      return doc.displayName || doc.name || doc.originalName || doc.filename || uploadData?.originalName || ''
+    }
+    return filterByInitial(controller.filteredDocuments, selectedInitial, getDocumentName)
+  }, [controller.filteredDocuments, selectedInitial])
+
+  // 페이지네이션이 적용된 초성 필터 결과
+  const paginatedFilteredDocuments = React.useMemo(() => {
+    const startIndex = (controller.currentPage - 1) * controller.itemsPerPage
+    const endIndex = startIndex + controller.itemsPerPage
+    return initialFilteredDocuments.slice(startIndex, endIndex)
+  }, [initialFilteredDocuments, controller.currentPage, controller.itemsPerPage])
+
+  // 초성 필터 적용 후 총 페이지 수
+  const filteredTotalPages = React.useMemo(() => {
+    return Math.max(1, Math.ceil(initialFilteredDocuments.length / controller.itemsPerPage))
+  }, [initialFilteredDocuments.length, controller.itemsPerPage])
+
+  // 초성 카운트 계산
+  const initialCounts = React.useMemo(() => {
+    const getDocumentName = (doc: Document) => {
+      const uploadData = typeof doc.upload === 'object' ? doc.upload : null
+      return doc.displayName || doc.name || doc.originalName || doc.filename || uploadData?.originalName || ''
+    }
+    return calculateInitialCounts(controller.filteredDocuments, getDocumentName)
+  }, [controller.filteredDocuments])
 
   // 🍎 Optimistic Update 함수를 외부로 노출
   React.useEffect(() => {
@@ -264,7 +301,7 @@ const DocumentLibraryContent: React.FC<{
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
   const handleSelectAll = React.useCallback((checked: boolean) => {
     if (checked) {
-      const allIds = controller.paginatedDocuments
+      const allIds = paginatedFilteredDocuments
         .map(doc => doc._id ?? doc.id ?? '')
         .filter(id => id !== '')
       onSelectAllIds(allIds)
@@ -342,7 +379,7 @@ const DocumentLibraryContent: React.FC<{
 
           {/* 총 문서 개수 */}
           <span className="result-count">
-            총 {controller.totalCount}개의 문서
+            총 {initialFilteredDocuments.length}개의 문서
           </span>
 
           {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
@@ -451,11 +488,23 @@ const DocumentLibraryContent: React.FC<{
         </div>
       </div>
 
+      {/* 초성 필터 바 */}
+      <InitialFilterBar
+        initialType={initialType}
+        onInitialTypeChange={onInitialTypeChange}
+        selectedInitial={selectedInitial}
+        onSelectedInitialChange={onSelectedInitialChange}
+        initialCounts={initialCounts}
+        countLabel="개"
+        targetLabel="문서"
+        className="library-initial-filter"
+      />
+
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
       <DocumentStatusList
-        documents={controller.paginatedDocuments}
+        documents={paginatedFilteredDocuments}
         isLoading={controller.isLoading}
-        isEmpty={controller.filteredDocuments.length === 0}
+        isEmpty={initialFilteredDocuments.length === 0}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
         {...(onDocumentDoubleClick ? { onDocumentDoubleClick } : {})}
@@ -493,7 +542,7 @@ const DocumentLibraryContent: React.FC<{
           </div>
 
           {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-          {controller.totalPages > 1 && (
+          {filteredTotalPages > 1 && (
             <div className="pagination-controls">
               <button
                 className="pagination-button pagination-button--prev"
@@ -509,13 +558,13 @@ const DocumentLibraryContent: React.FC<{
               <div className="pagination-info">
                 <span className="pagination-current">{controller.currentPage}</span>
                 <span className="pagination-separator">/</span>
-                <span className="pagination-total">{controller.totalPages}</span>
+                <span className="pagination-total">{filteredTotalPages}</span>
               </div>
 
               <button
                 className="pagination-button pagination-button--next"
                 onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
-                disabled={controller.currentPage === controller.totalPages}
+                disabled={controller.currentPage === filteredTotalPages}
                 aria-label="다음 페이지"
               >
                 <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
@@ -526,7 +575,7 @@ const DocumentLibraryContent: React.FC<{
           )}
 
           {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-          {controller.totalPages <= 1 && <div className="pagination-spacer"></div>}
+          {filteredTotalPages <= 1 && <div className="pagination-spacer"></div>}
         </div>
       )}
 
@@ -658,6 +707,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
+
+  // 초성 필터 상태 (F5 이후에도 유지)
+  const [initialType, setInitialType] = usePersistedState<InitialType>('document-library-initial-type', 'korean')
+  const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('document-library-selected-initial', null)
   const [isDocumentLinkModalVisible, setIsDocumentLinkModalVisible] = React.useState(false)
   const [selectedDocumentsForLink, setSelectedDocumentsForLink] = React.useState<any[]>([])
 
@@ -859,6 +912,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
         <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles">
           <DocumentLibraryContent
+            initialType={initialType}
+            onInitialTypeChange={setInitialType}
+            selectedInitial={selectedInitial}
+            onSelectedInitialChange={setSelectedInitial}
             isDeleteMode={isDeleteMode}
             isBulkLinkMode={isBulkLinkMode}
             selectedDocumentIds={selectedDocumentIds}

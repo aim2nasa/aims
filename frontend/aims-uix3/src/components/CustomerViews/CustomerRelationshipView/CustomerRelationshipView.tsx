@@ -21,6 +21,8 @@ import type { Customer } from '@/entities/customer/model';
 import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import './CustomerRelationshipView.css';
+import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 // 🚀 성능 최적화: 초성 인덱스 맵을 상수로 미리 계산 (O(1) 조회)
 const KOREAN_CONSONANTS = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
@@ -120,6 +122,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   // 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false);
+
+  // 초성 필터 상태 (F5 이후에도 유지)
+  const [initialType, setInitialType] = usePersistedState<InitialType>('customer-relationship-initial-type', 'korean');
+  const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('customer-relationship-selected-initial', null);
 
   // LocalStorage에서 트리 확장 상태 복원
   // 기본 viewMode가 'representative'이므로 'no-family-relationship'은 닫힌 상태
@@ -631,13 +637,93 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return '#';
   }, []);
 
-  const corporateEntries = Object.entries(structuredData.법인);
-  const noFamilyRelationshipCustomers = structuredData.가족관계미설정 || [];
-  const noCorporateRelationshipCustomers = structuredData.법인관계자미설정 || [];
+  // 초성 필터가 적용된 데이터 계산
+  const filteredStructuredData = useMemo(() => {
+    if (!selectedInitial) {
+      return structuredData;
+    }
+
+    const filtered: StructuredData = {
+      가족그룹: {},
+      법인: {},
+      가족관계미설정: [],
+      법인관계자미설정: []
+    };
+
+    // 가족 그룹 필터링 (대표자 이름 기준)
+    Object.entries(structuredData.가족그룹).forEach(([groupId, groupData]) => {
+      const repName = groupData.representative.personal_info?.name || '';
+      const filteredReps = filterByInitial([groupData.representative], selectedInitial, (c) => c.personal_info?.name || '');
+      if (filteredReps.length > 0) {
+        filtered.가족그룹[groupId] = groupData;
+      }
+    });
+
+    // 법인 그룹 필터링 (회사명 기준)
+    Object.entries(structuredData.법인).forEach(([companyId, groupData]) => {
+      const companyName = groupData.company.personal_info?.name || '';
+      const filteredCompanies = filterByInitial([groupData.company], selectedInitial, (c) => c.personal_info?.name || '');
+      if (filteredCompanies.length > 0) {
+        filtered.법인[companyId] = groupData;
+      }
+    });
+
+    // 가족관계 미설정 필터링
+    filtered.가족관계미설정 = filterByInitial(
+      structuredData.가족관계미설정,
+      selectedInitial,
+      (c) => c.personal_info?.name || ''
+    );
+
+    // 법인관계자 미설정 필터링
+    filtered.법인관계자미설정 = filterByInitial(
+      structuredData.법인관계자미설정,
+      selectedInitial,
+      (c) => c.personal_info?.name || ''
+    );
+
+    return filtered;
+  }, [structuredData, selectedInitial]);
+
+  // 초성 카운트 계산 (전체 고객 기준)
+  const initialCounts = useMemo(() => {
+    const allNames: string[] = [];
+
+    // 가족 그룹 대표자 이름 수집
+    Object.values(structuredData.가족그룹).forEach(group => {
+      const name = group.representative.personal_info?.name;
+      if (name) allNames.push(name);
+    });
+
+    // 법인 회사명 수집
+    Object.values(structuredData.법인).forEach(group => {
+      const name = group.company.personal_info?.name;
+      if (name) allNames.push(name);
+    });
+
+    // 가족관계 미설정 고객 이름 수집
+    structuredData.가족관계미설정.forEach(customer => {
+      const name = customer.personal_info?.name;
+      if (name) allNames.push(name);
+    });
+
+    // 법인관계자 미설정 고객 이름 수집
+    structuredData.법인관계자미설정.forEach(customer => {
+      const name = customer.personal_info?.name;
+      if (name) allNames.push(name);
+    });
+
+    // calculateInitialCounts expects array of objects with a getter function
+    return calculateInitialCounts(allNames.map(name => ({ name })), (item) => item.name);
+  }, [structuredData]);
+
+  const corporateEntries = Object.entries(filteredStructuredData.법인);
+  const noFamilyRelationshipCustomers = filteredStructuredData.가족관계미설정 || [];
+  const noCorporateRelationshipCustomers = filteredStructuredData.법인관계자미설정 || [];
 
   // 🚀 성능 최적화: 가족 그룹을 초성별로 그룹화 (의존성 최적화)
   const familyGroupsByConsonant = useMemo(() => {
-    const familyEntries = Object.entries(structuredData.가족그룹);
+    const familyEntries = Object.entries(filteredStructuredData.가족그룹);
     const grouped = new Map<string, Array<[string, FamilyGroup]>>();
 
     familyEntries.forEach(([groupId, groupData]) => {
@@ -1067,6 +1153,17 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
               </div>
             </div>
           </div>
+          {/* 초성 필터 바 */}
+          <InitialFilterBar
+            initialType={initialType}
+            onInitialTypeChange={setInitialType}
+            selectedInitial={selectedInitial}
+            onSelectedInitialChange={setSelectedInitial}
+            initialCounts={initialCounts}
+            countLabel="명"
+            targetLabel="고객/그룹"
+            className="relationship-initial-filter"
+          />
           {/* 가족 관계 섹션 - 가족 그룹 또는 가족관계 미설정 고객이 있을 때 표시 */}
           {(familyGroupsByConsonant.size > 0 || noFamilyRelationshipCustomers.length > 0) && (
             <div className="tree-section">

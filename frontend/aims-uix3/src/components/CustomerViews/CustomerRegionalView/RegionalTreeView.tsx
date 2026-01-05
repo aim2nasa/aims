@@ -21,6 +21,7 @@ import Tooltip from '@/shared/ui/Tooltip'
 import Button from '@/shared/ui/Button'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import './RegionalTreeView.css'
+import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
 import NaverMap from '../../NaverMap/NaverMap'
 import { CustomerAddressInputModal } from './CustomerAddressInputModal'
 import { CustomerService } from '@/services/customerService'
@@ -484,6 +485,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   const [showAllRegions, setShowAllRegions] = usePersistedState<boolean>('customer-regional-show-all-regions', false)
   const [showAllDistricts, setShowAllDistricts] = usePersistedState<boolean>('customer-regional-show-all-districts', false)
 
+  // 초성 필터 상태 (F5 이후에도 유지)
+  const [initialType, setInitialType] = usePersistedState<InitialType>('customer-regional-initial-type', 'korean')
+  const [selectedInitial, setSelectedInitial] = usePersistedState<string | null>('customer-regional-selected-initial', null)
+
   // 지역 선택 시 지도 중심 좌표 (새로고침 시 초기화)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
 
@@ -532,6 +537,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
     return result
   }, [typeFilteredCustomers, selectedRegion, selectedDistrict])
+
+  // 3단계: 초성 필터가 적용된 최종 고객 목록
+  const initialFilteredCustomers = useMemo(() => {
+    return filterByInitial(filteredCustomers, selectedInitial, (c) => c.personal_info?.name || '')
+  }, [filteredCustomers, selectedInitial])
+
+  // 초성 카운트 계산
+  const initialCounts = useMemo(() => {
+    return calculateInitialCounts(filteredCustomers, (c) => c.personal_info?.name || '')
+  }, [filteredCustomers])
 
   // 드롭다운 옵션 계산 (체크박스에 따라 전체 또는 고객 있는 지역만)
   const availableRegions = useMemo<DropdownOption[]>(() => {
@@ -612,7 +627,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     const groups: { [city: string]: { [district: string]: Customer[] } } = {}
     const noAddressCustomers: Customer[] = []
 
-    filteredCustomers.forEach((customer) => {
+    initialFilteredCustomers.forEach((customer) => {
       const address = customer.personal_info?.address?.address1
       if (!address) {
         noAddressCustomers.push(customer)
@@ -1258,6 +1273,18 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       </div>
 
       {/* 왼쪽: 트리, 오른쪽: 지도 */}
+      {/* 초성 필터 바 */}
+      <InitialFilterBar
+        initialType={initialType}
+        onInitialTypeChange={setInitialType}
+        selectedInitial={selectedInitial}
+        onSelectedInitialChange={setSelectedInitial}
+        initialCounts={initialCounts}
+        countLabel="명"
+        targetLabel="고객"
+        className="regional-initial-filter"
+      />
+
       <div className="regional-tree-content">
         {/* 트리 */}
         <div className="regional-tree-container">
@@ -1280,11 +1307,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         {/* 지도 */}
         <div className="regional-map-container">
           <NaverMap
-            customers={filteredCustomers}
+            customers={initialFilteredCustomers}
             selectedCustomerId={localSelectedCustomerId || selectedCustomerId}
             onCustomerSelect={(customerId: string) => {
               // 고객 ID로 고객 객체 찾기
-              const customer = filteredCustomers.find(c => c._id === customerId)
+              const customer = initialFilteredCustomers.find(c => c._id === customerId)
               if (customer) {
                 // 로컬 상태 업데이트 및 폴더 자동 펼치기
                 handleCustomerClick(customer)

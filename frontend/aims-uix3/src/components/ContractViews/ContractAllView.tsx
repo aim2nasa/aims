@@ -11,7 +11,7 @@ import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
-import { Dropdown } from '@/shared/ui'
+import { Dropdown, InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import Modal from '@/shared/ui/Modal'
 import { ContractService } from '@/services/contractService'
@@ -70,6 +70,10 @@ export default function ContractAllView({
   // 정렬 상태
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+
+  // 초성 필터 상태
+  const [initialType, setInitialType] = useState<InitialType>('korean')
+  const [selectedInitial, setSelectedInitial] = useState<string | null>(null)
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1)
@@ -244,10 +248,15 @@ export default function ContractAllView({
 
   // 검색 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
-    if (!searchValue.trim()) return contracts
+    if (!searchValue.trim()) {
+      if (selectedInitial) {
+        return filterByInitial(contracts, selectedInitial, (c) => c.customer_name || '')
+      }
+      return contracts
+    }
 
     const searchLower = searchValue.toLowerCase().trim()
-    return contracts.filter(contract => {
+    const filtered = contracts.filter(contract => {
       const customerName = contract.customer_name?.toLowerCase() || ''
       const productName = contract.product_name?.toLowerCase() || ''
       const policyNumber = contract.policy_number?.toLowerCase() || ''
@@ -258,6 +267,31 @@ export default function ContractAllView({
         policyNumber.includes(searchLower)
       )
     })
+
+    // 초성 필터링
+    if (selectedInitial) {
+      return filterByInitial(filtered, selectedInitial, (c) => c.customer_name || '')
+    }
+
+    return filtered
+  }, [contracts, searchValue, selectedInitial])
+
+  // 초성별 계약 카운트 계산
+  const initialCounts = useMemo(() => {
+    let baseContracts = contracts
+
+    // 검색 필터링 적용
+    if (searchValue.trim()) {
+      const searchLower = searchValue.toLowerCase().trim()
+      baseContracts = baseContracts.filter(contract => {
+        const customerName = contract.customer_name?.toLowerCase() || ''
+        const productName = contract.product_name?.toLowerCase() || ''
+        const policyNumber = contract.policy_number?.toLowerCase() || ''
+        return customerName.includes(searchLower) || productName.includes(searchLower) || policyNumber.includes(searchLower)
+      })
+    }
+
+    return calculateInitialCounts(baseContracts, (c) => c.customer_name || '')
   }, [contracts, searchValue])
 
   // 정렬된 계약 목록
@@ -580,6 +614,22 @@ export default function ContractAllView({
             )}
           </div>
         </div>
+
+        {/* 초성 필터 바 */}
+        {!isLoading && !error && contracts.length > 0 && (
+          <InitialFilterBar
+            initialType={initialType}
+            onInitialTypeChange={setInitialType}
+            selectedInitial={selectedInitial}
+            onSelectedInitialChange={(initial) => {
+              setSelectedInitial(initial)
+              setCurrentPage(1)
+            }}
+            initialCounts={initialCounts}
+            countLabel="건"
+            targetLabel="계약"
+          />
+        )}
 
         {/* 에러 메시지 */}
         {error && (
