@@ -24,12 +24,6 @@ import './CustomerRelationshipView.css';
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar';
 import { usePersistedState } from '@/hooks/usePersistedState';
 
-// 🚀 성능 최적화: 초성 인덱스 맵을 상수로 미리 계산 (O(1) 조회)
-const KOREAN_CONSONANTS = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-const CONSONANT_INDEX_MAP = new Map<string, number>(
-  KOREAN_CONSONANTS.map((consonant, index) => [consonant, index])
-);
-
 // 역관계 변환 맵 (A→B 관계를 B→A 관계로 변환) - 대표자 기준 표시용
 const REVERSE_RELATION_MAP: Record<string, string> = {
   parent: 'child',      // A의 부모 B → B의 자녀 A
@@ -608,35 +602,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return '';
   }, [relationships]);
 
-  // 한글 초성 추출 함수
-  const getKoreanConsonant = useCallback((name: string): string => {
-    if (!name || name.length === 0) {
-      return '#';
-    }
-
-    const firstChar = name.charAt(0);
-    const code = firstChar.charCodeAt(0);
-
-    // 한글 완성형 (가-힣) 범위: 0xAC00 ~ 0xD7A3
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-      const consonants = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-      const consonantIndex = Math.floor((code - 0xAC00) / 588);
-      return consonants[consonantIndex] || '#';
-    }
-
-    // 한글 자모 (ㄱ-ㅎ) 범위
-    if (code >= 0x3131 && code <= 0x314E) {
-      return firstChar;
-    }
-
-    // 영문
-    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
-      return firstChar.toUpperCase();
-    }
-
-    return '#';
-  }, []);
-
   // 초성 필터가 적용된 데이터 계산
   const filteredStructuredData = useMemo(() => {
     if (!selectedInitial) {
@@ -721,48 +686,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const noFamilyRelationshipCustomers = filteredStructuredData.가족관계미설정 || [];
   const noCorporateRelationshipCustomers = filteredStructuredData.법인관계자미설정 || [];
 
-  // 🚀 성능 최적화: 가족 그룹을 초성별로 그룹화 (의존성 최적화)
-  const familyGroupsByConsonant = useMemo(() => {
-    const familyEntries = Object.entries(filteredStructuredData.가족그룹);
-    const grouped = new Map<string, Array<[string, FamilyGroup]>>();
-
-    familyEntries.forEach(([groupId, groupData]) => {
-      const representativeName = groupData.representative.personal_info?.name || '이름없음';
-      const consonant = getKoreanConsonant(representativeName);
-
-      if (!grouped.has(consonant)) {
-        grouped.set(consonant, []);
-      }
-      grouped.get(consonant)!.push([groupId, groupData]);
-    });
-
-    // 🚀 성능 최적화: Map 조회로 O(n²) → O(n log n) 개선
-    const sortedConsonants = Array.from(grouped.keys()).sort((a, b) => {
-      const indexA = CONSONANT_INDEX_MAP.get(a) ?? -1;
-      const indexB = CONSONANT_INDEX_MAP.get(b) ?? -1;
-
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return a.localeCompare(b);
-    });
-
-    const sortedGrouped = new Map<string, Array<[string, FamilyGroup]>>();
-    sortedConsonants.forEach(consonant => {
-      // 각 초성 내에서도 대표자 이름순 정렬
-      const groups = grouped.get(consonant)!.sort(([, a], [, b]) => {
-        const nameA = a.representative.personal_info?.name || '';
-        const nameB = b.representative.personal_info?.name || '';
-        return nameA.localeCompare(nameB, 'ko');
-      });
-      sortedGrouped.set(consonant, groups);
-    });
-
-    return sortedGrouped;
-  }, [structuredData.가족그룹, getKoreanConsonant]);
-
   // 검색어 필터링 및 자동 트리 펼치기
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -782,54 +705,48 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       newExpandedNodes.add('no-family-relationship');
     }
 
-    // 🚀 성능 최적화: 가족 그룹 검색 (조기 종료 로직 추가)
-    for (const [consonant, groups] of familyGroupsByConsonant) {
-      const consonantKey = `consonant-${consonant}`;
+    // 가족 그룹 검색
+    for (const [groupId, groupData] of Object.entries(structuredData.가족그룹)) {
+      const groupKey = `family-${groupId}`;
 
-      for (const [groupId, groupData] of groups) {
-        const groupKey = `family-${groupId}`;
+      // 대표자 이름 확인
+      const representativeName = (groupData.representative.personal_info?.name || '').toLowerCase();
+      if (representativeName.includes(query)) {
+        newExpandedNodes.add('family');
+        newExpandedNodes.add(groupKey);
+        continue;
+      }
 
-        // 대표자 이름 확인 (toLowerCase 캐싱)
-        const representativeName = (groupData.representative.personal_info?.name || '').toLowerCase();
-        if (representativeName.includes(query)) {
+      // 구성원 이름 확인
+      for (const member of groupData.members) {
+        const memberName = (member.personal_info?.name || '').toLowerCase();
+        if (memberName.includes(query)) {
           newExpandedNodes.add('family');
-          newExpandedNodes.add(consonantKey);
           newExpandedNodes.add(groupKey);
-          continue; // 대표자 매칭 시 구성원 검색 스킵
-        }
-
-        // 구성원 이름 확인 (조기 종료)
-        for (const member of groupData.members) {
-          const memberName = (member.personal_info?.name || '').toLowerCase();
-          if (memberName.includes(query)) {
-            newExpandedNodes.add('family');
-            newExpandedNodes.add(consonantKey);
-            newExpandedNodes.add(groupKey);
-            break; // 첫 매칭 발견 시 즉시 종료
-          }
+          break;
         }
       }
     }
 
-    // 🚀 성능 최적화: 법인 그룹 검색 (조기 종료 로직 추가)
+    // 법인 그룹 검색
     for (const [companyId, groupData] of Object.entries(structuredData.법인)) {
       const companyKey = `corporate-${companyId}`;
 
-      // 회사명 확인 (toLowerCase 캐싱)
+      // 회사명 확인
       const companyName = (groupData.company.personal_info?.name || '').toLowerCase();
       if (companyName.includes(query)) {
         newExpandedNodes.add('corporate');
         newExpandedNodes.add(companyKey);
-        continue; // 회사명 매칭 시 직원 검색 스킵
+        continue;
       }
 
-      // 직원 이름 확인 (조기 종료)
+      // 직원 이름 확인
       for (const employee of groupData.employees) {
         const employeeName = (employee.personal_info?.name || '').toLowerCase();
         if (employeeName.includes(query)) {
           newExpandedNodes.add('corporate');
           newExpandedNodes.add(companyKey);
-          break; // 첫 매칭 발견 시 즉시 종료
+          break;
         }
       }
     }
@@ -837,7 +754,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     setExpandedNodes(newExpandedNodes);
     // 검색 시 뷰 모드를 'all'로 변경
     setViewMode('all');
-  }, [searchQuery, structuredData, familyGroupsByConsonant]);
+  }, [searchQuery, structuredData]);
 
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {
@@ -855,22 +772,13 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
   }, [viewMode]);
 
-  // 뷰 모드 순환 토글: 대표만 보기 → 초성만 보기 → 전체 보기 → 대표만 보기
+  // 뷰 모드 순환 토글: 대표만 보기 → 전체 보기 → 대표만 보기
   const toggleViewMode = useCallback(() => {
     let newExpandedNodes: Set<string>;
 
-    if (viewMode === 'representative') {
-      // 대표만 보기 → 초성만 보기 (최상위 폴더만 열고, 내부는 모두 닫힘)
-      newExpandedNodes = new Set<string>(['family', 'corporate']);
-      setViewMode('consonant');
-    } else if (viewMode === 'consonant') {
-      // 초성만 보기 → 전체 보기
+    if (viewMode === 'representative' || viewMode === 'consonant') {
+      // 대표만 보기 → 전체 보기
       newExpandedNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
-
-      // 초성 폴더 노드 추가
-      familyGroupsByConsonant.forEach((_, consonant) => {
-        newExpandedNodes.add(`consonant-${consonant}`);
-      });
 
       Object.keys(structuredData.가족그룹).forEach(groupId => {
         newExpandedNodes.add(`family-${groupId}`);
@@ -884,17 +792,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     } else {
       // 전체 보기 → 대표만 보기
       newExpandedNodes = new Set<string>(['family', 'corporate']);
-
-      // 초성 폴더는 펼쳐서 대표자가 보이도록
-      familyGroupsByConsonant.forEach((_, consonant) => {
-        newExpandedNodes.add(`consonant-${consonant}`);
-      });
-
       setViewMode('representative');
     }
 
     setExpandedNodes(newExpandedNodes);
-  }, [viewMode, structuredData, familyGroupsByConsonant]);
+  }, [viewMode, structuredData]);
 
   // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
@@ -975,7 +877,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     );
   }
 
-  const hasNoData = familyGroupsByConsonant.size === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0;
+  const hasNoData = Object.keys(filteredStructuredData.가족그룹).length === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0 && noCorporateRelationshipCustomers.length === 0;
 
   return (
     <>
@@ -1165,7 +1067,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             className="relationship-initial-filter"
           />
           {/* 가족 관계 섹션 - 가족 그룹 또는 가족관계 미설정 고객이 있을 때 표시 */}
-          {(familyGroupsByConsonant.size > 0 || noFamilyRelationshipCustomers.length > 0) && (
+          {(Object.keys(filteredStructuredData.가족그룹).length > 0 || noFamilyRelationshipCustomers.length > 0) && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -1177,7 +1079,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 <div className="tree-node__content">
                   <span className="tree-node__label tree-node__label--family">가족</span>
                   <span className="tree-node__badge">
-                    {Array.from(familyGroupsByConsonant.values()).reduce((sum, groups) => sum + groups.length, 0)}
+                    {Object.keys(filteredStructuredData.가족그룹).length}
                   </span>
                 </div>
               </div>
@@ -1228,143 +1130,122 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                     </div>
                   )}
 
-                  {/* 초성별 폴더 구조 */}
-                  {Array.from(familyGroupsByConsonant.entries()).map(([consonant, groups]) => {
-                    const consonantKey = `consonant-${consonant}`;
+                  {/* 가족 그룹 목록 (초성 필터는 상단 InitialFilterBar로 처리) */}
+                  {Object.entries(filteredStructuredData.가족그룹)
+                    .sort(([, a], [, b]) => {
+                      const nameA = a.representative.personal_info?.name || '';
+                      const nameB = b.representative.personal_info?.name || '';
+                      return nameA.localeCompare(nameB, 'ko');
+                    })
+                    .map(([groupId, groupData]) => {
+                      const representativeName = groupData.representative.personal_info?.name || '이름없음';
+                      const groupKey = `family-${groupId}`;
+                      const relationKey = `${groupKey}-relations`;
 
-                    return (
-                      <div key={consonantKey} className="tree-group">
-                        {/* 초성 폴더 */}
-                        <div
-                          className="tree-node tree-node--group"
-                          onClick={() => toggleNode(consonantKey)}
-                        >
-                          <span className={`tree-node__icon ${expandedNodes.has(consonantKey) ? 'expanded' : ''}`}>
-                            {expandedNodes.has(consonantKey) ? '📂' : '📁'}
-                          </span>
-                          <div className="tree-node__content">
-                            <span className="tree-node__label">{consonant}</span>
-                            <span className="tree-node__badge">{groups.length}</span>
+                      return (
+                        <div key={groupKey} className="tree-group">
+                          <div
+                            className="tree-node tree-node--group"
+                            onClick={() => toggleNode(groupKey)}
+                          >
+                            <span className={`tree-node__icon ${expandedNodes.has(groupKey) ? 'expanded' : ''}`}>
+                              {expandedNodes.has(groupKey) ? '📂' : '📁'}
+                            </span>
+                            <div className="tree-node__content">
+                              <span
+                                className="tree-node__label tree-node__label--clickable"
+                                onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
+                                onDoubleClick={(e) => handleCustomerDoubleClick(groupData.representative._id, e)}
+                              >
+                                👑 {highlightText(representativeName)} (대표)
+                              </span>
+                              {groupData.relations.length > 0 && (
+                                <span
+                                  className="tree-node__relation-toggle"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleNode(relationKey);
+                                  }}
+                                >
+                                  {expandedNodes.has(relationKey) ? '🔗' : '🔗'}
+                                </span>
+                              )}
+                              <span className="tree-node__badge tree-node__badge--success">
+                                {groupData.members.length}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* 초성 폴더가 펼쳐져 있으면 해당 초성의 가족 그룹들 표시 */}
-                        {expandedNodes.has(consonantKey) && (
-                          <div className="tree-children">
-                            {groups.map(([groupId, groupData]) => {
-                              const representativeName = groupData.representative.personal_info?.name || '이름없음';
-                              const groupKey = `family-${groupId}`;
-                              const relationKey = `${groupKey}-relations`;
-
-                              return (
-                                <div key={groupKey} className="tree-group">
-                                  <div
-                                    className="tree-node tree-node--group"
-                                    onClick={() => toggleNode(groupKey)}
-                                  >
-                                    <span className={`tree-node__icon ${expandedNodes.has(groupKey) ? 'expanded' : ''}`}>
-                                      {expandedNodes.has(groupKey) ? '📂' : '📁'}
+                          {expandedNodes.has(groupKey) && (
+                            <div className="tree-children">
+                              {/* 가족 구성원 - 들여쓰기 적용 */}
+                              {groupData.members
+                                .filter(member => member._id !== groupData.representative._id)
+                                .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
+                                .map((member) => (
+                                  <div key={member._id} className="tree-node tree-node--leaf tree-node--member">
+                                    <span className="tree-node__icon">
+                                      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                                        <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                        <circle cx="10" cy="7" r="3" />
+                                        <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                      </svg>
                                     </span>
-                                    <div className="tree-node__content">
-                                      <span
-                                        className="tree-node__label tree-node__label--clickable"
-                                        onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
-                                        onDoubleClick={(e) => handleCustomerDoubleClick(groupData.representative._id, e)}
-                                      >
-                                        👑 {highlightText(representativeName)} (대표)
-                                      </span>
-                                      {groupData.relations.length > 0 && (
-                                        <span
-                                          className="tree-node__relation-toggle"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleNode(relationKey);
-                                          }}
-                                        >
-                                          {expandedNodes.has(relationKey) ? '🔗' : '🔗'}
-                                        </span>
-                                      )}
-                                      <span className="tree-node__badge tree-node__badge--success">
-                                        {groupData.members.length}
-                                      </span>
-                                    </div>
+                                    <span
+                                      className="tree-node__label tree-node__label--clickable"
+                                      onClick={(e) => handleCustomerClick(member._id, e)}
+                                      onDoubleClick={(e) => handleCustomerDoubleClick(member._id, e)}
+                                    >
+                                      {highlightText(member.personal_info?.name || '이름없음')}
+                                      {(() => {
+                                        const label = getRelationshipLabel(member._id, groupData.representative._id);
+                                        return label ? ` (${label})` : '';
+                                      })()}
+                                    </span>
                                   </div>
+                                ))}
 
-                                  {expandedNodes.has(groupKey) && (
-                                    <div className="tree-children">
-                                      {/* 가족 구성원 - 들여쓰기 적용 */}
-                                      {groupData.members
-                                        .filter(member => member._id !== groupData.representative._id)
-                                        .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
-                                        .map((member) => (
-                                          <div key={member._id} className="tree-node tree-node--leaf tree-node--member">
-                                            <span className="tree-node__icon">
-                                              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                                                <circle cx="10" cy="10" r="10" opacity="0.2" />
-                                                <circle cx="10" cy="7" r="3" />
-                                                <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                                              </svg>
-                                            </span>
-                                            <span
-                                              className="tree-node__label tree-node__label--clickable"
-                                              onClick={(e) => handleCustomerClick(member._id, e)}
-                                              onDoubleClick={(e) => handleCustomerDoubleClick(member._id, e)}
-                                            >
-                                              {highlightText(member.personal_info?.name || '이름없음')}
-                                              {(() => {
-                                                const label = getRelationshipLabel(member._id, groupData.representative._id);
-                                                return label ? ` (${label})` : '';
-                                              })()}
-                                            </span>
-                                          </div>
-                                        ))}
+                              {/* 관계 정보 - 🔗 클릭 시에만 표시 */}
+                              {expandedNodes.has(relationKey) && groupData.relations.length > 0 && (
+                                <div className="relation-list">
+                                  {groupData.relations.map((relation) => {
+                                    // A → B: A의 입장에서 B는 어떤 관계인지 표시
+                                    // relationLabel은 이미 A→B 관계를 나타냄 (from의 입장에서 to의 관계)
+                                    const relationFromA = `${relation.fromName}의 ${relation.relationLabel}`;
 
-                                      {/* 관계 정보 - 🔗 클릭 시에만 표시 */}
-                                      {expandedNodes.has(relationKey) && groupData.relations.length > 0 && (
-                                        <div className="relation-list">
-                                          {groupData.relations.map((relation) => {
-                                            // A → B: A의 입장에서 B는 어떤 관계인지 표시
-                                            // relationLabel은 이미 A→B 관계를 나타냄 (from의 입장에서 to의 관계)
-                                            const relationFromA = `${relation.fromName}의 ${relation.relationLabel}`;
+                                    // 아이콘도 relationLabel(A→B 관계)에 맞춰 표시
+                                    const getRelationIcon = (label: string) => {
+                                      switch (label) {
+                                        case '배우자': return '❤️';       // 대칭 관계 (하트)
+                                        case '자녀': return '👶';         // A의 자녀
+                                        case '부모': return '👨‍👩';       // A의 부모 = 부모 세대
+                                        case '형제자매': return '👫';     // 대칭 관계
+                                        default: return '👥';
+                                      }
+                                    };
 
-                                            // 아이콘도 relationLabel(A→B 관계)에 맞춰 표시
-                                            const getRelationIcon = (label: string) => {
-                                              switch (label) {
-                                                case '배우자': return '❤️';       // 대칭 관계 (하트)
-                                                case '자녀': return '👶';         // A의 자녀
-                                                case '부모': return '👨‍👩';       // A의 부모 = 부모 세대
-                                                case '형제자매': return '👫';     // 대칭 관계
-                                                default: return '👥';
-                                              }
-                                            };
+                                    const icon = getRelationIcon(relation.relationLabel);
 
-                                            const icon = getRelationIcon(relation.relationLabel);
-
-                                            return (
-                                              <div
-                                                key={relation.key}
-                                                className="relation-item"
-                                                title={relationFromA}
-                                              >
-                                                <span className="relation-item__icon">{icon}</span>
-                                                <span className="relation-item__text">
-                                                  {relation.fromName} → {relation.toName}
-                                                </span>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+                                    return (
+                                      <div
+                                        key={relation.key}
+                                        className="relation-item"
+                                        title={relationFromA}
+                                      >
+                                        <span className="relation-item__icon">{icon}</span>
+                                        <span className="relation-item__text">
+                                          {relation.fromName} → {relation.toName}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
