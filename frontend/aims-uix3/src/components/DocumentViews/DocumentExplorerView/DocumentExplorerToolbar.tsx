@@ -485,18 +485,18 @@ export const DocumentExplorerToolbar: React.FC<DocumentExplorerToolbarProps> = (
             aria-pressed={thumbnailEnabled ? 'true' : 'false'}
           >
             {thumbnailEnabled ? (
-              /* 썸네일 켜짐: 채워진 사진 아이콘 */
+              /* 썸네일 켜짐: 컬러풀한 사진 아이콘 */
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="3" width="12" height="10" rx="1.5" fill="currentColor"/>
-                <circle cx="5.5" cy="6" r="1.5" fill="var(--color-bg-primary)"/>
-                <path d="M2 10.5L5 8L7 10L10 7L14 11V11.5C14 12.33 13.33 13 12.5 13H3.5C2.67 13 2 12.33 2 11.5V10.5Z" fill="var(--color-bg-primary)"/>
+                <rect x="2" y="3" width="12" height="10" rx="1.5" fill="#4A90D9"/>
+                <circle cx="5.5" cy="5.5" r="1.5" fill="#FFD93D"/>
+                <path d="M2 10L5 7.5L7 9.5L10 6.5L14 10.5V11.5C14 12.33 13.33 13 12.5 13H3.5C2.67 13 2 12.33 2 11.5V10Z" fill="#4CAF50"/>
               </svg>
             ) : (
-              /* 썸네일 꺼짐: 빈 사진 아이콘 */
+              /* 썸네일 꺼짐: 회색 사진 아이콘 */
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                <circle cx="5.5" cy="6" r="1.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-                <path d="M2 10.5L5 8L7 10L10 7L14 11" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <circle cx="5.5" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+                <path d="M2 10L5 7.5L7 9.5L10 6.5L14 10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
             )}
           </button>
