@@ -793,32 +793,33 @@ export const SystemHealthPage = () => {
         </div>
       </div>
 
-      <section className="system-health-page__section">
-        <div className={`system-health-page__summary ${allHealthy ? 'system-health-page__summary--healthy' : 'system-health-page__summary--warning'}`}>
-          <span className="system-health-page__summary-icon">
-            {allHealthy ? '✓' : '!'}
-          </span>
-          <div className="system-health-page__summary-text">
-            <span className="system-health-page__summary-title">
-              {allHealthy ? '모든 시스템 정상' : '일부 서비스 이상'}
-            </span>
-            <span className="system-health-page__summary-subtitle">
-              {healthyCount}/{services.length} 서비스 정상 작동 중
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* 전체 2열 레이아웃 */}
+      <div className="system-health-page__main-layout">
+        {/* 좌측: 메인 콘텐츠 */}
+        <div className="system-health-page__main-column">
+          <section className="system-health-page__section">
+            <div className={`system-health-page__summary ${allHealthy ? 'system-health-page__summary--healthy' : 'system-health-page__summary--warning'}`}>
+              <span className="system-health-page__summary-icon">
+                {allHealthy ? '✓' : '!'}
+              </span>
+              <div className="system-health-page__summary-text">
+                <span className="system-health-page__summary-title">
+                  {allHealthy ? '모든 시스템 정상' : '일부 서비스 이상'}
+                </span>
+                <span className="system-health-page__summary-subtitle">
+                  {healthyCount}/{services.length} 서비스 정상 작동 중
+                </span>
+              </div>
+            </div>
+          </section>
 
-      {/* 서버 리소스 섹션 */}
-      <ServerResourcesSection />
+          {/* 서버 리소스 섹션 */}
+          <ServerResourcesSection />
 
-      {/* 실시간 메트릭 섹션 */}
-      <RealtimeMetricsSection />
+          {/* 실시간 메트릭 섹션 */}
+          <RealtimeMetricsSection />
 
-      {/* 서비스 상태 + 포트 현황 2열 레이아웃 */}
-      <div className="system-health-page__two-column">
-        {/* 좌측: Tier 서비스 상태 + n8n 워크플로우 */}
-        <div className="system-health-page__services-column">
+          {/* Tier 서비스 상태 */}
           {serviceTiers.map((tierGroup) => (
             <section key={tierGroup.tier} className="system-health-page__section">
               <div className="system-health-page__tier-header">
@@ -839,7 +840,7 @@ export const SystemHealthPage = () => {
             </section>
           ))}
 
-          {/* n8n 워크플로우 상태 - Tier3 바로 아래 */}
+          {/* n8n 워크플로우 상태 */}
           {data?.workflows && data.workflows.length > 0 && (
             <section className="system-health-page__section">
               <div className="system-health-page__tier-header">
@@ -858,7 +859,7 @@ export const SystemHealthPage = () => {
         </div>
 
         {/* 우측: 포트 현황 + 상태 이력 */}
-        <div className="system-health-page__ports-column">
+        <div className="system-health-page__side-column">
           <PortsSection />
           <HealthHistorySection />
         </div>
