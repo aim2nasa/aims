@@ -35,7 +35,16 @@ jobs:
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+          # ssh-keyscan with timeout, fallback to StrictHostKeyChecking=accept-new
+          if timeout 10 ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "✅ SSH host key added via ssh-keyscan"
+          else
+            echo "⚠️ ssh-keyscan failed, using StrictHostKeyChecking=accept-new"
+            echo "Host ${{ vars.SERVER_HOST }}" >> ~/.ssh/config
+            echo "  StrictHostKeyChecking accept-new" >> ~/.ssh/config
+            echo "  UserKnownHostsFile ~/.ssh/known_hosts" >> ~/.ssh/config
+          fi
 
       - name: Deploy to server
         run: |
