@@ -31,19 +31,21 @@ export const UserProfileHeader: React.FC<UserProfileHeaderProps> = ({
   email,
   avatarUrl
 }) => {
-  const userInitial = name.charAt(0).toUpperCase();
+  // null/undefined 방어: name이 없으면 '?' 표시
+  const displayName = name || '사용자';
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   return (
     <div className="user-profile-header" role="banner">
       <div className="user-profile-header__avatar">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={name} />
+          <img src={avatarUrl} alt={displayName} />
         ) : (
           <span className="user-profile-header__initial">{userInitial}</span>
         )}
       </div>
       <div className="user-profile-header__info">
-        <div className="user-profile-header__name">{name}</div>
+        <div className="user-profile-header__name">{displayName}</div>
         <div className="user-profile-header__email">{email}</div>
       </div>
     </div>
