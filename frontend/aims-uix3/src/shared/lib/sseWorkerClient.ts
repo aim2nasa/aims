@@ -150,10 +150,13 @@ class SSEWorkerClient {
    * 스트림 구독
    */
   subscribe(streamKey: string, endpoint: string, params: Record<string, string> = {}) {
+    // 토큰을 subscribe 시점에 직접 전달 (레이스 컨디션 방지)
+    const token = getAuthToken()
+
     if (this.isSupported && this.port) {
       this.port.postMessage({
         type: 'subscribe',
-        payload: { streamKey, endpoint, params }
+        payload: { streamKey, endpoint, params, token: token || '' }
       } as WorkerMessage)
     } else {
       // 폴백: 직접 EventSource 사용

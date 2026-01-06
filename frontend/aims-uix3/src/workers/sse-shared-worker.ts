@@ -18,6 +18,7 @@ interface SubscribePayload {
   streamKey: string
   endpoint: string
   params?: Record<string, string>
+  token?: string // 레이스 컨디션 방지용 토큰
 }
 
 interface UnsubscribePayload {
@@ -311,7 +312,13 @@ function reconnect(streamKey: string, conn: Connection) {
  * 구독 처리
  */
 function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
-  const { streamKey, endpoint, params = {} } = payload
+  const { streamKey, endpoint, params = {}, token } = payload
+
+  // 토큰이 전달되면 즉시 설정 (레이스 컨디션 방지)
+  if (token && token !== authToken) {
+    authToken = token
+    log(`토큰 설정됨 (subscribe payload에서)`)
+  }
 
   log(`구독 요청: ${streamKey}`)
 
