@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { usersApi, type DeletePreviewResponse } from '@/features/users/api';
@@ -76,12 +76,14 @@ export const UsersPage = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['admin', 'users', page, debouncedSearch],
+    queryKey: ['admin', 'users', page, debouncedSearch, sortKey, sortOrder],
     queryFn: () =>
       usersApi.getUsers({
         page,
         limit,
         search: debouncedSearch || undefined,
+        sortBy: sortKey,
+        sortOrder,
         // role 필터 제거 - 모든 사용자 조회 (admin, agent, user 포함)
       }),
   });
@@ -160,47 +162,12 @@ export const UsersPage = () => {
       setSortKey(key);
       setSortOrder('asc');
     }
+    // 정렬 변경 시 첫 페이지로 이동
+    setPage(1);
   };
 
-  // 정렬된 사용자 목록
-  const sortedUsers = useMemo(() => {
-    const users = data?.users || [];
-    return [...users].sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
-
-      switch (sortKey) {
-        case 'name':
-          aVal = a.name || '';
-          bVal = b.name || '';
-          break;
-        case 'email':
-          aVal = a.email || '';
-          bVal = b.email || '';
-          break;
-        case 'tier':
-          aVal = a.storage?.tier || 'free_trial';
-          bVal = b.storage?.tier || 'free_trial';
-          break;
-        case 'createdAt':
-          aVal = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
-          bVal = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
-          break;
-        case 'lastLogin':
-          aVal = (a as any).lastLogin ? new Date((a as any).lastLogin).getTime() : 0;
-          bVal = (b as any).lastLogin ? new Date((b as any).lastLogin).getTime() : 0;
-          break;
-        default:
-          return 0;
-      }
-
-      if (typeof aVal === 'string') {
-        const cmp = aVal.localeCompare(bVal);
-        return sortOrder === 'asc' ? cmp : -cmp;
-      }
-      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-  }, [data?.users, sortKey, sortOrder]);
+  // DB에서 정렬된 사용자 목록 직접 사용
+  const users = data?.users || [];
 
   const pagination = data?.pagination;
 
@@ -258,7 +225,7 @@ export const UsersPage = () => {
 
       {/* Table Container */}
       <div className="users-page__table-container">
-        {sortedUsers.length === 0 ? (
+        {users.length === 0 ? (
           <div className="users-page__empty">검색 결과가 없습니다.</div>
         ) : (
           <table className="users-table">
@@ -285,7 +252,7 @@ export const UsersPage = () => {
               </tr>
             </thead>
             <tbody className="users-table__body">
-              {sortedUsers.map((user) => {
+              {users.map((user) => {
                 const isUpdating = updatingUserId === user._id;
                 const tier = user.storage?.tier || 'free_trial';
 

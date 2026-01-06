@@ -5871,9 +5871,9 @@ app.get('/api/admin/metrics', authenticateJWT, requireRole('admin'), async (req,
  * 관리자: 사용자 목록 조회 (페이징, 검색, 필터)
  */
 app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, res) => {
-  const { page = 1, limit = 50, search = '', role = '', hasOcrPermission } = req.query;
+  const { page = 1, limit = 50, search = '', role = '', hasOcrPermission, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-  console.log('[Admin Users API] 요청 파라미터:', { page, limit, search, role, hasOcrPermission });
+  console.log('[Admin Users API] 요청 파라미터:', { page, limit, search, role, hasOcrPermission, sortBy, sortOrder });
 
   try {
     // 검색 필터 구성
@@ -5903,6 +5903,20 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
 
     console.log('[Admin Users API] 필터:', JSON.stringify(filter));
 
+    // 정렬 옵션 구성
+    const sortFieldMap = {
+      name: 'name',
+      email: 'email',
+      tier: 'storage.tier',
+      createdAt: 'createdAt',
+      lastLogin: 'lastLogin'
+    };
+    const sortField = sortFieldMap[sortBy] || 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sortOption = { [sortField]: sortDirection };
+
+    console.log('[Admin Users API] 정렬:', sortOption);
+
     // 병렬로 사용자 목록과 전체 개수 조회
     const [users, total] = await Promise.all([
       db.collection(COLLECTIONS.USERS)
@@ -5914,7 +5928,7 @@ app.get('/api/admin/users', authenticateJWT, requireRole('admin'), async (req, r
             googleId: 0
           }
         })
-        .sort({ createdAt: -1 })
+        .sort(sortOption)
         .skip(skip)
         .limit(limitNum)
         .toArray(),

@@ -7,6 +7,8 @@ export interface GetUsersParams {
   search?: string;
   role?: string;
   hasOcrPermission?: boolean;
+  sortBy?: 'name' | 'email' | 'tier' | 'createdAt' | 'lastLogin';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface PaginationInfo {
@@ -93,6 +95,8 @@ export const usersApi = {
     if (params.hasOcrPermission !== undefined) {
       queryParams.append('hasOcrPermission', params.hasOcrPermission.toString());
     }
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/api/admin/users?${queryString}` : '/api/admin/users';
