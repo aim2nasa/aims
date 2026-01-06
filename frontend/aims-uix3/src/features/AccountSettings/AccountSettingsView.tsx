@@ -1313,9 +1313,12 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
               type="text"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="계정삭제"
               className="account-settings-view__delete-confirm-field"
               disabled={isDeleting}
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               aria-label="계정삭제 확인 입력"
             />
           </div>

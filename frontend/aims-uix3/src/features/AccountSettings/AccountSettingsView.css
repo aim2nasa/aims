@@ -769,6 +769,21 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
   opacity: 0.6;
 }
 
+/* 입력 중/값 있을 때 placeholder 완전히 숨김 */
+.account-settings-view__delete-confirm-field:focus::placeholder,
+.account-settings-view__delete-confirm-field:not(:placeholder-shown)::placeholder {
+  opacity: 0;
+  color: transparent;
+}
+
+/* 브라우저 자동완성 스타일 제거 */
+.account-settings-view__delete-confirm-field:-webkit-autofill,
+.account-settings-view__delete-confirm-field:-webkit-autofill:hover,
+.account-settings-view__delete-confirm-field:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
 .account-settings-view__delete-confirm-field:focus {
   border-color: var(--color-text-error, #FF3B30);
 }
