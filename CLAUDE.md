@@ -170,6 +170,9 @@ ssh tars 'cd ~/aims && ./deploy_all.sh'
 | aims_api | `http://100.110.215.65:3010` |
 | aims_rag_api | `http://100.110.215.65:8000` |
 | aims_mcp | `http://100.110.215.65:3011` |
+| pdf_proxy | `http://100.110.215.65:8002` |
+| annual_report_api | `http://100.110.215.65:8004` |
+| pdf_converter | `http://100.110.215.65:8005` |
 
 **vite.config.ts 프록시 설정:**
 ```typescript
@@ -243,9 +246,14 @@ proxy: {
 **금지**: HTML `<button>` 직접 사용, Portal/ESC 직접 구현
 
 ### Backend Services
-- Node.js API: `backend/api/aims_api/` (포트 3010)
-- Python FastAPI: `backend/api/doc_status_api/` (포트 8000)
-- MCP Server: `backend/api/aims_mcp/` (포트 3011, HTTP 모드)
+| 서비스 | 경로 | 포트 |
+|--------|------|------|
+| aims_api | `backend/api/aims_api/` | 3010 |
+| aims_rag_api | `backend/api/aims_rag_api/` | 8000 |
+| aims_mcp | `backend/api/aims_mcp/` | 3011 |
+| pdf_proxy | `backend/api/pdf_proxy/` | 8002 |
+| annual_report_api | `backend/api/annual_report_api/` | 8004 |
+| pdf_converter | `tools/convert/` | 8005 |
 
 ---
 
