@@ -1191,7 +1191,13 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
       let status = 'processing';
       let progress = 50;
 
-      if (doc.ocr && doc.ocr.status === 'done') {
+      // 1. MongoDB에 저장된 progress 필드 우선 사용 (document_pipeline에서 업데이트)
+      if (doc.progress !== undefined && doc.progress !== null) {
+        progress = doc.progress;
+        status = doc.progress >= 100 ? 'completed' : 'processing';
+      }
+      // 2. progress 필드가 없으면 기존 로직으로 계산
+      else if (doc.ocr && doc.ocr.status === 'done') {
         status = 'completed';
         progress = 100;
       } else if (doc.meta && doc.meta.meta_status === 'ok') {
@@ -8166,6 +8172,66 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
   } catch (error) {
     console.error('[SSE-DocStatus] 문서 처리 완료 알림 오류:', error);
     backendLogger.error('SSE', '문서 처리 완료 알림 오류', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * 문서 처리 진행률 업데이트 Webhook (document_pipeline에서 호출)
+ * @route POST /api/webhooks/document-progress
+ * @description 문서 처리 각 단계에서 진행률 업데이트 SSE 알림 발생
+ */
+app.post('/api/webhooks/document-progress', async (req, res) => {
+  try {
+    const { document_id, progress, stage, message, owner_id } = req.body;
+
+    // API Key 인증
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+      console.warn('[SSE-Progress] 잘못된 API Key로 webhook 호출 시도');
+      return res.status(401).json({ success: false, error: '인증 실패' });
+    }
+
+    if (!document_id || progress === undefined) {
+      return res.status(400).json({ success: false, error: 'document_id와 progress가 필요합니다.' });
+    }
+
+    const documentIdStr = document_id.toString().replace(/^"|"$/g, '');
+    console.log(`[SSE-Progress] 진행률 업데이트 - document_id: ${documentIdStr}, progress: ${progress}%, stage: ${stage}`);
+
+    // SSE 이벤트 데이터
+    const eventData = {
+      documentId: documentIdStr,
+      progress: progress,
+      stage: stage || 'processing',
+      message: message || '',
+      timestamp: utcNowISO()
+    };
+
+    // 개별 문서 구독자에게 진행률 업데이트 알림
+    const clients = documentStatusSSEClients.get(documentIdStr);
+    if (clients && clients.size > 0) {
+      notifyDocumentStatusSubscribers(documentIdStr, 'progress-update', eventData);
+      console.log(`[SSE-Progress] 개별 문서 구독자에게 알림 전송 - clients: ${clients.size}`);
+    }
+
+    // 문서 목록 구독자에게도 알림 (테이블 업데이트)
+    if (owner_id) {
+      const ownerIdStr = owner_id.toString().replace(/^"|"$/g, '');
+      notifyDocumentListSubscribers(ownerIdStr, 'document-progress', {
+        type: 'progress-update',
+        documentId: documentIdStr,
+        progress: progress,
+        stage: stage || 'processing',
+        timestamp: utcNowISO()
+      });
+      console.log(`[SSE-Progress] 문서 목록 구독자에게 알림 전송 - userId: ${ownerIdStr}`);
+    }
+
+    res.json({ success: true, message: '진행률 업데이트 알림 전송됨', progress });
+  } catch (error) {
+    console.error('[SSE-Progress] 진행률 업데이트 오류:', error);
+    backendLogger.error('SSE', '진행률 업데이트 오류', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

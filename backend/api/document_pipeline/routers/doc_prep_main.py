@@ -237,6 +237,47 @@ async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: 
         logger.warning(f"Error connecting document to customer: {e}")
 
 
+async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str, message: str = ""):
+    """Send progress update notification via SSE webhook and update MongoDB"""
+    import httpx
+
+    settings = get_settings()
+
+    # 1. MongoDB에 progress 필드 업데이트 (폴링용)
+    try:
+        files_collection = MongoService.get_collection("files")
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": {
+                "progress": progress,
+                "progressStage": stage,
+                "progressMessage": message
+            }}
+        )
+    except Exception as e:
+        logger.warning(f"Error updating progress in MongoDB: {e}")
+
+    # 2. SSE webhook 호출 (실시간 업데이트용)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.AIMS_API_URL}/api/webhooks/document-progress",
+                json={
+                    "document_id": doc_id,
+                    "progress": progress,
+                    "stage": stage,
+                    "message": message,
+                    "owner_id": owner_id
+                },
+                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                timeout=5.0
+            )
+            if response.status_code != 200:
+                logger.warning(f"Failed to send progress update: {response.text}")
+    except Exception as e:
+        logger.warning(f"Error sending progress update: {e}")
+
+
 async def _notify_document_complete(doc_id: str, owner_id: str):
     """Notify that document processing is complete"""
     import httpx
@@ -302,6 +343,10 @@ async def process_document_pipeline(
         doc_data = {
             "ownerId": user_id,
             "createdAt": datetime.utcnow(),
+            # 초기 progress 설정 - 프론트엔드에서 즉시 20% 표시
+            "progress": 20,
+            "progressStage": "upload",
+            "progressMessage": "업로드 준비 중",
         }
         if customer_id:
             doc_data["customerId"] = customer_id
@@ -339,7 +384,12 @@ async def process_document_pipeline(
         if customer_id:
             await _connect_document_to_customer(customer_id, doc_id, user_id)
 
+        # Progress: 20% - Upload complete
+        await _notify_progress(doc_id, user_id, 20, "upload", "파일 업로드 완료")
+
         # Step 3: Extract metadata
+        # Progress: 40% - Starting meta extraction
+        await _notify_progress(doc_id, user_id, 40, "meta", "메타데이터 추출 중")
         meta_result = await MetaService.extract_metadata(dest_path)
 
         if meta_result.get("error"):
@@ -387,18 +437,30 @@ async def process_document_pipeline(
 
         detected_mime = meta_result.get("mime_type", "")
 
+        # Progress: 50% - Meta extraction complete
+        await _notify_progress(doc_id, user_id, 50, "meta", "메타데이터 추출 완료")
+
         # Step 4: Route based on MIME type
 
         # Case 1: text/plain - extract and save text
         if detected_mime == "text/plain":
             logger.info(f"Processing text/plain file: {doc_id}")
 
+            # Progress: 60% - Starting text extraction
+            await _notify_progress(doc_id, user_id, 60, "text", "텍스트 추출 중")
+
             text_content = await FileService.read_file_as_text(dest_path)
+
+            # Progress: 80% - Saving text to database
+            await _notify_progress(doc_id, user_id, 80, "text", "텍스트 저장 중")
 
             await files_collection.update_one(
                 {"_id": ObjectId(doc_id)},
                 {"$set": {"text.full_text": text_content}}
             )
+
+            # Progress: 100% - text/plain processing complete (no OCR needed)
+            await _notify_progress(doc_id, user_id, 100, "complete", "텍스트 파일 처리 완료")
 
             return {
                 "exitCode": 0,
@@ -410,10 +472,19 @@ async def process_document_pipeline(
         if detected_mime in UNSUPPORTED_MIME_TYPES:
             logger.warning(f"Unsupported MIME type: {detected_mime} for {doc_id}")
 
+            # Progress: 60% - Checking file type
+            await _notify_progress(doc_id, user_id, 60, "check", "파일 형식 확인 중")
+
+            # Progress: 80% - Updating database
+            await _notify_progress(doc_id, user_id, 80, "update", "처리 상태 업데이트 중")
+
             await files_collection.update_one(
                 {"_id": ObjectId(doc_id)},
                 {"$set": {"ocr.warn": "Skipped OCR due to unsupported MIME type"}}
             )
+
+            # Progress: 100% - Unsupported MIME, OCR skipped
+            await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료 (OCR 생략)")
 
             return {
                 "warn": True,
@@ -426,6 +497,8 @@ async def process_document_pipeline(
 
         # Case 3: Check if OCR is needed (no text extracted)
         if not full_text or len(full_text.strip()) == 0:
+            # Progress: 60% - OCR needed
+            await _notify_progress(doc_id, user_id, 60, "ocr", "OCR 처리 준비 중")
             logger.info(f"Queueing OCR for document: {doc_id}")
 
             queued_at = datetime.utcnow().isoformat()
@@ -448,6 +521,9 @@ async def process_document_pipeline(
                 }}
             )
 
+            # Progress: 70% - OCR queued
+            await _notify_progress(doc_id, user_id, 70, "ocr", "OCR 대기열에 추가됨")
+
             return {
                 "result": "success",
                 "document_id": doc_id,
@@ -459,6 +535,12 @@ async def process_document_pipeline(
 
         # Case 4: Text already extracted, notify complete
         logger.info(f"Document {doc_id} processed without OCR (text already extracted)")
+
+        # Progress: 90% - Almost complete
+        await _notify_progress(doc_id, user_id, 90, "complete", "처리 완료 중")
+
+        # Progress: 100% - Complete (no OCR needed)
+        await _notify_progress(doc_id, user_id, 100, "complete", "처리 완료")
 
         # Send completion notification
         await _notify_document_complete(doc_id, user_id)

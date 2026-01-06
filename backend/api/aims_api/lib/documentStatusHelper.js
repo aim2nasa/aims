@@ -125,6 +125,60 @@ function prepareDocumentResponse(doc) {
   // PDF 관련 필드 (모든 computed 반환에 포함)
   const pdfFields = { canPreview, previewFilePath, conversionStatus, isConvertible };
 
+  // 🔴 PRIORITY: document_pipeline에서 설정한 progress 필드 우선 사용
+  // (폴링 시 즉각적인 상태 반영을 위해)
+  if (doc.progress !== undefined && doc.progress !== null) {
+    const hasMetaText = doc.meta && doc.meta.full_text;
+
+    // progress 100이거나 complete면 완료 상태 반환
+    if (doc.progress >= 100 || doc.progressStage === 'complete') {
+      const uiStages = hasMetaText ? {
+        upload: { name: '업로드', status: 'completed', message: '업로드 완료', timestamp: null },
+        meta: { name: '메타데이터', status: 'completed', message: '완료', timestamp: null },
+        docembed: { name: '임베딩', status: 'completed', message: '완료', timestamp: null }
+      } : {
+        upload: { name: '업로드', status: 'completed', message: '업로드 완료', timestamp: null },
+        meta: { name: '메타데이터', status: 'completed', message: '완료', timestamp: null },
+        ocr: { name: 'OCR 처리', status: 'completed', message: '완료', timestamp: null },
+        docembed: { name: '임베딩', status: 'completed', message: '완료', timestamp: null }
+      };
+      return {
+        raw,
+        computed: {
+          uiStages,
+          currentStage: 5,
+          overallStatus: 'completed',
+          progress: 100,
+          displayMessages: { upload: '완료', meta: '완료', ocr: '완료', docembed: '완료' },
+          ...pdfFields
+        }
+      };
+    }
+
+    // 중간 progress 값 (20~99) - processing 상태 반환
+    const uiStages = hasMetaText ? {
+      upload: { name: '업로드', status: doc.progress >= 20 ? 'completed' : 'processing', message: doc.progressMessage || '처리 중', timestamp: null },
+      meta: { name: '메타데이터', status: doc.progress >= 40 ? 'completed' : 'processing', message: doc.progressMessage || '처리 중', timestamp: null },
+      docembed: { name: '임베딩', status: doc.progress >= 80 ? 'processing' : 'pending', message: doc.progressMessage || '대기 중', timestamp: null }
+    } : {
+      upload: { name: '업로드', status: doc.progress >= 20 ? 'completed' : 'processing', message: doc.progressMessage || '처리 중', timestamp: null },
+      meta: { name: '메타데이터', status: doc.progress >= 40 ? 'completed' : 'processing', message: doc.progressMessage || '처리 중', timestamp: null },
+      ocr: { name: 'OCR 처리', status: doc.progress >= 60 ? 'processing' : 'pending', message: doc.progressMessage || '대기 중', timestamp: null },
+      docembed: { name: '임베딩', status: doc.progress >= 80 ? 'processing' : 'pending', message: doc.progressMessage || '대기 중', timestamp: null }
+    };
+    return {
+      raw,
+      computed: {
+        uiStages,
+        currentStage: Math.floor(doc.progress / 20),
+        overallStatus: 'processing',
+        progress: doc.progress,
+        displayMessages: { status: doc.progressMessage || '처리 중' },
+        ...pdfFields
+      }
+    };
+  }
+
   // 🧮 2. 계산된 UI 값
   const hasMetaText = doc.meta && doc.meta.full_text;
   const isUnsupported = isUnsupportedMimeType(doc.meta?.mime);
