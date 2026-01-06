@@ -1,7 +1,10 @@
-name: Deploy with Full Tests
+name: Full Tests with Build
 
 on:
-  workflow_dispatch:  # 수동 실행만 가능
+  workflow_dispatch:  # 수동 실행
+
+# NOTE: 실제 배포는 로컬에서 ./deploy_all.sh 사용
+# 서버는 Tailscale VPN으로만 접근 가능하여 GitHub Actions에서 배포 불가
 
 jobs:
   # Job 1: 프론트엔드 테스트
@@ -116,9 +119,11 @@ jobs:
         run: |
           cd backend/api/aims_rag_api && python -m pytest -v
 
-  # Job 4: 배포 (모든 테스트 통과 후에만 실행)
-  deploy:
-    name: Deploy Frontend
+  # Job 4: 빌드 검증 (모든 테스트 통과 후)
+  # NOTE: 실제 배포는 로컬에서 ./deploy_all.sh 사용
+  # 서버는 Tailscale VPN으로만 접근 가능하여 GitHub Actions에서 배포 불가
+  build-verify:
+    name: Build Verification
     runs-on: ubuntu-latest
     needs: [frontend-test, backend-test, python-test]
 
@@ -142,30 +147,7 @@ jobs:
         working-directory: frontend/aims-uix3
         run: npm run build
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known_hosts
+      - name: All tests passed and build successful
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          # ssh-keyscan with timeout, fallback to StrictHostKeyChecking=accept-new
-          if timeout 10 ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null; then
-            echo "✅ SSH host key added via ssh-keyscan"
-          else
-            echo "⚠️ ssh-keyscan failed, using StrictHostKeyChecking=accept-new"
-            echo "Host ${{ vars.SERVER_HOST }}" >> ~/.ssh/config
-            echo "  StrictHostKeyChecking accept-new" >> ~/.ssh/config
-            echo "  UserKnownHostsFile ~/.ssh/known_hosts" >> ~/.ssh/config
-          fi
-
-      - name: Deploy to server
-        run: |
-          rsync -avz --delete \
-            frontend/aims-uix3/dist/ \
-            ${{ vars.SERVER_USER }}@${{ vars.SERVER_HOST }}:/home/rossi/aims/frontend/aims-uix3/dist/
-
-      - name: Notify completion
-        run: echo "✅ Frontend deployed successfully after all tests passed!"
+          echo "✅ All tests passed and frontend build successful!"
+          echo "📦 Deploy manually: ssh tars 'cd ~/aims && ./deploy_all.sh'"

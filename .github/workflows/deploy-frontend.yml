@@ -1,10 +1,13 @@
-name: Deploy AIMS Frontend
+name: Build AIMS Frontend
 
 on:
-  workflow_dispatch:  # 수동 실행만 가능 (GitHub Actions 페이지에서 "Run workflow" 클릭)
+  workflow_dispatch:  # 수동 실행
+
+# NOTE: 실제 배포는 로컬에서 ./deploy_all.sh 사용
+# 서버는 Tailscale VPN으로만 접근 가능하여 GitHub Actions에서 배포 불가
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,30 +30,7 @@ jobs:
         working-directory: frontend/aims-uix3
         run: npm run build
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known_hosts
+      - name: Build successful
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          # ssh-keyscan with timeout, fallback to StrictHostKeyChecking=accept-new
-          if timeout 10 ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null; then
-            echo "✅ SSH host key added via ssh-keyscan"
-          else
-            echo "⚠️ ssh-keyscan failed, using StrictHostKeyChecking=accept-new"
-            echo "Host ${{ vars.SERVER_HOST }}" >> ~/.ssh/config
-            echo "  StrictHostKeyChecking accept-new" >> ~/.ssh/config
-            echo "  UserKnownHostsFile ~/.ssh/known_hosts" >> ~/.ssh/config
-          fi
-
-      - name: Deploy to server
-        run: |
-          rsync -avz --delete \
-            frontend/aims-uix3/dist/ \
-            ${{ vars.SERVER_USER }}@${{ vars.SERVER_HOST }}:/home/rossi/aims/frontend/aims-uix3/dist/
-
-      - name: Notify completion
-        run: echo "✅ Frontend deployed successfully!"
+          echo "✅ Frontend build successful!"
+          echo "📦 Deploy manually: ssh tars 'cd ~/aims && ./deploy_all.sh'"
