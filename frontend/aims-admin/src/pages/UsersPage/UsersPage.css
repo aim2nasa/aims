@@ -462,3 +462,243 @@ html[data-theme="dark"] .tier-select option {
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
+
+/* ============================================
+   보수적 삭제 디자인 스타일
+   ============================================ */
+
+/* [1] 관리 모드 토글 버튼 */
+.users-page__danger-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.users-page__danger-toggle:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-tertiary);
+}
+
+.users-page__danger-toggle--active {
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.08);
+  border-color: var(--color-error);
+}
+
+.users-page__danger-toggle--active:hover {
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.12);
+}
+
+.users-page__danger-toggle svg {
+  flex-shrink: 0;
+}
+
+/* [2] 삭제 아이콘 버튼 - 회색, 호버 시 빨간색 */
+.users-table__delete-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.users-table__delete-icon:hover:not(:disabled) {
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+.users-table__delete-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* [3] 인라인 확인 UI */
+.users-table__inline-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.users-table__inline-confirm-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-error);
+}
+
+.users-table__inline-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.users-table__inline-confirm-btn--yes {
+  color: #ffffff;
+  background-color: var(--color-error);
+}
+
+.users-table__inline-confirm-btn--yes:hover {
+  background-color: #d9302a;
+}
+
+.users-table__inline-confirm-btn--no {
+  color: var(--color-text-secondary);
+  background-color: var(--color-background-secondary);
+}
+
+.users-table__inline-confirm-btn--no:hover {
+  background-color: var(--color-border);
+}
+
+/* 관리 모드 꺼져있을 때 빈 공간 */
+.users-table__no-action {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+/* [4] 삭제 확인 텍스트 입력 */
+.delete-user-modal__confirm-input {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--radius-md);
+}
+
+.delete-user-modal__confirm-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.delete-user-modal__confirm-label strong {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+.delete-user-modal__confirm-field {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.delete-user-modal__confirm-field:focus {
+  outline: none;
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.15);
+}
+
+.delete-user-modal__confirm-field::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* [5] 24시간 예약 삭제 안내 */
+.delete-user-modal__schedule-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning);
+  background-color: rgba(255, 149, 0, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.delete-user-modal__schedule-notice svg {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.delete-user-modal__schedule-notice strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 삭제 예정 계정 행 스타일 */
+.users-table__row--scheduled-deletion {
+  background-color: rgba(255, 59, 48, 0.04);
+}
+
+.users-table__row--scheduled-deletion:hover {
+  background-color: rgba(255, 59, 48, 0.08);
+}
+
+/* 삭제 예정 배지 */
+.users-table__deletion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-error);
+  background-color: rgba(255, 59, 48, 0.1);
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-xs);
+}
+
+.users-table__deletion-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* 삭제 취소 버튼 */
+.users-table__cancel-deletion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  background-color: rgba(0, 122, 255, 0.1);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.users-table__cancel-deletion:hover {
+  background-color: rgba(0, 122, 255, 0.2);
+}
+
+.users-table__cancel-deletion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

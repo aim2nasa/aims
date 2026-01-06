@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { usersApi, type DeletePreviewResponse } from '@/features/users/api';
@@ -6,6 +6,25 @@ import { Button } from '@/shared/ui/Button/Button';
 import { Modal } from '@/shared/ui/Modal/Modal';
 import type { User } from '@/features/auth/types';
 import './UsersPage.css';
+
+/**
+ * 삭제 예정 시간까지 남은 시간 계산
+ */
+function getTimeRemaining(scheduledAt: string): { hours: number; minutes: number; text: string } | null {
+  const scheduled = new Date(scheduledAt).getTime();
+  const now = Date.now();
+  const diff = scheduled - now;
+
+  if (diff <= 0) return null;
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 0) {
+    return { hours, minutes, text: `${hours}시간 ${minutes}분 후 삭제` };
+  }
+  return { hours, minutes, text: `${minutes}분 후 삭제` };
+}
 
 const TIER_OPTIONS = [
   { value: 'free_trial', label: '무료체험' },
@@ -16,6 +35,9 @@ const TIER_OPTIONS = [
 
 type SortKey = 'name' | 'email' | 'tier' | 'createdAt' | 'lastLogin';
 type SortOrder = 'asc' | 'desc';
+
+const DANGER_MODE_TIMEOUT = 30000; // 30초 후 자동 해제
+const INLINE_CONFIRM_TIMEOUT = 3000; // 3초 내 확인 필요
 
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return '-';
@@ -42,6 +64,19 @@ export const UsersPage = () => {
   const [deletePreview, setDeletePreview] = useState<DeletePreviewResponse['preview'] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
+  // [1] 관리 모드 (삭제 버튼 숨김)
+  const [dangerMode, setDangerMode] = useState(false);
+  const [dangerModeRemaining, setDangerModeRemaining] = useState(0);
+  const dangerModeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dangerModeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // [3] 2단계 클릭 - 인라인 확인
+  const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
+  const inlineConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // [4] 텍스트 입력 확인
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
   // 등급 변경 확인 모달 상태
   const [tierChangeModal, setTierChangeModal] = useState<{
     user: User;
@@ -49,6 +84,61 @@ export const UsersPage = () => {
     newTier: string;
   } | null>(null);
   const limit = 10;
+
+  // [1] 관리 모드 타이머 정리
+  const clearDangerModeTimers = useCallback(() => {
+    if (dangerModeTimerRef.current) {
+      clearTimeout(dangerModeTimerRef.current);
+      dangerModeTimerRef.current = null;
+    }
+    if (dangerModeIntervalRef.current) {
+      clearInterval(dangerModeIntervalRef.current);
+      dangerModeIntervalRef.current = null;
+    }
+  }, []);
+
+  // [1] 관리 모드 토글
+  const toggleDangerMode = useCallback(() => {
+    if (dangerMode) {
+      // 끄기
+      setDangerMode(false);
+      setDangerModeRemaining(0);
+      clearDangerModeTimers();
+    } else {
+      // 켜기 - 30초 후 자동 해제
+      setDangerMode(true);
+      setDangerModeRemaining(DANGER_MODE_TIMEOUT / 1000);
+
+      dangerModeIntervalRef.current = setInterval(() => {
+        setDangerModeRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+
+      dangerModeTimerRef.current = setTimeout(() => {
+        setDangerMode(false);
+        setDangerModeRemaining(0);
+        clearDangerModeTimers();
+      }, DANGER_MODE_TIMEOUT);
+    }
+  }, [dangerMode, clearDangerModeTimers]);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      clearDangerModeTimers();
+      if (inlineConfirmTimerRef.current) {
+        clearTimeout(inlineConfirmTimerRef.current);
+      }
+    };
+  }, [clearDangerModeTimers]);
+
+  // [3] 인라인 확인 타이머 정리
+  const clearInlineConfirmTimer = useCallback(() => {
+    if (inlineConfirmTimerRef.current) {
+      clearTimeout(inlineConfirmTimerRef.current);
+      inlineConfirmTimerRef.current = null;
+    }
+    setPendingDeleteUserId(null);
+  }, []);
 
   // 삭제 모달 열릴 때 미리보기 데이터 조회
   useEffect(() => {
@@ -111,17 +201,27 @@ export const UsersPage = () => {
     mutationFn: (userId: string) => usersApi.deleteUser(userId),
     onSuccess: (result) => {
       setDeleteModalUser(null);
+      setDeleteConfirmText(''); // [4] 텍스트 입력 초기화
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-      const stats = result.stats;
-      if (stats) {
-        alert(
-          `사용자가 삭제되었습니다.\n\n삭제 통계:\n- 문서: ${stats.documents.total}개 (파일 ${stats.documents.filesDeleted}개, 임베딩 ${stats.documents.qdrantDeleted}개)\n- 고객: ${stats.customers}명\n- 계약: ${stats.contracts}건\n- 관계: ${stats.relationships}건\n- AI 사용량: ${stats.tokenUsage}건`
-        );
-      }
+      // [5] 24시간 후 삭제 예약 완료 메시지
+      alert(result.message || '사용자 삭제가 24시간 후로 예약되었습니다.');
     },
     onError: (error: any) => {
-      console.error('사용자 삭제 실패:', error);
-      alert(error?.message || '사용자 삭제에 실패했습니다.');
+      console.error('사용자 삭제 예약 실패:', error);
+      alert(error?.message || '사용자 삭제 예약에 실패했습니다.');
+    },
+  });
+
+  // [5] 삭제 취소 mutation
+  const cancelDeletionMutation = useMutation({
+    mutationFn: (userId: string) => usersApi.cancelDeletion(userId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      alert(result.message || '삭제 예약이 취소되었습니다.');
+    },
+    onError: (error: any) => {
+      console.error('삭제 취소 실패:', error);
+      alert(error?.message || '삭제 취소에 실패했습니다.');
     },
   });
 
@@ -141,14 +241,44 @@ export const UsersPage = () => {
     }
   };
 
-  const handleDeleteClick = (user: User) => {
+  // [3] 1단계: 아이콘 클릭 → 인라인 확인 표시
+  const handleDeleteIconClick = (user: User) => {
+    // 이미 다른 사용자의 인라인 확인이 열려있으면 닫기
+    clearInlineConfirmTimer();
+
+    // 인라인 확인 표시
+    setPendingDeleteUserId(user._id);
+
+    // 3초 후 자동 취소
+    inlineConfirmTimerRef.current = setTimeout(() => {
+      setPendingDeleteUserId(null);
+    }, INLINE_CONFIRM_TIMEOUT);
+  };
+
+  // [3] 2단계: 인라인 확인 클릭 → 모달 열기
+  const handleInlineConfirm = (user: User) => {
+    clearInlineConfirmTimer();
+    setDeleteConfirmText(''); // [4] 텍스트 입력 초기화
     setDeleteModalUser(user);
   };
 
+  // [3] 인라인 확인 취소
+  const handleInlineCancel = () => {
+    clearInlineConfirmTimer();
+  };
+
+  // [4] 삭제 확인 (텍스트 검증 후)
   const handleDeleteConfirm = () => {
-    if (deleteModalUser) {
-      deleteUserMutation.mutate(deleteModalUser._id);
+    if (!deleteModalUser) return;
+
+    // [4] 텍스트 입력 검증: "{사용자이름}삭제" 입력해야 함
+    const requiredText = `${deleteModalUser.name || deleteModalUser.email}삭제`;
+    if (deleteConfirmText !== requiredText) {
+      alert(`삭제하려면 "${requiredText}"를 정확히 입력하세요.`);
+      return;
     }
+
+    deleteUserMutation.mutate(deleteModalUser._id);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -209,7 +339,7 @@ export const UsersPage = () => {
         )}
       </div>
 
-      {/* Search */}
+      {/* [1] 관리 모드 토글 + Search */}
       <div className="users-page__filters">
         <input
           type="text"
@@ -221,6 +351,19 @@ export const UsersPage = () => {
             setPage(1);
           }}
         />
+
+        {/* [1] 관리 모드 토글 */}
+        <button
+          type="button"
+          className={`users-page__danger-toggle ${dangerMode ? 'users-page__danger-toggle--active' : ''}`}
+          onClick={toggleDangerMode}
+          title={dangerMode ? '관리 모드 끄기' : '삭제 기능 활성화'}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          {dangerMode ? `관리 모드 (${dangerModeRemaining}초)` : '관리 모드'}
+        </button>
       </div>
 
       {/* Table Container */}
@@ -255,10 +398,27 @@ export const UsersPage = () => {
               {users.map((user) => {
                 const isUpdating = updatingUserId === user._id;
                 const tier = user.storage?.tier || 'free_trial';
+                const isScheduledForDeletion = !!user.scheduledDeletionAt;
+                const deletionTimeRemaining = user.scheduledDeletionAt ? getTimeRemaining(user.scheduledDeletionAt) : null;
 
                 return (
-                  <tr key={user._id} className="users-table__row">
-                    <td className="users-table__td">{user.name || '-'}</td>
+                  <tr
+                    key={user._id}
+                    className={`users-table__row ${isScheduledForDeletion ? 'users-table__row--scheduled-deletion' : ''}`}
+                  >
+                    <td className="users-table__td">
+                      {user.name || '-'}
+                      {/* [5] 삭제 예정 배지 */}
+                      {isScheduledForDeletion && deletionTimeRemaining && (
+                        <span className="users-table__deletion-badge" title={`삭제 예정: ${new Date(user.scheduledDeletionAt!).toLocaleString('ko-KR')}`}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                          </svg>
+                          {deletionTimeRemaining.text}
+                        </span>
+                      )}
+                    </td>
                     <td className="users-table__td">{user.email || '-'}</td>
                     <td className="users-table__td">
                       <select
@@ -266,7 +426,7 @@ export const UsersPage = () => {
                         value={tier}
                         onChange={(e) => handleTierChange(user, tier, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        disabled={isUpdating}
+                        disabled={isUpdating || isScheduledForDeletion}
                         aria-label="등급 변경"
                       >
                         {TIER_OPTIONS.map((option) => (
@@ -280,15 +440,67 @@ export const UsersPage = () => {
                     <td className="users-table__td">{formatDate((user as any).lastLogin)}</td>
                     <td className="users-table__td users-table__td--actions">
                       {user.role !== 'admin' && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteClick(user)}
-                          disabled={deleteUserMutation.isPending}
-                          title="사용자 삭제"
-                        >
-                          삭제
-                        </Button>
+                        <>
+                          {/* [5] 삭제 예약된 사용자: 취소 버튼 표시 */}
+                          {isScheduledForDeletion ? (
+                            <button
+                              type="button"
+                              className="users-table__cancel-deletion"
+                              onClick={() => cancelDeletionMutation.mutate(user._id)}
+                              disabled={cancelDeletionMutation.isPending}
+                              title="삭제 예약 취소"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              취소
+                            </button>
+                          ) : (
+                            <>
+                              {/* [1] 관리 모드가 켜져있을 때만 삭제 UI 표시 */}
+                              {dangerMode ? (
+                                pendingDeleteUserId === user._id ? (
+                                  /* [3] 인라인 확인 UI */
+                                  <div className="users-table__inline-confirm">
+                                    <span className="users-table__inline-confirm-text">삭제?</span>
+                                    <button
+                                      type="button"
+                                      className="users-table__inline-confirm-btn users-table__inline-confirm-btn--yes"
+                                      onClick={() => handleInlineConfirm(user)}
+                                      title="삭제 진행"
+                                    >
+                                      ✓
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="users-table__inline-confirm-btn users-table__inline-confirm-btn--no"
+                                      onClick={handleInlineCancel}
+                                      title="취소"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ) : (
+                                  /* [2] 회색 아이콘 버튼 (호버 시 빨간색) */
+                                  <button
+                                    type="button"
+                                    className="users-table__delete-icon"
+                                    onClick={() => handleDeleteIconClick(user)}
+                                    disabled={deleteUserMutation.isPending}
+                                    title="사용자 삭제"
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                )
+                              ) : (
+                                /* [1] 관리 모드 꺼져있으면 빈 공간 */
+                                <span className="users-table__no-action">-</span>
+                              )}
+                            </>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>
@@ -410,19 +622,31 @@ export const UsersPage = () => {
         )}
       </Modal>
 
-      {/* 삭제 확인 모달 */}
+      {/* 삭제 확인 모달 - [4][5] 텍스트 입력 + 24시간 후 삭제 예약 */}
       <Modal
         isOpen={deleteModalUser !== null}
-        onClose={() => setDeleteModalUser(null)}
-        title="사용자 삭제 확인"
+        onClose={() => {
+          setDeleteModalUser(null);
+          setDeleteConfirmText('');
+        }}
+        title="⚠️ 사용자 삭제 예약"
       >
         <div className="delete-user-modal">
           <div className="delete-user-modal__warning">
+            {/* [5] 24시간 후 삭제 안내 */}
+            <div className="delete-user-modal__schedule-notice">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <span>삭제는 <strong>24시간 후</strong>에 실행됩니다</span>
+            </div>
+
             <p className="delete-user-modal__text">
-              <strong>{deleteModalUser?.name}</strong> ({deleteModalUser?.email}) 사용자를 정말 삭제하시겠습니까?
+              <strong>{deleteModalUser?.name}</strong> ({deleteModalUser?.email}) 사용자의 삭제를 예약하시겠습니까?
             </p>
             <p className="delete-user-modal__caution">
-              이 작업은 되돌릴 수 없으며, 다음 데이터가 모두 삭제됩니다:
+              24시간 내에 취소하지 않으면 다음 데이터가 영구 삭제됩니다:
             </p>
 
             {previewLoading ? (
@@ -474,11 +698,33 @@ export const UsersPage = () => {
                 <li>AI 사용량 기록</li>
               </ul>
             )}
+
+            {/* [4] 텍스트 입력 확인 */}
+            <div className="delete-user-modal__confirm-input">
+              <label className="delete-user-modal__confirm-label">
+                삭제를 예약하려면 <strong>{deleteModalUser?.name || deleteModalUser?.email}삭제</strong>를 입력하세요:
+              </label>
+              <input
+                type="text"
+                className="delete-user-modal__confirm-field"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={`${deleteModalUser?.name || deleteModalUser?.email}삭제`}
+                disabled={deleteUserMutation.isPending}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </div>
           </div>
+
           <div className="delete-user-modal__actions">
             <Button
               variant="secondary"
-              onClick={() => setDeleteModalUser(null)}
+              onClick={() => {
+                setDeleteModalUser(null);
+                setDeleteConfirmText('');
+              }}
               disabled={deleteUserMutation.isPending}
             >
               취소
@@ -486,9 +732,13 @@ export const UsersPage = () => {
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={deleteUserMutation.isPending || previewLoading}
+              disabled={
+                deleteUserMutation.isPending ||
+                previewLoading ||
+                deleteConfirmText !== `${deleteModalUser?.name || deleteModalUser?.email}삭제`
+              }
             >
-              {deleteUserMutation.isPending ? '삭제 중...' : '삭제'}
+              {deleteUserMutation.isPending ? '예약 중...' : '24시간 후 삭제 예약'}
             </Button>
           </div>
         </div>

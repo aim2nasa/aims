@@ -53,12 +53,30 @@ export interface DeleteUserStats {
 export interface DeleteUserResponse {
   success: boolean;
   message: string;
+  // 삭제 예약 응답 (24시간 후 삭제)
+  scheduledUser?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  scheduledDeletionAt?: string;
+  // deprecated (즉시 삭제는 더 이상 지원 안 함)
   deletedUser?: {
     _id: string;
     name: string;
     email: string;
   };
   stats?: DeleteUserStats;
+}
+
+export interface CancelDeletionResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface DeletePreviewResponse {
@@ -114,6 +132,10 @@ export const usersApi = {
 
   deleteUser: (userId: string): Promise<DeleteUserResponse> => {
     return apiClient.delete<DeleteUserResponse>(`/api/admin/users/${userId}`);
+  },
+
+  cancelDeletion: (userId: string): Promise<CancelDeletionResponse> => {
+    return apiClient.post<CancelDeletionResponse>(`/api/admin/users/${userId}/cancel-deletion`, {});
   },
 
   getDeletePreview: (userId: string): Promise<DeletePreviewResponse> => {

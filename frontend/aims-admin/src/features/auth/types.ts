@@ -17,6 +17,10 @@ export interface User {
   profileCompleted?: boolean;
   authProvider?: string;
   storage?: UserStorage;
+  // 삭제 예약 관련 필드
+  scheduledDeletionAt?: string | null;
+  scheduledDeletionBy?: string | null;
+  scheduledDeletionRequestedAt?: string | null;
 }
 
 export interface AuthResponse {

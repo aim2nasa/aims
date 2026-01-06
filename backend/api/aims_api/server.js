@@ -6159,18 +6159,18 @@ app.get('/api/admin/users/:id/delete-preview', authenticateJWT, requireRole('adm
 });
 
 /**
- * 관리자: 사용자 삭제 (관련 모든 데이터 cascade 삭제)
- * - MongoDB: documents, customers, contracts, relationships, token_usage, users
- * - Qdrant: 모든 임베딩 벡터
- * - Filesystem: /data/files 내 물리 파일
+ * 관리자: 사용자 삭제 예약 (24시간 후 삭제)
+ * - 즉시 삭제 대신 scheduledDeletionAt 필드 설정
+ * - 24시간 후 스케줄러가 실제 삭제 수행
  *
  * @since 2025-12-27
+ * @updated 2026-01-06 - 24시간 예약 삭제로 변경 (보수적 삭제 디자인)
  */
 app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const adminUserId = req.user.id;
 
-  console.log(`[Admin] 사용자 삭제 요청: userId=${id}, by admin=${adminUserId}`);
+  console.log(`[Admin] 사용자 삭제 예약 요청: userId=${id}, by admin=${adminUserId}`);
 
   // 자기 자신 삭제 방지
   if (id === adminUserId) {
@@ -6186,13 +6186,11 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
     let userIdQuery = null;
 
     if (ObjectId.isValid(id)) {
-      // ObjectId 형식인 경우
       targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
       userIdQuery = new ObjectId(id);
     }
 
     if (!targetUser) {
-      // 문자열 ID로 재시도
       targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: id });
       userIdQuery = id;
     }
@@ -6212,144 +6210,286 @@ app.delete('/api/admin/users/:id', authenticateJWT, requireRole('admin'), async 
       });
     }
 
-    const userId = id; // 문자열 형태의 userId
-    const deletionStats = {
-      documents: { total: 0, filesDeleted: 0, qdrantDeleted: 0, errors: [] },
-      customers: 0,
-      contracts: 0,
-      relationships: 0,
-      tokenUsage: 0
-    };
-
-    // 2. 사용자의 모든 문서 조회
-    const userDocuments = await db.collection(COLLECTIONS.FILES)
-      .find({ ownerId: userId })
-      .toArray();
-
-    deletionStats.documents.total = userDocuments.length;
-    console.log(`[Admin] 삭제 대상 문서: ${userDocuments.length}개`);
-
-    // 3. 각 문서별 물리 파일 + Qdrant 삭제
-    for (const doc of userDocuments) {
-      const docId = doc._id.toString();
-
-      // 3-1. 물리 파일 삭제
-      if (doc.upload?.destPath) {
-        try {
-          await fs.unlink(doc.upload.destPath);
-          deletionStats.documents.filesDeleted++;
-          console.log(`✅ 파일 삭제: ${doc.upload.destPath}`);
-        } catch (fileErr) {
-          if (fileErr.code !== 'ENOENT') {
-            console.error(`❌ 파일 삭제 실패: ${doc.upload.destPath}`, fileErr.message);
-            deletionStats.documents.errors.push({
-              docId,
-              type: 'file',
-              error: fileErr.message
-            });
-          }
-        }
-      }
-
-      // 3-2. Qdrant 임베딩 삭제
-      try {
-        await qdrantClient.delete(QDRANT_COLLECTION, {
-          filter: {
-            must: [{ key: 'doc_id', match: { value: docId } }]
-          }
-        });
-        deletionStats.documents.qdrantDeleted++;
-        console.log(`🗑️  [Qdrant] 문서 임베딩 삭제: doc_id=${docId}`);
-      } catch (qdrantErr) {
-        console.error(`❌ Qdrant 삭제 실패: doc_id=${docId}`, qdrantErr.message);
-        deletionStats.documents.errors.push({
-          docId,
-          type: 'qdrant',
-          error: qdrantErr.message
-        });
-      }
-    }
-
-    // 4. MongoDB 문서 일괄 삭제
-    const filesResult = await db.collection(COLLECTIONS.FILES).deleteMany({ ownerId: userId });
-    console.log(`🗑️  [MongoDB] 문서 삭제: ${filesResult.deletedCount}개`);
-
-    // 5. 고객 삭제 (meta.created_by 필드 사용)
-    const customersResult = await db.collection(COLLECTIONS.CUSTOMERS).deleteMany({ 'meta.created_by': userId });
-    deletionStats.customers = customersResult.deletedCount;
-    console.log(`🗑️  [MongoDB] 고객 삭제: ${customersResult.deletedCount}개`);
-
-    // 6. 계약 삭제 (agent_id는 ObjectId, meta.created_by는 문자열)
-    try {
-      let contractsDeleted = 0;
-      if (ObjectId.isValid(userId)) {
-        const byAgentId = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ agent_id: new ObjectId(userId) });
-        contractsDeleted = byAgentId.deletedCount;
-      }
-      // agent_id로 못 찾으면 meta.created_by로도 삭제
-      const byCreatedBy = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ 'meta.created_by': userId });
-      contractsDeleted += byCreatedBy.deletedCount;
-      deletionStats.contracts = contractsDeleted;
-      console.log(`🗑️  [MongoDB] 계약 삭제: ${contractsDeleted}개`);
-    } catch (err) {
-      console.log(`[MongoDB] contracts 삭제 오류:`, err.message);
-    }
-
-    // 7. 관계 삭제 (meta.created_by 필드 사용)
-    try {
-      const relationshipsResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({ 'meta.created_by': userId });
-      deletionStats.relationships = relationshipsResult.deletedCount;
-      console.log(`🗑️  [MongoDB] 관계 삭제: ${relationshipsResult.deletedCount}개`);
-    } catch (err) {
-      console.log(`[MongoDB] relationships 삭제 오류:`, err.message);
-    }
-
-    // 8. 토큰 사용량 삭제
-    try {
-      const tokenUsageResult = await db.collection('token_usage').deleteMany({ userId: userId });
-      deletionStats.tokenUsage = tokenUsageResult.deletedCount;
-      console.log(`🗑️  [MongoDB] 토큰 사용량 삭제: ${tokenUsageResult.deletedCount}개`);
-    } catch (err) {
-      console.log(`[MongoDB] token_usage 컬렉션 없음 또는 오류:`, err.message);
-    }
-
-    // 9. 마지막으로 사용자 삭제
-    const userResult = await db.collection(COLLECTIONS.USERS).deleteOne({ _id: userIdQuery });
-
-    if (userResult.deletedCount === 0) {
-      return res.status(500).json({
+    // 이미 삭제 예약된 경우
+    if (targetUser.scheduledDeletionAt) {
+      return res.status(400).json({
         success: false,
-        message: '사용자 삭제에 실패했습니다.'
+        message: '이미 삭제가 예약된 사용자입니다.',
+        scheduledDeletionAt: targetUser.scheduledDeletionAt
       });
     }
 
-    console.log(`✅ [Admin] 사용자 삭제 완료: ${targetUser.name} (${targetUser.email})`);
-    backendLogger.info('Admin', `사용자 삭제: ${targetUser.name} (${targetUser.email})`, {
-      deletedBy: adminUserId,
-      stats: deletionStats
+    // 2. 24시간 후 삭제 예약 (scheduledDeletionAt 필드 설정)
+    const scheduledDeletionAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24시간 후
+
+    const updateResult = await db.collection(COLLECTIONS.USERS).updateOne(
+      { _id: userIdQuery },
+      {
+        $set: {
+          scheduledDeletionAt: scheduledDeletionAt,
+          scheduledDeletionBy: adminUserId,
+          scheduledDeletionRequestedAt: new Date()
+        }
+      }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      return res.status(500).json({
+        success: false,
+        message: '삭제 예약에 실패했습니다.'
+      });
+    }
+
+    console.log(`⏰ [Admin] 사용자 삭제 예약 완료: ${targetUser.name} (${targetUser.email}) - ${scheduledDeletionAt.toISOString()}`);
+    backendLogger.info('Admin', `사용자 삭제 예약: ${targetUser.name} (${targetUser.email})`, {
+      scheduledBy: adminUserId,
+      scheduledDeletionAt: scheduledDeletionAt.toISOString()
     });
 
     res.json({
       success: true,
-      message: `사용자 "${targetUser.name}"이(가) 삭제되었습니다.`,
-      deletedUser: {
+      message: `사용자 "${targetUser.name}"의 삭제가 24시간 후로 예약되었습니다.`,
+      scheduledUser: {
         _id: id,
         name: targetUser.name,
         email: targetUser.email
       },
-      stats: deletionStats
+      scheduledDeletionAt: scheduledDeletionAt.toISOString()
     });
 
   } catch (error) {
-    console.error('[Admin] 사용자 삭제 오류:', error);
-    backendLogger.error('Admin', '사용자 삭제 오류', error);
+    console.error('[Admin] 사용자 삭제 예약 오류:', error);
+    backendLogger.error('Admin', '사용자 삭제 예약 오류', error);
     res.status(500).json({
       success: false,
-      message: '사용자 삭제 중 오류가 발생했습니다.',
+      message: '사용자 삭제 예약 중 오류가 발생했습니다.',
       error: error.message
     });
   }
 });
+
+/**
+ * 관리자: 사용자 삭제 예약 취소
+ * - scheduledDeletionAt 필드 제거
+ *
+ * @since 2026-01-06
+ */
+app.post('/api/admin/users/:id/cancel-deletion', authenticateJWT, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const adminUserId = req.user.id;
+
+  console.log(`[Admin] 사용자 삭제 취소 요청: userId=${id}, by admin=${adminUserId}`);
+
+  try {
+    // 1. 사용자 존재 확인
+    let targetUser = null;
+    let userIdQuery = null;
+
+    if (ObjectId.isValid(id)) {
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: new ObjectId(id) });
+      userIdQuery = new ObjectId(id);
+    }
+
+    if (!targetUser) {
+      targetUser = await db.collection(COLLECTIONS.USERS).findOne({ _id: id });
+      userIdQuery = id;
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
+      });
+    }
+
+    // 삭제 예약되지 않은 경우
+    if (!targetUser.scheduledDeletionAt) {
+      return res.status(400).json({
+        success: false,
+        message: '삭제가 예약되지 않은 사용자입니다.'
+      });
+    }
+
+    // 2. 삭제 예약 취소 (scheduledDeletionAt 필드 제거)
+    const updateResult = await db.collection(COLLECTIONS.USERS).updateOne(
+      { _id: userIdQuery },
+      {
+        $unset: {
+          scheduledDeletionAt: '',
+          scheduledDeletionBy: '',
+          scheduledDeletionRequestedAt: ''
+        }
+      }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      return res.status(500).json({
+        success: false,
+        message: '삭제 취소에 실패했습니다.'
+      });
+    }
+
+    console.log(`✅ [Admin] 사용자 삭제 취소 완료: ${targetUser.name} (${targetUser.email})`);
+    backendLogger.info('Admin', `사용자 삭제 취소: ${targetUser.name} (${targetUser.email})`, {
+      cancelledBy: adminUserId
+    });
+
+    res.json({
+      success: true,
+      message: `사용자 "${targetUser.name}"의 삭제 예약이 취소되었습니다.`,
+      user: {
+        _id: id,
+        name: targetUser.name,
+        email: targetUser.email
+      }
+    });
+
+  } catch (error) {
+    console.error('[Admin] 사용자 삭제 취소 오류:', error);
+    backendLogger.error('Admin', '사용자 삭제 취소 오류', error);
+    res.status(500).json({
+      success: false,
+      message: '사용자 삭제 취소 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 예약된 사용자 삭제 실행 (내부 함수)
+ * - scheduledDeletionAt이 현재 시간보다 이전인 사용자 실제 삭제
+ * - 서버 시작 시 + 매 시간마다 실행
+ *
+ * @since 2026-01-06
+ */
+async function executeScheduledDeletions() {
+  console.log('[Scheduler] 예약된 사용자 삭제 실행 시작...');
+
+  try {
+    // scheduledDeletionAt이 현재 시간보다 이전인 사용자 조회
+    const usersToDelete = await db.collection(COLLECTIONS.USERS).find({
+      scheduledDeletionAt: { $lte: new Date() },
+      role: { $ne: 'admin' } // 관리자는 삭제 불가
+    }).toArray();
+
+    if (usersToDelete.length === 0) {
+      console.log('[Scheduler] 삭제 예정 사용자 없음');
+      return { deleted: 0, errors: [] };
+    }
+
+    console.log(`[Scheduler] 삭제 대상 사용자: ${usersToDelete.length}명`);
+    const results = { deleted: 0, errors: [] };
+
+    for (const targetUser of usersToDelete) {
+      const userId = targetUser._id.toString();
+      const userIdQuery = targetUser._id;
+
+      try {
+        console.log(`[Scheduler] 사용자 삭제 시작: ${targetUser.name} (${targetUser.email})`);
+
+        const deletionStats = {
+          documents: { total: 0, filesDeleted: 0, qdrantDeleted: 0, errors: [] },
+          customers: 0,
+          contracts: 0,
+          relationships: 0,
+          tokenUsage: 0
+        };
+
+        // 1. 사용자의 모든 문서 조회
+        const userDocuments = await db.collection(COLLECTIONS.FILES)
+          .find({ ownerId: userId })
+          .toArray();
+
+        deletionStats.documents.total = userDocuments.length;
+
+        // 2. 각 문서별 물리 파일 + Qdrant 삭제
+        for (const doc of userDocuments) {
+          const docId = doc._id.toString();
+
+          // 물리 파일 삭제
+          if (doc.upload?.destPath) {
+            try {
+              await fs.unlink(doc.upload.destPath);
+              deletionStats.documents.filesDeleted++;
+            } catch (fileErr) {
+              if (fileErr.code !== 'ENOENT') {
+                deletionStats.documents.errors.push({ docId, type: 'file', error: fileErr.message });
+              }
+            }
+          }
+
+          // Qdrant 임베딩 삭제
+          try {
+            await qdrantClient.delete(QDRANT_COLLECTION, {
+              filter: { must: [{ key: 'doc_id', match: { value: docId } }] }
+            });
+            deletionStats.documents.qdrantDeleted++;
+          } catch (qdrantErr) {
+            deletionStats.documents.errors.push({ docId, type: 'qdrant', error: qdrantErr.message });
+          }
+        }
+
+        // 3. MongoDB 문서 일괄 삭제
+        await db.collection(COLLECTIONS.FILES).deleteMany({ ownerId: userId });
+
+        // 4. 고객 삭제
+        const customersResult = await db.collection(COLLECTIONS.CUSTOMERS).deleteMany({ 'meta.created_by': userId });
+        deletionStats.customers = customersResult.deletedCount;
+
+        // 5. 계약 삭제
+        try {
+          let contractsDeleted = 0;
+          if (ObjectId.isValid(userId)) {
+            const byAgentId = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ agent_id: new ObjectId(userId) });
+            contractsDeleted = byAgentId.deletedCount;
+          }
+          const byCreatedBy = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({ 'meta.created_by': userId });
+          contractsDeleted += byCreatedBy.deletedCount;
+          deletionStats.contracts = contractsDeleted;
+        } catch (err) { /* ignore */ }
+
+        // 6. 관계 삭제
+        try {
+          const relationshipsResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({ 'meta.created_by': userId });
+          deletionStats.relationships = relationshipsResult.deletedCount;
+        } catch (err) { /* ignore */ }
+
+        // 7. 토큰 사용량 삭제
+        try {
+          const tokenUsageResult = await db.collection('token_usage').deleteMany({ userId: userId });
+          deletionStats.tokenUsage = tokenUsageResult.deletedCount;
+        } catch (err) { /* ignore */ }
+
+        // 8. 사용자 삭제
+        await db.collection(COLLECTIONS.USERS).deleteOne({ _id: userIdQuery });
+
+        console.log(`✅ [Scheduler] 사용자 삭제 완료: ${targetUser.name} (${targetUser.email})`);
+        backendLogger.info('Scheduler', `예약 삭제 실행: ${targetUser.name} (${targetUser.email})`, {
+          stats: deletionStats
+        });
+
+        results.deleted++;
+
+      } catch (userError) {
+        console.error(`❌ [Scheduler] 사용자 삭제 실패: ${targetUser.name}`, userError.message);
+        results.errors.push({ userId, name: targetUser.name, error: userError.message });
+      }
+    }
+
+    console.log(`[Scheduler] 예약 삭제 완료: ${results.deleted}명 삭제, ${results.errors.length}건 오류`);
+    return results;
+
+  } catch (error) {
+    console.error('[Scheduler] 예약 삭제 실행 오류:', error);
+    return { deleted: 0, errors: [{ error: error.message }] };
+  }
+}
+
+// 예약 삭제 스케줄러 시작 (서버 시작 후 1분 뒤, 이후 매 시간마다)
+setTimeout(() => {
+  executeScheduledDeletions();
+  setInterval(executeScheduledDeletions, 60 * 60 * 1000); // 매 시간마다
+}, 60 * 1000); // 서버 시작 1분 후 첫 실행
 
 /**
  * Qdrant에서 문서의 모든 청크에 customer_id를 동기화합니다.
