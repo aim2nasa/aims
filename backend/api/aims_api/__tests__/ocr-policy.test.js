@@ -324,32 +324,34 @@ describe('OCR 정책 구현 검증', () => {
     });
   });
 
-  describe('10. UsageQuotaWidget UI', () => {
+  describe('10. UsageQuotaWidget UI (크레딧 기반)', () => {
+    // @updated 2026-01-06: OCR 페이지 → 크레딧 표시로 전환됨
     const widgetCode = fs.readFileSync(
       path.join(__dirname, '../../../../frontend/aims-uix3/src/shared/ui/UsageQuotaWidget/UsageQuotaWidget.tsx'),
       'utf-8'
     );
 
-    it('페이지 기반 사용률 계산', () => {
-      expect(widgetCode).toContain('ocr_pages_used');
-      expect(widgetCode).toContain('ocr_page_quota');
+    it('크레딧 기반 사용률 계산', () => {
+      expect(widgetCode).toContain('credits_used');
+      expect(widgetCode).toContain('credit_quota');
     });
 
     it('사이클 정보 표시', () => {
-      // UI에서는 사이클 종료일(ocr_cycle_end)만 표시 (시작일은 백엔드에서만 사용)
-      expect(widgetCode).toContain('ocr_cycle_end');
+      // UI에서는 사이클 종료일(credit_cycle_end)만 표시 (시작일은 백엔드에서만 사용)
+      expect(widgetCode).toContain('credit_cycle_end');
     });
 
     it('리셋까지 남은 일수는 백엔드 API에서 제공', () => {
-      // UI에서는 ocr_days_until_reset을 직접 표시하지 않고,
-      // 사이클 종료일(ocr_cycle_end)로 간접 표시
+      // UI에서는 credit_days_until_reset을 직접 표시하지 않고,
+      // 사이클 종료일(credit_cycle_end)로 간접 표시
       // 상세 정보는 AccountSettingsView에서 표시됨
-      expect(widgetCode).toContain('ocr_cycle_end');
+      expect(widgetCode).toContain('credit_cycle_end');
     });
 
-    it('툴팁에 문서 건수 표시', () => {
-      // 위젯 툴팁에는 OCR 처리된 문서 건수(ocr_docs_count)를 표시
-      expect(widgetCode).toContain('ocr_docs_count');
+    it('툴팁에 크레딧 사용량 표시', () => {
+      // 위젯 툴팁에는 크레딧 사용량과 한도 표시
+      expect(widgetCode).toContain('credits_used');
+      expect(widgetCode).toContain('credit_quota');
     });
   });
 });
@@ -1042,7 +1044,8 @@ describe('n8n 워크플로우 엣지 케이스', () => {
   });
 });
 
-describe('프론트엔드 표시 엣지 케이스', () => {
+describe('프론트엔드 표시 엣지 케이스 (크레딧 기반)', () => {
+  // @updated 2026-01-06: OCR 페이지 → 크레딧 표시로 전환됨
   const fs = require('fs');
   const path = require('path');
 
@@ -1053,11 +1056,11 @@ describe('프론트엔드 표시 엣지 케이스', () => {
 
   describe('무제한 사용자 표시', () => {
     it('무제한 체크 로직', () => {
-      expect(widgetCode).toContain('ocr_is_unlimited');
+      expect(widgetCode).toContain('credit_is_unlimited');
     });
 
     it('무제한 시 0% 또는 특별 표시', () => {
-      expect(widgetCode).toContain('ocr_is_unlimited');
+      expect(widgetCode).toContain('credit_is_unlimited');
     });
   });
 

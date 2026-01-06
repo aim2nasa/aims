@@ -98,7 +98,7 @@ describe('티어 권한 철칙 검증', () => {
 
     it('admin 티어는 무제한(-1)이어야 함', () => {
       expect(storageQuotaServiceCode).toContain(
-        "admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1"
+        "admin: { name: '관리자', quota_bytes: -1, credit_quota: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1"
       );
     });
   });
