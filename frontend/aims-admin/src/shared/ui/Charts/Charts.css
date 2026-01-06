@@ -11,18 +11,18 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-xs);
+  padding: 4px var(--spacing-xs);
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .resource-gauge__chart {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
 }
 
@@ -115,14 +115,14 @@
 
 /* Server Resources Section */
 .server-resources {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .server-resources__header {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .server-resources__title {
