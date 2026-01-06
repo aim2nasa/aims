@@ -65,7 +65,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   onClose
 }) => {
   // 🍎 애플 스타일 알림 모달
-  const { showAlert } = useAppleConfirm()
+  const { showAlert, showConfirm } = useAppleConfirm()
 
   // 전역 상태
   const { currentUser, updateCurrentUser } = useUserStore()
@@ -113,6 +113,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 계정 삭제 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   // 스토리지 정보 상태
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
@@ -471,6 +472,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         message: '로그인이 필요합니다.',
         iconType: 'warning'
       })
+      return
+    }
+
+    // 2차 확인: 정말 삭제할지 다시 한번 확인
+    const confirmed = await showConfirm({
+      title: '최종 확인',
+      message: '정말로 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      cancelText: '취소'
+    })
+
+    if (!confirmed) {
       return
     }
 
@@ -1244,7 +1259,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       {/* 계정 삭제 확인 모달 */}
       <Modal
         visible={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={() => {
+          setShowDeleteModal(false)
+          setDeleteConfirmText('')
+        }}
         title="계정 삭제"
         size="sm"
         backdropClosable={!isDeleting}
@@ -1254,7 +1272,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
             <Button
               variant="secondary"
               size="md"
-              onClick={() => setShowDeleteModal(false)}
+              onClick={() => {
+                setShowDeleteModal(false)
+                setDeleteConfirmText('')
+              }}
               disabled={isDeleting}
             >
               취소
@@ -1263,7 +1284,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
               variant="destructive"
               size="md"
               onClick={handleDeleteAccount}
-              disabled={isDeleting}
+              disabled={isDeleting || deleteConfirmText !== '계정삭제'}
             >
               {isDeleting ? '삭제 중...' : '삭제'}
             </Button>
@@ -1283,6 +1304,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           <p className="account-settings-view__delete-modal-desc">
             이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.
           </p>
+          <div className="account-settings-view__delete-confirm-input">
+            <label className="account-settings-view__delete-confirm-label">
+              계속하려면 <strong>계정삭제</strong>를 입력하세요
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="계정삭제"
+              className="account-settings-view__delete-confirm-field"
+              disabled={isDeleting}
+              autoComplete="off"
+            />
+          </div>
         </div>
       </Modal>
     </CenterPaneView>

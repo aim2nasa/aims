@@ -734,6 +734,50 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
   font-size: 13px;
 }
 
+/* 계정 삭제 확인 입력 */
+.account-settings-view__delete-confirm-input {
+  margin-top: var(--spacing-4);
+  text-align: left;
+}
+
+.account-settings-view__delete-confirm-label {
+  display: block;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-2);
+}
+
+.account-settings-view__delete-confirm-label strong {
+  color: var(--color-text-error, #FF3B30);
+  font-weight: var(--font-weight-semibold);
+}
+
+.account-settings-view__delete-confirm-field {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.account-settings-view__delete-confirm-field::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+.account-settings-view__delete-confirm-field:focus {
+  border-color: var(--color-text-error, #FF3B30);
+}
+
+.account-settings-view__delete-confirm-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* === STORAGE CARD (Data Tab) === */
 
 .storage-card {
