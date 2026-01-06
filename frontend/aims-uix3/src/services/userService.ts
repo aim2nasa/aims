@@ -109,8 +109,24 @@ export interface StorageInfo {
     quota: string
     used: string
     remaining: string
+    credit_quota?: string
   }
-  // OCR 정보 (페이지 기반 - 신규)
+
+  // 크레딧 정보 (신규 - TIER_PRICING_POLICY.md 참고)
+  credit_quota: number                    // 월 크레딧 한도
+  credits_used: number                    // 사용한 크레딧
+  credits_remaining: number               // 남은 크레딧
+  credit_usage_percent: number            // 사용률 (%)
+  credit_is_unlimited: boolean            // 무제한 여부
+  credit_breakdown: {
+    ocr: { pages: number; credits: number }
+    ai: { tokens: number; credits: number }
+  }
+  credit_cycle_start: string              // "YYYY-MM-DD"
+  credit_cycle_end: string                // "YYYY-MM-DD"
+  credit_days_until_reset: number         // 리셋까지 남은 일수
+
+  // OCR 정보 (페이지 기반 - deprecated, 하위호환)
   has_ocr_permission: boolean
   ocr_page_quota: number          // 페이지 한도
   ocr_pages_used: number          // 사용 페이지 수

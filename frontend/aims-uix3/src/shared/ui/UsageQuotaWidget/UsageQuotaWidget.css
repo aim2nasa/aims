@@ -1,5 +1,5 @@
 /**
- * UsageQuotaWidget - 스토리지 + OCR 파이 차트
+ * UsageQuotaWidget - 스토리지 + 크레딧 파이 차트
  */
 
 /* 컨테이너 */
@@ -59,9 +59,9 @@
   color: var(--color-ios-purple, #af52de);
 }
 
-/* OCR 아이콘: 민트/그린 (눈/인식) */
-.usage-pie__icon--ocr {
-  color: var(--color-ios-green, #34c759);
+/* 크레딧 아이콘: 골드/옐로우 (코인) */
+.usage-pie__icon--credit {
+  color: var(--color-ios-yellow, #ffcc00);
 }
 
 /* 프로그레스 링 색상 - normal (파랑) */

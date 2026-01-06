@@ -12,7 +12,7 @@ export const TierManagementPage = () => {
   const queryClient = useQueryClient();
   const [editingTier, setEditingTier] = useState<string | null>(null);
   const [editQuota, setEditQuota] = useState<string>('');
-  const [editOcrPageQuota, setEditOcrPageQuota] = useState<string>('');
+  const [editCreditQuota, setEditCreditQuota] = useState<string>('');
 
   const { data: tiersData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'tiers'],
@@ -20,13 +20,13 @@ export const TierManagementPage = () => {
   });
 
   const updateTierMutation = useMutation({
-    mutationFn: ({ tierId, quota_bytes, ocr_page_quota }: { tierId: string; quota_bytes: number; ocr_page_quota: number }) =>
-      dashboardApi.updateTier(tierId, { quota_bytes, ocr_page_quota }),
+    mutationFn: ({ tierId, quota_bytes, credit_quota }: { tierId: string; quota_bytes: number; credit_quota: number }) =>
+      dashboardApi.updateTier(tierId, { quota_bytes, credit_quota }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'tiers'] });
       setEditingTier(null);
       setEditQuota('');
-      setEditOcrPageQuota('');
+      setEditCreditQuota('');
     },
     onError: (error) => {
       console.error('티어 수정 실패:', error);
@@ -38,27 +38,27 @@ export const TierManagementPage = () => {
     if (tier.id === 'admin') return;
     setEditingTier(tier.id);
     setEditQuota((tier.quota_bytes / GB).toString());
-    setEditOcrPageQuota((tier.ocr_page_quota ?? 500).toString());
+    setEditCreditQuota((tier.credit_quota ?? 2000).toString());
   };
 
   const handleEditSave = (tierId: string) => {
     const quotaGB = parseFloat(editQuota);
-    const ocrPageQuota = parseInt(editOcrPageQuota, 10);
+    const creditQuota = parseInt(editCreditQuota, 10);
     if (isNaN(quotaGB) || quotaGB <= 0) {
       alert('유효한 스토리지 용량을 입력하세요.');
       return;
     }
-    if (isNaN(ocrPageQuota) || ocrPageQuota <= 0) {
-      alert('유효한 OCR 페이지 수를 입력하세요.');
+    if (isNaN(creditQuota) || creditQuota <= 0) {
+      alert('유효한 크레딧 수를 입력하세요.');
       return;
     }
-    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB), ocr_page_quota: ocrPageQuota });
+    updateTierMutation.mutate({ tierId, quota_bytes: Math.round(quotaGB * GB), credit_quota: creditQuota });
   };
 
   const handleEditCancel = () => {
     setEditingTier(null);
     setEditQuota('');
-    setEditOcrPageQuota('');
+    setEditCreditQuota('');
   };
 
   const sortedTiers = tiersData
@@ -92,7 +92,7 @@ export const TierManagementPage = () => {
                 <th>티어</th>
                 <th>설명</th>
                 <th>스토리지</th>
-                <th>OCR (페이지)</th>
+                <th>크레딧/월</th>
                 <th>작업</th>
               </tr>
             </thead>
@@ -131,18 +131,18 @@ export const TierManagementPage = () => {
                       <div className="tier-edit-input">
                         <input
                           type="number"
-                          value={editOcrPageQuota}
-                          onChange={(e) => setEditOcrPageQuota(e.target.value)}
+                          value={editCreditQuota}
+                          onChange={(e) => setEditCreditQuota(e.target.value)}
                           min="1"
-                          step="1"
-                          className="tier-edit-input__field tier-edit-input__field--ocr"
-                          aria-label="OCR 페이지 수"
+                          step="100"
+                          className="tier-edit-input__field tier-edit-input__field--credit"
+                          aria-label="월 크레딧"
                         />
-                        <span className="tier-edit-input__unit">p/월</span>
+                        <span className="tier-edit-input__unit">C/월</span>
                       </div>
                     ) : (
-                      <span className={tier.ocr_page_quota === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
-                        {tier.formatted_ocr_page_quota}
+                      <span className={tier.credit_quota === -1 ? 'tier-definition-table__unlimited' : 'tier-definition-table__quota'}>
+                        {tier.formatted_credit_quota}
                       </span>
                     )}
                   </td>

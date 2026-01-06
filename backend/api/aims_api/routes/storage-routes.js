@@ -3,6 +3,7 @@
  * @since 1.0.0
  *
  * 설계사별 디스크 할당량 관리 API
+ * @updated 2026-01-06 - 크레딧 시스템 통합
  */
 
 const express = require('express');
@@ -13,22 +14,33 @@ const {
   getSystemStorageOverview,
   formatBytes,
   getTierDefinitions,
-  updateTierDefinition
+  updateTierDefinition,
+  calculateOcrCycle
 } = require('../lib/storageQuotaService');
+const { getUserCreditInfo } = require('../lib/creditService');
 const backendLogger = require('../lib/backendLogger');
 
 /**
+ * 크레딧 한도 포맷팅
+ */
+function formatCreditQuota(quota) {
+  if (quota === -1) return '무제한';
+  return `${quota.toLocaleString()}C`;
+}
+
+/**
  * 라우트 설정 함수
- * @param {Db} db - MongoDB 인스턴스
+ * @param {Db} db - MongoDB docupload DB 인스턴스
+ * @param {Db} analyticsDb - MongoDB aims_analytics DB 인스턴스 (크레딧 계산용)
  * @param {Function} authenticateJWT - JWT 인증 미들웨어
  * @param {Function} requireRole - 역할 검증 미들웨어
  * @param {Function} notifyUserAccountSubscribers - SSE 사용자 계정 알림 함수
  */
-module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSubscribers) {
+module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers) {
 
   /**
    * GET /api/users/me/storage
-   * 내 스토리지 정보 조회
+   * 내 스토리지 정보 조회 (크레딧 정보 포함)
    */
   router.get('/users/me/storage', authenticateJWT, async (req, res) => {
     try {
@@ -41,16 +53,41 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
         });
       }
 
+      // 스토리지 정보 조회
       const storageInfo = await getUserStorageInfo(db, userId);
+
+      // 티어 정의에서 credit_quota 조회
+      const tierDefinitions = await getTierDefinitions(db);
+      const tierDef = tierDefinitions[storageInfo.tier] || tierDefinitions['free_trial'];
+      const creditQuota = storageInfo.is_unlimited ? -1 : (tierDef.credit_quota ?? 2000);
+
+      // 사이클 정보 (storageInfo에서 이미 계산된 값 사용)
+      const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
+      const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
+
+      // 크레딧 정보 조회
+      const creditInfo = await getUserCreditInfo(
+        db,
+        analyticsDb,
+        userId,
+        storageInfo.tier,
+        creditQuota,
+        cycleStart,
+        cycleEnd,
+        storageInfo.ocr_days_until_reset
+      );
 
       res.json({
         success: true,
         data: {
           ...storageInfo,
+          // 크레딧 정보 추가
+          ...creditInfo,
           formatted: {
             quota: formatBytes(storageInfo.quota_bytes),
             used: formatBytes(storageInfo.used_bytes),
-            remaining: formatBytes(storageInfo.remaining_bytes)
+            remaining: formatBytes(storageInfo.remaining_bytes),
+            credit_quota: formatCreditQuota(creditInfo.credit_quota)
           }
         }
       });
@@ -68,7 +105,7 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
 
   /**
    * GET /api/admin/users/:id/storage
-   * 특정 사용자 스토리지 정보 조회 (관리자용)
+   * 특정 사용자 스토리지 정보 조회 (관리자용, 크레딧 정보 포함)
    */
   router.get('/admin/users/:id/storage', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
@@ -81,17 +118,41 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
         });
       }
 
+      // 스토리지 정보 조회
       const storageInfo = await getUserStorageInfo(db, id);
+
+      // 티어 정의에서 credit_quota 조회
+      const tierDefinitions = await getTierDefinitions(db);
+      const tierDef = tierDefinitions[storageInfo.tier] || tierDefinitions['free_trial'];
+      const creditQuota = storageInfo.is_unlimited ? -1 : (tierDef.credit_quota ?? 2000);
+
+      // 사이클 정보
+      const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
+      const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
+
+      // 크레딧 정보 조회
+      const creditInfo = await getUserCreditInfo(
+        db,
+        analyticsDb,
+        id,
+        storageInfo.tier,
+        creditQuota,
+        cycleStart,
+        cycleEnd,
+        storageInfo.ocr_days_until_reset
+      );
 
       res.json({
         success: true,
         data: {
           userId: id,
           ...storageInfo,
+          ...creditInfo,
           formatted: {
             quota: formatBytes(storageInfo.quota_bytes),
             used: formatBytes(storageInfo.used_bytes),
-            remaining: formatBytes(storageInfo.remaining_bytes)
+            remaining: formatBytes(storageInfo.remaining_bytes),
+            credit_quota: formatCreditQuota(creditInfo.credit_quota)
           }
         }
       });
@@ -193,7 +254,7 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
   });
 
   /**
-   * OCR 할당량 포맷팅 (페이지 기준)
+   * OCR 할당량 포맷팅 (페이지 기준, deprecated)
    */
   function formatOcrPageQuota(quota) {
     if (quota === -1) return '무제한';
@@ -202,18 +263,20 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
 
   /**
    * GET /api/admin/tiers
-   * 티어 정의 목록 조회 (관리자용)
+   * 티어 정의 목록 조회 (관리자용, 크레딧 정보 포함)
    */
   router.get('/admin/tiers', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const tiers = await getTierDefinitions(db);
 
       // 객체를 배열로 변환하고 formatted 추가
-      // ocr_page_quota: 페이지 기준 (현재 사용)
+      // credit_quota: 크레딧 기준 (신규)
+      // ocr_page_quota: 페이지 기준 (deprecated)
       const tierList = Object.entries(tiers).map(([id, tier]) => ({
         id,
         ...tier,
         formatted_quota: formatBytes(tier.quota_bytes),
+        formatted_credit_quota: formatCreditQuota(tier.credit_quota ?? 2000),
         formatted_ocr_page_quota: formatOcrPageQuota(tier.ocr_page_quota ?? 500)
       }));
 
@@ -235,12 +298,12 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
 
   /**
    * PUT /api/admin/tiers/:tierId
-   * 티어 정의 수정 (관리자용)
+   * 티어 정의 수정 (관리자용, credit_quota 지원)
    */
   router.put('/admin/tiers/:tierId', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
       const { tierId } = req.params;
-      const { name, quota_bytes, ocr_page_quota, description } = req.body;
+      const { name, quota_bytes, credit_quota, ocr_page_quota, description } = req.body;
 
       if (!tierId) {
         return res.status(400).json({
@@ -260,6 +323,7 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
       const updates = {};
       if (name !== undefined) updates.name = name;
       if (quota_bytes !== undefined) updates.quota_bytes = quota_bytes;
+      if (credit_quota !== undefined) updates.credit_quota = credit_quota;
       if (ocr_page_quota !== undefined) updates.ocr_page_quota = ocr_page_quota;
       if (description !== undefined) updates.description = description;
 
@@ -272,6 +336,7 @@ module.exports = function(db, authenticateJWT, requireRole, notifyUserAccountSub
           id: tierId,
           ...updatedTier,
           formatted_quota: formatBytes(updatedTier.quota_bytes),
+          formatted_credit_quota: formatCreditQuota(updatedTier.credit_quota ?? 2000),
           formatted_ocr_page_quota: formatOcrPageQuota(updatedTier.ocr_page_quota ?? 500)
         }
       });

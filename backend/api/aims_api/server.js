@@ -10462,8 +10462,8 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', userActivityRoutes);
     console.log('[Server] userActivityRoutes 등록 완료');
 
-    // 스토리지 쿼터 라우트 설정
-    const storageRoutes = require('./routes/storage-routes')(db, authenticateJWT, requireRole, notifyUserAccountSubscribers);
+    // 스토리지 쿼터 라우트 설정 (크레딧 시스템 지원)
+    const storageRoutes = require('./routes/storage-routes')(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers);
     app.use('/api', storageRoutes);
 
     // 테스트: storage routes 바로 다음에 직접 라우트 등록

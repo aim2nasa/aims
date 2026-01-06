@@ -950,15 +950,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
         }
 
-        const getOcrPercent = () => {
-          if (!storageInfo || storageInfo.ocr_page_quota <= 0) return 0
-          return Math.min((storageInfo.ocr_pages_used / storageInfo.ocr_page_quota) * 100, 100)
+        const getCreditPercent = () => {
+          if (!storageInfo || storageInfo.credit_is_unlimited || !storageInfo.credit_quota || storageInfo.credit_quota <= 0) return 0
+          return Math.min((storageInfo.credits_used / storageInfo.credit_quota) * 100, 100)
         }
 
-        // OCR 사이클 날짜 포맷 (MM/DD 형식)
+        // 크레딧 사이클 날짜 포맷 (MM/DD 형식)
         const formatCycleDate = (dateStr: string) => {
           if (!dateStr) return ''
           return dateStr.slice(5).replace('-', '/')
+        }
+
+        // 크레딧 값 포맷 (1000 이상이면 1,000 형태로)
+        const formatCredits = (value: number) => {
+          return value.toLocaleString()
         }
 
         const getLevel = (percent: number) => {
@@ -1020,37 +1025,36 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
               {/* 구분선 */}
               <div className="account-settings-view__usage-separator" />
 
-              {/* OCR */}
+              {/* 크레딧 */}
               <div className="account-settings-view__usage-col">
                 <h3 className="account-settings-view__usage-title">
-                  <svg width="14" height="14" viewBox="0 0 16 16" style={{ color: 'var(--color-ios-green)' }}>
-                    <path d="M2 5V3.5A1.5 1.5 0 0 1 3.5 2H5M11 2h1.5A1.5 1.5 0 0 1 14 3.5V5M14 11v1.5a1.5 1.5 0 0 1-1.5 1.5H11M5 14H3.5A1.5 1.5 0 0 1 2 12.5V11" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                    <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+                  <svg width="14" height="14" viewBox="0 0 16 16" style={{ color: 'var(--color-ios-yellow, #ffcc00)' }}>
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                    <text x="8" y="11" textAnchor="middle" fontSize="8" fontWeight="600" fill="currentColor">C</text>
                   </svg>
-                  OCR (사이클)
+                  크레딧 (사이클)
                 </h3>
                 <div className="account-settings-view__usage-main">
                   {storageLoading ? (
                     <span className="account-settings-view__value account-settings-view__value--muted">로딩 중...</span>
                   ) : storageInfo ? (
                     <span className="account-settings-view__usage-value">
-                      {storageInfo.ocr_pages_used}p / {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_page_quota}p`}
-                      <span className="account-settings-view__usage-sub"> ({storageInfo.ocr_docs_count}건)</span>
+                      {formatCredits(storageInfo.credits_used ?? 0)}C / {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(storageInfo.credit_quota ?? 0)}C`}
                     </span>
                   ) : (
                     <span className="account-settings-view__value account-settings-view__value--muted">-</span>
                   )}
                 </div>
-                {storageInfo && !storageInfo.ocr_is_unlimited && (
-                  <div className={`account-settings-view__progress-bar-wrap account-settings-view__progress-bar-wrap--${getLevel(getOcrPercent())}`}>
-                    <div className="account-settings-view__progress-bar-fill" style={{ width: `${getOcrPercent()}%` }} />
+                {storageInfo && !storageInfo.credit_is_unlimited && (
+                  <div className={`account-settings-view__progress-bar-wrap account-settings-view__progress-bar-wrap--${getLevel(getCreditPercent())}`}>
+                    <div className="account-settings-view__progress-bar-fill" style={{ width: `${getCreditPercent()}%` }} />
                   </div>
                 )}
                 <div className="account-settings-view__usage-footer">
-                  <span className="account-settings-view__usage-label">남은 페이지</span>
+                  <span className="account-settings-view__usage-label">남은 크레딧</span>
                   {storageInfo ? (
-                    <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getOcrPercent())}`}>
-                      {storageInfo.ocr_is_unlimited ? '무제한' : `${storageInfo.ocr_remaining}p`}
+                    <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getCreditPercent())}`}>
+                      {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(storageInfo.credits_remaining ?? 0)}C`}
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>
@@ -1059,7 +1063,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   <span className="account-settings-view__usage-label">사이클</span>
                   {storageInfo ? (
                     <span className="account-settings-view__usage-stat">
-                      {formatCycleDate(storageInfo.ocr_cycle_start)} ~ {formatCycleDate(storageInfo.ocr_cycle_end)}
+                      {formatCycleDate(storageInfo.credit_cycle_start)} ~ {formatCycleDate(storageInfo.credit_cycle_end)}
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>
@@ -1068,12 +1072,25 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   <span className="account-settings-view__usage-label">리셋까지</span>
                   {storageInfo ? (
                     <span className="account-settings-view__usage-stat">
-                      {storageInfo.ocr_days_until_reset}일
+                      {storageInfo.credit_days_until_reset}일
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>
                   )}
                 </div>
+                {/* 크레딧 내역 (OCR + AI) */}
+                {storageInfo && storageInfo.credit_breakdown && (
+                  <div className="account-settings-view__usage-footer account-settings-view__usage-footer--breakdown">
+                    <span className="account-settings-view__usage-label">내역</span>
+                    <span className="account-settings-view__usage-stat">
+                      OCR {storageInfo.credit_breakdown.ocr?.pages ?? 0}p = {formatCredits(storageInfo.credit_breakdown.ocr?.credits ?? 0)}C
+                    </span>
+                    <span className="account-settings-view__usage-divider">|</span>
+                    <span className="account-settings-view__usage-stat">
+                      AI {((storageInfo.credit_breakdown.ai?.tokens ?? 0) / 1000).toFixed(1)}K = {formatCredits(Math.round(storageInfo.credit_breakdown.ai?.credits ?? 0))}C
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

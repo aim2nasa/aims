@@ -1,8 +1,9 @@
 /**
  * UsageQuotaWidget Component
  * @since 2025-12-19
+ * @updated 2026-01-06 - OCR → 크레딧 표시로 전환
  *
- * 스토리지 + OCR 파이 차트 아이콘
+ * 스토리지 + 크레딧 파이 차트 아이콘
  * - 두 개의 원형 프로그레스로 사용률 시각화
  * - AIMS 스타일 툴팁
  * - 클릭 시 상세 페이지로 이동
@@ -10,14 +11,12 @@
 
 import React from 'react'
 import type { StorageInfo } from '@/services/userService'
-import type { AIUsageData } from '@/services/aiUsageService'
 import { formatFileSize } from '@/features/batch-upload/utils/fileValidation'
 import Tooltip from '@/shared/ui/Tooltip'
 import './UsageQuotaWidget.css'
 
 export interface UsageQuotaWidgetProps {
   storageInfo: StorageInfo | null
-  aiUsage: AIUsageData | null
   loading?: boolean
   collapsed?: boolean
   onClick?: () => void
@@ -26,7 +25,7 @@ export interface UsageQuotaWidgetProps {
 interface PieChartProps {
   percent: number
   level: 'normal' | 'warning' | 'danger'
-  icon: 'storage' | 'ocr'
+  icon: 'storage' | 'credit'
   tooltip: string
   size?: number
 }
@@ -72,12 +71,11 @@ const PieChart: React.FC<PieChartProps> = ({ percent, level, icon, tooltip, size
               <circle cx="6" cy="12" r="1.5" fill="var(--color-bg-primary)" />
             </g>
           )}
-          {/* 중앙 아이콘 - OCR: 스캔 프레임 */}
-          {icon === 'ocr' && (
-            <g transform={`translate(${size / 2 - 5}, ${size / 2 - 5}) scale(0.42)`} className="usage-pie__icon usage-pie__icon--ocr">
-              <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              <circle cx="12" cy="12" r="4" fill="currentColor" />
+          {/* 중앙 아이콘 - 크레딧: 코인 "C" */}
+          {icon === 'credit' && (
+            <g transform={`translate(${size / 2 - 5}, ${size / 2 - 5}) scale(0.42)`} className="usage-pie__icon usage-pie__icon--credit">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
+              <text x="12" y="16" textAnchor="middle" fontSize="12" fontWeight="600" fill="currentColor">C</text>
             </g>
           )}
         </svg>
@@ -97,10 +95,10 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
     return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
   }
 
-  // OCR 사용률 계산 (페이지 기반)
-  const getOcrPercent = (): number => {
-    if (!storageInfo || !storageInfo.has_ocr_permission || storageInfo.ocr_is_unlimited || storageInfo.ocr_page_quota <= 0) return 0
-    return Math.min((storageInfo.ocr_pages_used / storageInfo.ocr_page_quota) * 100, 100)
+  // 크레딧 사용률 계산
+  const getCreditPercent = (): number => {
+    if (!storageInfo || storageInfo.credit_is_unlimited || !storageInfo.credit_quota || storageInfo.credit_quota <= 0) return 0
+    return Math.min((storageInfo.credits_used / storageInfo.credit_quota) * 100, 100)
   }
 
   // 경고 레벨 결정
@@ -111,7 +109,7 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   }
 
   const storagePercent = getStoragePercent()
-  const ocrPercent = getOcrPercent()
+  const creditPercent = getCreditPercent()
 
   // 로딩 상태
   if (loading) {
@@ -131,15 +129,16 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   // 툴팁 콘텐츠 (소수점 2자리까지 표시)
   const storageTooltip = `저장공간: ${formatFileSize(storageInfo.used_bytes)} / ${storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)} (${storagePercent.toFixed(2)}%)`
 
-  // OCR 사이클 날짜 포맷 (MM/DD 형식)
+  // 크레딧 사이클 날짜 포맷 (MM/DD 형식)
   const formatCycleDate = (dateStr: string) => {
     if (!dateStr) return ''
     return dateStr.slice(5).replace('-', '/')
   }
 
-  const ocrTooltip = storageInfo.has_ocr_permission
-    ? `OCR: ${ocrPercent.toFixed(0)}% (${storageInfo.ocr_docs_count}건) ~${formatCycleDate(storageInfo.ocr_cycle_end)}`
-    : 'OCR 권한 없음'
+  // 크레딧 툴팁
+  const creditTooltip = storageInfo.credit_is_unlimited
+    ? '크레딧: 무제한'
+    : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%) ~${formatCycleDate(storageInfo.credit_cycle_end)}`
 
   return (
     <button
@@ -154,14 +153,12 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
         icon="storage"
         tooltip={storageTooltip}
       />
-      {storageInfo.has_ocr_permission && (
-        <PieChart
-          percent={ocrPercent}
-          level={getLevel(ocrPercent)}
-          icon="ocr"
-          tooltip={ocrTooltip}
-        />
-      )}
+      <PieChart
+        percent={creditPercent}
+        level={getLevel(creditPercent)}
+        icon="credit"
+        tooltip={creditTooltip}
+      />
     </button>
   )
 }

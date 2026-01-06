@@ -265,7 +265,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 사용량 요약 위젯 상태 (LeftPane 하단) - useAppUsageData 훅으로 분리
   const {
     storageInfo: usageStorageInfo,
-    aiUsage: usageAIUsage,
     loading: usageLoading,
     refresh: refreshUsageData
   } = useAppUsageData()
@@ -1312,7 +1311,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     <div className="leftpane-footer__left">
                       <UsageQuotaWidget
                         storageInfo={usageStorageInfo}
-                        aiUsage={usageAIUsage}
                         loading={usageLoading}
                         collapsed={leftPaneCollapsed}
                         onClick={() => {

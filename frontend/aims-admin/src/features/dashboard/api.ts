@@ -125,10 +125,12 @@ export interface TierDefinition {
   id: string;
   name: string;
   quota_bytes: number;
-  ocr_page_quota: number;
+  credit_quota: number;              // 크레딧/월 (신규)
+  ocr_page_quota: number;            // deprecated, 하위호환
   description: string;
   formatted_quota: string;
-  formatted_ocr_page_quota: string;
+  formatted_credit_quota: string;    // 크레딧 포맷 (신규)
+  formatted_ocr_page_quota: string;  // deprecated
   updatedAt?: string;
 }
 
@@ -314,7 +316,7 @@ export const dashboardApi = {
       .then((res) => res.data);
   },
 
-  updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'ocr_page_quota' | 'description'>>): Promise<TierDefinition> => {
+  updateTier: (tierId: string, updates: Partial<Pick<TierDefinition, 'name' | 'quota_bytes' | 'credit_quota' | 'ocr_page_quota' | 'description'>>): Promise<TierDefinition> => {
     return apiClient.put<UpdateTierResponse>(`/api/admin/tiers/${tierId}`, updates)
       .then((res) => res.data);
   },

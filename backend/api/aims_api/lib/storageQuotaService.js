@@ -23,13 +23,15 @@ const MB = 1024 * 1024;
 
 // 기본 티어 정의 (DB에 없을 때 사용)
 // ocr_quota: 문서 수 기반 (deprecated)
-// ocr_page_quota: 페이지 수 기반 (신규 - OCR_USAGE_POLICY.md 참고)
+// ocr_page_quota: 페이지 수 기반 (deprecated - 크레딧으로 통합)
+// credit_quota: 월 크레딧 한도 (신규 - TIER_PRICING_POLICY.md 보수적안 기준)
+// 크레딧 환산: OCR 1페이지 = 2 크레딧, AI 1K 토큰 = 0.5 크레딧
 const DEFAULT_TIER_DEFINITIONS = {
-  free_trial: { name: '무료체험', quota_bytes: 5 * GB, ocr_quota: 10, ocr_page_quota: 100, max_batch_upload_bytes: 100 * MB, description: '체험 사용자' },
-  standard: { name: '일반', quota_bytes: 30 * GB, ocr_quota: 100, ocr_page_quota: 500, max_batch_upload_bytes: 500 * MB, description: '기본 등급' },
-  premium: { name: '프리미엄', quota_bytes: 50 * GB, ocr_quota: 500, ocr_page_quota: 3000, max_batch_upload_bytes: 1 * GB, description: '프리미엄 구독자' },
-  vip: { name: 'VIP', quota_bytes: 100 * GB, ocr_quota: 1000, ocr_page_quota: 10000, max_batch_upload_bytes: 2 * GB, description: 'VIP 고객' },
-  admin: { name: '관리자', quota_bytes: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1, description: '무제한' }
+  free_trial: { name: '무료체험', quota_bytes: 512 * MB, credit_quota: 300, ocr_quota: 10, ocr_page_quota: 100, max_batch_upload_bytes: 100 * MB, description: '체험 사용자' },
+  standard: { name: '일반', quota_bytes: 20 * GB, credit_quota: 2000, ocr_quota: 100, ocr_page_quota: 500, max_batch_upload_bytes: 500 * MB, description: '기본 등급' },
+  premium: { name: '프리미엄', quota_bytes: 40 * GB, credit_quota: 8000, ocr_quota: 500, ocr_page_quota: 3000, max_batch_upload_bytes: 1 * GB, description: '프리미엄 구독자' },
+  vip: { name: 'VIP', quota_bytes: 80 * GB, credit_quota: 30000, ocr_quota: 1000, ocr_page_quota: 10000, max_batch_upload_bytes: 2 * GB, description: 'VIP 고객' },
+  admin: { name: '관리자', quota_bytes: -1, credit_quota: -1, ocr_quota: -1, ocr_page_quota: -1, max_batch_upload_bytes: -1, description: '무제한' }
 };
 
 // 캐싱된 티어 정의 (성능 최적화)
@@ -102,7 +104,9 @@ async function updateTierDefinition(db, tierId, updates) {
   // admin 티어는 무제한 유지
   if (tierId === 'admin') {
     updates.quota_bytes = -1;
+    updates.credit_quota = -1;
     updates.ocr_quota = -1;
+    updates.ocr_page_quota = -1;
   }
 
   const updatedTiers = {
