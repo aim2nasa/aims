@@ -1265,7 +1265,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         }}
         title="계정 삭제"
         size="sm"
-        backdropClosable={!isDeleting}
+        backdropClosable={false}
         escapeToClose={!isDeleting}
         footer={
           <div className="account-settings-view__delete-modal-footer">
@@ -1313,10 +1313,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
               type="text"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder="계정삭제"
               className="account-settings-view__delete-confirm-field"
               disabled={isDeleting}
               autoComplete="off"
+              aria-label="계정삭제 확인 입력"
             />
           </div>
         </div>
