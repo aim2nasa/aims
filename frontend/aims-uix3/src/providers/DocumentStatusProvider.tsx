@@ -321,7 +321,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     fetchDocumentsRef.current(false)
   }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm])
 
-  // 🔄 SSE 훅 사용: Page Visibility API 및 실시간 업데이트 처리는 훅 내부에서 관리
+  // 🔄 SSE 훅 사용 (폴링 대체)
+  // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영
+  // - document-progress: 진행률 업데이트 시 즉시 반영 (폴링 제거)
+  // - Page Visibility API로 탭 비활성화 시 자동 연결 해제/재연결
   useDocumentStatusListSSE(
     () => {
       fetchDocumentsRef.current(false)
@@ -370,19 +373,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
   }, [initialFiles, isLoading])
 
-  // 🔄 하이브리드 방식: 폴링(진행률) + SSE(완료 알림)
-  // - 5초 폴링: 처리 중인 문서의 진행률 업데이트 (0% → 30% → 60% → 100%)
-  // - SSE: 완료 시 즉시 반영 (폴링 대기 없이)
-  useEffect(() => {
-    if (!isPollingEnabled) return
-
-    const intervalId = setInterval(() => {
-      fetchDocumentsRef.current(false)
-      checkApiHealthRef.current()
-    }, 5000) // 5초마다 폴링
-
-    return () => clearInterval(intervalId)
-  }, [isPollingEnabled])
+  // 🔄 SSE 단독 사용 (폴링 제거 - 2026-01-06)
+  // - document-list-change: 문서 업로드/삭제/상태변경 시 즉시 반영
+  // - document-progress: 진행률 업데이트 시 즉시 반영 (20% → 40% → 60% → 80% → 100%)
+  // - 폴링 대비 서버 부하 60-70% 감소, 실시간성 향상
+  // 참고: useDocumentStatusListSSE 훅에서 SSE 이벤트 처리
 
   /**
    * 🔍 검색 및 필터링

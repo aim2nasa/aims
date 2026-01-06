@@ -9,10 +9,12 @@ import { useSSESubscription } from './useSSESubscription'
 import { errorReporter } from '@/shared/lib/errorReporter'
 
 interface DocumentListChangeEvent {
-  type: 'uploaded' | 'deleted' | 'status-changed' | 'linked' | 'unlinked' | 'updated'
+  type: 'uploaded' | 'deleted' | 'status-changed' | 'linked' | 'unlinked' | 'updated' | 'progress-update'
   documentId: string
   documentName?: string
   status?: string
+  progress?: number
+  stage?: string
   timestamp: string
 }
 
@@ -50,6 +52,7 @@ export function useDocumentStatusListSSE(
 
   // 이벤트 핸들러
   const handleEvent = useCallback((eventType: string, data: unknown) => {
+    // 1. 문서 목록 변경 이벤트 (업로드, 삭제, 상태변경 등)
     if (eventType === 'document-list-change') {
       try {
         const eventData = data as DocumentListChangeEvent
@@ -71,6 +74,25 @@ export function useDocumentStatusListSSE(
       } catch (error) {
         console.error('[DocumentStatusListSSE] document-list-change 이벤트 처리 실패:', error)
         errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentListChange' })
+      }
+    }
+
+    // 2. 문서 진행률 업데이트 이벤트 (폴링 대체)
+    if (eventType === 'document-progress') {
+      try {
+        const eventData = data as DocumentListChangeEvent
+        if (import.meta.env.DEV) {
+          console.log('[DocumentStatusListSSE] 진행률 업데이트:', eventData.documentId, `${eventData.progress}%`, eventData.stage)
+        }
+
+        // 콜백 호출 (progress-update 타입으로)
+        onDocumentChangeRef.current?.(eventData)
+
+        // 🔄 진행률 변경 시 즉시 새로고침 (MongoDB에 이미 저장됨)
+        onRefreshRef.current()
+      } catch (error) {
+        console.error('[DocumentStatusListSSE] document-progress 이벤트 처리 실패:', error)
+        errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentProgress' })
       }
     }
   }, [])

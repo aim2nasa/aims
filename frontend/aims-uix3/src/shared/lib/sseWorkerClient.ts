@@ -320,7 +320,8 @@ class SSEWorkerClient {
     const eventTypes = [
       'connected', 'init', 'document-list-change', 'document-change',
       'document-status-change', 'ar-change', 'cr-change', 'processing-complete',
-      'timeout', 'new-message', 'status-changed', 'tier-changed', 'file-change'
+      'timeout', 'new-message', 'status-changed', 'tier-changed', 'file-change',
+      'document-progress' // 문서 진행률 업데이트
     ]
 
     eventTypes.forEach(eventType => {

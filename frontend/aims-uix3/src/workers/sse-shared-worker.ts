@@ -249,6 +249,16 @@ function setupEventListeners(streamKey: string, conn: Connection) {
     }
   })
 
+  // 문서 진행률 업데이트 (document status list - progress)
+  eventSource.addEventListener('document-progress', (e: MessageEvent) => {
+    try {
+      const data = JSON.parse(e.data)
+      broadcastToSubscribers(streamKey, 'document-progress', data)
+    } catch (error) {
+      logError(`document-progress 파싱 실패: ${streamKey}`, error)
+    }
+  })
+
   // ping (keep-alive)
   eventSource.addEventListener('ping', () => {
     // keep-alive, 무시
