@@ -204,8 +204,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
             {file.status === 'error' && (
               <>
                 <span className="progress-file__error">{file.error || '업로드 실패'}</span>
-                {/* 바이러스 감지 에러는 재시도 불가 */}
-                {onRetryFile && !file.error?.includes('바이러스 감지') && (
+                {/* 바이러스 감지/중복 파일 에러는 재시도 불가 */}
+                {onRetryFile && !file.error?.includes('바이러스') && !file.error?.includes('중복') && (
                   <button
                     type="button"
                     className="progress-file__retry"
