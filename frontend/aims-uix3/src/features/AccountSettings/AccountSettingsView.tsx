@@ -961,9 +961,9 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           return dateStr.slice(5).replace('-', '/')
         }
 
-        // 크레딧 값 포맷 (1000 이상이면 1,000 형태로)
+        // 크레딧 값 포맷 (정수, 1000 이상이면 1,000 형태로)
         const formatCredits = (value: number) => {
-          return value.toLocaleString()
+          return Math.round(value).toLocaleString()
         }
 
         const getLevel = (percent: number) => {
@@ -1032,7 +1032,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
                     <text x="8" y="11" textAnchor="middle" fontSize="8" fontWeight="600" fill="currentColor">C</text>
                   </svg>
-                  크레딧 (사이클)
+                  크레딧
                 </h3>
                 <div className="account-settings-view__usage-main">
                   {storageLoading ? (
@@ -1060,7 +1060,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     <span className="account-settings-view__usage-stat">-</span>
                   )}
                   <span className="account-settings-view__usage-divider">|</span>
-                  <span className="account-settings-view__usage-label">사이클</span>
+                  <span className="account-settings-view__usage-label">기간</span>
                   {storageInfo ? (
                     <span className="account-settings-view__usage-stat">
                       {formatCycleDate(storageInfo.credit_cycle_start)} ~ {formatCycleDate(storageInfo.credit_cycle_end)}
@@ -1083,43 +1083,60 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   <div className="account-settings-view__usage-footer account-settings-view__usage-footer--breakdown">
                     <span className="account-settings-view__usage-label">내역</span>
                     <span className="account-settings-view__usage-stat">
-                      OCR {storageInfo.credit_breakdown.ocr?.pages ?? 0}p = {formatCredits(storageInfo.credit_breakdown.ocr?.credits ?? 0)}C
+                      OCR {formatCredits(storageInfo.credit_breakdown.ocr?.credits ?? 0)}C
                     </span>
                     <span className="account-settings-view__usage-divider">|</span>
                     <span className="account-settings-view__usage-stat">
-                      AI {((storageInfo.credit_breakdown.ai?.tokens ?? 0) / 1000).toFixed(1)}K = {formatCredits(Math.round(storageInfo.credit_breakdown.ai?.credits ?? 0))}C
+                      AI {formatCredits(storageInfo.credit_breakdown.ai?.credits ?? 0)}C
                     </span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* AI 사용량 (30일) */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">AI 사용량 (30일)</h3>
-              <div className="account-settings-view__ai-stats">
-                <div className="account-settings-view__ai-stat">
-                  <span className="account-settings-view__ai-stat-label">총 토큰</span>
-                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.total_tokens) : '-'}</span>
-                </div>
-                <div className="account-settings-view__ai-stat">
-                  <span className="account-settings-view__ai-stat-label">예상 비용</span>
-                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatCost(aiUsage.estimated_cost_usd) : '-'}</span>
-                </div>
-                <div className="account-settings-view__ai-stat">
-                  <span className="account-settings-view__ai-stat-label">요청 횟수</span>
-                  <span className="account-settings-view__ai-stat-value">{aiUsage ? `${aiUsage.request_count}회` : '-'}</span>
-                </div>
-                <div className="account-settings-view__ai-stat">
-                  <span className="account-settings-view__ai-stat-label">RAG 검색</span>
-                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.by_source?.rag_api || 0) : '-'}</span>
-                </div>
-                <div className="account-settings-view__ai-stat">
-                  <span className="account-settings-view__ai-stat-label">문서 요약</span>
-                  <span className="account-settings-view__ai-stat-value">{aiUsage ? formatTokens(aiUsage.by_source?.n8n_docsummary || 0) : '-'}</span>
+            {/* AI 사용량 (30일) - 카드 스타일 */}
+            {aiUsage && aiUsage.by_source && (
+              <div className="account-settings-view__usage-card account-settings-view__usage-card--ai">
+                <div className="account-settings-view__usage-col">
+                  <h3 className="account-settings-view__usage-title">
+                    <svg width="14" height="14" viewBox="0 0 16 16" className="account-settings-view__usage-icon--ai">
+                      <path d="M8 1L2 4v4c0 4 2.5 6.5 6 7.5 3.5-1 6-3.5 6-7.5V4L8 1zm0 2l4 2v3c0 3-2 5-4 5.8V3z" fill="currentColor"/>
+                    </svg>
+                    AI 사용량 (30일)
+                  </h3>
+                  <div className="account-settings-view__usage-main">
+                    <span className="account-settings-view__usage-value">
+                      {formatCredits(Object.values(aiUsage.by_source).reduce<number>((sum, t) => sum + Math.round((t || 0) / 1000 * 0.5), 0))}C
+                    </span>
+                    <span className="account-settings-view__usage-requests">
+                      {' '}/ {aiUsage.request_count}회
+                    </span>
+                  </div>
+                  <div className="account-settings-view__usage-footer account-settings-view__usage-footer--breakdown">
+                    <span className="account-settings-view__usage-label">내역</span>
+                    {Object.entries(aiUsage.by_source)
+                      .filter(([, tokens]) => tokens && tokens > 0)
+                      .sort(([, a], [, b]) => (b || 0) - (a || 0))
+                      .map(([source, tokens], idx, arr) => {
+                        const sourceLabels: Record<string, string> = {
+                          rag_api: 'RAG',
+                          n8n_docsummary: '요약',
+                          chat: '채팅',
+                          mcp: 'MCP',
+                          doc_embedding: '임베딩'
+                        }
+                        return (
+                          <span key={source}>
+                            {idx > 0 && <span className="account-settings-view__usage-divider">|</span>}
+                            <span className="account-settings-view__usage-label">{sourceLabels[source] || source}</span>
+                            <span className="account-settings-view__usage-stat">{formatCredits(Math.round((tokens || 0) / 1000 * 0.5))}C</span>
+                          </span>
+                        )
+                      })}
+                  </div>
                 </div>
               </div>
-            </section>
+            )}
 
             {/* 데이터 관리 */}
             <section className="account-settings-view__section account-settings-view__section--danger">

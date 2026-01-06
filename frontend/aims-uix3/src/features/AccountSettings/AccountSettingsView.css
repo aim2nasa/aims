@@ -1679,3 +1679,43 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
     flex-direction: column;
   }
 }
+
+/* AI 사용량 카드 modifier */
+.account-settings-view__usage-card--ai {
+  margin-bottom: var(--spacing-5);
+}
+
+/* AI 아이콘 색상 (시안/청록) */
+.account-settings-view__usage-icon--ai {
+  color: var(--color-ios-teal, #30b0c7);
+}
+
+/* 요청 횟수 표시 */
+.account-settings-view__usage-requests {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+}
+
+/* 크레딧 내역 breakdown footer */
+.account-settings-view__usage-footer--breakdown {
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-2);
+  border-top: 1px solid var(--color-border);
+}
+
+/* breakdown 내 라벨과 값 사이 간격 */
+.account-settings-view__usage-footer--breakdown .account-settings-view__usage-label {
+  margin-right: var(--spacing-1);
+}
+
+.account-settings-view__usage-footer--breakdown .account-settings-view__usage-stat {
+  margin-right: var(--spacing-1);
+}
+
+/* breakdown 구분자 간격 */
+.account-settings-view__usage-footer--breakdown .account-settings-view__usage-divider {
+  margin: 0 var(--spacing-2);
+}
