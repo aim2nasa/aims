@@ -1,10 +1,14 @@
 """
 DocPrepMain Router
 Main orchestrator for document processing pipeline
+
+큐잉 모드 지원:
+- UPLOAD_QUEUE_ENABLED=True: 요청을 MongoDB 큐에 저장 후 즉시 응답
+- UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
 """
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from bson import ObjectId
@@ -15,9 +19,12 @@ from services.file_service import FileService
 from services.meta_service import MetaService
 from services.openai_service import OpenAIService
 from services.redis_service import RedisService
+from services.temp_file_service import TempFileService
+from services.upload_queue_service import UploadQueueService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+settings = get_settings()
 
 # Unsupported MIME types
 UNSUPPORTED_MIME_TYPES = [
@@ -149,216 +156,59 @@ async def doc_prep_main(
             raise HTTPException(status_code=500, detail=str(e))
 
     try:
-        # Step 1: Create document in MongoDB
-        logger.info(f"Creating document for userId: {userId}, customerId: {customerId}")
-
-        files_collection = MongoService.get_collection("files")
-        doc_data = {
-            "ownerId": userId,
-            "createdAt": datetime.utcnow(),
-        }
-        if customerId:
-            doc_data["customerId"] = customerId
-
-        result = await files_collection.insert_one(doc_data)
-        doc_id = str(result.inserted_id)
-        logger.info(f"Created document: {doc_id}")
-
-        # Step 2: Save file to disk (DocUpload logic)
+        # 파일 내용 읽기
         file_content = await file.read()
         original_name = file.filename or "unknown"
 
-        saved_name, dest_path = await FileService.save_file(
-            content=file_content,
-            original_name=original_name,
-            user_id=userId,
-            source_path=source_path
-        )
+        # 큐잉 모드 확인
+        if settings.UPLOAD_QUEUE_ENABLED:
+            # 큐잉 모드: 파일을 임시 저장소에 저장하고 큐에 등록 후 즉시 응답
+            logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
-        logger.info(f"Saved file: {saved_name} to {dest_path}")
+            # 1. 임시 파일 저장
+            temp_path = await TempFileService.save(file_content, original_name)
 
-        # Update MongoDB with upload info
-        upload_info = {
-            "upload.originalName": original_name,
-            "upload.saveName": saved_name,
-            "upload.destPath": dest_path,
-            "upload.uploaded_at": datetime.utcnow().isoformat(),
-        }
-        if source_path:
-            upload_info["upload.sourcePath"] = source_path
-
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": upload_info}
-        )
-
-        # Connect document to customer if customerId provided
-        if customerId:
-            await _connect_document_to_customer(customerId, doc_id, userId)
-
-        # Step 3: Extract metadata (DocMeta logic)
-        meta_result = await MetaService.extract_metadata(dest_path)
-
-        if meta_result.get("error"):
-            logger.warning(f"Metadata extraction failed: {meta_result}")
-            # Save error to MongoDB
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"meta.error": meta_result.get("message", "Unknown error")}}
-            )
-            return JSONResponse(
-                status_code=meta_result.get("status", 500),
-                content=meta_result
-            )
-
-        # Get summary if text was extracted
-        full_text = meta_result.get("extracted_text", "")
-        summary = ""
-        tags = []
-
-        if full_text and len(full_text.strip()) > 0:
-            summary_result = await OpenAIService.summarize_text(full_text)
-            summary = summary_result.get("summary", "")
-            tags = summary_result.get("tags", [])
-
-        # Update MongoDB with meta info
-        meta_update = {
-            "meta.filename": meta_result.get("filename"),
-            "meta.extension": meta_result.get("extension"),
-            "meta.mime": meta_result.get("mime_type"),
-            "meta.size_bytes": meta_result.get("file_size"),
-            "meta.file_hash": meta_result.get("file_hash"),
-            "meta.pdf_pages": meta_result.get("num_pages"),
-            "meta.full_text": full_text or "",
-            "meta.summary": summary,
-            "meta.tags": tags,
-            "meta.length": len(full_text) if full_text else 0,
-            "meta.meta_status": "done"
-        }
-
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": meta_update}
-        )
-
-        mime_type = meta_result.get("mime_type", "")
-
-        # Step 4: Route based on MIME type
-
-        # Case 1: text/plain - extract and save text
-        if mime_type == "text/plain":
-            logger.info(f"Processing text/plain file: {doc_id}")
-
-            # Read file content as text
-            text_content = await FileService.read_file_as_text(dest_path)
-
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"text.full_text": text_content}}
-            )
-
-            # Match n8n response format exactly
-            return {
-                "exitCode": 0,
-                "stderr": ""
-            }
-
-        # Case 2: Unsupported MIME type
-        if mime_type in UNSUPPORTED_MIME_TYPES:
-            logger.warning(f"Unsupported MIME type: {mime_type} for {doc_id}")
-
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {"ocr.warn": "Skipped OCR due to unsupported MIME type"}}
-            )
-
-            return JSONResponse(
-                status_code=415,
-                content={
-                    "warn": True,
-                    "status": 415,
-                    "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
-                    "mime": mime_type,
-                    "filename": original_name,
-                    "document_id": doc_id
-                }
-            )
-
-        # Case 3: Check if OCR is needed (no text extracted)
-        if not full_text or len(full_text.strip()) == 0:
-            logger.info(f"Queueing OCR for document: {doc_id}")
-
-            queued_at = datetime.utcnow().isoformat()
-
-            # Queue to Redis
-            await RedisService.add_to_stream(
-                file_id=doc_id,
-                file_path=dest_path,
-                doc_id=doc_id,
+            # 2. 큐에 작업 등록
+            queue_id = await UploadQueueService.enqueue(
+                file_data={
+                    "temp_path": temp_path,
+                    "original_filename": original_name,
+                    "file_size": len(file_content),
+                    "mime_type": file.content_type
+                },
+                request_data={
+                    "userId": userId,
+                    "customerId": customerId,
+                    "source_path": source_path
+                },
                 owner_id=userId,
-                queued_at=queued_at
+                customer_id=customerId
             )
 
-            # Update MongoDB with queue status
-            await files_collection.update_one(
-                {"_id": ObjectId(doc_id)},
-                {"$set": {
-                    "ocr.status": "queued",
-                    "ocr.queued_at": queued_at
-                }}
-            )
+            logger.info(f"Upload queued: {queue_id}")
 
+            # 3. 즉시 응답 반환
             return {
                 "result": "success",
-                "document_id": doc_id,
-                "ocr": {
-                    "status": "queued",
-                    "queued_at": queued_at
-                }
+                "status": "queued",
+                "queue_id": queue_id,
+                "message": "문서가 처리 대기열에 추가되었습니다."
             }
 
-        # Case 4: Text already extracted, notify complete
-        logger.info(f"Document {doc_id} processed without OCR (text already extracted)")
+        # 동기 처리 모드 (UPLOAD_QUEUE_ENABLED=False 또는 롤백용)
+        logger.info(f"Processing document synchronously for userId: {userId}, customerId: {customerId}")
 
-        # Send completion notification (async, don't wait)
-        await _notify_document_complete(doc_id, userId)
-
-        # Match n8n response format exactly (include meta, exclude has_text)
-        return {
-            "result": "success",
-            "document_id": doc_id,
-            "status": "completed",
-            "meta": {
-                "filename": meta_result.get("filename"),
-                "extension": meta_result.get("extension"),
-                "mime": meta_result.get("mime_type"),
-                "size_bytes": str(meta_result.get("file_size", "")),
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "meta_status": "ok",
-                "exif": "{}",
-                "pdf_pages": str(meta_result.get("num_pages", "")),
-                "full_text": (full_text[:10000] + "...") if len(full_text) > 10000 else full_text
-            }
-        }
+        return await process_document_pipeline(
+            file_content=file_content,
+            original_name=original_name,
+            user_id=userId,
+            customer_id=customerId,
+            source_path=source_path,
+            mime_type=file.content_type
+        )
 
     except Exception as e:
         logger.error(f"Error in doc_prep_main: {e}", exc_info=True)
-
-        # Save error to MongoDB if we have a doc_id
-        if doc_id:
-            try:
-                files_collection = MongoService.get_collection("files")
-                await files_collection.update_one(
-                    {"_id": ObjectId(doc_id)},
-                    {"$set": {
-                        "error.statusCode": 500,
-                        "error.statusMessage": str(e),
-                        "error.timestamp": datetime.utcnow().isoformat()
-                    }}
-                )
-            except Exception as save_error:
-                logger.error(f"Failed to save error to MongoDB: {save_error}")
-
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -418,3 +268,234 @@ async def _notify_document_complete(doc_id: str, owner_id: str):
 
     # Run notification in background
     asyncio.create_task(_send_notification())
+
+
+async def process_document_pipeline(
+    file_content: bytes,
+    original_name: str,
+    user_id: str,
+    customer_id: Optional[str],
+    source_path: Optional[str],
+    mime_type: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    실제 문서 처리 파이프라인 (워커에서 호출)
+
+    Args:
+        file_content: 파일 내용 (bytes)
+        original_name: 원본 파일명
+        user_id: 사용자 ID
+        customer_id: 고객 ID (선택)
+        source_path: 원본 경로 (선택)
+        mime_type: MIME 타입 (선택)
+
+    Returns:
+        처리 결과 dict
+    """
+    doc_id = None
+
+    try:
+        # Step 1: Create document in MongoDB
+        logger.info(f"Creating document for userId: {user_id}, customerId: {customer_id}")
+
+        files_collection = MongoService.get_collection("files")
+        doc_data = {
+            "ownerId": user_id,
+            "createdAt": datetime.utcnow(),
+        }
+        if customer_id:
+            doc_data["customerId"] = customer_id
+
+        result = await files_collection.insert_one(doc_data)
+        doc_id = str(result.inserted_id)
+        logger.info(f"Created document: {doc_id}")
+
+        # Step 2: Save file to disk
+        saved_name, dest_path = await FileService.save_file(
+            content=file_content,
+            original_name=original_name,
+            user_id=user_id,
+            source_path=source_path
+        )
+
+        logger.info(f"Saved file: {saved_name} to {dest_path}")
+
+        # Update MongoDB with upload info
+        upload_info = {
+            "upload.originalName": original_name,
+            "upload.saveName": saved_name,
+            "upload.destPath": dest_path,
+            "upload.uploaded_at": datetime.utcnow().isoformat(),
+        }
+        if source_path:
+            upload_info["upload.sourcePath"] = source_path
+
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": upload_info}
+        )
+
+        # Connect document to customer if customer_id provided
+        if customer_id:
+            await _connect_document_to_customer(customer_id, doc_id, user_id)
+
+        # Step 3: Extract metadata
+        meta_result = await MetaService.extract_metadata(dest_path)
+
+        if meta_result.get("error"):
+            logger.warning(f"Metadata extraction failed: {meta_result}")
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"meta.error": meta_result.get("message", "Unknown error")}}
+            )
+            return {
+                "result": "error",
+                "document_id": doc_id,
+                "error": meta_result.get("message", "Unknown error"),
+                "status": meta_result.get("status", 500)
+            }
+
+        # Get summary if text was extracted
+        full_text = meta_result.get("extracted_text", "")
+        summary = ""
+        tags = []
+
+        if full_text and len(full_text.strip()) > 0:
+            summary_result = await OpenAIService.summarize_text(full_text)
+            summary = summary_result.get("summary", "")
+            tags = summary_result.get("tags", [])
+
+        # Update MongoDB with meta info
+        meta_update = {
+            "meta.filename": meta_result.get("filename"),
+            "meta.extension": meta_result.get("extension"),
+            "meta.mime": meta_result.get("mime_type"),
+            "meta.size_bytes": meta_result.get("file_size"),
+            "meta.file_hash": meta_result.get("file_hash"),
+            "meta.pdf_pages": meta_result.get("num_pages"),
+            "meta.full_text": full_text or "",
+            "meta.summary": summary,
+            "meta.tags": tags,
+            "meta.length": len(full_text) if full_text else 0,
+            "meta.meta_status": "done"
+        }
+
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": meta_update}
+        )
+
+        detected_mime = meta_result.get("mime_type", "")
+
+        # Step 4: Route based on MIME type
+
+        # Case 1: text/plain - extract and save text
+        if detected_mime == "text/plain":
+            logger.info(f"Processing text/plain file: {doc_id}")
+
+            text_content = await FileService.read_file_as_text(dest_path)
+
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"text.full_text": text_content}}
+            )
+
+            return {
+                "exitCode": 0,
+                "stderr": "",
+                "document_id": doc_id
+            }
+
+        # Case 2: Unsupported MIME type
+        if detected_mime in UNSUPPORTED_MIME_TYPES:
+            logger.warning(f"Unsupported MIME type: {detected_mime} for {doc_id}")
+
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {"ocr.warn": "Skipped OCR due to unsupported MIME type"}}
+            )
+
+            return {
+                "warn": True,
+                "status": 415,
+                "userMessage": "OCR 생략: 지원하지 않는 문서 형식입니다.",
+                "mime": detected_mime,
+                "filename": original_name,
+                "document_id": doc_id
+            }
+
+        # Case 3: Check if OCR is needed (no text extracted)
+        if not full_text or len(full_text.strip()) == 0:
+            logger.info(f"Queueing OCR for document: {doc_id}")
+
+            queued_at = datetime.utcnow().isoformat()
+
+            # Queue to Redis
+            await RedisService.add_to_stream(
+                file_id=doc_id,
+                file_path=dest_path,
+                doc_id=doc_id,
+                owner_id=user_id,
+                queued_at=queued_at
+            )
+
+            # Update MongoDB with queue status
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {
+                    "ocr.status": "queued",
+                    "ocr.queued_at": queued_at
+                }}
+            )
+
+            return {
+                "result": "success",
+                "document_id": doc_id,
+                "ocr": {
+                    "status": "queued",
+                    "queued_at": queued_at
+                }
+            }
+
+        # Case 4: Text already extracted, notify complete
+        logger.info(f"Document {doc_id} processed without OCR (text already extracted)")
+
+        # Send completion notification
+        await _notify_document_complete(doc_id, user_id)
+
+        return {
+            "result": "success",
+            "document_id": doc_id,
+            "status": "completed",
+            "meta": {
+                "filename": meta_result.get("filename"),
+                "extension": meta_result.get("extension"),
+                "mime": meta_result.get("mime_type"),
+                "size_bytes": str(meta_result.get("file_size", "")),
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "meta_status": "ok",
+                "exif": "{}",
+                "pdf_pages": str(meta_result.get("num_pages", "")),
+                "full_text": (full_text[:10000] + "...") if len(full_text) > 10000 else full_text
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error in process_document_pipeline: {e}", exc_info=True)
+
+        # Save error to MongoDB if we have a doc_id
+        if doc_id:
+            try:
+                files_collection = MongoService.get_collection("files")
+                await files_collection.update_one(
+                    {"_id": ObjectId(doc_id)},
+                    {"$set": {
+                        "error.statusCode": 500,
+                        "error.statusMessage": str(e),
+                        "error.timestamp": datetime.utcnow().isoformat()
+                    }}
+                )
+            except Exception as save_error:
+                logger.error(f"Failed to save error to MongoDB: {save_error}")
+
+        raise

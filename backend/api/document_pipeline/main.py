@@ -2,6 +2,7 @@
 Document Pipeline API
 FastAPI replacement for n8n workflows
 """
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -10,8 +11,10 @@ from fastapi.responses import JSONResponse
 
 from config import get_settings
 from services.mongo_service import MongoService
+from services.upload_queue_service import UploadQueueService
 from routers import doc_upload_router, doc_summary_router, doc_ocr_router, doc_meta_router, smart_search_router, doc_prep_main_router, shadow_router
 from workers.error_logger import error_logger
+from workers.upload_worker import upload_worker
 
 # Configure logging
 logging.basicConfig(
@@ -24,13 +27,30 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler"""
+    settings = get_settings()
+
     # Startup
     logger.info("Starting Document Pipeline API...")
     await MongoService.connect()
     logger.info("MongoDB connected")
+
+    # Start Upload Worker (if queue enabled)
+    if settings.UPLOAD_QUEUE_ENABLED:
+        asyncio.create_task(upload_worker.start())
+        logger.info(f"Upload Worker started: {upload_worker.worker_id}")
+    else:
+        logger.info("Upload Queue disabled, skipping worker startup")
+
     yield
+
     # Shutdown
     logger.info("Shutting down Document Pipeline API...")
+
+    # Stop Upload Worker
+    if settings.UPLOAD_QUEUE_ENABLED:
+        upload_worker.stop()
+        logger.info("Upload Worker stopped")
+
     await MongoService.disconnect()
     logger.info("MongoDB disconnected")
 
@@ -84,6 +104,28 @@ async def health_check():
         "status": "healthy",
         "service": "document_pipeline",
         "version": "1.0.0"
+    }
+
+
+# Queue status endpoint
+@app.get("/queue/status")
+async def get_queue_status():
+    """업로드 큐 상태 조회"""
+    settings = get_settings()
+
+    if not settings.UPLOAD_QUEUE_ENABLED:
+        return {
+            "enabled": False,
+            "message": "Upload queue is disabled"
+        }
+
+    worker_status = upload_worker.get_status()
+    queue_stats = await UploadQueueService.get_queue_stats()
+
+    return {
+        "enabled": True,
+        "worker": worker_status,
+        "queue": queue_stats
     }
 
 

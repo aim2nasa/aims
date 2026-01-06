@@ -49,6 +49,16 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8100
 
+    # Upload Queue Settings
+    UPLOAD_QUEUE_COLLECTION: str = "upload_queue"
+    UPLOAD_QUEUE_MAX_CONCURRENT: int = 3
+    UPLOAD_QUEUE_MAX_RETRIES: int = 3
+    UPLOAD_QUEUE_RETRY_BASE_DELAY: float = 1.0  # 초 단위 (1→2→4 지수 백오프)
+    UPLOAD_QUEUE_POLL_INTERVAL: float = 1.0  # 큐 폴링 간격 (초)
+    UPLOAD_QUEUE_TEMP_PATH: str = "/data/files/users/temp"  # 임시 파일 저장 경로
+    UPLOAD_QUEUE_STALE_TIMEOUT_MINUTES: int = 30  # 타임아웃된 작업 복구
+    UPLOAD_QUEUE_ENABLED: bool = True  # 큐잉 활성화 여부 (롤백용)
+
 
 @lru_cache()
 def get_settings() -> Settings:
