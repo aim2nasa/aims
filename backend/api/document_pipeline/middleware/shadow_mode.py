@@ -25,16 +25,16 @@ FASTAPI_BASE = "http://localhost:8100/webhook"
 
 class ServiceMode(Enum):
     """서비스 모드"""
-    N8N = "n8n"           # n8n만 사용 (현재 운영)
-    FASTAPI = "fastapi"   # FastAPI만 사용 (전환 후)
-    SHADOW = "shadow"     # 병렬 비교 모드
+    N8N = "n8n"           # n8n만 사용 (백업 옵션)
+    FASTAPI = "fastapi"   # FastAPI만 사용 (현재 운영)
+    SHADOW = "shadow"     # 병렬 비교 모드 (마이그레이션 검증용)
 
 
 class ShadowMode:
     """Shadow Mode 및 서비스 모드 관리 클래스"""
 
-    enabled: bool = True
-    service_mode: ServiceMode = ServiceMode.SHADOW
+    enabled: bool = False
+    service_mode: ServiceMode = ServiceMode.FASTAPI
 
     @classmethod
     def enable(cls):
