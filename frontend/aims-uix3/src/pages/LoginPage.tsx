@@ -22,7 +22,12 @@ export default function LoginPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 개발자 모드 단축키 핸들러 (Ctrl+Alt+Shift+D)
+  // 🔒 보안: 프로덕션 환경에서는 개발자 모드 비활성화
   useEffect(() => {
+    if (import.meta.env.PROD) {
+      return; // 프로덕션에서는 개발자 모드 단축키 비활성화
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
         e.preventDefault();
@@ -116,8 +121,15 @@ export default function LoginPage() {
    * 개발 환경 전용: 로그인 건너뛰기
    * - 백엔드에 dev-user 계정 자동 생성/조회
    * - 카카오 OAuth 없이 바로 메인 페이지로 진입
+   * 🔒 보안: 프로덕션 환경에서는 호출 불가
    */
   const handleDevLogin = async () => {
+    // 🔒 보안: 프로덕션 환경에서 개발 로그인 차단
+    if (import.meta.env.PROD) {
+      console.error('[보안] 프로덕션 환경에서 개발 로그인 시도 차단됨');
+      return;
+    }
+
     try {
       // 1. localStorage 완전히 클리어 (이전 세션 정보 제거)
       localStorage.clear();
@@ -297,7 +309,8 @@ export default function LoginPage() {
           </div>
 
           {/* 개발자 모드 전용: 로그인 건너뛰기 (Ctrl+Alt+Shift+D로 활성화) */}
-          {isDevMode && (
+          {/* 🔒 보안: 프로덕션 환경에서는 개발 모드 UI 숨김 */}
+          {!import.meta.env.PROD && isDevMode && (
             <button
               type="button"
               className="social-login-button dev-login-button"
