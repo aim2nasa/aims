@@ -23,6 +23,7 @@ vi.mock('@/shared/lib/api', () => ({
     put: vi.fn(),
     delete: vi.fn(),
   },
+  getAuthToken: vi.fn().mockReturnValue('test-token'),
 }));
 
 vi.mock('@/shared/lib/fileValidation/virusScanApi', () => ({

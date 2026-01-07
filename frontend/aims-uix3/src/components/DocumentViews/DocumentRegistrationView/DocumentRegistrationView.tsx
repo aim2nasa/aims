@@ -18,7 +18,7 @@ import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './ty
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
-import { api, API_CONFIG } from '@/shared/lib/api'
+import { api, API_CONFIG, getAuthToken } from '@/shared/lib/api'
 import { cachedRequest } from '@/shared/lib/requestCache'
 import { waitForDocumentProcessing } from '@/shared/lib/waitForDocumentProcessing'
 import { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from '@/features/customer/utils/pdfParser'
@@ -1107,8 +1107,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         // 🔔 SSE 알림 트리거: 문서-고객 연결 완료 알림
         try {
           const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
-          const authData = localStorage.getItem('auth-storage');
-          const token = authData ? JSON.parse(authData)?.state?.token : null;
+          // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+          const token = getAuthToken();
           if (token) {
             fetch(`${API_BASE_URL}/api/notify/document-uploaded`, {
               method: 'POST',

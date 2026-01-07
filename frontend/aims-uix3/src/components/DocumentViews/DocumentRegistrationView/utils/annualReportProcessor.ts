@@ -7,6 +7,7 @@
 import { DocumentService } from '@/services/DocumentService';
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { getAuthToken } from '@/shared/lib/api';
 import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
 
@@ -46,8 +47,8 @@ export async function processAnnualReportFile(
       for (const doc of customerDocs.documents) {
         try {
           const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-          const authData = localStorage.getItem('auth-storage');
-          const token = authData ? JSON.parse(authData).state?.token : null;
+          // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+          const token = getAuthToken();
           const docStatus = await fetch(`/api/documents/${doc._id}/status`, {
             headers: {
               'x-user-id': userId,

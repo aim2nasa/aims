@@ -14,6 +14,7 @@ import { resolveFileUrl, resolvePdfUrl } from '../../../../utils/documentTransfo
 import type { SearchResultItem } from '@/entities/search'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { getAuthToken } from '@/shared/lib/api'
 import './DocumentContentSearchModal.css'
 
 interface DocumentContentSearchModalProps {
@@ -310,8 +311,8 @@ export const DocumentContentSearchModal: React.FC<DocumentContentSearchModalProp
     setIsLoadingPreview(true)
     try {
       const userId = localStorage.getItem('aims-current-user-id') || 'tester'
-      const authData = localStorage.getItem('auth-storage')
-      const token = authData ? JSON.parse(authData).state?.token : null
+      // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+      const token = getAuthToken()
 
       const response = await fetch(`/api/documents/${docId}/status`, {
         headers: {

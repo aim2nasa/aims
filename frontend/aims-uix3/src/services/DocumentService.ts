@@ -8,7 +8,7 @@
  * 바이러스 검사 통합 (ClamAV)
  */
 
-import { api } from '@/shared/lib/api';
+import { api, getAuthToken } from '@/shared/lib/api';
 import { utcNowISO } from '@/shared/lib/timeUtils';
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi';
 import { checkSystemDuplicate } from '@/shared/lib/fileValidation/duplicateChecker';
@@ -697,19 +697,8 @@ export class DocumentService {
 
     console.log(`[DocumentService] 📤 업로드 시작: ${file.name} (userId: ${userId})`);
 
-    // JWT 토큰 가져오기 (uploadService와 동일한 방식)
-    let token: string | null = null;
-    if (typeof window !== 'undefined') {
-      try {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          const parsed = JSON.parse(authStorage);
-          token = parsed?.state?.token || null;
-        }
-      } catch {
-        // 파싱 실패 시 무시
-      }
-    }
+    // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+    const token = getAuthToken();
 
     // XMLHttpRequest 사용 (새문서 등록과 동일하게)
     return new Promise((resolve, reject) => {
@@ -821,19 +810,8 @@ export class DocumentService {
       throw new Error('삭제할 문서 ID가 필요합니다');
     }
 
-    // JWT 토큰 가져오기 (api.ts와 동일한 로직)
-    let token: string | null = null;
-    if (typeof window !== 'undefined') {
-      try {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          const parsed = JSON.parse(authStorage);
-          token = parsed?.state?.token || null;
-        }
-      } catch {
-        // 파싱 실패 시 무시
-      }
-    }
+    // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+    const token = getAuthToken();
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
