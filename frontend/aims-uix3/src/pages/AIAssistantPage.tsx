@@ -11,6 +11,15 @@ import { getAuthToken } from '@/shared/lib/api';
 import ChatPanel from '@/components/ChatPanel';
 import './AIAssistantPage.css';
 
+/**
+ * 🔒 보안: JWT 토큰 형식 검증
+ * - 길이 제한 (2000자 미만)
+ * - JWT 형식 (header.payload.signature)
+ */
+const isValidJWT = (token: string): boolean =>
+  token.length < 2000 &&
+  /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/.test(token);
+
 export default function AIAssistantPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +66,14 @@ export default function AIAssistantPage() {
 
       if (event.data?.type === 'AIMS_AUTH_SYNC') {
         // 부모 창에서 인증 정보 동기화
-        if (event.data.token) {
-          localStorage.setItem('auth-storage-v2', JSON.stringify({ state: { token: event.data.token } }));
+        const token = event.data.token;
+        if (token && typeof token === 'string') {
+          // 🔒 보안: JWT 형식 검증 (악의적 토큰 주입 방지)
+          if (!isValidJWT(token)) {
+            console.warn('[AIAssistantPage] 유효하지 않은 토큰 형식:', token.substring(0, 20) + '...');
+            return;
+          }
+          localStorage.setItem('auth-storage-v2', JSON.stringify({ state: { token } }));
           setIsAuthenticated(true);
         }
       }
