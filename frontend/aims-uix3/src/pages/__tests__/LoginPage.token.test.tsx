@@ -8,6 +8,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createElement } from 'react'
 
+// 🔒 보안 테스트용: 유효한 JWT 형식의 mock 토큰
+// JWT 형식: header.payload.signature (Base64URL 인코딩)
+const MOCK_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0In0.test_signature';
+
 // vi.hoisted로 Mock 함수 선언 (hoisting 문제 해결)
 const {
   mockNavigate,
@@ -180,22 +184,22 @@ describe('LoginPage', () => {
     })
 
     it('URL에 토큰이 있으면 setToken을 호출해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
-        expect(mockSetToken).toHaveBeenCalledWith('test-jwt-token')
+        expect(mockSetToken).toHaveBeenCalledWith(MOCK_JWT_TOKEN)
       })
     })
 
     it('토큰 처리 후 /api/auth/me를 호출해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining('/api/auth/me'),
           expect.objectContaining({
             headers: expect.objectContaining({
-              Authorization: 'Bearer test-jwt-token'
+              Authorization: `Bearer ${MOCK_JWT_TOKEN}`
             })
           })
         )
@@ -203,7 +207,7 @@ describe('LoginPage', () => {
     })
 
     it('사용자 정보를 authStore에 저장해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
         expect(mockSetUser).toHaveBeenCalledWith(expect.objectContaining({
@@ -215,7 +219,7 @@ describe('LoginPage', () => {
     })
 
     it('userStore.updateCurrentUser를 호출해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
         expect(mockUpdateCurrentUser).toHaveBeenCalledWith(expect.objectContaining({
@@ -227,7 +231,7 @@ describe('LoginPage', () => {
     })
 
     it('localStorage에 aims-current-user-id를 저장해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
         expect(localStorage.getItem('aims-current-user-id')).toBe('user123')
@@ -235,7 +239,7 @@ describe('LoginPage', () => {
     })
 
     it('메인 페이지로 리다이렉트해야 함', async () => {
-      renderWithRouter(['/login?token=test-jwt-token'])
+      renderWithRouter([`/login?token=${MOCK_JWT_TOKEN}`])
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })

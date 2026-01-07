@@ -13,6 +13,14 @@ import { useState, useEffect } from 'react';
 import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
+ * 🔒 보안: MongoDB ObjectId 형식 검증
+ * 24자리 16진수 문자열인지 확인
+ */
+function isValidMongoObjectId(id: string): boolean {
+  return /^[a-f\d]{24}$/i.test(id);
+}
+
+/**
  * 사용자 인터페이스
  */
 export interface User {
@@ -30,14 +38,22 @@ export interface User {
  * 현재 사용자 ID를 저장하는 전역 변수
  * 초기값: localStorage에서 복원 (없으면 빈 문자열)
  * ⚠️ 실제 MongoDB ObjectId여야 함 ('tester', 'dev-user' 같은 문자열 금지)
+ * 🔒 보안: 형식 검증 추가
  */
 let currentUserId = typeof window !== 'undefined'
   ? (() => {
       const storedId = localStorage.getItem('aims-current-user-id');
       if (!storedId) {
         console.warn('[UserStore] ⚠️ 사용자 ID가 localStorage에 없습니다. 로그인이 필요합니다.');
+        return '';
       }
-      return storedId || '';
+      // 🔒 보안: MongoDB ObjectId 형식 검증
+      if (!isValidMongoObjectId(storedId)) {
+        console.error('[UserStore] ⚠️ 유효하지 않은 사용자 ID 형식:', storedId);
+        localStorage.removeItem('aims-current-user-id');
+        return '';
+      }
+      return storedId;
     })()
   : '';
 
@@ -66,12 +82,19 @@ function notifySubscribers() {
 /**
  * localStorage에서 userId를 다시 읽어 동기화 (페이지 리로드 없이)
  * 소셜 로그인 후 호출하여 레거시 시스템과 동기화
+ * 🔒 보안: 형식 검증 추가
  */
 export function syncUserIdFromStorage(): void {
   if (typeof window === 'undefined') return;
 
   const storedUserId = localStorage.getItem('aims-current-user-id');
   if (storedUserId && storedUserId !== currentUserId) {
+    // 🔒 보안: MongoDB ObjectId 형식 검증
+    if (!isValidMongoObjectId(storedUserId)) {
+      console.error('[UserStore] ⚠️ 유효하지 않은 사용자 ID 형식 (syncUserIdFromStorage):', storedUserId);
+      localStorage.removeItem('aims-current-user-id');
+      return;
+    }
     currentUserId = storedUserId;
     notifySubscribers();
   }

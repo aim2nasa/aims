@@ -202,7 +202,9 @@ describe('Auth Store 동기화', () => {
     })
 
     it('syncUserIdFromStorage 호출 시 localStorage에서 userId를 동기화해야 함', async () => {
-      localStorageMock['aims-current-user-id'] = 'user456'
+      // 🔒 보안 테스트: 유효한 MongoDB ObjectId 형식 사용 (24자리 16진수)
+      const validObjectId = '507f1f77bcf86cd799439011'
+      localStorageMock['aims-current-user-id'] = validObjectId
 
       const { syncUserIdFromStorage, useUserStore } = await import('@/stores/user')
 
@@ -210,7 +212,7 @@ describe('Auth Store 동기화', () => {
 
       const { result } = renderHook(() => useUserStore())
 
-      expect(result.current.userId).toBe('user456')
+      expect(result.current.userId).toBe(validObjectId)
     })
   })
 

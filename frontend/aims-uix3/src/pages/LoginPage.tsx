@@ -41,10 +41,27 @@ export default function LoginPage() {
   /**
    * OAuth 콜백 처리: URL에서 token 파라미터 추출 및 저장
    * - 토큰 저장 후 /api/auth/me 호출하여 정확한 사용자 정보 가져오기
+   * 🔒 보안: JWT 토큰 형식 검증 추가
    */
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token || isProcessing) return;
+
+    // 🔒 보안: JWT 토큰 기본 형식 검증
+    // JWT는 3개의 Base64URL 인코딩된 부분으로 구성 (header.payload.signature)
+    const isValidJWT = (t: string) =>
+      t.length < 2000 && // 최대 길이 제한
+      /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/.test(t);
+
+    if (!isValidJWT(token)) {
+      console.error('[LoginPage] 유효하지 않은 토큰 형식');
+      showAlert({
+        title: '로그인 실패',
+        message: '인증 토큰 형식이 올바르지 않습니다.',
+        iconType: 'error'
+      });
+      return;
+    }
 
     setIsProcessing(true);
 
