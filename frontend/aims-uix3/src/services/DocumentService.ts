@@ -198,7 +198,8 @@ export class DocumentService {
 
     const documents: Document[] = rawDocuments.map((doc) => {
       const record = doc as Record<string, unknown>;
-      const generatedId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      // 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
+      const generatedId = `temp-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
       const id =
         toString(record['_id']) ??

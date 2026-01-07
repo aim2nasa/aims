@@ -326,9 +326,10 @@ class ErrorReporter {
 
   /**
    * 요청 ID 생성
+   * 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
    */
   private generateRequestId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    return `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   /**

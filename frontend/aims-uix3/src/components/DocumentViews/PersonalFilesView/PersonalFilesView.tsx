@@ -648,8 +648,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setUploadProgress(0)
     setError(null)
 
+    // 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
     const newUploadFiles: UploadFile[] = selectedFiles.map((file) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
       file,
       fileSize: file.size,
       status: 'pending' as const,

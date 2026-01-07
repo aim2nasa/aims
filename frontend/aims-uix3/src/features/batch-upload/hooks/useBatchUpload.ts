@@ -112,8 +112,9 @@ const RETRY_DELAY_MS = 1000
 
 // ==================== 유틸리티 ====================
 
+// 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
 function generateFileId(): string {
-  return `file_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  return `file_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`
 }
 
 function createInitialDuplicateState(): DuplicateState {

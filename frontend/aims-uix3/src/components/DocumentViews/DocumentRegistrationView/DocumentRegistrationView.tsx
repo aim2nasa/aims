@@ -250,8 +250,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 고객명이 있으면 메시지 앞에 [고객명] 추가
     const finalMessage = customerName ? `[${customerName}] ${message}` : message
 
+    // 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
     const newLog: Log = {
-      id: `log_${Date.now()}_${counter}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `log_${Date.now()}_${counter}_${crypto.randomUUID().slice(0, 8)}`,
       timestamp: new Date(),
       level,
       message: finalMessage,
@@ -307,9 +308,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   /**
    * 고유 ID 생성
+   * 🔒 보안: crypto.randomUUID 사용 (Math.random은 예측 가능)
    */
   const generateFileId = useCallback((): string => {
-    return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `file_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`
   }, [])
 
   /**
