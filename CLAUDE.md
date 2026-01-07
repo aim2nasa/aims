@@ -317,6 +317,32 @@ npm run dev
 
 ---
 
+## Claude Code 자동화
+
+프로젝트에 맞춤 설정된 스킬과 에이전트가 자동으로 적용됩니다.
+
+### 스킬 (자동 적용되는 규칙)
+
+| 스킬 | 용도 | 적용 시점 |
+|------|------|----------|
+| `css-rules` | CSS 작성 규칙 | 스타일 수정, 색상 변경 |
+| `datetime-format` | 날짜/시간 형식 | 날짜 표시 작업 |
+| `deploy-guide` | 배포 절차 가이드 | 배포 요청 |
+| `api-verify` | API 검증 명령어 | API 연동 작업 |
+
+### 에이전트 (전문 분석)
+
+| 에이전트 | 용도 | 적용 시점 |
+|----------|------|----------|
+| `aims-code-checker` | 코드 규칙 검사 | 코드 수정 후 |
+| `deploy-monitor` | 배포 후 헬스체크 | 배포 완료 후 |
+| `test-analyzer` | 테스트 실패 분석 | 테스트 실패 시 |
+
+> **위치**: `.claude/skills/`, `.claude/agents/`
+> **상세 문서**: [SUBAGENT_SKILL_PROPOSAL.md](docs/SUBAGENT_SKILL_PROPOSAL.md)
+
+---
+
 ## 참조 문서
 
 | 문서 | 내용 |
