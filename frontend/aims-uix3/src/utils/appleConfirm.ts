@@ -9,6 +9,16 @@
 // CSS 파일 import로 !important 없이 높은 특이성 확보
 import './appleConfirm.css'
 
+/**
+ * 🔒 XSS 방지: HTML 특수문자 이스케이프
+ * innerHTML 사용 시 반드시 사용자 입력을 이스케이프해야 함
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 let currentModal: HTMLElement | null = null
 let currentResolver: ((value: boolean) => void) | null = null
 
@@ -43,13 +53,14 @@ export function showAppleConfirm(
 
     // 🍎 흔들기 애니메이션은 CSS 파일에서 정의됨 (apple-confirm-shake)
 
-    // 메시지에서 링크 텍스트를 찾아서 클릭 가능하게 만들기
+    // 🔒 XSS 방지: 메시지와 링크 텍스트를 이스케이프 처리
+    const escapedMessage = escapeHtml(message);
     const processedMessage = options?.linkText
-      ? message.replace(
-          options.linkText,
-          `<span class="apple-confirm-link">${options.linkText}</span>`
+      ? escapedMessage.replace(
+          escapeHtml(options.linkText),
+          `<span class="apple-confirm-link">${escapeHtml(options.linkText)}</span>`
         )
-      : message;
+      : escapedMessage;
 
     // 🍎 Apple 스타일: 확인 버튼 표시 여부 (기본값 true)
     const showConfirmButton = options?.showConfirmButton !== false;
@@ -80,6 +91,9 @@ export function showAppleConfirm(
         </div>
       `;
 
+    // 🔒 XSS 방지: title 이스케이프
+    const escapedTitle = title ? escapeHtml(title) : '';
+
     modal.innerHTML = `
       ${title ? `
         <div style="padding: 18px 20px 10px 20px; text-align: center;">
@@ -87,7 +101,7 @@ export function showAppleConfirm(
             <div style="font-size: var(--font-size-2xl, 28px); opacity: 0.95; transform: scale(0.9);">⚠️</div>
           </div>
           <h2 style="font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.25; color: var(--color-text-primary); margin: 0; letter-spacing: -0.35px; font-family: var(--font-family-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);">
-            ${title}
+            ${escapedTitle}
           </h2>
         </div>
       ` : `
@@ -259,12 +273,12 @@ export function showOversizedFilesModal(
       return mb.toFixed(1) + 'MB'
     }
 
-    // 파일 목록 HTML 생성 - 모든 파일을 표시
+    // 🔒 XSS 방지: 파일 목록 HTML 생성 시 파일명 이스케이프
     const fileListHTML = oversizedFiles
       .map((file, index) => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; ${index < oversizedFiles.length - 1 ? 'border-bottom: 0.33px solid rgba(60, 60, 67, 0.18);' : ''}">
           <span style="font-size: var(--font-size-footnote, 13px); font-weight: 400; color: var(--color-text-primary); opacity: 0.85; flex: 1; word-break: break-word; margin-right: 16px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); line-height: 1.3;">
-            ${file.name}
+            ${escapeHtml(file.name)}
           </span>
           <span style="font-size: var(--font-size-footnote, 13px); font-weight: 590; color: var(--color-primary); font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); white-space: nowrap;">
             ${formatFileSize(file.size)}
