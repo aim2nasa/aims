@@ -11,7 +11,7 @@ description: AIMS 서비스 배포 방법. 배포, deploy, 서버 반영, 업데
 
 **명령어:**
 ```bash
-ssh tars 'cd ~/aims && ./deploy_all.sh'
+ssh rossi@100.110.215.65 'cd ~/aims && ./deploy_all.sh'
 ```
 
 **자동 수행 작업 (12단계):**
@@ -47,7 +47,7 @@ ssh tars 'cd ~/aims && ./deploy_all.sh'
 cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 
 # 로컬에서 SSH로 실행
-ssh tars 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'
+ssh rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'
 ```
 
 ## 절대 금지 사항
@@ -70,15 +70,15 @@ ssh tars 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'
 
 ```bash
 # 서비스 상태 확인
-ssh tars 'pm2 list'
+ssh rossi@100.110.215.65 'pm2 list'
 
 # 개별 헬스체크
-ssh tars 'curl -s http://localhost:3010/health'   # aims_api
-ssh tars 'curl -s http://localhost:8000/health'   # aims_rag_api
-ssh tars 'curl -s http://localhost:3011/health'   # aims_mcp
-ssh tars 'curl -s http://localhost:8002/health'   # pdf_proxy
-ssh tars 'curl -s http://localhost:8004/health'   # annual_report_api
-ssh tars 'curl -s http://localhost:8005/health'   # pdf_converter
+ssh rossi@100.110.215.65 'curl -s http://localhost:3010/health'   # aims_api
+ssh rossi@100.110.215.65 'curl -s http://localhost:8000/health'   # aims_rag_api
+ssh rossi@100.110.215.65 'curl -s http://localhost:3011/health'   # aims_mcp
+ssh rossi@100.110.215.65 'curl -s http://localhost:8002/health'   # pdf_proxy
+ssh rossi@100.110.215.65 'curl -s http://localhost:8004/health'   # annual_report_api
+ssh rossi@100.110.215.65 'curl -s http://localhost:8005/health'   # pdf_converter
 ```
 
 ## 롤백
@@ -86,10 +86,10 @@ ssh tars 'curl -s http://localhost:8005/health'   # pdf_converter
 문제 발생 시:
 ```bash
 # Git으로 이전 버전 복원
-ssh tars 'cd ~/aims && git checkout HEAD~1'
+ssh rossi@100.110.215.65 'cd ~/aims && git checkout HEAD~1'
 
 # 해당 서비스 재배포
-ssh tars 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'
+ssh rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh'
 ```
 
 ## 서버 정보

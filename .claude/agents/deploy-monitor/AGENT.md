@@ -25,7 +25,7 @@ model: haiku
 
 ### 전체 서비스 헬스체크
 ```bash
-ssh tars 'echo "=== AIMS 서비스 헬스체크 ===" && \
+ssh rossi@100.110.215.65 'echo "=== AIMS 서비스 헬스체크 ===" && \
 echo -n "aims_api (3010): " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3010/health && echo "" && \
 echo -n "aims_rag_api (8000): " && curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health && echo "" && \
 echo -n "aims_mcp (3011): " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3011/health && echo "" && \
@@ -37,28 +37,28 @@ echo -n "pdf_converter (8005): " && curl -s -o /dev/null -w "%{http_code}" http:
 ### 개별 서비스 상세 체크
 ```bash
 # aims_api
-ssh tars 'curl -s http://localhost:3010/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:3010/health | python3 -m json.tool'
 
 # aims_rag_api
-ssh tars 'curl -s http://localhost:8000/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:8000/health | python3 -m json.tool'
 
 # aims_mcp
-ssh tars 'curl -s http://localhost:3011/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:3011/health | python3 -m json.tool'
 
 # pdf_proxy
-ssh tars 'curl -s http://localhost:8002/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:8002/health | python3 -m json.tool'
 
 # annual_report_api
-ssh tars 'curl -s http://localhost:8004/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:8004/health | python3 -m json.tool'
 
 # pdf_converter
-ssh tars 'curl -s http://localhost:8005/health | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s http://localhost:8005/health | python3 -m json.tool'
 ```
 
 ## PM2 프로세스 상태 확인
 
 ```bash
-ssh tars 'pm2 list'
+ssh rossi@100.110.215.65 'pm2 list'
 ```
 
 ### 예상 출력
@@ -98,19 +98,19 @@ ssh tars 'pm2 list'
 ### 서비스 다운 시
 ```bash
 # 로그 확인
-ssh tars 'pm2 logs 서비스명 --lines 50'
+ssh rossi@100.110.215.65 'pm2 logs 서비스명 --lines 50'
 
 # 재시작
-ssh tars 'cd ~/aims/backend/api/서비스경로 && ./deploy_서비스.sh'
+ssh rossi@100.110.215.65 'cd ~/aims/backend/api/서비스경로 && ./deploy_서비스.sh'
 ```
 
 ### 응답 지연 시
 ```bash
 # 메모리 사용량 확인
-ssh tars 'pm2 monit'
+ssh rossi@100.110.215.65 'pm2 monit'
 
 # 프로세스 상세 정보
-ssh tars 'pm2 show 서비스명'
+ssh rossi@100.110.215.65 'pm2 show 서비스명'
 ```
 
 ## 결과 보고 형식
@@ -142,6 +142,8 @@ ssh tars 'pm2 show 서비스명'
 
 | 항목 | 값 |
 |------|-----|
-| 호스트 | `tars.giize.com` 또는 `tars` |
-| Tailscale IP | `100.110.215.65` |
+| **SSH 접속 (필수)** | `ssh rossi@100.110.215.65` (Tailscale VPN) |
+| 호스트 별칭 | `tars` (Tailscale 설정 시) |
 | 프로젝트 경로 | `/home/rossi/aims` |
+
+> ⚠️ **중요**: 반드시 Tailscale IP로 접속해야 함 (UFW 방화벽으로 외부 차단됨)

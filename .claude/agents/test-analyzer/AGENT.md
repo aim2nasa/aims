@@ -181,7 +181,7 @@ MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017
 **해결:**
 ```bash
 # MongoDB 상태 확인
-ssh tars 'systemctl status mongod'
+ssh rossi@100.110.215.65 'systemctl status mongod'
 
 # 테스트용 DB 사용 확인
 # NODE_ENV=test 설정 확인
