@@ -764,7 +764,7 @@ html[data-theme="dark"] .chat-panel__welcome-feature--primary .chat-panel__welco
 }
 
 .chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
-  color: #6B7280;
+  color: var(--color-neutral-500);
 }
 
 /* Dark Theme - Secondary Feature */
@@ -778,7 +778,7 @@ html[data-theme="dark"] .chat-panel__welcome-feature--secondary:hover {
 }
 
 html[data-theme="dark"] .chat-panel__welcome-feature--secondary .chat-panel__welcome-feature-title {
-  color: #9CA3AF;
+  color: var(--color-neutral-400);
 }
 
 /* Mode Toggle - Welcome Screen */
@@ -877,7 +877,7 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
 }
 
 .chat-panel__question-tab--active {
-  background: #ffffff;
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -982,8 +982,8 @@ html[data-theme="dark"] .chat-panel__question-tab--active {
 }
 
 .chat-panel__saved-question-delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
 
 html[data-theme="dark"] .chat-panel__saved-question {
@@ -1075,14 +1075,14 @@ html[data-theme="dark"] .chat-panel__frequent-count {
 }
 
 .chat-panel__message--user .chat-panel__message-content {
-  background: #007AFF;
-  color: #ffffff;
+  background: var(--color-primary-500);
+  color: var(--color-text-inverse);
   border-bottom-right-radius: 4px;
 }
 
 .chat-panel__message--assistant .chat-panel__message-content {
   background: rgba(255, 255, 255, 0.85);
-  color: #1a1a1a;
+  color: var(--color-neutral-900);
   border: 1px solid rgba(139, 92, 246, 0.12);
   border-bottom-left-radius: 4px;
 }
@@ -1671,8 +1671,8 @@ html[data-theme="dark"] .chat-panel__doc-link:hover {
 }
 
 .chat-panel__example-item--selected .chat-panel__example-number {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--color-primary-600);
+  color: var(--color-text-inverse);
   font-weight: 700;
 }
 
@@ -1866,8 +1866,8 @@ html[data-theme="dark"] .chat-panel__doc-link:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #EF4444;
-  color: #ffffff;
+  background: var(--color-error);
+  color: var(--color-text-inverse);
   font-size: 11px;
   font-weight: 600;
   border-radius: 10px;
