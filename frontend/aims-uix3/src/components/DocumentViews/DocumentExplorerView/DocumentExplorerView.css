@@ -50,7 +50,7 @@
 
 .doc-explorer-toolbar__label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
 }
 
@@ -99,7 +99,7 @@
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   transition: all var(--explorer-transition);
@@ -133,7 +133,7 @@
 
 .doc-explorer-toolbar__sort-label {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-tertiary);
 }
 
@@ -415,7 +415,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-accent);
 }
 
@@ -452,7 +452,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-accent);
 }
 
@@ -623,7 +623,7 @@ html[data-theme="dark"] .doc-explorer-tree__folder-icon {
 .doc-explorer-tree__group-label {
   flex: 1;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -635,7 +635,7 @@ html[data-theme="dark"] .doc-explorer-tree__folder-icon {
   flex-shrink: 0;
   padding: 1px 6px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-tertiary);
   background: var(--color-bg-tertiary);
   border-radius: 10px;
@@ -693,7 +693,7 @@ html:not([data-theme="dark"]) .doc-explorer-tree__document:hover {
 /* 선택된 문서명 강조 (라이트 테마) */
 html:not([data-theme="dark"]) .doc-explorer-tree__document--selected .doc-explorer-tree__doc-name {
   color: var(--color-primary-700);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Indentation by level */
@@ -881,7 +881,7 @@ html[data-theme="dark"] .doc-explorer-tree__doc-icon.document-icon.file-icon--ex
   margin-left: var(--explorer-spacing-sm);
   padding: 1px 6px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-accent);
   background: var(--color-accent-bg);
   border-radius: 8px;

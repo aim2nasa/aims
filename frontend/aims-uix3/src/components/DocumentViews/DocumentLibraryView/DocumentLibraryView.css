@@ -225,7 +225,7 @@ html[data-theme="dark"] .document-library-result-header {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 html[data-theme="dark"] .result-count {
@@ -996,7 +996,7 @@ html[data-theme="dark"] .document-date {
 .document-type {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);  /* 🔧 수정: quaternary → secondary (더 진함) */
   text-align: center;
   white-space: nowrap;
@@ -1230,7 +1230,7 @@ html[data-theme="dark"] .pagination-arrow--clicked {
   gap: 6px;
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);
   min-width: 60px;
   justify-content: center;

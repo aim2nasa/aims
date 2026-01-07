@@ -199,7 +199,7 @@ html[data-theme="dark"] .viewer-content::-webkit-scrollbar-thumb:hover {
   border-radius: 8px;
   font-size: 12px;
   color: #ff6961;
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 

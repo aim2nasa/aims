@@ -203,7 +203,7 @@ html:not([data-theme="dark"]) .tree-node--selected {
 html:not([data-theme="dark"]) .tree-node.selected .tree-node__label,
 html:not([data-theme="dark"]) .tree-node--selected .tree-node__label {
   color: #0055a5;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 아이콘 */
@@ -406,7 +406,7 @@ html[data-theme="dark"] .relationship-search-input:focus {
   color: var(--color-accent);
   padding: 1px 3px;
   border-radius: 2px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ============================================

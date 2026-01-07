@@ -248,7 +248,7 @@ html[data-theme="dark"] .reset-button:focus-visible {
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
   border-radius: 8px;
@@ -324,7 +324,7 @@ html[data-theme="dark"] .similarity-legend {
 .legend-title {
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문/라벨 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);
   flex-shrink: 0;
 }
@@ -452,7 +452,7 @@ html[data-theme="dark"] .search-answer[open] {
   margin: 0;
   padding: 4px 0;
   font-size: var(--font-size-caption-1); /* 12px - 더 작게 */
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
   transition: color var(--duration-ios-quick) var(--easing-ease-out);
@@ -526,7 +526,7 @@ html[data-theme="dark"] .search-results-header {
 }
 
 .results-divider {
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 8px;
 }
 
@@ -824,7 +824,7 @@ html[data-theme="dark"] .search-result-row[data-selected="true"] {
 
 .row-index {
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-tertiary-light);
 }
@@ -1176,7 +1176,7 @@ html[data-theme="dark"] .row-subtitle {
 
 .search-customer .customer-name {
   color: var(--color-ios-text-primary-light);
-  font-weight: 500;
+  font-weight: 600;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1613,7 +1613,7 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border-radius: 8px;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
@@ -1653,7 +1653,7 @@ html[data-theme="dark"] .selected-customer-display {
   flex: 1;
   font-family: var(--font-family-text);
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-primary-light);
   white-space: nowrap;
   overflow: hidden;

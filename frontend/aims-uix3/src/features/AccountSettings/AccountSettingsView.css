@@ -726,7 +726,7 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
 .account-settings-view__delete-modal-title {
   color: var(--color-text-primary);
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .account-settings-view__delete-modal-desc {

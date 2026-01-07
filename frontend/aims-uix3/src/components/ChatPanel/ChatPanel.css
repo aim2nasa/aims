@@ -176,7 +176,7 @@
   align-items: center;
   gap: 4px;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: #8B5CF6;
   animation: bounce-hint 1.5s ease-in-out infinite;
 }
@@ -337,7 +337,7 @@
 
 .chat-panel__session-title {
   font-size: var(--font-size-caption-1);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -503,7 +503,7 @@
 
 .chat-panel__data-stat-label {
   font-size: var(--font-size-caption-1);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-tertiary);
 }
 
@@ -550,7 +550,7 @@ html[data-theme="dark"] .chat-panel__data-stat-value {
 
 .chat-panel__empty p {
   font-size: var(--font-size-footnote);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   margin: 0;
 }
@@ -862,7 +862,7 @@ html[data-theme="dark"] .chat-panel__welcome-features-header {
   flex: 1;
   padding: 6px 6px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   background: transparent;
   border: none;

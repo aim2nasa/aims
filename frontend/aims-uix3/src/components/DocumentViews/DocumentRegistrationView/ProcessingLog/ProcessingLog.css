@@ -54,7 +54,7 @@
 
 .processing-log__title {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   letter-spacing: -0.2px;
@@ -74,7 +74,7 @@
 
 .processing-log__sort-status {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-accent);
   margin-left: 8px;
@@ -302,7 +302,7 @@
 .file-summary__title {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-footnote);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
@@ -319,7 +319,7 @@
 .file-summary__error-count {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: #ff3b30;
   background: rgba(255, 59, 48, 0.15);
   padding: 2px 6px;
@@ -329,7 +329,7 @@
 .file-summary__uploading-count {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-primary-500);
   background: rgba(0, 122, 255, 0.15);
   padding: 2px 6px;
@@ -339,7 +339,7 @@
 .file-summary__analyzing-count {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: #5856d6;
   background: rgba(88, 86, 214, 0.15);
   padding: 2px 6px;
@@ -349,7 +349,7 @@
 .file-summary__skipped-count {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: #ff9500;
   background: rgba(255, 149, 0, 0.15);
   padding: 2px 6px;
@@ -404,7 +404,7 @@
   padding: 4px 0;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-1);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
 }
 
@@ -664,7 +664,7 @@
   padding: 2px 8px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-primary-500);
   background: transparent;
   border: 1px solid var(--color-primary-500);
@@ -683,7 +683,7 @@
 .file-item__status-text {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--font-size-caption-1);
-  font-weight: 500;
+  font-weight: 600;
   flex-shrink: 0;
   margin-left: auto;
 }

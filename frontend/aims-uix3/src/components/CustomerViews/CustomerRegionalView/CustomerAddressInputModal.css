@@ -81,7 +81,7 @@ html[data-theme="dark"] .address-modal-icon.warning {
 
 .geocoding-error-notice .notice-text {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-orange, #FF9500);
   line-height: 1.4;
 }
@@ -233,7 +233,7 @@ html[data-theme="dark"] .address-fields {
 
 .address-label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   min-width: 60px;
   flex-shrink: 0;

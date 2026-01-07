@@ -442,7 +442,7 @@ html[data-theme="dark"] .recent-customer-card:hover {
   /* font-size: var(--font-size-sm); () */
   color: var(--color-text-primary);
   /* font-weight: var(--font-weight-medium); () */
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .document-link-modal__optional {

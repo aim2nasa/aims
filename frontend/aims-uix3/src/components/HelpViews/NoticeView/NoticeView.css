@@ -106,7 +106,7 @@
 .notice-view__item-title {
   flex: 1;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.4;
   white-space: nowrap;

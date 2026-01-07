@@ -92,7 +92,7 @@ html[data-theme="dark"] .document-library-actions {
 .selected-count {
   /* font-size: var(--font-size-callout); () */
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .actions-right {

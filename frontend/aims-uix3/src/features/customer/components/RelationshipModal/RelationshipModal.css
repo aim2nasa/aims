@@ -164,7 +164,7 @@
   border-radius: 8px;
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease-out;
   display: flex;

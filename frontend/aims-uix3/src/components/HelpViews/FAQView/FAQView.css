@@ -86,7 +86,7 @@
 .faq-view__filter {
   padding: var(--spacing-1) var(--spacing-3);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-separator);
@@ -156,7 +156,7 @@
 .faq-view__question-text {
   flex: 1;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.4;
 }

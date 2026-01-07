@@ -143,7 +143,7 @@ html[data-theme="dark"] .detail-progress-bar-fill.status-pending {
   border-radius: 100px;
   font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   letter-spacing: -0.2px;
   user-select: none;
@@ -182,7 +182,7 @@ html[data-theme="dark"] .detail-status-badge.status-pending {
 .detail-progress-text {
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
@@ -250,7 +250,7 @@ html[data-theme="dark"] .detail-info-card:hover {
 .detail-info-card-label {
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   text-transform: uppercase;

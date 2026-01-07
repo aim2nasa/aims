@@ -37,7 +37,7 @@ html[data-theme="dark"] .pdf-page-container {
   color: var(--color-ios-bg-primary-light);
   border: none;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
   transition: opacity 0.2s ease-out;

@@ -32,7 +32,7 @@ html[data-theme="dark"] .file-list__header {
 
 .file-list__title {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-file-default-light);
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -45,7 +45,7 @@ html[data-theme="dark"] .file-list__title {
 /* 🍎 COMPACT TITLE: One-line layout optimization */
 .file-list__title-compact {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-file-default-light);
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -188,7 +188,7 @@ html[data-theme="dark"] .file-list__filter-status {
 
 .file-list__filter-text {
   color: var(--color-ios-spinner-fill-light);
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -205,7 +205,7 @@ html[data-theme="dark"] .file-list__filter-text {
   border: none;
   color: var(--color-ios-error-button-light);
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease-out;
@@ -313,7 +313,7 @@ html[data-theme="dark"] .file-list__overall-progress-fill {
 .file-item__completed-info {
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   color: var(--color-upload-completed-text-light);
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1132,7 +1132,7 @@ html[data-theme="dark"] .file-item--completed .file-item__status-compact::before
 
 .file-item__name-text {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-light);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   overflow: hidden;

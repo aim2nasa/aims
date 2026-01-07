@@ -1531,7 +1531,7 @@ html[data-theme="dark"] .status-text {
 
 .status-text .progress-text {
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-primary-500);
 }
 

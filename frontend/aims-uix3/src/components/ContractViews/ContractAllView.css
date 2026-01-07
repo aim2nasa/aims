@@ -140,7 +140,7 @@ html[data-theme="dark"] .contract-result-header {
   gap: var(--spacing-2);
   font-size: var(--font-size-caption-1);
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);
 }
 
@@ -494,7 +494,7 @@ html[data-theme="dark"] .contract-item > span {
 }
 
 .contract-customer {
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -614,7 +614,7 @@ html[data-theme="dark"] .not-registered-message {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .contract-status--active {
@@ -865,7 +865,7 @@ html[data-theme="dark"] .pagination-arrow--clicked {
   gap: 6px;
   font-size: var(--font-size-caption-1);
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);
   min-width: 60px;
   justify-content: center;
@@ -978,7 +978,7 @@ html[data-theme="dark"] .contract-all-view .edit-mode-icon-button--active:hover 
   margin-left: 12px;
   margin-right: 8px;
   font-size: var(--font-size-caption-1);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-primary-600);
 }
 

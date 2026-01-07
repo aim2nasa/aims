@@ -35,7 +35,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
 }
 
@@ -128,7 +128,7 @@
 
 .storage-quota-pending-info {
   color: var(--color-ios-blue, #007aff);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .storage-quota-warning,
@@ -136,7 +136,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .storage-quota-warning {

@@ -591,7 +591,7 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: user name in header */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   max-width: 120px;
   overflow: hidden;
@@ -645,7 +645,7 @@
 
 .header-user-label {
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -656,7 +656,7 @@
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: select dropdown */
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--font-family-mono);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);

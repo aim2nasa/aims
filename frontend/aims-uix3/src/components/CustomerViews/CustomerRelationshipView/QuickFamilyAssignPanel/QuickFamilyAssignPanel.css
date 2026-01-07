@@ -100,7 +100,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   display: block;
   font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/라벨 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -152,7 +152,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__role-btn .role-text {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 역할 모드 안내 */
@@ -291,7 +291,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__initial-type-label {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .quick-family-assign-panel__initial {
@@ -304,7 +304,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   cursor: pointer;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   transition: all 0.15s ease;
 }
@@ -431,7 +431,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__table-row .cell-name {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .quick-family-assign-panel__table-row .cell-birth,
@@ -503,7 +503,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 .quick-family-assign-panel__type-label {
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
 }

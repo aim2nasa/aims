@@ -121,7 +121,7 @@
 .profile-setup-avatar-empty-text {
   font-size: 0.625rem;
   color: var(--color-text-tertiary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .profile-setup-avatar-overlay {
@@ -155,7 +155,7 @@
 .profile-setup-label {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: 0.5rem;
 }

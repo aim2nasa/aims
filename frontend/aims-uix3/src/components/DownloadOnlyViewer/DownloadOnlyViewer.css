@@ -101,7 +101,7 @@ html[data-theme="dark"] .file-name-badge--clickable:hover {
 .file-name-text {
   display: block;
   color: var(--color-ios-text-primary-light);
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   white-space: nowrap;
   overflow: hidden;

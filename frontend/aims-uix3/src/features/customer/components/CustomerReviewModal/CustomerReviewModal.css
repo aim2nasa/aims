@@ -97,19 +97,19 @@
 
 .crm-persons__value {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
 /* ==================== Value Colors ==================== */
 .crm-value--success {
   color: var(--color-success);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .crm-value--error {
   color: var(--color-error);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ==================== Card ==================== */
@@ -140,7 +140,7 @@
 
 .crm-card__badge {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-accent);
   background: var(--color-accent-subtle);
   padding: 3px 8px;
@@ -217,7 +217,7 @@
 }
 
 .crm-list__item span:last-child {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -308,7 +308,7 @@
 
 .crm-table__cell--name {
   text-align: left;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -316,12 +316,12 @@
 
 .crm-table__cell--success {
   color: var(--color-success);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .crm-table__cell--error {
   color: var(--color-error);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .crm-table__cell--primary {
@@ -396,7 +396,7 @@
 }
 
 .crm-persons-inline b {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-tertiary);
   margin-right: 4px;
 }
@@ -583,7 +583,7 @@
 .crm-dual-value__label {
   flex-shrink: 0;
   font-size: 8px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-tertiary);
 }
 
@@ -591,7 +591,7 @@
 .crm-dual-value__amount {
   flex: 1;
   text-align: right;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 

@@ -125,7 +125,7 @@ html[data-theme="dark"] .parsing-file-item {
 
 .parsing-file-name {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-primary-light);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -138,7 +138,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 .parsing-file-status {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-primary);
   white-space: nowrap;
   padding: 1px 6px;
@@ -382,7 +382,7 @@ html[data-theme="dark"] .annual-report-row--selected {
 
 .row-owner,
 .header-owner {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-primary-light);
   white-space: nowrap;
   overflow: hidden;
@@ -444,7 +444,7 @@ html[data-theme="dark"] .row-count {
 
 .status-badge {
   /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 500;
+  font-weight: 600;
   padding: 2px 6px;
   border-radius: 6px;
   background: var(--color-primary);
@@ -512,7 +512,7 @@ html[data-theme="dark"] .row-count {
 }
 
 .pagination-current {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
@@ -549,13 +549,13 @@ html[data-theme="dark"] .row-count {
 .annual-report-tab__info-label {
   /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .annual-report-tab__info-value {
   /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ==================== Stats ==================== */
@@ -579,7 +579,7 @@ html[data-theme="dark"] .row-count {
 .annual-report-tab__stat-label {
   /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .annual-report-tab__stat-value {
@@ -648,7 +648,7 @@ html[data-theme="dark"] .row-count {
 
 .annual-report-tab__contract-status {
   /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 500;
+  font-weight: 600;
   padding: 3px 8px;
   border-radius: 10px;
   background: var(--color-bg-hover);
@@ -657,7 +657,7 @@ html[data-theme="dark"] .row-count {
 
 .annual-report-tab__contract-product {
   /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: 6px;
 }
@@ -814,7 +814,7 @@ html[data-theme="dark"] .annual-report-row--processing {
   background: var(--color-primary-500, #3b82f6);
   color: white;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;

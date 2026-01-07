@@ -301,7 +301,7 @@ html[data-theme="dark"] .customer-contracts-item > span {
 /* === 상품명 === */
 .contract-product {
   color: var(--color-ios-text-secondary-light);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;  /* 한 줄 유지 */
 }
 
@@ -344,7 +344,7 @@ html[data-theme="dark"] .contract-product {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: var(--font-size-caption-2);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 납입상태별 색상 */
@@ -503,7 +503,7 @@ html[data-theme="dark"] .contract-pagination .pagination-button:disabled .pagina
   gap: 6px;
   font-size: var(--font-size-caption-1);
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-text-secondary-light);
   min-width: 60px;
   justify-content: center;

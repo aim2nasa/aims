@@ -114,7 +114,7 @@ html[data-theme="dark"] .customer-edit-modal-tabs {
   background-color: transparent;
   color: var(--color-text-secondary);
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 탭 */
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--font-family-text);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -207,7 +207,7 @@ html[data-theme="dark"] .customer-edit-modal-content {
 /* ===== 라벨 ===== */
 .customer-edit-modal-label {
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 레이블 */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   font-family: var(--font-family-text);
 }

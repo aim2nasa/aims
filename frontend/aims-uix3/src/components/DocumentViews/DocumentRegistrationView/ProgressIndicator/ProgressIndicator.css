@@ -57,7 +57,7 @@
 
 .progress-indicator__stat--error {
   color: var(--color-ios-red);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 🍎 PROGRESS TRACK: macOS native progress bar */
@@ -106,7 +106,7 @@ html[data-theme="dark"] .progress-indicator__current {
 
 .progress-indicator__filename {
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   overflow: hidden;
@@ -123,7 +123,7 @@ html[data-theme="dark"] .progress-indicator__current {
 
 .progress-indicator__progress-text {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-system-blue);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-variant-numeric: tabular-nums;
@@ -166,7 +166,7 @@ html[data-theme="dark"] .progress-indicator__current {
 
 .progress-indicator__cancel-text {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   white-space: nowrap;
   letter-spacing: -0.1px;
@@ -199,7 +199,7 @@ html[data-theme="dark"] .progress-indicator__cancel:hover {
   color: var(--color-ios-green);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ============================================
@@ -397,7 +397,7 @@ html[data-theme="dark"] .progress-file--uploading:hover {
 .progress-file__progress-text {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-system-blue);
   min-width: 32px;
   text-align: right;
@@ -422,7 +422,7 @@ html[data-theme="dark"] .progress-file--uploading:hover {
 
 .progress-file__status-text--analyzing {
   color: #5856d6;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .progress-file__status-text--cancelled {
@@ -446,7 +446,7 @@ html[data-theme="dark"] .progress-file--uploading:hover {
   padding: 2px 8px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-system-blue);
   background: transparent;
   border: 1px solid var(--color-ios-system-blue);

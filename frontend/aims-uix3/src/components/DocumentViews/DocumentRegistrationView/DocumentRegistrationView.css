@@ -446,7 +446,7 @@ html[data-theme="dark"] .customer-info-toggle-icon {
   padding: 8px 20px;
   font-family: var(--font-family-text);
   font-size: var(--font-size-footnote);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-ios-blue);
   background: transparent;
   border: 1px solid var(--color-ios-blue);

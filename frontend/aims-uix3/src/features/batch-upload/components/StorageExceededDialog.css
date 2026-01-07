@@ -39,7 +39,7 @@
 }
 
 .storage-exceeded-value {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -54,7 +54,7 @@
 
 .storage-exceeded-info-row.exceeded .storage-exceeded-label {
   color: var(--color-error-600);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .storage-exceeded-info-row.exceeded .storage-exceeded-value {

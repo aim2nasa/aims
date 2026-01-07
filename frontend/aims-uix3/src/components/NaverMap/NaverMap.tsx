@@ -742,7 +742,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             max-width: 280px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.4);
           ">
-            <div style="font-weight: 500; margin-bottom: 6px; color: #FF3B30;">${group.length}명의 고객</div>
+            <div style="font-weight: 600; margin-bottom: 6px; color: #FF3B30;">${group.length}명의 고객</div>
             <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 6px;">
               ${customerList}
             </div>
@@ -781,7 +781,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             color: white;
             border-radius: 6px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             white-space: nowrap;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           ">

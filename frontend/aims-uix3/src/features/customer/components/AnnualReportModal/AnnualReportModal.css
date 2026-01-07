@@ -81,7 +81,7 @@
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
   font-family: var(--font-family-text);
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -247,12 +247,12 @@
 
 .contracts-table__cell--number {
   text-align: center;
-  font-weight: 500;
+  font-weight: 600;
   width: 50px;
 }
 
 .contracts-table__cell--company {
-  font-weight: 500;
+  font-weight: 600;
   min-width: 80px;
 }
 
@@ -291,7 +291,7 @@
   border-radius: 6px;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 뱃지 (10px deprecated) */
   font-family: var(--font-family-text);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .status-badge.contract-item__status--active {
@@ -311,7 +311,7 @@
 
 .contracts-table__cell--coverage {
   text-align: right;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-accent);
   min-width: 80px;
 }
