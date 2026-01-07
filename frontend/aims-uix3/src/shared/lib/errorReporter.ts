@@ -59,8 +59,27 @@ interface ErrorReport {
 
 /**
  * 민감 정보 필드 목록
+ * 🔒 보안: 다양한 변형 패턴 포함 (user_token, auth_code 등)
  */
-const SENSITIVE_KEYS = ['password', 'token', 'secret', 'ssn', 'creditCard', 'cardNumber', 'authorization'];
+const SENSITIVE_KEYS = [
+  // 인증 관련
+  'password', 'passwd', 'pwd',
+  'token', 'accesstoken', 'access_token', 'refreshtoken', 'refresh_token',
+  'bearer', 'jwt', 'session', 'sessionid', 'session_id',
+  'authorization', 'auth', 'authcode', 'auth_code',
+  'apikey', 'api_key', 'api-key',
+  'credentials', 'credential',
+  // 암호화 키
+  'secret', 'secretkey', 'secret_key',
+  'privatekey', 'private_key', 'private-key',
+  'publickey', 'public_key', 'public-key',
+  // 개인정보
+  'ssn', 'socialsecurity',
+  'creditcard', 'credit_card', 'cardnumber', 'card_number', 'cvv', 'cvc',
+  'pin', 'pincode', 'pin_code',
+  // 쿠키/스토리지
+  'cookie', 'cookies',
+];
 
 /**
  * 에러 리포터 클래스
