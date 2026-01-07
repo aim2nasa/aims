@@ -291,6 +291,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
 
     // postMessage로부터 메시지 동기화
     const handleMessage = (event: MessageEvent) => {
+      // 🔒 보안: 동일 출처 검증 (XSS 공격 방지)
+      if (event.origin !== window.location.origin) {
+        console.warn('[ChatPanel] 허용되지 않은 출처에서 메시지 수신:', event.origin);
+        return;
+      }
+
       if (event.data?.type === 'AIMS_MESSAGES_SYNC') {
         try {
           const parsed = JSON.parse(event.data.messages);
@@ -451,12 +457,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
 
         // 🔴 팝업이 준비되면 메시지 전달
         const handlePopupReady = (event: MessageEvent) => {
+          // 🔒 보안: 동일 출처 검증
+          if (event.origin !== window.location.origin) {
+            return;
+          }
           if (event.data?.type === 'AIMS_POPUP_READY' && event.source === popup) {
             console.log('[ChatPanel] 팝업 준비 완료, 메시지 전달:', messages.length);
+            // 🔒 보안: 명시적 출처 지정 (메시지 탈취 방지)
             popup.postMessage({
               type: 'AIMS_MESSAGES_SYNC',
               messages: JSON.stringify(messages),
-            }, '*');
+            }, window.location.origin);
             window.removeEventListener('message', handlePopupReady);
           }
         };

@@ -49,6 +49,12 @@ export default function AIAssistantPage() {
   // 부모 창과 동기화 (세션 ID, 토큰 등)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // 🔒 보안: 동일 출처 검증 (XSS 공격 방지)
+      if (event.origin !== window.location.origin) {
+        console.warn('[AIAssistantPage] 허용되지 않은 출처에서 메시지 수신:', event.origin);
+        return;
+      }
+
       if (event.data?.type === 'AIMS_AUTH_SYNC') {
         // 부모 창에서 인증 정보 동기화
         if (event.data.token) {
@@ -70,7 +76,8 @@ export default function AIAssistantPage() {
     const timer = setTimeout(() => {
       if (window.opener && !window.opener.closed) {
         console.log('[AIAssistantPage] 팝업 준비 완료, 부모에 알림');
-        window.opener.postMessage({ type: 'AIMS_POPUP_READY' }, '*');
+        // 🔒 보안: 명시적 출처 지정 (메시지 탈취 방지)
+        window.opener.postMessage({ type: 'AIMS_POPUP_READY' }, window.location.origin);
       }
     }, 100);
 
