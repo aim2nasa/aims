@@ -335,6 +335,7 @@ npm run dev
 | 에이전트 | 용도 | 적용 시점 |
 |----------|------|----------|
 | `aims-code-checker` | 코드 규칙 검사 | 코드 수정 후 |
+| `full-deploy` | 전체 서비스 배포 | "전체 배포", "deploy all" 요청 시 |
 | `deploy-monitor` | 배포 후 헬스체크 | 배포 완료 후 |
 | `test-analyzer` | 테스트 실패 분석 | 테스트 실패 시 |
 
