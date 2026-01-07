@@ -432,7 +432,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               disabled: !customerPhone,
               onClick: () => {
                 if (customerPhone) {
-                  window.open(`tel:${customerPhone.replace(/-/g, '')}`, '_blank');
+                  // 🔒 보안: noopener,noreferrer 추가
+                  window.open(`tel:${customerPhone.replace(/-/g, '')}`, '_blank', 'noopener,noreferrer');
                 }
               }
             },
@@ -447,7 +448,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               disabled: !customerPhone,
               onClick: () => {
                 if (customerPhone) {
-                  window.open(`sms:${customerPhone.replace(/-/g, '')}`, '_blank');
+                  // 🔒 보안: noopener,noreferrer 추가
+                  window.open(`sms:${customerPhone.replace(/-/g, '')}`, '_blank', 'noopener,noreferrer');
                 }
               }
             }

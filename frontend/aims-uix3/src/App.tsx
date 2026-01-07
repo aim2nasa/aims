@@ -2063,8 +2063,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
             return previewModalDocument?.fileUrl ? {
               onDownload: () => {
-                // 새 창에서 파일 열기 (다운로드)
-                window.open(previewModalDocument.fileUrl!, '_blank');
+                // 🔒 보안: noopener,noreferrer로 tab-nabbing 공격 방지
+                window.open(previewModalDocument.fileUrl!, '_blank', 'noopener,noreferrer');
               }
             } : {}
           })()}
