@@ -190,8 +190,8 @@
 }
 
 .doc-explorer-toolbar__sort-btn--active:hover {
-  background: #0066DD;
-  border-color: #0055CC;
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-700);
 }
 
 .doc-explorer-toolbar__sort-icon {
@@ -384,19 +384,19 @@
 }
 
 .doc-explorer-toolbar__filter-chip--active {
-  color: white;
-  background: #007AFF;
-  border-color: #0055CC;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: var(--color-text-inverse);
+  background: var(--color-primary-500);
+  border-color: var(--color-primary-700);
+  box-shadow: 0 2px 8px var(--color-accent-blue-alpha-50), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   font-weight: 700;
 }
 
 .doc-explorer-toolbar__filter-chip--active:hover {
-  color: white;
-  background: #0066DD;
-  border-color: #0044BB;
-  box-shadow: 0 3px 10px rgba(0, 122, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--color-text-inverse);
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-800);
+  box-shadow: 0 3px 10px var(--color-accent-blue-alpha-50), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* Customer Filter Indicator */
@@ -1087,63 +1087,63 @@ html[data-theme="dark"] .doc-explorer-tree__document--selected {
 
 /* 문서 노드 포커스 상태 - 항상 눈에 띄게 표시 */
 .doc-explorer-tree__document--focused {
-  background: #e3f2fd;
-  outline: 2px solid #2196f3;
+  background: var(--color-primary-50);
+  outline: 2px solid var(--color-primary-500);
   outline-offset: -2px;
   position: relative;
   z-index: 1;
 }
 
 .doc-explorer-tree__document--focused:hover {
-  background: #e3f2fd;
+  background: var(--color-primary-50);
 }
 
 .doc-explorer-tree__document--focused.doc-explorer-tree__document--selected {
-  background: #bbdefb;
+  background: var(--color-primary-100);
 }
 
 /* 그룹 헤더 포커스 상태 */
 .doc-explorer-tree__group-header--focused {
-  background: #e3f2fd;
-  outline: 2px solid #2196f3;
+  background: var(--color-primary-50);
+  outline: 2px solid var(--color-primary-500);
   outline-offset: -2px;
   position: relative;
   z-index: 1;
 }
 
 .doc-explorer-tree__group-header--focused:hover {
-  background: #e3f2fd;
+  background: var(--color-primary-50);
 }
 
 /* 다크모드 포커스 스타일 */
 html[data-theme="dark"] .doc-explorer-tree__document--focused {
-  background: rgba(33, 150, 243, 0.2);
-  outline-color: #64b5f6;
+  background: var(--color-selection-bg-dark);
+  outline-color: var(--color-primary-300);
 }
 
 html[data-theme="dark"] .doc-explorer-tree__document--focused:hover {
-  background: rgba(33, 150, 243, 0.2);
+  background: var(--color-selection-bg-dark);
 }
 
 html[data-theme="dark"] .doc-explorer-tree__document--focused.doc-explorer-tree__document--selected {
-  background: rgba(33, 150, 243, 0.3);
+  background: var(--color-selection-bg-dark-hover);
 }
 
 html[data-theme="dark"] .doc-explorer-tree__group-header--focused {
-  background: rgba(33, 150, 243, 0.2);
-  outline-color: #64b5f6;
+  background: var(--color-selection-bg-dark);
+  outline-color: var(--color-primary-300);
 }
 
 html[data-theme="dark"] .doc-explorer-tree__group-header--focused:hover {
-  background: rgba(33, 150, 243, 0.2);
+  background: var(--color-selection-bg-dark);
 }
 
 /* ============================================
    Search Highlight
    ============================================ */
 .doc-explorer-highlight {
-  background-color: #ff9500;
-  color: #fff;
+  background-color: var(--color-dev-mode);
+  color: var(--color-text-inverse);
   padding: 1px 3px;
   border-radius: 3px;
   font-weight: 600;
@@ -1151,8 +1151,8 @@ html[data-theme="dark"] .doc-explorer-tree__group-header--focused:hover {
 
 /* 다크모드 하이라이트 */
 html[data-theme="dark"] .doc-explorer-highlight {
-  background-color: #ff9f0a;
-  color: #000;
+  background-color: var(--color-warning-500);
+  color: var(--color-neutral-900);
 }
 
 /* ============================================
@@ -1256,7 +1256,7 @@ html[data-theme="dark"] .hover-preview__content {
   height: 120px;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
-  color: #fff;
+  color: var(--color-text-inverse);
   text-align: center;
   gap: 4px;
 }
@@ -1439,7 +1439,7 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 }
 
 .doc-explorer-toolbar__calendar-weekday--sunday {
-  color: #ff3b30;
+  color: var(--color-error);
 }
 
 /* Calendar Grid */
@@ -1499,9 +1499,9 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 }
 
 .doc-explorer-toolbar__calendar-day--has-docs:hover {
-  background: #007aff !important;
-  color: #ffffff !important;
-  opacity: 1 !important;
+  background: var(--color-primary-500);
+  color: var(--color-text-inverse);
+  opacity: 1;
 }
 
 .doc-explorer-toolbar__calendar-day--has-docs:hover::after {
@@ -1631,7 +1631,7 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 /* 라이트 테마 초성 버튼 대비 강화 */
 html:not([data-theme="dark"]) .initial-filter-bar__initial {
   border-color: var(--color-border-secondary);
-  color: #4b5563;  /* neutral-600 보다 약간 진하게 */
+  color: var(--color-neutral-600);
 }
 
 .initial-filter-bar__initial:hover:not(:disabled) {
@@ -1644,26 +1644,26 @@ html:not([data-theme="dark"]) .initial-filter-bar__initial {
 /* 선택된 초성 - 최고 우선순위로 스타일 적용 */
 button.initial-filter-bar__initial.initial-filter-bar__initial--active,
 .initial-filter-bar__initial.initial-filter-bar__initial--active {
-  background: #007aff;
-  border-color: #007aff;
-  color: #FFFFFF;
+  background: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  color: var(--color-text-inverse);
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 2px 6px var(--color-accent-blue-alpha-30);
 }
 
 /* 라이트모드 선택된 초성 - 최고 우선순위로 흰색 텍스트 보장 */
 html:not([data-theme="dark"]) button.initial-filter-bar__initial.initial-filter-bar__initial--active,
 html:not([data-theme="dark"]) .initial-filter-bar__initial.initial-filter-bar__initial--active {
-  background: #007aff;
-  border-color: #007aff;
-  color: #FFFFFF;
+  background: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  color: var(--color-text-inverse);
 }
 
 button.initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled),
 .initial-filter-bar__initial.initial-filter-bar__initial--active:hover:not(:disabled) {
-  background: #0066DD;
-  border-color: #0055CC;
-  color: #FFFFFF;
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-700);
+  color: var(--color-text-inverse);
   transform: scale(1.05);
 }
 
