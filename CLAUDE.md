@@ -49,7 +49,7 @@
 ### 6. 백엔드 API 연동
 - **추측 금지**, 실제 API 호출로 응답 구조 확인 필수
 ```bash
-ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m json.tool'
+ssh rossi@100.110.215.65 'curl -s "http://localhost:3010/api/endpoint" | python3 -m json.tool'
 ```
 
 ### 7. 날짜/시간 형식
@@ -100,7 +100,7 @@ cd /home/rossi/aims/backend/api/aims_api && ./deploy_aims_api.sh
 사용자가 위 명령을 요청하면 **deploy_all.sh 스크립트 사용**:
 
 ```bash
-ssh tars 'cd ~/aims && ./deploy_all.sh'
+ssh rossi@100.110.215.65 'cd ~/aims && ./deploy_all.sh'
 ```
 
 **스크립트가 자동 수행하는 작업:**
