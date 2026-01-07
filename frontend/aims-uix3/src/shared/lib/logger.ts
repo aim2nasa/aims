@@ -15,6 +15,8 @@
  * @since 2025-12-22 - 서버 전송 기능 추가
  */
 
+import { getAuthToken } from './api'
+
 const isDev = import.meta.env.DEV
 const API_BASE_URL = (import.meta.env['VITE_API_BASE_URL'] as string) || ''
 
@@ -113,7 +115,8 @@ const flushQueue = async (): Promise<void> => {
   const logsToSend = logQueue.splice(0, 10) // 한 번에 최대 10개
 
   try {
-    const token = localStorage.getItem('aims-token')
+    // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+    const token = getAuthToken()
     await fetch(`${API_BASE_URL}/api/system-logs/batch`, {
       method: 'POST',
       headers: {
@@ -360,7 +363,8 @@ export const logger = {
     }
     // 동기적으로 전송 시도 (sendBeacon 사용)
     if (logQueue.length > 0 && navigator.sendBeacon) {
-      const token = localStorage.getItem('aims-token')
+      // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+      const token = getAuthToken()
       const blob = new Blob([JSON.stringify({ logs: logQueue })], { type: 'application/json' })
       navigator.sendBeacon(`${API_BASE_URL}/api/system-logs/batch`, blob)
       logQueue = []
