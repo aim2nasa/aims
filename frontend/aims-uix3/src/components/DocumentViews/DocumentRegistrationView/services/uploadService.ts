@@ -16,6 +16,7 @@ import {
 import { UserContextService, uploadConfig } from './userContextService'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { getAuthToken } from '@/shared/lib/api'
 
 /**
  * 업로드 진행률 콜백 타입
@@ -357,18 +358,10 @@ export class UploadService {
       xhr.open('POST', uploadConfig.endpoints.upload)
       xhr.timeout = 5 * 60 * 1000 // 5분 타임아웃
 
-      // JWT 인증 헤더 추가 (aims_api 프록시 인증용)
-      const authData = localStorage.getItem('auth-storage')
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData)
-          const token = parsed?.state?.token
-          if (token) {
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-          }
-        } catch (e) {
-          console.warn('[UploadService] Failed to parse auth token:', e)
-        }
+      // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+      const token = getAuthToken()
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
       }
 
       // 업로드 시작
@@ -386,11 +379,8 @@ export class UploadService {
     documentName: string
   ): Promise<void> {
     try {
-      const authData = localStorage.getItem('auth-storage')
-      if (!authData) return
-
-      const parsed = JSON.parse(authData)
-      const token = parsed?.state?.token
+      // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+      const token = getAuthToken()
       if (!token) return
 
       const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || ''
@@ -428,13 +418,11 @@ export class UploadService {
     const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || ''
 
     // 1. folderId 설정 API 호출
+    // 🔒 보안: getAuthToken()으로 토큰 통합 관리 (v1/v2 호환)
+    const token = getAuthToken()
     try {
-      const authData = localStorage.getItem('auth-storage')
-      if (authData) {
-        const parsed = JSON.parse(authData)
-        const token = parsed?.state?.token
-        if (token) {
-          const setFolderResponse = await fetch(`${API_BASE_URL}/api/documents/recent/set-folder`, {
+      if (token) {
+        const setFolderResponse = await fetch(`${API_BASE_URL}/api/documents/recent/set-folder`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -443,10 +431,9 @@ export class UploadService {
             body: JSON.stringify({ filename, folderId: folderId || null })
           })
 
-          if (import.meta.env.DEV) {
-            const result = await setFolderResponse.json()
-            console.log(`[UploadService] folderId 설정 완료:`, result)
-          }
+        if (import.meta.env.DEV) {
+          const result = await setFolderResponse.json()
+          console.log(`[UploadService] folderId 설정 완료:`, result)
         }
       }
     } catch (error) {
