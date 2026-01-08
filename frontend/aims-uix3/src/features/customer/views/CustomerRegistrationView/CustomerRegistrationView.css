@@ -439,6 +439,45 @@
   }
 }
 
+/* 📱 iPad 세로 높이 제한 (850px 이하: iPad Air 13" 832px 등) */
+@media (min-width: 1024px) and (max-height: 850px) {
+  .customer-registration__inner {
+    padding: 0 var(--spacing-2);
+  }
+
+  .customer-registration__header {
+    padding: 2px 0;
+    margin-bottom: 0;
+  }
+
+  .form-section__title {
+    padding: 1px 0;
+    font-size: 12px;
+  }
+
+  .form-row {
+    padding: 3px 0;
+    min-height: 20px;
+  }
+
+  .form-row__input input,
+  .form-row__input select {
+    height: 16px;
+    min-height: 16px;
+    max-height: 16px;
+    font-size: 12px;
+  }
+
+  .form-row__label {
+    font-size: 12px;
+  }
+
+  .customer-registration__actions {
+    margin-top: 2px;
+    padding-top: 0;
+  }
+}
+
 /* 모바일 (768px 이하) */
 @media (max-width: 768px) {
   .customer-registration__inner {

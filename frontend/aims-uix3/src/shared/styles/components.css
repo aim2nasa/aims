@@ -710,6 +710,23 @@
   }
 }
 
+/* 📱 iPad 세로 높이 제한 (850px 이하) - 극한 압축 */
+@media (min-width: 1024px) and (max-height: 850px) {
+  .leftpane-footer {
+    gap: 2px;
+    padding: 2px 0;
+  }
+
+  .leftpane-footer__version {
+    font-size: 8px;
+  }
+
+  .leftpane-footer__hamburger-skeleton {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 /* === LAYOUT CONTROL MODAL === */
 
 .modal-overlay {

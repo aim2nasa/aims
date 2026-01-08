@@ -1180,10 +1180,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       className="layout-main"
       onContextMenu={handleContextMenu}
       style={{
-        width: '100vw',
-        height: '100vh',
-        position: 'relative',
-        ...cssVariables // CSS 변수 적용
+        // width, height, position은 layout.css에서 관리 (iPad 미디어쿼리 적용을 위해)
+        ...cssVariables as React.CSSProperties // CSS 변수 적용
       }}>
 
       {/* 🍎 Apple A11y: Skip Navigation - VoiceOver 완벽 지원 */}

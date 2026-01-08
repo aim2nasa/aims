@@ -26,12 +26,10 @@
 /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
 
 .header-progressive {
-  /* 기본 위치와 크기 - 고정 높이로 변경 */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 50px; /* 고정 높이 - 물리적 공간 변화 없음 */
+  /* 🍎 그리드 흐름 참여 - absolute 제거로 레이아웃 충돌 해결 */
+  position: relative;
+  width: 100%;
+  height: var(--header-height-base, 60px); /* CSS 변수 사용 - theme.css와 동기화 */
 
   /* 플렉스 레이아웃 */
   display: flex;
@@ -54,7 +52,6 @@
 
   /* 🍎 성능 최적화 (필수만) */
   will-change: background-color;
-  transform: translateZ(0);
 
   /* 레이어링 */
   z-index: var(--z-index-header, 100);
@@ -62,7 +59,7 @@
   /* 패딩 - Safe Area 지원 */
   padding-left: max(var(--spacing-4), env(safe-area-inset-left));
   padding-right: max(var(--spacing-4), env(safe-area-inset-right));
-  padding-top: max(0px, env(safe-area-inset-top));
+  padding-top: 0;
   padding-bottom: 0;
   box-sizing: border-box;
 
@@ -433,11 +430,15 @@
 
 /* === 반응형 === */
 
-/* 📱 iPad 전용 최적화 (1024px - 1366px) */
+/* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
 @media (min-width: 1024px) and (max-width: 1366px) {
   .header-progressive {
+    /* 50px 고정 높이 - layout.css와 동기화 */
     height: 50px;
-    padding: 0 var(--spacing-3);
+    min-height: 50px;
+    max-height: 50px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
   }
 
   .header-title {
@@ -445,42 +446,71 @@
   }
 
   .header-controls {
-    gap: var(--spacing-2);
+    gap: 12px; /* 16px → 12px 축소 */
   }
 
+  .header-control-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* 아바타 크기 축소 - 50px 헤더에 여유롭게 */
   .header-user-avatar-circle {
     width: 32px;
     height: 32px;
-    font-size: var(--font-size-footnote);
+    font-size: 12px;
   }
 
-  .header-chat-ai-icon {
+  .header-user-avatar-skeleton {
     width: 32px;
+    height: 32px;
+  }
+
+  /* AI 아이콘 크기 축소 */
+  .header-chat-ai-icon {
+    width: 30px;
     height: 22px;
+  }
+
+  .header-user-name {
+    font-size: 11px;
+    max-width: 80px;
   }
 }
 
-/* 📱 iPad 세로 높이 작은 경우 (832px 이하) */
+/* 📱 iPad 세로 높이 제한 (850px 이하) - 더 압축 */
 @media (min-width: 1024px) and (max-height: 850px) {
   .header-progressive {
     height: 50px;
-    padding: 0 var(--spacing-2);
+    min-height: 50px;
+    max-height: 50px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .header-controls {
+    gap: 8px; /* 더 압축 */
+  }
+
+  .header-control-button {
+    width: 28px;
+    height: 28px;
   }
 
   .header-user-avatar-circle {
     width: 30px;
     height: 30px;
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .header-user-avatar-skeleton {
+    width: 30px;
+    height: 30px;
   }
 
   .header-chat-ai-icon {
     width: 28px;
     height: 20px;
-  }
-
-  .header-dev-badge {
-    padding: 1px 6px;
-    font-size: 9px;
   }
 }
 

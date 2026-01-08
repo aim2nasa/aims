@@ -27,6 +27,10 @@
   padding: 0;
   font-family: var(--font-family-primary);
   background-color: var(--color-layout-main-bg);
+  /* 🍎 기본 크기 - CSS로 관리하여 미디어쿼리 적용 가능 */
+  width: 100vw;
+  height: 100vh;
+  position: relative;
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
@@ -113,26 +117,42 @@
 
 /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
 @media (min-width: 1024px) and (max-width: 1366px) {
-  .layout-main--grid {
-    /* iPad에서 safe-area 패딩 제거 - 헤더 잘림 방지 */
-    padding: 0;
-    gap: 4px; /* 간격 축소 */
-    grid-template-rows: 50px 1fr; /* 헤더 50px로 고정 */
+  /* 🍎 최상위 컨테이너 - iOS Safari 100vh 버그 대응 */
+  .layout-main {
+    height: -webkit-fill-available;
+    height: 100dvh;
   }
 
-  .layout-header {
-    /* iPad에서 헤더 높이 축소 */
+  /* 🍎 전체 레이아웃 - iOS Safari 100vh 버그 대응 */
+  .layout-main--grid {
+    /* iOS Safari: 100vh는 URL바 포함 높이라 실제 뷰포트보다 큼 */
+    /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
+    height: -webkit-fill-available; /* Safari 폴백 */
+    height: 100dvh; /* 100dvh (dynamic viewport height) - Safari 15.4+ */
+    max-height: -webkit-fill-available;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding: 0; /* safe-area 패딩 제거 - 레이아웃 충돌 방지 */
+    gap: 8px; /* 16px → 8px 축소 */
+    grid-template-rows: 50px 1fr; /* 헤더 50px 고정 */
+  }
+
+  /* 헤더 높이 강제 고정 */
+  .layout-header--grid {
     height: 50px;
     min-height: 50px;
     max-height: 50px;
-    padding-top: 0;
-    overflow: visible;
+    flex-shrink: 0; /* 절대 축소 안됨 */
   }
 
-  .layout-header--grid {
-    /* 그리드 영역도 맞춤 */
-    min-height: 50px;
-    max-height: 50px;
+  /* 콘텐츠 영역 - 스크롤은 내부에서만 */
+  .layout-nav--grid,
+  .layout-main-content--grid,
+  .layout-aside--grid {
+    /* dvh 사용으로 정확한 뷰포트 기준 계산 */
+    max-height: calc(100dvh - 58px); /* 50px 헤더 + 8px gap */
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .layout-leftpane {
@@ -142,26 +162,19 @@
     padding-top: 4px;
     padding-bottom: 4px;
   }
-
-  .layout-mainpane,
-  .layout-rightpane {
-    /* 콘텐츠 영역 패딩 축소 */
-    padding: 4px;
-  }
 }
 
-/* 📱 iPad 세로 높이 작은 경우 (832px 이하) */
+/* 📱 iPad 세로 높이 제한 (850px 이하: iPad Air 13" 등) */
 @media (min-width: 1024px) and (max-height: 850px) {
   .layout-main--grid {
-    grid-template-rows: 50px 1fr; /* 헤더 50px로 축소 */
-    gap: 2px;
-    padding: 0;
+    gap: 4px; /* 더 압축 */
+    grid-template-rows: 50px 1fr;
   }
 
-  .layout-header {
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
+  .layout-nav--grid,
+  .layout-main-content--grid,
+  .layout-aside--grid {
+    max-height: calc(100dvh - 54px); /* 50px 헤더 + 4px gap */
   }
 }
 
