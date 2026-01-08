@@ -117,10 +117,31 @@
 
 /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
 @media (min-width: 1024px) and (max-width: 1366px) {
-  /* 🍎 최상위 컨테이너 - iOS Safari 100vh 버그 대응 */
+  /* 🍎 iPad 전용 CSS 변수 오버라이드 */
+  :root {
+    --header-height-base: 50px; /* 60px → 50px 축소 */
+    --layout-header-height: 50px;
+    /* 🍎 핵심: mainpane-height를 100dvh 기반으로 변경 (iOS Safari 100vh 버그 대응) */
+    --mainpane-height: calc(100dvh - 50px);
+  }
+
+  /* 🍎 최상위 컨테이너 - Flexbox로 Header 고정 */
   .layout-main {
     height: -webkit-fill-available;
     height: 100dvh;
+    /* Flexbox 레이아웃: Header를 상단에 고정 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* 🍎 Header 고정 - 절대 축소 안됨 */
+  .layout-main > .header-progressive,
+  .layout-main > header {
+    flex-shrink: 0;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
   }
 
   /* 🍎 전체 레이아웃 - iOS Safari 100vh 버그 대응 */
