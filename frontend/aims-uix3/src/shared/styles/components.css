@@ -682,6 +682,34 @@
   justify-content: center;
 }
 
+/* === LEFTPANE FOOTER RESPONSIVE === */
+
+/* 📱 iPad/소형 PC (1024px-1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .leftpane-footer {
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .leftpane-footer__version {
+    font-size: 9px;
+  }
+}
+
+/* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
+@media (min-width: 1024px) and (max-width: 1100px) {
+  .leftpane-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .leftpane-footer__left,
+  .leftpane-footer__right {
+    flex: 0 0 auto;
+  }
+}
+
 /* === LAYOUT CONTROL MODAL === */
 
 .modal-overlay {

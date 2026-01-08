@@ -938,3 +938,47 @@ html[data-theme="dark"] .menu-icon--help {
   border-top: 1px solid var(--color-separator);
   flex-shrink: 0;
 }
+/* === RESPONSIVE MENU FOR iPAD === */
+
+/* 📱 iPad/소형 PC (1024px-1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .custom-menu-item {
+    padding: 3px 12px;
+    font-size: 12px;
+  }
+
+  .custom-menu-item.sub-menu {
+    padding-left: var(--spacing-8); /* 32px instead of larger */
+  }
+
+  .menu-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+
+  .custom-menu__footer {
+    padding: 6px 0 2px;
+  }
+
+  .custom-menu__usage-widget {
+    padding: var(--spacing-1);
+  }
+}
+
+/* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
+@media (min-width: 1024px) and (max-width: 1100px) {
+  .custom-menu-item {
+    padding: 2px 10px;
+    font-size: 11px;
+  }
+
+  .sub-menu-container.expanded {
+    max-height: 200px; /* Reduced for smaller screens */
+  }
+
+  .menu-icon {
+    width: 16px;
+    height: 16px;
+  }
+}

@@ -115,3 +115,31 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* === RESPONSIVE FOR iPAD === */
+
+/* 📱 iPad/소형 PC (1024px-1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .usage-widget-container {
+    gap: 4px;
+    padding: 2px 4px;
+  }
+
+  .usage-pie--loading {
+    width: 24px;
+    height: 24px;
+  }
+
+  .usage-pie__skeleton {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 📱 iPad Mini 전용 (1024px-1100px) - 더 컴팩트하게 */
+@media (min-width: 1024px) and (max-width: 1100px) {
+  .usage-widget-container {
+    transform: scale(0.9);
+    transform-origin: left center;
+  }
+}
