@@ -4,7 +4,12 @@
  */
 
 .contract-import-view {
-  padding: var(--spacing-6);
+  padding: 0;
   height: 100%;
   overflow: auto;
+}
+
+/* CenterPaneView content padding 오버라이드 */
+.center-pane-view:has(.contract-import-view) .center-pane-view__content {
+  padding: var(--spacing-2);
 }

@@ -14,7 +14,8 @@
 
 .excel-refiner__main {
   flex: 1;
-  overflow: hidden;
+  min-height: 0; /* flexbox 스크롤 활성화 */
+  overflow: auto; /* hidden → auto: 내용이 넘치면 스크롤 */
   display: flex;
   flex-direction: column;
   background: var(--color-layout-centerpane-bg);
@@ -27,7 +28,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: var(--spacing-8);
+  margin: var(--spacing-2);
   border: 2px dashed var(--color-upload-zone-border);
   border-radius: var(--radius-xl);
   background: var(--color-upload-zone-bg);
@@ -45,8 +46,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-8);
-  padding: var(--spacing-8);
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
   width: 100%;
 }
 
