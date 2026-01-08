@@ -7,14 +7,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* center → flex-start: 상단 정렬 */
   flex: 1;
-  min-height: 300px;
-  padding: var(--spacing-xl);
+  min-height: 0;
+  min-width: 0; /* flexbox 오버플로우 방지 */
+  padding: var(--spacing-3);
   border: 2px dashed var(--color-upload-zone-border);
   border-radius: var(--radius-lg);
   background: var(--color-upload-zone-bg);
   transition: all 0.2s ease;
+  overflow: auto; /* 내용 넘침 시 스크롤 */
 }
 
 .folder-drop-zone.drag-over {
@@ -33,6 +35,8 @@
   align-items: center;
   gap: var(--spacing-md);
   text-align: center;
+  max-width: 100%;
+  min-width: 0; /* flexbox shrink 허용 */
 }
 
 .folder-drop-zone-icon {
@@ -88,12 +92,14 @@
 .folder-guide {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px 32px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
   background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary, #f3f4f6) 100%);
   border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
   border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-2);
+  max-width: 100%; /* 컨테이너 너비 초과 방지 */
+  box-sizing: border-box;
 }
 
 .folder-guide-header {
@@ -123,16 +129,18 @@
 .folder-guide-content {
   display: flex;
   justify-content: center;
-  padding: 32px 40px;
+  padding: var(--spacing-3) var(--spacing-4);
   background: rgba(0, 122, 255, 0.08);
   border-radius: var(--radius-md);
-  margin: var(--spacing-xs) 0;
+  margin: var(--spacing-1) 0;
+  max-width: 100%;
+  overflow-x: auto; /* 트리가 넓으면 가로 스크롤 */
 }
 
 .folder-guide-tree {
   font-size: 13px;
-  line-height: 1.6;
-  padding: 8px 0;
+  line-height: 1.5;
+  padding: var(--spacing-1) 0;
 }
 
 /* 트리 노드 - CSS 라인으로 연결 */
@@ -177,7 +185,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 0;
+  padding: 4px 0;
   white-space: nowrap;
 }
 
@@ -287,9 +295,10 @@ html:not([data-theme="dark"]) .guide-icon.folder {
 /* 팁 영역 */
 .folder-guide-tips {
   display: flex;
-  gap: var(--spacing-lg);
+  flex-wrap: wrap; /* 공간 부족 시 줄바꿈 */
+  gap: var(--spacing-2);
   justify-content: center;
-  padding-top: 16px;
+  padding-top: var(--spacing-2);
   border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
 }
 
