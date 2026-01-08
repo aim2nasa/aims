@@ -1094,7 +1094,7 @@
 
   /* Text and Border Colors */
   --color-text-primary: var(--color-neutral-900);
-  --color-border-primary: var(--color-neutral-200);
+  --color-border-primary: #d4d6dc;  /* 라이트 모드 기본 경계 색상 */
 
   /* Layout Hamburger Colors - iOS 16+ 공식 색상 적용 */
   --color-layout-hamburger-bg-light: transparent;      /* 기본 투명 */
