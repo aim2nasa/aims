@@ -554,7 +554,7 @@
     --color-text-disabled: var(--color-neutral-300);
     --color-text-inverse: var(--color-neutral-0);
 
-    --color-border-primary: var(--color-neutral-200);
+    --color-border-primary: #d4d6dc;  /* 라이트 모드 기본 경계 색상 - 통일 */
     --color-border-secondary: var(--color-neutral-300);
     --color-border-focus: var(--color-primary-500);
     --color-border-error: var(--color-error-500);

@@ -13,7 +13,7 @@ import { DocumentStatusProvider } from '@/providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '@/contexts/DocumentStatusContext'
 import { DocumentExplorerToolbar } from './DocumentExplorerToolbar'
 import { DocumentExplorerTree } from './DocumentExplorerTree'
-import { InitialFilterBar } from './InitialFilterBar'
+import { InitialFilterBar } from '@/shared/ui/InitialFilterBar'
 import { useDocumentExplorerTree } from './hooks/useDocumentExplorerTree'
 import type { Document } from '@/types/documentStatus'
 import './DocumentExplorerView.css'
@@ -144,13 +144,15 @@ const DocumentExplorerContent: React.FC<{
         onThumbnailEnabledChange={setThumbnailEnabled}
       />
 
-      {/* 초성 필터 바 */}
+      {/* 초성 필터 바 - 공용 컴포넌트 사용 */}
       <InitialFilterBar
         initialType={initialType}
         onInitialTypeChange={setInitialType}
         selectedInitial={selectedInitial}
         onSelectedInitialChange={setSelectedInitial}
-        initialCustomerCounts={initialCustomerCounts}
+        initialCounts={initialCustomerCounts}
+        countLabel="건"
+        targetLabel="고객"
       />
 
       {/* 트리 뷰 */}
