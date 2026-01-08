@@ -113,10 +113,55 @@
 
 /* 📱 iPad 전용 최적화 (1024px - 1366px: iPad Mini ~ iPad Pro 13") */
 @media (min-width: 1024px) and (max-width: 1366px) {
+  .layout-main--grid {
+    /* iPad에서 safe-area 패딩 제거 - 헤더 잘림 방지 */
+    padding: 0;
+    gap: 4px; /* 간격 축소 */
+    grid-template-rows: 50px 1fr; /* 헤더 50px로 고정 */
+  }
+
+  .layout-header {
+    /* iPad에서 헤더 높이 축소 */
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    padding-top: 0;
+    overflow: visible;
+  }
+
+  .layout-header--grid {
+    /* 그리드 영역도 맞춤 */
+    min-height: 50px;
+    max-height: 50px;
+  }
+
   .layout-leftpane {
     /* iPad에서 좌우 패딩 축소 */
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .layout-mainpane,
+  .layout-rightpane {
+    /* 콘텐츠 영역 패딩 축소 */
+    padding: 4px;
+  }
+}
+
+/* 📱 iPad 세로 높이 작은 경우 (832px 이하) */
+@media (min-width: 1024px) and (max-height: 850px) {
+  .layout-main--grid {
+    grid-template-rows: 50px 1fr; /* 헤더 50px로 축소 */
+    gap: 2px;
+    padding: 0;
+  }
+
+  .layout-header {
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
   }
 }
 
