@@ -36,7 +36,6 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-bottom: 1px solid var(--color-border-primary);
   background: var(--color-bg-secondary);
   flex-shrink: 0;
   flex-wrap: nowrap;
