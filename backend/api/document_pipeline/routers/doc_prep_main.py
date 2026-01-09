@@ -474,7 +474,19 @@ async def process_document_pipeline(
             "meta.summary": summary,
             "meta.tags": tags,
             "meta.length": len(full_text) if full_text else 0,
-            "meta.meta_status": "done"
+            "meta.meta_status": "done",
+            # Image EXIF metadata
+            "meta.width": meta_result.get("width"),
+            "meta.height": meta_result.get("height"),
+            "meta.date_taken": meta_result.get("date_taken"),
+            "meta.camera_make": meta_result.get("camera_make"),
+            "meta.camera_model": meta_result.get("camera_model"),
+            "meta.gps_latitude": meta_result.get("gps_latitude"),
+            "meta.gps_longitude": meta_result.get("gps_longitude"),
+            "meta.gps_latitude_ref": meta_result.get("gps_latitude_ref"),
+            "meta.gps_longitude_ref": meta_result.get("gps_longitude_ref"),
+            "meta.orientation": meta_result.get("orientation"),
+            "meta.exif": meta_result.get("exif"),
         }
 
         await files_collection.update_one(

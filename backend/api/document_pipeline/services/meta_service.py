@@ -5,6 +5,7 @@ import os
 import hashlib
 import mimetypes
 import logging
+import io
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
@@ -19,6 +20,20 @@ try:
 except ImportError:
     HAS_PYMUPDF = False
     logger.warning("PyMuPDF not available. PDF text extraction will be limited.")
+
+try:
+    import exifread
+    HAS_EXIFREAD = True
+except ImportError:
+    HAS_EXIFREAD = False
+    logger.warning("exifread not available. EXIF extraction will be limited.")
+
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+    logger.warning("Pillow not available. Image dimension extraction will be limited.")
 
 
 class MetaService:
@@ -82,14 +97,19 @@ class MetaService:
                 "num_pages": None,
                 "pdf_text_ratio": None,
                 "exif": None,
+                "width": None,
+                "height": None,
                 "error": False
             }
 
-            # Extract text based on file type
+            # Extract info based on file type
             if mime_type == "application/pdf":
                 pdf_info = await cls._extract_pdf_info(content)
                 result.update(pdf_info)
-            elif mime_type.startswith("text/"):
+            elif mime_type and mime_type.startswith("image/"):
+                image_info = cls._extract_image_info(content, mime_type)
+                result.update(image_info)
+            elif mime_type and mime_type.startswith("text/"):
                 result["extracted_text"] = content.decode("utf-8", errors="ignore")
 
             return result
@@ -141,6 +161,75 @@ class MetaService:
         return result
 
     @classmethod
+    def _extract_image_info(cls, content: bytes, mime_type: str) -> Dict[str, Any]:
+        """Extract image-specific information including EXIF and dimensions"""
+        result = {
+            "exif": None,
+            "width": None,
+            "height": None
+        }
+
+        # Extract image dimensions using PIL
+        if HAS_PIL:
+            try:
+                img = Image.open(io.BytesIO(content))
+                result["width"] = img.width
+                result["height"] = img.height
+                img.close()
+            except Exception as e:
+                logger.warning(f"PIL image dimension extraction failed: {e}")
+
+        # Extract EXIF data (primarily for JPEG)
+        if HAS_EXIFREAD and mime_type in ("image/jpeg", "image/tiff"):
+            try:
+                tags = exifread.process_file(io.BytesIO(content), details=False)
+                if tags:
+                    exif_data = {}
+                    for tag, value in tags.items():
+                        # Skip thumbnail data and internal tags
+                        if tag.startswith("Thumbnail") or tag.startswith("EXIF MakerNote"):
+                            continue
+                        # Convert IfdTag to string
+                        str_value = str(value)
+                        # Skip very long values (binary data)
+                        if len(str_value) <= 500:
+                            exif_data[tag] = str_value
+
+                    if exif_data:
+                        result["exif"] = exif_data
+
+                        # Extract commonly used EXIF fields as top-level properties
+                        if "EXIF DateTimeOriginal" in exif_data:
+                            result["date_taken"] = exif_data["EXIF DateTimeOriginal"]
+                        elif "EXIF DateTimeDigitized" in exif_data:
+                            result["date_taken"] = exif_data["EXIF DateTimeDigitized"]
+                        elif "Image DateTime" in exif_data:
+                            result["date_taken"] = exif_data["Image DateTime"]
+
+                        if "Image Make" in exif_data:
+                            result["camera_make"] = exif_data["Image Make"]
+                        if "Image Model" in exif_data:
+                            result["camera_model"] = exif_data["Image Model"]
+
+                        # GPS coordinates
+                        if "GPS GPSLatitude" in exif_data and "GPS GPSLongitude" in exif_data:
+                            result["gps_latitude"] = exif_data["GPS GPSLatitude"]
+                            result["gps_longitude"] = exif_data["GPS GPSLongitude"]
+                            if "GPS GPSLatitudeRef" in exif_data:
+                                result["gps_latitude_ref"] = exif_data["GPS GPSLatitudeRef"]
+                            if "GPS GPSLongitudeRef" in exif_data:
+                                result["gps_longitude_ref"] = exif_data["GPS GPSLongitudeRef"]
+
+                        # Image orientation
+                        if "Image Orientation" in exif_data:
+                            result["orientation"] = exif_data["Image Orientation"]
+
+            except Exception as e:
+                logger.warning(f"EXIF extraction failed: {e}")
+
+        return result
+
+    @classmethod
     def _error_response(cls, error_code: str, message: str) -> Dict[str, Any]:
         """Generate error response"""
         return {
@@ -157,5 +246,7 @@ class MetaService:
             "extracted_text": None,
             "num_pages": None,
             "pdf_text_ratio": None,
-            "exif": None
+            "exif": None,
+            "width": None,
+            "height": None
         }

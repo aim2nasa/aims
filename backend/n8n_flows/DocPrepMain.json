@@ -183,6 +183,66 @@
               "type": "string"
             },
             {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67891",
+              "name": "meta.width",
+              "value": "={{ $json.body.width }}",
+              "type": "number"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67892",
+              "name": "meta.height",
+              "value": "={{ $json.body.height }}",
+              "type": "number"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67893",
+              "name": "meta.date_taken",
+              "value": "={{ $json.body.date_taken }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67894",
+              "name": "meta.camera_make",
+              "value": "={{ $json.body.camera_make }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67895",
+              "name": "meta.camera_model",
+              "value": "={{ $json.body.camera_model }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67896",
+              "name": "meta.gps_latitude",
+              "value": "={{ $json.body.gps_latitude }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67897",
+              "name": "meta.gps_longitude",
+              "value": "={{ $json.body.gps_longitude }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67898",
+              "name": "meta.gps_latitude_ref",
+              "value": "={{ $json.body.gps_latitude_ref }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67899",
+              "name": "meta.gps_longitude_ref",
+              "value": "={{ $json.body.gps_longitude_ref }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67900",
+              "name": "meta.orientation",
+              "value": "={{ $json.body.orientation }}",
+              "type": "string"
+            },
+            {
               "id": "dbc183dd-ac7c-4628-b2a2-38b4a0e5ed5f",
               "name": "_id",
               "value": "={{ String($('Merge1').item.json._id).replace(/\"/g, '') }}",

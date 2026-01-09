@@ -111,6 +111,17 @@ async def extract_metadata(
             "truncated": truncated,
             "tags": tags,
             "file_hash": meta.get("file_hash"),
+            # Image-specific metadata
+            "width": meta.get("width"),
+            "height": meta.get("height"),
+            "date_taken": meta.get("date_taken"),
+            "camera_make": meta.get("camera_make"),
+            "camera_model": meta.get("camera_model"),
+            "gps_latitude": meta.get("gps_latitude"),
+            "gps_longitude": meta.get("gps_longitude"),
+            "gps_latitude_ref": meta.get("gps_latitude_ref"),
+            "gps_longitude_ref": meta.get("gps_longitude_ref"),
+            "orientation": meta.get("orientation"),
             "error": None
         }
 
@@ -168,6 +179,17 @@ async def extract_metadata_json(request: MetaPathRequest):
             "truncated": truncated,
             "tags": tags,
             "file_hash": meta.get("file_hash"),
+            # Image-specific metadata
+            "width": meta.get("width"),
+            "height": meta.get("height"),
+            "date_taken": meta.get("date_taken"),
+            "camera_make": meta.get("camera_make"),
+            "camera_model": meta.get("camera_model"),
+            "gps_latitude": meta.get("gps_latitude"),
+            "gps_longitude": meta.get("gps_longitude"),
+            "gps_latitude_ref": meta.get("gps_latitude_ref"),
+            "gps_longitude_ref": meta.get("gps_longitude_ref"),
+            "orientation": meta.get("orientation"),
             "error": None
         }
 
@@ -195,5 +217,16 @@ def _error_response(status_code: int, error: str, message: str):
         "length": 0,
         "truncated": False,
         "tags": [],
-        "file_hash": None
+        "file_hash": None,
+        # Image-specific metadata
+        "width": None,
+        "height": None,
+        "date_taken": None,
+        "camera_make": None,
+        "camera_model": None,
+        "gps_latitude": None,
+        "gps_longitude": None,
+        "gps_latitude_ref": None,
+        "gps_longitude_ref": None,
+        "orientation": None
     }
