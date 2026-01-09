@@ -1453,7 +1453,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   options={itemsPerPageOptions}
                   onChange={handleLimitChange}
                   aria-label="페이지당 항목 수"
-                  width={100}
+                  width={70}
                 />
               </div>
 
