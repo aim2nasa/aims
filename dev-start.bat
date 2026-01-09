@@ -12,7 +12,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5178 ^| findstr LISTENING') 
 )
 
 echo Starting dev servers...
-wt ^
+start "" wt ^
   -p "PowerShell" -d "D:\aims\tools\SemanTree" --title "SemanTree" pwsh -NoExit -Command "py .\semantree.py" ^
   ; new-tab -p "PowerShell" -d "D:\aims\frontend\aims-admin" --title "Admin" pwsh -NoExit -Command "npm run dev" ^
   ; new-tab -p "PowerShell" -d "D:\aims\frontend\aims-uix3" --title "AIMS-UI" pwsh -NoExit -Command "npm run dev"
