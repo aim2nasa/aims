@@ -561,3 +561,183 @@ class TestDocMetaFileTypes:
             data = response.json()
 
             assert "word" in data["mime"].lower() or "openxmlformats" in data["mime"].lower()
+
+
+class TestDocMetaExifResponse:
+    """EXIF 메타데이터 응답 테스트"""
+
+    @pytest.mark.asyncio
+    async def test_image_exif_fields_in_response(self, client, sample_jpeg_with_exif):
+        """이미지 응답에 EXIF 필드 포함 확인"""
+        with patch("routers.doc_meta.MetaService") as mock_meta:
+
+            mock_meta.extract_metadata = AsyncMock(return_value={
+                "filename": "photo.jpg",
+                "extension": ".jpg",
+                "mime_type": "image/jpeg",
+                "file_size": 1234567,
+                "created_at": "2026-01-09T12:00:00Z",
+                "file_hash": "abc123",
+                "error": False,
+                "width": 3024,
+                "height": 4032,
+                "exif": {
+                    "Image Make": "Samsung",
+                    "Image Model": "SM-N960N",
+                    "EXIF DateTimeOriginal": "2026:01:04 05:13:51",
+                },
+                "date_taken": "2026:01:04 05:13:51",
+                "camera_make": "Samsung",
+                "camera_model": "SM-N960N",
+                "orientation": "1",
+                "gps_latitude": None,
+                "gps_longitude": None,
+            })
+
+            response = await client.post(
+                "/webhook/docmeta",
+                files={"file": ("photo.jpg", sample_jpeg_with_exif, "image/jpeg")}
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            # EXIF 관련 필드 검증
+            assert data["width"] == 3024
+            assert data["height"] == 4032
+            assert data["date_taken"] == "2026:01:04 05:13:51"
+            assert data["camera_make"] == "Samsung"
+            assert data["camera_model"] == "SM-N960N"
+            assert data["orientation"] == "1"
+
+    @pytest.mark.asyncio
+    async def test_image_response_includes_all_exif_fields(self, client, sample_jpeg_with_exif):
+        """이미지 응답에 모든 EXIF 필드 키 포함"""
+        with patch("routers.doc_meta.MetaService") as mock_meta:
+
+            mock_meta.extract_metadata = AsyncMock(return_value={
+                "filename": "photo.jpg",
+                "extension": ".jpg",
+                "mime_type": "image/jpeg",
+                "file_size": 1000,
+                "file_hash": "hash",
+                "error": False,
+                "width": 100,
+                "height": 100,
+            })
+
+            response = await client.post(
+                "/webhook/docmeta",
+                files={"file": ("photo.jpg", sample_jpeg_with_exif, "image/jpeg")}
+            )
+
+            data = response.json()
+
+            # 모든 EXIF 관련 필드가 응답에 포함되어야 함
+            exif_fields = [
+                "width", "height", "date_taken",
+                "camera_make", "camera_model",
+                "gps_latitude", "gps_longitude",
+                "gps_latitude_ref", "gps_longitude_ref",
+                "orientation"
+            ]
+
+            for field in exif_fields:
+                assert field in data, f"Missing EXIF field in response: {field}"
+
+    @pytest.mark.asyncio
+    async def test_pdf_no_exif_fields(self, client, sample_pdf):
+        """PDF 응답에는 EXIF 필드가 None"""
+        with patch("routers.doc_meta.MetaService") as mock_meta, \
+             patch("routers.doc_meta.OpenAIService") as mock_openai:
+
+            mock_meta.extract_metadata = AsyncMock(return_value={
+                "filename": "document.pdf",
+                "extension": "pdf",
+                "mime_type": "application/pdf",
+                "file_size": 12345,
+                "file_hash": "hash",
+                "num_pages": 5,
+                "extracted_text": "텍스트",
+                "error": None
+            })
+
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "요약",
+                "tags": [],
+                "truncated": False
+            })
+
+            response = await client.post(
+                "/webhook/docmeta",
+                files={"file": ("doc.pdf", sample_pdf.read(), "application/pdf")}
+            )
+
+            data = response.json()
+
+            # PDF는 이미지 관련 필드가 None
+            assert data["width"] is None
+            assert data["height"] is None
+            assert data["date_taken"] is None
+            assert data["camera_make"] is None
+            assert data["camera_model"] is None
+
+    @pytest.mark.asyncio
+    async def test_image_with_gps_coordinates(self, client):
+        """GPS 좌표가 있는 이미지 응답"""
+        with patch("routers.doc_meta.MetaService") as mock_meta:
+
+            mock_meta.extract_metadata = AsyncMock(return_value={
+                "filename": "gps_photo.jpg",
+                "extension": ".jpg",
+                "mime_type": "image/jpeg",
+                "file_size": 2000000,
+                "file_hash": "gps_hash",
+                "error": False,
+                "width": 4000,
+                "height": 3000,
+                "exif": {
+                    "GPS GPSLatitude": "[37, 30, 0]",
+                    "GPS GPSLongitude": "[127, 0, 0]",
+                    "GPS GPSLatitudeRef": "N",
+                    "GPS GPSLongitudeRef": "E",
+                },
+                "gps_latitude": "[37, 30, 0]",
+                "gps_longitude": "[127, 0, 0]",
+                "gps_latitude_ref": "N",
+                "gps_longitude_ref": "E",
+            })
+
+            jpeg_header = bytes([0xFF, 0xD8, 0xFF, 0xE0])
+
+            response = await client.post(
+                "/webhook/docmeta",
+                files={"file": ("gps.jpg", jpeg_header, "image/jpeg")}
+            )
+
+            data = response.json()
+
+            assert data["gps_latitude"] == "[37, 30, 0]"
+            assert data["gps_longitude"] == "[127, 0, 0]"
+            assert data["gps_latitude_ref"] == "N"
+            assert data["gps_longitude_ref"] == "E"
+
+    @pytest.mark.asyncio
+    async def test_error_response_includes_exif_fields(self, client):
+        """에러 응답에도 EXIF 필드 포함 (None 값)"""
+        response = await client.post("/webhook/docmeta")  # No input
+
+        data = response.json()
+
+        # 에러 응답에도 EXIF 필드가 포함되어야 함
+        exif_fields = [
+            "width", "height", "date_taken",
+            "camera_make", "camera_model",
+            "gps_latitude", "gps_longitude",
+            "gps_latitude_ref", "gps_longitude_ref",
+            "orientation"
+        ]
+
+        for field in exif_fields:
+            assert field in data, f"Missing EXIF field in error response: {field}"
+            assert data[field] is None
