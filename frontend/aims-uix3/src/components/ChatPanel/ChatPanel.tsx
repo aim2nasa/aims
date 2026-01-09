@@ -1420,14 +1420,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
         // 파일명 추출 ([ 와 ] 사이)
         const fileName = content.slice(openBracketPos + 1, suffixStart);
 
-        // 문서 링크 추가
+        // 문서 링크 추가 (데스크톱에서만 클릭 가능)
+        const isDesktop = window.innerWidth >= 768;
         parts.push(
           <button
             key={`doc-${docId}-${match.index}`}
             type="button"
-            className="chat-panel__doc-link"
-            onClick={() => handleDocumentPreviewClick(docId)}
-            title="클릭하여 문서 미리보기"
+            className={`chat-panel__doc-link${isDesktop ? '' : ' chat-panel__doc-link--disabled'}`}
+            onClick={() => isDesktop && handleDocumentPreviewClick(docId)}
+            title={isDesktop ? '클릭하여 문서 미리보기' : '웹에서 문서 미리보기 가능'}
+            style={isDesktop ? { cursor: 'pointer' } : { cursor: 'default' }}
           >
             📄 {fileName}
           </button>
