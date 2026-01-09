@@ -79,6 +79,8 @@ export async function handleGetCustomerReviews(args: unknown) {
         index,
         // 메타 정보
         productName: review.product_name || '-',
+        contractorName: review.contractor_name || '-',  // 계약자
+        insuredName: review.insured_name || '-',        // 피보험자
         issueDate: review.issue_date,
         parsedAt: review.parsed_at,
         status: review.status || 'completed',
