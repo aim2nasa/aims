@@ -49,6 +49,27 @@ html[data-theme="dark"] .customer-contracts .contract-pagination {
   gap: 8px;
 }
 
+/* 전체 보기 페이지 드롭다운 컴팩트 스타일 */
+.pagination-limit .ios-dropdown__trigger {
+  height: 28px;
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.pagination-limit .ios-dropdown__value {
+  font-size: 12px;
+}
+
+.pagination-limit .ios-dropdown__menu {
+  padding: 4px 0;
+}
+
+.pagination-limit .ios-dropdown__option {
+  padding: 6px 12px;
+  font-size: 12px;
+  min-height: 28px;
+}
+
 /* === PAGINATION CONTROLS === */
 .pagination-controls {
   display: flex;
