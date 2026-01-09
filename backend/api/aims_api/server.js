@@ -2422,6 +2422,21 @@ app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
     }
     // ========================================
 
+    // ========== AR 파싱 큐에서 제거 ==========
+    // 문서가 삭제되면 ar_parse_queue에서도 제거해야 pending 목록에서 사라짐
+    try {
+      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+        file_id: new ObjectId(id)
+      });
+      if (queueDeleteResult.deletedCount > 0) {
+        console.log(`✅ AR 파싱 큐 정리: ${queueDeleteResult.deletedCount}개 레코드 삭제`);
+      }
+    } catch (queueError) {
+      console.warn('⚠️ AR 파싱 큐 정리 실패:', queueError.message);
+      // 큐 정리 실패해도 문서 삭제는 진행
+    }
+    // ========================================
+
     // ========== Annual Report 파싱 데이터 삭제 ==========
     // 매칭 조건: customer_name + issue_date가 같으면 한 쌍
     if (document.is_annual_report) {
@@ -2710,6 +2725,22 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
     } catch (customerError) {
       console.warn('⚠️ [문서 삭제] 고객 참조 정리 실패:', customerError.message);
       // 고객 참조 정리 실패해도 문서 삭제는 진행
+    }
+    // ========================================
+
+    // ========== AR 파싱 큐에서 제거 ==========
+    // 문서가 삭제되면 ar_parse_queue에서도 제거해야 pending 목록에서 사라짐
+    try {
+      const deleteObjectIds = ownedDocIds.map(id => new ObjectId(id));
+      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+        file_id: { $in: deleteObjectIds }
+      });
+      if (queueDeleteResult.deletedCount > 0) {
+        console.log(`✅ [문서 삭제] AR 파싱 큐 정리: ${queueDeleteResult.deletedCount}개 레코드 삭제`);
+      }
+    } catch (queueError) {
+      console.warn('⚠️ [문서 삭제] AR 파싱 큐 정리 실패:', queueError.message);
+      // 큐 정리 실패해도 문서 삭제는 진행
     }
     // ========================================
 
@@ -6872,6 +6903,19 @@ app.delete('/api/customers/:id/documents/:document_id', authenticateJWT, async (
         );
         console.log(`✅ [AR 삭제] 파싱 데이터 삭제 완료`);
       }
+    }
+
+    // AR 파싱 큐에서도 제거 (pending 목록에서 사라지도록)
+    try {
+      const queueDeleteResult = await db.collection('ar_parse_queue').deleteMany({
+        file_id: new ObjectId(document_id),
+        customer_id: new ObjectId(id)
+      });
+      if (queueDeleteResult.deletedCount > 0) {
+        console.log(`✅ AR 파싱 큐 정리: ${queueDeleteResult.deletedCount}개 레코드 삭제`);
+      }
+    } catch (queueError) {
+      console.warn('⚠️ AR 파싱 큐 정리 실패:', queueError.message);
     }
 
     // 고객에서 문서 연결 제거

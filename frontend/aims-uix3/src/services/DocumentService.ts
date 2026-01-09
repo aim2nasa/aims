@@ -104,6 +104,8 @@ export interface CustomerDocumentItem {
   document_type?: string;
   document_type_auto?: boolean;
   document_type_confidence?: number;
+  // Annual Report 분석 상태
+  ar_parsing_status?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 export interface CustomerDocumentsResult {
@@ -462,6 +464,10 @@ export class DocumentService {
           if (documentType) result.document_type = documentType;
           if (documentTypeAuto) result.document_type_auto = documentTypeAuto;
           if (typeof documentTypeConfidence === 'number') result.document_type_confidence = documentTypeConfidence;
+
+          // 🍎 Annual Report 분석 상태 추출
+          const arParsingStatus = toString(item['ar_parsing_status']) as CustomerDocumentItem['ar_parsing_status'];
+          if (arParsingStatus) result.ar_parsing_status = arParsingStatus;
 
           return result;
         })

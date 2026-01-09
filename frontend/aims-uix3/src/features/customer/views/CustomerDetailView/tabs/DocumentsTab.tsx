@@ -875,9 +875,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
     if (!confirmed) return
 
-    // 🍎 삭제될 문서 중 AR 문서가 있는지 확인
+    // 🍎 삭제될 문서 중 AR 문서 또는 AR 분석 중인 문서가 있는지 확인
     const hasArDocument = documents.some(
-      doc => selectedDocumentIds.has(doc._id) && doc.isAnnualReport
+      doc => selectedDocumentIds.has(doc._id) && (
+        doc.isAnnualReport ||
+        doc.ar_parsing_status === 'processing' ||
+        doc.ar_parsing_status === 'pending'
+      )
     )
     // 🍎 삭제될 문서 중 Customer Review 문서가 있는지 확인
     const hasCustomerReview = documents.some(

@@ -550,7 +550,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
       if (result.success) {
         setSelectedIndices(new Set());
-        await loadAnnualReports(); // 목록 새로고침
+        // 목록 새로고침 (pending + reports 모두)
+        await Promise.all([
+          loadAnnualReports(),
+          loadPendingDocuments()
+        ]);
 
         // 성공 모달은 마지막에 표시
         await confirmModal.actions.openModal({
