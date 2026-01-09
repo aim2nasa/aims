@@ -206,6 +206,78 @@ Single Source of Truth 원칙:
 
 ---
 
+---
+
+## 🔐 보안 자동 검사
+
+코드 리뷰 시 다음 보안 검사를 **자동으로 실행**합니다.
+
+### 1. 의존성 취약점 검사
+
+```bash
+cd frontend/aims-uix3 && npm audit --audit-level=high
+cd backend/api/aims_api && npm audit --audit-level=high
+```
+
+**결과 해석:**
+- `0 vulnerabilities`: ✅ 안전
+- `high` 또는 `critical`: ❌ 즉시 수정 필요
+
+### 2. 하드코딩 민감정보 검사
+
+```bash
+grep -rn "API_KEY\|SECRET\|PASSWORD\|PRIVATE_KEY\|ACCESS_TOKEN" --include="*.ts" --include="*.tsx" --include="*.js" frontend/aims-uix3/src/
+grep -rn "API_KEY\|SECRET\|PASSWORD\|PRIVATE_KEY\|ACCESS_TOKEN" --include="*.ts" --include="*.js" backend/api/
+```
+
+**허용 예외:**
+- `process.env.API_KEY` (환경변수 참조)
+- 타입 정의 (`interface { apiKey: string }`)
+- 테스트 파일 내 mock 데이터
+
+### 3. .env 파일 git 포함 여부
+
+```bash
+git ls-files | grep -E "\.env$"
+```
+
+**결과:**
+- 결과 없음: ✅ 안전
+- 결과 있음: ❌ **심각** - 즉시 .gitignore에 추가 필요
+
+### 4. 프로덕션 console.log 검사
+
+```bash
+grep -rn "console\.\(log\|debug\)" --include="*.ts" --include="*.tsx" frontend/aims-uix3/src/ | grep -v "test\|spec\|__tests__\|errorReporter"
+```
+
+**허용 예외:**
+- 테스트 파일
+- errorReporter 내부
+- 개발 환경 분기 (`if (import.meta.env.DEV)`)
+
+### 5. 보안 검사 결과 보고 형식
+
+```
+## 🔐 보안 검사 결과
+
+### 의존성 취약점
+- Frontend: ✅ 0 vulnerabilities / ❌ N high/critical
+- Backend: ✅ 0 vulnerabilities / ❌ N high/critical
+
+### 민감정보 노출
+- 하드코딩 발견: ✅ 없음 / ❌ N건 발견
+- .env 파일 git: ✅ 안전 / ❌ 노출됨
+
+### 프로덕션 로그
+- console.log: ✅ 없음 / ❌ N건 발견
+
+### 결론
+✅ 보안 검사 통과 / ❌ N개 항목 수정 필요
+```
+
+---
+
 ## 자동 실행 조건
 
 다음 상황에서 자동으로 실행됩니다:
