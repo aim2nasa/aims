@@ -864,9 +864,68 @@ export const ErrorLogsPage = () => {
           <div className="error-logs-page__modal">
             <div className="error-logs-page__modal-header">
               <h2>에러 상세</h2>
-              <button className="error-logs-page__modal-close" onClick={() => setDetailLog(null)}>
-                ×
-              </button>
+              <div className="error-logs-page__modal-actions">
+                <button
+                  className="error-logs-page__modal-copy"
+                  onClick={() => {
+                    const lines: string[] = [];
+                    lines.push('=== 에러 상세 ===\n');
+                    lines.push('[기본 정보]');
+                    lines.push(`시간: ${formatDateTime(detailLog.timestamp)}`);
+                    lines.push(`소스: ${detailLog.source?.type ? (SOURCE_LABELS[detailLog.source.type] || detailLog.source.type) : '-'}`);
+                    lines.push(`심각도: ${detailLog.error?.severity ? (SEVERITY_LABELS[detailLog.error.severity] || detailLog.error.severity) : '-'}`);
+                    lines.push(`카테고리: ${detailLog.error?.category ? (CATEGORY_LABELS[detailLog.error.category] || detailLog.error.category) : '-'}`);
+
+                    if (detailLog.logType === 'activity') {
+                      lines.push('\n[활동 정보]');
+                      lines.push(`액션: ${detailLog.activity?.action_type || '-'}`);
+                      lines.push(`카테고리: ${detailLog.activity?.category || '-'}`);
+                      lines.push(`메시지: ${detailLog.message || '-'}`);
+                      if (detailLog.activity?.success !== undefined) {
+                        lines.push(`결과: ${detailLog.activity.success ? '성공' : '실패'}`);
+                      }
+                    } else {
+                      lines.push('\n[에러 정보]');
+                      lines.push(`타입: ${detailLog.error?.type || '-'}`);
+                      lines.push(`메시지: ${detailLog.error?.message || detailLog.message || '-'}`);
+                      if (detailLog.error?.stack) {
+                        lines.push(`스택 트레이스:\n${detailLog.error.stack}`);
+                      }
+                    }
+
+                    lines.push('\n[소스 정보]');
+                    if (detailLog.source?.url) lines.push(`URL: ${detailLog.source.url}`);
+                    if (detailLog.source?.endpoint) lines.push(`엔드포인트: ${detailLog.source.method} ${detailLog.source.endpoint}`);
+                    if (detailLog.source?.component) lines.push(`컴포넌트: ${detailLog.source.component}`);
+                    if (detailLog.source?.file) {
+                      let fileInfo = detailLog.source.file;
+                      if (detailLog.source.line) fileInfo += `:${detailLog.source.line}`;
+                      if (detailLog.source.column) fileInfo += `:${detailLog.source.column}`;
+                      lines.push(`파일: ${fileInfo}`);
+                    }
+
+                    lines.push('\n[사용자 정보]');
+                    lines.push(`사용자 ID: ${detailLog.actor?.user_id || '-'}`);
+                    lines.push(`이름: ${detailLog.actor?.name || '-'}`);
+                    lines.push(`IP: ${detailLog.actor?.ip_address || '-'}`);
+
+                    if (detailLog.context) {
+                      lines.push('\n[컨텍스트]');
+                      if (detailLog.context.browser) lines.push(`브라우저: ${detailLog.context.browser}`);
+                      if (detailLog.context.version) lines.push(`앱 버전: ${detailLog.context.version}`);
+                      if (detailLog.context.response_status) lines.push(`응답 상태: ${detailLog.context.response_status}`);
+                    }
+
+                    navigator.clipboard.writeText(lines.join('\n'));
+                  }}
+                  title="전체 내용 복사"
+                >
+                  복사
+                </button>
+                <button className="error-logs-page__modal-close" onClick={() => setDetailLog(null)}>
+                  ×
+                </button>
+              </div>
             </div>
             <div className="error-logs-page__modal-content">
               {/* 기본 정보 */}
