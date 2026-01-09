@@ -555,6 +555,8 @@ html[data-theme="dark"] .pdf-conversion-badge--completed {
 .customer-documents .document-pagination {
   flex-shrink: 0;
   transform: translateY(6px); /* 구분선 높이 A와 맞춤 - 아래로 6px */
+  position: relative;
+  z-index: 10; /* 드롭다운 메뉴가 배지(z-index: 2) 위에 표시되도록 */
 }
 
 html[data-theme="dark"] .customer-documents .document-pagination {
