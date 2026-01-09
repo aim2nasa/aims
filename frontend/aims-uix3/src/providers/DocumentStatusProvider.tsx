@@ -16,6 +16,11 @@ import { errorReporter } from '@/shared/lib/errorReporter'
 import { useDocumentStatusListSSE } from '@/shared/hooks/useDocumentStatusListSSE'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
+// 🍎 모듈 레벨 캐시: 컴포넌트 언마운트 후에도 데이터 유지
+// 네비게이션 시 빈 화면 대신 이전 데이터 표시
+let documentCache: Document[] = []
+let paginationCache = { totalPages: 1, totalCount: 0 }
+
 interface DocumentStatusProviderProps {
   children: React.ReactNode
   initialFiles?: Document[]
@@ -32,11 +37,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   searchQuery = '',
   fileScope = 'all'
 }) => {
-  // State
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
+  // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
+  const [documents, setDocuments] = useState<Document[]>(documentCache)
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>(documentCache)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
-  const [isLoading, setLoading] = useState<boolean>(true)
+  // 캐시가 있으면 로딩 상태 false로 시작 (이전 데이터 즉시 표시)
+  const [isLoading, setLoading] = useState<boolean>(documentCache.length === 0)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>(searchQuery)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -59,8 +65,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
     return 15 // 기본값 (10 → 15로 변경)
   })
-  const [totalPages, setTotalPages] = useState<number>(1)
-  const [totalCount, setTotalCount] = useState<number>(0)
+  // 캐시된 페이지네이션 정보로 초기화
+  const [totalPages, setTotalPages] = useState<number>(paginationCache.totalPages)
+  const [totalCount, setTotalCount] = useState<number>(paginationCache.totalCount)
 
   // 🍎 Sort State
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null>('uploadDate')
@@ -113,13 +120,21 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
-        // 🍎 백엔드 pagination 정보 저장
+        // 🍎 백엔드 pagination 정보 저장 + 캐시 업데이트
         if (data.data?.pagination) {
           setTotalPages(data.data.pagination.totalPages || 1)
           setTotalCount(data.data.pagination.totalCount || 0)
+          paginationCache = {
+            totalPages: data.data.pagination.totalPages || 1,
+            totalCount: data.data.pagination.totalCount || 0
+          }
         } else if (data.pagination) {
           setTotalPages(data.pagination.totalPages || 1)
           setTotalCount(data.pagination.totalCount || 0)
+          paginationCache = {
+            totalPages: data.pagination.totalPages || 1,
+            totalCount: data.pagination.totalCount || 0
+          }
         }
 
         // ✅ FIX: /api/documents/status API가 이미 customer_relation을 반환하므로
@@ -209,6 +224,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           if (prevFingerprints === newFingerprints) {
             return prevDocs
           }
+
+          // 🍎 모듈 레벨 캐시 업데이트 (네비게이션 시 데이터 유지)
+          documentCache = finalDocs
 
           return finalDocs
         })
