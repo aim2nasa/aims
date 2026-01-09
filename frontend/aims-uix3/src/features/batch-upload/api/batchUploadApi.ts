@@ -13,7 +13,8 @@ import type { CustomerForMatching } from '../utils/customerMatcher'
 import { scanFile, isScanAvailable } from '@/shared/lib/fileValidation/virusScanApi'
 
 // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교, n8n 응답 반환)
-const UPLOAD_ENDPOINT = 'https://aims.giize.com/shadow/docprep-main'
+// 상대 경로 사용: 개발환경에서는 Vite 프록시, 프로덕션에서는 직접 접근
+const UPLOAD_ENDPOINT = '/shadow/docprep-main'
 
 // ==================== 타입 정의 ====================
 

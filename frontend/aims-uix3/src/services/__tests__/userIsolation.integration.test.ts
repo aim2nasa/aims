@@ -251,8 +251,8 @@ describe('사용자별 문서 격리 - 통합 테스트', () => {
       const result = await DocumentService.uploadDocument(file)
 
       expect(result.document?.filename).toBe('test.pdf')
-      // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교)
-      expect(mockXHR.open).toHaveBeenCalledWith('POST', 'https://aims.giize.com/shadow/docprep-main')
+      // Shadow Mode 경유 업로드 (FastAPI document_pipeline)
+      expect(mockXHR.open).toHaveBeenCalledWith('POST', '/shadow/docprep-main')
 
       vi.unstubAllGlobals()
     })

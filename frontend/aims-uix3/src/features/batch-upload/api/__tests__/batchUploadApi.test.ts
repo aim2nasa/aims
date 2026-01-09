@@ -411,10 +411,10 @@ describe('BatchUploadApi', () => {
 
         await uploadPromise
 
-        // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교)
+        // Shadow Mode 경유 업로드 (FastAPI document_pipeline)
         expect(mockXHR.open).toHaveBeenCalledWith(
           'POST',
-          'https://aims.giize.com/shadow/docprep-main'
+          '/shadow/docprep-main'
         )
       })
     })

@@ -79,6 +79,12 @@ export default defineConfig({
         secure: false,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/pdf-proxy/, '')
+      },
+      // Shadow (FastAPI document_pipeline - 파일 업로드)
+      '/shadow': {
+        target: 'http://100.110.215.65:8100',  // Tailscale VPN - document_pipeline
+        secure: false,
+        changeOrigin: true
       }
     },
     // HMR 설정 최적화

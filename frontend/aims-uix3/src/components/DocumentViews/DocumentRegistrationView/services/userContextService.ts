@@ -164,8 +164,9 @@ export class UserContextService {
  */
 export const uploadConfig = {
   // Shadow Mode 경유 업로드 (n8n + FastAPI 병렬 비교, n8n 응답 반환)
+  // 상대 경로 사용: 개발환경에서는 Vite 프록시, 프로덕션에서는 직접 접근
   endpoints: {
-    upload: 'https://aims.giize.com/shadow/docprep-main'
+    upload: '/shadow/docprep-main'
   },
 
   // 🔮 미래 확장 설정 (현재는 비활성화)
