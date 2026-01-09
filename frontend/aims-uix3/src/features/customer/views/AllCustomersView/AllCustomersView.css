@@ -166,7 +166,7 @@ html[data-theme="dark"] .customer-library-error {
   align-items: center;
   justify-content: space-between;
   padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-border-primary);
+  
 }
 
 .result-count {
