@@ -823,7 +823,7 @@ app.post('/api/documents/check-hash', authenticateJWT, async (req, res) => {
       return res.status(400).json({ success: false, error: 'fileHash required (SHA-256)' });
     }
 
-    const db = mongoClient.db('docupload');
+    // 전역 db 변수 사용 (이미 docupload DB에 연결됨)
 
     // 🔴 customerId가 제공되면 해당 고객에게만 중복 체크
     // customerId가 없으면 미분류 문서(customerId=null)에서만 체크

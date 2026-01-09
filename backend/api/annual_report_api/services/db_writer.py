@@ -536,9 +536,11 @@ def delete_annual_reports(
         reports = customer.get("annual_reports", [])
 
         # 최신순 정렬 (uploaded_at 기준)
+        # 🔥 timezone-aware datetime 사용 (MongoDB 데이터와 비교 가능하도록)
+        min_dt = datetime.min.replace(tzinfo=timezone.utc)
         sorted_reports = sorted(
             reports,
-            key=lambda r: r.get("uploaded_at", datetime.min),
+            key=lambda r: r.get("uploaded_at", min_dt) if isinstance(r.get("uploaded_at"), datetime) else min_dt,
             reverse=True
         )
 
@@ -1273,9 +1275,11 @@ def delete_customer_reviews(
         reviews = customer.get("customer_reviews", [])
 
         # 최신순 정렬 (uploaded_at 기준)
+        # 🔥 timezone-aware datetime 사용 (MongoDB 데이터와 비교 가능하도록)
+        min_dt = datetime.min.replace(tzinfo=timezone.utc)
         sorted_reviews = sorted(
             reviews,
-            key=lambda r: r.get("uploaded_at", datetime.min),
+            key=lambda r: r.get("uploaded_at", min_dt) if isinstance(r.get("uploaded_at"), datetime) else min_dt,
             reverse=True
         )
 
