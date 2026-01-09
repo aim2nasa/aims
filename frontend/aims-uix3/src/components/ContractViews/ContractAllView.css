@@ -905,12 +905,5 @@ html[data-theme="dark"] .delete-confirm-content .delete-warning {
   .loading-spinner {
     animation: none;
   }
-
-  .pagination-button:active:not(:disabled) {
-    transform: none;
-  }
-
-  .pagination-arrow {
-    transition: none;
-  }
+  /* 페이지네이션 관련 스타일은 공용 Pagination.css에서 처리 */
 }
