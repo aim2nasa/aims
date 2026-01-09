@@ -28,6 +28,7 @@ model: sonnet
 │ Phase 1: 배포 전 검증 (Gate)                                │
 │ ⚠️ 하나라도 실패 → 전체 배포 중단                          │
 ├─────────────────────────────────────────────────────────────┤
+│ 0. 의존성 무결성 검사 (node_modules 정상 여부)             │
 │ 1. 프론트엔드 테스트 (4000+ 테스트)                        │
 │ 2. CSP 호환성 검사 (csp-compatibility-checker 호출)        │
 │ 3. 보안 검사 (code-reviewer 보안 섹션 호출)                │
@@ -50,6 +51,43 @@ model: sonnet
 ---
 
 ## Phase 1: 배포 전 검증 (필수)
+
+### 1.0 의존성 무결성 검사 (가장 먼저!)
+
+```bash
+cd frontend/aims-uix3
+
+# node_modules 존재 여부
+if [ ! -d "node_modules" ]; then
+  echo "FAIL: node_modules 없음"
+  exit 1
+fi
+
+# 핵심 의존성 검사 (npm ls로 누락 확인)
+npm ls --depth=0 2>&1 | grep -E "WARN|ERR|missing" && echo "FAIL: 의존성 누락" || echo "PASS: 의존성 정상"
+
+# 자주 누락되는 패키지 직접 확인
+for pkg in js-tokens @babel/core vite react react-dom; do
+  if [ ! -d "node_modules/$pkg" ]; then
+    echo "FAIL: $pkg 누락"
+    exit 1
+  fi
+done
+echo "PASS: 핵심 패키지 확인 완료"
+```
+
+**판정 기준:**
+- ✅ 통과: 모든 의존성 정상 설치
+- ❌ 실패: 누락된 패키지 발견 → **배포 중단**
+
+**실패 시 조치:**
+```bash
+cd frontend/aims-uix3
+rm -rf node_modules package-lock.json .vite
+npm install
+```
+
+---
 
 ### 1.1 프론트엔드 테스트
 
@@ -121,6 +159,7 @@ cd frontend/aims-uix3 && npm run build
 ### 검증 항목
 | 항목 | 상태 | 상세 |
 |------|------|------|
+| 의존성 무결성 | ✅/❌ | node_modules 정상 |
 | 프론트엔드 테스트 | ✅/❌ | X/Y passed |
 | CSP 호환성 | ✅/❌ | eval/Function 검사 |
 | 보안 검사 | ✅/❌ | npm audit, .env |
@@ -255,6 +294,7 @@ ssh rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh
 ### Phase 1: 검증
 | 항목 | 상태 |
 |------|------|
+| 의존성 무결성 | ✅ 정상 |
 | 테스트 | ✅ 4041 passed |
 | CSP 호환성 | ✅ 안전 |
 | 보안 검사 | ✅ 통과 |
