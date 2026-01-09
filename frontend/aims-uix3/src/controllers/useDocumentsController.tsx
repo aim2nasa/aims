@@ -10,9 +10,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DocumentService } from '@/services/DocumentService';
-import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { handleApiError } from '@/shared/lib/api';
-import { errorReporter } from '@/shared/lib/errorReporter';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
 
@@ -63,31 +61,23 @@ export const useDocumentsController = () => {
       const data = await DocumentService.getDocuments(queryParams);
       const realDocuments = data.documents || [];
 
-      // 각 문서의 상세 처리 상태 정보를 가져오기 위해 개별 문서 조회
-      const documentsWithStatus = await Promise.all(
-        realDocuments.map(async (doc: Document) => {
-          try {
-            const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id);
+      // ⚡ 성능 최적화: N+1 쿼리 제거
+      // 백엔드 /api/documents 응답에 이미 필요한 정보 포함
+      // (customer_relation, ownerId, customerId, status, progress)
+      // 개별 문서 상태 조회 제거 → API 호출 N+1 → 1로 감소
+      const documentsWithStatus = realDocuments.map((doc: any) => {
+        // 백엔드 응답의 status/progress로 overallStatus 계산
+        const backendStatus = doc.status; // 'completed' | 'processing'
+        const progress = doc.progress || 0;
+        const overallStatus = backendStatus === 'completed' || progress >= 100
+          ? 'completed'
+          : 'processing';
 
-            // 처리 상태 정보를 문서 최상위 레벨에 평평하게 추가
-            // extractStatus()가 document.overallStatus를 찾도록 함
-            return {
-              ...doc,
-              customer_relation: detailedDoc.data?.raw?.customer_relation,
-              ownerId: detailedDoc.data?.raw?.ownerId,  // 🆕 내 파일 기능
-              customerId: detailedDoc.data?.raw?.customerId,  // 🆕 내 파일 기능
-              virusScan: detailedDoc.data?.raw?.virusScan,  // 🔴 바이러스 스캔 정보
-              stages: detailedDoc.data?.stages,
-              computed: detailedDoc.data?.computed,
-              overallStatus: detailedDoc.data?.computed?.overallStatus,
-            } as any;
-          } catch (error) {
-            console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
-            errorReporter.reportApiError(error as Error, { component: 'useDocumentsController.loadDocuments' });
-            return doc;
-          }
-        })
-      );
+        return {
+          ...doc,
+          overallStatus,
+        };
+      });
 
       // 백엔드에서 이미 검색/정렬/페이지네이션 처리된 데이터 사용
       setDocuments(documentsWithStatus);

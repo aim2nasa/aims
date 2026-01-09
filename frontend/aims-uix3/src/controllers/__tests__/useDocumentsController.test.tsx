@@ -49,6 +49,8 @@ describe('useDocumentsController', () => {
       customer_id: 'cust1',
       customer_name: '홍길동',
     },
+    status: 'completed',  // 백엔드 응답에 포함
+    progress: 100,        // 백엔드 응답에 포함
   }
 
   const mockDocument2 = {
@@ -66,6 +68,8 @@ describe('useDocumentsController', () => {
       customer_id: 'cust2',
       customer_name: '김영희',
     },
+    status: 'completed',  // 백엔드 응답에 포함
+    progress: 100,        // 백엔드 응답에 포함
   }
 
   const mockDocument3 = {
@@ -80,6 +84,8 @@ describe('useDocumentsController', () => {
     },
     uploadDate: '2025-01-03T00:00:00.000Z',
     // customer_relation 없음
+    status: 'processing',  // 백엔드 응답에 포함
+    progress: 50,          // 백엔드 응답에 포함
   }
 
   beforeEach(() => {
@@ -672,49 +678,57 @@ describe('useDocumentsController', () => {
   })
 
   // ===== 15. 처리 상태 복원 기능 테스트 (Processing Status Restoration) =====
+  // ⚡ N+1 쿼리 최적화로 인해 개별 DocumentStatusService 호출 제거됨
+  // 백엔드 /api/documents 응답의 status/progress 필드를 직접 사용
 
   describe('처리 상태 복원 기능', () => {
-    it('각 문서에 대해 DocumentStatusService.getDocumentStatus()를 호출해야 함', async () => {
+    it('N+1 최적화: DocumentStatusService.getDocumentStatus()를 호출하지 않아야 함', async () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
         expect(result.current.isInitialLoad).toBe(false)
       })
 
-      // 3개 문서에 대해 각각 getDocumentStatus 호출 확인
-      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledTimes(3)
-      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc1')
-      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc2')
-      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc3')
+      // ⚡ 성능 최적화: 개별 상태 조회 API 호출 없음
+      expect(DocumentStatusService.getDocumentStatus).not.toHaveBeenCalled()
     })
 
-    it('overallStatus 필드가 문서 최상위 레벨에 추가되어야 함', async () => {
+    it('overallStatus 필드가 백엔드 status/progress로부터 계산되어야 함', async () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
         expect(result.current.isInitialLoad).toBe(false)
       })
 
-      // 모든 문서에 overallStatus 필드가 있는지 확인
-      result.current.documents.forEach((doc: any) => {
-        expect(doc.overallStatus).toBe('completed')
-      })
+      // doc1, doc2는 status: 'completed' → overallStatus: 'completed'
+      const doc1 = result.current.documents.find((d: any) => d._id === 'doc1')
+      const doc2 = result.current.documents.find((d: any) => d._id === 'doc2')
+      expect(doc1?.overallStatus).toBe('completed')
+      expect(doc2?.overallStatus).toBe('completed')
+
+      // doc3는 status: 'processing', progress: 50 → overallStatus: 'processing'
+      const doc3 = result.current.documents.find((d: any) => d._id === 'doc3')
+      expect(doc3?.overallStatus).toBe('processing')
     })
 
-    it('stages와 computed 필드가 보존되어야 함', async () => {
+    it('progress가 100이면 overallStatus가 completed여야 함', async () => {
+      // progress: 100인 문서
+      vi.mocked(DocumentService.getDocuments).mockResolvedValueOnce({
+        documents: [{ ...mockDocument3, status: 'processing', progress: 100 }] as any,
+        total: 1,
+        hasMore: false,
+        offset: 0,
+        limit: 10,
+      })
+
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
         expect(result.current.isInitialLoad).toBe(false)
       })
 
-      // 모든 문서에 stages와 computed 필드가 있는지 확인
-      result.current.documents.forEach((doc: any) => {
-        expect(doc.stages).toBeDefined()
-        expect(doc.computed).toBeDefined()
-        expect(doc.computed.overallStatus).toBe('completed')
-        expect(doc.computed.progress).toBe(100)
-      })
+      const doc = result.current.documents[0] as any
+      expect(doc.overallStatus).toBe('completed')
     })
 
     it('customer_relation 필드가 보존되어야 함', async () => {
@@ -734,55 +748,6 @@ describe('useDocumentsController', () => {
       expect(doc2?.customer_relation).toBeDefined()
       expect(doc2?.customer_relation?.customer_id).toBe('cust2')
       expect(doc3?.customer_relation).toBeUndefined()
-    })
-
-    it('getDocumentStatus() 실패 시 원본 문서를 유지해야 함', async () => {
-      // 첫 번째 문서에서만 에러 발생
-      vi.mocked(DocumentStatusService.getDocumentStatus).mockImplementation(async (id) => {
-        if (id === 'doc1') {
-          throw new Error('Network error')
-        }
-        // doc2, doc3는 정상 응답
-        const doc = [mockDocument2, mockDocument3].find(d => d._id === id)
-        if (!doc) {
-          return {
-            success: true,
-            data: {
-              raw: { _id: id, upload: null, meta: null, ocr: null, text: null, docembed: null, customer_relation: null },
-              computed: { uiStages: {}, currentStage: 5, overallStatus: 'completed' as const, progress: 100, displayMessages: {}, processingPath: 'meta_fulltext' as const },
-              stages: { upload: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' } },
-              _id: id, originalName: 'unknown.pdf', uploadedAt: null, fileSize: 0, rawDocument: null,
-            },
-          } as any
-        }
-        return {
-          success: true,
-          data: {
-            raw: { _id: doc._id, upload: doc.upload || null, meta: null, ocr: null, text: null, docembed: null, customer_relation: (doc as any).customer_relation },
-            computed: { uiStages: {}, currentStage: 5, overallStatus: 'completed' as const, progress: 100, displayMessages: {}, processingPath: 'meta_fulltext' as const },
-            stages: { upload: { status: 'completed', timestamp: doc.uploadDate } },
-            _id: doc._id, originalName: doc.filename, uploadedAt: doc.uploadDate, fileSize: doc.upload?.size, rawDocument: doc,
-          },
-        } as any
-      })
-
-      const { result } = renderHook(() => useDocumentsController())
-
-      await waitFor(() => {
-        expect(result.current.isInitialLoad).toBe(false)
-      })
-
-      // doc1은 에러가 발생했지만 원본 데이터는 유지되어야 함
-      const doc1 = result.current.documents.find((d: any) => d._id === 'doc1')
-      expect(doc1).toBeDefined()
-      expect(doc1?._id).toBe('doc1')
-      expect(doc1?.filename).toBe('document1.pdf')
-
-      // doc2, doc3는 정상적으로 처리되어야 함
-      const doc2 = result.current.documents.find((d: any) => d._id === 'doc2')
-      const doc3 = result.current.documents.find((d: any) => d._id === 'doc3')
-      expect((doc2 as any)?.overallStatus).toBe('completed')
-      expect((doc3 as any)?.overallStatus).toBe('completed')
     })
   })
 
