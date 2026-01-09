@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 /**
  * iOS Dynamic Type 크기 단계
@@ -36,6 +36,8 @@ export function useDynamicType() {
   const [currentSize, setCurrentSize] = useState('Large'); // iOS 기본값
   const [scaleFactor, setScaleFactor] = useState(1.0);
   const [isAccessibilitySize, setIsAccessibilitySize] = useState(false);
+  // 🍎 resetToSystemDefault 타이머 ref (cleanup용)
+  const resetTimer = useRef(null);
 
   useEffect(() => {
     /**
@@ -150,7 +152,13 @@ export function useDynamicType() {
     const cleanup = setupDynamicTypeListener();
 
     // 컴포넌트 언마운트 시 정리
-    return cleanup;
+    return () => {
+      cleanup();
+      // resetToSystemDefault 타이머도 정리
+      if (resetTimer.current) {
+        clearTimeout(resetTimer.current);
+      }
+    };
   }, []);
 
   /**
@@ -186,8 +194,13 @@ export function useDynamicType() {
     document.body.removeAttribute('data-text-size');
     document.body.classList.remove('accessibility-text-size');
 
-    // 시스템 설정 재감지
-    setTimeout(() => {
+    // 이전 타이머 정리
+    if (resetTimer.current) {
+      clearTimeout(resetTimer.current);
+    }
+
+    // 시스템 설정 재감지 (cleanup 가능하도록 ref 사용)
+    resetTimer.current = setTimeout(() => {
       const computedStyle = getComputedStyle(document.documentElement);
       const systemScaleFactor = parseFloat(
         computedStyle.getPropertyValue('--font-scale-factor') || '1'

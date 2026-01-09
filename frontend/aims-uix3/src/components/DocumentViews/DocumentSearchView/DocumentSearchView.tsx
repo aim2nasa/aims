@@ -177,6 +177,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const documentClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 🍎 고객명 싱글클릭/더블클릭 구분용 타이머
   const customerClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 🍎 검색창 blur 타이머 (드롭다운 클릭 허용)
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 🍎 문서 컨텍스트 메뉴 상태
   const documentContextMenu = useContextMenu()
@@ -210,6 +212,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }, 100)
     return () => clearTimeout(timer)
   }, [visible])
+
+  // 🍎 blur 타이머 cleanup (테스트 환경 cleanup 경고 방지)
+  useEffect(() => {
+    return () => {
+      if (blurTimer.current) {
+        clearTimeout(blurTimer.current)
+      }
+    }
+  }, [])
 
   // 🍎 Context의 customerId가 설정되면 해당 고객 자동 선택 (상세 문서 검색 이동 시)
   useEffect(() => {
@@ -1105,8 +1116,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 setRecentSearchQueries(recent)
               }}
               onBlur={() => {
-                // 드롭다운 클릭 시간을 주기 위해 지연
-                setTimeout(() => setIsSearchInputFocused(false), 200)
+                // 드롭다운 클릭 시간을 주기 위해 지연 (cleanup 가능하도록 ref 사용)
+                if (blurTimer.current) clearTimeout(blurTimer.current)
+                blurTimer.current = setTimeout(() => setIsSearchInputFocused(false), 200)
               }}
               placeholder="상세 문서검색"
               aria-label="상세 문서검색"
