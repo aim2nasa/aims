@@ -162,13 +162,35 @@ async def doc_prep_main(
 
         # 큐잉 모드 확인
         if settings.UPLOAD_QUEUE_ENABLED:
-            # 큐잉 모드: 파일을 임시 저장소에 저장하고 큐에 등록 후 즉시 응답
+            # 큐잉 모드: 문서를 먼저 생성 후 파일 처리를 큐에 등록
             logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
-            # 1. 임시 파일 저장
+            # 1. MongoDB 문서 먼저 생성 (set-annual-report API가 찾을 수 있도록)
+            files_collection = MongoService.get_collection("files")
+            doc_data = {
+                "ownerId": userId,
+                "createdAt": datetime.utcnow(),
+                "upload": {
+                    "originalName": original_name,
+                    "uploaded_at": datetime.utcnow().isoformat()
+                },
+                # 초기 progress 설정 - 프론트엔드에서 즉시 표시
+                "progress": 10,
+                "progressStage": "queued",
+                "progressMessage": "대기열에 추가됨",
+                "status": "processing"  # 처리 중 상태 (set-annual-report가 찾을 수 있음)
+            }
+            if customerId:
+                doc_data["customerId"] = customerId
+
+            result = await files_collection.insert_one(doc_data)
+            doc_id = str(result.inserted_id)
+            logger.info(f"Created document for queue: {doc_id}")
+
+            # 2. 임시 파일 저장
             temp_path = await TempFileService.save(file_content, original_name)
 
-            # 2. 큐에 작업 등록
+            # 3. 큐에 작업 등록 (document_id 포함)
             queue_id = await UploadQueueService.enqueue(
                 file_data={
                     "temp_path": temp_path,
@@ -179,19 +201,21 @@ async def doc_prep_main(
                 request_data={
                     "userId": userId,
                     "customerId": customerId,
-                    "source_path": source_path
+                    "source_path": source_path,
+                    "document_id": doc_id  # 기존 문서 ID 전달
                 },
                 owner_id=userId,
                 customer_id=customerId
             )
 
-            logger.info(f"Upload queued: {queue_id}")
+            logger.info(f"Upload queued: {queue_id} for document: {doc_id}")
 
-            # 3. 즉시 응답 반환
+            # 4. 즉시 응답 반환 (document_id 포함)
             return {
                 "result": "success",
                 "status": "queued",
                 "queue_id": queue_id,
+                "document_id": doc_id,  # 프론트엔드가 사용할 document_id
                 "message": "문서가 처리 대기열에 추가되었습니다."
             }
 
@@ -246,13 +270,19 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
     # 1. MongoDB에 progress 필드 업데이트 (폴링용)
     try:
         files_collection = MongoService.get_collection("files")
+        update_fields = {
+            "progress": progress,
+            "progressStage": stage,
+            "progressMessage": message
+        }
+
+        # ⭐ 처리 완료 시 status: 'completed' 설정 (전체 문서 보기에 표시되도록)
+        if progress == 100 and stage == "complete":
+            update_fields["status"] = "completed"
+
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
-            {"$set": {
-                "progress": progress,
-                "progressStage": stage,
-                "progressMessage": message
-            }}
+            {"$set": update_fields}
         )
     except Exception as e:
         logger.warning(f"Error updating progress in MongoDB: {e}")
@@ -317,7 +347,8 @@ async def process_document_pipeline(
     user_id: str,
     customer_id: Optional[str],
     source_path: Optional[str],
-    mime_type: Optional[str] = None
+    mime_type: Optional[str] = None,
+    existing_doc_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     실제 문서 처리 파이프라인 (워커에서 호출)
@@ -329,31 +360,47 @@ async def process_document_pipeline(
         customer_id: 고객 ID (선택)
         source_path: 원본 경로 (선택)
         mime_type: MIME 타입 (선택)
+        existing_doc_id: 기존 문서 ID (큐잉 모드에서 미리 생성된 문서)
 
     Returns:
         처리 결과 dict
     """
-    doc_id = None
+    doc_id = existing_doc_id
 
     try:
-        # Step 1: Create document in MongoDB
-        logger.info(f"Creating document for userId: {user_id}, customerId: {customer_id}")
-
         files_collection = MongoService.get_collection("files")
-        doc_data = {
-            "ownerId": user_id,
-            "createdAt": datetime.utcnow(),
-            # 초기 progress 설정 - 프론트엔드에서 즉시 20% 표시
-            "progress": 20,
-            "progressStage": "upload",
-            "progressMessage": "업로드 준비 중",
-        }
-        if customer_id:
-            doc_data["customerId"] = customer_id
 
-        result = await files_collection.insert_one(doc_data)
-        doc_id = str(result.inserted_id)
-        logger.info(f"Created document: {doc_id}")
+        # Step 1: Create document in MongoDB (기존 문서가 없는 경우에만)
+        if existing_doc_id:
+            # 큐잉 모드: 기존 문서 업데이트
+            logger.info(f"Using existing document: {existing_doc_id} for userId: {user_id}")
+            doc_id = existing_doc_id
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {
+                    "progress": 20,
+                    "progressStage": "upload",
+                    "progressMessage": "업로드 준비 중"
+                }}
+            )
+        else:
+            # 동기 모드: 새 문서 생성
+            logger.info(f"Creating document for userId: {user_id}, customerId: {customer_id}")
+            doc_data = {
+                "ownerId": user_id,
+                "createdAt": datetime.utcnow(),
+                # 초기 progress 설정 - 프론트엔드에서 즉시 20% 표시
+                "progress": 20,
+                "progressStage": "upload",
+                "progressMessage": "업로드 준비 중",
+                "status": "processing"
+            }
+            if customer_id:
+                doc_data["customerId"] = customer_id
+
+            result = await files_collection.insert_one(doc_data)
+            doc_id = str(result.inserted_id)
+            logger.info(f"Created document: {doc_id}")
 
         # Step 2: Save file to disk
         saved_name, dest_path = await FileService.save_file(

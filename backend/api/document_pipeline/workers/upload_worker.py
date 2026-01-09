@@ -122,14 +122,15 @@ class UploadWorker:
         # 임시 파일 읽기
         file_content = await TempFileService.read(temp_path)
 
-        # 파이프라인 실행
+        # 파이프라인 실행 (기존 document_id가 있으면 전달)
         result = await process_document_pipeline(
             file_content=file_content,
             original_name=file_data.get("original_filename", "unknown"),
             user_id=request_data.get("userId"),
             customer_id=request_data.get("customerId"),
             source_path=request_data.get("source_path"),
-            mime_type=file_data.get("mime_type")
+            mime_type=file_data.get("mime_type"),
+            existing_doc_id=request_data.get("document_id")  # 큐잉 시 생성된 문서 ID
         )
 
         return result
