@@ -215,71 +215,10 @@
   color: var(--color-text-secondary);
 }
 
-/* 페이지네이션 - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) */
-.customer-review-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.pagination-limit {
-  display: flex;
-  align-items: center;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pagination-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: var(--color-bg-secondary);
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: all 0.15s;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-.pagination-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.pagination-arrow {
-  line-height: 1;
-}
-
-.pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-text-secondary);
-}
-
-.pagination-current {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.pagination-separator {
-  opacity: 0.5;
-}
-
-.pagination-total {
-  opacity: 0.7;
-}
+/* 페이지네이션 - 공용 Pagination.css 사용 */
+/* 기본 스타일: shared/ui/Pagination/Pagination.css
+ * 세부 오버라이드: CustomerFullDetailView.css
+ */
 
 .row-policy-number {
   font-variant-numeric: tabular-nums;

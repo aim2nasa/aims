@@ -550,7 +550,8 @@ html[data-theme="dark"] .pdf-conversion-badge--completed {
 }
 
 /* === 🍎 페이지네이션 === */
-/* 🔧 B 전용 스타일만 정의 - 기본 스타일은 DocumentLibraryView.css 사용 */
+/* 기본 스타일: shared/ui/Pagination/Pagination.css
+ * 여기서는 고객 상세 문서 탭 전용 오버라이드만 정의 */
 .customer-documents .document-pagination {
   flex-shrink: 0;
   transform: translateY(6px); /* 구분선 높이 A와 맞춤 - 아래로 6px */
