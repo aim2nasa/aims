@@ -166,11 +166,7 @@ html[data-theme="dark"] .customer-library-error {
   align-items: center;
   justify-content: space-between;
   padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
-}
-
-html[data-theme="dark"] .customer-library-result-header {
-  border-bottom-color: var(--color-ios-separator-subtle-dark);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .result-count {

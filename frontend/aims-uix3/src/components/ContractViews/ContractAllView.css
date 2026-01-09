@@ -127,12 +127,9 @@ html[data-theme="dark"] .search-result-info {
   align-items: center;
   justify-content: space-between;
   padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
-html[data-theme="dark"] .contract-result-header {
-  border-bottom-color: var(--color-ios-separator-subtle-dark);
-}
 
 .contract-result-header .result-count {
   display: flex;
