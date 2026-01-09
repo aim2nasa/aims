@@ -17,6 +17,7 @@ import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo }
 import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus } from './annual_reports.js';
+import { customerReviewToolDefinitions, handleGetCustomerReviews } from './customer_reviews.js';
 import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageGaps, handleSuggestNextAction } from './insights.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
@@ -36,6 +37,7 @@ const allToolDefinitions = [
   ...productToolDefinitions,
   ...relationshipToolDefinitions,
   ...annualReportToolDefinitions,
+  ...customerReviewToolDefinitions,
   ...insightToolDefinitions,
   ...utilityToolDefinitions,
   ...ragToolDefinitions,
@@ -86,6 +88,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_ar_parsing_status: handleGetArParsingStatus,
   trigger_ar_parsing: handleTriggerArParsing,
   get_ar_queue_status: handleGetArQueueStatus,
+  // Customer Review 관련
+  get_customer_reviews: handleGetCustomerReviews,
   // 인사이트 관련
   analyze_customer_value: handleAnalyzeCustomerValue,
   find_coverage_gaps: handleFindCoverageGaps,

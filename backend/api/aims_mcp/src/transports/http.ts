@@ -25,6 +25,8 @@ async function loadToolHandlers() {
   const relationships = await import('../tools/relationships.js');
   // Phase 2: Annual Report 도구
   const annualReports = await import('../tools/annual_reports.js');
+  // Customer Review 도구
+  const customerReviews = await import('../tools/customer_reviews.js');
   // Phase 3: 인사이트 도구
   const insights = await import('../tools/insights.js');
   // Phase 4: 유틸리티 도구
@@ -76,6 +78,8 @@ async function loadToolHandlers() {
     get_ar_parsing_status: annualReports.handleGetArParsingStatus,
     trigger_ar_parsing: annualReports.handleTriggerArParsing,
     get_ar_queue_status: annualReports.handleGetArQueueStatus,
+    // Customer Review
+    get_customer_reviews: customerReviews.handleGetCustomerReviews,
     // Phase 3: 인사이트
     analyze_customer_value: insights.handleAnalyzeCustomerValue,
     find_coverage_gaps: insights.handleFindCoverageGaps,
