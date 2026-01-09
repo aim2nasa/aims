@@ -781,8 +781,11 @@ export const ErrorLogsPage = () => {
                       <td className="error-logs-page__cell-message">
                         {log.message || log.error?.message || '-'}
                       </td>
-                      <td className="error-logs-page__cell-user">
-                        {log.actor?.name || log.actor?.user_id || '-'}
+                      <td
+                        className="error-logs-page__cell-user"
+                        title={log.actor?.user_id || undefined}
+                      >
+                        {log.actor?.name || (log.actor?.user_id ? log.actor.user_id.slice(0, 8) + '...' : '-')}
                       </td>
                     </tr>
                   );

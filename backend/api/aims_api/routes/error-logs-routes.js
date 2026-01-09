@@ -674,6 +674,40 @@ module.exports = function(db, authenticateJWT, requireRole) {
       const startIdx = (pageNum - 1) * limitNum;
       const paginatedLogs = allLogs.slice(startIdx, startIdx + limitNum);
 
+      // 🔧 사용자 이름 조회 (user_id → name 매핑)
+      const userIds = [...new Set(paginatedLogs
+        .map(log => log.actor?.user_id)
+        .filter(id => id && typeof id === 'string')
+      )];
+
+      if (userIds.length > 0) {
+        try {
+          const { ObjectId } = require('mongodb');
+          const usersCollection = db.collection('users');
+          const validObjectIds = userIds.filter(id => {
+            try { new ObjectId(id); return true; } catch { return false; }
+          });
+
+          if (validObjectIds.length > 0) {
+            const users = await usersCollection.find(
+              { _id: { $in: validObjectIds.map(id => new ObjectId(id)) } },
+              { projection: { _id: 1, name: 1 } }
+            ).toArray();
+
+            const userMap = new Map(users.map(u => [u._id.toString(), u.name]));
+
+            // 로그에 사용자 이름 주입
+            paginatedLogs.forEach(log => {
+              if (log.actor?.user_id && userMap.has(log.actor.user_id)) {
+                log.actor.name = userMap.get(log.actor.user_id);
+              }
+            });
+          }
+        } catch (userErr) {
+          console.warn('[ErrorLogs] 사용자 이름 조회 실패:', userErr.message);
+        }
+      }
+
       res.json({
         success: true,
         logs: paginatedLogs,
