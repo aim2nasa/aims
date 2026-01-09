@@ -953,38 +953,75 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       let targetCustomerId = '';
       let linkedCustomerName = '';
 
-      // 🔥 사용자 메시지에서 고객명 추출 (최근 메시지부터)
-      const userMessages = [...messages].reverse().filter(m => m.role === 'user');
-      for (const msg of userMessages) {
-        // "XXX 고객에게 문서", "XXX에게 문서", "XXX 문서 등록" 등의 패턴
-        const patterns = [
-          /([가-힣a-zA-Z0-9]{2,20})\s*(고객에게|에게)\s*(문서|파일)/,
-          /([가-힣a-zA-Z0-9]{2,20})\s*(문서|파일)\s*(등록|업로드)/,
-        ];
-        for (const pattern of patterns) {
-          const match = msg.content.match(pattern);
-          if (match) {
-            const customerName = match[1];
-            console.log('[ChatPanel] 사용자 메시지에서 고객명 추출:', customerName);
+      // 🔥 전략 1: AI가 "어떤 고객에게?" 질문 후 사용자 응답을 고객명으로 인식
+      const allMessages = [...messages];
+      for (let i = allMessages.length - 1; i >= 0; i--) {
+        const msg = allMessages[i];
+
+        // AI가 고객명을 질문한 경우
+        if (msg.role === 'assistant' &&
+            (msg.content.includes('어떤 고객에게') ||
+             msg.content.includes('어느 고객에게') ||
+             msg.content.includes('고객명을 입력'))) {
+          // 그 다음에 오는 사용자 메시지가 있으면 고객명으로 간주
+          const nextUserMsg = allMessages.slice(i + 1).find(m => m.role === 'user');
+          if (nextUserMsg) {
+            const potentialName = nextUserMsg.content.trim();
+            console.log('[ChatPanel] AI 질문 후 사용자 응답에서 고객명 추출 시도:', potentialName);
             try {
               const result = await CustomerService.getCustomers({
-                search: customerName,
+                search: potentialName,
                 limit: 5
               });
               const customers = result?.customers || [];
-              const exactMatch = customers.find((c) => c.personal_info?.name === customerName);
+              const exactMatch = customers.find((c) => c.personal_info?.name === potentialName);
               if (exactMatch?._id) {
                 targetCustomerId = exactMatch._id;
-                linkedCustomerName = customerName;
-                console.log('[ChatPanel] 사용자 메시지 기반 고객 찾음:', customerName, targetCustomerId);
-                break;
+                linkedCustomerName = potentialName;
+                console.log('[ChatPanel] AI 질문 후 응답에서 고객 찾음:', potentialName, targetCustomerId);
               }
             } catch (searchError) {
-              console.warn('[ChatPanel] 고객 검색 실패:', customerName, searchError);
+              console.warn('[ChatPanel] 고객 검색 실패:', potentialName, searchError);
             }
           }
+          break; // AI 질문을 찾았으면 루프 종료
         }
-        if (targetCustomerId) break;
+      }
+
+      // 🔥 전략 2: 기존 패턴 매칭 (AI 질문이 없거나 고객을 못 찾은 경우)
+      if (!targetCustomerId) {
+        const userMessages = [...messages].reverse().filter(m => m.role === 'user');
+        for (const msg of userMessages) {
+          // "XXX 고객에게 문서", "XXX에게 문서", "XXX 문서 등록" 등의 패턴
+          const patterns = [
+            /([가-힣a-zA-Z0-9]{2,20})\s*(고객에게|에게)\s*(문서|파일)/,
+            /([가-힣a-zA-Z0-9]{2,20})\s*(문서|파일)\s*(등록|업로드)/,
+          ];
+          for (const pattern of patterns) {
+            const match = msg.content.match(pattern);
+            if (match) {
+              const customerName = match[1];
+              console.log('[ChatPanel] 사용자 메시지에서 고객명 추출:', customerName);
+              try {
+                const result = await CustomerService.getCustomers({
+                  search: customerName,
+                  limit: 5
+                });
+                const customers = result?.customers || [];
+                const exactMatch = customers.find((c) => c.personal_info?.name === customerName);
+                if (exactMatch?._id) {
+                  targetCustomerId = exactMatch._id;
+                  linkedCustomerName = customerName;
+                  console.log('[ChatPanel] 사용자 메시지 기반 고객 찾음:', customerName, targetCustomerId);
+                  break;
+                }
+              } catch (searchError) {
+                console.warn('[ChatPanel] 고객 검색 실패:', customerName, searchError);
+              }
+            }
+          }
+          if (targetCustomerId) break;
+        }
       }
 
       // 🔥 고객 없으면 업로드 취소하고 사용자에게 안내
