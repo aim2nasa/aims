@@ -430,6 +430,7 @@
 
 .error-logs-page__cell-user {
   color: var(--color-text-secondary);
+  cursor: pointer;
 }
 
 /* Badges */

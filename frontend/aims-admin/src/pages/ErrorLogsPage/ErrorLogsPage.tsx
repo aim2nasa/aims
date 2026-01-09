@@ -783,7 +783,13 @@ export const ErrorLogsPage = () => {
                       </td>
                       <td
                         className="error-logs-page__cell-user"
-                        title={log.actor?.user_id || undefined}
+                        title={log.actor?.user_id ? `${log.actor.user_id} (우클릭하여 복사)` : undefined}
+                        onContextMenu={(e) => {
+                          if (log.actor?.user_id) {
+                            e.preventDefault();
+                            navigator.clipboard.writeText(log.actor.user_id);
+                          }
+                        }}
                       >
                         {log.actor?.name || (log.actor?.user_id ? log.actor.user_id.slice(0, 8) + '...' : '-')}
                       </td>
