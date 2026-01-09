@@ -860,8 +860,8 @@ export const ErrorLogsPage = () => {
 
       {/* Detail Modal */}
       {detailLog && (
-        <div className="error-logs-page__modal-overlay" onClick={() => setDetailLog(null)}>
-          <div className="error-logs-page__modal" onClick={(e) => e.stopPropagation()}>
+        <div className="error-logs-page__modal-overlay">
+          <div className="error-logs-page__modal">
             <div className="error-logs-page__modal-header">
               <h2>에러 상세</h2>
               <button className="error-logs-page__modal-close" onClick={() => setDetailLog(null)}>
