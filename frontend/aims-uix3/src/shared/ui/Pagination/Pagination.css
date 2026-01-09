@@ -1,0 +1,152 @@
+/**
+ * 공용 페이지네이션 스타일
+ * @description iOS 스타일 페이지네이션 컴포넌트
+ */
+
+/* === PAGINATION CONTAINER === */
+/* 기존 클래스명 호환: customer-pagination, document-pagination, contract-pagination, table-pagination */
+.pagination,
+.customer-pagination,
+.document-pagination,
+.contract-pagination,
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border-primary);
+}
+
+/* === PAGINATION LIMIT === */
+.pagination-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === PAGINATION CONTROLS === */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* === PAGINATION SPACER === */
+.pagination-spacer {
+  flex: 1;
+}
+
+/* === PAGINATION BUTTON === */
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-700);
+  transform: scale(1.15);
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-300);
+}
+
+.pagination-button:active:not(:disabled) {
+  background-color: var(--color-bg-tertiary);
+  transform: scale(0.96);
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* === PAGINATION ARROW === */
+.pagination-arrow {
+  font-weight: 300;
+  line-height: 1;
+  color: inherit;
+  user-select: none;
+  display: inline-block;
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+
+.pagination-button:disabled .pagination-arrow {
+  color: var(--color-text-quaternary);
+}
+
+/* === PAGINATION ARROW CLICKED STATE === */
+.pagination-arrow--clicked {
+  color: var(--color-primary-700);
+}
+
+html[data-theme="dark"] .pagination-arrow--clicked {
+  color: var(--color-primary-300);
+}
+
+/* === Direction-specific animations === */
+.pagination-button--prev .pagination-arrow--clicked {
+  transform: translateX(-2px) scale(1.05);
+}
+
+.pagination-button--next .pagination-arrow--clicked {
+  transform: translateX(2px) scale(1.05);
+}
+
+/* === PAGINATION INFO === */
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 60px;
+  justify-content: center;
+}
+
+.pagination-current {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.pagination-separator {
+  color: var(--color-text-quaternary);
+}
+
+.pagination-total {
+  color: var(--color-text-tertiary);
+}
+
+/* === MOTION REDUCTION === */
+@media (prefers-reduced-motion: reduce) {
+  .pagination-button {
+    transition: none;
+  }
+
+  .pagination-button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .pagination-arrow {
+    transition: none;
+  }
+}

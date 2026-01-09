@@ -321,104 +321,7 @@ html[data-theme='dark'] .action-button:disabled {
   animation: spin 1s linear infinite;
 }
 
-/* === 🍎 페이지네이션 - iOS Style (DocumentLibraryView와 동일) === */
-.table-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  margin-top: 8px;
-  border-top: 1px solid var(--color-ios-separator-subtle-light);
-}
-
-/* 🍎 PAGINATION LIMIT - iOS Native Style (Dropdown 컴포넌트 사용) */
-.pagination-limit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 🍎 PAGINATION CONTROLS - Center group */
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: center;
-  flex: 1;
-}
-
-/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
-.pagination-spacer {
-  flex: 1;
-}
-
-/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
-.pagination-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-.pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-light);
-  transform: scale(0.96);
-}
-
-.pagination-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.3;
-}
-
-/* 🍎 PAGINATION ARROW - Large and Clear */
-.pagination-arrow {
-  font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 대형 심볼 */
-  font-weight: 300;
-  line-height: 1;
-  color: var(--color-ios-text-primary-light);
-  user-select: none;
-}
-
-.pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-.pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: pagination info */
-  font-family: var(--font-family-text);
-  font-weight: 600;
-  color: var(--color-ios-text-secondary-light);
-  min-width: 60px;
-  justify-content: center;
-}
-
-.pagination-current {
-  color: var(--color-ios-text-primary-light);
-  font-weight: 600;
-}
-
-.pagination-separator {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-.pagination-total {
-  color: var(--color-ios-text-tertiary-light);
-}
+/* 페이지네이션: 공용 Pagination.css 사용 */
 
 /* === 애니메이션 === */
 @keyframes rotate-processing {
@@ -485,42 +388,6 @@ html[data-theme="dark"] .loading-spinner {
   border-top-color: var(--color-primary-400);
 }
 
-html[data-theme="dark"] .table-pagination {
-  border-top-color: var(--color-ios-separator-subtle-dark);
-}
-
-html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-html[data-theme="dark"] .pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-html[data-theme="dark"] .pagination-arrow {
-  color: var(--color-ios-text-primary-dark);
-}
-
-html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-html[data-theme="dark"] .pagination-info {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-html[data-theme="dark"] .pagination-current {
-  color: var(--color-ios-text-primary-dark);
-}
-
-html[data-theme="dark"] .pagination-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-html[data-theme="dark"] .pagination-total {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
 /* === 반응형 === */
 @media (max-width: 768px) {
   .document-status-table {
@@ -531,35 +398,5 @@ html[data-theme="dark"] .pagination-total {
   .document-status-table thead th,
   .document-status-table tbody td {
     padding: var(--spacing-2) var(--spacing-3);
-  }
-
-  .table-pagination {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .pagination-controls {
-    order: 1;
-    width: 100%;
-  }
-
-  .pagination-limit {
-    order: 2;
-  }
-
-  .pagination-button {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-/* 🍎 MOTION REDUCTION: Respect user preferences */
-@media (prefers-reduced-motion: reduce) {
-  .pagination-button {
-    transition: none;
-  }
-
-  .pagination-button:active:not(:disabled) {
-    transform: none;
   }
 }

@@ -76,3 +76,6 @@ export {
   ALPHABET_INITIALS,
   NUMBER_INITIALS,
 } from './InitialFilterBar';
+
+// Pagination (CSS만 제공)
+import './Pagination';
