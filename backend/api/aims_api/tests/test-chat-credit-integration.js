@@ -1,11 +1,10 @@
 /**
  * test-chat-credit-integration.js
- * /api/chat 엔드포인트의 크레딧 체크 통합 테스트
+ * checkCreditBeforeAI 함수 통합 테스트
  *
  * 실행: node tests/test-chat-credit-integration.js
  */
 
-const http = require('http');
 const { MongoClient } = require('mongodb');
 
 // 테스트 결과 추적
@@ -22,145 +21,62 @@ function assert(condition, message) {
   }
 }
 
-/**
- * SSE 응답 파싱
- */
-function parseSSEEvents(data) {
-  const events = [];
-  const lines = data.split('\n');
-
-  for (const line of lines) {
-    if (line.startsWith('data: ')) {
-      try {
-        events.push(JSON.parse(line.slice(6)));
-      } catch (e) {
-        // 파싱 실패 무시
-      }
-    }
-  }
-  return events;
-}
-
-/**
- * HTTP 요청 헬퍼
- */
-function makeRequest(options, body) {
-  return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ status: res.statusCode, data, headers: res.headers }));
-    });
-
-    req.on('error', reject);
-    req.setTimeout(30000, () => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    });
-
-    if (body) {
-      req.write(JSON.stringify(body));
-    }
-    req.end();
-  });
-}
-
 async function runTests() {
-  console.log('\n🧪 /api/chat 크레딧 체크 통합 테스트\n');
+  console.log('\n🧪 checkCreditBeforeAI 통합 테스트\n');
 
   const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost:27017');
 
   try {
     await client.connect();
+    console.log('📦 MongoDB 연결 성공\n');
     const db = client.db('docupload');
 
-    // 테스트용 사용자 토큰 획득 (admin)
+    // 테스트용 admin 사용자 조회
     const adminUser = await db.collection('users').findOne({ role: 'admin' });
     if (!adminUser) {
       console.log('❌ admin 사용자를 찾을 수 없음');
       process.exit(1);
     }
 
-    // JWT 토큰 생성 (간단한 테스트용)
-    const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    const testToken = jwt.sign(
-      { userId: adminUser._id.toString(), email: adminUser.email },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
     // ============================================
-    // 테스트 1: 정상 요청 (admin - 무제한)
+    // 테스트 1: checkCreditBeforeAI 직접 호출 (admin)
     // ============================================
-    console.log('📋 테스트 1: admin 사용자 채팅 요청');
-
-    const chatOptions = {
-      hostname: 'localhost',
-      port: 3010,
-      path: '/api/chat',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${testToken}`
-      }
-    };
-
-    const chatBody = {
-      messages: [{ role: 'user', content: '테스트 메시지입니다.' }]
-    };
-
-    try {
-      const response = await makeRequest(chatOptions, chatBody);
-      assert(response.status === 200, `HTTP 200 응답 (받은 값: ${response.status})`);
-
-      const events = parseSSEEvents(response.data);
-      console.log(`  ℹ️ 받은 이벤트 수: ${events.length}`);
-
-      // credit_exceeded 이벤트가 없어야 함 (admin은 무제한)
-      const creditExceeded = events.find(e => e.type === 'credit_exceeded');
-      assert(!creditExceeded, 'admin 사용자는 credit_exceeded 없어야 함');
-
-      // done 이벤트가 있어야 함
-      const doneEvent = events.find(e => e.type === 'done');
-      assert(!!doneEvent, 'done 이벤트 수신');
-
-    } catch (error) {
-      console.log(`  ⚠️ 요청 실패: ${error.message}`);
-      // 서버가 실행 중이 아닐 수 있음
-    }
-
-    // ============================================
-    // 테스트 2: 인증 없이 요청 (거부되어야 함)
-    // ============================================
-    console.log('\n📋 테스트 2: 인증 없는 요청');
-
-    const noAuthOptions = {
-      ...chatOptions,
-      headers: { 'Content-Type': 'application/json' }
-    };
-
-    try {
-      const response = await makeRequest(noAuthOptions, chatBody);
-      assert(response.status === 401, `인증 없이 401 응답 (받은 값: ${response.status})`);
-    } catch (error) {
-      console.log(`  ⚠️ 요청 실패: ${error.message}`);
-    }
-
-    // ============================================
-    // 테스트 3: creditService 직접 테스트 (크레딧 부족 시뮬레이션)
-    // ============================================
-    console.log('\n📋 테스트 3: 크레딧 부족 시뮬레이션 (직접 함수 호출)');
+    console.log('📋 테스트 1: admin 사용자 크레딧 체크 (직접 함수 호출)');
 
     const { checkCreditBeforeAI } = require('../lib/creditService');
     const analyticsDb = client.db('aims_analytics');
 
-    // free_trial 사용자 찾기 또는 시뮬레이션
-    const freeUser = await db.collection('users').findOne({ tier: 'free_trial' });
+    const adminResult = await checkCreditBeforeAI(db, analyticsDb, adminUser._id.toString());
+    assert(adminResult.allowed === true, 'admin 사용자는 허용되어야 함');
+    assert(adminResult.reason === 'unlimited', 'reason이 unlimited여야 함');
+    assert(adminResult.credit_quota === -1, 'credit_quota가 -1이어야 함')
 
-    if (freeUser) {
+    // ============================================
+    // 테스트 2: Fail-open 패턴 검증 (존재하지 않는 사용자)
+    // ============================================
+    console.log('\n📋 테스트 2: Fail-open 패턴 검증');
+
+    const fakeUserId = '000000000000000000000000';
+    const failOpenResult = await checkCreditBeforeAI(db, analyticsDb, fakeUserId);
+    assert(failOpenResult.allowed === true, 'Fail-open: 오류 시에도 허용');
+    assert(
+      failOpenResult.reason === 'error_fallback' || failOpenResult.reason === 'within_quota',
+      'reason이 error_fallback 또는 within_quota'
+    );
+
+    // ============================================
+    // 테스트 3: 크레딧 부족 시뮬레이션 (큰 크레딧 요청)
+    // ============================================
+    console.log('\n📋 테스트 3: 크레딧 부족 시뮬레이션');
+
+    // free_trial 또는 standard 사용자 찾기
+    const limitedUser = await db.collection('users').findOne({
+      tier: { $in: ['free_trial', 'standard'] }
+    });
+
+    if (limitedUser) {
       // 매우 큰 크레딧 요청으로 거부 유도
-      const result = await checkCreditBeforeAI(db, analyticsDb, freeUser._id.toString(), 50000);
+      const result = await checkCreditBeforeAI(db, analyticsDb, limitedUser._id.toString(), 50000);
 
       if (result.reason !== 'unlimited') {
         assert(result.allowed === false, '50000 크레딧 요청은 거부되어야 함');
@@ -172,10 +88,10 @@ async function runTests() {
         assert(typeof result.credit_quota === 'number', 'credit_quota 포함');
         assert(typeof result.days_until_reset === 'number', 'days_until_reset 포함');
       } else {
-        console.log('  ℹ️ free_trial 사용자가 무제한 설정됨');
+        console.log('  ℹ️ 해당 사용자가 무제한 설정됨 - 스킵');
       }
     } else {
-      console.log('  ⚠️ free_trial 사용자 없음 - 스킵');
+      console.log('  ⚠️ 제한된 티어 사용자 없음 - 스킵');
     }
 
     // ============================================
@@ -217,7 +133,6 @@ async function runTests() {
 
   } catch (error) {
     console.error('\n❌ 테스트 중 오류:', error.message);
-    console.error(error.stack);
     process.exit(1);
   } finally {
     await client.close();

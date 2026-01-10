@@ -121,11 +121,11 @@ assertIncludes(
 
 console.log('\n📋 Test Suite 2: Single Document Deletion (DELETE /api/documents/:id)\n');
 
-// 단일 문서 삭제 API 블록 추출 (Qdrant 삭제까지 포함하려면 7500자 이상 필요)
+// 단일 문서 삭제 API 블록 추출 (Qdrant 삭제까지 포함하려면 10000자 이상 필요)
 const singleDeleteBlock = findCodeBlock(
   serverContent,
   "app\\.delete\\('/api/documents/:id'",
-  7500  // 약 7500자 추출 (Qdrant 삭제 코드 포함)
+  10000  // 약 10000자 추출 (Qdrant 삭제 코드 포함)
 );
 
 if (!singleDeleteBlock) {
@@ -173,8 +173,8 @@ if (bulkDeleteStartIndex === -1) {
   console.log(`${RED}✗ Could not find bulk document deletion API${RESET}`);
   testsFailed++;
 } else {
-  // Qdrant 삭제 코드가 endpoint 시작에서 약 130줄 뒤에 있으므로 8000자 추출
-  const bulkDeleteBlock = serverContent.slice(bulkDeleteStartIndex, bulkDeleteStartIndex + 8000);
+  // Qdrant 삭제 코드가 endpoint 시작에서 약 130줄 뒤에 있으므로 12000자 추출
+  const bulkDeleteBlock = serverContent.slice(bulkDeleteStartIndex, bulkDeleteStartIndex + 12000);
   console.log(`${BLUE}ℹ Found bulk document deletion block (${bulkDeleteBlock.length} chars)${RESET}\n`);
 
   // 9. 반복문 내 Qdrant 삭제
@@ -200,7 +200,7 @@ console.log('\n📋 Test Suite 4: Customer Cascade Deletion\n');
 const customerDeleteBlock = findCodeBlock(
   serverContent,
   "app\\.delete\\('/api/customers/:id'",
-  8000  // 고객 삭제는 더 큼
+  15000  // 고객 삭제는 더 큼 (cascade 삭제 포함)
 );
 
 if (!customerDeleteBlock) {
