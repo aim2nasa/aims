@@ -10972,6 +10972,30 @@ app.post('/api/chat', authenticateJWT, async (req, res) => {
   console.log(`[Chat] 채팅 시작 - userId: ${userId}, sessionId: ${sessionId || 'none'}, messages: ${messages.length}개`);
 
   try {
+    // 크레딧 한도 체크 (AI 호출 전)
+    const { checkCreditBeforeAI } = require('./lib/creditService');
+    const creditCheck = await checkCreditBeforeAI(db, analyticsDb, userId);
+
+    if (!creditCheck.allowed) {
+      console.log(`[Chat] 크레딧 부족 - userId: ${userId}, used: ${creditCheck.credits_used}, quota: ${creditCheck.credit_quota}`);
+
+      // 크레딧 부족 SSE 이벤트 전송
+      res.write(`data: ${JSON.stringify({
+        type: 'credit_exceeded',
+        credits_used: creditCheck.credits_used,
+        credits_remaining: creditCheck.credits_remaining,
+        credit_quota: creditCheck.credit_quota,
+        credit_usage_percent: creditCheck.credit_usage_percent,
+        days_until_reset: creditCheck.days_until_reset,
+        tier: creditCheck.tier,
+        tier_name: creditCheck.tier_name
+      })}\n\n`);
+
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      res.end();
+      return;
+    }
+
     const { streamChatResponse } = require('./lib/chatService');
 
     let fullResponse = '';

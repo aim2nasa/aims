@@ -6,7 +6,8 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { useChatSSE, ChatMessage, ChatEvent } from '@/shared/hooks/useChatSSE';
+import { useChatSSE, ChatMessage, ChatEvent, CreditExceededInfo } from '@/shared/hooks/useChatSSE';
+import CreditExceededDialog from '@/shared/ui/CreditExceededDialog';
 import { useChatHistory, ChatSession } from '@/shared/hooks/useChatHistory';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
@@ -512,7 +513,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     isLoading,
     currentResponse,
     activeTools,
-    retryStatus
+    retryStatus,
+    creditExceededInfo,
+    clearCreditExceeded
   } = useChatSSE();
 
   const { isDevMode } = useDevModeStore();
@@ -3137,6 +3140,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             ))}
           </div>
         </DraggableModal>
+        {/* 크레딧 초과 다이얼로그 */}
+        <CreditExceededDialog
+          visible={creditExceededInfo !== null}
+          onClose={clearCreditExceeded}
+          creditInfo={creditExceededInfo || {
+            credits_used: 0,
+            credits_remaining: 0,
+            credit_quota: 0,
+            credit_usage_percent: 0,
+            days_until_reset: 0
+          }}
+        />
       </>
     );
   }
@@ -3226,6 +3241,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
           ))}
         </div>
       </DraggableModal>
+      {/* 크레딧 초과 다이얼로그 */}
+      <CreditExceededDialog
+        visible={creditExceededInfo !== null}
+        onClose={clearCreditExceeded}
+        creditInfo={creditExceededInfo || {
+          credits_used: 0,
+          credits_remaining: 0,
+          credit_quota: 0,
+          credit_usage_percent: 0,
+          days_until_reset: 0
+        }}
+      />
     </>
   );
 };

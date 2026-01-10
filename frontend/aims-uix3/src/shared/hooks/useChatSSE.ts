@@ -20,7 +20,7 @@ export interface ChatMessage {
  * SSE 이벤트 타입
  */
 export interface ChatEvent {
-  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error' | 'session' | 'rate_limit_retry';
+  type: 'content' | 'tool_start' | 'tool_calling' | 'tool_result' | 'done' | 'error' | 'session' | 'rate_limit_retry' | 'credit_exceeded';
   content?: string;
   tools?: string[];
   name?: string;
@@ -36,6 +36,27 @@ export interface ChatEvent {
   attempt?: number;
   maxAttempts?: number;
   delayMs?: number;
+  // Credit exceeded 정보
+  credits_used?: number;
+  credits_remaining?: number;
+  credit_quota?: number;
+  credit_usage_percent?: number;
+  days_until_reset?: number;
+  tier?: string;
+  tier_name?: string;
+}
+
+/**
+ * 크레딧 초과 정보
+ */
+export interface CreditExceededInfo {
+  credits_used: number;
+  credits_remaining: number;
+  credit_quota: number;
+  credit_usage_percent: number;
+  days_until_reset: number;
+  tier?: string;
+  tier_name?: string;
 }
 
 /**
@@ -88,6 +109,10 @@ export interface UseChatSSEReturn {
   currentSessionId: string | null;
   /** Rate limit 재시도 상태 */
   retryStatus: RateLimitRetryStatus | null;
+  /** 크레딧 초과 정보 */
+  creditExceededInfo: CreditExceededInfo | null;
+  /** 크레딧 초과 상태 초기화 */
+  clearCreditExceeded: () => void;
 }
 
 /**
@@ -112,7 +137,15 @@ export function useChatSSE(): UseChatSSEReturn {
   const [lastUsage, setLastUsage] = useState<ChatEvent['usage'] | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [retryStatus, setRetryStatus] = useState<RateLimitRetryStatus | null>(null);
+  const [creditExceededInfo, setCreditExceededInfo] = useState<CreditExceededInfo | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  /**
+   * 크레딧 초과 상태 초기화
+   */
+  const clearCreditExceeded = useCallback(() => {
+    setCreditExceededInfo(null);
+  }, []);
 
   /**
    * SSE 데이터 파싱
@@ -250,6 +283,19 @@ export function useChatSSE(): UseChatSSEReturn {
               }
               break;
 
+            case 'credit_exceeded':
+              // 크레딧 초과 이벤트 처리
+              setCreditExceededInfo({
+                credits_used: event.credits_used ?? 0,
+                credits_remaining: event.credits_remaining ?? 0,
+                credit_quota: event.credit_quota ?? 0,
+                credit_usage_percent: event.credit_usage_percent ?? 100,
+                days_until_reset: event.days_until_reset ?? 0,
+                tier: event.tier,
+                tier_name: event.tier_name
+              });
+              break;
+
             case 'error':
               throw new Error(event.error || '알 수 없는 오류가 발생했습니다.');
           }
@@ -289,7 +335,9 @@ export function useChatSSE(): UseChatSSEReturn {
     activeTools,
     lastUsage,
     currentSessionId,
-    retryStatus
+    retryStatus,
+    creditExceededInfo,
+    clearCreditExceeded
   };
 }
 

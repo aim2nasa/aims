@@ -1,8 +1,8 @@
 # AIMS SaaS 구독 모델 구현 계획
 
-> **문서 버전**: 1.0.0
+> **문서 버전**: 1.1.0
 > **작성일**: 2026-01-10
-> **상태**: 승인됨 (Phase 1 진행 예정)
+> **상태**: Phase 1 완료
 
 ---
 
@@ -23,7 +23,7 @@ AIMS에 월간 구독 SaaS 모델을 구현하여:
 | 스토리지 한도 체크 | ✅ 완료 | 업로드 시 차단 |
 | 크레딧 사용량 계산 | ✅ 완료 | OCR + AI 통합 |
 | OCR 한도 체크 | ✅ 완료 | n8n 워크플로우에서 체크 |
-| AI 크레딧 한도 차단 | ❌ 미구현 | **Phase 1 목표** |
+| AI 크레딧 한도 차단 | ✅ 완료 | **Phase 1 완료 (2026-01-10)** |
 | 결제/PG 연동 | ❌ 미구현 | Phase 3 |
 
 ### 1.3 사용자 요구사항
@@ -105,30 +105,67 @@ AIMS에 월간 구독 SaaS 모델을 구현하여:
 
 | 항목 | 현재 상태 | 위험도 | 해결 Phase |
 |------|----------|--------|-----------|
-| AI 크레딧 차단 미구현 | 무제한 사용 가능 | **높음** | 1 |
+| AI 크레딧 차단 미구현 | ✅ 해결됨 | ~~높음~~ | 1 (완료) |
 | 결제 멱등성 없음 | 중복 결제 가능 | **높음** | 3 |
 
 ---
 
 ## 4. 구현 로드맵
 
-### Phase 1: AI 크레딧 한도 차단 (1주)
+### Phase 1: AI 크레딧 한도 차단 ✅ 완료 (2026-01-10)
 
 **목표**: AI 호출 시 크레딧 부족하면 차단
 
-**작업 내용**:
-1. `creditService.js`에 `checkAndBlockIfExceeded()` 함수 추가
-2. `aims_rag_api`의 `/chat` 엔드포인트에 체크 로직 삽입
-3. `CreditExceededDialog` 컴포넌트 구현
-4. 테스트 케이스 작성
+**구현 완료 내용**:
 
-**수정/생성 파일**:
+#### 1. 백엔드: `checkCreditBeforeAI()` 함수 추가
+- **파일**: `backend/api/aims_api/lib/creditService.js`
+- 사용자 티어 정보 조회 → 크레딧 사용량 계산 → 한도 체크
+- 무제한 사용자(admin) 자동 통과
+- Fail-open 패턴: 체크 오류 시 사용 허용 (사용자 차단 방지)
+
+```javascript
+// 반환값 예시
+{
+  allowed: false,
+  reason: 'credit_exceeded',
+  credits_used: 1850,
+  credits_remaining: 150,
+  credit_quota: 2000,
+  credit_usage_percent: 92.5,
+  days_until_reset: 12,
+  tier: 'standard',
+  tier_name: '일반'
+}
 ```
-backend/api/aims_api/lib/creditService.js (수정)
-backend/api/aims_rag_api/app.py (수정)
-frontend/aims-uix3/src/shared/ui/CreditExceededDialog/ (신규)
-frontend/aims-uix3/src/features/chat/ChatPanel.tsx (수정)
-```
+
+#### 2. 백엔드: `/api/chat` 엔드포인트에 크레딧 체크 삽입
+- **파일**: `backend/api/aims_api/server.js` (line ~10972)
+- AI 스트리밍 시작 전 `checkCreditBeforeAI()` 호출
+- 크레딧 부족 시 SSE로 `credit_exceeded` 이벤트 전송
+
+#### 3. 프론트엔드: SSE 이벤트 처리
+- **파일**: `frontend/aims-uix3/src/shared/hooks/useChatSSE.ts`
+- `credit_exceeded` 이벤트 타입 추가
+- `CreditExceededInfo` 인터페이스 정의
+- `creditExceededInfo`, `clearCreditExceeded` 상태/함수 추가
+
+#### 4. 프론트엔드: CreditExceededDialog 컴포넌트
+- **파일**: `frontend/aims-uix3/src/shared/ui/CreditExceededDialog/`
+  - `CreditExceededDialog.tsx` - 다이얼로그 컴포넌트
+  - `CreditExceededDialog.css` - 스타일
+  - `index.ts` - Export
+- StorageExceededDialog 패턴 재사용
+- 크레딧 사용량, 리셋까지 남은 일수, 티어 정보 표시
+
+#### 5. 프론트엔드: ChatPanel 연동
+- **파일**: `frontend/aims-uix3/src/components/ChatPanel/ChatPanel.tsx`
+- 도킹/분리 모드 모두에서 CreditExceededDialog 렌더링
+- 크레딧 부족 시 자동으로 다이얼로그 표시
+
+**테스트 결과**:
+- ✅ 빌드 성공 (`npm run build`)
+- ✅ 타입 체크 통과
 
 ---
 
@@ -420,3 +457,4 @@ frontend/aims-uix3/src/features/trial-expired/
 | 날짜 | 버전 | 내용 |
 |------|------|------|
 | 2026-01-10 | 1.0.0 | 초안 작성 - 10명 전문가 검토 완료 |
+| 2026-01-10 | 1.1.0 | **Phase 1 완료** - AI 크레딧 한도 차단 구현 |
