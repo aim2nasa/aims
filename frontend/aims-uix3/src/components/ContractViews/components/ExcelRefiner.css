@@ -213,15 +213,17 @@ html[data-theme="dark"] .excel-refiner__format-th {
 }
 
 .excel-refiner__format-th--required {
-  background: var(--color-primary-100);
-  color: var(--color-primary-800);
+  background: var(--color-primary-200);
+  color: var(--color-primary-700);
   font-weight: 700;
+  border-bottom: 2px solid var(--color-primary-400);
 }
 
 html[data-theme="dark"] .excel-refiner__format-th--required {
-  background: var(--color-primary-900);
-  color: var(--color-primary-300);
-  font-weight: 600;
+  background: var(--color-primary-800);
+  color: var(--color-primary-200);
+  font-weight: 700;
+  border-bottom: 2px solid var(--color-primary-500);
 }
 
 .excel-refiner__format-td {
@@ -260,11 +262,13 @@ html[data-theme="dark"] .excel-refiner__format-th--required {
 }
 
 .excel-refiner__format-legend-item--required {
-  color: var(--color-primary-600);
+  color: var(--color-primary-700);
+  font-weight: 600;
 }
 
 html[data-theme="dark"] .excel-refiner__format-legend-item--required {
-  color: var(--color-primary-400);
+  color: var(--color-primary-300);
+  font-weight: 600;
 }
 
 /* === CONTENT === */
