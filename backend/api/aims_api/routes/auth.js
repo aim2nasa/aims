@@ -9,6 +9,8 @@ const activityLogger = require('../lib/activityLogger');
 const backendLogger = require('../lib/backendLogger');
 
 // 허용된 리다이렉트 도메인 목록 (보안)
+// - 정확한 문자열 일치만 허용 (Open Redirect 방지)
+// - 모바일 딥링크는 고정 경로만 허용
 const ALLOWED_REDIRECT_ORIGINS = [
   'https://aims.giize.com',
   'https://admin.aims.giize.com',
@@ -18,9 +20,43 @@ const ALLOWED_REDIRECT_ORIGINS = [
   'http://127.0.0.1:5177',
   'http://127.0.0.1:5178',
   'http://127.0.0.1:5173',
-  // 모바일 앱 딥링크
-  'aims-mobile://'
+  // 모바일 앱 딥링크 (고정 경로만 허용)
+  'aims-mobile://callback'
 ];
+
+/**
+ * 리다이렉트 URL 검증 (보안)
+ * @param {string} url - 검증할 URL
+ * @returns {boolean} 허용 여부
+ */
+function isAllowedRedirect(url) {
+  if (!url || typeof url !== 'string') return false;
+
+  // 정확히 일치하는 경우
+  if (ALLOWED_REDIRECT_ORIGINS.includes(url)) return true;
+
+  // URL 파싱으로 추가 검증 (호스트명 기반)
+  try {
+    const parsed = new URL(url);
+
+    // HTTPS 도메인 검증
+    if (parsed.protocol === 'https:') {
+      return ['aims.giize.com', 'admin.aims.giize.com'].includes(parsed.hostname);
+    }
+
+    // 로컬 개발 환경 (HTTP localhost/127.0.0.1)
+    if (parsed.protocol === 'http:') {
+      const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+      const isAllowedPort = ['5177', '5178', '5173'].includes(parsed.port);
+      return isLocalhost && isAllowedPort;
+    }
+  } catch {
+    // URL 파싱 실패 (커스텀 스킴 등) - 정확 일치만 허용
+    return false;
+  }
+
+  return false;
+}
 
 module.exports = function(db) {
   const router = express.Router();
@@ -45,7 +81,7 @@ module.exports = function(db) {
   router.get('/kakao', (req, res, next) => {
     // redirect origin 저장 (state 파라미터로 전달)
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       // state에 redirect origin 인코딩하여 전달
       return passport.authenticate('kakao', {
         session: false,
@@ -63,7 +99,7 @@ module.exports = function(db) {
   router.get('/kakao/switch', (req, res, next) => {
     // redirect origin 저장 (state 파라미터로 전달)
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('kakao-switch', {
         session: false,
         state: Buffer.from(redirectOrigin).toString('base64')
@@ -93,7 +129,7 @@ module.exports = function(db) {
           try {
             const decodedOrigin = Buffer.from(req.query.state, 'base64').toString('utf-8');
             // 허용된 도메인인지 검증
-            if (ALLOWED_REDIRECT_ORIGINS.includes(decodedOrigin)) {
+            if (isAllowedRedirect(decodedOrigin)) {
               frontendUrl = decodedOrigin;
               console.log(`[Auth] Dynamic redirect to: ${frontendUrl}`);
             }
@@ -128,8 +164,8 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
-        if (frontendUrl.endsWith('://')) {
+        // 모바일 딥링크인 경우 바로 토큰 전달
+        if (frontendUrl.startsWith('aims-mobile://')) {
           res.redirect(`${frontendUrl}?token=${token}`);
         } else {
           res.redirect(`${frontendUrl}/login?token=${token}`);
@@ -174,7 +210,7 @@ module.exports = function(db) {
    */
   router.get('/naver', (req, res, next) => {
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('naver', {
         session: false,
         state: Buffer.from(redirectOrigin).toString('base64')
@@ -190,7 +226,7 @@ module.exports = function(db) {
    */
   router.get('/naver/switch', (req, res, next) => {
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('naver-switch', {
         session: false,
         state: Buffer.from(redirectOrigin).toString('base64')
@@ -219,7 +255,7 @@ module.exports = function(db) {
         if (req.query.state) {
           try {
             const decodedOrigin = Buffer.from(req.query.state, 'base64').toString('utf-8');
-            if (ALLOWED_REDIRECT_ORIGINS.includes(decodedOrigin)) {
+            if (isAllowedRedirect(decodedOrigin)) {
               frontendUrl = decodedOrigin;
               console.log(`[Auth] Dynamic redirect to: ${frontendUrl}`);
             }
@@ -254,8 +290,8 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
-        if (frontendUrl.endsWith('://')) {
+        // 모바일 딥링크인 경우 바로 토큰 전달
+        if (frontendUrl.startsWith('aims-mobile://')) {
           res.redirect(`${frontendUrl}?token=${token}`);
         } else {
           res.redirect(`${frontendUrl}/login?token=${token}`);
@@ -299,7 +335,7 @@ module.exports = function(db) {
    */
   router.get('/google', (req, res, next) => {
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('google', {
         session: false,
         state: Buffer.from(redirectOrigin).toString('base64')
@@ -315,7 +351,7 @@ module.exports = function(db) {
    */
   router.get('/google/switch', (req, res, next) => {
     const redirectOrigin = req.query.redirect;
-    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+    if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('google-switch', {
         session: false,
         state: Buffer.from(redirectOrigin).toString('base64')
@@ -344,7 +380,7 @@ module.exports = function(db) {
         if (req.query.state) {
           try {
             const decodedOrigin = Buffer.from(req.query.state, 'base64').toString('utf-8');
-            if (ALLOWED_REDIRECT_ORIGINS.includes(decodedOrigin)) {
+            if (isAllowedRedirect(decodedOrigin)) {
               frontendUrl = decodedOrigin;
               console.log(`[Auth] Dynamic redirect to: ${frontendUrl}`);
             }
@@ -379,8 +415,8 @@ module.exports = function(db) {
         });
 
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        // 모바일 딥링크인 경우 /login 없이 바로 토큰 전달
-        if (frontendUrl.endsWith('://')) {
+        // 모바일 딥링크인 경우 바로 토큰 전달
+        if (frontendUrl.startsWith('aims-mobile://')) {
           res.redirect(`${frontendUrl}?token=${token}`);
         } else {
           res.redirect(`${frontendUrl}/login?token=${token}`);

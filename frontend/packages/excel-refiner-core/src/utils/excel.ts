@@ -7,9 +7,27 @@ import * as XLSX from 'xlsx'
 import type { SheetData, CellValue } from '../types/excel'
 
 /**
+ * 최대 엑셀 파일 크기 (DOS 방어)
+ * - 대용량 파일 업로드 시 메모리 고갈 방지
+ * - SheetJS는 파일 전체를 메모리에 로드하므로 제한 필요
+ */
+export const MAX_EXCEL_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+
+/**
  * 엑셀 파일 파싱
+ * @throws {Error} 파일 크기 초과 시
  */
 export async function parseExcel(file: File): Promise<SheetData[]> {
+  // DOS 방어: 파일 크기 제한
+  if (file.size > MAX_EXCEL_FILE_SIZE) {
+    const maxMB = MAX_EXCEL_FILE_SIZE / 1024 / 1024
+    const fileMB = (file.size / 1024 / 1024).toFixed(1)
+    throw new Error(
+      `파일 크기가 ${maxMB}MB를 초과합니다. (현재: ${fileMB}MB)\n` +
+      `대용량 파일은 여러 개로 분할하여 업로드해 주세요.`
+    )
+  }
+
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
 

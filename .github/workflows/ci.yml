@@ -1,7 +1,18 @@
 name: CI
 
 on:
-  workflow_dispatch:  # 수동 실행만 가능
+  workflow_dispatch:  # 수동 실행
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
 
 jobs:
   frontend:

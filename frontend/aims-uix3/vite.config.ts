@@ -150,6 +150,9 @@ export default defineConfig({
       '**/tests/**', // Playwright E2E 테스트 제외
     ],
     coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
@@ -164,6 +167,13 @@ export default defineConfig({
         '**/*.test.*', // 테스트 파일
         '**/*.spec.*', // 스펙 파일
       ],
+      // 커버리지 임계값 (향후 점진적 상향)
+      thresholds: {
+        statements: 50,
+        branches: 40,
+        functions: 50,
+        lines: 50
+      }
     },
   },
 })
