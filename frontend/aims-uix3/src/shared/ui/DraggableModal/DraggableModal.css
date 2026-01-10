@@ -426,3 +426,20 @@ html[data-theme="dark"] .draggable-modal__footer {
     animation: none;
   }
 }
+
+/* ===== 투명 모드 (Transparent Mode) ===== */
+/* 배경과 상호작용 가능하게 backdrop에 pointer-events: none */
+.draggable-modal-backdrop--transparent {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+/* 투명 모드에서 모달 자체는 클릭 가능해야 함 */
+.draggable-modal-backdrop--transparent .draggable-modal {
+  pointer-events: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}

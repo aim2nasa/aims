@@ -53,6 +53,8 @@ export interface DraggableModalProps {
   minHeight?: number
   /** localStorage 저장 키 (위치/크기 자동 영속화) */
   storageKey?: string
+  /** 투명 모드: backdrop 없이 배경과 상호작용 가능 */
+  transparent?: boolean
 }
 
 /**
@@ -93,7 +95,8 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   initialHeight = 800,
   minWidth = 600,
   minHeight = 400,
-  storageKey
+  storageKey,
+  transparent = false
 }) => {
   // Drag & Resize 기능
   const modal = useModalDragResize({
@@ -106,14 +109,15 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
 
   // 공통 모달 훅 사용
   useEscapeKey(escapeToClose && visible, onClose)
-  useBodyOverflow(visible)
+  // 투명 모드에서는 body overflow 유지 (배경 스크롤 가능)
+  useBodyOverflow(visible && !transparent)
   const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
 
   if (!visible) return null
 
   const modalBody = (
     <div
-      className="draggable-modal-backdrop"
+      className={`draggable-modal-backdrop ${transparent ? 'draggable-modal-backdrop--transparent' : ''}`}
       onClick={handleBackdropClick}
       role="presentation"
     >

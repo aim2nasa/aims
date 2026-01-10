@@ -3095,6 +3095,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             className="chat-panel-modal"
             escapeToClose={false}
             backdropClosable={false}
+            transparent={true}
           >
             <div className="chat-panel chat-panel--detached">
               {detachedPanelContent}
