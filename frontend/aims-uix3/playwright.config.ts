@@ -2,7 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright 테스트 설정
- * 고객 CRUD 100회 반복 자동화 테스트용
+ * - E2E 테스트
+ * - 접근성 테스트 (axe-core)
+ * - 시각적 회귀 테스트
  */
 export default defineConfig({
   // 테스트 파일 위치
@@ -14,7 +16,19 @@ export default defineConfig({
   // 각 expect() 호출의 최대 대기 시간 (10초)
   expect: {
     timeout: 10000,
+    // 시각적 회귀 테스트 설정
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01, // 1% 픽셀 차이 허용
+      threshold: 0.2, // 픽셀 색상 차이 임계값
+    },
+    toMatchSnapshot: {
+      maxDiffPixelRatio: 0.01,
+    },
   },
+
+  // 스냅샷 경로 설정 (시각적 회귀 테스트)
+  snapshotDir: './tests/__snapshots__',
+  snapshotPathTemplate: '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
 
   // 병렬 실행 비활성화 (순차 실행)
   fullyParallel: false,
