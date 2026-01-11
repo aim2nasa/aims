@@ -3,12 +3,12 @@
  * 미매칭 상품명 클릭 시 표시되어 정확한 상품명을 선택할 수 있게 함
  *
  * aims-uix3 공용 컴포넌트 사용:
- * - Modal: @/shared/ui/Modal
+ * - DraggableModal: @/shared/ui/DraggableModal (드래그 이동 지원)
  * - Button: @/shared/ui/Button
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Modal } from '@/shared/ui/Modal'
+import { DraggableModal } from '@/shared/ui/DraggableModal'
 import { Button } from '@/shared/ui/Button'
 import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core'
 import { errorReporter } from '@/shared/lib/errorReporter'
@@ -105,12 +105,14 @@ export function ProductSearchModal({
   )
 
   return (
-    <Modal
+    <DraggableModal
       visible={isOpen}
       onClose={onClose}
       title="보험상품 검색"
-      size="md"
-      backdropClosable
+      initialWidth={480}
+      initialHeight={560}
+      minWidth={400}
+      minHeight={400}
       footer={footer}
     >
       <div className="product-search-modal__body">
@@ -165,7 +167,7 @@ export function ProductSearchModal({
           </label>
         </div>
       </div>
-    </Modal>
+    </DraggableModal>
   )
 }
 
