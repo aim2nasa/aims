@@ -353,6 +353,7 @@ npm run dev
 | `datetime-format` | 날짜/시간 형식 | 날짜 표시 작업 |
 | `deploy-guide` | 배포 절차 가이드 | 배포 요청 |
 | `api-verify` | API 검증 명령어 | API 연동 작업 |
+| `full-test` | 전체 테스트 실행 | "전체 테스트", "full test" 요청 |
 
 ### 에이전트 (전문 분석)
 
