@@ -226,20 +226,21 @@ module.exports = function(db, authenticateJWT, requireRole) {
         });
 
         // 활동 로그 개수를 통계에 추가
+        const activityCount = activityResult.pagination?.total || 0;
         stats.activity = {
-          total: activityResult.pagination?.total || 0
+          total: activityCount
         };
 
         // byLevel에 activity 추가
         stats.byLevel = stats.byLevel || {};
-        stats.byLevel.activity = activityResult.pagination?.total || 0;
+        stats.byLevel.activity = activityCount;
 
         // total에 activity 추가
-        stats.total = (stats.total || 0) + (activityResult.pagination?.total || 0);
+        stats.total = (stats.total || 0) + activityCount;
 
-        // bySource에 activity 추가
+        // bySource에 backend 카운트 추가 (activity 로그는 모두 backend)
         stats.bySource = stats.bySource || {};
-        stats.bySource.activity = activityResult.pagination?.total || 0;
+        stats.bySource.backend = (stats.bySource.backend || 0) + activityCount;
       } catch (actErr) {
         console.warn('[ErrorLogs-SSE] activity 통계 조회 실패:', actErr.message);
         stats.activity = { total: 0 };
@@ -881,20 +882,21 @@ module.exports = function(db, authenticateJWT, requireRole) {
         });
 
         // 활동 로그 개수를 통계에 추가
+        const activityCount = activityResult.pagination?.total || 0;
         stats.activity = {
-          total: activityResult.pagination?.total || 0
+          total: activityCount
         };
 
-        // byLevel에 activity를 info로 추가
+        // byLevel에 activity 추가
         stats.byLevel = stats.byLevel || {};
-        stats.byLevel.activity = activityResult.pagination?.total || 0;
+        stats.byLevel.activity = activityCount;
 
         // total에 activity 추가
-        stats.total = (stats.total || 0) + (activityResult.pagination?.total || 0);
+        stats.total = (stats.total || 0) + activityCount;
 
-        // bySource에 backend activity 추가
+        // bySource에 backend 카운트 추가 (activity 로그는 모두 backend)
         stats.bySource = stats.bySource || {};
-        stats.bySource.activity = activityResult.pagination?.total || 0;
+        stats.bySource.backend = (stats.bySource.backend || 0) + activityCount;
       } catch (actErr) {
         console.warn('[ErrorLogs] activity 통계 조회 실패:', actErr.message);
         stats.activity = { total: 0 };

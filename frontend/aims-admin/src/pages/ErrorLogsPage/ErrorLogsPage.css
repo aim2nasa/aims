@@ -205,6 +205,46 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   min-width: 80px;
+  transition: all 0.15s ease;
+}
+
+.error-logs-page__stat-card--clickable {
+  cursor: pointer;
+}
+
+.error-logs-page__stat-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.error-logs-page__stat-card--active {
+  border-width: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-logs-page__stat-card--active:not(.error-logs-page__stat-card--error):not(.error-logs-page__stat-card--warn):not(.error-logs-page__stat-card--info):not(.error-logs-page__stat-card--activity) {
+  border-color: var(--color-primary, #007aff);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.error-logs-page__stat-card--error.error-logs-page__stat-card--active {
+  border-color: var(--color-error, #ff3b30);
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.error-logs-page__stat-card--warn.error-logs-page__stat-card--active {
+  border-color: #ff9500;
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.error-logs-page__stat-card--info.error-logs-page__stat-card--active {
+  border-color: #007aff;
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.error-logs-page__stat-card--activity.error-logs-page__stat-card--active {
+  border-color: #34c759;
+  background: rgba(52, 199, 89, 0.1);
 }
 
 .error-logs-page__stat-card--critical {

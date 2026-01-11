@@ -525,31 +525,104 @@ export const ErrorLogsPage = () => {
       {stats && (
         <div className="error-logs-page__stats-section">
           <div className="error-logs-page__stats">
-            <div className="error-logs-page__stat-card">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--clickable ${
+                levelFilter === '' && logTypeFilter === 'all' && sourceFilter === '' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setLevelFilter('');
+                setLogTypeFilter('all');
+                setSourceFilter('');
+                setPage(1);
+              }}
+              title="전체 로그 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.total}</span>
               <span className="error-logs-page__stat-label">총 로그</span>
             </div>
-            <div className="error-logs-page__stat-card error-logs-page__stat-card--activity">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--activity error-logs-page__stat-card--clickable ${
+                logTypeFilter === 'activity' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setLogTypeFilter('activity');
+                setLevelFilter('');
+                setPage(1);
+              }}
+              title="활동 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.byLevel?.activity || stats.bySource?.activity || 0}</span>
               <span className="error-logs-page__stat-label">Activity</span>
             </div>
-            <div className="error-logs-page__stat-card error-logs-page__stat-card--error">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--error error-logs-page__stat-card--clickable ${
+                levelFilter === 'error' && logTypeFilter === 'system' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setLevelFilter('error');
+                setLogTypeFilter('system');
+                setPage(1);
+              }}
+              title="에러 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.byLevel?.error || 0}</span>
               <span className="error-logs-page__stat-label">Error</span>
             </div>
-            <div className="error-logs-page__stat-card error-logs-page__stat-card--warn">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--warn error-logs-page__stat-card--clickable ${
+                levelFilter === 'warn' && logTypeFilter === 'system' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setLevelFilter('warn');
+                setLogTypeFilter('system');
+                setPage(1);
+              }}
+              title="경고 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.byLevel?.warn || 0}</span>
               <span className="error-logs-page__stat-label">Warn</span>
             </div>
-            <div className="error-logs-page__stat-card error-logs-page__stat-card--info">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--info error-logs-page__stat-card--clickable ${
+                levelFilter === 'info' && logTypeFilter === 'system' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setLevelFilter('info');
+                setLogTypeFilter('system');
+                setPage(1);
+              }}
+              title="정보 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.byLevel?.info || 0}</span>
               <span className="error-logs-page__stat-label">Info</span>
             </div>
-            <div className="error-logs-page__stat-card">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--clickable ${
+                sourceFilter === 'frontend' && levelFilter === '' && logTypeFilter === 'all' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setSourceFilter('frontend');
+                setLevelFilter('');
+                setLogTypeFilter('all');
+                setPage(1);
+              }}
+              title="프론트엔드 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.bySource?.frontend || 0}</span>
               <span className="error-logs-page__stat-label">Frontend</span>
             </div>
-            <div className="error-logs-page__stat-card">
+            <div
+              className={`error-logs-page__stat-card error-logs-page__stat-card--clickable ${
+                sourceFilter === 'backend' && levelFilter === '' && logTypeFilter === 'all' ? 'error-logs-page__stat-card--active' : ''
+              }`}
+              onClick={() => {
+                setSourceFilter('backend');
+                setLevelFilter('');
+                setLogTypeFilter('all');
+                setPage(1);
+              }}
+              title="백엔드 로그만 보기"
+            >
               <span className="error-logs-page__stat-value">{stats.bySource?.backend || 0}</span>
               <span className="error-logs-page__stat-label">Backend</span>
             </div>
