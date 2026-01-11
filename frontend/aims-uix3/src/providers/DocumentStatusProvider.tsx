@@ -139,50 +139,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
         // ✅ FIX: /api/documents/status API가 이미 customer_relation을 반환하므로
         // 개별 문서 조회 없이 바로 사용 (N+1 쿼리 방지 + customer_name 보존)
-        // 🍎 customer_type 일괄 조회 추가 (DocumentSearchView 패턴 참고)
-        const customerIds = new Set<string>()
-        realDocuments.forEach((doc: Document) => {
-          if (doc.customer_relation?.customer_id) {
-            customerIds.add(String(doc.customer_relation.customer_id))
-          }
-        })
-
-        // customer_type 일괄 조회
-        const customerTypeMap: Record<string, string | null> = {}
-        if (customerIds.size > 0) {
-          await Promise.all(
-            Array.from(customerIds).map(async (customerId) => {
-              try {
-                // ⭐ JWT 인증으로 설계사별 고객 데이터 격리
-                const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: getAuthHeaders()
-                })
-                if (customerResponse.ok) {
-                  const customerData = await customerResponse.json()
-                  if (customerData.success && customerData.data) {
-                    customerTypeMap[customerId] = customerData.data.insurance_info?.customer_type || null
-                  }
-                }
-              } catch (error) {
-                console.error(`[DocumentStatusProvider] 고객 ${customerId} 조회 오류:`, error)
-                errorReporter.reportApiError(error as Error, { component: 'DocumentStatusProvider.fetchDocuments.getCustomer', payload: { customerId } })
-              }
-            })
-          )
-        }
-
-        // customer_type을 customer_relation에 추가
+        // 🚀 PERF FIX: customer_type은 먼저 문서 표시 후 백그라운드에서 로드
         const documentsWithCustomerRelation: Document[] = realDocuments.map((doc: Document): Document => {
-          const customerId = doc.customer_relation?.customer_id ? String(doc.customer_relation.customer_id) : null
-          const customerType = customerId ? customerTypeMap[customerId] : null
-
           return {
             ...doc,
             // API가 이미 customer_relation (customer_name 포함)을 반환함
-            customer_relation: doc.customer_relation ? {
-              ...doc.customer_relation,
-              customer_type: customerType
-            } : undefined
+            customer_relation: doc.customer_relation
           } as Document
         })
 
@@ -249,6 +211,64 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     },
     [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, fileScope]
   )
+
+  /**
+   * 🚀 customer_type 백그라운드 로드
+   * - 문서 표시 후 비동기로 customer_type 가져옴 (N+1 쿼리이지만 UI 블로킹 없음)
+   * - customer_type이 없는 고객만 조회
+   */
+  const fetchCustomerTypesInBackground = useCallback(async (docs: Document[]) => {
+    // customer_type이 없는 고객 ID 수집
+    const customerIdsToFetch = new Set<string>()
+    docs.forEach((doc) => {
+      if (doc.customer_relation?.customer_id && !doc.customer_relation?.customer_type) {
+        customerIdsToFetch.add(String(doc.customer_relation.customer_id))
+      }
+    })
+
+    if (customerIdsToFetch.size === 0) return
+
+    // customer_type 일괄 조회 (백그라운드)
+    const customerTypeMap: Record<string, string | null> = {}
+    await Promise.all(
+      Array.from(customerIdsToFetch).map(async (customerId) => {
+        try {
+          const customerResponse = await fetch(`/api/customers/${customerId}`, {
+            headers: getAuthHeaders()
+          })
+          if (customerResponse.ok) {
+            const customerData = await customerResponse.json()
+            if (customerData.success && customerData.data) {
+              customerTypeMap[customerId] = customerData.data.insurance_info?.customer_type || null
+            }
+          }
+        } catch {
+          // 백그라운드 로드이므로 에러 무시
+        }
+      })
+    )
+
+    // customer_type 업데이트 (이미 표시된 문서에 추가)
+    if (Object.keys(customerTypeMap).length > 0) {
+      setDocuments((prevDocs) =>
+        prevDocs.map((doc) => {
+          const customerId = doc.customer_relation?.customer_id
+            ? String(doc.customer_relation.customer_id)
+            : null
+          if (customerId && customerTypeMap[customerId] !== undefined && doc.customer_relation) {
+            return {
+              ...doc,
+              customer_relation: {
+                ...doc.customer_relation,
+                customer_type: customerTypeMap[customerId]
+              }
+            }
+          }
+          return doc
+        })
+      )
+    }
+  }, [])
 
   /**
    * 문서 목록 새로고침
@@ -405,6 +425,22 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   useEffect(() => {
     setFilteredDocuments(documents)
   }, [documents])
+
+  /**
+   * 🚀 customer_type 백그라운드 로드 트리거
+   * - documents가 변경되면 customer_type이 없는 고객에 대해 백그라운드 로드
+   * - 비동기 처리로 UI 블로킹 없음
+   */
+  useEffect(() => {
+    if (documents.length === 0 || typeof window === 'undefined') {
+      return
+    }
+    // setTimeout으로 렌더링 완료 후 실행
+    const timeoutId = setTimeout(() => {
+      fetchCustomerTypesInBackground(documents)
+    }, 100)
+    return () => clearTimeout(timeoutId)
+  }, [documents, fetchCustomerTypesInBackground])
 
   // 🍎 Pagination Logic
   // 백엔드에서 이미 페이지네이션된 데이터를 받으므로 filteredDocuments를 그대로 사용

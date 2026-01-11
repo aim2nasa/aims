@@ -63,11 +63,15 @@ function getFileTypeIcon(doc: Document): { icon: string; color: string; label: s
   return FILE_TYPE_ICONS[ext] || null
 }
 
+// 이미지 확장자 목록 (mimeType 누락 시 fallback용)
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
+
 /**
  * 문서에서 썸네일 API용 파일 경로 추출
  * - PDF 파일: destPath 사용
  * - 이미지 파일: destPath 직접 사용
  * - 기타 파일: convPdfPath 사용 (변환된 PDF)
+ * - mimeType 누락 시 파일 확장자로 판단 (fallback)
  */
 function getThumbnailPath(doc: Document): string | null {
   // upload이 string인 경우 JSON 파싱 시도
@@ -87,14 +91,19 @@ function getThumbnailPath(doc: Document): string | null {
   const convPdfPath = uploadData.convPdfPath
   const mimeType = doc.mimeType || uploadData.mimeType || ''
 
-  // PDF 파일인 경우 직접 destPath 사용
-  if (mimeType.includes('pdf') && destPath) {
+  // 파일 확장자 추출 (mimeType 누락 시 fallback용)
+  const fileExt = destPath ? destPath.split('.').pop()?.toLowerCase() : ''
+
+  // PDF 파일인 경우 직접 destPath 사용 (mimeType 또는 확장자로 판단)
+  if ((mimeType.includes('pdf') || fileExt === 'pdf') && destPath) {
     // /data/files/ 접두어 제거
     return destPath.replace(/^\/data\/files\//, '')
   }
 
-  // 이미지 파일인 경우 직접 destPath 사용
-  if (IMAGE_MIME_TYPES.some(type => mimeType.includes(type)) && destPath) {
+  // 이미지 파일인 경우 직접 destPath 사용 (mimeType 또는 확장자로 판단)
+  const isImageByMime = IMAGE_MIME_TYPES.some(type => mimeType.includes(type))
+  const isImageByExt = fileExt ? IMAGE_EXTENSIONS.includes(fileExt) : false
+  if ((isImageByMime || isImageByExt) && destPath) {
     return destPath.replace(/^\/data\/files\//, '')
   }
 
@@ -153,6 +162,7 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
   const prevDocIdRef = useRef<string | null>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
 
   // 썸네일 경로 계산
   const thumbnailPath = document ? getThumbnailPath(document) : null
@@ -183,6 +193,19 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
       prevDocIdRef.current = docId
     }
   }, [docId, thumbnailUrl])
+
+  // ★ 콜백 ref: 이미지 요소가 마운트될 때 브라우저 캐시 즉시 감지
+  const imgRefCallback = (img: HTMLImageElement | null) => {
+    imgRef.current = img
+    // 이미지가 마운트되고, 아직 로드 상태가 아닐 때만 체크
+    if (img && thumbnailUrl && !imageLoaded && !imageError) {
+      // 브라우저에 캐시된 이미지는 complete가 즉시 true
+      if (img.complete && img.naturalWidth > 0) {
+        setImageLoaded(true)
+        loadedImageCache.add(thumbnailUrl)
+      }
+    }
+  }
 
   // 이미지 로드 완료 핸들러
   const handleImageLoad = () => {
@@ -256,6 +279,7 @@ const HoverPreviewComponent: React.FC<HoverPreviewProps> = ({
           </div>
         )}
         <img
+          ref={imgRefCallback}
           src={thumbnailUrl!}
           alt="문서 미리보기"
           className={`hover-preview__image ${(imageLoaded || isImageCached) ? 'hover-preview__image--loaded' : ''}`}
