@@ -144,6 +144,85 @@ html[data-theme="dark"] .contract-result-header .result-count {
   color: var(--color-ios-text-secondary-dark);
 }
 
+/* === 🍎 미매칭 상품명 필터 버튼 === */
+.contract-filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contract-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: transparent;
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="dark"] .contract-filter-btn {
+  border-color: var(--color-border-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.contract-filter-btn:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .contract-filter-btn:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.contract-filter-btn--active {
+  background: var(--color-warning-100);
+  border-color: var(--color-warning-300);
+  color: var(--color-warning-700);
+}
+
+html[data-theme="dark"] .contract-filter-btn--active {
+  background: var(--color-warning-900);
+  border-color: var(--color-warning-700);
+  color: var(--color-warning-300);
+}
+
+.contract-filter-btn--active:hover {
+  background: var(--color-warning-200);
+}
+
+html[data-theme="dark"] .contract-filter-btn--active:hover {
+  background: var(--color-warning-800);
+}
+
+.contract-filter-btn .filter-icon {
+  font-size: 12px;
+}
+
+.contract-filter-btn .filter-count {
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--color-warning-200);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .contract-filter-btn .filter-count {
+  background: var(--color-warning-700);
+}
+
+.contract-filter-btn--active .filter-count {
+  background: var(--color-warning-300);
+}
+
+html[data-theme="dark"] .contract-filter-btn--active .filter-count {
+  background: var(--color-warning-600);
+}
+
 /* === 계약 목록 === */
 .contract-list {
   min-height: 0; /* 🔥 FIX: flex item이 parent를 넘지 않도록 */
@@ -526,10 +605,38 @@ html[data-theme="dark"] .contract-item > span {
 
 .contract-product {
   color: var(--color-ios-text-secondary-light);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 html[data-theme="dark"] .contract-product {
   color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 미매칭 상품명 스타일 === */
+.contract-product--unmatched {
+  color: var(--color-warning-600);
+}
+
+html[data-theme="dark"] .contract-product--unmatched {
+  color: var(--color-warning-400);
+}
+
+.contract-product--unmatched .product-unmatched-icon {
+  flex-shrink: 0;
+  color: var(--color-warning-500);
+  opacity: 0.9;
+}
+
+html[data-theme="dark"] .contract-product--unmatched .product-unmatched-icon {
+  color: var(--color-warning-400);
+}
+
+.contract-product--unmatched .product-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contract-date {

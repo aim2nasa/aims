@@ -600,9 +600,17 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 className="customer-contracts-item"
               >
                 {/* 상품명 */}
-                <Tooltip content={contract.product_name || '-'}>
-                  <span className="contract-product">
-                    {contract.product_name || '-'}
+                <Tooltip
+                  content={!contract.product_id ? 'DB에 일치하는 상품이 없어 색상이 다르게 표시됩니다' : (contract.product_name || '-')}
+                >
+                  <span className={`contract-product ${!contract.product_id ? 'contract-product--unmatched' : ''}`}>
+                    {!contract.product_id && (
+                      <svg className="product-unmatched-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z"/>
+                        <path d="M7.25 4.5a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V4.5zM8 10.5a1 1 0 100 2 1 1 0 000-2z"/>
+                      </svg>
+                    )}
+                    <span className="product-name-text">{contract.product_name || '-'}</span>
                   </span>
                 </Tooltip>
 

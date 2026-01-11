@@ -714,6 +714,83 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   font-weight: var(--font-weight-regular); /* 400 */
 }
 
+/* 상품명 미매칭 허용 체크박스 */
+.excel-refiner__unmatched-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-warning-300);
+  border-radius: 6px;
+  background: var(--color-warning-50);
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-warning-700);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="dark"] .excel-refiner__unmatched-checkbox {
+  border-color: var(--color-warning-700);
+  background: var(--color-warning-900);
+  color: var(--color-warning-300);
+}
+
+.excel-refiner__unmatched-checkbox:hover {
+  background: var(--color-warning-100);
+}
+
+html[data-theme="dark"] .excel-refiner__unmatched-checkbox:hover {
+  background: var(--color-warning-800);
+}
+
+.excel-refiner__unmatched-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--color-warning-600);
+}
+
+/* 미매칭 허용 취소 버튼 */
+.excel-refiner__unmatched-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-warning-400);
+  border-radius: 6px;
+  background: var(--color-warning-100);
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-warning-700);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="dark"] .excel-refiner__unmatched-cancel {
+  border-color: var(--color-warning-600);
+  background: var(--color-warning-900);
+  color: var(--color-warning-300);
+}
+
+.excel-refiner__unmatched-cancel:hover {
+  background: var(--color-warning-200);
+  border-color: var(--color-warning-500);
+}
+
+html[data-theme="dark"] .excel-refiner__unmatched-cancel:hover {
+  background: var(--color-warning-800);
+  border-color: var(--color-warning-500);
+}
+
+.excel-refiner__unmatched-cancel svg {
+  opacity: 0.7;
+}
+
+.excel-refiner__unmatched-cancel:hover svg {
+  opacity: 1;
+}
+
 /* 범례 */
 .excel-refiner__legend {
   display: flex;

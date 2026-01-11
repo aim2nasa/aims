@@ -299,14 +299,42 @@ html[data-theme="dark"] .customer-contracts-item > span {
 }
 
 /* === 상품명 === */
-.contract-product {
+.customer-contracts-item .contract-product {
   color: var(--color-ios-text-secondary-light);
   font-weight: 600;
   white-space: nowrap;  /* 한 줄 유지 */
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-html[data-theme="dark"] .contract-product {
+html[data-theme="dark"] .customer-contracts-item .contract-product {
   color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 미매칭 상품명 스타일 === */
+.customer-contracts-item .contract-product--unmatched {
+  color: var(--color-warning-600);
+}
+
+html[data-theme="dark"] .customer-contracts-item .contract-product--unmatched {
+  color: var(--color-warning-400);
+}
+
+.customer-contracts-item .contract-product--unmatched .product-unmatched-icon {
+  flex-shrink: 0;
+  color: var(--color-warning-500);
+  opacity: 0.9;
+}
+
+html[data-theme="dark"] .customer-contracts-item .contract-product--unmatched .product-unmatched-icon {
+  color: var(--color-warning-400);
+}
+
+.customer-contracts-item .contract-product--unmatched .product-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* === 계약일 === */

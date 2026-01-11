@@ -282,6 +282,9 @@ export function ExcelRefiner() {
   // 상품명 상태 필터 (범례 클릭 시 해당 상태 행을 맨 위로)
   const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'unmatched' | null>(null)
 
+  // 상품명 미매칭 허용 체크박스 (활성화 시 미매칭 상품명도 등록 가능)
+  const [allowUnmatchedProducts, setAllowUnmatchedProducts] = useState(false)
+
   // 삭제 모드 상태
   const [isDeleteMode, setIsDeleteMode] = useState(false)
 
@@ -2718,8 +2721,24 @@ export function ExcelRefiner() {
     const existingSheets = sheetNames.filter(name => sheets.some(s => s.name === name))
     const allValid = existingSheets.length > 0 && existingSheets.every(name => getSheetStatus(name) === 'valid')
 
+    // 미매칭 허용 시: 계약 시트에 미매칭만 있는 경우에도 진행 가능
+    const contractSheetStatus = getSheetStatus('계약')
+    const contractIssueCount = sheetIssueCount.get('계약') || 0
+    const unmatchedCount = productMatchResult?.unmatched.length || 0
+    const contractHasOnlyUnmatched = contractSheetStatus === 'invalid' &&
+      unmatchedCount > 0 &&
+      contractIssueCount === unmatchedCount
+
+    // 다른 시트(개인고객, 법인고객)는 valid인지 확인
+    const otherSheetsValid = existingSheets
+      .filter(name => name !== '계약')
+      .every(name => getSheetStatus(name) === 'valid')
+
     // Step 4: 모든 검증 완료 → 등록 단계
-    if (allValid) {
+    // 또는: 미매칭 허용이 활성화되고, 계약 시트에 미매칭만 있으며, 다른 시트는 valid인 경우
+    const canProceedWithUnmatched = allowUnmatchedProducts && contractHasOnlyUnmatched && otherSheetsValid
+
+    if (allValid || canProceedWithUnmatched) {
       if (importResult && resultStatus) {
         // 퍼센트 계산 헬퍼
         const pct = (s: number, t: number) => t > 0 ? Math.round((s / t) * 100) : 0
@@ -2737,11 +2756,11 @@ export function ExcelRefiner() {
       return { step: 4, label: '일괄등록', message: '등록 가능', resultStatus: null }
     }
 
-    // 시트별 단계 결정
-    for (let i = 0; i < sheetNames.length; i++) {
-      const sheetName = sheetNames[i] as string
+    // 시트별 단계 결정 (존재하는 시트만 순회)
+    for (const sheetName of existingSheets) {
       const status = getSheetStatus(sheetName)
-      const step = i + 1
+      // 원래 sheetNames에서의 인덱스로 step 계산 (개인고객=1, 법인고객=2, 계약=3)
+      const step = sheetNames.indexOf(sheetName) + 1
 
       if (status === 'validating') {
         return { step, label: sheetName, message: '검증 중...', resultStatus: null }
@@ -2756,7 +2775,7 @@ export function ExcelRefiner() {
     }
 
     return { step: 1, label: '개인고객', message: '검증 대기', resultStatus: null }
-  }, [sheets, sheetValidationStatus, sheetIssueCount, importResult])
+  }, [sheets, sheetValidationStatus, sheetIssueCount, importResult, allowUnmatchedProducts, productMatchResult])
 
   // 컬럼별 검증 실패 이유 생성
   const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
@@ -3203,20 +3222,65 @@ export function ExcelRefiner() {
 
                     {/* 일괄등록 버튼 */}
                     {wizardStep?.step === 4 ? (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleImportContracts}
-                        disabled={isImporting}
-                      >
-                        {isImporting ? '등록 중...' : '일괄등록'}
-                      </Button>
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleImportContracts}
+                          disabled={isImporting}
+                        >
+                          {isImporting ? '등록 중...' : '일괄등록'}
+                        </Button>
+                        {/* 미매칭 허용 상태일 때 취소 버튼 표시 */}
+                        {allowUnmatchedProducts && productMatchResult && productMatchResult.unmatched.length > 0 && (
+                          <Tooltip content="상품명 미매칭 허용을 취소하고 검증 단계로 돌아갑니다">
+                            <button
+                              type="button"
+                              className="excel-refiner__unmatched-cancel"
+                              onClick={() => setAllowUnmatchedProducts(false)}
+                            >
+                              <span>상품명 미매칭 허용 중 ({productMatchResult.unmatched.length}건)</span>
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                            </button>
+                          </Tooltip>
+                        )}
+                      </>
                     ) : wizardStep?.step === 3 ? (
-                  // pending 상태가 아닌 경우에만 수정 필요 건수 표시 (pending은 우측 actionLog에서 표시)
+                  // pending 상태가 아닌 경우에만 표시
                   !Array.from(sheetValidationStatus.values()).some(v => v === 'pending') && (
-                    <span className="excel-refiner__status excel-refiner__status--error">
-                      ⚠️ {sheetIssueCount.get(Array.from(sheetValidationStatus.entries()).find(([_, v]) => v === 'invalid')?.[0] || '') || 0}건 수정 필요
-                    </span>
+                    <>
+                      {/* 미매칭만 있는 경우 허용 체크박스 표시 */}
+                      {(() => {
+                        const contractStatus = sheetValidationStatus.get('계약')
+                        const contractIssues = sheetIssueCount.get('계약') || 0
+                        const unmatchedOnly = productMatchResult &&
+                          productMatchResult.unmatched.length > 0 &&
+                          contractIssues === productMatchResult.unmatched.length &&
+                          contractStatus === 'invalid'
+
+                        if (unmatchedOnly) {
+                          return (
+                            <Tooltip content="DB에 일치하는 상품이 없는 상품명도 원본 그대로 등록합니다. 나중에 계약 목록에서 수정할 수 있습니다.">
+                              <label className="excel-refiner__unmatched-checkbox">
+                                <input
+                                  type="checkbox"
+                                  checked={allowUnmatchedProducts}
+                                  onChange={(e) => setAllowUnmatchedProducts(e.target.checked)}
+                                />
+                                <span>상품명 미매칭 허용 ({productMatchResult?.unmatched.length}건)</span>
+                              </label>
+                            </Tooltip>
+                          )
+                        }
+                        return (
+                          <span className="excel-refiner__status excel-refiner__status--error">
+                            ⚠️ {contractIssues}건 수정 필요
+                          </span>
+                        )
+                      })()}
+                    </>
                   )
                 ) : wizardStep?.step === 1 ? (
                   <span className="excel-refiner__status excel-refiner__status--hint">

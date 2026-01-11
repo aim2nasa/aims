@@ -113,6 +113,9 @@ export default function ContractAllView({
     name: string
   }>({ isOpen: false, name: '' })
 
+  // 미매칭 상품명 필터 상태
+  const [showUnmatchedOnly, setShowUnmatchedOnly] = useState(false)
+
   // 데이터 로드
   const loadContracts = useCallback(async () => {
     setIsLoading(true)
@@ -246,17 +249,29 @@ export default function ContractAllView({
     }
   }, [onCustomerDoubleClick])
 
+  // 미매칭 상품명 개수 계산
+  const unmatchedProductCount = useMemo(() => {
+    return contracts.filter(c => !c.product_id).length
+  }, [contracts])
+
   // 검색 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
+    let result = contracts
+
+    // 미매칭 필터 적용
+    if (showUnmatchedOnly) {
+      result = result.filter(c => !c.product_id)
+    }
+
     if (!searchValue.trim()) {
       if (selectedInitial) {
-        return filterByInitial(contracts, selectedInitial, (c) => c.customer_name || '')
+        return filterByInitial(result, selectedInitial, (c) => c.customer_name || '')
       }
-      return contracts
+      return result
     }
 
     const searchLower = searchValue.toLowerCase().trim()
-    const filtered = contracts.filter(contract => {
+    const filtered = result.filter(contract => {
       const customerName = contract.customer_name?.toLowerCase() || ''
       const productName = contract.product_name?.toLowerCase() || ''
       const policyNumber = contract.policy_number?.toLowerCase() || ''
@@ -274,7 +289,7 @@ export default function ContractAllView({
     }
 
     return filtered
-  }, [contracts, searchValue, selectedInitial])
+  }, [contracts, searchValue, selectedInitial, showUnmatchedOnly])
 
   // 초성별 계약 카운트 계산
   const initialCounts = useMemo(() => {
@@ -671,8 +686,26 @@ export default function ContractAllView({
               )}
 
               <span>총 {filteredContracts.length}건</span>
-              {searchValue && contracts.length !== filteredContracts.length && (
+              {(searchValue || showUnmatchedOnly) && contracts.length !== filteredContracts.length && (
                 <span className="search-result-info"> (전체 {contracts.length}건 중)</span>
+              )}
+
+              {/* 미매칭 상품명 필터 버튼 */}
+              {unmatchedProductCount > 0 && (
+                <Tooltip content={showUnmatchedOnly ? '전체 보기' : 'DB에 일치하는 상품이 없는 계약만 표시'}>
+                  <button
+                    type="button"
+                    className={`contract-filter-btn ${showUnmatchedOnly ? 'contract-filter-btn--active' : ''}`}
+                    onClick={() => {
+                      setShowUnmatchedOnly(!showUnmatchedOnly)
+                      setCurrentPage(1)
+                    }}
+                  >
+                    <span className="filter-icon">⚠️</span>
+                    <span>미매칭 상품명</span>
+                    <span className="filter-count">{unmatchedProductCount}</span>
+                  </button>
+                </Tooltip>
               )}
 
               {/* 🍎 도움말 버튼 */}
@@ -911,9 +944,22 @@ export default function ContractAllView({
               >
                 {contract.customer_name || '-'}
               </span>
-              <span className="contract-product" title={contract.product_name || '-'}>
-                {contract.product_name || '-'}
-              </span>
+              <Tooltip
+                content={!contract.product_id ? 'DB에 일치하는 상품이 없어 색상이 다르게 표시됩니다' : (contract.product_name || '-')}
+              >
+                <span
+                  className={`contract-product ${!contract.product_id ? 'contract-product--unmatched' : ''}`}
+                  title={contract.product_name || '-'}
+                >
+                  {!contract.product_id && (
+                    <svg className="product-unmatched-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z"/>
+                      <path d="M7.25 4.5a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V4.5zM8 10.5a1 1 0 100 2 1 1 0 000-2z"/>
+                    </svg>
+                  )}
+                  <span className="product-name-text">{contract.product_name || '-'}</span>
+                </span>
+              </Tooltip>
               <span className="contract-date">{formatDate(contract.contract_date)}</span>
               <span className="contract-policy">{formatPolicyNumber(contract.policy_number)}</span>
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
