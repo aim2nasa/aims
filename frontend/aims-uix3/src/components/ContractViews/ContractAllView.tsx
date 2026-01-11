@@ -949,7 +949,6 @@ export default function ContractAllView({
               >
                 <span
                   className={`contract-product ${!contract.product_id ? 'contract-product--unmatched' : ''}`}
-                  title={contract.product_name || '-'}
                 >
                   {!contract.product_id && (
                     <svg className="product-unmatched-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
