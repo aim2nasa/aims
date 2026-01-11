@@ -57,8 +57,8 @@ function getSystemType(
  * 시스템 유형별 라벨
  */
 const SYSTEM_TYPE_LABELS: Record<string, string> = {
-  annual_report: '연간보고서',
-  customer_review: '고객리뷰'
+  annual_report: 'Annual Report',
+  customer_review: '변액 리포트'
 }
 
 export const DocumentTypeCell: React.FC<DocumentTypeCellProps> = ({

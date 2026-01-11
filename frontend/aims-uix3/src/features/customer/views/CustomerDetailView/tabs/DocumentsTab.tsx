@@ -455,7 +455,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       map.set(dt.value, dt.label)
     })
     // 연간보고서는 '연간보고서' 라벨
-    map.set('annual_report', '연간보고서')
+    map.set('annual_report', 'Annual Report')
     return map
   }, [documentTypes])
 
@@ -1222,7 +1222,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     </div>
                     {/* 🍎 AR BADGE: Annual Report 표시 */}
                     {document.isAnnualReport && (
-                      <Tooltip content="연간보고서">
+                      <Tooltip content="Annual Report">
                         <div className="document-ar-badge">
                           AR
                         </div>

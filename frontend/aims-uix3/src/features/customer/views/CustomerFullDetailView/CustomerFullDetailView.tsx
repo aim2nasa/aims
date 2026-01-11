@@ -1041,7 +1041,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`}
                       onClick={() => setReportTab('annual')}
                     >
-                      연간보고서
+                      Annual Report
                       {annualReportCount > 0 && (
                         <span className="report-tabs__count">{annualReportCount}</span>
                       )}
@@ -1051,7 +1051,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`}
                       onClick={() => setReportTab('review')}
                     >
-                      고객리뷰
+                      변액 리포트
                       {customerReviewCount > 0 && (
                         <span className="report-tabs__count">{customerReviewCount}</span>
                       )}
