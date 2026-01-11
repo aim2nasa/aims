@@ -3665,18 +3665,20 @@ export function ExcelRefiner() {
                           // 현재 셀이 편집 중인지 확인
                           const isEditing = editingCell?.rowIndex === originalIndex && editingCell?.colIndex === dataIndex
 
-                          // 미매칭 상품명 외에는 편집 가능
-                          if (!isUnmatchedProduct) {
+                          // 상품명 컬럼은 항상 클릭 가능 (검색 모달), 그 외는 편집 가능
+                          const isProductNameColumn = currentSheet?.name === '계약' && dataIndex === productNameColumnIndex
+                          if (!isProductNameColumn) {
                             tdClassName += ' excel-refiner__td--editable'
                           }
                           if (isEditing) {
                             tdClassName += ' excel-refiner__td--editing'
                           }
 
-                          // 더블클릭 핸들러: 미매칭 → 검색 모달, 그 외 → 편집
+                          // 더블클릭 핸들러: 상품명 컬럼 → 검색 모달, 그 외 → 편집
                           const handleDoubleClick = (e: React.MouseEvent) => {
                             e.stopPropagation()
-                            if (isUnmatchedProduct) {
+                            if (isProductNameColumn) {
+                              // 상품명 컬럼은 매칭 여부와 관계없이 항상 검색 모달
                               handleUnmatchedProductClick(originalIndex, cellValue)
                             } else {
                               handleCellDoubleClick(originalIndex, dataIndex, cellValue)
@@ -3694,10 +3696,8 @@ export function ExcelRefiner() {
 
                           // 툴팁 결정
                           let cellTitle = '더블클릭하여 편집'
-                          if (isUnmatchedProduct) {
-                            cellTitle = '더블클릭: 상품 검색'
-                          } else if (matchedProductId) {
-                            cellTitle = '우클릭: 상품 정보 | 더블클릭: 편집'
+                          if (isProductNameColumn) {
+                            cellTitle = isUnmatchedProduct ? '더블클릭: 상품 검색' : '우클릭: 상품 정보 | 더블클릭: 상품 변경'
                           }
 
                           return (

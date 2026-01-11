@@ -661,6 +661,23 @@ html[data-theme="dark"] .contract-product {
   color: var(--color-ios-text-secondary-dark);
 }
 
+/* === 🍎 클릭 가능한 상품명 스타일 === */
+.contract-product--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.contract-product--clickable:hover {
+  background-color: var(--color-ios-bg-tertiary);
+}
+
+html[data-theme="dark"] .contract-product--clickable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
 /* === 🍎 미매칭 상품명 스타일 === */
 .contract-product--unmatched {
   color: var(--color-warning-600);

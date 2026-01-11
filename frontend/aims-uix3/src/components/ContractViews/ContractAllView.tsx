@@ -21,6 +21,7 @@ import type { Contract } from '@/entities/contract'
 import type { Customer } from '@/entities/customer'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { ProductSearchModal } from './components/ProductSearchModal'
 import './ContractAllView.css'
 
 interface ContractAllViewProps {
@@ -139,6 +140,11 @@ export default function ContractAllView({
 
   // 미매칭 상품명 필터 상태
   const [showUnmatchedOnly, setShowUnmatchedOnly] = useState(false)
+
+  // 상품 검색 모달 상태
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
+  const [productSearchKeyword, setProductSearchKeyword] = useState('')
+  const [selectedContractForProduct, setSelectedContractForProduct] = useState<Contract | null>(null)
 
   // 칼럼 폭 상태 (localStorage에서 로드)
   const [columnWidths, setColumnWidths] = useState<Record<ColumnKey, number>>(() => {
@@ -292,6 +298,43 @@ export default function ContractAllView({
       }
     }
   }, [onCustomerDoubleClick])
+
+  // 🍎 상품명 더블클릭 핸들러 - 상품 검색 모달 열기
+  const handleProductDoubleClick = useCallback((contract: Contract, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedContractForProduct(contract)
+    setProductSearchKeyword(contract.product_name || '')
+    setIsProductSearchOpen(true)
+  }, [])
+
+  // 상품 선택 핸들러 - 계약의 상품명/상품ID 업데이트
+  const handleProductSelect = useCallback(async (productName: string, productId: string) => {
+    if (!selectedContractForProduct) return
+
+    try {
+      await ContractService.updateContract(selectedContractForProduct._id, {
+        product_name: productName,
+        product_id: productId
+      })
+
+      // 목록 새로고침
+      await loadContracts()
+
+      showAlert({
+        title: '상품 변경 완료',
+        message: `상품이 "${productName}"으로 변경되었습니다.`,
+        iconType: 'success'
+      })
+    } catch (err) {
+      console.error('[ContractAllView] 상품 업데이트 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ContractAllView.handleProductSelect' })
+      showAlert({
+        title: '상품 변경 실패',
+        message: '상품 변경 중 오류가 발생했습니다.',
+        iconType: 'error'
+      })
+    }
+  }, [selectedContractForProduct, loadContracts, showAlert])
 
   // 미매칭 상품명 개수 계산
   const unmatchedProductCount = useMemo(() => {
@@ -1081,10 +1124,11 @@ export default function ContractAllView({
                 {contract.customer_name || '-'}
               </span>
               <Tooltip
-                content={!contract.product_id ? 'DB에 일치하는 상품이 없어 색상이 다르게 표시됩니다' : (contract.product_name || '-')}
+                content={!contract.product_id ? '더블클릭: 상품 검색 (미매칭 상품)' : '더블클릭: 상품 변경'}
               >
                 <span
-                  className={`contract-product ${!contract.product_id ? 'contract-product--unmatched' : ''}`}
+                  className={`contract-product contract-product--clickable ${!contract.product_id ? 'contract-product--unmatched' : ''}`}
+                  onDoubleClick={(e) => handleProductDoubleClick(contract, e)}
                 >
                   {!contract.product_id && (
                     <svg className="product-unmatched-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -1288,6 +1332,17 @@ export default function ContractAllView({
           </div>
         </div>
       </Modal>
+
+      {/* 상품 검색 모달 */}
+      <ProductSearchModal
+        isOpen={isProductSearchOpen}
+        onClose={() => {
+          setIsProductSearchOpen(false)
+          setSelectedContractForProduct(null)
+        }}
+        initialKeyword={productSearchKeyword}
+        onSelect={handleProductSelect}
+      />
     </CenterPaneView>
   )
 }
