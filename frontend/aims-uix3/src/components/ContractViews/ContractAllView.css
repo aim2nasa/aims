@@ -664,18 +664,12 @@ html[data-theme="dark"] .contract-product {
 /* === 🍎 클릭 가능한 상품명 스타일 === */
 .contract-product--clickable {
   cursor: pointer;
-  transition: background-color 0.15s ease;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin: -2px -4px;
+  transition: all 0.15s ease;
 }
 
-.contract-product--clickable:hover {
-  background-color: var(--color-ios-bg-tertiary);
-}
-
-html[data-theme="dark"] .contract-product--clickable:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
+.contract-product--clickable:hover .product-name-text {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 /* === 🍎 미매칭 상품명 스타일 === */
