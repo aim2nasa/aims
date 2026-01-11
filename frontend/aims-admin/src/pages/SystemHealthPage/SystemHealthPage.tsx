@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
@@ -162,7 +162,7 @@ const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
 const TIME_RANGE_STORAGE_KEY = 'aims-admin-metrics-time-range';
 
 // 서버 리소스 섹션 컴포넌트
-const ServerResourcesSection = () => {
+const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) => {
   const [timeRange, setTimeRange] = useState<number>(() => {
     const stored = localStorage.getItem(TIME_RANGE_STORAGE_KEY);
     if (stored) {
@@ -181,20 +181,25 @@ const ServerResourcesSection = () => {
   };
 
   // 현재 메트릭
-  const { data: currentMetrics, isLoading: isCurrentLoading } = useQuery({
+  const { data: currentMetrics, isLoading: isCurrentLoading, isError: isCurrentError } = useQuery({
     queryKey: ['admin', 'metrics', 'current'],
     queryFn: dashboardApi.getMetricsCurrent,
     refetchInterval: 10000,
+    retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
 
   // 히스토리 메트릭
-  const { data: historyData, isLoading: isHistoryLoading } = useQuery({
+  const { data: historyData, isLoading: isHistoryLoading, isError: isHistoryError } = useQuery({
     queryKey: ['admin', 'metrics', 'history', timeRange],
     queryFn: () => dashboardApi.getMetricsHistory(timeRange),
     refetchInterval: 60000, // 1분마다 갱신
     gcTime: 5 * 60 * 1000, // 5분 후 캐시 정리 (메모리 절약)
     staleTime: 30000, // 30초간 fresh 상태 유지
+    retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
+
+  // aims_api 연결 실패 여부 (헬스 모니터 기준 또는 API 에러)
+  const apiUnavailable = !isAimsApiHealthy || (isCurrentError && isHistoryError);
 
   // 라인 차트용 데이터 변환
   // 백엔드에서 이미 샘플링된 데이터가 반환됨 (시간 범위에 따라 자동 샘플링)
@@ -233,77 +238,86 @@ const ServerResourcesSection = () => {
       </div>
 
       <div className="server-resources__content">
-        {/* 게이지 차트 (현재 상태) */}
-        <div className="server-resources__gauges">
-          {isCurrentLoading ? (
-            <div className="server-resources__loading">로딩 중...</div>
-          ) : currentMetrics ? (
-            <>
-              <ResourceGauge
-                label="CPU"
-                value={currentMetrics.cpu.usage}
-                total={`${currentMetrics.cpu.cores} cores`}
-                color="cpu"
-              />
-              <ResourceGauge
-                label="Memory"
-                value={currentMetrics.memory.usagePercent}
-                used={formatBytes(currentMetrics.memory.used)}
-                total={formatBytes(currentMetrics.memory.total)}
-                color="memory"
-              />
-              {/* 파티션별 디스크 표시 */}
-              {currentMetrics.disks ? (
+        {apiUnavailable ? (
+          <div className="server-resources__unavailable">
+            ⚠️ aims_api(3010) 연결 필요 - 복구 후 자동 갱신
+          </div>
+        ) : (
+          <>
+            {/* 게이지 차트 (현재 상태) */}
+            <div className="server-resources__gauges">
+              {isCurrentLoading ? (
+                <div className="server-resources__loading">로딩 중...</div>
+              ) : currentMetrics ? (
                 <>
                   <ResourceGauge
-                    label="Disk (/)"
-                    value={currentMetrics.disks.root.usagePercent}
-                    used={formatBytes(currentMetrics.disks.root.used)}
-                    total={formatBytes(currentMetrics.disks.root.total)}
-                    color="disk"
+                    label="CPU"
+                    value={currentMetrics.cpu.usage}
+                    total={`${currentMetrics.cpu.cores} cores`}
+                    color="cpu"
                   />
                   <ResourceGauge
-                    label="Disk (/data)"
-                    value={currentMetrics.disks.data.usagePercent}
-                    used={formatBytes(currentMetrics.disks.data.used)}
-                    total={formatBytes(currentMetrics.disks.data.total)}
-                    color="disk-data"
+                    label="Memory"
+                    value={currentMetrics.memory.usagePercent}
+                    used={formatBytes(currentMetrics.memory.used)}
+                    total={formatBytes(currentMetrics.memory.total)}
+                    color="memory"
                   />
+                  {/* 파티션별 디스크 표시 */}
+                  {currentMetrics.disks ? (
+                    <>
+                      <ResourceGauge
+                        label="Disk (/)"
+                        value={currentMetrics.disks.root.usagePercent}
+                        used={formatBytes(currentMetrics.disks.root.used)}
+                        total={formatBytes(currentMetrics.disks.root.total)}
+                        color="disk"
+                      />
+                      <ResourceGauge
+                        label="Disk (/data)"
+                        value={currentMetrics.disks.data.usagePercent}
+                        used={formatBytes(currentMetrics.disks.data.used)}
+                        total={formatBytes(currentMetrics.disks.data.total)}
+                        color="disk-data"
+                      />
+                    </>
+                  ) : (
+                    <ResourceGauge
+                      label="Disk"
+                      value={currentMetrics.disk.usagePercent}
+                      used={formatBytes(currentMetrics.disk.used)}
+                      total={formatBytes(currentMetrics.disk.total)}
+                      color="disk"
+                    />
+                  )}
                 </>
               ) : (
-                <ResourceGauge
-                  label="Disk"
-                  value={currentMetrics.disk.usagePercent}
-                  used={formatBytes(currentMetrics.disk.used)}
-                  total={formatBytes(currentMetrics.disk.total)}
-                  color="disk"
-                />
+                <div className="server-resources__loading">메트릭 데이터 없음</div>
               )}
-            </>
-          ) : (
-            <div className="server-resources__loading">메트릭 데이터 없음</div>
-          )}
-        </div>
+            </div>
 
-        {/* 시계열 차트 */}
-        <div className="server-resources__chart">
-          {isHistoryLoading ? (
-            <div className="server-resources__loading">차트 로딩 중...</div>
-          ) : (
-            <MetricsLineChart data={chartData} showDisk={true} height="100%" timeRangeHours={timeRange} />
-          )}
-        </div>
+            {/* 시계열 차트 */}
+            <div className="server-resources__chart">
+              {isHistoryLoading ? (
+                <div className="server-resources__loading">차트 로딩 중...</div>
+              ) : (
+                <MetricsLineChart data={chartData} showDisk={true} height="100%" timeRangeHours={timeRange} />
+              )}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
 };
 
 // 실시간 메트릭 섹션 컴포넌트
-const RealtimeMetricsSection = () => {
-  const { data: metrics, isLoading } = useQuery({
+const RealtimeMetricsSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) => {
+  const { data: metrics, isLoading, isError } = useQuery({
     queryKey: ['admin', 'metrics', 'realtime'],
     queryFn: dashboardApi.getMetricsRealtime,
     refetchInterval: 3000, // 3초마다 갱신
+    retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
 
   // 부하 지수 상태별 색상
@@ -337,15 +351,16 @@ const RealtimeMetricsSection = () => {
     );
   }
 
-  if (!metrics) {
-    return null;
-  }
+  // 에러 또는 데이터 없음 또는 헬스 모니터 기준 aims_api 다운: 같은 레이아웃 유지하면서 placeholder 표시
+  const showUnavailable = !isAimsApiHealthy || isError || !metrics;
 
   return (
     <section className="realtime-metrics-section">
       <div className="realtime-metrics-section__header">
         <h2 className="realtime-metrics-section__title">실시간 모니터링</h2>
-        <span className="realtime-metrics-section__subtitle">3초마다 자동 갱신</span>
+        <span className="realtime-metrics-section__subtitle">
+          {showUnavailable ? 'aims_api 연결 필요' : '3초마다 자동 갱신'}
+        </span>
       </div>
 
       <div className="realtime-metrics-section__grid">
@@ -356,24 +371,30 @@ const RealtimeMetricsSection = () => {
             <span className="realtime-metrics-section__card-title">동시접속</span>
           </div>
           <div className="realtime-metrics-section__card-content">
+            {showUnavailable ? (
+              <div className="realtime-metrics-section__card-unavailable">-</div>
+            ) : (
+            <>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">활성 요청</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.concurrency.activeRequests}
+                {metrics!.concurrency.activeRequests}
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">활성 사용자</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.concurrency.activeUsers}명
+                {metrics!.concurrency.activeUsers}명
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
               <span className="realtime-metrics-section__stat-label">피크 요청</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.concurrency.peakRequests}/s
+                {metrics!.concurrency.peakRequests}/s
               </span>
             </div>
+            </>
+            )}
           </div>
         </div>
 
@@ -384,24 +405,30 @@ const RealtimeMetricsSection = () => {
             <span className="realtime-metrics-section__card-title">처리량</span>
           </div>
           <div className="realtime-metrics-section__card-content">
+            {showUnavailable ? (
+              <div className="realtime-metrics-section__card-unavailable">-</div>
+            ) : (
+            <>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">요청/초</span>
               <span className="realtime-metrics-section__stat-value realtime-metrics-section__stat-value--highlight">
-                {metrics.throughput.requestsPerSecond}
+                {metrics!.throughput.requestsPerSecond}
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">최근 60초</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.throughput.requestsLast60s}건
+                {metrics!.throughput.requestsLast60s}건
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
               <span className="realtime-metrics-section__stat-label">에러율</span>
-              <span className={`realtime-metrics-section__stat-value ${metrics.throughput.errorRate > 0 ? 'realtime-metrics-section__stat-value--error' : ''}`}>
-                {metrics.throughput.errorRate}%
+              <span className={`realtime-metrics-section__stat-value ${metrics!.throughput.errorRate > 0 ? 'realtime-metrics-section__stat-value--error' : ''}`}>
+                {metrics!.throughput.errorRate}%
               </span>
             </div>
+            </>
+            )}
           </div>
         </div>
 
@@ -412,24 +439,30 @@ const RealtimeMetricsSection = () => {
             <span className="realtime-metrics-section__card-title">응답시간</span>
           </div>
           <div className="realtime-metrics-section__card-content">
+            {showUnavailable ? (
+              <div className="realtime-metrics-section__card-unavailable">-</div>
+            ) : (
+            <>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">평균</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.responseTime.avg}ms
+                {metrics!.responseTime.avg}ms
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row">
               <span className="realtime-metrics-section__stat-label">P95</span>
-              <span className={`realtime-metrics-section__stat-value ${metrics.responseTime.p95 > 1000 ? 'realtime-metrics-section__stat-value--warning' : ''}`}>
-                {metrics.responseTime.p95}ms
+              <span className={`realtime-metrics-section__stat-value ${metrics!.responseTime.p95 > 1000 ? 'realtime-metrics-section__stat-value--warning' : ''}`}>
+                {metrics!.responseTime.p95}ms
               </span>
             </div>
             <div className="realtime-metrics-section__stat-row realtime-metrics-section__stat-row--muted">
               <span className="realtime-metrics-section__stat-label">P99</span>
               <span className="realtime-metrics-section__stat-value">
-                {metrics.responseTime.p99}ms
+                {metrics!.responseTime.p99}ms
               </span>
             </div>
+            </>
+            )}
           </div>
         </div>
 
@@ -440,33 +473,39 @@ const RealtimeMetricsSection = () => {
             <span className="realtime-metrics-section__card-title">부하 지수</span>
           </div>
           <div className="realtime-metrics-section__card-content">
+            {showUnavailable ? (
+              <div className="realtime-metrics-section__card-unavailable">-</div>
+            ) : (
+            <>
             <div className="realtime-metrics-section__load-gauge">
               <div
                 className="realtime-metrics-section__load-value"
-                style={{ color: getLoadStatusColor(metrics.loadIndex.status) }}
+                style={{ color: getLoadStatusColor(metrics!.loadIndex.status) }}
               >
-                {metrics.loadIndex.value}
+                {metrics!.loadIndex.value}
               </div>
               <div
                 className="realtime-metrics-section__load-status"
-                style={{ color: getLoadStatusColor(metrics.loadIndex.status) }}
+                style={{ color: getLoadStatusColor(metrics!.loadIndex.status) }}
               >
-                {getLoadStatusText(metrics.loadIndex.status)}
+                {getLoadStatusText(metrics!.loadIndex.status)}
               </div>
             </div>
             <div className="realtime-metrics-section__load-bar">
               <div
                 className="realtime-metrics-section__load-bar-fill"
                 style={{
-                  width: `${Math.min(100, metrics.loadIndex.value)}%`,
-                  backgroundColor: getLoadStatusColor(metrics.loadIndex.status)
+                  width: `${Math.min(100, metrics!.loadIndex.value)}%`,
+                  backgroundColor: getLoadStatusColor(metrics!.loadIndex.status)
                 }}
               />
             </div>
             <div className="realtime-metrics-section__load-components">
-              <span>CPU: {metrics.loadIndex.components.cpu.toFixed(1)}%</span>
-              <span>MEM: {metrics.loadIndex.components.memory.toFixed(1)}%</span>
+              <span>CPU: {metrics!.loadIndex.components.cpu.toFixed(1)}%</span>
+              <span>MEM: {metrics!.loadIndex.components.memory.toFixed(1)}%</span>
             </div>
+            </>
+            )}
           </div>
         </div>
       </div>
@@ -621,7 +660,7 @@ const PortsSection = () => {
   const { data: ports, isLoading } = useQuery({
     queryKey: ['admin', 'ports'],
     queryFn: dashboardApi.getPorts,
-    refetchInterval: 30000,
+    refetchInterval: 10000, // 다른 섹션과 동기화 (10초)
   });
 
   if (isLoading) {
@@ -663,28 +702,117 @@ const PortsSection = () => {
   );
 };
 
+// 독립 헬스 모니터 응답을 기존 HealthStatus 형식으로 변환
+type HealthMonitorResponse = Awaited<ReturnType<typeof dashboardApi.getHealthCurrent>>;
+type HealthStatus = NonNullable<Awaited<ReturnType<typeof dashboardApi.getDashboard>>['health']>;
+
+const convertHealthData = (data: HealthMonitorResponse): HealthStatus => {
+  const findService = (name: string) => {
+    const svc = data.services.find(s => s.service === name);
+    if (!svc) return { status: 'unhealthy' as const, latency: null, checkedAt: new Date().toISOString() };
+    return {
+      status: svc.status,
+      latency: svc.responseTime,
+      checkedAt: svc.checkedAt,
+      error: svc.error,
+    };
+  };
+
+  return {
+    mongodb: findService('mongodb'),
+    qdrant: findService('qdrant'),
+    nodeApi: findService('aims_api'),
+    aimsRagApi: findService('aims_rag_api'),
+    annualReportApi: findService('annual_report_api'),
+    pdfProxy: findService('pdf_proxy'),
+    pdfConverter: findService('pdf_converter'),
+    aimsMcp: findService('aims_mcp'),
+    n8n: findService('n8n'),
+  };
+};
+
 export const SystemHealthPage = () => {
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const queryClient = useQueryClient();
+
+  // 독립 헬스 모니터에서 서비스 상태 조회 (aims_api와 무관하게 항상 동작)
+  const {
+    data: healthData,
+    isLoading: isHealthLoading,
+  } = useQuery({
+    queryKey: ['health-monitor', 'current'],
+    queryFn: dashboardApi.getHealthCurrent,
+    refetchInterval: 10000,
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  // 대시보드 데이터 (aims_api) - 실패해도 서비스 상태는 표시됨
+  const { data } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
     refetchInterval: 10000,
+    retry: 0, // 즉시 실패 감지
   });
 
-  if (isLoading) {
+  // 모든 관련 쿼리를 동시에 갱신 (동기화)
+  const refetchAll = useCallback(async () => {
+    // 1. 독립 헬스 모니터에 강제 체크 요청 (최신 상태 수집)
+    try {
+      await dashboardApi.forceHealthCheck();
+    } catch {
+      // 헬스 모니터 자체가 다운된 경우 무시
+    }
+
+    // 2. 모든 관련 쿼리 캐시 무효화 후 즉시 refetch (동기화)
+    // 순서: 헬스 모니터 → 대시보드 → 메트릭 → 포트 → 이력
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'metrics'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ports'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'], refetchType: 'all' }),
+    ]);
+  }, [queryClient]);
+
+  // 헬스 모니터 로딩 중
+  if (isHealthLoading) {
     return <div className="system-health-page__loading">데이터를 불러오는 중...</div>;
   }
 
-  if (isError) {
+  // 헬스 모니터도 실패한 경우 (심각한 문제)
+  if (!healthData) {
     return (
       <div className="system-health-page__error">
-        <p>데이터를 불러오는데 실패했습니다.</p>
-        <p>{error instanceof Error ? error.message : '알 수 없는 오류'}</p>
-        <Button onClick={() => refetch()}>다시 시도</Button>
+        <p>헬스 모니터 서비스에 연결할 수 없습니다.</p>
+        <p>독립 모니터링 서비스(3012)를 확인하세요.</p>
+        <Button onClick={() => refetchAll()}>다시 시도</Button>
       </div>
     );
   }
 
-  const health = data?.health;
+  // 독립 헬스 모니터의 서비스 상태를 기존 형식으로 변환
+  const health = healthData ? convertHealthData(healthData) : data?.health;
+
+  // 독립 헬스 모니터 기준: aims_api(3010) 상태 확인
+  // 이 값이 unhealthy면 aims_api에서 데이터를 가져오는 모든 섹션을 unavailable로 표시
+  const isAimsApiHealthy = health?.nodeApi?.status === 'healthy';
+
+  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
+  const prevAimsApiStatus = useRef<boolean | null>(null);
+  useEffect(() => {
+    // 최초 로드 시에는 무시
+    if (prevAimsApiStatus.current === null) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      return;
+    }
+    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
+    if (prevAimsApiStatus.current !== isAimsApiHealthy) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      // 모든 관련 쿼리 즉시 갱신 (동기화)
+      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
+    }
+  }, [isAimsApiHealthy, queryClient]);
 
   // 하위 호환성: 이전 API 형식 지원 (string → object)
   const normalizeHealth = (h: ServiceHealth | string | undefined): ServiceHealth => {
@@ -787,7 +915,7 @@ export const SystemHealthPage = () => {
           <span className="system-health-page__refresh-info">
             10초마다 자동 갱신
           </span>
-          <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          <Button variant="secondary" size="sm" onClick={() => refetchAll()}>
             지금 새로고침
           </Button>
         </div>
@@ -814,10 +942,10 @@ export const SystemHealthPage = () => {
           </section>
 
           {/* 서버 리소스 섹션 */}
-          <ServerResourcesSection />
+          <ServerResourcesSection isAimsApiHealthy={isAimsApiHealthy} />
 
           {/* 실시간 메트릭 섹션 */}
-          <RealtimeMetricsSection />
+          <RealtimeMetricsSection isAimsApiHealthy={isAimsApiHealthy} />
 
           {/* Tier 서비스 상태 */}
           {serviceTiers.map((tierGroup) => (
@@ -841,21 +969,29 @@ export const SystemHealthPage = () => {
           ))}
 
           {/* n8n 워크플로우 상태 */}
-          {data?.workflows && data.workflows.length > 0 && (
-            <section className="system-health-page__section">
-              <div className="system-health-page__tier-header">
-                <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
-                <span className="system-health-page__tier-description">
-                  {data.workflows.filter(w => w.active).length}/{data.workflows.length} 활성화
-                </span>
-              </div>
-              <div className="system-health-page__workflow-grid">
-                {data.workflows.map((workflow) => (
+          <section className="system-health-page__section">
+            <div className="system-health-page__tier-header">
+              <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
+              <span className="system-health-page__tier-description">
+                {!isAimsApiHealthy
+                  ? 'aims_api 연결 필요'
+                  : data?.workflows
+                    ? `${data.workflows.filter(w => w.active).length}/${data.workflows.length} 활성화`
+                    : '로딩 중...'}
+              </span>
+            </div>
+            <div className="system-health-page__workflow-grid">
+              {isAimsApiHealthy && data?.workflows && data.workflows.length > 0 ? (
+                data.workflows.map((workflow) => (
                   <WorkflowCard key={workflow.id} workflow={workflow} />
-                ))}
-              </div>
-            </section>
-          )}
+                ))
+              ) : (
+                <div className="system-health-page__workflow-unavailable">
+                  aims_api(3010) 복구 후 표시됩니다
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
         {/* 우측: 포트 현황 + 상태 이력 */}

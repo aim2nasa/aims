@@ -1,4 +1,4 @@
-import { apiClient } from '@/shared/api/apiClient';
+import { apiClient, healthMonitorClient } from '@/shared/api/apiClient';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -332,13 +332,82 @@ export const dashboardApi = {
       .then((res) => res.data);
   },
 
-  // 포트 현황 API
+  // 현재 서비스 상태 조회 (독립 헬스 모니터 서비스 - aims_api 우회)
+  getHealthCurrent: (): Promise<{
+    services: Array<{
+      service: string;
+      port: number;
+      description: string;
+      status: 'healthy' | 'unhealthy';
+      responseTime: number;
+      error: string | null;
+      checkedAt: string;
+    }>;
+    summary: { healthy: number; unhealthy: number; total: number };
+    monitorUptime: number | null;
+    lastCheck: string | null;
+  }> => {
+    return healthMonitorClient.get<{
+      success: boolean;
+      data: {
+        services: Array<{
+          service: string;
+          port: number;
+          description: string;
+          status: 'healthy' | 'unhealthy';
+          responseTime: number;
+          error: string | null;
+          checkedAt: string;
+        }>;
+        summary: { healthy: number; unhealthy: number; total: number };
+        monitorUptime: number | null;
+        lastCheck: string | null;
+      };
+    }>('/api/health/current').then((res) => res.data);
+  },
+
+  // 강제 헬스체크 실행 (독립 헬스 모니터 서비스)
+  forceHealthCheck: (): Promise<{
+    services: Array<{
+      service: string;
+      port: number;
+      description: string;
+      status: 'healthy' | 'unhealthy';
+      responseTime: number;
+      error: string | null;
+      checkedAt: string;
+    }>;
+    summary: { healthy: number; unhealthy: number; total: number };
+    monitorUptime: number | null;
+    lastCheck: string | null;
+  }> => {
+    return healthMonitorClient.get<{
+      success: boolean;
+      data: {
+        services: Array<{
+          service: string;
+          port: number;
+          description: string;
+          status: 'healthy' | 'unhealthy';
+          responseTime: number;
+          error: string | null;
+          checkedAt: string;
+        }>;
+        summary: { healthy: number; unhealthy: number; total: number };
+        monitorUptime: number | null;
+        lastCheck: string | null;
+      };
+      message: string;
+    }>('/api/health/check').then((res) => res.data);
+  },
+
+  // 포트 현황 API (독립 헬스 모니터 서비스에서 조회)
   getPorts: (): Promise<PortStatus[]> => {
-    return apiClient.get<PortsResponse>('/api/admin/ports')
+    return healthMonitorClient.get<PortsResponse>('/api/ports')
       .then((res) => res.data);
   },
 
-  // 서비스 상태 이력 API
+  // 서비스 상태 이력 API (독립 헬스 모니터 서비스에서 조회)
   getHealthHistory: (options?: {
     service?: string;
     eventType?: 'down' | 'recovered';
@@ -350,19 +419,19 @@ export const dashboardApi = {
     if (options?.limit) params.append('limit', String(options.limit));
 
     const query = params.toString();
-    return apiClient.get<HealthHistoryResponse>(`/api/admin/health-history${query ? `?${query}` : ''}`)
+    return healthMonitorClient.get<HealthHistoryResponse>(`/api/health/history${query ? `?${query}` : ''}`)
       .then((res) => ({ logs: res.data, totalCount: res.totalCount }));
   },
 
-  // 서비스 다운타임 통계 API
+  // 서비스 다운타임 통계 API (독립 헬스 모니터 서비스에서 조회)
   getHealthStats: (days: number = 30): Promise<HealthStatsItem[]> => {
-    return apiClient.get<HealthStatsResponse>(`/api/admin/health-stats?days=${days}`)
+    return healthMonitorClient.get<HealthStatsResponse>(`/api/health/stats?days=${days}`)
       .then((res) => res.data);
   },
 
-  // 서비스 상태 이력 삭제 API
+  // 서비스 상태 이력 삭제 API (독립 헬스 모니터 서비스에서 처리)
   clearHealthHistory: (): Promise<{ message: string; deletedCount: number }> => {
-    return apiClient.delete<{ success: boolean; message: string; deletedCount: number }>('/api/admin/health-history')
+    return healthMonitorClient.delete<{ success: boolean; message: string; deletedCount: number }>('/api/health/history')
       .then((res) => ({ message: res.message, deletedCount: res.deletedCount }));
   },
 

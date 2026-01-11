@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const HEALTH_MONITOR_URL = import.meta.env.VITE_HEALTH_MONITOR_URL || '';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -92,3 +93,6 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
+
+// 독립 헬스 모니터 서비스 클라이언트 (aims_api와 분리)
+export const healthMonitorClient = new ApiClient(HEALTH_MONITOR_URL);

@@ -887,3 +887,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* API Unavailable State - 정상 레이아웃 내 인라인 표시 */
+.server-resources__unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  flex: 1;
+  width: 100%;
+  min-height: 200px;
+}
+
+.realtime-metrics-section__card-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 60px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-lg);
+}
+
+/* Workflow Unavailable - 정상 레이아웃 유지 */
+.system-health-page__workflow-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 26px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
