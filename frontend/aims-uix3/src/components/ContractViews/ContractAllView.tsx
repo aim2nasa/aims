@@ -45,6 +45,30 @@ const ITEMS_PER_PAGE_OPTIONS = [
   { value: '100', label: '100개씩' },
 ]
 
+// 칼럼 키 타입
+type ColumnKey = 'type' | 'customer' | 'product' | 'date' | 'policy' | 'premium' | 'paymentDay' | 'cycle' | 'insured' | 'status'
+
+// 칼럼 기본 폭 설정
+const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+  type: 50,
+  customer: 140,
+  product: 200,
+  date: 100,
+  policy: 115,
+  premium: 100,
+  paymentDay: 75,
+  cycle: 90,
+  insured: 95,
+  status: 100,
+}
+
+// 칼럼 최소/최대 폭
+const COLUMN_MIN_WIDTH = 50
+const COLUMN_MAX_WIDTH = 400
+
+// localStorage 키
+const COLUMN_WIDTHS_STORAGE_KEY = 'contractAllView_columnWidths'
+
 export default function ContractAllView({
   visible,
   onClose,
@@ -115,6 +139,26 @@ export default function ContractAllView({
 
   // 미매칭 상품명 필터 상태
   const [showUnmatchedOnly, setShowUnmatchedOnly] = useState(false)
+
+  // 칼럼 폭 상태 (localStorage에서 로드)
+  const [columnWidths, setColumnWidths] = useState<Record<ColumnKey, number>>(() => {
+    try {
+      const saved = localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // 저장된 값과 기본값 병합 (새로운 칼럼이 추가된 경우 대비)
+        return { ...DEFAULT_COLUMN_WIDTHS, ...parsed }
+      }
+    } catch (e) {
+      console.warn('칼럼 폭 로드 실패:', e)
+    }
+    return DEFAULT_COLUMN_WIDTHS
+  })
+
+  // 리사이즈 중인 칼럼 상태
+  const [resizingColumn, setResizingColumn] = useState<ColumnKey | null>(null)
+  const resizeStartX = useRef<number>(0)
+  const resizeStartWidth = useRef<number>(0)
 
   // 데이터 로드
   const loadContracts = useCallback(async () => {
@@ -564,6 +608,85 @@ export default function ContractAllView({
     }
   }
 
+  // === 칼럼 리사이즈 핸들러 ===
+  const handleResizeStart = useCallback((e: React.MouseEvent, column: ColumnKey) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setResizingColumn(column)
+    resizeStartX.current = e.clientX
+    resizeStartWidth.current = columnWidths[column]
+  }, [columnWidths])
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizingColumn) return
+
+    const diff = e.clientX - resizeStartX.current
+    const newWidth = Math.max(
+      COLUMN_MIN_WIDTH,
+      Math.min(COLUMN_MAX_WIDTH, resizeStartWidth.current + diff)
+    )
+
+    setColumnWidths(prev => ({
+      ...prev,
+      [resizingColumn]: newWidth
+    }))
+  }, [resizingColumn])
+
+  const handleResizeEnd = useCallback(() => {
+    if (resizingColumn) {
+      // localStorage에 저장
+      setColumnWidths(prev => {
+        try {
+          localStorage.setItem(COLUMN_WIDTHS_STORAGE_KEY, JSON.stringify(prev))
+        } catch (e) {
+          console.warn('칼럼 폭 저장 실패:', e)
+        }
+        return prev
+      })
+    }
+    setResizingColumn(null)
+  }, [resizingColumn])
+
+  // 리사이즈 이벤트 리스너 등록
+  useEffect(() => {
+    if (resizingColumn) {
+      document.addEventListener('mousemove', handleResizeMove)
+      document.addEventListener('mouseup', handleResizeEnd)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove)
+      document.removeEventListener('mouseup', handleResizeEnd)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [resizingColumn, handleResizeMove, handleResizeEnd])
+
+  // 칼럼 폭 초기화
+  const handleResetColumnWidths = useCallback(() => {
+    setColumnWidths(DEFAULT_COLUMN_WIDTHS)
+    try {
+      localStorage.removeItem(COLUMN_WIDTHS_STORAGE_KEY)
+    } catch (e) {
+      console.warn('칼럼 폭 초기화 실패:', e)
+    }
+  }, [])
+
+  // CSS 변수로 칼럼 폭 적용
+  const gridStyle = useMemo(() => ({
+    '--col-type': `${columnWidths.type}px`,
+    '--col-customer': `${columnWidths.customer}px`,
+    '--col-product': `${columnWidths.product}px`,
+    '--col-date': `${columnWidths.date}px`,
+    '--col-policy': `${columnWidths.policy}px`,
+    '--col-premium': `${columnWidths.premium}px`,
+    '--col-payment-day': `${columnWidths.paymentDay}px`,
+    '--col-cycle': `${columnWidths.cycle}px`,
+    '--col-insured': `${columnWidths.insured}px`,
+    '--col-status': `${columnWidths.status}px`,
+  } as React.CSSProperties), [columnWidths])
+
   // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
   const renderSortIndicator = (field: SortField) => {
     if (sortField === field) {
@@ -790,7 +913,10 @@ export default function ContractAllView({
 
           {/* 컬럼 헤더 */}
           {!isEmpty && !isLoading && (
-            <div className={`contract-list-header ${isDeleteMode ? 'contract-list-header--delete-mode' : ''}`}>
+            <div
+              className={`contract-list-header ${isDeleteMode ? 'contract-list-header--delete-mode' : ''} ${resizingColumn ? 'contract-list-header--resizing' : ''}`}
+              style={gridStyle}
+            >
               {/* 삭제 모드일 때 전체 선택 체크박스 */}
               {isDeleteMode && (
                 <div className="header-checkbox">
@@ -805,6 +931,7 @@ export default function ContractAllView({
               <div className="header-type header-sortable" onClick={() => handleColumnSort('customer_type')}>
                 <span>유형</span>
                 {renderSortIndicator('customer_type')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'type')} />
               </div>
               <div className="header-customer header-sortable" onClick={() => handleColumnSort('customer_name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -813,6 +940,7 @@ export default function ContractAllView({
                 </svg>
                 <span>고객명</span>
                 {renderSortIndicator('customer_name')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'customer')} />
               </div>
               <div className="header-product header-sortable" onClick={() => handleColumnSort('product_name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -821,6 +949,7 @@ export default function ContractAllView({
                 </svg>
                 <span>상품명</span>
                 {renderSortIndicator('product_name')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'product')} />
               </div>
               <div className="header-date header-sortable" onClick={() => handleColumnSort('contract_date')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -830,6 +959,7 @@ export default function ContractAllView({
                 </svg>
                 <span>계약일</span>
                 {renderSortIndicator('contract_date')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'date')} />
               </div>
               <div className="header-policy header-sortable" onClick={() => handleColumnSort('policy_number')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -848,6 +978,7 @@ export default function ContractAllView({
                     {showFullPolicyNumber ? '00' : '·'}
                   </button>
                 </Tooltip>
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'policy')} />
               </div>
               <div className="header-premium header-sortable" onClick={() => handleColumnSort('premium')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -856,6 +987,7 @@ export default function ContractAllView({
                 </svg>
                 <span>보험료</span>
                 {renderSortIndicator('premium')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'premium')} />
               </div>
               <div className="header-payment-day header-sortable" onClick={() => handleColumnSort('payment_day')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -865,6 +997,7 @@ export default function ContractAllView({
                 </svg>
                 <span>이체일</span>
                 {renderSortIndicator('payment_day')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'paymentDay')} />
               </div>
               <div className="header-cycle header-sortable" onClick={() => handleColumnSort('payment_cycle')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -873,6 +1006,7 @@ export default function ContractAllView({
                 </svg>
                 <span>납입주기</span>
                 {renderSortIndicator('payment_cycle')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'cycle')} />
               </div>
               <div className="header-insured header-sortable" onClick={() => handleColumnSort('insured_person')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -882,6 +1016,7 @@ export default function ContractAllView({
                 </svg>
                 <span>피보험자</span>
                 {renderSortIndicator('insured_person')}
+                <div className="column-resize-handle" onMouseDown={(e) => handleResizeStart(e, 'insured')} />
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('payment_status')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -899,6 +1034,7 @@ export default function ContractAllView({
             <div
               key={contract._id}
               className={`contract-item ${isDeleteMode ? 'contract-item--delete-mode' : ''}`}
+              style={gridStyle}
               onClick={isDeleteMode ? (e) => handleSelectContract(contract._id, e) : undefined}
             >
               {/* 삭제 모드일 때 체크박스 */}

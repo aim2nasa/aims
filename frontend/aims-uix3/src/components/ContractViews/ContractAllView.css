@@ -262,22 +262,23 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
 /* === 🍎 COLUMN HEADER: macOS Finder-style === */
 .contract-list-header {
   display: grid;
+  /* CSS 변수로 동적 칼럼 폭 적용 (리사이즈 가능) */
   grid-template-columns:
-    50px                 /* 유형 (개인/법인) */
-    140px                /* 고객명 */
-    minmax(200px, 1fr)   /* 상품명 */
-    100px                /* 계약일 */
-    115px                /* 증권번호 */
-    100px                /* 보험료 */
-    75px                 /* 이체일 */
-    90px                 /* 납입주기 */
-    95px                 /* 피보험자 */
-    100px;               /* 납입상태 */
+    var(--col-type, 50px)          /* 유형 (개인/법인) */
+    var(--col-customer, 140px)     /* 고객명 */
+    var(--col-product, 200px)      /* 상품명 */
+    var(--col-date, 100px)         /* 계약일 */
+    var(--col-policy, 115px)       /* 증권번호 */
+    var(--col-premium, 100px)      /* 보험료 */
+    var(--col-payment-day, 75px)   /* 이체일 */
+    var(--col-cycle, 90px)         /* 납입주기 */
+    var(--col-insured, 95px)       /* 피보험자 */
+    var(--col-status, 100px);      /* 납입상태 */
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
   height: 32px;          /* AllCustomersView와 동일 */
-  min-width: 1145px;     /* 최소 너비 - 수평 스크롤 트리거 */
+  min-width: max-content; /* 칼럼 리사이즈 시 자동 확장 */
   background: linear-gradient(180deg, #f0f4f8 0%, #e8ecf0 100%);
   border-bottom: 1px solid rgba(0, 120, 212, 0.2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -343,6 +344,51 @@ html[data-theme="dark"] .header-sortable:hover {
 
 html[data-theme="dark"] .header-sortable:active {
   background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* === 🍎 COLUMN RESIZE HANDLE: 칼럼 리사이즈 핸들 === */
+.column-resize-handle {
+  position: absolute;
+  right: -6px;
+  top: 0;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.column-resize-handle::after {
+  content: '';
+  width: 2px;
+  height: 14px;
+  background: transparent;
+  border-radius: 1px;
+  transition: background-color 0.15s ease;
+}
+
+.column-resize-handle:hover::after {
+  background: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .column-resize-handle:hover::after {
+  background: var(--color-primary-500);
+}
+
+/* 리사이즈 중일 때 핸들 강조 */
+.contract-list-header--resizing .column-resize-handle::after {
+  background: var(--color-primary-500);
+}
+
+html[data-theme="dark"] .contract-list-header--resizing .column-resize-handle::after {
+  background: var(--color-primary-400);
+}
+
+/* 헤더 칼럼에 position relative 추가 (리사이즈 핸들 위치 기준) */
+.contract-list-header > div {
+  position: relative;
 }
 
 /* 🍎 CLICKABLE HEADER: 클릭 가능한 컬럼 (토글용) */
@@ -510,20 +556,21 @@ html[data-theme="dark"] .sort-indicator {
 /* === 계약 행 === */
 .contract-item {
   display: grid;
+  /* CSS 변수로 동적 칼럼 폭 적용 (리사이즈 가능) */
   grid-template-columns:
-    50px                 /* 유형 (개인/법인) */
-    140px                /* 고객명 */
-    minmax(200px, 1fr)   /* 상품명 */
-    100px                /* 계약일 */
-    115px                /* 증권번호 */
-    100px                /* 보험료 */
-    75px                 /* 이체일 */
-    90px                 /* 납입주기 */
-    95px                 /* 피보험자 */
-    100px;               /* 납입상태 */
+    var(--col-type, 50px)          /* 유형 (개인/법인) */
+    var(--col-customer, 140px)     /* 고객명 */
+    var(--col-product, 200px)      /* 상품명 */
+    var(--col-date, 100px)         /* 계약일 */
+    var(--col-policy, 115px)       /* 증권번호 */
+    var(--col-premium, 100px)      /* 보험료 */
+    var(--col-payment-day, 75px)   /* 이체일 */
+    var(--col-cycle, 90px)         /* 납입주기 */
+    var(--col-insured, 95px)       /* 피보험자 */
+    var(--col-status, 100px);      /* 납입상태 */
   gap: 12px;
   align-items: center;
-  min-width: 1145px;     /* 헤더와 동일 - 수평 스크롤 */
+  min-width: max-content; /* 헤더와 동일 - 칼럼 리사이즈 시 자동 확장 */
   height: 32px;
   padding: 6px 12px;
   background: var(--color-ios-bg-primary-light);
@@ -945,33 +992,33 @@ html[data-theme="dark"] .contract-all-view .selected-count-inline {
 /* 삭제 모드일 때 헤더 그리드 조정 */
 .contract-list-header--delete-mode {
   grid-template-columns:
-    24px                 /* 체크박스 */
-    50px                 /* 유형 (개인/법인) */
-    140px                /* 고객명 */
-    minmax(200px, 1fr)   /* 상품명 */
-    100px                /* 계약일 */
-    115px                /* 증권번호 */
-    100px                /* 보험료 */
-    75px                 /* 이체일 */
-    90px                 /* 납입주기 */
-    95px                 /* 피보험자 */
-    100px;               /* 납입상태 */
+    24px                           /* 체크박스 */
+    var(--col-type, 50px)          /* 유형 (개인/법인) */
+    var(--col-customer, 140px)     /* 고객명 */
+    var(--col-product, 200px)      /* 상품명 */
+    var(--col-date, 100px)         /* 계약일 */
+    var(--col-policy, 115px)       /* 증권번호 */
+    var(--col-premium, 100px)      /* 보험료 */
+    var(--col-payment-day, 75px)   /* 이체일 */
+    var(--col-cycle, 90px)         /* 납입주기 */
+    var(--col-insured, 95px)       /* 피보험자 */
+    var(--col-status, 100px);      /* 납입상태 */
 }
 
 /* 삭제 모드일 때 계약 행 그리드 조정 */
 .contract-item--delete-mode {
   grid-template-columns:
-    24px                 /* 체크박스 */
-    50px                 /* 유형 (개인/법인) */
-    140px                /* 고객명 */
-    minmax(200px, 1fr)   /* 상품명 */
-    100px                /* 계약일 */
-    115px                /* 증권번호 */
-    100px                /* 보험료 */
-    75px                 /* 이체일 */
-    90px                 /* 납입주기 */
-    95px                 /* 피보험자 */
-    100px;               /* 납입상태 */
+    24px                           /* 체크박스 */
+    var(--col-type, 50px)          /* 유형 (개인/법인) */
+    var(--col-customer, 140px)     /* 고객명 */
+    var(--col-product, 200px)      /* 상품명 */
+    var(--col-date, 100px)         /* 계약일 */
+    var(--col-policy, 115px)       /* 증권번호 */
+    var(--col-premium, 100px)      /* 보험료 */
+    var(--col-payment-day, 75px)   /* 이체일 */
+    var(--col-cycle, 90px)         /* 납입주기 */
+    var(--col-insured, 95px)       /* 피보험자 */
+    var(--col-status, 100px);      /* 납입상태 */
 }
 
 /* 삭제 확인 모달 */
