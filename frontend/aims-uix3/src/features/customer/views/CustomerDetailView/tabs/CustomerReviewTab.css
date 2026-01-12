@@ -114,7 +114,25 @@
 /* 테이블 헤더 - 기본 구조만 정의 (스타일은 CustomerFullDetailView.css에서 오버라이드) */
 .customer-review-table-header {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
+  grid-template-columns:
+    var(--contractor-column-width, 60px)           /* 계약자 (동적) */
+    var(--policy-number-column-width, 90px)        /* 증권번호 (동적) */
+    var(--product-column-width, 1fr)               /* 상품명 (동적) */
+    var(--issue-date-column-width, 80px)           /* 발행일 (동적) */
+    var(--parsed-at-column-width, 130px);          /* 파싱일시 (동적) */
   align-items: center;
+}
+
+/* 체크박스 포함 시 그리드 */
+.customer-review-table-header.has-checkbox {
+  grid-template-columns:
+    28px                                            /* 체크박스 */
+    var(--contractor-column-width, 60px)           /* 계약자 (동적) */
+    var(--policy-number-column-width, 90px)        /* 증권번호 (동적) */
+    var(--product-column-width, 1fr)               /* 상품명 (동적) */
+    var(--issue-date-column-width, 80px)           /* 발행일 (동적) */
+    var(--parsed-at-column-width, 130px);          /* 파싱일시 (동적) */
 }
 
 .header-checkbox {
@@ -165,8 +183,26 @@
 /* 테이블 행 - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) */
 .customer-review-row {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
+  grid-template-columns:
+    var(--contractor-column-width, 60px)           /* 계약자 (동적) */
+    var(--policy-number-column-width, 90px)        /* 증권번호 (동적) */
+    var(--product-column-width, 1fr)               /* 상품명 (동적) */
+    var(--issue-date-column-width, 80px)           /* 발행일 (동적) */
+    var(--parsed-at-column-width, 130px);          /* 파싱일시 (동적) */
   align-items: center;
   cursor: pointer;
+}
+
+/* 체크박스 포함 시 그리드 */
+.customer-review-row.has-checkbox {
+  grid-template-columns:
+    28px                                            /* 체크박스 */
+    var(--contractor-column-width, 60px)           /* 계약자 (동적) */
+    var(--policy-number-column-width, 90px)        /* 증권번호 (동적) */
+    var(--product-column-width, 1fr)               /* 상품명 (동적) */
+    var(--issue-date-column-width, 80px)           /* 발행일 (동적) */
+    var(--parsed-at-column-width, 130px);          /* 파싱일시 (동적) */
 }
 
 .customer-review-row--selected {
@@ -226,4 +262,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--color-text-secondary);
+}
+
+/* 🍎 COLUMN RESIZE: 리사이즈 중 상태 */
+.customer-review-table-container.is-resizing {
+  cursor: col-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.customer-review-table-container.is-resizing * {
+  cursor: col-resize !important;
 }

@@ -20,6 +20,7 @@ import SFSymbol, {
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import './ContractsTab.css'
 
 interface ContractsTabProps {
@@ -53,6 +54,17 @@ type SortDirection = 'asc' | 'desc'
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
 const SORT_ICON_WIDTH = 14
+
+// 🍎 컬럼 리사이즈 설정
+const CONTRACTS_COLUMNS: ColumnConfig[] = [
+  { id: 'product', minWidth: 120, maxWidth: 450 },
+  { id: 'contractDate', minWidth: 80, maxWidth: 135 },
+  { id: 'policyNumber', minWidth: 80, maxWidth: 175 },
+  { id: 'premium', minWidth: 70, maxWidth: 155 },
+  { id: 'paymentDay', minWidth: 50, maxWidth: 105 },
+  { id: 'paymentCycle', minWidth: 60, maxWidth: 135 },
+  { id: 'paymentStatus', minWidth: 70, maxWidth: 145 }
+]
 
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
 const calculateTextWidth = (text: string): number => {
@@ -406,6 +418,27 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return calculatedWidth
   }, [contracts])
 
+  // 🍎 컬럼 리사이즈 훅 (동적 계산값을 기본값으로 사용)
+  const defaultColumnWidths = useMemo(() => ({
+    product: productColumnWidth,
+    contractDate: contractDateColumnWidth,
+    policyNumber: policyNumberColumnWidth,
+    premium: premiumColumnWidth,
+    paymentDay: paymentDayColumnWidth,
+    paymentCycle: paymentCycleColumnWidth,
+    paymentStatus: paymentStatusColumnWidth
+  }), [productColumnWidth, contractDateColumnWidth, policyNumberColumnWidth, premiumColumnWidth, paymentDayColumnWidth, paymentCycleColumnWidth, paymentStatusColumnWidth])
+
+  const {
+    columnWidths,
+    isResizing,
+    getResizeHandleProps
+  } = useColumnResize({
+    storageKey: 'contracts-tab',
+    columns: CONTRACTS_COLUMNS,
+    defaultWidths: defaultColumnWidths
+  })
+
   const isEmpty = contracts.length === 0
 
   const renderState = () => {
@@ -488,21 +521,21 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         <>
           {/* 🍎 리스트 컨테이너 */}
           <div
-            className="customer-contracts__list-container"
+            className={`customer-contracts__list-container${isResizing ? ' is-resizing' : ''}`}
             style={{
-              '--product-column-width': `${productColumnWidth}px`,
-              '--contract-date-column-width': `${contractDateColumnWidth}px`,
-              '--policy-number-column-width': `${policyNumberColumnWidth}px`,
-              '--premium-column-width': `${premiumColumnWidth}px`,
-              '--payment-day-column-width': `${paymentDayColumnWidth}px`,
-              '--payment-cycle-column-width': `${paymentCycleColumnWidth}px`,
-              '--payment-status-column-width': `${paymentStatusColumnWidth}px`,
+              '--product-column-width': `${columnWidths['product'] || productColumnWidth}px`,
+              '--contract-date-column-width': `${columnWidths['contractDate'] || contractDateColumnWidth}px`,
+              '--policy-number-column-width': `${columnWidths['policyNumber'] || policyNumberColumnWidth}px`,
+              '--premium-column-width': `${columnWidths['premium'] || premiumColumnWidth}px`,
+              '--payment-day-column-width': `${columnWidths['paymentDay'] || paymentDayColumnWidth}px`,
+              '--payment-cycle-column-width': `${columnWidths['paymentCycle'] || paymentCycleColumnWidth}px`,
+              '--payment-status-column-width': `${columnWidths['paymentStatus'] || paymentStatusColumnWidth}px`,
             } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 */}
             <div className="customer-contracts-list-header">
               <div
-                className="header-product header-sortable"
+                className="header-product header-sortable resizable-header"
                 onClick={() => handleSort('product_name')}
                 role="button"
                 tabIndex={0}
@@ -514,9 +547,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 </svg>
                 <span>상품명</span>
                 {renderSortIndicator('product_name')}
+                <div {...getResizeHandleProps('product')} />
               </div>
               <div
-                className="header-date header-sortable"
+                className="header-date header-sortable resizable-header"
                 onClick={() => handleSort('contract_date')}
                 role="button"
                 tabIndex={0}
@@ -528,9 +562,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 </svg>
                 <span>계약일</span>
                 {renderSortIndicator('contract_date')}
+                <div {...getResizeHandleProps('contractDate')} />
               </div>
               <div
-                className="header-policy header-sortable"
+                className="header-policy header-sortable resizable-header"
                 onClick={() => handleSort('policy_number')}
                 role="button"
                 tabIndex={0}
@@ -542,9 +577,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 </svg>
                 <span>증권번호</span>
                 {renderSortIndicator('policy_number')}
+                <div {...getResizeHandleProps('policyNumber')} />
               </div>
               <div
-                className="header-premium header-sortable"
+                className="header-premium header-sortable resizable-header"
                 onClick={() => handleSort('premium')}
                 role="button"
                 tabIndex={0}
@@ -556,9 +592,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 </svg>
                 <span>보험료</span>
                 {renderSortIndicator('premium')}
+                <div {...getResizeHandleProps('premium')} />
               </div>
               <div
-                className="header-payment-day header-sortable"
+                className="header-payment-day header-sortable resizable-header"
                 onClick={() => handleSort('payment_day')}
                 role="button"
                 tabIndex={0}
@@ -566,9 +603,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               >
                 <span>이체일</span>
                 {renderSortIndicator('payment_day')}
+                <div {...getResizeHandleProps('paymentDay')} />
               </div>
               <div
-                className="header-cycle header-sortable"
+                className="header-cycle header-sortable resizable-header"
                 onClick={() => handleSort('payment_cycle')}
                 role="button"
                 tabIndex={0}
@@ -576,6 +614,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               >
                 <span>납입주기</span>
                 {renderSortIndicator('payment_cycle')}
+                <div {...getResizeHandleProps('paymentCycle')} />
               </div>
               <div
                 className="header-status header-sortable"

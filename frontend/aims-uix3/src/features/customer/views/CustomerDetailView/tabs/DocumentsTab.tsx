@@ -42,6 +42,7 @@ import { DocumentContentSearchModal } from '../../../components/DocumentContentS
 import { useCustomerDocumentsSSE } from '@/shared/hooks/useCustomerDocumentsSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
+import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -63,6 +64,19 @@ interface DocumentsTabProps {
 
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
 const SORT_ICON_WIDTH = 14
+
+// 🍎 컬럼 리사이즈 설정
+const DOCUMENTS_COLUMNS: ColumnConfig[] = [
+  { id: 'filename', minWidth: 120, maxWidth: 500 },
+  { id: 'docType', minWidth: 50, maxWidth: 120 },
+  { id: 'size', minWidth: 40, maxWidth: 115 },
+  { id: 'type', minWidth: 35, maxWidth: 80 },
+  { id: 'date', minWidth: 60, maxWidth: 195 }
+]
+
+// 🍎 기본 문서유형/타입 칼럼 폭 (고정)
+const DEFAULT_DOCTYPE_WIDTH = 65
+const DEFAULT_TYPE_WIDTH = 42
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
 const ITEMS_PER_PAGE_OPTIONS_BASE = [
@@ -433,6 +447,26 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     const calculatedWidth = Math.max(50, Math.min(115, maxLength * 7 + 16 + SORT_ICON_WIDTH));
     return calculatedWidth;
   }, [documents]);
+
+  // 🍎 컬럼 리사이즈: 기본 폭 계산
+  const defaultColumnWidths = useMemo(() => ({
+    filename: filenameColumnWidth,
+    docType: DEFAULT_DOCTYPE_WIDTH,
+    size: sizeColumnWidth,
+    type: DEFAULT_TYPE_WIDTH,
+    date: dateColumnWidth,
+  }), [filenameColumnWidth, sizeColumnWidth, dateColumnWidth])
+
+  // 🍎 컬럼 리사이즈 훅
+  const {
+    columnWidths,
+    isResizing,
+    getResizeHandleProps
+  } = useColumnResize({
+    storageKey: 'documents-tab',
+    columns: DOCUMENTS_COLUMNS,
+    defaultWidths: defaultColumnWidths
+  })
 
   // 🍎 검색어로 필터링된 문서 목록
   const filteredDocuments = useMemo(() => {
@@ -1073,11 +1107,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         <>
           {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
           <div
-            className="customer-documents__list-container"
+            className={`customer-documents__list-container${isResizing ? ' is-resizing' : ''}`}
             style={{
-              '--filename-column-width': `${filenameColumnWidth}px`,
-              '--size-column-width': `${sizeColumnWidth}px`,
-              '--date-column-width': `${dateColumnWidth}px`,
+              '--filename-column-width': `${columnWidths['filename'] || filenameColumnWidth}px`,
+              '--doctype-column-width': `${columnWidths['docType'] || DEFAULT_DOCTYPE_WIDTH}px`,
+              '--size-column-width': `${columnWidths['size'] || sizeColumnWidth}px`,
+              '--type-column-width': `${columnWidths['type'] || DEFAULT_TYPE_WIDTH}px`,
+              '--date-column-width': `${columnWidths['date'] || dateColumnWidth}px`,
             } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
@@ -1096,7 +1132,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               )}
               <div className="header-icon"></div>
               <div
-                className="header-filename header-sortable"
+                className="header-filename header-sortable resizable-header"
                 onClick={() => handleSort('originalName')}
                 role="button"
                 tabIndex={0}
@@ -1110,10 +1146,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 {sortField === 'originalName' && (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div {...getResizeHandleProps('filename')} />
               </div>
               {/* 🍎 문서 유형 칼럼 헤더 */}
               <div
-                className="header-doctype header-sortable"
+                className="header-doctype header-sortable resizable-header"
                 onClick={() => handleSort('docType')}
                 role="button"
                 tabIndex={0}
@@ -1126,9 +1163,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 {sortField === 'docType' && (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div {...getResizeHandleProps('docType')} />
               </div>
               <div
-                className="header-size header-sortable"
+                className="header-size header-sortable resizable-header"
                 onClick={() => handleSort('fileSize')}
                 role="button"
                 tabIndex={0}
@@ -1142,9 +1180,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 {sortField === 'fileSize' && (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div {...getResizeHandleProps('size')} />
               </div>
               <div
-                className="header-type header-sortable"
+                className="header-type header-sortable resizable-header"
                 onClick={() => handleSort('mimeType')}
                 role="button"
                 tabIndex={0}
@@ -1158,9 +1197,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 {sortField === 'mimeType' && (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div {...getResizeHandleProps('type')} />
               </div>
               <div
-                className="header-date header-sortable"
+                className="header-date header-sortable resizable-header"
                 onClick={() => handleSort('linkedAt')}
                 role="button"
                 tabIndex={0}
@@ -1174,6 +1214,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 {sortField === 'linkedAt' && (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div {...getResizeHandleProps('date')} />
               </div>
               <div className="header-actions">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">

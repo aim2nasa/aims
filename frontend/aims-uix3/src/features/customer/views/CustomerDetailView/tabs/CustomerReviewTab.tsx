@@ -19,6 +19,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { useCustomerReviewSSE } from '@/shared/hooks/useCustomerReviewSSE';
 import type { Customer } from '@/entities/customer/model';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
 import './CustomerReviewTab.css';
 
 // 정렬 필드 타입
@@ -48,6 +49,22 @@ const ROW_HEIGHT = 32;
 const ROW_GAP = 2;
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
+
+// 🍎 컬럼 리사이즈 설정
+const CUSTOMER_REVIEW_COLUMNS: ColumnConfig[] = [
+  { id: 'contractor', minWidth: 50, maxWidth: 120 },
+  { id: 'policyNumber', minWidth: 80, maxWidth: 150 },
+  { id: 'product', minWidth: 100, maxWidth: 300 },
+  { id: 'issueDate', minWidth: 70, maxWidth: 120 },
+  { id: 'parsedAt', minWidth: 100, maxWidth: 180 }
+];
+
+// 🍎 기본 컬럼 폭
+const DEFAULT_CONTRACTOR_WIDTH = 60;
+const DEFAULT_POLICY_NUMBER_WIDTH = 90;
+const DEFAULT_PRODUCT_WIDTH = 120;
+const DEFAULT_ISSUE_DATE_WIDTH = 80;
+const DEFAULT_PARSED_AT_WIDTH = 130;
 
 export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   customer,
@@ -161,6 +178,26 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       return opt;
     });
   }, [itemsPerPageMode, autoCalculatedItems]);
+
+  // 🍎 컬럼 리사이즈: 기본 폭 계산
+  const defaultColumnWidths = useMemo(() => ({
+    contractor: DEFAULT_CONTRACTOR_WIDTH,
+    policyNumber: DEFAULT_POLICY_NUMBER_WIDTH,
+    product: DEFAULT_PRODUCT_WIDTH,
+    issueDate: DEFAULT_ISSUE_DATE_WIDTH,
+    parsedAt: DEFAULT_PARSED_AT_WIDTH,
+  }), [])
+
+  // 🍎 컬럼 리사이즈 훅
+  const {
+    columnWidths,
+    isResizing,
+    getResizeHandleProps
+  } = useColumnResize({
+    storageKey: 'customer-review-tab',
+    columns: CUSTOMER_REVIEW_COLUMNS,
+    defaultWidths: defaultColumnWidths
+  })
 
   // Customer Review 목록 로드
   useEffect(() => {
@@ -462,7 +499,16 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       )}
 
       {/* 테이블 컨테이너 */}
-      <div className="customer-review-table-container">
+      <div
+        className={`customer-review-table-container${isResizing ? ' is-resizing' : ''}`}
+        style={{
+          '--contractor-column-width': `${columnWidths['contractor'] || DEFAULT_CONTRACTOR_WIDTH}px`,
+          '--policy-number-column-width': `${columnWidths['policyNumber'] || DEFAULT_POLICY_NUMBER_WIDTH}px`,
+          '--product-column-width': `${columnWidths['product'] || DEFAULT_PRODUCT_WIDTH}px`,
+          '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
+          '--parsed-at-column-width': `${columnWidths['parsedAt'] || DEFAULT_PARSED_AT_WIDTH}px`,
+        } as React.CSSProperties}
+      >
         {/* 테이블 헤더 */}
         <div className={`customer-review-table-header ${isDevMode ? 'has-checkbox' : ''}`}>
           {isDevMode && (
@@ -476,7 +522,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             </div>
           )}
           <div
-            className="header-contractor customer-review-table__sortable"
+            className="header-contractor customer-review-table__sortable resizable-header"
             onClick={() => handleSort('contractor_name')}
           >
             <span className="customer-review-table__header-content">
@@ -485,9 +531,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                 {sortField === 'contractor_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('contractor')} />
           </div>
           <div
-            className="header-policy-number customer-review-table__sortable"
+            className="header-policy-number customer-review-table__sortable resizable-header"
             onClick={() => handleSort('policy_number')}
           >
             <span className="customer-review-table__header-content">
@@ -496,9 +543,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                 {sortField === 'policy_number' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('policyNumber')} />
           </div>
           <div
-            className="header-product customer-review-table__sortable"
+            className="header-product customer-review-table__sortable resizable-header"
             onClick={() => handleSort('product_name')}
           >
             <span className="customer-review-table__header-content">
@@ -507,9 +555,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                 {sortField === 'product_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('product')} />
           </div>
           <div
-            className="header-issue-date customer-review-table__sortable"
+            className="header-issue-date customer-review-table__sortable resizable-header"
             onClick={() => handleSort('issue_date')}
           >
             <span className="customer-review-table__header-content">
@@ -518,9 +567,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                 {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('issueDate')} />
           </div>
           <div
-            className="header-parsed-at customer-review-table__sortable"
+            className="header-parsed-at customer-review-table__sortable resizable-header"
             onClick={() => handleSort('parsed_at')}
           >
             <span className="customer-review-table__header-content">
@@ -529,6 +579,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                 {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('parsedAt')} />
           </div>
         </div>
 

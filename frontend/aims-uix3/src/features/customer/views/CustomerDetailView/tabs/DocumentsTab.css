@@ -115,14 +115,15 @@
 /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
 .customer-documents-list-header {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
   grid-template-columns:
-    28px    /* 유형 아이콘 */
-    minmax(60px, 1fr) /* 파일명 - 유연하게 */
-    65px    /* 문서유형 */
-    50px    /* 크기 */
-    42px    /* 타입 */
-    68px    /* 연결일 */
-    70px;   /* 작업 */
+    28px                                        /* 유형 아이콘 */
+    var(--filename-column-width, 200px)         /* 파일명 (동적) */
+    var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
+    var(--size-column-width, 50px)              /* 크기 (동적) */
+    var(--type-column-width, 42px)              /* 타입 (동적) */
+    var(--date-column-width, 68px)              /* 연결일 (동적) */
+    70px;                                       /* 작업 */
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -281,14 +282,15 @@
 /* === 🍎 LIST ITEM: 문서 아이템 === */
 .customer-documents-item {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
   grid-template-columns:
-    28px    /* 유형 아이콘 */
-    minmax(60px, 1fr) /* 파일명 - 유연하게 */
-    65px    /* 문서유형 */
-    50px    /* 크기 */
-    42px    /* 타입 */
-    68px    /* 연결일 */
-    70px;   /* 작업 버튼 */
+    28px                                        /* 유형 아이콘 */
+    var(--filename-column-width, 200px)         /* 파일명 (동적) */
+    var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
+    var(--size-column-width, 50px)              /* 크기 (동적) */
+    var(--type-column-width, 42px)              /* 타입 (동적) */
+    var(--date-column-width, 68px)              /* 연결일 (동적) */
+    70px;                                       /* 작업 버튼 */
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -1276,4 +1278,15 @@ html[data-theme="dark"] .doctype-readonly--ar {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* === 🍎 COLUMN RESIZE: 리사이즈 중 상태 === */
+.customer-documents__list-container.is-resizing {
+  cursor: col-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.customer-documents__list-container.is-resizing * {
+  cursor: col-resize !important;
 }

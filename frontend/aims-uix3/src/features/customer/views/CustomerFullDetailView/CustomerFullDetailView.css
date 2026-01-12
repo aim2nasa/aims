@@ -1133,11 +1133,18 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
   padding: 0;
 }
 
-/* 문서 리스트 헤더 - A행 높이 32px */
+/* 문서 리스트 헤더 - A행 높이 32px - CSS 변수 기반으로 리사이즈 지원 */
 .customer-full-detail__section-content--documents .customer-documents-list-header {
   display: grid;
   /* 🍎 7칼럼: 아이콘 | 파일명 | 문서유형 | 크기 | 타입 | 연결일 | 작업 */
-  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 64px 102px 50px;
+  grid-template-columns:
+    20px
+    var(--filename-column-width, minmax(30px, 1fr))
+    var(--doctype-column-width, 95px)
+    var(--size-column-width, 69px)
+    var(--type-column-width, 64px)
+    var(--date-column-width, 102px)
+    50px;
   gap: 4px 6px; /* row-gap: 4px, column-gap: 6px */
   padding: 0 10px;
   height: var(--row-height);
@@ -1160,11 +1167,18 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   border-bottom-color: var(--color-ios-separator-dark);
 }
 
-/* 문서 아이템 - A행 높이 32px */
+/* 문서 아이템 - A행 높이 32px - CSS 변수 기반으로 리사이즈 지원 */
 .customer-full-detail__section-content--documents .customer-documents-item {
   display: grid;
   /* 🍎 7칼럼: 아이콘 | 파일명 | 문서유형 | 크기 | 타입 | 연결일 | 작업 */
-  grid-template-columns: 20px minmax(30px, 1fr) 95px 69px 64px 102px 50px;
+  grid-template-columns:
+    20px
+    var(--filename-column-width, minmax(30px, 1fr))
+    var(--doctype-column-width, 95px)
+    var(--size-column-width, 69px)
+    var(--type-column-width, 64px)
+    var(--date-column-width, 102px)
+    50px;
   gap: 4px 6px; /* row-gap: 4px, column-gap: 6px */
   padding: 0 10px;
   height: var(--row-height);
@@ -1504,43 +1518,91 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
 }
 
 /* ============================================
-   🍎 연간보고서 전용 (칼럼 폭)
+   🍎 연간보고서 전용 (칼럼 폭) - CSS 변수 기반으로 리사이즈 지원
    ============================================ */
 
 .customer-full-detail__section-content--report .annual-report-table-header {
-  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+  grid-template-columns:
+    var(--owner-column-width, 50px)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 125px)
+    var(--premium-column-width, 85px)
+    var(--count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 .customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
-  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
+  grid-template-columns:
+    28px
+    var(--owner-column-width, 50px)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 125px)
+    var(--premium-column-width, 85px)
+    var(--count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 .customer-full-detail__section-content--report .annual-report-row {
-  grid-template-columns: 50px 80px 125px 85px 70px 40px;
+  grid-template-columns:
+    var(--owner-column-width, 50px)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 125px)
+    var(--premium-column-width, 85px)
+    var(--count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
-  grid-template-columns: 28px 50px 80px 125px 85px 70px 40px;
+  grid-template-columns:
+    28px
+    var(--owner-column-width, 50px)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 125px)
+    var(--premium-column-width, 85px)
+    var(--count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 /* ============================================
-   🍎 고객리뷰 전용 (칼럼 폭)
+   🍎 고객리뷰 전용 (칼럼 폭) - CSS 변수 기반으로 리사이즈 지원
    ============================================ */
 
 .customer-full-detail__section-content--report .customer-review-table-header {
-  grid-template-columns: 60px 90px 1fr 80px 130px;
+  grid-template-columns:
+    var(--contractor-column-width, 60px)
+    var(--policy-number-column-width, 90px)
+    var(--product-column-width, 1fr)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 130px);
 }
 
 .customer-full-detail__section-content--report .customer-review-table-header.has-checkbox {
-  grid-template-columns: 28px 60px 90px 1fr 80px 130px;
+  grid-template-columns:
+    28px
+    var(--contractor-column-width, 60px)
+    var(--policy-number-column-width, 90px)
+    var(--product-column-width, 1fr)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 130px);
 }
 
 .customer-full-detail__section-content--report .customer-review-row {
-  grid-template-columns: 60px 90px 1fr 80px 130px;
+  grid-template-columns:
+    var(--contractor-column-width, 60px)
+    var(--policy-number-column-width, 90px)
+    var(--product-column-width, 1fr)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 130px);
 }
 
 .customer-full-detail__section-content--report .customer-review-row.has-checkbox {
-  grid-template-columns: 28px 60px 90px 1fr 80px 130px;
+  grid-template-columns:
+    28px
+    var(--contractor-column-width, 60px)
+    var(--policy-number-column-width, 90px)
+    var(--product-column-width, 1fr)
+    var(--issue-date-column-width, 80px)
+    var(--parsed-at-column-width, 130px);
 }
 
 /* 셀 스타일 - nowrap으로 데이터 한 줄 유지 */

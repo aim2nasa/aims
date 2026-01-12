@@ -23,6 +23,7 @@ import { UserContextService } from '../../../../../components/DocumentViews/Docu
 import type { Customer } from '@/entities/customer/model';
 import type { CustomerDocumentItem } from '@/services/DocumentService';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
 import './AnnualReportTab.css';
 
 // 🍎 정렬 필드 타입
@@ -95,6 +96,21 @@ const ROW_GAP = 2;       // CSS gap: 2px (행 사이 간격)
 // 🍎 기본 높이값 (실제 DOM 측정이 안될 때 fallback)
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
+
+// 🍎 컬럼 리사이즈 설정
+const ANNUAL_REPORT_COLUMNS: ColumnConfig[] = [
+  { id: 'owner', minWidth: 50, maxWidth: 150 },
+  { id: 'issueDate', minWidth: 70, maxWidth: 120 },
+  { id: 'parsedAt', minWidth: 100, maxWidth: 180 },
+  { id: 'premium', minWidth: 80, maxWidth: 180 },
+  { id: 'count', minWidth: 50, maxWidth: 100 },
+  { id: 'status', minWidth: 40, maxWidth: 80 }
+];
+
+// 🍎 기본 컬럼 폭 (고정값)
+const DEFAULT_ISSUE_DATE_WIDTH = 80;
+const DEFAULT_COUNT_WIDTH = 70;
+const DEFAULT_STATUS_WIDTH = 40;
 
 export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   customer,
@@ -270,6 +286,27 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     const calculatedWidth = Math.max(100, Math.min(180, maxLength * 7 + 16));
     return calculatedWidth;
   }, [reports]);
+
+  // 🍎 컬럼 리사이즈: 기본 폭 계산
+  const defaultColumnWidths = useMemo(() => ({
+    owner: ownerColumnWidth,
+    issueDate: DEFAULT_ISSUE_DATE_WIDTH,
+    parsedAt: parsedAtColumnWidth,
+    premium: premiumColumnWidth,
+    count: DEFAULT_COUNT_WIDTH,
+    status: DEFAULT_STATUS_WIDTH,
+  }), [ownerColumnWidth, parsedAtColumnWidth, premiumColumnWidth])
+
+  // 🍎 컬럼 리사이즈 훅
+  const {
+    columnWidths,
+    isResizing,
+    getResizeHandleProps
+  } = useColumnResize({
+    storageKey: 'annual-report-tab',
+    columns: ANNUAL_REPORT_COLUMNS,
+    defaultWidths: defaultColumnWidths
+  })
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -821,11 +858,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
       {/* 테이블 컨테이너 */}
       <div
-        className="annual-report-table-container"
+        className={`annual-report-table-container${isResizing ? ' is-resizing' : ''}`}
         style={{
-          '--owner-column-width': `${ownerColumnWidth}px`,
-          '--parsed-at-column-width': `${parsedAtColumnWidth}px`,
-          '--premium-column-width': `${premiumColumnWidth}px`,
+          '--owner-column-width': `${columnWidths['owner'] || ownerColumnWidth}px`,
+          '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
+          '--parsed-at-column-width': `${columnWidths['parsedAt'] || parsedAtColumnWidth}px`,
+          '--premium-column-width': `${columnWidths['premium'] || premiumColumnWidth}px`,
+          '--count-column-width': `${columnWidths['count'] || DEFAULT_COUNT_WIDTH}px`,
+          '--status-column-width': `${columnWidths['status'] || DEFAULT_STATUS_WIDTH}px`,
         } as React.CSSProperties}
       >
         {/* 테이블 헤더 */}
@@ -841,7 +881,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             </div>
           )}
           <div
-            className="header-owner annual-report-table__sortable"
+            className="header-owner annual-report-table__sortable resizable-header"
             onClick={() => handleSort('customer_name')}
           >
             <span className="annual-report-table__header-content">
@@ -850,9 +890,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'customer_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('owner')} />
           </div>
           <div
-            className="header-issue-date annual-report-table__sortable"
+            className="header-issue-date annual-report-table__sortable resizable-header"
             onClick={() => handleSort('issue_date')}
           >
             <span className="annual-report-table__header-content">
@@ -861,9 +902,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('issueDate')} />
           </div>
           <div
-            className="header-parsed-at annual-report-table__sortable"
+            className="header-parsed-at annual-report-table__sortable resizable-header"
             onClick={() => handleSort('parsed_at')}
           >
             <span className="annual-report-table__header-content">
@@ -872,9 +914,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('parsedAt')} />
           </div>
           <div
-            className="header-premium annual-report-table__sortable"
+            className="header-premium annual-report-table__sortable resizable-header"
             onClick={() => handleSort('total_monthly_premium')}
           >
             <span className="annual-report-table__header-content">
@@ -883,9 +926,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'total_monthly_premium' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('premium')} />
           </div>
           <div
-            className="header-count annual-report-table__sortable"
+            className="header-count annual-report-table__sortable resizable-header"
             onClick={() => handleSort('contract_count')}
           >
             <span className="annual-report-table__header-content">
@@ -894,9 +938,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'contract_count' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('count')} />
           </div>
           <div
-            className="header-status annual-report-table__sortable"
+            className="header-status annual-report-table__sortable resizable-header"
             onClick={() => handleSort('status')}
           >
             <span className="annual-report-table__header-content">
@@ -905,6 +950,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 {sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
               </span>
             </span>
+            <div {...getResizeHandleProps('status')} />
           </div>
         </div>
 
