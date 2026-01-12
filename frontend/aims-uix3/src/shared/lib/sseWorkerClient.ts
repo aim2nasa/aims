@@ -107,9 +107,17 @@ class SSEWorkerClient {
   private handleWorkerMessage(event: MessageEvent<WorkerResponse>) {
     const { type, payload } = event.data
 
+    // 🔍 DEBUG: 모든 Worker 메시지 로깅
+    console.log(`[SSE-Client] Worker 메시지 수신 - type: ${type}, payload:`, payload)
+
     if (type === 'event' && payload.streamKey && payload.eventType) {
+      // 🔍 DEBUG: 이벤트 수신 상세 로깅
+      console.log(`[SSE-Client] 🎯 SSE 이벤트 수신 - streamKey: ${payload.streamKey}, eventType: ${payload.eventType}, data:`, payload.data)
+
       // SSE 이벤트를 리스너들에게 전달
       const callbacks = this.listeners.get(payload.streamKey)
+      console.log(`[SSE-Client] 리스너 조회 - streamKey: ${payload.streamKey}, 등록된 리스너: ${callbacks?.size || 0}개`)
+
       if (callbacks) {
         const sseEvent: SSEEvent = {
           streamKey: payload.streamKey,
@@ -123,11 +131,14 @@ class SSEWorkerClient {
             console.error('[SSE-Client] Callback error:', error)
           }
         })
+      } else {
+        console.warn(`[SSE-Client] ⚠️ 리스너 없음! streamKey: ${payload.streamKey}`)
+        console.log(`[SSE-Client] 현재 등록된 리스너 키 목록:`, Array.from(this.listeners.keys()))
       }
     } else if (type === 'subscribed') {
-      console.log('[SSE-Client] Subscribed:', payload.streamKey)
+      console.log('[SSE-Client] ✅ Subscribed:', payload.streamKey)
     } else if (type === 'unsubscribed') {
-      console.log('[SSE-Client] Unsubscribed:', payload.streamKey)
+      console.log('[SSE-Client] ❌ Unsubscribed:', payload.streamKey)
     } else if (type === 'pong') {
       // ping 응답, 무시
     }
@@ -153,12 +164,17 @@ class SSEWorkerClient {
     // 토큰을 subscribe 시점에 직접 전달 (레이스 컨디션 방지)
     const token = getAuthToken()
 
+    // 🔍 DEBUG: 구독 요청 상세 로깅
+    console.log(`[SSE-Client] 📡 구독 요청 - streamKey: ${streamKey}, endpoint: ${endpoint}, params:`, params, `token: ${token ? '있음' : '없음'}`)
+
     if (this.isSupported && this.port) {
+      console.log(`[SSE-Client] SharedWorker로 구독 메시지 전송`)
       this.port.postMessage({
         type: 'subscribe',
         payload: { streamKey, endpoint, params, token: token || '' }
       } as WorkerMessage)
     } else {
+      console.log(`[SSE-Client] Polyfill 모드로 구독`)
       // 폴백: 직접 EventSource 사용
       this.polyfillSubscribe(streamKey, endpoint, params)
     }
@@ -192,9 +208,14 @@ class SSEWorkerClient {
     }
     this.listeners.get(streamKey)!.add(callback)
 
+    // 🔍 DEBUG: 리스너 등록 로깅
+    console.log(`[SSE-Client] 👂 리스너 등록 - streamKey: ${streamKey}, 총 리스너: ${this.listeners.get(streamKey)!.size}개`)
+    console.log(`[SSE-Client] 현재 등록된 모든 streamKey:`, Array.from(this.listeners.keys()))
+
     // 해제 함수 반환
     return () => {
       this.listeners.get(streamKey)?.delete(callback)
+      console.log(`[SSE-Client] 👋 리스너 해제 - streamKey: ${streamKey}, 남은 리스너: ${this.listeners.get(streamKey)?.size || 0}개`)
     }
   }
 

@@ -320,12 +320,18 @@ function notifyARSubscribers(customerId, event, data) {
   const customerIdStr = customerId.toString();
   const clients = arSSEClients.get(customerIdStr);
   const totalClients = Array.from(arSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+
+  // 🔍 DEBUG: 현재 등록된 모든 클라이언트 키 출력
+  const allKeys = Array.from(arSSEClients.keys());
+  console.log(`[SSE-AR] 🔍 DEBUG - 등록된 클라이언트 키 목록: [${allKeys.join(', ')}]`);
+  console.log(`[SSE-AR] 🔍 DEBUG - 조회할 키: "${customerIdStr}" (type: ${typeof customerIdStr})`);
+
   console.log(`[SSE-AR] notifyARSubscribers 호출 - customerId: ${customerIdStr}, 해당 고객 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
   if (clients && clients.size > 0) {
     clients.forEach(res => sendSSE(res, event, data));
-    console.log(`[SSE-AR] 고객 ${customerIdStr}의 AR 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+    console.log(`[SSE-AR] ✅ 고객 ${customerIdStr}의 AR 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
   } else {
-    console.log(`[SSE-AR] 고객 ${customerIdStr}에 연결된 AR 구독자 없음 - 이벤트 미전송`);
+    console.log(`[SSE-AR] ⚠️ 고객 ${customerIdStr}에 연결된 AR 구독자 없음 - 이벤트 미전송`);
   }
 }
 
@@ -7931,7 +7937,9 @@ app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQ
     return res.status(400).json({ success: false, error: '유효하지 않은 고객 ID입니다.' });
   }
 
-  console.log(`[SSE-AR] AR 스트림 연결 - customerId: ${customerId}, userId: ${userId}`);
+  // 🔍 DEBUG: SSE 연결 상세 로깅
+  console.log(`[SSE-AR] 📡 AR 스트림 연결 요청 - customerId: "${customerId}" (type: ${typeof customerId}), userId: ${userId}`);
+  console.log(`[SSE-AR] 🔍 연결 전 arSSEClients 키 목록: [${Array.from(arSSEClients.keys()).join(', ')}]`);
 
   // SSE 헤더 설정
   res.setHeader('Content-Type', 'text/event-stream');
@@ -7947,6 +7955,11 @@ app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQ
   }
   arSSEClients.get(customerId).add(res);
 
+  // 🔍 DEBUG: 등록 후 상태 로깅
+  console.log(`[SSE-AR] ✅ 클라이언트 등록 완료 - customerId: "${customerId}"`);
+  console.log(`[SSE-AR] 🔍 등록 후 arSSEClients 키 목록: [${Array.from(arSSEClients.keys()).join(', ')}]`);
+  console.log(`[SSE-AR] 🔍 해당 고객 연결 수: ${arSSEClients.get(customerId).size}`);
+
   // 연결 확인 이벤트
   sendSSE(res, 'connected', {
     customerId,
@@ -7961,12 +7974,14 @@ app.get('/api/customers/:customerId/annual-reports/stream', authenticateJWTWithQ
 
   // 연결 종료 처리
   req.on('close', () => {
-    console.log(`[SSE-AR] AR 스트림 연결 종료 - customerId: ${customerId}`);
+    console.log(`[SSE-AR] ❌ AR 스트림 연결 종료 - customerId: "${customerId}"`);
     clearInterval(keepAliveInterval);
     arSSEClients.get(customerId)?.delete(res);
     if (arSSEClients.get(customerId)?.size === 0) {
       arSSEClients.delete(customerId);
+      console.log(`[SSE-AR] 🗑️ 고객 ${customerId}의 모든 연결 종료, 키 삭제됨`);
     }
+    console.log(`[SSE-AR] 🔍 연결 종료 후 arSSEClients 키 목록: [${Array.from(arSSEClients.keys()).join(', ')}]`);
   });
 });
 
@@ -11589,7 +11604,9 @@ app.post("/api/webhooks/ar-status-change", async (req, res) => {
       return res.status(400).json({ success: false, error: 'customer_id required' });
     }
 
-    console.log(`[AR 웹훅] 상태 변경 - customer_id: ${customer_id}, file_id: ${file_id}, status: ${status}`);
+    // 🔍 DEBUG: 웹훅 수신 상세 로깅
+    console.log(`[AR 웹훅] 📥 상태 변경 수신 - customer_id: "${customer_id}" (type: ${typeof customer_id}), file_id: ${file_id}, status: ${status}`);
+    console.log(`[AR 웹훅] 🔍 현재 arSSEClients 키 목록: [${Array.from(arSSEClients.keys()).join(', ')}]`);
 
     // SSE 알림 전송: AR 탭용
     notifyARSubscribers(customer_id, 'ar-change', {

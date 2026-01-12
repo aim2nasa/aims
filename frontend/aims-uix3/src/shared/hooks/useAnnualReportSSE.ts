@@ -52,10 +52,13 @@ export function useAnnualReportSSE(
 
   // 이벤트 핸들러
   const handleEvent = useCallback((eventType: string, data: unknown) => {
+    // 🔍 DEBUG: 모든 이벤트 수신 로깅
+    console.log(`[AnnualReportSSE] 📥 이벤트 수신 - eventType: ${eventType}, data:`, data)
+
     if (eventType === 'ar-change') {
       try {
         const eventData = data as ARChangeEvent
-        console.log('[AnnualReportSSE] AR 상태 변경:', eventData)
+        console.log('[AnnualReportSSE] 🎯 AR 상태 변경:', eventData)
 
         // ref를 통해 최신 콜백 호출
         onARChangeRef.current?.(eventData)
@@ -64,6 +67,8 @@ export function useAnnualReportSSE(
         console.error('[AnnualReportSSE] ar-change 이벤트 처리 실패:', error)
         errorReporter.reportApiError(error as Error, { component: 'useAnnualReportSSE.arChange' })
       }
+    } else {
+      console.log(`[AnnualReportSSE] ⚠️ 처리되지 않은 이벤트 타입: ${eventType}`)
     }
   }, [])
 

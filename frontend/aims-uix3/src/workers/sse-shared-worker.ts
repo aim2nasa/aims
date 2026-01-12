@@ -81,16 +81,24 @@ function buildUrl(endpoint: string, params: Record<string, string>): string {
  */
 function broadcastToSubscribers(streamKey: string, type: string, data: unknown) {
   const conn = connections.get(streamKey)
-  if (!conn) return
+  if (!conn) {
+    log(`⚠️ 브로드캐스트 실패 - 연결 없음: ${streamKey}`)
+    log(`현재 연결된 streamKey 목록:`, Array.from(connections.keys()))
+    return
+  }
 
   const message = {
     type: 'event',
     payload: { streamKey, eventType: type, data }
   }
 
+  // 🔍 DEBUG: 브로드캐스트 로깅
+  log(`📢 브로드캐스트 - streamKey: ${streamKey}, eventType: ${type}, 구독자: ${conn.subscribers.size}명`)
+
   conn.subscribers.forEach(port => {
     try {
       port.postMessage(message)
+      log(`✅ 메시지 전송 성공 - streamKey: ${streamKey}, eventType: ${type}`)
     } catch (e) {
       // 포트가 닫힌 경우 정리
       log(`포트 전송 실패, 정리: ${streamKey}`)
@@ -173,7 +181,10 @@ function setupEventListeners(streamKey: string, conn: Connection) {
   // AR 변경 (annual reports)
   eventSource.addEventListener('ar-change', (e: MessageEvent) => {
     try {
+      // 🔍 DEBUG: AR 변경 이벤트 수신 로깅
+      log(`🎯 ar-change 이벤트 수신! streamKey: ${streamKey}, raw data:`, e.data)
       const data = JSON.parse(e.data)
+      log(`🎯 ar-change 파싱 완료:`, data)
       broadcastToSubscribers(streamKey, 'ar-change', data)
     } catch (error) {
       logError(`ar-change 파싱 실패: ${streamKey}`, error)
@@ -313,6 +324,10 @@ function reconnect(streamKey: string, conn: Connection) {
  */
 function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
   const { streamKey, endpoint, params = {}, token } = payload
+
+  // 🔍 DEBUG: 구독 요청 상세 로깅
+  log(`📡 구독 요청 수신 - streamKey: ${streamKey}, endpoint: ${endpoint}`)
+  log(`   params: ${JSON.stringify(params)}, token: ${token ? '있음' : '없음'}`)
 
   // 토큰이 전달되면 즉시 설정 (레이스 컨디션 방지)
   if (token && token !== authToken) {

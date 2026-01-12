@@ -157,10 +157,29 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     loadAnnualReports();
   }, []);
 
-  // SSE 실시간 업데이트 (폴링 대체)
-  useAnnualReportSSE(customer._id, handleSSERefresh, {
+  // SSE 실시간 업데이트
+  const { isConnected: sseConnected } = useAnnualReportSSE(customer._id, handleSSERefresh, {
     enabled: Boolean(customer._id),
   });
+
+  // 🔄 폴링 fallback: 분석 중인 문서가 있을 때 10초마다 상태 확인
+  // SSE가 끊겨도 안정적으로 업데이트
+  useEffect(() => {
+    if (!customer._id || pendingCount === 0) return;
+
+    console.log(`[AnnualReportTab] 폴링 시작 - pendingCount: ${pendingCount}, SSE 연결: ${sseConnected}`);
+
+    const pollInterval = setInterval(() => {
+      console.log('[AnnualReportTab] 폴링 실행 (10초 간격)');
+      loadPendingDocuments();
+      loadAnnualReports();
+    }, 10000); // 10초마다
+
+    return () => {
+      console.log('[AnnualReportTab] 폴링 중지');
+      clearInterval(pollInterval);
+    };
+  }, [customer._id, pendingCount, sseConnected]);
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
