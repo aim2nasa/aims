@@ -799,3 +799,20 @@ html[data-theme="dark"] .row-status .retry-button:hover {
 html[data-theme="dark"] .error-reason {
   color: var(--color-danger-400, #f87171);
 }
+
+/* 재시도 횟수 표시 [1/3] - 상태 칼럼용 */
+.row-status .retry-indicator {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-ios-text-secondary-light);
+  background-color: var(--color-ios-fill-tertiary-light);
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .row-status .retry-indicator {
+  color: var(--color-ios-text-secondary-dark);
+  background-color: var(--color-ios-fill-tertiary-dark);
+}

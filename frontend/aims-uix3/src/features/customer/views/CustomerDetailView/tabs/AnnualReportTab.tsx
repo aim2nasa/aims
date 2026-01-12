@@ -969,18 +969,24 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                       </button>
                     </>
                   )}
-                  {/* 처리중 상태: 스피너 + 처리중 배지 */}
+                  {/* 처리중 상태: 스피너 + 처리중 배지 + [1/3] */}
                   {isProcessing && (
-                    <span className="status-badge status-badge--processing">
-                      <span className="status-spinner"></span>
-                      처리중
-                    </span>
+                    <>
+                      <span className="status-badge status-badge--processing">
+                        <span className="status-spinner"></span>
+                        처리중
+                      </span>
+                      <span className="retry-indicator">[{report.retry_count || 1}/3]</span>
+                    </>
                   )}
-                  {/* 대기중 상태: 대기중 배지 */}
+                  {/* 대기중 상태: 대기중 배지 + [1/3] */}
                   {isPending && (
-                    <span className="status-badge status-badge--pending">
-                      대기중
-                    </span>
+                    <>
+                      <span className="status-badge status-badge--pending">
+                        대기중
+                      </span>
+                      <span className="retry-indicator">[{report.retry_count || 1}/3]</span>
+                    </>
                   )}
                   {/* 완료 상태 중 최신 */}
                   {!isNotCompleted && isLatestCompleted && (
