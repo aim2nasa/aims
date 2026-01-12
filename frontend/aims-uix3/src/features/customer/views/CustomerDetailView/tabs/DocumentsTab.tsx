@@ -398,17 +398,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     }
   }, [handleSimpleSearch])
 
-  // 🍎 정렬 핸들러
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('desc')
-    }
-    setCurrentPage(1)
-  }, [sortField])
-
   // 🍎 동적 칼럼 폭 계산: 파일명(originalName) 기준 (+ 정렬 아이콘)
   const filenameColumnWidth = useMemo(() => {
     if (documents.length === 0) return 200; // 기본값
@@ -461,12 +450,27 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const {
     columnWidths,
     isResizing,
-    getResizeHandleProps
+    getResizeHandleProps,
+    wasJustResizing
   } = useColumnResize({
     storageKey: 'documents-tab',
     columns: DOCUMENTS_COLUMNS,
     defaultWidths: defaultColumnWidths
   })
+
+  // 🍎 정렬 핸들러 (useColumnResize 훅 뒤에 정의)
+  const handleSort = useCallback((field: SortField) => {
+    // 리사이즈 직후 클릭은 무시 (정렬 방지)
+    if (wasJustResizing()) return
+
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('desc')
+    }
+    setCurrentPage(1)
+  }, [sortField, wasJustResizing])
 
   // 🍎 검색어로 필터링된 문서 목록
   const filteredDocuments = useMemo(() => {

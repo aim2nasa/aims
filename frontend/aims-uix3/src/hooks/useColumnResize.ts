@@ -46,6 +46,8 @@ export interface UseColumnResizeReturn {
   resetWidths: () => void;
   /** 특정 컬럼 폭 기본값으로 리셋 */
   resetColumnWidth: (columnId: string) => void;
+  /** 방금 리사이즈가 완료되었는지 확인 (클릭 이벤트 무시용) */
+  wasJustResizing: () => boolean;
 }
 
 const STORAGE_PREFIX = 'aims_column_widths_';
@@ -127,6 +129,10 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
     startWidth: number;
   } | null>(null);
 
+  // 리사이즈 완료 직후 플래그 (클릭 이벤트 무시용)
+  const justFinishedResizingRef = useRef(false);
+  const justFinishedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // defaultWidths가 변경되면 저장된 값이 없는 컬럼만 업데이트
   useEffect(() => {
     const stored = loadStoredWidths(storageKey);
@@ -178,6 +184,20 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
         saveWidths(storageKey, current);
         return current;
       });
+
+      // 리사이즈 완료 직후 플래그 설정 (클릭 이벤트 무시용)
+      justFinishedResizingRef.current = true;
+
+      // 이전 타이머 정리
+      if (justFinishedTimerRef.current) {
+        clearTimeout(justFinishedTimerRef.current);
+      }
+
+      // 200ms 후 플래그 해제
+      justFinishedTimerRef.current = setTimeout(() => {
+        justFinishedResizingRef.current = false;
+        justFinishedTimerRef.current = null;
+      }, 200);
     }
 
     dragStartRef.current = null;
@@ -281,12 +301,18 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
     handleDoubleClick(columnId);
   }, [handleDoubleClick]);
 
+  // 방금 리사이즈가 완료되었는지 확인 (클릭 이벤트 무시용)
+  const wasJustResizing = useCallback(() => {
+    return justFinishedResizingRef.current;
+  }, []);
+
   return {
     columnWidths,
     isResizing,
     resizingColumn,
     getResizeHandleProps,
     resetWidths,
-    resetColumnWidth
+    resetColumnWidth,
+    wasJustResizing
   };
 }

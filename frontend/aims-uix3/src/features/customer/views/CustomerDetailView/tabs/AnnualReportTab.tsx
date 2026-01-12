@@ -301,7 +301,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   const {
     columnWidths,
     isResizing,
-    getResizeHandleProps
+    getResizeHandleProps,
+    wasJustResizing
   } = useColumnResize({
     storageKey: 'annual-report-tab',
     columns: ANNUAL_REPORT_COLUMNS,
@@ -507,6 +508,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
   // 🍎 정렬 핸들러
   const handleSort = useCallback((field: SortField) => {
+    // 리사이즈 직후 클릭은 무시 (정렬 방지)
+    if (wasJustResizing()) return;
+
     if (sortField === field) {
       // 같은 필드 클릭 시 방향 토글
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -515,7 +519,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       setSortField(field);
       setSortDirection('desc');
     }
-  }, [sortField]);
+  }, [sortField, wasJustResizing]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

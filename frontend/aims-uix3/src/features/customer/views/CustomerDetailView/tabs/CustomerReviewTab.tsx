@@ -192,7 +192,8 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   const {
     columnWidths,
     isResizing,
-    getResizeHandleProps
+    getResizeHandleProps,
+    wasJustResizing
   } = useColumnResize({
     storageKey: 'customer-review-tab',
     columns: CUSTOMER_REVIEW_COLUMNS,
@@ -241,13 +242,16 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
 
   // 정렬 핸들러
   const handleSort = useCallback((field: SortField) => {
+    // 리사이즈 직후 클릭은 무시 (정렬 방지)
+    if (wasJustResizing()) return;
+
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('desc');
     }
-  }, [sortField]);
+  }, [sortField, wasJustResizing]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

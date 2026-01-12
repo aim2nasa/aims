@@ -230,17 +230,6 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     }
   }, [loadContracts])
 
-  // 🍎 정렬 핸들러
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('desc')
-    }
-    setCurrentPage(1)
-  }, [sortField])
-
   // 🍎 검색어 변경 시 첫 페이지로 이동
   useEffect(() => {
     setCurrentPage(1)
@@ -432,12 +421,27 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const {
     columnWidths,
     isResizing,
-    getResizeHandleProps
+    getResizeHandleProps,
+    wasJustResizing
   } = useColumnResize({
     storageKey: 'contracts-tab',
     columns: CONTRACTS_COLUMNS,
     defaultWidths: defaultColumnWidths
   })
+
+  // 🍎 정렬 핸들러 (useColumnResize 훅 뒤에 정의)
+  const handleSort = useCallback((field: SortField) => {
+    // 리사이즈 직후 클릭은 무시 (정렬 방지)
+    if (wasJustResizing()) return
+
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('desc')
+    }
+    setCurrentPage(1)
+  }, [sortField, wasJustResizing])
 
   const isEmpty = contracts.length === 0
 
