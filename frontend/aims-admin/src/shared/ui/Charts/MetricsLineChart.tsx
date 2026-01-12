@@ -89,9 +89,12 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRan
     );
   }
 
+  // height가 문자열("100%")이면 숫자로 변환 (ResponsiveContainer는 숫자 필요)
+  const chartHeight = typeof height === 'number' ? height : 200;
+
   return (
     <div className="metrics-line-chart">
-      <ResponsiveContainer width="100%" height={typeof height === 'number' ? height : 200}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
@@ -117,7 +120,7 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRan
             type="monotone"
             dataKey="cpu"
             name="CPU"
-            stroke="var(--chart-color-cpu)"
+            stroke="#007AFF"
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
@@ -126,34 +129,34 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRan
             type="monotone"
             dataKey="memory"
             name="Memory"
-            stroke="var(--chart-color-memory)"
+            stroke="#34C759"
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
           />
-          {showDisk && (
-            <>
-              <Line
-                type="monotone"
-                dataKey="diskRoot"
-                name="Disk (/)"
-                stroke="var(--chart-color-disk)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="diskData"
-                name="Disk (/data)"
-                stroke="var(--chart-color-disk-data)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-                connectNulls={true}
-              />
-            </>
-          )}
+          {showDisk && [
+            <Line
+              key="diskRoot"
+              type="monotone"
+              dataKey="diskRoot"
+              name="Disk (/)"
+              stroke="#FF9500"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />,
+            <Line
+              key="diskData"
+              type="monotone"
+              dataKey="diskData"
+              name="Disk (/data)"
+              stroke="#AF52DE"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+              connectNulls={true}
+            />
+          ]}
         </LineChart>
       </ResponsiveContainer>
     </div>
