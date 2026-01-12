@@ -404,7 +404,11 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
                 return uploaded_at
             if isinstance(uploaded_at, str):
                 try:
-                    return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                    parsed_dt = datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                    # timezone-naive면 UTC로 가정
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                    return parsed_dt
                 except Exception as e:
                     logger.debug(f"uploaded_at 파싱 실패, 기본값 사용: {uploaded_at} - {e}")
                     return min_dt
@@ -1159,7 +1163,11 @@ def get_customer_reviews(db, customer_id: str, limit: int = 10) -> Dict[str, any
                 return uploaded_at
             if isinstance(uploaded_at, str):
                 try:
-                    return datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                    parsed_dt = datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                    # timezone-naive면 UTC로 가정
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                    return parsed_dt
                 except Exception as e:
                     logger.debug(f"uploaded_at 파싱 실패, 기본값 사용: {uploaded_at} - {e}")
                     return min_dt
