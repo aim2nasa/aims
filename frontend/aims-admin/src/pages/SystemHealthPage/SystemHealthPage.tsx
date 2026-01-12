@@ -754,6 +754,33 @@ export const SystemHealthPage = () => {
     retry: 0, // 즉시 실패 감지
   });
 
+  // 독립 헬스 모니터의 서비스 상태를 기존 형식으로 변환
+  // 모든 훅보다 먼저 계산하여 useEffect에서 사용
+  const health = healthData ? convertHealthData(healthData) : data?.health;
+
+  // 독립 헬스 모니터 기준: aims_api(3010) 상태 확인
+  // 이 값이 unhealthy면 aims_api에서 데이터를 가져오는 모든 섹션을 unavailable로 표시
+  const isAimsApiHealthy = health?.nodeApi?.status === 'healthy';
+
+  // aims_api 상태 변경 감지용 ref (모든 훅은 조기 리턴 전에 선언해야 함)
+  const prevAimsApiStatus = useRef<boolean | null>(null);
+
+  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
+  useEffect(() => {
+    // 최초 로드 시에는 무시
+    if (prevAimsApiStatus.current === null) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      return;
+    }
+    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
+    if (prevAimsApiStatus.current !== isAimsApiHealthy) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      // 모든 관련 쿼리 즉시 갱신 (동기화)
+      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
+    }
+  }, [isAimsApiHealthy, queryClient]);
+
   // 모든 관련 쿼리를 동시에 갱신 (동기화)
   const refetchAll = useCallback(async () => {
     // 1. 독립 헬스 모니터에 강제 체크 요청 (최신 상태 수집)
@@ -774,7 +801,7 @@ export const SystemHealthPage = () => {
     ]);
   }, [queryClient]);
 
-  // 헬스 모니터 로딩 중
+  // 헬스 모니터 로딩 중 (모든 훅 선언 후에 조기 리턴)
   if (isHealthLoading) {
     return <div className="system-health-page__loading">데이터를 불러오는 중...</div>;
   }
@@ -789,30 +816,6 @@ export const SystemHealthPage = () => {
       </div>
     );
   }
-
-  // 독립 헬스 모니터의 서비스 상태를 기존 형식으로 변환
-  const health = healthData ? convertHealthData(healthData) : data?.health;
-
-  // 독립 헬스 모니터 기준: aims_api(3010) 상태 확인
-  // 이 값이 unhealthy면 aims_api에서 데이터를 가져오는 모든 섹션을 unavailable로 표시
-  const isAimsApiHealthy = health?.nodeApi?.status === 'healthy';
-
-  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
-  const prevAimsApiStatus = useRef<boolean | null>(null);
-  useEffect(() => {
-    // 최초 로드 시에는 무시
-    if (prevAimsApiStatus.current === null) {
-      prevAimsApiStatus.current = isAimsApiHealthy;
-      return;
-    }
-    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
-    if (prevAimsApiStatus.current !== isAimsApiHealthy) {
-      prevAimsApiStatus.current = isAimsApiHealthy;
-      // 모든 관련 쿼리 즉시 갱신 (동기화)
-      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
-    }
-  }, [isAimsApiHealthy, queryClient]);
 
   // 하위 호환성: 이전 API 형식 지원 (string → object)
   const normalizeHealth = (h: ServiceHealth | string | undefined): ServiceHealth => {
