@@ -69,6 +69,7 @@
 /* Metrics Line Chart */
 .metrics-line-chart {
   width: 100%;
+  min-height: 200px;
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);

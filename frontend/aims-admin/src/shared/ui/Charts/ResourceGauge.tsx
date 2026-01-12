@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell } from 'recharts';
 import './Charts.css';
 
 interface ResourceGaugeProps {
@@ -34,25 +34,23 @@ export const ResourceGauge = ({
   return (
     <div className="resource-gauge">
       <div className="resource-gauge__chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={16}
-              outerRadius={23}
-              startAngle={90}
-              endAngle={-270}
-              paddingAngle={0}
-              dataKey="value"
-              stroke="none"
-            >
-              <Cell fill={usedColor} />
-              <Cell fill={freeColor} />
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+        <PieChart width={40} height={40}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={12}
+            outerRadius={18}
+            startAngle={90}
+            endAngle={-270}
+            paddingAngle={0}
+            dataKey="value"
+            stroke="none"
+          >
+            <Cell fill={usedColor} />
+            <Cell fill={freeColor} />
+          </Pie>
+        </PieChart>
         <div className="resource-gauge__center">
           <span className="resource-gauge__value">{value.toFixed(0)}%</span>
         </div>
