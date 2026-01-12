@@ -1609,29 +1609,42 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
       });
     }
 
-    // 각 문서의 상태 분석 + DB 업데이트
-    const documentsWithStatus = await Promise.all(documents.map(async (doc) => {
-      // overallStatus 없거나 completed 아니면 DB 업데이트
+    // 🚀 N+1 최적화: 상태 업데이트가 필요한 문서 수집 후 bulkWrite
+    const bulkUpdateOps = [];
+    const updateTimestamp = utcNowDate();
+
+    // 1단계: 상태 계산 + 업데이트 필요한 문서 수집 (DB 호출 없음)
+    for (const doc of documents) {
       if (!doc.overallStatus || doc.overallStatus !== 'completed') {
         const { computed } = prepareDocumentResponse(doc);
         const newStatus = computed.overallStatus;
 
-        // DB에 저장된 값과 다르면 업데이트
         if (doc.overallStatus !== newStatus) {
-          await db.collection(COLLECTION_NAME).updateOne(
-            { _id: doc._id },
-            {
-              $set: {
-                overallStatus: newStatus,
-                overallStatusUpdatedAt: utcNowDate()
+          bulkUpdateOps.push({
+            updateOne: {
+              filter: { _id: doc._id },
+              update: {
+                $set: {
+                  overallStatus: newStatus,
+                  overallStatusUpdatedAt: updateTimestamp
+                }
               }
             }
-          );
-          // doc 객체도 업데이트 (이후 응답용)
+          });
+          // doc 객체 즉시 업데이트 (응답용)
           doc.overallStatus = newStatus;
         }
       }
+    }
 
+    // 2단계: bulkWrite로 일괄 업데이트 (1회 DB 호출)
+    if (bulkUpdateOps.length > 0) {
+      await db.collection(COLLECTION_NAME).bulkWrite(bulkUpdateOps, { ordered: false });
+      backendLogger.info('Documents', `overallStatus 일괄 업데이트: ${bulkUpdateOps.length}건`);
+    }
+
+    // 3단계: 응답 데이터 구성 (DB 호출 없음)
+    const documentsWithStatus = documents.map((doc) => {
       // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
       let customerRelation = null;
       const effectiveCustomerId = doc.customerId;
@@ -1689,7 +1702,7 @@ app.get('/api/documents/status', authenticateJWT, async (req, res) => {
         virusScan: doc.virusScan || null,  // 🔴 바이러스 스캔 정보
         ...statusInfo
       };
-    }));
+    });
 
     // 상태별 필터링
     let filteredDocuments = documentsWithStatus;
