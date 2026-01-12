@@ -353,8 +353,7 @@ describe('AnnualReportTab AR 파싱 큐 시스템 Regression 테스트', () => {
       await waitFor(() => {
         // 테이블에 완료된 AR 표시
         expect(screen.getByText('동기화테스트')).toBeInTheDocument();
-        expect(screen.getByText('최신')).toBeInTheDocument();
-      });
+              });
 
       // "분석 중" 섹션이 없어야 함
       expect(screen.queryByText('Annual Report 분석 중')).not.toBeInTheDocument();
@@ -409,8 +408,7 @@ describe('AnnualReportTab AR 파싱 큐 시스템 Regression 테스트', () => {
         // 테이블에 completed와 error 표시
         expect(screen.getByText('완료AR')).toBeInTheDocument();
         expect(screen.getByText('실패AR')).toBeInTheDocument();
-        expect(screen.getByText('최신')).toBeInTheDocument();
-        expect(screen.getByText(/실패.*\(2\/3\)/)).toBeInTheDocument();
+                expect(screen.getByText(/실패.*\(2\/3\)/)).toBeInTheDocument();
       });
     });
   });

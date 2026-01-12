@@ -6,7 +6,7 @@
  * 1. pending 상태 표시 (대기중 배지)
  * 2. processing 상태 표시 (처리중 배지 + 스피너)
  * 3. error 상태 표시 (실패 배지 + 재시도 버튼)
- * 4. completed 상태 표시 (최신 배지)
+ * 4. completed 상태 표시 (파싱일시)
  * 5. AR 문서 등록 시 즉시 Annual Report 탭에 표시
  */
 
@@ -336,27 +336,6 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
   });
 
   describe('completed 상태 (완료)', () => {
-    it('completed 상태인 최신 AR은 "최신" 배지를 표시해야 한다', async () => {
-      const completedReport = createMockARReport({
-        status: 'completed',
-        parsed_at: '2025-12-16T02:30:00.000Z',
-        total_monthly_premium: 200000,
-        contract_count: 5
-      });
-
-      mockAnnualReportsApi([completedReport]);
-
-      render(
-        <Wrapper>
-          <AnnualReportTab customer={mockCustomer} />
-        </Wrapper>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('최신')).toBeInTheDocument();
-      });
-    });
-
     it('completed 상태인 AR은 파싱일시가 표시되어야 한다', async () => {
       const completedReport = createMockARReport({
         status: 'completed',
@@ -414,54 +393,11 @@ describe('AnnualReportTab 파싱 상태 표시', () => {
 
       await waitFor(() => {
         // 상태 배지 확인
-        expect(screen.getByText('최신')).toBeInTheDocument();
         expect(screen.getByText('대기중')).toBeInTheDocument();
         // 실패 배지는 status-badge--error 클래스 내에서만 확인
         const errorBadge = document.querySelector('.status-badge--error');
         expect(errorBadge).toBeInTheDocument();
         expect(errorBadge?.textContent).toBe('실패');
-      });
-    });
-
-    it('미완료 상태(pending/processing/error)는 "최신" 배지가 표시되지 않아야 한다', async () => {
-      // pending이 가장 최신이지만 "최신" 배지는 completed 중에서만 표시
-      const reports = [
-        createMockARReport({
-          report_id: 'p1',
-          customer_name: '대기고객',
-          status: 'pending',
-          parsed_at: null,
-          uploaded_at: '2025-12-16T03:00:00.000Z'  // 가장 최신
-        }),
-        createMockARReport({
-          report_id: 'c1',
-          customer_name: '완료고객',
-          status: 'completed',
-          uploaded_at: '2025-12-16T02:30:00.000Z'
-        })
-      ];
-
-      mockAnnualReportsApi(reports);
-
-      render(
-        <Wrapper>
-          <AnnualReportTab customer={mockCustomer} />
-        </Wrapper>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('대기중')).toBeInTheDocument();
-        expect(screen.getByText('최신')).toBeInTheDocument();
-      });
-
-      // pending 행에는 "최신" 배지가 없어야 함
-      const pendingRow = screen.getByText('대기고객').closest('.annual-report-row');
-      // pending 행에서 status-badge 중 status-badge--pending만 있어야 함
-      const badges = pendingRow?.querySelectorAll('.status-badge');
-      badges?.forEach(badge => {
-        if (!badge.classList.contains('status-badge--pending')) {
-          expect(badge.textContent).not.toBe('최신');
-        }
       });
     });
   });

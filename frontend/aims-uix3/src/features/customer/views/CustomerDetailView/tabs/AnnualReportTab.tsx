@@ -958,20 +958,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
         <div className="annual-report-table-body">
           {visibleReports.map((report) => {
             const globalIndex = reports.indexOf(report);
-            // 완료된 보고서 중에서만 최신 판단
-            const completedReports = reports.filter(r => r.status === 'completed' || !r.status);
-            const isLatestCompleted = completedReports.length > 0 && completedReports[0].report_id === report.report_id;
             const formattedDate = formatDate(report.issue_date);
             const isSelected = selectedIndices.has(globalIndex);
             const isError = report.status === 'error';
             const isProcessing = report.status === 'processing';
             const isPending = report.status === 'pending';
-            const isNotCompleted = isError || isProcessing || isPending;
 
             return (
               <div
                 key={report.report_id}
-                className={`annual-report-row ${isLatestCompleted && !isNotCompleted ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
+                className={`annual-report-row ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
                 onClick={() => handleViewReport(report)}
               >
                 {isDevMode && (
@@ -1033,10 +1029,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                       </span>
                       <span className="retry-indicator">[{report.retry_count || 1}/3]</span>
                     </>
-                  )}
-                  {/* 완료 상태 중 최신 */}
-                  {!isNotCompleted && isLatestCompleted && (
-                    <span className="status-badge">최신</span>
                   )}
                 </div>
               </div>
