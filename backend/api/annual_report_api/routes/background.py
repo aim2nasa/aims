@@ -59,19 +59,35 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         if not doc.get("is_annual_report"):
             return {"success": False, "error": "AR 문서가 아님"}
 
-        # 2. 파일 경로 확인
+        # 2. 파일 경로 확인 (업로드 완료 대기)
         file_path = doc.get("upload", {}).get("destPath")
         if not file_path:
-            # 🔥 파일 경로 없음 → error 상태로 업데이트 (결과 보장)
-            error_msg = "파일 경로 없음"
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {
-                    "ar_parsing_status": "error",
-                    "ar_parsing_error": error_msg
-                }}
-            )
-            return {"success": False, "error": error_msg}
+            # 🔧 파일 업로드가 아직 완료되지 않은 경우 - 대기 후 재조회
+            import time
+            max_wait_attempts = 5  # 최대 5번 대기 (총 10초)
+            wait_interval = 2  # 2초 간격
+
+            for attempt in range(max_wait_attempts):
+                time.sleep(wait_interval)
+                # 파일 재조회
+                doc = db["files"].find_one({"_id": ObjectId(file_id)})
+                if doc:
+                    file_path = doc.get("upload", {}).get("destPath")
+                    if file_path:
+                        logger.info(f"✅ 파일 경로 대기 후 발견 (시도 {attempt + 1}): {file_path}")
+                        break
+
+            # 대기 후에도 파일 경로가 없으면 에러
+            if not file_path:
+                error_msg = "파일 경로 없음 (업로드 미완료)"
+                db["files"].update_one(
+                    {"_id": ObjectId(file_id)},
+                    {"$set": {
+                        "ar_parsing_status": "error",
+                        "ar_parsing_error": error_msg
+                    }}
+                )
+                return {"success": False, "error": error_msg}
 
         import os
         # file_path는 이미 절대 경로 (/data/files/users/...)
