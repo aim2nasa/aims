@@ -541,13 +541,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1)
   }, [searchTerm])
 
-  // 🍎 페이지, 페이지네이션, 정렬, 검색어 변경 시 문서 다시 가져오기
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    fetchDocuments(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // fetchDocuments를 dependency에 포함하면 무한 루프 발생 (fetchDocuments 자체가 자주 재생성됨)
-  }, [currentPage, itemsPerPage, sortField, sortDirection, searchTerm])
+  // 🔧 중복 useEffect 제거 (2026-01-12)
+  // - 기존: line 348-360과 동일한 의존성으로 fetchDocuments(false) 호출
+  // - 문제: isInitialMountRef 체크 없이 초기 마운트 시에도 실행되어 중복 API 호출
+  // - 해결: line 348-360이 동일한 역할을 하고 isInitialMountRef로 초기 스킵 처리하므로 제거
 
   // State 객체
   const state: DocumentStatusState = useMemo(
