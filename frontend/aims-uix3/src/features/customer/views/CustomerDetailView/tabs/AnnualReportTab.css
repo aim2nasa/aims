@@ -277,7 +277,8 @@ html[data-theme="dark"] .parsing-file-name {
   flex-direction: column;
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
+  overflow-x: auto;    /* 수평 스크롤만 (카드 하단) */
+  overflow-y: hidden;  /* 수직 스크롤은 table-body에서 */
 }
 
 /* ==================== 🍎 TABLE HEADER - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) ==================== */
@@ -322,6 +323,7 @@ html[data-theme="dark"] .parsing-file-name {
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
+  overflow-x: hidden;  /* 수평 스크롤은 container에서만 */
   padding-right: 4px;
 }
 
