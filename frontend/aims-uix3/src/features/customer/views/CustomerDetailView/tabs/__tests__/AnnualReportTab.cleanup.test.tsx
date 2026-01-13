@@ -117,7 +117,9 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-// TODO: SSE 통합 후 테스트 mock 수정 필요
+// NOTE: 이 테스트는 AnnualReportTab에서 cleanup API를 자동 호출하는 기능을 테스트하지만,
+// 현재 AnnualReportTab.tsx에는 cleanup 로직이 없음. cleanup은 annualReportApi에만 존재함.
+// 해당 기능이 구현되면 테스트 재활성화 필요.
 describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -165,7 +167,7 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
         deleted_count: 0
       };
 
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
         data: [
@@ -174,25 +176,26 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
             parsed_at: '2025-11-03T06:25:00.000Z',
             customer_name: '테스트고객'
           }
-        ]
+        ],
+        count: 1,
+        total: 1
       };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
-      // Cleanup API는 이제 api.post 사용
+      // Cleanup API는 api.post 사용
       mockApiPost
         .mockResolvedValueOnce(mockCleanupResponse1)
         .mockResolvedValueOnce(mockCleanupResponse2);
-
-      // Annual Reports 목록 조회는 여전히 api.get
-      // 하지만 getAnnualReports도 api.get을 사용하므로 mockApiGet 설정 필요
-      // 테스트를 단순화하기 위해 fetch로 남겨둠
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Annual Reports API
-          ok: true,
-          json: async () => mockAnnualReports
-        });
 
       render(
         <Wrapper>
@@ -224,21 +227,24 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
         }
       };
 
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
-        data: []
+        data: [],
+        count: 0,
+        total: 0
       };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
-
-      // fetch는 Annual Reports용
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Annual Reports API
-          ok: true,
-          json: async () => mockAnnualReports
-        });
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
       render(
         <Wrapper>
@@ -288,24 +294,27 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
         deleted_count: 1
       };
 
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
-        data: []
+        data: [],
+        count: 0,
+        total: 0
       };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
       // Cleanup API는 api.post 사용
       mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
-
-      // fetch는 Annual Reports용
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Annual Reports API
-          ok: true,
-          json: async () => mockAnnualReports
-        });
 
       render(
         <Wrapper>
@@ -356,24 +365,27 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
         deleted_count: 0
       };
 
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
-        data: []
+        data: [],
+        count: 0,
+        total: 0
       };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
       // Cleanup API는 api.post 사용
       mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
-
-      // fetch는 Annual Reports용
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Annual Reports API
-          ok: true,
-          json: async () => mockAnnualReports
-        });
 
       render(
         <Wrapper>
@@ -410,7 +422,7 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
         }
       };
 
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
         data: [
@@ -419,7 +431,9 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
             parsed_at: '2025-11-03T06:25:00.000Z',
             customer_name: '테스트고객'
           }
-        ]
+        ],
+        count: 1,
+        total: 1
       };
 
       // Documents API와 Annual Reports API 모두 api.get 사용
@@ -454,7 +468,7 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
     });
 
     it('Documents API 실패 시 정리를 건너뛰고 AR 목록을 표시해야 한다', async () => {
-      // Annual Reports API 응답
+      // Annual Reports API 응답 (백엔드 원본 구조)
       const mockAnnualReports = {
         success: true,
         data: [
@@ -463,7 +477,9 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
             parsed_at: '2025-11-03T06:25:00.000Z',
             customer_name: '테스트고객'
           }
-        ]
+        ],
+        count: 1,
+        total: 1
       };
 
       // Documents API는 실패, Annual Reports API는 성공
@@ -535,20 +551,24 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
       const mockCleanupResponse3 = { success: true, deleted_count: 0 };
 
       // Annual Reports API 응답
-      const mockAnnualReports = { success: true, data: [] };
+      const mockAnnualReports = { success: true, data: [], count: 0, total: 0 };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
       // Cleanup API는 api.post 사용
       mockApiPost
         .mockResolvedValueOnce(mockCleanupResponse1)
         .mockResolvedValueOnce(mockCleanupResponse2)
         .mockResolvedValueOnce(mockCleanupResponse3);
-
-      // fetch는 Annual Reports용
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockAnnualReports });
 
       render(
         <Wrapper>
@@ -587,17 +607,21 @@ describe.skip('AnnualReportTab 중복 AR 자동 정리', () => {
       const mockCleanupResponse = { success: true, deleted_count: 1 };
 
       // Annual Reports API 응답
-      const mockAnnualReports = { success: true, data: [] };
+      const mockAnnualReports = { success: true, data: [], count: 0, total: 0 };
 
-      // Documents API는 api.get 사용
-      mockApiGet.mockResolvedValue(mockDocuments);
+      // api.get은 URL 패턴에 따라 다른 응답 반환
+      mockApiGet.mockImplementation((url: string) => {
+        if (url.includes('/documents')) {
+          return Promise.resolve(mockDocuments);
+        }
+        if (url.includes('/annual-reports')) {
+          return Promise.resolve(mockAnnualReports);
+        }
+        return Promise.resolve({ success: true, data: [] });
+      });
 
       // Cleanup API는 api.post 사용
       mockApiPost.mockResolvedValueOnce(mockCleanupResponse);
-
-      // fetch는 Annual Reports용
-      (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockAnnualReports });
 
       render(
         <Wrapper>
