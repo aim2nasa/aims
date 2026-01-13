@@ -611,17 +611,17 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                 {isExpanded && contractsData && contractsData.length > 0 && (
                   <div className="ar-accordion__content">
                     <div className="ar-contracts-header">
-                      <span className="ar-contracts-header__seq">순</span>
+                      <span className="ar-contracts-header__seq">순번</span>
                       <span className="ar-contracts-header__policy">증권번호</span>
                       <span className="ar-contracts-header__product">보험상품</span>
                       <span className="ar-contracts-header__holder">계약자</span>
                       <span className="ar-contracts-header__insured">피보험자</span>
                       <span className="ar-contracts-header__date">계약일</span>
-                      <span className="ar-contracts-header__status">상태</span>
+                      <span className="ar-contracts-header__status">계약상태</span>
                       <span className="ar-contracts-header__amount">가입금액</span>
                       <span className="ar-contracts-header__period">보험기간</span>
                       <span className="ar-contracts-header__payment">납입기간</span>
-                      <span className="ar-contracts-header__premium">보험료</span>
+                      <span className="ar-contracts-header__premium">보험료(원)</span>
                     </div>
                     {contractsData.map((contract, idx) => (
                       <div key={`${report.report_id}-${idx}`} className="ar-contract-item">

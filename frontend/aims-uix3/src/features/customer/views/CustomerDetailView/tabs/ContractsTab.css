@@ -486,15 +486,16 @@ html[data-theme="dark"] .ar-accordion {
   border-color: var(--color-ios-separator-dark);
 }
 
-/* AR 아코디언 헤더 (요약 행) */
+/* AR 아코디언 헤더 (요약 행) - Annual Report 탭과 동일한 스타일 */
 .ar-accordion__header {
   display: grid;
   grid-template-columns: 20px 80px 80px 140px 100px 60px;
   gap: 8px;
   align-items: center;
-  padding: 8px 12px;
+  height: 32px; /* Annual Report 행과 동일 */
+  padding: 6px 10px; /* Annual Report 행과 동일 */
   cursor: pointer;
-  font-size: var(--font-size-caption-1);
+  font-size: var(--font-size-footnote); /* 13px - Annual Report 행과 동일 */
   color: var(--color-ios-text-primary-light);
   transition: background-color 0.15s ease-out;
 }
@@ -606,13 +607,14 @@ html[data-theme="dark"] .ar-accordion__content--empty {
   color: var(--color-ios-text-tertiary-dark);
 }
 
-/* AR 계약 헤더 - 11컬럼 (모달과 동일한 정보) */
+/* AR 계약 헤더 - 11컬럼 (가로 스크롤) */
 .ar-contracts-header {
   display: grid;
-  grid-template-columns: 22px 80px minmax(100px, 1fr) 50px 50px 70px 55px 55px 45px 45px 65px;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 10px;
+  grid-template-columns: 28px 70px 180px 50px 50px 70px 55px 70px 50px 50px 70px;
+  gap: 6px;
+  min-width: 800px;
+  padding: 6px 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
@@ -636,16 +638,19 @@ html[data-theme="dark"] .ar-contracts-header {
 .ar-contracts-header__payment { text-align: center; }
 .ar-contracts-header__premium { text-align: right; }
 
-/* AR 계약 아이템 - 11컬럼 */
+/* AR 계약 아이템 - 11컬럼 (가로 스크롤) */
 .ar-contract-item {
   display: grid;
-  grid-template-columns: 22px 80px minmax(100px, 1fr) 50px 50px 70px 55px 55px 45px 45px 65px;
-  gap: 4px;
-  padding: 3px 8px;
-  font-size: 11px;
+  grid-template-columns: 28px 70px 180px 50px 50px 70px 55px 70px 50px 50px 70px;
+  gap: 6px;
+  min-width: 800px;
+  height: 28px;
+  padding: 4px 10px;
+  align-items: center;
+  font-size: 12px;
   color: var(--color-ios-text-primary-light);
   background: var(--color-ios-bg-primary-light);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 html[data-theme="dark"] .ar-contract-item {
