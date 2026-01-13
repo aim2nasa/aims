@@ -1020,8 +1020,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 
 /* iOS Dropdown 컴포넌트 스타일 오버라이드 */
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown {
-  width: 42px;
-  min-width: unset;
+  width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__trigger {
@@ -1295,8 +1296,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 /* iOS Dropdown 컴포넌트 스타일 오버라이드 */
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown {
-  width: 42px;
-  min-width: unset;
+  width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__trigger {
@@ -1677,8 +1679,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 
 /* iOS Dropdown 컴포넌트 스타일 오버라이드 */
 .customer-full-detail__section-content--report .pagination-limit .ios-dropdown {
-  width: 42px;
-  min-width: unset;
+  width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .customer-full-detail__section-content--report .pagination-limit .ios-dropdown__trigger {
