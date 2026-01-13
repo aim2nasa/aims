@@ -64,7 +64,7 @@ type SortDirection = 'asc' | 'desc'
 // 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
 const SORT_ICON_WIDTH = 14
 
-// 🍎 컬럼 리사이즈 설정
+// 🍎 컬럼 리사이즈 설정 (수동 계약 테이블)
 const CONTRACTS_COLUMNS: ColumnConfig[] = [
   { id: 'product', minWidth: 120, maxWidth: 450 },
   { id: 'contractDate', minWidth: 80, maxWidth: 135 },
@@ -73,6 +73,21 @@ const CONTRACTS_COLUMNS: ColumnConfig[] = [
   { id: 'paymentDay', minWidth: 50, maxWidth: 105 },
   { id: 'paymentCycle', minWidth: 60, maxWidth: 135 },
   { id: 'paymentStatus', minWidth: 70, maxWidth: 145 }
+]
+
+// 🍎 AR 계약 이력용 컬럼 리사이즈 설정 (11컬럼)
+const AR_HISTORY_COLUMNS: ColumnConfig[] = [
+  { id: 'seq', minWidth: 28, maxWidth: 50 },           // 순번
+  { id: 'policy', minWidth: 70, maxWidth: 150 },       // 증권번호
+  { id: 'product', minWidth: 100, maxWidth: 350 },     // 보험상품
+  { id: 'holder', minWidth: 40, maxWidth: 100 },       // 계약자
+  { id: 'insured', minWidth: 40, maxWidth: 100 },      // 피보험자
+  { id: 'date', minWidth: 60, maxWidth: 100 },         // 계약일
+  { id: 'status', minWidth: 45, maxWidth: 80 },        // 계약상태
+  { id: 'amount', minWidth: 50, maxWidth: 100 },       // 가입금액
+  { id: 'period', minWidth: 40, maxWidth: 80 },        // 보험기간
+  { id: 'payment', minWidth: 40, maxWidth: 80 },       // 납입기간
+  { id: 'premium', minWidth: 60, maxWidth: 120 },      // 보험료
 ]
 
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
@@ -502,6 +517,81 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   const isEmpty = contracts.length === 0
 
+  // 🍎 AR 계약 이력용 동적 칼럼 폭 계산
+  const arHistoryColumnWidths = useMemo(() => {
+    if (contractHistories.length === 0) {
+      return {
+        seq: 28,
+        policy: 90,
+        product: 180,
+        holder: 50,
+        insured: 50,
+        date: 70,
+        status: 55,
+        amount: 60,
+        period: 50,
+        payment: 50,
+        premium: 80,
+      }
+    }
+
+    // 각 컬럼별 최대 폭 계산
+    let maxPolicy = 0
+    let maxProduct = 0
+    let maxHolder = 0
+    let maxInsured = 0
+    let maxDate = 0
+    let maxStatus = 0
+    let maxAmount = 0
+    let maxPeriod = 0
+    let maxPayment = 0
+    let maxPremium = 0
+
+    for (const history of contractHistories) {
+      maxPolicy = Math.max(maxPolicy, calculateTextWidth(history.policyNumber || ''))
+      maxProduct = Math.max(maxProduct, calculateTextWidth(history.productName || ''))
+      maxHolder = Math.max(maxHolder, calculateTextWidth(history.holder || ''))
+      maxInsured = Math.max(maxInsured, calculateTextWidth(history.insured || ''))
+      maxDate = Math.max(maxDate, calculateTextWidth(history.contractDate || ''))
+      maxStatus = Math.max(maxStatus, calculateTextWidth(history.latestSnapshot?.status || ''))
+      maxAmount = Math.max(maxAmount, calculateTextWidth(
+        history.latestSnapshot?.coverageAmount?.toLocaleString('ko-KR') || ''
+      ))
+      maxPeriod = Math.max(maxPeriod, calculateTextWidth(history.latestSnapshot?.insurancePeriod || ''))
+      maxPayment = Math.max(maxPayment, calculateTextWidth(history.latestSnapshot?.paymentPeriod || ''))
+      maxPremium = Math.max(maxPremium, calculateTextWidth(
+        history.latestSnapshot?.premium?.toLocaleString('ko-KR') || ''
+      ))
+    }
+
+    // 패딩과 여유 공간 추가 (16px), 최소/최대 범위 적용
+    const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val))
+    return {
+      seq: 28,  // 순번은 고정
+      policy: clamp(maxPolicy + 30, 70, 150),    // 토글 아이콘 포함
+      product: clamp(maxProduct + 16, 100, 350),
+      holder: clamp(maxHolder + 12, 40, 100),
+      insured: clamp(maxInsured + 12, 40, 100),
+      date: clamp(maxDate + 12, 60, 100),
+      status: clamp(maxStatus + 12, 45, 80),
+      amount: clamp(maxAmount + 12, 50, 100),
+      period: clamp(maxPeriod + 12, 40, 80),
+      payment: clamp(maxPayment + 12, 40, 80),
+      premium: clamp(maxPremium + 12, 60, 120),
+    }
+  }, [contractHistories])
+
+  // 🍎 AR 계약 이력용 컬럼 리사이즈 훅
+  const {
+    columnWidths: arColumnWidths,
+    isResizing: isArResizing,
+    getResizeHandleProps: getArResizeHandleProps,
+  } = useColumnResize({
+    storageKey: 'ar-history-tab',
+    columns: AR_HISTORY_COLUMNS,
+    defaultWidths: arHistoryColumnWidths,
+  })
+
   // 🍎 증권번호 아코디언 토글 핸들러
   const handlePolicyToggle = useCallback((policyNumber: string) => {
     setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
@@ -582,21 +672,63 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 증권번호 기준 계약 이력 (아코디언) - 11컬럼 */}
+      {/* 🍎 증권번호 기준 계약 이력 (아코디언) - 11컬럼, 리사이즈 가능 */}
       {contractHistories.length > 0 && (
-        <div className="contract-history-section">
-          {/* 헤더 행 */}
+        <div
+          className={`contract-history-section${isArResizing ? ' is-resizing' : ''}`}
+          style={{
+            '--ar-seq-width': `${arColumnWidths['seq'] || arHistoryColumnWidths.seq}px`,
+            '--ar-policy-width': `${arColumnWidths['policy'] || arHistoryColumnWidths.policy}px`,
+            '--ar-product-width': `${arColumnWidths['product'] || arHistoryColumnWidths.product}px`,
+            '--ar-holder-width': `${arColumnWidths['holder'] || arHistoryColumnWidths.holder}px`,
+            '--ar-insured-width': `${arColumnWidths['insured'] || arHistoryColumnWidths.insured}px`,
+            '--ar-date-width': `${arColumnWidths['date'] || arHistoryColumnWidths.date}px`,
+            '--ar-status-width': `${arColumnWidths['status'] || arHistoryColumnWidths.status}px`,
+            '--ar-amount-width': `${arColumnWidths['amount'] || arHistoryColumnWidths.amount}px`,
+            '--ar-period-width': `${arColumnWidths['period'] || arHistoryColumnWidths.period}px`,
+            '--ar-payment-width': `${arColumnWidths['payment'] || arHistoryColumnWidths.payment}px`,
+            '--ar-premium-width': `${arColumnWidths['premium'] || arHistoryColumnWidths.premium}px`,
+          } as React.CSSProperties}
+        >
+          {/* 헤더 행 (리사이즈 핸들 포함) */}
           <div className="contract-history-header">
             <span className="contract-history-header__seq">순번</span>
-            <span className="contract-history-header__policy">증권번호</span>
-            <span className="contract-history-header__product">보험상품</span>
-            <span className="contract-history-header__holder">계약자</span>
-            <span className="contract-history-header__insured">피보험자</span>
-            <span className="contract-history-header__date">계약일</span>
-            <span className="contract-history-header__status">계약상태</span>
-            <span className="contract-history-header__amount">가입금액</span>
-            <span className="contract-history-header__period">보험기간</span>
-            <span className="contract-history-header__payment">납입기간</span>
+            <span className="contract-history-header__policy resizable-header">
+              증권번호
+              <div {...getArResizeHandleProps('policy')} />
+            </span>
+            <span className="contract-history-header__product resizable-header">
+              보험상품
+              <div {...getArResizeHandleProps('product')} />
+            </span>
+            <span className="contract-history-header__holder resizable-header">
+              계약자
+              <div {...getArResizeHandleProps('holder')} />
+            </span>
+            <span className="contract-history-header__insured resizable-header">
+              피보험자
+              <div {...getArResizeHandleProps('insured')} />
+            </span>
+            <span className="contract-history-header__date resizable-header">
+              계약일
+              <div {...getArResizeHandleProps('date')} />
+            </span>
+            <span className="contract-history-header__status resizable-header">
+              계약상태
+              <div {...getArResizeHandleProps('status')} />
+            </span>
+            <span className="contract-history-header__amount resizable-header">
+              가입금액
+              <div {...getArResizeHandleProps('amount')} />
+            </span>
+            <span className="contract-history-header__period resizable-header">
+              보험기간
+              <div {...getArResizeHandleProps('period')} />
+            </span>
+            <span className="contract-history-header__payment resizable-header">
+              납입기간
+              <div {...getArResizeHandleProps('payment')} />
+            </span>
             <span className="contract-history-header__premium">보험료(원)</span>
           </div>
           <div className="contract-history-list">

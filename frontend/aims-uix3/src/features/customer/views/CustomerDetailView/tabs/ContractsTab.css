@@ -781,6 +781,7 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
 
 /* =====================================================
    증권번호 기준 계약 이력 아코디언 (Phase 5) - 11컬럼
+   CSS 변수 기반 동적 폭 + 리사이즈 가능
    ===================================================== */
 
 .contract-history-section {
@@ -790,10 +791,28 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   overflow-x: auto;
 }
 
-/* 11컬럼 헤더 */
+/* 리사이즈 중 텍스트 선택 방지 */
+.contract-history-section.is-resizing {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: col-resize;
+}
+
+/* 11컬럼 헤더 - CSS 변수 기반 동적 폭 */
 .contract-history-header {
   display: grid;
-  grid-template-columns: 28px 90px 180px 50px 50px 70px 55px 60px 50px 50px 80px;
+  grid-template-columns:
+    var(--ar-seq-width, 28px)
+    var(--ar-policy-width, 90px)
+    var(--ar-product-width, 180px)
+    var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
+    var(--ar-date-width, 70px)
+    var(--ar-status-width, 55px)
+    var(--ar-amount-width, 60px)
+    var(--ar-period-width, 50px)
+    var(--ar-payment-width, 50px)
+    var(--ar-premium-width, 80px);
   gap: 6px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-2);
@@ -801,7 +820,9 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   color: var(--color-ios-text-tertiary-light);
   background: var(--color-ios-bg-secondary-light);
   border-radius: 4px;
-  min-width: 800px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 html[data-theme="dark"] .contract-history-header {
@@ -809,11 +830,17 @@ html[data-theme="dark"] .contract-history-header {
   background: var(--color-ios-bg-secondary-dark);
 }
 
+/* 리사이즈 가능한 헤더 셀 */
+.contract-history-header > .resizable-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .contract-history-list {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-width: 800px;
 }
 
 /* 아코디언 컨테이너 */
@@ -826,10 +853,21 @@ html[data-theme="dark"] .contract-history-accordion {
   background: var(--color-ios-bg-primary-dark);
 }
 
-/* 아코디언 헤더 (11컬럼 계약 행) */
+/* 아코디언 헤더 (11컬럼 계약 행) - CSS 변수 기반 동적 폭 */
 .contract-history-accordion__header {
   display: grid;
-  grid-template-columns: 28px 90px 180px 50px 50px 70px 55px 60px 50px 50px 80px;
+  grid-template-columns:
+    var(--ar-seq-width, 28px)
+    var(--ar-policy-width, 90px)
+    var(--ar-product-width, 180px)
+    var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
+    var(--ar-date-width, 70px)
+    var(--ar-status-width, 55px)
+    var(--ar-amount-width, 60px)
+    var(--ar-period-width, 50px)
+    var(--ar-payment-width, 50px)
+    var(--ar-premium-width, 80px);
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
