@@ -12,7 +12,13 @@ import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
 import { ContractService } from '@/services/contractService'
 import { ContractUtils } from '@/entities/contract/model'
-import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi'
+import {
+  AnnualReportApi,
+  type AnnualReport,
+  type ContractHistory,
+  groupContractsByPolicyNumber,
+  getChangedFields,
+} from '@/features/customer/api/annualReportApi'
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
 import { Tooltip } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
@@ -96,7 +102,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   // 🍎 AR 기반 계약 정보 상태
   const [arReports, setArReports] = useState<AnnualReport[]>([])
-  const [expandedArId, setExpandedArId] = useState<string | null>(null)
+  const [contractHistories, setContractHistories] = useState<ContractHistory[]>([])
+  const [expandedPolicyNumber, setExpandedPolicyNumber] = useState<string | null>(null)
   const [isLoadingAr, setIsLoadingAr] = useState(false)
 
   // 🍎 검색어 상태 (외부/내부)
@@ -246,6 +253,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             status: r.status || 'completed',
           })) as AnnualReport[]
         setArReports(completedReports)
+
+        // 증권번호별 계약 이력으로 변환
+        const histories = groupContractsByPolicyNumber(completedReports)
+        setContractHistories(histories)
       }
     } catch (err) {
       console.error('[ContractsTab] AR 로드 실패:', err)
@@ -491,9 +502,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   const isEmpty = contracts.length === 0
 
-  // 🍎 AR 아코디언 토글 핸들러
-  const handleArToggle = useCallback((reportId: string) => {
-    setExpandedArId(prev => prev === reportId ? null : reportId)
+  // 🍎 증권번호 아코디언 토글 핸들러
+  const handlePolicyToggle = useCallback((policyNumber: string) => {
+    setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
   }, [])
 
   const renderState = () => {
@@ -531,8 +542,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       )
     }
 
-    // AR 데이터가 있으면 빈 상태 메시지 표시 안 함
-    if (isEmpty && arReports.length === 0) {
+    // AR 계약 이력이 있으면 빈 상태 메시지 표시 안 함
+    if (isEmpty && contractHistories.length === 0) {
       return (
         <div className="customer-contracts__state customer-contracts__state--empty">
           <SFSymbol
@@ -571,113 +582,120 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 AR 기반 계약 정보 (아코디언) - 제목 없이 컴팩트하게 */}
-      {arReports.length > 0 && (
-        <div className="ar-section__list">
-          {arReports.map((report) => {
-            const isExpanded = expandedArId === report.report_id
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const contractsData = report.contracts as any[]
+      {/* 🍎 증권번호 기준 계약 이력 (아코디언) - 11컬럼 */}
+      {contractHistories.length > 0 && (
+        <div className="contract-history-section">
+          {/* 헤더 행 */}
+          <div className="contract-history-header">
+            <span className="contract-history-header__seq">순번</span>
+            <span className="contract-history-header__policy">증권번호</span>
+            <span className="contract-history-header__product">보험상품</span>
+            <span className="contract-history-header__holder">계약자</span>
+            <span className="contract-history-header__insured">피보험자</span>
+            <span className="contract-history-header__date">계약일</span>
+            <span className="contract-history-header__status">계약상태</span>
+            <span className="contract-history-header__amount">가입금액</span>
+            <span className="contract-history-header__period">보험기간</span>
+            <span className="contract-history-header__payment">납입기간</span>
+            <span className="contract-history-header__premium">보험료(원)</span>
+          </div>
+          <div className="contract-history-list">
+            {contractHistories.map((history, idx) => {
+              const isExpanded = expandedPolicyNumber === history.policyNumber
+              const { latestSnapshot } = history
 
-            return (
-              <div key={report.report_id} className="ar-accordion">
-                {/* AR 요약 행 */}
-                <div
-                  className={`ar-accordion__header ${isExpanded ? 'ar-accordion__header--expanded' : ''}`}
-                  onClick={() => handleArToggle(report.report_id)}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={isExpanded ? 'true' : 'false'}
-                >
-                  <span className="ar-accordion__toggle">
-                    {isExpanded ? '▼' : '▶'}
-                  </span>
-                  <span className="ar-accordion__owner">{report.customer_name || '-'}</span>
-                  <span className="ar-accordion__issue-date">{formatDate(report.issue_date)}</span>
-                  <span className="ar-accordion__parsed-at">
-                    {report.parsed_at ? AnnualReportApi.formatDateTime(report.parsed_at) : '-'}
-                  </span>
-                  <span className="ar-accordion__premium">
-                    {report.total_monthly_premium != null
-                      ? AnnualReportApi.formatCurrency(report.total_monthly_premium)
-                      : '-'}
-                  </span>
-                  <span className="ar-accordion__count">
-                    {report.contract_count != null ? `${report.contract_count}건` : '-'}
-                  </span>
-                </div>
+              return (
+                <div key={history.policyNumber} className="contract-history-accordion">
+                  {/* 계약 요약 행 (11컬럼) */}
+                  <div
+                    className={`contract-history-accordion__header ${isExpanded ? 'contract-history-accordion__header--expanded' : ''}`}
+                    onClick={() => handlePolicyToggle(history.policyNumber)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded ? 'true' : 'false'}
+                  >
+                    <span className="contract-history-item__seq">{idx + 1}</span>
+                    <span className="contract-history-item__policy">
+                      <span className="contract-history-item__toggle">{isExpanded ? '▼' : '▶'}</span>
+                      {history.policyNumber}
+                    </span>
+                    <Tooltip content={history.productName || '-'}>
+                      <span className="contract-history-item__product">{history.productName || '-'}</span>
+                    </Tooltip>
+                    <span className="contract-history-item__holder">{history.holder || '-'}</span>
+                    <span className="contract-history-item__insured">{history.insured || '-'}</span>
+                    <span className="contract-history-item__date">{history.contractDate || '-'}</span>
+                    <span className={`contract-history-item__status contract-history-item__status--${(latestSnapshot.status || '').replace(/\s/g, '-')}`}>
+                      {latestSnapshot.status || '-'}
+                    </span>
+                    <span className="contract-history-item__amount">
+                      {latestSnapshot.coverageAmount ? latestSnapshot.coverageAmount.toLocaleString('ko-KR') : '-'}
+                    </span>
+                    <span className="contract-history-item__period">{latestSnapshot.insurancePeriod || '-'}</span>
+                    <span className="contract-history-item__payment">{latestSnapshot.paymentPeriod || '-'}</span>
+                    <span className="contract-history-item__premium">
+                      {latestSnapshot.premium ? latestSnapshot.premium.toLocaleString('ko-KR') : '-'}
+                    </span>
+                  </div>
 
-                {/* AR 상세 계약 목록 (펼침 시) - 모달과 동일한 상세 정보 */}
-                {isExpanded && contractsData && contractsData.length > 0 && (
-                  <div className="ar-accordion__content">
-                    <div className="ar-contracts-header">
-                      <span className="ar-contracts-header__seq">순번</span>
-                      <span className="ar-contracts-header__policy">증권번호</span>
-                      <span className="ar-contracts-header__product">보험상품</span>
-                      <span className="ar-contracts-header__holder">계약자</span>
-                      <span className="ar-contracts-header__insured">피보험자</span>
-                      <span className="ar-contracts-header__date">계약일</span>
-                      <span className="ar-contracts-header__status">계약상태</span>
-                      <span className="ar-contracts-header__amount">가입금액</span>
-                      <span className="ar-contracts-header__period">보험기간</span>
-                      <span className="ar-contracts-header__payment">납입기간</span>
-                      <span className="ar-contracts-header__premium">보험료(원)</span>
-                    </div>
-                    {contractsData.map((contract, idx) => (
-                      <div key={`${report.report_id}-${idx}`} className="ar-contract-item">
-                        <span className="ar-contract-item__seq">
-                          {contract['순번'] || idx + 1}
-                        </span>
-                        <span className="ar-contract-item__policy">
-                          {contract['증권번호'] || '-'}
-                        </span>
-                        <Tooltip content={contract['보험상품'] || '-'}>
-                          <span className="ar-contract-item__product">
-                            {contract['보험상품'] || '-'}
-                          </span>
-                        </Tooltip>
-                        <span className="ar-contract-item__holder">
-                          {contract['계약자'] || '-'}
-                        </span>
-                        <span className="ar-contract-item__insured">
-                          {contract['피보험자'] || '-'}
-                        </span>
-                        <span className="ar-contract-item__date">
-                          {contract['계약일'] || '-'}
-                        </span>
-                        <span className={`ar-contract-item__status ar-contract-item__status--${(contract['계약상태'] || '').replace(/\s/g, '-')}`}>
-                          {contract['계약상태'] || '-'}
-                        </span>
-                        <span className="ar-contract-item__amount">
-                          {contract['가입금액(만원)']
-                            ? contract['가입금액(만원)'].toLocaleString('ko-KR')
-                            : '-'}
-                        </span>
-                        <span className="ar-contract-item__period">
-                          {contract['보험기간'] || '-'}
-                        </span>
-                        <span className="ar-contract-item__payment">
-                          {contract['납입기간'] || '-'}
-                        </span>
-                        <span className="ar-contract-item__premium">
-                          {contract['보험료(원)']
-                            ? contract['보험료(원)'].toLocaleString('ko-KR')
-                            : '-'}
-                        </span>
+                  {/* 스냅샷 이력 (펼침 시) - 발행일별 변경 이력 */}
+                  {isExpanded && history.snapshots.length > 1 && (
+                    <div className="contract-history-accordion__content">
+                      <div className="contract-history-snapshots-title">
+                        <span>📋 발행일별 이력 ({history.snapshots.length}건)</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="contract-history-snapshots-header">
+                        <span className="snapshot-header__issue-date">발행일</span>
+                        <span className="snapshot-header__status">계약상태</span>
+                        <span className="snapshot-header__coverage">가입금액</span>
+                        <span className="snapshot-header__period">보험기간</span>
+                        <span className="snapshot-header__payment">납입기간</span>
+                        <span className="snapshot-header__premium">보험료(원)</span>
+                      </div>
+                      {history.snapshots.map((snapshot, snapshotIdx) => {
+                        const prevSnapshot = history.snapshots[snapshotIdx + 1]
+                        const changedFields = getChangedFields(snapshot, prevSnapshot)
+                        const hasChanges = changedFields.length > 0
 
-                {/* 계약 없음 메시지 */}
-                {isExpanded && (!contractsData || contractsData.length === 0) && (
-                  <div className="ar-accordion__content ar-accordion__content--empty">
-                    <span>계약 정보가 없습니다.</span>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                        return (
+                          <div
+                            key={`${history.policyNumber}-${snapshot.issueDate}`}
+                            className={`contract-history-snapshot-item ${hasChanges ? 'contract-history-snapshot-item--changed' : ''}`}
+                          >
+                            <span className="snapshot-item__issue-date">
+                              {formatDate(snapshot.issueDate)}
+                            </span>
+                            <span className={`snapshot-item__status ${changedFields.includes('status') ? 'snapshot-item--changed' : ''}`}>
+                              {snapshot.status || '-'}
+                            </span>
+                            <span className={`snapshot-item__coverage ${changedFields.includes('coverageAmount') ? 'snapshot-item--changed' : ''}`}>
+                              {snapshot.coverageAmount ? snapshot.coverageAmount.toLocaleString('ko-KR') : '-'}
+                            </span>
+                            <span className={`snapshot-item__period ${changedFields.includes('insurancePeriod') ? 'snapshot-item--changed' : ''}`}>
+                              {snapshot.insurancePeriod || '-'}
+                            </span>
+                            <span className={`snapshot-item__payment ${changedFields.includes('paymentPeriod') ? 'snapshot-item--changed' : ''}`}>
+                              {snapshot.paymentPeriod || '-'}
+                            </span>
+                            <span className={`snapshot-item__premium ${changedFields.includes('premium') ? 'snapshot-item--changed' : ''}`}>
+                              {snapshot.premium ? snapshot.premium.toLocaleString('ko-KR') : '-'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* 이력이 1건인 경우 (변경 없음) */}
+                  {isExpanded && history.snapshots.length === 1 && (
+                    <div className="contract-history-accordion__content contract-history-accordion__content--empty">
+                      <span>변경 이력이 없습니다. (1건의 AR에서만 발견)</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

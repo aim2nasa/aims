@@ -778,3 +778,337 @@ html[data-theme="dark"] .ar-contract-item__premium {
 html[data-theme="dark"] .customer-contracts__ar-loading {
   color: var(--color-ios-text-tertiary-dark);
 }
+
+/* =====================================================
+   증권번호 기준 계약 이력 아코디언 (Phase 5) - 11컬럼
+   ===================================================== */
+
+.contract-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-x: auto;
+}
+
+/* 11컬럼 헤더 */
+.contract-history-header {
+  display: grid;
+  grid-template-columns: 28px 90px 180px 50px 50px 70px 55px 60px 50px 50px 80px;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 4px;
+  min-width: 800px;
+}
+
+html[data-theme="dark"] .contract-history-header {
+  color: var(--color-ios-text-tertiary-dark);
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.contract-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 800px;
+}
+
+/* 아코디언 컨테이너 */
+.contract-history-accordion {
+  overflow: hidden;
+  background: var(--color-ios-bg-primary-light);
+}
+
+html[data-theme="dark"] .contract-history-accordion {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+/* 아코디언 헤더 (11컬럼 계약 행) */
+.contract-history-accordion__header {
+  display: grid;
+  grid-template-columns: 28px 90px 180px 50px 50px 70px 55px 60px 50px 50px 80px;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: var(--font-size-caption-1);
+  min-height: 28px;
+}
+
+.contract-history-accordion__header:hover {
+  background: var(--color-ios-hover-overlay-light);
+}
+
+html[data-theme="dark"] .contract-history-accordion__header:hover {
+  background: var(--color-ios-hover-overlay-dark);
+}
+
+.contract-history-accordion__header--expanded {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .contract-history-accordion__header--expanded {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* 순번 */
+.contract-history-item__seq {
+  text-align: center;
+  color: var(--color-ios-text-tertiary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="dark"] .contract-history-item__seq {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* 증권번호 + 토글 */
+.contract-history-item__policy {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-family-mono);
+  font-weight: 500;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__policy {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.contract-history-item__toggle {
+  font-size: 8px;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__toggle {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* 보험상품 (말줄임) */
+.contract-history-item__product {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__product {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 계약자 */
+.contract-history-item__holder {
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__holder {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 피보험자 */
+.contract-history-item__insured {
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__insured {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 계약일 */
+.contract-history-item__date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 계약상태 */
+.contract-history-item__status {
+  font-weight: 500;
+  color: var(--color-ios-green-light);
+}
+
+html[data-theme="dark"] .contract-history-item__status {
+  color: var(--color-ios-green-dark);
+}
+
+.contract-history-item__status--해지,
+.contract-history-item__status--실효 {
+  color: var(--color-ios-red-light);
+}
+
+html[data-theme="dark"] .contract-history-item__status--해지,
+html[data-theme="dark"] .contract-history-item__status--실효 {
+  color: var(--color-ios-red-dark);
+}
+
+/* 가입금액 */
+.contract-history-item__amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__amount {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 보험기간 */
+.contract-history-item__period {
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__period {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 납입기간 */
+.contract-history-item__payment {
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .contract-history-item__payment {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 보험료 */
+.contract-history-item__premium {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .contract-history-item__premium {
+  color: var(--color-primary-400);
+}
+
+/* 아코디언 내용 (스냅샷 목록) */
+.contract-history-accordion__content {
+  padding: 8px 12px 12px 40px;
+  background: var(--color-ios-bg-secondary-light);
+  border-top: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .contract-history-accordion__content {
+  background: var(--color-ios-bg-secondary-dark);
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+.contract-history-accordion__content--empty {
+  color: var(--color-ios-text-tertiary-light);
+  font-size: var(--font-size-caption-1);
+  padding: 12px 12px 12px 40px;
+}
+
+html[data-theme="dark"] .contract-history-accordion__content--empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* 스냅샷 제목 */
+.contract-history-snapshots-title {
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .contract-history-snapshots-title {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 스냅샷 헤더 (6컬럼) */
+.contract-history-snapshots-header {
+  display: grid;
+  grid-template-columns: 80px 55px 60px 50px 50px 80px;
+  gap: 6px;
+  padding: 4px 0 6px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .contract-history-snapshots-header {
+  color: var(--color-ios-text-tertiary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* 스냅샷 항목 (6컬럼) */
+.contract-history-snapshot-item {
+  display: grid;
+  grid-template-columns: 80px 55px 60px 50px 50px 80px;
+  gap: 6px;
+  padding: 5px 0;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-primary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .contract-history-snapshot-item {
+  color: var(--color-ios-text-primary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.contract-history-snapshot-item:last-child {
+  border-bottom: none;
+}
+
+/* 변경된 행 표시 */
+.contract-history-snapshot-item--changed {
+  background: var(--color-ios-yellow-light-bg, rgba(255, 204, 0, 0.08));
+}
+
+html[data-theme="dark"] .contract-history-snapshot-item--changed {
+  background: var(--color-ios-yellow-dark-bg, rgba(255, 214, 10, 0.12));
+}
+
+/* 발행일 */
+.snapshot-item__issue-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .snapshot-item__issue-date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 계약상태 */
+.snapshot-item__status {
+  font-weight: 500;
+}
+
+/* 가입금액, 보험료 */
+.snapshot-item__coverage,
+.snapshot-item__premium {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 보험기간, 납입기간 */
+.snapshot-item__period,
+.snapshot-item__payment {
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .snapshot-item__period,
+html[data-theme="dark"] .snapshot-item__payment {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 변경된 필드 하이라이트 */
+.snapshot-item--changed {
+  font-weight: 600;
+  color: var(--color-ios-orange-light);
+}
+
+html[data-theme="dark"] .snapshot-item--changed {
+  color: var(--color-ios-orange-dark);
+}

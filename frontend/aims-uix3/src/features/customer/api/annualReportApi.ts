@@ -51,6 +51,127 @@ export interface AnnualReport {
   registered_at?: string;          // 보험계약 탭 등록일시 (ISO 8601)
 }
 
+// ==================== 계약 이력 관리 타입 ====================
+
+/**
+ * 발행일 기준 계약 스냅샷
+ * - AR이 발행될 때마다 해당 시점의 계약 정보가 스냅샷으로 기록
+ */
+export interface ContractSnapshot {
+  arReportId: string;         // 원본 AR ID
+  issueDate: string;          // AR 발행일 (YYYY-MM-DD)
+  parsedAt: string;           // AR 파싱 시점 (ISO 8601)
+  status: string;             // 계약상태 (정상, 해지, 실효 등)
+  premium: number;            // 보험료(원)
+  coverageAmount: number;     // 가입금액(만원)
+  insurancePeriod: string;    // 보험기간 (예: "종신", "80세 만기")
+  paymentPeriod: string;      // 납입기간 (예: "20년납", "전기납")
+}
+
+/**
+ * 계약 이력 (증권번호 기준)
+ * - 증권번호를 유일 키로 사용하여 여러 AR에서 동일 계약의 이력을 추적
+ */
+export interface ContractHistory {
+  policyNumber: string;       // 증권번호 (유일 키)
+  insurerName: string;        // 보험사명
+  productName: string;        // 보험상품명
+  holder: string;             // 계약자
+  insured: string;            // 피보험자
+  contractDate: string;       // 계약일 (YYYY-MM-DD)
+  snapshots: ContractSnapshot[];  // 발행일별 스냅샷 (시간순 정렬, 최신 우선)
+  latestSnapshot: ContractSnapshot;  // 가장 최근 스냅샷 (요약 표시용)
+}
+
+/**
+ * AR 목록 → 증권번호별 계약 이력으로 변환
+ *
+ * @param arReports 완료된 AR 목록
+ * @returns 증권번호별 계약 이력 배열
+ */
+export function groupContractsByPolicyNumber(arReports: AnnualReport[]): ContractHistory[] {
+  const historyMap = new Map<string, ContractHistory>();
+
+  // 모든 AR의 계약을 순회
+  for (const ar of arReports) {
+    if (!ar.contracts || ar.contracts.length === 0) continue;
+
+    for (const contract of ar.contracts) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contractData = contract as any;
+      const policyNumber = contractData['증권번호'] || contractData.contract_number;
+      if (!policyNumber) continue;
+
+      // 스냅샷 생성
+      const snapshot: ContractSnapshot = {
+        arReportId: ar.report_id,
+        issueDate: ar.issue_date || '',
+        parsedAt: ar.parsed_at || '',
+        status: contractData['계약상태'] || contractData.status || '',
+        premium: contractData['보험료(원)'] || contractData.monthly_premium || 0,
+        coverageAmount: contractData['가입금액(만원)'] || contractData.coverage_amount || 0,
+        insurancePeriod: contractData['보험기간'] || contractData.insurance_period || '',
+        paymentPeriod: contractData['납입기간'] || contractData.premium_payment_period || '',
+      };
+
+      if (historyMap.has(policyNumber)) {
+        // 기존 이력에 스냅샷 추가
+        historyMap.get(policyNumber)!.snapshots.push(snapshot);
+      } else {
+        // 새 이력 생성
+        historyMap.set(policyNumber, {
+          policyNumber,
+          insurerName: contractData['보험사'] || contractData.insurance_company || '',
+          productName: contractData['보험상품'] || contractData.product_name || '',
+          holder: contractData['계약자'] || contractData.contractor_name || '',
+          insured: contractData['피보험자'] || contractData.insured_name || '',
+          contractDate: contractData['계약일'] || contractData.contract_date || '',
+          snapshots: [snapshot],
+          latestSnapshot: snapshot,  // 임시
+        });
+      }
+    }
+  }
+
+  // 스냅샷 정렬 (최신순) 및 latestSnapshot 설정
+  for (const history of historyMap.values()) {
+    history.snapshots.sort((a, b) =>
+      new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+    );
+    history.latestSnapshot = history.snapshots[0];
+  }
+
+  // 증권번호 순 정렬하여 반환
+  return Array.from(historyMap.values()).sort((a, b) =>
+    a.policyNumber.localeCompare(b.policyNumber)
+  );
+}
+
+/**
+ * 두 스냅샷 간 변경된 필드 목록 반환
+ *
+ * @param current 현재 스냅샷
+ * @param previous 이전 스냅샷
+ * @returns 변경된 필드명 배열
+ */
+export function getChangedFields(
+  current: ContractSnapshot,
+  previous: ContractSnapshot | undefined
+): string[] {
+  if (!previous) return [];
+
+  const changedFields: string[] = [];
+  if (current.status !== previous.status) changedFields.push('status');
+  if (current.premium !== previous.premium) changedFields.push('premium');
+  if (current.coverageAmount !== previous.coverageAmount) changedFields.push('coverageAmount');
+  if (current.insurancePeriod !== previous.insurancePeriod) changedFields.push('insurancePeriod');
+  if (current.paymentPeriod !== previous.paymentPeriod) changedFields.push('paymentPeriod');
+
+  return changedFields;
+}
+
+// ==================== AR 요약 타입 ====================
+
 /**
  * Annual Report 요약 정보 (목록 조회용)
  */
