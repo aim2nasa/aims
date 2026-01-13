@@ -1702,7 +1702,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (stats.total > 0 && !uploadState.uploading) {
       return `문서 등록 (${stats.completed}/${stats.total} 완료)`
     }
-    return "고객·문서 자동 등록"
+    return "고객·계약·문서 자동 등록"
   }
 
   return (
@@ -1718,7 +1718,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       className="document-registration-view"
       placeholderIcon="doc.badge.plus"
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
-      description="개인 또는 법인 고객과 관계된 문서들을 등록합니다."
+      description="Annual Report로 고객과 계약을 자동 등록합니다."
       titleAccessory={
         <Tooltip content="도움말" placement="bottom">
           <button

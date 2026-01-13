@@ -2107,7 +2107,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           activeDocumentView === 'contracts-import' ? '📥 고객·계약 일괄등록 사용법' :
           activeDocumentView === 'documents-library' ? '📄 문서 보관함 사용법' :
           activeDocumentView === 'documents-search' ? '🔍 상세 문서검색 사용법' :
-          activeDocumentView === 'documents-register' ? '📄 고객·문서 자동 등록 사용법' :
+          activeDocumentView === 'documents-register' ? '📄 고객·계약·문서 자동 등록 사용법' :
           activeDocumentView === 'batch-document-upload' ? '📦 문서 일괄등록 사용법' :
           activeDocumentView === 'documents-my-files' ? '📁 내 보관함 사용법' :
           '🚀 시작하기'
