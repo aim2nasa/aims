@@ -28,7 +28,8 @@ export interface UseColumnResizeOptions {
 
 export interface ResizeHandleProps {
   onMouseDown: (e: React.MouseEvent) => void;
-  onDoubleClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
+  onDoubleClick: (e: React.MouseEvent) => void;
   style: React.CSSProperties;
   className: string;
 }
@@ -209,18 +210,17 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
     document.body.style.cursor = '';
   }, [storageKey]);
 
-  // 전역 이벤트 리스너 등록/해제
+  // mousemove/mouseup 핸들러 ref (최신 참조 유지)
+  const handleMouseMoveRef = useRef(handleMouseMove);
+  const handleMouseUpRef = useRef(handleMouseUp);
+
   useEffect(() => {
-    if (!isResizing) return;
+    handleMouseMoveRef.current = handleMouseMove;
+  }, [handleMouseMove]);
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing, handleMouseMove, handleMouseUp]);
+  useEffect(() => {
+    handleMouseUpRef.current = handleMouseUp;
+  }, [handleMouseUp]);
 
   // 드래그 시작 핸들러
   const handleResizeStart = useCallback((columnId: string, e: React.MouseEvent) => {
@@ -228,7 +228,11 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
     e.stopPropagation();
 
     const currentWidth = columnWidths[columnId];
-    if (typeof currentWidth !== 'number') return;
+
+    if (typeof currentWidth !== 'number') {
+      console.warn('[useColumnResize] 폭이 숫자가 아님:', columnId, currentWidth);
+      return;
+    }
 
     dragStartRef.current = {
       columnId,
@@ -242,6 +246,17 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
     // 드래그 중 텍스트 선택 방지
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'col-resize';
+
+    // 즉시 이벤트 리스너 등록 (비동기 상태 업데이트 기다리지 않음)
+    const onMouseMove = (ev: MouseEvent) => handleMouseMoveRef.current(ev);
+    const onMouseUp = () => {
+      handleMouseUpRef.current();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }, [columnWidths]);
 
   // 더블클릭 핸들러 (기본값으로 리셋)
@@ -265,16 +280,17 @@ export function useColumnResize(options: UseColumnResizeOptions): UseColumnResiz
   const getResizeHandleProps = useCallback((columnId: string): ResizeHandleProps => {
     return {
       onMouseDown: (e: React.MouseEvent) => handleResizeStart(columnId, e),
-      onDoubleClick: () => handleDoubleClick(columnId),
-      style: {
-        position: 'absolute',
-        right: -3,
-        top: 0,
-        bottom: 0,
-        width: 6,
-        cursor: 'col-resize',
-        zIndex: 10
+      onClick: (e: React.MouseEvent) => {
+        // 클릭 이벤트 버블링 방지 (정렬 이벤트 차단)
+        e.preventDefault();
+        e.stopPropagation();
       },
+      onDoubleClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDoubleClick(columnId);
+      },
+      style: {},
       className: `column-resize-handle${resizingColumn === columnId ? ' column-resize-handle--active' : ''}`
     };
   }, [handleResizeStart, handleDoubleClick, resizingColumn]);

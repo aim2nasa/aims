@@ -122,6 +122,11 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [expandedPolicyNumber, setExpandedPolicyNumber] = useState<string | null>(null)
   const [isLoadingAr, setIsLoadingAr] = useState(false)
 
+  // 🍎 AR 계약 이력 정렬 상태
+  type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'insured' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium'
+  const [arSortField, setArSortField] = useState<ArSortField>('policyNumber')
+  const [arSortDirection, setArSortDirection] = useState<SortDirection>('asc')
+
   // 🍎 검색어 상태 (외부/내부)
   const [internalSearchTerm, setInternalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
@@ -598,6 +603,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     columnWidths: arColumnWidths,
     isResizing: isArResizing,
     getResizeHandleProps: getArResizeHandleProps,
+    wasJustResizing: wasArJustResizing,
   } = useColumnResize({
     storageKey: 'ar-history-tab',
     columns: AR_HISTORY_COLUMNS,
@@ -608,6 +614,84 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const handlePolicyToggle = useCallback((policyNumber: string) => {
     setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
   }, [])
+
+  // 🍎 AR 계약 이력 정렬 핸들러
+  const handleArSort = useCallback((field: typeof arSortField) => {
+    // 리사이즈 직후 클릭은 무시 (정렬 방지)
+    if (wasArJustResizing()) return
+
+    if (arSortField === field) {
+      setArSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setArSortField(field)
+      setArSortDirection('asc')
+    }
+  }, [arSortField, wasArJustResizing])
+
+  // 🍎 정렬된 AR 계약 이력
+  const sortedContractHistories = useMemo(() => {
+    return [...contractHistories].sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (arSortField) {
+        case 'policyNumber':
+          aValue = a.policyNumber || ''
+          bValue = b.policyNumber || ''
+          break
+        case 'productName':
+          aValue = a.productName || ''
+          bValue = b.productName || ''
+          break
+        case 'holder':
+          aValue = a.holder || ''
+          bValue = b.holder || ''
+          break
+        case 'insured':
+          aValue = a.insured || ''
+          bValue = b.insured || ''
+          break
+        case 'contractDate':
+          aValue = a.contractDate || ''
+          bValue = b.contractDate || ''
+          break
+        case 'status':
+          aValue = a.latestSnapshot?.status || ''
+          bValue = b.latestSnapshot?.status || ''
+          break
+        case 'coverageAmount':
+          aValue = a.latestSnapshot?.coverageAmount || 0
+          bValue = b.latestSnapshot?.coverageAmount || 0
+          break
+        case 'insurancePeriod':
+          aValue = a.latestSnapshot?.insurancePeriod || ''
+          bValue = b.latestSnapshot?.insurancePeriod || ''
+          break
+        case 'paymentPeriod':
+          aValue = a.latestSnapshot?.paymentPeriod || ''
+          bValue = b.latestSnapshot?.paymentPeriod || ''
+          break
+        case 'premium':
+          aValue = a.latestSnapshot?.premium || 0
+          bValue = b.latestSnapshot?.premium || 0
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return arSortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return arSortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [contractHistories, arSortField, arSortDirection])
+
+  // 🍎 AR 정렬 인디케이터 렌더링
+  const renderArSortIndicator = (field: typeof arSortField) => {
+    if (arSortField === field) {
+      return <span className="ar-sort-indicator">{arSortDirection === 'asc' ? '▲' : '▼'}</span>
+    }
+    return null
+  }
 
   const renderState = () => {
     if (isLoading && contracts.length === 0) {
@@ -702,49 +786,51 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             '--ar-premium-width': `${arColumnWidths['premium'] || arHistoryColumnWidths.premium}px`,
           } as React.CSSProperties}
         >
-          {/* 헤더 행 (리사이즈 핸들 포함) */}
+          {/* 헤더 행 */}
           <div className="contract-history-header">
-            <span className="contract-history-header__seq">순번</span>
-            <span className="contract-history-header__policy resizable-header">
+            <div className="contract-history-header__seq">순번</div>
+            <div className="contract-history-header__policy resizable-header">
               증권번호
               <div {...getArResizeHandleProps('policy')} />
-            </span>
-            <span className="contract-history-header__product resizable-header">
+            </div>
+            <div className="contract-history-header__product resizable-header">
               보험상품
               <div {...getArResizeHandleProps('product')} />
-            </span>
-            <span className="contract-history-header__holder resizable-header">
+            </div>
+            <div className="contract-history-header__holder resizable-header">
               계약자
               <div {...getArResizeHandleProps('holder')} />
-            </span>
-            <span className="contract-history-header__insured resizable-header">
+            </div>
+            <div className="contract-history-header__insured resizable-header">
               피보험자
               <div {...getArResizeHandleProps('insured')} />
-            </span>
-            <span className="contract-history-header__date resizable-header">
+            </div>
+            <div className="contract-history-header__date resizable-header">
               계약일
               <div {...getArResizeHandleProps('date')} />
-            </span>
-            <span className="contract-history-header__status resizable-header">
+            </div>
+            <div className="contract-history-header__status resizable-header">
               계약상태
               <div {...getArResizeHandleProps('status')} />
-            </span>
-            <span className="contract-history-header__amount resizable-header">
+            </div>
+            <div className="contract-history-header__amount resizable-header">
               가입금액
               <div {...getArResizeHandleProps('amount')} />
-            </span>
-            <span className="contract-history-header__period resizable-header">
+            </div>
+            <div className="contract-history-header__period resizable-header">
               보험기간
               <div {...getArResizeHandleProps('period')} />
-            </span>
-            <span className="contract-history-header__payment resizable-header">
+            </div>
+            <div className="contract-history-header__payment resizable-header">
               납입기간
               <div {...getArResizeHandleProps('payment')} />
-            </span>
-            <span className="contract-history-header__premium">보험료(원)</span>
+            </div>
+            <div className="contract-history-header__premium">
+              보험료(원)
+            </div>
           </div>
           <div className="contract-history-list">
-            {contractHistories.map((history, idx) => {
+            {sortedContractHistories.map((history, idx) => {
               const isExpanded = expandedPolicyNumber === history.policyNumber
               const { latestSnapshot } = history
 

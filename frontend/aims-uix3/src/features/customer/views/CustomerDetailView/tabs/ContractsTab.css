@@ -798,13 +798,13 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   cursor: col-resize;
 }
 
-/* 11컬럼 헤더 - 보험상품만 1fr, 나머지 고정 폭 (폭 10% 증가) */
+/* 11컬럼 헤더 - 모든 컬럼 CSS 변수 사용 */
 .contract-history-header {
   display: grid;
   grid-template-columns:
     var(--ar-seq-width, 31px)
     var(--ar-policy-width, 94px)
-    minmax(110px, 1fr)
+    var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
     var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
@@ -830,21 +830,19 @@ html[data-theme="dark"] .contract-history-header {
   background: var(--color-ios-bg-secondary-dark);
 }
 
-/* 헤더 셀 공통 - 텍스트 줄바꿈 방지, 중앙 정렬 */
-.contract-history-header > span {
+/* 헤더 셀 공통 */
+.contract-history-header > div {
   white-space: nowrap;
-  overflow: hidden;
+  overflow: visible;
   text-overflow: ellipsis;
   text-align: center;
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-/* 리사이즈 가능한 헤더 셀 */
-.contract-history-header > .resizable-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+/* contract-history-header는 전역 column-resize.css 스타일 사용
+   (.resizable-header, .column-resize-handle) */
 
 .contract-history-list {
   display: flex;
@@ -862,13 +860,13 @@ html[data-theme="dark"] .contract-history-accordion {
   background: var(--color-ios-bg-primary-dark);
 }
 
-/* 아코디언 헤더 (11컬럼 계약 행) - 보험상품만 1fr, 나머지 고정 폭 (폭 10% 증가) */
+/* 아코디언 헤더 (11컬럼 계약 행) - 모든 컬럼 CSS 변수 사용 */
 .contract-history-accordion__header {
   display: grid;
   grid-template-columns:
     var(--ar-seq-width, 31px)
     var(--ar-policy-width, 94px)
-    minmax(110px, 1fr)
+    var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
     var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
