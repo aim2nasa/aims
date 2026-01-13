@@ -212,7 +212,29 @@ AnnualReportApi.registerARContracts(customerId, issueDate, customerName?)
 ---
 
 ### Phase 4: 자동 등록 로직
-#### 상태: ⏳ 대기
+#### 상태: ✅ 완료 (2026-01-13)
+
+#### 구현 내용
+- AR 파싱 완료 시 자동으로 `registered_at` 필드 설정
+- `db_writer.py`의 `save_annual_report()` 함수에서 구현
+- 모든 새로운 AR 문서는 파싱 완료 즉시 보험계약 탭에 표시됨
+
+#### 코드 변경
+**파일**: `backend/api/annual_report_api/services/db_writer.py`
+```python
+annual_report = {
+    # ... 기존 필드들 ...
+
+    # 🍎 Phase 4: 자동 등록 - 파싱 완료 시 자동으로 보험계약 탭에 등록
+    "registered_at": utc_now_iso(),
+}
+```
+
+#### 동작 방식
+1. AR 문서 업로드 → 파싱 시작
+2. 파싱 완료 → `save_annual_report()` 호출
+3. `registered_at` 필드 자동 설정 → 보험계약 탭에 즉시 표시
+4. 중복 체크: 같은 customer_name + issue_date는 저장 거부
 
 ---
 
@@ -225,6 +247,7 @@ AnnualReportApi.registerARContracts(customerId, issueDate, customerName?)
 - [x] "삭제" 클릭 → 삭제 확인 모달
 - [x] 계약 탭에서 AR 요약 행 클릭 → 아코디언 펼침/접힘
 - [x] 같은 발행일 AR 중복 등록 시도 → 토스트 알림
+- [x] 새 AR 업로드 시 자동 등록 → 계약 탭에 즉시 표시
 
 ---
 
@@ -237,6 +260,7 @@ AnnualReportApi.registerARContracts(customerId, issueDate, customerName?)
 | `ContractsTab.css` | 아코디언 스타일 추가 |
 | `annualReportApi.ts` | `registerARContracts` API 추가 |
 | `routes/query.py` | AR 보험계약 등록 엔드포인트 추가 |
+| `db_writer.py` | 자동 등록 로직 (`registered_at` 필드 추가) |
 
 ---
 

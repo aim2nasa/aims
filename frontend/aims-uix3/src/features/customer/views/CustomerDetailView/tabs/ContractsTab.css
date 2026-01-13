@@ -608,14 +608,12 @@ html[data-theme="dark"] .ar-accordion__content--empty {
 /* AR 계약 헤더 */
 .ar-contracts-header {
   display: grid;
-  grid-template-columns: 80px 100px 1fr 60px 90px;
+  grid-template-columns: 100px 1fr 70px 90px;
   gap: 8px;
   padding: 4px 8px;
   font-size: var(--font-size-caption-2);
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
 }
 
 html[data-theme="dark"] .ar-contracts-header {
@@ -629,7 +627,7 @@ html[data-theme="dark"] .ar-contracts-header {
 /* AR 계약 아이템 */
 .ar-contract-item {
   display: grid;
-  grid-template-columns: 80px 100px 1fr 60px 90px;
+  grid-template-columns: 100px 1fr 70px 90px;
   gap: 8px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-1);

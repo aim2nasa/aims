@@ -8,6 +8,7 @@ import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
+import { ToastProvider } from './shared/ui/Toast'
 import { DevToolsPanel } from './shared/ui/DevToolsPanel'
 import { OnboardingTour, type TourStep } from './shared/components/OnboardingTour'
 import { RightClickGuide } from './shared/components/RightClickGuide'
@@ -2444,14 +2445,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   )
 }
 
-// DocumentSearchProvider와 AppleConfirmProvider로 App 감싸기
+// DocumentSearchProvider, AppleConfirmProvider, ToastProvider로 App 감싸기
 function AppWithProviders(props: AppProps) {
   return (
-    <AppleConfirmProvider>
-      <DocumentSearchProvider>
-        <App {...props} />
-      </DocumentSearchProvider>
-    </AppleConfirmProvider>
+    <ToastProvider position="top-right">
+      <AppleConfirmProvider>
+        <DocumentSearchProvider>
+          <App {...props} />
+        </DocumentSearchProvider>
+      </AppleConfirmProvider>
+    </ToastProvider>
   )
 }
 

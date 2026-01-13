@@ -157,6 +157,9 @@ def save_annual_report(
             # 타임스탬프
             "uploaded_at": utc_now_iso(),
             "parsed_at": utc_now_iso(),
+
+            # 🍎 Phase 4: 자동 등록 - 파싱 완료 시 자동으로 보험계약 탭에 등록
+            "registered_at": utc_now_iso(),
         }
 
         # 원본 파일 ID 추가 (있는 경우)

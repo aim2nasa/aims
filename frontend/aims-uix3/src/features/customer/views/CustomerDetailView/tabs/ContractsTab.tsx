@@ -531,7 +531,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       )
     }
 
-    if (isEmpty) {
+    // AR 데이터가 있으면 빈 상태 메시지 표시 안 함
+    if (isEmpty && arReports.length === 0) {
       return (
         <div className="customer-contracts__state customer-contracts__state--empty">
           <SFSymbol
@@ -570,97 +571,83 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 AR 기반 계약 정보 (아코디언) */}
+      {/* 🍎 AR 기반 계약 정보 (아코디언) - 제목 없이 컴팩트하게 */}
       {arReports.length > 0 && (
-        <div className="customer-contracts__ar-section">
-          <div className="ar-section__title">
-            <SFSymbol
-              name="doc.text.fill"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>Annual Report 계약 정보</span>
-            <span className="ar-section__count">{arReports.length}건</span>
-          </div>
+        <div className="ar-section__list">
+          {arReports.map((report) => {
+            const isExpanded = expandedArId === report.report_id
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const contractsData = report.contracts as any[]
 
-          <div className="ar-section__list">
-            {arReports.map((report) => {
-              const isExpanded = expandedArId === report.report_id
-
-              return (
-                <div key={report.report_id} className="ar-accordion">
-                  {/* AR 요약 행 */}
-                  <div
-                    className={`ar-accordion__header ${isExpanded ? 'ar-accordion__header--expanded' : ''}`}
-                    onClick={() => handleArToggle(report.report_id)}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={isExpanded ? 'true' : 'false'}
-                  >
-                    <span className="ar-accordion__toggle">
-                      {isExpanded ? '▼' : '▶'}
-                    </span>
-                    <span className="ar-accordion__owner">{report.customer_name || '-'}</span>
-                    <span className="ar-accordion__issue-date">{formatDate(report.issue_date)}</span>
-                    <span className="ar-accordion__parsed-at">
-                      {report.parsed_at ? AnnualReportApi.formatDateTime(report.parsed_at) : '-'}
-                    </span>
-                    <span className="ar-accordion__premium">
-                      {report.total_monthly_premium != null
-                        ? AnnualReportApi.formatCurrency(report.total_monthly_premium)
-                        : '-'}
-                    </span>
-                    <span className="ar-accordion__count">
-                      {report.contract_count != null ? `${report.contract_count}건` : '-'}
-                    </span>
-                  </div>
-
-                  {/* AR 상세 계약 목록 (펼침 시) */}
-                  {isExpanded && report.contracts && report.contracts.length > 0 && (
-                    <div className="ar-accordion__content">
-                      <div className="ar-contracts-header">
-                        <span className="ar-contracts-header__company">보험사</span>
-                        <span className="ar-contracts-header__policy">증권번호</span>
-                        <span className="ar-contracts-header__product">상품명</span>
-                        <span className="ar-contracts-header__status">상태</span>
-                        <span className="ar-contracts-header__premium">보험료</span>
-                      </div>
-                      {report.contracts.map((contract, idx) => (
-                        <div key={`${report.report_id}-${idx}`} className="ar-contract-item">
-                          <span className="ar-contract-item__company">
-                            {contract.insurance_company || '메트라이프'}
-                          </span>
-                          <span className="ar-contract-item__policy">
-                            {contract.contract_number || '-'}
-                          </span>
-                          <Tooltip content={contract.product_name || '-'}>
-                            <span className="ar-contract-item__product">
-                              {contract.product_name || '-'}
-                            </span>
-                          </Tooltip>
-                          <span className={`ar-contract-item__status ar-contract-item__status--${(contract.status || '').replace(/\s/g, '-').toLowerCase()}`}>
-                            {contract.status || '-'}
-                          </span>
-                          <span className="ar-contract-item__premium">
-                            {contract.monthly_premium
-                              ? contract.monthly_premium.toLocaleString('ko-KR') + '원'
-                              : '-'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 계약 없음 메시지 */}
-                  {isExpanded && (!report.contracts || report.contracts.length === 0) && (
-                    <div className="ar-accordion__content ar-accordion__content--empty">
-                      <span>계약 정보가 없습니다.</span>
-                    </div>
-                  )}
+            return (
+              <div key={report.report_id} className="ar-accordion">
+                {/* AR 요약 행 */}
+                <div
+                  className={`ar-accordion__header ${isExpanded ? 'ar-accordion__header--expanded' : ''}`}
+                  onClick={() => handleArToggle(report.report_id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded ? 'true' : 'false'}
+                >
+                  <span className="ar-accordion__toggle">
+                    {isExpanded ? '▼' : '▶'}
+                  </span>
+                  <span className="ar-accordion__owner">{report.customer_name || '-'}</span>
+                  <span className="ar-accordion__issue-date">{formatDate(report.issue_date)}</span>
+                  <span className="ar-accordion__parsed-at">
+                    {report.parsed_at ? AnnualReportApi.formatDateTime(report.parsed_at) : '-'}
+                  </span>
+                  <span className="ar-accordion__premium">
+                    {report.total_monthly_premium != null
+                      ? AnnualReportApi.formatCurrency(report.total_monthly_premium)
+                      : '-'}
+                  </span>
+                  <span className="ar-accordion__count">
+                    {report.contract_count != null ? `${report.contract_count}건` : '-'}
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+
+                {/* AR 상세 계약 목록 (펼침 시) - 실제 DB 필드명 사용 */}
+                {isExpanded && contractsData && contractsData.length > 0 && (
+                  <div className="ar-accordion__content">
+                    <div className="ar-contracts-header">
+                      <span>증권번호</span>
+                      <span>상품명</span>
+                      <span>상태</span>
+                      <span className="ar-contracts-header__premium">보험료</span>
+                    </div>
+                    {contractsData.map((contract, idx) => (
+                      <div key={`${report.report_id}-${idx}`} className="ar-contract-item">
+                        <span className="ar-contract-item__policy">
+                          {contract['증권번호'] || '-'}
+                        </span>
+                        <Tooltip content={contract['보험상품'] || '-'}>
+                          <span className="ar-contract-item__product">
+                            {contract['보험상품'] || '-'}
+                          </span>
+                        </Tooltip>
+                        <span className={`ar-contract-item__status ar-contract-item__status--${(contract['계약상태'] || '').replace(/\s/g, '-')}`}>
+                          {contract['계약상태'] || '-'}
+                        </span>
+                        <span className="ar-contract-item__premium">
+                          {contract['보험료(원)']
+                            ? contract['보험료(원)'].toLocaleString('ko-KR') + '원'
+                            : '-'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 계약 없음 메시지 */}
+                {isExpanded && (!contractsData || contractsData.length === 0) && (
+                  <div className="ar-accordion__content ar-accordion__content--empty">
+                    <span>계약 정보가 없습니다.</span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
