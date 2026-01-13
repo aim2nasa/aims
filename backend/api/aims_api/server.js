@@ -9215,6 +9215,75 @@ app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', authent
   }
 });
 
+/**
+ * AR 보험계약 등록 API (수동)
+ * 프론트엔드 → Node.js (3010) → Python (8004)
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
+app.post('/api/customers/:customerId/ar-contracts', authenticateJWT, async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { issue_date, customer_name } = req.body;
+
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`📋 [AR Contracts] 보험계약 등록 요청: customer=${customerId}, userId=${userId}, issue_date=${issue_date}`);
+
+    if (!issue_date) {
+      return res.status(400).json({
+        success: false,
+        message: 'issue_date가 필요합니다'
+      });
+    }
+
+    const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/ar-contracts`;
+
+    const response = await axios.post(pythonApiUrl, {
+      issue_date,
+      customer_name
+    }, {
+      headers: {
+        'x-user-id': userId
+      },
+      timeout: 5000
+    });
+
+    console.log(`✅ [AR Contracts] 보험계약 등록 완료:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [AR Contracts] 보험계약 등록 오류:', error.message);
+    backendLogger.error('ARContracts', '[AR Contracts] 보험계약 등록 오류', error);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        success: false,
+        message: error.response.data?.detail || '고객 또는 AR을 찾을 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'AR 보험계약 등록 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
 // ==================== 주소 보관소 관리 API ====================
 
 /**
