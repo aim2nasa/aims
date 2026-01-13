@@ -76,19 +76,19 @@ const CONTRACTS_COLUMNS: ColumnConfig[] = [
   { id: 'paymentStatus', minWidth: 70, maxWidth: 145 }
 ]
 
-// 🍎 AR 계약 이력용 컬럼 리사이즈 설정 (11컬럼) - 컴팩트 버전
+// 🍎 AR 계약 이력용 컬럼 리사이즈 설정 (11컬럼) - 폭 10% 증가
 const AR_HISTORY_COLUMNS: ColumnConfig[] = [
-  { id: 'seq', minWidth: 28, maxWidth: 40 },           // 순번 (고정)
-  { id: 'policy', minWidth: 75, maxWidth: 100 },       // 증권번호
-  { id: 'product', minWidth: 100, maxWidth: 400 },     // 보험상품 (1fr)
-  { id: 'holder', minWidth: 40, maxWidth: 70 },        // 계약자
-  { id: 'insured', minWidth: 40, maxWidth: 70 },       // 피보험자
-  { id: 'date', minWidth: 65, maxWidth: 80 },          // 계약일
-  { id: 'status', minWidth: 38, maxWidth: 55 },        // 계약상태
-  { id: 'amount', minWidth: 50, maxWidth: 75 },        // 가입금액
-  { id: 'period', minWidth: 35, maxWidth: 55 },        // 보험기간
-  { id: 'payment', minWidth: 38, maxWidth: 60 },       // 납입기간
-  { id: 'premium', minWidth: 60, maxWidth: 95 },       // 보험료
+  { id: 'seq', minWidth: 31, maxWidth: 44 },           // 순번 (고정)
+  { id: 'policy', minWidth: 83, maxWidth: 110 },       // 증권번호
+  { id: 'product', minWidth: 110, maxWidth: 440 },     // 보험상품 (1fr)
+  { id: 'holder', minWidth: 44, maxWidth: 77 },        // 계약자
+  { id: 'insured', minWidth: 44, maxWidth: 77 },       // 피보험자
+  { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
+  { id: 'status', minWidth: 42, maxWidth: 61 },        // 계약상태
+  { id: 'amount', minWidth: 55, maxWidth: 83 },        // 가입금액
+  { id: 'period', minWidth: 50, maxWidth: 77 },        // 보험기간
+  { id: 'payment', minWidth: 42, maxWidth: 66 },       // 납입기간
+  { id: 'premium', minWidth: 66, maxWidth: 105 },      // 보험료
 ]
 
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
@@ -528,21 +528,21 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   const isEmpty = contracts.length === 0
 
-  // 🍎 AR 계약 이력용 동적 칼럼 폭 계산 (컴팩트 버전)
+  // 🍎 AR 계약 이력용 동적 칼럼 폭 계산 (폭 10% 증가)
   const arHistoryColumnWidths = useMemo(() => {
-    // 기본값 (컴팩트)
+    // 기본값 (폭 10% 증가)
     const defaults = {
-      seq: 28,
-      policy: 85,
-      product: 180,  // 1fr로 동작하므로 기본값은 참고용
-      holder: 45,
-      insured: 45,
-      date: 68,
-      status: 42,
-      amount: 55,
-      period: 38,
-      payment: 42,
-      premium: 75,
+      seq: 31,
+      policy: 94,
+      product: 198,  // 1fr로 동작하므로 기본값은 참고용
+      holder: 50,
+      insured: 50,
+      date: 75,
+      status: 46,
+      amount: 61,
+      period: 53,
+      payment: 46,
+      premium: 83,
     }
 
     if (contractHistories.length === 0) {
@@ -576,20 +576,20 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       ))
     }
 
-    // 패딩 최소화, 최소/최대 범위 적용 (컴팩트)
+    // 패딩 + 10% 여유 적용, 최소/최대 범위 적용
     const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val))
     return {
-      seq: 28,  // 순번은 고정
-      policy: clamp(maxPolicy + 22, 75, 100),     // 토글 아이콘 포함
-      product: 180,  // 1fr로 동작하므로 고정값
-      holder: clamp(maxHolder + 8, 40, 70),
-      insured: clamp(maxInsured + 8, 40, 70),
-      date: clamp(maxDate + 8, 65, 80),
-      status: clamp(maxStatus + 8, 38, 55),
-      amount: clamp(maxAmount + 8, 50, 75),
-      period: clamp(maxPeriod + 8, 35, 55),
-      payment: clamp(maxPayment + 8, 38, 60),
-      premium: clamp(maxPremium + 8, 60, 95),
+      seq: 31,  // 순번은 고정
+      policy: clamp(maxPolicy + 24, 83, 110),     // 토글 아이콘 포함
+      product: 198,  // 1fr로 동작하므로 고정값
+      holder: clamp(maxHolder + 9, 44, 77),
+      insured: clamp(maxInsured + 9, 44, 77),
+      date: clamp(maxDate + 9, 72, 88),
+      status: clamp(maxStatus + 9, 42, 61),
+      amount: clamp(maxAmount + 9, 55, 83),
+      period: clamp(maxPeriod + 9, 50, 77),
+      payment: clamp(maxPayment + 9, 42, 66),
+      premium: clamp(maxPremium + 9, 66, 105),
     }
   }, [contractHistories])
 

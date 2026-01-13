@@ -798,21 +798,21 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   cursor: col-resize;
 }
 
-/* 11컬럼 헤더 - 보험상품만 1fr, 나머지 고정 폭 */
+/* 11컬럼 헤더 - 보험상품만 1fr, 나머지 고정 폭 (폭 10% 증가) */
 .contract-history-header {
   display: grid;
   grid-template-columns:
-    var(--ar-seq-width, 28px)
-    var(--ar-policy-width, 85px)
-    minmax(100px, 1fr)
-    var(--ar-holder-width, 45px)
-    var(--ar-insured-width, 45px)
-    var(--ar-date-width, 68px)
-    var(--ar-status-width, 42px)
-    var(--ar-amount-width, 55px)
-    var(--ar-period-width, 38px)
-    var(--ar-payment-width, 42px)
-    var(--ar-premium-width, 75px);
+    var(--ar-seq-width, 31px)
+    var(--ar-policy-width, 94px)
+    minmax(110px, 1fr)
+    var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
+    var(--ar-date-width, 75px)
+    var(--ar-status-width, 46px)
+    var(--ar-amount-width, 61px)
+    var(--ar-period-width, 53px)
+    var(--ar-payment-width, 46px)
+    var(--ar-premium-width, 83px);
   gap: 4px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-2);
@@ -830,11 +830,13 @@ html[data-theme="dark"] .contract-history-header {
   background: var(--color-ios-bg-secondary-dark);
 }
 
-/* 헤더 셀 공통 - 텍스트 줄바꿈 방지 */
+/* 헤더 셀 공통 - 텍스트 줄바꿈 방지, 중앙 정렬 */
 .contract-history-header > span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  justify-content: center;
 }
 
 /* 리사이즈 가능한 헤더 셀 */
@@ -860,21 +862,21 @@ html[data-theme="dark"] .contract-history-accordion {
   background: var(--color-ios-bg-primary-dark);
 }
 
-/* 아코디언 헤더 (11컬럼 계약 행) - 보험상품만 1fr, 나머지 고정 폭 */
+/* 아코디언 헤더 (11컬럼 계약 행) - 보험상품만 1fr, 나머지 고정 폭 (폭 10% 증가) */
 .contract-history-accordion__header {
   display: grid;
   grid-template-columns:
-    var(--ar-seq-width, 28px)
-    var(--ar-policy-width, 85px)
-    minmax(100px, 1fr)
-    var(--ar-holder-width, 45px)
-    var(--ar-insured-width, 45px)
-    var(--ar-date-width, 68px)
-    var(--ar-status-width, 42px)
-    var(--ar-amount-width, 55px)
-    var(--ar-period-width, 38px)
-    var(--ar-payment-width, 42px)
-    var(--ar-premium-width, 75px);
+    var(--ar-seq-width, 31px)
+    var(--ar-policy-width, 94px)
+    minmax(110px, 1fr)
+    var(--ar-holder-width, 50px)
+    var(--ar-insured-width, 50px)
+    var(--ar-date-width, 75px)
+    var(--ar-status-width, 46px)
+    var(--ar-amount-width, 61px)
+    var(--ar-period-width, 53px)
+    var(--ar-payment-width, 46px)
+    var(--ar-premium-width, 83px);
   gap: 4px;
   align-items: center;
   padding: 6px 8px;
@@ -900,6 +902,11 @@ html[data-theme="dark"] .contract-history-accordion__header--expanded {
   background: var(--color-ios-bg-tertiary-dark);
 }
 
+/* 아코디언 데이터 셀 공통 - 중앙 정렬 */
+.contract-history-accordion__header > span {
+  text-align: center;
+}
+
 /* 순번 */
 .contract-history-item__seq {
   text-align: center;
@@ -915,6 +922,7 @@ html[data-theme="dark"] .contract-history-item__seq {
 .contract-history-item__policy {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   font-family: var(--font-family-mono);
   font-weight: 500;
