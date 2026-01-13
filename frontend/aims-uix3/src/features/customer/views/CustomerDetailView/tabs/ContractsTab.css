@@ -798,22 +798,22 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
   cursor: col-resize;
 }
 
-/* 11컬럼 헤더 - CSS 변수 기반 동적 폭 */
+/* 11컬럼 헤더 - 보험상품만 1fr, 나머지 고정 폭 */
 .contract-history-header {
   display: grid;
   grid-template-columns:
     var(--ar-seq-width, 28px)
-    var(--ar-policy-width, 90px)
-    var(--ar-product-width, 180px)
-    var(--ar-holder-width, 50px)
-    var(--ar-insured-width, 50px)
-    var(--ar-date-width, 70px)
-    var(--ar-status-width, 55px)
-    var(--ar-amount-width, 60px)
-    var(--ar-period-width, 50px)
-    var(--ar-payment-width, 50px)
-    var(--ar-premium-width, 80px);
-  gap: 6px;
+    var(--ar-policy-width, 85px)
+    minmax(100px, 1fr)
+    var(--ar-holder-width, 45px)
+    var(--ar-insured-width, 45px)
+    var(--ar-date-width, 68px)
+    var(--ar-status-width, 42px)
+    var(--ar-amount-width, 55px)
+    var(--ar-period-width, 38px)
+    var(--ar-payment-width, 42px)
+    var(--ar-premium-width, 75px);
+  gap: 4px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-2);
   font-weight: 600;
@@ -828,6 +828,13 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
 html[data-theme="dark"] .contract-history-header {
   color: var(--color-ios-text-tertiary-dark);
   background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 헤더 셀 공통 - 텍스트 줄바꿈 방지 */
+.contract-history-header > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 리사이즈 가능한 헤더 셀 */
@@ -853,22 +860,22 @@ html[data-theme="dark"] .contract-history-accordion {
   background: var(--color-ios-bg-primary-dark);
 }
 
-/* 아코디언 헤더 (11컬럼 계약 행) - CSS 변수 기반 동적 폭 */
+/* 아코디언 헤더 (11컬럼 계약 행) - 보험상품만 1fr, 나머지 고정 폭 */
 .contract-history-accordion__header {
   display: grid;
   grid-template-columns:
     var(--ar-seq-width, 28px)
-    var(--ar-policy-width, 90px)
-    var(--ar-product-width, 180px)
-    var(--ar-holder-width, 50px)
-    var(--ar-insured-width, 50px)
-    var(--ar-date-width, 70px)
-    var(--ar-status-width, 55px)
-    var(--ar-amount-width, 60px)
-    var(--ar-period-width, 50px)
-    var(--ar-payment-width, 50px)
-    var(--ar-premium-width, 80px);
-  gap: 6px;
+    var(--ar-policy-width, 85px)
+    minmax(100px, 1fr)
+    var(--ar-holder-width, 45px)
+    var(--ar-insured-width, 45px)
+    var(--ar-date-width, 68px)
+    var(--ar-status-width, 42px)
+    var(--ar-amount-width, 55px)
+    var(--ar-period-width, 38px)
+    var(--ar-payment-width, 42px)
+    var(--ar-premium-width, 75px);
+  gap: 4px;
   align-items: center;
   padding: 6px 8px;
   cursor: pointer;
@@ -912,6 +919,8 @@ html[data-theme="dark"] .contract-history-item__seq {
   font-family: var(--font-family-mono);
   font-weight: 500;
   color: var(--color-ios-text-primary-light);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 html[data-theme="dark"] .contract-history-item__policy {
@@ -942,6 +951,9 @@ html[data-theme="dark"] .contract-history-item__product {
 /* 계약자 */
 .contract-history-item__holder {
   color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-theme="dark"] .contract-history-item__holder {
@@ -951,6 +963,9 @@ html[data-theme="dark"] .contract-history-item__holder {
 /* 피보험자 */
 .contract-history-item__insured {
   color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-theme="dark"] .contract-history-item__insured {
@@ -961,6 +976,7 @@ html[data-theme="dark"] .contract-history-item__insured {
 .contract-history-item__date {
   font-variant-numeric: tabular-nums;
   color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__date {
@@ -971,6 +987,7 @@ html[data-theme="dark"] .contract-history-item__date {
 .contract-history-item__status {
   font-weight: 500;
   color: var(--color-ios-green-light);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__status {
@@ -992,6 +1009,7 @@ html[data-theme="dark"] .contract-history-item__status--실효 {
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--color-ios-text-primary-light);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__amount {
@@ -1001,6 +1019,7 @@ html[data-theme="dark"] .contract-history-item__amount {
 /* 보험기간 */
 .contract-history-item__period {
   color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__period {
@@ -1010,6 +1029,7 @@ html[data-theme="dark"] .contract-history-item__period {
 /* 납입기간 */
 .contract-history-item__payment {
   color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__payment {
@@ -1022,6 +1042,7 @@ html[data-theme="dark"] .contract-history-item__payment {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--color-primary-600);
+  white-space: nowrap;
 }
 
 html[data-theme="dark"] .contract-history-item__premium {
