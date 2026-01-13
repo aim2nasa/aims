@@ -30,6 +30,7 @@ import SFSymbol, {
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { formatDate } from '@/shared/lib/timeUtils'
+import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE'
 import './ContractsTab.css'
 
 interface ContractsTabProps {
@@ -280,6 +281,16 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       setIsLoadingAr(false)
     }
   }, [customer?._id])
+
+  // 🍎 AR SSE 실시간 업데이트 - 파싱 완료 시 자동 리로드
+  useAnnualReportSSE(customer?._id, loadArReports, {
+    enabled: !!customer?._id,
+    onARChange: (event) => {
+      if (import.meta.env.DEV) {
+        console.log('[ContractsTab] AR SSE 이벤트 수신:', event)
+      }
+    }
+  })
 
   // 🍎 초기 로드
   useEffect(() => {
