@@ -789,44 +789,104 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           {/* 헤더 행 */}
           <div className="contract-history-header">
             <div className="contract-history-header__seq">순번</div>
-            <div className="contract-history-header__policy resizable-header">
-              증권번호
+            <div
+              className="contract-history-header__policy resizable-header header-sortable"
+              onClick={() => handleArSort('policyNumber')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>증권번호</span>
+              {renderArSortIndicator('policyNumber')}
               <div {...getArResizeHandleProps('policy')} />
             </div>
-            <div className="contract-history-header__product resizable-header">
-              보험상품
+            <div
+              className="contract-history-header__product resizable-header header-sortable"
+              onClick={() => handleArSort('productName')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>보험상품</span>
+              {renderArSortIndicator('productName')}
               <div {...getArResizeHandleProps('product')} />
             </div>
-            <div className="contract-history-header__holder resizable-header">
-              계약자
+            <div
+              className="contract-history-header__holder resizable-header header-sortable"
+              onClick={() => handleArSort('holder')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>계약자</span>
+              {renderArSortIndicator('holder')}
               <div {...getArResizeHandleProps('holder')} />
             </div>
-            <div className="contract-history-header__insured resizable-header">
-              피보험자
+            <div
+              className="contract-history-header__insured resizable-header header-sortable"
+              onClick={() => handleArSort('insured')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>피보험자</span>
+              {renderArSortIndicator('insured')}
               <div {...getArResizeHandleProps('insured')} />
             </div>
-            <div className="contract-history-header__date resizable-header">
-              계약일
+            <div
+              className="contract-history-header__date resizable-header header-sortable"
+              onClick={() => handleArSort('contractDate')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>계약일</span>
+              {renderArSortIndicator('contractDate')}
               <div {...getArResizeHandleProps('date')} />
             </div>
-            <div className="contract-history-header__status resizable-header">
-              계약상태
+            <div
+              className="contract-history-header__status resizable-header header-sortable"
+              onClick={() => handleArSort('status')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>계약상태</span>
+              {renderArSortIndicator('status')}
               <div {...getArResizeHandleProps('status')} />
             </div>
-            <div className="contract-history-header__amount resizable-header">
-              가입금액
+            <div
+              className="contract-history-header__amount resizable-header header-sortable"
+              onClick={() => handleArSort('coverageAmount')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>가입금액</span>
+              {renderArSortIndicator('coverageAmount')}
               <div {...getArResizeHandleProps('amount')} />
             </div>
-            <div className="contract-history-header__period resizable-header">
-              보험기간
+            <div
+              className="contract-history-header__period resizable-header header-sortable"
+              onClick={() => handleArSort('insurancePeriod')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>보험기간</span>
+              {renderArSortIndicator('insurancePeriod')}
               <div {...getArResizeHandleProps('period')} />
             </div>
-            <div className="contract-history-header__payment resizable-header">
-              납입기간
+            <div
+              className="contract-history-header__payment resizable-header header-sortable"
+              onClick={() => handleArSort('paymentPeriod')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>납입기간</span>
+              {renderArSortIndicator('paymentPeriod')}
               <div {...getArResizeHandleProps('payment')} />
             </div>
-            <div className="contract-history-header__premium">
-              보험료(원)
+            <div
+              className="contract-history-header__premium header-sortable"
+              onClick={() => handleArSort('premium')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>보험료(원)</span>
+              {renderArSortIndicator('premium')}
             </div>
           </div>
           <div className="contract-history-list">

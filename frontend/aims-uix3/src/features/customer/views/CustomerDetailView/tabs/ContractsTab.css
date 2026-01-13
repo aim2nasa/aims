@@ -839,6 +839,34 @@ html[data-theme="dark"] .contract-history-header {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
+}
+
+/* 정렬 가능한 헤더 */
+.contract-history-header .header-sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.contract-history-header .header-sortable:hover {
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .contract-history-header .header-sortable:hover {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* AR 정렬 인디케이터 */
+.ar-sort-indicator {
+  font-size: 8px;
+  color: var(--color-ios-blue-light);
+  margin-left: 2px;
+}
+
+html[data-theme="dark"] .ar-sort-indicator {
+  color: var(--color-ios-blue-dark);
 }
 
 /* contract-history-header는 전역 column-resize.css 스타일 사용
