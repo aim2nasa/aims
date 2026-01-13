@@ -492,6 +492,101 @@ html[data-theme="dark"] .view-status-button--secondary:hover {
   color: var(--color-icon-doc-library);
 }
 
+/* 🎯 문서 유형 선택 영역 - iOS 세그먼트 컨트롤 스타일 */
+.document-type-selection {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.document-type-selection__buttons {
+  display: inline-flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-ios-separator-light);
+  background: rgba(118, 118, 128, 0.12);
+}
+
+html[data-theme="dark"] .document-type-selection__buttons {
+  border-color: var(--color-ios-separator-dark);
+  background: rgba(118, 118, 128, 0.24);
+}
+
+/* 🍎 세그먼트 컨트롤 스타일 버튼 */
+.document-type-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 32px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--color-ios-separator-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+html[data-theme="dark"] .document-type-card {
+  border-right-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.document-type-card:last-child {
+  border-right: none;
+}
+
+.document-type-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html[data-theme="dark"] .document-type-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.document-type-card--selected {
+  background: var(--color-ios-blue);
+  color: white;
+}
+
+.document-type-card--selected:hover {
+  background: var(--color-ios-blue);
+}
+
+html[data-theme="dark"] .document-type-card--selected {
+  background: var(--color-ios-blue);
+  color: white;
+}
+
+.document-type-card__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
+/* 🎯 문서 유형 아이콘 */
+.document-type-card__icon {
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+.document-type-card__icon--orange {
+  color: var(--color-ios-orange);
+}
+
+.document-type-card__icon--green {
+  color: var(--color-ios-green);
+}
+
+/* 선택 시 아이콘 흰색 */
+.document-type-card--selected .document-type-card__icon {
+  color: white;
+}
+
 /* 🍎 RESPONSIVE: Minimal changes */
 @media (max-width: 768px) {
   .document-registration-content {
@@ -501,5 +596,18 @@ html[data-theme="dark"] .view-status-button--secondary:hover {
   .registration-guide .guide-section {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .document-type-selection__buttons {
+    flex-direction: column;
+  }
+
+  .document-type-card {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-secondary);
+  }
+
+  .document-type-card:last-child {
+    border-bottom: none;
   }
 }

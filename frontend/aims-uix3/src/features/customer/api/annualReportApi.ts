@@ -123,6 +123,33 @@ export interface LatestAnnualReportResponse {
 }
 
 /**
+ * 전체 AR 목록 조회 응답 (고객별 그룹화)
+ */
+export interface AllAnnualReportsResponse {
+  success: boolean;
+  data?: {
+    reports: ARSummaryByCustomer[];
+    total_count: number;
+  };
+  error?: string;
+}
+
+/**
+ * 고객별 AR 요약 정보
+ */
+export interface ARSummaryByCustomer {
+  customer_id: string;
+  customer_name: string;
+  customer_type?: '개인' | '법인';
+  registered_at?: string;
+  latest_issue_date: string;
+  latest_parsed_at: string;
+  total_monthly_premium: number;
+  contract_count: number;
+  ar_count: number;  // 해당 고객의 총 AR 개수
+}
+
+/**
  * Annual Report 체크 응답 (백엔드 /check API)
  */
 export interface CheckAnnualReportResponse {
@@ -646,6 +673,43 @@ export class AnnualReportApi {
         : (error instanceof Error ? error.message : 'AR 파싱 재시도 중 오류가 발생했습니다');
       errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.retryParsing', payload: { fileId } });
       return { success: false, message };
+    }
+  }
+
+  /**
+   * 전체 Annual Reports 목록 조회 (고객별 그룹화)
+   *
+   * 모든 고객의 AR을 조회하여 고객별로 그룹화하고 최신 AR 정보를 반환
+   * ⭐ 설계사별 데이터 격리 적용 (JWT 토큰 기반)
+   *
+   * @returns 고객별 최신 AR 요약 목록
+   */
+  static async getAllAnnualReports(): Promise<AllAnnualReportsResponse> {
+    try {
+      const data = await api.get<{
+        success?: boolean;
+        data?: {
+          reports: ARSummaryByCustomer[];
+          total_count: number;
+        };
+        message?: string;
+        error?: string;
+      }>(`${ANNUAL_REPORT_API_URL}/annual-reports/all`);
+
+      if (data.success !== false) {
+        return {
+          success: true,
+          data: data.data,
+        };
+      }
+
+      throw new Error(data.message || data.error || '전체 Annual Reports 조회에 실패했습니다.');
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : '전체 Annual Reports 조회 중 오류가 발생했습니다.');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.getAllAnnualReports' });
+      return { success: false, error: message };
     }
   }
 }

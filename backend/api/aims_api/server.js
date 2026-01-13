@@ -7771,6 +7771,100 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
 });
 
 /**
+ * 전체 Annual Reports 목록 조회 (고객별 그룹화)
+ * ⭐ 설계사별 데이터 격리 적용
+ *
+ * 응답: 고객별 최신 AR 요약 목록
+ */
+app.get('/api/annual-reports/all', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`📋 [Annual Report] 전체 AR 목록 조회, userId: ${userId}`);
+
+    // MongoDB Aggregation: 고객별 AR 그룹화 + 최신 AR 정보
+    const results = await db.collection(CUSTOMERS_COLLECTION).aggregate([
+      // 1. 해당 설계사의 고객 중 AR이 있는 고객만 필터
+      {
+        $match: {
+          'meta.created_by': userId,
+          'annual_reports.0': { $exists: true }
+        }
+      },
+      // 2. annual_reports 배열 unwind
+      {
+        $unwind: '$annual_reports'
+      },
+      // 3. 파싱 완료된 AR만 필터 (parsed_at이 있는 것)
+      {
+        $match: {
+          'annual_reports.parsed_at': { $exists: true, $ne: null }
+        }
+      },
+      // 4. 파싱일 기준 정렬
+      {
+        $sort: { 'annual_reports.parsed_at': -1 }
+      },
+      // 5. 고객별 그룹화: 최신 AR + AR 개수
+      {
+        $group: {
+          _id: '$_id',
+          customer_name: { $first: '$personal_info.name' },
+          customer_type: { $first: '$insurance_info.customer_type' },
+          registered_at: { $first: '$meta.created_at' },
+          latest_ar: { $first: '$annual_reports' },
+          ar_count: { $sum: 1 }
+        }
+      },
+      // 6. 최신 파싱일 기준 정렬
+      {
+        $sort: { 'latest_ar.parsed_at': -1 }
+      },
+      // 7. 결과 형식 변환
+      {
+        $project: {
+          _id: 0,
+          customer_id: '$_id',
+          customer_name: 1,
+          customer_type: 1,
+          registered_at: 1,
+          latest_issue_date: '$latest_ar.issue_date',
+          latest_parsed_at: '$latest_ar.parsed_at',
+          total_monthly_premium: '$latest_ar.total_monthly_premium',
+          contract_count: '$latest_ar.total_contracts',
+          ar_count: 1
+        }
+      }
+    ]).toArray();
+
+    console.log(`📋 [Annual Report] 조회 완료: ${results.length}명의 고객`);
+
+    res.json({
+      success: true,
+      data: {
+        reports: results,
+        total_count: results.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ [Annual Report] 전체 조회 오류:', error.message);
+    backendLogger.error('AnnualReport', '[Annual Report] 전체 조회 오류', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Annual Report 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
  * 고객의 Annual Reports 목록 조회 프록시
  */
 /**

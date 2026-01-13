@@ -36,6 +36,10 @@ interface AnnualReportModalProps {
   error: string | null;
   /** 고객 이름 */
   customerName: string;
+  /** 동일 고객의 모든 AR 목록 (발행일 드롭다운용) */
+  allReports?: AnnualReport[];
+  /** AR 선택 변경 핸들러 */
+  onReportChange?: (report: AnnualReport) => void;
 }
 
 // 정렬 설정 타입
@@ -50,10 +54,24 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   report,
   isLoading,
   error,
-  customerName
+  customerName,
+  allReports,
+  onReportChange
 }) => {
   // 정렬 상태
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  // 발행일 드롭다운 상태
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+
+  /**
+   * 발행일 선택 핸들러
+   */
+  const handleDateSelect = (selectedReport: AnnualReport) => {
+    setIsDateDropdownOpen(false);
+    if (onReportChange && selectedReport.report_id !== report?.report_id) {
+      onReportChange(selectedReport);
+    }
+  };
 
   /**
    * 계약 상태에 따른 배지 스타일
@@ -201,9 +219,44 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
         <div className="annual-report-summary">
           <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">발행일</span>
-            <span className="annual-report-summary__value">
-              {formatDate(report.issue_date)}
-            </span>
+            {/* 다중 AR이 있으면 드롭다운, 없으면 단순 텍스트 */}
+            {allReports && allReports.length > 1 && onReportChange ? (
+              <div className="annual-report-date-dropdown">
+                <button
+                  className="annual-report-date-dropdown__trigger"
+                  onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                  type="button"
+                >
+                  <span className="annual-report-date-dropdown__value">
+                    {formatDate(report.issue_date)}
+                  </span>
+                  <span className={`annual-report-date-dropdown__arrow ${isDateDropdownOpen ? 'is-open' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+                {isDateDropdownOpen && (
+                  <div className="annual-report-date-dropdown__menu">
+                    {allReports.map((r) => (
+                      <button
+                        key={r.report_id}
+                        className={`annual-report-date-dropdown__item ${r.report_id === report.report_id ? 'is-current' : ''}`}
+                        onClick={() => handleDateSelect(r)}
+                        type="button"
+                      >
+                        {formatDate(r.issue_date)}
+                        {r.report_id === report.report_id && (
+                          <span className="annual-report-date-dropdown__current-badge">(현재)</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <span className="annual-report-summary__value">
+                {formatDate(report.issue_date)}
+              </span>
+            )}
           </div>
           <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">총 월보험료</span>

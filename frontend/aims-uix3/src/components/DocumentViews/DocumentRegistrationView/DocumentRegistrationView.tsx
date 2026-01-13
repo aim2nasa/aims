@@ -26,6 +26,10 @@ import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument } from './utils/annualReportProcessor'
+import { CustomerSelectionModal } from '@/features/annual-report/components/CustomerSelectionModal'
+import { NewCustomerInputModal } from '@/features/annual-report/components/NewCustomerInputModal'
+import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
+import CustomerService from '@/services/customerService'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import {
   validateFile,
@@ -95,6 +99,28 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [currentDuplicateFile, setCurrentDuplicateFile] = useState<DuplicateFile | null>(null)
   const duplicateResolverRef = useRef<((action: DuplicateAction) => void) | null>(null)
   const duplicateApplyAllRef = useRef<{ action: DuplicateAction } | null>(null)
+
+  // 🎯 AR 고객 선택 모달 상태
+  const [arCustomerSelectionState, setArCustomerSelectionState] = useState<{
+    isOpen: boolean
+    arFile: File | null
+    arMetadata: { customer_name: string; issue_date: string } | null
+    matchingCustomers: Customer[]
+    fileId: string
+    existingHashes: ExistingFileHash[]
+  }>({
+    isOpen: false,
+    arFile: null,
+    arMetadata: null,
+    matchingCustomers: [],
+    fileId: '',
+    existingHashes: []
+  })
+  const [showNewCustomerModal, setShowNewCustomerModal] = useState(false)
+
+  // 🎯 문서 유형 선택 상태 (AR은 고객 선택 불필요)
+  type DocumentTypeMode = 'normal' | 'annual_report' | null
+  const [documentTypeMode, setDocumentTypeMode] = useState<DocumentTypeMode>(null)
 
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
@@ -375,6 +401,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
+   * 🔄 컴포넌트 레벨 파일 상태 업데이트 (AR 핸들러용)
+   */
+  const updateFileStatusByFile = useCallback((file: File, status: UploadStatus, error?: string) => {
+    setUploadState(prev => ({
+      ...prev,
+      files: prev.files.map(f =>
+        f.file.name === file.name && f.file.size === file.size
+          ? { ...f, status, error }
+          : f
+      )
+    }));
+  }, []);
+
+  /**
    * 파일 선택 핸들러
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
@@ -514,15 +554,78 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (checkResult.is_annual_report) {
               console.log('[DocumentRegistrationView] ✅ Annual Report 감지!', checkResult.metadata);
 
-              // 🎯 사전 선택된 고객 확인 (고객 검색 불필요)
-              if (!customerFileCustomer) {
-                addLog('warning', `AR 문서 감지됨: ${file.name}`, '고객을 먼저 선택해주세요');
-                updateFileStatus(file, 'error', '고객을 먼저 선택해주세요')
-                continue;
+              // 🎯 AR 고객 매칭 플로우
+              let targetCustomerId: string;
+              let targetCustomerName: string;
+
+              if (customerFileCustomer) {
+                // 사전 선택된 고객이 있으면 그대로 사용
+                targetCustomerId = customerFileCustomer._id;
+                targetCustomerName = customerFileCustomer.personal_info?.name || '알 수 없음';
+              } else {
+                // 사전 선택된 고객이 없으면 AR 메타데이터에서 고객명 추출 후 검색
+                const arCustomerName = checkResult.metadata?.customer_name;
+
+                if (!arCustomerName) {
+                  addLog('warning', `AR 문서 감지됨: ${file.name}`, '고객명을 추출할 수 없습니다. 고객을 먼저 선택해주세요');
+                  updateFileStatus(file, 'error', '고객명 추출 실패');
+                  continue;
+                }
+
+                addLog('info', `[2/5] AR 고객 검색 중: "${arCustomerName}"`);
+
+                // 고객명으로 부분 일치 검색
+                const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                const matchingCustomers = await AnnualReportApi.searchCustomersByName(arCustomerName, currentUserId);
+
+                if (matchingCustomers.length === 0) {
+                  // Case 1: 유사 이름 고객 0명 → 자동 등록
+                  addLog('info', `[3/5] 유사 고객 없음 → "${arCustomerName}" 자동 등록`);
+
+                  try {
+                    const newCustomer = await CustomerService.createCustomer({
+                      personal_info: { name: arCustomerName },
+                      insurance_info: { customer_type: '개인' },
+                      contracts: [],
+                      documents: [],
+                      consultations: [],
+                    });
+
+                    targetCustomerId = newCustomer._id;
+                    targetCustomerName = arCustomerName;
+
+                    addLog('success', `[3/5] 새 고객 등록 완료: ${arCustomerName}`);
+                  } catch (error) {
+                    console.error('[DocumentRegistrationView] 고객 자동 등록 실패:', error);
+                    addLog('error', `고객 등록 실패: ${file.name}`, String(error));
+                    updateFileStatus(file, 'error', '고객 등록 실패');
+                    continue;
+                  }
+                } else {
+                  // Case 2: 유사 이름 고객 1명 이상 → 선택 모달 표시
+                  addLog('info', `[3/5] ${matchingCustomers.length}명의 유사 고객 발견 → 선택 필요`);
+
+                  // 모달 상태 설정 (사용자 선택 대기)
+                  setArCustomerSelectionState({
+                    isOpen: true,
+                    arFile: file,
+                    arMetadata: {
+                      customer_name: arCustomerName,
+                      issue_date: checkResult.metadata?.issue_date || '',
+                    },
+                    matchingCustomers,
+                    fileId,
+                    existingHashes,
+                  });
+
+                  // 현재 파일은 모달에서 처리될 예정이므로 건너뜀
+                  updateFileStatus(file, 'pending', '고객 선택 대기 중');
+                  continue;
+                }
               }
 
-              const customerId = customerFileCustomer._id;
-              const customerName = customerFileCustomer.personal_info?.name || '알 수 없음';
+              const customerId = targetCustomerId;
+              const customerName = targetCustomerName;
 
               // 중복 문서 체크
               const processResult = await processAnnualReportFile(file, customerId);
@@ -1478,6 +1581,119 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     prevCustomerIdRef.current = currentCustomerId
   }, [customerFileCustomer])
 
+  // 🎯 AR 고객 선택 완료 핸들러
+  const handleArCustomerSelected = useCallback(async (customerId: string) => {
+    const { arFile, arMetadata, fileId } = arCustomerSelectionState;
+
+    if (!arFile || !arMetadata) {
+      console.error('[DocumentRegistrationView] AR 파일 또는 메타데이터 없음');
+      return;
+    }
+
+    // 모달 닫기
+    setArCustomerSelectionState(prev => ({ ...prev, isOpen: false }));
+
+    // 선택된 고객 정보 조회
+    const selectedCustomer = arCustomerSelectionState.matchingCustomers.find(c => c._id === customerId);
+    const customerName = selectedCustomer?.personal_info?.name || arMetadata.customer_name;
+
+    addLog('success', `[3/5] 기존 고객 선택: ${customerName}`);
+
+    // AR 등록 처리
+    try {
+      const processResult = await processAnnualReportFile(arFile, customerId);
+      if (processResult.isDuplicateDoc) {
+        addLog('warning', `🔴 중복 파일 건너뜀: ${arFile.name}`, '이미 등록된 파일입니다.');
+        updateFileStatusByFile(arFile, 'skipped', '중복 파일 - 이미 등록됨');
+        return;
+      }
+
+      const result = await registerArDocument(arFile, customerId, arMetadata.issue_date, {
+        addLog,
+        generateFileId: () => fileId,
+        addToUploadQueue: (uploadFile) => {
+          updateFileStatusByFile(arFile, 'pending');
+          setUploadState(prev => ({
+            ...prev,
+            files: [...prev.files, { ...uploadFile, id: fileId }]
+          }));
+        },
+        trackArFile: (fileName, custId) => {
+          arFilenamesRef.current.add(fileName);
+          arCustomerMappingRef.current.set(fileName, custId);
+          arMetadataMappingRef.current.set(fileName, arMetadata);
+          customerNameMappingRef.current.set(custId, customerName);
+        }
+      });
+
+      if (result.success) {
+        console.log('[DocumentRegistrationView] AR 문서 등록 성공 (모달 선택):', arFile.name);
+        arProcessedCountRef.current += 1;
+      }
+    } catch (error) {
+      console.error('[DocumentRegistrationView] AR 등록 실패:', error);
+      addLog('error', `AR 등록 실패: ${arFile.name}`, String(error));
+      updateFileStatusByFile(arFile, 'error', 'AR 등록 실패');
+    }
+  }, [arCustomerSelectionState, addLog, updateFileStatusByFile]);
+
+  // 🎯 새 고객 등록 모달 열기
+  const handleArCreateNewCustomer = useCallback(() => {
+    setArCustomerSelectionState(prev => ({ ...prev, isOpen: false }));
+    setShowNewCustomerModal(true);
+  }, []);
+
+  // 🎯 새 고객 등록 완료 핸들러
+  const handleNewCustomerCreated = useCallback(async (customerId: string, customerName: string) => {
+    const { arFile, arMetadata, fileId } = arCustomerSelectionState;
+
+    // 모달 닫기
+    setShowNewCustomerModal(false);
+
+    if (!arFile || !arMetadata) {
+      console.error('[DocumentRegistrationView] AR 파일 또는 메타데이터 없음');
+      return;
+    }
+
+    addLog('success', `[3/5] 새 고객 등록 완료: ${customerName}`);
+
+    // AR 등록 처리
+    try {
+      const result = await registerArDocument(arFile, customerId, arMetadata.issue_date, {
+        addLog,
+        generateFileId: () => fileId,
+        addToUploadQueue: (uploadFile) => {
+          updateFileStatusByFile(arFile, 'pending');
+          setUploadState(prev => ({
+            ...prev,
+            files: [...prev.files, { ...uploadFile, id: fileId }]
+          }));
+        },
+        trackArFile: (fileName, custId) => {
+          arFilenamesRef.current.add(fileName);
+          arCustomerMappingRef.current.set(fileName, custId);
+          arMetadataMappingRef.current.set(fileName, arMetadata);
+          customerNameMappingRef.current.set(custId, customerName);
+        }
+      });
+
+      if (result.success) {
+        console.log('[DocumentRegistrationView] AR 문서 등록 성공 (새 고객):', arFile.name);
+        arProcessedCountRef.current += 1;
+      }
+    } catch (error) {
+      console.error('[DocumentRegistrationView] AR 등록 실패:', error);
+      addLog('error', `AR 등록 실패: ${arFile.name}`, String(error));
+      updateFileStatusByFile(arFile, 'error', 'AR 등록 실패');
+    }
+  }, [arCustomerSelectionState, addLog, updateFileStatusByFile]);
+
+  // 🎯 새 고객 등록 모달에서 뒤로가기
+  const handleNewCustomerBack = useCallback(() => {
+    setShowNewCustomerModal(false);
+    setArCustomerSelectionState(prev => ({ ...prev, isOpen: true }));
+  }, []);
+
   // 제목에 진행 상태 표시
   const getTitle = () => {
     if (uploadState.uploading) {
@@ -1517,84 +1733,142 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     >
       <div className="document-registration-content">
-        {/* 🍎 등록 방법 안내 (접기/펼치기 가능) */}
-        <div className={`registration-guide ${isGuideExpanded ? 'registration-guide--expanded' : 'registration-guide--collapsed'}`}>
-          <button
-            type="button"
-            className="registration-guide__toggle"
-            onClick={toggleGuide}
-            aria-expanded={isGuideExpanded ? "true" : "false"}
-            aria-label={isGuideExpanded ? '도움말 접기' : '도움말 펼치기'}
-          >
-            <div className="guide-header">
-              <div className="guide-icon">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* 🎯 Step 0: 문서 유형 선택 (AR은 고객 선택 불필요) */}
+        {!isLogVisible && (
+          <div className="document-type-selection">
+            <div className="document-type-selection__buttons">
+              <button
+                type="button"
+                className={`document-type-card ${documentTypeMode === 'normal' ? 'document-type-card--selected' : ''}`}
+                onClick={() => setDocumentTypeMode('normal')}
+              >
+                <svg className="document-type-card__icon document-type-card__icon--orange" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 2V8H20M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </div>
-              <h3 className="guide-title">문서 등록 방법</h3>
-              <span className="guide-toggle-icon" aria-hidden="true">
-                {isGuideExpanded ? '▲' : '▼'}
-              </span>
+                <span className="document-type-card__label">일반 문서</span>
+              </button>
+              <button
+                type="button"
+                className={`document-type-card ${documentTypeMode === 'annual_report' ? 'document-type-card--selected' : ''}`}
+                onClick={() => setDocumentTypeMode('annual_report')}
+              >
+                <svg className="document-type-card__icon document-type-card__icon--green" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3V21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7 16L12 11L15 14L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 8H21V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="document-type-card__label">Annual Report</span>
+              </button>
             </div>
-          </button>
-
-          {isGuideExpanded && (
-            <div className="guide-content">
-              <div className="guide-section">
-                <div className="guide-step">
-                  <span className="step-number">1</span>
-                  <div className="step-content">
-                    <h4 className="step-title">고객 선택하기 (필수)</h4>
-                    <p className="step-description">• 문서를 등록할 고객을 먼저 선택해주세요</p>
-                  </div>
-                </div>
-
-                <div className="guide-step">
-                  <span className="step-number">2</span>
-                  <div className="step-content">
-                    <h4 className="step-title">파일 올리기</h4>
-                    <p className="step-description">• 고객을 선택하면 파일 업로드가 활성화돼요</p>
-                    <p className="step-description">• 업로드된 문서는 선택한 고객에게 자동 연결돼요</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 🎯 [필수] 고객 선택 영역 - 항상 펼쳐진 상태 */}
-        <div className="customer-info-section customer-info-section--always-expanded">
-          <div className="customer-info-content">
-            <CustomerFileUploadArea
-              selectedCustomer={customerFileCustomer}
-              onCustomerSelect={setCustomerFileCustomer}
-              disabled={false}
-              showResetButton={isLogVisible && uploadState.files.length > 0}
-              onReset={() => {
-                // 초기 상태로 되돌리기 (새 문서 등록 버튼과 동일)
-                setProcessingLogs([])
-                setUploadState({
-                  uploading: false,
-                  files: [],
-                  totalProgress: 0,
-                  completedCount: 0,
-                  errors: [],
-                  context: {
-                    identifierType: 'userId',
-                    identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
-                  }
-                })
-                setIsLogVisible(false)
-                setCustomerFileCustomer(null)
-              }}
-            />
           </div>
-        </div>
+        )}
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 시 & 로그 미표시 시에만 표시 */}
-        {customerFileCustomer && !isLogVisible && (
+        {/* 🍎 등록 방법 안내 - 문서 유형 선택 후에만 표시 */}
+        {documentTypeMode && !isLogVisible && (
+          <div className={`registration-guide ${isGuideExpanded ? 'registration-guide--expanded' : 'registration-guide--collapsed'}`}>
+            <button
+              type="button"
+              className="registration-guide__toggle"
+              onClick={toggleGuide}
+              aria-expanded={isGuideExpanded}
+              aria-label={isGuideExpanded ? '도움말 접기' : '도움말 펼치기'}
+            >
+              <div className="guide-header">
+                <div className="guide-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className="guide-title">
+                  {documentTypeMode === 'annual_report' ? 'AR 등록 방법' : '문서 등록 방법'}
+                </h3>
+                <span className="guide-toggle-icon" aria-hidden="true">
+                  {isGuideExpanded ? '▲' : '▼'}
+                </span>
+              </div>
+            </button>
+
+            {isGuideExpanded && (
+              <div className="guide-content">
+                <div className="guide-section">
+                  {documentTypeMode === 'annual_report' ? (
+                    <>
+                      <div className="guide-step">
+                        <span className="step-number">1</span>
+                        <div className="step-content">
+                          <h4 className="step-title">AR 파일 업로드</h4>
+                          <p className="step-description">• Annual Report PDF 파일을 업로드해주세요</p>
+                        </div>
+                      </div>
+                      <div className="guide-step">
+                        <span className="step-number">2</span>
+                        <div className="step-content">
+                          <h4 className="step-title">고객 자동 매칭</h4>
+                          <p className="step-description">• AR에서 고객명을 추출하여 자동 매칭합니다</p>
+                          <p className="step-description">• 매칭되는 고객이 없으면 새 고객이 생성됩니다</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="guide-step">
+                        <span className="step-number">1</span>
+                        <div className="step-content">
+                          <h4 className="step-title">고객 선택하기 (필수)</h4>
+                          <p className="step-description">• 문서를 등록할 고객을 먼저 선택해주세요</p>
+                        </div>
+                      </div>
+                      <div className="guide-step">
+                        <span className="step-number">2</span>
+                        <div className="step-content">
+                          <h4 className="step-title">파일 올리기</h4>
+                          <p className="step-description">• 고객을 선택하면 파일 업로드가 활성화돼요</p>
+                          <p className="step-description">• 업로드된 문서는 선택한 고객에게 자동 연결돼요</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 🎯 [일반 문서] 고객 선택 영역 - 일반 문서일 때만 표시 */}
+        {documentTypeMode === 'normal' && !isLogVisible && (
+          <div className="customer-info-section customer-info-section--always-expanded">
+            <div className="customer-info-content">
+              <CustomerFileUploadArea
+                selectedCustomer={customerFileCustomer}
+                onCustomerSelect={setCustomerFileCustomer}
+                disabled={false}
+                showResetButton={isLogVisible && uploadState.files.length > 0}
+                onReset={() => {
+                  // 초기 상태로 되돌리기 (새 문서 등록 버튼과 동일)
+                  setProcessingLogs([])
+                  setUploadState({
+                    uploading: false,
+                    files: [],
+                    totalProgress: 0,
+                    completedCount: 0,
+                    errors: [],
+                    context: {
+                      identifierType: 'userId',
+                      identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
+                    }
+                  })
+                  setIsLogVisible(false)
+                  setCustomerFileCustomer(null)
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 🎯 [핵심] 파일 업로드 영역 - AR이거나 (일반 문서 + 고객 선택) 시 표시 */}
+        {((documentTypeMode === 'annual_report') || (documentTypeMode === 'normal' && customerFileCustomer)) && !isLogVisible && (
           <FileUploadArea
             onFilesSelected={handleFilesSelected}
             options={fileSelectionOptions}
@@ -1732,6 +2006,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           file={currentDuplicateFile}
           onAction={handleDuplicateAction}
           onCancel={handleDuplicateCancel}
+        />
+      )}
+
+      {/* 🎯 AR 고객 선택 모달 */}
+      {arCustomerSelectionState.arMetadata && (
+        <CustomerSelectionModal
+          isOpen={arCustomerSelectionState.isOpen}
+          onClose={() => setArCustomerSelectionState(prev => ({ ...prev, isOpen: false }))}
+          arMetadata={arCustomerSelectionState.arMetadata}
+          matchingCustomers={arCustomerSelectionState.matchingCustomers}
+          onSelectCustomer={handleArCustomerSelected}
+          onCreateNewCustomer={handleArCreateNewCustomer}
+        />
+      )}
+
+      {/* 🎯 새 고객명 입력 모달 */}
+      {arCustomerSelectionState.arMetadata && (
+        <NewCustomerInputModal
+          isOpen={showNewCustomerModal}
+          onClose={() => setShowNewCustomerModal(false)}
+          arMetadata={arCustomerSelectionState.arMetadata}
+          onSubmit={handleNewCustomerCreated}
+          onBack={handleNewCustomerBack}
         />
       )}
     </CenterPaneView>

@@ -99,6 +99,18 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
   })
 
   /**
+   * 헬퍼: 문서 유형 '일반 문서' 선택 (고객 선택 UI 표시 전 필수)
+   */
+  const selectNormalDocumentType = async () => {
+    const normalDocButton = screen.getByText('일반 문서')
+    fireEvent.click(normalDocButton)
+    // 고객 선택 버튼이 나타날 때까지 대기
+    await waitFor(() => {
+      expect(screen.getByText('고객 선택')).toBeInTheDocument()
+    })
+  }
+
+  /**
    * 헬퍼: 드래그존(FileUploadArea)이 표시되는지 확인
    * FileUploadArea는 "클릭하여 파일 선택" 또는 드래그 영역 텍스트를 포함
    */
@@ -141,6 +153,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
       />
     )
 
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
+
     // Then: 고객이 선택되지 않았으므로 드래그존이 없어야 함
     // "고객 선택" 버튼은 있어야 함
     expect(screen.getByText('고객 선택')).toBeInTheDocument()
@@ -154,6 +169,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
         onClose={vi.fn()}
       />
     )
+
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
 
     // When: 고객 선택 버튼 클릭
     const selectCustomerButton = screen.getByText('고객 선택')
@@ -210,6 +228,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
         onClose={vi.fn()}
       />
     )
+
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
 
     // Step 1: 고객 선택
     const selectCustomerButton = screen.getByText('고객 선택')
@@ -282,6 +303,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
       />
     )
 
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
+
     // Step 1: 첫 번째 고객 선택
     fireEvent.click(screen.getByText('고객 선택'))
     await waitFor(() => {
@@ -323,6 +347,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
       />
     )
 
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
+
     // 고객 선택
     fireEvent.click(screen.getByText('고객 선택'))
     await waitFor(() => {
@@ -349,6 +376,9 @@ describe('DocumentRegistrationView - 고객 변경 시 드래그존 표시', () 
         onClose={vi.fn()}
       />
     )
+
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
 
     // Step 1: 고객 선택
     fireEvent.click(screen.getByText('고객 선택'))
@@ -396,6 +426,17 @@ describe('DocumentRegistrationView - isLogVisible 상태 검증', () => {
     localStorage.clear()
   })
 
+  /**
+   * 헬퍼: 문서 유형 '일반 문서' 선택 (고객 선택 UI 표시 전 필수)
+   */
+  const selectNormalDocumentType = async () => {
+    const normalDocButton = screen.getByText('일반 문서')
+    fireEvent.click(normalDocButton)
+    await waitFor(() => {
+      expect(screen.getByText('고객 선택')).toBeInTheDocument()
+    })
+  }
+
   it('초기 상태에서 isLogVisible은 false여야 함', () => {
     render(
       <DocumentRegistrationView
@@ -422,6 +463,9 @@ describe('DocumentRegistrationView - isLogVisible 상태 검증', () => {
         onClose={vi.fn()}
       />
     )
+
+    // 문서 유형 선택 (일반 문서)
+    await selectNormalDocumentType()
 
     // 고객 선택
     fireEvent.click(screen.getByText('고객 선택'))

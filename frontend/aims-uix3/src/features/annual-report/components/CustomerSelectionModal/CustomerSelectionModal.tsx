@@ -1,0 +1,205 @@
+/**
+ * CustomerSelectionModal
+ *
+ * AR 업로드 시 고객 선택 모달
+ * - 유사 이름 고객 목록 표시
+ * - 기존 고객 선택 또는 새 고객 등록 선택
+ */
+
+import React, { useState } from 'react';
+import { Modal } from '@/shared/ui/Modal';
+import { Button } from '@/shared/ui/Button';
+import type { Customer } from '@/entities/customer';
+import { formatDate } from '@/shared/lib/timeUtils';
+import './CustomerSelectionModal.css';
+
+export interface CustomerSelectionModalProps {
+  /** 모달 표시 여부 */
+  isOpen: boolean;
+  /** 모달 닫기 핸들러 */
+  onClose: () => void;
+  /** AR 메타데이터 (추출된 고객명, 발행일) */
+  arMetadata: {
+    customer_name: string;
+    issue_date: string;
+  };
+  /** 검색된 유사 이름 고객 목록 */
+  matchingCustomers: Customer[];
+  /** 기존 고객 선택 시 콜백 */
+  onSelectCustomer: (customerId: string) => void;
+  /** 새 고객 등록 선택 시 콜백 */
+  onCreateNewCustomer: () => void;
+  /** 로딩 상태 */
+  isLoading?: boolean;
+}
+
+/**
+ * AR 업로드 시 고객 선택 모달
+ *
+ * Case 2: 유사 이름 고객이 1명 이상인 경우 표시
+ * - 기존 고객 선택: 해당 고객에 AR 추가
+ * - 새 고객으로 등록: NewCustomerInputModal로 전환
+ */
+export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
+  isOpen,
+  onClose,
+  arMetadata,
+  matchingCustomers,
+  onSelectCustomer,
+  onCreateNewCustomer,
+  isLoading = false,
+}) => {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  const handleSelect = () => {
+    if (selectedCustomerId) {
+      onSelectCustomer(selectedCustomerId);
+    }
+  };
+
+  const handleRowClick = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+  };
+
+  const handleRowDoubleClick = (customerId: string) => {
+    onSelectCustomer(customerId);
+  };
+
+  // 고객 등록일 포맷
+  const formatRegisteredAt = (customer: Customer): string => {
+    const createdAt = customer.meta?.created_at;
+    if (!createdAt) return '-';
+    return formatDate(createdAt);
+  };
+
+  // 최근 AR 날짜 포맷
+  const formatLatestAR = (customer: Customer): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reports = (customer as any).annual_reports;
+    if (!reports || reports.length === 0) return '-';
+
+    // 가장 최근 AR의 발행일
+    const latestReport = reports[0];
+    if (!latestReport?.issue_date) return '-';
+
+    // issue_date가 Date 객체이거나 문자열일 수 있음
+    const issueDate = latestReport.issue_date;
+    if (typeof issueDate === 'string') {
+      return formatDate(issueDate);
+    }
+    return formatDate(issueDate.toString());
+  };
+
+  // 계약 수
+  const getContractCount = (customer: Customer): string => {
+    // contracts 필드가 있으면 그 길이, 없으면 annual_reports의 최신 계약 수
+    if (customer.contracts && customer.contracts.length > 0) {
+      return `${customer.contracts.length}건`;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reports = (customer as any).annual_reports;
+    if (reports && reports.length > 0 && reports[0]?.total_contracts) {
+      return `${reports[0].total_contracts}건`;
+    }
+    return '-';
+  };
+
+  const footer = (
+    <div className="customer-selection-modal__footer">
+      <Button
+        variant="secondary"
+        onClick={onCreateNewCustomer}
+        disabled={isLoading}
+      >
+        새 고객으로 등록
+      </Button>
+      <Button
+        variant="primary"
+        onClick={handleSelect}
+        disabled={!selectedCustomerId || isLoading}
+      >
+        선택 완료
+      </Button>
+    </div>
+  );
+
+  return (
+    <Modal
+      visible={isOpen}
+      onClose={onClose}
+      title="고객 선택"
+      size="lg"
+      footer={footer}
+      backdropClosable={false}
+    >
+      <div className="customer-selection-modal">
+        <p className="customer-selection-modal__description">
+          <strong>"{arMetadata.customer_name}"</strong>님의 AR을 등록할 고객을 선택하세요.
+        </p>
+
+        <div className="customer-selection-modal__table-container">
+          <table className="customer-selection-modal__table">
+            <thead>
+              <tr>
+                <th className="customer-selection-modal__th--select"></th>
+                <th className="customer-selection-modal__th--name">고객명</th>
+                <th className="customer-selection-modal__th--type">구분</th>
+                <th className="customer-selection-modal__th--date">등록일</th>
+                <th className="customer-selection-modal__th--date">최근 AR</th>
+                <th className="customer-selection-modal__th--count">계약 수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {matchingCustomers.map((customer) => {
+                const customerId = customer._id;
+                const isSelected = selectedCustomerId === customerId;
+
+                return (
+                  <tr
+                    key={customerId}
+                    className={`customer-selection-modal__row ${isSelected ? 'customer-selection-modal__row--selected' : ''}`}
+                    onClick={() => handleRowClick(customerId)}
+                    onDoubleClick={() => handleRowDoubleClick(customerId)}
+                  >
+                    <td className="customer-selection-modal__td--select">
+                      <input
+                        type="radio"
+                        name="customer-selection"
+                        checked={isSelected}
+                        onChange={() => setSelectedCustomerId(customerId)}
+                        className="customer-selection-modal__radio"
+                      />
+                    </td>
+                    <td className="customer-selection-modal__td--name">
+                      {customer.personal_info?.name || '-'}
+                    </td>
+                    <td className="customer-selection-modal__td--type">
+                      {customer.insurance_info?.customer_type || '개인'}
+                    </td>
+                    <td className="customer-selection-modal__td--date">
+                      {formatRegisteredAt(customer)}
+                    </td>
+                    <td className="customer-selection-modal__td--date">
+                      {formatLatestAR(customer)}
+                    </td>
+                    <td className="customer-selection-modal__td--count">
+                      {getContractCount(customer)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {matchingCustomers.length === 0 && (
+          <div className="customer-selection-modal__empty">
+            유사한 이름의 고객이 없습니다.
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+export default CustomerSelectionModal;
