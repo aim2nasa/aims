@@ -607,17 +607,27 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                   </span>
                 </div>
 
-                {/* AR 상세 계약 목록 (펼침 시) - 실제 DB 필드명 사용 */}
+                {/* AR 상세 계약 목록 (펼침 시) - 모달과 동일한 상세 정보 */}
                 {isExpanded && contractsData && contractsData.length > 0 && (
                   <div className="ar-accordion__content">
                     <div className="ar-contracts-header">
-                      <span>증권번호</span>
-                      <span>상품명</span>
-                      <span>상태</span>
+                      <span className="ar-contracts-header__seq">순</span>
+                      <span className="ar-contracts-header__policy">증권번호</span>
+                      <span className="ar-contracts-header__product">보험상품</span>
+                      <span className="ar-contracts-header__holder">계약자</span>
+                      <span className="ar-contracts-header__insured">피보험자</span>
+                      <span className="ar-contracts-header__date">계약일</span>
+                      <span className="ar-contracts-header__status">상태</span>
+                      <span className="ar-contracts-header__amount">가입금액</span>
+                      <span className="ar-contracts-header__period">보험기간</span>
+                      <span className="ar-contracts-header__payment">납입기간</span>
                       <span className="ar-contracts-header__premium">보험료</span>
                     </div>
                     {contractsData.map((contract, idx) => (
                       <div key={`${report.report_id}-${idx}`} className="ar-contract-item">
+                        <span className="ar-contract-item__seq">
+                          {contract['순번'] || idx + 1}
+                        </span>
                         <span className="ar-contract-item__policy">
                           {contract['증권번호'] || '-'}
                         </span>
@@ -626,12 +636,32 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                             {contract['보험상품'] || '-'}
                           </span>
                         </Tooltip>
+                        <span className="ar-contract-item__holder">
+                          {contract['계약자'] || '-'}
+                        </span>
+                        <span className="ar-contract-item__insured">
+                          {contract['피보험자'] || '-'}
+                        </span>
+                        <span className="ar-contract-item__date">
+                          {contract['계약일'] || '-'}
+                        </span>
                         <span className={`ar-contract-item__status ar-contract-item__status--${(contract['계약상태'] || '').replace(/\s/g, '-')}`}>
                           {contract['계약상태'] || '-'}
                         </span>
+                        <span className="ar-contract-item__amount">
+                          {contract['가입금액(만원)']
+                            ? contract['가입금액(만원)'].toLocaleString('ko-KR')
+                            : '-'}
+                        </span>
+                        <span className="ar-contract-item__period">
+                          {contract['보험기간'] || '-'}
+                        </span>
+                        <span className="ar-contract-item__payment">
+                          {contract['납입기간'] || '-'}
+                        </span>
                         <span className="ar-contract-item__premium">
                           {contract['보험료(원)']
-                            ? contract['보험료(원)'].toLocaleString('ko-KR') + '원'
+                            ? contract['보험료(원)'].toLocaleString('ko-KR')
                             : '-'}
                         </span>
                       </div>
