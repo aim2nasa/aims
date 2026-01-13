@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
+import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
 import { api } from '@/shared/lib/api';
@@ -150,6 +151,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
+
+  // 🍎 AR 컨텍스트 메뉴 훅
+  const reportContextMenu = useContextMenu<AnnualReport>();
 
   // SSE 새로고침 콜백 (pending + reports 모두 갱신)
   const handleSSERefresh = useCallback(() => {
@@ -509,6 +513,93 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     setSelectedReport(null);
   };
 
+  // 🍎 AR 우클릭 컨텍스트 메뉴 열기
+  const handleReportContextMenu = useCallback((e: React.MouseEvent, report: AnnualReport) => {
+    reportContextMenu.open(e, report);
+  }, [reportContextMenu]);
+
+  // 🍎 보험계약 등록 핸들러 (Phase 3에서 구현)
+  const handleRegisterContracts = useCallback(async (report: AnnualReport) => {
+    // TODO: Phase 3에서 실제 API 호출 구현
+    await confirmModal.actions.openModal({
+      title: '보험계약 등록',
+      message: `"${report.customer_name}" 님의 AR (발행일: ${formatDate(report.issue_date)})에서\n${report.contract_count}건의 계약 정보를 보험계약 탭에 등록합니다.`,
+      confirmText: '등록',
+      cancelText: '취소',
+      showCancel: true,
+      iconType: 'info'
+    });
+    // Phase 3 구현 후: API 호출 및 결과 처리
+  }, [confirmModal.actions]);
+
+  // 🍎 단일 AR 삭제 핸들러
+  const handleDeleteReport = useCallback(async (report: AnnualReport) => {
+    const confirmed = await confirmModal.actions.openModal({
+      title: 'Annual Report 삭제',
+      message: `"${report.customer_name}" 님의 AR (발행일: ${formatDate(report.issue_date)})을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'warning'
+    });
+
+    if (!confirmed) return;
+
+    const globalIndex = reports.indexOf(report);
+    if (globalIndex === -1) {
+      console.error('[AnnualReportTab] 삭제할 AR을 찾을 수 없습니다');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const userId = UserContextService.getContext().identifierValue;
+      const result = await AnnualReportApi.deleteAnnualReports(
+        customer._id,
+        userId,
+        [globalIndex]
+      );
+
+      setIsDeleting(false);
+
+      if (result.success) {
+        // 목록 새로고침
+        await Promise.all([
+          loadAnnualReports(),
+          loadPendingDocuments()
+        ]);
+
+        await confirmModal.actions.openModal({
+          title: '완료',
+          message: 'Annual Report가 삭제되었습니다.',
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'success'
+        });
+      } else {
+        await confirmModal.actions.openModal({
+          title: '실패',
+          message: result.message,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'error'
+        });
+      }
+    } catch (err) {
+      setIsDeleting(false);
+      console.error('[AnnualReportTab] 삭제 오류:', err);
+      errorReporter.reportApiError(err as Error, { component: 'AnnualReportTab.handleDeleteReport', payload: { customerId: customer._id } });
+      await confirmModal.actions.openModal({
+        title: '오류',
+        message: '삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error'
+      });
+    }
+  }, [reports, customer._id, confirmModal.actions]);
+
   // 체크박스 전체 선택/해제
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -660,6 +751,57 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       return sortDirection === 'asc' ? comparison : -comparison;
     });
   }, [filteredReports, reports, sortField, sortDirection]);
+
+  // 🍎 AR 컨텍스트 메뉴 섹션 정의
+  const reportContextMenuSections: ContextMenuSection[] = useMemo(() => {
+    const report = reportContextMenu.targetData;
+    if (!report) return [];
+
+    const sections: ContextMenuSection[] = [];
+    const actionItems: ContextMenuSection['items'] = [];
+
+    // 완료 상태: 상세 보기, 보험계약 등록
+    if (report.status === 'completed') {
+      actionItems.push({
+        id: 'view',
+        label: '상세 보기',
+        onClick: () => handleViewReport(report),
+      });
+      actionItems.push({
+        id: 'register-contracts',
+        label: '보험계약 등록',
+        onClick: () => handleRegisterContracts(report),
+      });
+    }
+
+    // 에러 상태: 재시도
+    if (report.status === 'error') {
+      actionItems.push({
+        id: 'retry',
+        label: '재시도',
+        onClick: (e?: React.MouseEvent) => {
+          if (e) handleRetryParsing(report, e);
+        },
+      });
+    }
+
+    if (actionItems.length > 0) {
+      sections.push({ id: 'actions', items: actionItems });
+    }
+
+    // 삭제 섹션 (항상)
+    sections.push({
+      id: 'danger',
+      items: [{
+        id: 'delete',
+        label: '삭제',
+        danger: true,
+        onClick: () => handleDeleteReport(report),
+      }]
+    });
+
+    return sections;
+  }, [reportContextMenu.targetData, handleViewReport, handleRegisterContracts, handleDeleteReport]);
 
   // 🍎 페이지네이션 계산 (hooks 이후에 배치)
   const itemsPerPageNumber = itemsPerPage;
@@ -956,6 +1098,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
                 key={report.report_id}
                 className={`annual-report-row ${isSelected ? 'annual-report-row--selected' : ''} ${isError ? 'annual-report-row--error' : ''} ${isProcessing ? 'annual-report-row--processing' : ''} ${isPending ? 'annual-report-row--pending' : ''}`}
                 onClick={() => handleViewReport(report)}
+                onContextMenu={(e) => handleReportContextMenu(e, report)}
               >
                 {isDevMode && (
                   <div className="row-checkbox" onClick={(e) => handleSelectReport(globalIndex, e)}>
@@ -1064,6 +1207,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 🍎 AR 컨텍스트 메뉴 */}
+      <ContextMenu
+        visible={reportContextMenu.isOpen}
+        position={reportContextMenu.position}
+        sections={reportContextMenuSections}
+        onClose={reportContextMenu.close}
+      />
 
       {/* Annual Report Modal */}
       <AnnualReportModal
