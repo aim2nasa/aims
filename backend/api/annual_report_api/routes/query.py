@@ -407,6 +407,167 @@ async def delete_customer_annual_reports(
         )
 
 
+class RegisterARContractsRequest(BaseModel):
+    """AR 보험계약 등록 요청"""
+    issue_date: str = Field(..., description="등록할 AR의 발행일 (YYYY-MM-DD 또는 ISO 형식)")
+    customer_name: Optional[str] = Field(None, description="AR의 고객명 (발행일과 함께 식별용)")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "issue_date": "2025-08-29",
+                "customer_name": "홍길동"
+            }
+        }
+
+
+class RegisterARContractsResponse(BaseModel):
+    """AR 보험계약 등록 응답"""
+    success: bool
+    message: str
+    registered_at: Optional[str] = None
+    duplicate: bool = False
+
+
+@router.post(
+    "/customers/{customer_id}/ar-contracts",
+    response_model=RegisterARContractsResponse
+)
+async def register_ar_contracts(
+    customer_id: str = Path(..., description="고객 ObjectId"),
+    request: RegisterARContractsRequest = Body(...),
+    user_id: str = Header(None, alias="x-user-id")
+):
+    """
+    AR 보험계약 등록 (수동)
+
+    Annual Report의 계약 정보를 보험계약 탭에 등록합니다.
+    registered_at 필드를 설정하여 등록 여부를 표시합니다.
+
+    Args:
+        customer_id: 고객 ObjectId
+        request: 등록 요청 (issue_date, customer_name)
+        user_id: 설계사 userId (x-user-id 헤더)
+
+    Returns:
+        RegisterARContractsResponse: {
+            "success": true,
+            "message": "보험계약이 등록되었습니다",
+            "registered_at": "2026-01-13T12:00:00Z"
+        }
+
+    Raises:
+        HTTPException 400: userId 또는 요청이 유효하지 않을 때
+        HTTPException 404: 고객 또는 AR을 찾을 수 없을 때
+        HTTPException 500: 서버 오류
+    """
+    from datetime import datetime, timezone
+
+    logger.info(f"📋 AR 보험계약 등록 요청: customer_id={customer_id}, user_id={user_id}, issue_date={request.issue_date}")
+
+    try:
+        # userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        from main import db
+        if db is None:
+            raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
+
+        # customer 소유권 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
+            )
+
+        # annual_reports 배열에서 해당 AR 찾기
+        annual_reports = customer.get("annual_reports", [])
+        target_issue_date = request.issue_date.split('T')[0]  # YYYY-MM-DD만 비교
+
+        found_index = None
+        for idx, ar in enumerate(annual_reports):
+            ar_issue_date = ar.get("issue_date")
+            ar_customer_name = ar.get("customer_name", "")
+
+            # issue_date 정규화
+            if ar_issue_date:
+                if isinstance(ar_issue_date, datetime):
+                    ar_issue_date_str = ar_issue_date.strftime("%Y-%m-%d")
+                elif isinstance(ar_issue_date, str):
+                    ar_issue_date_str = ar_issue_date.split('T')[0]
+                else:
+                    ar_issue_date_str = None
+            else:
+                ar_issue_date_str = None
+
+            # issue_date와 customer_name 모두 일치하는지 확인
+            if ar_issue_date_str == target_issue_date:
+                # customer_name이 제공된 경우 추가 검증
+                if request.customer_name:
+                    if ar_customer_name == request.customer_name:
+                        found_index = idx
+                        break
+                else:
+                    # customer_name이 없으면 issue_date만으로 매칭
+                    found_index = idx
+                    break
+
+        if found_index is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"발행일 {target_issue_date}의 Annual Report를 찾을 수 없습니다"
+            )
+
+        # 이미 등록된 경우 체크
+        target_ar = annual_reports[found_index]
+        if target_ar.get("registered_at"):
+            return RegisterARContractsResponse(
+                success=True,
+                message="이미 보험계약 탭에 등록된 Annual Report입니다",
+                registered_at=target_ar["registered_at"] if isinstance(target_ar["registered_at"], str) else target_ar["registered_at"].isoformat(),
+                duplicate=True
+            )
+
+        # registered_at 설정
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        result = db.customers.update_one(
+            {"_id": customer_obj_id},
+            {"$set": {f"annual_reports.{found_index}.registered_at": now_iso}}
+        )
+
+        if result.modified_count > 0:
+            logger.info(f"✅ AR 보험계약 등록 완료: customer_id={customer_id}, issue_date={target_issue_date}")
+            return RegisterARContractsResponse(
+                success=True,
+                message="보험계약이 등록되었습니다",
+                registered_at=now_iso
+            )
+        else:
+            raise HTTPException(status_code=500, detail="등록 실패: 문서가 수정되지 않았습니다")
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"❌ AR 보험계약 등록 API 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"AR 보험계약 등록 API 오류: {e}", e)
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+
+
 class CleanupDuplicatesRequest(BaseModel):
     """중복 Annual Reports 정리 요청"""
     issue_date: str = Field(..., description="발행일 (YYYY-MM-DD 또는 ISO 형식)")

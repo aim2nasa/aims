@@ -12,6 +12,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { ContextMenu, useContextMenu, type ContextMenuSection } from '@/shared/ui/ContextMenu';
+import { useToastContext } from '@/shared/ui/Toast';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
 import { api } from '@/shared/lib/api';
@@ -151,6 +152,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
+
+  // 🍎 Toast 알림
+  const toast = useToastContext();
 
   // 🍎 AR 컨텍스트 메뉴 훅
   const reportContextMenu = useContextMenu<AnnualReport>();
@@ -518,10 +522,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     reportContextMenu.open(e, report);
   }, [reportContextMenu]);
 
-  // 🍎 보험계약 등록 핸들러 (Phase 3에서 구현)
+  // 🍎 보험계약 등록 핸들러
   const handleRegisterContracts = useCallback(async (report: AnnualReport) => {
-    // TODO: Phase 3에서 실제 API 호출 구현
-    await confirmModal.actions.openModal({
+    const confirmed = await confirmModal.actions.openModal({
       title: '보험계약 등록',
       message: `"${report.customer_name}" 님의 AR (발행일: ${formatDate(report.issue_date)})에서\n${report.contract_count}건의 계약 정보를 보험계약 탭에 등록합니다.`,
       confirmText: '등록',
@@ -529,8 +532,32 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       showCancel: true,
       iconType: 'info'
     });
-    // Phase 3 구현 후: API 호출 및 결과 처리
-  }, [confirmModal.actions]);
+
+    if (!confirmed) return;
+
+    try {
+      const result = await AnnualReportApi.registerARContracts(
+        customer._id,
+        report.issue_date || '',
+        report.customer_name
+      );
+
+      if (result.success) {
+        if (result.duplicate) {
+          // 이미 등록된 경우 - 토스트 알림 (3초)
+          toast.info('이미 등록된 Annual Report입니다', 3000);
+        } else {
+          // 등록 성공
+          toast.success('보험계약이 등록되었습니다', 3000);
+        }
+      } else {
+        toast.error(result.message || '보험계약 등록에 실패했습니다');
+      }
+    } catch (err) {
+      console.error('[AnnualReportTab] 보험계약 등록 오류:', err);
+      toast.error('보험계약 등록 중 오류가 발생했습니다');
+    }
+  }, [confirmModal.actions, customer._id, toast]);
 
   // 🍎 단일 AR 삭제 핸들러
   const handleDeleteReport = useCallback(async (report: AnnualReport) => {

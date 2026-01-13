@@ -13,6 +13,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/shared/ui/Toast';
 import { AnnualReportTab } from '../AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 
@@ -91,7 +92,7 @@ const mockCustomer: Customer = {
   tags: []
 };
 
-// Test wrapper with React Query
+// Test wrapper with React Query and Toast
 function Wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -102,7 +103,9 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ToastProvider>
+        {children}
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

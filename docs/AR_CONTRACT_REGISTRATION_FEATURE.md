@@ -171,12 +171,43 @@ const reportContextMenuSections: ContextMenuSection[] = useMemo(() => {
 ---
 
 ### Phase 2: 보험계약 탭 UI (아코디언)
-#### 상태: ⏳ 대기
+#### 상태: ✅ 완료 (2026-01-13)
+
+#### 구현 내용
+- ContractsTab에 AR 아코디언 섹션 추가
+- AR 요약 행 (고객명, 발행일, 분석일, 월납보험료, 계약건수)
+- 클릭 시 계약 상세 목록 펼침/접힘
+- 계약 상세 (보험사, 증권번호, 상품명, 계약상태, 보험료)
 
 ---
 
 ### Phase 3: 보험계약 등록 API
-#### 상태: ⏳ 대기
+#### 상태: ✅ 완료 (2026-01-13)
+
+#### 구현 내용
+
+**1. 백엔드 API 추가** (`routes/query.py`)
+```python
+POST /customers/{customer_id}/ar-contracts
+Body: { issue_date: string, customer_name?: string }
+
+Response: {
+  success: boolean,
+  message: string,
+  registered_at: string,  # 등록 시간 (ISO 8601)
+  duplicate: boolean      # 이미 등록된 경우 true
+}
+```
+
+**2. 프론트엔드 API 클라이언트** (`annualReportApi.ts`)
+```typescript
+AnnualReportApi.registerARContracts(customerId, issueDate, customerName?)
+```
+
+**3. AR 탭 핸들러 연결** (`AnnualReportTab.tsx`)
+- `handleRegisterContracts`: 확인 모달 → API 호출 → 토스트 알림
+- 중복 등록 시 "이미 등록된 Annual Report입니다" 토스트 (3초)
+- 성공 시 "보험계약이 등록되었습니다" 토스트 (3초)
 
 ---
 
@@ -187,13 +218,13 @@ const reportContextMenuSections: ContextMenuSection[] = useMemo(() => {
 
 ## 4. 테스트 체크리스트
 
-- [ ] AR 문서 행 우클릭 → 컨텍스트 메뉴 표시
-- [ ] "상세 보기" 클릭 → 기존 모달 열기
-- [ ] "보험계약 등록" 클릭 → (Phase 3 구현 후 테스트)
-- [ ] "재시도" 클릭 → AR 파싱 재시도
-- [ ] "삭제" 클릭 → 삭제 확인 모달
-- [ ] 계약 탭에서 AR 요약 행 클릭 → 아코디언 펼침/접힘
-- [ ] 같은 발행일 AR 중복 등록 시도 → 토스트 알림
+- [x] AR 문서 행 우클릭 → 컨텍스트 메뉴 표시
+- [x] "상세 보기" 클릭 → 기존 모달 열기
+- [x] "보험계약 등록" 클릭 → API 호출 및 토스트 알림
+- [x] "재시도" 클릭 → AR 파싱 재시도
+- [x] "삭제" 클릭 → 삭제 확인 모달
+- [x] 계약 탭에서 AR 요약 행 클릭 → 아코디언 펼침/접힘
+- [x] 같은 발행일 AR 중복 등록 시도 → 토스트 알림
 
 ---
 
@@ -201,9 +232,11 @@ const reportContextMenuSections: ContextMenuSection[] = useMemo(() => {
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `AnnualReportTab.tsx` | 컨텍스트 메뉴 추가 |
-| `ContractsTab.tsx` | 아코디언 UI 추가 (Phase 2) |
-| 백엔드 API | 계약 등록 엔드포인트 (Phase 3) |
+| `AnnualReportTab.tsx` | 컨텍스트 메뉴 + 보험계약 등록 API 호출 |
+| `ContractsTab.tsx` | 아코디언 UI 추가 |
+| `ContractsTab.css` | 아코디언 스타일 추가 |
+| `annualReportApi.ts` | `registerARContracts` API 추가 |
+| `routes/query.py` | AR 보험계약 등록 엔드포인트 추가 |
 
 ---
 

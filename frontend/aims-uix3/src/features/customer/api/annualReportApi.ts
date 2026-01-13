@@ -643,6 +643,60 @@ export class AnnualReportApi {
   }
 
   /**
+   * AR 보험계약 등록 (수동)
+   *
+   * Annual Report의 계약 정보를 보험계약 탭에 등록합니다.
+   * registered_at 필드를 설정하여 등록 여부를 표시합니다.
+   *
+   * @param customerId 고객 ID
+   * @param issueDate 등록할 AR의 발행일 (YYYY-MM-DD)
+   * @param customerName AR의 고객명 (선택, 식별용)
+   * @returns 등록 결과
+   */
+  static async registerARContracts(
+    customerId: string,
+    issueDate: string,
+    customerName?: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    registered_at?: string;
+    duplicate?: boolean;
+  }> {
+    try {
+      const data = await api.post<{
+        success?: boolean;
+        message?: string;
+        registered_at?: string;
+        duplicate?: boolean;
+      }>(
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/ar-contracts`,
+        {
+          issue_date: issueDate,
+          customer_name: customerName,
+        }
+      );
+
+      if (data.success !== false) {
+        return {
+          success: true,
+          message: data.message || '보험계약이 등록되었습니다',
+          registered_at: data.registered_at,
+          duplicate: data.duplicate,
+        };
+      }
+
+      throw new Error(data.message || 'AR 보험계약 등록에 실패했습니다');
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : (error instanceof Error ? error.message : 'AR 보험계약 등록 중 오류가 발생했습니다');
+      errorReporter.reportApiError(error as Error, { component: 'AnnualReportApi.registerARContracts', payload: { customerId, issueDate } });
+      return { success: false, message };
+    }
+  }
+
+  /**
    * AR 파싱 재시도 요청
    *
    * @param fileId 재시도할 파일 ID
