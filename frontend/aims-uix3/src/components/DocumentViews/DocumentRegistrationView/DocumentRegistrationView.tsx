@@ -1702,7 +1702,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (stats.total > 0 && !uploadState.uploading) {
       return `문서 등록 (${stats.completed}/${stats.total} 완료)`
     }
-    return "새 문서 등록"
+    return "고객-문서 자동 등록"
   }
 
   return (

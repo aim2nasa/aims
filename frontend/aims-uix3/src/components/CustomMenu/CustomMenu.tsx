@@ -412,16 +412,16 @@ const CustomMenu = ({
       tooltipTitle: '빠른 작업',
       children: collapsed ? undefined : [
         {
-          key: 'customers-register',
-          icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-          label: '새 고객 등록',
-          tooltipTitle: '새로운 고객을 등록합니다',
-        },
-        {
           key: 'documents-register',
           icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-          label: '새 문서 등록',
-          tooltipTitle: '새로운 문서를 등록합니다',
+          label: '고객-문서 자동 등록',
+          tooltipTitle: 'AR 업로드 시 고객 자동 추출/연결',
+        },
+        {
+          key: 'customers-register',
+          icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          label: '고객 수동 등록',
+          tooltipTitle: '고객 정보를 직접 입력합니다',
         },
         {
           key: 'contracts-import',
@@ -441,16 +441,16 @@ const CustomMenu = ({
     // collapsed 상태에서 자주 사용 서브메뉴 표시
     ...(collapsed ? [
       {
-        key: 'customers-register',
-        icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-        label: '',
-        tooltipTitle: '새로운 고객을 등록합니다',
-      },
-      {
         key: 'documents-register',
         icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
         label: '',
-        tooltipTitle: '새로운 문서를 등록합니다',
+        tooltipTitle: '고객-문서 자동 등록',
+      },
+      {
+        key: 'customers-register',
+        icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+        label: '',
+        tooltipTitle: '고객 수동 등록',
       },
       {
         key: 'contracts-import',
