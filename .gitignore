@@ -36,3 +36,4 @@ nul
 .build_hash
 _build_info.json
 .requirements_hash
+tmpclaude-*

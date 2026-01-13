@@ -1739,17 +1739,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <div className="document-type-selection__buttons">
               <button
                 type="button"
-                className={`document-type-card ${documentTypeMode === 'normal' ? 'document-type-card--selected' : ''}`}
-                onClick={() => setDocumentTypeMode('normal')}
-              >
-                <svg className="document-type-card__icon document-type-card__icon--orange" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2V8H20M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="document-type-card__label">일반 문서</span>
-              </button>
-              <button
-                type="button"
                 className={`document-type-card ${documentTypeMode === 'annual_report' ? 'document-type-card--selected' : ''}`}
                 onClick={() => setDocumentTypeMode('annual_report')}
               >
@@ -1759,6 +1748,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   <path d="M17 8H21V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span className="document-type-card__label">Annual Report</span>
+              </button>
+              <button
+                type="button"
+                className={`document-type-card ${documentTypeMode === 'normal' ? 'document-type-card--selected' : ''}`}
+                onClick={() => setDocumentTypeMode('normal')}
+              >
+                <svg className="document-type-card__icon document-type-card__icon--orange" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 2V8H20M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="document-type-card__label">일반 문서</span>
               </button>
             </div>
           </div>
