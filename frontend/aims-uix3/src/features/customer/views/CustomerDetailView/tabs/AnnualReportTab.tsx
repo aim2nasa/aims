@@ -173,6 +173,28 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     enabled: Boolean(customer._id),
   });
 
+  // 🍎 팝업 → 메인 창 복귀 리스너 (브라우저 내로 이동)
+  useEffect(() => {
+    const handlePopupMessage = (event: MessageEvent) => {
+      // 같은 origin에서 온 메시지만 처리
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'AIMS_AR_OPEN_IN_MAIN') {
+        console.log('[AnnualReportTab] 팝업에서 브라우저 내로 이동 요청');
+        try {
+          const reportData = JSON.parse(event.data.report);
+          setSelectedReport(reportData);
+          setIsModalOpen(true);
+        } catch (err) {
+          console.error('[AnnualReportTab] AR 데이터 파싱 실패:', err);
+        }
+      }
+    };
+
+    window.addEventListener('message', handlePopupMessage);
+    return () => window.removeEventListener('message', handlePopupMessage);
+  }, []);
+
   // 🔄 폴링 fallback: 분석 중인 문서가 있을 때 10초마다 상태 확인
   // SSE가 끊겨도 안정적으로 업데이트
   useEffect(() => {

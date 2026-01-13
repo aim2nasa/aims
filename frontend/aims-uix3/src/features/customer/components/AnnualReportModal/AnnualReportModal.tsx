@@ -65,6 +65,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
 
   /**
    * 새 창에서 열기 핸들러
+   * 새 창을 열고 브라우저 내 모달은 닫음
    */
   const handleOpenPopup = useCallback(() => {
     localStorage.setItem('aims-ar-popup-data', JSON.stringify({
@@ -82,7 +83,10 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
       'aims-ar-popup',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
-  }, [report, customerName]);
+
+    // 브라우저 내 모달 닫기
+    onClose();
+  }, [report, customerName, onClose]);
 
   /**
    * 발행일 선택 핸들러
