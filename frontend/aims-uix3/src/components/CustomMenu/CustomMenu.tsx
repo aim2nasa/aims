@@ -414,7 +414,7 @@ const CustomMenu = ({
         {
           key: 'documents-register',
           icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-          label: '고객·계약·문서 자동 등록',
+          label: '고객·계약·문서 등록',
           tooltipTitle: 'AR 업로드 시 고객 자동 추출/연결',
         },
         {
@@ -444,7 +444,7 @@ const CustomMenu = ({
         key: 'documents-register',
         icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
         label: '',
-        tooltipTitle: '고객·계약·문서 자동 등록',
+        tooltipTitle: '고객·계약·문서 등록',
       },
       {
         key: 'customers-register',
