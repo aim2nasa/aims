@@ -76,19 +76,19 @@ const CONTRACTS_COLUMNS: ColumnConfig[] = [
   { id: 'paymentStatus', minWidth: 70, maxWidth: 145 }
 ]
 
-// 🍎 AR 계약 이력용 컬럼 리사이즈 설정 (11컬럼) - 폭 10% 증가
+// 🍎 AR 계약 이력용 컬럼 리사이즈 설정 (11컬럼)
 const AR_HISTORY_COLUMNS: ColumnConfig[] = [
   { id: 'seq', minWidth: 31, maxWidth: 44 },           // 순번 (고정)
   { id: 'policy', minWidth: 83, maxWidth: 110 },       // 증권번호
   { id: 'product', minWidth: 110, maxWidth: 440 },     // 보험상품 (1fr)
   { id: 'holder', minWidth: 44, maxWidth: 77 },        // 계약자
-  { id: 'insured', minWidth: 44, maxWidth: 77 },       // 피보험자
   { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
   { id: 'status', minWidth: 42, maxWidth: 61 },        // 계약상태
   { id: 'amount', minWidth: 55, maxWidth: 83 },        // 가입금액
   { id: 'period', minWidth: 50, maxWidth: 77 },        // 보험기간
   { id: 'payment', minWidth: 42, maxWidth: 66 },       // 납입기간
   { id: 'premium', minWidth: 66, maxWidth: 105 },      // 보험료
+  { id: 'issueDate', minWidth: 72, maxWidth: 95 },     // 발행일 (AR 기준일)
 ]
 
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
@@ -123,7 +123,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [isLoadingAr, setIsLoadingAr] = useState(false)
 
   // 🍎 AR 계약 이력 정렬 상태
-  type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'insured' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium'
+  type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium' | 'issueDate'
   const [arSortField, setArSortField] = useState<ArSortField>('policyNumber')
   const [arSortDirection, setArSortDirection] = useState<SortDirection>('asc')
 
@@ -533,21 +533,21 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   const isEmpty = contracts.length === 0
 
-  // 🍎 AR 계약 이력용 동적 칼럼 폭 계산 (폭 10% 증가)
+  // 🍎 AR 계약 이력용 동적 칼럼 폭 계산
   const arHistoryColumnWidths = useMemo(() => {
-    // 기본값 (폭 10% 증가)
+    // 기본값
     const defaults = {
       seq: 31,
       policy: 94,
       product: 198,  // 1fr로 동작하므로 기본값은 참고용
       holder: 50,
-      insured: 50,
       date: 75,
       status: 46,
       amount: 61,
       period: 53,
       payment: 46,
       premium: 83,
+      issueDate: 80,  // 발행일 (YYYY.MM.DD 형식)
     }
 
     if (contractHistories.length === 0) {
@@ -557,18 +557,17 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     // 각 컬럼별 최대 폭 계산
     let maxPolicy = 0
     let maxHolder = 0
-    let maxInsured = 0
     let maxDate = 0
     let maxStatus = 0
     let maxAmount = 0
     let maxPeriod = 0
     let maxPayment = 0
     let maxPremium = 0
+    let maxIssueDate = 0
 
     for (const history of contractHistories) {
       maxPolicy = Math.max(maxPolicy, calculateTextWidth(history.policyNumber || ''))
       maxHolder = Math.max(maxHolder, calculateTextWidth(history.holder || ''))
-      maxInsured = Math.max(maxInsured, calculateTextWidth(history.insured || ''))
       maxDate = Math.max(maxDate, calculateTextWidth(history.contractDate || ''))
       maxStatus = Math.max(maxStatus, calculateTextWidth(history.latestSnapshot?.status || ''))
       maxAmount = Math.max(maxAmount, calculateTextWidth(
@@ -579,22 +578,23 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       maxPremium = Math.max(maxPremium, calculateTextWidth(
         history.latestSnapshot?.premium?.toLocaleString('ko-KR') || ''
       ))
+      maxIssueDate = Math.max(maxIssueDate, calculateTextWidth(history.latestSnapshot?.issueDate || ''))
     }
 
-    // 패딩 + 10% 여유 적용, 최소/최대 범위 적용
+    // 패딩 + 여유 적용, 최소/최대 범위 적용
     const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val))
     return {
       seq: 31,  // 순번은 고정
       policy: clamp(maxPolicy + 24, 83, 110),     // 토글 아이콘 포함
       product: 198,  // 1fr로 동작하므로 고정값
       holder: clamp(maxHolder + 9, 44, 77),
-      insured: clamp(maxInsured + 9, 44, 77),
       date: clamp(maxDate + 9, 72, 88),
       status: clamp(maxStatus + 9, 42, 61),
       amount: clamp(maxAmount + 9, 55, 83),
       period: clamp(maxPeriod + 9, 50, 77),
       payment: clamp(maxPayment + 9, 42, 66),
       premium: clamp(maxPremium + 9, 66, 105),
+      issueDate: clamp(maxIssueDate + 9, 72, 95),
     }
   }, [contractHistories])
 
@@ -647,10 +647,6 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           aValue = a.holder || ''
           bValue = b.holder || ''
           break
-        case 'insured':
-          aValue = a.insured || ''
-          bValue = b.insured || ''
-          break
         case 'contractDate':
           aValue = a.contractDate || ''
           bValue = b.contractDate || ''
@@ -674,6 +670,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         case 'premium':
           aValue = a.latestSnapshot?.premium || 0
           bValue = b.latestSnapshot?.premium || 0
+          break
+        case 'issueDate':
+          aValue = a.latestSnapshot?.issueDate || ''
+          bValue = b.latestSnapshot?.issueDate || ''
           break
         default:
           return 0
@@ -777,13 +777,13 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             '--ar-policy-width': `${arColumnWidths['policy'] || arHistoryColumnWidths.policy}px`,
             '--ar-product-width': `${arColumnWidths['product'] || arHistoryColumnWidths.product}px`,
             '--ar-holder-width': `${arColumnWidths['holder'] || arHistoryColumnWidths.holder}px`,
-            '--ar-insured-width': `${arColumnWidths['insured'] || arHistoryColumnWidths.insured}px`,
             '--ar-date-width': `${arColumnWidths['date'] || arHistoryColumnWidths.date}px`,
             '--ar-status-width': `${arColumnWidths['status'] || arHistoryColumnWidths.status}px`,
             '--ar-amount-width': `${arColumnWidths['amount'] || arHistoryColumnWidths.amount}px`,
             '--ar-period-width': `${arColumnWidths['period'] || arHistoryColumnWidths.period}px`,
             '--ar-payment-width': `${arColumnWidths['payment'] || arHistoryColumnWidths.payment}px`,
             '--ar-premium-width': `${arColumnWidths['premium'] || arHistoryColumnWidths.premium}px`,
+            '--ar-issue-date-width': `${arColumnWidths['issueDate'] || arHistoryColumnWidths.issueDate}px`,
           } as React.CSSProperties}
         >
           {/* 헤더 행 */}
@@ -818,16 +818,6 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               <span>계약자</span>
               {renderArSortIndicator('holder')}
               <div {...getArResizeHandleProps('holder')} />
-            </div>
-            <div
-              className="contract-history-header__insured resizable-header header-sortable"
-              onClick={() => handleArSort('insured')}
-              role="button"
-              tabIndex={0}
-            >
-              <span>피보험자</span>
-              {renderArSortIndicator('insured')}
-              <div {...getArResizeHandleProps('insured')} />
             </div>
             <div
               className="contract-history-header__date resizable-header header-sortable"
@@ -880,13 +870,23 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
               <div {...getArResizeHandleProps('payment')} />
             </div>
             <div
-              className="contract-history-header__premium header-sortable"
+              className="contract-history-header__premium resizable-header header-sortable"
               onClick={() => handleArSort('premium')}
               role="button"
               tabIndex={0}
             >
               <span>보험료(원)</span>
               {renderArSortIndicator('premium')}
+              <div {...getArResizeHandleProps('premium')} />
+            </div>
+            <div
+              className="contract-history-header__issue-date header-sortable"
+              onClick={() => handleArSort('issueDate')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>발행일</span>
+              {renderArSortIndicator('issueDate')}
             </div>
           </div>
           <div className="contract-history-list">
@@ -913,7 +913,6 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                       <span className="contract-history-item__product">{history.productName || '-'}</span>
                     </Tooltip>
                     <span className="contract-history-item__holder">{history.holder || '-'}</span>
-                    <span className="contract-history-item__insured">{history.insured || '-'}</span>
                     <span className="contract-history-item__date">{history.contractDate || '-'}</span>
                     <span className={`contract-history-item__status contract-history-item__status--${(latestSnapshot.status || '').replace(/\s/g, '-')}`}>
                       {latestSnapshot.status || '-'}
@@ -925,6 +924,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                     <span className="contract-history-item__payment">{latestSnapshot.paymentPeriod || '-'}</span>
                     <span className="contract-history-item__premium">
                       {latestSnapshot.premium ? latestSnapshot.premium.toLocaleString('ko-KR') : '-'}
+                    </span>
+                    <span className="contract-history-item__issue-date">
+                      {formatDate(latestSnapshot.issueDate)}
                     </span>
                   </div>
 

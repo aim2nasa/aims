@@ -806,13 +806,13 @@ html[data-theme="dark"] .customer-contracts__ar-loading {
     var(--ar-policy-width, 94px)
     var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
-    var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
     var(--ar-status-width, 46px)
     var(--ar-amount-width, 61px)
     var(--ar-period-width, 53px)
     var(--ar-payment-width, 46px)
-    var(--ar-premium-width, 83px);
+    var(--ar-premium-width, 83px)
+    var(--ar-issue-date-width, 80px);
   gap: 4px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-2);
@@ -896,13 +896,13 @@ html[data-theme="dark"] .contract-history-accordion {
     var(--ar-policy-width, 94px)
     var(--ar-product-width, 198px)
     var(--ar-holder-width, 50px)
-    var(--ar-insured-width, 50px)
     var(--ar-date-width, 75px)
     var(--ar-status-width, 46px)
     var(--ar-amount-width, 61px)
     var(--ar-period-width, 53px)
     var(--ar-payment-width, 46px)
-    var(--ar-premium-width, 83px);
+    var(--ar-premium-width, 83px)
+    var(--ar-issue-date-width, 80px);
   gap: 4px;
   align-items: center;
   padding: 6px 8px;
@@ -994,18 +994,6 @@ html[data-theme="dark"] .contract-history-item__holder {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 피보험자 */
-.contract-history-item__insured {
-  color: var(--color-ios-text-secondary-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-theme="dark"] .contract-history-item__insured {
-  color: var(--color-ios-text-secondary-dark);
-}
-
 /* 계약일 */
 .contract-history-item__date {
   font-variant-numeric: tabular-nums;
@@ -1081,6 +1069,18 @@ html[data-theme="dark"] .contract-history-item__payment {
 
 html[data-theme="dark"] .contract-history-item__premium {
   color: var(--color-primary-400);
+}
+
+/* 발행일 (AR 기준일) */
+.contract-history-item__issue-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-tertiary-light);
+  white-space: nowrap;
+  font-size: var(--font-size-caption-2);
+}
+
+html[data-theme="dark"] .contract-history-item__issue-date {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* 아코디언 내용 (스냅샷 목록) */
