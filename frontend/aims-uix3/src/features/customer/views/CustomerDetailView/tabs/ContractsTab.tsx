@@ -12,6 +12,8 @@ import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
 import { ContractService } from '@/services/contractService'
 import { ContractUtils } from '@/entities/contract/model'
+import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi'
+import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
 import { Tooltip } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import SFSymbol, {
@@ -21,6 +23,7 @@ import SFSymbol, {
 } from '../../../../../components/SFSymbol'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
+import { formatDate } from '@/shared/lib/timeUtils'
 import './ContractsTab.css'
 
 interface ContractsTabProps {
@@ -90,6 +93,11 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 🍎 AR 기반 계약 정보 상태
+  const [arReports, setArReports] = useState<AnnualReport[]>([])
+  const [expandedArId, setExpandedArId] = useState<string | null>(null)
+  const [isLoadingAr, setIsLoadingAr] = useState(false)
 
   // 🍎 검색어 상태 (외부/내부)
   const [internalSearchTerm, setInternalSearchTerm] = useState('')
@@ -210,10 +218,48 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     }
   }, [customer?._id, onContractCountChange])
 
+  // 🍎 AR 데이터 로드
+  const loadArReports = useCallback(async () => {
+    if (!customer?._id) return
+
+    setIsLoadingAr(true)
+    try {
+      const userId = UserContextService.getContext().identifierValue
+      const response = await AnnualReportApi.getAnnualReports(customer._id, userId, 50)
+
+      if (response.success && response.data) {
+        // 완료된 AR만 필터링 (API 응답 타입을 any로 캐스팅하여 contracts 접근)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const completedReports = (response.data.reports as any[])
+          .filter((r) => r.status === 'completed')
+          .map((r) => ({
+            report_id: r.report_id || r.file_id || '',
+            issue_date: r.issue_date || '',
+            customer_name: r.customer_name || '',
+            total_monthly_premium: r.total_monthly_premium,
+            total_coverage: r.total_coverage || 0,
+            contract_count: r.total_contracts || r.contract_count || 0,
+            contracts: r.contracts || [],
+            source_file_id: r.source_file_id || r.file_id || '',
+            created_at: r.created_at || r.uploaded_at || '',
+            parsed_at: r.parsed_at || '',
+            status: r.status || 'completed',
+          })) as AnnualReport[]
+        setArReports(completedReports)
+      }
+    } catch (err) {
+      console.error('[ContractsTab] AR 로드 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ContractsTab.loadArReports', payload: { customerId: customer._id } })
+    } finally {
+      setIsLoadingAr(false)
+    }
+  }, [customer?._id])
+
   // 🍎 초기 로드
   useEffect(() => {
     void loadContracts()
-  }, [loadContracts])
+    void loadArReports()
+  }, [loadContracts, loadArReports])
 
   // 🍎 contractChanged 이벤트 리스너
   useEffect(() => {
@@ -445,6 +491,11 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   const isEmpty = contracts.length === 0
 
+  // 🍎 AR 아코디언 토글 핸들러
+  const handleArToggle = useCallback((reportId: string) => {
+    setExpandedArId(prev => prev === reportId ? null : reportId)
+  }, [])
+
   const renderState = () => {
     if (isLoading && contracts.length === 0) {
       return (
@@ -518,6 +569,113 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           )}
         </div>
       </div>
+
+      {/* 🍎 AR 기반 계약 정보 (아코디언) */}
+      {arReports.length > 0 && (
+        <div className="customer-contracts__ar-section">
+          <div className="ar-section__title">
+            <SFSymbol
+              name="doc.text.fill"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+            <span>Annual Report 계약 정보</span>
+            <span className="ar-section__count">{arReports.length}건</span>
+          </div>
+
+          <div className="ar-section__list">
+            {arReports.map((report) => {
+              const isExpanded = expandedArId === report.report_id
+
+              return (
+                <div key={report.report_id} className="ar-accordion">
+                  {/* AR 요약 행 */}
+                  <div
+                    className={`ar-accordion__header ${isExpanded ? 'ar-accordion__header--expanded' : ''}`}
+                    onClick={() => handleArToggle(report.report_id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded ? 'true' : 'false'}
+                  >
+                    <span className="ar-accordion__toggle">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                    <span className="ar-accordion__owner">{report.customer_name || '-'}</span>
+                    <span className="ar-accordion__issue-date">{formatDate(report.issue_date)}</span>
+                    <span className="ar-accordion__parsed-at">
+                      {report.parsed_at ? AnnualReportApi.formatDateTime(report.parsed_at) : '-'}
+                    </span>
+                    <span className="ar-accordion__premium">
+                      {report.total_monthly_premium != null
+                        ? AnnualReportApi.formatCurrency(report.total_monthly_premium)
+                        : '-'}
+                    </span>
+                    <span className="ar-accordion__count">
+                      {report.contract_count != null ? `${report.contract_count}건` : '-'}
+                    </span>
+                  </div>
+
+                  {/* AR 상세 계약 목록 (펼침 시) */}
+                  {isExpanded && report.contracts && report.contracts.length > 0 && (
+                    <div className="ar-accordion__content">
+                      <div className="ar-contracts-header">
+                        <span className="ar-contracts-header__company">보험사</span>
+                        <span className="ar-contracts-header__policy">증권번호</span>
+                        <span className="ar-contracts-header__product">상품명</span>
+                        <span className="ar-contracts-header__status">상태</span>
+                        <span className="ar-contracts-header__premium">보험료</span>
+                      </div>
+                      {report.contracts.map((contract, idx) => (
+                        <div key={`${report.report_id}-${idx}`} className="ar-contract-item">
+                          <span className="ar-contract-item__company">
+                            {contract.insurance_company || '메트라이프'}
+                          </span>
+                          <span className="ar-contract-item__policy">
+                            {contract.contract_number || '-'}
+                          </span>
+                          <Tooltip content={contract.product_name || '-'}>
+                            <span className="ar-contract-item__product">
+                              {contract.product_name || '-'}
+                            </span>
+                          </Tooltip>
+                          <span className={`ar-contract-item__status ar-contract-item__status--${(contract.status || '').replace(/\s/g, '-').toLowerCase()}`}>
+                            {contract.status || '-'}
+                          </span>
+                          <span className="ar-contract-item__premium">
+                            {contract.monthly_premium
+                              ? contract.monthly_premium.toLocaleString('ko-KR') + '원'
+                              : '-'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 계약 없음 메시지 */}
+                  {isExpanded && (!report.contracts || report.contracts.length === 0) && (
+                    <div className="ar-accordion__content ar-accordion__content--empty">
+                      <span>계약 정보가 없습니다.</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* AR 로딩 중 */}
+      {isLoadingAr && arReports.length === 0 && (
+        <div className="customer-contracts__ar-loading">
+          <SFSymbol
+            name="arrow.clockwise"
+            animation={SFSymbolAnimation.ROTATE}
+            size={SFSymbolSize.CAPTION_1}
+            weight={SFSymbolWeight.MEDIUM}
+          />
+          <span>AR 계약 정보 로딩 중...</span>
+        </div>
+      )}
 
       {renderState()}
 

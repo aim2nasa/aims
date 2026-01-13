@@ -425,3 +425,289 @@ html[data-theme="dark"] .contract-status--미정 {
 /* 기본 스타일: shared/ui/Pagination/Pagination.css
  * iOS 스타일 오버라이드: .customer-contracts .contract-pagination 선택자로 적용됨
  */
+
+/* ========================================
+ * 🍎 AR 기반 계약 정보 아코디언 섹션
+ * ======================================== */
+
+.customer-contracts__ar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .customer-contracts__ar-section {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.ar-section__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .ar-section__title {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.ar-section__count {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .ar-section__count {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.ar-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* === AR 아코디언 === */
+.ar-accordion {
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--color-ios-bg-primary-light);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .ar-accordion {
+  background: var(--color-ios-bg-primary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* AR 아코디언 헤더 (요약 행) */
+.ar-accordion__header {
+  display: grid;
+  grid-template-columns: 20px 80px 80px 140px 100px 60px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-primary-light);
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .ar-accordion__header {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.ar-accordion__header:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .ar-accordion__header:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.ar-accordion__header--expanded {
+  background: var(--color-ios-bg-tertiary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .ar-accordion__header--expanded {
+  background: var(--color-ios-bg-tertiary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.ar-accordion__toggle {
+  font-size: 10px;
+  color: var(--color-ios-text-tertiary-light);
+  text-align: center;
+}
+
+html[data-theme="dark"] .ar-accordion__toggle {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.ar-accordion__owner {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ar-accordion__issue-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .ar-accordion__issue-date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.ar-accordion__parsed-at {
+  font-size: var(--font-size-caption-2);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-tertiary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .ar-accordion__parsed-at {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.ar-accordion__premium {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .ar-accordion__premium {
+  color: var(--color-primary-400);
+}
+
+.ar-accordion__count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .ar-accordion__count {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* AR 아코디언 콘텐츠 (상세 계약 목록) */
+.ar-accordion__content {
+  padding: 8px 12px 12px 32px;
+  background: var(--color-ios-bg-secondary-light);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+html[data-theme="dark"] .ar-accordion__content {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.ar-accordion__content--empty {
+  padding: 16px 12px 16px 32px;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: var(--font-size-caption-1);
+  text-align: center;
+}
+
+html[data-theme="dark"] .ar-accordion__content--empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* AR 계약 헤더 */
+.ar-contracts-header {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr 60px 90px;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+html[data-theme="dark"] .ar-contracts-header {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.ar-contracts-header__premium {
+  text-align: right;
+}
+
+/* AR 계약 아이템 */
+.ar-contract-item {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr 60px 90px;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-primary-light);
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] .ar-contract-item {
+  color: var(--color-ios-text-primary-dark);
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.ar-contract-item__company {
+  color: var(--color-ios-text-secondary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .ar-contract-item__company {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.ar-contract-item__policy {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ar-contract-item__product {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ar-contract-item__status {
+  text-align: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 500;
+  background: var(--color-success-100);
+  color: var(--color-success-700);
+}
+
+html[data-theme="dark"] .ar-contract-item__status {
+  background: var(--color-success-900);
+  color: var(--color-success-300);
+}
+
+.ar-contract-item__status--실효 {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+html[data-theme="dark"] .ar-contract-item__status--실효 {
+  background: var(--color-gray-800);
+  color: var(--color-gray-400);
+}
+
+.ar-contract-item__premium {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* AR 로딩 */
+.customer-contracts__ar-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .customer-contracts__ar-loading {
+  color: var(--color-ios-text-tertiary-dark);
+}
