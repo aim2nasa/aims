@@ -270,51 +270,99 @@ html[data-theme="dark"] .parsing-file-name {
   margin: 0;
 }
 
-/* ==================== 🍎 TABLE CONTAINER - 전체보기 스타일 통일 ==================== */
+/* ==================== 🍎 TABLE CONTAINER - DocumentsTab 스타일 복제 ==================== */
 
 .annual-report-table-container {
   display: flex;
   flex-direction: column;
   min-height: 0;
   flex: 1;
-  overflow-x: auto;    /* 수평 스크롤만 (카드 하단) */
-  overflow-y: hidden;  /* 수직 스크롤은 table-body에서 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
-/* ==================== 🍎 TABLE HEADER - 기본 구조만 (스타일은 CustomerFullDetailView.css에서 오버라이드) ==================== */
+/* 🍎 SCROLLBAR */
+.annual-report-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.annual-report-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.annual-report-table-container::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] .annual-report-table-container::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+/* ==================== 🍎 TABLE HEADER - DocumentsTab 스타일 ==================== */
 
 .annual-report-table-header {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
   grid-template-columns:
-    var(--owner-column-width, 50px)              /* 소유주 (동적) */
-    var(--issue-date-column-width, 80px)         /* 발행일 (동적) */
-    var(--parsed-at-column-width, 125px)         /* 파싱일시 (동적) */
-    var(--premium-column-width, 85px)            /* 총 월보험료 (동적) */
-    var(--count-column-width, 70px)              /* 계약 수 (동적) */
-    var(--status-column-width, 40px);            /* 상태 (동적) */
+    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+    104px                  /* 발행일 +30% */
+    163px                  /* 파싱일시 +30% */
+    124px                  /* 총 월보험료 +30% */
+    72px                   /* 계약 수 +30% */
+    65px;                  /* 상태 +30% */
+  gap: 4px;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: var(--color-neutral-100);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: var(--font-size-caption-1); /* 12px - DocumentsTab과 동일 */
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .annual-report-table-header {
+  background: var(--color-neutral-700);
+  color: var(--color-ios-text-secondary-dark);
+  box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
 }
 
 /* 체크박스 포함 시 그리드 */
 .annual-report-table-header:has(.header-checkbox) {
   grid-template-columns:
-    28px                                          /* 체크박스 */
-    var(--owner-column-width, 50px)              /* 소유주 (동적) */
-    var(--issue-date-column-width, 80px)         /* 발행일 (동적) */
-    var(--parsed-at-column-width, 125px)         /* 파싱일시 (동적) */
-    var(--premium-column-width, 85px)            /* 총 월보험료 (동적) */
-    var(--count-column-width, 70px)              /* 계약 수 (동적) */
-    var(--status-column-width, 40px);            /* 상태 (동적) */
+    28px                   /* 체크박스 */
+    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+    104px                  /* 발행일 +30% */
+    163px                  /* 파싱일시 +30% */
+    124px                  /* 총 월보험료 +30% */
+    72px                   /* 계약 수 +30% */
+    65px;                  /* 상태 +30% */
+  gap: 4px;
 }
 
 .annual-report-table-header > div {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 4px;
-  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
+
+/* 헤더 칼럼 정렬 */
+.annual-report-table-header .header-owner { justify-content: flex-start; }
+.annual-report-table-header .header-issue-date { justify-content: center; }
+.annual-report-table-header .header-parsed-at { justify-content: center; }
+.annual-report-table-header .header-premium { justify-content: flex-end; }
+.annual-report-table-header .header-count { justify-content: center; }
+.annual-report-table-header .header-status { justify-content: center; }
 
 /* ==================== 🍎 TABLE BODY ==================== */
 
@@ -322,64 +370,57 @@ html[data-theme="dark"] .parsing-file-name {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  overflow-y: auto;
-  overflow-x: hidden;  /* 수평 스크롤은 container에서만 */
-  padding-right: 4px;
 }
 
-/* 🍎 SCROLLBAR: Apple-style subtle */
-.annual-report-table-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.annual-report-table-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.annual-report-table-body::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-  transition: background-color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-.annual-report-table-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-light);
-}
-
-html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-dark);
-}
-
-/* ==================== 🍎 TABLE ROW - 기본 구조만 (스타일은 CustomerFullDetailView.css에서) ==================== */
+/* ==================== 🍎 TABLE ROW - DocumentsTab 스타일 ==================== */
 
 .annual-report-row {
   display: grid;
-  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
   grid-template-columns:
-    var(--owner-column-width, 50px)              /* 소유주 (동적) */
-    var(--issue-date-column-width, 80px)         /* 발행일 (동적) */
-    var(--parsed-at-column-width, 125px)         /* 파싱일시 (동적) */
-    var(--premium-column-width, 85px)            /* 총 월보험료 (동적) */
-    var(--count-column-width, 70px)              /* 계약 수 (동적) */
-    var(--status-column-width, 40px);            /* 상태 (동적) */
+    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+    104px                  /* 발행일 +30% */
+    163px                  /* 파싱일시 +30% */
+    124px                  /* 총 월보험료 +30% */
+    72px                   /* 계약 수 +30% */
+    65px;                  /* 상태 +30% */
+  gap: 4px;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 6px 10px;
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  font-size: var(--font-size-footnote); /* 13px - DocumentsTab과 동일 */
+  font-family: var(--font-family-text);
+}
+
+html[data-theme="dark"] .annual-report-row {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.annual-report-row:hover {
+  background-color: var(--color-ios-bg-hover-light);
+  transform: translateX(2px);
+}
+
+html[data-theme="dark"] .annual-report-row:hover {
+  background-color: var(--color-ios-bg-hover-dark);
 }
 
 /* 체크박스 포함 시 그리드 */
 .annual-report-row:has(.row-checkbox) {
   grid-template-columns:
-    28px                                          /* 체크박스 */
-    var(--owner-column-width, 50px)              /* 소유주 (동적) */
-    var(--issue-date-column-width, 80px)         /* 발행일 (동적) */
-    var(--parsed-at-column-width, 125px)         /* 파싱일시 (동적) */
-    var(--premium-column-width, 85px)            /* 총 월보험료 (동적) */
-    var(--count-column-width, 70px)              /* 계약 수 (동적) */
-    var(--status-column-width, 40px);            /* 상태 (동적) */
+    28px                   /* 체크박스 */
+    minmax(80px, 1fr)     /* 소유주 - 유연 폭 */
+    104px                  /* 발행일 +30% */
+    163px                  /* 파싱일시 +30% */
+    124px                  /* 총 월보험료 +30% */
+    72px                   /* 계약 수 +30% */
+    65px;                  /* 상태 +30% */
+  gap: 4px;
 }
 
 /* === 상태별 스타일 === */
@@ -420,15 +461,16 @@ html[data-theme="dark"] .annual-report-row--selected {
   accent-color: var(--color-primary);
 }
 
-/* ==================== 🍎 ROW CELLS ==================== */
+/* ==================== 🍎 ROW CELLS - DocumentsTab 스타일 복제 ==================== */
 
 .row-owner,
 .header-owner {
   font-weight: 600;
-  color: var(--color-ios-text-primary-light);
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 html[data-theme="dark"] .row-owner,
@@ -437,21 +479,22 @@ html[data-theme="dark"] .header-owner {
 }
 
 .row-issue-date {
-  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 html[data-theme="dark"] .row-issue-date {
-  color: var(--color-ios-text-primary-dark);
+  color: var(--color-ios-text-secondary-dark);
 }
 
 .row-parsed-at {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  font-size: 11px;
 }
 
 html[data-theme="dark"] .row-parsed-at {
@@ -459,19 +502,18 @@ html[data-theme="dark"] .row-parsed-at {
 }
 
 .row-premium {
-  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 400;
-  color: var(--color-primary);
   text-align: right;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  font-weight: 600;
 }
 
 .row-count {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
   text-align: center;
+  color: var(--color-text-secondary);
   white-space: nowrap;
+  font-size: 11px;
 }
 
 html[data-theme="dark"] .row-count {
