@@ -39,7 +39,7 @@ import DocumentSummaryModal from '../../../../../components/DocumentViews/Docume
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import { DocumentContentSearchModal } from '../../../components/DocumentContentSearchModal'
-import { useCustomerDocumentsSSE } from '@/shared/hooks/useCustomerDocumentsSSE'
+import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService, type DocumentType } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
@@ -313,8 +313,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     return () => resizeObserver.disconnect()
   }, [])
 
-  // 🍎 SSE 실시간 업데이트 (폴링 대체)
-  useCustomerDocumentsSSE(customer?._id, refresh, {
+  // 🍎 SSE 실시간 업데이트 (폴링 대체) - 통합 SSE 사용
+  // HTTP/1.1 연결 제한 문제 해결을 위해 개별 SSE 대신 통합 SSE 사용
+  useCustomerSSE(customer?._id, {
+    onRefreshDocuments: refresh,
+  }, {
     enabled: Boolean(customer?._id),
   })
 

@@ -18,7 +18,7 @@ import { formatDate } from '@/shared/lib/timeUtils';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
-import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE';
+import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
 import type { CustomerDocumentItem } from '@/services/DocumentService';
@@ -157,8 +157,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
     loadAnnualReports();
   }, []);
 
-  // SSE 실시간 업데이트
-  const { isConnected: sseConnected } = useAnnualReportSSE(customer._id, handleSSERefresh, {
+  // SSE 실시간 업데이트 - 통합 SSE 사용
+  // HTTP/1.1 연결 제한 문제 해결을 위해 개별 SSE 대신 통합 SSE 사용
+  const { isConnected: sseConnected } = useCustomerSSE(customer._id, {
+    onRefreshAR: handleSSERefresh,
+  }, {
     enabled: Boolean(customer._id),
   });
 
@@ -357,55 +360,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
   };
 
   const loadAnnualReports = async () => {
+    console.log('[AnnualReportTab] 🔴 loadAnnualReports 시작');
     setIsLoading(true);
     setError(null);
 
     try {
       const userId = UserContextService.getContext().identifierValue;
-
-      // ⭐ 먼저 Documents 탭의 문서들을 가져와서 중복 AR 정리
-      try {
-        // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
-        const docsData = await api.get<{ success: boolean; data: { documents: CustomerDocumentItem[] } }>(
-          `/api/customers/${customer._id}/documents`
-        );
-
-        if (docsData.success && docsData.data?.documents) {
-          const arDocuments = docsData.data.documents.filter(
-            (doc) => doc.relationship === 'annual_report' && doc.linkedAt && doc.ar_metadata?.issue_date
-          );
-
-          if (arDocuments.length > 0) {
-            console.log(`[AnnualReportTab] 자동 중복 정리 시작: ${arDocuments.length}개 AR 문서 발견`);
-
-            for (const doc of arDocuments) {
-              const issueDate = doc.ar_metadata?.issue_date?.split('T')[0];
-              const customerName = doc.ar_metadata?.customer_name;
-
-              if (!issueDate || !doc.linkedAt) continue;
-
-              console.log(`[AnnualReportTab] AR 중복 정리: issue_date=${issueDate}, customer_name=${customerName}, linkedAt=${doc.linkedAt}`);
-
-              const result = await AnnualReportApi.cleanupDuplicates(
-                customer._id,
-                userId,
-                issueDate,
-                doc.linkedAt,
-                customerName
-              );
-
-              if (result.deleted_count && result.deleted_count > 0) {
-                console.log(`[AnnualReportTab] ✅ 중복 AR 정리 완료 (${issueDate}): ${result.deleted_count}건 삭제`);
-              }
-            }
-          }
-        }
-      } catch (cleanupError) {
-        console.warn('[AnnualReportTab] 자동 중복 정리 실패 (무시):', cleanupError);
-        errorReporter.reportApiError(cleanupError as Error, { component: 'AnnualReportTab.cleanupDuplicates', payload: { customerId: customer._id } });
-      }
+      console.log('[AnnualReportTab] 🔴 API 호출 시작:', customer._id);
 
       const response = await AnnualReportApi.getAnnualReports(customer._id, userId, 20);
+      console.log('[AnnualReportTab] 🔴 API 응답:', response);
 
       if (response.success && response.data) {
         // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환

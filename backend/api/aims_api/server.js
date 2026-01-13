@@ -303,6 +303,8 @@ function notifyCustomerDocSubscribers(customerId, event, data) {
   } else {
     console.log(`[SSE] 고객 ${customerIdStr}에 연결된 구독자 없음 - 이벤트 미전송`);
   }
+  // 통합 SSE로도 전송 (HTTP/1.1 연결 제한 문제 해결용)
+  notifyCustomerCombinedSubscribers(customerIdStr, event, data);
 }
 
 // ========================================
@@ -333,6 +335,8 @@ function notifyARSubscribers(customerId, event, data) {
   } else {
     console.log(`[SSE-AR] ⚠️ 고객 ${customerIdStr}에 연결된 AR 구독자 없음 - 이벤트 미전송`);
   }
+  // 통합 SSE로도 전송 (HTTP/1.1 연결 제한 문제 해결용)
+  notifyCustomerCombinedSubscribers(customerIdStr, event, data);
 }
 
 // ========================================
@@ -356,6 +360,34 @@ function notifyCRSubscribers(customerId, event, data) {
     console.log(`[SSE-CR] 고객 ${customerIdStr}의 CR 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
   } else {
     console.log(`[SSE-CR] 고객 ${customerIdStr}에 연결된 CR 구독자 없음 - 이벤트 미전송`);
+  }
+  // 통합 SSE로도 전송 (HTTP/1.1 연결 제한 문제 해결용)
+  notifyCustomerCombinedSubscribers(customerIdStr, event, data);
+}
+
+// ========================================
+// SSE (Server-Sent Events) 클라이언트 관리 - Customer Combined (문서+AR+CR 통합)
+// HTTP/1.1 동시 연결 제한 문제 해결을 위해 3개 SSE를 1개로 통합
+// ========================================
+const customerCombinedSSEClients = new Map(); // customerId(string) -> Set<response>
+
+/**
+ * 특정 고객의 통합 SSE 구독자들에게 알림 전송
+ * 기존 개별 SSE(documents, AR, CR)를 하나의 연결로 통합하여 전송
+ * @param {string} customerId - 고객 ID
+ * @param {string} event - 이벤트 이름 (document-change, document-status-change, ar-change, cr-change)
+ * @param {object} data - 이벤트 데이터
+ */
+function notifyCustomerCombinedSubscribers(customerId, event, data) {
+  const customerIdStr = customerId.toString();
+  const clients = customerCombinedSSEClients.get(customerIdStr);
+  const totalClients = Array.from(customerCombinedSSEClients.values()).reduce((sum, set) => sum + set.size, 0);
+  console.log(`[SSE-Combined] notifyCustomerCombinedSubscribers 호출 - customerId: ${customerIdStr}, event: ${event}, 해당 고객 연결: ${clients?.size || 0}, 전체 연결: ${totalClients}`);
+  if (clients && clients.size > 0) {
+    clients.forEach(res => sendSSE(res, event, data));
+    console.log(`[SSE-Combined] ✅ 고객 ${customerIdStr}의 통합 구독자들에게 ${event} 이벤트 전송 (${clients.size} 연결)`);
+  } else {
+    console.log(`[SSE-Combined] 고객 ${customerIdStr}에 연결된 통합 구독자 없음 - 이벤트 미전송`);
   }
 }
 
@@ -7141,6 +7173,78 @@ app.get('/api/customers/:id/documents/stream', authenticateJWTWithQuery, (req, r
     customerDocSSEClients.get(customerId)?.delete(res);
     if (customerDocSSEClients.get(customerId)?.size === 0) {
       customerDocSSEClients.delete(customerId);
+    }
+  });
+});
+
+// ========================================
+// SSE 스트림: 고객 통합 실시간 업데이트 (문서+AR+CR)
+// HTTP/1.1 동시 연결 제한 문제 해결을 위해 3개 SSE를 1개로 통합
+// ========================================
+
+/**
+ * 고객 통합 SSE 스트림 엔드포인트
+ * GET /api/customers/:customerId/stream
+ *
+ * 인증: ?token=xxx 쿼리 파라미터 (EventSource는 헤더 설정 불가)
+ * 이벤트:
+ * - connected: 연결 성공
+ * - document-change: 문서 변경 (추가/삭제/수정)
+ * - document-status-change: 문서 상태 변경 (처리 완료 등)
+ * - ar-change: Annual Report 변경
+ * - cr-change: Customer Review 변경
+ * - ping: Keep-alive (30초)
+ *
+ * 통합 이유: 기존 개별 SSE 3개(documents, AR, CR)가 HTTP/1.1 동시 연결 제한(6개)을
+ * 대부분 점유하여 API 요청이 타임아웃되는 문제 해결
+ */
+app.get('/api/customers/:customerId/stream', authenticateJWTWithQuery, (req, res) => {
+  const { customerId } = req.params;
+  const userId = req.user.id;
+
+  if (!ObjectId.isValid(customerId)) {
+    return res.status(400).json({
+      success: false,
+      error: '유효하지 않은 고객 ID입니다.'
+    });
+  }
+
+  console.log(`[SSE-Combined] 고객 통합 스트림 연결 - customerId: ${customerId}, userId: ${userId}`);
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no'); // nginx 버퍼링 비활성화
+  res.flushHeaders();
+
+  // 클라이언트 등록
+  if (!customerCombinedSSEClients.has(customerId)) {
+    customerCombinedSSEClients.set(customerId, new Set());
+  }
+  customerCombinedSSEClients.get(customerId).add(res);
+
+  // 연결 확인 이벤트
+  sendSSE(res, 'connected', {
+    customerId,
+    userId,
+    timestamp: utcNowISO(),
+    type: 'combined'  // 통합 SSE임을 표시
+  });
+
+  // 30초마다 keep-alive 전송
+  const keepAliveInterval = setInterval(() => {
+    sendSSE(res, 'ping', { timestamp: utcNowISO() });
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    console.log(`[SSE-Combined] 고객 통합 스트림 연결 종료 - customerId: ${customerId}`);
+    clearInterval(keepAliveInterval);
+    customerCombinedSSEClients.get(customerId)?.delete(res);
+    if (customerCombinedSSEClients.get(customerId)?.size === 0) {
+      customerCombinedSSEClients.delete(customerId);
     }
   });
 });

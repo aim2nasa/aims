@@ -16,7 +16,7 @@ import { CustomerReviewApi, type CustomerReview } from '@/features/customer/api/
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
-import { useCustomerReviewSSE } from '@/shared/hooks/useCustomerReviewSSE';
+import { useCustomerSSE } from '@/shared/hooks/useCustomerSSE';
 import type { Customer } from '@/entities/customer/model';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
@@ -109,8 +109,10 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     loadCustomerReviews();
   }, []);
 
-  // SSE 실시간 업데이트 (폴링 대체)
-  useCustomerReviewSSE(customer._id, handleSSERefresh, {
+  // SSE 실시간 업데이트 (폴링 대체) - 통합 SSE 사용
+  useCustomerSSE(customer._id, {
+    onRefreshCR: handleSSERefresh,
+  }, {
     enabled: Boolean(customer._id),
   });
 
