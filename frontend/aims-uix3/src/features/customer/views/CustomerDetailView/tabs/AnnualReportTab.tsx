@@ -561,9 +561,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
 
   // 🍎 단일 AR 삭제 핸들러
   const handleDeleteReport = useCallback(async (report: AnnualReport) => {
+    // 보험계약 탭에 등록된 AR인 경우 추가 경고
+    const contractWarning = report.registered_at
+      ? '\n\n⚠️ 이 AR은 보험계약 탭에 등록되어 있습니다.\n함께 삭제됩니다.'
+      : '';
+
     const confirmed = await confirmModal.actions.openModal({
       title: 'Annual Report 삭제',
-      message: `"${report.customer_name}" 님의 AR (발행일: ${formatDate(report.issue_date)})을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`,
+      message: `"${report.customer_name}" 님의 AR (발행일: ${formatDate(report.issue_date)})을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.${contractWarning}`,
       confirmText: '삭제',
       cancelText: '취소',
       confirmStyle: 'destructive',
@@ -663,10 +668,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       });
       return;
     }
+    // 보험계약 탭에 등록된 AR이 포함되어 있는지 확인
+    const hasRegisteredAR = Array.from(selectedIndices).some(idx => reports[idx]?.registered_at);
+    const contractWarning = hasRegisteredAR
+      ? '\n\n⚠️ 보험계약 탭에 등록된 AR이 포함되어 있습니다.\n함께 삭제됩니다.'
+      : '';
+
 
     const confirmed = await confirmModal.actions.openModal({
       title: 'Annual Report 삭제',
-      message: `${selectedIndices.size}개 항목을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`,
+      message: `${selectedIndices.size}개 항목을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.${contractWarning}`,
       confirmText: '삭제',
       cancelText: '취소',
       confirmStyle: 'destructive',

@@ -48,6 +48,7 @@ export interface AnnualReport {
   status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
   error_message?: string;          // 에러 메시지 (실패 시)
   retry_count?: number;            // 재시도 횟수 (실패 시)
+  registered_at?: string;          // 보험계약 탭 등록일시 (ISO 8601)
 }
 
 /**
