@@ -1,0 +1,353 @@
+/**
+ * Annual Report 팝업 페이지 스타일
+ * @since 2026-01-14
+ */
+
+.annual-report-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-ios-bg-primary-light);
+  color: var(--color-ios-text-primary-light);
+}
+
+/* 헤더 */
+.annual-report-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  -webkit-app-region: drag; /* 드래그로 창 이동 가능 */
+}
+
+.annual-report-page__header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  -webkit-app-region: no-drag;
+}
+
+.annual-report-page__header-title h1 {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+}
+
+.annual-report-page__header-title p {
+  margin: 0;
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+}
+
+.annual-report-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.annual-report-page__action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-ios-text-secondary-light);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.annual-report-page__action-button:hover {
+  background: var(--color-ios-fill-tertiary-light);
+  color: var(--color-ios-text-primary-light);
+}
+
+.annual-report-page__close-button:hover {
+  background: var(--color-ios-red-light);
+  color: white;
+}
+
+/* 메인 콘텐츠 */
+.annual-report-page__content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* 빈 상태 */
+.annual-report-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100vh;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+/* Summary Section (AnnualReportModal.css에서 가져옴) */
+.annual-report-page .annual-report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.annual-report-page .annual-report-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.annual-report-page .annual-report-summary__label {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+}
+
+.annual-report-page .annual-report-summary__value {
+  font-size: var(--font-size-title-3);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+}
+
+.annual-report-page .annual-report-summary__value--primary {
+  color: var(--color-ios-blue-light);
+}
+
+/* Contracts Section */
+.annual-report-page .annual-report-contracts {
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.annual-report-page .annual-report-contracts__title {
+  margin: 0 0 12px;
+  font-size: var(--font-size-callout);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+}
+
+/* Table Wrapper */
+.annual-report-page .contracts-table-wrapper {
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+/* Table */
+.annual-report-page .contracts-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+  font-size: var(--font-size-caption-1);
+}
+
+.annual-report-page .contracts-table th,
+.annual-report-page .contracts-table td {
+  padding: 8px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.annual-report-page .contracts-table th {
+  background: var(--color-ios-bg-tertiary-light);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.annual-report-page .contracts-table__th--sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.annual-report-page .contracts-table__th--sortable:hover {
+  background: var(--color-ios-fill-tertiary-light);
+}
+
+.annual-report-page .contracts-table__th--sorted {
+  color: var(--color-ios-blue-light);
+}
+
+.annual-report-page .contracts-table__sort-icon {
+  margin-left: 4px;
+  opacity: 0.6;
+}
+
+.annual-report-page .contracts-table__th--sorted .contracts-table__sort-icon {
+  opacity: 1;
+}
+
+.annual-report-page .contracts-table td {
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  color: var(--color-ios-text-primary-light);
+}
+
+.annual-report-page .contracts-table tr:hover td {
+  background: var(--color-ios-fill-quaternary-light);
+}
+
+.annual-report-page .contracts-table__cell--number {
+  text-align: center;
+  color: var(--color-ios-text-tertiary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.annual-report-page .contracts-table__cell--contract-number {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-caption-2);
+}
+
+.annual-report-page .contracts-table__cell--product {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.annual-report-page .contracts-table__cell--coverage,
+.annual-report-page .contracts-table__cell--premium {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.annual-report-page .contracts-table__cell--premium-highlight {
+  font-weight: 600;
+  color: var(--color-ios-blue-light);
+}
+
+/* Status Badge */
+.annual-report-page .status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 500;
+}
+
+.annual-report-page .contract-item__status--active {
+  background: var(--color-ios-green-light);
+  color: white;
+}
+
+.annual-report-page .contract-item__status--inactive {
+  background: var(--color-ios-gray-light);
+  color: white;
+}
+
+.annual-report-page .contract-item__status--default {
+  background: var(--color-ios-fill-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+}
+
+/* Footer */
+.annual-report-page__footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-ios-separator-light);
+  text-align: center;
+}
+
+.annual-report-page__footer-text {
+  font-size: var(--font-size-caption-2);
+  color: var(--color-ios-text-tertiary-light);
+}
+
+/* 다크 모드 */
+@media (prefers-color-scheme: dark) {
+  .annual-report-page {
+    background: var(--color-ios-bg-primary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page__header {
+    background: var(--color-ios-bg-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .annual-report-page__header-title h1 {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page__header-title p {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .annual-report-page__action-button {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .annual-report-page__action-button:hover {
+    background: var(--color-ios-fill-tertiary-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page .annual-report-summary {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .annual-report-page .annual-report-summary__label {
+    color: var(--color-ios-text-secondary-dark);
+  }
+
+  .annual-report-page .annual-report-summary__value {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page .annual-report-contracts {
+    background: var(--color-ios-bg-secondary-dark);
+  }
+
+  .annual-report-page .annual-report-contracts__title {
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page .contracts-table th {
+    background: var(--color-ios-bg-tertiary-dark);
+    color: var(--color-ios-text-secondary-dark);
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
+
+  .annual-report-page .contracts-table__th--sortable:hover {
+    background: var(--color-ios-fill-tertiary-dark);
+  }
+
+  .annual-report-page .contracts-table td {
+    border-bottom-color: var(--color-ios-separator-dark);
+    color: var(--color-ios-text-primary-dark);
+  }
+
+  .annual-report-page .contracts-table tr:hover td {
+    background: var(--color-ios-fill-quaternary-dark);
+  }
+
+  .annual-report-page .contracts-table__cell--number {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .annual-report-page__footer {
+    border-top-color: var(--color-ios-separator-dark);
+  }
+
+  .annual-report-page__footer-text {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+
+  .annual-report-page__empty {
+    color: var(--color-ios-text-tertiary-dark);
+  }
+}

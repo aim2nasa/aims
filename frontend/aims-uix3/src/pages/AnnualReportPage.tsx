@@ -1,161 +1,145 @@
 /**
- * AIMS UIX-3 Annual Report Modal
- * @since 2025-10-16
- * @version 3.0.0
+ * Annual Report 팝업 윈도우 전용 페이지
+ * @since 2026-01-14
  *
- * 🍎 Annual Report 모달 컴포넌트
- * - 고객의 보험 계약 현황 표시 (Annual Review Report)
- * - Document-Controller-View 패턴 준수 (Layer 5: View)
- * - 순수 View 컴포넌트 (비즈니스 로직 없음)
- * - 문서 프리뷰 모달 디자인 적용
+ * window.open()으로 열리는 독립 팝업 창에서 Annual Report를 볼 수 있게 함
+ * 브라우저 밖으로 이동 가능하며, 다른 앱 위에 띄울 수 있음
  */
 
-import React, { useState, useCallback } from 'react';
-import DraggableModal from '@/shared/ui/DraggableModal';
-import Button from '@/shared/ui/Button';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
-import Tooltip from '../../../../shared/ui/Tooltip';
-import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
-import { AnnualReportApi } from '../../api/annualReportApi';
-import { formatDateTime, formatDate } from '@/shared/lib/timeUtils';
-import './AnnualReportModal.css';
-
-/**
- * AnnualReportModal Props 인터페이스
- */
-interface AnnualReportModalProps {
-  /** 모달 열림/닫힘 상태 */
-  isOpen: boolean;
-  /** 모달 닫기 핸들러 */
-  onClose: () => void;
-  /** Annual Report 데이터 */
-  report: AnnualReport | null;
-  /** 로딩 상태 */
-  isLoading: boolean;
-  /** 에러 메시지 */
-  error: string | null;
-  /** 고객 이름 */
-  customerName: string;
-  /** 동일 고객의 모든 AR 목록 (발행일 드롭다운용) */
-  allReports?: AnnualReport[];
-  /** AR 선택 변경 핸들러 */
-  onReportChange?: (report: AnnualReport) => void;
-}
+import React, { useState, useEffect, useCallback } from 'react'
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../components/SFSymbol'
+import Tooltip from '../shared/ui/Tooltip'
+import type { AnnualReport, InsuranceContract } from '../features/customer/api/annualReportApi'
+import { AnnualReportApi } from '../features/customer/api/annualReportApi'
+import { formatDateTime, formatDate } from '@/shared/lib/timeUtils'
+import './AnnualReportPage.css'
 
 // 정렬 설정 타입
 type SortConfig = {
-  key: keyof InsuranceContract;
-  direction: 'asc' | 'desc';
-} | null;
+  key: keyof InsuranceContract
+  direction: 'asc' | 'desc'
+} | null
 
-export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
-  isOpen,
-  onClose,
-  report,
-  isLoading,
-  error,
-  customerName,
-  allReports,
-  onReportChange
-}) => {
-  // 정렬 상태
-  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-  // 발행일 드롭다운 상태
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+const AnnualReportPage: React.FC = () => {
+  const [report, setReport] = useState<AnnualReport | null>(null)
+  const [customerName, setCustomerName] = useState('')
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null)
 
-  /**
-   * 새 창에서 열기 핸들러
-   */
-  const handleOpenPopup = useCallback(() => {
-    localStorage.setItem('aims-ar-popup-data', JSON.stringify({
-      report,
-      customerName
-    }));
+  // 컴포넌트 마운트 시 localStorage에서 데이터 로드
+  useEffect(() => {
+    console.log('[AnnualReportPage] 팝업 페이지 로드')
 
-    const width = 1200;
-    const height = 800;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    // localStorage에서 AR 데이터 읽기
+    const storedData = localStorage.getItem('aims-ar-popup-data')
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData)
+        setReport(data.report)
+        setCustomerName(data.customerName || '')
+        console.log('[AnnualReportPage] AR 데이터 로드 완료:', data.report?.report_id)
 
-    window.open(
-      '/annual-report',
-      'aims-ar-popup',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-  }, [report, customerName]);
-
-  /**
-   * 발행일 선택 핸들러
-   */
-  const handleDateSelect = (selectedReport: AnnualReport) => {
-    setIsDateDropdownOpen(false);
-    if (onReportChange && selectedReport.report_id !== report?.report_id) {
-      onReportChange(selectedReport);
+        // 팝업 열림 상태 저장
+        localStorage.setItem('aims-ar-popup-open', 'true')
+      } catch (error) {
+        console.error('[AnnualReportPage] AR 데이터 파싱 실패:', error)
+      }
     }
-  };
+
+    // 팝업 준비 완료 알림
+    if (window.opener && !window.opener.closed) {
+      console.log('[AnnualReportPage] 팝업 준비 완료, 부모에 알림')
+      window.opener.postMessage({ type: 'AIMS_AR_POPUP_READY' }, window.location.origin)
+    }
+
+    // 창 닫힐 때 정리
+    return () => {
+      localStorage.removeItem('aims-ar-popup-open')
+    }
+  }, [])
+
+  // 창 닫힐 때 localStorage 정리
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('aims-ar-popup-open')
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
+  // 브라우저 내로 이동 (팝업 → 메인 창)
+  const handleMoveToMainWindow = useCallback(() => {
+    if (window.opener && !window.opener.closed) {
+      // 팝업 닫힘 상태 제거
+      localStorage.removeItem('aims-ar-popup-open')
+      // 메인 창에 AR 모달 열기 이벤트 전송
+      window.opener.postMessage({
+        type: 'AIMS_AR_OPEN_IN_MAIN',
+        report: JSON.stringify(report),
+        customerName
+      }, window.location.origin)
+      // 팝업 창 닫기
+      window.close()
+    }
+  }, [report, customerName])
 
   /**
    * 계약 상태에 따른 배지 스타일
    */
   const getStatusBadgeClass = (status?: string) => {
-    if (!status) return 'contract-item__status--default';
+    if (!status) return 'contract-item__status--default'
 
-    const lowerStatus = status.toLowerCase();
+    const lowerStatus = status.toLowerCase()
     if (lowerStatus.includes('유지') || lowerStatus.includes('정상')) {
-      return 'contract-item__status--active';
+      return 'contract-item__status--active'
     }
     if (lowerStatus.includes('만기') || lowerStatus.includes('해지')) {
-      return 'contract-item__status--inactive';
+      return 'contract-item__status--inactive'
     }
-    return 'contract-item__status--default';
-  };
-
+    return 'contract-item__status--default'
+  }
 
   /**
-   * 정렬 핸들러 - 컬럼 클릭 시 오름차순/내림차순 토글
+   * 정렬 핸들러
    */
   const handleSort = (key: keyof InsuranceContract) => {
-    let direction: 'asc' | 'desc' = 'asc';
+    let direction: 'asc' | 'desc' = 'asc'
 
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+      direction = 'desc'
     }
 
-    setSortConfig({ key, direction });
-  };
+    setSortConfig({ key, direction })
+  }
 
   /**
    * 정렬된 계약 목록 생성
    */
   const getSortedContracts = (contracts: InsuranceContract[]): InsuranceContract[] => {
-    if (!sortConfig) return contracts;
+    if (!sortConfig) return contracts
 
-    const sortedContracts = [...contracts];
+    const sortedContracts = [...contracts]
 
     sortedContracts.sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = a[sortConfig.key]
+      const bValue = b[sortConfig.key]
 
-      // null/undefined 처리
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return 1
+      if (bValue == null) return -1
 
-      // 숫자 비교
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
       }
 
-      // 문자열 비교
-      const aStr = String(aValue);
-      const bStr = String(bValue);
-      const comparison = aStr.localeCompare(bStr, 'ko-KR');
+      const aStr = String(aValue)
+      const bStr = String(bValue)
+      const comparison = aStr.localeCompare(bStr, 'ko-KR')
 
-      return sortConfig.direction === 'asc' ? comparison : -comparison;
-    });
+      return sortConfig.direction === 'asc' ? comparison : -comparison
+    })
 
-    return sortedContracts;
-  };
+    return sortedContracts
+  }
 
   /**
    * 정렬 아이콘 렌더링
@@ -173,10 +157,10 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             />
           </span>
         </Tooltip>
-      );
+      )
     }
 
-    const tooltipText = sortConfig.direction === 'asc' ? '오름차순 정렬 중' : '내림차순 정렬 중';
+    const tooltipText = sortConfig.direction === 'asc' ? '오름차순 정렬 중' : '내림차순 정렬 중'
 
     return (
       <Tooltip content={tooltipText}>
@@ -189,95 +173,88 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           />
         </span>
       </Tooltip>
-    );
-  };
+    )
+  }
 
-  /**
-   * 정렬된 헤더인지 확인
-   */
   const isSortedColumn = (columnKey: keyof InsuranceContract) => {
-    return sortConfig && sortConfig.key === columnKey;
-  };
+    return sortConfig && sortConfig.key === columnKey
+  }
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="annual-report-modal__center">
-          <span>Annual Report를 불러오는 중...</span>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="annual-report-modal__center annual-report-modal__center--error">
-          <SFSymbol
-            name="exclamationmark.triangle.fill"
-            size={SFSymbolSize.TITLE_3}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-          <p>{error}</p>
-        </div>
-      );
-    }
-
-    if (!report) {
-      return (
-        <div className="annual-report-modal__center">
+  // 데이터 없음 상태
+  if (!report) {
+    return (
+      <div className="annual-report-page">
+        <div className="annual-report-page__empty">
           <SFSymbol
             name="doc.text.slash"
             size={SFSymbolSize.TITLE_3}
             weight={SFSymbolWeight.MEDIUM}
           />
-          <span>Annual Report가 없습니다.</span>
+          <span>Annual Report 데이터가 없습니다.</span>
         </div>
-      );
-    }
+      </div>
+    )
+  }
 
-    return (
-      <>
+  return (
+    <div className="annual-report-page">
+      {/* 헤더 */}
+      <header className="annual-report-page__header">
+        <div className="annual-report-page__header-title">
+          <SFSymbol
+            name="chart.bar.doc.horizontal"
+            size={SFSymbolSize.BODY}
+            weight={SFSymbolWeight.REGULAR}
+          />
+          <div>
+            <h1>{report.customer_name || customerName}님의 Annual Report</h1>
+            <p>
+              {report.issue_date ? `발행일: ${formatDate(report.issue_date)}` : '정보 없음'}
+              {` · ${report.contract_count}건`}
+            </p>
+          </div>
+        </div>
+        <div className="annual-report-page__header-actions">
+          {/* 브라우저 내로 이동 버튼 */}
+          {window.opener && !window.opener.closed && (
+            <Tooltip content="브라우저 내로 이동">
+              <button
+                className="annual-report-page__action-button"
+                onClick={handleMoveToMainWindow}
+                aria-label="브라우저 내로 이동"
+                type="button"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M9 2h5v5M14 2L8 8M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </Tooltip>
+          )}
+          {/* 닫기 버튼 */}
+          <Tooltip content="창 닫기">
+            <button
+              className="annual-report-page__action-button annual-report-page__close-button"
+              onClick={() => window.close()}
+              aria-label="창 닫기"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </Tooltip>
+        </div>
+      </header>
+
+      {/* 메인 콘텐츠 */}
+      <main className="annual-report-page__content">
         {/* Summary Section */}
         <div className="annual-report-summary">
           <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">발행일</span>
-            {/* 다중 AR이 있으면 드롭다운, 없으면 단순 텍스트 */}
-            {allReports && allReports.length > 1 && onReportChange ? (
-              <div className="annual-report-date-dropdown">
-                <button
-                  className="annual-report-date-dropdown__trigger"
-                  onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                  type="button"
-                >
-                  <span className="annual-report-date-dropdown__value">
-                    {formatDate(report.issue_date)}
-                  </span>
-                  <span className={`annual-report-date-dropdown__arrow ${isDateDropdownOpen ? 'is-open' : ''}`}>
-                    ▼
-                  </span>
-                </button>
-                {isDateDropdownOpen && (
-                  <div className="annual-report-date-dropdown__menu">
-                    {allReports.map((r) => (
-                      <button
-                        key={r.report_id}
-                        className={`annual-report-date-dropdown__item ${r.report_id === report.report_id ? 'is-current' : ''}`}
-                        onClick={() => handleDateSelect(r)}
-                        type="button"
-                      >
-                        {formatDate(r.issue_date)}
-                        {r.report_id === report.report_id && (
-                          <span className="annual-report-date-dropdown__current-badge">(현재)</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <span className="annual-report-summary__value">
-                {formatDate(report.issue_date)}
-              </span>
-            )}
+            <span className="annual-report-summary__value">
+              {formatDate(report.issue_date)}
+            </span>
           </div>
           <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">총 월보험료</span>
@@ -403,59 +380,14 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
         </div>
 
         {/* Footer Info */}
-        <div className="annual-report-modal__footer">
-          <span className="annual-report-modal__footer-text">
+        <div className="annual-report-page__footer">
+          <span className="annual-report-page__footer-text">
             생성일: {formatDateTime(report.created_at)}
           </span>
         </div>
-      </>
-    );
-  };
-
-  return (
-    <DraggableModal
-      visible={isOpen}
-      onClose={onClose}
-      title={
-        <div className="customer-document-preview__title">
-          <SFSymbol
-            name="chart.bar.doc.horizontal"
-            size={SFSymbolSize.BODY}
-            weight={SFSymbolWeight.REGULAR}
-          />
-          <div>
-            <h2>{report?.customer_name || customerName}님의 Annual Report</h2>
-            <p>
-              {report?.issue_date ? `발행일: ${formatDate(report.issue_date)}` : '정보 없음'}
-              {report && ` · ${report.contract_count}건`}
-            </p>
-          </div>
-        </div>
-      }
-      initialWidth={1440}
-      initialHeight={800}
-      minWidth={960}
-      minHeight={600}
-      footer={
-        <div className="fulltext-modal-footer">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={onClose}
-            className="fulltext-modal-button"
-          >
-            닫기
-          </Button>
-        </div>
-      }
-      className="customer-document-preview"
-      onOpenPopup={handleOpenPopup}
-    >
-      <main className="customer-document-preview__content">
-        {renderContent()}
       </main>
-    </DraggableModal>
-  );
-};
+    </div>
+  )
+}
 
-export default AnnualReportModal;
+export default AnnualReportPage

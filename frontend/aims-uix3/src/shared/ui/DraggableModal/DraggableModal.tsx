@@ -55,6 +55,8 @@ export interface DraggableModalProps {
   storageKey?: string
   /** 투명 모드: backdrop 없이 배경과 상호작용 가능 */
   transparent?: boolean
+  /** 새창에서 보기 핸들러 (제공되면 버튼 표시) */
+  onOpenPopup?: () => void
 }
 
 /**
@@ -96,7 +98,8 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   minWidth = 600,
   minHeight = 400,
   storageKey,
-  transparent = false
+  transparent = false,
+  onOpenPopup
 }) => {
   // Drag & Resize 기능
   const modal = useModalDragResize({
@@ -173,6 +176,24 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
                   )}
                 </button>
               </Tooltip>
+              {/* 새창에서 보기 버튼 */}
+              {onOpenPopup && (
+                <Tooltip content="새창에서 보기">
+                  <button
+                    className="draggable-modal__popup-button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOpenPopup()
+                    }}
+                    aria-label="새창에서 보기"
+                    type="button"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M9 2h5v5M14 2L8 8M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+              )}
               {/* 몰입 모드 버튼 (최대화 상태에서만 표시) */}
               {modal.isMaximized && (
                 <Tooltip content="몰입 모드 (헤더/푸터 숨김)">

@@ -17,6 +17,7 @@ import { errorReporter } from '@/shared/lib/errorReporter';
 // 페이지 컴포넌트 지연 로딩
 const HomePage = React.lazy(() => import('@/pages/home'));
 const AIAssistantPage = React.lazy(() => import('@/pages/AIAssistantPage'));
+const AnnualReportPage = React.lazy(() => import('@/pages/AnnualReportPage'));
 
 /**
  * 페이지 로딩 스켈레톤
@@ -192,6 +193,17 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AIAssistantPage />
+        </Suspense>
+      </ErrorBoundary>
+    ),
+  },
+  // Annual Report 팝업 전용 라우트 (레이아웃 없이 독립)
+  {
+    path: '/annual-report',
+    element: (
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AnnualReportPage />
         </Suspense>
       </ErrorBoundary>
     ),
