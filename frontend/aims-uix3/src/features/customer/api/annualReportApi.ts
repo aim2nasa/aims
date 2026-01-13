@@ -61,6 +61,13 @@ export interface ContractSnapshot {
   arReportId: string;         // 원본 AR ID
   issueDate: string;          // AR 발행일 (YYYY-MM-DD)
   parsedAt: string;           // AR 파싱 시점 (ISO 8601)
+  // 계약 기본 정보 (스냅샷별로 다를 수 있음)
+  insurerName: string;        // 보험사명
+  productName: string;        // 보험상품명
+  holder: string;             // 계약자
+  insured: string;            // 피보험자
+  contractDate: string;       // 계약일 (YYYY-MM-DD)
+  // 변경 추적 대상 필드
   status: string;             // 계약상태 (정상, 해지, 실효 등)
   premium: number;            // 보험료(원)
   coverageAmount: number;     // 가입금액(만원)
@@ -102,11 +109,18 @@ export function groupContractsByPolicyNumber(arReports: AnnualReport[]): Contrac
       const policyNumber = contractData['증권번호'] || contractData.contract_number;
       if (!policyNumber) continue;
 
-      // 스냅샷 생성
+      // 스냅샷 생성 (모든 계약 정보 포함)
       const snapshot: ContractSnapshot = {
         arReportId: ar.report_id,
         issueDate: ar.issue_date || '',
         parsedAt: ar.parsed_at || '',
+        // 계약 기본 정보
+        insurerName: contractData['보험사'] || contractData.insurance_company || '',
+        productName: contractData['보험상품'] || contractData.product_name || '',
+        holder: contractData['계약자'] || contractData.contractor_name || '',
+        insured: contractData['피보험자'] || contractData.insured_name || '',
+        contractDate: contractData['계약일'] || contractData.contract_date || '',
+        // 변경 추적 대상 필드
         status: contractData['계약상태'] || contractData.status || '',
         premium: contractData['보험료(원)'] || contractData.monthly_premium || 0,
         coverageAmount: contractData['가입금액(만원)'] || contractData.coverage_amount || 0,
@@ -134,11 +148,19 @@ export function groupContractsByPolicyNumber(arReports: AnnualReport[]): Contrac
   }
 
   // 스냅샷 정렬 (최신순) 및 latestSnapshot 설정
+  // 최신 스냅샷의 데이터로 history 객체 필드 업데이트
   for (const history of historyMap.values()) {
     history.snapshots.sort((a, b) =>
       new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
     );
     history.latestSnapshot = history.snapshots[0];
+    // 최신 스냅샷의 데이터로 계약 기본 정보 업데이트
+    const latest = history.latestSnapshot;
+    history.insurerName = latest.insurerName;
+    history.productName = latest.productName;
+    history.holder = latest.holder;
+    history.insured = latest.insured;
+    history.contractDate = latest.contractDate;
   }
 
   // 증권번호 순 정렬하여 반환
