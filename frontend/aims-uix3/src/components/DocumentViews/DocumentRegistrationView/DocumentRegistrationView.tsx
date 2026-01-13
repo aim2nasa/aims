@@ -1602,6 +1602,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // AR 등록 처리
     try {
       const processResult = await processAnnualReportFile(arFile, customerId);
+
       if (processResult.isDuplicateDoc) {
         addLog('warning', `🔴 중복 파일 건너뜀: ${arFile.name}`, '이미 등록된 파일입니다.');
         updateFileStatusByFile(arFile, 'skipped', '중복 파일 - 이미 등록됨');
@@ -1612,11 +1613,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog,
         generateFileId: () => fileId,
         addToUploadQueue: (uploadFile) => {
+          // 기존 파일의 상태만 업데이트 (중복 추가 방지)
           updateFileStatusByFile(arFile, 'pending');
-          setUploadState(prev => ({
-            ...prev,
-            files: [...prev.files, { ...uploadFile, id: fileId }]
-          }));
+          // 🚀 실제 업로드 시작! (uploadService에 큐잉)
+          uploadService.queueFiles([{ ...uploadFile, id: fileId }]);
         },
         trackArFile: (fileName, custId) => {
           arFilenamesRef.current.add(fileName);
@@ -1663,11 +1663,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog,
         generateFileId: () => fileId,
         addToUploadQueue: (uploadFile) => {
+          // 기존 파일의 상태만 업데이트 (중복 추가 방지)
           updateFileStatusByFile(arFile, 'pending');
-          setUploadState(prev => ({
-            ...prev,
-            files: [...prev.files, { ...uploadFile, id: fileId }]
-          }));
+          // 🚀 실제 업로드 시작! (uploadService에 큐잉)
+          uploadService.queueFiles([{ ...uploadFile, id: fileId }]);
         },
         trackArFile: (fileName, custId) => {
           arFilenamesRef.current.add(fileName);
