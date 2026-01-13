@@ -39,11 +39,35 @@ const SIDEBAR_DEFAULT_WIDTH = 240;
 const SIDEBAR_WIDTH_KEY = 'aims_admin_sidebar_width';
 const EXPANDED_MENUS_KEY = 'aims_admin_expanded_menus';
 
+/**
+ * 현재 시간을 YYYY.MM.DD HH:mm:ss 형식으로 반환
+ */
+function formatCurrentTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+}
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = usePersistentTheme();
+
+  // 현재 시간 표시
+  const [currentTime, setCurrentTime] = useState(formatCurrentTime);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(formatCurrentTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 문의 알림 관리 (SSE 실시간 알림)
   const inquiryNotifications = useInquiryNotifications();
@@ -223,6 +247,7 @@ function App() {
             <h1 className="app__logo">AIMS Admin</h1>
           </div>
           <div className="app__header-right">
+            <span className="app__current-time">{currentTime}</span>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <span className="app__user-name">{user?.name || user?.email || '관리자'}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout}>

@@ -34,6 +34,13 @@
   gap: var(--spacing-md);
 }
 
+.app__current-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  letter-spacing: 0.02em;
+}
+
 .app__user-name {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
