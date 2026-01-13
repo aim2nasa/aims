@@ -29,6 +29,13 @@ const AnnualReportPage: React.FC = () => {
   useEffect(() => {
     console.log('[AnnualReportPage] 팝업 페이지 로드')
 
+    // 테마 적용 (메인 창과 동일한 테마 유지)
+    const savedTheme = localStorage.getItem('aims-theme')
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', savedTheme)
+      console.log('[AnnualReportPage] 테마 적용:', savedTheme)
+    }
+
     // localStorage에서 AR 데이터 읽기
     const storedData = localStorage.getItem('aims-ar-popup-data')
     if (storedData) {
