@@ -1131,6 +1131,15 @@ html[data-theme="dark"] .contract-history-snapshots-title {
   border-bottom: 1px solid var(--color-ios-separator-light);
 }
 
+/* 헤더 칼럼 우측 정렬 (계약상태, 가입금액, 보험기간, 납입기간, 보험료) */
+.snapshot-header__status,
+.snapshot-header__coverage,
+.snapshot-header__period,
+.snapshot-header__payment,
+.snapshot-header__premium {
+  text-align: right;
+}
+
 html[data-theme="dark"] .contract-history-snapshots-header {
   color: var(--color-ios-text-tertiary-dark);
   border-bottom-color: var(--color-ios-separator-dark);
@@ -1178,6 +1187,7 @@ html[data-theme="dark"] .snapshot-item__issue-date {
 /* 계약상태 */
 .snapshot-item__status {
   font-weight: 500;
+  text-align: right;
 }
 
 /* 가입금액, 보험료 */
@@ -1190,6 +1200,7 @@ html[data-theme="dark"] .snapshot-item__issue-date {
 /* 보험기간, 납입기간 */
 .snapshot-item__period,
 .snapshot-item__payment {
+  text-align: right;
   color: var(--color-ios-text-secondary-light);
 }
 
