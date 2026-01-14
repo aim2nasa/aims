@@ -217,10 +217,19 @@ class ARGenerator:
         c.drawString(50, height - 190, "Annual")
         c.drawString(50, height - 230, "Review Report")
 
-        # 발행일
+        # 발행일 (한글 형식으로 변환: 2026-01-14 -> 2026년 01월 14일)
         c.setFillColor(Color(0.3, 0.3, 0.3))
         c.setFont(font_name, 12)
-        c.drawString(50, height - 280, f"발행기준일: {issue_date}")
+        # 파싱 로직이 "년 월 일" 형식을 기대하므로 변환
+        try:
+            parts = issue_date.split('-')
+            if len(parts) == 3:
+                issue_date_korean = f"{parts[0]}년 {parts[1]}월 {parts[2]}일"
+            else:
+                issue_date_korean = issue_date
+        except:
+            issue_date_korean = issue_date
+        c.drawString(50, height - 280, f"발행기준일: {issue_date_korean}")
 
         # FSR 정보
         if fsr_name:
