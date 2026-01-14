@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { generateARPdf, saveARPdf } from './generator.js';
-import { generateFromPreset, generateCustomAR, SHIN_SANG_CHEOL_TEMPLATE } from './templates.js';
+import { generateFromPreset, generateCustomAR, HONG_GIL_DONG_TEMPLATE } from './templates.js';
 import type { ARGenerateOptions, Contract, ARTemplatePreset } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,7 +47,7 @@ app.get('/api/presets', (req, res) => {
     { id: 'all_lapsed', name: '모두 실효', description: '모든 계약 실효' },
     { id: 'mixed_status', name: '혼합 상태', description: '다양한 상태 혼합' },
     { id: 'empty', name: '계약 없음', description: '엣지케이스 테스트' },
-    { id: 'shin', name: '신상철 템플릿', description: '실제 고객 데이터' },
+    { id: 'hong', name: '홍길동 템플릿', description: '다수 계약 샘플' },
   ];
   res.json({ success: true, presets });
 });
@@ -57,8 +57,8 @@ app.get('/api/preset/:id', (req, res) => {
   try {
     const presetId = req.params.id;
 
-    if (presetId === 'shin') {
-      res.json({ success: true, data: SHIN_SANG_CHEOL_TEMPLATE });
+    if (presetId === 'hong') {
+      res.json({ success: true, data: HONG_GIL_DONG_TEMPLATE });
       return;
     }
 

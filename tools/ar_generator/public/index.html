@@ -92,6 +92,10 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
+    .card.compact {
+      padding: 16px 20px;
+    }
+
     .card h2 {
       font-size: 16px;
       font-weight: 600;
@@ -100,6 +104,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .card.compact h2 {
+      font-size: 14px;
+      margin-bottom: 12px;
     }
 
     .card h2::before {
@@ -114,12 +123,21 @@
       margin-bottom: 16px;
     }
 
+    .form-group.compact {
+      margin-bottom: 0;
+    }
+
     .form-group label {
       display: block;
       font-size: 13px;
       font-weight: 500;
       color: #6e6e73;
       margin-bottom: 6px;
+    }
+
+    .form-group.compact label {
+      font-size: 11px;
+      margin-bottom: 4px;
     }
 
     .form-group input,
@@ -132,6 +150,11 @@
       transition: border-color 0.2s;
     }
 
+    .form-group.compact input {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
     .form-group input:focus,
     .form-group select:focus {
       outline: none;
@@ -141,6 +164,12 @@
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-row-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
     }
 
@@ -194,19 +223,18 @@
 
     /* 프리셋 버튼 */
     .preset-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .preset-btn {
-      padding: 8px 12px;
+      padding: 6px 10px;
       border: 1px solid #d2d2d7;
-      border-radius: 8px;
+      border-radius: 6px;
       background: white;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       transition: all 0.2s;
     }
 
@@ -455,37 +483,35 @@
     <div class="main-grid">
       <!-- 왼쪽: 입력 폼 -->
       <div class="left-panel">
-        <div class="card">
+        <div class="card compact">
           <h2>기본 정보</h2>
 
-          <div class="form-group">
-            <label>프리셋 선택</label>
-            <div class="preset-grid">
-              <button class="preset-btn" data-preset="basic">기본</button>
-              <button class="preset-btn" data-preset="single">단일</button>
-              <button class="preset-btn" data-preset="many">다수</button>
-              <button class="preset-btn" data-preset="with_lapsed">실효포함</button>
-              <button class="preset-btn" data-preset="all_lapsed">모두실효</button>
-              <button class="preset-btn" data-preset="mixed_status">혼합</button>
-              <button class="preset-btn" data-preset="empty">빈계약</button>
-              <button class="preset-btn" data-preset="shin">신상철</button>
+          <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;">
+            <div class="form-group compact" style="flex: 0 0 auto;">
+              <label>프리셋</label>
+              <div class="preset-grid">
+                <button class="preset-btn" data-preset="basic">기본</button>
+                <button class="preset-btn" data-preset="single">단일</button>
+                <button class="preset-btn" data-preset="many">다수</button>
+                <button class="preset-btn" data-preset="with_lapsed">실효포함</button>
+                <button class="preset-btn" data-preset="all_lapsed">모두실효</button>
+                <button class="preset-btn" data-preset="mixed_status">혼합</button>
+                <button class="preset-btn" data-preset="empty">빈계약</button>
+                <button class="preset-btn" data-preset="hong">홍길동</button>
+              </div>
             </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
+            <div class="form-group compact" style="flex: 1; min-width: 120px;">
               <label>고객명 *</label>
               <input type="text" id="customerName" placeholder="홍길동">
             </div>
-            <div class="form-group">
+            <div class="form-group compact" style="flex: 1; min-width: 140px;">
               <label>발행기준일 *</label>
               <input type="date" id="issueDate">
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>FSR (설계사) 이름</label>
-            <input type="text" id="fsrName" placeholder="송유미">
+            <div class="form-group compact" style="flex: 1; min-width: 120px;">
+              <label>FSR (설계사)</label>
+              <input type="text" id="fsrName" placeholder="송유미">
+            </div>
           </div>
         </div>
 

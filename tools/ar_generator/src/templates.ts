@@ -205,9 +205,9 @@ export function generateCustomAR(
   };
 }
 
-/** 신상철 고객 기본 템플릿 */
-export const SHIN_SANG_CHEOL_TEMPLATE: ARGenerateOptions = {
-  customerName: '신상철',
+/** 홍길동 고객 기본 템플릿 */
+export const HONG_GIL_DONG_TEMPLATE: ARGenerateOptions = {
+  customerName: '홍길동',
   issueDate: today(),
   fsrName: '송유미',
   contracts: [
@@ -215,8 +215,8 @@ export const SHIN_SANG_CHEOL_TEMPLATE: ARGenerateOptions = {
       순번: 1,
       증권번호: '0013017050',
       보험상품: '무배당 미리받는GI종신보험(저해지환급금형)',
-      계약자: '신상철',
-      피보험자: '신상철',
+      계약자: '홍길동',
+      피보험자: '홍길동',
       계약일: '2021-05-09',
       계약상태: '정상',
       '가입금액(만원)': 3000,
@@ -228,8 +228,8 @@ export const SHIN_SANG_CHEOL_TEMPLATE: ARGenerateOptions = {
       순번: 2,
       증권번호: '0013107410',
       보험상품: '무배당 백만인을위한달러종신보험(저해지환급금형)',
-      계약자: '신상철',
-      피보험자: '신상철',
+      계약자: '홍길동',
+      피보험자: '홍길동',
       계약일: '2021-10-31',
       계약상태: '정상',
       '가입금액(만원)': 4728,
@@ -241,8 +241,8 @@ export const SHIN_SANG_CHEOL_TEMPLATE: ARGenerateOptions = {
       순번: 3,
       증권번호: '0013262131',
       보험상품: '무배당 변액유니버셜 오늘의 종신보험 Plus',
-      계약자: '신상철',
-      피보험자: '신상철',
+      계약자: '홍길동',
+      피보험자: '홍길동',
       계약일: '2022-10-17',
       계약상태: '정상',
       '가입금액(만원)': 2000,
@@ -254,8 +254,8 @@ export const SHIN_SANG_CHEOL_TEMPLATE: ARGenerateOptions = {
       순번: 4,
       증권번호: '0013526523',
       보험상품: '무배당 모두의 종신보험(저해약환급금형)',
-      계약자: '신상철',
-      피보험자: '신상철',
+      계약자: '홍길동',
+      피보험자: '홍길동',
       계약일: '2024-06-05',
       계약상태: '정상',
       '가입금액(만원)': 9300,

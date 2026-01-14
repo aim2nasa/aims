@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 
 import { saveARPdf, batchGenerateAR } from './generator.js';
-import { generateFromPreset, generateCustomAR, SHIN_SANG_CHEOL_TEMPLATE } from './templates.js';
+import { generateFromPreset, generateCustomAR, HONG_GIL_DONG_TEMPLATE } from './templates.js';
 import { runAllTests, runScenarioTest } from './test-runner.js';
 import type { ARTemplatePreset, Contract } from './types.js';
 
@@ -39,20 +39,20 @@ program
   .option('-d, --date <YYYY-MM-DD>', '발행기준일')
   .option('-f, --fsr <name>', 'FSR(설계사) 이름')
   .option('-o, --output <path>', '출력 파일 경로')
-  .option('--shin', '신상철 고객 템플릿 사용')
+  .option('--hong', '홍길동 고객 템플릿 사용')
   .action(async (options) => {
     console.log(chalk.blue('\n=== AR PDF 생성 ===\n'));
 
     try {
       let arOptions;
 
-      if (options.shin) {
-        // 신상철 템플릿
+      if (options.hong) {
+        // 홍길동 템플릿
         arOptions = {
-          ...SHIN_SANG_CHEOL_TEMPLATE,
-          issueDate: options.date || SHIN_SANG_CHEOL_TEMPLATE.issueDate,
+          ...HONG_GIL_DONG_TEMPLATE,
+          issueDate: options.date || HONG_GIL_DONG_TEMPLATE.issueDate,
         };
-        console.log(chalk.yellow('신상철 고객 템플릿 사용'));
+        console.log(chalk.yellow('홍길동 고객 템플릿 사용'));
       } else {
         // 프리셋 기반 생성
         arOptions = generateFromPreset(options.preset as ARTemplatePreset, {

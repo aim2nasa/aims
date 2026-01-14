@@ -8,7 +8,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import type { TestResult, TestRunResult, ARTemplatePreset } from './types.js';
 import { generateARPdf, saveARPdf } from './generator.js';
-import { generateFromPreset, SHIN_SANG_CHEOL_TEMPLATE } from './templates.js';
+import { generateFromPreset, HONG_GIL_DONG_TEMPLATE } from './templates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -313,7 +313,7 @@ export async function runScenarioTest(scenario: string): Promise<TestRunResult> 
       // 신상철 템플릿 테스트
       console.log('신상철 고객 템플릿 테스트...');
       const pdfPath = path.join(__dirname, '../output/test_shin.pdf');
-      await saveARPdf(SHIN_SANG_CHEOL_TEMPLATE, pdfPath);
+      await saveARPdf(HONG_GIL_DONG_TEMPLATE, pdfPath);
       console.log(`PDF 생성: ${pdfPath}`);
       results.push({
         name: 'Shin Template Generation',
