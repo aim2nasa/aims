@@ -74,6 +74,9 @@ SAMPLE_PRODUCTS = [
 
 SAMPLE_NAMES = ['김철수', '이영희', '박민수', '최지영', '정대호', '강수진', '조현우']
 
+INSURANCE_PERIODS = ['종신', '80세', '90세', '100세', '10년', '20년', '30년']
+PAYMENT_PERIODS = ['전기납', '5년', '7년', '10년', '15년', '20년', '30년', '60세', '65세']
+
 
 def generate_policy_number() -> str:
     """증권번호 생성"""
@@ -98,7 +101,8 @@ def get_preset_data(preset_id: str) -> Dict[str, Any]:
             'contracts': [
                 Contract(i+1, generate_policy_number(), random.choice(SAMPLE_PRODUCTS),
                         "", "", random_date(), "정상", random.randint(1000, 10000),
-                        "종신", "20년", random.randint(100000, 500000))
+                        random.choice(INSURANCE_PERIODS), random.choice(PAYMENT_PERIODS),
+                        random.randint(100000, 500000))
                 for i in range(random.randint(3, 5))
             ]
         },
@@ -107,7 +111,8 @@ def get_preset_data(preset_id: str) -> Dict[str, Any]:
             'contracts': [
                 Contract(1, generate_policy_number(), random.choice(SAMPLE_PRODUCTS),
                         "", "", random_date(), "정상", random.randint(1000, 10000),
-                        "종신", "20년", random.randint(100000, 500000))
+                        random.choice(INSURANCE_PERIODS), random.choice(PAYMENT_PERIODS),
+                        random.randint(100000, 500000))
             ]
         },
         'many': {
@@ -115,7 +120,8 @@ def get_preset_data(preset_id: str) -> Dict[str, Any]:
             'contracts': [
                 Contract(i+1, generate_policy_number(), random.choice(SAMPLE_PRODUCTS),
                         "", "", random_date(), "정상", random.randint(1000, 10000),
-                        "종신", "20년", random.randint(100000, 500000))
+                        random.choice(INSURANCE_PERIODS), random.choice(PAYMENT_PERIODS),
+                        random.randint(100000, 500000))
                 for i in range(random.randint(10, 15))
             ]
         },
@@ -237,7 +243,7 @@ class ARGenerator:
 
     def _draw_contracts(self, c: canvas.Canvas, width: float, height: float,
                         customer_name: str, contracts: List[Contract]):
-        """계약 목록 그리기"""
+        """계약 목록 그리기 - 모든 필드 포함 (AR 파싱과 동일)"""
         try:
             font_name = 'Korean'
             c.setFont(font_name, 12)
@@ -254,47 +260,213 @@ class ARGenerator:
             c.drawString(50, height - 100, "등록된 계약이 없습니다.")
             return
 
-        # 테이블 헤더
+        # 테이블 헤더 (AR 파싱 필드와 동일: 순번, 증권번호, 보험상품, 계약자, 피보험자, 계약일, 계약상태, 가입금액, 보험기간, 납입기간, 보험료)
         y = height - 90
-        c.setFont(font_name, 10)
+        c.setFont(font_name, 7)
         c.setFillColor(Color(0.9, 0.9, 0.9))
-        c.rect(40, y - 5, width - 80, 20, fill=True, stroke=False)
+        c.rect(25, y - 5, width - 50, 20, fill=True, stroke=False)
 
         c.setFillColor(Color(0, 0, 0))
-        headers = ['No', '증권번호', '보험상품', '상태', '가입금액', '보험료']
-        x_positions = [50, 80, 150, 350, 420, 500]
+        headers = ['No', '증권번호', '보험상품', '계약자', '피보험자', '계약일', '상태', '보험기간', '납입기간', '가입금액', '보험료']
+        x_positions = [28, 42, 95, 195, 235, 280, 335, 370, 415, 460, 510]
 
         for header, x in zip(headers, x_positions):
             c.drawString(x, y, header)
 
         # 테이블 데이터
-        y -= 25
-        c.setFont(font_name, 9)
+        y -= 20
+        c.setFont(font_name, 6)
 
         for contract in contracts:
             if y < 50:  # 페이지 넘침 방지
                 break
 
-            c.drawString(50, y, str(contract.순번))
-            c.drawString(80, y, contract.증권번호[:10])
+            c.drawString(28, y, str(contract.순번))
+            c.drawString(42, y, contract.증권번호[:10] if contract.증권번호 else '-')
 
             # 상품명 자르기
             product = contract.보험상품
-            if len(product) > 25:
-                product = product[:25] + "..."
-            c.drawString(150, y, product)
+            if len(product) > 15:
+                product = product[:15] + "..."
+            c.drawString(95, y, product)
 
-            c.drawString(350, y, contract.계약상태)
-            c.drawString(420, y, f"{contract.가입금액:,}만원")
-            c.drawString(500, y, f"{contract.보험료:,}원")
+            # 계약자
+            c.drawString(195, y, contract.계약자[:4] if contract.계약자 else '-')
 
-            y -= 20
+            # 피보험자
+            c.drawString(235, y, contract.피보험자[:4] if contract.피보험자 else '-')
+
+            # 계약일
+            c.drawString(280, y, contract.계약일 if contract.계약일 else '-')
+
+            c.drawString(335, y, contract.계약상태)
+
+            # 보험기간
+            c.drawString(370, y, contract.보험기간 if contract.보험기간 else '-')
+
+            # 납입기간
+            c.drawString(415, y, contract.납입기간 if contract.납입기간 else '-')
+
+            c.drawString(460, y, f"{contract.가입금액:,}")
+            c.drawString(510, y, f"{contract.보험료:,}")
+
+            y -= 16
 
         # 합계
         y -= 10
         c.setFont(font_name, 10)
         total_premium = sum(ct.보험료 for ct in contracts)
-        c.drawString(400, y, f"총 보험료: {total_premium:,}원")
+        c.drawString(420, y, f"총 월보험료: {total_premium:,}원")
+
+
+class ContractEditDialog:
+    """계약 편집 다이얼로그"""
+
+    def __init__(self, parent, contract: Contract = None, customer_name: str = ""):
+        self.result = None
+        self.contract = contract
+
+        self.dialog = tk.Toplevel(parent)
+        self.dialog.title("계약 편집" if contract else "계약 추가")
+        self.dialog.geometry("500x450")
+        self.dialog.transient(parent)
+        self.dialog.grab_set()
+
+        # 중앙 정렬
+        self.dialog.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() - 500) // 2
+        y = parent.winfo_y() + (parent.winfo_height() - 450) // 2
+        self.dialog.geometry(f"+{x}+{y}")
+
+        self.setup_ui(customer_name)
+
+        # 기존 데이터 로드
+        if contract:
+            self.load_contract(contract)
+
+    def setup_ui(self, customer_name: str):
+        """UI 구성"""
+        main_frame = ttk.Frame(self.dialog, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 필드 정의
+        fields = [
+            ("증권번호 *", "policy"),
+            ("보험상품 *", "product"),
+            ("계약자", "contractor"),
+            ("피보험자", "insured"),
+            ("계약일 *", "contract_date"),
+            ("계약상태", "status"),
+            ("보험기간", "ins_period"),
+            ("납입기간", "pay_period"),
+            ("가입금액 (만원)", "amount"),
+            ("보험료 (원)", "premium"),
+        ]
+
+        self.entries = {}
+
+        for i, (label, key) in enumerate(fields):
+            ttk.Label(main_frame, text=label).grid(row=i, column=0, sticky=tk.W, pady=3)
+
+            if key == "status":
+                var = tk.StringVar(value="정상")
+                combo = ttk.Combobox(main_frame, textvariable=var, values=["정상", "실효", "해지", "만기"], width=37)
+                combo.grid(row=i, column=1, sticky=tk.W, padx=5, pady=3)
+                self.entries[key] = var
+            elif key == "ins_period":
+                var = tk.StringVar(value="종신")
+                combo = ttk.Combobox(main_frame, textvariable=var, values=INSURANCE_PERIODS, width=37)
+                combo.grid(row=i, column=1, sticky=tk.W, padx=5, pady=3)
+                self.entries[key] = var
+            elif key == "pay_period":
+                var = tk.StringVar(value="20년")
+                combo = ttk.Combobox(main_frame, textvariable=var, values=PAYMENT_PERIODS, width=37)
+                combo.grid(row=i, column=1, sticky=tk.W, padx=5, pady=3)
+                self.entries[key] = var
+            elif key == "product":
+                var = tk.StringVar()
+                combo = ttk.Combobox(main_frame, textvariable=var, values=SAMPLE_PRODUCTS, width=37)
+                combo.grid(row=i, column=1, sticky=tk.W, padx=5, pady=3)
+                self.entries[key] = var
+            else:
+                var = tk.StringVar()
+                entry = ttk.Entry(main_frame, textvariable=var, width=40)
+                entry.grid(row=i, column=1, sticky=tk.W, padx=5, pady=3)
+                self.entries[key] = var
+
+        # 기본값 설정
+        if not self.contract:
+            self.entries["policy"].set(generate_policy_number())
+            self.entries["contract_date"].set(random_date())
+            self.entries["contractor"].set(customer_name)
+            self.entries["insured"].set(customer_name)
+            self.entries["amount"].set(str(random.randint(1000, 10000)))
+            self.entries["premium"].set(str(random.randint(100000, 500000)))
+
+        # 버튼
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
+
+        ttk.Button(btn_frame, text="확인", command=self.on_ok, width=15).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="취소", command=self.on_cancel, width=15).pack(side=tk.LEFT, padx=5)
+
+    def load_contract(self, contract: Contract):
+        """계약 데이터 로드"""
+        self.entries["policy"].set(contract.증권번호)
+        self.entries["product"].set(contract.보험상품)
+        self.entries["contractor"].set(contract.계약자)
+        self.entries["insured"].set(contract.피보험자)
+        self.entries["contract_date"].set(contract.계약일)
+        self.entries["status"].set(contract.계약상태)
+        self.entries["ins_period"].set(contract.보험기간)
+        self.entries["pay_period"].set(contract.납입기간)
+        self.entries["amount"].set(str(contract.가입금액))
+        self.entries["premium"].set(str(contract.보험료))
+
+    def on_ok(self):
+        """확인 버튼"""
+        # 필수 필드 검증
+        if not self.entries["policy"].get().strip():
+            messagebox.showwarning("입력 오류", "증권번호를 입력해주세요.", parent=self.dialog)
+            return
+        if not self.entries["product"].get().strip():
+            messagebox.showwarning("입력 오류", "보험상품을 입력해주세요.", parent=self.dialog)
+            return
+        if not self.entries["contract_date"].get().strip():
+            messagebox.showwarning("입력 오류", "계약일을 입력해주세요.", parent=self.dialog)
+            return
+
+        try:
+            amount = int(self.entries["amount"].get() or "0")
+            premium = int(self.entries["premium"].get() or "0")
+        except ValueError:
+            messagebox.showwarning("입력 오류", "가입금액과 보험료는 숫자로 입력해주세요.", parent=self.dialog)
+            return
+
+        self.result = Contract(
+            순번=self.contract.순번 if self.contract else 1,
+            증권번호=self.entries["policy"].get().strip(),
+            보험상품=self.entries["product"].get().strip(),
+            계약자=self.entries["contractor"].get().strip(),
+            피보험자=self.entries["insured"].get().strip(),
+            계약일=self.entries["contract_date"].get().strip(),
+            계약상태=self.entries["status"].get(),
+            가입금액=amount,
+            보험기간=self.entries["ins_period"].get(),
+            납입기간=self.entries["pay_period"].get(),
+            보험료=premium
+        )
+
+        self.dialog.destroy()
+
+    def on_cancel(self):
+        """취소 버튼"""
+        self.dialog.destroy()
+
+    def show(self) -> Contract:
+        """다이얼로그 표시"""
+        self.dialog.wait_window()
+        return self.result
 
 
 class ARGeneratorApp:
@@ -303,7 +475,7 @@ class ARGeneratorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("AR Generator - AIMS 테스트 PDF 생성 도구")
-        self.root.geometry("1400x750")
+        self.root.geometry("1500x800")
         self.root.configure(bg='#f5f5f7')
 
         self.contracts: List[Contract] = []
@@ -362,26 +534,39 @@ class ARGeneratorApp:
         ttk.Entry(input_frame, textvariable=self.fsr_name_var, width=15).grid(row=0, column=5, padx=5)
 
         # 계약 목록
-        contracts_frame = ttk.LabelFrame(left_frame, text="보유계약 목록", padding="5")
+        contracts_frame = ttk.LabelFrame(left_frame, text="보유계약 목록 (더블클릭으로 편집)", padding="5")
         contracts_frame.pack(fill=tk.BOTH, expand=True, pady=10)
 
-        # 트리뷰
-        columns = ('no', 'policy', 'product', 'status', 'amount', 'premium')
-        self.tree = ttk.Treeview(contracts_frame, columns=columns, show='headings', height=12)
+        # 트리뷰 (AR 파싱과 동일한 모든 필드 포함)
+        columns = ('no', 'policy', 'product', 'contractor', 'insured', 'contract_date', 'status', 'ins_period', 'pay_period', 'amount', 'premium')
+        self.tree = ttk.Treeview(contracts_frame, columns=columns, show='headings', height=15)
 
         self.tree.heading('no', text='#')
         self.tree.heading('policy', text='증권번호')
         self.tree.heading('product', text='보험상품')
+        self.tree.heading('contractor', text='계약자')
+        self.tree.heading('insured', text='피보험자')
+        self.tree.heading('contract_date', text='계약일')
         self.tree.heading('status', text='상태')
+        self.tree.heading('ins_period', text='보험기간')
+        self.tree.heading('pay_period', text='납입기간')
         self.tree.heading('amount', text='가입금액')
         self.tree.heading('premium', text='보험료')
 
         self.tree.column('no', width=30)
-        self.tree.column('policy', width=100)
-        self.tree.column('product', width=250)
-        self.tree.column('status', width=60)
-        self.tree.column('amount', width=80)
-        self.tree.column('premium', width=80)
+        self.tree.column('policy', width=85)
+        self.tree.column('product', width=180)
+        self.tree.column('contractor', width=50)
+        self.tree.column('insured', width=50)
+        self.tree.column('contract_date', width=80)
+        self.tree.column('status', width=45)
+        self.tree.column('ins_period', width=55)
+        self.tree.column('pay_period', width=55)
+        self.tree.column('amount', width=65)
+        self.tree.column('premium', width=75)
+
+        # 더블클릭 이벤트
+        self.tree.bind('<Double-1>', self.edit_contract)
 
         scrollbar = ttk.Scrollbar(contracts_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
@@ -394,6 +579,7 @@ class ARGeneratorApp:
         btn_frame.pack(fill=tk.X, pady=5)
 
         ttk.Button(btn_frame, text="+ 계약 추가", command=self.add_contract).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text="선택 편집", command=self.edit_selected_contract).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="선택 삭제", command=self.remove_contract).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="전체 삭제", command=self.clear_contracts).pack(side=tk.LEFT, padx=2)
 
@@ -464,26 +650,39 @@ class ARGeneratorApp:
         self.update_summary()
 
     def add_contract(self):
-        """계약 추가"""
+        """계약 추가 (다이얼로그)"""
         customer_name = self.customer_name_var.get() or "홍길동"
+        dialog = ContractEditDialog(self.root, None, customer_name)
+        result = dialog.show()
 
-        contract = Contract(
-            순번=len(self.contracts) + 1,
-            증권번호=generate_policy_number(),
-            보험상품=random.choice(SAMPLE_PRODUCTS),
-            계약자=customer_name,
-            피보험자=customer_name,
-            계약일=random_date(),
-            계약상태="정상",
-            가입금액=random.randint(1000, 10000),
-            보험기간="종신",
-            납입기간="20년",
-            보험료=random.randint(100000, 500000)
-        )
+        if result:
+            result.순번 = len(self.contracts) + 1
+            self.contracts.append(result)
+            self.update_tree()
+            self.update_summary()
 
-        self.contracts.append(contract)
-        self.update_tree()
-        self.update_summary()
+    def edit_contract(self, event):
+        """더블클릭으로 계약 편집"""
+        self.edit_selected_contract()
+
+    def edit_selected_contract(self):
+        """선택된 계약 편집"""
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showinfo("알림", "편집할 계약을 선택해주세요.")
+            return
+
+        idx = self.tree.index(selected[0])
+        contract = self.contracts[idx]
+
+        dialog = ContractEditDialog(self.root, contract, self.customer_name_var.get())
+        result = dialog.show()
+
+        if result:
+            result.순번 = idx + 1
+            self.contracts[idx] = result
+            self.update_tree()
+            self.update_summary()
 
     def remove_contract(self):
         """선택된 계약 삭제"""
@@ -511,20 +710,25 @@ class ARGeneratorApp:
         self.update_summary()
 
     def update_tree(self):
-        """트리뷰 업데이트"""
+        """트리뷰 업데이트 (AR 파싱과 동일한 모든 필드)"""
         for item in self.tree.get_children():
             self.tree.delete(item)
 
         for c in self.contracts:
             product = c.보험상품
-            if len(product) > 30:
-                product = product[:30] + "..."
+            if len(product) > 22:
+                product = product[:22] + "..."
 
             self.tree.insert('', tk.END, values=(
                 c.순번,
                 c.증권번호,
                 product,
+                c.계약자,
+                c.피보험자,
+                c.계약일,
                 c.계약상태,
+                c.보험기간,
+                c.납입기간,
                 f"{c.가입금액:,}만원",
                 f"{c.보험료:,}원"
             ))
