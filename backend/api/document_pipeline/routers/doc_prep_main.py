@@ -236,6 +236,173 @@ async def doc_prep_main(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def _detect_and_process_annual_report(
+    doc_id: str,
+    full_text: str,
+    original_name: str,
+    user_id: str,
+    files_collection
+) -> Dict[str, Any]:
+    """
+    🔴 AR 자동 감지 및 고객 연결
+
+    텍스트에서 AR 패턴을 감지하고, AR이면:
+    1. is_annual_report=True 설정
+    2. 고객명 추출 → 고객 생성/검색
+    3. customerId 설정
+    4. ar_parsing_status='pending' 설정 (백그라운드 파싱 대기)
+
+    Args:
+        doc_id: 문서 ID
+        full_text: 추출된 텍스트
+        original_name: 원본 파일명
+        user_id: 설계사 ID
+        files_collection: MongoDB files 컬렉션
+
+    Returns:
+        dict: {
+            "is_annual_report": bool,
+            "customer_id": str or None,
+            "customer_name": str or None
+        }
+    """
+    import re
+    import httpx
+
+    settings = get_settings()
+
+    try:
+        # 1. AR 패턴 매칭 (공백 정규화)
+        normalized_text = re.sub(r'\s+', ' ', full_text)
+
+        # 필수 키워드: "Annual Review Report"
+        required_keywords = ['Annual Review Report']
+        # 선택 키워드: MetLife 관련
+        optional_keywords = ['보유계약 현황', 'MetLife', '고객님을 위한', '메트라이프생명', '메트라이프']
+
+        matched_required = [kw for kw in required_keywords if kw in normalized_text]
+        matched_optional = [kw for kw in optional_keywords if kw in normalized_text]
+
+        # AR 판단: 필수 키워드 1개 이상 + 선택 키워드 1개 이상
+        is_annual_report = len(matched_required) > 0 and len(matched_optional) > 0
+
+        if not is_annual_report:
+            logger.debug(f"AR 패턴 불일치: doc_id={doc_id}, required={matched_required}, optional={matched_optional}")
+            return {"is_annual_report": False, "customer_id": None, "customer_name": None}
+
+        logger.info(f"🔍 AR 감지: doc_id={doc_id}, 매칭={matched_required + matched_optional}")
+
+        # 2. 고객명 추출: "XXX 고객님을 위한" 패턴
+        customer_name = None
+        customer_pattern = r'([가-힣]{2,10})\s*고객님을?\s*위한'
+        customer_match = re.search(customer_pattern, normalized_text)
+        if customer_match:
+            customer_name = customer_match.group(1).strip()
+            logger.info(f"📄 고객명 추출: {customer_name}")
+
+        # 3. 발행기준일 추출
+        issue_date = None
+        # 패턴 1: "발행기준일: YYYY-MM-DD"
+        date_pattern1 = r'발행기준일[:\s]*(\d{4})-(\d{1,2})-(\d{1,2})'
+        date_match1 = re.search(date_pattern1, normalized_text)
+        if date_match1:
+            year, month, day = date_match1.groups()
+            issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        else:
+            # 패턴 2: "YYYY년 MM월 DD일"
+            date_pattern2 = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+            date_match2 = re.search(date_pattern2, normalized_text)
+            if date_match2:
+                year, month, day = date_match2.groups()
+                issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+        if issue_date:
+            logger.info(f"📅 발행기준일 추출: {issue_date}")
+
+        # 4. 고객 생성/검색
+        customer_id = None
+        if customer_name and user_id:
+            try:
+                async with httpx.AsyncClient() as client:
+                    # 고객 검색 (이름으로)
+                    search_response = await client.get(
+                        f"{settings.AIMS_API_URL}/api/customers/search",
+                        params={"q": customer_name, "userId": user_id},
+                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                        timeout=10.0
+                    )
+
+                    if search_response.status_code == 200:
+                        search_result = search_response.json()
+                        customers = search_result.get("customers", [])
+
+                        # 정확히 일치하는 고객 찾기
+                        exact_match = None
+                        for c in customers:
+                            c_name = c.get("personal_info", {}).get("name", "")
+                            if c_name == customer_name:
+                                exact_match = c
+                                break
+
+                        if exact_match:
+                            customer_id = exact_match.get("_id")
+                            logger.info(f"✅ 기존 고객 발견: {customer_name} (ID: {customer_id})")
+                        else:
+                            # 새 고객 생성
+                            create_response = await client.post(
+                                f"{settings.AIMS_API_URL}/api/customers",
+                                json={
+                                    "personal_info": {"name": customer_name},
+                                    "insurance_info": {"customer_type": "개인"},
+                                    "userId": user_id
+                                },
+                                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                                timeout=10.0
+                            )
+
+                            if create_response.status_code in [200, 201]:
+                                new_customer = create_response.json()
+                                customer_id = new_customer.get("_id")
+                                logger.info(f"✅ 새 고객 생성: {customer_name} (ID: {customer_id})")
+                            else:
+                                logger.warning(f"고객 생성 실패: {create_response.text}")
+                    else:
+                        logger.warning(f"고객 검색 실패: {search_response.text}")
+            except Exception as e:
+                logger.warning(f"고객 생성/검색 중 오류: {e}")
+
+        # 5. DB 업데이트
+        update_fields = {
+            "is_annual_report": True,
+            "document_type": "annual_report",
+            "ar_parsing_status": "pending",  # 백그라운드 파싱 대기
+        }
+
+        if customer_id:
+            update_fields["customerId"] = customer_id
+
+        if issue_date:
+            update_fields["ar_issue_date"] = issue_date
+
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": update_fields}
+        )
+
+        logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
+
+        return {
+            "is_annual_report": True,
+            "customer_id": customer_id,
+            "customer_name": customer_name,
+            "issue_date": issue_date
+        }
+
+    except Exception as e:
+        logger.error(f"AR 자동 감지 중 오류: {e}", exc_info=True)
+        return {"is_annual_report": False, "customer_id": None, "customer_name": None}
+
+
 async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: str):
     """Connect document to customer via internal API call"""
     import httpx
@@ -498,6 +665,18 @@ async def process_document_pipeline(
 
         # Progress: 50% - Meta extraction complete
         await _notify_progress(doc_id, user_id, 50, "meta", "메타데이터 추출 완료")
+
+        # 🔴 AR 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
+        if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
+            ar_detection = await _detect_and_process_annual_report(
+                doc_id=doc_id,
+                full_text=full_text,
+                original_name=original_name,
+                user_id=user_id,
+                files_collection=files_collection
+            )
+            if ar_detection.get("is_annual_report"):
+                logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, customer_id={ar_detection.get('customer_id')}")
 
         # Step 4: Route based on MIME type
 
