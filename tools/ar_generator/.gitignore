@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Generated PDFs
+output/*.pdf
+
+# Font files (download separately)
+fonts/*.ttf
+fonts/*.otf
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/

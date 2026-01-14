@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Generator - AIMS 테스트 도구</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1d1d1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: #667eea;
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6e6e73;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd6;
+    }
+
+    .btn-secondary {
+      background: #e8e8ed;
+      color: #1d1d1f;
+    }
+
+    .btn-secondary:hover {
+      background: #d2d2d7;
+    }
+
+    .btn-danger {
+      background: #ff3b30;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #e0352b;
+    }
+
+    .btn-success {
+      background: #34c759;
+      color: white;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 프리셋 버튼 */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-btn {
+      padding: 8px 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      border-color: #667eea;
+      background: #f5f3ff;
+    }
+
+    .preset-btn.active {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+    }
+
+    /* 계약 테이블 */
+    .contracts-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .contracts-table th,
+    .contracts-table td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #e8e8ed;
+    }
+
+    .contracts-table th {
+      background: #f5f5f7;
+      font-weight: 600;
+      color: #6e6e73;
+    }
+
+    .contracts-table input {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1px solid #d2d2d7;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .contracts-table select {
+      padding: 4px 6px;
+      border: 1px solid #d2d2d7;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .remove-btn {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    /* PDF 미리보기 */
+    .preview-container {
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f5f5f7;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-container iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: #6e6e73;
+    }
+
+    /* 테스트 결과 */
+    .test-result {
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .test-result.success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .test-result.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* 파일 목록 */
+    .file-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #e8e8ed;
+    }
+
+    .file-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .file-meta {
+      font-size: 11px;
+      color: #6e6e73;
+    }
+
+    /* 로딩 */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d2d2d7;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 요약 정보 */
+    .summary {
+      background: #f5f5f7;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+
+    .summary-row span:last-child {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AR Generator</h1>
+      <p>AIMS Annual Report 테스트 PDF 생성 도구</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- 왼쪽: 입력 폼 -->
+      <div>
+        <div class="card">
+          <h2>기본 정보</h2>
+
+          <div class="form-group">
+            <label>프리셋 선택</label>
+            <div class="preset-grid">
+              <button class="preset-btn" data-preset="basic">기본</button>
+              <button class="preset-btn" data-preset="single">단일</button>
+              <button class="preset-btn" data-preset="many">다수</button>
+              <button class="preset-btn" data-preset="with_lapsed">실효포함</button>
+              <button class="preset-btn" data-preset="all_lapsed">모두실효</button>
+              <button class="preset-btn" data-preset="mixed_status">혼합</button>
+              <button class="preset-btn" data-preset="empty">빈계약</button>
+              <button class="preset-btn" data-preset="shin">신상철</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>고객명 *</label>
+              <input type="text" id="customerName" placeholder="홍길동">
+            </div>
+            <div class="form-group">
+              <label>발행기준일 *</label>
+              <input type="date" id="issueDate">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>FSR (설계사) 이름</label>
+            <input type="text" id="fsrName" placeholder="송유미">
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h2>보유계약 목록</h2>
+
+          <div style="overflow-x: auto;">
+            <table class="contracts-table" id="contractsTable">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">순번</th>
+                  <th style="width: 100px;">증권번호</th>
+                  <th style="width: 180px;">보험상품</th>
+                  <th style="width: 80px;">계약일</th>
+                  <th style="width: 60px;">상태</th>
+                  <th style="width: 70px;">가입금액</th>
+                  <th style="width: 80px;">보험료</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="contractsBody">
+                <!-- 동적으로 추가됨 -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="addContract()">+ 계약 추가</button>
+            <button class="btn btn-secondary" onclick="clearContracts()">전체 삭제</button>
+          </div>
+
+          <div class="summary" id="summary">
+            <div class="summary-row">
+              <span>총 계약 수</span>
+              <span id="totalContracts">0건</span>
+            </div>
+            <div class="summary-row">
+              <span>총 보험료</span>
+              <span id="totalPremium">0원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 미리보기 및 결과 -->
+      <div>
+        <div class="card">
+          <h2>PDF 생성</h2>
+
+          <div class="btn-group" style="margin-bottom: 16px;">
+            <button class="btn btn-primary" onclick="generatePdf()" id="generateBtn">
+              PDF 생성
+            </button>
+            <button class="btn btn-success" onclick="generateAndSave()">
+              생성 및 저장
+            </button>
+            <button class="btn btn-secondary" onclick="testArCheck()" id="testBtn">
+              AR Check 테스트
+            </button>
+          </div>
+
+          <div class="preview-container" id="previewContainer">
+            <div class="preview-placeholder">
+              <p>PDF를 생성하면 여기에 표시됩니다</p>
+            </div>
+          </div>
+
+          <div id="testResult"></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h2>생성된 파일</h2>
+          <div class="file-list" id="fileList">
+            <div class="preview-placeholder">
+              <p>저장된 파일이 없습니다</p>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="loadFiles()" style="margin-top: 12px;">
+            새로고침
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 상태
+    let contracts = [];
+    let currentPdfBase64 = null;
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      // 오늘 날짜 설정
+      document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
+
+      // 프리셋 버튼 이벤트
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadPreset(btn.dataset.preset));
+      });
+
+      // 파일 목록 로드
+      loadFiles();
+    });
+
+    // 프리셋 로드
+    async function loadPreset(presetId) {
+      try {
+        // 버튼 활성화
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.preset === presetId);
+        });
+
+        const response = await fetch(`/api/preset/${presetId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const data = result.data;
+
+          document.getElementById('customerName').value = data.customerName || '';
+          document.getElementById('issueDate').value = data.issueDate || '';
+          document.getElementById('fsrName').value = data.fsrName || '';
+
+          contracts = data.contracts || [];
+          renderContracts();
+          updateSummary();
+        }
+      } catch (error) {
+        console.error('프리셋 로드 오류:', error);
+      }
+    }
+
+    // 계약 추가
+    function addContract() {
+      const newContract = {
+        순번: contracts.length + 1,
+        증권번호: `001${Math.floor(Math.random() * 9000000) + 1000000}`,
+        보험상품: '무배당 종신보험',
+        계약자: document.getElementById('customerName').value || '',
+        피보험자: document.getElementById('customerName').value || '',
+        계약일: new Date().toISOString().split('T')[0],
+        계약상태: '정상',
+        '가입금액(만원)': 5000,
+        보험기간: '종신',
+        납입기간: '20년',
+        '보험료(원)': 150000,
+      };
+
+      contracts.push(newContract);
+      renderContracts();
+      updateSummary();
+    }
+
+    // 계약 삭제
+    function removeContract(index) {
+      contracts.splice(index, 1);
+      // 순번 재정렬
+      contracts.forEach((c, i) => c.순번 = i + 1);
+      renderContracts();
+      updateSummary();
+    }
+
+    // 계약 전체 삭제
+    function clearContracts() {
+      contracts = [];
+      renderContracts();
+      updateSummary();
+    }
+
+    // 계약 테이블 렌더링
+    function renderContracts() {
+      const tbody = document.getElementById('contractsBody');
+
+      if (contracts.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; color: #6e6e73; padding: 20px;">
+              계약이 없습니다. "계약 추가" 버튼을 클릭하세요.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = contracts.map((c, i) => `
+        <tr>
+          <td>${c.순번}</td>
+          <td><input type="text" value="${c.증권번호}" onchange="updateContract(${i}, '증권번호', this.value)"></td>
+          <td><input type="text" value="${c.보험상품}" onchange="updateContract(${i}, '보험상품', this.value)"></td>
+          <td><input type="date" value="${c.계약일}" onchange="updateContract(${i}, '계약일', this.value)"></td>
+          <td>
+            <select onchange="updateContract(${i}, '계약상태', this.value)">
+              <option value="정상" ${c.계약상태 === '정상' ? 'selected' : ''}>정상</option>
+              <option value="실효" ${c.계약상태 === '실효' ? 'selected' : ''}>실효</option>
+              <option value="해지" ${c.계약상태 === '해지' ? 'selected' : ''}>해지</option>
+              <option value="만기" ${c.계약상태 === '만기' ? 'selected' : ''}>만기</option>
+            </select>
+          </td>
+          <td><input type="number" value="${c['가입금액(만원)']}" onchange="updateContract(${i}, '가입금액(만원)', parseInt(this.value))" style="width: 60px;">만</td>
+          <td><input type="number" value="${c['보험료(원)']}" onchange="updateContract(${i}, '보험료(원)', parseInt(this.value))" style="width: 70px;"></td>
+          <td><button class="remove-btn" onclick="removeContract(${i})">삭제</button></td>
+        </tr>
+      `).join('');
+    }
+
+    // 계약 업데이트
+    function updateContract(index, field, value) {
+      contracts[index][field] = value;
+      if (field === '보험료(원)' || field === '가입금액(만원)') {
+        updateSummary();
+      }
+    }
+
+    // 요약 업데이트
+    function updateSummary() {
+      const total = contracts.length;
+      const premium = contracts.reduce((sum, c) => sum + (c['보험료(원)'] || 0), 0);
+
+      document.getElementById('totalContracts').textContent = `${total}건`;
+      document.getElementById('totalPremium').textContent = `${premium.toLocaleString()}원`;
+    }
+
+    // PDF 생성
+    async function generatePdf() {
+      const btn = document.getElementById('generateBtn');
+      btn.innerHTML = '<span class="loading"></span>';
+      btn.disabled = true;
+
+      try {
+        const customerName = document.getElementById('customerName').value;
+        const issueDate = document.getElementById('issueDate').value;
+        const fsrName = document.getElementById('fsrName').value;
+
+        if (!customerName || !issueDate) {
+          alert('고객명과 발행일은 필수입니다.');
+          return;
+        }
+
+        // 계약자/피보험자 이름 설정
+        const processedContracts = contracts.map(c => ({
+          ...c,
+          계약자: c.계약자 || customerName,
+          피보험자: c.피보험자 || customerName,
+        }));
+
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName,
+            issueDate,
+            fsrName,
+            contracts: processedContracts,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          currentPdfBase64 = result.data.base64;
+
+          // PDF 미리보기 (Blob URL 사용 - 대용량 PDF 지원)
+          const previewContainer = document.getElementById('previewContainer');
+
+          // Base64를 Blob으로 변환
+          const byteCharacters = atob(currentPdfBase64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+
+          previewContainer.innerHTML = `
+            <iframe src="${blobUrl}" style="width: 100%; height: 600px;"></iframe>
+          `;
+        } else {
+          alert('PDF 생성 실패: ' + result.error);
+        }
+      } catch (error) {
+        console.error('PDF 생성 오류:', error);
+        alert('PDF 생성 중 오류가 발생했습니다.');
+      } finally {
+        btn.innerHTML = 'PDF 생성';
+        btn.disabled = false;
+      }
+    }
+
+    // PDF 생성 및 저장
+    async function generateAndSave() {
+      try {
+        const customerName = document.getElementById('customerName').value;
+        const issueDate = document.getElementById('issueDate').value;
+        const fsrName = document.getElementById('fsrName').value;
+
+        if (!customerName || !issueDate) {
+          alert('고객명과 발행일은 필수입니다.');
+          return;
+        }
+
+        const processedContracts = contracts.map(c => ({
+          ...c,
+          계약자: c.계약자 || customerName,
+          피보험자: c.피보험자 || customerName,
+        }));
+
+        const response = await fetch('/api/generate-and-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName,
+            issueDate,
+            fsrName,
+            contracts: processedContracts,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert(`저장 완료: ${result.data.filename}`);
+          loadFiles();
+        } else {
+          alert('저장 실패: ' + result.error);
+        }
+      } catch (error) {
+        console.error('저장 오류:', error);
+        alert('저장 중 오류가 발생했습니다.');
+      }
+    }
+
+    // AR Check 테스트
+    async function testArCheck() {
+      if (!currentPdfBase64) {
+        alert('먼저 PDF를 생성해주세요.');
+        return;
+      }
+
+      const btn = document.getElementById('testBtn');
+      btn.innerHTML = '<span class="loading"></span>';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/test-ar-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: currentPdfBase64 }),
+        });
+
+        const result = await response.json();
+        const testResultDiv = document.getElementById('testResult');
+
+        if (result.success && result.data.is_annual_report) {
+          testResultDiv.innerHTML = `
+            <div class="test-result success">
+              <strong>AR 인식 성공!</strong><br>
+              Confidence: ${result.data.confidence}<br>
+              발행일: ${result.data.metadata?.issue_date || '-'}<br>
+              제목: ${result.data.metadata?.report_title || '-'}
+            </div>
+          `;
+        } else {
+          testResultDiv.innerHTML = `
+            <div class="test-result error">
+              <strong>AR 인식 실패</strong><br>
+              ${result.error || 'is_annual_report: false'}
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('테스트 오류:', error);
+        document.getElementById('testResult').innerHTML = `
+          <div class="test-result error">
+            <strong>테스트 오류</strong><br>
+            ${error.message}
+          </div>
+        `;
+      } finally {
+        btn.innerHTML = 'AR Check 테스트';
+        btn.disabled = false;
+      }
+    }
+
+    // 파일 목록 로드
+    async function loadFiles() {
+      try {
+        const response = await fetch('/api/files');
+        const result = await response.json();
+
+        const fileList = document.getElementById('fileList');
+
+        if (result.success && result.files.length > 0) {
+          fileList.innerHTML = result.files.map(f => `
+            <div class="file-item">
+              <div class="file-info">
+                <div class="file-name">${f.name}</div>
+                <div class="file-meta">${(f.size / 1024).toFixed(1)} KB - ${new Date(f.created).toLocaleString()}</div>
+              </div>
+              <div class="btn-group">
+                <a href="${f.downloadUrl}" class="btn btn-secondary" style="text-decoration: none; font-size: 12px;">다운로드</a>
+                <button class="btn btn-danger" style="font-size: 12px;" onclick="deleteFile('${f.name}')">삭제</button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          fileList.innerHTML = `
+            <div class="preview-placeholder">
+              <p>저장된 파일이 없습니다</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('파일 목록 로드 오류:', error);
+      }
+    }
+
+    // 파일 삭제
+    async function deleteFile(filename) {
+      if (!confirm(`${filename}을 삭제하시겠습니까?`)) return;
+
+      try {
+        await fetch(`/api/files/${filename}`, { method: 'DELETE' });
+        loadFiles();
+      } catch (error) {
+        console.error('파일 삭제 오류:', error);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -64,18 +64,21 @@ async function extractFirstPageText(file: File): Promise<string> {
 
 /**
  * 메타데이터 추출 (AR 감지용)
+ * @param text - 원본 텍스트
+ * @param normalizedText - 공백 정규화된 텍스트 (선택적)
  */
-function extractMetadata(text: string) {
+function extractMetadata(text: string, normalizedText?: string) {
   const metadata: { report_title?: string; issue_date?: string; customer_name?: string } = {};
+  const searchText = normalizedText || text.replace(/\s+/g, ' ');
 
   // 보고서 제목 추출
-  if (text.includes('Annual Review Report')) {
+  if (searchText.includes('Annual Review Report')) {
     metadata.report_title = 'Annual Review Report';
   }
 
   // 날짜 추출: "2025년 8월 27일" 형식
   const datePattern = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/;
-  const dateMatch = text.match(datePattern);
+  const dateMatch = searchText.match(datePattern);
   if (dateMatch && dateMatch[1] && dateMatch[2] && dateMatch[3]) {
     const year = dateMatch[1];
     const month = dateMatch[2].padStart(2, '0');
@@ -85,7 +88,7 @@ function extractMetadata(text: string) {
 
   // 고객명 추출: "XXX 고객님을 위한" 패턴
   const customerNamePattern = /([가-힣]{2,10})\s*고객님을\s*위한/;
-  const customerNameMatch = text.match(customerNamePattern);
+  const customerNameMatch = searchText.match(customerNamePattern);
   if (customerNameMatch && customerNameMatch[1]) {
     metadata.customer_name = customerNameMatch[1].trim();
   }
@@ -107,12 +110,15 @@ export async function checkAnnualReportFromPDF(
     // 1. 첫 페이지 텍스트 추출
     const text = await extractFirstPageText(file);
 
-    // 2. 키워드 매칭
+    // 2. 키워드 매칭 (공백 정규화 적용)
+    // PDF에서 추출된 텍스트는 여러 공백이 들어갈 수 있으므로 정규화 필요
+    const normalizedText = text.replace(/\s+/g, ' ');
+
     const requiredKeywords = ['Annual Review Report'];
     const optionalKeywords = ['보유계약 현황', 'MetLife', '고객님을 위한', '메트라이프생명'];
 
-    const matchedRequired = requiredKeywords.filter((kw) => text.includes(kw));
-    const matchedOptional = optionalKeywords.filter((kw) => text.includes(kw));
+    const matchedRequired = requiredKeywords.filter((kw) => normalizedText.includes(kw));
+    const matchedOptional = optionalKeywords.filter((kw) => normalizedText.includes(kw));
 
     if (import.meta.env.DEV) {
       console.log('[pdfParser] 매칭된 필수 키워드:', matchedRequired);
@@ -130,8 +136,8 @@ export async function checkAnnualReportFromPDF(
       return { is_annual_report: false, confidence, metadata: null };
     }
 
-    // 4. 메타데이터 추출
-    const metadata = extractMetadata(text);
+    // 4. 메타데이터 추출 (정규화된 텍스트 전달)
+    const metadata = extractMetadata(text, normalizedText);
 
     if (import.meta.env.DEV) {
       console.log('[pdfParser] ✅ Annual Report 판단: true, metadata:', metadata);
