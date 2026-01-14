@@ -58,65 +58,95 @@ def parse_rate_limit_wait_time(error_message: str) -> float:
     return 0
 
 
-async def scan_pending_ar_documents():
+async def scan_pending_ar_documents(log_always: bool = False):
     """
-    files 컬렉션에서 ar_parsing_status='pending'인 문서를 찾아 큐에 추가
+    AR 파싱이 필요한 문서를 찾아 큐에 추가
+
+    🔴 100% 신뢰 설계:
+    - 조건: is_annual_report=true AND overallStatus=completed AND ar_parsing_status != completed
+    - Frontend trigger 실패해도 Backend가 반드시 처리
+    - customerId가 없으면 스킵 (고객 연결 필요)
+
+    Args:
+        log_always: True면 0건이어도 로그 출력 (30초마다 heartbeat용)
+
+    Returns:
+        tuple: (enqueued_count, found_count, skipped_count)
     """
     try:
         from bson import ObjectId
 
-        # ar_parsing_status가 pending이고 큐에 없는 문서 조회
+        # 🔴 단순하고 확실한 조건:
+        # 1. is_annual_report: true - AR로 식별됨
+        # 2. overallStatus: completed - 문서 처리 완료
+        # 3. ar_parsing_status != completed - 아직 파싱 안됨
+        # 4. customerId 존재 - 고객 연결됨
         pending_docs = list(db["files"].find({
             "is_annual_report": True,
-            "ar_parsing_status": "pending",
-            "customerId": {"$exists": True}  # customerId가 있어야 파싱 가능
-        }).limit(10))  # 한 번에 최대 10개
+            "overallStatus": "completed",
+            "ar_parsing_status": {"$ne": "completed"},
+            "customerId": {"$exists": True, "$ne": None}
+        }).limit(10))
 
+        found_count = len(pending_docs)
         enqueued_count = 0
+        skipped_count = 0
+
         for doc in pending_docs:
             file_id = doc["_id"]
             customer_id = doc.get("customerId")
+            filename = doc.get("upload", {}).get("originalName", "unknown")
+            current_status = doc.get("ar_parsing_status", "unknown")
 
+            # customerId 유효성 검사
             if not customer_id:
-                logger.warning(f"⚠️  AR 문서에 customerId 없음: {file_id}")
+                skipped_count += 1
                 continue
 
             # 큐에 이미 있는지 확인
             existing = db["ar_parse_queue"].find_one({"file_id": file_id})
             if existing:
+                skipped_count += 1
                 continue
 
             # 큐에 추가
             success = queue_manager.enqueue(file_id, customer_id, {
-                "filename": doc.get("upload", {}).get("originalName"),
-                "auto_enqueued": True
+                "filename": filename,
+                "auto_enqueued": True,
+                "previous_status": current_status
             })
 
             if success:
                 enqueued_count += 1
-                logger.info(f"📥 AR 파싱 큐에 자동 등록: {doc.get('upload', {}).get('originalName')}")
+                logger.info(f"📥 AR 자동 큐 등록: {filename} (status: {current_status})")
+            else:
+                skipped_count += 1
 
-        if enqueued_count > 0:
-            logger.info(f"✅ AR 파싱 큐에 {enqueued_count}건 자동 등록 완료")
+        # 결과 로깅
+        if found_count > 0:
+            logger.info(f"🔍 AR 스캔: 발견={found_count}, 등록={enqueued_count}, 스킵={skipped_count}")
+        elif log_always:
+            logger.info(f"💓 AR 워커 정상 (파싱 대기 파일 없음)")
 
-        return enqueued_count
+        return (enqueued_count, found_count, skipped_count)
 
     except Exception as e:
-        logger.error(f"❌ pending AR 문서 스캔 오류: {e}", exc_info=True)
-        send_error_log("annual_report_api", f"pending AR 문서 스캔 오류: {e}", e)
-        return 0
+        logger.error(f"❌ AR 스캔 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"AR 스캔 오류: {e}", e)
+        return (0, 0, 0)
 
 
 async def queue_worker():
-    """큐 기반 AR 파싱 워커 (1초마다 폴링)"""
+    """큐 기반 AR 파싱 워커 (1초마다 폴링, 3초마다 스캔)"""
     global background_task_running
     from routes.background import parse_single_ar_document
+    import time
 
     # 서버 시작 후 3초 대기 (서버 완전 시작 대기)
     await asyncio.sleep(3)
 
     background_task_running = True
-    logger.info("🔄 큐 기반 AR 파싱 워커 시작 (1초 폴링)")
+    logger.info("🔄 큐 기반 AR 파싱 워커 시작 (3초마다 pending 스캔)")
 
     # 시작 시 좀비 작업 복구 (5분 타임아웃)
     reset_count = await asyncio.to_thread(queue_manager.reset_stale_processing_tasks, 300)
@@ -124,19 +154,27 @@ async def queue_worker():
         logger.info(f"🔧 좀비 작업 {reset_count}건 복구 완료")
 
     # 시작 시 pending AR 문서 스캔
-    scan_count = await scan_pending_ar_documents()
-    if scan_count > 0:
-        logger.info(f"📥 시작 시 {scan_count}건 AR 문서 큐 등록")
+    enqueued, found, skipped = await scan_pending_ar_documents(log_always=True)
+    if enqueued > 0:
+        logger.info(f"📥 시작 시 {enqueued}건 AR 문서 큐 등록")
 
-    scan_interval = 0  # 5초마다 스캔
+    last_scan_time = time.time()
+    last_heartbeat_time = time.time()
+    SCAN_INTERVAL = 3  # 3초마다 스캔 (기존 5초에서 단축)
+    HEARTBEAT_INTERVAL = 30  # 30초마다 heartbeat 로그
 
     while background_task_running:
         try:
-            # 5초마다 pending AR 문서 스캔 (큐가 비어있을 때)
-            scan_interval += 1
-            if scan_interval >= 5:
-                scan_interval = 0
-                await scan_pending_ar_documents()
+            current_time = time.time()
+
+            # 3초마다 pending AR 문서 스캔
+            if current_time - last_scan_time >= SCAN_INTERVAL:
+                # 30초마다는 heartbeat 로그 포함
+                log_heartbeat = (current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL)
+                await scan_pending_ar_documents(log_always=log_heartbeat)
+                last_scan_time = current_time
+                if log_heartbeat:
+                    last_heartbeat_time = current_time
 
             # 큐에서 작업 하나 가져오기
             task = await asyncio.to_thread(queue_manager.dequeue)
