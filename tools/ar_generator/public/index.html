@@ -19,17 +19,16 @@
     }
 
     .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
+      width: 100%;
+      padding: 24px 40px;
     }
 
     header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 20px;
+      padding: 20px 24px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     header h1 {
@@ -43,21 +42,53 @@
     }
 
     .main-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      display: flex;
+      gap: 0;
     }
 
-    @media (max-width: 1024px) {
+    .left-panel {
+      flex: 2;
+      min-width: 500px;
+      padding-right: 12px;
+    }
+
+    .right-panel {
+      flex: 1;
+      min-width: 320px;
+      padding-left: 12px;
+    }
+
+    .resize-handle {
+      width: 8px;
+      background: #e8e8ed;
+      cursor: col-resize;
+      border-radius: 4px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: #667eea;
+    }
+
+    @media (max-width: 1200px) {
       .main-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+      }
+      .left-panel, .right-panel {
+        width: 100%;
+        padding: 0;
+      }
+      .resize-handle {
+        display: none;
       }
     }
 
     .card {
       background: white;
       border-radius: 12px;
-      padding: 20px;
+      padding: 24px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
@@ -190,40 +221,97 @@
       color: white;
     }
 
-    /* 계약 테이블 */
+    /* 계약 테이블 (한 줄 레이아웃) */
     .contracts-table {
       width: 100%;
       border-collapse: collapse;
+      margin-bottom: 16px;
       font-size: 12px;
-      margin-bottom: 12px;
     }
 
-    .contracts-table th,
-    .contracts-table td {
-      padding: 8px;
-      text-align: left;
-      border-bottom: 1px solid #e8e8ed;
+    .contracts-table-wrapper {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e8e8ed;
+      border-radius: 8px;
+    }
+
+    .contracts-table thead {
+      position: sticky;
+      top: 0;
+      background: #f5f5f7;
+      z-index: 1;
     }
 
     .contracts-table th {
-      background: #f5f5f7;
+      padding: 10px 8px;
+      text-align: left;
       font-weight: 600;
       color: #6e6e73;
+      border-bottom: 1px solid #e8e8ed;
+      white-space: nowrap;
     }
 
-    .contracts-table input {
-      width: 100%;
-      padding: 4px 6px;
-      border: 1px solid #d2d2d7;
-      border-radius: 4px;
-      font-size: 12px;
+    .contracts-table td {
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
     }
 
+    .contracts-table tr:hover {
+      background: #f9f9fb;
+    }
+
+    .contracts-table input,
     .contracts-table select {
-      padding: 4px 6px;
+      width: 100%;
+      padding: 6px 8px;
       border: 1px solid #d2d2d7;
       border-radius: 4px;
       font-size: 12px;
+      background: white;
+    }
+
+    .contracts-table input:focus,
+    .contracts-table select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .contracts-table input[type="number"] {
+      text-align: right;
+      width: 90px;
+    }
+
+    .contracts-table input[type="date"] {
+      width: 130px;
+    }
+
+    .contracts-table .col-num {
+      width: 40px;
+      text-align: center;
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .contracts-table .col-policy {
+      width: 90px;
+    }
+
+    .contracts-table .col-policy input {
+      width: 90px;
+    }
+
+    .contracts-table .col-product {
+      min-width: 280px;
+    }
+
+    .contracts-table .col-product input {
+      width: 100%;
+    }
+
+    .contracts-table .col-status {
+      width: 80px;
     }
 
     .remove-btn {
@@ -234,6 +322,19 @@
       padding: 4px 8px;
       cursor: pointer;
       font-size: 11px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .remove-btn:hover {
+      background: #e0352b;
+    }
+
+    .empty-contracts {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6e6e73;
+      font-size: 14px;
     }
 
     /* PDF 미리보기 */
@@ -353,7 +454,7 @@
 
     <div class="main-grid">
       <!-- 왼쪽: 입력 폼 -->
-      <div>
+      <div class="left-panel">
         <div class="card">
           <h2>기본 정보</h2>
 
@@ -391,27 +492,27 @@
         <div class="card" style="margin-top: 20px;">
           <h2>보유계약 목록</h2>
 
-          <div style="overflow-x: auto;">
+          <div class="contracts-table-wrapper">
             <table class="contracts-table" id="contractsTable">
               <thead>
                 <tr>
-                  <th style="width: 40px;">순번</th>
-                  <th style="width: 100px;">증권번호</th>
-                  <th style="width: 180px;">보험상품</th>
-                  <th style="width: 80px;">계약일</th>
-                  <th style="width: 60px;">상태</th>
-                  <th style="width: 70px;">가입금액</th>
-                  <th style="width: 80px;">보험료</th>
-                  <th style="width: 40px;"></th>
+                  <th>#</th>
+                  <th>증권번호</th>
+                  <th>보험상품</th>
+                  <th>계약일</th>
+                  <th>상태</th>
+                  <th>가입금액(만원)</th>
+                  <th>보험료(원)</th>
+                  <th></th>
                 </tr>
               </thead>
-              <tbody id="contractsBody">
+              <tbody id="contractsList">
                 <!-- 동적으로 추가됨 -->
               </tbody>
             </table>
           </div>
 
-          <div class="btn-group">
+          <div class="btn-group" style="margin-top: 12px;">
             <button class="btn btn-secondary" onclick="addContract()">+ 계약 추가</button>
             <button class="btn btn-secondary" onclick="clearContracts()">전체 삭제</button>
           </div>
@@ -429,8 +530,11 @@
         </div>
       </div>
 
+      <!-- 리사이즈 핸들 -->
+      <div class="resize-handle" id="resizeHandle"></div>
+
       <!-- 오른쪽: 미리보기 및 결과 -->
-      <div>
+      <div class="right-panel">
         <div class="card">
           <h2>PDF 생성</h2>
 
@@ -555,12 +659,12 @@
 
     // 계약 테이블 렌더링
     function renderContracts() {
-      const tbody = document.getElementById('contractsBody');
+      const tbody = document.getElementById('contractsList');
 
       if (contracts.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align: center; color: #6e6e73; padding: 20px;">
+            <td colspan="8" class="empty-contracts">
               계약이 없습니다. "계약 추가" 버튼을 클릭하세요.
             </td>
           </tr>
@@ -570,11 +674,17 @@
 
       tbody.innerHTML = contracts.map((c, i) => `
         <tr>
-          <td>${c.순번}</td>
-          <td><input type="text" value="${c.증권번호}" onchange="updateContract(${i}, '증권번호', this.value)"></td>
-          <td><input type="text" value="${c.보험상품}" onchange="updateContract(${i}, '보험상품', this.value)"></td>
-          <td><input type="date" value="${c.계약일}" onchange="updateContract(${i}, '계약일', this.value)"></td>
+          <td class="col-num">${c.순번}</td>
+          <td class="col-policy">
+            <input type="text" value="${c.증권번호}" onchange="updateContract(${i}, '증권번호', this.value)">
+          </td>
+          <td class="col-product">
+            <input type="text" value="${c.보험상품}" onchange="updateContract(${i}, '보험상품', this.value)">
+          </td>
           <td>
+            <input type="date" value="${c.계약일}" onchange="updateContract(${i}, '계약일', this.value)">
+          </td>
+          <td class="col-status">
             <select onchange="updateContract(${i}, '계약상태', this.value)">
               <option value="정상" ${c.계약상태 === '정상' ? 'selected' : ''}>정상</option>
               <option value="실효" ${c.계약상태 === '실효' ? 'selected' : ''}>실효</option>
@@ -582,9 +692,15 @@
               <option value="만기" ${c.계약상태 === '만기' ? 'selected' : ''}>만기</option>
             </select>
           </td>
-          <td><input type="number" value="${c['가입금액(만원)']}" onchange="updateContract(${i}, '가입금액(만원)', parseInt(this.value))" style="width: 60px;">만</td>
-          <td><input type="number" value="${c['보험료(원)']}" onchange="updateContract(${i}, '보험료(원)', parseInt(this.value))" style="width: 70px;"></td>
-          <td><button class="remove-btn" onclick="removeContract(${i})">삭제</button></td>
+          <td>
+            <input type="number" value="${c['가입금액(만원)']}" onchange="updateContract(${i}, '가입금액(만원)', parseInt(this.value))">
+          </td>
+          <td>
+            <input type="number" value="${c['보험료(원)']}" onchange="updateContract(${i}, '보험료(원)', parseInt(this.value))">
+          </td>
+          <td>
+            <button class="remove-btn" onclick="removeContract(${i})">삭제</button>
+          </td>
         </tr>
       `).join('');
     }
@@ -812,6 +928,56 @@
         console.error('파일 삭제 오류:', error);
       }
     }
+
+    // 리사이즈 핸들 기능
+    (function initResizeHandle() {
+      const resizeHandle = document.getElementById('resizeHandle');
+      const leftPanel = document.querySelector('.left-panel');
+      const rightPanel = document.querySelector('.right-panel');
+      const mainGrid = document.querySelector('.main-grid');
+
+      let isResizing = false;
+      let startX = 0;
+      let startLeftWidth = 0;
+      let startRightWidth = 0;
+
+      resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startLeftWidth = leftPanel.offsetWidth;
+        startRightWidth = rightPanel.offsetWidth;
+        resizeHandle.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const dx = e.clientX - startX;
+        const containerWidth = mainGrid.offsetWidth - resizeHandle.offsetWidth;
+        const newLeftWidth = startLeftWidth + dx;
+        const newRightWidth = startRightWidth - dx;
+
+        // 최소 너비 제한
+        if (newLeftWidth >= 400 && newRightWidth >= 300) {
+          leftPanel.style.flex = 'none';
+          rightPanel.style.flex = 'none';
+          leftPanel.style.width = newLeftWidth + 'px';
+          rightPanel.style.width = newRightWidth + 'px';
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isResizing) {
+          isResizing = false;
+          resizeHandle.classList.remove('dragging');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+        }
+      });
+    })();
   </script>
 </body>
 </html>
