@@ -32,7 +32,7 @@ run_step() {
     local step_cmd=$3
 
     local start=$(date +%s)
-    echo -n "[${step_num}/12] ${step_name} ... "
+    echo -n "[${step_num}/13] ${step_name} ... "
 
     eval "$step_cmd" > /dev/null 2>&1
 
@@ -62,23 +62,26 @@ run_step 5 "pdf_proxy 배포" "cd '$AIMS_DIR/backend/api/pdf_proxy' && ./deploy_
 # 6. aims_mcp
 run_step 6 "aims_mcp 배포" "cd '$AIMS_DIR/backend/api/aims_mcp' && ./deploy_aims_mcp.sh"
 
-# 7. pdf_converter
-run_step 7 "pdf_converter 배포" "cd '$AIMS_DIR/tools/convert' && ./deploy_pdf_converter.sh"
+# 7. aims_health_monitor (3012)
+run_step 7 "aims_health_monitor 배포" "cd '$AIMS_DIR/backend/api/aims_health_monitor' && ./deploy_aims_health_monitor.sh"
 
-# 8. n8n 워크플로우
-run_step 8 "n8n 워크플로우 배포" "cd '$AIMS_DIR/backend/n8n_flows' && source ~/.profile 2>/dev/null || true && ./deploy_n8n_workflows.sh"
+# 8. pdf_converter
+run_step 8 "pdf_converter 배포" "cd '$AIMS_DIR/tools/convert' && ./deploy_pdf_converter.sh"
 
-# 9. Frontend (메인)
-run_step 9 "Frontend 배포" "cd '$AIMS_DIR/frontend/aims-uix3' && ./deploy_aims_frontend.sh"
+# 9. n8n 워크플로우
+run_step 9 "n8n 워크플로우 배포" "cd '$AIMS_DIR/backend/n8n_flows' && source ~/.profile 2>/dev/null || true && ./deploy_n8n_workflows.sh"
 
-# 10. Admin Frontend
-run_step 10 "Admin 배포" "cd '$AIMS_DIR/frontend/aims-admin' && ./deploy_aims_admin.sh"
+# 10. Frontend (메인)
+run_step 10 "Frontend 배포" "cd '$AIMS_DIR/frontend/aims-uix3' && ./deploy_aims_frontend.sh"
 
-# 11. 상태 확인
-run_step 11 "서비스 상태 확인" "pm2 list"
+# 11. Admin Frontend
+run_step 11 "Admin 배포" "cd '$AIMS_DIR/frontend/aims-admin' && ./deploy_aims_admin.sh"
 
-# 12. Docker 정리 (미사용 이미지 삭제)
-run_step 12 "Docker 정리" "docker image prune -f && docker container prune -f"
+# 12. 상태 확인
+run_step 12 "서비스 상태 확인" "pm2 list"
+
+# 13. Docker 정리 (미사용 이미지 삭제)
+run_step 13 "Docker 정리" "docker image prune -f && docker container prune -f"
 
 TOTAL_END=$(date +%s)
 TOTAL_ELAPSED=$((TOTAL_END - TOTAL_START))
