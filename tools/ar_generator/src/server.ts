@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3099;
 
 // 미들웨어
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));  // PDF Base64 처리를 위해 크기 제한 증가
 app.use(express.static(path.join(__dirname, '../public')));
 
 // 출력 디렉토리
@@ -187,7 +187,7 @@ app.delete('/api/files/:filename', (req, res) => {
 app.post('/api/test-ar-check', async (req, res) => {
   try {
     const { base64 } = req.body;
-    const AR_API_URL = process.env.AR_API_URL || 'http://localhost:8004';
+    const AR_API_URL = process.env.AR_API_URL || 'http://100.110.215.65:8004';
 
     // Base64를 Buffer로 변환
     const pdfBuffer = Buffer.from(base64, 'base64');
