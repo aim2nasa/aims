@@ -54,26 +54,36 @@
 }
 
 .customer-selection-modal__th--select {
-  width: 40px;
+  width: 36px;
   text-align: center;
 }
 
 .customer-selection-modal__th--name {
-  min-width: 120px;
+  min-width: 80px;
+}
+
+.customer-selection-modal__th--birth {
+  width: 75px;
+  text-align: center;
+}
+
+.customer-selection-modal__th--phone {
+  width: 80px;
+  text-align: center;
 }
 
 .customer-selection-modal__th--type {
-  width: 60px;
+  width: 50px;
   text-align: center;
 }
 
 .customer-selection-modal__th--date {
-  width: 100px;
+  width: 85px;
   text-align: center;
 }
 
 .customer-selection-modal__th--count {
-  width: 80px;
+  width: 50px;
   text-align: center;
 }
 
@@ -106,6 +116,18 @@
 
 .customer-selection-modal__td--name {
   font-weight: 500;
+}
+
+.customer-selection-modal__td--birth {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.customer-selection-modal__td--phone {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .customer-selection-modal__td--type {

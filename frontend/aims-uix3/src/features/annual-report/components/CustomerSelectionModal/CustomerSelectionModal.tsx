@@ -104,6 +104,30 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     return '-';
   };
 
+  // 생년월일 포맷 (YYYY-MM-DD → YY.MM.DD)
+  const formatBirthDate = (customer: Customer): string => {
+    const birthDate = customer.personal_info?.birth_date;
+    if (!birthDate) return '-';
+    // YYYY-MM-DD 형식에서 앞 2자리 년도만
+    const parts = birthDate.split('-');
+    if (parts.length === 3) {
+      return `${parts[0].slice(2)}.${parts[1]}.${parts[2]}`;
+    }
+    return birthDate;
+  };
+
+  // 휴대폰 포맷 (마지막 4자리만)
+  const formatPhone = (customer: Customer): string => {
+    const phone = customer.personal_info?.mobile_phone;
+    if (!phone) return '-';
+    // 숫자만 추출
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length >= 4) {
+      return `***-${digits.slice(-4)}`;
+    }
+    return phone;
+  };
+
   const footer = (
     <div className="customer-selection-modal__footer">
       <Button
@@ -143,10 +167,11 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
               <tr>
                 <th className="customer-selection-modal__th--select"></th>
                 <th className="customer-selection-modal__th--name">고객명</th>
+                <th className="customer-selection-modal__th--birth">생년월일</th>
+                <th className="customer-selection-modal__th--phone">휴대폰</th>
                 <th className="customer-selection-modal__th--type">구분</th>
                 <th className="customer-selection-modal__th--date">등록일</th>
-                <th className="customer-selection-modal__th--date">최근 AR</th>
-                <th className="customer-selection-modal__th--count">계약 수</th>
+                <th className="customer-selection-modal__th--count">계약</th>
               </tr>
             </thead>
             <tbody>
@@ -173,14 +198,17 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                     <td className="customer-selection-modal__td--name">
                       {customer.personal_info?.name || '-'}
                     </td>
+                    <td className="customer-selection-modal__td--birth">
+                      {formatBirthDate(customer)}
+                    </td>
+                    <td className="customer-selection-modal__td--phone">
+                      {formatPhone(customer)}
+                    </td>
                     <td className="customer-selection-modal__td--type">
                       {customer.insurance_info?.customer_type || '개인'}
                     </td>
                     <td className="customer-selection-modal__td--date">
                       {formatRegisteredAt(customer)}
-                    </td>
-                    <td className="customer-selection-modal__td--date">
-                      {formatLatestAR(customer)}
                     </td>
                     <td className="customer-selection-modal__td--count">
                       {getContractCount(customer)}
