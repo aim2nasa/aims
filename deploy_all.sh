@@ -63,7 +63,7 @@ run_step 5 "pdf_proxy 배포" "cd '$AIMS_DIR/backend/api/pdf_proxy' && ./deploy_
 run_step 6 "aims_mcp 배포" "cd '$AIMS_DIR/backend/api/aims_mcp' && ./deploy_aims_mcp.sh"
 
 # 7. aims_health_monitor (3012)
-run_step 7 "aims_health_monitor 배포" "cd '$AIMS_DIR/backend/api/aims_health_monitor' && ./deploy_aims_health_monitor.sh"
+run_step 7 "aims_health_monitor 배포" "cd '$AIMS_DIR/backend/api/aims_health_monitor' && bash deploy_aims_health_monitor.sh"
 
 # 8. pdf_converter
 run_step 8 "pdf_converter 배포" "cd '$AIMS_DIR/tools/convert' && ./deploy_pdf_converter.sh"
