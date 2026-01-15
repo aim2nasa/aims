@@ -925,6 +925,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onContractCountChange={setContractCount}
                       searchTerm={contractSearchTerm}
                       onSearchChange={setContractSearchTerm}
+                      refreshTrigger={annualReportRefreshTrigger}
                     />
                   </div>
                 </section>

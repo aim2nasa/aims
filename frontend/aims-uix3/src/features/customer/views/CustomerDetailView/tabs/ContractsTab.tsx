@@ -40,6 +40,8 @@ interface ContractsTabProps {
   searchTerm?: string
   /** 검색어 변경 핸들러 */
   onSearchChange?: (term: string) => void
+  /** AR 삭제 등으로 인한 외부 새로고침 트리거 */
+  refreshTrigger?: number
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -109,7 +111,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   customer,
   onContractCountChange,
   searchTerm: externalSearchTerm,
-  onSearchChange
+  onSearchChange,
+  refreshTrigger
 }) => {
   // 🍎 상태 관리
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -302,6 +305,13 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     void loadContracts()
     void loadArReports()
   }, [loadContracts, loadArReports])
+
+  // 🍎 외부 refreshTrigger 변경 시 AR 데이터 새로고침 (AR 문서 삭제 등)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      void loadArReports()
+    }
+  }, [refreshTrigger, loadArReports])
 
   // 🍎 contractChanged 이벤트 리스너
   useEffect(() => {
