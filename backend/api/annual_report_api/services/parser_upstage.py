@@ -179,7 +179,7 @@ def parse_annual_report(
         logger.info(
             f"✅ Upstage 파싱 완료: "
             f"계약 {len(contracts)}건, "
-            f"총월보험료 {total_premium:,}원" if total_premium else f"총월보험료 추출실패"
+            f"총월보험료 {total_premium:,}원" if total_premium is not None else f"총월보험료 추출실패"
         )
 
         return create_success_result(

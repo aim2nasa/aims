@@ -29,7 +29,7 @@ def extract_total_premium(text: str) -> Optional[int]:
 
     패턴 예시:
     - "현재 납입중인 월 보험료는 총 1,809,150원 입니다"
-    - "월보험료는 총 1,809,150원"
+    - "1,809,150\n현재 납입중인 월 보험료는 총 원 입니다" (줄바꿈된 경우)
 
     Args:
         text: PDF 페이지 텍스트
@@ -37,6 +37,9 @@ def extract_total_premium(text: str) -> Optional[int]:
     Returns:
         총 월보험료 (정수) 또는 None
     """
+    # 줄바꿈을 공백으로 대체하여 한 줄로 만듦
+    text_single_line = re.sub(r'\s+', ' ', text)
+
     patterns = [
         r'월\s*보험료는\s*총\s*([\d,]+)\s*원',
         r'월\s*보험료\s*총\s*([\d,]+)\s*원',
@@ -45,12 +48,20 @@ def extract_total_premium(text: str) -> Optional[int]:
     ]
 
     for pattern in patterns:
-        match = re.search(pattern, text)
+        match = re.search(pattern, text_single_line)
         if match:
             try:
                 return int(match.group(1).replace(",", ""))
             except (ValueError, TypeError):
                 continue
+
+    # 특수 패턴: "N\n현재 납입중인 월 보험료는 총 원" (숫자가 앞줄에 있는 경우)
+    special_match = re.search(r'([\d,]+)\s*현재\s*납입중인\s*월\s*보험료는\s*총\s*원', text_single_line)
+    if special_match:
+        try:
+            return int(special_match.group(1).replace(",", ""))
+        except (ValueError, TypeError):
+            pass
 
     return None
 
@@ -100,6 +111,28 @@ def find_header_row(table: List[List]) -> Optional[int]:
     return None
 
 
+def is_lapsed_contract_table(table: List[List]) -> bool:
+    """
+    테이블이 부활가능 실효계약 테이블인지 판별
+
+    Args:
+        table: 표 데이터
+
+    Returns:
+        부활가능 실효계약 테이블이면 True
+    """
+    if not table:
+        return False
+
+    # 첫 몇 행에서 "부활가능" 또는 "실효계약" 확인
+    for row in table[:3]:
+        if row:
+            row_text = " ".join(str(cell) for cell in row if cell)
+            if "부활가능" in row_text or "실효계약" in row_text:
+                return True
+    return False
+
+
 def parse_annual_report(
     pdf_path: str,
     customer_name: Optional[str] = None,
@@ -135,7 +168,6 @@ def parse_annual_report(
         contracts = []
         lapsed_contracts = []
         total_premium = None
-        current_section = "보유계약"  # "보유계약" 또는 "부활가능"
 
         with pdfplumber.open(pdf_path) as pdf:
             for page_num, page in enumerate(pdf.pages):
@@ -147,10 +179,6 @@ def parse_annual_report(
                     total_premium = extract_total_premium(text)
                     if total_premium:
                         logger.info(f"✅ 총 월보험료 추출: {total_premium:,}원")
-
-                # 섹션 판별
-                if "부활가능" in text or "실효계약" in text:
-                    current_section = "부활가능"
 
                 # 표 추출
                 tables = page.extract_tables()
@@ -164,13 +192,16 @@ def parse_annual_report(
                     if header_idx is None:
                         continue
 
+                    # 테이블별 섹션 판별 (페이지 텍스트가 아닌 테이블 자체에서)
+                    is_lapsed = is_lapsed_contract_table(table)
+
                     headers = [str(h).strip() if h else "" for h in table[header_idx]]
 
                     # 데이터 행 파싱
                     for row in table[header_idx + 1:]:
                         contract = parse_table_row(row, headers)
                         if contract:
-                            if current_section == "부활가능":
+                            if is_lapsed:
                                 lapsed_contracts.append(contract)
                             else:
                                 contracts.append(contract)
@@ -178,7 +209,7 @@ def parse_annual_report(
         logger.info(
             f"✅ pdfplumber 파싱 완료: "
             f"계약 {len(contracts)}건, 부활가능 {len(lapsed_contracts)}건, "
-            f"총월보험료 {total_premium:,}원" if total_premium else f"총월보험료 추출실패"
+            f"총월보험료 {total_premium:,}원" if total_premium is not None else f"총월보험료 추출실패"
         )
 
         return create_success_result(
