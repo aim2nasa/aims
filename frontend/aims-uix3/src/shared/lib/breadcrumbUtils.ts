@@ -13,7 +13,7 @@ import type { BreadcrumbItem } from '@/shared/ui/Breadcrumb';
 const MENU_LABELS: Record<string, { parent?: string; label: string }> = {
   // 빠른 작업
   'quick-actions': { label: '빠른 작업' },
-  'customers-register': { parent: 'quick-actions', label: '고객 수동 등록' },
+  'customers-register': { parent: 'quick-actions', label: '고객 수동등록' },
   'documents-register': { parent: 'quick-actions', label: '고객·계약·문서 등록' },
   'contracts-import': { parent: 'quick-actions', label: '고객·계약 일괄등록' },
   'batch-document-upload': { parent: 'quick-actions', label: '문서 일괄등록' },

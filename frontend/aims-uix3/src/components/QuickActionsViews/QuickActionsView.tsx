@@ -152,7 +152,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
                   weight={SFSymbolWeight.MEDIUM}
                 />
               </span>
-              <span className="action-card-title">고객 수동 등록</span>
+              <span className="action-card-title">고객 수동등록</span>
               <span className="action-card-description">한명의 신규 고객을 등록합니다</span>
             </button>
 

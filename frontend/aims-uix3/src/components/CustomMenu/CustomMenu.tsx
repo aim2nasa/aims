@@ -422,7 +422,7 @@ const CustomMenu = ({
         {
           key: 'customers-register',
           icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-          label: '고객 수동 등록',
+          label: '고객 수동등록',
           tooltipTitle: '고객 정보를 직접 입력합니다',
         },
         {
@@ -452,7 +452,7 @@ const CustomMenu = ({
         key: 'customers-register',
         icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
         label: '',
-        tooltipTitle: '고객 수동 등록',
+        tooltipTitle: '고객 수동등록',
       },
       {
         key: 'contracts-import',
