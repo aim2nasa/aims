@@ -118,9 +118,9 @@ const phone = customer.personal_info?.mobile_phone;  // ✅
 
 ### 용어 통일 (엑셀)
 
-- [ ] `EXCEL_IMPORT_SPECIFICATION.md` - "연락처" → "휴대폰" (개인), "대표전화" (법인)
-- [ ] `useValidation.ts` - columnOrder 내 "연락처" → "휴대폰"/"대표전화"
-- [ ] `ExcelRefiner.tsx` - 엑셀 열 이름 변경
+- [x] `EXCEL_IMPORT_SPECIFICATION.md` - "연락처" → "휴대폰" (개인), "대표전화" (법인) ✅ 완료 (2026-01-15)
+- [x] `ExcelRefiner.tsx` - 엑셀 열 이름 변경, 열 인식 로직 수정 (하위 호환) ✅ 완료 (2026-01-15)
+- [x] 샘플 엑셀 파일 - 열 이름 변경 ✅ 완료 (2026-01-15)
 
 ### 용어 통일 (도움말/FAQ)
 
@@ -132,6 +132,7 @@ const phone = customer.personal_info?.mobile_phone;  // ✅
 
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
+| 2026-01-15 | 1.1.0 | 엑셀 용어 통일 완료 - UI/샘플 파일/열 인식 로직 수정 |
 | 2025-01-15 | 1.0.0 | 최초 작성 |
 
 ---

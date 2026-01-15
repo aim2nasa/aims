@@ -48,7 +48,7 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './ExcelRefiner.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
-const RIGHT_ALIGN_PATTERNS = ['증권번호', '보험료', '이체일', '납입주기', '납입기간', '납입상태', '연락처', '계약일', '피보험자']
+const RIGHT_ALIGN_PATTERNS = ['증권번호', '보험료', '이체일', '납입주기', '납입기간', '납입상태', '휴대폰', '대표전화', '연락처', '계약일', '피보험자']
 
 // 시트별 검증 상태 타입
 type SheetValidationStatus = 'pending' | 'validating' | 'valid' | 'invalid'
@@ -1501,17 +1501,23 @@ export function ExcelRefiner() {
             s.columns.findIndex(col => col && getValidationType(col) === 'customerName')
           const findColIdx = (s: SheetData, pattern: string) =>
             s.columns.findIndex(col => col && col.includes(pattern))
+          // 전화번호 컬럼 찾기 (표준 용어 우선, '연락처' 폴백)
+          const findPhoneColIdx = (s: SheetData, primaryPattern: string) => {
+            const primaryIdx = findColIdx(s, primaryPattern)
+            if (primaryIdx !== -1) return primaryIdx
+            return findColIdx(s, '연락처')  // 하위 호환
+          }
 
           const indNameIdx = findCustomerNameColIndex(individualSheet)
           const corpNameIdx = findCustomerNameColIndex(corporateSheet)
 
           if (indNameIdx !== -1 && corpNameIdx !== -1) {
             // 개인고객 컬럼 인덱스
-            const indContactIdx = findColIdx(individualSheet, '연락처')
+            const indContactIdx = findPhoneColIdx(individualSheet, '휴대폰')  // 개인: 휴대폰 우선
             const indAddressIdx = findColIdx(individualSheet, '주소')
 
             // 법인고객 컬럼 인덱스
-            const corpContactIdx = findColIdx(corporateSheet, '연락처')
+            const corpContactIdx = findPhoneColIdx(corporateSheet, '대표전화')  // 법인: 대표전화 우선
             const corpAddressIdx = findColIdx(corporateSheet, '주소')
 
             // 개인고객 이름-행 매핑
@@ -1775,13 +1781,19 @@ export function ExcelRefiner() {
       s.columns.findIndex(col => col && getValidationType(col) === 'customerName')
     const findColIdx = (s: SheetData, pattern: string) =>
       s.columns.findIndex(col => col && col.includes(pattern))
+    // 전화번호 컬럼 찾기 (표준 용어 우선, '연락처' 폴백)
+    const findPhoneColIdx = (s: SheetData, primaryPattern: string) => {
+      const primaryIdx = findColIdx(s, primaryPattern)
+      if (primaryIdx !== -1) return primaryIdx
+      return findColIdx(s, '연락처')  // 하위 호환
+    }
 
     const indNameIdx = findCustomerNameColIndex(individualSheet)
     const corpNameIdx = findCustomerNameColIndex(corporateSheet)
 
-    const indContactIdx = findColIdx(individualSheet, '연락처')
+    const indContactIdx = findPhoneColIdx(individualSheet, '휴대폰')  // 개인: 휴대폰 우선
     const indAddressIdx = findColIdx(individualSheet, '주소')
-    const corpContactIdx = findColIdx(corporateSheet, '연락처')
+    const corpContactIdx = findPhoneColIdx(corporateSheet, '대표전화')  // 법인: 대표전화 우선
     const corpAddressIdx = findColIdx(corporateSheet, '주소')
 
     const individualCustomers: typeof duplicateNameModal.individualCustomers = []
@@ -2144,12 +2156,18 @@ export function ExcelRefiner() {
       sheet.columns.findIndex(col => col && col.includes(pattern))
     const findCustomerNameColIndex = (sheet: SheetData) =>
       sheet.columns.findIndex(col => col && getValidationType(col) === 'customerName')
+    // 전화번호 컬럼 찾기 (표준 용어 우선, '연락처' 폴백 - 하위 호환)
+    const findPhoneColIndex = (sheet: SheetData, primaryPattern: string) => {
+      const primaryIdx = findColIndex(sheet, primaryPattern)
+      if (primaryIdx !== -1) return primaryIdx
+      return findColIndex(sheet, '연락처')  // 하위 호환: 기존 "연락처" 열도 인식
+    }
 
     // 1. 개인고객 시트 처리
     const individualSheet = sheets.find(s => s.name === '개인고객')
     if (individualSheet) {
       const nameIdx = findCustomerNameColIndex(individualSheet)
-      const contactIdx = findColIndex(individualSheet, '연락처')
+      const contactIdx = findPhoneColIndex(individualSheet, '휴대폰')  // 개인: 휴대폰 우선
       const addressIdx = findColIndex(individualSheet, '주소')
       const genderIdx = findColIndex(individualSheet, '성별')
       const birthIdx = findColIndex(individualSheet, '생년월일')
@@ -2187,7 +2205,7 @@ export function ExcelRefiner() {
     const corporateSheet = sheets.find(s => s.name === '법인고객')
     if (corporateSheet) {
       const nameIdx = findCustomerNameColIndex(corporateSheet)
-      const contactIdx = findColIndex(corporateSheet, '연락처')
+      const contactIdx = findPhoneColIndex(corporateSheet, '대표전화')  // 법인: 대표전화 우선
       const emailIdx = findColIndex(corporateSheet, '이메일')
       const addressIdx = findColIndex(corporateSheet, '주소')
 
@@ -3083,7 +3101,7 @@ export function ExcelRefiner() {
                         <tr>
                           <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
                           <th className="excel-refiner__format-th">이메일</th>
-                          <th className="excel-refiner__format-th">연락처</th>
+                          <th className="excel-refiner__format-th">휴대폰</th>
                           <th className="excel-refiner__format-th">주소</th>
                           <th className="excel-refiner__format-th">성별</th>
                           <th className="excel-refiner__format-th">생년월일</th>
@@ -3111,7 +3129,7 @@ export function ExcelRefiner() {
                         <tr>
                           <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
                           <th className="excel-refiner__format-th">이메일</th>
-                          <th className="excel-refiner__format-th">연락처</th>
+                          <th className="excel-refiner__format-th">대표전화</th>
                           <th className="excel-refiner__format-th">주소</th>
                           <th className="excel-refiner__format-th">사업자번호</th>
                           <th className="excel-refiner__format-th">대표자명</th>
@@ -4092,7 +4110,7 @@ export function ExcelRefiner() {
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--phone">
                           <path d="M3.654 1.328a.678.678 0 00-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 004.168 6.608 17.569 17.569 0 006.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 00-.063-1.015l-2.307-1.794a.678.678 0 00-.58-.122l-2.19.547a1.745 1.745 0 01-1.657-.459L5.482 8.062a1.745 1.745 0 01-.46-1.657l.548-2.19a.678.678 0 00-.122-.58L3.654 1.328z"/>
                         </svg>
-                        연락처
+                        휴대폰
                       </th>
                       <th>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--address">
@@ -4199,7 +4217,7 @@ export function ExcelRefiner() {
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--phone">
                           <path d="M3.654 1.328a.678.678 0 00-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 004.168 6.608 17.569 17.569 0 006.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 00-.063-1.015l-2.307-1.794a.678.678 0 00-.58-.122l-2.19.547a1.745 1.745 0 01-1.657-.459L5.482 8.062a1.745 1.745 0 01-.46-1.657l.548-2.19a.678.678 0 00-.122-.58L3.654 1.328z"/>
                         </svg>
-                        연락처
+                        대표전화
                       </th>
                       <th>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="excel-refiner__th-icon excel-refiner__th-icon--address">
@@ -4390,7 +4408,7 @@ export function ExcelRefiner() {
                     <tr>
                       <th className="excel-refiner__result-th">상태</th>
                       <th className="excel-refiner__result-th">고객명</th>
-                      <th className="excel-refiner__result-th">연락처</th>
+                      <th className="excel-refiner__result-th">휴대폰</th>
                       <th className="excel-refiner__result-th">주소</th>
                       <th className="excel-refiner__result-th">성별</th>
                       <th className="excel-refiner__result-th">생년월일</th>
@@ -4459,7 +4477,7 @@ export function ExcelRefiner() {
                     <tr>
                       <th className="excel-refiner__result-th">상태</th>
                       <th className="excel-refiner__result-th">법인명</th>
-                      <th className="excel-refiner__result-th">연락처</th>
+                      <th className="excel-refiner__result-th">대표전화</th>
                       <th className="excel-refiner__result-th">주소</th>
                       <th className="excel-refiner__result-th">비고</th>
                     </tr>
