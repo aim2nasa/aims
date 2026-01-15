@@ -186,12 +186,12 @@ describe('Customers API - CRUD', () => {
   test('고객 수정 - 업데이트 데이터 구조', () => {
     const updateData = {
       $set: {
-        'personal_info.phone': '010-1234-5678',
+        'personal_info.mobile_phone': '010-1234-5678',
         'meta.updated_at': new Date()
       }
     };
 
-    expect(updateData.$set['personal_info.phone']).toBe('010-1234-5678');
+    expect(updateData.$set['personal_info.mobile_phone']).toBe('010-1234-5678');
     expect(updateData.$set['meta.updated_at']).toBeInstanceOf(Date);
   });
 

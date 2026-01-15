@@ -3494,7 +3494,7 @@ app.get('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
 
       filter.$or = [
         { 'personal_info.name': { $regex: decodedSearch, $options: 'i' } },
-        { 'personal_info.phone': { $regex: decodedSearch, $options: 'i' } },
+        { 'personal_info.mobile_phone': { $regex: decodedSearch, $options: 'i' } },
         { 'personal_info.email': { $regex: decodedSearch, $options: 'i' } }
       ];
     }
