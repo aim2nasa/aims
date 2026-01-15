@@ -3,7 +3,7 @@ AR Generator - AIMS Annual Report PDF 생성 도구
 Python GUI 버전 (exe 패키징용)
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -20,7 +20,9 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.colors import Color
+from reportlab.lib.colors import Color, HexColor
+from reportlab.platypus import Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # PDF 미리보기
 import tempfile
@@ -252,7 +254,7 @@ class ARGenerator:
     def _draw_contracts(self, c: canvas.Canvas, width: float, height: float,
                         customer_name: str, contracts: List[Contract],
                         total_premium: int = 0):
-        """계약 목록 그리기 - 모든 필드 포함 (AR 파싱과 동일)
+        """계약 목록 그리기 - 원본 AR과 완전히 동일하게
 
         Args:
             total_premium: PDF에서 읽은 총 월보험료 (0이면 계산)
@@ -264,72 +266,8 @@ class ARGenerator:
             font_name = 'Helvetica'
             c.setFont(font_name, 12)
 
-        # 제목
-        c.setFont(font_name, 16)
-        c.drawString(50, height - 50, f"{customer_name} 고객님의 보유계약 현황")
-
-        if not contracts:
-            c.setFont(font_name, 12)
-            c.drawString(50, height - 100, "등록된 계약이 없습니다.")
-            return
-
-        # 테이블 헤더 (AR 파싱 필드와 동일: 순번, 증권번호, 보험상품, 계약자, 피보험자, 계약일, 계약상태, 가입금액, 보험기간, 납입기간, 보험료)
-        y = height - 90
-        c.setFont(font_name, 7)
-        c.setFillColor(Color(0.9, 0.9, 0.9))
-        c.rect(25, y - 5, width - 50, 20, fill=True, stroke=False)
-
-        c.setFillColor(Color(0, 0, 0))
-        headers = ['No', '증권번호', '보험상품', '계약자', '피보험자', '계약일', '상태', '보험기간', '납입기간', '가입금액', '보험료']
-        x_positions = [28, 42, 95, 195, 235, 280, 335, 370, 415, 460, 510]
-
-        for header, x in zip(headers, x_positions):
-            c.drawString(x, y, header)
-
-        # 테이블 데이터
-        y -= 20
-        c.setFont(font_name, 6)
-
-        for contract in contracts:
-            if y < 50:  # 페이지 넘침 방지
-                break
-
-            c.drawString(28, y, str(contract.순번))
-            c.drawString(42, y, contract.증권번호[:10] if contract.증권번호 else '-')
-
-            # 상품명 자르기
-            product = contract.보험상품
-            if len(product) > 15:
-                product = product[:15] + "..."
-            c.drawString(95, y, product)
-
-            # 계약자
-            c.drawString(195, y, contract.계약자[:4] if contract.계약자 else '-')
-
-            # 피보험자
-            c.drawString(235, y, contract.피보험자[:4] if contract.피보험자 else '-')
-
-            # 계약일
-            c.drawString(280, y, contract.계약일 if contract.계약일 else '-')
-
-            c.drawString(335, y, contract.계약상태)
-
-            # 보험기간
-            c.drawString(370, y, contract.보험기간 if contract.보험기간 else '-')
-
-            # 납입기간
-            c.drawString(415, y, contract.납입기간 if contract.납입기간 else '-')
-
-            c.drawString(460, y, f"{contract.가입금액:,}")
-            c.drawString(510, y, f"{contract.보험료:,}")
-
-            y -= 16
-
-        # 합계 - PDF에서 읽은 값 사용 (없으면 계산)
-        y -= 10
-        c.setFont(font_name, 10)
+        # 합계 계산 (먼저 계산)
         if total_premium <= 0:
-            # PDF에서 읽지 못한 경우에만 계산 (fallback)
             current_year = datetime.now().year
             total_premium = 0
             for ct in contracts:
@@ -344,7 +282,136 @@ class ARGenerator:
                     if current_year - contract_year >= pay_years:
                         continue
                 total_premium += ct.보험료
-        c.drawString(420, y, f"총 월보험료: {total_premium:,}원")
+
+        # === 원본 레이아웃 시작 ===
+        y = height - 40
+
+        # 1. 상단 헤더: "보유계약 현황" (파란색, 밑줄) + 오른쪽 "Annual Review Report | 2 / 2"
+        c.setFillColor(HexColor('#0066CC'))
+        c.setFont(font_name, 14)
+        c.drawString(30, y, "보유계약 현황")
+        # 밑줄
+        c.setStrokeColor(HexColor('#0066CC'))
+        c.setLineWidth(1)
+        c.line(30, y - 3, 120, y - 3)
+
+        # 오른쪽 페이지 정보
+        c.setFillColor(HexColor('#666666'))
+        c.setFont(font_name, 9)
+        c.drawRightString(width - 30, y, f"Annual Review Report  |  2 / 2")
+
+        y -= 35
+
+        # 2. 고객 정보 라인 (원본: "김보성 님을 피보험자로 하는 보유계약은 현재 6 건이며,")
+        c.setFillColor(HexColor('#000000'))
+        c.setFont(font_name, 12)
+        c.drawString(30, y, f"{customer_name}")
+
+        x_pos = 30 + c.stringWidth(f"{customer_name}", font_name, 12) + 5
+        c.setFont(font_name, 10)
+        c.drawString(x_pos, y, "님을 피보험자로 하는 보유계약은 현재")
+
+        x_pos += c.stringWidth("님을 피보험자로 하는 보유계약은 현재", font_name, 10) + 8
+        c.setFillColor(HexColor('#0066CC'))
+        c.setFont(font_name, 14)
+        c.drawString(x_pos, y - 1, f"{len(contracts)}")
+
+        x_pos += c.stringWidth(f"{len(contracts)}", font_name, 14) + 8
+        c.setFillColor(HexColor('#000000'))
+        c.setFont(font_name, 10)
+        c.drawString(x_pos, y, "건이며,")
+
+        y -= 20
+
+        # 월 보험료 라인 (원본: "현재 납입중인 월 보험료는 총 1,809,150 원 입니다.")
+        c.setFont(font_name, 10)
+        c.drawString(30, y, "현재 납입중인 월 보험료는 총")
+
+        x_pos = 30 + c.stringWidth("현재 납입중인 월 보험료는 총", font_name, 10) + 12
+        c.setFillColor(HexColor('#0066CC'))
+        c.setFont(font_name, 14)
+        c.drawString(x_pos, y - 1, f"{total_premium:,}")
+
+        x_pos += c.stringWidth(f"{total_premium:,}", font_name, 14) + 3
+        c.setFillColor(HexColor('#000000'))
+        c.setFont(font_name, 10)
+        c.drawString(x_pos, y, "원 입니다.")
+
+        y -= 30
+
+        if not contracts:
+            c.setFont(font_name, 12)
+            c.drawString(30, y, "등록된 계약이 없습니다.")
+            return
+
+        # 3. 테이블 - Paragraph 스타일 (줄바꿈 지원)
+        styles = getSampleStyleSheet()
+        cell_style = ParagraphStyle(
+            'CellStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=7,
+            leading=9,
+        )
+        header_style = ParagraphStyle(
+            'HeaderStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=7,
+            leading=9,
+            textColor=HexColor('#0066CC'),
+        )
+
+        # 테이블 헤더 (원본과 정확히 동일)
+        headers = ['순번', '증권번호', '보험상품', '계약자', '피보험자', '계약일', '계약상태', '가입금액(만원)', '보험기간', '납입기간', '보험료(원)']
+        header_row = [Paragraph(h, header_style) for h in headers]
+
+        # 테이블 데이터
+        data = [header_row]
+        for contract in contracts:
+            row = [
+                Paragraph(str(contract.순번), cell_style),
+                Paragraph(contract.증권번호 or '-', cell_style),
+                Paragraph(contract.보험상품 or '-', cell_style),
+                Paragraph(contract.계약자 or '-', cell_style),
+                Paragraph(contract.피보험자 or '-', cell_style),
+                Paragraph(contract.계약일 or '-', cell_style),
+                Paragraph(contract.계약상태, cell_style),
+                Paragraph(f"{contract.가입금액:,}", cell_style),
+                Paragraph(contract.보험기간 or '-', cell_style),
+                Paragraph(contract.납입기간 or '-', cell_style),
+                Paragraph(f"{contract.보험료:,}", cell_style),
+            ]
+            data.append(row)
+
+        # 컬럼 너비 (계약자/피보험자 확장 - 한글 줄바꿈 방지)
+        # 순번, 증권번호, 보험상품, 계약자, 피보험자, 계약일, 계약상태, 가입금액, 보험기간, 납입기간, 보험료
+        col_widths = [22, 55, 110, 55, 50, 55, 32, 45, 32, 32, 52]
+
+        table = Table(data, colWidths=col_widths)
+
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#F8F8F8')),
+            ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#CCCCCC')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('ALIGN', (7, 1), (7, -1), 'RIGHT'),
+            ('ALIGN', (10, 1), (10, -1), 'RIGHT'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+
+        table_width, table_height = table.wrap(width - 60, height)
+        table.drawOn(c, 30, y - table_height)
+
+        y = y - table_height - 15
+
+        # 4. 하단 총 월보험료
+        c.setFillColor(HexColor('#000000'))
+        c.setFont(font_name, 10)
+        c.drawRightString(width - 30, y, f"총 월보험료: {total_premium:,}원")
 
     def parse_pdf(self, pdf_path: str) -> Dict[str, Any]:
         """PDF에서 데이터 추출 (실제 메트라이프 AR PDF 형식)"""
@@ -463,11 +530,12 @@ class ARGenerator:
                             contract = Contract(순번=순번)
                             contract.증권번호 = policy_num
 
-                            # 인덱스 기반으로 각 필드 추출 (줄바꿈 제거)
+                            # 인덱스 기반으로 각 필드 추출 (줄바꿈 제거 - 원본 데이터 복원)
                             def get_cell(col_name: str, default_idx: int = -1) -> str:
                                 idx = col_map.get(col_name, default_idx)
                                 if idx >= 0 and idx < len(row) and row[idx]:
-                                    return str(row[idx]).replace('\n', ' ').replace('  ', ' ').strip()
+                                    # 줄바꿈 제거 (PDF 표시용 줄바꿈을 원본 데이터로 복원)
+                                    return str(row[idx]).replace('\n', '').strip()
                                 return ''
 
                             # 보험상품
