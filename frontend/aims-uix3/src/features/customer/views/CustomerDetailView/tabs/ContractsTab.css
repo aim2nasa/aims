@@ -935,6 +935,12 @@ html[data-theme="dark"] .contract-history-accordion__header--expanded {
   text-align: center;
 }
 
+/* 가입금액, 보험료 우측 정렬 */
+.contract-history-accordion__header > .contract-history-item__amount,
+.contract-history-accordion__header > .contract-history-item__premium {
+  text-align: right;
+}
+
 /* 순번 */
 .contract-history-item__seq {
   text-align: center;
