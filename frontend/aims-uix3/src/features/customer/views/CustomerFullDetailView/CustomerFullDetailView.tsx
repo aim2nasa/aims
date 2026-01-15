@@ -792,61 +792,62 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   {/* 🍎 고객 정보 탭 콘텐츠 */}
                   {customerInfoTab === 'info' && (
                     <>
-                      {/* 🍎 기본정보 테이블 (3행 컴팩트 레이아웃) */}
-                      <table className="customer-info-table customer-info-table--compact">
-                        <tbody>
-                          {/* Row 1: 이름, 생년월일, 성별, 유형 (모두 짧은 필드) */}
-                          <tr>
-                            <td className="customer-info-table__label">이름</td>
-                            <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
-                            <td className="customer-info-table__label">생년월일</td>
-                            <td className="customer-info-table__value">{formatDate(customer.personal_info?.birth_date)}</td>
-                            <td className="customer-info-table__label">성별</td>
-                            <td className="customer-info-table__value">
-                              {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
-                            </td>
-                            <td className="customer-info-table__label">유형</td>
-                            <td className="customer-info-table__value">
-                              <span className="customer-info-table__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
-                            </td>
-                          </tr>
-                          {/* Row 2: 휴대폰, 이메일 (중간 길이 필드) */}
-                          <tr>
-                            <td className="customer-info-table__label">휴대폰</td>
-                            <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
-                            <td className="customer-info-table__label">이메일</td>
-                            <td className="customer-info-table__value" colSpan={5}>{customer.personal_info?.email || '-'}</td>
-                          </tr>
-                          {/* Row 3: 주소 (긴 필드, 전체 행 사용) */}
-                          <tr>
-                            <td className="customer-info-table__label">주소</td>
-                            <td className="customer-info-table__value" colSpan={7}>
-                              <div className="customer-info-table__address-wrapper">
-                                <span className="customer-info-table__address-text">
-                                  {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
-                                  {customer.personal_info?.address?.address1 || '-'}
-                                  {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                      {/* 🍎 기본정보 그리드 (반응형 레이아웃) */}
+                      <div className="customer-info-grid">
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">이름</span>
+                          <span className="customer-info-grid__value">{customer.personal_info?.name || '-'}</span>
+                        </div>
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">생년월일</span>
+                          <span className="customer-info-grid__value">{formatDate(customer.personal_info?.birth_date)}</span>
+                        </div>
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">성별</span>
+                          <span className="customer-info-grid__value">
+                            {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
+                          </span>
+                        </div>
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">유형</span>
+                          <span className="customer-info-grid__value">
+                            <span className="customer-info-grid__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
+                          </span>
+                        </div>
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">휴대폰</span>
+                          <span className="customer-info-grid__value">{customer.personal_info?.mobile_phone || '-'}</span>
+                        </div>
+                        <div className="customer-info-grid__item">
+                          <span className="customer-info-grid__label">이메일</span>
+                          <span className="customer-info-grid__value">{customer.personal_info?.email || '-'}</span>
+                        </div>
+                        <div className="customer-info-grid__item customer-info-grid__item--full">
+                          <span className="customer-info-grid__label">주소</span>
+                          <span className="customer-info-grid__value customer-info-grid__address">
+                            <span className="customer-info-grid__address-text">
+                              {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
+                              {customer.personal_info?.address?.address1 || '-'}
+                              {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                            </span>
+                            <Tooltip content="주소 변경 이력 보기">
+                              <button
+                                className="customer-info-grid__history-btn"
+                                onClick={addressArchiveController.open}
+                                aria-label="주소 변경 이력"
+                                type="button"
+                              >
+                                <span className="customer-info-grid__history-label">
+                                  이력({addressArchiveController.addressHistory.length})
                                 </span>
-                                <Tooltip content="주소 변경 이력 보기">
-                                  <button
-                                    className="customer-info-table__address-history-btn"
-                                    onClick={addressArchiveController.open}
-                                    aria-label="주소 변경 이력"
-                                    type="button"
-                                  >
-                                    <span className="customer-info-table__address-history-label">
-                                      이력({addressArchiveController.addressHistory.length})
-                                    </span>
-                                    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="customer-info-table__address-history-icon">
-                                      <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
-                                    </svg>
-                                  </button>
-                                </Tooltip>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="customer-info-grid__history-icon">
+                                  <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
+                                </svg>
+                              </button>
+                            </Tooltip>
+                          </span>
+                        </div>
+                      </div>
                       {/* 가족 리스트 - 구분선 없이 바로 아래 */}
                       <div className="customer-info-family-list">
                         <RelationshipsTab
