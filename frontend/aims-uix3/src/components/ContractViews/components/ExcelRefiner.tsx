@@ -2188,6 +2188,7 @@ export function ExcelRefiner() {
     if (corporateSheet) {
       const nameIdx = findCustomerNameColIndex(corporateSheet)
       const contactIdx = findColIndex(corporateSheet, '연락처')
+      const emailIdx = findColIndex(corporateSheet, '이메일')
       const addressIdx = findColIndex(corporateSheet, '주소')
 
       if (nameIdx !== -1) {
@@ -2200,6 +2201,10 @@ export function ExcelRefiner() {
           if (contactIdx !== -1) {
             const phone = cellToString(row[contactIdx] as CellValue).trim()
             if (phone) { customer.mobile_phone = phone; phoneMap.set(name, phone) }
+          }
+          if (emailIdx !== -1) {
+            const email = cellToString(row[emailIdx] as CellValue).trim()
+            if (email) customer.email = email
           }
           if (addressIdx !== -1) {
             const addr = cellToString(row[addressIdx] as CellValue).trim()

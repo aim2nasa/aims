@@ -3866,6 +3866,16 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
             changes.push('생년월일');
           }
 
+          // 이메일 비교/업데이트
+          if (customer.email && customer.email !== existingCustomer.personal_info?.email) {
+            if (hasPersonalInfo) {
+              updateFields['personal_info.email'] = customer.email;
+            } else {
+              updateFields['personal_info'] = { name: existingCustomer.personal_info?.name || customer.name, email: customer.email };
+            }
+            changes.push('이메일');
+          }
+
           // 고객 유형 비교/업데이트
           if (customer.customer_type && customer.customer_type !== existingCustomer.insurance_info?.customer_type) {
             if (hasInsuranceInfo) {
@@ -3908,6 +3918,7 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
             personal_info: {
               name: name,
               mobile_phone: customer.mobile_phone || undefined,
+              email: customer.email || undefined,
               gender: normalizedGender,
               birth_date: customer.birth_date || undefined,
               address: customer.address ? { address1: customer.address } : undefined

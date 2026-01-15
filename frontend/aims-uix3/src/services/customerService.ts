@@ -481,6 +481,7 @@ export interface BulkCustomerInput {
   name: string;
   customer_type: '개인' | '법인';
   mobile_phone?: string;
+  email?: string;
   address?: string;
   gender?: string;
   birth_date?: string;
