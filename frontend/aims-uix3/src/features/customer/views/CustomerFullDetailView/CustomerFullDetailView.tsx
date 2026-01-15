@@ -114,9 +114,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
-  const DEFAULT_TOP_LEFT_WIDTH = 38 // 🍎 상단: 고객정보 ↔ 보험계약
-  const DEFAULT_BOTTOM_LEFT_WIDTH = 38 // 🍎 하단: 문서 ↔ Annual Report
-  const DEFAULT_TOP_ROW_FLEX = 1 // 🍎 상단/하단 행 동일 높이
+  const DEFAULT_TOP_LEFT_WIDTH = 31 // 🍎 상단: 고객정보(31%) ↔ 보험계약(69%)
+  const DEFAULT_BOTTOM_LEFT_WIDTH = 55 // 🍎 하단: 문서(55%) ↔ Annual Report(45%)
+  const DEFAULT_TOP_ROW_FLEX = 0.81 // 🍎 상단 행이 하단보다 약간 작음
 
   // 🍎 localStorage에서 저장된 레이아웃 불러오기
   const getInitialLayoutValues = () => {
