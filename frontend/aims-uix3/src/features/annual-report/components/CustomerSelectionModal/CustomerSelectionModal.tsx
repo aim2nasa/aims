@@ -128,6 +128,23 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     return phone;
   };
 
+  // 주소 포맷 (시/구까지만 표시)
+  const formatAddress = (customer: Customer): string => {
+    const addressObj = customer.personal_info?.address;
+    if (!addressObj) return '-';
+
+    // address1 또는 address2에서 주소 추출
+    const fullAddress = addressObj.address1 || addressObj.address2 || '';
+    if (!fullAddress) return '-';
+
+    // 시/도 + 구/군까지만 표시 (예: "서울시 강남구")
+    const parts = fullAddress.split(' ');
+    if (parts.length >= 2) {
+      return parts.slice(0, 2).join(' ');
+    }
+    return fullAddress.length > 15 ? fullAddress.slice(0, 15) + '...' : fullAddress;
+  };
+
   const footer = (
     <div className="customer-selection-modal__footer">
       <Button
@@ -158,7 +175,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     >
       <div className="customer-selection-modal">
         <p className="customer-selection-modal__description">
-          <strong>"{arMetadata.customer_name}"</strong>님의 AR을 등록할 고객을 선택하세요.
+          <strong>{arMetadata.customer_name}</strong>님의 AR을 등록할 고객을 선택하세요.
         </p>
 
         <div className="customer-selection-modal__table-container">
@@ -169,6 +186,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                 <th className="customer-selection-modal__th--name">고객명</th>
                 <th className="customer-selection-modal__th--birth">생년월일</th>
                 <th className="customer-selection-modal__th--phone">휴대폰</th>
+                <th className="customer-selection-modal__th--address">주소</th>
                 <th className="customer-selection-modal__th--type">구분</th>
                 <th className="customer-selection-modal__th--date">등록일</th>
                 <th className="customer-selection-modal__th--count">계약</th>
@@ -203,6 +221,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                     </td>
                     <td className="customer-selection-modal__td--phone">
                       {formatPhone(customer)}
+                    </td>
+                    <td className="customer-selection-modal__td--address">
+                      {formatAddress(customer)}
                     </td>
                     <td className="customer-selection-modal__td--type">
                       {customer.insurance_info?.customer_type || '개인'}
