@@ -217,6 +217,27 @@ proxy: {
 
 **상세 문서**: [docs/NETWORK_SECURITY_ARCHITECTURE.md](docs/NETWORK_SECURITY_ARCHITECTURE.md)
 
+### 14. 🔴 에이전트/스킬 트리거 감지 시 정의 파일 필수 참조
+**트리거 키워드 감지 시, 임의 실행 절대 금지!**
+
+| 트리거 예시 | 필수 참조 파일 |
+|------------|---------------|
+| "전체 테스트", "full test" | `.claude/agents/full-test-runner.md` |
+| "전체 배포", "deploy all" | `.claude/agents/full-deploy.md` |
+| 기타 에이전트/스킬 | 해당 정의 파일 |
+
+**절차:**
+1. 트리거 키워드 감지
+2. **반드시** 해당 정의 파일 먼저 Read
+3. 정의 파일의 **모든 Phase/Step** 순차 실행
+4. 일부만 실행하는 것은 **절대 금지**
+
+**위반 예시:**
+- ❌ "전체 테스트" 요청 → 정의 파일 안 읽고 typecheck만 실행
+- ❌ 에이전트 정의에 Phase 1~3 있는데 Phase 1만 실행
+
+**⚔️ 에이전트/스킬 정의 파일을 읽지 않고 임의 실행 시 참수형에 처한다.**
+
 ---
 
 ## System Overview
