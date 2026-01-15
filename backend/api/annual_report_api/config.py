@@ -12,35 +12,70 @@ from version import APP_VERSION, VERSION_INFO
 # .env 파일 로드
 load_dotenv()
 
-# AI 모델 설정 캐싱
+# AI 모델/파서 설정 캐싱
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
-_ai_model_cache = {"model": None, "timestamp": 0}
-_AI_MODEL_CACHE_TTL = 60  # 1분
+_ai_settings_cache = {"model": None, "parser": None, "timestamp": 0}
+_AI_SETTINGS_CACHE_TTL = 60  # 1분
 
-def get_annual_report_model() -> str:
+def _fetch_ai_settings() -> dict:
     """
-    aims_api에서 연보 파싱 모델 설정 조회 (1분 캐싱)
+    aims_api에서 AI 설정 조회 (내부용)
+
+    Returns:
+        {"model": str, "parser": str}
     """
     now = time.time()
 
     # 캐시 유효성 검사
-    if _ai_model_cache["model"] and (now - _ai_model_cache["timestamp"]) < _AI_MODEL_CACHE_TTL:
-        return _ai_model_cache["model"]
+    if _ai_settings_cache["model"] and (now - _ai_settings_cache["timestamp"]) < _AI_SETTINGS_CACHE_TTL:
+        return {
+            "model": _ai_settings_cache["model"],
+            "parser": _ai_settings_cache["parser"]
+        }
 
     # API에서 조회
     try:
         response = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5)
         if response.status_code == 200:
             data = response.json()
-            model = data.get("data", {}).get("annualReport", {}).get("model", "gpt-4.1")
-            _ai_model_cache["model"] = model
-            _ai_model_cache["timestamp"] = now
-            return model
-    except Exception as e:
-        print(f"[AnnualReport] AI 모델 설정 조회 실패: {e}")
+            ar_settings = data.get("data", {}).get("annualReport", {})
+            model = ar_settings.get("model", "gpt-4.1")
+            parser = ar_settings.get("parser", "openai")
 
-    # 실패 시 기본값
-    return _ai_model_cache.get("model") or "gpt-4.1"
+            _ai_settings_cache["model"] = model
+            _ai_settings_cache["parser"] = parser
+            _ai_settings_cache["timestamp"] = now
+
+            return {"model": model, "parser": parser}
+    except Exception as e:
+        print(f"[AnnualReport] AI 설정 조회 실패: {e}")
+
+    # 실패 시 캐시 또는 기본값
+    return {
+        "model": _ai_settings_cache.get("model") or "gpt-4.1",
+        "parser": _ai_settings_cache.get("parser") or "openai"
+    }
+
+
+def get_annual_report_model() -> str:
+    """
+    aims_api에서 연보 파싱 모델 설정 조회 (1분 캐싱)
+
+    Returns:
+        모델명 (예: "gpt-4.1")
+    """
+    return _fetch_ai_settings()["model"]
+
+
+def get_annual_report_parser() -> str:
+    """
+    aims_api에서 연보 파서 타입 조회 (1분 캐싱)
+
+    Returns:
+        파서 타입: "openai" | "pdfplumber" | "upstage"
+        기본값: "openai"
+    """
+    return _fetch_ai_settings()["parser"]
 
 class Settings:
     """API 설정"""
