@@ -13,7 +13,7 @@ import tempfile
 import shutil
 
 from services.detector import is_annual_report, extract_customer_info_from_first_page
-from services.parser import parse_annual_report
+from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
 from system_logger import send_error_log
@@ -238,8 +238,9 @@ def do_parsing_in_background(
         end_page_1indexed = end_page_0indexed + 1  # 1-based로 변환 (예: 3 = 3페이지)
         logger.info(f"📄 계약 테이블 범위: 2 ~ {end_page_1indexed}페이지 (1페이지 제외)")
 
-        # 4. OpenAI API 파싱 (평균 25초, 2~N페이지만)
-        logger.info("Step 4: OpenAI API 파싱 중 (약 25초 소요, 2~N페이지만)...")
+        # 4. AR 파싱 (설정에 따라 파서 선택: openai/pdfplumber/upstage)
+        logger.info("Step 4: AR 파싱 중 (2~N페이지)...")
+        parse_annual_report = get_parser()  # 설정에 따라 파서 선택
         result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page_1indexed)
 
         # 5. 파싱 결과 확인

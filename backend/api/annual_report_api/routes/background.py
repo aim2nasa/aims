@@ -13,7 +13,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from services.detector import is_annual_report, extract_customer_info_from_first_page
-from services.parser import parse_annual_report
+from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
 from config import settings
 from system_logger import send_error_log
@@ -127,6 +127,7 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")
 
         customer_name = doc.get("ar_metadata", {}).get("customer_name")
+        parse_annual_report = get_parser()  # 설정에 따라 파서 선택
         result = parse_annual_report(file_path, customer_name=customer_name)
 
         if "error" in result:
@@ -331,7 +332,8 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # 고객명 가져오기
                 customer_name = doc.get("ar_metadata", {}).get("customer_name")
 
-                # 파싱 실행
+                # 파싱 실행 (설정에 따라 파서 선택)
+                parse_annual_report = get_parser()
                 result = parse_annual_report(file_path, customer_name=customer_name)
 
                 if "error" in result:
