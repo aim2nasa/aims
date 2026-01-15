@@ -132,6 +132,9 @@ const AVAILABLE_AI_MODELS = [
   'o1-pro-2025-03-19'
 ];
 
+// 사용 가능한 AR 파서 목록
+const AVAILABLE_AR_PARSERS = ['openai', 'pdfplumber', 'upstage'];
+
 // 기본 AI 모델 설정
 const DEFAULT_AI_MODEL_SETTINGS = {
   chat: {
@@ -146,8 +149,10 @@ const DEFAULT_AI_MODEL_SETTINGS = {
   },
   annualReport: {
     model: 'gpt-4.1',
+    parser: 'openai',  // openai | pdfplumber | upstage
     description: 'Annual Report PDF 파싱',
-    availableModels: AVAILABLE_AI_MODELS
+    availableModels: AVAILABLE_AI_MODELS,
+    availableParsers: AVAILABLE_AR_PARSERS
   }
 };
 
@@ -343,11 +348,15 @@ module.exports = function(db, authenticateJWT, requireRole) {
         delete settings._id;
         delete settings.updatedAt;
         delete settings.updatedBy;
-        // 항상 최신 availableModels 사용
+        // 항상 최신 availableModels/availableParsers 사용
         for (const service of ['chat', 'rag', 'annualReport']) {
           if (settings[service]) {
             settings[service].availableModels = AVAILABLE_AI_MODELS;
           }
+        }
+        // annualReport에 availableParsers 추가
+        if (settings.annualReport) {
+          settings.annualReport.availableParsers = AVAILABLE_AR_PARSERS;
         }
       }
 
@@ -499,6 +508,13 @@ function validateAIModelSettings(settings) {
     const available = DEFAULT_AI_MODEL_SETTINGS[service].availableModels;
     if (!available.includes(settings[service].model)) {
       return `${service}에 사용할 수 없는 모델입니다: ${settings[service].model}`;
+    }
+  }
+
+  // annualReport parser 유효성 검증
+  if (settings.annualReport && settings.annualReport.parser) {
+    if (!AVAILABLE_AR_PARSERS.includes(settings.annualReport.parser)) {
+      return `사용할 수 없는 AR 파서입니다: ${settings.annualReport.parser}. 사용 가능: ${AVAILABLE_AR_PARSERS.join(', ')}`;
     }
   }
 
