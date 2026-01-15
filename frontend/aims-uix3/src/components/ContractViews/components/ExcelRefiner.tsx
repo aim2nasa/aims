@@ -174,6 +174,96 @@ function partitionBulkResultByType(
   }
 }
 
+/**
+ * P2-3: 일괄등록 결과 메시지 생성 유틸리티 함수
+ * 개인/법인별 상세 결과를 포함한 actionLog 메시지 생성
+ */
+function buildCustomerResultMessage(partitioned: PartitionedCustomerResult): {
+  message: string
+  status: 'success' | 'partial' | 'skipped' | 'error'
+} {
+  const 개인 = {
+    created: partitioned.개인고객.created.length,
+    updated: partitioned.개인고객.updated.length,
+    skipped: partitioned.개인고객.skipped.length,
+    errors: partitioned.개인고객.errors.length,
+    total: 0
+  }
+  개인.total = 개인.created + 개인.updated + 개인.skipped + 개인.errors
+
+  const 법인 = {
+    created: partitioned.법인고객.created.length,
+    updated: partitioned.법인고객.updated.length,
+    skipped: partitioned.법인고객.skipped.length,
+    errors: partitioned.법인고객.errors.length,
+    total: 0
+  }
+  법인.total = 법인.created + 법인.updated + 법인.skipped + 법인.errors
+
+  // 전체 통계
+  const totalCreated = 개인.created + 법인.created
+  const totalUpdated = 개인.updated + 법인.updated
+  const totalSkipped = 개인.skipped + 법인.skipped
+  const totalErrors = 개인.errors + 법인.errors
+  const totalProcessed = 개인.total + 법인.total
+
+  // 개인고객 상세 메시지 생성
+  const buildTypeMessage = (
+    type: '개인' | '법인',
+    stats: typeof 개인
+  ): string | null => {
+    if (stats.total === 0) return null
+    const details: string[] = []
+    const unit = type === '개인' ? '명' : '개'
+    if (stats.created > 0) details.push(`${stats.created}${unit} 신규`)
+    if (stats.updated > 0) details.push(`${stats.updated}${unit} 업데이트`)
+    if (stats.skipped > 0) details.push(`${stats.skipped}${unit} 중복`)
+    if (stats.errors > 0) details.push(`${stats.errors}${unit} 오류`)
+    return `${type} ${details.join(' / ')}`
+  }
+
+  const parts: string[] = []
+  const 개인Msg = buildTypeMessage('개인', 개인)
+  const 법인Msg = buildTypeMessage('법인', 법인)
+  if (개인Msg) parts.push(개인Msg)
+  if (법인Msg) parts.push(법인Msg)
+
+  // 상태 결정
+  let icon: string
+  let prefix: string
+  let status: 'success' | 'partial' | 'skipped' | 'error'
+
+  if (totalProcessed === 0) {
+    // 처리할 고객이 없음
+    return { message: 'ℹ️ 등록할 고객 없음', status: 'skipped' }
+  } else if (totalCreated + totalUpdated === 0 && totalSkipped > 0 && totalErrors === 0) {
+    // 전체 중복 (변경 없음)
+    icon = 'ℹ️'
+    prefix = '변경 없음'
+    status = 'skipped'
+  } else if (totalCreated + totalUpdated === 0 && totalErrors > 0) {
+    // 전체 오류
+    icon = '✗'
+    prefix = '등록 실패'
+    status = 'error'
+  } else if (totalSkipped > 0 || totalErrors > 0) {
+    // 일부 성공
+    icon = '⚠️'
+    prefix = '일부 등록'
+    status = 'partial'
+  } else {
+    // 전체 성공
+    icon = '✓'
+    prefix = '고객 등록 완료'
+    status = 'success'
+  }
+
+  return {
+    message: `${icon} ${prefix}: ${parts.join(', ')}`,
+    status
+  }
+}
+
 // sessionStorage에 저장할 상태 타입
 interface PersistedState {
   fileName: string | null
@@ -2249,49 +2339,20 @@ export function ExcelRefiner() {
           errors: Array.isArray(rawResult?.errors) ? rawResult.errors : []
         }
 
-        // 결과 메시지 생성
-        const hasSuccess = result.createdCount > 0 || result.updatedCount > 0
-        const hasFailure = result.skippedCount > 0 || result.errorCount > 0
-
-        let statusIcon: string
-        let statusText: string
-        if (hasSuccess && !hasFailure) {
-          statusIcon = '✓'
-          statusText = '일괄등록 완료'
-        } else if (hasSuccess && hasFailure) {
-          statusIcon = '⚠️'
-          statusText = '일괄등록 일부 완료'
-        } else {
-          statusIcon = '✗'
-          statusText = '일괄등록 실패'
-        }
-
-        const parts: string[] = [`${statusIcon} ${statusText}`]
-
-        if (result.createdCount > 0) {
-          parts.push(`${result.createdCount}명 생성`)
-        }
-        if (result.updatedCount > 0) {
-          parts.push(`${result.updatedCount}명 정보 업데이트`)
-        }
-        if (result.skippedCount > 0) {
-          parts.push(`${result.skippedCount}명 변경없음`)
-        }
-        if (result.errorCount > 0) {
-          parts.push(`오류 ${result.errorCount}건`)
-        }
-
-        setActionLog(parts.join(' | '))
-
-        // 결과 저장 (Wizard 표시용) - 고객 시트만 처리한 경우 (신규 생성만 성공으로 카운트)
-        setImportResult({
-          개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (개인고객Count / customers.length)) : 0 },
-          법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (법인고객Count / customers.length)) : 0 },
-          계약: { total: 0, success: 0 }
-        })
-
         // 상세 결과 저장 (결과 상세 모달용) - P2-2: 헬퍼 함수 사용
         const partitioned = partitionBulkResultByType(result, customers)
+
+        // P2-3: 개선된 결과 메시지 생성 (개인/법인별 상세 정보 포함)
+        const { message: resultMessage, status: resultStatus } = buildCustomerResultMessage(partitioned)
+        setActionLog(resultMessage)
+
+        // 결과 저장 (Wizard 표시용) - 고객 시트만 처리한 경우 (신규 생성 + 업데이트를 성공으로 카운트)
+        const successCount = result.createdCount + result.updatedCount
+        setImportResult({
+          개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(successCount * (개인고객Count / customers.length)) : 0 },
+          법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(successCount * (법인고객Count / customers.length)) : 0 },
+          계약: { total: 0, success: 0 }
+        })
 
         // 데이터가 있는 탭을 기본 선택
         const 개인Total = partitioned.개인고객.created.length + partitioned.개인고객.updated.length + partitioned.개인고객.skipped.length + partitioned.개인고객.errors.length
@@ -2299,6 +2360,15 @@ export function ExcelRefiner() {
         let defaultTab: '개인고객' | '법인고객' | '계약' = '개인고객'
         if (개인Total > 0) defaultTab = '개인고객'
         else if (법인Total > 0) defaultTab = '법인고객'
+
+        // 상태 텍스트 (P2-3: 개선된 상태 매핑)
+        const statusTextMap: Record<typeof resultStatus, string> = {
+          success: '일괄등록 완료',
+          partial: '일괄등록 일부 완료',
+          skipped: '변경 없음 (중복)',
+          error: '일괄등록 실패'
+        }
+        const statusText = statusTextMap[resultStatus]
 
         setImportResultDetail({
           isOpen: false,
@@ -2333,18 +2403,20 @@ export function ExcelRefiner() {
               errors: Array.isArray(rawResult?.errors) ? rawResult.errors : []
             }
 
-            const parts: string[] = []
-            if (result.createdCount > 0) parts.push(`${result.createdCount}명 생성`)
-            if (result.updatedCount > 0) parts.push(`${result.updatedCount}명 업데이트`)
-            setActionLog(`✓ 고객 등록 완료: ${parts.join(', ')}`)
-            setImportResult({
-              개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (개인고객Count / customers.length)) : 0 },
-              법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(result.createdCount * (법인고객Count / customers.length)) : 0 },
-              계약: { total: 0, success: 0 }
-            })
-
             // 상세 결과 저장 (결과 상세 모달용) - P2-2: 헬퍼 함수 사용
             const partitioned = partitionBulkResultByType(result, customers)
+
+            // P2-3: 개선된 결과 메시지 생성
+            const { message: resultMessage, status: resultStatus } = buildCustomerResultMessage(partitioned)
+            setActionLog(resultMessage)
+
+            // 신규 생성 + 업데이트를 성공으로 카운트
+            const successCount = result.createdCount + result.updatedCount
+            setImportResult({
+              개인고객: { total: 개인고객Count, success: customers.length > 0 ? Math.round(successCount * (개인고객Count / customers.length)) : 0 },
+              법인고객: { total: 법인고객Count, success: customers.length > 0 ? Math.round(successCount * (법인고객Count / customers.length)) : 0 },
+              계약: { total: 0, success: 0 }
+            })
 
             // 데이터가 있는 탭을 기본 선택
             const 개인Total = partitioned.개인고객.created.length + partitioned.개인고객.updated.length + partitioned.개인고객.skipped.length + partitioned.개인고객.errors.length
@@ -2353,12 +2425,14 @@ export function ExcelRefiner() {
             if (개인Total > 0) defaultTab = '개인고객'
             else if (법인Total > 0) defaultTab = '법인고객'
 
-            // 상태 텍스트
-            const hasSuccess = result.createdCount > 0 || result.updatedCount > 0
-            const hasFailure = result.skippedCount > 0 || result.errorCount > 0
-            let statusText = '일괄등록 완료'
-            if (hasSuccess && hasFailure) statusText = '일괄등록 일부 완료'
-            else if (!hasSuccess) statusText = '일괄등록 실패'
+            // 상태 텍스트 (P2-3: 개선된 상태 매핑)
+            const statusTextMap: Record<typeof resultStatus, string> = {
+              success: '일괄등록 완료',
+              partial: '일괄등록 일부 완료',
+              skipped: '변경 없음 (중복)',
+              error: '일괄등록 실패'
+            }
+            const statusText = statusTextMap[resultStatus]
 
             setImportResultDetail({
               isOpen: false,
@@ -2707,13 +2781,27 @@ export function ExcelRefiner() {
     // 각 시트의 상태 확인
     const getSheetStatus = (name: string) => sheetValidationStatus.get(name) || 'pending'
 
-    // 등록 결과 상태 계산
-    let resultStatus: 'success' | 'partial' | 'error' | null = null
+    // 등록 결과 상태 계산 (P2-3: 'skipped' 상태 추가)
+    let resultStatus: 'success' | 'partial' | 'error' | 'skipped' | null = null
     if (importResult) {
       const totalItems = importResult.개인고객.total + importResult.법인고객.total + importResult.계약.total
       const successItems = importResult.개인고객.success + importResult.법인고객.success + importResult.계약.success
+
+      // P2-3: 중복(스킵) 여부 확인
+      const totalSkipped = importResultDetail.개인고객.skipped.length +
+                           importResultDetail.법인고객.skipped.length +
+                           importResultDetail.계약.skipped.length
+      const totalErrors = importResultDetail.개인고객.errors.length +
+                          importResultDetail.법인고객.errors.length +
+                          importResultDetail.계약.errors.length
+
       if (successItems === 0 && totalItems > 0) {
-        resultStatus = 'error'
+        // P2-3: 모두 스킵(중복)인 경우와 오류인 경우 구분
+        if (totalSkipped > 0 && totalErrors === 0) {
+          resultStatus = 'skipped'
+        } else {
+          resultStatus = 'error'
+        }
       } else if (successItems === totalItems && totalItems > 0) {
         resultStatus = 'success'
       } else if (successItems > 0) {
@@ -2744,6 +2832,19 @@ export function ExcelRefiner() {
 
     if (allValid || canProceedWithUnmatched) {
       if (importResult && resultStatus) {
+        // P2-3: 'skipped' 상태일 때 별도 메시지
+        if (resultStatus === 'skipped') {
+          const totalSkipped = importResultDetail.개인고객.skipped.length +
+                               importResultDetail.법인고객.skipped.length +
+                               importResultDetail.계약.skipped.length
+          return {
+            step: 4,
+            label: '등록결과',
+            message: `변경 없음 (${totalSkipped}건 중복)`,
+            resultStatus
+          }
+        }
+
         // 퍼센트 계산 헬퍼
         const pct = (s: number, t: number) => t > 0 ? Math.round((s / t) * 100) : 0
         const fmt = (s: number, t: number) => `${pct(s, t)}%(${s}/${t})`
@@ -2779,7 +2880,7 @@ export function ExcelRefiner() {
     }
 
     return { step: 1, label: '개인고객', message: '검증 대기', resultStatus: null }
-  }, [sheets, sheetValidationStatus, sheetIssueCount, importResult, allowUnmatchedProducts, productMatchResult])
+  }, [sheets, sheetValidationStatus, sheetIssueCount, importResult, importResultDetail, allowUnmatchedProducts, productMatchResult])
 
   // 컬럼별 검증 실패 이유 생성
   const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
@@ -3177,7 +3278,10 @@ export function ExcelRefiner() {
                       onClick={wizardStep.resultStatus ? () => setImportResultDetail(prev => ({ ...prev, isOpen: true })) : undefined}
                     >
                       <span className="excel-refiner__wizard-step-number">
-                        {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : importStepNumber}
+                        {wizardStep.resultStatus === 'success' ? '✓' :
+                         wizardStep.resultStatus === 'error' ? '✕' :
+                         wizardStep.resultStatus === 'skipped' ? 'ℹ' :
+                         importStepNumber}
                       </span>
                       <span className="excel-refiner__wizard-step-label">
                         {wizardStep.step === 4 && wizardStep.resultStatus

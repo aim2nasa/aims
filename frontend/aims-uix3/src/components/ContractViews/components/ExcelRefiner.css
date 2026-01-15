@@ -633,6 +633,26 @@ html[data-theme="dark"] .excel-refiner__wizard-step--result-error .excel-refiner
   background: var(--color-error-600);
 }
 
+/* 전체 중복 (변경 없음) - 회색/중립 */
+.excel-refiner__wizard-step--result-skipped {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.excel-refiner__wizard-step--result-skipped .excel-refiner__wizard-step-number {
+  background: var(--color-gray-400);
+  color: var(--color-text-inverse);
+}
+
+html[data-theme="dark"] .excel-refiner__wizard-step--result-skipped {
+  background: var(--color-gray-800);
+  color: var(--color-gray-400);
+}
+
+html[data-theme="dark"] .excel-refiner__wizard-step--result-skipped .excel-refiner__wizard-step-number {
+  background: var(--color-gray-600);
+}
+
 /* 클릭 가능한 등록결과 스텝 */
 .excel-refiner__wizard-step--clickable {
   cursor: pointer;
