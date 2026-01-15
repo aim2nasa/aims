@@ -3,6 +3,8 @@ AR Generator - AIMS Annual Report PDF 생성 도구
 Python GUI 버전 (exe 패키징용)
 """
 
+__version__ = "0.1.3"
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
@@ -10,6 +12,7 @@ import os
 import sys
 from typing import List, Dict, Any
 import random
+import re
 
 # PDF 생성
 from reportlab.lib.pagesizes import A4
@@ -318,6 +321,229 @@ class ARGenerator:
         total_premium = sum(ct.보험료 for ct in contracts)
         c.drawString(420, y, f"총 월보험료: {total_premium:,}원")
 
+    def parse_pdf(self, pdf_path: str) -> Dict[str, Any]:
+        """PDF에서 데이터 추출 (실제 메트라이프 AR PDF 형식)"""
+        if not HAS_PREVIEW:
+            raise Exception("PyMuPDF가 설치되지 않았습니다.")
+
+        doc = fitz.open(pdf_path)
+        result = {
+            'customer_name': '',
+            'issue_date': '',
+            'fsr_name': '',
+            'contracts': []
+        }
+
+        # 1페이지: 표지 - 고객명, 발행일, FSR 추출
+        if len(doc) >= 1:
+            page1_text = doc[0].get_text()
+
+            # 고객명 추출 ("xxx 고객님을 위한" 패턴)
+            customer_match = re.search(r'([가-힣]+)\s*고객님을\s*위한', page1_text)
+            if customer_match:
+                result['customer_name'] = customer_match.group(1)
+
+            # 발행일 추출 ("발행(기준)일 : YYYY년 MM월 DD일" 형식)
+            date_match = re.search(r'발행\(?기준\)?일[:\s]*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일', page1_text)
+            if date_match:
+                result['issue_date'] = f"{date_match.group(1)}-{int(date_match.group(2)):02d}-{int(date_match.group(3)):02d}"
+            else:
+                date_match2 = re.search(r'발행\(?기준\)?일[:\s]*(\d{4}-\d{2}-\d{2})', page1_text)
+                if date_match2:
+                    result['issue_date'] = date_match2.group(1)
+
+            # FSR 추출 ("송유미 FSR" 또는 "담당 : 송유미 FSR" 형식)
+            fsr_match = re.search(r'([가-힣]{2,4})\s*FSR', page1_text)
+            if fsr_match:
+                result['fsr_name'] = fsr_match.group(1)
+
+        # 2페이지 이후: 계약 목록 추출 (테이블 형식)
+        # 메트라이프 AR PDF 컬럼 순서: 순번, 증권번호, 보험상품, 계약자, 피보험자, 계약일, 계약상태, 가입금액, 보험기간, 납입기간, 보험료(원)
+        contracts = []
+        순번 = 0
+
+        # 컬럼 이름 매핑
+        COLUMN_NAMES = ['순번', '증권번호', '보험상품', '계약자', '피보험자', '계약일', '계약상태', '가입금액', '보험기간', '납입기간', '보험료']
+
+        for page_num in range(1, len(doc)):
+            page = doc[page_num]
+
+            # 테이블 추출 시도 (PyMuPDF 1.23+)
+            try:
+                tables = page.find_tables()
+                if tables and len(tables.tables) > 0:
+                    for table in tables.tables:
+                        data = table.extract()
+                        if not data or len(data) < 2:
+                            continue
+
+                        # 헤더 행 찾기 및 컬럼 인덱스 매핑
+                        header_idx = -1
+                        col_map = {}  # 컬럼명 -> 인덱스
+
+                        for i, row in enumerate(data):
+                            row_text = ' '.join([str(cell) if cell else '' for cell in row])
+                            if '증권번호' in row_text and '보험상품' in row_text:
+                                header_idx = i
+                                # 헤더 컬럼 인덱스 매핑
+                                for j, cell in enumerate(row):
+                                    if cell:
+                                        cell_str = str(cell).strip()
+                                        for col_name in COLUMN_NAMES:
+                                            if col_name in cell_str:
+                                                col_map[col_name] = j
+                                                break
+                                break
+
+                        if header_idx < 0:
+                            continue
+
+                        # 데이터 행 파싱
+                        for row in data[header_idx + 1:]:
+                            if not row or len(row) < 5:
+                                continue
+
+                            # 증권번호 확인 (유효한 행인지 체크)
+                            policy_idx = col_map.get('증권번호', 1)
+                            if policy_idx >= len(row) or not row[policy_idx]:
+                                continue
+
+                            policy_num = str(row[policy_idx]).strip()
+                            if not re.match(r'^\d{10}$', policy_num):
+                                continue
+
+                            순번 += 1
+                            contract = Contract(순번=순번)
+                            contract.증권번호 = policy_num
+
+                            # 인덱스 기반으로 각 필드 추출 (줄바꿈 제거)
+                            def get_cell(col_name: str, default_idx: int = -1) -> str:
+                                idx = col_map.get(col_name, default_idx)
+                                if idx >= 0 and idx < len(row) and row[idx]:
+                                    return str(row[idx]).replace('\n', ' ').replace('  ', ' ').strip()
+                                return ''
+
+                            # 보험상품
+                            product = get_cell('보험상품', 2)
+                            if product:
+                                contract.보험상품 = product
+
+                            # 계약자
+                            contractor = get_cell('계약자', 3)
+                            if contractor:
+                                contract.계약자 = contractor
+
+                            # 피보험자
+                            insured = get_cell('피보험자', 4)
+                            if insured:
+                                contract.피보험자 = insured
+
+                            # 계약일
+                            contract_date = get_cell('계약일', 5)
+                            if contract_date and re.match(r'\d{4}-\d{2}-\d{2}', contract_date):
+                                contract.계약일 = contract_date
+
+                            # 계약상태
+                            status = get_cell('계약상태', 6)
+                            if status in ['정상', '실효', '해지', '만기', '업무처리중']:
+                                contract.계약상태 = status
+
+                            # 가입금액 (만원 단위)
+                            amount_str = get_cell('가입금액', 7).replace(',', '')
+                            if amount_str:
+                                try:
+                                    contract.가입금액 = int(float(amount_str))
+                                except:
+                                    pass
+
+                            # 보험기간
+                            ins_period = get_cell('보험기간', 8)
+                            if ins_period:
+                                contract.보험기간 = ins_period
+
+                            # 납입기간
+                            pay_period = get_cell('납입기간', 9)
+                            if pay_period:
+                                contract.납입기간 = pay_period
+
+                            # 보험료 (원 단위)
+                            premium_str = get_cell('보험료', 10).replace(',', '')
+                            if premium_str:
+                                try:
+                                    contract.보험료 = int(float(premium_str))
+                                except:
+                                    pass
+
+                            contracts.append(contract)
+                    continue  # 테이블 추출 성공 시 다음 페이지로
+            except Exception as e:
+                print(f"테이블 추출 실패, 텍스트 파싱으로 전환: {e}")
+
+            # 테이블 추출 실패 시 텍스트 기반 파싱
+            page_text = page.get_text()
+            lines = page_text.split('\n')
+
+            current_contract = None
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+
+                # 증권번호 패턴으로 새 계약 시작 (10자리 숫자)
+                policy_match = re.match(r'^(\d{10})$', line)
+                if policy_match:
+                    if current_contract and current_contract.증권번호:
+                        contracts.append(current_contract)
+                    순번 += 1
+                    current_contract = Contract(순번=순번)
+                    current_contract.증권번호 = policy_match.group(1)
+                    continue
+
+                if current_contract:
+                    # 상품명
+                    if '무배당' in line and not current_contract.보험상품:
+                        current_contract.보험상품 = line
+
+                    # 계약일
+                    date_match = re.match(r'^(\d{4}-\d{2}-\d{2})$', line)
+                    if date_match and not current_contract.계약일:
+                        current_contract.계약일 = date_match.group(1)
+
+                    # 계약상태
+                    if line in ['정상', '실효', '해지', '만기', '업무처리중']:
+                        current_contract.계약상태 = line
+
+                    # 보험기간/납입기간
+                    if line in ['종신', '80세', '90세', '100세', '일시납']:
+                        if not current_contract.보험기간:
+                            current_contract.보험기간 = line
+                        elif not current_contract.납입기간:
+                            current_contract.납입기간 = line
+                    elif re.match(r'^\d+년$', line) or line == '전기납':
+                        if not current_contract.납입기간:
+                            current_contract.납입기간 = line
+
+                    # 숫자 (가입금액, 보험료)
+                    num_match = re.match(r'^([\d,.]+)$', line.replace(',', ''))
+                    if num_match:
+                        try:
+                            val = float(line.replace(',', ''))
+                            if val >= 100:
+                                if current_contract.가입금액 == 0:
+                                    current_contract.가입금액 = int(val)
+                                elif current_contract.보험료 == 0:
+                                    current_contract.보험료 = int(val)
+                        except:
+                            pass
+
+            # 마지막 계약 추가
+            if current_contract and current_contract.증권번호:
+                contracts.append(current_contract)
+
+        result['contracts'] = contracts
+        doc.close()
+        return result
+
 
 class ContractEditDialog:
     """계약 편집 다이얼로그"""
@@ -474,7 +700,7 @@ class ARGeneratorApp:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("AR Generator - AIMS 테스트 PDF 생성 도구")
+        self.root.title(f"AR Generator v{__version__} - AIMS 테스트 PDF 생성 도구")
         self.root.geometry("1500x800")
         self.root.configure(bg='#f5f5f7')
 
@@ -513,6 +739,11 @@ class ARGeneratorApp:
             btn = ttk.Button(preset_frame, text=name, width=8,
                            command=lambda p=preset_id: self.load_preset(p))
             btn.pack(side=tk.LEFT, padx=2)
+
+        # PDF 불러오기 버튼
+        ttk.Separator(preset_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, padx=8, fill=tk.Y)
+        ttk.Button(preset_frame, text="📄 PDF 불러오기", width=14,
+                   command=self.load_from_pdf).pack(side=tk.LEFT, padx=2)
 
         # 입력 필드
         input_frame = ttk.Frame(left_frame)
@@ -553,26 +784,29 @@ class ARGeneratorApp:
         self.tree.heading('amount', text='가입금액')
         self.tree.heading('premium', text='보험료')
 
-        self.tree.column('no', width=30)
-        self.tree.column('policy', width=85)
-        self.tree.column('product', width=180)
-        self.tree.column('contractor', width=50)
-        self.tree.column('insured', width=50)
-        self.tree.column('contract_date', width=80)
-        self.tree.column('status', width=45)
-        self.tree.column('ins_period', width=55)
-        self.tree.column('pay_period', width=55)
-        self.tree.column('amount', width=65)
-        self.tree.column('premium', width=75)
+        self.tree.column('no', width=30, minwidth=30)
+        self.tree.column('policy', width=90, minwidth=90)
+        self.tree.column('product', width=380, minwidth=300)
+        self.tree.column('contractor', width=60, minwidth=50)
+        self.tree.column('insured', width=50, minwidth=40)
+        self.tree.column('contract_date', width=85, minwidth=80)
+        self.tree.column('status', width=45, minwidth=40)
+        self.tree.column('ins_period', width=55, minwidth=50)
+        self.tree.column('pay_period', width=55, minwidth=50)
+        self.tree.column('amount', width=85, minwidth=70)
+        self.tree.column('premium', width=100, minwidth=80)
 
         # 더블클릭 이벤트
         self.tree.bind('<Double-1>', self.edit_contract)
 
-        scrollbar = ttk.Scrollbar(contracts_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
+        # 스크롤바 (가로/세로)
+        y_scrollbar = ttk.Scrollbar(contracts_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        x_scrollbar = ttk.Scrollbar(contracts_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
+        self.tree.configure(yscrollcommand=y_scrollbar.set, xscrollcommand=x_scrollbar.set)
 
+        y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        x_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # 계약 버튼
         btn_frame = ttk.Frame(left_frame)
@@ -648,6 +882,59 @@ class ARGeneratorApp:
 
         self.update_tree()
         self.update_summary()
+
+    def load_from_pdf(self):
+        """PDF 파일에서 데이터 불러오기"""
+        if not HAS_PREVIEW:
+            messagebox.showwarning("불가", "PyMuPDF가 설치되지 않았습니다.\npip install PyMuPDF")
+            return
+
+        file_path = filedialog.askopenfilename(
+            title="AR PDF 불러오기",
+            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            # PDF 파싱
+            result = self.generator.parse_pdf(file_path)
+
+            # 데이터 설정
+            if result['customer_name']:
+                self.customer_name_var.set(result['customer_name'])
+            if result['issue_date']:
+                self.issue_date_var.set(result['issue_date'])
+            if result['fsr_name']:
+                self.fsr_name_var.set(result['fsr_name'])
+
+            # 계약 목록 설정
+            self.contracts = result['contracts']
+
+            # 계약자/피보험자 이름 설정 (비어있으면 고객명으로)
+            customer_name = self.customer_name_var.get()
+            for c in self.contracts:
+                if not c.계약자:
+                    c.계약자 = customer_name
+                if not c.피보험자:
+                    c.피보험자 = customer_name
+
+            self.update_tree()
+            self.update_summary()
+
+            # 프리뷰도 표시
+            self.render_pdf_pages(file_path)
+            self.current_page = 0
+            self.display_page()
+
+            self.status_var.set(f"PDF 불러오기 완료!\n{os.path.basename(file_path)}\n{len(self.contracts)}개 계약 파싱됨")
+
+            if len(self.contracts) == 0:
+                messagebox.showinfo("알림", f"PDF를 읽었지만 계약 데이터를 파싱하지 못했습니다.\n\n파일: {os.path.basename(file_path)}\n\n수동으로 계약을 입력해주세요.")
+
+        except Exception as e:
+            messagebox.showerror("오류", f"PDF 불러오기 실패:\n{str(e)}")
 
     def add_contract(self):
         """계약 추가 (다이얼로그)"""
