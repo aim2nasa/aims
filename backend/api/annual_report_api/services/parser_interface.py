@@ -76,7 +76,13 @@ def normalize_contract(contract: Dict) -> Optional[Dict]:
                         val = int(str(val).strip())
                     except (ValueError, TypeError):
                         val = 0
-                elif std_key in ["가입금액(만원)", "보험료(원)"]:
+                elif std_key == "가입금액(만원)":
+                    try:
+                        # 쉼표, 공백 제거 후 실수 변환 (소수점 있을 수 있음)
+                        val = float(str(val).replace(",", "").replace(" ", "").strip())
+                    except (ValueError, TypeError):
+                        val = 0
+                elif std_key == "보험료(원)":
                     try:
                         # 쉼표, 공백 제거 후 정수 변환
                         val = int(str(val).replace(",", "").replace(" ", "").strip())

@@ -66,6 +66,49 @@ def extract_total_premium(text: str) -> Optional[int]:
     return None
 
 
+def is_korean(char: str) -> bool:
+    """한글 문자인지 확인"""
+    if not char:
+        return False
+    code = ord(char)
+    # 한글 유니코드 범위: 가-힣 (0xAC00-0xD7A3), ㄱ-ㅎ (0x3131-0x314E), ㅏ-ㅣ (0x314F-0x3163)
+    return (0xAC00 <= code <= 0xD7A3) or (0x3131 <= code <= 0x3163)
+
+
+def smart_join_lines(text: str) -> str:
+    """
+    줄바꿈을 스마트하게 처리
+    - 한글-한글 사이: 공백 없이 연결 (예: "캐치업\\n코리아" → "캐치업코리아")
+    - 그 외: 공백으로 연결
+    """
+    if not text:
+        return ""
+
+    lines = text.split("\n")
+    if len(lines) == 1:
+        return text.strip()
+
+    result = []
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            continue
+
+        if result:
+            prev_char = result[-1][-1] if result[-1] else ""
+            curr_char = line[0] if line else ""
+
+            # 한글-한글 사이는 공백 없이 연결
+            if is_korean(prev_char) and is_korean(curr_char):
+                result.append(line)
+            else:
+                result.append(" " + line)
+        else:
+            result.append(line)
+
+    return "".join(result).strip()
+
+
 def parse_table_row(row: List, headers: List[str]) -> Optional[Dict]:
     """
     표의 한 행을 파싱
@@ -90,7 +133,14 @@ def parse_table_row(row: List, headers: List[str]) -> Optional[Dict]:
     for j, val in enumerate(row):
         if j < len(headers) and headers[j]:
             key = str(headers[j]).replace("\n", "").strip()
-            contract[key] = str(val).strip() if val else ""
+            # 셀 내 줄바꿈을 스마트하게 처리 (한글은 공백 없이 연결)
+            if val:
+                val_str = smart_join_lines(str(val))
+                # 연속 공백 제거
+                val_str = " ".join(val_str.split())
+                contract[key] = val_str
+            else:
+                contract[key] = ""
 
     return normalize_contract(contract)
 
@@ -180,8 +230,36 @@ def parse_annual_report(
                     if total_premium:
                         logger.info(f"✅ 총 월보험료 추출: {total_premium:,}원")
 
-                # 표 추출
-                tables = page.extract_tables()
+                # 표 추출 (여러 설정 시도)
+                table_settings_list = [
+                    # 설정 1: 기본 lines 전략
+                    {
+                        "vertical_strategy": "lines",
+                        "horizontal_strategy": "lines",
+                        "snap_tolerance": 3,
+                        "join_tolerance": 3,
+                    },
+                    # 설정 2: text 전략 (백업)
+                    {
+                        "vertical_strategy": "text",
+                        "horizontal_strategy": "lines",
+                        "snap_tolerance": 5,
+                        "join_tolerance": 5,
+                        "text_tolerance": 3,
+                    },
+                ]
+
+                all_tables = []
+                for settings in table_settings_list:
+                    try:
+                        tables = page.extract_tables(settings)
+                        if tables:
+                            all_tables.extend(tables)
+                            break  # 첫 번째 성공한 설정 사용
+                    except Exception:
+                        continue
+
+                tables = all_tables
 
                 for table in tables:
                     if not table:

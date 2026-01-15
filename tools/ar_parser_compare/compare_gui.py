@@ -105,6 +105,20 @@ class ParserCompareGUI:
 
             self.parser_widgets[pid] = {"time_var": time_var, "text": text}
 
+        # === 필드별 비교 탭 ===
+        diff_frame = ttk.Frame(self.main_notebook)
+        self.main_notebook.add(diff_frame, text="⚖️ 필드별 비교")
+
+        # 비교 결과 텍스트 (3개 비교 실행 시 자동으로 채워짐)
+        self.diff_text = scrolledtext.ScrolledText(diff_frame, wrap=tk.WORD, font=("Consolas", 10))
+        self.diff_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # 태그 설정 (하이라이트용)
+        self.diff_text.tag_config("match", foreground="green")
+        self.diff_text.tag_config("mismatch", foreground="red", font=("Consolas", 10, "bold"))
+        self.diff_text.tag_config("header", foreground="blue", font=("Consolas", 11, "bold"))
+        self.diff_text.tag_config("subheader", foreground="purple", font=("Consolas", 10, "bold"))
+
         # === 상세 뷰 탭 ===
         detail_frame = ttk.Frame(self.main_notebook)
         self.main_notebook.add(detail_frame, text="🔍 상세 뷰 (1개)")
@@ -177,7 +191,8 @@ class ParserCompareGUI:
             self.root.after(0, lambda p=pid: self.status_var.set(f"{p} 파싱 중..."))
             self._parse(pid)
             time.sleep(0.3)
-        self.root.after(0, lambda: self.status_var.set("완료"))
+        # 완료 후 자동으로 필드별 비교 실행 및 탭 전환
+        self.root.after(0, self._auto_compare)
 
     def _parse(self, parser_id):
         file_path = self.file_path_var.get()
@@ -307,6 +322,134 @@ class ParserCompareGUI:
                 self.status_var.set(f"완료 - 계약수 일치 ({list(unique)[0]}건)")
             else:
                 self.status_var.set(f"완료 - 계약수 불일치! {counts}")
+
+    def _auto_compare(self):
+        """3개 비교 실행 완료 후 자동으로 필드별 비교 실행 및 탭 전환"""
+        self.run_field_comparison()
+        self.main_notebook.select(1)  # "⚖️ 필드별 비교" 탭으로 전환
+        self.status_var.set("완료 - 필드별 비교 결과 확인")
+
+    def run_field_comparison(self):
+        """3개 파서 결과를 나란히 비교"""
+        self.diff_text.delete(1.0, tk.END)
+
+        # 최소 2개 파서 결과 필요
+        valid_results = {k: v for k, v in self.results.items() if "error" not in v.get("result", {})}
+        if len(valid_results) < 2:
+            self.diff_text.insert(tk.END, "비교하려면 최소 2개 파서의 성공 결과가 필요합니다.\n")
+            self.diff_text.insert(tk.END, "'3개 비교 실행' 버튼을 먼저 눌러주세요.\n")
+            return
+
+        parser_ids = ["openai", "pdfplumber", "upstage"]
+        active_parsers = [p for p in parser_ids if p in valid_results]
+
+        # 헤더
+        self.diff_text.insert(tk.END, "═" * 90 + "\n", "header")
+        self.diff_text.insert(tk.END, "  3개 파서 JSON 필드별 비교\n", "header")
+        self.diff_text.insert(tk.END, "═" * 90 + "\n\n", "header")
+
+        total_mismatches = 0
+
+        # 1. 총 월보험료 비교
+        self.diff_text.insert(tk.END, "【 총 월보험료 】\n", "subheader")
+        premiums = {p: valid_results[p]["result"].get("총_월보험료") for p in active_parsers}
+        unique_premiums = set(premiums.values())
+        is_match = len(unique_premiums) == 1
+
+        line = "  "
+        for p in active_parsers:
+            val = premiums[p]
+            val_str = f"{val:,}원" if val is not None else "None"
+            line += f"{p}: {val_str}  |  "
+        line = line.rstrip(" | ")
+
+        if is_match:
+            self.diff_text.insert(tk.END, line + " ✓\n", "match")
+        else:
+            self.diff_text.insert(tk.END, line + " ✗ 불일치!\n", "mismatch")
+            total_mismatches += 1
+
+        self.diff_text.insert(tk.END, "\n")
+
+        # 2. 계약별 비교 - 3개 나란히
+        self.diff_text.insert(tk.END, "【 보유계약 현황 - 3개 파서 비교 】\n\n", "subheader")
+
+        # 모든 증권번호 수집
+        all_policies = set()
+        contracts_by_parser = {}
+        for p in active_parsers:
+            contracts = valid_results[p]["result"].get("보유계약 현황", [])
+            contracts_by_parser[p] = {c.get("증권번호"): c for c in contracts}
+            all_policies.update(contracts_by_parser[p].keys())
+
+        fields_to_compare = ["보험상품", "계약자", "피보험자", "계약일", "계약상태", "가입금액(만원)", "보험기간", "납입기간", "보험료(원)"]
+
+        for policy_no in sorted(all_policies):
+            self.diff_text.insert(tk.END, f"┌─ 증권번호: {policy_no} ", "subheader")
+
+            # 존재 여부 체크
+            missing_parsers = [p for p in active_parsers if policy_no not in contracts_by_parser[p]]
+            if missing_parsers:
+                self.diff_text.insert(tk.END, f"(누락: {', '.join(missing_parsers)})\n", "mismatch")
+                total_mismatches += len(missing_parsers)
+            else:
+                self.diff_text.insert(tk.END, "\n")
+
+            # 필드별 비교
+            for field in fields_to_compare:
+                values = {}
+                for p in active_parsers:
+                    contract = contracts_by_parser[p].get(policy_no, {})
+                    values[p] = contract.get(field)
+
+                # 값 비교
+                non_none_values = [v for v in values.values() if v is not None]
+                if not non_none_values:
+                    continue
+
+                # 숫자 비교
+                def normalize_val(v):
+                    if v is None:
+                        return None
+                    if isinstance(v, (int, float)):
+                        return float(v)
+                    return str(v).strip()
+
+                normalized = {p: normalize_val(v) for p, v in values.items()}
+                unique_vals = set(v for v in normalized.values() if v is not None)
+                is_field_match = len(unique_vals) <= 1
+
+                # 출력
+                field_display = f"{field:14}"
+                line = f"│  {field_display} "
+
+                for p in active_parsers:
+                    val = values[p]
+                    if val is None:
+                        val_str = "-"
+                    elif isinstance(val, float):
+                        val_str = f"{val:,.1f}" if val != int(val) else f"{int(val):,}"
+                    elif isinstance(val, int):
+                        val_str = f"{val:,}"
+                    else:
+                        val_str = str(val)[:20]
+                    line += f"{p[:3]}:{val_str:>12}  "
+
+                if is_field_match:
+                    self.diff_text.insert(tk.END, line + "✓\n", "match")
+                else:
+                    self.diff_text.insert(tk.END, line + "✗\n", "mismatch")
+                    total_mismatches += 1
+
+            self.diff_text.insert(tk.END, "└" + "─" * 80 + "\n\n")
+
+        # 요약
+        self.diff_text.insert(tk.END, "═" * 90 + "\n", "header")
+        if total_mismatches == 0:
+            self.diff_text.insert(tk.END, "  ✓ 모든 파서 결과가 완전히 일치합니다!\n", "match")
+        else:
+            self.diff_text.insert(tk.END, f"  ✗ 총 {total_mismatches}개 불일치 발견!\n", "mismatch")
+        self.diff_text.insert(tk.END, "═" * 90 + "\n", "header")
 
 
 def run_single_parser_cli(parser_id: str, file_path: str, output_json: bool = False):
