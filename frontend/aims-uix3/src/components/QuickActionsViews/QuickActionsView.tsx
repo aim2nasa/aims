@@ -14,6 +14,7 @@ import { StatCard } from '@/shared/ui/StatCard'
 import { getCustomers } from '@/services/customerService'
 import { getDocumentStatistics } from '@/services/DocumentService'
 import { ContractService } from '@/services/contractService'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './QuickActionsView.css'
 
 interface QuickActionsViewProps {
@@ -36,6 +37,7 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   onNavigate,
 }) => {
   const queryClient = useQueryClient()
+  const { isDevMode } = useDevModeStore() // 개발자 모드 상태
 
   // 데이터 변경 이벤트 리스너 (고객, 계약, 문서 변경 시 쿼리 캐시 무효화)
   useEffect(() => {
@@ -182,8 +184,8 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
                   weight={SFSymbolWeight.MEDIUM}
                 />
               </span>
-              <span className="action-card-title">고객·계약 일괄등록</span>
-              <span className="action-card-description">엑셀 파일에서 고객과 계약을 일괄 등록합니다</span>
+              <span className="action-card-title">{isDevMode ? '고객·계약 일괄등록' : '고객 일괄등록'}</span>
+              <span className="action-card-description">{isDevMode ? '엑셀 파일에서 고객과 계약을 일괄 등록합니다' : '엑셀 파일에서 고객을 일괄 등록합니다'}</span>
             </button>
 
             <button
@@ -222,13 +224,15 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
               color="primary"
               isLoading={isCustomersLoading}
             />
-            <StatCard
-              title="전체 계약"
-              value={stats.totalContracts}
-              icon={<SFSymbol name="briefcase-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
-              color="success"
-              isLoading={isContractsLoading}
-            />
+            {isDevMode && (
+              <StatCard
+                title="전체 계약"
+                value={stats.totalContracts}
+                icon={<SFSymbol name="briefcase-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+                color="success"
+                isLoading={isContractsLoading}
+              />
+            )}
             <StatCard
               title="전체 문서"
               value={stats.totalDocuments}
@@ -297,42 +301,44 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
               </div>
             </button>
 
-            {/* 계약 관리 */}
-            <button
-              type="button"
-              className="quick-actions-view__menu-card"
-              onClick={() => onNavigate?.('contracts')}
-            >
-              <div className="menu-card-header">
-                <span className="menu-icon-blue">
-                  <SFSymbol
-                    name="briefcase-fill"
-                    size={SFSymbolSize.CALLOUT}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                </span>
-                <span className="menu-card-title">계약 관리</span>
-              </div>
-              <p className="menu-card-description">
-                보험 계약을 조회하고 관리합니다. 엑셀 파일에서 계약 정보를 가져올 수 있습니다.
-              </p>
-              <div className="menu-card-actions">
-                <button
-                  type="button"
-                  className="menu-card-action"
-                  onClick={(e) => { e.stopPropagation(); onNavigate?.('contracts-all') }}
-                >
-                  전체 보기
-                </button>
-                <button
-                  type="button"
-                  className="menu-card-action"
-                  onClick={(e) => { e.stopPropagation(); onNavigate?.('contracts-import') }}
-                >
-                  가져오기
-                </button>
-              </div>
-            </button>
+            {/* 계약 관리 (개발자 모드에서만 표시) */}
+            {isDevMode && (
+              <button
+                type="button"
+                className="quick-actions-view__menu-card"
+                onClick={() => onNavigate?.('contracts')}
+              >
+                <div className="menu-card-header">
+                  <span className="menu-icon-blue">
+                    <SFSymbol
+                      name="briefcase-fill"
+                      size={SFSymbolSize.CALLOUT}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </span>
+                  <span className="menu-card-title">계약 관리</span>
+                </div>
+                <p className="menu-card-description">
+                  보험 계약을 조회하고 관리합니다. 엑셀 파일에서 계약 정보를 가져올 수 있습니다.
+                </p>
+                <div className="menu-card-actions">
+                  <button
+                    type="button"
+                    className="menu-card-action"
+                    onClick={(e) => { e.stopPropagation(); onNavigate?.('contracts-all') }}
+                  >
+                    전체 보기
+                  </button>
+                  <button
+                    type="button"
+                    className="menu-card-action"
+                    onClick={(e) => { e.stopPropagation(); onNavigate?.('contracts-import') }}
+                  >
+                    가져오기
+                  </button>
+                </div>
+              </button>
+            )}
 
             {/* 문서 관리 */}
             <button

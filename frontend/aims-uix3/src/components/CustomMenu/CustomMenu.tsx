@@ -4,6 +4,7 @@ import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import RecentCustomers from '../RecentCustomers'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './CustomMenu.css'
 import './CustomMenuTooltip.css'
 
@@ -342,6 +343,7 @@ const CustomMenu = ({
 }: CustomMenuProps) => {
   const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  const { isDevMode } = useDevModeStore() // 개발자 모드 상태
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
   useEffect(() => {
@@ -426,8 +428,8 @@ const CustomMenu = ({
         {
           key: 'contracts-import',
           icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
-          label: '고객·계약 일괄등록',
-          tooltipTitle: '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다',
+          label: isDevMode ? '고객·계약 일괄등록' : '고객 일괄등록',
+          tooltipTitle: isDevMode ? '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다' : '엑셀 파일에서 고객 정보를 일괄 등록합니다',
         },
         {
           key: 'batch-document-upload',
@@ -456,7 +458,7 @@ const CustomMenu = ({
         key: 'contracts-import',
         icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
         label: '',
-        tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+        tooltipTitle: isDevMode ? '엑셀 파일에서 고객과 계약 정보를 일괄 등록합니다' : '엑셀 파일에서 고객 정보를 일괄 등록합니다',
       },
       {
         key: 'batch-document-upload',
@@ -516,8 +518,8 @@ const CustomMenu = ({
       }
     ] : []),
 
-    // ━━━ 계약 ━━━
-    {
+    // ━━━ 계약 ━━━ (개발자 모드에서만 표시)
+    ...(isDevMode ? [{
       key: 'contracts',
       icon: <span className="menu-icon-blue"><MenuIcons.Contract /></span>,
       label: collapsed ? '' : '계약',
@@ -530,10 +532,10 @@ const CustomMenu = ({
           tooltipTitle: '모든 계약을 보여줍니다',
         }
       ]
-    },
+    }] : []),
 
-    // collapsed 상태에서 계약 서브메뉴 표시
-    ...(collapsed ? [
+    // collapsed 상태에서 계약 서브메뉴 표시 (개발자 모드에서만)
+    ...(collapsed && isDevMode ? [
       {
         key: 'contracts-all',
         icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
@@ -669,7 +671,7 @@ const CustomMenu = ({
     ] : []),
 
     // 최근 검색 고객은 LeftPane 하단에 별도 컴포넌트로 분리됨
-  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount, noticeHasNew])
+  ], [collapsed, hasSearchResults, searchResultsCount, inquiryUnreadCount, noticeHasNew, isDevMode])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>

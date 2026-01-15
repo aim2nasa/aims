@@ -44,6 +44,7 @@ import { ContractService } from '@/services/contractService'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { ProductSearchModal } from './ProductSearchModal'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import './ExcelRefiner.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
@@ -234,6 +235,9 @@ export function ExcelRefiner() {
 
   // 로그인 사용자 정보
   const { user } = useAuthStore()
+
+  // 개발자 모드 상태
+  const { isDevMode } = useDevModeStore()
 
   // 파일 상태
   const [fileName, setFileName] = useState<string | null>(null)
@@ -2925,8 +2929,8 @@ export function ExcelRefiner() {
                   <span className="excel-refiner__format-title">엑셀 예시</span>
                   <Tooltip content="샘플 엑셀 다운로드">
                     <a
-                      href="/일괄등록_샘플.xlsx"
-                      download="일괄등록_샘플.xlsx"
+                      href={isDevMode ? '/일괄등록_샘플.xlsx' : '/일괄등록_샘플_고객.xlsx'}
+                      download={isDevMode ? '일괄등록_샘플.xlsx' : '일괄등록_샘플_고객.xlsx'}
                       className="excel-refiner__format-download"
                       aria-label="샘플 엑셀 다운로드"
                     >
@@ -2954,13 +2958,15 @@ export function ExcelRefiner() {
                   >
                     법인고객
                   </button>
-                  <button
-                    type="button"
-                    className={`excel-refiner__format-tab ${formatGuideTab === '계약' ? 'excel-refiner__format-tab--active' : ''}`}
-                    onClick={() => setFormatGuideTab('계약')}
-                  >
-                    계약
-                  </button>
+                  {isDevMode && (
+                    <button
+                      type="button"
+                      className={`excel-refiner__format-tab ${formatGuideTab === '계약' ? 'excel-refiner__format-tab--active' : ''}`}
+                      onClick={() => setFormatGuideTab('계약')}
+                    >
+                      계약
+                    </button>
+                  )}
                 </div>
 
                 {/* 개인고객 시트 */}
@@ -3019,8 +3025,8 @@ export function ExcelRefiner() {
                   </div>
                 )}
 
-                {/* 계약 시트 */}
-                {formatGuideTab === '계약' && (
+                {/* 계약 시트 (개발자 모드에서만 표시) */}
+                {isDevMode && formatGuideTab === '계약' && (
                   <div className="excel-refiner__format-table-wrapper">
                     <table className="excel-refiner__format-table">
                       <thead>
@@ -3125,7 +3131,7 @@ export function ExcelRefiner() {
                 )}
               </div>
 
-              {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → 계약 → 등록 */}
+              {/* 위자드 스텝 (중앙): 개인고객 → 법인고객 → (계약: 개발자모드만) → 등록 */}
               {wizardStep && (() => {
                 // 각 시트의 검증 상태에 따른 스텝 클래스 결정
                 const getStepClass = (sheetName: string) => {
@@ -3137,9 +3143,13 @@ export function ExcelRefiner() {
                   return ''
                 }
 
-                const allValid = ['개인고객', '법인고객', '계약'].every(
+                // 개발자 모드에서는 계약 포함, 비개발자 모드에서는 계약 제외
+                const sheetsToValidate = isDevMode ? ['개인고객', '법인고객', '계약'] : ['개인고객', '법인고객']
+                const allValid = sheetsToValidate.every(
                   name => sheetValidationStatus.get(name) === 'valid'
                 )
+                // 일괄등록 스텝 번호: 개발자 모드 4, 비개발자 모드 3
+                const importStepNumber = isDevMode ? 4 : 3
 
                 return (
                   <div className={`excel-refiner__wizard-compact excel-refiner__wizard--step-${wizardStep.step}`}>
@@ -3152,18 +3162,22 @@ export function ExcelRefiner() {
                       <span className="excel-refiner__wizard-step-number">2</span>
                       <span className="excel-refiner__wizard-step-label">법인고객 검증</span>
                     </div>
-                    <div className="excel-refiner__wizard-connector" />
-                    <div className={`excel-refiner__wizard-step ${getStepClass('계약')}`}>
-                      <span className="excel-refiner__wizard-step-number">3</span>
-                      <span className="excel-refiner__wizard-step-label">계약 검증</span>
-                    </div>
+                    {isDevMode && (
+                      <>
+                        <div className="excel-refiner__wizard-connector" />
+                        <div className={`excel-refiner__wizard-step ${getStepClass('계약')}`}>
+                          <span className="excel-refiner__wizard-step-number">3</span>
+                          <span className="excel-refiner__wizard-step-label">계약 검증</span>
+                        </div>
+                      </>
+                    )}
                     <div className="excel-refiner__wizard-connector" />
                     <div
                       className={`excel-refiner__wizard-step ${allValid ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus} excel-refiner__wizard-step--clickable` : ''}`}
                       onClick={wizardStep.resultStatus ? () => setImportResultDetail(prev => ({ ...prev, isOpen: true })) : undefined}
                     >
                       <span className="excel-refiner__wizard-step-number">
-                        {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
+                        {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : importStepNumber}
                       </span>
                       <span className="excel-refiner__wizard-step-label">
                         {wizardStep.step === 4 && wizardStep.resultStatus
@@ -4205,10 +4219,10 @@ export function ExcelRefiner() {
             </span>
           </div>
 
-          {/* 탭 네비게이션 - 데이터가 있는 탭만 표시 */}
+          {/* 탭 네비게이션 - 데이터가 있는 탭만 표시 (계약 탭은 개발자 모드에서만) */}
           <div className="excel-refiner__result-tabs-wrapper">
             <div className="excel-refiner__result-tabs">
-              {(['개인고객', '법인고객', '계약'] as const)
+              {(['개인고객', '법인고객', ...(isDevMode ? ['계약' as const] : [])] as const)
                 .map(tab => {
                   const totalCount = tab === '계약'
                     ? importResultDetail.계약.created.length + importResultDetail.계약.updated.length + importResultDetail.계약.skipped.length + importResultDetail.계약.errors.length
