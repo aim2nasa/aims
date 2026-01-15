@@ -1215,12 +1215,12 @@ html[data-theme="dark"] .snapshot-item__payment {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 변경된 필드 하이라이트 */
+/* 변경된 필드 하이라이트 (빨간색) */
 .snapshot-item--changed {
   font-weight: 600;
-  color: var(--color-ios-orange-light);
+  color: var(--color-icon-red, #ff3b30);
 }
 
 html[data-theme="dark"] .snapshot-item--changed {
-  color: var(--color-ios-orange-dark);
+  color: var(--color-button-destructive-bg-dark, #ff453a);
 }
