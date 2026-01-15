@@ -817,24 +817,21 @@ class ARGeneratorApp:
         ttk.Button(btn_frame, text="선택 삭제", command=self.remove_contract).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="전체 삭제", command=self.clear_contracts).pack(side=tk.LEFT, padx=2)
 
-        # 요약
+        # 요약 및 PDF 생성 버튼
+        bottom_frame = ttk.Frame(left_frame)
+        bottom_frame.pack(fill=tk.X, pady=5)
+
         self.summary_var = tk.StringVar(value="총 0건, 보험료 합계: 0원")
-        ttk.Label(left_frame, textvariable=self.summary_var).pack(pady=5)
+        ttk.Label(bottom_frame, textvariable=self.summary_var).pack(side=tk.LEFT, padx=5)
 
-        # 중앙 패널 (버튼)
-        center_frame = ttk.LabelFrame(main_frame, text="PDF 생성", padding="10")
-        center_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
-
-        ttk.Button(center_frame, text="프리뷰", command=self.show_preview, width=18).pack(pady=5)
-        ttk.Button(center_frame, text="PDF 생성", command=self.generate_pdf, width=18).pack(pady=5)
-        ttk.Button(center_frame, text="PDF 생성 및 저장", command=self.generate_and_save, width=18).pack(pady=5)
-        ttk.Button(center_frame, text="마지막 PDF 열기", command=self.open_last_pdf, width=18).pack(pady=5)
-
-        ttk.Separator(center_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=10)
+        # PDF 생성 버튼들 (오른쪽 정렬)
+        ttk.Button(bottom_frame, text="마지막 PDF 열기", command=self.open_last_pdf).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(bottom_frame, text="PDF 생성 및 저장", command=self.generate_and_save).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(bottom_frame, text="프리뷰", command=self.show_preview).pack(side=tk.RIGHT, padx=2)
 
         # 상태 표시
         self.status_var = tk.StringVar(value="준비됨")
-        ttk.Label(center_frame, textvariable=self.status_var, wraplength=140).pack(pady=5)
+        ttk.Label(left_frame, textvariable=self.status_var, foreground='gray').pack(pady=2)
 
         # 오른쪽 패널 (프리뷰)
         right_frame = ttk.LabelFrame(main_frame, text="PDF 프리뷰", padding="10")
