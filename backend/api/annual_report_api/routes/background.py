@@ -15,6 +15,7 @@ from bson.errors import InvalidId
 from services.detector import is_annual_report, extract_customer_info_from_first_page
 from services.parser_factory import get_parser
 from services.db_writer import save_annual_report
+from utils.pdf_utils import find_contract_table_end_page
 from config import settings
 from system_logger import send_error_log
 
@@ -127,8 +128,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")
 
         customer_name = doc.get("ar_metadata", {}).get("customer_name")
+
+        # 🔧 end_page 계산 (2페이지만 OpenAI에 전달하기 위함)
+        end_page_0indexed = find_contract_table_end_page(file_path)
+        end_page = end_page_0indexed + 1  # 1-based로 변환
+        logger.info(f"📄 [Queue Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+
         parse_annual_report = get_parser()  # 설정에 따라 파서 선택
-        result = parse_annual_report(file_path, customer_name=customer_name)
+        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
 
         if "error" in result:
             logger.error(f"❌ [Queue Parsing] 파싱 실패: {result['error']}")
@@ -332,9 +339,14 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # 고객명 가져오기
                 customer_name = doc.get("ar_metadata", {}).get("customer_name")
 
+                # 🔧 end_page 계산 (2페이지만 OpenAI에 전달하기 위함)
+                end_page_0indexed = find_contract_table_end_page(file_path)
+                end_page = end_page_0indexed + 1  # 1-based로 변환
+                logger.info(f"📄 [BG Parsing] 계약 테이블 범위: 2~{end_page}페이지")
+
                 # 파싱 실행 (설정에 따라 파서 선택)
                 parse_annual_report = get_parser()
-                result = parse_annual_report(file_path, customer_name=customer_name)
+                result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
 
                 if "error" in result:
                     logger.error(f"❌ [BG Parsing] 파싱 실패: {result['error']}")
