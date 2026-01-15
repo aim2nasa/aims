@@ -47,7 +47,9 @@ describe('processAnnualReportFile', () => {
 
       expect(result).toEqual({
         shouldUploadDoc: true,
-        isDuplicateDoc: false
+        isDuplicateDoc: false,
+        isDuplicateIssueDate: false,
+        duplicateIssueDate: undefined
       })
     })
 
@@ -84,7 +86,9 @@ describe('processAnnualReportFile', () => {
 
       expect(result).toEqual({
         shouldUploadDoc: true,
-        isDuplicateDoc: false
+        isDuplicateDoc: false,
+        isDuplicateIssueDate: false,
+        duplicateIssueDate: undefined
       })
     })
 
@@ -121,7 +125,9 @@ describe('processAnnualReportFile', () => {
 
       expect(result).toEqual({
         shouldUploadDoc: false,
-        isDuplicateDoc: true
+        isDuplicateDoc: true,
+        isDuplicateIssueDate: false,
+        duplicateIssueDate: undefined
       })
     })
 
@@ -165,7 +171,9 @@ describe('processAnnualReportFile', () => {
 
       expect(result).toEqual({
         shouldUploadDoc: true,
-        isDuplicateDoc: false
+        isDuplicateDoc: false,
+        isDuplicateIssueDate: false,
+        duplicateIssueDate: undefined
       })
       expect(consoleErrorSpy).toHaveBeenCalled()
 
@@ -182,7 +190,9 @@ describe('processAnnualReportFile', () => {
 
       expect(result).toEqual({
         shouldUploadDoc: true,
-        isDuplicateDoc: false
+        isDuplicateDoc: false,
+        isDuplicateIssueDate: false,
+        duplicateIssueDate: undefined
       })
       expect(consoleErrorSpy).toHaveBeenCalled()
 
@@ -267,7 +277,8 @@ describe('registerArDocument', () => {
 
       expect(result).toEqual({
         success: true,
-        isDuplicate: false
+        isDuplicate: false,
+        isDuplicateIssueDate: false
       })
 
       expect(mockCallbacks.trackArFile).toHaveBeenCalledWith(mockFile.name, mockCustomerId)
@@ -320,7 +331,8 @@ describe('registerArDocument', () => {
 
       expect(result).toEqual({
         success: false,
-        isDuplicate: true
+        isDuplicate: true,
+        isDuplicateIssueDate: false
       })
 
       expect(mockCallbacks.addLog).toHaveBeenCalledWith(

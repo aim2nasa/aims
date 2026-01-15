@@ -25,7 +25,7 @@ import { checkAnnualReportFromPDF, checkCustomerReviewFromPDF } from '@/features
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
-import { processAnnualReportFile, registerArDocument } from './utils/annualReportProcessor'
+import { processAnnualReportFile, registerArDocument, formatIssueDateKorean } from './utils/annualReportProcessor'
 import { CustomerSelectionModal } from '@/features/annual-report/components/CustomerSelectionModal'
 import { NewCustomerInputModal } from '@/features/annual-report/components/NewCustomerInputModal'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
@@ -627,8 +627,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customerId = targetCustomerId;
               const customerName = targetCustomerName;
 
-              // 중복 문서 체크
-              const processResult = await processAnnualReportFile(file, customerId);
+              // 중복 문서 체크 (해시 + 발행일)
+              const processResult = await processAnnualReportFile(file, customerId, checkResult.metadata?.issue_date);
               if (processResult.isDuplicateDoc) {
                 addLog(
                   'warning',
@@ -636,6 +636,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
                 );
                 updateFileStatus(file, 'skipped', '중복 파일 - 이미 등록됨')
+                continue;
+              }
+              if (processResult.isDuplicateIssueDate) {
+                const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate);
+                addLog(
+                  'warning',
+                  `🔴 ${formattedDate} 발행일 보고서 이미 존재`,
+                  `${file.name} 업로드를 건너뜁니다.`
+                );
+                updateFileStatus(file, 'skipped', `${formattedDate} 발행일 보고서 이미 존재`)
                 continue;
               }
 
@@ -1601,11 +1611,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     // AR 등록 처리
     try {
-      const processResult = await processAnnualReportFile(arFile, customerId);
+      const processResult = await processAnnualReportFile(arFile, customerId, arMetadata.issue_date);
 
       if (processResult.isDuplicateDoc) {
         addLog('warning', `🔴 중복 파일 건너뜀: ${arFile.name}`, '이미 등록된 파일입니다.');
         updateFileStatusByFile(arFile, 'skipped', '중복 파일 - 이미 등록됨');
+        return;
+      }
+
+      if (processResult.isDuplicateIssueDate) {
+        const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate);
+        addLog(
+          'warning',
+          `🔴 ${formattedDate} 발행일 보고서 이미 존재`,
+          `${arFile.name} 업로드를 건너뜁니다.`
+        );
+        updateFileStatusByFile(arFile, 'skipped', `${formattedDate} 발행일 보고서 이미 존재`);
         return;
       }
 
