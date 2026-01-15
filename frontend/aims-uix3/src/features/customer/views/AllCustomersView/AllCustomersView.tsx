@@ -58,9 +58,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
-    // 고객 타입 필터는 항상 'all'로 고정 (개인/법인 모두 표시)
-    const customerTypeFilter: 'all' | 'personal' | 'corporate' = 'all';
-    const [statusFilter, setStatusFilter] = usePersistedState<'all' | 'active' | 'inactive'>('customer-all-status-filter', 'all');
+    // 상태+유형 통합 필터 (5가지 옵션)
+    const [statusFilter, setStatusFilter] = usePersistedState<
+      'all' | 'active' | 'inactive' | 'active-personal' | 'active-corporate' | 'inactive-personal' | 'inactive-corporate'
+    >('customer-all-status-filter', 'all');
 
     // 초성 필터 상태
     const [initialType, setInitialType] = usePersistedState<InitialType>('customer-all-initial-type', 'korean');
@@ -174,7 +175,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // 🍎 휴면 처리/복원 후 활성 필터로 자동 전환
     useEffect(() => {
       const handleStatusFilterChange = (event: Event) => {
-        const customEvent = event as CustomEvent<{ filter: 'all' | 'active' | 'inactive' }>;
+        const customEvent = event as CustomEvent<{
+          filter: 'all' | 'active' | 'inactive' | 'active-personal' | 'active-corporate' | 'inactive-personal' | 'inactive-corporate'
+        }>;
         if (customEvent.detail?.filter) {
           setStatusFilter(customEvent.detail.filter);
           setCurrentPage(1); // 첫 페이지로 이동
@@ -191,20 +194,28 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const filteredCustomers = useMemo(() => {
       let customers = allCustomers;
 
-      // 상태 필터링
-      if (statusFilter === 'active') {
-        customers = customers.filter(c => c.meta?.status === 'active');
-      } else if (statusFilter === 'inactive') {
-        customers = customers.filter(c => c.meta?.status === 'inactive');
+      // 상태+유형 통합 필터링
+      switch (statusFilter) {
+        case 'active':
+          customers = customers.filter(c => c.meta?.status === 'active');
+          break;
+        case 'inactive':
+          customers = customers.filter(c => c.meta?.status === 'inactive');
+          break;
+        case 'active-personal':
+          customers = customers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '개인');
+          break;
+        case 'active-corporate':
+          customers = customers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '법인');
+          break;
+        case 'inactive-personal':
+          customers = customers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '개인');
+          break;
+        case 'inactive-corporate':
+          customers = customers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '법인');
+          break;
+        // 'all'이면 필터링하지 않음
       }
-      // statusFilter === 'all'이면 필터링하지 않음
-
-      // 유형 필터링 (현재 customerTypeFilter는 'all'로 고정됨)
-      // if (customerTypeFilter === 'personal') {
-      //   customers = customers.filter(c => c.insurance_info?.customer_type === '개인');
-      // } else if (customerTypeFilter === 'corporate') {
-      //   customers = customers.filter(c => c.insurance_info?.customer_type === '법인');
-      // }
 
       // 검색 필터링
       if (searchValue.trim()) {
@@ -223,7 +234,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
 
       return customers;
-    }, [allCustomers, searchValue, customerTypeFilter, statusFilter]);
+    }, [allCustomers, searchValue, statusFilter]);
 
 
 
@@ -231,11 +242,26 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const initialCounts = useMemo(() => {
       let baseCustomers = allCustomers;
 
-      // 상태 필터링 적용
-      if (statusFilter === 'active') {
-        baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active');
-      } else if (statusFilter === 'inactive') {
-        baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive');
+      // 상태+유형 필터링 적용 (filteredCustomers와 동일한 로직)
+      switch (statusFilter) {
+        case 'active':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active');
+          break;
+        case 'inactive':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive');
+          break;
+        case 'active-personal':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '개인');
+          break;
+        case 'active-corporate':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'active' && c.insurance_info?.customer_type === '법인');
+          break;
+        case 'inactive-personal':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '개인');
+          break;
+        case 'inactive-corporate':
+          baseCustomers = baseCustomers.filter(c => c.meta?.status === 'inactive' && c.insurance_info?.customer_type === '법인');
+          break;
       }
 
       // 검색 필터링 적용
@@ -648,7 +674,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     //   setCurrentPage(1);
     // };
 
-    const handleStatusFilterChange = (filter: 'all' | 'active' | 'inactive') => {
+    const handleStatusFilterChange = (
+      filter: 'all' | 'active' | 'inactive' | 'active-personal' | 'active-corporate' | 'inactive-personal' | 'inactive-corporate'
+    ) => {
       setStatusFilter(filter);
       setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
     };
@@ -902,21 +930,37 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 </Tooltip>
               )}
 
-              {/* 상태 필터 버튼 */}
+              {/* 상태+유형 필터 버튼 */}
               <button
-                className={`type-filter-button ${statusFilter === 'active' ? 'active' : ''}`}
-                onClick={() => handleStatusFilterChange('active')}
-                title="활성 고객만 보기"
+                className={`type-filter-button ${statusFilter === 'active-personal' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('active-personal')}
+                title="활성 개인 고객만 보기"
               >
-                활성(개인 {typeCounts.active.personal}, 법인 {typeCounts.active.corporate})
+                활성 개인({typeCounts.active.personal})
               </button>
               <span className="type-filter-separator">/</span>
               <button
-                className={`type-filter-button ${statusFilter === 'inactive' ? 'active' : ''}`}
-                onClick={() => handleStatusFilterChange('inactive')}
-                title="휴면 고객만 보기"
+                className={`type-filter-button ${statusFilter === 'active-corporate' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('active-corporate')}
+                title="활성 법인 고객만 보기"
               >
-                휴면(개인 {typeCounts.inactive.personal}, 법인 {typeCounts.inactive.corporate})
+                활성 법인({typeCounts.active.corporate})
+              </button>
+              <span className="type-filter-separator">/</span>
+              <button
+                className={`type-filter-button ${statusFilter === 'inactive-personal' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('inactive-personal')}
+                title="휴면 개인 고객만 보기"
+              >
+                휴면 개인({typeCounts.inactive.personal})
+              </button>
+              <span className="type-filter-separator">/</span>
+              <button
+                className={`type-filter-button ${statusFilter === 'inactive-corporate' ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange('inactive-corporate')}
+                title="휴면 법인 고객만 보기"
+              >
+                휴면 법인({typeCounts.inactive.corporate})
               </button>
               <span className="type-filter-separator">/</span>
               <button
