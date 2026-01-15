@@ -269,7 +269,7 @@
 
 .contracts-table th {
   padding: 8px 6px;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   color: var(--color-text-primary);
   border-bottom: 2px solid var(--color-layout-border);
