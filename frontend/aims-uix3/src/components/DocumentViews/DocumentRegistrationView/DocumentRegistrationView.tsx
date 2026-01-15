@@ -1921,7 +1921,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }}
             >
               <span className="icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
-              새 문서 등록
+              고객·계약·문서 등록
             </button>
             <button
               type="button"
