@@ -1814,23 +1814,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               <div className="guide-content">
                 <div className="guide-section">
                   {documentTypeMode === 'annual_report' ? (
-                    <>
-                      <div className="guide-step">
-                        <span className="step-number">1</span>
-                        <div className="step-content">
-                          <h4 className="step-title">AR 파일 업로드</h4>
-                          <p className="step-description">• Annual Report PDF 파일을 업로드해주세요</p>
-                        </div>
-                      </div>
-                      <div className="guide-step">
-                        <span className="step-number">2</span>
-                        <div className="step-content">
-                          <h4 className="step-title">고객 자동 매칭</h4>
-                          <p className="step-description">• AR에서 고객명을 추출하여 자동 매칭합니다</p>
-                          <p className="step-description">• 매칭되는 고객이 없으면 새 고객이 생성됩니다</p>
-                        </div>
-                      </div>
-                    </>
+                    <p className="step-description">고객의 Annual Report PDF 파일을 업로드해주세요.</p>
                   ) : (
                     <>
                       <div className="guide-step">
