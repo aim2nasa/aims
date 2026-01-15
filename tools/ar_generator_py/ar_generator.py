@@ -3,7 +3,7 @@ AR Generator - AIMS Annual Report PDF 생성 도구
 Python GUI 버전 (exe 패키징용)
 """
 
-__version__ = "0.1.5"
+__version__ = "0.1.7"
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -445,10 +445,18 @@ class ARGenerator:
                 if date_match2:
                     result['issue_date'] = date_match2.group(1)
 
-            # FSR 추출 ("송유미 FSR" 또는 "담당 : 송유미 FSR" 형식)
-            fsr_match = re.search(r'([가-힣]{2,4})\s*FSR', page1_text)
+            # FSR 추출 (여러 형식 지원)
+            # 형식 1: "담당 FSR: 송유미" 또는 "담당 FSR : 송유미"
+            fsr_match = re.search(r'담당\s*FSR\s*[:\s]\s*([가-힣]{2,4})', page1_text)
             if fsr_match:
                 result['fsr_name'] = fsr_match.group(1)
+            else:
+                # 형식 2: "송유미 FSR"
+                fsr_match2 = re.search(r'([가-힣]{2,4})\s*FSR', page1_text)
+                if fsr_match2:
+                    # "담당"이 아닌 경우만
+                    if fsr_match2.group(1) != '담당':
+                        result['fsr_name'] = fsr_match2.group(1)
 
         # 모든 페이지에서 총 월보험료 텍스트 찾기
         # "현재 납입중인 월 보험료는 총 1,809,150원 입니다" 또는 "총 월보험료: 1,809,150원" 형식
@@ -530,12 +538,51 @@ class ARGenerator:
                             contract = Contract(순번=순번)
                             contract.증권번호 = policy_num
 
-                            # 인덱스 기반으로 각 필드 추출 (줄바꿈 제거 - 원본 데이터 복원)
+                            # 인덱스 기반으로 각 필드 추출 (스마트 줄바꿈 처리 - 원본 데이터 복원)
                             def get_cell(col_name: str, default_idx: int = -1) -> str:
                                 idx = col_map.get(col_name, default_idx)
                                 if idx >= 0 and idx < len(row) and row[idx]:
-                                    # 줄바꿈 제거 (PDF 표시용 줄바꿈을 원본 데이터로 복원)
-                                    return str(row[idx]).replace('\n', '').strip()
+                                    text = str(row[idx])
+
+                                    def has_jongseong(char: str) -> bool:
+                                        """한글 음절에 받침(종성)이 있는지 확인"""
+                                        if not char or not ('\uac00' <= char <= '\ud7a3'):
+                                            return False
+                                        # 한글 음절 유니코드: AC00 + (초성*21+중성)*28 + 종성
+                                        # 종성이 0이면 받침 없음
+                                        return (ord(char) - 0xAC00) % 28 != 0
+
+                                    # 스마트 줄바꿈 처리
+                                    result = []
+                                    for i, char in enumerate(text):
+                                        if char == '\n':
+                                            prev_char = text[i-1] if i > 0 else ''
+                                            next_char = text[i+1] if i < len(text)-1 else ''
+                                            prev_is_hangul = prev_char and '\uac00' <= prev_char <= '\ud7a3'
+                                            next_is_hangul = next_char and '\uac00' <= next_char <= '\ud7a3'
+
+                                            # 조사 목록 (공백을 유지해야 하는 어미)
+                                            KOREAN_PARTICLES = '의를에와과는은이가로'
+
+                                            if prev_is_hangul and next_is_hangul:
+                                                # 조사로 끝나면 공백 유지 (단어 경계)
+                                                if prev_char in KOREAN_PARTICLES:
+                                                    result.append(' ')
+                                                # 받침 있는 한글 뒤 줄바꿈 → 원래 공백이 있었을 가능성 높음
+                                                elif has_jongseong(prev_char):
+                                                    result.append(' ')
+                                                # 받침 없는 한글 뒤 줄바꿈 → 단어 중간일 가능성 높음
+                                                else:
+                                                    pass  # 공백 없이 연결
+                                            else:
+                                                result.append(' ')
+                                        else:
+                                            result.append(char)
+                                    text = ''.join(result)
+                                    # 연속 공백을 단일 공백으로
+                                    while '  ' in text:
+                                        text = text.replace('  ', ' ')
+                                    return text.strip()
                                 return ''
 
                             # 보험상품
