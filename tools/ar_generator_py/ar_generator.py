@@ -3,7 +3,7 @@ AR Generator - AIMS Annual Report PDF 생성 도구
 Python GUI 버전 (exe 패키징용)
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -179,8 +179,13 @@ class ARGenerator:
         print("Warning: Korean font not found, using default font")
 
     def generate(self, customer_name: str, issue_date: str, fsr_name: str,
-                 contracts: List[Contract], output_path: str) -> str:
-        """AR PDF 생성"""
+                 contracts: List[Contract], output_path: str,
+                 total_premium: int = 0) -> str:
+        """AR PDF 생성
+
+        Args:
+            total_premium: PDF에서 읽은 총 월보험료 (0이면 계산)
+        """
 
         c = canvas.Canvas(output_path, pagesize=A4)
         width, height = A4
@@ -190,7 +195,7 @@ class ARGenerator:
         c.showPage()
 
         # 페이지 2: 계약 목록
-        self._draw_contracts(c, width, height, customer_name, contracts)
+        self._draw_contracts(c, width, height, customer_name, contracts, total_premium)
         c.showPage()
 
         c.save()
@@ -245,8 +250,13 @@ class ARGenerator:
             c.drawString(50, height - 300, f"담당 FSR: {fsr_name}")
 
     def _draw_contracts(self, c: canvas.Canvas, width: float, height: float,
-                        customer_name: str, contracts: List[Contract]):
-        """계약 목록 그리기 - 모든 필드 포함 (AR 파싱과 동일)"""
+                        customer_name: str, contracts: List[Contract],
+                        total_premium: int = 0):
+        """계약 목록 그리기 - 모든 필드 포함 (AR 파싱과 동일)
+
+        Args:
+            total_premium: PDF에서 읽은 총 월보험료 (0이면 계산)
+        """
         try:
             font_name = 'Korean'
             c.setFont(font_name, 12)
@@ -315,10 +325,25 @@ class ARGenerator:
 
             y -= 16
 
-        # 합계
+        # 합계 - PDF에서 읽은 값 사용 (없으면 계산)
         y -= 10
         c.setFont(font_name, 10)
-        total_premium = sum(ct.보험료 for ct in contracts)
+        if total_premium <= 0:
+            # PDF에서 읽지 못한 경우에만 계산 (fallback)
+            current_year = datetime.now().year
+            total_premium = 0
+            for ct in contracts:
+                if ct.계약상태 != '정상':
+                    continue
+                if ct.납입기간 == '일시납':
+                    continue
+                year_match = re.match(r'^(\d+)년$', ct.납입기간)
+                if year_match:
+                    pay_years = int(year_match.group(1))
+                    contract_year = int(ct.계약일[:4]) if ct.계약일 else current_year
+                    if current_year - contract_year >= pay_years:
+                        continue
+                total_premium += ct.보험료
         c.drawString(420, y, f"총 월보험료: {total_premium:,}원")
 
     def parse_pdf(self, pdf_path: str) -> Dict[str, Any]:
@@ -331,7 +356,8 @@ class ARGenerator:
             'customer_name': '',
             'issue_date': '',
             'fsr_name': '',
-            'contracts': []
+            'contracts': [],
+            'total_monthly_premium': 0  # PDF에서 읽은 총 월보험료
         }
 
         # 1페이지: 표지 - 고객명, 발행일, FSR 추출
@@ -356,6 +382,27 @@ class ARGenerator:
             fsr_match = re.search(r'([가-힣]{2,4})\s*FSR', page1_text)
             if fsr_match:
                 result['fsr_name'] = fsr_match.group(1)
+
+        # 모든 페이지에서 총 월보험료 텍스트 찾기
+        # "현재 납입중인 월 보험료는 총 1,809,150원 입니다" 또는 "총 월보험료: 1,809,150원" 형식
+        for page_num in range(len(doc)):
+            page_text = doc[page_num].get_text()
+            # 패턴 1: "월 보험료는 총 X원"
+            premium_match = re.search(r'월\s*보험료[는은가]?\s*총\s+([\d,]+)\s*원', page_text)
+            if premium_match:
+                try:
+                    result['total_monthly_premium'] = int(premium_match.group(1).replace(',', ''))
+                    break
+                except:
+                    pass
+            # 패턴 2: "총 월보험료: X원" 또는 "총 월보험료 X원"
+            premium_match2 = re.search(r'총\s*월\s*보험료[:\s]*([\d,]+)\s*원', page_text)
+            if premium_match2:
+                try:
+                    result['total_monthly_premium'] = int(premium_match2.group(1).replace(',', ''))
+                    break
+                except:
+                    pass
 
         # 2페이지 이후: 계약 목록 추출 (테이블 형식)
         # 메트라이프 AR PDF 컬럼 순서: 순번, 증권번호, 보험상품, 계약자, 피보험자, 계약일, 계약상태, 가입금액, 보험기간, 납입기간, 보험료(원)
@@ -707,6 +754,7 @@ class ARGeneratorApp:
         self.contracts: List[Contract] = []
         self.generator = ARGenerator()
         self.last_pdf_path: str = None
+        self.pdf_total_premium: int = 0  # PDF에서 읽은 총 월보험료
 
         # 프리뷰 관련
         self.preview_images: List[Any] = []  # ImageTk 참조 유지
@@ -868,6 +916,7 @@ class ARGeneratorApp:
         self.fsr_name_var.set(data.get('fsrName', '송유미'))
 
         self.contracts = data.get('contracts', [])
+        self.pdf_total_premium = 0  # 프리셋 로드 시 PDF 값 리셋
 
         # 계약자/피보험자 이름 설정
         customer_name = self.customer_name_var.get()
@@ -906,6 +955,9 @@ class ARGeneratorApp:
             if result['fsr_name']:
                 self.fsr_name_var.set(result['fsr_name'])
 
+            # PDF에서 읽은 총 월보험료 저장
+            self.pdf_total_premium = result.get('total_monthly_premium', 0)
+
             # 계약 목록 설정
             self.contracts = result['contracts']
 
@@ -942,6 +994,7 @@ class ARGeneratorApp:
         if result:
             result.순번 = len(self.contracts) + 1
             self.contracts.append(result)
+            self.pdf_total_premium = 0  # 계약 변경 시 PDF 값 리셋
             self.update_tree()
             self.update_summary()
 
@@ -965,6 +1018,7 @@ class ARGeneratorApp:
         if result:
             result.순번 = idx + 1
             self.contracts[idx] = result
+            self.pdf_total_premium = 0  # 계약 변경 시 PDF 값 리셋
             self.update_tree()
             self.update_summary()
 
@@ -984,12 +1038,14 @@ class ARGeneratorApp:
         for i, c in enumerate(self.contracts):
             c.순번 = i + 1
 
+        self.pdf_total_premium = 0  # 계약 변경 시 PDF 값 리셋
         self.update_tree()
         self.update_summary()
 
     def clear_contracts(self):
         """전체 계약 삭제"""
         self.contracts = []
+        self.pdf_total_premium = 0  # PDF 값 리셋
         self.update_tree()
         self.update_summary()
 
@@ -1018,10 +1074,28 @@ class ARGeneratorApp:
             ))
 
     def update_summary(self):
-        """요약 업데이트"""
+        """요약 업데이트 - PDF에서 읽은 총 월보험료 사용"""
         total = len(self.contracts)
-        premium = sum(c.보험료 for c in self.contracts)
-        self.summary_var.set(f"총 {total}건, 보험료 합계: {premium:,}원")
+        # PDF에서 읽은 총 월보험료가 있으면 그 값 사용
+        if self.pdf_total_premium > 0:
+            premium = self.pdf_total_premium
+        else:
+            # PDF에서 읽지 못한 경우에만 계산 (fallback)
+            current_year = datetime.now().year
+            premium = 0
+            for c in self.contracts:
+                if c.계약상태 != '정상':
+                    continue
+                if c.납입기간 == '일시납':
+                    continue
+                year_match = re.match(r'^(\d+)년$', c.납입기간)
+                if year_match:
+                    pay_years = int(year_match.group(1))
+                    contract_year = int(c.계약일[:4]) if c.계약일 else current_year
+                    if current_year - contract_year >= pay_years:
+                        continue
+                premium += c.보험료
+        self.summary_var.set(f"총 {total}건, 월보험료 합계: {premium:,}원")
 
     def generate_pdf(self):
         """PDF 생성 (임시 파일)"""
@@ -1037,7 +1111,8 @@ class ARGeneratorApp:
                 self.issue_date_var.get(),
                 self.fsr_name_var.get(),
                 self.contracts,
-                output_path
+                output_path,
+                self.pdf_total_premium  # PDF에서 읽은 총 월보험료 전달
             )
 
             self.last_pdf_path = output_path
@@ -1074,7 +1149,8 @@ class ARGeneratorApp:
                 self.issue_date_var.get(),
                 self.fsr_name_var.get(),
                 self.contracts,
-                file_path
+                file_path,
+                self.pdf_total_premium  # PDF에서 읽은 총 월보험료 전달
             )
 
             self.last_pdf_path = file_path
@@ -1132,7 +1208,8 @@ class ARGeneratorApp:
                 self.issue_date_var.get(),
                 self.fsr_name_var.get(),
                 self.contracts,
-                temp_path
+                temp_path,
+                self.pdf_total_premium  # PDF에서 읽은 총 월보험료 전달
             )
 
             # PDF를 이미지로 변환
