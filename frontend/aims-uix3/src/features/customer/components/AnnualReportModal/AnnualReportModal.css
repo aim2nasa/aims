@@ -237,14 +237,15 @@
 }
 
 .contracts-table-wrapper {
+  overflow: hidden;
   overflow-x: auto;
-  border: 1px solid var(--color-layout-border);
+  border: 1px solid var(--color-ios-separator-light);
   border-radius: 8px;
   background: var(--color-layout-content-light);
 }
 
 [data-theme="dark"] .contracts-table-wrapper {
-  border-color: var(--color-layout-border);
+  border-color: var(--color-ios-separator-dark);
   background: var(--color-layout-content-dark);
 }
 
@@ -272,12 +273,17 @@
   text-align: center;
   font-weight: 600;
   color: var(--color-text-primary);
-  border-bottom: 2px solid var(--color-layout-border);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  border-right: 1px solid var(--color-ios-separator-light);
   white-space: nowrap;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 테이블 헤더 (10px deprecated) */
   font-family: var(--font-family-text);
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+.contracts-table th:last-child {
+  border-right: none;
 }
 
 /* Sortable Table Headers - 개선된 직관성 */
@@ -329,16 +335,17 @@
 }
 
 [data-theme="dark"] .contracts-table th {
-  border-bottom-color: var(--color-layout-border);
+  border-bottom-color: var(--color-ios-separator-dark);
+  border-right-color: var(--color-ios-separator-dark);
 }
 
 .contracts-table tbody tr {
-  border-bottom: 1px solid var(--color-layout-border);
+  border-bottom: 1px solid var(--color-ios-separator-light);
   transition: background-color 0.2s ease;
 }
 
 [data-theme="dark"] .contracts-table tbody tr {
-  border-bottom-color: var(--color-hover-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
 }
 
 .contracts-table tbody tr:last-child {
@@ -359,6 +366,15 @@
   vertical-align: middle;
   font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 테이블 내용 */
   font-family: var(--font-family-text);
+  border-right: 1px solid var(--color-ios-separator-light);
+}
+
+.contracts-table td:last-child {
+  border-right: none;
+}
+
+[data-theme="dark"] .contracts-table td {
+  border-right-color: var(--color-ios-separator-dark);
 }
 
 /* Cell Specific Styles */
