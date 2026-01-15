@@ -92,10 +92,22 @@ export interface AIModelServiceSettings {
   availableModels: string[];
 }
 
+export interface AnnualReportServiceSettings extends AIModelServiceSettings {
+  parser: string;  // 'openai' | 'pdfplumber' | 'upstage'
+  availableParsers: string[];
+}
+
 export interface AIModelSettings {
   chat: AIModelServiceSettings;
   rag: AIModelServiceSettings;
-  annualReport: AIModelServiceSettings;
+  annualReport: AnnualReportServiceSettings;
+}
+
+// 업데이트용 타입 (부분 업데이트 지원)
+export interface AIModelSettingsUpdate {
+  chat?: Partial<AIModelServiceSettings>;
+  rag?: Partial<AIModelServiceSettings>;
+  annualReport?: Partial<AnnualReportServiceSettings>;
 }
 
 export interface AIModelSettingsResponse {
@@ -215,7 +227,7 @@ export const aiUsageApi = {
   /**
    * AI 모델 설정 수정
    */
-  updateAIModelSettings: async (updates: Partial<AIModelSettings>): Promise<AIModelSettings> => {
+  updateAIModelSettings: async (updates: AIModelSettingsUpdate): Promise<AIModelSettings> => {
     const res = await apiClient.put<AIModelSettingsResponse>(
       `/api/settings/ai-models`,
       updates

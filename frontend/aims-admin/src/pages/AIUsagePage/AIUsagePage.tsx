@@ -17,7 +17,7 @@ import {
   Legend,
 } from 'recharts';
 import { aiUsageApi, formatTokens, formatCost } from '@/features/dashboard/aiUsageApi';
-import type { DailyUsageBySourcePoint, HourlyUsagePoint, AIModelSettings } from '@/features/dashboard/aiUsageApi';
+import type { DailyUsageBySourcePoint, HourlyUsagePoint, AIModelSettingsUpdate } from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -417,7 +417,7 @@ export const AIUsagePage = () => {
 
   // AI 모델 설정 변경 뮤테이션
   const updateModelMutation = useMutation({
-    mutationFn: (updates: Partial<AIModelSettings>) => aiUsageApi.updateAIModelSettings(updates),
+    mutationFn: (updates: AIModelSettingsUpdate) => aiUsageApi.updateAIModelSettings(updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'ai-model-settings'] });
     },
@@ -435,6 +435,13 @@ export const AIUsagePage = () => {
   const handleModelChange = (service: 'chat' | 'rag' | 'annualReport', model: string) => {
     updateModelMutation.mutate({
       [service]: { model }
+    });
+  };
+
+  // AR 파서 변경 핸들러
+  const handleParserChange = (parser: string) => {
+    updateModelMutation.mutate({
+      annualReport: { parser }
     });
   };
 
@@ -756,17 +763,33 @@ export const AIUsagePage = () => {
                 <span className="ai-usage-page__model-label">Annual Report</span>
                 <span className="ai-usage-page__model-desc">{modelSettings?.annualReport?.description}</span>
               </div>
-              <select
-                className="ai-usage-page__model-select"
-                value={modelSettings?.annualReport?.model || ''}
-                onChange={(e) => handleModelChange('annualReport', e.target.value)}
-                disabled={updateModelMutation.isPending}
-                aria-label="Annual Report 모델 선택"
-              >
-                {modelSettings?.annualReport?.availableModels?.map((model) => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </select>
+              <div className="ai-usage-page__model-selects">
+                <select
+                  className="ai-usage-page__parser-select"
+                  value={modelSettings?.annualReport?.parser || 'openai'}
+                  onChange={(e) => handleParserChange(e.target.value)}
+                  disabled={updateModelMutation.isPending}
+                  aria-label="AR 파서 선택"
+                >
+                  {modelSettings?.annualReport?.availableParsers?.map((parser) => (
+                    <option key={parser} value={parser}>
+                      {parser === 'pdfplumber' ? 'pdfplumber (무료)' : parser === 'openai' ? 'OpenAI' : 'Upstage'}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="ai-usage-page__model-select"
+                  value={modelSettings?.annualReport?.model || ''}
+                  onChange={(e) => handleModelChange('annualReport', e.target.value)}
+                  disabled={updateModelMutation.isPending || modelSettings?.annualReport?.parser !== 'openai'}
+                  aria-label="Annual Report 모델 선택"
+                  title={modelSettings?.annualReport?.parser !== 'openai' ? 'OpenAI 파서 선택 시에만 모델 변경 가능' : ''}
+                >
+                  {modelSettings?.annualReport?.availableModels?.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="ai-usage-page__model-actions">
