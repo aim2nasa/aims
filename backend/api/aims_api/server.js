@@ -3218,17 +3218,51 @@ app.delete('/api/dev/customers/all', authenticateJWT, async (req, res) => {
   try {
     // 요청한 사용자(설계사)의 고객만 삭제
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
-    // 고객은 meta.created_by로 설계사 ID를 저장함 (문자열)
+
+    // 1. 먼저 설계사의 모든 고객 ID 목록 조회
+    const customers = await db.collection(CUSTOMERS_COLLECTION).find(
+      { 'meta.created_by': userId },
+      { projection: { _id: 1 } }
+    ).toArray();
+    const customerIds = customers.map(c => c._id);
+
+    console.log(`🗑️ [DEV] 고객 전체 삭제 시작: userId=${userId}, customerCount=${customerIds.length}`);
+
+    // 2. 해당 고객들과 관련된 모든 관계 레코드 삭제 (Cascade Delete)
+    let relationshipsDeleteCount = 0;
+    if (customerIds.length > 0) {
+      const relationshipsDeleteResult = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteMany({
+        $or: [
+          { from_customer: { $in: customerIds } },
+          { related_customer: { $in: customerIds } },
+          { family_representative: { $in: customerIds } }
+        ]
+      });
+      relationshipsDeleteCount = relationshipsDeleteResult.deletedCount;
+    }
+
+    // 3. 해당 고객들의 계약 삭제 (Cascade Delete)
+    let contractsDeleteCount = 0;
+    if (customerIds.length > 0) {
+      const contractsDeleteResult = await db.collection(COLLECTIONS.CONTRACTS).deleteMany({
+        customer_id: { $in: customerIds }
+      });
+      contractsDeleteCount = contractsDeleteResult.deletedCount;
+    }
+
+    // 4. 고객 삭제
     const result = await db.collection(CUSTOMERS_COLLECTION).deleteMany({
       'meta.created_by': userId
     });
 
-    console.log(`🗑️ [DEV] 고객 전체 삭제: meta.created_by=${userId}, deletedCount=${result.deletedCount}`);
+    console.log(`🗑️ [DEV] 고객 전체 삭제 완료: customers=${result.deletedCount}, relationships=${relationshipsDeleteCount}, contracts=${contractsDeleteCount}`);
 
     res.json({
       success: true,
-      message: `${result.deletedCount}명의 고객이 삭제되었습니다.`,
-      deletedCount: result.deletedCount
+      message: `${result.deletedCount}명의 고객이 삭제되었습니다. (관계: ${relationshipsDeleteCount}건, 계약: ${contractsDeleteCount}건 정리)`,
+      deletedCount: result.deletedCount,
+      relationshipsDeleteCount,
+      contractsDeleteCount
     });
   } catch (error) {
     console.error('❌ 고객 전체 삭제 실패:', error);
