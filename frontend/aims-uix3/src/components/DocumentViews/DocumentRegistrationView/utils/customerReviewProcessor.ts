@@ -113,14 +113,15 @@ export async function processCustomerReviewFile(
         const normalizedUploadDate = issueDate.split('T')[0];
 
         for (const existingCr of crListResponse.data.reviews) {
-          if (existingCr.issue_date && existingCr.policy_number) {
+          const existingPolicyNumber = existingCr.contract_info?.policy_number;
+          if (existingCr.issue_date && existingPolicyNumber) {
             const normalizedExistingDate = existingCr.issue_date.split('T')[0];
 
             // 발행일 + 증권번호 모두 일치해야 중복
-            if (normalizedUploadDate === normalizedExistingDate && policyNumber === existingCr.policy_number) {
+            if (normalizedUploadDate === normalizedExistingDate && policyNumber === existingPolicyNumber) {
               isDuplicateIssueDatePolicy = true;
               duplicateIssueDate = normalizedExistingDate;
-              duplicatePolicyNumber = existingCr.policy_number;
+              duplicatePolicyNumber = existingPolicyNumber;
               console.log(`[processCustomerReviewFile] 발행일+증권번호 중복 감지: ${normalizedUploadDate}, ${policyNumber}`);
               break;
             }
