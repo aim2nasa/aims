@@ -322,7 +322,7 @@ function isProductNameSuffixMatch(text: string): boolean {
 
 /**
  * 상품명 접미사인지 확인
- * ex: "Ⅱ보험", "보험", "금형)", "급금형)", "환급금형)", "Plus"
+ * ex: "Ⅱ보험", "보험", "금형)", "급금형)", "환급금형)", "Plus", "(저해지환급금형)"
  */
 function isProductNameSuffix(line: string): boolean {
   const trimmed = line.trim();
@@ -332,6 +332,7 @@ function isProductNameSuffix(line: string): boolean {
     /^급금형\)?$/,            // "급금형)"
     /^환급금형\)?$/,          // "환급금형)"
     /^Plus$/i,                // "Plus"
+    /^\([^)]+환급금형\)$/,    // "(저해지환급금형)", "(저해약환급금형)" - 완전한 괄호 suffix
   ];
   return suffixPatterns.some(p => p.test(trimmed));
 }
