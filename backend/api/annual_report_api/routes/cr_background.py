@@ -6,6 +6,8 @@ Customer Review Background Parsing Routes
 """
 
 import logging
+import os
+import requests
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Header
@@ -15,12 +17,34 @@ from bson.errors import InvalidId
 
 from services.cr_detector import extract_cr_metadata_from_first_page
 from services.cr_parser import parse_customer_review
+from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import save_customer_review
 from system_logger import send_error_log
+
+# aims_api 설정 조회 URL
+AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def get_cr_parser_setting() -> str:
+    """
+    aims_api에서 CR 파서 설정 조회 (동기 버전)
+    기본값: 'regex'
+    """
+    try:
+        resp = requests.get(f"{AIMS_API_URL}/api/settings/ai-models", timeout=5.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("success") and data.get("data"):
+                parser = data["data"].get("customerReview", {}).get("parser", "regex")
+                logger.info(f"📊 CR 파서 설정 조회 성공: {parser}")
+                return parser
+    except Exception as e:
+        logger.warning(f"CR 파서 설정 조회 실패, 기본값 사용: {e}")
+    return "regex"
 
 
 class TriggerCRParsingRequest(BaseModel):
@@ -83,7 +107,6 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             )
             return {"success": False, "error": error_msg}
 
-        import os
         if not os.path.exists(file_path):
             error_msg = f"파일이 존재하지 않음: {file_path}"
             db["files"].update_one(
@@ -108,10 +131,16 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             )
             return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
 
-        # 3. CR 파싱 실행 (pdfplumber 기반 - 빠르고 비용 없음)
-        logger.info(f"🔍 [CR Parsing] 파싱 시작: {file_path}")
+        # 3. CR 파서 설정 조회 및 파싱 실행
+        parser_type = get_cr_parser_setting()
+        logger.info(f"🔍 [CR Parsing] 파싱 시작: {file_path} (파서: {parser_type})")
 
-        result = parse_customer_review(file_path)
+        if parser_type == "pdfplumber_table":
+            # 테이블 기반 일반화 파서 (pdfplumber)
+            result = parse_customer_review_table(file_path)
+        else:
+            # 기존 정규식 파서 (regex)
+            result = parse_customer_review(file_path)
 
         if "error" in result:
             logger.error(f"❌ [CR Parsing] 파싱 실패: {result['error']}")
