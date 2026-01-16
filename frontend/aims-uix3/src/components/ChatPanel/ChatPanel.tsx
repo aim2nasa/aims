@@ -34,11 +34,13 @@ const DATA_MUTATING_TOOLS = {
   // 고객 관련
   customers: ['create_customer', 'update_customer', 'restore_customer'],
   // 문서 관련
-  documents: ['delete_document', 'link_document_to_customer'],
+  documents: ['delete_document', 'delete_documents', 'link_document_to_customer'],
   // 관계 관련
-  relationships: ['create_relationship'],
+  relationships: ['create_relationship', 'delete_relationship'],
   // 메모 관련
   memos: ['add_customer_memo', 'delete_customer_memo'],
+  // 계약 관련
+  contracts: ['create_contract'],
 };
 
 interface ChatPanelProps {
@@ -1694,7 +1696,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             ...DATA_MUTATING_TOOLS.customers,
             ...DATA_MUTATING_TOOLS.documents,
             ...DATA_MUTATING_TOOLS.relationships,
-            ...DATA_MUTATING_TOOLS.memos
+            ...DATA_MUTATING_TOOLS.memos,
+            ...DATA_MUTATING_TOOLS.contracts
           ];
 
           if (allMutatingTools.includes(toolName)) {
