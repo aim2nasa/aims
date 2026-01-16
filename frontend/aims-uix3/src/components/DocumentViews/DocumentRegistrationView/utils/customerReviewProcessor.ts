@@ -106,14 +106,13 @@ export async function processCustomerReviewFile(
   // 2. 발행일 + 증권번호 중복 검사 (해시 중복이 아닌 경우만)
   if (!isDuplicateDoc && issueDate && policyNumber) {
     try {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const crListResponse = await CustomerReviewApi.getCustomerReviews(customerId, userId, 100);
+      const crListResponse = await CustomerReviewApi.getCustomerReviews(customerId, 100);
 
-      if (crListResponse.success && crListResponse.data?.reports) {
+      if (crListResponse.success && crListResponse.data?.reviews) {
         // 발행일 정규화 (YYYY-MM-DD 형식으로 비교)
         const normalizedUploadDate = issueDate.split('T')[0];
 
-        for (const existingCr of crListResponse.data.reports) {
+        for (const existingCr of crListResponse.data.reviews) {
           if (existingCr.issue_date && existingCr.policy_number) {
             const normalizedExistingDate = existingCr.issue_date.split('T')[0];
 
