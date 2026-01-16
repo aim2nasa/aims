@@ -1224,3 +1224,305 @@ html[data-theme="dark"] .snapshot-item__payment {
 html[data-theme="dark"] .snapshot-item--changed {
   color: var(--color-button-destructive-bg-dark, #ff453a);
 }
+
+/* ============================================
+ * CRS (Customer Review) 계약 이력 섹션
+ * ============================================ */
+
+.cr-contract-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-x: auto;
+}
+
+/* 9컬럼 헤더 */
+.cr-contract-history-header {
+  display: grid;
+  grid-template-columns: 31px 100px 1fr 50px 75px 90px 90px 70px 80px;
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-width: max-content;
+}
+
+html[data-theme="dark"] .cr-contract-history-header {
+  color: var(--color-ios-text-tertiary-dark);
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 헤더 셀 공통 */
+.cr-contract-history-header > div {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: ellipsis;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* 숫자 칼럼 우측 정렬 */
+.cr-contract-history-header__insured-amount,
+.cr-contract-history-header__accumulated,
+.cr-contract-history-header__return-rate {
+  justify-content: flex-end;
+}
+
+/* CRS 아코디언 */
+.cr-contract-history-accordion {
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .cr-contract-history-accordion {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+/* CRS 아코디언 헤더 (계약 요약 행) */
+.cr-contract-history-accordion__header {
+  display: grid;
+  grid-template-columns: 31px 100px 1fr 50px 75px 90px 90px 70px 80px;
+  gap: 4px;
+  padding: 8px;
+  align-items: center;
+  cursor: pointer;
+  font-size: var(--font-size-caption-1);
+  transition: background 0.15s ease;
+  min-width: max-content;
+}
+
+.cr-contract-history-accordion__header:hover {
+  background: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-accordion__header:hover {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.cr-contract-history-accordion__header--expanded {
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-accordion__header--expanded {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* CRS 아이템 셀 공통 */
+.cr-contract-history-item__seq {
+  text-align: center;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: var(--font-size-caption-2);
+}
+
+html[data-theme="dark"] .cr-contract-history-item__seq {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.cr-contract-history-item__toggle {
+  font-size: 8px;
+  margin-right: 4px;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-item__toggle {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.cr-contract-history-item__policy {
+  font-weight: 500;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.cr-contract-history-item__product {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-item__product {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.cr-contract-history-item__contractor {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cr-contract-history-item__date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .cr-contract-history-item__date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.cr-contract-history-item__insured-amount,
+.cr-contract-history-item__accumulated {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cr-contract-history-item__return-rate {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .cr-contract-history-item__return-rate {
+  color: var(--color-primary-400);
+}
+
+.cr-contract-history-item__issue-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-tertiary-light);
+  white-space: nowrap;
+  font-size: var(--font-size-caption-2);
+}
+
+html[data-theme="dark"] .cr-contract-history-item__issue-date {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* CRS 아코디언 내용 (스냅샷 목록) */
+.cr-contract-history-accordion__content {
+  padding: 8px 12px 12px 40px;
+  background: var(--color-ios-bg-secondary-light);
+  border-top: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-accordion__content {
+  background: var(--color-ios-bg-secondary-dark);
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+.cr-contract-history-accordion__content--empty {
+  color: var(--color-ios-text-tertiary-light);
+  font-size: var(--font-size-caption-1);
+  padding: 12px 12px 12px 40px;
+}
+
+html[data-theme="dark"] .cr-contract-history-accordion__content--empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* CRS 스냅샷 제목 */
+.cr-contract-history-snapshots-title {
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .cr-contract-history-snapshots-title {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* CRS 스냅샷 헤더 (6컬럼) */
+.cr-contract-history-snapshots-header {
+  display: grid;
+  grid-template-columns: 80px 90px 90px 70px 90px 70px;
+  gap: 6px;
+  padding: 4px 0 6px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-snapshots-header {
+  color: var(--color-ios-text-tertiary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* CRS 스냅샷 헤더 칼럼 우측 정렬 */
+.cr-snapshot-header__insured-amount,
+.cr-snapshot-header__accumulated,
+.cr-snapshot-header__return-rate,
+.cr-snapshot-header__surrender-value,
+.cr-snapshot-header__surrender-rate {
+  text-align: right;
+}
+
+/* CRS 스냅샷 아이템 (6컬럼) */
+.cr-contract-history-snapshot-item {
+  display: grid;
+  grid-template-columns: 80px 90px 90px 70px 90px 70px;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: var(--font-size-caption-2);
+  color: var(--color-ios-text-primary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .cr-contract-history-snapshot-item {
+  color: var(--color-ios-text-primary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.cr-contract-history-snapshot-item:last-child {
+  border-bottom: none;
+}
+
+/* 변경된 행 배경 */
+.cr-contract-history-snapshot-item--changed {
+  background: var(--color-ios-yellow-light-bg, rgba(255, 204, 0, 0.1));
+}
+
+html[data-theme="dark"] .cr-contract-history-snapshot-item--changed {
+  background: var(--color-ios-yellow-dark-bg, rgba(255, 214, 10, 0.12));
+}
+
+/* CRS 발행일 */
+.cr-snapshot-item__issue-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .cr-snapshot-item__issue-date {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* CRS 숫자 칼럼 */
+.cr-snapshot-item__insured-amount,
+.cr-snapshot-item__accumulated,
+.cr-snapshot-item__surrender-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-snapshot-item__return-rate,
+.cr-snapshot-item__surrender-rate {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* CRS 변경된 필드 하이라이트 (빨간색) */
+.cr-snapshot-item--changed {
+  font-weight: 600;
+  color: var(--color-icon-red, #ff3b30);
+}
+
+html[data-theme="dark"] .cr-snapshot-item--changed {
+  color: var(--color-button-destructive-bg-dark, #ff453a);
+}

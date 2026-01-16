@@ -19,6 +19,10 @@ import {
   groupContractsByPolicyNumber,
   getChangedFields,
 } from '@/features/customer/api/annualReportApi'
+import {
+  CustomerReviewApi,
+  type CustomerReview,
+} from '@/features/customer/api/customerReviewApi'
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService'
 import { Tooltip } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
@@ -42,6 +46,8 @@ interface ContractsTabProps {
   onSearchChange?: (term: string) => void
   /** AR 삭제 등으로 인한 외부 새로고침 트리거 */
   refreshTrigger?: number
+  /** 보험 이력 탭 (ar: Annual Report 이력, cr: 변액 리포트 이력) */
+  historyTab?: 'ar' | 'cr'
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -93,6 +99,39 @@ const AR_HISTORY_COLUMNS: ColumnConfig[] = [
   { id: 'issueDate', minWidth: 72, maxWidth: 95 },     // 발행일 (AR 기준일)
 ]
 
+// 🍎 CRS 계약 이력용 컬럼 리사이즈 설정 (9컬럼)
+const CR_HISTORY_COLUMNS: ColumnConfig[] = [
+  { id: 'seq', minWidth: 31, maxWidth: 44 },           // 순번 (고정)
+  { id: 'policy', minWidth: 83, maxWidth: 130 },       // 증권번호
+  { id: 'product', minWidth: 110, maxWidth: 440 },     // 보험상품 (1fr)
+  { id: 'contractor', minWidth: 44, maxWidth: 77 },    // 계약자
+  { id: 'date', minWidth: 72, maxWidth: 88 },          // 계약일
+  { id: 'insuredAmount', minWidth: 66, maxWidth: 105 },// 보험가입금액
+  { id: 'accumulated', minWidth: 66, maxWidth: 105 },  // 적립금
+  { id: 'returnRate', minWidth: 55, maxWidth: 83 },    // 투자수익률
+  { id: 'issueDate', minWidth: 72, maxWidth: 95 },     // 발행일 (CRS 기준일)
+]
+
+// 🍎 CRS 계약 이력 스냅샷 타입
+interface CrContractSnapshot {
+  issueDate: string
+  insuredAmount?: number    // 보험가입금액 (원)
+  accumulatedAmount?: number // 적립금 (원)
+  investmentReturnRate?: number // 투자수익률 (%)
+  surrenderValue?: number   // 해지환급금 (원)
+  surrenderRate?: number    // 해지환급율 (%)
+}
+
+// 🍎 CRS 계약 이력 타입 (증권번호별 그룹)
+interface CrContractHistory {
+  policyNumber: string
+  productName: string
+  contractorName: string
+  contractDate: string
+  latestSnapshot: CrContractSnapshot
+  snapshots: CrContractSnapshot[]
+}
+
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
 const calculateTextWidth = (text: string): number => {
   let width = 0
@@ -107,12 +146,88 @@ const calculateTextWidth = (text: string): number => {
   return width
 }
 
+/**
+ * CRS 리뷰를 증권번호별로 그룹화하여 계약 이력 생성
+ */
+function groupCrReviewsByPolicyNumber(reviews: CustomerReview[]): CrContractHistory[] {
+  const policyMap = new Map<string, {
+    productName: string
+    contractorName: string
+    contractDate: string
+    snapshots: CrContractSnapshot[]
+  }>()
+
+  // 발행일 기준 최신순 정렬
+  const sortedReviews = [...reviews].sort((a, b) => {
+    const dateA = a.issue_date ? new Date(a.issue_date).getTime() : 0
+    const dateB = b.issue_date ? new Date(b.issue_date).getTime() : 0
+    return dateB - dateA
+  })
+
+  for (const review of sortedReviews) {
+    const policyNumber = review.contract_info?.policy_number
+    if (!policyNumber) continue
+
+    const snapshot: CrContractSnapshot = {
+      issueDate: review.issue_date || '',
+      insuredAmount: review.contract_info?.insured_amount,
+      accumulatedAmount: review.contract_info?.accumulated_amount,
+      investmentReturnRate: review.contract_info?.investment_return_rate,
+      surrenderValue: review.contract_info?.surrender_value,
+      surrenderRate: review.contract_info?.surrender_rate,
+    }
+
+    if (!policyMap.has(policyNumber)) {
+      policyMap.set(policyNumber, {
+        productName: review.product_name || '-',
+        contractorName: review.contractor_name || '-',
+        contractDate: review.contract_info?.contract_date || '-',
+        snapshots: [snapshot]
+      })
+    } else {
+      policyMap.get(policyNumber)!.snapshots.push(snapshot)
+    }
+  }
+
+  // Map을 배열로 변환
+  const histories: CrContractHistory[] = []
+  policyMap.forEach((data, policyNumber) => {
+    histories.push({
+      policyNumber,
+      productName: data.productName,
+      contractorName: data.contractorName,
+      contractDate: data.contractDate,
+      latestSnapshot: data.snapshots[0], // 최신 스냅샷
+      snapshots: data.snapshots
+    })
+  })
+
+  return histories
+}
+
+/**
+ * CRS 스냅샷 간 변경된 필드 감지
+ */
+function getCrChangedFields(current: CrContractSnapshot, previous?: CrContractSnapshot): string[] {
+  if (!previous) return []
+  const changedFields: string[] = []
+
+  if (current.insuredAmount !== previous.insuredAmount) changedFields.push('insuredAmount')
+  if (current.accumulatedAmount !== previous.accumulatedAmount) changedFields.push('accumulatedAmount')
+  if (current.investmentReturnRate !== previous.investmentReturnRate) changedFields.push('investmentReturnRate')
+  if (current.surrenderValue !== previous.surrenderValue) changedFields.push('surrenderValue')
+  if (current.surrenderRate !== previous.surrenderRate) changedFields.push('surrenderRate')
+
+  return changedFields
+}
+
 export const ContractsTab: React.FC<ContractsTabProps> = ({
   customer,
   onContractCountChange,
   searchTerm: externalSearchTerm,
   onSearchChange,
-  refreshTrigger
+  refreshTrigger,
+  historyTab = 'ar'
 }) => {
   // 🍎 상태 관리
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -124,6 +239,12 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [contractHistories, setContractHistories] = useState<ContractHistory[]>([])
   const [expandedPolicyNumber, setExpandedPolicyNumber] = useState<string | null>(null)
   const [isLoadingAr, setIsLoadingAr] = useState(false)
+
+  // 🍎 CRS 기반 계약 정보 상태
+  const [crReviews, setCrReviews] = useState<CustomerReview[]>([])
+  const [crContractHistories, setCrContractHistories] = useState<CrContractHistory[]>([])
+  const [expandedCrPolicyNumber, setExpandedCrPolicyNumber] = useState<string | null>(null)
+  const [isLoadingCr, setIsLoadingCr] = useState(false)
 
   // 🍎 AR 계약 이력 정렬 상태
   type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium' | 'issueDate'
@@ -300,11 +421,38 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     }
   })
 
+  // 🍎 CRS 데이터 로드
+  const loadCrReviews = useCallback(async () => {
+    if (!customer?._id) return
+
+    setIsLoadingCr(true)
+    try {
+      const response = await CustomerReviewApi.getCustomerReviews(customer._id, 100)
+
+      if (response.success && response.data) {
+        // 완료된 CRS만 필터링
+        const completedReviews = response.data.reviews
+          .filter((r) => r.status === 'completed')
+        setCrReviews(completedReviews)
+
+        // 증권번호별 계약 이력으로 변환
+        const histories = groupCrReviewsByPolicyNumber(completedReviews)
+        setCrContractHistories(histories)
+      }
+    } catch (err) {
+      console.error('[ContractsTab] CRS 로드 실패:', err)
+      errorReporter.reportApiError(err as Error, { component: 'ContractsTab.loadCrReviews', payload: { customerId: customer._id } })
+    } finally {
+      setIsLoadingCr(false)
+    }
+  }, [customer?._id])
+
   // 🍎 초기 로드
   useEffect(() => {
     void loadContracts()
     void loadArReports()
-  }, [loadContracts, loadArReports])
+    void loadCrReviews()
+  }, [loadContracts, loadArReports, loadCrReviews])
 
   // 🍎 외부 refreshTrigger 변경 시 AR 데이터 새로고침 (AR 문서 삭제 등)
   useEffect(() => {
@@ -778,8 +926,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         </div>
       </div>
 
-      {/* 🍎 증권번호 기준 계약 이력 (아코디언) - 11컬럼, 리사이즈 가능 */}
-      {contractHistories.length > 0 && (
+      {/* 🍎 AR 증권번호 기준 계약 이력 (아코디언) - 11컬럼, 리사이즈 가능 */}
+      {historyTab === 'ar' && contractHistories.length > 0 && (
         <div
           className={`contract-history-section${isArResizing ? ' is-resizing' : ''}`}
           style={{
@@ -1002,7 +1150,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       )}
 
       {/* AR 로딩 중 */}
-      {isLoadingAr && arReports.length === 0 && (
+      {historyTab === 'ar' && isLoadingAr && arReports.length === 0 && (
         <div className="customer-contracts__ar-loading">
           <SFSymbol
             name="arrow.clockwise"
@@ -1011,6 +1159,146 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             weight={SFSymbolWeight.MEDIUM}
           />
           <span>AR 계약 정보 로딩 중...</span>
+        </div>
+      )}
+
+      {/* 🍎 CRS 증권번호 기준 계약 이력 (아코디언) */}
+      {historyTab === 'cr' && crContractHistories.length > 0 && (
+        <div className="cr-contract-history-section">
+          {/* 헤더 행 */}
+          <div className="cr-contract-history-header">
+            <div className="cr-contract-history-header__seq">순번</div>
+            <div className="cr-contract-history-header__policy">증권번호</div>
+            <div className="cr-contract-history-header__product">보험상품</div>
+            <div className="cr-contract-history-header__contractor">계약자</div>
+            <div className="cr-contract-history-header__date">계약일</div>
+            <div className="cr-contract-history-header__insured-amount">보험가입금액</div>
+            <div className="cr-contract-history-header__accumulated">적립금</div>
+            <div className="cr-contract-history-header__return-rate">투자수익률</div>
+            <div className="cr-contract-history-header__issue-date">발행일</div>
+          </div>
+          <div className="cr-contract-history-list">
+            {crContractHistories.map((history, idx) => {
+              const isExpanded = expandedCrPolicyNumber === history.policyNumber
+              const { latestSnapshot } = history
+
+              return (
+                <div key={history.policyNumber} className="cr-contract-history-accordion">
+                  {/* 계약 요약 행 */}
+                  <div
+                    className={`cr-contract-history-accordion__header ${isExpanded ? 'cr-contract-history-accordion__header--expanded' : ''}`}
+                    onClick={() => setExpandedCrPolicyNumber(isExpanded ? null : history.policyNumber)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded ? 'true' : 'false'}
+                  >
+                    <span className="cr-contract-history-item__seq">{idx + 1}</span>
+                    <span className="cr-contract-history-item__policy">
+                      <span className="cr-contract-history-item__toggle">{isExpanded ? '▼' : '▶'}</span>
+                      {history.policyNumber}
+                    </span>
+                    <Tooltip content={history.productName || '-'}>
+                      <span className="cr-contract-history-item__product">{history.productName || '-'}</span>
+                    </Tooltip>
+                    <span className="cr-contract-history-item__contractor">{history.contractorName || '-'}</span>
+                    <span className="cr-contract-history-item__date">{history.contractDate || '-'}</span>
+                    <span className="cr-contract-history-item__insured-amount">
+                      {latestSnapshot.insuredAmount ? latestSnapshot.insuredAmount.toLocaleString('ko-KR') : '-'}
+                    </span>
+                    <span className="cr-contract-history-item__accumulated">
+                      {latestSnapshot.accumulatedAmount ? latestSnapshot.accumulatedAmount.toLocaleString('ko-KR') : '-'}
+                    </span>
+                    <span className="cr-contract-history-item__return-rate">
+                      {latestSnapshot.investmentReturnRate !== undefined ? `${latestSnapshot.investmentReturnRate.toFixed(2)}%` : '-'}
+                    </span>
+                    <span className="cr-contract-history-item__issue-date">
+                      {formatDate(latestSnapshot.issueDate)}
+                    </span>
+                  </div>
+
+                  {/* 스냅샷 이력 (펼침 시) - 발행일별 변경 이력 */}
+                  {isExpanded && history.snapshots.length > 1 && (
+                    <div className="cr-contract-history-accordion__content">
+                      <div className="cr-contract-history-snapshots-title">
+                        <span>📋 발행일별 이력 ({history.snapshots.length}건)</span>
+                      </div>
+                      <div className="cr-contract-history-snapshots-header">
+                        <span className="cr-snapshot-header__issue-date">발행일</span>
+                        <span className="cr-snapshot-header__insured-amount">보험가입금액</span>
+                        <span className="cr-snapshot-header__accumulated">적립금</span>
+                        <span className="cr-snapshot-header__return-rate">투자수익률</span>
+                        <span className="cr-snapshot-header__surrender-value">해지환급금</span>
+                        <span className="cr-snapshot-header__surrender-rate">해지환급율</span>
+                      </div>
+                      {history.snapshots.map((snapshot, snapshotIdx) => {
+                        const prevSnapshot = history.snapshots[snapshotIdx + 1]
+                        const changedFields = getCrChangedFields(snapshot, prevSnapshot)
+                        const hasChanges = changedFields.length > 0
+
+                        return (
+                          <div
+                            key={`${history.policyNumber}-${snapshot.issueDate}`}
+                            className={`cr-contract-history-snapshot-item ${hasChanges ? 'cr-contract-history-snapshot-item--changed' : ''}`}
+                          >
+                            <span className="cr-snapshot-item__issue-date">
+                              {formatDate(snapshot.issueDate)}
+                            </span>
+                            <span className={`cr-snapshot-item__insured-amount ${changedFields.includes('insuredAmount') ? 'cr-snapshot-item--changed' : ''}`}>
+                              {snapshot.insuredAmount ? snapshot.insuredAmount.toLocaleString('ko-KR') : '-'}
+                            </span>
+                            <span className={`cr-snapshot-item__accumulated ${changedFields.includes('accumulatedAmount') ? 'cr-snapshot-item--changed' : ''}`}>
+                              {snapshot.accumulatedAmount ? snapshot.accumulatedAmount.toLocaleString('ko-KR') : '-'}
+                            </span>
+                            <span className={`cr-snapshot-item__return-rate ${changedFields.includes('investmentReturnRate') ? 'cr-snapshot-item--changed' : ''}`}>
+                              {snapshot.investmentReturnRate !== undefined ? `${snapshot.investmentReturnRate.toFixed(2)}%` : '-'}
+                            </span>
+                            <span className={`cr-snapshot-item__surrender-value ${changedFields.includes('surrenderValue') ? 'cr-snapshot-item--changed' : ''}`}>
+                              {snapshot.surrenderValue ? snapshot.surrenderValue.toLocaleString('ko-KR') : '-'}
+                            </span>
+                            <span className={`cr-snapshot-item__surrender-rate ${changedFields.includes('surrenderRate') ? 'cr-snapshot-item--changed' : ''}`}>
+                              {snapshot.surrenderRate !== undefined ? `${snapshot.surrenderRate.toFixed(2)}%` : '-'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* 이력이 1건인 경우 (변경 없음) */}
+                  {isExpanded && history.snapshots.length === 1 && (
+                    <div className="cr-contract-history-accordion__content cr-contract-history-accordion__content--empty">
+                      <span>변경 이력이 없습니다. (1건의 CRS에서만 발견)</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* CRS 로딩 중 */}
+      {historyTab === 'cr' && isLoadingCr && crReviews.length === 0 && (
+        <div className="customer-contracts__ar-loading">
+          <SFSymbol
+            name="arrow.clockwise"
+            animation={SFSymbolAnimation.ROTATE}
+            size={SFSymbolSize.CAPTION_1}
+            weight={SFSymbolWeight.MEDIUM}
+          />
+          <span>변액 리포트 정보 로딩 중...</span>
+        </div>
+      )}
+
+      {/* CRS 빈 상태 */}
+      {historyTab === 'cr' && !isLoadingCr && crContractHistories.length === 0 && (
+        <div className="customer-contracts__state customer-contracts__state--empty">
+          <SFSymbol
+            name='doc.text.magnifyingglass'
+            size={SFSymbolSize.TITLE_3}
+            weight={SFSymbolWeight.MEDIUM}
+          />
+          <span>등록된 변액 리포트가 없습니다.</span>
         </div>
       )}
 

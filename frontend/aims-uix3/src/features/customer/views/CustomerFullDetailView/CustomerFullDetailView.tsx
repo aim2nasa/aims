@@ -106,6 +106,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 보고서 탭 상태 ('annual' | 'review')
   const [reportTab, setReportTab] = useState<'annual' | 'review'>('annual')
 
+  // 🍎 보험 이력 탭 상태 ('ar' | 'cr')
+  const [historyTab, setHistoryTab] = useState<'ar' | 'cr'>('ar')
+
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
 
@@ -876,17 +879,30 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   aria-label="고객정보와 보험계약 사이 크기 조절"
                 />
 
-                {/* 🍎 보험 계약 섹션 */}
+                {/* 🍎 보험 이력 섹션 (탭 구조: AR 이력, 변액 이력) */}
                 <section className="customer-full-detail__section customer-full-detail__section--contracts">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <rect x="2" y="2" width="12" height="12" rx="2"/>
                     <path d="M5 5h6M5 8h6M5 11h4" stroke="white" strokeWidth="1" strokeLinecap="round"/>
                   </svg>
-                  <span>보험 계약</span>
-                  {contractCount > 0 && (
-                    <span className="customer-full-detail__section-count">{contractCount}</span>
-                  )}
+                  {/* 🍎 보험 이력 탭 버튼 */}
+                  <div className="history-tabs">
+                    <button
+                      type="button"
+                      className={`history-tabs__tab ${historyTab === 'ar' ? 'history-tabs__tab--active' : ''}`}
+                      onClick={() => setHistoryTab('ar')}
+                    >
+                      Annual Report
+                    </button>
+                    <button
+                      type="button"
+                      className={`history-tabs__tab ${historyTab === 'cr' ? 'history-tabs__tab--active' : ''}`}
+                      onClick={() => setHistoryTab('cr')}
+                    >
+                      변액 리포트
+                    </button>
+                  </div>
                   {/* 🍎 계약 검색 */}
                   <div className="customer-full-detail__section-search">
                     <SFSymbol
@@ -927,6 +943,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       searchTerm={contractSearchTerm}
                       onSearchChange={setContractSearchTerm}
                       refreshTrigger={annualReportRefreshTrigger}
+                      historyTab={historyTab}
                     />
                   </div>
                 </section>

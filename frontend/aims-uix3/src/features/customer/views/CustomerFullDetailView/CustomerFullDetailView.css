@@ -942,6 +942,59 @@ html[data-theme="dark"] .report-tabs__tab--active {
   color: var(--color-text-primary);
 }
 
+/* 🍎 보험 이력 탭 버튼 (AR 이력 / 변액 리포트) */
+.history-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 2px;
+}
+
+.history-tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-title);
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.history-tabs__tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.history-tabs__tab--active {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* 활성 탭 하단 인디케이터 */
+.history-tabs__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  background: var(--color-primary-500);
+  border-radius: 1px;
+}
+
+html[data-theme="dark"] .history-tabs__tab:hover {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .history-tabs__tab--active {
+  color: var(--color-text-primary);
+}
+
 /* 🍎 보고서 탭 패널 (항상 렌더링, 비활성 시 숨김 - SSE 실시간 업데이트 유지) */
 .report-tab-panel {
   display: none;
