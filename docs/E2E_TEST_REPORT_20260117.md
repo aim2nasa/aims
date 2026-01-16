@@ -69,7 +69,7 @@ curl -s -X PUT 'http://localhost:3010/api/customers/<id>' \
 
 ---
 
-### 🟡 Issue #3: `customerId=null` 필터 미작동 (Medium)
+### ✅ Issue #3: `customerId=null` 필터 미작동 (Medium) - **해결됨**
 
 **위치**: `GET /api/documents?customerId=null`
 
@@ -79,13 +79,18 @@ curl -s 'http://localhost:3010/api/documents?customerId=null' \
   -H 'Authorization: Bearer <token>'
 ```
 
-**현재 결과**: 고객 연결된 문서도 함께 반환됨
+**수정 전 결과**: 고객 연결된 문서도 함께 반환됨
 
-**예상 결과**: 고객 미연결 문서만 반환
+**수정 후 결과**: 고객 미연결 문서만 반환됨 (`customerId: null`)
 
-**영향**: 문서 필터링 기능 오작동
+**상태**: ✅ 해결됨 (2026-01-17)
 
-**상태**: ⬜ 미해결
+**수정 내용**:
+- `server.js:962` - customerIdFilter 쿼리 파라미터 추가
+- `server.js:1041-1057` - customerId 필터 로직 추가
+  - `customerId=null` → 미연결 문서만
+  - `customerId=<id>` → 특정 고객 문서만
+  - 생략 시 → 모든 고객 연결 문서 (기본)
 
 ---
 
@@ -207,7 +212,7 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 🔴 P0 | #4 XSS 취약점 | 보안 위협 | ✅ 해결됨 |
 | 🔴 P0 | #6 고아 계약 | 데이터 정합성 | ✅ 해결됨 |
 | 🟡 P1 | #2 last_modified_by | 감사 추적 | ✅ 해결됨 |
-| 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 | ⬜ 미해결 |
+| 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 | ✅ 해결됨 |
 | 🟢 P2 | #1 오류 메시지 | UX 개선 | ⬜ 미해결 |
 | 🟢 P2 | #5 customer_name | UX 개선 | ⬜ 미해결 |
 
@@ -222,6 +227,7 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 08:26 | - | 테스트 보고서 작성 | 완료 |
 | 08:34 | #4, #2 | XSS 취약점 수정, last_modified_by 버그 수정 | ✅ 완료 |
 | 08:42 | #6 | 고아 계약 25건 정리 (admin API 사용) | ✅ 완료 |
+| 08:45 | #3 | customerId=null 필터 추가 | ✅ 완료 |
 
 ---
 

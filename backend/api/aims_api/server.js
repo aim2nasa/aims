@@ -959,7 +959,7 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     }
 
     // 파라미터 검증 및 기본값 설정
-    let { page, limit = 10, offset, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType } = req.query;
+    let { page, limit = 10, offset, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType, customerId: customerIdFilter } = req.query;
 
     // limit 파라미터 검증 (0 이하 또는 음수 방지)
     limit = parseInt(limit);
@@ -1032,14 +1032,29 @@ app.get('/api/documents', authenticateJWT, async (req, res) => {
     // }
 
     // ⭐ ownerId 필터 추가 (사용자 계정 기능)
-    // ⭐ 전체 문서 보기: 고객 문서만 표시 (설계사 개인 파일 제외)
-    // customerId가 ownerId와 같으면 개인 파일이므로 제외
-    // customerId는 ObjectId, ownerId는 string이므로 $expr + $toString 사용
-    let query = {
-      ownerId: userId,
-      customerId: { $exists: true, $ne: null },
-      $expr: { $ne: [{ $toString: '$customerId' }, userId] }  // customerId !== ownerId
-    };
+    // customerId 필터 처리:
+    // - customerId=null → 고객 미연결 문서만 (개인 파일 포함)
+    // - customerId=<id> → 특정 고객 문서만
+    // - customerId 없음 → 모든 고객 연결 문서 (개인 파일 제외)
+    let query = { ownerId: userId };
+
+    if (customerIdFilter === 'null' || customerIdFilter === '') {
+      // Issue #3 수정: customerId=null 필터 - 고객 미연결 문서
+      query.$or = [
+        { customerId: null },
+        { customerId: { $exists: false } }
+      ];
+      console.log('📂 고객 미연결 문서 필터 적용');
+    } else if (customerIdFilter && ObjectId.isValid(customerIdFilter)) {
+      // 특정 고객의 문서만
+      query.customerId = new ObjectId(customerIdFilter);
+      console.log(`📂 특정 고객 문서 필터: ${customerIdFilter}`);
+    } else {
+      // 기본: 고객 연결 문서만 (설계사 개인 파일 제외)
+      // customerId가 ownerId와 같으면 개인 파일이므로 제외
+      query.customerId = { $exists: true, $ne: null };
+      query.$expr = { $ne: [{ $toString: '$customerId' }, userId] };  // customerId !== ownerId
+    }
 
     // 검색 조건 추가
     if (search) {
