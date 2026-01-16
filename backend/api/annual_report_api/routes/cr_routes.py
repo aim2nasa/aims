@@ -16,12 +16,34 @@ import tempfile
 
 from services.cr_detector import is_customer_review, extract_cr_metadata_from_first_page
 from services.cr_parser import parse_customer_review
+from services.cr_parser_table import parse_customer_review_table
 from services.db_writer import get_customer_reviews, delete_customer_reviews, save_customer_review
 from system_logger import send_error_log
+import httpx
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# aims_api 설정 조회 URL
+AIMS_API_URL = os.getenv("AIMS_API_URL", "http://100.110.215.65:3010")
+
+
+async def get_cr_parser_setting() -> str:
+    """
+    aims_api에서 CR 파서 설정 조회
+    기본값: 'regex'
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{AIMS_API_URL}/api/settings/ai-models")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("success") and data.get("data"):
+                    return data["data"].get("customerReview", {}).get("parser", "regex")
+    except Exception as e:
+        logger.warning(f"CR 파서 설정 조회 실패, 기본값 사용: {e}")
+    return "regex"
 
 
 # ================================================================================
@@ -304,11 +326,23 @@ async def parse_customer_review_api(
         # 1. 1페이지 메타데이터 추출 (AI 불사용)
         metadata = extract_cr_metadata_from_first_page(request.pdf_path)
 
-        # 2. 2~4페이지 OpenAI 파싱
-        parsed_data = parse_customer_review(
-            pdf_path=request.pdf_path,
-            end_page=request.end_page
-        )
+        # 2. 파서 설정 조회
+        parser_type = await get_cr_parser_setting()
+        logger.info(f"📊 CR 파서 타입: {parser_type}")
+
+        # 3. 파서 타입에 따라 파싱 실행
+        if parser_type == "pdfplumber_table":
+            # 테이블 기반 일반화 파서 (pdfplumber)
+            parsed_data = parse_customer_review_table(
+                pdf_path=request.pdf_path,
+                end_page=request.end_page
+            )
+        else:
+            # 기존 정규식 파서 (regex)
+            parsed_data = parse_customer_review(
+                pdf_path=request.pdf_path,
+                end_page=request.end_page
+            )
 
         # 파싱 실패 체크
         if "error" in parsed_data:

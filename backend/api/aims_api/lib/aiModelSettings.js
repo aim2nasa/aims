@@ -22,6 +22,12 @@ const DEFAULT_AI_MODEL_SETTINGS = {
     model: 'gpt-4.1',
     description: '연보 PDF 파싱',
     availableModels: ['gpt-4.1', 'gpt-4o', 'gpt-4-turbo']
+  },
+  customerReview: {
+    model: 'gpt-4.1',
+    parser: 'regex',
+    description: 'Customer Review Service PDF 파싱',
+    availableModels: ['gpt-4.1', 'gpt-4o', 'gpt-4-turbo']
   }
 };
 

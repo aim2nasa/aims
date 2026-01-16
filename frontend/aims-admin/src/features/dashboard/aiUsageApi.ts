@@ -93,7 +93,12 @@ export interface AIModelServiceSettings {
 }
 
 export interface AnnualReportServiceSettings extends AIModelServiceSettings {
-  parser: string;  // 'openai' | 'pdfplumber' | 'upstage'
+  parser: string;  // 'openai' | 'pdfplumber' | 'pdfplumber_table' | 'upstage'
+  availableParsers: string[];
+}
+
+export interface CustomerReviewServiceSettings extends AIModelServiceSettings {
+  parser: string;  // 'regex' | 'pdfplumber_table'
   availableParsers: string[];
 }
 
@@ -101,6 +106,7 @@ export interface AIModelSettings {
   chat: AIModelServiceSettings;
   rag: AIModelServiceSettings;
   annualReport: AnnualReportServiceSettings;
+  customerReview: CustomerReviewServiceSettings;
 }
 
 // 업데이트용 타입 (부분 업데이트 지원)
@@ -108,6 +114,7 @@ export interface AIModelSettingsUpdate {
   chat?: Partial<AIModelServiceSettings>;
   rag?: Partial<AIModelServiceSettings>;
   annualReport?: Partial<AnnualReportServiceSettings>;
+  customerReview?: Partial<CustomerReviewServiceSettings>;
 }
 
 export interface AIModelSettingsResponse {

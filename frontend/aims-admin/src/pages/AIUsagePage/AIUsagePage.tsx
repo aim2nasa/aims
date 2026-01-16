@@ -445,6 +445,13 @@ export const AIUsagePage = () => {
     });
   };
 
+  // CR 파서 변경 핸들러
+  const handleCRParserChange = (parser: string) => {
+    updateModelMutation.mutate({
+      customerReview: { parser }
+    });
+  };
+
   // 차트 데이터 준비
   const chartData = useMemo(() => {
     if (periodType === 'hourly') {
@@ -792,6 +799,30 @@ export const AIUsagePage = () => {
                     <option key={model} value={model}>{model}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            <div className="ai-usage-page__model-row">
+              <div className="ai-usage-page__model-info">
+                <span className="ai-usage-page__model-label">Customer Review</span>
+                <span className="ai-usage-page__model-desc">{modelSettings?.customerReview?.description}</span>
+              </div>
+              <div className="ai-usage-page__model-selects">
+                <select
+                  className="ai-usage-page__parser-select"
+                  value={modelSettings?.customerReview?.parser || 'regex'}
+                  onChange={(e) => handleCRParserChange(e.target.value)}
+                  disabled={updateModelMutation.isPending}
+                  aria-label="CR 파서 선택"
+                >
+                  {modelSettings?.customerReview?.availableParsers?.map((parser) => (
+                    <option key={parser} value={parser}>
+                      {parser === 'regex' ? 'Regex (기존)'
+                        : 'pdfplumber Table (일반화)'}
+                    </option>
+                  ))}
+                </select>
+                <span className="ai-usage-page__no-model">AI 미사용</span>
               </div>
             </div>
 

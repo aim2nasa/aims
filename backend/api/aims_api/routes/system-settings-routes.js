@@ -135,6 +135,9 @@ const AVAILABLE_AI_MODELS = [
 // 사용 가능한 AR 파서 목록
 const AVAILABLE_AR_PARSERS = ['openai', 'pdfplumber', 'pdfplumber_table', 'upstage'];
 
+// 사용 가능한 CR 파서 목록
+const AVAILABLE_CR_PARSERS = ['regex', 'pdfplumber_table'];
+
 // 기본 AI 모델 설정
 const DEFAULT_AI_MODEL_SETTINGS = {
   chat: {
@@ -153,6 +156,13 @@ const DEFAULT_AI_MODEL_SETTINGS = {
     description: 'Annual Report PDF 파싱',
     availableModels: AVAILABLE_AI_MODELS,
     availableParsers: AVAILABLE_AR_PARSERS
+  },
+  customerReview: {
+    model: 'gpt-4.1',
+    parser: 'regex',  // regex | pdfplumber_table
+    description: 'Customer Review Service PDF 파싱',
+    availableModels: AVAILABLE_AI_MODELS,
+    availableParsers: AVAILABLE_CR_PARSERS
   }
 };
 
@@ -349,7 +359,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
         delete settings.updatedAt;
         delete settings.updatedBy;
         // 항상 최신 availableModels/availableParsers 사용
-        for (const service of ['chat', 'rag', 'annualReport']) {
+        for (const service of ['chat', 'rag', 'annualReport', 'customerReview']) {
           if (settings[service]) {
             settings[service].availableModels = AVAILABLE_AI_MODELS;
           }
@@ -357,6 +367,13 @@ module.exports = function(db, authenticateJWT, requireRole) {
         // annualReport에 availableParsers 추가
         if (settings.annualReport) {
           settings.annualReport.availableParsers = AVAILABLE_AR_PARSERS;
+        }
+        // customerReview에 availableParsers 추가
+        if (settings.customerReview) {
+          settings.customerReview.availableParsers = AVAILABLE_CR_PARSERS;
+        } else {
+          // customerReview 설정이 없으면 기본값 추가
+          settings.customerReview = { ...DEFAULT_AI_MODEL_SETTINGS.customerReview };
         }
       }
 
@@ -399,12 +416,17 @@ module.exports = function(db, authenticateJWT, requireRole) {
       if (!existingSettings) {
         existingSettings = { ...DEFAULT_AI_MODEL_SETTINGS };
       }
+      // customerReview가 없으면 기본값 사용
+      if (!existingSettings.customerReview) {
+        existingSettings.customerReview = { ...DEFAULT_AI_MODEL_SETTINGS.customerReview };
+      }
 
       // 설정 병합
       const mergedSettings = {
         chat: { ...existingSettings.chat, ...updates.chat },
         rag: { ...existingSettings.rag, ...updates.rag },
-        annualReport: { ...existingSettings.annualReport, ...updates.annualReport }
+        annualReport: { ...existingSettings.annualReport, ...updates.annualReport },
+        customerReview: { ...existingSettings.customerReview, ...updates.customerReview }
       };
 
       // 유효성 검증
@@ -495,7 +517,7 @@ module.exports = function(db, authenticateJWT, requireRole) {
  * AI 모델 설정 유효성 검증
  */
 function validateAIModelSettings(settings) {
-  const services = ['chat', 'rag', 'annualReport'];
+  const services = ['chat', 'rag', 'annualReport', 'customerReview'];
 
   for (const service of services) {
     if (!settings[service]) {
@@ -515,6 +537,13 @@ function validateAIModelSettings(settings) {
   if (settings.annualReport && settings.annualReport.parser) {
     if (!AVAILABLE_AR_PARSERS.includes(settings.annualReport.parser)) {
       return `사용할 수 없는 AR 파서입니다: ${settings.annualReport.parser}. 사용 가능: ${AVAILABLE_AR_PARSERS.join(', ')}`;
+    }
+  }
+
+  // customerReview parser 유효성 검증
+  if (settings.customerReview && settings.customerReview.parser) {
+    if (!AVAILABLE_CR_PARSERS.includes(settings.customerReview.parser)) {
+      return `사용할 수 없는 CR 파서입니다: ${settings.customerReview.parser}. 사용 가능: ${AVAILABLE_CR_PARSERS.join(', ')}`;
     }
   }
 

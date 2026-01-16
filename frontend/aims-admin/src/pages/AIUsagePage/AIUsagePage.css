@@ -557,6 +557,14 @@
   cursor: not-allowed;
 }
 
+.ai-usage-page__no-model {
+  min-width: 160px;
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
 .ai-usage-page__model-actions {
   display: flex;
   align-items: center;
