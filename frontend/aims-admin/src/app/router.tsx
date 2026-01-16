@@ -23,6 +23,7 @@ import { DocumentTypesPage } from '@/pages/DocumentTypesPage/DocumentTypesPage';
 import { BackupPage } from '@/pages/BackupPage';
 import { ShadowMonitorPage } from '@/pages/ShadowMonitorPage';
 import { VirusScanPage } from '@/pages/VirusScanPage';
+import { ParsingSettingsPage } from '@/pages/ParsingSettingsPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -123,6 +124,10 @@ export const router = createBrowserRouter([
       {
         path: 'system/document-types',
         element: <DocumentTypesPage />,
+      },
+      {
+        path: 'system/parsing-settings',
+        element: <ParsingSettingsPage />,
       },
       {
         path: 'system/backup',

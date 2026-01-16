@@ -174,6 +174,7 @@ function App() {
       label: '시스템 관리',
       children: [
         { path: '/system/document-types', label: '문서 유형' },
+        { path: '/system/parsing-settings', label: '파싱 설정' },
         { path: '/system/backup', label: '백업 관리' },
         { path: '/system/shadow-monitor', label: 'Shadow Monitor' },
         { path: '/system/virus-scan', label: '바이러스 검사' },

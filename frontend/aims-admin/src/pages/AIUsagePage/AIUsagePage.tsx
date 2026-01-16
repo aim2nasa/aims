@@ -432,23 +432,9 @@ export const AIUsagePage = () => {
   });
 
   // 모델 변경 핸들러
-  const handleModelChange = (service: 'chat' | 'rag' | 'annualReport', model: string) => {
+  const handleModelChange = (service: 'chat' | 'rag', model: string) => {
     updateModelMutation.mutate({
       [service]: { model }
-    });
-  };
-
-  // AR 파서 변경 핸들러
-  const handleParserChange = (parser: string) => {
-    updateModelMutation.mutate({
-      annualReport: { parser }
-    });
-  };
-
-  // CR 파서 변경 핸들러
-  const handleCRParserChange = (parser: string) => {
-    updateModelMutation.mutate({
-      customerReview: { parser }
     });
   };
 
@@ -763,67 +749,6 @@ export const AIUsagePage = () => {
                   <option key={model} value={model}>{model}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="ai-usage-page__model-row">
-              <div className="ai-usage-page__model-info">
-                <span className="ai-usage-page__model-label">Annual Report</span>
-                <span className="ai-usage-page__model-desc">{modelSettings?.annualReport?.description}</span>
-              </div>
-              <div className="ai-usage-page__model-selects">
-                <select
-                  className="ai-usage-page__parser-select"
-                  value={modelSettings?.annualReport?.parser || 'openai'}
-                  onChange={(e) => handleParserChange(e.target.value)}
-                  disabled={updateModelMutation.isPending}
-                  aria-label="AR 파서 선택"
-                >
-                  {modelSettings?.annualReport?.availableParsers?.map((parser) => (
-                    <option key={parser} value={parser}>
-                      {parser === 'pdfplumber' ? 'pdfplumber (무료)'
-                        : parser === 'pdfplumber_table' ? 'pdfplumber Table (일반화)'
-                        : parser === 'openai' ? 'OpenAI'
-                        : 'Upstage'}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="ai-usage-page__model-select"
-                  value={modelSettings?.annualReport?.model || ''}
-                  onChange={(e) => handleModelChange('annualReport', e.target.value)}
-                  disabled={updateModelMutation.isPending || modelSettings?.annualReport?.parser !== 'openai'}
-                  aria-label="Annual Report 모델 선택"
-                  title={modelSettings?.annualReport?.parser !== 'openai' ? 'OpenAI 파서 선택 시에만 모델 변경 가능' : ''}
-                >
-                  {modelSettings?.annualReport?.availableModels?.map((model) => (
-                    <option key={model} value={model}>{model}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="ai-usage-page__model-row">
-              <div className="ai-usage-page__model-info">
-                <span className="ai-usage-page__model-label">Customer Review</span>
-                <span className="ai-usage-page__model-desc">{modelSettings?.customerReview?.description}</span>
-              </div>
-              <div className="ai-usage-page__model-selects">
-                <select
-                  className="ai-usage-page__parser-select"
-                  value={modelSettings?.customerReview?.parser || 'regex'}
-                  onChange={(e) => handleCRParserChange(e.target.value)}
-                  disabled={updateModelMutation.isPending}
-                  aria-label="CR 파서 선택"
-                >
-                  {modelSettings?.customerReview?.availableParsers?.map((parser) => (
-                    <option key={parser} value={parser}>
-                      {parser === 'regex' ? 'Regex (기존)'
-                        : 'pdfplumber Table (일반화)'}
-                    </option>
-                  ))}
-                </select>
-                <span className="ai-usage-page__no-model">AI 미사용</span>
-              </div>
             </div>
 
             <div className="ai-usage-page__model-actions">
