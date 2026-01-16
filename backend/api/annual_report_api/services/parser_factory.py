@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 # 파서 타입 상수
 PARSER_OPENAI = "openai"
 PARSER_PDFPLUMBER = "pdfplumber"
+PARSER_PDFPLUMBER_TABLE = "pdfplumber_table"  # 일반화된 테이블 추출 파서 (100% 정확도)
 PARSER_UPSTAGE = "upstage"
 
 # 유효한 파서 타입 목록
-VALID_PARSERS = [PARSER_OPENAI, PARSER_PDFPLUMBER, PARSER_UPSTAGE]
+VALID_PARSERS = [PARSER_OPENAI, PARSER_PDFPLUMBER, PARSER_PDFPLUMBER_TABLE, PARSER_UPSTAGE]
 
 
 def get_parser() -> Callable[[str, Optional[str], Optional[int]], Dict]:
@@ -53,6 +54,10 @@ def get_parser() -> Callable[[str, Optional[str], Optional[int]], Dict]:
 
     if parser_type == PARSER_PDFPLUMBER:
         from services.parser_pdfplumber import parse_annual_report
+        return parse_annual_report
+
+    elif parser_type == PARSER_PDFPLUMBER_TABLE:
+        from services.parser_pdfplumber_table import parse_annual_report
         return parse_annual_report
 
     elif parser_type == PARSER_UPSTAGE:

@@ -773,7 +773,10 @@ export const AIUsagePage = () => {
                 >
                   {modelSettings?.annualReport?.availableParsers?.map((parser) => (
                     <option key={parser} value={parser}>
-                      {parser === 'pdfplumber' ? 'pdfplumber (무료)' : parser === 'openai' ? 'OpenAI' : 'Upstage'}
+                      {parser === 'pdfplumber' ? 'pdfplumber (무료)'
+                        : parser === 'pdfplumber_table' ? 'pdfplumber Table (일반화)'
+                        : parser === 'openai' ? 'OpenAI'
+                        : 'Upstage'}
                     </option>
                   ))}
                 </select>

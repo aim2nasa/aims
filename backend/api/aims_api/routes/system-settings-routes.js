@@ -133,7 +133,7 @@ const AVAILABLE_AI_MODELS = [
 ];
 
 // 사용 가능한 AR 파서 목록
-const AVAILABLE_AR_PARSERS = ['openai', 'pdfplumber', 'upstage'];
+const AVAILABLE_AR_PARSERS = ['openai', 'pdfplumber', 'pdfplumber_table', 'upstage'];
 
 // 기본 AI 모델 설정
 const DEFAULT_AI_MODEL_SETTINGS = {
