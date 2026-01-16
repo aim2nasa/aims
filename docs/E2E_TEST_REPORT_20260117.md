@@ -135,7 +135,7 @@ curl -s -X POST 'http://localhost:3010/api/contracts' \
 
 ---
 
-### 🔴 Issue #6: 고아 계약 25건 존재 (Critical - 데이터)
+### ✅ Issue #6: 고아 계약 25건 존재 (Critical - 데이터) - **해결됨**
 
 **위치**: `/api/admin/data-integrity-report`
 
@@ -144,7 +144,7 @@ curl -s -X POST 'http://localhost:3010/api/contracts' \
 curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 ```
 
-**현재 결과**:
+**수정 전 결과**:
 ```json
 {
   "orphanedData": {
@@ -155,11 +155,20 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 }
 ```
 
-**의미**: 존재하지 않는 고객을 참조하는 계약 25건
+**수정 후 결과**:
+```json
+{
+  "orphanedData": {
+    "contracts": 0,
+    "total": 0
+  },
+  "health": "healthy"
+}
+```
 
-**권장 조치**: 데이터 정리 또는 마이그레이션 필요
+**상태**: ✅ 해결됨 (2026-01-17)
 
-**상태**: ⬜ 미해결
+**수정 내용**: `/api/admin/orphaned-all` API로 삭제된 고객을 참조하는 고아 계약 25건 정리
 
 ---
 
@@ -196,7 +205,7 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 우선순위 | Issue | 이유 | 상태 |
 |---------|-------|------|------|
 | 🔴 P0 | #4 XSS 취약점 | 보안 위협 | ✅ 해결됨 |
-| 🔴 P0 | #6 고아 계약 | 데이터 정합성 | ⬜ 미해결 |
+| 🔴 P0 | #6 고아 계약 | 데이터 정합성 | ✅ 해결됨 |
 | 🟡 P1 | #2 last_modified_by | 감사 추적 | ✅ 해결됨 |
 | 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 | ⬜ 미해결 |
 | 🟢 P2 | #1 오류 메시지 | UX 개선 | ⬜ 미해결 |
@@ -212,6 +221,7 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 |------|-------|----------|------|
 | 08:26 | - | 테스트 보고서 작성 | 완료 |
 | 08:34 | #4, #2 | XSS 취약점 수정, last_modified_by 버그 수정 | ✅ 완료 |
+| 08:42 | #6 | 고아 계약 25건 정리 (admin API 사용) | ✅ 완료 |
 
 ---
 
