@@ -185,6 +185,7 @@ const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
     queryKey: ['admin', 'metrics', 'current'],
     queryFn: dashboardApi.getMetricsCurrent,
     refetchInterval: 10000,
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
 
@@ -193,6 +194,7 @@ const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
     queryKey: ['admin', 'metrics', 'history', timeRange],
     queryFn: () => dashboardApi.getMetricsHistory(timeRange),
     refetchInterval: 60000, // 1분마다 갱신
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     gcTime: 5 * 60 * 1000, // 5분 후 캐시 정리 (메모리 절약)
     staleTime: 30000, // 30초간 fresh 상태 유지
     retry: 0, // 즉시 실패 감지 (딜레이 최소화)
@@ -317,6 +319,7 @@ const RealtimeMetricsSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
     queryKey: ['admin', 'metrics', 'realtime'],
     queryFn: dashboardApi.getMetricsRealtime,
     refetchInterval: 3000, // 3초마다 갱신
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
 
@@ -538,6 +541,7 @@ const HealthHistorySection = () => {
       limit: 50,
     }),
     refetchInterval: 60000,
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
   });
 
   const clearMutation = useMutation({
@@ -661,6 +665,7 @@ const PortsSection = () => {
     queryKey: ['admin', 'ports'],
     queryFn: dashboardApi.getPorts,
     refetchInterval: 10000, // 다른 섹션과 동기화 (10초)
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
   });
 
   if (isLoading) {
@@ -742,6 +747,7 @@ export const SystemHealthPage = () => {
     queryKey: ['health-monitor', 'current'],
     queryFn: dashboardApi.getHealthCurrent,
     refetchInterval: 10000,
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     retry: 3,
     retryDelay: 1000,
   });
@@ -751,6 +757,7 @@ export const SystemHealthPage = () => {
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
     refetchInterval: 10000,
+    refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     retry: 0, // 즉시 실패 감지
   });
 
