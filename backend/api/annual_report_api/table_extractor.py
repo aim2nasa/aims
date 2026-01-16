@@ -1,14 +1,17 @@
 """
-Annual Report 테이블 추출기 (일반화된 구현)
+Annual Report 테이블 추출기 (완전 일반화 구현)
 
 핵심 원리:
 - pdfplumber의 테이블 추출 기능을 사용하여 셀 경계 보존
 - 텍스트 추출(구조 손실) 대신 테이블 추출(구조 보존) 사용
-- 하드코딩된 패턴 없이 일반화된 파싱 가능
+- 테이블 헤더를 동적으로 분석하여 열 인덱스 매핑
+- 하드코딩된 패턴 완전 제거
 
 오버피팅 방지:
 - 특정 회사명, 상품명, 상태값을 하드코딩하지 않음
-- 셀 내 줄바꿈은 단순히 제거 (cell.replace('\\n', ''))
+- 증권번호: 10자리 숫자 (00 시작 가정 제거)
+- 상태값: 열 위치 기반 추출 (하드코딩 제거)
+- 보험기간/납입기간: 열 위치 기반 추출 (패턴 제거)
 - 새로운 데이터에도 자동으로 대응
 
 @see docs/ANNUAL_REPORT_PARSER.md
@@ -100,9 +103,13 @@ def extract_contract_table(pdf_path: str, page_num: int = 1) -> Dict[str, Any]:
 
                 # 계약 테이블 감지 (헤더에 "순번", "증권번호" 포함)
                 if '순번' in first_row_text and '증권번호' in first_row_text:
+                    # 헤더 행에서 열 인덱스 매핑
+                    column_map = build_column_map(data[0])
+                    logger.debug(f"열 매핑: {column_map}")
+
                     # 헤더 행 스킵하고 데이터 행 처리
                     for row in data[1:]:
-                        contract = parse_contract_row(row)
+                        contract = parse_contract_row_by_columns(row, column_map)
                         if contract:
                             if is_lapsed_section:
                                 lapsed_contracts.append(contract)
@@ -156,16 +163,59 @@ def extract_header_info(page) -> Dict[str, Any]:
     return result
 
 
-def parse_contract_row(row: List[Optional[str]]) -> Optional[Dict[str, Any]]:
+def build_column_map(header_row: List[Optional[str]]) -> Dict[str, int]:
     """
-    테이블 행을 계약 정보로 파싱
+    테이블 헤더 행에서 열 이름과 인덱스를 매핑
 
-    핵심: 각 셀은 이미 완전한 단위로 추출됨
-    - 줄바꿈 제거만 하면 됨 (cell.replace('\\n', ''))
-    - 하드코딩된 패턴 불필요
+    Args:
+        header_row: 헤더 행 (각 셀은 열 이름)
+
+    Returns:
+        dict: {열이름: 인덱스} 매핑
+    """
+    column_map = {}
+
+    # 열 이름 정규화 매핑 (다양한 헤더명 대응)
+    # 순서 중요: 더 긴(구체적인) 패턴을 먼저 검사
+    name_mapping = [
+        ('증권번호', 'policyNumber'),
+        ('보험상품', 'productName'),
+        ('상품명', 'productName'),
+        ('피보험자', 'insured'),
+        ('계약자', 'contractor'),
+        ('계약일', 'contractDate'),
+        ('계약상태', 'status'),
+        ('가입금액', 'coverageAmount'),
+        ('보험기간', 'insurancePeriod'),
+        ('납입기간', 'paymentPeriod'),
+        ('보험료', 'premium'),
+        ('순번', 'seq'),
+    ]
+
+    for idx, cell in enumerate(header_row):
+        if cell:
+            # 줄바꿈 제거 후 매칭
+            cell_text = str(cell).replace('\n', '').strip()
+            # 매핑 테이블에서 찾기 (순서대로 검사)
+            for korean, english in name_mapping:
+                if korean in cell_text and english not in column_map:
+                    column_map[english] = idx
+                    break
+
+    return column_map
+
+
+def parse_contract_row_by_columns(row: List[Optional[str]], column_map: Dict[str, int]) -> Optional[Dict[str, Any]]:
+    """
+    열 인덱스 매핑을 사용하여 테이블 행을 계약 정보로 파싱
+
+    핵심: 헤더에서 동적으로 열 위치를 파악하여 추출
+    - 상태값, 보험기간 등 하드코딩 없이 위치 기반 추출
+    - 새로운 값이 나와도 자동 대응
 
     Args:
         row: 테이블 행 (각 셀은 문자열 또는 None)
+        column_map: {열이름: 인덱스} 매핑
 
     Returns:
         dict: 계약 정보 또는 None (파싱 불가)
@@ -173,88 +223,64 @@ def parse_contract_row(row: List[Optional[str]]) -> Optional[Dict[str, Any]]:
     if not row:
         return None
 
-    # None을 빈 문자열로 변환
-    cells = [str(c).replace('\n', '') if c else '' for c in row]
+    # None을 빈 문자열로 변환, 줄바꿈 제거
+    cells = [str(c).replace('\n', '').strip() if c else '' for c in row]
 
-    # 최소 셀 수 확인 (순번, 증권번호, 상품명, 계약자, 피보험자, 계약일, 상태, ...)
-    if len(cells) < 8:
-        return None
-
-    # 첫 번째 셀이 숫자인지 확인 (순번)
+    # 순번 확인 (필수)
+    seq_idx = column_map.get('seq', 0)
     try:
-        seq = int(cells[0])
-    except (ValueError, TypeError):
+        seq = int(cells[seq_idx])
+    except (ValueError, TypeError, IndexError):
         return None  # 헤더 행이거나 데이터 아님
 
-    # 증권번호 패턴 확인 (10자리 숫자, 00으로 시작)
-    policy_number = cells[1].strip()
-    if not re.match(r'^00\d{8}$', policy_number):
+    # 증권번호 확인 (10자리 숫자)
+    policy_idx = column_map.get('policyNumber', 1)
+    policy_number = cells[policy_idx] if policy_idx < len(cells) else ''
+    if not re.match(r'^\d{10}$', policy_number):
         return None
 
-    # 계약일 패턴 확인 (YYYY-MM-DD)
-    contract_date = None
-    contract_date_idx = None
-    for i, cell in enumerate(cells):
-        if re.match(r'^\d{4}-\d{2}-\d{2}$', cell.strip()):
-            contract_date = cell.strip()
-            contract_date_idx = i
-            break
+    # 계약일 확인 (YYYY-MM-DD)
+    date_idx = column_map.get('contractDate')
+    contract_date = ''
+    if date_idx is not None and date_idx < len(cells):
+        contract_date = cells[date_idx]
+    else:
+        # 열 매핑 없으면 패턴으로 찾기
+        for cell in cells:
+            if re.match(r'^\d{4}-\d{2}-\d{2}$', cell):
+                contract_date = cell
+                break
 
     if not contract_date:
         return None
 
-    # 셀 인덱스 매핑 (계약일 위치 기준)
-    # 일반적 구조: 순번(0), 증권번호(1), 상품명(2), 계약자(3), 피보험자(4), 계약일(5), 상태(6), ...
-    # 하지만 테이블에 따라 열 병합이 있을 수 있음
+    # 각 필드 열 위치 기반 추출 (하드코딩 없음)
+    def get_cell(key: str, default: str = '') -> str:
+        idx = column_map.get(key)
+        if idx is not None and idx < len(cells):
+            return cells[idx]
+        return default
 
-    product_name = cells[2].strip() if len(cells) > 2 else ''
+    product_name = get_cell('productName', '')
+    contractor = get_cell('contractor', '')
+    insured = get_cell('insured', '')
+    status = get_cell('status', '')  # 하드코딩 없이 위치 기반 추출
+    insurance_period = get_cell('insurancePeriod', '')  # 하드코딩 없이 위치 기반 추출
+    payment_period = get_cell('paymentPeriod', '')  # 하드코딩 없이 위치 기반 추출
 
-    # 계약자/피보험자 위치 추정
-    # 계약일 바로 앞 2개 셀이 계약자, 피보험자
-    if contract_date_idx and contract_date_idx >= 4:
-        insured = cells[contract_date_idx - 1].strip()
-        contractor = cells[contract_date_idx - 2].strip()
-        # 상품명 = 2번 인덱스부터 계약자 전까지
-        if contract_date_idx > 4:
-            product_parts = cells[2:contract_date_idx - 2]
-            product_name = ' '.join([p.strip() for p in product_parts if p.strip()])
-    else:
-        contractor = cells[3].strip() if len(cells) > 3 else ''
-        insured = cells[4].strip() if len(cells) > 4 else ''
+    # 가입금액 (숫자 파싱)
+    coverage_str = get_cell('coverageAmount', '0')
+    try:
+        coverage_amount = float(coverage_str.replace(',', '')) if coverage_str else 0.0
+    except ValueError:
+        coverage_amount = 0.0
 
-    # 계약일 이후: 상태, 가입금액, 보험기간, 납입기간, 보험료
-    status = ''
-    coverage_amount = 0.0
-    insurance_period = ''
-    payment_period = ''
-    premium = 0
-
-    if contract_date_idx:
-        after_date = cells[contract_date_idx + 1:]
-
-        for cell in after_date:
-            cell = cell.strip()
-            if not cell:
-                continue
-
-            # 상태 (한글, 숫자 아님)
-            if cell in ['정상', '납입완료', '업무처리중', '실효']:
-                status = cell
-            # 가입금액 (숫자, 첫 번째)
-            elif re.match(r'^[\d,]+\.?\d*$', cell) and coverage_amount == 0:
-                coverage_amount = float(cell.replace(',', ''))
-            # 보험기간 (종신, N세)
-            elif cell == '종신' or re.match(r'^\d+세$', cell):
-                if not insurance_period:
-                    insurance_period = cell
-                elif not payment_period:
-                    payment_period = cell
-            # 납입기간 (N년, 전기납, 일시납)
-            elif re.match(r'^\d+년$', cell) or cell in ['전기납', '일시납']:
-                payment_period = cell
-            # 보험료 (마지막 숫자)
-            elif re.match(r'^[\d,]+$', cell):
-                premium = int(cell.replace(',', ''))
+    # 보험료 (숫자 파싱)
+    premium_str = get_cell('premium', '0')
+    try:
+        premium = int(premium_str.replace(',', '')) if premium_str else 0
+    except ValueError:
+        premium = 0
 
     return {
         "seq": seq,
