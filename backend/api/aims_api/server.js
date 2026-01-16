@@ -8820,7 +8820,7 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
     // 고객 소유권 확인
     const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
       _id: new ObjectId(customerId),
-      userId: userId
+      'meta.created_by': userId
     });
 
     if (!customer) {
