@@ -8637,6 +8637,18 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
       // 스캔 오류는 무시하고 계속 진행
     }
 
+    // 📄 PDF 변환 트리거 (Office 문서 + customerId가 있는 경우)
+    try {
+      const docForPdf = await db.collection(COLLECTION_NAME).findOne({ _id: new ObjectId(documentIdStr) });
+      if (docForPdf && docForPdf.customerId) {
+        const pdfResult = await triggerPdfConversionIfNeeded(docForPdf);
+        console.log(`[PDF변환] 문서 처리 완료 후 트리거: ${documentIdStr} → ${pdfResult}`);
+      }
+    } catch (pdfError) {
+      console.error('[PDF변환] 트리거 오류:', pdfError.message);
+      // PDF 변환 오류는 무시하고 계속 진행
+    }
+
     res.json({ success: true, message: 'SSE 알림이 전송되었습니다.', sent });
   } catch (error) {
     console.error('[SSE-DocStatus] 문서 처리 완료 알림 오류:', error);
@@ -8835,6 +8847,21 @@ app.post('/api/notify/document-uploaded', authenticateJWT, async (req, res) => {
       } catch (scanError) {
         console.error('[VirusScan] 업로드 후 스캔 트리거 오류:', scanError.message);
         // 스캔 오류는 무시하고 계속 진행
+      }
+
+      // 📄 PDF 변환 트리거 (Office 문서인 경우)
+      // customerId가 있는 문서는 프리뷰를 위해 PDF 변환 필요
+      try {
+        const document = await db.collection(COLLECTION_NAME).findOne({
+          _id: new ObjectId(documentId)
+        });
+        if (document && document.customerId) {
+          const pdfResult = await triggerPdfConversionIfNeeded(document);
+          console.log(`[PDF변환] 업로드 후 트리거: ${documentId} → ${pdfResult}`);
+        }
+      } catch (pdfError) {
+        console.error('[PDF변환] 업로드 후 트리거 오류:', pdfError.message);
+        // PDF 변환 오류는 무시하고 계속 진행
       }
     }
 

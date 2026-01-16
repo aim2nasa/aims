@@ -321,6 +321,35 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     enabled: Boolean(customer?._id),
   })
 
+  // 🍎 PDF 변환 상태 폴링 fallback (SSE 알림 누락 대비)
+  // conversion_status가 'processing' 또는 'pending'인 문서가 있으면 5초마다 새로고침
+  useEffect(() => {
+    const hasProcessingConversion = documents.some(doc => {
+      const conversionStatus = doc.upload?.conversion_status
+      return conversionStatus === 'processing' || conversionStatus === 'pending'
+    })
+
+    if (!hasProcessingConversion) return
+
+    if (import.meta.env.DEV) {
+      console.log('[DocumentsTab] PDF 변환 중인 문서 감지, 폴링 시작')
+    }
+
+    const pollInterval = setInterval(() => {
+      if (import.meta.env.DEV) {
+        console.log('[DocumentsTab] PDF 변환 상태 폴링 실행')
+      }
+      void refresh()
+    }, 5000) // 5초마다 새로고침
+
+    return () => {
+      if (import.meta.env.DEV) {
+        console.log('[DocumentsTab] PDF 변환 폴링 중지')
+      }
+      clearInterval(pollInterval)
+    }
+  }, [documents, refresh])
+
   // 🍎 외부 refreshTrigger 변경 시 새로고침 (RightPane visibility 변경)
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {

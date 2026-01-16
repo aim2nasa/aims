@@ -35,6 +35,34 @@ except ImportError:
     HAS_PIL = False
     logger.warning("Pillow not available. Image dimension extraction will be limited.")
 
+try:
+    import openpyxl
+    HAS_OPENPYXL = True
+except ImportError:
+    HAS_OPENPYXL = False
+    logger.warning("openpyxl not available. Excel text extraction will be limited.")
+
+try:
+    from docx import Document as DocxDocument
+    HAS_DOCX = True
+except ImportError:
+    HAS_DOCX = False
+    logger.warning("python-docx not available. DOCX text extraction will be limited.")
+
+try:
+    from pptx import Presentation
+    HAS_PPTX = True
+except ImportError:
+    HAS_PPTX = False
+    logger.warning("python-pptx not available. PPTX text extraction will be limited.")
+
+try:
+    import xlrd
+    HAS_XLRD = True
+except ImportError:
+    HAS_XLRD = False
+    logger.warning("xlrd not available. XLS text extraction will be limited.")
+
 
 class MetaService:
     """Extract metadata from documents using class methods"""
@@ -111,6 +139,24 @@ class MetaService:
                 result.update(image_info)
             elif mime_type and mime_type.startswith("text/"):
                 result["extracted_text"] = content.decode("utf-8", errors="ignore")
+            # Office documents - XLSX
+            elif mime_type in (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel"
+            ):
+                xlsx_info = cls._extract_xlsx_info(content, mime_type)
+                result.update(xlsx_info)
+            # Office documents - DOCX
+            elif mime_type in (
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword"
+            ):
+                docx_info = cls._extract_docx_info(content, mime_type)
+                result.update(docx_info)
+            # Office documents - PPTX
+            elif mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+                pptx_info = cls._extract_pptx_info(content)
+                result.update(pptx_info)
 
             return result
 
@@ -226,6 +272,106 @@ class MetaService:
 
             except Exception as e:
                 logger.warning(f"EXIF extraction failed: {e}")
+
+        return result
+
+    @classmethod
+    def _extract_xlsx_info(cls, content: bytes, mime_type: str) -> Dict[str, Any]:
+        """Extract text from Excel files (XLSX/XLS)"""
+        result = {"extracted_text": None}
+
+        # XLSX format (OpenXML)
+        if mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            if not HAS_OPENPYXL:
+                return result
+            try:
+                wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+                all_text = ""
+                for sheet_name in wb.sheetnames:
+                    all_text += f"\n--- 시트: {sheet_name} ---\n"
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(values_only=True):
+                        row_text = "\t".join(str(cell) if cell is not None else "" for cell in row)
+                        if row_text.strip():
+                            all_text += row_text + "\n"
+                wb.close()
+
+                # Check if meaningful text exists
+                cleaned = all_text.replace("\n", "").replace("\t", "").replace("--- 시트:", "").strip()
+                if cleaned:
+                    result["extracted_text"] = all_text
+            except Exception as e:
+                logger.warning(f"XLSX text extraction failed: {e}")
+
+        # XLS format (Legacy)
+        elif mime_type == "application/vnd.ms-excel":
+            if not HAS_XLRD:
+                return result
+            try:
+                wb = xlrd.open_workbook(file_contents=content)
+                all_text = ""
+                for sheet_name in wb.sheet_names():
+                    all_text += f"\n--- 시트: {sheet_name} ---\n"
+                    ws = wb.sheet_by_name(sheet_name)
+                    for row_idx in range(ws.nrows):
+                        row_text = "\t".join(str(ws.cell_value(row_idx, col_idx)) for col_idx in range(ws.ncols))
+                        if row_text.strip():
+                            all_text += row_text + "\n"
+
+                cleaned = all_text.replace("\n", "").replace("\t", "").replace("--- 시트:", "").strip()
+                if cleaned:
+                    result["extracted_text"] = all_text
+            except Exception as e:
+                logger.warning(f"XLS text extraction failed: {e}")
+
+        return result
+
+    @classmethod
+    def _extract_docx_info(cls, content: bytes, mime_type: str) -> Dict[str, Any]:
+        """Extract text from Word documents (DOCX)"""
+        result = {"extracted_text": None}
+
+        if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            if not HAS_DOCX:
+                return result
+            try:
+                doc = DocxDocument(io.BytesIO(content))
+                paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+                if paragraphs:
+                    result["extracted_text"] = "\n".join(paragraphs)
+            except Exception as e:
+                logger.warning(f"DOCX text extraction failed: {e}")
+
+        # DOC format not supported by python-docx
+        elif mime_type == "application/msword":
+            logger.info("DOC format not supported for text extraction (use DOCX)")
+
+        return result
+
+    @classmethod
+    def _extract_pptx_info(cls, content: bytes) -> Dict[str, Any]:
+        """Extract text from PowerPoint presentations (PPTX)"""
+        result = {"extracted_text": None, "num_pages": None}
+
+        if not HAS_PPTX:
+            return result
+
+        try:
+            prs = Presentation(io.BytesIO(content))
+            result["num_pages"] = len(prs.slides)
+
+            all_text = ""
+            for slide_idx, slide in enumerate(prs.slides, 1):
+                all_text += f"\n--- 슬라이드 {slide_idx} ---\n"
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text.strip():
+                        all_text += shape.text + "\n"
+
+            cleaned = all_text.replace("\n", "").replace("--- 슬라이드", "").strip()
+            if cleaned:
+                result["extracted_text"] = all_text
+        except Exception as e:
+            logger.warning(f"PPTX text extraction failed: {e}")
 
         return result
 
