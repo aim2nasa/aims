@@ -893,14 +893,14 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       className={`history-tabs__tab ${historyTab === 'ar' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => setHistoryTab('ar')}
                     >
-                      Annual Report
+                      Annual Report 이력
                     </button>
                     <button
                       type="button"
                       className={`history-tabs__tab ${historyTab === 'cr' ? 'history-tabs__tab--active' : ''}`}
                       onClick={() => setHistoryTab('cr')}
                     >
-                      변액 리포트
+                      변액 리포트 이력
                     </button>
                   </div>
                   {/* 🍎 계약 검색 */}
