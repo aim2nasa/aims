@@ -29,6 +29,7 @@ export interface CheckCustomerReviewResult {
     contractor_name?: string;
     insured_name?: string;
     fsr_name?: string;
+    policy_number?: string;
   } | null;
 }
 
@@ -166,6 +167,7 @@ function extractCRMetadata(text: string) {
     contractor_name?: string;
     insured_name?: string;
     fsr_name?: string;
+    policy_number?: string;
   } = {};
 
   // 1. 상품명 추출: "무) 실버플랜 변액유니버셜V보험(월납) 종신, 전기납" 패턴
@@ -227,6 +229,13 @@ function extractCRMetadata(text: string) {
   const fsrMatch = text.match(fsrPattern);
   if (fsrMatch) {
     metadata.fsr_name = fsrMatch[1].replace(/\s/g, '').trim();
+  }
+
+  // 6. 증권번호 추출: "증권번호 : 0011423761" 또는 "증권번호: 0011423761"
+  const policyPattern = /증권\s*번호\s*[:\s]+(\d{8,15})/;
+  const policyMatch = text.match(policyPattern);
+  if (policyMatch) {
+    metadata.policy_number = policyMatch[1].trim();
   }
 
   return metadata;

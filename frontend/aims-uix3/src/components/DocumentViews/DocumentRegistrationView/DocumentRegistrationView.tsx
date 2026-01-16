@@ -26,6 +26,7 @@ import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument, formatIssueDateKorean } from './utils/annualReportProcessor'
+import { processCustomerReviewFile, formatIssueDateKorean as formatIssueDateKoreanCR } from './utils/customerReviewProcessor'
 import { CustomerSelectionModal } from '@/features/annual-report/components/CustomerSelectionModal'
 import { NewCustomerInputModal } from '@/features/annual-report/components/NewCustomerInputModal'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
@@ -118,8 +119,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   })
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false)
 
-  // 🎯 문서 유형 선택 상태 (AR은 고객 선택 불필요)
-  type DocumentTypeMode = 'normal' | 'annual_report' | null
+  // 🎯 CRS 고객 선택 모달 상태 (AR과 동일한 패턴)
+  const [crCustomerSelectionState, setCrCustomerSelectionState] = useState<{
+    isOpen: boolean
+    crFile: File | null
+    crMetadata: { customer_name?: string; product_name?: string; issue_date?: string; contractor_name?: string; insured_name?: string; fsr_name?: string; policy_number?: string } | null
+    matchingCustomers: Customer[]
+    fileId: string
+    existingHashes: ExistingFileHash[]
+  }>({
+    isOpen: false,
+    crFile: null,
+    crMetadata: null,
+    matchingCustomers: [],
+    fileId: '',
+    existingHashes: []
+  })
+  const [showNewCustomerModalForCR, setShowNewCustomerModalForCR] = useState(false)
+
+  // 🎯 문서 유형 선택 상태 (AR/CRS는 고객 선택 불필요 - 업로드 후 모달로 선택)
+  type DocumentTypeMode = 'normal' | 'annual_report' | 'customer_review' | null
   const [documentTypeMode, setDocumentTypeMode] = useState<DocumentTypeMode>(null)
 
   // UI 상태 (localStorage에서 복원)
@@ -225,7 +244,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const crCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
   // 📝 CRS 파일명 → metadata 매핑 (발행일 등 DB 저장용)
-  const crMetadataMappingRef = useRef<Map<string, { product_name?: string; issue_date?: string; contractor_name?: string; insured_name?: string; fsr_name?: string }>>(new Map())
+  const crMetadataMappingRef = useRef<Map<string, { product_name?: string; issue_date?: string; contractor_name?: string; insured_name?: string; fsr_name?: string; policy_number?: string }>>(new Map())
 
   // 📄 일반 문서 파일명 → 문서 ID 매핑 (백그라운드 처리 완료 확인용)
   const normalDocumentMappingRef = useRef<Map<string, string>>(new Map())
@@ -521,27 +540,30 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const validation = validateFile(file)
 
       if (validation.valid) {
-        // 🔴🔴🔴 해당 고객에게 해시 중복 검사 (문서 유형 상관없이 최우선 실행!) 🔴🔴🔴
-        try {
-          const systemDupResult = await checkSystemDuplicate(file, customerFileCustomer?._id)
-          if (systemDupResult.isDuplicate && systemDupResult.existingDocument) {
-            const existingInfo = systemDupResult.existingDocument
-            const customerInfo = existingInfo.customerName
-              ? `"${existingInfo.customerName}" 고객에게`
-              : '시스템에'
+        // 🔴🔴🔴 해당 고객에게 해시 중복 검사 (일반 문서일 때만! AR/CRS는 고객 결정 후 체크) 🔴🔴🔴
+        // AR/CRS 탭에서는 시스템 중복 체크 건너뜀 - 고객이 결정된 후에 해당 고객 문서로 중복 체크함
+        if (documentTypeMode === 'normal') {
+          try {
+            const systemDupResult = await checkSystemDuplicate(file, customerFileCustomer?._id)
+            if (systemDupResult.isDuplicate && systemDupResult.existingDocument) {
+              const existingInfo = systemDupResult.existingDocument
+              const customerInfo = existingInfo.customerName
+                ? `"${existingInfo.customerName}" 고객에게`
+                : '시스템에'
 
-            addLog(
-              'error',
-              `🔴 중복 파일 거부: ${file.name}`,
-              `이미 ${customerInfo} 동일한 파일이 등록되어 있습니다. (${existingInfo.fileName})`
-            )
-            console.error(`[DocumentRegistration] 🔴🔴🔴 시스템 해시 중복 거부: ${file.name} (기존: ${existingInfo.fileName})`)
-            updateFileStatus(file, 'error', `중복 파일 - 이미 ${customerInfo} 등록됨`)
-            continue
+              addLog(
+                'error',
+                `🔴 중복 파일 거부: ${file.name}`,
+                `이미 ${customerInfo} 동일한 파일이 등록되어 있습니다. (${existingInfo.fileName})`
+              )
+              console.error(`[DocumentRegistration] 🔴🔴🔴 시스템 해시 중복 거부: ${file.name} (기존: ${existingInfo.fileName})`)
+              updateFileStatus(file, 'error', `중복 파일 - 이미 ${customerInfo} 등록됨`)
+              continue
+            }
+          } catch (error) {
+            console.error('[DocumentRegistration] 시스템 해시 중복 검사 실패:', error)
+            // 검사 실패 시 업로드 계속 진행 (백엔드에서 최종 차단)
           }
-        } catch (error) {
-          console.error('[DocumentRegistration] 시스템 해시 중복 검사 실패:', error)
-          // 검사 실패 시 업로드 계속 진행 (백엔드에서 최종 차단)
         }
 
         // PDF 파일이면 Annual Report 체크
@@ -688,66 +710,122 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }
 
               continue;
-            } else {
-              // AR이 아닌 경우 Customer Review 체크
-              console.log('[DocumentRegistrationView] 🔍 Annual Report 아님, Customer Review 체크:', file.name);
+            } else if (documentTypeMode === 'customer_review') {
+              // 🎯 CRS 탭에서 업로드한 경우 - CRS로 처리 (AR과 동일한 고객 매칭 플로우)
+              console.log('[DocumentRegistrationView] 🔍 CRS 탭 모드, Customer Review 체크:', file.name);
               const crCheckResult = await checkCustomerReviewFromPDF(file);
 
               if (crCheckResult.is_customer_review) {
                 console.log('[DocumentRegistrationView] ✅ Customer Review 감지!', crCheckResult.metadata);
 
-                // 🎯 사전 선택된 고객 확인
-                if (!customerFileCustomer) {
-                  addLog('warning', `CRS 문서 감지됨: ${file.name}`, '고객을 먼저 선택해주세요');
-                  updateFileStatus(file, 'error', '고객을 먼저 선택해주세요');
+                // 🎯 CRS 고객 매칭 플로우 (AR과 동일한 패턴)
+                let targetCustomerId: string;
+                let targetCustomerName: string;
+
+                // CRS 메타데이터에서 고객명 추출 (계약자명 사용)
+                const crCustomerName = crCheckResult.metadata?.contractor_name;
+
+                if (!crCustomerName) {
+                  addLog('warning', `CRS 문서 감지됨: ${file.name}`, '고객명(계약자)을 추출할 수 없습니다.');
+                  updateFileStatus(file, 'error', '고객명 추출 실패');
                   continue;
-                }
-
-                const customerId = customerFileCustomer._id;
-                const customerName = customerFileCustomer.personal_info?.name || '알 수 없음';
-
-                // 🔴 CRS 문서도 중복 검사 필수!
-                if (existingHashes.length > 0) {
-                  try {
-                    const duplicateResult = await checkDuplicateFile(file, existingHashes)
-                    if (duplicateResult.isDuplicate && duplicateResult.existingDoc) {
-                      addLog(
-                        'error',
-                        `🔴 중복 파일 거부: ${file.name}`,
-                        `"${customerName}" 고객에게 이미 동일한 파일이 등록되어 있습니다.`
-                      )
-                      console.error(`[DocumentRegistration] 🔴 CRS 중복 파일 거부: ${file.name}`)
-                      updateFileStatus(file, 'error', `중복 파일 - "${customerName}" 고객에게 이미 등록됨`)
-                      continue
-                    }
-                  } catch (error) {
-                    console.error('[DocumentRegistration] CRS 중복 검사 실패:', error)
-                  }
                 }
 
                 addLog('success', `[1/4] PDF 분석 완료: ${file.name}`);
                 addLog(
                   'cr-detect',
                   `[2/5] Customer Review 감지`,
-                  `사전 선택된 고객: ${customerName} → CRS 전용 처리로 전환`
+                  `계약자명: ${crCustomerName}`
+                );
+                addLog('info', `[3/5] CRS 고객 검색 중: "${crCustomerName}"`);
+
+                // 고객명으로 부분 일치 검색
+                const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                const matchingCustomers = await AnnualReportApi.searchCustomersByName(crCustomerName, currentUserId);
+
+                if (matchingCustomers.length === 0) {
+                  // Case 1: 유사 이름 고객 0명 → 자동 등록
+                  addLog('info', `[4/5] 유사 고객 없음 → "${crCustomerName}" 자동 등록`);
+
+                  try {
+                    const newCustomer = await CustomerService.createCustomer({
+                      personal_info: { name: crCustomerName },
+                      insurance_info: { customer_type: '개인' },
+                      contracts: [],
+                      documents: [],
+                      consultations: [],
+                    });
+
+                    targetCustomerId = newCustomer._id;
+                    targetCustomerName = crCustomerName;
+
+                    addLog('success', `[4/5] 새 고객 등록 완료: ${crCustomerName}`);
+                  } catch (error) {
+                    console.error('[DocumentRegistrationView] 고객 자동 등록 실패:', error);
+                    addLog('error', `고객 등록 실패: ${file.name}`, String(error));
+                    updateFileStatus(file, 'error', '고객 등록 실패');
+                    continue;
+                  }
+                } else {
+                  // Case 2: 유사 이름 고객 1명 이상 → 선택 모달 표시
+                  addLog('info', `[4/5] ${matchingCustomers.length}명의 유사 고객 발견 → 선택 필요`);
+
+                  // CRS 모달 상태 설정 (사용자 선택 대기)
+                  setCrCustomerSelectionState({
+                    isOpen: true,
+                    crFile: file,
+                    crMetadata: crCheckResult.metadata,
+                    matchingCustomers,
+                    fileId,
+                    existingHashes,
+                  });
+
+                  // 현재 파일은 모달에서 처리될 예정이므로 건너뜀
+                  updateFileStatus(file, 'pending', '고객 선택 대기 중');
+                  continue;
+                }
+
+                const customerId = targetCustomerId;
+                const customerName = targetCustomerName;
+
+                // 🔴 CRS 중복 문서 체크 (해시 + 발행일+증권번호)
+                const processResult = await processCustomerReviewFile(
+                  file,
+                  customerId,
+                  crCheckResult.metadata?.issue_date,
+                  crCheckResult.metadata?.policy_number
                 );
 
-                addLog(
-                  'cr-auto',
-                  `CRS 자동 등록: ${file.name}`,
-                  `사전 선택된 고객: ${customerName}`
-                );
+                if (processResult.isDuplicateDoc) {
+                  addLog(
+                    'warning',
+                    `🔴 중복 파일 건너뜀: ${file.name}`,
+                    `이미 등록된 파일입니다. 업로드를 건너뜁니다.`
+                  );
+                  updateFileStatus(file, 'skipped', '중복 파일 - 이미 등록됨');
+                  continue;
+                }
 
-                // ✅ CRS 파일 추적 등록 (AR과 동일한 패턴)
+                if (processResult.isDuplicateIssueDatePolicy) {
+                  const formattedDate = formatIssueDateKoreanCR(processResult.duplicateIssueDate);
+                  addLog(
+                    'warning',
+                    `🔴 ${formattedDate} 발행, 증권번호 ${processResult.duplicatePolicyNumber} CRS 이미 존재`,
+                    `${file.name} 업로드를 건너뜁니다.`
+                  );
+                  updateFileStatus(file, 'skipped', `${formattedDate} 발행일, 증권번호 ${processResult.duplicatePolicyNumber} CRS 이미 존재`);
+                  continue;
+                }
+
+                // ✅ CRS 파일 추적 등록
                 crFilenamesRef.current.add(file.name);
                 crCustomerMappingRef.current.set(file.name, customerId);
                 if (crCheckResult.metadata) {
                   crMetadataMappingRef.current.set(file.name, crCheckResult.metadata);
                 }
-                // 고객명 매핑 저장 (자동 연결 로그에서 사용)
                 customerNameMappingRef.current.set(customerId, customerName);
 
-                // ✅ 문서 업로드 큐에 추가 (AR과 동일한 패턴)
+                // ✅ 문서 업로드 큐에 추가
                 const uploadFile: UploadFile = {
                   id: fileId,
                   file,
@@ -760,12 +838,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 updateFileStatus(file, 'pending');
                 newUploadFiles.push(uploadFile);
 
-                console.log('[DocumentRegistrationView] CRS 문서 업로드 큐에 추가:', file.name);
+                addLog(
+                  'cr-auto',
+                  `CRS 자동 등록: ${file.name}`,
+                  `고객: ${customerName}`
+                );
 
+                console.log('[DocumentRegistrationView] CRS 문서 업로드 큐에 추가:', file.name);
                 continue;
               } else {
-                addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report/Customer Review 아님 - 일반 문서로 처리');
+                addLog('warning', `CRS 문서가 아님: ${file.name}`, 'Customer Review 형식이 아닙니다.');
+                updateFileStatus(file, 'error', 'Customer Review 형식이 아님');
+                continue;
               }
+            } else {
+              // AR 탭에서 업로드했지만 AR이 아닌 경우 - 일반 문서로 처리
+              addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report 아님 - 일반 문서로 처리');
             }
           } catch (error) {
             console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
@@ -1714,6 +1802,110 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     setArCustomerSelectionState(prev => ({ ...prev, isOpen: true }));
   }, []);
 
+  // ===========================================
+  // 🎯 CRS 고객 선택 핸들러 (AR과 동일한 패턴)
+  // ===========================================
+
+  // 🎯 CRS 기존 고객 선택 핸들러
+  const handleCrCustomerSelected = useCallback(async (customerId: string) => {
+    const { crFile, crMetadata, fileId } = crCustomerSelectionState;
+
+    if (!crFile || !crMetadata) {
+      console.error('[DocumentRegistrationView] CRS 파일 또는 메타데이터 없음');
+      return;
+    }
+
+    // 모달 닫기
+    setCrCustomerSelectionState(prev => ({ ...prev, isOpen: false }));
+
+    // 선택된 고객 정보 조회
+    const selectedCustomer = crCustomerSelectionState.matchingCustomers.find(c => c._id === customerId);
+    const customerName = selectedCustomer?.personal_info?.name || crMetadata.contractor_name || '알 수 없음';
+
+    addLog('success', `[4/5] 기존 고객 선택: ${customerName}`);
+
+    // CRS 파일 추적 등록 및 업로드 큐 추가
+    crFilenamesRef.current.add(crFile.name);
+    crCustomerMappingRef.current.set(crFile.name, customerId);
+    crMetadataMappingRef.current.set(crFile.name, crMetadata);
+    customerNameMappingRef.current.set(customerId, customerName);
+
+    const uploadFile: UploadFile = {
+      id: fileId,
+      file: crFile,
+      fileSize: crFile.size,
+      status: 'pending',
+      progress: 0,
+      error: undefined,
+      completedAt: undefined,
+    };
+
+    updateFileStatusByFile(crFile, 'pending');
+    uploadService.queueFiles([uploadFile]);
+
+    addLog(
+      'cr-auto',
+      `CRS 자동 등록: ${crFile.name}`,
+      `고객: ${customerName}`
+    );
+
+    console.log('[DocumentRegistrationView] CRS 문서 업로드 시작 (모달 선택):', crFile.name);
+  }, [crCustomerSelectionState, addLog, updateFileStatusByFile]);
+
+  // 🎯 CRS 새 고객 등록 모달 열기
+  const handleCrCreateNewCustomer = useCallback(() => {
+    setCrCustomerSelectionState(prev => ({ ...prev, isOpen: false }));
+    setShowNewCustomerModalForCR(true);
+  }, []);
+
+  // 🎯 CRS 새 고객 등록 완료 핸들러
+  const handleNewCustomerCreatedForCR = useCallback(async (customerId: string, customerName: string) => {
+    const { crFile, crMetadata, fileId } = crCustomerSelectionState;
+
+    // 모달 닫기
+    setShowNewCustomerModalForCR(false);
+
+    if (!crFile || !crMetadata) {
+      console.error('[DocumentRegistrationView] CRS 파일 또는 메타데이터 없음');
+      return;
+    }
+
+    addLog('success', `[4/5] 새 고객 등록 완료: ${customerName}`);
+
+    // CRS 파일 추적 등록 및 업로드 큐 추가
+    crFilenamesRef.current.add(crFile.name);
+    crCustomerMappingRef.current.set(crFile.name, customerId);
+    crMetadataMappingRef.current.set(crFile.name, crMetadata);
+    customerNameMappingRef.current.set(customerId, customerName);
+
+    const uploadFile: UploadFile = {
+      id: fileId,
+      file: crFile,
+      fileSize: crFile.size,
+      status: 'pending',
+      progress: 0,
+      error: undefined,
+      completedAt: undefined,
+    };
+
+    updateFileStatusByFile(crFile, 'pending');
+    uploadService.queueFiles([uploadFile]);
+
+    addLog(
+      'cr-auto',
+      `CRS 자동 등록: ${crFile.name}`,
+      `고객: ${customerName}`
+    );
+
+    console.log('[DocumentRegistrationView] CRS 문서 업로드 시작 (새 고객):', crFile.name);
+  }, [crCustomerSelectionState, addLog, updateFileStatusByFile]);
+
+  // 🎯 CRS 새 고객 등록 모달에서 뒤로가기
+  const handleNewCustomerBackForCR = useCallback(() => {
+    setShowNewCustomerModalForCR(false);
+    setCrCustomerSelectionState(prev => ({ ...prev, isOpen: true }));
+  }, []);
+
   // 제목에 진행 상태 표시
   const getTitle = () => {
     if (uploadState.uploading) {
@@ -1738,7 +1930,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       className="document-registration-view"
       placeholderIcon="doc.badge.plus"
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
-      description={documentTypeMode === 'normal' ? "고객을 선택하고 고객의 문서들을 등록합니다." : "Annual Report로 고객과 계약을 자동 등록합니다."}
+      description={documentTypeMode === 'normal' ? "고객을 선택하고 고객의 문서들을 등록합니다." : documentTypeMode === 'customer_review' ? "Customer Review로 고객과 변액 정보를 자동 등록합니다." : "Annual Report로 고객과 계약을 자동 등록합니다."}
       titleAccessory={
         <Tooltip content="도움말" placement="bottom">
           <button
@@ -1768,6 +1960,18 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   <path d="M17 8H21V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span className="document-type-card__label">Annual Report</span>
+              </button>
+              <button
+                type="button"
+                className={`document-type-card ${documentTypeMode === 'customer_review' ? 'document-type-card--selected' : ''}`}
+                onClick={() => setDocumentTypeMode('customer_review')}
+              >
+                <svg className="document-type-card__icon document-type-card__icon--purple" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="document-type-card__label">Customer Review</span>
               </button>
               <button
                 type="button"
@@ -1802,7 +2006,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   </svg>
                 </div>
                 <h3 className="guide-title">
-                  {documentTypeMode === 'annual_report' ? 'AR 등록 방법' : '문서 등록 방법'}
+                  {documentTypeMode === 'annual_report' ? 'AR 등록 방법' : documentTypeMode === 'customer_review' ? 'CRS 등록 방법' : '문서 등록 방법'}
                 </h3>
                 <span className="guide-toggle-icon" aria-hidden="true">
                   {isGuideExpanded ? '▲' : '▼'}
@@ -1815,6 +2019,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 <div className="guide-section">
                   {documentTypeMode === 'annual_report' ? (
                     <p className="step-description">고객의 Annual Report PDF 파일을 업로드해주세요.</p>
+                  ) : documentTypeMode === 'customer_review' ? (
+                    <p className="step-description">고객의 Customer Review PDF 파일을 업로드해주세요.</p>
                   ) : (
                     <>
                       <div className="guide-step">
@@ -1871,8 +2077,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - AR이거나 (일반 문서 + 고객 선택) 시 표시 */}
-        {((documentTypeMode === 'annual_report') || (documentTypeMode === 'normal' && customerFileCustomer)) && !isLogVisible && (
+        {/* 🎯 [핵심] 파일 업로드 영역 - AR/CRS이거나 (일반 문서 + 고객 선택) 시 표시 */}
+        {((documentTypeMode === 'annual_report') || (documentTypeMode === 'customer_review') || (documentTypeMode === 'normal' && customerFileCustomer)) && !isLogVisible && (
           <FileUploadArea
             onFilesSelected={handleFilesSelected}
             options={fileSelectionOptions}
@@ -2033,6 +2239,35 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           arMetadata={arCustomerSelectionState.arMetadata}
           onSubmit={handleNewCustomerCreated}
           onBack={handleNewCustomerBack}
+        />
+      )}
+
+      {/* 🎯 CRS 고객 선택 모달 */}
+      {crCustomerSelectionState.crMetadata && (
+        <CustomerSelectionModal
+          isOpen={crCustomerSelectionState.isOpen}
+          onClose={() => setCrCustomerSelectionState(prev => ({ ...prev, isOpen: false }))}
+          arMetadata={{
+            customer_name: crCustomerSelectionState.crMetadata.contractor_name || '',
+            issue_date: crCustomerSelectionState.crMetadata.issue_date || '',
+          }}
+          matchingCustomers={crCustomerSelectionState.matchingCustomers}
+          onSelectCustomer={handleCrCustomerSelected}
+          onCreateNewCustomer={handleCrCreateNewCustomer}
+        />
+      )}
+
+      {/* 🎯 CRS 새 고객명 입력 모달 */}
+      {crCustomerSelectionState.crMetadata && (
+        <NewCustomerInputModal
+          isOpen={showNewCustomerModalForCR}
+          onClose={() => setShowNewCustomerModalForCR(false)}
+          arMetadata={{
+            customer_name: crCustomerSelectionState.crMetadata.contractor_name || '',
+            issue_date: crCustomerSelectionState.crMetadata.issue_date || '',
+          }}
+          onSubmit={handleNewCustomerCreatedForCR}
+          onBack={handleNewCustomerBackForCR}
         />
       )}
     </CenterPaneView>

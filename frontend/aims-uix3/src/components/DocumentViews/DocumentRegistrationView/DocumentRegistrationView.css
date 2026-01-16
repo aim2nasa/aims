@@ -582,6 +582,10 @@ html[data-theme="dark"] .document-type-card--selected {
   color: var(--color-ios-green);
 }
 
+.document-type-card__icon--purple {
+  color: var(--color-ios-purple);
+}
+
 /* 선택 시 아이콘 흰색 */
 .document-type-card--selected .document-type-card__icon {
   color: white;
