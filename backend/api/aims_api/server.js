@@ -94,6 +94,23 @@ function escapeRegex(str) {
 }
 
 /**
+ * HTML 태그 제거 및 XSS 방지용 새니타이징 함수
+ * 사용자 입력에서 HTML 태그를 제거하여 Stored XSS 공격 방지
+ * @param {string} str - 새니타이즈할 문자열
+ * @returns {string} - HTML 태그가 제거된 문자열
+ */
+function sanitizeHtml(str) {
+  if (typeof str !== 'string') return str;
+  // HTML 태그 제거
+  return str
+    .replace(/<[^>]*>/g, '')  // HTML 태그 제거
+    .replace(/&lt;/g, '<')     // 이미 이스케이프된 것 복원 후
+    .replace(/&gt;/g, '>')
+    .replace(/<[^>]*>/g, '')  // 다시 태그 제거 (이중 인코딩 방지)
+    .trim();
+}
+
+/**
  * customerId를 안전하게 ObjectId로 변환
  * 문자열이면 ObjectId로 변환, 이미 ObjectId면 그대로 반환
  * @param {string|ObjectId|null} id - 변환할 ID
@@ -3648,12 +3665,19 @@ app.post('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
       });
     }
 
-    // 고객명 필수 체크
-    const originalName = customerData.personal_info?.name;
-    if (!originalName) {
+    // 고객명 필수 체크 및 XSS 방지 새니타이징
+    const rawName = customerData.personal_info?.name;
+    if (!rawName) {
       return res.status(400).json({
         success: false,
         error: '고객명은 필수 입력 항목입니다.'
+      });
+    }
+    const originalName = sanitizeHtml(rawName);  // XSS 방지: HTML 태그 제거
+    if (!originalName) {
+      return res.status(400).json({
+        success: false,
+        error: '유효한 고객명을 입력해주세요. (HTML 태그는 허용되지 않습니다)'
       });
     }
 
@@ -3835,9 +3859,11 @@ app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
 
     for (const customer of customers) {
       try {
-        const name = customer.name?.trim();
+        // XSS 방지: HTML 태그 제거
+        const rawName = customer.name?.trim();
+        const name = rawName ? sanitizeHtml(rawName) : null;
         if (!name) {
-          errors.push({ name: customer.name || '(이름없음)', reason: '고객명 누락' });
+          errors.push({ name: customer.name || '(이름없음)', reason: '고객명 누락 또는 유효하지 않은 형식' });
           continue;
         }
 
@@ -4341,6 +4367,17 @@ app.put('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
       });
     }
 
+    // XSS 방지: 고객명에 HTML 태그가 있으면 제거
+    if (updateData.personal_info?.name) {
+      updateData.personal_info.name = sanitizeHtml(updateData.personal_info.name);
+      if (!updateData.personal_info.name) {
+        return res.status(400).json({
+          success: false,
+          error: '유효한 고객명을 입력해주세요. (HTML 태그는 허용되지 않습니다)'
+        });
+      }
+    }
+
     // 주소 변경 여부 확인 및 이력 저장
     const newAddress = updateData.personal_info?.address;
     const oldAddress = existingCustomer.personal_info?.address;
@@ -4392,7 +4429,7 @@ app.put('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
     const updateFields = {
       ...flattenedData,
       'meta.updated_at': utcNowDate(),
-      'meta.last_modified_by': updateData.modified_by || null
+      'meta.last_modified_by': userId  // Issue #2 수정: JWT에서 추출한 사용자 ID 사용
     };
 
     // 주소 변경 관련 임시 필드 제거 (DB에 저장하지 않음)

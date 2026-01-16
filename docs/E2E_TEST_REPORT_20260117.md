@@ -45,7 +45,7 @@ curl -s 'http://localhost:3010/api/customers/000000000000000000000000' \
 
 ---
 
-### 🟡 Issue #2: 고객 수정 후 `last_modified_by`가 null (Medium)
+### ✅ Issue #2: 고객 수정 후 `last_modified_by`가 null (Medium) - **해결됨**
 
 **위치**: `PUT /api/customers/:id`
 
@@ -63,7 +63,9 @@ curl -s -X PUT 'http://localhost:3010/api/customers/<id>' \
 
 **영향**: 감사 추적 불가
 
-**상태**: ⬜ 미해결
+**상태**: ✅ 해결됨 (2026-01-17)
+
+**수정 내용**: `server.js:4430` - `updateData.modified_by || null` → `userId` (JWT에서 추출한 사용자 ID)
 
 ---
 
@@ -87,9 +89,9 @@ curl -s 'http://localhost:3010/api/documents?customerId=null' \
 
 ---
 
-### 🔴 Issue #4: Stored XSS 취약점 (High - 보안)
+### ✅ Issue #4: Stored XSS 취약점 (High - 보안) - **해결됨**
 
-**위치**: `POST /api/customers`
+**위치**: `POST /api/customers`, `PUT /api/customers/:id`, `POST /api/customers/bulk`
 
 **재현 방법**:
 ```bash
@@ -99,13 +101,17 @@ curl -s -X POST 'http://localhost:3010/api/customers' \
   -d '{"personal_info": {"name": "<script>alert(1)</script>"}, "insurance_info": {"customer_type": "개인"}}'
 ```
 
-**현재 결과**: 스크립트 태그가 그대로 저장됨
+**수정 전 결과**: 스크립트 태그가 그대로 저장됨
 
-**위험**: 프론트엔드에서 이스케이프 없이 렌더링 시 XSS 공격 가능
+**수정 후 결과**: `<script>` 태그가 제거되어 `alert(1)` 만 저장됨
 
-**권장 조치**: 입력값 검증 및 HTML 특수문자 이스케이프
+**상태**: ✅ 해결됨 (2026-01-17)
 
-**상태**: ⬜ 미해결
+**수정 내용**:
+- `server.js:102-111` - `sanitizeHtml()` 함수 추가 (HTML 태그 제거)
+- `server.js:3676` - 고객 생성 시 이름 새니타이징
+- `server.js:4368-4376` - 고객 수정 시 이름 새니타이징
+- `server.js:3862-3867` - 대량 고객 등록 시 이름 새니타이징
 
 ---
 
@@ -187,14 +193,14 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 
 ## 4. 우선순위별 수정 계획
 
-| 우선순위 | Issue | 이유 |
-|---------|-------|------|
-| 🔴 P0 | #4 XSS 취약점 | 보안 위협 |
-| 🔴 P0 | #6 고아 계약 | 데이터 정합성 |
-| 🟡 P1 | #2 last_modified_by | 감사 추적 |
-| 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 |
-| 🟢 P2 | #1 오류 메시지 | UX 개선 |
-| 🟢 P2 | #5 customer_name | UX 개선 |
+| 우선순위 | Issue | 이유 | 상태 |
+|---------|-------|------|------|
+| 🔴 P0 | #4 XSS 취약점 | 보안 위협 | ✅ 해결됨 |
+| 🔴 P0 | #6 고아 계약 | 데이터 정합성 | ⬜ 미해결 |
+| 🟡 P1 | #2 last_modified_by | 감사 추적 | ✅ 해결됨 |
+| 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 | ⬜ 미해결 |
+| 🟢 P2 | #1 오류 메시지 | UX 개선 | ⬜ 미해결 |
+| 🟢 P2 | #5 customer_name | UX 개선 | ⬜ 미해결 |
 
 ---
 
@@ -204,7 +210,8 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 
 | 시간 | Issue | 작업 내용 | 결과 |
 |------|-------|----------|------|
-| - | - | 테스트 보고서 작성 | 완료 |
+| 08:26 | - | 테스트 보고서 작성 | 완료 |
+| 08:34 | #4, #2 | XSS 취약점 수정, last_modified_by 버그 수정 | ✅ 완료 |
 
 ---
 
