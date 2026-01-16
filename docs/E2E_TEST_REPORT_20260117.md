@@ -11,14 +11,15 @@
 | 항목 | 결과 |
 |------|------|
 | 테스트 케이스 | 27개 |
-| 통과 | 21개 |
+| 통과 | 27개 |
 | 발견된 문제 | 6개 |
+| 해결된 문제 | 6개 ✅ |
 
 ---
 
 ## 2. 발견된 문제점
 
-### 🔴 Issue #1: 존재하지 않는 고객 조회 시 잘못된 오류 메시지 (Low)
+### ✅ Issue #1: 존재하지 않는 고객 조회 시 잘못된 오류 메시지 (Low) - **해결됨**
 
 **위치**: `GET /api/customers/:id`
 
@@ -28,7 +29,7 @@ curl -s 'http://localhost:3010/api/customers/000000000000000000000000' \
   -H 'Authorization: Bearer <token>'
 ```
 
-**현재 응답**:
+**수정 전 응답**:
 ```json
 {
   "success": false,
@@ -37,11 +38,17 @@ curl -s 'http://localhost:3010/api/customers/000000000000000000000000' \
 }
 ```
 
-**예상 응답**: "고객을 찾을 수 없습니다"
+**수정 후 응답**:
+```json
+{
+  "success": false,
+  "error": "고객을 찾을 수 없습니다."
+}
+```
 
-**영향**: 사용자 혼란 유발
+**상태**: ✅ 해결됨 (2026-01-17)
 
-**상태**: ⬜ 미해결
+**수정 내용**: `server.js:4321-4327` - 존재하지 않는 고객 조회 시 "고객을 찾을 수 없습니다" 메시지로 변경
 
 ---
 
@@ -120,7 +127,7 @@ curl -s -X POST 'http://localhost:3010/api/customers' \
 
 ---
 
-### 🟢 Issue #5: 계약 생성 시 `customer_name` 미설정 (Low)
+### ✅ Issue #5: 계약 생성 시 `customer_name` 미설정 (Low) - **해결됨**
 
 **위치**: `POST /api/contracts`
 
@@ -132,11 +139,13 @@ curl -s -X POST 'http://localhost:3010/api/contracts' \
   -d '{"agent_id": "<agent_id>", "customer_id": "<customer_id>", "policy_number": "TEST-001", "product_name": "테스트"}'
 ```
 
-**현재 결과**: `customer_name: ""`
+**수정 전 결과**: `customer_name: ""`
 
-**예상 결과**: 해당 고객의 이름이 자동으로 채워져야 함
+**수정 후 결과**: `customer_name: "테스트고객E2E"` (고객 ID로 자동 조회)
 
-**상태**: ⬜ 미해결
+**상태**: ✅ 해결됨 (2026-01-17)
+
+**수정 내용**: `server.js:10328-10343` - customer_id가 있고 customer_name이 없으면 고객 컬렉션에서 자동 조회하여 설정
 
 ---
 
@@ -213,8 +222,8 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 🔴 P0 | #6 고아 계약 | 데이터 정합성 | ✅ 해결됨 |
 | 🟡 P1 | #2 last_modified_by | 감사 추적 | ✅ 해결됨 |
 | 🟡 P1 | #3 customerId=null 필터 | 기능 오작동 | ✅ 해결됨 |
-| 🟢 P2 | #1 오류 메시지 | UX 개선 | ⬜ 미해결 |
-| 🟢 P2 | #5 customer_name | UX 개선 | ⬜ 미해결 |
+| 🟢 P2 | #1 오류 메시지 | UX 개선 | ✅ 해결됨 |
+| 🟢 P2 | #5 customer_name | UX 개선 | ✅ 해결됨 |
 
 ---
 
@@ -228,10 +237,24 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 08:34 | #4, #2 | XSS 취약점 수정, last_modified_by 버그 수정 | ✅ 완료 |
 | 08:42 | #6 | 고아 계약 25건 정리 (admin API 사용) | ✅ 완료 |
 | 08:45 | #3 | customerId=null 필터 추가 | ✅ 완료 |
+| 08:48 | #1 | 오류 메시지 수정 ("고객을 찾을 수 없습니다") | ✅ 완료 |
+| 08:48 | #5 | 계약 생성 시 customer_name 자동 조회 추가 | ✅ 완료 |
 
 ---
 
-## 6. 참고사항
+## 6. 최종 결과
+
+**🎉 모든 이슈 해결 완료!**
+
+| 구분 | 개수 |
+|------|------|
+| 발견된 이슈 | 6개 |
+| 해결된 이슈 | 6개 |
+| 미해결 이슈 | 0개 |
+
+---
+
+## 7. 참고사항
 
 - 테스트 데이터는 모두 정리 완료
 - 테스트에 사용된 JWT 토큰은 개발자 계정 (dev@aims.local)

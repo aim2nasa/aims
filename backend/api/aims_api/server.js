@@ -4319,11 +4319,10 @@ app.get('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
       .findOne({ _id: new ObjectId(id) });
 
     if (!customerExists) {
-      // 🔴 고객이 DB에 없음 (삭제됨)
+      // Issue #1 수정: 존재하지 않는 고객에 대한 정확한 오류 메시지
       return res.status(404).json({
         success: false,
-        error: '해당 고객은 삭제되었습니다.',
-        deleted: true
+        error: '고객을 찾을 수 없습니다.'
       });
     }
 
@@ -10326,13 +10325,30 @@ app.post('/api/contracts', authenticateJWTorAPIKey, async (req, res) => {
       });
     }
 
+    // Issue #5 수정: customer_id가 있고 customer_name이 없으면 고객 이름 자동 조회
+    let customerName = contract.customer_name || '';
+    if (contract.customer_id && !contract.customer_name) {
+      try {
+        const customer = await db.collection(CUSTOMERS_COLLECTION).findOne(
+          { _id: new ObjectId(contract.customer_id) },
+          { projection: { 'personal_info.name': 1 } }
+        );
+        if (customer?.personal_info?.name) {
+          customerName = customer.personal_info.name;
+          console.log(`📝 계약 등록: 고객명 자동 설정 "${customerName}"`);
+        }
+      } catch (err) {
+        console.error('고객명 조회 실패:', err.message);
+      }
+    }
+
     const now = utcNowDate();
     const newContract = {
       agent_id: new ObjectId(contract.agent_id),
       customer_id: contract.customer_id ? new ObjectId(contract.customer_id) : null,
       insurer_id: contract.insurer_id ? new ObjectId(contract.insurer_id) : null,
       product_id: contract.product_id ? new ObjectId(contract.product_id) : null,
-      customer_name: contract.customer_name || '',
+      customer_name: customerName,
       product_name: contract.product_name || '',
       contract_date: contract.contract_date || null,
       policy_number: contract.policy_number,
