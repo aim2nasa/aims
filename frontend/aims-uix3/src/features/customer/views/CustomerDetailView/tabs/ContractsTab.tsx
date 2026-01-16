@@ -886,8 +886,8 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       )
     }
 
-    // AR 계약 이력이 있으면 빈 상태 메시지 표시 안 함
-    if (isEmpty && contractHistories.length === 0) {
+    // AR 탭: 계약도 없고 AR 이력도 없을 때만 빈 상태 메시지 표시
+    if (historyTab === 'ar' && isEmpty && contractHistories.length === 0) {
       return (
         <div className="customer-contracts__state customer-contracts__state--empty">
           <SFSymbol
