@@ -1,7 +1,20 @@
 /**
- * MetLife Annual Review Report Parser
+ * @deprecated ⚠️ DO NOT USE - OVERFITTED IMPLEMENTATION
  *
- * 보유계약 현황 페이지(2페이지)를 파싱하여 구조화된 데이터로 변환
+ * 이 파서는 5개 테스트 샘플에 대해 100% 정확도를 보이지만,
+ * 실제로는 하드코딩된 패턴으로 인해 새로운 데이터에서 실패합니다.
+ *
+ * 문제점:
+ * 1. 특정 회사명 하드코딩: "캐치업", "코리아" (line 275-276, 298-299)
+ * 2. 특정 상태값 하드코딩: "업무처" (line 277-278)
+ * 3. 제한된 suffix 패턴: 특정 형태만 인식 (line 329-337)
+ *
+ * 이 방식은 "규칙 기반 파싱"의 전형적인 오버피팅 문제입니다.
+ * 새로운 회사명, 상품명, 상태값이 나타나면 즉시 실패합니다.
+ *
+ * 근본적 해결책:
+ * - pdfplumber 테이블 추출 사용 → 셀 경계 보존 → 하드코딩 불필요
+ * - backend/api/annual_report_api/table_extractor.py 사용 권장
  *
  * @see docs/ANNUAL_REPORT_PARSER.md
  */
