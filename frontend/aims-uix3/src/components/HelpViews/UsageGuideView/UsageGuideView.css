@@ -177,6 +177,42 @@
   color: var(--color-ios-brown, #a2845e);
 }
 
+/* 신규 카테고리 아이콘 색상 (2026-01-16) */
+.usage-guide-view__category-icon--doc-register {
+  background: transparent;
+  color: var(--color-ios-blue, #007aff);
+}
+
+.usage-guide-view__category-icon--customer-register {
+  background: transparent;
+  color: var(--color-ios-teal, #5ac8fa);
+}
+
+.usage-guide-view__category-icon--excel-import {
+  background: transparent;
+  color: var(--color-ios-green, #34c759);
+}
+
+.usage-guide-view__category-icon--batch-document {
+  background: transparent;
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.usage-guide-view__category-icon--customers-all {
+  background: transparent;
+  color: var(--color-ios-indigo, #5856d6);
+}
+
+.usage-guide-view__category-icon--documents-all {
+  background: transparent;
+  color: var(--color-ios-purple, #af52de);
+}
+
+.usage-guide-view__category-icon--doc-explorer {
+  background: transparent;
+  color: var(--color-ios-cyan, #32ade6);
+}
+
 .usage-guide-view__category-svg {
   width: 18px;
   height: 18px;

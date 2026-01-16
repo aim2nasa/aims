@@ -19,35 +19,31 @@ const GUIDE_CATEGORIES = ['customer', 'document', 'contract'];
 // FAQ 카테고리 라벨 매핑
 const FAQ_CATEGORY_LABELS = {
   general: '일반',
-  'import-data': '고객계약 등록',
-  'import-file': '문서 등록',
-  customer: '고객',
-  document: '문서',
-  contract: '계약',
-  account: '계정',
-  'term-customer': '고객 용어',
-  'term-doc': '문서 용어',
-  'term-contract': '계약 용어',
-  'term-system': '시스템 용어',
+  'doc-register': '고객·계약·문서 등록',
+  'customer-register': '고객 등록',
+  'batch-upload': '일괄 등록',
+  'customer-view': '고객 조회',
+  'document-view': '문서 조회',
+  terminology: '용어 설명',
 };
 
 // 사용 가이드 카테고리 라벨 매핑
 const USAGE_GUIDE_CATEGORY_LABELS = {
   'getting-started': '시작하기',
-  customer: '고객 관리',
-  contract: '계약 관리',
-  document: '문서 관리',
-  'batch-import': '일괄 등록',
-  advanced: '고급 기능',
-  account: '계정 설정',
-  tips: '팁 & 트릭',
+  'doc-register': '고객·계약·문서 등록',
+  'customer-register': '고객 수동등록',
+  'excel-import': '고객 일괄등록',
+  'batch-document': '문서 일괄등록',
+  'customers-all': '전체고객보기',
+  'documents-all': '전체문서보기',
+  'doc-explorer': '문서 탐색기',
   terminology: '용어 설명',
 };
 
 // 사용 가이드 카테고리 정렬 순서
 const USAGE_GUIDE_CATEGORY_ORDER = [
-  'getting-started', 'customer', 'contract', 'document',
-  'batch-import', 'advanced', 'account', 'tips', 'terminology'
+  'getting-started', 'doc-register', 'customer-register', 'excel-import',
+  'batch-document', 'customers-all', 'documents-all', 'doc-explorer', 'terminology'
 ];
 
 module.exports = (db, authenticateJWT, requireRole) => {

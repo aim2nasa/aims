@@ -79,6 +79,65 @@ const TerminologyIcon = () => (
   </svg>
 );
 
+// 고객·계약·문서 등록 (AR 업로드)
+const DocRegisterIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" opacity="0.85"/>
+    <path d="M14 2v6h6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M12 18v-6m-3 3h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+// 고객 수동등록
+const CustomerRegisterIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <circle cx="9" cy="7" r="4" opacity="0.85"/>
+    <path d="M9 13c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z" opacity="0.85"/>
+    <path d="M19 8v6m-3-3h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+// 고객 일괄등록 (엑셀)
+const ExcelImportIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" opacity="0.85"/>
+    <path d="M7 7h4v4H7zm6 0h4v4h-4zm-6 6h4v4H7zm6 0h4v4h-4z" fill="none" stroke="currentColor" strokeWidth="1"/>
+  </svg>
+);
+
+// 문서 일괄등록 (폴더)
+const BatchDocumentIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" opacity="0.85"/>
+    <path d="M12 17v-6m-3 3h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+// 전체고객보기
+const CustomersAllIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <circle cx="9" cy="7" r="3" opacity="0.85"/>
+    <path d="M9 12c-3.5 0-6 1.5-6 4v1h12v-1c0-2.5-2.5-4-6-4z" opacity="0.85"/>
+    <circle cx="17" cy="8" r="2.5" opacity="0.6"/>
+    <path d="M17 12c2 0 4 1 4 3v1h-4" opacity="0.6"/>
+  </svg>
+);
+
+// 전체문서보기
+const DocumentsAllIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M4 4h5v5H4zm6 0h5v5h-5zm6 0h5v5h-5zM4 10h5v5H4zm6 0h5v5h-5zm6 0h5v5h-5zM4 16h5v5H4zm6 0h5v5h-5zm6 0h5v5h-5z" opacity="0.85"/>
+  </svg>
+);
+
+// 문서 탐색기
+const DocExplorerIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="usage-guide-view__category-svg">
+    <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" opacity="0.85"/>
+    <path d="M6 14h12M6 17h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
 interface UsageGuideViewProps {
   visible: boolean;
   onClose: () => void;
@@ -87,13 +146,13 @@ interface UsageGuideViewProps {
 // 카테고리 아이콘 매핑 (확장됨)
 const CATEGORY_ICONS: Record<string, ReactNode> = {
   'getting-started': <GettingStartedIcon />,
-  customer: <CustomerIcon />,
-  contract: <ContractIcon />,
-  document: <DocumentIcon />,
-  'batch-import': <BatchImportIcon />,
-  advanced: <AdvancedIcon />,
-  account: <AccountIcon />,
-  tips: <TipsIcon />,
+  'doc-register': <DocRegisterIcon />,
+  'customer-register': <CustomerRegisterIcon />,
+  'excel-import': <ExcelImportIcon />,
+  'batch-document': <BatchDocumentIcon />,
+  'customers-all': <CustomersAllIcon />,
+  'documents-all': <DocumentsAllIcon />,
+  'doc-explorer': <DocExplorerIcon />,
   terminology: <TerminologyIcon />,
 };
 
