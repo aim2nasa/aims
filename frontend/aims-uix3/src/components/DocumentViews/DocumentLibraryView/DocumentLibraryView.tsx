@@ -376,9 +376,17 @@ const DocumentLibraryContent: React.FC<{
             </button>
           </Tooltip>
 
-          {/* 총 문서 개수 */}
+          {/* 총 문서 개수 및 현재 표시 범위 */}
           <span className="result-count">
-            총 {state.totalCount}개의 문서
+            {state.totalCount > 0 ? (
+              <>
+                {((state.currentPage - 1) * state.itemsPerPage) + 1}-
+                {Math.min(state.currentPage * state.itemsPerPage, state.totalCount)}
+                {' / '}총 {state.totalCount}개
+              </>
+            ) : (
+              '문서 없음'
+            )}
           </span>
 
           {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
