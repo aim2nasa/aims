@@ -29,7 +29,6 @@ import type {
   DailyUsageBySourcePoint,
   HourlyUsagePoint,
   AIModelSettingsUpdate,
-  OCRUsageOverview,
   OCRDailyUsagePoint,
 } from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
