@@ -829,6 +829,11 @@ export const AIUsagePage = () => {
             <span className="source-card__percent">{embeddingPercent}%</span>
           </div>
         </div>
+        <div className="ai-usage-page__ai-cost-summary">
+          <span className="ai-usage-page__ai-cost-label">AI 예상 비용:</span>
+          <span className="ai-usage-page__ai-cost-value">{formatCost(overview?.estimated_cost_usd || 0)}</span>
+          <span className="ai-usage-page__ai-cost-krw">≈ ₩{Math.round((overview?.estimated_cost_usd || 0) * 1450).toLocaleString()}</span>
+        </div>
       </section>
 
       {/* OCR 사용량 섹션 */}
@@ -862,97 +867,102 @@ export const AIUsagePage = () => {
         </div>
       </section>
 
-      {/* 차트 - AI 사용량 추이 */}
+      {/* 차트 - AI/OCR 사용량 추이 (병렬 배치) */}
       <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">
-          AI 토큰 사용량 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
-        </h2>
-        <div className="ai-usage-page__line-chart-container">
-          {chartData.length === 0 ? (
-            <div className="ai-usage-page__chart-empty">사용 데이터가 없습니다</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis
-                  dataKey={periodType === 'hourly' ? 'hour' : periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
-                  stroke="var(--color-border)"
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
-                  stroke="var(--color-border)"
-                  tickFormatter={(value) => formatTokens(value)}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  verticalAlign="top"
-                  height={24}
-                  wrapperStyle={{ fontSize: '11px' }}
-                />
-                <Bar dataKey="doc_embedding" name="Embed" fill="#FF9500" stackId="stack" />
-                <Bar dataKey="n8n_docsummary" name="Summary" fill="#34C759" stackId="stack" />
-                <Bar dataKey="rag_api" name="RAG" fill="#007AFF" stackId="stack" />
-                <Bar dataKey="chat" name="Chat" fill="#AF52DE" stackId="stack" />
-              </BarChart>
-            </ResponsiveContainer>
+        <div className="ai-usage-page__charts-row">
+          {/* AI 토큰 사용량 추이 */}
+          <div className="ai-usage-page__chart-wrapper">
+            <h3 className="ai-usage-page__chart-title">
+              AI 토큰 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
+            </h3>
+            <div className="ai-usage-page__line-chart-container ai-usage-page__line-chart-container--compact">
+              {chartData.length === 0 ? (
+                <div className="ai-usage-page__chart-empty">사용 데이터가 없습니다</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                    <XAxis
+                      dataKey={periodType === 'hourly' ? 'hour' : periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
+                      tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+                      stroke="var(--color-border)"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 9, fill: 'var(--color-text-tertiary)' }}
+                      stroke="var(--color-border)"
+                      tickFormatter={(value) => formatTokens(value)}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend
+                      verticalAlign="top"
+                      height={20}
+                      wrapperStyle={{ fontSize: '10px' }}
+                    />
+                    <Bar dataKey="doc_embedding" name="Embed" fill="#FF9500" stackId="stack" />
+                    <Bar dataKey="n8n_docsummary" name="Summary" fill="#34C759" stackId="stack" />
+                    <Bar dataKey="rag_api" name="RAG" fill="#007AFF" stackId="stack" />
+                    <Bar dataKey="chat" name="Chat" fill="#AF52DE" stackId="stack" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* OCR 처리 추이 차트 */}
+          {periodType !== 'hourly' && (
+            <div className="ai-usage-page__chart-wrapper">
+              <h3 className="ai-usage-page__chart-title">
+                OCR 처리 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
+              </h3>
+              <div className="ai-usage-page__line-chart-container ai-usage-page__line-chart-container--compact">
+                {ocrChartData.length === 0 ? (
+                  <div className="ai-usage-page__chart-empty">OCR 데이터가 없습니다</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={ocrChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                      <XAxis
+                        dataKey={periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
+                        tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+                        stroke="var(--color-border)"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 9, fill: 'var(--color-text-tertiary)' }}
+                        stroke="var(--color-border)"
+                      />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload || !label) return null;
+                          return (
+                            <div className="ai-usage-page__tooltip">
+                              <p className="ai-usage-page__tooltip-time">{label}</p>
+                              {payload.map((entry, index) => (
+                                <p
+                                  key={index}
+                                  className={`ai-usage-page__tooltip-item ${entry.dataKey === 'done' ? 'ai-usage-page__tooltip-item--ocr-done' : 'ai-usage-page__tooltip-item--ocr-error'}`}
+                                >
+                                  {entry.name}: {(entry.value as number).toLocaleString()}건
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={20}
+                        wrapperStyle={{ fontSize: '10px' }}
+                      />
+                      <Bar dataKey="done" name="성공" fill="#34C759" stackId="stack" />
+                      <Bar dataKey="error" name="실패" fill="#FF3B30" stackId="stack" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </section>
-
-      {/* OCR 처리 추이 차트 */}
-      {periodType !== 'hourly' && (
-        <section className="ai-usage-page__section">
-          <h2 className="ai-usage-page__section-title">
-            OCR 처리 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
-          </h2>
-          <div className="ai-usage-page__line-chart-container">
-            {ocrChartData.length === 0 ? (
-              <div className="ai-usage-page__chart-empty">OCR 데이터가 없습니다</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={ocrChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis
-                    dataKey={periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
-                    tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
-                    stroke="var(--color-border)"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
-                    stroke="var(--color-border)"
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload || !label) return null;
-                      return (
-                        <div className="ai-usage-page__tooltip">
-                          <p className="ai-usage-page__tooltip-time">{label}</p>
-                          {payload.map((entry, index) => (
-                            <p
-                              key={index}
-                              className={`ai-usage-page__tooltip-item ${entry.dataKey === 'done' ? 'ai-usage-page__tooltip-item--ocr-done' : 'ai-usage-page__tooltip-item--ocr-error'}`}
-                            >
-                              {entry.name}: {(entry.value as number).toLocaleString()}건
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    height={24}
-                    wrapperStyle={{ fontSize: '11px' }}
-                  />
-                  <Bar dataKey="done" name="성공" fill="#34C759" stackId="stack" />
-                  <Bar dataKey="error" name="실패" fill="#FF3B30" stackId="stack" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* Top 사용자 - AI/OCR 병렬 표시 */}
       <section className="ai-usage-page__section">
