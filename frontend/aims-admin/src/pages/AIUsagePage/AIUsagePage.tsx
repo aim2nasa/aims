@@ -16,8 +16,22 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { aiUsageApi, formatTokens, formatCost } from '@/features/dashboard/aiUsageApi';
-import type { DailyUsageBySourcePoint, HourlyUsagePoint, AIModelSettingsUpdate } from '@/features/dashboard/aiUsageApi';
+import {
+  aiUsageApi,
+  formatTokens,
+  formatCost,
+  formatCredits,
+  tokensToCredits,
+  pagesToCredits,
+  CREDIT_RATES,
+} from '@/features/dashboard/aiUsageApi';
+import type {
+  DailyUsageBySourcePoint,
+  HourlyUsagePoint,
+  AIModelSettingsUpdate,
+  OCRUsageOverview,
+  OCRDailyUsagePoint,
+} from '@/features/dashboard/aiUsageApi';
 import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -409,6 +423,22 @@ export const AIUsagePage = () => {
     enabled: periodType === 'hourly',
   });
 
+  // OCR Usage Queries
+  const { data: ocrOverview, refetch: refetchOcrOverview } = useQuery({
+    queryKey: ['admin', 'ocr-usage', 'overview', periodType, dateRange.start, dateRange.end],
+    queryFn: () => periodType === 'hourly'
+      ? aiUsageApi.getOCROverview(1)
+      : aiUsageApi.getOCROverviewByRange(dateRange.start, dateRange.end),
+    refetchInterval: 60000,
+  });
+
+  const { data: ocrDailyUsage, refetch: refetchOcrDaily } = useQuery({
+    queryKey: ['admin', 'ocr-usage', 'daily', dateRange.start, dateRange.end],
+    queryFn: () => aiUsageApi.getOCRDailyUsageByRange(dateRange.start, dateRange.end),
+    refetchInterval: 60000,
+    enabled: periodType !== 'hourly',
+  });
+
   // AI 모델 설정 조회
   const { data: modelSettings, isLoading: modelSettingsLoading } = useQuery({
     queryKey: ['admin', 'ai-model-settings'],
@@ -480,10 +510,17 @@ export const AIUsagePage = () => {
     refetchOverview();
     refetchDaily();
     refetchTopUsers();
+    refetchOcrOverview();
+    refetchOcrDaily();
     if (periodType === 'hourly') {
       refetchHourly();
     }
   };
+
+  // 크레딧 계산
+  const aiCredits = tokensToCredits(overview?.total_tokens || 0);
+  const ocrCredits = pagesToCredits(ocrOverview?.page_count || 0);
+  const totalCredits = aiCredits + ocrCredits;
 
   // 기간 표시 텍스트
   const periodLabel = periodType === 'hourly'
@@ -577,50 +614,89 @@ export const AIUsagePage = () => {
         </div>
       </div>
 
-      {/* 전체 통계 */}
+      {/* 전체 통계 (AI + OCR 통합) */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">
           전체 통계 <span className="ai-usage-page__period-label">({periodLabel})</span>
         </h2>
-        <div className="ai-usage-page__stats-grid">
+        <div className="ai-usage-page__stats-grid ai-usage-page__stats-grid--4col">
           <StatCard
-            title="총 토큰"
-            value={formatTokens(overview?.total_tokens || 0)}
-            subtitle={`프롬프트: ${formatTokens(overview?.prompt_tokens || 0)} / 완성: ${formatTokens(overview?.completion_tokens || 0)}`}
+            title="총 크레딧"
+            value={formatCredits(totalCredits)}
+            subtitle={`AI: ${formatCredits(aiCredits)} / OCR: ${formatCredits(ocrCredits)}`}
           />
           <StatCard
-            title="예상 비용"
-            value={formatCost(overview?.estimated_cost_usd || 0)}
-            subtitle="기간 내 사용"
+            title="AI 토큰"
+            value={formatTokens(overview?.total_tokens || 0)}
+            subtitle={`≈ ${formatCredits(aiCredits)} 크레딧 (${CREDIT_RATES.AI_PER_1K_TOKENS}/1K)`}
+          />
+          <StatCard
+            title="OCR 페이지"
+            value={(ocrOverview?.page_count || 0).toLocaleString()}
+            subtitle={`≈ ${formatCredits(ocrCredits)} 크레딧 (${CREDIT_RATES.OCR_PER_PAGE}/page)`}
           />
           <StatCard
             title="활성 사용자"
             value={overview?.unique_users || 0}
-            subtitle={`요청 ${(overview?.request_count || 0).toLocaleString()}건`}
+            subtitle={`AI: ${overview?.request_count || 0}건 / OCR: ${ocrOverview?.ocr_count || 0}건`}
           />
         </div>
       </section>
 
-      {/* 소스별 분포 */}
+      {/* AI 소스별 분포 */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">
-          소스별 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
+          AI 소스별 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
         </h2>
         <div className="ai-usage-page__source-grid">
           <div className="source-card source-card--rag">
             <span className="source-card__label">RAG API</span>
             <span className="source-card__value">{formatTokens(overview?.by_source?.rag_api || 0)}</span>
+            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.rag_api || 0))} cr</span>
             <span className="source-card__percent">{ragPercent}%</span>
           </div>
           <div className="source-card source-card--n8n">
             <span className="source-card__label">DocSummary</span>
             <span className="source-card__value">{formatTokens(overview?.by_source?.n8n_docsummary || 0)}</span>
+            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.n8n_docsummary || 0))} cr</span>
             <span className="source-card__percent">{n8nPercent}%</span>
           </div>
           <div className="source-card source-card--embedding">
             <span className="source-card__label">임베딩</span>
             <span className="source-card__value">{formatTokens(overview?.by_source?.doc_embedding || 0)}</span>
+            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.doc_embedding || 0))} cr</span>
             <span className="source-card__percent">{embeddingPercent}%</span>
+          </div>
+        </div>
+      </section>
+
+      {/* OCR 사용량 섹션 */}
+      <section className="ai-usage-page__section">
+        <h2 className="ai-usage-page__section-title">
+          OCR 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
+        </h2>
+        <div className="ai-usage-page__ocr-grid">
+          <div className="ocr-stat-card">
+            <span className="ocr-stat-card__label">처리 건수</span>
+            <span className="ocr-stat-card__value">{(ocrOverview?.ocr_count || 0).toLocaleString()}</span>
+            <span className="ocr-stat-card__sub">
+              대기: {ocrOverview?.ocr_pending || 0} / 처리중: {ocrOverview?.ocr_processing || 0} / 실패: {ocrOverview?.ocr_failed || 0}
+            </span>
+          </div>
+          <div className="ocr-stat-card ocr-stat-card--pages">
+            <span className="ocr-stat-card__label">페이지 수</span>
+            <span className="ocr-stat-card__value">{(ocrOverview?.page_count || 0).toLocaleString()}</span>
+            <span className="ocr-stat-card__sub">누적: {(ocrOverview?.pages_total || 0).toLocaleString()} 페이지</span>
+          </div>
+          <div className="ocr-stat-card ocr-stat-card--credits">
+            <span className="ocr-stat-card__label">크레딧</span>
+            <span className="ocr-stat-card__value">{formatCredits(ocrCredits)}</span>
+            <span className="ocr-stat-card__sub">{CREDIT_RATES.OCR_PER_PAGE} 크레딧/페이지</span>
+          </div>
+          <div className="ocr-stat-card ocr-stat-card--cost">
+            <span className="ocr-stat-card__label">예상 비용</span>
+            <span className="ocr-stat-card__value">{formatCost(ocrOverview?.estimated_cost_usd || 0)}</span>
+            <span className="ocr-stat-card__sub">≈ ₩{(ocrOverview?.estimated_cost_krw || 0).toLocaleString()}</span>
           </div>
         </div>
       </section>
