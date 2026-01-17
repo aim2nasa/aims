@@ -110,11 +110,18 @@ const DocumentLibraryContent: React.FC<{
   }, [controller.filteredDocuments, selectedInitial])
 
   // 페이지네이션이 적용된 초성 필터 결과
+  // 초성 필터가 없으면 API에서 이미 페이지네이션된 데이터 사용
+  // 초성 필터가 있으면 클라이언트에서 페이지네이션 적용
   const paginatedFilteredDocuments = React.useMemo(() => {
+    if (!selectedInitial) {
+      // 초성 필터 없음: API가 이미 페이지네이션한 결과 사용
+      return controller.filteredDocuments
+    }
+    // 초성 필터 있음: 클라이언트에서 페이지네이션
     const startIndex = (controller.currentPage - 1) * controller.itemsPerPage
     const endIndex = startIndex + controller.itemsPerPage
     return initialFilteredDocuments.slice(startIndex, endIndex)
-  }, [initialFilteredDocuments, controller.currentPage, controller.itemsPerPage])
+  }, [selectedInitial, controller.filteredDocuments, initialFilteredDocuments, controller.currentPage, controller.itemsPerPage])
 
   // 초성 필터 적용 후 총 페이지 수
   // 초성 필터가 없으면 API의 totalPages 사용, 있으면 로컬 계산
