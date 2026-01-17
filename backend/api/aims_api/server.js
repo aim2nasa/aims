@@ -3475,11 +3475,12 @@ app.get('/api/customers/stats', authenticateJWTorAPIKey, async (req, res) => {
       return res.status(400).json({ success: false, error: 'userId required' });
     }
 
-    const baseFilter = { 'meta.created_by': userId };
+    // 🔴 삭제된 고객은 통계에서 제외
+    const baseFilter = { 'meta.created_by': userId, deleted_at: null };
 
     // 병렬로 통계 조회
     const [total, active, inactive, newThisMonth] = await Promise.all([
-      // 전체 고객 수
+      // 전체 고객 수 (삭제되지 않은 것만)
       db.collection(CUSTOMERS_COLLECTION).countDocuments(baseFilter),
       // 활성 고객 수
       db.collection(CUSTOMERS_COLLECTION).countDocuments({
@@ -3566,8 +3567,11 @@ app.get('/api/customers', authenticateJWTorAPIKey, async (req, res) => {
     }
 
     // ⭐ Status filter (soft delete 지원)
+    // 🔴 삭제된 고객은 항상 제외 (deleted_at이 null인 것만)
+    filter['deleted_at'] = null;
+
     if (status === 'all') {
-      // No status filter - show all customers
+      // No status filter - show all customers (but still exclude deleted)
     } else if (status === 'inactive') {
       filter['meta.status'] = 'inactive';
     } else {
