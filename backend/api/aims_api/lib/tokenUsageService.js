@@ -338,11 +338,13 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
     const source = r._id.source;
 
     if (!dataMap.has(ts)) {
-      dataMap.set(ts, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 });
+      dataMap.set(ts, { chat: 0, rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 });
     }
 
     const entry = dataMap.get(ts);
-    if (source === 'rag_api') {
+    if (source === 'chat') {
+      entry.chat = r.total_tokens;
+    } else if (source === 'rag_api') {
       entry.rag_api = r.total_tokens;
     } else if (source === 'n8n_docsummary' || source === 'doc_summary') {
       // n8n_docsummary (레거시)와 doc_summary (FastAPI) 합산
@@ -373,15 +375,16 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
     const slotTime = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
     const ts = formatKSTTimestamp(slotTime);
 
-    const data = dataMap.get(ts) || { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 };
+    const data = dataMap.get(ts) || { chat: 0, rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 };
 
     usageData.push({
       timestamp: ts,
+      chat: data.chat,
       rag_api: data.rag_api,
       n8n_docsummary: data.n8n_docsummary,
       doc_summary: data.doc_summary,
       doc_embedding: data.doc_embedding,
-      total: data.rag_api + data.n8n_docsummary + data.doc_embedding
+      total: data.chat + data.rag_api + data.n8n_docsummary + data.doc_embedding
     });
   }
 
@@ -506,6 +509,7 @@ async function getDailyUsageByRange(analyticsDb, startDate, endDate) {
     if (!dateMap.has(date)) {
       dateMap.set(date, {
         date,
+        chat: 0,
         rag_api: 0,
         n8n_docsummary: 0,
         doc_summary: 0,
@@ -517,7 +521,9 @@ async function getDailyUsageByRange(analyticsDb, startDate, endDate) {
     }
 
     const entry = dateMap.get(date);
-    if (source === 'rag_api') {
+    if (source === 'chat') {
+      entry.chat = r.total_tokens;
+    } else if (source === 'rag_api') {
       entry.rag_api = r.total_tokens;
     } else if (source === 'n8n_docsummary' || source === 'doc_summary') {
       // n8n_docsummary (레거시)와 doc_summary (FastAPI) 합산

@@ -101,12 +101,14 @@ const MONTH_LABELS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8
 // 일별 데이터를 월별로 집계
 function aggregateToMonthly(dailyData: DailyUsageBySourcePoint[]): Array<{
   month: string;
+  chat: number;
   rag_api: number;
   n8n_docsummary: number;
   doc_embedding: number;
   total_tokens: number;
 }> {
   const monthlyMap = new Map<string, {
+    chat: number;
     rag_api: number;
     n8n_docsummary: number;
     doc_embedding: number;
@@ -116,13 +118,14 @@ function aggregateToMonthly(dailyData: DailyUsageBySourcePoint[]): Array<{
   // 12개월 초기화
   for (let m = 1; m <= 12; m++) {
     const monthKey = String(m).padStart(2, '0');
-    monthlyMap.set(monthKey, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
+    monthlyMap.set(monthKey, { chat: 0, rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
   }
 
   for (const day of dailyData) {
     const month = day.date.split('-')[1]; // YYYY-MM-DD에서 MM 추출
     const entry = monthlyMap.get(month);
     if (entry) {
+      entry.chat += day.chat || 0;
       entry.rag_api += day.rag_api;
       entry.n8n_docsummary += day.n8n_docsummary;
       entry.doc_embedding += day.doc_embedding;
@@ -139,12 +142,14 @@ function aggregateToMonthly(dailyData: DailyUsageBySourcePoint[]): Array<{
 // 일별 데이터를 년도별로 집계
 function aggregateToYearly(dailyData: DailyUsageBySourcePoint[], currentYear: number, yearsBack: number = 3): Array<{
   year: string;
+  chat: number;
   rag_api: number;
   n8n_docsummary: number;
   doc_embedding: number;
   total_tokens: number;
 }> {
   const yearlyMap = new Map<string, {
+    chat: number;
     rag_api: number;
     n8n_docsummary: number;
     doc_embedding: number;
@@ -153,13 +158,14 @@ function aggregateToYearly(dailyData: DailyUsageBySourcePoint[], currentYear: nu
 
   // N년 초기화
   for (let y = currentYear - yearsBack + 1; y <= currentYear; y++) {
-    yearlyMap.set(String(y), { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
+    yearlyMap.set(String(y), { chat: 0, rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total_tokens: 0 });
   }
 
   for (const day of dailyData) {
     const year = day.date.split('-')[0]; // YYYY-MM-DD에서 YYYY 추출
     const entry = yearlyMap.get(year);
     if (entry) {
+      entry.chat += day.chat || 0;
       entry.rag_api += day.rag_api;
       entry.n8n_docsummary += day.n8n_docsummary;
       entry.doc_embedding += day.doc_embedding;
@@ -176,6 +182,7 @@ function aggregateToYearly(dailyData: DailyUsageBySourcePoint[], currentYear: nu
 // 일별 데이터를 일자별로 매핑 (1~31일)
 function mapToDays(dailyData: DailyUsageBySourcePoint[], year: number, month: number): Array<{
   day: string;
+  chat: number;
   rag_api: number;
   n8n_docsummary: number;
   doc_embedding: number;
@@ -184,6 +191,7 @@ function mapToDays(dailyData: DailyUsageBySourcePoint[], year: number, month: nu
   const daysInMonth = new Date(year, month, 0).getDate();
   const result: Array<{
     day: string;
+    chat: number;
     rag_api: number;
     n8n_docsummary: number;
     doc_embedding: number;
@@ -195,6 +203,7 @@ function mapToDays(dailyData: DailyUsageBySourcePoint[], year: number, month: nu
     const dayData = dailyData.find(item => item.date === dateStr);
     result.push({
       day: `${d}`,
+      chat: dayData?.chat || 0,
       rag_api: dayData?.rag_api || 0,
       n8n_docsummary: dayData?.n8n_docsummary || 0,
       doc_embedding: dayData?.doc_embedding || 0,
@@ -208,6 +217,7 @@ function mapToDays(dailyData: DailyUsageBySourcePoint[], year: number, month: nu
 // 일별 데이터를 요일별로 매핑 (날짜 포함)
 function mapToWeekdays(dailyData: DailyUsageBySourcePoint[], weekStart: string): Array<{
   day: string;
+  chat: number;
   rag_api: number;
   n8n_docsummary: number;
   doc_embedding: number;
@@ -216,6 +226,7 @@ function mapToWeekdays(dailyData: DailyUsageBySourcePoint[], weekStart: string):
   const startDate = new Date(weekStart);
   const result: Array<{
     day: string;
+    chat: number;
     rag_api: number;
     n8n_docsummary: number;
     doc_embedding: number;
@@ -235,6 +246,7 @@ function mapToWeekdays(dailyData: DailyUsageBySourcePoint[], weekStart: string):
     const dayData = dailyData.find(d => d.date === dateStr);
     result.push({
       day: dayLabel,
+      chat: dayData?.chat || 0,
       rag_api: dayData?.rag_api || 0,
       n8n_docsummary: dayData?.n8n_docsummary || 0,
       doc_embedding: dayData?.doc_embedding || 0,
@@ -248,15 +260,16 @@ function mapToWeekdays(dailyData: DailyUsageBySourcePoint[], weekStart: string):
 // 시간별 데이터를 차트용으로 매핑 (24시간)
 function mapToHours(hourlyData: HourlyUsagePoint[]): Array<{
   hour: string;
+  chat: number;
   rag_api: number;
   n8n_docsummary: number;
   doc_embedding: number;
   total: number;
 }> {
   // 24시간 초기화
-  const hourlyMap = new Map<number, { rag_api: number; n8n_docsummary: number; doc_embedding: number; total: number }>();
+  const hourlyMap = new Map<number, { chat: number; rag_api: number; n8n_docsummary: number; doc_embedding: number; total: number }>();
   for (let h = 0; h < 24; h++) {
-    hourlyMap.set(h, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total: 0 });
+    hourlyMap.set(h, { chat: 0, rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, total: 0 });
   }
 
   // 데이터 매핑
@@ -264,6 +277,7 @@ function mapToHours(hourlyData: HourlyUsagePoint[]): Array<{
     const hour = new Date(point.timestamp).getHours();
     const entry = hourlyMap.get(hour);
     if (entry) {
+      entry.chat += point.chat || 0;
       entry.rag_api += point.rag_api;
       entry.n8n_docsummary += point.n8n_docsummary;
       entry.doc_embedding += point.doc_embedding;
@@ -401,6 +415,8 @@ interface CustomTooltipProps {
 // dataKey to CSS class mapping
 const getTooltipColorClass = (dataKey: string): string => {
   switch (dataKey) {
+    case 'chat':
+      return 'ai-usage-page__tooltip-item--chat';
     case 'rag_api':
       return 'ai-usage-page__tooltip-item--rag';
     case 'n8n_docsummary':
@@ -637,7 +653,8 @@ export const AIUsagePage = () => {
   }
 
   // 소스별 퍼센트 계산
-  const totalBySource = (overview?.by_source?.rag_api || 0) + (overview?.by_source?.n8n_docsummary || 0) + (overview?.by_source?.doc_embedding || 0);
+  const totalBySource = (overview?.by_source?.chat || 0) + (overview?.by_source?.rag_api || 0) + (overview?.by_source?.n8n_docsummary || 0) + (overview?.by_source?.doc_embedding || 0);
+  const chatPercent = totalBySource > 0 ? ((overview?.by_source?.chat || 0) / totalBySource * 100).toFixed(1) : '0';
   const ragPercent = totalBySource > 0 ? ((overview?.by_source?.rag_api || 0) / totalBySource * 100).toFixed(1) : '0';
   const n8nPercent = totalBySource > 0 ? ((overview?.by_source?.n8n_docsummary || 0) / totalBySource * 100).toFixed(1) : '0';
   const embeddingPercent = totalBySource > 0 ? ((overview?.by_source?.doc_embedding || 0) / totalBySource * 100).toFixed(1) : '0';
@@ -786,7 +803,13 @@ export const AIUsagePage = () => {
         <h2 className="ai-usage-page__section-title">
           AI 소스별 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
         </h2>
-        <div className="ai-usage-page__source-grid">
+        <div className="ai-usage-page__source-grid ai-usage-page__source-grid--4col">
+          <div className="source-card source-card--chat">
+            <span className="source-card__label">AI 채팅</span>
+            <span className="source-card__value">{formatTokens(overview?.by_source?.chat || 0)}</span>
+            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.chat || 0))} cr</span>
+            <span className="source-card__percent">{chatPercent}%</span>
+          </div>
           <div className="source-card source-card--rag">
             <span className="source-card__label">RAG API</span>
             <span className="source-card__value">{formatTokens(overview?.by_source?.rag_api || 0)}</span>
@@ -870,6 +893,7 @@ export const AIUsagePage = () => {
                 <Bar dataKey="doc_embedding" name="Embed" fill="#FF9500" stackId="stack" />
                 <Bar dataKey="n8n_docsummary" name="Summary" fill="#34C759" stackId="stack" />
                 <Bar dataKey="rag_api" name="RAG" fill="#007AFF" stackId="stack" />
+                <Bar dataKey="chat" name="Chat" fill="#AF52DE" stackId="stack" />
               </BarChart>
             </ResponsiveContainer>
           )}

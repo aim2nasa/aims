@@ -14,8 +14,9 @@ export interface AIUsageOverview {
   request_count: number;
   unique_users: number;
   by_source: {
+    chat?: number;
     rag_api?: number;
-    n8n_docsummary?: number;
+    n8n_docsummary?: number;  // doc_summary (FastAPI)
     doc_embedding?: number;
   };
 }
@@ -31,8 +32,9 @@ export interface DailyUsagePoint {
 
 export interface DailyUsageBySourcePoint {
   date: string;
+  chat: number;
   rag_api: number;
-  n8n_docsummary: number;
+  n8n_docsummary: number;  // doc_summary (FastAPI)
   doc_embedding: number;
   total_tokens: number;
   estimated_cost_usd: number;
@@ -41,8 +43,9 @@ export interface DailyUsageBySourcePoint {
 
 export interface HourlyUsagePoint {
   timestamp: string;
+  chat: number;
   rag_api: number;
-  n8n_docsummary: number;
+  n8n_docsummary: number;  // doc_summary (FastAPI)
   doc_embedding: number;
   total: number;
 }

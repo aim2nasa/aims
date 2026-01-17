@@ -179,6 +179,17 @@
   flex-wrap: wrap;
 }
 
+.ai-usage-page__source-grid--4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 900px) {
+  .ai-usage-page__source-grid--4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .source-card {
   display: flex;
   flex-direction: column;
@@ -189,6 +200,10 @@
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+}
+
+.source-card--chat {
+  border-color: #AF52DE;
 }
 
 .source-card--rag {
@@ -213,6 +228,10 @@
 .source-card__value {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
+}
+
+.source-card--chat .source-card__value {
+  color: #AF52DE;
 }
 
 .source-card--rag .source-card__value {
@@ -397,6 +416,10 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   margin: 1px 0;
+}
+
+.ai-usage-page__tooltip-item--chat {
+  color: #8839b3;
 }
 
 .ai-usage-page__tooltip-item--rag {
