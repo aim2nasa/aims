@@ -26,6 +26,8 @@ interface DocumentStatusProviderProps {
   initialFiles?: Document[]
   searchQuery?: string
   fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'
+  /** 초기 페이지당 항목 수 (문서 탐색기는 전체 문서 필요하므로 큰 값 사용) */
+  initialItemsPerPage?: number
 }
 
 /**
@@ -35,7 +37,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   children,
   initialFiles = [],
   searchQuery = '',
-  fileScope = 'all'
+  fileScope = 'all',
+  initialItemsPerPage
 }) => {
   // State - 캐시된 데이터로 초기화 (네비게이션 시 빈 화면 방지)
   const [documents, setDocuments] = useState<Document[]>(documentCache)
@@ -53,6 +56,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // 🍎 Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+    // 🍎 initialItemsPerPage prop이 있으면 우선 사용 (문서 탐색기 등 전체 문서 필요 시)
+    if (initialItemsPerPage !== undefined && initialItemsPerPage > 0) {
+      return initialItemsPerPage
+    }
     // localStorage에서 저장된 값 불러오기
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('aims-items-per-page')
