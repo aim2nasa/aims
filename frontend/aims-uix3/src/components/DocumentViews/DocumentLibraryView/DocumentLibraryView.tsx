@@ -117,9 +117,15 @@ const DocumentLibraryContent: React.FC<{
   }, [initialFilteredDocuments, controller.currentPage, controller.itemsPerPage])
 
   // 초성 필터 적용 후 총 페이지 수
+  // 초성 필터가 없으면 API의 totalPages 사용, 있으면 로컬 계산
   const filteredTotalPages = React.useMemo(() => {
+    if (!selectedInitial) {
+      // 초성 필터 없음: API의 totalPages 사용
+      return state.totalPages
+    }
+    // 초성 필터 있음: 로컬에서 계산 (클라이언트 필터링)
     return Math.max(1, Math.ceil(initialFilteredDocuments.length / controller.itemsPerPage))
-  }, [initialFilteredDocuments.length, controller.itemsPerPage])
+  }, [selectedInitial, state.totalPages, initialFilteredDocuments.length, controller.itemsPerPage])
 
   // 초성 카운트 계산 (연결된 고객명 기준)
   const initialCounts = React.useMemo(() => {
