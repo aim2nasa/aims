@@ -125,15 +125,18 @@
     --mainpane-height: calc(100dvh - 50px);
   }
 
-  /* 🍎 iPad에서 전체 페이지 스크롤 방지 - fixed 요소(ChatPanel) 정상 동작 보장 */
+  /* 🍎 iPad에서 전체 페이지 스크롤/이동 완전 방지 - fixed 요소(ChatPanel) 정상 동작 보장 */
   html, body {
+    /* 🔴 핵심: position fixed로 iOS Safari의 뷰포트 자동 조정 완전 차단 */
+    position: fixed;
+    width: 100%;
     overflow: hidden;
     /* 순서 중요: 폴백 먼저, 최신 표준 나중 (cascade) */
     height: -webkit-fill-available;
     height: 100dvh;
     /* iOS Safari 터치 스크롤 바운스 방지 */
     overscroll-behavior: none;
-    /* 화살표 키 스크롤 방지 */
+    /* 터치/화살표 스크롤 방지 */
     touch-action: none;
   }
 
