@@ -28,9 +28,10 @@ export const getFailedQueriesSchema = z.object({
 });
 
 export const submitSearchFeedbackSchema = z.object({
-  queryId: z.string().describe('검색 쿼리 ID'),
-  rating: z.number().min(1).max(5).describe('평점 (1-5)'),
-  comment: z.string().optional().describe('피드백 코멘트')
+  logId: z.string().describe('검색 로그 ID (search_documents_semantic 응답의 logId)'),
+  rating: z.number().min(1).max(5).describe('만족도 평점 (1-5)'),
+  comment: z.string().optional().describe('피드백 텍스트'),
+  clickedDocs: z.array(z.string()).optional().describe('클릭한 문서 ID 목록')
 });
 
 // ============================================================
@@ -59,6 +60,7 @@ interface SearchResponse {
   search_results?: SearchResult[];
   total_count?: number;  // 페이지네이션: 전체 결과 수
   has_more?: boolean;    // 페이지네이션: 더 많은 결과 존재 여부
+  log_id?: string;       // 검색 로그 ID (피드백 제출 시 사용)
 }
 
 interface AnalyticsResponse {
@@ -135,15 +137,16 @@ export const ragToolDefinitions = [
   },
   {
     name: 'submit_search_feedback',
-    description: '검색 결과에 대한 피드백을 제출합니다. 검색 품질 개선에 활용됩니다.',
+    description: '검색 결과에 대한 피드백을 제출합니다. 검색 품질 개선에 활용됩니다. search_documents_semantic 응답의 logId를 사용해야 합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        queryId: { type: 'string', description: '검색 쿼리 ID' },
-        rating: { type: 'number', description: '평점 (1-5)' },
-        comment: { type: 'string', description: '피드백 코멘트' }
+        logId: { type: 'string', description: '검색 로그 ID (search_documents_semantic 응답의 logId)' },
+        rating: { type: 'number', description: '만족도 평점 (1-5)' },
+        comment: { type: 'string', description: '피드백 텍스트' },
+        clickedDocs: { type: 'array', items: { type: 'string' }, description: '클릭한 문서 ID 목록' }
       },
-      required: ['queryId', 'rating']
+      required: ['logId', 'rating']
     }
   }
 ];
@@ -246,6 +249,7 @@ export async function handleSearchDocumentsSemantic(args: unknown) {
           hasMore: result.has_more,        // 더 많은 결과 존재 여부
           offset: currentOffset,           // 현재 offset
           nextOffset: result.has_more ? nextOffset : null,  // 다음 페이지 offset (hasMore가 true일 때만)
+          logId: result.log_id || null,    // 피드백 제출 시 사용 (semantic 검색만 제공)
           pagination: result.has_more
             ? `더 많은 결과를 보려면 offset=${nextOffset}로 다시 검색하세요 (현재 ${currentOffset + 1}-${nextOffset}/${result.total_count || '?'}개)`
             : `모든 결과를 표시했습니다 (총 ${result.total_count || formattedResults.length}개)`,
@@ -390,19 +394,23 @@ export async function handleGetFailedQueries(args: unknown) {
 
 /**
  * 검색 피드백 제출
+ * RAG API의 FeedbackRequest 모델에 맞춤:
+ * - log_id: 검색 로그 ID
+ * - satisfaction_rating: 만족도 평점
+ * - feedback_text: 피드백 텍스트
+ * - clicked_docs: 클릭한 문서 ID 목록
  */
 export async function handleSubmitSearchFeedback(args: unknown) {
   try {
     const params = submitSearchFeedbackSchema.parse(args);
-    const userId = getCurrentUserId();
 
     const response = await ragFetch('/feedback', {
       method: 'POST',
       body: JSON.stringify({
-        query_id: params.queryId,
-        user_id: userId,
-        rating: params.rating,
-        comment: params.comment || ''
+        log_id: params.logId,
+        satisfaction_rating: params.rating,
+        feedback_text: params.comment || null,
+        clicked_docs: params.clickedDocs || null
       })
     });
 
@@ -422,7 +430,7 @@ export async function handleSubmitSearchFeedback(args: unknown) {
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          queryId: params.queryId,
+          logId: params.logId,
           rating: params.rating,
           message: '피드백이 성공적으로 제출되었습니다. 검색 품질 개선에 활용됩니다.'
         }, null, 2)

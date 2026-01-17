@@ -108,6 +108,7 @@ class UnifiedSearchResponse(BaseModel):
     search_results: List[Dict[str, Any]]
     total_count: Optional[int] = None  # 페이지네이션: 전체 결과 수
     has_more: Optional[bool] = None  # 페이지네이션: 더 많은 결과 존재 여부
+    log_id: Optional[str] = None  # 검색 로그 ID (피드백 제출 시 사용)
 
 # 보안: 내부망에서만 n8n 접근 (host 네트워크 모드로 localhost 직접 접근)
 SMARTSEARCH_API_URL = "http://localhost:5678/webhook/smartsearch"
@@ -403,7 +404,8 @@ async def search_endpoint(request: SearchRequest):
                 answer=final_answer,
                 search_results=top_results,
                 total_count=total_reranked,
-                has_more=has_more
+                has_more=has_more,
+                log_id=str(log_id) if log_id else None  # 피드백 제출 시 사용
             )
 
         except Exception as e:

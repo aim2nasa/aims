@@ -28,9 +28,11 @@ import { TestDataFactory } from './test-data.js';
 // 환경 설정
 // ============================================================
 
+// Tailscale VPN 경유 원격 서버 (개발 환경 기본값)
 export const TEST_CONFIG = {
-  MCP_URL: process.env.MCP_URL || 'http://localhost:3011',
-  AIMS_API_URL: process.env.AIMS_API_URL || 'http://localhost:3010',
+  MCP_URL: process.env.MCP_URL || 'http://100.110.215.65:3011',
+  AIMS_API_URL: process.env.AIMS_API_URL || 'http://100.110.215.65:3010',
+  RAG_API_URL: process.env.RAG_API_URL || 'http://100.110.215.65:8000',
   TEST_USER_ID: process.env.TEST_USER_ID || '000000000000000000000001',
   TEST_USER_ID_B: process.env.TEST_USER_ID_B || '000000000000000000000002',
   TIMEOUT_MS: parseInt(process.env.TEST_TIMEOUT || '15000', 10)
@@ -69,20 +71,38 @@ export async function checkAIMSAPIServer(): Promise<boolean> {
 }
 
 /**
- * 양쪽 서버 모두 사용 가능한지 확인
+ * RAG API 서버 상태 확인
+ */
+export async function checkRAGServer(): Promise<boolean> {
+  try {
+    const res = await fetch(`${TEST_CONFIG.RAG_API_URL}/health`, {
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await res.json() as { status?: string };
+    return data.status === 'healthy';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 모든 서버 사용 가능한지 확인
  */
 export async function checkAllServers(): Promise<{
   mcp: boolean;
   api: boolean;
+  rag: boolean;
   allAvailable: boolean;
 }> {
-  const [mcp, api] = await Promise.all([
+  const [mcp, api, rag] = await Promise.all([
     checkMCPServer(),
-    checkAIMSAPIServer()
+    checkAIMSAPIServer(),
+    checkRAGServer()
   ]);
   return {
     mcp,
     api,
+    rag,
     allAvailable: mcp && api
   };
 }
