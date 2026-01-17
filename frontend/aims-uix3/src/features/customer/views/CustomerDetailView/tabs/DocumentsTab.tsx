@@ -325,7 +325,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // conversion_status가 'processing' 또는 'pending'인 문서가 있으면 5초마다 새로고침
   useEffect(() => {
     const hasProcessingConversion = documents.some(doc => {
-      const conversionStatus = doc.upload?.conversion_status
+      const conversionStatus = doc.conversionStatus
       return conversionStatus === 'processing' || conversionStatus === 'pending'
     })
 
