@@ -78,8 +78,13 @@ async function loadToolHandlers() {
     get_ar_parsing_status: annualReports.handleGetArParsingStatus,
     trigger_ar_parsing: annualReports.handleTriggerArParsing,
     get_ar_queue_status: annualReports.handleGetArQueueStatus,
-    // Customer Review
+    get_ar_contract_history: annualReports.handleGetArContractHistory,
+    // Customer Review (변액리포트)
     get_customer_reviews: customerReviews.handleGetCustomerReviews,
+    get_cr_parsing_status: customerReviews.handleGetCrParsingStatus,
+    trigger_cr_parsing: customerReviews.handleTriggerCrParsing,
+    get_cr_queue_status: customerReviews.handleGetCrQueueStatus,
+    get_cr_contract_history: customerReviews.handleGetCrContractHistory,
     // Phase 3: 인사이트
     analyze_customer_value: insights.handleAnalyzeCustomerValue,
     find_coverage_gaps: insights.handleFindCoverageGaps,

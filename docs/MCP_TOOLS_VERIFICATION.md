@@ -1,7 +1,7 @@
 # AIMS MCP 도구 검증 보고서
 
 > **검증일**: 2026-01-18
-> **최종 업데이트**: 2026-01-18 (100회 반복 스트레스 테스트 완료)
+> **최종 업데이트**: 2026-01-18 (AR/CRS 이력 도구 5종 추가)
 > **목적**: MCP 서버의 46개 도구 중 실제 동작하지 않는 도구 식별 및 정리, 100회 반복 자동화 테스트로 안정성 검증
 
 ---
@@ -199,7 +199,7 @@ ITERATIONS=50 node quick-stress-test.mjs
 
 ---
 
-## 6. 검증된 최종 도구 목록 (41개)
+## 6. 검증된 최종 도구 목록 (46개)
 
 ### 6.1 카테고리별 분류표
 
@@ -208,15 +208,15 @@ ITERATIONS=50 node quick-stress-test.mjs
 | 고객 관리 | 7 | 고객 CRUD 및 검색 |
 | 계약 관리 | 4 | 계약 조회, 생일 고객 |
 | 문서 관리 | 7 | 문서 CRUD 및 검색 |
-| Annual Report | 4 | AR 파싱 및 조회 |
-| 고객 리뷰 | 1 | 고객 리뷰 조회 |
+| Annual Report | 5 | AR 파싱, 조회, **이력 추적** |
+| Customer Review (변액) | 5 | CRS 파싱, 조회, **이력 추적** |
 | 관계 네트워크 | 4 | 고객 간 관계 관리 |
 | 메모 관리 | 3 | 고객 메모 CRUD |
 | 상품 정보 | 1 | 보험상품 검색 |
 | 검색/분석 | 5 | RAG 검색, 통합검색 |
 | 시스템 유틸 | 3 | 저장소, 공지, FAQ |
 | 콘텐츠/주소 | 2 | 가이드, 주소검색 |
-| **합계** | **41** | |
+| **합계** | **46** | +5개 (2026-01-18 추가) |
 
 ### 6.2 전체 도구 상세 목록
 
@@ -253,7 +253,7 @@ ITERATIONS=50 node quick-stress-test.mjs
 | 17 | `link_document_to_customer` | W | 문서-고객 연결 | `documentId`, `customerId` | ✅ |
 | 18 | `find_document_by_filename` | R | 파일명으로 문서 검색 | `filename` | ✅ |
 
-#### Annual Report (4개)
+#### Annual Report (5개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
@@ -261,60 +261,65 @@ ITERATIONS=50 node quick-stress-test.mjs
 | 20 | `get_ar_parsing_status` | R | AR 파싱 상태 조회 | `customerId` | ✅ |
 | 21 | `trigger_ar_parsing` | W | AR 파싱 트리거 | `customerId` | ✅ |
 | 22 | `get_ar_queue_status` | R | AR 파싱 큐 상태 | - | ✅ |
+| 23 | `get_ar_contract_history` | R | AR 계약 이력 조회 (증권번호별 스냅샷) | `customerId` | ✅ **신규** |
 
-#### 고객 리뷰 (1개)
+#### Customer Review / 변액리포트 (5개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 23 | `get_customer_reviews` | R | 고객 리뷰 조회 | `customerId` | ✅ |
+| 24 | `get_customer_reviews` | R | 변액리포트 목록 조회 | `customerId` | ✅ |
+| 25 | `get_cr_parsing_status` | R | CRS 파싱 상태 조회 | `customerId` | ✅ **신규** |
+| 26 | `trigger_cr_parsing` | W | CRS 파싱 트리거 | `customerId` | ✅ **신규** |
+| 27 | `get_cr_queue_status` | R | CRS 파싱 큐 상태 | - | ✅ **신규** |
+| 28 | `get_cr_contract_history` | R | CRS 변액 계약 이력 조회 (증권번호별 스냅샷) | `customerId` | ✅ **신규** |
 
 #### 관계 네트워크 (4개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 24 | `create_relationship` | W | 고객 간 관계 생성 | `sourceId`, `targetId`, `type` | ✅ |
-| 25 | `delete_relationship` | W | 관계 삭제 | `relationshipId` | ✅ |
-| 26 | `list_relationships` | R | 고객 관계 목록 | `customerId` ⚠️ | ✅ |
-| 27 | `get_customer_network` | R | 관계 네트워크 그래프 | `customerId` | ✅ |
+| 29 | `create_relationship` | W | 고객 간 관계 생성 | `sourceId`, `targetId`, `type` | ✅ |
+| 30 | `delete_relationship` | W | 관계 삭제 | `relationshipId` | ✅ |
+| 31 | `list_relationships` | R | 고객 관계 목록 | `customerId` ⚠️ | ✅ |
+| 32 | `get_customer_network` | R | 관계 네트워크 그래프 | `customerId` | ✅ |
 
 #### 메모 관리 (3개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 28 | `add_customer_memo` | W | 고객 메모 추가 | `customerId`, `content` | ✅ |
-| 29 | `list_customer_memos` | R | 고객 메모 목록 | `customerId` | ✅ |
-| 30 | `delete_customer_memo` | W | 메모 삭제 | `customerId`, `memoId` | ✅ |
+| 33 | `add_customer_memo` | W | 고객 메모 추가 | `customerId`, `content` | ✅ |
+| 34 | `list_customer_memos` | R | 고객 메모 목록 | `customerId` | ✅ |
+| 35 | `delete_customer_memo` | W | 메모 삭제 | `customerId`, `memoId` | ✅ |
 
 #### 상품 정보 (1개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 31 | `search_products` | R | 보험상품 검색 | - | ✅ 수정됨 |
+| 36 | `search_products` | R | 보험상품 검색 | - | ✅ 수정됨 |
 
 #### 검색/분석 (5개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 32 | `search_documents_semantic` | R | RAG 시맨틱/키워드 검색 | `query` | ✅ |
-| 33 | `get_search_analytics` | R | 검색 분석 통계 | - | ✅ |
-| 34 | `get_failed_queries` | R | 실패한 검색 쿼리 | - | ✅ |
-| 35 | `submit_search_feedback` | W | 검색 피드백 제출 | `logId`, `rating` | ✅ 수정됨 |
-| 36 | `unified_search` | R | 통합 검색 (문서+고객+계약) | `query` | ✅ 수정됨 |
+| 37 | `search_documents_semantic` | R | RAG 시맨틱/키워드 검색 | `query` | ✅ |
+| 38 | `get_search_analytics` | R | 검색 분석 통계 | - | ✅ |
+| 39 | `get_failed_queries` | R | 실패한 검색 쿼리 | - | ✅ |
+| 40 | `submit_search_feedback` | W | 검색 피드백 제출 | `logId`, `rating` | ✅ 수정됨 |
+| 41 | `unified_search` | R | 통합 검색 (문서+고객+계약) | `query` | ✅ 수정됨 |
 
 #### 시스템 유틸리티 (3개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 37 | `get_storage_info` | R | 저장소 사용량 조회 | - | ✅ |
-| 38 | `list_notices` | R | 공지사항 목록 | - | ✅ |
-| 39 | `list_faqs` | R | FAQ 목록 | - | ✅ |
+| 42 | `get_storage_info` | R | 저장소 사용량 조회 | - | ✅ |
+| 43 | `list_notices` | R | 공지사항 목록 | - | ✅ |
+| 44 | `list_faqs` | R | FAQ 목록 | - | ✅ |
 
 #### 콘텐츠 관리 (2개)
 
 | # | 도구명 | 타입 | 설명 | 필수 파라미터 | 검증 |
 |---|--------|------|------|---------------|------|
-| 40 | `list_usage_guides` | R | 사용 가이드 목록 | - | ✅ |
-| 41 | `search_address` | R | 주소 검색 (외부 API) | `keyword` | ✅ |
+| 45 | `list_usage_guides` | R | 사용 가이드 목록 | - | ✅ |
+| 46 | `search_address` | R | 주소 검색 (외부 API) | `keyword` | ✅ |
 
 ### 6.3 타입 범례
 
@@ -344,3 +349,14 @@ ITERATIONS=50 node quick-stress-test.mjs
 | 2026-01-18 | 100회 반복 스트레스 테스트 실행 (100% 성공) |
 | 2026-01-18 | `submit_search_feedback` 버그 수정 완료 |
 | 2026-01-18 | 검증된 최종 도구 39개 분류표 추가 |
+| 2026-01-18 | **AR/CRS 이력 도구 5종 추가** (41개 → 46개) |
+
+### 신규 추가 도구 상세 (2026-01-18)
+
+| 도구명 | 설명 | 용도 |
+|--------|------|------|
+| `get_ar_contract_history` | AR 계약 이력 조회 | 증권번호별로 여러 AR에서 추출된 스냅샷을 시간순 집계 |
+| `get_cr_parsing_status` | CRS 파싱 상태 조회 | 특정 문서/고객의 CRS 파싱 진행 상황 확인 |
+| `trigger_cr_parsing` | CRS 파싱 트리거 | CRS 파싱 요청 (백그라운드 처리) |
+| `get_cr_queue_status` | CRS 파싱 큐 상태 | 대기/처리/완료/오류 상태 통계 |
+| `get_cr_contract_history` | CRS 변액 이력 조회 | 증권번호별 적립금, 투자수익률 변화 추적 |
