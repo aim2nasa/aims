@@ -9,7 +9,6 @@ import { sendErrorLog } from '../systemLogger.js';
 import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer, handleRestoreCustomer, handleListDeletedCustomers } from './customers.js';
 import { contractToolDefinitions, handleListContracts, handleGetContractDetails, handleCreateContract } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
-import { expiringToolDefinitions, handleFindExpiringContracts } from './expiring.js';
 import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
 import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleDeleteDocument, handleDeleteDocuments, handleLinkDocumentToCustomer, handleFindDocumentByFilename } from './documents.js';
@@ -29,7 +28,6 @@ const allToolDefinitions = [
   ...customerToolDefinitions,
   ...contractToolDefinitions,
   ...birthdayToolDefinitions,
-  ...expiringToolDefinitions,
   ...statisticsToolDefinitions,
   ...networkToolDefinitions,
   ...documentToolDefinitions,
@@ -58,9 +56,8 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   list_contracts: handleListContracts,
   get_contract_details: handleGetContractDetails,
   create_contract: handleCreateContract,
-  // 생일/만기
+  // 생일
   find_birthday_customers: handleFindBirthdayCustomers,
-  find_expiring_contracts: handleFindExpiringContracts,
   // 통계/네트워크
   get_statistics: handleGetStatistics,
   get_customer_network: handleGetCustomerNetwork,
