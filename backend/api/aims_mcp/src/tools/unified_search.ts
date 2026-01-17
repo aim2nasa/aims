@@ -227,57 +227,63 @@ async function searchCustomers(query: string, userId: string, limit: number): Pr
 }
 
 /**
- * 계약 검색
+ * 계약 검색 (customers.annual_reports[].contracts에서 검색)
  */
 async function searchContracts(query: string, userId: string, limit: number): Promise<{ count: number; results: ContractResult[] }> {
   try {
     const db = await getDB();
-    const searchRegex = { $regex: escapeRegex(query), $options: 'i' };
+    const searchRegex = new RegExp(escapeRegex(query), 'i');
 
-    // 먼저 products 컬렉션에서 검색어와 매칭되는 상품 찾기
-    const matchingProducts = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS)
+    // customers 컬렉션에서 annual_reports.contracts 검색
+    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
       .find({
-        $or: [
-          { name: searchRegex },
-          { shortName: searchRegex }
-        ]
+        'meta.created_by': userId,
+        deleted_at: null,
+        'annual_reports.contracts': { $exists: true, $ne: [] }
       })
-      .project({ _id: 1 })
+      .project({
+        _id: 1,
+        'personal_info.name': 1,
+        annual_reports: 1
+      })
       .toArray();
 
-    const productIds = matchingProducts.map(p => p._id);
+    const results: ContractResult[] = [];
 
-    const filter = {
-      $and: [
-        { user_id: userId },
-        {
-          $or: [
-            { customer_name: searchRegex },
-            { product_name: searchRegex },
-            { policy_number: searchRegex },
-            ...(productIds.length > 0 ? [{ product_id: { $in: productIds } }] : [])
-          ]
+    for (const customer of customers) {
+      const customerName = customer.personal_info?.name || '';
+      const annualReports = customer.annual_reports || [];
+
+      for (const ar of annualReports) {
+        const contracts = ar.contracts || [];
+        for (const contract of contracts) {
+          // 검색어 매칭: 고객명, 상품명, 증권번호
+          const productName = contract.productName || contract.product_name || '';
+          const policyNumber = contract.policyNumber || contract.policy_number || '';
+          const status = contract.status || contract.contractStatus || '';
+
+          if (
+            searchRegex.test(customerName) ||
+            searchRegex.test(productName) ||
+            searchRegex.test(policyNumber)
+          ) {
+            results.push({
+              contractId: `${customer._id}-${policyNumber}`,
+              customerName,
+              productName,
+              policyNumber,
+              status
+            });
+
+            if (results.length >= limit) break;
+          }
         }
-      ]
-    };
+        if (results.length >= limit) break;
+      }
+      if (results.length >= limit) break;
+    }
 
-    const [contracts, totalCount] = await Promise.all([
-      db.collection(COLLECTIONS.CONTRACTS)
-        .find(filter)
-        .limit(limit)
-        .toArray(),
-      db.collection(COLLECTIONS.CONTRACTS).countDocuments(filter)
-    ]);
-
-    const results = contracts.map(c => ({
-      contractId: c._id.toString(),
-      customerName: c.customer_name || '',
-      productName: c.product_name || '',
-      policyNumber: c.policy_number || '',
-      status: c.status || ''
-    }));
-
-    return { count: totalCount, results };
+    return { count: results.length, results };
   } catch (error) {
     console.error('[unified_search] 계약 검색 오류:', error);
     return { count: 0, results: [] };

@@ -9,15 +9,13 @@ import { sendErrorLog } from '../systemLogger.js';
 import { customerToolDefinitions, handleSearchCustomers, handleGetCustomer, handleCreateCustomer, handleUpdateCustomer, handleRestoreCustomer, handleListDeletedCustomers } from './customers.js';
 import { contractToolDefinitions, handleListContracts, handleGetContractDetails, handleCreateContract } from './contracts.js';
 import { birthdayToolDefinitions, handleFindBirthdayCustomers } from './birthdays.js';
-import { statisticsToolDefinitions, handleGetStatistics } from './statistics.js';
 import { networkToolDefinitions, handleGetCustomerNetwork } from './network.js';
 import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, handleListCustomerDocuments, handleDeleteDocument, handleDeleteDocuments, handleLinkDocumentToCustomer, handleFindDocumentByFilename } from './documents.js';
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
-import { productToolDefinitions, handleSearchProducts, handleGetProductDetails } from './products.js';
+import { productToolDefinitions, handleSearchProducts } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus } from './annual_reports.js';
 import { customerReviewToolDefinitions, handleGetCustomerReviews } from './customer_reviews.js';
-import { insightToolDefinitions, handleAnalyzeCustomerValue, handleFindCoverageGaps, handleSuggestNextAction } from './insights.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
@@ -28,7 +26,6 @@ const allToolDefinitions = [
   ...customerToolDefinitions,
   ...contractToolDefinitions,
   ...birthdayToolDefinitions,
-  ...statisticsToolDefinitions,
   ...networkToolDefinitions,
   ...documentToolDefinitions,
   ...memoToolDefinitions,
@@ -36,7 +33,6 @@ const allToolDefinitions = [
   ...relationshipToolDefinitions,
   ...annualReportToolDefinitions,
   ...customerReviewToolDefinitions,
-  ...insightToolDefinitions,
   ...utilityToolDefinitions,
   ...ragToolDefinitions,
   ...addressToolDefinitions,
@@ -58,8 +54,7 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   create_contract: handleCreateContract,
   // 생일
   find_birthday_customers: handleFindBirthdayCustomers,
-  // 통계/네트워크
-  get_statistics: handleGetStatistics,
+  // 네트워크
   get_customer_network: handleGetCustomerNetwork,
   // 문서 관련
   search_documents: handleSearchDocuments,
@@ -75,7 +70,6 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   delete_customer_memo: handleDeleteMemo,
   // 보험상품 관련
   search_products: handleSearchProducts,
-  get_product_details: handleGetProductDetails,
   // 관계 관련
   create_relationship: handleCreateRelationship,
   delete_relationship: handleDeleteRelationship,
@@ -87,10 +81,6 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   get_ar_queue_status: handleGetArQueueStatus,
   // Customer Review 관련
   get_customer_reviews: handleGetCustomerReviews,
-  // 인사이트 관련
-  analyze_customer_value: handleAnalyzeCustomerValue,
-  find_coverage_gaps: handleFindCoverageGaps,
-  suggest_next_action: handleSuggestNextAction,
   // 유틸리티 관련
   get_storage_info: handleGetStorageInfo,
   check_customer_name: handleCheckCustomerName,
