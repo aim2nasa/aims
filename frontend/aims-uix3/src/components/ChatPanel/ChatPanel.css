@@ -5,11 +5,14 @@
  */
 
 .chat-panel {
-  /* 고정 위치 - center-pane-view__content와 정확히 동일한 높이 */
+  /* 🍎 고정 위치 - LeftPane/CenterPane과 **정확히 동일한** 위치 및 높이 */
+  /* App.tsx: top = header-height-base + gap-top */
+  /* App.tsx: height = mainpane-height - gap-top - gap-bottom */
   position: fixed;
-  top: calc(var(--header-height-base, 50px) + var(--gap-top, 2px) + 4px);
+  top: calc(var(--header-height-base, 50px) + var(--gap-top, 2px));
   right: 0;
-  height: calc(100vh - var(--header-height-base, 50px) - var(--gap-top, 2px) - var(--gap-bottom, 2px) - 8px);
+  /* 🍎 --mainpane-height 사용으로 iPad/PC 모두 자동 대응 (tokens.css: 100vh, iPad: 100dvh) */
+  height: calc(var(--mainpane-height, calc(100vh - var(--header-height-base, 50px))) - var(--gap-top, 2px) - var(--gap-bottom, 2px));
   /* width는 inline style로 동적 제어 */
   min-width: 320px;
   max-width: 600px;
@@ -1896,3 +1899,9 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     border-radius: 0;
   }
 }
+
+/* 📱 iPad 전용 미디어 쿼리 불필요 - --mainpane-height CSS 변수가 자동 처리
+ * layout.css에서 iPad (1024px-1366px)일 때:
+ * --mainpane-height: calc(100dvh - 50px) 로 오버라이드됨
+ * 따라서 ChatPanel도 자동으로 100dvh 기반 높이를 사용함
+ */
