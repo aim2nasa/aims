@@ -167,9 +167,11 @@ class OCRWorker:
             tags = []
             if ocr_result.get("full_text"):
                 try:
-                    summary, tags = await self.openai_service.summarize_text(
+                    result = await self.openai_service.summarize_text(
                         ocr_result["full_text"]
                     )
+                    summary = result.get("summary")
+                    tags = result.get("tags", [])
                 except Exception as e:
                     logger.warning(f"Summary generation failed: {e}")
 

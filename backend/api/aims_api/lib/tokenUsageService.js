@@ -338,14 +338,16 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
     const source = r._id.source;
 
     if (!dataMap.has(ts)) {
-      dataMap.set(ts, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0 });
+      dataMap.set(ts, { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 });
     }
 
     const entry = dataMap.get(ts);
     if (source === 'rag_api') {
       entry.rag_api = r.total_tokens;
-    } else if (source === 'n8n_docsummary') {
-      entry.n8n_docsummary = r.total_tokens;
+    } else if (source === 'n8n_docsummary' || source === 'doc_summary') {
+      // n8n_docsummary (레거시)와 doc_summary (FastAPI) 합산
+      entry.n8n_docsummary += r.total_tokens;
+      entry.doc_summary += r.total_tokens;
     } else if (source === 'doc_embedding') {
       entry.doc_embedding = r.total_tokens;
     }
@@ -371,12 +373,13 @@ async function getHourlyUsageBySource(analyticsDb, hours = 24) {
     const slotTime = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
     const ts = formatKSTTimestamp(slotTime);
 
-    const data = dataMap.get(ts) || { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0 };
+    const data = dataMap.get(ts) || { rag_api: 0, n8n_docsummary: 0, doc_embedding: 0, doc_summary: 0 };
 
     usageData.push({
       timestamp: ts,
       rag_api: data.rag_api,
       n8n_docsummary: data.n8n_docsummary,
+      doc_summary: data.doc_summary,
       doc_embedding: data.doc_embedding,
       total: data.rag_api + data.n8n_docsummary + data.doc_embedding
     });
@@ -505,6 +508,7 @@ async function getDailyUsageByRange(analyticsDb, startDate, endDate) {
         date,
         rag_api: 0,
         n8n_docsummary: 0,
+        doc_summary: 0,
         doc_embedding: 0,
         total_tokens: 0,
         estimated_cost_usd: 0,
@@ -515,8 +519,10 @@ async function getDailyUsageByRange(analyticsDb, startDate, endDate) {
     const entry = dateMap.get(date);
     if (source === 'rag_api') {
       entry.rag_api = r.total_tokens;
-    } else if (source === 'n8n_docsummary') {
-      entry.n8n_docsummary = r.total_tokens;
+    } else if (source === 'n8n_docsummary' || source === 'doc_summary') {
+      // n8n_docsummary (레거시)와 doc_summary (FastAPI) 합산
+      entry.n8n_docsummary += r.total_tokens;
+      entry.doc_summary += r.total_tokens;
     } else if (source === 'doc_embedding') {
       entry.doc_embedding = r.total_tokens;
     }

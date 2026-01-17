@@ -63,7 +63,13 @@ async def summarize_document(request: SummaryRequest):
         truncated = len(full_text) > 10000
 
         # Generate summary
-        summary, tags = await openai_service.summarize_text(full_text)
+        result = await openai_service.summarize_text(
+            full_text,
+            owner_id=request.user_id,
+            document_id=doc_id
+        )
+        summary = result.get("summary", "")
+        tags = result.get("tags", [])
 
         logger.info(
             f"Summary generated: {len(full_text)} chars -> {len(summary)} chars, "

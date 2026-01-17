@@ -81,7 +81,11 @@ async def extract_metadata(
         extracted_text = meta.get("extracted_text")
         if extracted_text:
             try:
-                summary_result = await OpenAIService.summarize_text(extracted_text)
+                summary_result = await OpenAIService.summarize_text(
+                    extracted_text,
+                    owner_id=owner_id,
+                    document_id=document_id
+                )
                 summary = summary_result.get("summary")
                 tags = summary_result.get("tags", [])
                 length = len(summary) if summary else 0
@@ -155,7 +159,11 @@ async def extract_metadata_json(request: MetaPathRequest):
         extracted_text = meta.get("extracted_text")
         if extracted_text:
             try:
-                summary_result = await OpenAIService.summarize_text(extracted_text)
+                summary_result = await OpenAIService.summarize_text(
+                    extracted_text,
+                    owner_id=request.owner_id,
+                    document_id=request.document_id
+                )
                 summary = summary_result.get("summary")
                 tags = summary_result.get("tags", [])
                 length = len(summary) if summary else 0

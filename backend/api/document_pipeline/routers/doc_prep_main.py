@@ -127,7 +127,11 @@ async def doc_prep_main(
                 }
 
             # 텍스트 추출 성공 - 요약 생성
-            summary_result = await OpenAIService.summarize_text(full_text)
+            summary_result = await OpenAIService.summarize_text(
+                full_text,
+                owner_id=userId,
+                document_id="shadow_simulated"
+            )
 
             # n8n이 전달한 created_at 사용 (없으면 현재 시간)
             if shadow_created_at:
@@ -625,7 +629,11 @@ async def process_document_pipeline(
         tags = []
 
         if full_text and len(full_text.strip()) > 0:
-            summary_result = await OpenAIService.summarize_text(full_text)
+            summary_result = await OpenAIService.summarize_text(
+                full_text,
+                owner_id=user_id,
+                document_id=doc_id
+            )
             summary = summary_result.get("summary", "")
             tags = summary_result.get("tags", [])
 

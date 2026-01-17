@@ -1,11 +1,21 @@
 """
 OpenAI Service for Text Summarization
 """
+import os
+import uuid
+import httpx
 import openai
+import logging
 from typing import List, Dict, Any, Optional
-import re
 
 from config import get_settings
+
+logger = logging.getLogger(__name__)
+
+# aims_api 토큰 로깅 설정
+AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
 
 
 class OpenAIService:
@@ -22,10 +32,76 @@ class OpenAIService:
         return cls._client
 
     @classmethod
+    async def _log_token_usage(
+        cls,
+        user_id: str,
+        document_id: str,
+        model: str,
+        prompt_tokens: int,
+        completion_tokens: int,
+        total_tokens: int
+    ) -> bool:
+        """
+        aims_api에 토큰 사용량 로깅
+
+        Args:
+            user_id: 문서 소유자 ID
+            document_id: 문서 ID
+            model: 사용된 모델명
+            prompt_tokens: 입력 토큰 수
+            completion_tokens: 출력 토큰 수
+            total_tokens: 총 토큰 수
+
+        Returns:
+            bool: 로깅 성공 여부
+        """
+        try:
+            payload = {
+                "user_id": user_id or "system",
+                "source": "doc_summary",
+                "model": model,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens,
+                "request_id": str(uuid.uuid4()),
+                "metadata": {
+                    "document_id": document_id,
+                    "workflow": "document_pipeline"
+                }
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "x-api-key": INTERNAL_API_KEY
+            }
+
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.post(
+                    TOKEN_LOGGING_URL,
+                    json=payload,
+                    headers=headers
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("success"):
+                        logger.info(f"[TokenLog] 요약 토큰 로깅 완료: {total_tokens} tokens")
+                        return True
+
+            logger.warning(f"[TokenLog] 토큰 로깅 실패: {response.status_code}")
+            return False
+
+        except Exception as e:
+            logger.warning(f"[TokenLog] 토큰 로깅 오류: {e}")
+            return False
+
+    @classmethod
     async def summarize_text(
         cls,
         text: str,
-        max_length: int = 500
+        max_length: int = 500,
+        owner_id: Optional[str] = None,
+        document_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Summarize text and extract tags.
@@ -58,6 +134,17 @@ class OpenAIService:
             )
 
             content = response.choices[0].message.content
+
+            # 토큰 사용량 로깅
+            if response.usage and (owner_id or document_id):
+                await cls._log_token_usage(
+                    user_id=owner_id,
+                    document_id=document_id,
+                    model="gpt-4o-mini",
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    total_tokens=response.usage.total_tokens
+                )
 
             # Parse response
             summary = ""
