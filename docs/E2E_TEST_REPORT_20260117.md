@@ -239,10 +239,45 @@ curl -s 'http://localhost:3010/api/admin/data-integrity-report'
 | 08:45 | #3 | customerId=null 필터 추가 | ✅ 완료 |
 | 08:48 | #1 | 오류 메시지 수정 ("고객을 찾을 수 없습니다") | ✅ 완료 |
 | 08:48 | #5 | 계약 생성 시 customer_name 자동 조회 추가 | ✅ 완료 |
+| 09:00 | - | 수정 후 E2E 재테스트 (21개 항목) | ✅ 전체 통과 |
 
 ---
 
-## 6. 최종 결과
+## 6. 수정 후 검증 테스트
+
+**테스트 일시**: 2026-01-17 09:00 (KST)
+
+### 테스트 결과: 21/21 ✅
+
+| 카테고리 | 테스트 항목 | 결과 |
+|---------|------------|------|
+| 시스템 | Health check | ✅ |
+| 시스템 | Deep health check (MongoDB, FileQuery) | ✅ |
+| 고객 CRUD | 생성 | ✅ |
+| 고객 CRUD | 조회 | ✅ |
+| 고객 CRUD | 수정 | ✅ |
+| 고객 CRUD | last_modified_by 설정 (Issue #2) | ✅ |
+| 고객 CRUD | 중복명 거부 | ✅ |
+| 고객 CRUD | 빈 이름 거부 | ✅ |
+| 고객 CRUD | 삭제 (soft delete) | ✅ |
+| 고객 CRUD | 없는 고객 에러메시지 (Issue #1) | ✅ |
+| 문서 API | 목록 조회 | ✅ |
+| 문서 API | 통계 조회 | ✅ |
+| 문서 API | customerId=null 필터 (Issue #3) | ✅ |
+| 계약 API | 목록 조회 | ✅ |
+| 계약 API | 생성 + customer_name 자동설정 (Issue #5) | ✅ |
+| 계약 API | 중복 증권번호 거부 | ✅ |
+| 보안 | XSS 방지 - 생성 (Issue #4) | ✅ |
+| 보안 | XSS 방지 - 수정 (Issue #4) | ✅ |
+| 보안 | 잘못된 ObjectId 거부 | ✅ |
+| 보안 | 사용자 데이터 격리 | ✅ |
+| 데이터 정합성 | healthy, orphan=0 (Issue #6) | ✅ |
+
+**결론**: 모든 수정사항이 정상 작동하며, 사이드 이펙트 없음
+
+---
+
+## 7. 최종 결과
 
 **🎉 모든 이슈 해결 완료!**
 
