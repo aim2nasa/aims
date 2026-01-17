@@ -15,8 +15,6 @@ async function loadToolHandlers() {
   const customers = await import('../tools/customers.js');
   const contracts = await import('../tools/contracts.js');
   const birthdays = await import('../tools/birthdays.js');
-  const expiring = await import('../tools/expiring.js');
-  const statistics = await import('../tools/statistics.js');
   const network = await import('../tools/network.js');
   const documents = await import('../tools/documents.js');
   const memos = await import('../tools/memos.js');
@@ -27,8 +25,6 @@ async function loadToolHandlers() {
   const annualReports = await import('../tools/annual_reports.js');
   // Customer Review 도구
   const customerReviews = await import('../tools/customer_reviews.js');
-  // Phase 3: 인사이트 도구
-  const insights = await import('../tools/insights.js');
   // Phase 4: 유틸리티 도구
   const utilities = await import('../tools/utilities.js');
   // Phase 5: RAG 검색 도구
@@ -50,11 +46,9 @@ async function loadToolHandlers() {
     list_contracts: contracts.handleListContracts,
     get_contract_details: contracts.handleGetContractDetails,
     create_contract: contracts.handleCreateContract,
-    // 생일/만기
+    // 생일
     find_birthday_customers: birthdays.handleFindBirthdayCustomers,
-    find_expiring_contracts: expiring.handleFindExpiringContracts,
-    // 통계/네트워크
-    get_statistics: statistics.handleGetStatistics,
+    // 네트워크
     get_customer_network: network.handleGetCustomerNetwork,
     // 문서 관련
     search_documents: documents.handleSearchDocuments,
@@ -68,7 +62,6 @@ async function loadToolHandlers() {
     delete_customer_memo: memos.handleDeleteMemo,
     // 보험상품 관련
     search_products: products.handleSearchProducts,
-    get_product_details: products.handleGetProductDetails,
     // Phase 1: 관계 관리
     create_relationship: relationships.handleCreateRelationship,
     delete_relationship: relationships.handleDeleteRelationship,
@@ -85,10 +78,6 @@ async function loadToolHandlers() {
     trigger_cr_parsing: customerReviews.handleTriggerCrParsing,
     get_cr_queue_status: customerReviews.handleGetCrQueueStatus,
     get_cr_contract_history: customerReviews.handleGetCrContractHistory,
-    // Phase 3: 인사이트
-    analyze_customer_value: insights.handleAnalyzeCustomerValue,
-    find_coverage_gaps: insights.handleFindCoverageGaps,
-    suggest_next_action: insights.handleSuggestNextAction,
     // Phase 4: 유틸리티
     get_storage_info: utilities.handleGetStorageInfo,
     check_customer_name: utilities.handleCheckCustomerName,
