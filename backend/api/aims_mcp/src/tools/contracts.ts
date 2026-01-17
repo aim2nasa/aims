@@ -1,14 +1,16 @@
 import { z, ZodError } from 'zod';
-import { ObjectId } from 'mongodb';
-import { getDB, escapeRegex, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
+import { getDB, toSafeObjectId, COLLECTIONS, formatZodError } from '../db.js';
 import { getCurrentUserId } from '../auth.js';
 import { sendErrorLog } from '../systemLogger.js';
 
+// ============================================================================
 // 스키마 정의
+// ============================================================================
+
 export const listContractsSchema = z.object({
   customerId: z.string().optional().describe('특정 고객의 계약만 조회'),
   search: z.string().optional().describe('검색어 (고객명, 상품명, 증권번호)'),
-  status: z.string().optional().describe('계약 상태'),
+  status: z.string().optional().describe('계약 상태 (정상, 실효 등)'),
   limit: z.number().optional().default(10).describe('결과 개수 제한 (기본: 10, 최대: 50)'),
   offset: z.number().optional().default(0).describe('건너뛸 개수 (페이지네이션용)')
 });
@@ -17,29 +19,20 @@ export const getContractDetailsSchema = z.object({
   policyNumber: z.string().describe('증권번호')
 });
 
-export const createContractSchema = z.object({
-  customerId: z.string().describe('계약자(고객) ID'),
-  policyNumber: z.string().describe('증권번호'),
-  productName: z.string().optional().describe('상품명'),
-  insurerName: z.string().optional().describe('보험사명'),
-  premium: z.number().optional().describe('보험료'),
-  contractDate: z.string().optional().describe('계약일 (YYYY-MM-DD)'),
-  expiryDate: z.string().optional().describe('만기일 (YYYY-MM-DD)'),
-  status: z.string().optional().describe('계약 상태'),
-  memo: z.string().optional().describe('메모')
-});
-
+// ============================================================================
 // Tool 정의
+// ============================================================================
+
 export const contractToolDefinitions = [
   {
     name: 'list_contracts',
-    description: '계약 목록을 조회합니다. 고객별, 상품별로 필터링할 수 있습니다. 기본 10개씩 페이지네이션됩니다.',
+    description: '계약 목록을 조회합니다. Annual Report에서 파싱된 계약 정보를 반환합니다. 고객별, 상품별, 상태별로 필터링할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         customerId: { type: 'string', description: '특정 고객의 계약만 조회' },
         search: { type: 'string', description: '검색어 (고객명, 상품명, 증권번호)' },
-        status: { type: 'string', description: '계약 상태' },
+        status: { type: 'string', description: '계약 상태 (정상, 실효 등)' },
         limit: { type: 'number', description: '결과 개수 제한 (기본: 10, 최대: 50)' },
         offset: { type: 'number', description: '건너뛸 개수 (페이지네이션용, 기본: 0)' }
       }
@@ -47,7 +40,7 @@ export const contractToolDefinitions = [
   },
   {
     name: 'get_contract_details',
-    description: '계약의 상세 정보를 조회합니다. 증권번호로 검색합니다. 피보험자, 특약 등 모든 정보를 포함합니다.',
+    description: '계약의 상세 정보를 조회합니다. 증권번호로 검색합니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -55,30 +48,113 @@ export const contractToolDefinitions = [
       },
       required: ['policyNumber']
     }
-  },
-  {
-    name: 'create_contract',
-    description: '새 계약을 생성합니다. 증권번호는 중복 불가합니다.',
-    inputSchema: {
-      type: 'object' as const,
-      properties: {
-        customerId: { type: 'string', description: '계약자(고객) ID' },
-        policyNumber: { type: 'string', description: '증권번호' },
-        productName: { type: 'string', description: '상품명' },
-        insurerName: { type: 'string', description: '보험사명' },
-        premium: { type: 'number', description: '보험료' },
-        contractDate: { type: 'string', description: '계약일 (YYYY-MM-DD)' },
-        expiryDate: { type: 'string', description: '만기일 (YYYY-MM-DD)' },
-        status: { type: 'string', description: '계약 상태' },
-        memo: { type: 'string', description: '메모' }
-      },
-      required: ['customerId', 'policyNumber']
-    }
   }
+  // Note: create_contract 제거 - 계약은 Annual Report 파싱으로만 생성됨
 ];
+
+// ============================================================================
+// 타입 정의
+// ============================================================================
+
+interface ARContract {
+  '순번': number;
+  '증권번호': string;
+  '보험상품': string;
+  '계약자': string;
+  '피보험자': string;
+  '계약일': string;
+  '계약상태': string;
+  '가입금액(만원)': number;
+  '보험기간': string;
+  '납입기간': string;
+  '보험료(원)': number;
+}
+
+interface AnnualReport {
+  customer_name: string;
+  issue_date: string;
+  contracts: ARContract[];
+  lapsed_contracts?: ARContract[];
+  total_monthly_premium?: number;
+  total_contracts?: number;
+  uploaded_at?: string;
+  parsed_at?: string;
+  source_file_id?: string;
+}
+
+interface NormalizedContract {
+  customerId: string;
+  customerName: string;
+  policyNumber: string;
+  productName: string;
+  contractor: string;
+  insured: string;
+  contractDate: string;
+  status: string;
+  coverageAmount: number;
+  insurancePeriod: string;
+  paymentPeriod: string;
+  premium: number;
+  arIssueDate: string;
+  arParsedAt?: string;
+}
+
+// ============================================================================
+// 헬퍼 함수
+// ============================================================================
+
+/**
+ * AR 계약 데이터를 정규화된 형식으로 변환
+ */
+function normalizeContract(
+  contract: ARContract,
+  customerId: string,
+  customerName: string,
+  arIssueDate: string,
+  arParsedAt?: string
+): NormalizedContract {
+  return {
+    customerId,
+    customerName,
+    policyNumber: contract['증권번호'] || '',
+    productName: contract['보험상품'] || '',
+    contractor: contract['계약자'] || '',
+    insured: contract['피보험자'] || '',
+    contractDate: contract['계약일'] || '',
+    status: contract['계약상태'] || '',
+    coverageAmount: contract['가입금액(만원)'] || 0,
+    insurancePeriod: contract['보험기간'] || '',
+    paymentPeriod: contract['납입기간'] || '',
+    premium: contract['보험료(원)'] || 0,
+    arIssueDate,
+    arParsedAt
+  };
+}
+
+/**
+ * 검색어와 계약이 매칭되는지 확인
+ */
+function matchesSearch(contract: NormalizedContract, search: string): boolean {
+  const searchLower = search.toLowerCase();
+  return (
+    contract.customerName.toLowerCase().includes(searchLower) ||
+    contract.contractor.toLowerCase().includes(searchLower) ||
+    contract.insured.toLowerCase().includes(searchLower) ||
+    contract.productName.toLowerCase().includes(searchLower) ||
+    contract.policyNumber.toLowerCase().includes(searchLower)
+  );
+}
+
+// ============================================================================
+// 핸들러 함수
+// ============================================================================
 
 /**
  * 계약 목록 조회 핸들러
+ *
+ * 데이터 소스: customers.annual_reports[].contracts
+ * - Annual Report PDF 파싱 결과에서 계약 정보 조회
+ * - 고객별, 검색어, 상태별 필터링 지원
  */
 export async function handleListContracts(args: unknown) {
   try {
@@ -86,120 +162,105 @@ export async function handleListContracts(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // 쿼리 조건들을 배열로 수집 (명확한 $and 구조)
-    const conditions: object[] = [];
+    // 쿼리 조건: 현재 설계사의 고객만 조회
+    const customerQuery: Record<string, unknown> = {
+      'meta.created_by': userId,
+      'annual_reports': { $exists: true, $ne: [] }
+    };
 
-    // agent_id 필터 (ObjectId 또는 string 모두 지원)
-    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
-    conditions.push({
-      $or: [
-        { agent_id: agentObjectId },
-        { agent_id: userId }
-      ]
-    });
-
-    // 고객 ID
+    // 특정 고객만 조회
     if (params.customerId) {
       const customerObjectId = toSafeObjectId(params.customerId);
       if (customerObjectId) {
-        conditions.push({ customer_id: customerObjectId });
+        customerQuery['_id'] = customerObjectId;
       }
     }
 
-    // 검색어
-    if (params.search) {
-      const searchRegex = { $regex: escapeRegex(params.search), $options: 'i' };
-
-      // 1. 보험사명으로 검색 시도
-      const insurer = await db.collection(COLLECTIONS.INSURERS).findOne({
-        $or: [
-          { name: searchRegex },
-          { shortName: searchRegex },
-          { code: { $regex: `^${escapeRegex(params.search)}$`, $options: 'i' } }
-        ]
-      });
-
-      if (insurer) {
-        // 해당 보험사의 모든 상품 ID 가져오기
-        const insurerObjectId = toSafeObjectId(insurer._id.toString());
-        const products = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS)
-          .find({ insurer_id: insurerObjectId })
-          .project({ _id: 1 })
-          .toArray();
-
-        // product_id가 string 또는 ObjectId일 수 있으므로 둘 다 매칭
-        const productIdStrings = products.map(p => p._id.toString());
-        const productIdObjects = products.map(p => p._id);
-
-        if (products.length > 0) {
-          conditions.push({
-            $or: [
-              { product_id: { $in: productIdStrings } },
-              { product_id: { $in: productIdObjects } }
-            ]
-          });
-        }
-      } else {
-        // 보험사 매칭 없으면 기존 검색 (고객명, 상품명, 증권번호)
-        conditions.push({
-          $or: [
-            { customer_name: searchRegex },
-            { product_name: searchRegex },
-            { policy_number: searchRegex }
-          ]
-        });
-      }
-    }
-
-    // 상태
-    if (params.status) {
-      conditions.push({ status: params.status });
-    }
-
-    // 최종 필터: 모든 조건을 $and로 결합
-    const filter = conditions.length > 1 ? { $and: conditions } : conditions[0];
-
-    // limit 최대 50 제한, offset 적용
-    const limit = Math.min(params.limit || 10, 50);
-    const offset = params.offset || 0;
-
-    const contracts = await db.collection(COLLECTIONS.CONTRACTS)
-      .find(filter)
-      .sort({ 'meta.created_at': -1 })
-      .skip(offset)
-      .limit(limit)
+    // 고객 목록 조회 (annual_reports 배열 포함)
+    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
+      .find(customerQuery)
+      .project({
+        _id: 1,
+        'personal_info.name': 1,
+        'annual_reports': 1
+      })
       .toArray();
 
-    const totalCount = await db.collection(COLLECTIONS.CONTRACTS).countDocuments(filter);
-    const hasMore = offset + contracts.length < totalCount;
+    // 모든 계약 수집 및 정규화
+    const allContracts: NormalizedContract[] = [];
+
+    for (const customer of customers) {
+      const customerId = customer._id.toString();
+      const customerName = customer.personal_info?.name || '';
+      const annualReports: AnnualReport[] = customer.annual_reports || [];
+
+      // 각 AR의 계약 수집 (최신 AR만 사용 - 중복 방지)
+      // AR은 issue_date 기준 최신 것 사용
+      if (annualReports.length > 0) {
+        // issue_date 기준 정렬 (최신 우선)
+        const sortedReports = [...annualReports].sort((a, b) => {
+          const dateA = new Date(a.issue_date || 0).getTime();
+          const dateB = new Date(b.issue_date || 0).getTime();
+          return dateB - dateA;
+        });
+
+        const latestAR = sortedReports[0];
+        const contracts = latestAR.contracts || [];
+
+        for (const contract of contracts) {
+          allContracts.push(normalizeContract(
+            contract,
+            customerId,
+            customerName,
+            latestAR.issue_date,
+            latestAR.parsed_at
+          ));
+        }
+      }
+    }
+
+    // 필터링: 검색어
+    let filteredContracts = allContracts;
+    if (params.search) {
+      filteredContracts = filteredContracts.filter(c => matchesSearch(c, params.search!));
+    }
+
+    // 필터링: 상태
+    if (params.status) {
+      const statusLower = params.status.toLowerCase();
+      filteredContracts = filteredContracts.filter(c =>
+        c.status.toLowerCase().includes(statusLower)
+      );
+    }
+
+    // 정렬: 계약일 기준 최신순
+    filteredContracts.sort((a, b) => {
+      const dateA = new Date(a.contractDate || 0).getTime();
+      const dateB = new Date(b.contractDate || 0).getTime();
+      return dateB - dateA;
+    });
+
+    // 페이지네이션
+    const totalCount = filteredContracts.length;
+    const limit = Math.min(params.limit || 10, 50);
+    const offset = params.offset || 0;
+    const paginatedContracts = filteredContracts.slice(offset, offset + limit);
+    const hasMore = offset + paginatedContracts.length < totalCount;
 
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
-          count: contracts.length,
+          count: paginatedContracts.length,
           totalCount,
           offset,
           limit,
           hasMore,
-          contracts: contracts.map(c => ({
-            id: c._id.toString(),
-            customerId: c.customer_id?.toString(),
-            customerName: c.customer_name,
-            policyNumber: c.policy_number,
-            productName: c.product_name,
-            insurerName: c.insurer_name,
-            status: c.status,
-            premium: c.premium,
-            contractDate: c.contract_date,
-            expiryDate: c.expiry_date,
-            createdAt: c.meta?.created_at
-          }))
+          contracts: paginatedContracts
         }, null, 2)
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
     console.error('[MCP] list_contracts 에러:', error);
     sendErrorLog('aims_mcp', 'list_contracts 에러', error);
     const errorMessage = error instanceof ZodError
@@ -217,6 +278,9 @@ export async function handleListContracts(args: unknown) {
 
 /**
  * 계약 상세 조회 핸들러
+ *
+ * 데이터 소스: customers.annual_reports[].contracts
+ * - 증권번호로 특정 계약 검색
  */
 export async function handleGetContractDetails(args: unknown) {
   try {
@@ -224,100 +288,102 @@ export async function handleGetContractDetails(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
-    // agent_id 필터 (ObjectId 또는 string)
-    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
-
-    // 증권번호로 검색 (정확히 일치 또는 포함)
     const policyNumber = params.policyNumber.trim();
 
-    // 먼저 정확히 일치하는 계약 검색
-    let contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
-      policy_number: policyNumber,
-      $or: [
-        { agent_id: agentObjectId },
-        { agent_id: userId }
-      ]
-    });
+    // 현재 설계사의 모든 고객에서 해당 증권번호 검색
+    const customers = await db.collection(COLLECTIONS.CUSTOMERS)
+      .find({
+        'meta.created_by': userId,
+        'annual_reports.contracts.증권번호': policyNumber
+      })
+      .project({
+        _id: 1,
+        'personal_info.name': 1,
+        'annual_reports': 1
+      })
+      .toArray();
 
-    // 정확히 일치하지 않으면 포함 검색
-    if (!contract) {
-      contract = await db.collection(COLLECTIONS.CONTRACTS).findOne({
-        policy_number: { $regex: escapeRegex(policyNumber), $options: 'i' },
-        $or: [
-          { agent_id: agentObjectId },
-          { agent_id: userId }
-        ]
-      });
-    }
+    if (customers.length === 0) {
+      // 부분 일치 검색 시도
+      const allCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+        .find({
+          'meta.created_by': userId,
+          'annual_reports': { $exists: true, $ne: [] }
+        })
+        .project({
+          _id: 1,
+          'personal_info.name': 1,
+          'annual_reports': 1
+        })
+        .toArray();
 
-    if (!contract) {
+      // 부분 일치 검색
+      for (const customer of allCustomers) {
+        const annualReports: AnnualReport[] = customer.annual_reports || [];
+        for (const ar of annualReports) {
+          const contracts = ar.contracts || [];
+          const found = contracts.find(c =>
+            c['증권번호']?.toLowerCase().includes(policyNumber.toLowerCase())
+          );
+          if (found) {
+            const normalized = normalizeContract(
+              found,
+              customer._id.toString(),
+              customer.personal_info?.name || '',
+              ar.issue_date,
+              ar.parsed_at
+            );
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify(normalized, null, 2)
+              }]
+            };
+          }
+        }
+      }
+
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: `증권번호 "${policyNumber}"에 해당하는 계약을 찾을 수 없습니다.` }]
+        content: [{
+          type: 'text' as const,
+          text: `증권번호 "${policyNumber}"에 해당하는 계약을 찾을 수 없습니다.`
+        }]
       };
     }
 
-    // 보험상품 정보 조회
-    let productInfo = null;
-    if (contract.product_id) {
-      const productObjectId = toSafeObjectId(contract.product_id);
-      if (productObjectId) {
-        const product = await db.collection(COLLECTIONS.INSURANCE_PRODUCTS).findOne({
-          _id: productObjectId
-        });
-        if (product) {
-          productInfo = {
-            id: product._id.toString(),
-            name: product.product_name,
-            insurerName: product.insurer_name,
-            category: product.category,
-            type: product.product_type
-          };
-        }
+    // 정확히 일치하는 계약 찾기
+    const customer = customers[0];
+    const annualReports: AnnualReport[] = customer.annual_reports || [];
+
+    for (const ar of annualReports) {
+      const contracts = ar.contracts || [];
+      const found = contracts.find(c => c['증권번호'] === policyNumber);
+      if (found) {
+        const normalized = normalizeContract(
+          found,
+          customer._id.toString(),
+          customer.personal_info?.name || '',
+          ar.issue_date,
+          ar.parsed_at
+        );
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify(normalized, null, 2)
+          }]
+        };
       }
     }
 
-    const contractDetails = {
-      id: contract._id.toString(),
-      // 기본 정보
-      policyNumber: contract.policy_number,
-      productName: contract.product_name,
-      insurerName: contract.insurer_name,
-      status: contract.status,
-      // 계약자 정보
-      contractor: {
-        customerId: contract.customer_id?.toString(),
-        customerName: contract.customer_name
-      },
-      // 피보험자 정보
-      insuredPerson: contract.insured_person || null,
-      // 보험료 및 금액
-      premium: contract.premium,
-      paymentFrequency: contract.payment_frequency,
-      sumInsured: contract.sum_insured,
-      // 날짜
-      contractDate: contract.contract_date,
-      expiryDate: contract.expiry_date,
-      paymentStartDate: contract.payment_start_date,
-      paymentEndDate: contract.payment_end_date,
-      // 특약
-      riders: contract.riders || [],
-      // 상품 정보
-      product: productInfo,
-      // 메타
-      memo: contract.memo,
-      createdAt: contract.meta?.created_at,
-      updatedAt: contract.meta?.updated_at
-    };
-
     return {
+      isError: true,
       content: [{
         type: 'text' as const,
-        text: JSON.stringify(contractDetails, null, 2)
+        text: `증권번호 "${policyNumber}"에 해당하는 계약을 찾을 수 없습니다.`
       }]
     };
   } catch (error) {
-    // 에러 로깅 (디버깅용)
     console.error('[MCP] get_contract_details 에러:', error);
     sendErrorLog('aims_mcp', 'get_contract_details 에러', error);
     const errorMessage = error instanceof ZodError
@@ -333,100 +399,32 @@ export async function handleGetContractDetails(args: unknown) {
   }
 }
 
+// ============================================================================
+// Deprecated: create_contract
+// ============================================================================
+
+// 기존 스키마는 호환성을 위해 유지하되, 핸들러는 비활성화
+export const createContractSchema = z.object({
+  customerId: z.string().describe('계약자(고객) ID'),
+  policyNumber: z.string().describe('증권번호'),
+  productName: z.string().optional().describe('상품명'),
+  insurerName: z.string().optional().describe('보험사명'),
+  premium: z.number().optional().describe('보험료'),
+  contractDate: z.string().optional().describe('계약일 (YYYY-MM-DD)'),
+  expiryDate: z.string().optional().describe('만기일 (YYYY-MM-DD)'),
+  status: z.string().optional().describe('계약 상태'),
+  memo: z.string().optional().describe('메모')
+});
+
 /**
- * 계약 생성 핸들러
+ * @deprecated 계약 생성은 Annual Report 파싱으로만 가능합니다.
  */
-export async function handleCreateContract(args: unknown) {
-  try {
-    const params = createContractSchema.parse(args);
-    const db = getDB();
-    const userId = getCurrentUserId();
-
-    // 고객 ID 검증
-    const customerObjectId = toSafeObjectId(params.customerId);
-    if (!customerObjectId) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 고객 ID입니다.' }]
-      };
-    }
-
-    // 고객이 해당 설계사의 고객인지 확인
-    const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
-      _id: customerObjectId,
-      'meta.created_by': userId
-    });
-
-    if (!customer) {
-      return {
-        isError: true,
-        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
-      };
-    }
-
-    // 증권번호 중복 체크
-    const existing = await db.collection(COLLECTIONS.CONTRACTS).findOne({
-      policy_number: params.policyNumber
-    });
-
-    if (existing) {
-      return {
-        isError: true,
-        content: [{
-          type: 'text' as const,
-          text: `이미 존재하는 증권번호입니다: ${params.policyNumber}`
-        }]
-      };
-    }
-
-    const now = new Date();
-    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : null;
-
-    const newContract = {
-      agent_id: agentObjectId,
-      customer_id: customerObjectId,
-      customer_name: customer.personal_info?.name || '',
-      policy_number: params.policyNumber,
-      product_name: params.productName || '',
-      insurer_name: params.insurerName || '',
-      premium: params.premium || 0,
-      contract_date: params.contractDate || null,
-      expiry_date: params.expiryDate || null,
-      status: params.status || 'active',
-      memo: params.memo || '',
-      meta: {
-        created_at: now,
-        updated_at: now,
-        created_by: userId
-      }
-    };
-
-    const result = await db.collection(COLLECTIONS.CONTRACTS).insertOne(newContract);
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify({
-          success: true,
-          contractId: result.insertedId.toString(),
-          policyNumber: params.policyNumber,
-          customerName: customer.personal_info?.name,
-          message: `계약이 성공적으로 생성되었습니다: ${params.policyNumber}`
-        }, null, 2)
-      }]
-    };
-  } catch (error) {
-    console.error('[MCP] create_contract 에러:', error);
-    sendErrorLog('aims_mcp', 'create_contract 에러', error);
-    const errorMessage = error instanceof ZodError
-      ? formatZodError(error)
-      : (error instanceof Error ? error.message : '알 수 없는 오류');
-    return {
-      isError: true,
-      content: [{
-        type: 'text' as const,
-        text: `계약 생성 실패: ${errorMessage}`
-      }]
-    };
-  }
+export async function handleCreateContract(_args: unknown) {
+  return {
+    isError: true,
+    content: [{
+      type: 'text' as const,
+      text: '계약은 Annual Report PDF 업로드 및 파싱을 통해서만 등록할 수 있습니다. 고객의 Annual Report를 업로드해 주세요.'
+    }]
+  };
 }
