@@ -451,13 +451,24 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 컴포넌트 마운트 시 이전 상태 복원 (모달 + 활성 View + URL 기반 상태)
   useEffect(() => {
+    // 🔧 캐시 초기화 파라미터 처리 (?reset=1)
+    // iPad 등에서 다른 사용자 데이터가 보일 때 사용
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('reset') === '1') {
+      console.log('[App] 캐시 초기화 요청 감지 - localStorage/sessionStorage 클리어')
+      localStorage.clear()
+      sessionStorage.clear()
+      // 파라미터 제거 후 리다이렉트
+      window.location.href = window.location.origin + window.location.pathname
+      return
+    }
+
     if (persistentState.layoutControlModalOpen) {
       setLayoutControlModalOpen(true)
       modalStateRef.current = true
     }
 
     // URL에서 상태 복원
-    const urlParams = new URLSearchParams(window.location.search)
     const urlView = urlParams.get('view')
     const urlCustomerId = urlParams.get('customerId')
     const urlDocumentId = urlParams.get('documentId')
