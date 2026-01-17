@@ -378,7 +378,7 @@ const DocumentLibraryContent: React.FC<{
 
           {/* 총 문서 개수 */}
           <span className="result-count">
-            총 {initialFilteredDocuments.length}개의 문서
+            총 {state.totalCount}개의 문서
           </span>
 
           {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
