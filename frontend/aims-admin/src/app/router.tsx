@@ -10,7 +10,7 @@ import { TierManagementPage } from '@/pages/TierManagementPage';
 import { SystemHealthPage } from '@/pages/SystemHealthPage';
 import { FileValidationPage } from '@/pages/FileValidationPage';
 import { AIUsagePage } from '@/pages/AIUsagePage';
-import { OCRUsagePage } from '@/pages/OCRUsagePage';
+// OCRUsagePage는 AIUsagePage로 통합됨
 import { UsersPage } from '@/pages/UsersPage/UsersPage';
 import { UserActivityPage } from '@/pages/UserActivityPage';
 import { ErrorLogsPage } from '@/pages/ErrorLogsPage';
@@ -78,8 +78,9 @@ export const router = createBrowserRouter([
         element: <AIUsagePage />,
       },
       {
+        // OCR 사용량 페이지는 AI 사용량 페이지로 통합됨 - 기존 URL 리다이렉트
         path: 'dashboard/ocr-usage',
-        element: <OCRUsagePage />,
+        element: <Navigate to="/dashboard/ai-usage" replace />,
       },
       {
         path: 'dashboard/error-logs',

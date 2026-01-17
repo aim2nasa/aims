@@ -279,6 +279,120 @@ function mapToHours(hourlyData: HourlyUsagePoint[]): Array<{
   }));
 }
 
+// OCR 일별 데이터를 차트용으로 매핑
+function mapOcrToDays(ocrData: OCRDailyUsagePoint[], year: number, month: number): Array<{
+  day: string;
+  done: number;
+  error: number;
+}> {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const result: Array<{
+    day: string;
+    done: number;
+    error: number;
+  }> = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayData = ocrData.find(item => item.date === dateStr);
+    result.push({
+      day: `${d}`,
+      done: dayData?.done || 0,
+      error: dayData?.error || 0,
+    });
+  }
+
+  return result;
+}
+
+// OCR 일별 데이터를 요일별로 매핑
+function mapOcrToWeekdays(ocrData: OCRDailyUsagePoint[], weekStart: string): Array<{
+  day: string;
+  done: number;
+  error: number;
+}> {
+  const startDate = new Date(weekStart);
+  const result: Array<{
+    day: string;
+    done: number;
+    error: number;
+  }> = [];
+
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    const dateStr = currentDate.toISOString().split('T')[0];
+
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const dayLabel = `${WEEKDAY_LABELS[i]} ${month}/${day}`;
+
+    const dayData = ocrData.find(d => d.date === dateStr);
+    result.push({
+      day: dayLabel,
+      done: dayData?.done || 0,
+      error: dayData?.error || 0,
+    });
+  }
+
+  return result;
+}
+
+// OCR 일별 데이터를 월별로 집계
+function aggregateOcrToMonthly(ocrData: OCRDailyUsagePoint[]): Array<{
+  month: string;
+  done: number;
+  error: number;
+}> {
+  const monthlyMap = new Map<string, { done: number; error: number }>();
+
+  for (let m = 1; m <= 12; m++) {
+    const monthKey = String(m).padStart(2, '0');
+    monthlyMap.set(monthKey, { done: 0, error: 0 });
+  }
+
+  for (const day of ocrData) {
+    const month = day.date.split('-')[1];
+    const entry = monthlyMap.get(month);
+    if (entry) {
+      entry.done += day.done;
+      entry.error += day.error;
+    }
+  }
+
+  return Array.from(monthlyMap.entries()).map(([month, data]) => ({
+    month: MONTH_LABELS[parseInt(month) - 1],
+    ...data,
+  }));
+}
+
+// OCR 일별 데이터를 년도별로 집계
+function aggregateOcrToYearly(ocrData: OCRDailyUsagePoint[], currentYear: number, yearsBack: number = 3): Array<{
+  year: string;
+  done: number;
+  error: number;
+}> {
+  const yearlyMap = new Map<string, { done: number; error: number }>();
+
+  for (let y = currentYear - yearsBack + 1; y <= currentYear; y++) {
+    yearlyMap.set(String(y), { done: 0, error: 0 });
+  }
+
+  for (const day of ocrData) {
+    const year = day.date.split('-')[0];
+    const entry = yearlyMap.get(year);
+    if (entry) {
+      entry.done += day.done;
+      entry.error += day.error;
+    }
+  }
+
+  return Array.from(yearlyMap.entries()).map(([year, data]) => ({
+    year: `${year}년`,
+    ...data,
+  }));
+}
+
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{ name: string; value: number; dataKey: string }>;
@@ -416,6 +530,15 @@ export const AIUsagePage = () => {
     refetchInterval: 300000,
   });
 
+  // OCR Top Users Query
+  const { data: ocrTopUsers, refetch: refetchOcrTopUsers } = useQuery({
+    queryKey: ['admin', 'ocr-usage', 'top-users', periodType, dateRange.start, dateRange.end],
+    queryFn: () => periodType === 'hourly'
+      ? aiUsageApi.getOCRTopUsers(1)
+      : aiUsageApi.getOCRTopUsersByRange(dateRange.start, dateRange.end),
+    refetchInterval: 300000,
+  });
+
   const { data: hourlyUsageRaw, refetch: refetchHourly } = useQuery({
     queryKey: ['admin', 'ai-usage', 'hourly'],
     queryFn: () => aiUsageApi.getHourlyUsage(24),
@@ -486,6 +609,21 @@ export const AIUsagePage = () => {
     return aggregateToMonthly(dailyUsageRaw);
   }, [dailyUsageRaw, hourlyUsageRaw, periodType, dateRange.start, selectedYear, selectedMonth, currentYear]);
 
+  // OCR 차트 데이터 준비
+  const ocrChartData = useMemo(() => {
+    if (periodType === 'hourly' || !ocrDailyUsage) return [];
+    if (periodType === 'daily') {
+      return mapOcrToDays(ocrDailyUsage, selectedYear, selectedMonth);
+    }
+    if (periodType === 'weekly') {
+      return mapOcrToWeekdays(ocrDailyUsage, dateRange.start);
+    }
+    if (periodType === 'yearly') {
+      return aggregateOcrToYearly(ocrDailyUsage, currentYear, 3);
+    }
+    return aggregateOcrToMonthly(ocrDailyUsage);
+  }, [ocrDailyUsage, periodType, dateRange.start, selectedYear, selectedMonth, currentYear]);
+
   if (overviewLoading) {
     return <div className="ai-usage-page__loading">데이터를 불러오는 중...</div>;
   }
@@ -512,6 +650,7 @@ export const AIUsagePage = () => {
     refetchTopUsers();
     refetchOcrOverview();
     refetchOcrDaily();
+    refetchOcrTopUsers();
     if (periodType === 'hourly') {
       refetchHourly();
     }
@@ -536,7 +675,7 @@ export const AIUsagePage = () => {
   return (
     <div className="ai-usage-page">
       <div className="ai-usage-page__header">
-        <h1 className="ai-usage-page__title">AI 사용량 현황</h1>
+        <h1 className="ai-usage-page__title">AI/OCR 사용량 현황</h1>
         <div className="ai-usage-page__header-right">
           <div className="ai-usage-page__period-selector">
             <button
@@ -701,10 +840,10 @@ export const AIUsagePage = () => {
         </div>
       </section>
 
-      {/* 차트 */}
+      {/* 차트 - AI 사용량 추이 */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">
-          사용량 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
+          AI 토큰 사용량 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
         </h2>
         <div className="ai-usage-page__line-chart-container">
           {chartData.length === 0 ? (
@@ -738,49 +877,149 @@ export const AIUsagePage = () => {
         </div>
       </section>
 
-      {/* Top 사용자 */}
+      {/* OCR 처리 추이 차트 */}
+      {periodType !== 'hourly' && (
+        <section className="ai-usage-page__section">
+          <h2 className="ai-usage-page__section-title">
+            OCR 처리 추이 <span className="ai-usage-page__period-label">({periodLabel})</span>
+          </h2>
+          <div className="ai-usage-page__line-chart-container">
+            {ocrChartData.length === 0 ? (
+              <div className="ai-usage-page__chart-empty">OCR 데이터가 없습니다</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={ocrChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey={periodType === 'monthly' ? 'month' : periodType === 'yearly' ? 'year' : 'day'}
+                    tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }}
+                    stroke="var(--color-border)"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: 'var(--color-text-tertiary)' }}
+                    stroke="var(--color-border)"
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !label) return null;
+                      return (
+                        <div className="ai-usage-page__tooltip">
+                          <p className="ai-usage-page__tooltip-time">{label}</p>
+                          {payload.map((entry, index) => (
+                            <p
+                              key={index}
+                              className={`ai-usage-page__tooltip-item ${entry.dataKey === 'done' ? 'ai-usage-page__tooltip-item--ocr-done' : 'ai-usage-page__tooltip-item--ocr-error'}`}
+                            >
+                              {entry.name}: {(entry.value as number).toLocaleString()}건
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    height={24}
+                    wrapperStyle={{ fontSize: '11px' }}
+                  />
+                  <Bar dataKey="done" name="성공" fill="#34C759" stackId="stack" />
+                  <Bar dataKey="error" name="실패" fill="#FF3B30" stackId="stack" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Top 사용자 - AI/OCR 병렬 표시 */}
       <section className="ai-usage-page__section">
         <h2 className="ai-usage-page__section-title">
           Top 10 사용자 <span className="ai-usage-page__period-label">({periodLabel})</span>
         </h2>
-        <div className="ai-usage-page__table-container">
-          <table className="ai-usage-page__table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>사용자</th>
-                <th>토큰</th>
-                <th>요청 수</th>
-                <th>예상 비용</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!topUsers || topUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="ai-usage-page__table-empty">
-                    사용자 데이터가 없습니다
-                  </td>
-                </tr>
-              ) : (
-                topUsers.map((user, index) => (
-                  <tr key={user.user_id}>
-                    <td className="ai-usage-page__table-rank">{index + 1}</td>
-                    <td className="ai-usage-page__table-user">
-                      <span className="ai-usage-page__user-name">{user.user_name}</span>
-                      <span className="ai-usage-page__user-id">({user.user_id})</span>
-                    </td>
-                    <td className="ai-usage-page__table-tokens">
-                      {formatTokens(user.total_tokens)}
-                    </td>
-                    <td>{user.request_count.toLocaleString()}</td>
-                    <td className="ai-usage-page__table-cost">
-                      {formatCost(user.estimated_cost_usd)}
-                    </td>
+        <div className="ai-usage-page__tables-row">
+          {/* AI Top 사용자 */}
+          <div className="ai-usage-page__table-wrapper">
+            <h3 className="ai-usage-page__table-subtitle">AI 사용량</h3>
+            <div className="ai-usage-page__table-container">
+              <table className="ai-usage-page__table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>사용자</th>
+                    <th>토큰</th>
+                    <th>요청</th>
+                    <th>비용</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {!topUsers || topUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="ai-usage-page__table-empty">
+                        데이터 없음
+                      </td>
+                    </tr>
+                  ) : (
+                    topUsers.map((user, index) => (
+                      <tr key={user.user_id}>
+                        <td className="ai-usage-page__table-rank">{index + 1}</td>
+                        <td className="ai-usage-page__table-user">
+                          <span className="ai-usage-page__user-name">{user.user_name}</span>
+                        </td>
+                        <td className="ai-usage-page__table-tokens">
+                          {formatTokens(user.total_tokens)}
+                        </td>
+                        <td>{user.request_count.toLocaleString()}</td>
+                        <td className="ai-usage-page__table-cost">
+                          {formatCost(user.estimated_cost_usd)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* OCR Top 사용자 */}
+          <div className="ai-usage-page__table-wrapper">
+            <h3 className="ai-usage-page__table-subtitle">OCR 사용량</h3>
+            <div className="ai-usage-page__table-container">
+              <table className="ai-usage-page__table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>사용자</th>
+                    <th>OCR</th>
+                    <th>페이지</th>
+                    <th>비용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!ocrTopUsers || ocrTopUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="ai-usage-page__table-empty">
+                        데이터 없음
+                      </td>
+                    </tr>
+                  ) : (
+                    ocrTopUsers.map((user, index) => (
+                      <tr key={user.user_id}>
+                        <td className="ai-usage-page__table-rank">{index + 1}</td>
+                        <td className="ai-usage-page__table-user">
+                          <span className="ai-usage-page__user-name">{user.user_name}</span>
+                        </td>
+                        <td>{user.ocr_count.toLocaleString()}</td>
+                        <td>{user.page_count.toLocaleString()}</td>
+                        <td className="ai-usage-page__table-cost">
+                          {formatCost(user.estimated_cost_usd)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
