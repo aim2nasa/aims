@@ -100,3 +100,49 @@ export async function fetchSystemVersions(): Promise<SystemVersions> {
     backends,
   }
 }
+
+/**
+ * 프론트엔드 버전 불일치 확인
+ * 서버에 배포된 index.html의 git hash와 현재 로드된 버전 비교
+ * @returns true if version mismatch detected (new version available)
+ */
+export async function checkFrontendVersionMismatch(): Promise<boolean> {
+  try {
+    // 서버의 index.html을 다시 fetch하여 git hash 추출
+    const response = await fetch('/?_t=' + Date.now(), {
+      cache: 'no-store',
+      headers: { 'Accept': 'text/html' }
+    })
+
+    if (!response.ok) return false
+
+    const html = await response.text()
+
+    // index.html에서 현재 JS 번들 해시 추출 (assets/index-XXXX.js)
+    const match = html.match(/assets\/index-([A-Za-z0-9]+)\.js/)
+    if (!match) return false
+
+    const serverBundleHash = match[1]
+
+    // 현재 로드된 번들의 해시와 비교
+    // 스크립트 태그에서 현재 번들 해시 추출
+    const scripts = document.querySelectorAll('script[src*="assets/index-"]')
+    for (const script of scripts) {
+      const src = script.getAttribute('src') || ''
+      const currentMatch = src.match(/assets\/index-([A-Za-z0-9]+)\.js/)
+      if (currentMatch) {
+        const currentBundleHash = currentMatch[1]
+
+        if (currentBundleHash !== serverBundleHash) {
+          console.log('[versionService] 🔄 새 버전 감지:', currentBundleHash, '→', serverBundleHash)
+          return true
+        }
+      }
+    }
+
+    return false
+  } catch (error) {
+    console.error('[versionService] 버전 확인 실패:', error)
+    return false
+  }
+}

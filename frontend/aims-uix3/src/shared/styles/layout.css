@@ -725,3 +725,55 @@ html[data-theme="dark"] .layout-brb-reset:hover {
     transform: translateY(0);
   }
 }
+
+/* === VERSION UPDATE BANNER === */
+
+/**
+ * 새 버전 알림 배너
+ * 프로덕션에서 프론트엔드 버전 불일치 감지 시 표시
+ */
+.version-update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-primary-500);
+  color: white;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10001;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.version-update-banner__btn-refresh {
+  background: white;
+  color: var(--color-primary-500);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.version-update-banner__btn-refresh:hover {
+  background: var(--color-gray-100);
+}
+
+.version-update-banner__btn-later {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.version-update-banner__btn-later:hover {
+  background: rgba(255, 255, 255, 0.1);
+}

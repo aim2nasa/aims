@@ -21,6 +21,7 @@ import { useUserAccountSSE } from './shared/hooks/useUserAccountSSE'
 import { useNoticeNotifications } from './hooks/useNoticeNotifications'
 import type { Customer as _Customer } from './entities/customer'
 import { APP_VERSION, GIT_HASH, FULL_VERSION, logVersionInfo } from './config/version'
+import { checkFrontendVersionMismatch } from './services/versionService'
 import { errorReporter } from './shared/lib/errorReporter'
 
 // Lazy loading으로 성능 최적화
@@ -448,6 +449,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [layoutControlModalOpen, setLayoutControlModalOpen] = useState(false)
   const [modalClickProtection, setModalClickProtection] = useState(false)
   const modalStateRef = useRef(false)
+  const [newVersionAvailable, setNewVersionAvailable] = useState(false)
 
   // 컴포넌트 마운트 시 이전 상태 복원 (모달 + 활성 View + URL 기반 상태)
   useEffect(() => {
@@ -582,6 +584,28 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     logVersionInfo()
   }, [])
 
+  // 🔄 새 버전 감지 (5분마다 확인, 프로덕션만)
+  useEffect(() => {
+    if (import.meta.env.DEV) return // 개발 환경에서는 비활성화
+
+    const checkVersion = async () => {
+      const hasMismatch = await checkFrontendVersionMismatch()
+      if (hasMismatch) {
+        setNewVersionAvailable(true)
+      }
+    }
+
+    // 초기 체크 (30초 후)
+    const initialTimer = setTimeout(checkVersion, 30000)
+
+    // 5분마다 체크
+    const interval = setInterval(checkVersion, 5 * 60 * 1000)
+
+    return () => {
+      clearTimeout(initialTimer)
+      clearInterval(interval)
+    }
+  }, [])
 
   const { currentSize, scaleFactor, isAccessibilitySize } = dynamicType
   const { isHapticEnabled } = haptic
@@ -1195,6 +1219,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         // width, height, position은 layout.css에서 관리 (iPad 미디어쿼리 적용을 위해)
         ...cssVariables as React.CSSProperties // CSS 변수 적용
       }}>
+
+      {/* 🔄 새 버전 알림 배너 */}
+      {newVersionAvailable && (
+        <div className="version-update-banner">
+          <span>새로운 버전이 있습니다. 새로고침하여 업데이트하세요.</span>
+          <button
+            type="button"
+            className="version-update-banner__btn-refresh"
+            onClick={() => window.location.reload()}
+          >
+            새로고침
+          </button>
+          <button
+            type="button"
+            className="version-update-banner__btn-later"
+            onClick={() => setNewVersionAvailable(false)}
+          >
+            나중에
+          </button>
+        </div>
+      )}
 
       {/* 🍎 Apple A11y: Skip Navigation - VoiceOver 완벽 지원 */}
       <a
