@@ -330,6 +330,11 @@ export async function handleGetCustomer(args: unknown) {
       };
     }
 
+    // 문서 수는 files 컬렉션에서 조회 (Single Source of Truth: files.customerId)
+    const documentCount = await db.collection(COLLECTIONS.FILES).countDocuments({
+      customerId: objectId
+    });
+
     // 민감 정보 제외
     const safeCustomer = {
       id: customer._id.toString(),
@@ -351,7 +356,7 @@ export async function handleGetCustomer(args: unknown) {
         createdAt: customer.meta?.created_at,
         updatedAt: customer.meta?.updated_at
       },
-      documentCount: customer.documents?.length || 0
+      documentCount
     };
 
     return {
