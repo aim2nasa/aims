@@ -381,12 +381,12 @@ export const formatBytes = (bytes: number): string => {
  */
 export const formatTokens = (tokens: number): string => {
   if (tokens >= 1000000) {
-    return (tokens / 1000000).toFixed(1) + 'M';
+    return (tokens / 1000000).toFixed(1) + 'M tk';
   }
   if (tokens >= 1000) {
-    return (tokens / 1000).toFixed(1) + 'K';
+    return (tokens / 1000).toFixed(1) + 'K tk';
   }
-  return tokens.toString();
+  return tokens.toString() + ' tk';
 };
 
 /**

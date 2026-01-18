@@ -13,6 +13,7 @@ export interface AIUsageOverview {
   estimated_cost_usd: number;
   request_count: number;
   unique_users: number;
+  total_users: number;  // 전체 등록 사용자 수
   by_source: {
     chat?: number;
     rag_api?: number;
@@ -188,12 +189,12 @@ export interface OCRTopUsersResponse {
 // 숫자 포맷팅 함수들
 export function formatTokens(tokens: number): string {
   if (tokens >= 1000000) {
-    return `${(tokens / 1000000).toFixed(1)}M`;
+    return `${(tokens / 1000000).toFixed(1)}M tk`;
   }
   if (tokens >= 1000) {
-    return `${(tokens / 1000).toFixed(1)}K`;
+    return `${(tokens / 1000).toFixed(1)}K tk`;
   }
-  return tokens.toLocaleString();
+  return `${tokens.toLocaleString()} tk`;
 }
 
 export function formatCost(cost: number): string {

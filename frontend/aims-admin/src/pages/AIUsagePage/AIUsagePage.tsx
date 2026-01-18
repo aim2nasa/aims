@@ -23,7 +23,6 @@ import {
   formatCredits,
   tokensToCredits,
   pagesToCredits,
-  CREDIT_RATES,
 } from '@/features/dashboard/aiUsageApi';
 import type {
   DailyUsageBySourcePoint,
@@ -31,7 +30,6 @@ import type {
   AIModelSettingsUpdate,
   OCRDailyUsagePoint,
 } from '@/features/dashboard/aiUsageApi';
-import { StatCard } from '@/shared/ui/StatCard/StatCard';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
 
@@ -666,13 +664,6 @@ export const AIUsagePage = () => {
     );
   }
 
-  // 소스별 퍼센트 계산
-  const totalBySource = (overview?.by_source?.chat || 0) + (overview?.by_source?.rag_api || 0) + (overview?.by_source?.n8n_docsummary || 0) + (overview?.by_source?.doc_embedding || 0);
-  const chatPercent = totalBySource > 0 ? ((overview?.by_source?.chat || 0) / totalBySource * 100).toFixed(1) : '0';
-  const ragPercent = totalBySource > 0 ? ((overview?.by_source?.rag_api || 0) / totalBySource * 100).toFixed(1) : '0';
-  const n8nPercent = totalBySource > 0 ? ((overview?.by_source?.n8n_docsummary || 0) / totalBySource * 100).toFixed(1) : '0';
-  const embeddingPercent = totalBySource > 0 ? ((overview?.by_source?.doc_embedding || 0) / totalBySource * 100).toFixed(1) : '0';
-
   // 모든 데이터 새로고침
   const handleRefreshAll = () => {
     refetchOverview();
@@ -783,100 +774,192 @@ export const AIUsagePage = () => {
         </div>
       </div>
 
-      {/* 전체 통계 (AI + OCR 통합) */}
+      {/* ======================================================
+          💰 총 운영 비용 - 가장 중요한 정보를 최상단에
+          ====================================================== */}
       <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">
-          전체 통계 <span className="ai-usage-page__period-label">({periodLabel})</span>
-        </h2>
-        <div className="ai-usage-page__stats-grid ai-usage-page__stats-grid--4col">
-          <StatCard
-            title="총 크레딧"
-            value={formatCredits(totalCredits)}
-            subtitle={`AI: ${formatCredits(aiCredits)} / OCR: ${formatCredits(ocrCredits)}`}
-          />
-          <StatCard
-            title="AI 토큰"
-            value={formatTokens(overview?.total_tokens || 0)}
-            subtitle={`≈ ${formatCredits(aiCredits)} 크레딧 (${CREDIT_RATES.AI_PER_1K_TOKENS}/1K)`}
-          />
-          <StatCard
-            title="OCR 페이지"
-            value={(ocrOverview?.page_count || 0).toLocaleString()}
-            subtitle={`≈ ${formatCredits(ocrCredits)} 크레딧 (${CREDIT_RATES.OCR_PER_PAGE}/page)`}
-          />
-          <StatCard
-            title="활성 사용자"
-            value={overview?.unique_users || 0}
-            subtitle={`AI: ${overview?.request_count || 0}건 / OCR: ${ocrOverview?.ocr_count || 0}건`}
-          />
-        </div>
-      </section>
+        <div className="cost-hero">
+          <div className="cost-hero__header">
+            <h2 className="cost-hero__title">💰 총 운영 비용</h2>
+            <span className="cost-hero__period">{periodLabel}</span>
+          </div>
 
-      {/* AI 소스별 분포 */}
-      <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">
-          AI 소스별 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
-        </h2>
-        <div className="ai-usage-page__source-grid ai-usage-page__source-grid--4col">
-          <div className="source-card source-card--chat">
-            <span className="source-card__label">AI 채팅</span>
-            <span className="source-card__value">{formatTokens(overview?.by_source?.chat || 0)}</span>
-            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.chat || 0))} cr</span>
-            <span className="source-card__percent">{chatPercent}%</span>
-          </div>
-          <div className="source-card source-card--rag">
-            <span className="source-card__label">RAG API</span>
-            <span className="source-card__value">{formatTokens(overview?.by_source?.rag_api || 0)}</span>
-            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.rag_api || 0))} cr</span>
-            <span className="source-card__percent">{ragPercent}%</span>
-          </div>
-          <div className="source-card source-card--n8n">
-            <span className="source-card__label">DocSummary</span>
-            <span className="source-card__value">{formatTokens(overview?.by_source?.n8n_docsummary || 0)}</span>
-            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.n8n_docsummary || 0))} cr</span>
-            <span className="source-card__percent">{n8nPercent}%</span>
-          </div>
-          <div className="source-card source-card--embedding">
-            <span className="source-card__label">임베딩</span>
-            <span className="source-card__value">{formatTokens(overview?.by_source?.doc_embedding || 0)}</span>
-            <span className="source-card__credits">≈ {formatCredits(tokensToCredits(overview?.by_source?.doc_embedding || 0))} cr</span>
-            <span className="source-card__percent">{embeddingPercent}%</span>
-          </div>
-        </div>
-        <div className="ai-usage-page__ai-cost-summary">
-          <span className="ai-usage-page__ai-cost-label">AI 예상 비용:</span>
-          <span className="ai-usage-page__ai-cost-value">{formatCost(overview?.estimated_cost_usd || 0)}</span>
-          <span className="ai-usage-page__ai-cost-krw">≈ ₩{Math.round((overview?.estimated_cost_usd || 0) * 1450).toLocaleString()}</span>
-        </div>
-      </section>
-
-      {/* OCR 사용량 섹션 */}
-      <section className="ai-usage-page__section">
-        <h2 className="ai-usage-page__section-title">
-          OCR 사용량 <span className="ai-usage-page__period-label">({periodLabel})</span>
-        </h2>
-        <div className="ai-usage-page__ocr-grid">
-          <div className="ocr-stat-card">
-            <span className="ocr-stat-card__label">처리 건수</span>
-            <span className="ocr-stat-card__value">{(ocrOverview?.ocr_count || 0).toLocaleString()}</span>
-            <span className="ocr-stat-card__sub">
-              대기: {ocrOverview?.ocr_pending || 0} / 처리중: {ocrOverview?.ocr_processing || 0} / 실패: {ocrOverview?.ocr_failed || 0}
+          {/* 총 비용 - 가장 크게 */}
+          <div className="cost-hero__total">
+            <span className="cost-hero__amount">
+              {formatCost((overview?.estimated_cost_usd || 0) + (ocrOverview?.estimated_cost_usd || 0))}
+            </span>
+            <span className="cost-hero__krw">
+              ≈ ₩{Math.round(((overview?.estimated_cost_usd || 0) + (ocrOverview?.estimated_cost_usd || 0)) * 1450).toLocaleString()}
             </span>
           </div>
-          <div className="ocr-stat-card ocr-stat-card--pages">
-            <span className="ocr-stat-card__label">페이지 수</span>
-            <span className="ocr-stat-card__value">{(ocrOverview?.page_count || 0).toLocaleString()}</span>
-            <span className="ocr-stat-card__sub">누적: {(ocrOverview?.pages_total || 0).toLocaleString()} 페이지</span>
+
+          {/* AI vs OCR 비용 비교 바 */}
+          <div className="cost-hero__breakdown">
+            {(() => {
+              const aiCost = overview?.estimated_cost_usd || 0;
+              const ocrCost = ocrOverview?.estimated_cost_usd || 0;
+              const totalCostVal = aiCost + ocrCost;
+              const aiPercent = totalCostVal > 0 ? (aiCost / totalCostVal * 100) : 0;
+              const ocrPercent = totalCostVal > 0 ? (ocrCost / totalCostVal * 100) : 0;
+
+              return (
+                <>
+                  <div className="cost-bar">
+                    <div className="cost-bar__ai" style={{ width: `${aiPercent}%` }} />
+                    <div className="cost-bar__ocr" style={{ width: `${ocrPercent}%` }} />
+                  </div>
+                  <div className="cost-legend">
+                    <div className="cost-legend__item cost-legend__item--ai">
+                      <span className="cost-legend__dot" />
+                      <span className="cost-legend__label">AI</span>
+                      <span className="cost-legend__value">{formatCost(aiCost)}</span>
+                      <span className="cost-legend__percent">({aiPercent.toFixed(1)}%)</span>
+                    </div>
+                    <div className="cost-legend__item cost-legend__item--ocr">
+                      <span className="cost-legend__dot" />
+                      <span className="cost-legend__label">OCR</span>
+                      <span className="cost-legend__value">{formatCost(ocrCost)}</span>
+                      <span className="cost-legend__percent">({ocrPercent.toFixed(1)}%)</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
-          <div className="ocr-stat-card ocr-stat-card--credits">
-            <span className="ocr-stat-card__label">크레딧</span>
-            <span className="ocr-stat-card__value">{formatCredits(ocrCredits)}</span>
-            <span className="ocr-stat-card__sub">{CREDIT_RATES.OCR_PER_PAGE} 크레딧/페이지</span>
+
+          {/* 부가 정보 */}
+          <div className="cost-hero__meta">
+            <span className="cost-hero__meta-item">
+              <span className="cost-hero__meta-label">AI 토큰</span>
+              <span className="cost-hero__meta-value">{formatTokens(overview?.total_tokens || 0)}</span>
+            </span>
+            <span className="cost-hero__meta-divider">|</span>
+            <span className="cost-hero__meta-item">
+              <span className="cost-hero__meta-label">OCR 페이지</span>
+              <span className="cost-hero__meta-value">{(ocrOverview?.page_count || 0).toLocaleString()}p</span>
+            </span>
+            <span className="cost-hero__meta-divider">|</span>
+            <span className="cost-hero__meta-item">
+              <span className="cost-hero__meta-label">총 크레딧</span>
+              <span className="cost-hero__meta-value">{formatCredits(totalCredits)} cr</span>
+            </span>
+            <span className="cost-hero__meta-divider">|</span>
+            <span className="cost-hero__meta-item">
+              <span className="cost-hero__meta-label">등록 사용자</span>
+              <span className="cost-hero__meta-value">{overview?.total_users || 0}명</span>
+            </span>
           </div>
-          <div className="ocr-stat-card ocr-stat-card--cost">
-            <span className="ocr-stat-card__label">예상 비용</span>
-            <span className="ocr-stat-card__value">{formatCost(ocrOverview?.estimated_cost_usd || 0)}</span>
-            <span className="ocr-stat-card__sub">≈ ₩{(ocrOverview?.estimated_cost_krw || 0).toLocaleString()}</span>
+        </div>
+      </section>
+
+      {/* ======================================================
+          AI vs OCR 비용 상세 - 병렬 배치
+          ====================================================== */}
+      <section className="ai-usage-page__section">
+        <div className="cost-details-row">
+          {/* AI 비용 상세 */}
+          <div className="cost-detail cost-detail--ai">
+            <div className="cost-detail__header">
+              <h3 className="cost-detail__title">
+                <span className="cost-detail__icon cost-detail__icon--ai">AI</span>
+                AI 비용 상세
+              </h3>
+              <span className="cost-detail__total">{formatCost(overview?.estimated_cost_usd || 0)}</span>
+            </div>
+
+            <div className="cost-detail__items">
+              {(() => {
+                const sources = [
+                  { key: 'doc_embedding', label: '임베딩', color: '#FF9500', tokens: overview?.by_source?.doc_embedding || 0 },
+                  { key: 'rag_api', label: 'RAG API', color: '#007AFF', tokens: overview?.by_source?.rag_api || 0 },
+                  { key: 'n8n_docsummary', label: '문서요약', color: '#34C759', tokens: overview?.by_source?.n8n_docsummary || 0 },
+                  { key: 'chat', label: 'AI 채팅', color: '#AF52DE', tokens: overview?.by_source?.chat || 0 },
+                ];
+
+                const totalTokensVal = sources.reduce((sum, s) => sum + s.tokens, 0);
+                const totalAiCost = overview?.estimated_cost_usd || 0;
+
+                const sourcesWithCost = sources.map(s => ({
+                  ...s,
+                  percent: totalTokensVal > 0 ? (s.tokens / totalTokensVal * 100) : 0,
+                  cost: totalTokensVal > 0 ? (s.tokens / totalTokensVal * totalAiCost) : 0,
+                  credits: tokensToCredits(s.tokens),
+                })).sort((a, b) => b.cost - a.cost);
+
+                return sourcesWithCost.map((source) => (
+                  <div key={source.key} className="cost-item">
+                    <div className="cost-item__row">
+                      <span className="cost-item__dot" style={{ backgroundColor: source.color }} />
+                      <span className="cost-item__label">{source.label}</span>
+                      <span className="cost-item__cost">{formatCost(source.cost)}</span>
+                    </div>
+                    <div className="cost-item__bar">
+                      <div
+                        className="cost-item__bar-fill"
+                        style={{ width: `${source.percent}%`, backgroundColor: source.color }}
+                      />
+                    </div>
+                    <div className="cost-item__meta">
+                      <span>{source.percent.toFixed(1)}%</span>
+                      <span>{formatTokens(source.tokens)} tokens</span>
+                      <span>{formatCredits(source.credits)} cr</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+
+          {/* OCR 비용 상세 */}
+          <div className="cost-detail cost-detail--ocr">
+            <div className="cost-detail__header">
+              <h3 className="cost-detail__title">
+                <span className="cost-detail__icon cost-detail__icon--ocr">OCR</span>
+                OCR 비용 상세
+              </h3>
+              <span className="cost-detail__total">{formatCost(ocrOverview?.estimated_cost_usd || 0)}</span>
+            </div>
+
+            <div className="cost-detail__ocr-content">
+              <div className="ocr-formula">
+                <span className="ocr-formula__pages">{(ocrOverview?.page_count || 0).toLocaleString()} 페이지</span>
+                <span className="ocr-formula__x">×</span>
+                <span className="ocr-formula__rate">$0.0015/page</span>
+                <span className="ocr-formula__eq">=</span>
+                <span className="ocr-formula__result">{formatCost(ocrOverview?.estimated_cost_usd || 0)}</span>
+              </div>
+
+              <div className="ocr-stats">
+                <div className="ocr-stat">
+                  <span className="ocr-stat__label">크레딧</span>
+                  <span className="ocr-stat__value">{formatCredits(ocrCredits)} cr</span>
+                </div>
+                <div className="ocr-stat">
+                  <span className="ocr-stat__label">처리 건수</span>
+                  <span className="ocr-stat__value">{ocrOverview?.ocr_count || 0}건</span>
+                </div>
+                <div className="ocr-stat">
+                  <span className="ocr-stat__label">누적 페이지</span>
+                  <span className="ocr-stat__value">{(ocrOverview?.pages_total || 0).toLocaleString()}p</span>
+                </div>
+              </div>
+
+              <div className="ocr-status">
+                <span className="ocr-status__item">
+                  <span className="ocr-status__dot ocr-status__dot--pending" />
+                  대기 {ocrOverview?.ocr_pending || 0}
+                </span>
+                <span className="ocr-status__item">
+                  <span className="ocr-status__dot ocr-status__dot--processing" />
+                  처리중 {ocrOverview?.ocr_processing || 0}
+                </span>
+                <span className="ocr-status__item">
+                  <span className="ocr-status__dot ocr-status__dot--failed" />
+                  실패 {ocrOverview?.ocr_failed || 0}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

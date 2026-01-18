@@ -246,12 +246,17 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // 전체 등록 사용자 수 조회 (관리자 포함)
+      const usersCollection = db.collection('users');
+      const totalUsers = await usersCollection.countDocuments();
+
       const overview = await getSystemOverview(analyticsDb, startDate, endDate);
 
       res.json({
         success: true,
         data: {
           ...overview,
+          total_users: totalUsers,
           start_date: startDate.toISOString().split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
           formatted: {
