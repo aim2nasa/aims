@@ -163,18 +163,18 @@ export const customerToolDefinitions = [
   },
   {
     name: 'restore_customer',
-    description: '삭제된(휴면) 고객을 복구합니다. 삭제된 고객만 복구할 수 있습니다.',
+    description: '휴면 고객을 활성화합니다. 휴면 상태의 고객만 활성화할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        customerId: { type: 'string', description: '복구할 고객 ID' }
+        customerId: { type: 'string', description: '활성화할 휴면 고객 ID' }
       },
       required: ['customerId']
     }
   },
   {
     name: 'list_deleted_customers',
-    description: '삭제된(휴면) 고객 목록을 조회합니다. 복구 가능한 고객을 확인할 수 있습니다.',
+    description: '휴면 고객 목록을 조회합니다. 활성화 가능한 고객을 확인할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
