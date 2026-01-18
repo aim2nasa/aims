@@ -52,8 +52,7 @@ async function loadToolHandlers() {
     search_documents: documents.handleSearchDocuments,
     get_document: documents.handleGetDocument,
     list_customer_documents: documents.handleListCustomerDocuments,
-    delete_document: documents.handleDeleteDocument,
-    delete_documents: documents.handleDeleteDocuments,
+    find_document_by_filename: documents.handleFindDocumentByFilename,
     // 메모 관련
     add_customer_memo: memos.handleAddMemo,
     list_customer_memos: memos.handleListMemos,
