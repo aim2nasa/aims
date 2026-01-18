@@ -335,6 +335,12 @@ export async function handleGetCustomer(args: unknown) {
       customerId: objectId
     });
 
+    // 계약 수: 가장 최신 annual_report의 contracts 배열에서 조회
+    const latestAr = customer.annual_reports?.sort((a: { issue_date?: Date }, b: { issue_date?: Date }) =>
+      new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime()
+    )[0];
+    const contractCount = latestAr?.contracts?.length || 0;
+
     // 민감 정보 제외
     const safeCustomer = {
       id: customer._id.toString(),
@@ -356,7 +362,8 @@ export async function handleGetCustomer(args: unknown) {
         createdAt: customer.meta?.created_at,
         updatedAt: customer.meta?.updated_at
       },
-      documentCount
+      documentCount,
+      contractCount
     };
 
     return {
