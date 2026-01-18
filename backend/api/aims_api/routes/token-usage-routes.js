@@ -233,13 +233,12 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/ai-usage/overview', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 기간 계산
+      // 기간 계산 (UTC 기준)
       let startDate, endDate;
       if (req.query.start && req.query.end) {
-        startDate = new Date(req.query.start);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(req.query.end);
-        endDate.setHours(23, 59, 59, 999);
+        // UTC 기준으로 날짜 설정 (타임존 문제 방지)
+        startDate = new Date(req.query.start + 'T00:00:00.000Z');
+        endDate = new Date(req.query.end + 'T23:59:59.999Z');
       } else {
         const days = parseInt(req.query.days) || 30;
         endDate = new Date();
@@ -287,11 +286,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       let dailyUsage;
 
       if (req.query.start && req.query.end) {
-        // start/end 범위로 조회
-        const startDate = new Date(req.query.start);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(req.query.end);
-        endDate.setHours(23, 59, 59, 999);
+        // start/end 범위로 조회 (UTC 기준)
+        const startDate = new Date(req.query.start + 'T00:00:00.000Z');
+        const endDate = new Date(req.query.end + 'T23:59:59.999Z');
 
         dailyUsage = await getDailyUsageByRange(analyticsDb, startDate, endDate);
       } else {
@@ -327,13 +324,12 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/ai-usage/top-users', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
-      // 기간 계산
+      // 기간 계산 (UTC 기준)
       let startDate, endDate;
       if (req.query.start && req.query.end) {
-        startDate = new Date(req.query.start);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(req.query.end);
-        endDate.setHours(23, 59, 59, 999);
+        // UTC 기준으로 날짜 설정 (타임존 문제 방지)
+        startDate = new Date(req.query.start + 'T00:00:00.000Z');
+        endDate = new Date(req.query.end + 'T23:59:59.999Z');
       } else {
         const days = parseInt(req.query.days) || 30;
         endDate = new Date();

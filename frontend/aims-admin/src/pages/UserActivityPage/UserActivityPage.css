@@ -137,7 +137,7 @@
 }
 
 .user-table__th {
-  padding: 10px 12px;
+  padding: 8px 8px;
   text-align: left;
   font-size: 11px;
   font-weight: var(--font-weight-semibold);
@@ -146,13 +146,13 @@
   white-space: nowrap;
 }
 
-.user-table__th--user { min-width: 180px; }
-.user-table__th--tier { width: 80px; }
-.user-table__th--credit { min-width: 160px; }
-.user-table__th--ai { min-width: 200px; }
-.user-table__th--ocr { min-width: 130px; }
-.user-table__th--storage { min-width: 140px; }
-.user-table__th--activity { width: 80px; }
+.user-table__th--user { min-width: 140px; }
+.user-table__th--tier { width: 60px; }
+.user-table__th--credit { min-width: 130px; }
+.user-table__th--ai { min-width: 180px; }
+.user-table__th--ocr { min-width: 100px; }
+.user-table__th--storage { min-width: 110px; }
+.user-table__th--activity { width: 70px; }
 
 /* Table Body */
 .user-table__row {
@@ -181,7 +181,7 @@
 }
 
 .user-table__td {
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--color-border-light);
   vertical-align: middle;
 }
@@ -272,17 +272,17 @@
 }
 
 /* ============================================
-   Usage Cell (Inline Progress Bar)
+   Usage Cell (Inline Progress Bar - Compact)
    ============================================ */
 .usage-cell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .usage-bar-inline {
-  width: 60px;
-  height: 6px;
+  width: 40px;
+  height: 5px;
   background: var(--color-border-light);
   border-radius: 3px;
   overflow: hidden;
@@ -309,8 +309,8 @@
 
 .usage-cell__text {
   font-weight: var(--font-weight-semibold);
-  font-size: 11px;
-  min-width: 32px;
+  font-size: 10px;
+  min-width: 28px;
 }
 
 .usage-cell__text--normal {
@@ -326,8 +326,15 @@
 }
 
 .usage-cell__values {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono, monospace);
+}
+
+.usage-cell__cost {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
   font-family: var(--font-family-mono, monospace);
 }
 
@@ -362,18 +369,22 @@
 }
 
 /* ============================================
-   AI Source Stack Bar
+   AI Source Stack Bar (Compact)
    ============================================ */
 .ai-stack {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.ai-stack--compact {
+  gap: 4px;
 }
 
 .ai-stack__bar {
-  width: 120px;
-  height: 8px;
-  border-radius: 4px;
+  width: 50px;
+  height: 6px;
+  border-radius: 3px;
   overflow: hidden;
   display: flex;
   flex-shrink: 0;
@@ -388,23 +399,30 @@
 .ai-stack__label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-size: 10px;
   color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
 .ai-stack__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .ai-stack__total {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  font-family: var(--font-family-mono, monospace);
+}
+
+.ai-stack__cost {
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
   font-family: var(--font-family-mono, monospace);
 }
 
@@ -533,8 +551,9 @@
    Detail Panel
    ============================================ */
 .user-detail-panel {
-  width: 400px;
-  min-width: 400px;
+  width: 420px;
+  min-width: 380px;
+  max-width: 450px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -999,4 +1018,254 @@
   font-size: 10px;
   color: var(--color-text-tertiary);
   margin-left: var(--spacing-xs);
+}
+
+/* ============================================
+   Credit Breakdown (크레딧 사용 내역)
+   ============================================ */
+.credit-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.credit-breakdown__empty {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+/* 총계 */
+.credit-breakdown__total {
+  text-align: center;
+  padding: var(--spacing-sm) 0;
+}
+
+.credit-breakdown__total-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.credit-breakdown__credits {
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.credit-breakdown__cost {
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
+}
+
+/* AI vs OCR 비율 바 */
+.credit-breakdown__ratio-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--color-border-light);
+}
+
+.credit-breakdown__ratio-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.credit-breakdown__ratio-segment--ai {
+  background: linear-gradient(90deg, #AF52DE 0%, #007AFF 100%);
+}
+
+.credit-breakdown__ratio-segment--ocr {
+  background: #34C759;
+}
+
+/* AI vs OCR 요약 */
+.credit-breakdown__summary {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+}
+
+.credit-breakdown__category {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.credit-breakdown__category-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.credit-breakdown__category-dot--ai {
+  background: linear-gradient(135deg, #AF52DE 0%, #007AFF 100%);
+}
+
+.credit-breakdown__category-dot--ocr {
+  background: #34C759;
+}
+
+.credit-breakdown__category-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 28px;
+}
+
+.credit-breakdown__category-percent {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  min-width: 35px;
+  text-align: right;
+}
+
+.credit-breakdown__category-credits {
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono, monospace);
+  min-width: 50px;
+  text-align: right;
+}
+
+.credit-breakdown__category-cost {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* 상세 섹션 */
+.credit-breakdown__detail {
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+}
+
+.credit-breakdown__detail-header {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* 상세 아이템 */
+.credit-breakdown__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.credit-breakdown__item-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.credit-breakdown__item-dot--ocr {
+  background: #34C759;
+}
+
+.credit-breakdown__item-name {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  min-width: 45px;
+}
+
+.credit-breakdown__item-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border-light);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 30px;
+}
+
+.credit-breakdown__item-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.credit-breakdown__item-bar-fill--ocr {
+  background: #34C759;
+}
+
+.credit-breakdown__item-percent {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 25px;
+  text-align: right;
+}
+
+.credit-breakdown__item-tokens {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono, monospace);
+  min-width: 35px;
+  text-align: right;
+}
+
+.credit-breakdown__item-credits {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono, monospace);
+  min-width: 45px;
+  text-align: right;
+}
+
+.credit-breakdown__item-cost {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* ============================================
+   Resize Handle (패널 리사이즈)
+   ============================================ */
+.resize-handle {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 40px;
+  background: var(--color-border);
+  border-radius: 2px;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, height 0.15s ease;
+}
+
+.resize-handle:hover::before,
+.resize-handle--active::before {
+  opacity: 1;
+  height: 60px;
+  background: var(--color-primary);
+}
+
+.resize-handle:hover,
+.resize-handle--active {
+  background: rgba(0, 122, 255, 0.05);
 }

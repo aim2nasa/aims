@@ -37,14 +37,29 @@ import './AIUsagePage.css';
 
 type PeriodType = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-// 최근 24시간 범위 계산
+// 최근 24시간 범위 계산 (타임존 문제 방지)
 function getLast24HoursRange(): { start: string; end: string } {
   const now = new Date();
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  return {
-    start: yesterday.toISOString().split('T')[0],
-    end: now.toISOString().split('T')[0],
+  // formatLocalDate 함수 사용 (아래 정의됨)
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
+  return {
+    start: formatDate(yesterday),
+    end: formatDate(now),
+  };
+}
+
+// 로컬 Date를 YYYY-MM-DD 문자열로 변환 (타임존 문제 방지)
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // 현재 주간 범위 계산 (월~일)
@@ -55,14 +70,13 @@ function getCurrentWeekRange(): { start: string; end: string } {
 
   const monday = new Date(now);
   monday.setDate(now.getDate() + mondayOffset);
-  monday.setHours(0, 0, 0, 0);
 
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
   return {
-    start: monday.toISOString().split('T')[0],
-    end: sunday.toISOString().split('T')[0],
+    start: formatLocalDate(monday),
+    end: formatLocalDate(sunday),
   };
 }
 
@@ -74,13 +88,13 @@ function getYearRange(year: number): { start: string; end: string } {
   };
 }
 
-// 월 범위 계산
+// 월 범위 계산 (타임존 문제 방지 - 문자열 직접 생성)
 function getMonthRange(year: number, month: number): { start: string; end: string } {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0); // 다음 달의 0일 = 이번 달의 마지막 날
+  const lastDay = new Date(year, month, 0).getDate(); // 해당 월의 마지막 날
+  const monthStr = month.toString().padStart(2, '0');
   return {
-    start: startDate.toISOString().split('T')[0],
-    end: endDate.toISOString().split('T')[0],
+    start: `${year}-${monthStr}-01`,
+    end: `${year}-${monthStr}-${lastDay.toString().padStart(2, '0')}`,
   };
 }
 

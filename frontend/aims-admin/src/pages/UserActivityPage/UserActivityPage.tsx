@@ -4,7 +4,7 @@
  * @since 2025-12-14
  */
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
@@ -12,6 +12,7 @@ import {
   formatBytes,
   formatTokens,
   formatCredits,
+  formatCost,
   formatRelativeTime,
   type UserActivitySummary,
   type AISourceUsage,
@@ -61,16 +62,18 @@ const LIMIT_OPTIONS = [
   { value: 100, label: '100개씩' },
 ];
 
-// 인라인 진행바 컴포넌트
+// 인라인 진행바 컴포넌트 (비용 표시 지원)
 const UsageBar = ({
   used,
   quota,
   percent,
+  cost,
   formatValue = (v: number) => v.toString(),
 }: {
   used: number;
   quota: number;
   percent: number;
+  cost?: number;
   formatValue?: (v: number) => string;
 }) => {
   const level = percent >= 100 ? 'danger' : percent >= 80 ? 'warning' : 'normal';
@@ -101,19 +104,24 @@ const UsageBar = ({
         {isOverflow && <span className="usage-cell__overflow-icon">!</span>}
       </span>
       <span className="usage-cell__values">
-        ({formatValue(used)}{hasQuota ? `/${formatValue(quota)}` : ''})
+        ({formatValue(used)})
       </span>
+      {cost !== undefined && cost > 0 && (
+        <span className="usage-cell__cost">{formatCost(cost)}</span>
+      )}
     </div>
   );
 };
 
-// AI 소스 스택바 컴포넌트
+// AI 소스 스택바 컴포넌트 (컴팩트 + 비용 표시)
 const AISourceStackBar = ({
   sources,
-  totalTokens
+  totalTokens,
+  totalCost
 }: {
   sources: Record<string, AISourceUsage>;
   totalTokens: number;
+  totalCost: number;
 }) => {
   if (totalTokens === 0 || Object.keys(sources).length === 0) {
     return <span className="ai-stack__empty">-</span>;
@@ -132,7 +140,7 @@ const AISourceStackBar = ({
   const topSource = sortedSources[0];
 
   return (
-    <div className="ai-stack">
+    <div className="ai-stack ai-stack--compact">
       <div className="ai-stack__bar">
         {sortedSources.map(({ key, percent, config }) => (
           <div
@@ -154,9 +162,16 @@ const AISourceStackBar = ({
         {topSource.config.label} {topSource.percent}%
       </span>
       <span className="ai-stack__total">{formatTokens(totalTokens)}</span>
+      <span className="ai-stack__cost">{formatCost(totalCost)}</span>
     </div>
   );
 };
+
+// 패널 너비 localStorage 키
+const PANEL_WIDTH_KEY = 'userActivity_panelWidth';
+const DEFAULT_PANEL_WIDTH = 420;
+const MIN_PANEL_WIDTH = 320;
+const MAX_PANEL_WIDTH = 600;
 
 export const UserActivityPage = () => {
   const [page, setPage] = useState(1);
@@ -166,6 +181,44 @@ export const UserActivityPage = () => {
   const [sortBy, setSortBy] = useState('last_activity_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // 패널 리사이즈
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const saved = localStorage.getItem(PANEL_WIDTH_KEY);
+    return saved ? Number(saved) : DEFAULT_PANEL_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  // 리사이즈 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeRef.current = { startX: e.clientX, startWidth: panelWidth };
+  }, [panelWidth]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const delta = resizeRef.current.startX - e.clientX;
+      const newWidth = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, resizeRef.current.startWidth + delta));
+      setPanelWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth));
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, panelWidth]);
 
   // 검색어 debounce (300ms)
   const debouncedSearch = useDebounce(search, 300);
@@ -284,27 +337,7 @@ export const UserActivityPage = () => {
                       <th className="user-table__th user-table__th--user">사용자</th>
                       <th className="user-table__th user-table__th--tier">등급</th>
                       <th className="user-table__th user-table__th--credit">크레딧</th>
-                      <th className="user-table__th user-table__th--ai">
-                        <span>AI 사용량 (30일)</span>
-                        <div className="ai-legend">
-                          <span className="ai-legend__item" title="채팅">
-                            <span className="ai-legend__dot ai-legend__dot--chat" />
-                            <span className="ai-legend__text">채팅</span>
-                          </span>
-                          <span className="ai-legend__item" title="임베딩">
-                            <span className="ai-legend__dot ai-legend__dot--embed" />
-                            <span className="ai-legend__text">임베딩</span>
-                          </span>
-                          <span className="ai-legend__item" title="RAG">
-                            <span className="ai-legend__dot ai-legend__dot--rag" />
-                            <span className="ai-legend__text">RAG</span>
-                          </span>
-                          <span className="ai-legend__item" title="요약">
-                            <span className="ai-legend__dot ai-legend__dot--summary" />
-                            <span className="ai-legend__text">요약</span>
-                          </span>
-                        </div>
-                      </th>
+                      <th className="user-table__th user-table__th--ai">AI (30일)</th>
                       <th className="user-table__th user-table__th--ocr">OCR</th>
                       <th className="user-table__th user-table__th--storage">스토리지</th>
                       <th className="user-table__th user-table__th--activity">최근활동</th>
@@ -345,12 +378,13 @@ export const UserActivityPage = () => {
                             </span>
                           </td>
 
-                          {/* 크레딧 */}
+                          {/* 크레딧 (AI + OCR 비용 합산) */}
                           <td className="user-table__td user-table__td--credit">
                             <UsageBar
                               used={user.credits_used}
                               quota={user.credit_quota}
                               percent={user.credit_usage_percent}
+                              cost={(user.ai_cost_30d || 0) + (user.ocr_cost_30d || 0)}
                               formatValue={formatCredits}
                             />
                           </td>
@@ -360,6 +394,7 @@ export const UserActivityPage = () => {
                             <AISourceStackBar
                               sources={user.ai_by_source || {}}
                               totalTokens={user.ai_tokens_30d}
+                              totalCost={user.ai_cost_30d}
                             />
                           </td>
 
@@ -369,6 +404,7 @@ export const UserActivityPage = () => {
                               used={user.ocr_pages_30d}
                               quota={user.ocr_page_quota}
                               percent={user.ocr_usage_percent}
+                              cost={user.ocr_cost_30d}
                               formatValue={(v) => `${v}p`}
                             />
                           </td>
@@ -456,12 +492,19 @@ export const UserActivityPage = () => {
           )}
         </div>
 
-        {/* Detail Panel */}
+        {/* Detail Panel with Resize Handle */}
         {selectedUserId && (
-          <UserDetailPanel
-            userId={selectedUserId}
-            onClose={() => setSelectedUserId(null)}
-          />
+          <>
+            <div
+              className={`resize-handle ${isResizing ? 'resize-handle--active' : ''}`}
+              onMouseDown={handleResizeStart}
+            />
+            <UserDetailPanel
+              userId={selectedUserId}
+              onClose={() => setSelectedUserId(null)}
+              width={panelWidth}
+            />
+          </>
         )}
       </div>
     </div>

@@ -96,7 +96,8 @@ export interface ActivitySummary {
   };
   ai_usage: {
     total_tokens: number;
-    by_source: Record<string, number>;
+    total_cost: number;
+    by_source: Record<string, { tokens: number; cost: number }>;
   };
   ocr_usage: {
     total: number;

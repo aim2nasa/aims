@@ -44,6 +44,7 @@ import './UserActivityPage.css';
 interface UserDetailPanelProps {
   userId: string;
   onClose: () => void;
+  width?: number;
 }
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -82,7 +83,7 @@ const getStoredDocPageSize = (): number => {
   return stored ? Number(stored) : 10;
 };
 
-export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
+export const UserDetailPanel = ({ userId, onClose, width }: UserDetailPanelProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
 
   // 오류 목록 정렬 및 페이지네이션
@@ -223,88 +224,144 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
         </div>
       </div>
 
-      {/* AI 사용량 */}
+      {/* 크레딧 사용 내역 (통합 비용 분석) */}
       <div className="user-detail-panel__section">
-        <h4 className="user-detail-panel__section-title">AI 사용량 (30일) - 소스별</h4>
-        <div className="user-detail-panel__stats-grid">
-          <div className="stat-item stat-item--primary">
-            <span className="stat-value">{formatTokens(activity_summary.ai_usage.total_tokens)}</span>
-            <span className="stat-label">총 토큰</span>
-          </div>
-          {Object.entries(activity_summary.ai_usage.by_source || {}).map(([source, tokens]) => (
-            <div key={source} className="stat-item">
-              <span className="stat-value">{formatTokens(tokens as number)}</span>
-              <span className="stat-label">{AI_SOURCE_LABELS[source] || source}</span>
-            </div>
-          ))}
-        </div>
-        {/* AI 소스별 상세 - 그래픽 비율 표시 */}
-        {Object.keys(activity_summary.ai_usage.by_source || {}).length > 0 && (
-          <div className="user-detail-panel__ai-sources">
-            {Object.entries(activity_summary.ai_usage.by_source || {})
-              .sort(([, a], [, b]) => (b as number) - (a as number))
-              .map(([source, tokens]) => {
-                const tokenNum = tokens as number;
-                const percent = activity_summary.ai_usage.total_tokens > 0
-                  ? Math.round((tokenNum / activity_summary.ai_usage.total_tokens) * 100)
-                  : 0;
-                const config = AI_SOURCE_CONFIG[source] || AI_SOURCE_CONFIG.unknown;
-                return (
-                  <div key={source} className="ai-source-row">
-                    <div className="ai-source-row__label">
-                      <span
-                        className="ai-source-row__dot"
-                        style={{ backgroundColor: config.color }}
-                      />
-                      <span className="ai-source-row__name">{config.label}</span>
-                    </div>
-                    <div className="ai-source-row__bar-container">
-                      <div
-                        className="ai-source-row__bar"
-                        style={{ width: `${percent}%`, backgroundColor: config.color }}
-                      />
-                    </div>
-                    <div className="ai-source-row__stats">
-                      <span className="ai-source-row__percent">{percent}%</span>
-                      <span className="ai-source-row__tokens">{formatTokens(tokenNum)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        )}
-      </div>
-
-      {/* OCR 사용량 */}
-      <div className="user-detail-panel__section">
-        <h4 className="user-detail-panel__section-title">OCR 사용량</h4>
+        <h4 className="user-detail-panel__section-title">크레딧 사용 내역</h4>
         {(() => {
-          const totalPages = activity_summary.ocr_usage.total_pages || 0;
-          const thisMonthPages = activity_summary.ocr_usage.this_month_pages || 0;
-          const totalDocs = activity_summary.ocr_usage.total || 0;
-          const thisMonthDocs = activity_summary.ocr_usage.this_month || 0;
+          // 크레딧 환산율
+          const OCR_CREDIT_PER_PAGE = 2;
+          const AI_CREDIT_PER_1K_TOKENS = 0.5;
+          // OCR 비용 환산율 (USD)
+          const OCR_COST_PER_PAGE = 0.0065;
+
+          // OCR 크레딧/비용
+          const ocrPages = activity_summary.ocr_usage.total_pages || 0;
+          const ocrCredits = ocrPages * OCR_CREDIT_PER_PAGE;
+          const ocrCost = ocrPages * OCR_COST_PER_PAGE;
+
+          // AI 소스별 크레딧/비용 계산 (실제 기록된 비용 사용)
+          const aiSources = Object.entries(activity_summary.ai_usage.by_source || {})
+            .map(([source, data]) => {
+              // 새 API: { tokens, cost } 형식
+              const tokenNum = typeof data === 'number' ? data : data.tokens;
+              const actualCost = typeof data === 'number' ? 0 : (data.cost || 0);
+              const credits = (tokenNum / 1000) * AI_CREDIT_PER_1K_TOKENS;
+              const config = AI_SOURCE_CONFIG[source] || AI_SOURCE_CONFIG.unknown;
+              return { source, tokens: tokenNum, credits, cost: actualCost, config };
+            })
+            .sort((a, b) => b.credits - a.credits);
+
+          const totalAiCredits = aiSources.reduce((sum, s) => sum + s.credits, 0);
+          // 실제 기록된 AI 비용 사용 (API에서 total_cost 반환)
+          const totalAiCost = activity_summary.ai_usage.total_cost || aiSources.reduce((sum, s) => sum + s.cost, 0);
+          const totalCredits = totalAiCredits + ocrCredits;
+          const totalCost = totalAiCost + ocrCost;
+
+          // 비율 계산
+          const aiPercent = totalCredits > 0 ? Math.round((totalAiCredits / totalCredits) * 100) : 0;
+          const ocrPercent = totalCredits > 0 ? Math.round((ocrCredits / totalCredits) * 100) : 0;
+
+          if (totalCredits === 0) {
+            return <div className="credit-breakdown__empty">사용 내역이 없습니다.</div>;
+          }
 
           return (
-            <>
-              <div className="user-detail-panel__stats-grid">
-                <div className="stat-item" title={`${totalPages}페이지 / ${totalDocs}문서`}>
-                  <span className="stat-value">{totalPages}p</span>
-                  <span className="stat-label">전체 페이지</span>
-                </div>
-                <div className="stat-item" title={`${thisMonthPages}페이지 / ${thisMonthDocs}문서`}>
-                  <span className="stat-value">{thisMonthPages}p</span>
-                  <span className="stat-label">이번달</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{totalDocs}</span>
-                  <span className="stat-label">전체 문서</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{thisMonthDocs}</span>
-                  <span className="stat-label">이번달 문서</span>
+            <div className="credit-breakdown">
+              {/* 총계 */}
+              <div className="credit-breakdown__total">
+                <div className="credit-breakdown__total-value">
+                  <span className="credit-breakdown__credits">{totalCredits.toFixed(1)} 크레딧</span>
+                  <span className="credit-breakdown__cost">${totalCost.toFixed(2)}</span>
                 </div>
               </div>
-            </>
+
+              {/* AI vs OCR 비율 바 */}
+              <div className="credit-breakdown__ratio-bar">
+                {totalAiCredits > 0 && (
+                  <div
+                    className="credit-breakdown__ratio-segment credit-breakdown__ratio-segment--ai"
+                    style={{ width: `${aiPercent}%` }}
+                    title={`AI: ${aiPercent}%`}
+                  />
+                )}
+                {ocrCredits > 0 && (
+                  <div
+                    className="credit-breakdown__ratio-segment credit-breakdown__ratio-segment--ocr"
+                    style={{ width: `${ocrPercent}%` }}
+                    title={`OCR: ${ocrPercent}%`}
+                  />
+                )}
+              </div>
+
+              {/* AI vs OCR 요약 */}
+              <div className="credit-breakdown__summary">
+                <div className="credit-breakdown__category">
+                  <span className="credit-breakdown__category-dot credit-breakdown__category-dot--ai" />
+                  <span className="credit-breakdown__category-name">AI</span>
+                  <span className="credit-breakdown__category-percent">{aiPercent}%</span>
+                  <span className="credit-breakdown__category-credits">{totalAiCredits.toFixed(1)}cr</span>
+                  <span className="credit-breakdown__category-cost">${totalAiCost.toFixed(2)}</span>
+                </div>
+                <div className="credit-breakdown__category">
+                  <span className="credit-breakdown__category-dot credit-breakdown__category-dot--ocr" />
+                  <span className="credit-breakdown__category-name">OCR</span>
+                  <span className="credit-breakdown__category-percent">{ocrPercent}%</span>
+                  <span className="credit-breakdown__category-credits">{ocrCredits.toFixed(1)}cr</span>
+                  <span className="credit-breakdown__category-cost">${ocrCost.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* AI 소스별 상세 */}
+              {aiSources.length > 0 && (
+                <div className="credit-breakdown__detail">
+                  <div className="credit-breakdown__detail-header">AI 상세</div>
+                  {aiSources.map(({ source, tokens, credits, cost, config }) => {
+                    const sourcePercent = totalCredits > 0
+                      ? Math.round((credits / totalCredits) * 100)
+                      : 0;
+                    return (
+                      <div key={source} className="credit-breakdown__item">
+                        <span
+                          className="credit-breakdown__item-dot"
+                          style={{ backgroundColor: config.color }}
+                        />
+                        <span className="credit-breakdown__item-name">{config.label}</span>
+                        <div className="credit-breakdown__item-bar">
+                          <div
+                            className="credit-breakdown__item-bar-fill"
+                            style={{ width: `${sourcePercent * 2}%`, backgroundColor: config.color }}
+                          />
+                        </div>
+                        <span className="credit-breakdown__item-percent">{sourcePercent}%</span>
+                        <span className="credit-breakdown__item-tokens">{formatTokens(tokens)}</span>
+                        <span className="credit-breakdown__item-credits">{credits.toFixed(1)}cr</span>
+                        <span className="credit-breakdown__item-cost">${cost.toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* OCR 상세 */}
+              {ocrCredits > 0 && (
+                <div className="credit-breakdown__detail">
+                  <div className="credit-breakdown__detail-header">OCR 상세</div>
+                  <div className="credit-breakdown__item">
+                    <span className="credit-breakdown__item-dot credit-breakdown__item-dot--ocr" />
+                    <span className="credit-breakdown__item-name">페이지 처리</span>
+                    <div className="credit-breakdown__item-bar">
+                      <div
+                        className="credit-breakdown__item-bar-fill credit-breakdown__item-bar-fill--ocr"
+                        style={{ width: `${ocrPercent * 2}%` }}
+                      />
+                    </div>
+                    <span className="credit-breakdown__item-percent">{ocrPercent}%</span>
+                    <span className="credit-breakdown__item-credits">{ocrPages}p</span>
+                    <span className="credit-breakdown__item-cost">${ocrCost.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })()}
       </div>
@@ -716,7 +773,7 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
   };
 
   return (
-    <div className="user-detail-panel">
+    <div className="user-detail-panel" style={width ? { width, minWidth: width } : undefined}>
       <div className="user-detail-panel__header">
         <span className="user-detail-panel__title">
           {user.name} 상세

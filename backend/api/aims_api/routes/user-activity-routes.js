@@ -466,7 +466,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       }
 
       // AI 사용량 (30일) - ai_token_usage 컬렉션 사용
-      let aiUsage = { total_tokens: 0, by_source: {} };
+      // 소스별 tokens, cost 모두 반환 (실제 기록된 비용)
+      let aiUsage = { total_tokens: 0, total_cost: 0, by_source: {} };
       if (analyticsDb) {
         try {
           const tokenUsageCollection = analyticsDb.collection('ai_token_usage');
@@ -480,18 +481,29 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             {
               $group: {
                 _id: '$source',
-                total_tokens: { $sum: '$total_tokens' }
+                total_tokens: { $sum: '$total_tokens' },
+                total_cost: { $sum: '$estimated_cost_usd' }
               }
             }
           ]).toArray();
 
           let totalTokens = 0;
+          let totalCost = 0;
           const bySource = {};
           for (const a of aiData) {
-            bySource[a._id] = a.total_tokens;
+            const source = a._id || 'unknown';
+            bySource[source] = {
+              tokens: a.total_tokens,
+              cost: Math.round(a.total_cost * 10000) / 10000
+            };
             totalTokens += a.total_tokens;
+            totalCost += a.total_cost;
           }
-          aiUsage = { total_tokens: totalTokens, by_source: bySource };
+          aiUsage = {
+            total_tokens: totalTokens,
+            total_cost: Math.round(totalCost * 10000) / 10000,
+            by_source: bySource
+          };
         } catch (err) {
           console.warn('[user-activity detail] AI 사용량 조회 실패:', err.message);
         }
