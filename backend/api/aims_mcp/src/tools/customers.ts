@@ -594,7 +594,7 @@ export async function handleUpdateCustomer(args: unknown) {
 }
 
 /**
- * 삭제된 고객 복구 핸들러
+ * 휴면 고객 활성화 핸들러
  */
 export async function handleRestoreCustomer(args: unknown) {
   try {
@@ -610,15 +610,15 @@ export async function handleRestoreCustomer(args: unknown) {
       };
     }
 
-    // 삭제된 고객 확인 (deleted_at 필드가 있는 경우)
+    // 휴면 고객 확인 (meta.status가 'inactive'인 경우)
     const customer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
       _id: objectId,
       'meta.created_by': userId,
-      deleted_at: { $exists: true }
+      'meta.status': 'inactive'
     });
 
     if (!customer) {
-      // 삭제되지 않은 고객이거나 권한 없음
+      // 휴면 상태가 아닌 고객이거나 권한 없음
       const activeCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
         _id: objectId,
         'meta.created_by': userId
@@ -627,7 +627,7 @@ export async function handleRestoreCustomer(args: unknown) {
       if (activeCustomer) {
         return {
           isError: true,
-          content: [{ type: 'text' as const, text: '이 고객은 삭제되지 않은 활성 고객입니다.' }]
+          content: [{ type: 'text' as const, text: '이 고객은 이미 활성 상태입니다.' }]
         };
       }
 
@@ -639,12 +639,12 @@ export async function handleRestoreCustomer(args: unknown) {
 
     const customerName = customer.personal_info?.name || '알 수 없음';
 
-    // 이름 중복 체크 (복구 시에도 동일 이름 체크)
+    // 이름 중복 체크 (활성화 시에도 동일 이름 체크)
     const duplicateName = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
       'personal_info.name': { $regex: `^${escapeRegex(customerName)}$`, $options: 'i' },
       'meta.created_by': userId,
       _id: { $ne: objectId },
-      deleted_at: { $exists: false }
+      'meta.status': 'active'
     });
 
     if (duplicateName) {
@@ -652,16 +652,15 @@ export async function handleRestoreCustomer(args: unknown) {
         isError: true,
         content: [{
           type: 'text' as const,
-          text: `같은 이름의 활성 고객이 이미 존재합니다: ${customerName}. 먼저 기존 고객을 삭제하거나 이름을 변경해주세요.`
+          text: `같은 이름의 활성 고객이 이미 존재합니다: ${customerName}. 먼저 기존 고객을 휴면 처리하거나 이름을 변경해주세요.`
         }]
       };
     }
 
-    // 고객 복구 (deleted_at 필드 제거, 상태 active로 변경)
+    // 휴면 고객 활성화 (상태를 active로 변경)
     const result = await db.collection(COLLECTIONS.CUSTOMERS).findOneAndUpdate(
       { _id: objectId },
       {
-        $unset: { deleted_at: '' },
         $set: {
           'meta.status': 'active',
           'meta.updated_at': new Date()
@@ -673,7 +672,7 @@ export async function handleRestoreCustomer(args: unknown) {
     if (!result) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '고객 복구에 실패했습니다.' }]
+        content: [{ type: 'text' as const, text: '고객 활성화에 실패했습니다.' }]
       };
     }
 
@@ -685,7 +684,7 @@ export async function handleRestoreCustomer(args: unknown) {
           customerId: params.customerId,
           customerName,
           customerType: customer.insurance_info?.customer_type,
-          message: `고객이 성공적으로 복구되었습니다: ${customerName}`
+          message: `휴면 고객이 활성화되었습니다: ${customerName}`
         }, null, 2)
       }]
     };
@@ -699,14 +698,14 @@ export async function handleRestoreCustomer(args: unknown) {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `고객 복구 실패: ${errorMessage}`
+        text: `고객 활성화 실패: ${errorMessage}`
       }]
     };
   }
 }
 
 /**
- * 삭제된 고객 목록 조회 핸들러
+ * 휴면 고객 목록 조회 핸들러
  */
 export async function handleListDeletedCustomers(args: unknown) {
   try {
@@ -714,12 +713,13 @@ export async function handleListDeletedCustomers(args: unknown) {
     const db = getDB();
     const userId = getCurrentUserId();
 
+    // 휴면 고객 조회: meta.status가 'inactive'인 고객
     const customers = await db.collection(COLLECTIONS.CUSTOMERS)
       .find({
         'meta.created_by': userId,
-        deleted_at: { $exists: true }
+        'meta.status': 'inactive'
       })
-      .sort({ deleted_at: -1 })
+      .sort({ 'meta.updated_at': -1 })
       .limit(params.limit || 20)
       .project({
         _id: 1,
@@ -727,13 +727,13 @@ export async function handleListDeletedCustomers(args: unknown) {
         'personal_info.mobile_phone': 1,
         'insurance_info.customer_type': 1,
         'meta.status': 1,
-        deleted_at: 1
+        'meta.updated_at': 1
       })
       .toArray();
 
     const totalCount = await db.collection(COLLECTIONS.CUSTOMERS).countDocuments({
       'meta.created_by': userId,
-      deleted_at: { $exists: true }
+      'meta.status': 'inactive'
     });
 
     return {
@@ -747,11 +747,11 @@ export async function handleListDeletedCustomers(args: unknown) {
             name: c.personal_info?.name,
             phone: c.personal_info?.mobile_phone,
             type: c.insurance_info?.customer_type,
-            deletedAt: c.deleted_at
+            dormantAt: c.meta?.updated_at
           })),
           message: totalCount > 0
-            ? `${totalCount}명의 삭제된 고객이 있습니다. restore_customer 도구로 복구할 수 있습니다.`
-            : '삭제된 고객이 없습니다.'
+            ? `${totalCount}명의 휴면 고객이 있습니다. restore_customer 도구로 활성화할 수 있습니다.`
+            : '휴면 고객이 없습니다.'
         }, null, 2)
       }]
     };
@@ -765,7 +765,7 @@ export async function handleListDeletedCustomers(args: unknown) {
       isError: true,
       content: [{
         type: 'text' as const,
-        text: `삭제된 고객 목록 조회 실패: ${errorMessage}`
+        text: `휴면 고객 목록 조회 실패: ${errorMessage}`
       }]
     };
   }
