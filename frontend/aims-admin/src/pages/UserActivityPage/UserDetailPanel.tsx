@@ -17,12 +17,24 @@ import {
   type UserError,
 } from '@/features/users/userActivityApi';
 
-// AI 소스 표시명
+// AI 소스 표시명 및 색상 (UserActivityPage와 동일)
+const AI_SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
+  chat: { label: '채팅', color: '#AF52DE' },
+  doc_embedding: { label: '임베딩', color: '#FF9500' },
+  rag_api: { label: 'RAG', color: '#007AFF' },
+  n8n_docsummary: { label: '요약', color: '#34C759' },
+  unknown: { label: '기타', color: '#8E8E93' },
+};
+
+// 레거시 키 호환
 const AI_SOURCE_LABELS: Record<string, string> = {
   chat: '채팅',
   embed: '임베딩',
+  doc_embedding: '임베딩',
   rag: 'RAG 검색',
+  rag_api: 'RAG',
   summary: '요약',
+  n8n_docsummary: '요약',
   unknown: '기타',
 };
 import { Button } from '@/shared/ui/Button/Button';
@@ -226,33 +238,39 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
             </div>
           ))}
         </div>
-        {/* AI 소스별 상세 테이블 */}
+        {/* AI 소스별 상세 - 그래픽 비율 표시 */}
         {Object.keys(activity_summary.ai_usage.by_source || {}).length > 0 && (
-          <div className="user-detail-panel__source-table">
-            <table className="source-detail-table">
-              <thead>
-                <tr>
-                  <th>소스</th>
-                  <th>토큰</th>
-                  <th>비율</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(activity_summary.ai_usage.by_source || {}).map(([source, tokens]) => {
-                  const tokenNum = tokens as number;
-                  const percent = activity_summary.ai_usage.total_tokens > 0
-                    ? Math.round((tokenNum / activity_summary.ai_usage.total_tokens) * 100)
-                    : 0;
-                  return (
-                    <tr key={source}>
-                      <td>{AI_SOURCE_LABELS[source] || source}</td>
-                      <td className="text-right">{formatTokens(tokenNum)}</td>
-                      <td className="text-right">{percent}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="user-detail-panel__ai-sources">
+            {Object.entries(activity_summary.ai_usage.by_source || {})
+              .sort(([, a], [, b]) => (b as number) - (a as number))
+              .map(([source, tokens]) => {
+                const tokenNum = tokens as number;
+                const percent = activity_summary.ai_usage.total_tokens > 0
+                  ? Math.round((tokenNum / activity_summary.ai_usage.total_tokens) * 100)
+                  : 0;
+                const config = AI_SOURCE_CONFIG[source] || AI_SOURCE_CONFIG.unknown;
+                return (
+                  <div key={source} className="ai-source-row">
+                    <div className="ai-source-row__label">
+                      <span
+                        className="ai-source-row__dot"
+                        style={{ backgroundColor: config.color }}
+                      />
+                      <span className="ai-source-row__name">{config.label}</span>
+                    </div>
+                    <div className="ai-source-row__bar-container">
+                      <div
+                        className="ai-source-row__bar"
+                        style={{ width: `${percent}%`, backgroundColor: config.color }}
+                      />
+                    </div>
+                    <div className="ai-source-row__stats">
+                      <span className="ai-source-row__percent">{percent}%</span>
+                      <span className="ai-source-row__tokens">{formatTokens(tokenNum)}</span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
@@ -260,43 +278,70 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
       {/* OCR 사용량 */}
       <div className="user-detail-panel__section">
         <h4 className="user-detail-panel__section-title">OCR 사용량</h4>
-        <div className="user-detail-panel__stats-grid">
-          <div
-            className="stat-item"
-            title={`${activity_summary.ocr_usage.total_pages}페이지/${activity_summary.ocr_usage.total}문서`}
-          >
-            <span className="stat-value">{activity_summary.ocr_usage.total_pages}/{activity_summary.ocr_usage.total}</span>
-            <span className="stat-label">전체</span>
-          </div>
-          <div
-            className="stat-item"
-            title={`${activity_summary.ocr_usage.this_month_pages}페이지/${activity_summary.ocr_usage.this_month}문서`}
-          >
-            <span className="stat-value">{activity_summary.ocr_usage.this_month_pages}/{activity_summary.ocr_usage.this_month}</span>
-            <span className="stat-label">이번달</span>
-          </div>
-        </div>
+        {(() => {
+          const totalPages = activity_summary.ocr_usage.total_pages || 0;
+          const thisMonthPages = activity_summary.ocr_usage.this_month_pages || 0;
+          const totalDocs = activity_summary.ocr_usage.total || 0;
+          const thisMonthDocs = activity_summary.ocr_usage.this_month || 0;
+
+          return (
+            <>
+              <div className="user-detail-panel__stats-grid">
+                <div className="stat-item" title={`${totalPages}페이지 / ${totalDocs}문서`}>
+                  <span className="stat-value">{totalPages}p</span>
+                  <span className="stat-label">전체 페이지</span>
+                </div>
+                <div className="stat-item" title={`${thisMonthPages}페이지 / ${thisMonthDocs}문서`}>
+                  <span className="stat-value">{thisMonthPages}p</span>
+                  <span className="stat-label">이번달</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-value">{totalDocs}</span>
+                  <span className="stat-label">전체 문서</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-value">{thisMonthDocs}</span>
+                  <span className="stat-label">이번달 문서</span>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* 스토리지 */}
       <div className="user-detail-panel__section">
         <h4 className="user-detail-panel__section-title">스토리지</h4>
-        <div className="user-detail-panel__storage">
-          <span className="storage-text">
-            {formatBytes(user.storage?.used_bytes || 0)} /{' '}
-            {(user.storage?.quota_bytes || 0) < 0
-              ? '무제한'
-              : formatBytes(user.storage?.quota_bytes || 0)}
-          </span>
-          {(user.storage?.quota_bytes || 0) > 0 && (
-            <div className="storage-bar">
-              <div
-                className="storage-bar__fill"
-                style={{ width: `${Math.min(100, user.storage?.usage_percent || 0)}%` }}
-              />
+        {(() => {
+          const usedBytes = user.storage?.used_bytes || 0;
+          const quotaBytes = user.storage?.quota_bytes || 0;
+          const percent = user.storage?.usage_percent || 0;
+          const hasQuota = quotaBytes > 0;
+          const level = percent >= 100 ? 'danger' : percent >= 80 ? 'warning' : 'normal';
+
+          return (
+            <div className="detail-usage-row">
+              <div className="detail-usage-row__info">
+                <span className="detail-usage-row__values">
+                  {formatBytes(usedBytes)} / {hasQuota ? formatBytes(quotaBytes) : '무제한'}
+                </span>
+                {hasQuota && (
+                  <span className={`detail-usage-row__percent detail-usage-row__percent--${level}`}>
+                    {percent}%
+                  </span>
+                )}
+              </div>
+              {hasQuota && (
+                <div className="detail-usage-row__bar">
+                  <div
+                    className={`detail-usage-row__bar-fill detail-usage-row__bar-fill--${level}`}
+                    style={{ width: `${Math.min(100, percent)}%` }}
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
     </div>
   );

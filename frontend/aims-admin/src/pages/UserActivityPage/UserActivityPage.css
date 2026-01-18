@@ -720,6 +720,141 @@
 }
 
 /* ============================================
+   AI Source Row (Detail Panel - 그래픽 비율)
+   ============================================ */
+.user-detail-panel__ai-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: var(--spacing-sm);
+}
+
+.ai-source-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-source-row__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 70px;
+}
+
+.ai-source-row__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ai-source-row__name {
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+.ai-source-row__bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-source-row__bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.ai-source-row__stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 90px;
+  justify-content: flex-end;
+}
+
+.ai-source-row__percent {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 35px;
+  text-align: right;
+}
+
+.ai-source-row__tokens {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono, monospace);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* ============================================
+   Detail Usage Row (스토리지/OCR/크레딧 비율)
+   ============================================ */
+.detail-usage-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-usage-row__info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-usage-row__values {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.detail-usage-row__percent {
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.detail-usage-row__percent--normal {
+  color: var(--color-primary);
+}
+
+.detail-usage-row__percent--warning {
+  color: #FF9500;
+}
+
+.detail-usage-row__percent--danger {
+  color: var(--color-error);
+}
+
+.detail-usage-row__bar {
+  height: 10px;
+  background: var(--color-border-light);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.detail-usage-row__bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.detail-usage-row__bar-fill--normal {
+  background: var(--color-primary);
+}
+
+.detail-usage-row__bar-fill--warning {
+  background: #FF9500;
+}
+
+.detail-usage-row__bar-fill--danger {
+  background: var(--color-error);
+}
+
+/* ============================================
    Activity Timeline
    ============================================ */
 .activity-timeline {
