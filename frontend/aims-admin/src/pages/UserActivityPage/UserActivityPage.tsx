@@ -75,11 +75,21 @@ const UsageBar = ({
 }) => {
   const level = percent >= 100 ? 'danger' : percent >= 80 ? 'warning' : 'normal';
   const hasQuota = quota > 0;
+  const isOverflow = percent > 100;
+
+  // 사용량이 0이면 간단히 "-" 표시
+  if (used === 0 && hasQuota) {
+    return (
+      <div className="usage-cell">
+        <span className="usage-cell__empty">-</span>
+      </div>
+    );
+  }
 
   return (
     <div className="usage-cell">
       {hasQuota && (
-        <div className="usage-bar-inline">
+        <div className={`usage-bar-inline ${isOverflow ? 'usage-bar-inline--overflow' : ''}`}>
           <div
             className={`usage-bar-inline__fill usage-bar-inline__fill--${level}`}
             style={{ width: `${Math.min(100, percent)}%` }}
@@ -88,6 +98,7 @@ const UsageBar = ({
       )}
       <span className={`usage-cell__text usage-cell__text--${level}`}>
         {hasQuota ? `${percent}%` : '∞'}
+        {isOverflow && <span className="usage-cell__overflow-icon">!</span>}
       </span>
       <span className="usage-cell__values">
         ({formatValue(used)}{hasQuota ? `/${formatValue(quota)}` : ''})

@@ -331,6 +331,36 @@
   font-family: var(--font-family-mono, monospace);
 }
 
+.usage-cell__empty {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* 100% 초과 시 줄무늬 배경 */
+.usage-bar-inline--overflow {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-border-light),
+    var(--color-border-light) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+.usage-cell__overflow-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  background: var(--color-error);
+  border-radius: 50%;
+}
+
 /* ============================================
    AI Source Stack Bar
    ============================================ */
@@ -341,7 +371,7 @@
 }
 
 .ai-stack__bar {
-  width: 80px;
+  width: 120px;
   height: 8px;
   border-radius: 4px;
   overflow: hidden;
@@ -399,8 +429,8 @@
 }
 
 .ai-legend__dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -422,9 +452,9 @@
 }
 
 .ai-legend__text {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 /* ============================================
