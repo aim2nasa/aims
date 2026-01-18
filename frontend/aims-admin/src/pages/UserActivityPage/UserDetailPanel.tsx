@@ -224,7 +224,7 @@ export const UserDetailPanel = ({ userId, onClose, width }: UserDetailPanelProps
         </div>
       </div>
 
-      {/* 크레딧 사용 내역 (통합 비용 분석) */}
+      {/* 크레딧 사용 내역 (엑셀 시트 스타일) */}
       <div className="user-detail-panel__section">
         <h4 className="user-detail-panel__section-title">크레딧 사용 내역</h4>
         {(() => {
@@ -242,7 +242,6 @@ export const UserDetailPanel = ({ userId, onClose, width }: UserDetailPanelProps
           // AI 소스별 크레딧/비용 계산 (실제 기록된 비용 사용)
           const aiSources = Object.entries(activity_summary.ai_usage.by_source || {})
             .map(([source, data]) => {
-              // 새 API: { tokens, cost } 형식
               const tokenNum = typeof data === 'number' ? data : data.tokens;
               const actualCost = typeof data === 'number' ? 0 : (data.cost || 0);
               const credits = (tokenNum / 1000) * AI_CREDIT_PER_1K_TOKENS;
@@ -252,115 +251,118 @@ export const UserDetailPanel = ({ userId, onClose, width }: UserDetailPanelProps
             .sort((a, b) => b.credits - a.credits);
 
           const totalAiCredits = aiSources.reduce((sum, s) => sum + s.credits, 0);
-          // 실제 기록된 AI 비용 사용 (API에서 total_cost 반환)
           const totalAiCost = activity_summary.ai_usage.total_cost || aiSources.reduce((sum, s) => sum + s.cost, 0);
           const totalCredits = totalAiCredits + ocrCredits;
           const totalCost = totalAiCost + ocrCost;
+
+          if (totalCredits === 0) {
+            return <div className="credit-sheet__empty">사용 내역이 없습니다.</div>;
+          }
 
           // 비율 계산
           const aiPercent = totalCredits > 0 ? Math.round((totalAiCredits / totalCredits) * 100) : 0;
           const ocrPercent = totalCredits > 0 ? Math.round((ocrCredits / totalCredits) * 100) : 0;
 
-          if (totalCredits === 0) {
-            return <div className="credit-breakdown__empty">사용 내역이 없습니다.</div>;
-          }
-
           return (
-            <div className="credit-breakdown">
-              {/* 총계 */}
-              <div className="credit-breakdown__total">
-                <div className="credit-breakdown__total-value">
-                  <span className="credit-breakdown__credits">{totalCredits.toFixed(1)} 크레딧</span>
-                  <span className="credit-breakdown__cost">${totalCost.toFixed(2)}</span>
-                </div>
+            <div className="credit-sheet">
+              {/* 테이블 헤더 */}
+              <div className="credit-sheet__header">
+                <span className="credit-sheet__col credit-sheet__col--name">항목</span>
+                <span className="credit-sheet__col credit-sheet__col--bar">비율</span>
+                <span className="credit-sheet__col credit-sheet__col--usage">사용량</span>
+                <span className="credit-sheet__col credit-sheet__col--credit">크레딧</span>
+                <span className="credit-sheet__col credit-sheet__col--cost">비용</span>
               </div>
 
-              {/* AI vs OCR 비율 바 */}
-              <div className="credit-breakdown__ratio-bar">
-                {totalAiCredits > 0 && (
-                  <div
-                    className="credit-breakdown__ratio-segment credit-breakdown__ratio-segment--ai"
-                    style={{ width: `${aiPercent}%` }}
-                    title={`AI: ${aiPercent}%`}
-                  />
-                )}
-                {ocrCredits > 0 && (
-                  <div
-                    className="credit-breakdown__ratio-segment credit-breakdown__ratio-segment--ocr"
-                    style={{ width: `${ocrPercent}%` }}
-                    title={`OCR: ${ocrPercent}%`}
-                  />
-                )}
-              </div>
-
-              {/* AI vs OCR 요약 */}
-              <div className="credit-breakdown__summary">
-                <div className="credit-breakdown__category">
-                  <span className="credit-breakdown__category-dot credit-breakdown__category-dot--ai" />
-                  <span className="credit-breakdown__category-name">AI</span>
-                  <span className="credit-breakdown__category-percent">{aiPercent}%</span>
-                  <span className="credit-breakdown__category-credits">{totalAiCredits.toFixed(1)}cr</span>
-                  <span className="credit-breakdown__category-cost">${totalAiCost.toFixed(2)}</span>
-                </div>
-                <div className="credit-breakdown__category">
-                  <span className="credit-breakdown__category-dot credit-breakdown__category-dot--ocr" />
-                  <span className="credit-breakdown__category-name">OCR</span>
-                  <span className="credit-breakdown__category-percent">{ocrPercent}%</span>
-                  <span className="credit-breakdown__category-credits">{ocrCredits.toFixed(1)}cr</span>
-                  <span className="credit-breakdown__category-cost">${ocrCost.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* AI 소스별 상세 */}
+              {/* AI 항목들 */}
               {aiSources.length > 0 && (
-                <div className="credit-breakdown__detail">
-                  <div className="credit-breakdown__detail-header">AI 상세</div>
+                <>
+                  <div className="credit-sheet__group-header">
+                    <span className="credit-sheet__group-dot credit-sheet__group-dot--ai" />
+                    AI
+                  </div>
                   {aiSources.map(({ source, tokens, credits, cost, config }) => {
-                    const sourcePercent = totalCredits > 0
-                      ? Math.round((credits / totalCredits) * 100)
-                      : 0;
+                    const itemPercent = totalCredits > 0 ? Math.round((credits / totalCredits) * 100) : 0;
                     return (
-                      <div key={source} className="credit-breakdown__item">
-                        <span
-                          className="credit-breakdown__item-dot"
-                          style={{ backgroundColor: config.color }}
-                        />
-                        <span className="credit-breakdown__item-name">{config.label}</span>
-                        <div className="credit-breakdown__item-bar">
-                          <div
-                            className="credit-breakdown__item-bar-fill"
-                            style={{ width: `${sourcePercent * 2}%`, backgroundColor: config.color }}
-                          />
-                        </div>
-                        <span className="credit-breakdown__item-percent">{sourcePercent}%</span>
-                        <span className="credit-breakdown__item-tokens">{formatTokens(tokens)}</span>
-                        <span className="credit-breakdown__item-credits">{credits.toFixed(1)}cr</span>
-                        <span className="credit-breakdown__item-cost">${cost.toFixed(2)}</span>
+                      <div key={source} className="credit-sheet__row">
+                        <span className="credit-sheet__col credit-sheet__col--name">
+                          <span className="credit-sheet__dot" style={{ backgroundColor: config.color }} />
+                          {config.label}
+                        </span>
+                        <span className="credit-sheet__col credit-sheet__col--bar">
+                          <div className="credit-sheet__bar">
+                            <div
+                              className="credit-sheet__bar-fill"
+                              style={{ width: `${itemPercent}%`, backgroundColor: config.color }}
+                            />
+                          </div>
+                          <span className="credit-sheet__percent">{itemPercent}%</span>
+                        </span>
+                        <span className="credit-sheet__col credit-sheet__col--usage">{formatTokens(tokens)}</span>
+                        <span className="credit-sheet__col credit-sheet__col--credit">{credits.toFixed(1)} cr</span>
+                        <span className="credit-sheet__col credit-sheet__col--cost">${cost.toFixed(2)}</span>
                       </div>
                     );
                   })}
-                </div>
+                  <div className="credit-sheet__subtotal">
+                    <span className="credit-sheet__col credit-sheet__col--name">AI 소계</span>
+                    <span className="credit-sheet__col credit-sheet__col--bar">
+                      <span className="credit-sheet__percent credit-sheet__percent--bold">{aiPercent}%</span>
+                    </span>
+                    <span className="credit-sheet__col credit-sheet__col--usage"></span>
+                    <span className="credit-sheet__col credit-sheet__col--credit">{totalAiCredits.toFixed(1)} cr</span>
+                    <span className="credit-sheet__col credit-sheet__col--cost">${totalAiCost.toFixed(2)}</span>
+                  </div>
+                </>
               )}
 
-              {/* OCR 상세 */}
-              {ocrCredits > 0 && (
-                <div className="credit-breakdown__detail">
-                  <div className="credit-breakdown__detail-header">OCR 상세</div>
-                  <div className="credit-breakdown__item">
-                    <span className="credit-breakdown__item-dot credit-breakdown__item-dot--ocr" />
-                    <span className="credit-breakdown__item-name">페이지 처리</span>
-                    <div className="credit-breakdown__item-bar">
-                      <div
-                        className="credit-breakdown__item-bar-fill credit-breakdown__item-bar-fill--ocr"
-                        style={{ width: `${ocrPercent * 2}%` }}
-                      />
-                    </div>
-                    <span className="credit-breakdown__item-percent">{ocrPercent}%</span>
-                    <span className="credit-breakdown__item-credits">{ocrPages}p</span>
-                    <span className="credit-breakdown__item-cost">${ocrCost.toFixed(2)}</span>
+              {/* OCR 항목 */}
+              {ocrPages > 0 && (
+                <>
+                  <div className="credit-sheet__group-header">
+                    <span className="credit-sheet__group-dot credit-sheet__group-dot--ocr" />
+                    OCR
                   </div>
-                </div>
+                  <div className="credit-sheet__row">
+                    <span className="credit-sheet__col credit-sheet__col--name">
+                      <span className="credit-sheet__dot credit-sheet__dot--ocr" />
+                      페이지 처리
+                    </span>
+                    <span className="credit-sheet__col credit-sheet__col--bar">
+                      <div className="credit-sheet__bar">
+                        <div
+                          className="credit-sheet__bar-fill credit-sheet__bar-fill--ocr"
+                          style={{ width: `${ocrPercent}%` }}
+                        />
+                      </div>
+                      <span className="credit-sheet__percent">{ocrPercent}%</span>
+                    </span>
+                    <span className="credit-sheet__col credit-sheet__col--usage">{ocrPages}p × 2cr</span>
+                    <span className="credit-sheet__col credit-sheet__col--credit">{ocrCredits.toFixed(1)} cr</span>
+                    <span className="credit-sheet__col credit-sheet__col--cost">${ocrCost.toFixed(2)}</span>
+                  </div>
+                  <div className="credit-sheet__subtotal">
+                    <span className="credit-sheet__col credit-sheet__col--name">OCR 소계</span>
+                    <span className="credit-sheet__col credit-sheet__col--bar">
+                      <span className="credit-sheet__percent credit-sheet__percent--bold">{ocrPercent}%</span>
+                    </span>
+                    <span className="credit-sheet__col credit-sheet__col--usage"></span>
+                    <span className="credit-sheet__col credit-sheet__col--credit">{ocrCredits.toFixed(1)} cr</span>
+                    <span className="credit-sheet__col credit-sheet__col--cost">${ocrCost.toFixed(2)}</span>
+                  </div>
+                </>
               )}
+
+              {/* 총합계 */}
+              <div className="credit-sheet__total">
+                <span className="credit-sheet__col credit-sheet__col--name">총합계</span>
+                <span className="credit-sheet__col credit-sheet__col--bar">
+                  <span className="credit-sheet__percent">100%</span>
+                </span>
+                <span className="credit-sheet__col credit-sheet__col--usage"></span>
+                <span className="credit-sheet__col credit-sheet__col--credit">{totalCredits.toFixed(1)} cr</span>
+                <span className="credit-sheet__col credit-sheet__col--cost">${totalCost.toFixed(2)}</span>
+              </div>
             </div>
           );
         })()}

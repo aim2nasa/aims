@@ -1021,215 +1021,208 @@
 }
 
 /* ============================================
-   Credit Breakdown (크레딧 사용 내역)
+   Credit Sheet (크레딧 사용 내역 - 엑셀 스타일)
    ============================================ */
-.credit-breakdown {
+.credit-sheet {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
-.credit-breakdown__empty {
+.credit-sheet__empty {
   color: var(--color-text-tertiary);
   font-size: 12px;
   text-align: center;
   padding: var(--spacing-md);
 }
 
-/* 총계 */
-.credit-breakdown__total {
-  text-align: center;
-  padding: var(--spacing-sm) 0;
-}
-
-.credit-breakdown__total-value {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: var(--spacing-sm);
-}
-
-.credit-breakdown__credits {
-  font-size: 24px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-}
-
-.credit-breakdown__cost {
-  font-size: 16px;
+/* 테이블 헤더 */
+.credit-sheet__header {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px 85px 55px;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  font-size: 10px;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-success);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
 }
 
-/* AI vs OCR 비율 바 */
-.credit-breakdown__ratio-bar {
-  display: flex;
-  height: 12px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--color-border-light);
-}
-
-.credit-breakdown__ratio-segment {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-.credit-breakdown__ratio-segment--ai {
-  background: linear-gradient(90deg, #AF52DE 0%, #007AFF 100%);
-}
-
-.credit-breakdown__ratio-segment--ocr {
-  background: #34C759;
-}
-
-/* AI vs OCR 요약 */
-.credit-breakdown__summary {
-  display: flex;
-  gap: var(--spacing-lg);
-  justify-content: center;
-}
-
-.credit-breakdown__category {
+/* 그룹 헤더 (AI, OCR) */
+.credit-sheet__group-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-}
-
-.credit-breakdown__category-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.credit-breakdown__category-dot--ai {
-  background: linear-gradient(135deg, #AF52DE 0%, #007AFF 100%);
-}
-
-.credit-breakdown__category-dot--ocr {
-  background: #34C759;
-}
-
-.credit-breakdown__category-name {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  min-width: 28px;
-}
-
-.credit-breakdown__category-percent {
+  padding: 6px 12px;
+  background: var(--color-surface);
+  font-size: 11px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  min-width: 35px;
-  text-align: right;
-}
-
-.credit-breakdown__category-credits {
-  color: var(--color-text-secondary);
-  font-family: var(--font-family-mono, monospace);
-  min-width: 50px;
-  text-align: right;
-}
-
-.credit-breakdown__category-cost {
-  color: var(--color-success);
-  font-weight: var(--font-weight-semibold);
-  min-width: 45px;
-  text-align: right;
-}
-
-/* 상세 섹션 */
-.credit-breakdown__detail {
-  background: var(--color-background);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm);
-}
-
-.credit-breakdown__detail-header {
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  margin-bottom: var(--spacing-xs);
-  padding-bottom: var(--spacing-xs);
   border-bottom: 1px solid var(--color-border-light);
 }
 
-/* 상세 아이템 */
-.credit-breakdown__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+.credit-sheet__group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
 }
 
-.credit-breakdown__item-dot {
+.credit-sheet__group-dot--ai {
+  background: linear-gradient(135deg, #AF52DE 0%, #007AFF 100%);
+}
+
+.credit-sheet__group-dot--ocr {
+  background: #34C759;
+}
+
+/* 데이터 행 */
+.credit-sheet__row {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px 85px 55px;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 12px;
+}
+
+.credit-sheet__row:hover {
+  background: var(--color-surface);
+}
+
+/* 소계 행 */
+.credit-sheet__subtotal {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px 85px 55px;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.credit-sheet__subtotal .credit-sheet__col--name {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.credit-sheet__subtotal .credit-sheet__col--credit {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+/* 총합계 행 */
+.credit-sheet__total {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px 85px 55px;
+  gap: 4px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+}
+
+.credit-sheet__total .credit-sheet__col--name {
+  color: white;
+}
+
+.credit-sheet__total .credit-sheet__col--credit {
+  color: #4ade80;
+  font-size: 14px;
+}
+
+.credit-sheet__total .credit-sheet__col--cost {
+  color: #4ade80;
+}
+
+/* 컬럼 스타일 */
+.credit-sheet__col {
+  display: flex;
+  align-items: center;
+}
+
+.credit-sheet__col--name {
+  gap: 6px;
+  color: var(--color-text-primary);
+}
+
+.credit-sheet__col--usage {
+  justify-content: flex-end;
+  font-family: var(--font-family-mono, monospace);
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.credit-sheet__col--credit {
+  justify-content: flex-end;
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.credit-sheet__col--cost {
+  justify-content: flex-end;
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 색상 dot */
+.credit-sheet__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.credit-breakdown__item-dot--ocr {
+.credit-sheet__dot--ocr {
   background: #34C759;
 }
 
-.credit-breakdown__item-name {
-  font-size: 12px;
-  color: var(--color-text-primary);
-  min-width: 45px;
+/* 비율 막대 */
+.credit-sheet__col--bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.credit-breakdown__item-bar {
+.credit-sheet__bar {
   flex: 1;
-  height: 6px;
+  height: 8px;
   background: var(--color-border-light);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
-  min-width: 30px;
 }
 
-.credit-breakdown__item-bar-fill {
+.credit-sheet__bar-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-.credit-breakdown__item-bar-fill--ocr {
+.credit-sheet__bar-fill--ocr {
   background: #34C759;
 }
 
-.credit-breakdown__item-percent {
+.credit-sheet__percent {
   font-size: 11px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  min-width: 25px;
+  min-width: 32px;
   text-align: right;
 }
 
-.credit-breakdown__item-tokens {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  font-family: var(--font-family-mono, monospace);
-  min-width: 35px;
-  text-align: right;
+.credit-sheet__percent--bold {
+  font-weight: var(--font-weight-bold);
 }
 
-.credit-breakdown__item-credits {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  font-family: var(--font-family-mono, monospace);
-  min-width: 45px;
-  text-align: right;
-}
-
-.credit-breakdown__item-cost {
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-success);
-  min-width: 45px;
-  text-align: right;
+.credit-sheet__total .credit-sheet__percent {
+  color: white;
 }
 
 /* ============================================
