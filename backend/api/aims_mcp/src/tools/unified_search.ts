@@ -16,7 +16,9 @@ const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:8000';
 export const unifiedSearchSchema = z.object({
   query: z.string().min(1).describe('검색어'),
   limit: z.number().min(1).max(20).optional().default(5).describe('카테고리별 결과 개수 (기본 5)'),
-  documentsOnly: z.boolean().optional().default(false).describe('true: 문서만 검색 (고객/계약 제외)')
+  documentsOnly: z.boolean().optional().default(false).describe('true: 문서만 검색 (고객/계약 제외)'),
+  keywordOffset: z.number().optional().default(0).describe('키워드 검색 시작 위치 (페이지네이션)'),
+  aiOffset: z.number().optional().default(0).describe('AI 검색 시작 위치 (페이지네이션)')
 });
 
 // ============================================================
@@ -72,13 +74,26 @@ export const unifiedSearchToolDefinitions = [
 
 **documentsOnly 옵션:**
 - false (기본): 문서 + 고객 + 계약 모두 검색
-- true: 문서만 검색 (고객/계약 제외) - "문서", "서류", "파일" 관련 요청 시 사용`,
+- true: 문서만 검색 (고객/계약 제외) - "문서", "서류", "파일" 관련 요청 시 사용
+
+**페이지네이션:**
+- 응답에 hasMore가 true면 더 많은 결과가 있음
+- "키워드 검색 더 보여줘": keywordOffset에 nextOffset 값 사용
+- "AI 검색 더 보여줘": aiOffset에 nextOffset 값 사용
+- "더 보여줘" (일반): 남은 결과가 있는 유형 모두 조회
+
+**⚠️ 결과 표시 규칙 (반드시 준수):**
+- 응답의 formattedText 필드를 그대로 사용자에게 표시하세요
+- formattedText에는 이미 올바른 번호와 섹션 헤더가 포함되어 있습니다
+- 절대로 번호를 1부터 다시 시작하지 마세요`,
     inputSchema: {
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색어' },
         limit: { type: 'number', description: '카테고리별 결과 개수 (기본 5, 최대 20)' },
-        documentsOnly: { type: 'boolean', description: 'true: 문서만 검색 (고객/계약 제외)' }
+        documentsOnly: { type: 'boolean', description: 'true: 문서만 검색 (고객/계약 제외)' },
+        keywordOffset: { type: 'number', description: '키워드 검색 시작 위치 (기본 0)' },
+        aiOffset: { type: 'number', description: 'AI 검색 시작 위치 (기본 0)' }
       },
       required: ['query']
     }
@@ -108,7 +123,7 @@ async function ragFetch(endpoint: string, options: RequestInit = {}): Promise<Re
 /**
  * 문서 키워드 검색
  */
-async function searchDocumentsKeyword(query: string, userId: string, limit: number): Promise<{ count: number; results: DocumentResult[] }> {
+async function searchDocumentsKeyword(query: string, userId: string, limit: number, offset: number = 0): Promise<{ count: number; results: DocumentResult[]; hasMore: boolean; nextOffset: number | null }> {
   try {
     const response = await ragFetch('/search', {
       method: 'POST',
@@ -116,15 +131,16 @@ async function searchDocumentsKeyword(query: string, userId: string, limit: numb
         query,
         user_id: userId,
         search_mode: 'keyword',
-        top_k: limit
+        top_k: limit,
+        offset
       })
     });
 
     if (!response.ok) {
-      return { count: 0, results: [] };
+      return { count: 0, results: [], hasMore: false, nextOffset: null };
     }
 
-    const data = await response.json() as { search_results?: Record<string, unknown>[]; total_count?: number };
+    const data = await response.json() as { search_results?: Record<string, unknown>[]; total_count?: number; has_more?: boolean };
     const results = (data.search_results || []).map((r: Record<string, unknown>) => {
       const upload = r.upload as Record<string, unknown> | undefined;
       const meta = r.meta as Record<string, unknown> | undefined;
@@ -137,17 +153,21 @@ async function searchDocumentsKeyword(query: string, userId: string, limit: numb
       };
     });
 
-    return { count: data.total_count || results.length, results };
+    const totalCount = data.total_count || results.length;
+    const hasMore = data.has_more ?? (offset + results.length < totalCount);
+    const nextOffset = hasMore ? offset + results.length : null;
+
+    return { count: totalCount, results, hasMore, nextOffset };
   } catch (error) {
     console.error('[unified_search] 키워드 검색 오류:', error);
-    return { count: 0, results: [] };
+    return { count: 0, results: [], hasMore: false, nextOffset: null };
   }
 }
 
 /**
  * 문서 AI(시맨틱) 검색
  */
-async function searchDocumentsAI(query: string, userId: string, limit: number): Promise<{ count: number; results: DocumentResult[] }> {
+async function searchDocumentsAI(query: string, userId: string, limit: number, offset: number = 0): Promise<{ count: number; results: DocumentResult[]; hasMore: boolean; nextOffset: number | null }> {
   try {
     const response = await ragFetch('/search', {
       method: 'POST',
@@ -155,15 +175,16 @@ async function searchDocumentsAI(query: string, userId: string, limit: number): 
         query,
         user_id: userId,
         search_mode: 'semantic',
-        top_k: limit
+        top_k: limit,
+        offset
       })
     });
 
     if (!response.ok) {
-      return { count: 0, results: [] };
+      return { count: 0, results: [], hasMore: false, nextOffset: null };
     }
 
-    const data = await response.json() as { search_results?: Record<string, unknown>[]; total_count?: number };
+    const data = await response.json() as { search_results?: Record<string, unknown>[]; total_count?: number; has_more?: boolean };
     const results = (data.search_results || []).map((r: Record<string, unknown>) => {
       const payload = r.payload as Record<string, unknown> | undefined;
       return {
@@ -175,10 +196,14 @@ async function searchDocumentsAI(query: string, userId: string, limit: number): 
       };
     });
 
-    return { count: data.total_count || results.length, results };
+    const totalCount = data.total_count || results.length;
+    const hasMore = data.has_more ?? (offset + results.length < totalCount);
+    const nextOffset = hasMore ? offset + results.length : null;
+
+    return { count: totalCount, results, hasMore, nextOffset };
   } catch (error) {
     console.error('[unified_search] AI 검색 오류:', error);
-    return { count: 0, results: [] };
+    return { count: 0, results: [], hasMore: false, nextOffset: null };
   }
 }
 
@@ -300,25 +325,35 @@ export async function handleUnifiedSearch(args: unknown) {
     const userId = getCurrentUserId();
     const limit = params.limit || 5;
     const documentsOnly = params.documentsOnly || false;
+    const keywordOffset = params.keywordOffset || 0;
+    const aiOffset = params.aiOffset || 0;
 
     // 문서만 검색 모드
     if (documentsOnly) {
       const [keywordDocs, aiDocs] = await Promise.all([
-        searchDocumentsKeyword(params.query, userId, limit),
-        searchDocumentsAI(params.query, userId, limit)
+        searchDocumentsKeyword(params.query, userId, limit, keywordOffset),
+        searchDocumentsAI(params.query, userId, limit, aiOffset)
       ]);
 
       // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거
       const keywordFileIds = new Set(keywordDocs.results.map(d => d.fileId));
-      const uniqueAiDocs = {
-        count: aiDocs.count,
-        results: aiDocs.results.filter(d => !keywordFileIds.has(d.fileId))
-      };
+      const uniqueAiResults = aiDocs.results.filter(d => !keywordFileIds.has(d.fileId));
 
-      const totalDocs = keywordDocs.count + uniqueAiDocs.count;
+      const totalDocs = keywordDocs.count + aiDocs.count;
       const summary = totalDocs > 0
-        ? `"${params.query}" 문서 검색 결과: 📄 ${totalDocs}건 (키워드 ${keywordDocs.count}, AI ${uniqueAiDocs.count})`
+        ? `"${params.query}" 문서 검색 결과: 📄 ${totalDocs}건 (키워드 ${keywordDocs.count}, AI ${aiDocs.count})`
         : `"${params.query}"에 대한 문서가 없습니다.`;
+
+      // 결과에 번호를 직접 포함
+      const keywordResultsWithNumbers = keywordDocs.results.map((r, i) => ({
+        번호: keywordOffset + i + 1,
+        ...r
+      }));
+
+      const aiResultsWithNumbers = uniqueAiResults.map((r, i) => ({
+        번호: aiOffset + i + 1,
+        ...r
+      }));
 
       return {
         content: [{
@@ -327,8 +362,24 @@ export async function handleUnifiedSearch(args: unknown) {
             query: params.query,
             documentsOnly: true,
             documents: {
-              keyword: keywordDocs,
-              ai: uniqueAiDocs
+              keyword: keywordResultsWithNumbers.length > 0 ? {
+                sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordOffset + keywordResultsWithNumbers.length}번)`,
+                totalCount: keywordDocs.count,
+                results: keywordResultsWithNumbers,
+                hasMore: keywordDocs.hasMore,
+                nextOffset: keywordDocs.nextOffset
+              } : null,
+              ai: aiResultsWithNumbers.length > 0 ? {
+                sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiOffset + aiResultsWithNumbers.length}번)`,
+                totalCount: aiDocs.count,
+                results: aiResultsWithNumbers,
+                hasMore: aiDocs.hasMore,
+                nextOffset: aiDocs.nextOffset
+              } : null
+            },
+            _paginationHint: {
+              keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", documentsOnly=true, keywordOffset=${keywordDocs.nextOffset})` : null,
+              ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", documentsOnly=true, aiOffset=${aiDocs.nextOffset})` : null
             },
             summary
           }, null, 2)
@@ -338,25 +389,22 @@ export async function handleUnifiedSearch(args: unknown) {
 
     // 전체 검색 모드 (문서 + 고객 + 계약)
     const [keywordDocs, aiDocs, customers, contracts] = await Promise.all([
-      searchDocumentsKeyword(params.query, userId, limit),
-      searchDocumentsAI(params.query, userId, limit),
+      searchDocumentsKeyword(params.query, userId, limit, keywordOffset),
+      searchDocumentsAI(params.query, userId, limit, aiOffset),
       searchCustomers(params.query, userId, limit),
       searchContracts(params.query, userId, limit)
     ]);
 
     // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거
     const keywordFileIds = new Set(keywordDocs.results.map(d => d.fileId));
-    const uniqueAiDocs = {
-      count: aiDocs.count,
-      results: aiDocs.results.filter(d => !keywordFileIds.has(d.fileId))
-    };
+    const uniqueAiResults = aiDocs.results.filter(d => !keywordFileIds.has(d.fileId));
 
     // 결과 요약 생성
-    const totalDocs = keywordDocs.count + uniqueAiDocs.count;
+    const totalDocs = keywordDocs.count + aiDocs.count;
     const summaryParts: string[] = [];
 
     if (totalDocs > 0) {
-      summaryParts.push(`📄 문서 ${totalDocs}건 (키워드 ${keywordDocs.count}, AI ${uniqueAiDocs.count})`);
+      summaryParts.push(`📄 문서 ${totalDocs}건 (키워드 ${keywordDocs.count}, AI ${aiDocs.count})`);
     }
     if (customers.count > 0) {
       summaryParts.push(`👤 고객 ${customers.count}건`);
@@ -369,14 +417,41 @@ export async function handleUnifiedSearch(args: unknown) {
       ? `"${params.query}" 검색 결과: ${summaryParts.join(', ')}`
       : `"${params.query}"에 대한 검색 결과가 없습니다.`;
 
-    const result: UnifiedSearchResult = {
+    // 결과에 번호를 직접 포함
+    const keywordResultsWithNumbers = keywordDocs.results.map((r, i) => ({
+      번호: keywordOffset + i + 1,
+      ...r
+    }));
+
+    const aiResultsWithNumbers = uniqueAiResults.map((r, i) => ({
+      번호: aiOffset + i + 1,
+      ...r
+    }));
+
+    const result = {
       query: params.query,
       documents: {
-        keyword: keywordDocs,
-        ai: uniqueAiDocs
+        keyword: keywordResultsWithNumbers.length > 0 ? {
+          sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordOffset + keywordResultsWithNumbers.length}번)`,
+          totalCount: keywordDocs.count,
+          results: keywordResultsWithNumbers,
+          hasMore: keywordDocs.hasMore,
+          nextOffset: keywordDocs.nextOffset
+        } : null,
+        ai: aiResultsWithNumbers.length > 0 ? {
+          sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiOffset + aiResultsWithNumbers.length}번)`,
+          totalCount: aiDocs.count,
+          results: aiResultsWithNumbers,
+          hasMore: aiDocs.hasMore,
+          nextOffset: aiDocs.nextOffset
+        } : null
       },
       customers,
       contracts,
+      _paginationHint: {
+        keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", keywordOffset=${keywordDocs.nextOffset})` : null,
+        ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", aiOffset=${aiDocs.nextOffset})` : null
+      },
       summary
     };
 

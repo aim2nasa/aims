@@ -8,7 +8,8 @@ export const searchDocumentsSchema = z.object({
   query: z.string().describe('검색어'),
   searchMode: z.enum(['semantic', 'keyword']).optional().default('semantic').describe('검색 모드'),
   customerId: z.string().optional().describe('특정 고객의 문서만 검색'),
-  limit: z.number().optional().default(10).describe('결과 개수 제한')
+  limit: z.number().optional().default(10).describe('결과 개수 제한'),
+  offset: z.number().optional().default(0).describe('시작 위치 (페이지네이션용)')
 });
 
 export const getDocumentSchema = z.object({
@@ -45,14 +46,20 @@ export const findDocumentByFilenameSchema = z.object({
 export const documentToolDefinitions = [
   {
     name: 'search_documents',
-    description: '문서를 검색합니다. semantic 모드는 AI 기반 의미 검색, keyword 모드는 키워드 검색입니다.',
+    description: `문서를 검색합니다. semantic 모드는 AI 기반 의미 검색, keyword 모드는 키워드 검색입니다.
+
+페이지네이션 지원:
+- offset을 사용하여 추가 결과를 조회할 수 있습니다
+- 응답의 hasMore가 true이면 nextOffset으로 다음 페이지 조회 가능
+- 사용자가 "더 보여줘"하면 동일한 query와 searchMode로 nextOffset 사용`,
     inputSchema: {
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: '검색어' },
         searchMode: { type: 'string', enum: ['semantic', 'keyword'], description: '검색 모드 (기본: semantic)' },
         customerId: { type: 'string', description: '특정 고객의 문서만 검색' },
-        limit: { type: 'number', description: '결과 개수 제한 (기본: 10)' }
+        limit: { type: 'number', description: '결과 개수 제한 (기본: 10)' },
+        offset: { type: 'number', description: '시작 위치 (기본: 0, 페이지네이션용)' }
       },
       required: ['query']
     }
@@ -164,6 +171,9 @@ export async function handleSearchDocuments(args: unknown) {
     const timeoutId = setTimeout(() => controller.abort(), RAG_API_TIMEOUT_MS);
 
     try {
+      const limit = params.limit || 10;
+      const offset = params.offset || 0;
+
       // RAG API 호출 (타임아웃 적용)
       const response = await fetch('http://localhost:8000/search', {
         method: 'POST',
@@ -175,7 +185,8 @@ export async function handleSearchDocuments(args: unknown) {
           search_mode: params.searchMode || 'semantic',
           user_id: userId,
           customer_id: params.customerId,
-          top_k: params.limit || 10
+          top_k: limit,
+          offset: offset
         }),
         signal: controller.signal
       });
@@ -186,45 +197,81 @@ export async function handleSearchDocuments(args: unknown) {
         throw new Error(`RAG API 오류: ${response.status}`);
       }
 
+      // RAG API 응답 구조 (키워드 검색과 시맨틱 검색이 다른 구조를 반환)
       const result = await response.json() as {
         search_mode: string;
         answer: string | null;
+        total_count?: number;
+        has_more?: boolean;
         search_results: Array<{
-          doc_id: string;
-          score: number;
+          // 시맨틱 검색 형식
+          doc_id?: string;
+          score?: number;
           final_score?: number;
-          payload: {
+          payload?: {
             original_name: string;
             preview: string;
             mime: string;
             uploaded_at: string;
+          };
+          // 키워드 검색 형식 (MongoDB 문서 직접 반환)
+          _id?: string;
+          upload?: {
+            originalName: string;
+            uploaded_at: string;
+          };
+          meta?: {
+            mime: string;
+            summary: string;
+          };
+          ocr?: {
+            summary: string;
           };
         }>;
       };
 
-      // 결과 포맷팅
+      // 페이지네이션 계산
+      const resultCount = result.search_results?.length || 0;
+      const totalCount = result.total_count || resultCount;
+      const hasMore = result.has_more ?? (offset + resultCount < totalCount);
+      const nextOffset = hasMore ? offset + resultCount : null;
+
+      // 결과 포맷팅 (두 가지 응답 구조 모두 처리)
       const formattedResult = {
         searchMode: result.search_mode,
+        query: params.query,
         answer: result.answer,
-        resultCount: result.search_results?.length || 0,
-        documents: (result.search_results || []).map((doc: {
-          doc_id: string;
-          score: number;
-          final_score?: number;
-          payload: {
-            original_name: string;
-            preview: string;
-            mime: string;
-            uploaded_at: string;
+        resultCount,
+        totalCount,
+        offset,
+        hasMore,
+        nextOffset,
+        // AI 지시: 사용자가 "더 보여줘"하면 이 query, searchMode, nextOffset 사용
+        _paginationHint: hasMore
+          ? `다음 페이지: search_documents(query="${params.query}", searchMode="${params.searchMode || 'semantic'}", offset=${nextOffset})`
+          : null,
+        documents: (result.search_results || []).map((doc) => {
+          // 키워드 검색 형식 (MongoDB 문서)
+          if (doc._id) {
+            const preview = doc.ocr?.summary || doc.meta?.summary || '';
+            return {
+              id: doc._id,
+              filename: doc.upload?.originalName || '알 수 없는 파일',
+              preview: preview.substring(0, 200) + (preview.length > 200 ? '...' : ''),
+              mimeType: doc.meta?.mime,
+              uploadedAt: doc.upload?.uploaded_at
+            };
+          }
+          // 시맨틱 검색 형식
+          return {
+            id: doc.doc_id,
+            filename: doc.payload?.original_name,
+            preview: doc.payload?.preview?.substring(0, 200) + '...',
+            mimeType: doc.payload?.mime,
+            uploadedAt: doc.payload?.uploaded_at,
+            score: doc.final_score || doc.score
           };
-        }) => ({
-          id: doc.doc_id,
-          filename: doc.payload?.original_name,
-          preview: doc.payload?.preview?.substring(0, 200) + '...',
-          mimeType: doc.payload?.mime,
-          uploadedAt: doc.payload?.uploaded_at,
-          score: doc.final_score || doc.score
-        }))
+        })
       };
 
       return {
