@@ -341,9 +341,12 @@ export async function handleGetCustomer(args: unknown) {
     )[0];
     const contractCount = latestAr?.contracts?.length || 0;
 
-    // 관계 수: customer_relationships 컬렉션에서 조회
+    // 관계 수: customer_relationships 컬렉션에서 조회 (from_customer 또는 related_customer로 연결)
     const relationshipCount = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).countDocuments({
-      sourceCustomerId: objectId
+      $or: [
+        { from_customer: objectId },
+        { related_customer: objectId }
+      ]
     });
 
     // 민감 정보 제외
