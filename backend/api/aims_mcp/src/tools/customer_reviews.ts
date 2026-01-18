@@ -36,7 +36,7 @@ export const customerReviewToolDefinitions = [
   },
   {
     name: 'get_cr_contract_history',
-    description: '고객의 변액보험 계약 이력을 조회합니다. 증권번호별로 여러 CRS에서 추출된 스냅샷을 시간순으로 집계하여 적립금, 투자수익률 변화를 추적합니다.',
+    description: '고객의 변액보험 계약 이력 변화를 조회합니다. 증권번호별로 여러 CRS(변액리포트)에서 추출된 스냅샷을 시간순으로 집계하여 적립금, 투자수익률, 해지환급금 등의 변화를 추적합니다. "변액 이력 변화", "적립금 변화", "수익률 변화" 등을 물어볼 때 사용하세요.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -208,6 +208,13 @@ export async function handleGetCrContractHistory(args: unknown) {
     const customerName = customer.personal_info?.name || '알 수 없음';
     const customerReviews = customer.customer_reviews || [];
 
+    // 발행일별 CRS 문서 정보 수집 (중복 제거)
+    const crsDocumentsMap = new Map<string, {
+      issueDate: string;
+      sourceFileId: string;
+      fileName?: string;
+    }>();
+
     // 증권번호별로 스냅샷 집계
     const historyMap = new Map<string, {
       policyNumber: string;
@@ -220,6 +227,18 @@ export async function handleGetCrContractHistory(args: unknown) {
     for (const review of customerReviews) {
       const contractInfo = review.contract_info || {};
       const policyNumber = contractInfo.policy_number;
+      const issueDate = review.issue_date;
+      const sourceFileId = review.source_file_id?.toString();
+
+      // 발행일별 CRS 문서 정보 저장
+      const issueDateStr = typeof issueDate === 'string' ? issueDate : String(issueDate || '');
+      if (issueDateStr && sourceFileId && !crsDocumentsMap.has(issueDateStr)) {
+        crsDocumentsMap.set(issueDateStr, {
+          issueDate: issueDateStr,
+          sourceFileId,
+          fileName: review.source_file_name || `CRS_${customerName}_${issueDateStr.replace(/\./g, '')}.pdf`
+        });
+      }
 
       if (!policyNumber) continue;
 
@@ -227,14 +246,14 @@ export async function handleGetCrContractHistory(args: unknown) {
       if (params.policyNumber && policyNumber !== params.policyNumber) continue;
 
       const snapshot = {
-        issueDate: review.issue_date,
+        issueDate,
         parsedAt: review.parsed_at,
         insuredAmount: contractInfo.insured_amount || 0,
         accumulatedAmount: contractInfo.accumulated_amount || 0,
         investmentReturnRate: contractInfo.investment_return_rate || 0,
         surrenderValue: contractInfo.surrender_value || 0,
         surrenderRate: contractInfo.surrender_rate || 0,
-        sourceFileId: review.source_file_id?.toString()
+        sourceFileId
       };
 
       if (!historyMap.has(policyNumber)) {
@@ -273,12 +292,21 @@ export async function handleGetCrContractHistory(args: unknown) {
       return dateB.getTime() - dateA.getTime();
     });
 
+    // 발행일별 CRS 문서 목록 (최신순 정렬)
+    const crsDocuments = Array.from(crsDocumentsMap.values()).sort((a, b) => {
+      const dateA = new Date(a.issueDate || 0);
+      const dateB = new Date(b.issueDate || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           customerId: params.customerId,
           customerName,
+          // 발행일별 CRS 문서 목록 (맨 위에 링크로 표시용)
+          crsDocuments,
           totalContracts: contractHistories.length,
           crContractHistories: contractHistories,
           message: contractHistories.length > 0

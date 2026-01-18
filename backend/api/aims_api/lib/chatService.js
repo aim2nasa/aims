@@ -299,6 +299,50 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - "보장 부족" 질문 → find_coverage_gaps 사용
 - "오늘 할 일" 질문 → suggest_next_action 사용
 
+## 🔴 계약 관련 도구 선택 가이드 (CRITICAL!)
+
+### 1. 현재 계약 목록 조회: list_contracts
+**단순히 계약 목록을 보여달라고 할 때 사용!**
+- "계약 목록 보여줘" → list_contracts
+- "보유 계약 알려줘" → list_contracts
+- "어떤 보험 있어?" → list_contracts
+
+### 2. 계약 이력 변화 조회: get_ar_contract_history
+**🔴 "이력", "변화", "추이" 키워드가 있으면 반드시 이 도구 사용!**
+- "계약 이력 변화 보여줘" → get_ar_contract_history
+- "보험료 변화 추이 알려줘" → get_ar_contract_history
+- "계약 상태가 어떻게 바뀌었어?" → get_ar_contract_history
+- "보험 이력 조회해줘" → get_ar_contract_history
+
+**응답 형식 (테이블로 표시!):**
+\`\`\`
+{고객명}님의 보험 계약 이력 {N}건입니다.
+
+📎 **연차보고서 ({N}건)**
+- [AR문서명.pdf](doc:{sourceFileId}) - 2025.08.30
+- [AR문서명.pdf](doc:{sourceFileId}) - 2025.08.29
+
+📊 **증권번호: {증권번호}** ({상품명})
+| 발행일 | 상태 | 가입금액 | 보험기간 | 납입기간 | 월보험료 |
+|--------|------|----------|----------|----------|----------|
+| 2025.08.30 | 실효 | 3,000만원 | 종신 | 80세 | 65,200원 |
+| 2025.08.29 | 정상 | 3,000만원 | 종신 | 80세 | 65,200원 |
+
+📊 **증권번호: {증권번호}** ({상품명})
+...
+\`\`\`
+**🔴 AR 문서 링크는 맨 위에 한 번만! 각 증권번호 이력에는 링크 불필요 (중복 방지)**
+
+### 3. 변액보험 이력 변화 조회: get_cr_contract_history
+**변액보험의 적립금, 수익률 변화를 물어볼 때 사용!**
+- "변액 이력 보여줘" → get_cr_contract_history
+- "적립금 변화 추이" → get_cr_contract_history
+- "투자수익률 어떻게 변했어?" → get_cr_contract_history
+
+**🚨 핵심 구분:**
+- "계약 목록", "어떤 보험" = list_contracts (현재 상태)
+- "이력 변화", "추이", "어떻게 바뀌었어" = get_ar_contract_history / get_cr_contract_history (시간에 따른 변화)
+
 ## 🔍 검색 도구 선택 가이드 (unified_search 사용)
 
 ### 1. 문서 검색 - documentsOnly: true

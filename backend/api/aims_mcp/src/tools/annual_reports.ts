@@ -31,7 +31,7 @@ export const annualReportToolDefinitions = [
   },
   {
     name: 'get_ar_contract_history',
-    description: '고객의 보험 계약 이력을 조회합니다. 증권번호별로 여러 Annual Report에서 추출된 스냅샷을 시간순으로 집계하여 보험료, 계약상태 변화를 추적합니다.',
+    description: '고객의 보험 계약 이력 변화를 조회합니다. 증권번호별로 여러 Annual Report에서 추출된 스냅샷을 시간순으로 집계하여 보험료, 계약상태, 가입금액 등의 변화를 추적합니다. "계약 이력 변화", "보험료 변화", "계약 상태 변화" 등을 물어볼 때 사용하세요. (단순 계약 목록은 list_contracts 사용)',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -172,6 +172,13 @@ export async function handleGetArContractHistory(args: unknown) {
     const customerName = customer.personal_info?.name || '알 수 없음';
     const annualReports = customer.annual_reports || [];
 
+    // 발행일별 AR 문서 정보 수집 (중복 제거)
+    const arDocumentsMap = new Map<string, {
+      issueDate: string;
+      sourceFileId: string;
+      fileName?: string;
+    }>();
+
     // 증권번호별로 스냅샷 집계
     const historyMap = new Map<string, {
       policyNumber: string;
@@ -187,6 +194,16 @@ export async function handleGetArContractHistory(args: unknown) {
       const parsedAt = report.parsed_at;
       const sourceFileId = report.source_file_id?.toString();
       const contracts = report.contracts || [];
+
+      // 발행일별 AR 문서 정보 저장
+      const issueDateStr = typeof issueDate === 'string' ? issueDate : String(issueDate || '');
+      if (issueDateStr && sourceFileId && !arDocumentsMap.has(issueDateStr)) {
+        arDocumentsMap.set(issueDateStr, {
+          issueDate: issueDateStr,
+          sourceFileId,
+          fileName: report.source_file_name || `AR_${customerName}_${issueDateStr.replace(/\./g, '')}.pdf`
+        });
+      }
 
       for (const contract of contracts) {
         // 증권번호 추출 (다양한 필드명 대응)
@@ -250,12 +267,21 @@ export async function handleGetArContractHistory(args: unknown) {
       return dateB.getTime() - dateA.getTime();
     });
 
+    // 발행일별 AR 문서 목록 (최신순 정렬)
+    const arDocuments = Array.from(arDocumentsMap.values()).sort((a, b) => {
+      const dateA = new Date(a.issueDate || 0);
+      const dateB = new Date(b.issueDate || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           customerId: params.customerId,
           customerName,
+          // 발행일별 AR 문서 목록 (맨 위에 링크로 표시용)
+          arDocuments,
           totalContracts: contractHistories.length,
           contractHistories,
           message: contractHistories.length > 0
