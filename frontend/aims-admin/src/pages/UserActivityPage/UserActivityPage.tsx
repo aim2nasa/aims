@@ -1,6 +1,6 @@
 /**
  * User Activity Page
- * 사용자 활동 현황 페이지
+ * 사용자 활동 현황 페이지 - 컴팩트 테이블 레이아웃
  * @since 2025-12-14
  */
 
@@ -14,6 +14,7 @@ import {
   formatCredits,
   formatRelativeTime,
   type UserActivitySummary,
+  type AISourceUsage,
 } from '@/features/users/userActivityApi';
 import { Button } from '@/shared/ui/Button/Button';
 import { UserDetailPanel } from './UserDetailPanel';
@@ -35,13 +36,13 @@ const TIER_LABELS: Record<string, string> = {
   admin: '관리자',
 };
 
-// AI 소스 라벨
-const AI_SOURCE_LABELS: Record<string, string> = {
-  chat: '채팅',
-  embed: '임베딩',
-  rag: 'RAG',
-  summary: '요약',
-  unknown: '기타',
+// AI 소스 라벨 및 색상 (AIUsagePage와 동일한 키/색상 사용)
+const AI_SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
+  chat: { label: '채팅', color: '#AF52DE' },           // Purple
+  doc_embedding: { label: '임베딩', color: '#FF9500' }, // Orange
+  rag_api: { label: 'RAG', color: '#007AFF' },         // Blue
+  n8n_docsummary: { label: '요약', color: '#34C759' }, // Green
+  unknown: { label: '기타', color: '#8E8E93' },
 };
 
 const SORT_OPTIONS = [
@@ -55,10 +56,96 @@ const SORT_OPTIONS = [
 ];
 
 const LIMIT_OPTIONS = [
-  { value: 10, label: '10개씩' },
   { value: 20, label: '20개씩' },
   { value: 50, label: '50개씩' },
+  { value: 100, label: '100개씩' },
 ];
+
+// 인라인 진행바 컴포넌트
+const UsageBar = ({
+  used,
+  quota,
+  percent,
+  formatValue = (v: number) => v.toString(),
+}: {
+  used: number;
+  quota: number;
+  percent: number;
+  formatValue?: (v: number) => string;
+}) => {
+  const level = percent >= 100 ? 'danger' : percent >= 80 ? 'warning' : 'normal';
+  const hasQuota = quota > 0;
+
+  return (
+    <div className="usage-cell">
+      {hasQuota && (
+        <div className="usage-bar-inline">
+          <div
+            className={`usage-bar-inline__fill usage-bar-inline__fill--${level}`}
+            style={{ width: `${Math.min(100, percent)}%` }}
+          />
+        </div>
+      )}
+      <span className={`usage-cell__text usage-cell__text--${level}`}>
+        {hasQuota ? `${percent}%` : '∞'}
+      </span>
+      <span className="usage-cell__values">
+        ({formatValue(used)}{hasQuota ? `/${formatValue(quota)}` : ''})
+      </span>
+    </div>
+  );
+};
+
+// AI 소스 스택바 컴포넌트
+const AISourceStackBar = ({
+  sources,
+  totalTokens
+}: {
+  sources: Record<string, AISourceUsage>;
+  totalTokens: number;
+}) => {
+  if (totalTokens === 0 || Object.keys(sources).length === 0) {
+    return <span className="ai-stack__empty">-</span>;
+  }
+
+  // 소스별 비율 계산 및 정렬 (많은 순)
+  const sortedSources = Object.entries(sources)
+    .map(([key, data]) => ({
+      key,
+      tokens: data.tokens,
+      percent: Math.round((data.tokens / totalTokens) * 100),
+      config: AI_SOURCE_CONFIG[key] || AI_SOURCE_CONFIG.unknown,
+    }))
+    .sort((a, b) => b.tokens - a.tokens);
+
+  const topSource = sortedSources[0];
+
+  return (
+    <div className="ai-stack">
+      <div className="ai-stack__bar">
+        {sortedSources.map(({ key, percent, config }) => (
+          <div
+            key={key}
+            className="ai-stack__segment"
+            style={{
+              width: `${percent}%`,
+              backgroundColor: config.color,
+            }}
+            title={`${config.label}: ${percent}%`}
+          />
+        ))}
+      </div>
+      <span className="ai-stack__label">
+        <span
+          className="ai-stack__dot"
+          style={{ backgroundColor: topSource.config.color }}
+        />
+        {topSource.config.label} {topSource.percent}%
+      </span>
+      <span className="ai-stack__total">{formatTokens(totalTokens)}</span>
+    </div>
+  );
+};
 
 export const UserActivityPage = () => {
   const [page, setPage] = useState(1);
@@ -111,13 +198,6 @@ export const UserActivityPage = () => {
 
   const users = data?.users || [];
   const pagination = data?.pagination;
-
-  // 사용량 비율 계산 (프로그레스바용)
-  const getUsageLevel = (percent: number): 'normal' | 'warning' | 'danger' => {
-    if (percent >= 100) return 'danger';
-    if (percent >= 80) return 'warning';
-    return 'normal';
-  };
 
   return (
     <div className="user-activity-page">
@@ -185,118 +265,122 @@ export const UserActivityPage = () => {
             <div className="user-activity-page__empty">검색 결과가 없습니다.</div>
           ) : (
             <>
-              {/* 카드 리스트 */}
-              <div className="user-card-list">
-                {users.map((user) => {
-                  const isSelected = selectedUserId === user.user_id;
-                  const hasErrors = user.error_count_7d > 0;
-                  const creditLevel = getUsageLevel(user.credit_usage_percent);
-                  const ocrLevel = getUsageLevel(user.ocr_usage_percent);
-                  const storagePercent = user.storage_quota_bytes > 0
-                    ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
-                    : 0;
-                  const storageLevel = getUsageLevel(storagePercent);
-
-                  // AI 소스별 데이터
-                  const aiSources = user.ai_by_source || {};
-                  const hasAiUsage = Object.keys(aiSources).length > 0;
-
-                  return (
-                    <div
-                      key={user.user_id}
-                      className={`user-card ${isSelected ? 'user-card--selected' : ''} ${user.any_limit_exceeded ? 'user-card--exceeded' : ''} ${hasErrors ? 'user-card--has-errors' : ''}`}
-                      onClick={() => handleRowClick(user)}
-                    >
-                      {/* 헤더: 이름 + 등급 */}
-                      <div className="user-card__header">
-                        <div className="user-card__info">
-                          <span className="user-card__name">
-                            {user.any_limit_exceeded && <span className="user-card__warning-icon">⚠</span>}
-                            {user.name}
+              {/* 테이블 */}
+              <div className="user-table-wrapper">
+                <table className="user-table">
+                  <thead>
+                    <tr>
+                      <th className="user-table__th user-table__th--user">사용자</th>
+                      <th className="user-table__th user-table__th--tier">등급</th>
+                      <th className="user-table__th user-table__th--credit">크레딧</th>
+                      <th className="user-table__th user-table__th--ai">
+                        <span>AI 사용량 (30일)</span>
+                        <div className="ai-legend">
+                          <span className="ai-legend__item" title="채팅">
+                            <span className="ai-legend__dot ai-legend__dot--chat" />
+                            <span className="ai-legend__text">채팅</span>
                           </span>
-                          <span className="user-card__email">{user.email}</span>
-                        </div>
-                        <div className="user-card__badges">
-                          <span className={`tier-badge tier-badge--${user.tier}`}>
-                            {TIER_LABELS[user.tier] || user.tier}
+                          <span className="ai-legend__item" title="임베딩">
+                            <span className="ai-legend__dot ai-legend__dot--embed" />
+                            <span className="ai-legend__text">임베딩</span>
                           </span>
-                          {hasErrors && (
-                            <span className="error-badge">오류 {user.error_count_7d}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 크레딧 사용량 */}
-                      <div className="user-card__section">
-                        <div className="user-card__section-header">
-                          <span className="user-card__section-label">크레딧</span>
-                          <span className={`user-card__section-value user-card__section-value--${creditLevel}`}>
-                            {formatCredits(user.credits_used)} / {user.credit_quota > 0 ? formatCredits(user.credit_quota) : '∞'}
-                            {user.credit_quota > 0 && <span className="usage-percent">({user.credit_usage_percent}%)</span>}
+                          <span className="ai-legend__item" title="RAG">
+                            <span className="ai-legend__dot ai-legend__dot--rag" />
+                            <span className="ai-legend__text">RAG</span>
+                          </span>
+                          <span className="ai-legend__item" title="요약">
+                            <span className="ai-legend__dot ai-legend__dot--summary" />
+                            <span className="ai-legend__text">요약</span>
                           </span>
                         </div>
-                        {user.credit_quota > 0 && (
-                          <div className="usage-bar">
-                            <div
-                              className={`usage-bar__fill usage-bar__fill--${creditLevel}`}
-                              style={{ width: `${Math.min(100, user.credit_usage_percent)}%` }}
-                            />
-                          </div>
-                        )}
-                        <div className="user-card__credit-breakdown">
-                          <span>AI: {formatCredits(user.credits_ai)}</span>
-                          <span>OCR: {formatCredits(user.credits_ocr)}</span>
-                        </div>
-                      </div>
+                      </th>
+                      <th className="user-table__th user-table__th--ocr">OCR</th>
+                      <th className="user-table__th user-table__th--storage">스토리지</th>
+                      <th className="user-table__th user-table__th--activity">최근활동</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => {
+                      const isSelected = selectedUserId === user.user_id;
+                      const hasErrors = user.error_count_7d > 0;
+                      const storagePercent = user.storage_quota_bytes > 0
+                        ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
+                        : 0;
 
-                      {/* AI 소스별 사용량 */}
-                      <div className="user-card__section user-card__section--ai">
-                        <div className="user-card__section-header">
-                          <span className="user-card__section-label">AI 사용량 (30일)</span>
-                          <span className="user-card__section-value">
-                            {formatTokens(user.ai_tokens_30d)} 토큰
-                          </span>
-                        </div>
-                        {hasAiUsage ? (
-                          <div className="ai-source-grid">
-                            {Object.entries(aiSources).map(([source, data]) => (
-                              <div key={source} className="ai-source-item">
-                                <span className="ai-source-item__label">{AI_SOURCE_LABELS[source] || source}</span>
-                                <span className="ai-source-item__value">{formatTokens(data.tokens)}</span>
+                      return (
+                        <tr
+                          key={user.user_id}
+                          className={`user-table__row ${isSelected ? 'user-table__row--selected' : ''} ${user.any_limit_exceeded ? 'user-table__row--exceeded' : ''} ${hasErrors ? 'user-table__row--has-errors' : ''}`}
+                          onClick={() => handleRowClick(user)}
+                        >
+                          {/* 사용자 */}
+                          <td className="user-table__td user-table__td--user">
+                            <div className="user-cell">
+                              {user.any_limit_exceeded && <span className="user-cell__warning">⚠</span>}
+                              <div className="user-cell__info">
+                                <span className="user-cell__name">{user.name}</span>
+                                <span className="user-cell__email">{user.email}</span>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="user-card__no-data">사용 없음</div>
-                        )}
-                      </div>
+                              {hasErrors && (
+                                <span className="user-cell__error">오류 {user.error_count_7d}</span>
+                              )}
+                            </div>
+                          </td>
 
-                      {/* OCR + 스토리지 */}
-                      <div className="user-card__row">
-                        <div className="user-card__mini-section">
-                          <span className="user-card__mini-label">OCR</span>
-                          <span className={`user-card__mini-value user-card__mini-value--${ocrLevel}`}>
-                            {user.ocr_pages_30d}페이지
-                            {user.ocr_page_quota > 0 && ` / ${user.ocr_page_quota}`}
-                          </span>
-                        </div>
-                        <div className="user-card__mini-section">
-                          <span className="user-card__mini-label">스토리지</span>
-                          <span className={`user-card__mini-value user-card__mini-value--${storageLevel}`}>
-                            {formatBytes(user.storage_used_bytes)}
-                            {user.storage_quota_bytes > 0 && ` / ${formatBytes(user.storage_quota_bytes)}`}
-                          </span>
-                        </div>
-                        <div className="user-card__mini-section">
-                          <span className="user-card__mini-label">최근활동</span>
-                          <span className="user-card__mini-value">
+                          {/* 등급 */}
+                          <td className="user-table__td user-table__td--tier">
+                            <span className={`tier-badge tier-badge--${user.tier}`}>
+                              {TIER_LABELS[user.tier] || user.tier}
+                            </span>
+                          </td>
+
+                          {/* 크레딧 */}
+                          <td className="user-table__td user-table__td--credit">
+                            <UsageBar
+                              used={user.credits_used}
+                              quota={user.credit_quota}
+                              percent={user.credit_usage_percent}
+                              formatValue={formatCredits}
+                            />
+                          </td>
+
+                          {/* AI 사용량 */}
+                          <td className="user-table__td user-table__td--ai">
+                            <AISourceStackBar
+                              sources={user.ai_by_source || {}}
+                              totalTokens={user.ai_tokens_30d}
+                            />
+                          </td>
+
+                          {/* OCR */}
+                          <td className="user-table__td user-table__td--ocr">
+                            <UsageBar
+                              used={user.ocr_pages_30d}
+                              quota={user.ocr_page_quota}
+                              percent={user.ocr_usage_percent}
+                              formatValue={(v) => `${v}p`}
+                            />
+                          </td>
+
+                          {/* 스토리지 */}
+                          <td className="user-table__td user-table__td--storage">
+                            <UsageBar
+                              used={user.storage_used_bytes}
+                              quota={user.storage_quota_bytes}
+                              percent={storagePercent}
+                              formatValue={formatBytes}
+                            />
+                          </td>
+
+                          {/* 최근활동 */}
+                          <td className="user-table__td user-table__td--activity">
                             {formatRelativeTime(user.last_activity_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {/* Pagination */}

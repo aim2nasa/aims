@@ -1,6 +1,6 @@
 /**
- * User Activity Page - Card Layout
- * 사용자 활동 현황 카드 레이아웃
+ * User Activity Page - Compact Table Layout
+ * 사용자 활동 현황 컴팩트 테이블 레이아웃
  */
 
 /* ============================================
@@ -112,92 +112,131 @@
 }
 
 /* ============================================
-   Card List
+   Table Layout
    ============================================ */
-.user-card-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: var(--spacing-md);
-  overflow-y: auto;
-  padding-right: var(--spacing-xs);
-}
-
-/* ============================================
-   User Card
-   ============================================ */
-.user-card {
-  background: var(--color-surface);
+.user-table-wrapper {
+  flex: 1;
+  overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  background: var(--color-surface);
 }
 
-.user-card:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.user-card--selected {
-  border-color: var(--color-primary);
-  background: rgba(0, 122, 255, 0.04);
-}
-
-.user-card--exceeded {
-  border-left: 3px solid #FF9500;
-}
-
-.user-card--has-errors {
-  border-left: 3px solid var(--color-error);
-}
-
-.user-card--exceeded.user-card--has-errors {
-  border-left: 3px solid var(--color-error);
-}
-
-/* Card Header */
-.user-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.user-card__info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.user-card__name {
-  font-size: 14px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.user-card__warning-icon {
-  color: #FF9500;
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
 }
 
-.user-card__email {
+/* Table Header */
+.user-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-background);
+}
+
+.user-table__th {
+  padding: 10px 12px;
+  text-align: left;
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
 
-.user-card__badges {
+.user-table__th--user { min-width: 180px; }
+.user-table__th--tier { width: 80px; }
+.user-table__th--credit { min-width: 160px; }
+.user-table__th--ai { min-width: 200px; }
+.user-table__th--ocr { min-width: 130px; }
+.user-table__th--storage { min-width: 140px; }
+.user-table__th--activity { width: 80px; }
+
+/* Table Body */
+.user-table__row {
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.user-table__row:hover {
+  background: rgba(0, 122, 255, 0.04);
+}
+
+.user-table__row--selected {
+  background: rgba(0, 122, 255, 0.08);
+}
+
+.user-table__row--exceeded {
+  border-left: 3px solid #FF9500;
+}
+
+.user-table__row--has-errors {
+  border-left: 3px solid var(--color-error);
+}
+
+.user-table__row--exceeded.user-table__row--has-errors {
+  border-left: 3px solid var(--color-error);
+}
+
+.user-table__td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+/* ============================================
+   User Cell (Name + Email)
+   ============================================ */
+.user-cell {
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
 }
 
-/* Tier Badge */
+.user-cell__warning {
+  color: #FF9500;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.user-cell__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-cell__name {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-cell__email {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-cell__error {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: var(--font-weight-medium);
+  background: #FFEBEE;
+  color: var(--color-error);
+  white-space: nowrap;
+}
+
+/* ============================================
+   Tier Badge
+   ============================================ */
 .tier-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -232,184 +271,160 @@
   color: #C2185B;
 }
 
-/* Error Badge */
-.error-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: var(--font-weight-medium);
-  background: #FFEBEE;
-  color: var(--color-error);
-}
-
 /* ============================================
-   Card Section
+   Usage Cell (Inline Progress Bar)
    ============================================ */
-.user-card__section {
-  margin-bottom: var(--spacing-sm);
-}
-
-.user-card__section-header {
+.usage-cell {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  gap: 6px;
 }
 
-.user-card__section-label {
-  font-size: 11px;
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.user-card__section-value {
-  font-size: 13px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  font-family: var(--font-family-mono, monospace);
-}
-
-.user-card__section-value--normal {
-  color: var(--color-text-primary);
-}
-
-.user-card__section-value--warning {
-  color: #FF9500;
-}
-
-.user-card__section-value--danger {
-  color: var(--color-error);
-}
-
-.usage-percent {
-  font-size: 11px;
-  font-weight: normal;
-  color: var(--color-text-secondary);
-  margin-left: 4px;
-}
-
-/* Usage Bar */
-.usage-bar {
-  height: 4px;
+.usage-bar-inline {
+  width: 60px;
+  height: 6px;
   background: var(--color-border-light);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
-.usage-bar__fill {
+.usage-bar-inline__fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.usage-bar__fill--normal {
+.usage-bar-inline__fill--normal {
   background: var(--color-primary);
 }
 
-.usage-bar__fill--warning {
+.usage-bar-inline__fill--warning {
   background: #FF9500;
 }
 
-.usage-bar__fill--danger {
+.usage-bar-inline__fill--danger {
   background: var(--color-error);
 }
 
-/* Credit Breakdown */
-.user-card__credit-breakdown {
-  display: flex;
-  gap: var(--spacing-md);
+.usage-cell__text {
+  font-weight: var(--font-weight-semibold);
   font-size: 11px;
+  min-width: 32px;
+}
+
+.usage-cell__text--normal {
+  color: var(--color-text-primary);
+}
+
+.usage-cell__text--warning {
+  color: #FF9500;
+}
+
+.usage-cell__text--danger {
+  color: var(--color-error);
+}
+
+.usage-cell__values {
+  font-size: 10px;
   color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono, monospace);
 }
 
 /* ============================================
-   AI Source Grid
+   AI Source Stack Bar
    ============================================ */
-.user-card__section--ai {
-  background: var(--color-background);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-}
-
-.ai-source-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.ai-source-item {
+.ai-stack {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 6px 4px;
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-light);
+  gap: 8px;
 }
 
-.ai-source-item__label {
+.ai-stack__bar {
+  width: 80px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-shrink: 0;
+  background: var(--color-border-light);
+}
+
+.ai-stack__segment {
+  height: 100%;
+  min-width: 2px;
+}
+
+.ai-stack__label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 10px;
-  color: var(--color-text-tertiary);
-  margin-bottom: 2px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
-.ai-source-item__value {
-  font-size: 12px;
+.ai-stack__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ai-stack__total {
+  font-size: 11px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-family: var(--font-family-mono, monospace);
 }
 
-.user-card__no-data {
-  font-size: 11px;
+.ai-stack__empty {
   color: var(--color-text-tertiary);
-  text-align: center;
-  padding: 8px;
+  font-size: 11px;
 }
 
 /* ============================================
-   Card Row (OCR, Storage, Activity)
+   AI Legend (Header)
    ============================================ */
-.user-card__row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--color-border-light);
-  margin-top: var(--spacing-sm);
-}
-
-.user-card__mini-section {
+.ai-legend {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ai-legend__item {
+  display: flex;
   align-items: center;
-  text-align: center;
+  gap: 3px;
 }
 
-.user-card__mini-label {
-  font-size: 10px;
+.ai-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ai-legend__dot--chat {
+  background-color: #AF52DE;
+}
+
+.ai-legend__dot--embed {
+  background-color: #FF9500;
+}
+
+.ai-legend__dot--rag {
+  background-color: #007AFF;
+}
+
+.ai-legend__dot--summary {
+  background-color: #34C759;
+}
+
+.ai-legend__text {
+  font-size: 9px;
+  font-weight: var(--font-weight-regular);
   color: var(--color-text-tertiary);
-  margin-bottom: 2px;
-}
-
-.user-card__mini-value {
-  font-size: 12px;
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.user-card__mini-value--warning {
-  color: #FF9500;
-}
-
-.user-card__mini-value--danger {
-  color: var(--color-error);
 }
 
 /* ============================================
