@@ -658,23 +658,62 @@ module.exports = function(db) {
   /**
    * DELETE /api/auth/account
    * 계정 완전 삭제 (개발/테스트용)
+   * CASCADE DELETE: 사용자 삭제 시 관련 데이터 모두 삭제
    */
   router.delete('/account', authenticateJWT, async (req, res) => {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
+      const customersCollection = db.collection('customers');
+      const filesCollection = db.collection('files');
+      const relationshipsCollection = db.collection('customer_relationships');
 
       // ObjectId 형식이면 ObjectId로 변환, 아니면 문자열 그대로 사용 (dev-user 등)
       let userId;
+      let userIdStr;
       try {
         userId = ObjectId.isValid(req.user.id) && req.user.id.length === 24
           ? new ObjectId(req.user.id)
           : req.user.id;
+        userIdStr = req.user.id;
       } catch {
         userId = req.user.id;
+        userIdStr = req.user.id;
       }
 
-      // 사용자 삭제
+      // 1. 해당 사용자의 고객 ID 목록 조회
+      const customerIds = await customersCollection
+        .find({ 'meta.created_by': userIdStr })
+        .project({ _id: 1 })
+        .toArray()
+        .then(docs => docs.map(d => d._id));
+
+      console.log(`[Auth] Found ${customerIds.length} customers to delete for user ${userIdStr}`);
+
+      if (customerIds.length > 0) {
+        // 2. 해당 고객들의 관계 삭제
+        const relDeleteResult = await relationshipsCollection.deleteMany({
+          $or: [
+            { from_customer: { $in: customerIds } },
+            { related_customer: { $in: customerIds } }
+          ]
+        });
+        console.log(`[Auth] Deleted ${relDeleteResult.deletedCount} relationships`);
+
+        // 3. 해당 고객들의 파일 삭제
+        const filesDeleteResult = await filesCollection.deleteMany({
+          customerId: { $in: customerIds }
+        });
+        console.log(`[Auth] Deleted ${filesDeleteResult.deletedCount} files`);
+
+        // 4. 고객 삭제
+        const customersDeleteResult = await customersCollection.deleteMany({
+          'meta.created_by': userIdStr
+        });
+        console.log(`[Auth] Deleted ${customersDeleteResult.deletedCount} customers`);
+      }
+
+      // 5. 사용자 삭제
       const result = await usersCollection.deleteOne({ _id: userId });
 
       if (result.deletedCount === 0) {
@@ -688,7 +727,11 @@ module.exports = function(db) {
 
       res.json({
         success: true,
-        message: 'Account deleted successfully'
+        message: 'Account deleted successfully',
+        deletedData: {
+          customers: customerIds.length,
+          user: 1
+        }
       });
     } catch (error) {
       console.error('Account deletion error:', error);
