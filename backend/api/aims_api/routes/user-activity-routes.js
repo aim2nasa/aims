@@ -8,8 +8,12 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const backendLogger = require('../lib/backendLogger');
-const { DEFAULT_TIER } = require('../lib/storageQuotaService');
+const { DEFAULT_TIER, getTierDefinitions } = require('../lib/storageQuotaService');
 const { OCR_PRICE_PER_PAGE_USD } = require('../lib/ocrPricing');
+
+// 크레딧 환산율 (TIER_PRICING_POLICY.md 기준)
+const OCR_CREDIT_PER_PAGE = 2;      // OCR 1페이지 = 2 크레딧
+const AI_CREDIT_PER_1K_TOKENS = 0.5; // AI 1K 토큰 = 0.5 크레딧
 
 /**
  * 라우트 설정 함수
@@ -135,11 +139,15 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       const errorCountMap = new Map(errorCounts.map(e => [e._id, e.count]));
 
       // AI 토큰 사용량 및 비용 집계 (30일) - ai_token_usage 컬렉션 사용
+      // 소스별 상세 정보도 함께 집계
       let aiTokenMap = new Map();
       let aiCostMap = new Map();
+      let aiBySourceMap = new Map(); // 소스별 상세 정보
       if (analyticsDb) {
         try {
           const tokenUsageCollection = analyticsDb.collection('ai_token_usage');
+
+          // 전체 토큰/비용 집계
           const aiTokenCounts = await tokenUsageCollection.aggregate([
             {
               $match: {
@@ -157,6 +165,36 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           ]).toArray();
           aiTokenMap = new Map(aiTokenCounts.map(a => [a._id, a.total_tokens]));
           aiCostMap = new Map(aiTokenCounts.map(a => [a._id, a.total_cost]));
+
+          // 소스별 집계 (chat, embed, rag, summary)
+          const aiBySource = await tokenUsageCollection.aggregate([
+            {
+              $match: {
+                user_id: { $in: userIds },
+                timestamp: { $gte: thirtyDaysAgo }
+              }
+            },
+            {
+              $group: {
+                _id: { user_id: '$user_id', source: '$source' },
+                tokens: { $sum: '$total_tokens' },
+                cost: { $sum: '$estimated_cost_usd' }
+              }
+            }
+          ]).toArray();
+
+          // 사용자별 소스 데이터 맵핑
+          for (const item of aiBySource) {
+            const userId = item._id.user_id;
+            const source = item._id.source || 'unknown';
+            if (!aiBySourceMap.has(userId)) {
+              aiBySourceMap.set(userId, {});
+            }
+            aiBySourceMap.get(userId)[source] = {
+              tokens: item.tokens,
+              cost: Math.round(item.cost * 10000) / 10000
+            };
+          }
         } catch (err) {
           console.warn('[user-activity] AI 토큰 집계 실패:', err.message);
         }
@@ -204,25 +242,68 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
       ]).toArray();
       const storageMap = new Map(storageSums.map(s => [s._id, s.totalSize]));
 
+      // 티어 정의 로드 (한도 정보용)
+      const tierDefinitions = await getTierDefinitions(db);
+
       // 결과 조합
       const enrichedUsers = users.map(user => {
         const odlId = user._id.toString();
         const ocrPages = ocrPageMap.get(odlId) || 0;
+        const aiTokens = aiTokenMap.get(odlId) || 0;
+        const tier = user.storage?.tier || DEFAULT_TIER;
+        const tierDef = tierDefinitions[tier] || tierDefinitions[DEFAULT_TIER];
+        const aiBySource = aiBySourceMap.get(odlId) || {};
+
+        // 크레딧 계산: OCR 페이지 * 2 + AI 토큰(K) * 0.5
+        const ocrCredits = ocrPages * OCR_CREDIT_PER_PAGE;
+        const aiCredits = (aiTokens / 1000) * AI_CREDIT_PER_1K_TOKENS;
+        const totalCredits = Math.round((ocrCredits + aiCredits) * 100) / 100;
+
+        // 티어 한도
+        const creditQuota = tierDef.credit_quota || 0;
+        const ocrPageQuota = tierDef.ocr_page_quota || 0;
+
+        // 한도 초과 여부
+        const creditExceeded = creditQuota > 0 && totalCredits > creditQuota;
+        const ocrExceeded = ocrPageQuota > 0 && ocrPages > ocrPageQuota;
+        const storageQuota = user.storage?.quota_bytes || tierDef.quota_bytes || 0;
+        const storageUsed = storageMap.get(odlId) || 0;
+        const storageExceeded = storageQuota > 0 && storageUsed > storageQuota;
+
         return {
           user_id: odlId,
           name: user.name || '-',
           email: user.email || '-',
           role: user.role,
-          tier: user.storage?.tier || DEFAULT_TIER,
+          tier,
           document_count: docCountMap.get(odlId) || 0,
           customer_count: customerCountMap.get(odlId) || 0,
-          ai_tokens_30d: aiTokenMap.get(odlId) || 0,
+          // AI 사용량
+          ai_tokens_30d: aiTokens,
           ai_cost_30d: Math.round((aiCostMap.get(odlId) || 0) * 10000) / 10000,
+          ai_by_source: aiBySource, // 소스별 상세 (chat, embed, rag, summary)
+          // OCR 사용량
           ocr_count_30d: ocrCountMap.get(odlId) || 0,
           ocr_pages_30d: ocrPages,
           ocr_cost_30d: Math.round(ocrPages * OCR_PRICE_PER_PAGE_USD * 10000) / 10000,
-          storage_used_bytes: storageMap.get(odlId) || 0,
-          storage_quota_bytes: user.storage?.quota_bytes || 0,
+          // 크레딧
+          credits_used: totalCredits,
+          credits_ocr: Math.round(ocrCredits * 100) / 100,
+          credits_ai: Math.round(aiCredits * 100) / 100,
+          // 티어 한도
+          credit_quota: creditQuota,
+          ocr_page_quota: ocrPageQuota,
+          // 한도 초과 여부
+          credit_exceeded: creditExceeded,
+          ocr_exceeded: ocrExceeded,
+          storage_exceeded: storageExceeded,
+          any_limit_exceeded: creditExceeded || ocrExceeded || storageExceeded,
+          // 사용률 (%)
+          credit_usage_percent: creditQuota > 0 ? Math.round((totalCredits / creditQuota) * 100) : 0,
+          ocr_usage_percent: ocrPageQuota > 0 ? Math.round((ocrPages / ocrPageQuota) * 100) : 0,
+          // 스토리지
+          storage_used_bytes: storageUsed,
+          storage_quota_bytes: storageQuota,
           error_count_7d: errorCountMap.get(odlId) || 0,
           last_activity_at: lastActivityMap.get(odlId) || user.lastLogin || null,
           created_at: user.createdAt
@@ -242,7 +323,10 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         'ocr_cost_30d': 'ocr_cost_30d',
         'storage_used_bytes': 'storage_used_bytes',
         'error_count_7d': 'error_count_7d',
-        'last_activity_at': 'last_activity_at'
+        'last_activity_at': 'last_activity_at',
+        'credits_used': 'credits_used',
+        'credit_usage_percent': 'credit_usage_percent',
+        'ocr_usage_percent': 'ocr_usage_percent'
       };
       const sortKey = sortKeyMap[sortBy] || 'last_activity_at';
 

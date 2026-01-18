@@ -10,6 +10,12 @@ import { apiClient } from '@/shared/api/apiClient';
 // Types
 // ============================================================
 
+// AI 소스별 사용량
+export interface AISourceUsage {
+  tokens: number;
+  cost: number;
+}
+
 export interface UserActivitySummary {
   user_id: string;
   name: string;
@@ -18,11 +24,30 @@ export interface UserActivitySummary {
   tier: string;
   document_count: number;
   customer_count: number;
+  // AI 사용량
   ai_tokens_30d: number;
   ai_cost_30d: number;
+  ai_by_source: Record<string, AISourceUsage>; // chat, embed, rag, summary
+  // OCR 사용량
   ocr_count_30d: number;
   ocr_pages_30d: number;
   ocr_cost_30d: number;
+  // 크레딧
+  credits_used: number;
+  credits_ocr: number;
+  credits_ai: number;
+  // 티어 한도
+  credit_quota: number;
+  ocr_page_quota: number;
+  // 한도 초과 여부
+  credit_exceeded: boolean;
+  ocr_exceeded: boolean;
+  storage_exceeded: boolean;
+  any_limit_exceeded: boolean;
+  // 사용률 (%)
+  credit_usage_percent: number;
+  ocr_usage_percent: number;
+  // 스토리지
   storage_used_bytes: number;
   storage_quota_bytes: number;
   error_count_7d: number;
@@ -372,6 +397,29 @@ export const formatCost = (cost: number): string => {
     return `$${cost.toFixed(4)}`;
   }
   return `$${cost.toFixed(2)}`;
+};
+
+/**
+ * 크레딧을 읽기 쉬운 형식으로 변환
+ */
+export const formatCredits = (credits: number): string => {
+  if (credits === 0) return '0';
+  if (credits < 0) return '무제한';
+  if (credits >= 10000) {
+    return (credits / 1000).toFixed(1) + 'K';
+  }
+  if (credits >= 100) {
+    return Math.round(credits).toLocaleString();
+  }
+  return credits.toFixed(1);
+};
+
+/**
+ * 사용률을 포맷팅 (%)
+ */
+export const formatUsagePercent = (percent: number, quota: number): string => {
+  if (quota <= 0) return '∞';
+  return `${percent}%`;
 };
 
 /**

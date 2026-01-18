@@ -4,42 +4,20 @@
  * @since 2025-12-14
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   userActivityApi,
   formatBytes,
   formatTokens,
-  formatCost,
+  formatCredits,
   formatRelativeTime,
   type UserActivitySummary,
 } from '@/features/users/userActivityApi';
 import { Button } from '@/shared/ui/Button/Button';
 import { UserDetailPanel } from './UserDetailPanel';
 import './UserActivityPage.css';
-
-// 컬럼 폭 localStorage 키
-const COLUMN_WIDTHS_KEY = 'userActivityPage_columnWidths';
-
-// 기본 컬럼 폭
-const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
-  name: 180,
-  tier: 70,
-  document: 50,
-  customer: 50,
-  ai: 60,
-  aiCost: 65,
-  ocr: 55,
-  ocrCost: 65,
-  storage: 110,
-  error: 50,
-  lastActivity: 70,
-};
-
-// 컬럼 최소/최대 폭
-const MIN_COLUMN_WIDTH = 40;
-const MAX_COLUMN_WIDTH = 400;
 
 const TIER_OPTIONS = [
   { value: '', label: '전체 등급' },
@@ -57,17 +35,22 @@ const TIER_LABELS: Record<string, string> = {
   admin: '관리자',
 };
 
+// AI 소스 라벨
+const AI_SOURCE_LABELS: Record<string, string> = {
+  chat: '채팅',
+  embed: '임베딩',
+  rag: 'RAG',
+  summary: '요약',
+  unknown: '기타',
+};
+
 const SORT_OPTIONS = [
   { value: 'last_activity_at', label: '최근 활동순' },
-  { value: 'error_count_7d', label: '오류 많은순' },
-  { value: 'document_count', label: '문서 많은순' },
-  { value: 'customer_count', label: '고객 많은순' },
+  { value: 'credits_used', label: '크레딧 사용순' },
+  { value: 'credit_usage_percent', label: '크레딧 사용률순' },
   { value: 'ai_tokens_30d', label: 'AI 사용량순' },
-  { value: 'ai_cost_30d', label: 'AI 비용순' },
-  { value: 'ocr_count_30d', label: 'OCR 사용량순' },
-  { value: 'ocr_cost_30d', label: 'OCR 비용순' },
-  { value: 'storage_used_bytes', label: '스토리지순' },
-  { value: 'tier', label: '등급순' },
+  { value: 'ocr_pages_30d', label: 'OCR 페이지순' },
+  { value: 'error_count_7d', label: '오류 많은순' },
   { value: 'name', label: '이름순' },
 ];
 
@@ -75,7 +58,6 @@ const LIMIT_OPTIONS = [
   { value: 10, label: '10개씩' },
   { value: 20, label: '20개씩' },
   { value: 50, label: '50개씩' },
-  { value: 100, label: '100개씩' },
 ];
 
 export const UserActivityPage = () => {
@@ -86,60 +68,6 @@ export const UserActivityPage = () => {
   const [sortBy, setSortBy] = useState('last_activity_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-
-  // 컬럼 리사이즈 상태
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    try {
-      const saved = localStorage.getItem(COLUMN_WIDTHS_KEY);
-      return saved ? { ...DEFAULT_COLUMN_WIDTHS, ...JSON.parse(saved) } : DEFAULT_COLUMN_WIDTHS;
-    } catch {
-      return DEFAULT_COLUMN_WIDTHS;
-    }
-  });
-  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
-  const resizeStartX = useRef<number>(0);
-  const resizeStartWidth = useRef<number>(0);
-
-  // 컬럼 폭 localStorage 저장
-  useEffect(() => {
-    localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  // 리사이즈 핸들러
-  const handleResizeStart = useCallback((columnKey: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizingColumn(columnKey);
-    resizeStartX.current = e.clientX;
-    resizeStartWidth.current = columnWidths[columnKey] || DEFAULT_COLUMN_WIDTHS[columnKey];
-  }, [columnWidths]);
-
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizingColumn) return;
-    const diff = e.clientX - resizeStartX.current;
-    const newWidth = Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, resizeStartWidth.current + diff));
-    setColumnWidths(prev => ({ ...prev, [resizingColumn]: newWidth }));
-  }, [resizingColumn]);
-
-  const handleResizeEnd = useCallback(() => {
-    setResizingColumn(null);
-  }, []);
-
-  // 리사이즈 이벤트 리스너
-  useEffect(() => {
-    if (resizingColumn) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleResizeMove);
-      document.removeEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [resizingColumn, handleResizeMove, handleResizeEnd]);
 
   // 검색어 debounce (300ms)
   const debouncedSearch = useDebounce(search, 300);
@@ -152,21 +80,11 @@ export const UserActivityPage = () => {
         limit,
         search: debouncedSearch || undefined,
         tier: tierFilter || undefined,
-        // role 필터 제거 - 모든 사용자 조회 (admin, agent, user 포함)
         sortBy,
         sortOrder,
       }),
-    refetchInterval: 60000, // 1분마다 갱신
+    refetchInterval: 60000,
   });
-
-  const handleSort = (key: string) => {
-    if (sortBy === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(key);
-      setSortOrder('desc');
-    }
-  };
 
   const handleRowClick = (user: UserActivitySummary) => {
     setSelectedUserId(selectedUserId === user.user_id ? null : user.user_id);
@@ -175,11 +93,6 @@ export const UserActivityPage = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     setSelectedUserId(null);
-  };
-
-  const handleLimitChange = (newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
   };
 
   if (isLoading) {
@@ -198,6 +111,13 @@ export const UserActivityPage = () => {
 
   const users = data?.users || [];
   const pagination = data?.pagination;
+
+  // 사용량 비율 계산 (프로그레스바용)
+  const getUsageLevel = (percent: number): 'normal' | 'warning' | 'danger' => {
+    if (percent >= 100) return 'danger';
+    if (percent >= 80) return 'warning';
+    return 'normal';
+  };
 
   return (
     <div className="user-activity-page">
@@ -233,9 +153,7 @@ export const UserActivityPage = () => {
           aria-label="등급 필터"
         >
           {TIER_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
         <select
@@ -248,162 +166,137 @@ export const UserActivityPage = () => {
           aria-label="정렬 기준"
         >
           {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
         <button
           type="button"
           className="user-activity-page__sort-order"
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-          title={sortOrder === 'asc' ? '오름차순' : '내림차순'}
         >
           {sortOrder === 'asc' ? '↑' : '↓'}
         </button>
       </div>
 
-      {/* Content: Table + Detail Panel (마스터-디테일 레이아웃) */}
+      {/* Content */}
       <div className="user-activity-page__content">
-        {/* Main: Table + Pagination */}
         <div className="user-activity-page__main">
           {users.length === 0 ? (
             <div className="user-activity-page__empty">검색 결과가 없습니다.</div>
           ) : (
             <>
-              <div className="user-activity-page__table-container">
-                <table className="user-activity-page__table">
-                  <colgroup>
-                    <col style={{ width: columnWidths.name }} />
-                    <col style={{ width: columnWidths.tier }} />
-                    <col style={{ width: columnWidths.document }} />
-                    <col style={{ width: columnWidths.customer }} />
-                    <col style={{ width: columnWidths.ai }} />
-                    <col style={{ width: columnWidths.aiCost }} />
-                    <col style={{ width: columnWidths.ocr }} />
-                    <col style={{ width: columnWidths.ocrCost }} />
-                    <col style={{ width: columnWidths.storage }} />
-                    <col style={{ width: columnWidths.error }} />
-                    <col style={{ width: columnWidths.lastActivity }} />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th onClick={() => handleSort('name')}>
-                        <span className="th-content">이름 {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('name', e)} />
-                      </th>
-                      <th onClick={() => handleSort('tier')}>
-                        <span className="th-content">등급 {sortBy === 'tier' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('tier', e)} />
-                      </th>
-                      <th onClick={() => handleSort('document_count')}>
-                        <span className="th-content">문서 {sortBy === 'document_count' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('document', e)} />
-                      </th>
-                      <th onClick={() => handleSort('customer_count')}>
-                        <span className="th-content">고객 {sortBy === 'customer_count' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('customer', e)} />
-                      </th>
-                      <th onClick={() => handleSort('ai_tokens_30d')}>
-                        <span className="th-content">AI {sortBy === 'ai_tokens_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ai', e)} />
-                      </th>
-                      <th onClick={() => handleSort('ai_cost_30d')}>
-                        <span className="th-content">AI비용 {sortBy === 'ai_cost_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('aiCost', e)} />
-                      </th>
-                      <th onClick={() => handleSort('ocr_count_30d')}>
-                        <span className="th-content">OCR {sortBy === 'ocr_count_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ocr', e)} />
-                      </th>
-                      <th onClick={() => handleSort('ocr_cost_30d')}>
-                        <span className="th-content">OCR비용 {sortBy === 'ocr_cost_30d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('ocrCost', e)} />
-                      </th>
-                      <th onClick={() => handleSort('storage_used_bytes')}>
-                        <span className="th-content">스토리지 {sortBy === 'storage_used_bytes' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('storage', e)} />
-                      </th>
-                      <th onClick={() => handleSort('error_count_7d')}>
-                        <span className="th-content">오류 {sortBy === 'error_count_7d' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                        <span className="resize-handle" onMouseDown={(e) => handleResizeStart('error', e)} />
-                      </th>
-                      <th onClick={() => handleSort('last_activity_at')}>
-                        <span className="th-content">최근활동 {sortBy === 'last_activity_at' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => {
-                      const storagePercent =
-                        user.storage_quota_bytes > 0
-                          ? (user.storage_used_bytes / user.storage_quota_bytes) * 100
-                          : 0;
-                      const storageWarning = storagePercent >= 80;
-                      const hasErrors = user.error_count_7d > 0;
-                      const isSelected = selectedUserId === user.user_id;
+              {/* 카드 리스트 */}
+              <div className="user-card-list">
+                {users.map((user) => {
+                  const isSelected = selectedUserId === user.user_id;
+                  const hasErrors = user.error_count_7d > 0;
+                  const creditLevel = getUsageLevel(user.credit_usage_percent);
+                  const ocrLevel = getUsageLevel(user.ocr_usage_percent);
+                  const storagePercent = user.storage_quota_bytes > 0
+                    ? Math.round((user.storage_used_bytes / user.storage_quota_bytes) * 100)
+                    : 0;
+                  const storageLevel = getUsageLevel(storagePercent);
 
-                      return (
-                        <tr
-                          key={user.user_id}
-                          className={`user-activity-page__row ${isSelected ? 'user-activity-page__row--selected' : ''} ${hasErrors ? 'user-activity-page__row--has-errors' : ''}`}
-                          onClick={() => handleRowClick(user)}
-                        >
-                          <td className="user-activity-page__cell-user">
-                            <span className="user-activity-page__user-name">{user.name}</span>
-                            <span className="user-activity-page__user-email">{user.email}</span>
-                          </td>
-                          <td>
-                            <span className={`tier-badge tier-badge--${user.tier}`}>
-                              {TIER_LABELS[user.tier] || user.tier}
-                            </span>
-                          </td>
-                          <td className="user-activity-page__cell-number">
-                            {user.document_count.toLocaleString()}
-                          </td>
-                          <td className="user-activity-page__cell-number">
-                            {user.customer_count.toLocaleString()}
-                          </td>
-                          <td className="user-activity-page__cell-number">
-                            {formatTokens(user.ai_tokens_30d)}
-                          </td>
-                          <td className="user-activity-page__cell-number user-activity-page__cell-cost">
-                            {formatCost(user.ai_cost_30d)}
-                          </td>
-                          <td
-                            className="user-activity-page__cell-number"
-                            title={`${user.ocr_pages_30d}페이지/${user.ocr_count_30d}문서`}
-                          >
-                            {user.ocr_pages_30d}/{user.ocr_count_30d}
-                          </td>
-                          <td className="user-activity-page__cell-number user-activity-page__cell-cost">
-                            {formatCost(user.ocr_cost_30d)}
-                          </td>
-                          <td
-                            className={`user-activity-page__cell-storage ${storageWarning ? 'user-activity-page__cell-storage--warning' : ''}`}
-                          >
-                            <span className="storage-used">{formatBytes(user.storage_used_bytes)}</span>
-                            <span className="storage-quota">
-                              /{' '}
-                              {user.storage_quota_bytes < 0
-                                ? '무제한'
-                                : formatBytes(user.storage_quota_bytes)}
-                            </span>
-                          </td>
-                          <td
-                            className={`user-activity-page__cell-error ${hasErrors ? 'user-activity-page__cell-error--has-errors' : ''}`}
-                          >
-                            {user.error_count_7d}
-                            {hasErrors && <span className="error-indicator">!</span>}
-                          </td>
-                          <td className="user-activity-page__cell-time">
+                  // AI 소스별 데이터
+                  const aiSources = user.ai_by_source || {};
+                  const hasAiUsage = Object.keys(aiSources).length > 0;
+
+                  return (
+                    <div
+                      key={user.user_id}
+                      className={`user-card ${isSelected ? 'user-card--selected' : ''} ${user.any_limit_exceeded ? 'user-card--exceeded' : ''} ${hasErrors ? 'user-card--has-errors' : ''}`}
+                      onClick={() => handleRowClick(user)}
+                    >
+                      {/* 헤더: 이름 + 등급 */}
+                      <div className="user-card__header">
+                        <div className="user-card__info">
+                          <span className="user-card__name">
+                            {user.any_limit_exceeded && <span className="user-card__warning-icon">⚠</span>}
+                            {user.name}
+                          </span>
+                          <span className="user-card__email">{user.email}</span>
+                        </div>
+                        <div className="user-card__badges">
+                          <span className={`tier-badge tier-badge--${user.tier}`}>
+                            {TIER_LABELS[user.tier] || user.tier}
+                          </span>
+                          {hasErrors && (
+                            <span className="error-badge">오류 {user.error_count_7d}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 크레딧 사용량 */}
+                      <div className="user-card__section">
+                        <div className="user-card__section-header">
+                          <span className="user-card__section-label">크레딧</span>
+                          <span className={`user-card__section-value user-card__section-value--${creditLevel}`}>
+                            {formatCredits(user.credits_used)} / {user.credit_quota > 0 ? formatCredits(user.credit_quota) : '∞'}
+                            {user.credit_quota > 0 && <span className="usage-percent">({user.credit_usage_percent}%)</span>}
+                          </span>
+                        </div>
+                        {user.credit_quota > 0 && (
+                          <div className="usage-bar">
+                            <div
+                              className={`usage-bar__fill usage-bar__fill--${creditLevel}`}
+                              style={{ width: `${Math.min(100, user.credit_usage_percent)}%` }}
+                            />
+                          </div>
+                        )}
+                        <div className="user-card__credit-breakdown">
+                          <span>AI: {formatCredits(user.credits_ai)}</span>
+                          <span>OCR: {formatCredits(user.credits_ocr)}</span>
+                        </div>
+                      </div>
+
+                      {/* AI 소스별 사용량 */}
+                      <div className="user-card__section user-card__section--ai">
+                        <div className="user-card__section-header">
+                          <span className="user-card__section-label">AI 사용량 (30일)</span>
+                          <span className="user-card__section-value">
+                            {formatTokens(user.ai_tokens_30d)} 토큰
+                          </span>
+                        </div>
+                        {hasAiUsage ? (
+                          <div className="ai-source-grid">
+                            {Object.entries(aiSources).map(([source, data]) => (
+                              <div key={source} className="ai-source-item">
+                                <span className="ai-source-item__label">{AI_SOURCE_LABELS[source] || source}</span>
+                                <span className="ai-source-item__value">{formatTokens(data.tokens)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="user-card__no-data">사용 없음</div>
+                        )}
+                      </div>
+
+                      {/* OCR + 스토리지 */}
+                      <div className="user-card__row">
+                        <div className="user-card__mini-section">
+                          <span className="user-card__mini-label">OCR</span>
+                          <span className={`user-card__mini-value user-card__mini-value--${ocrLevel}`}>
+                            {user.ocr_pages_30d}페이지
+                            {user.ocr_page_quota > 0 && ` / ${user.ocr_page_quota}`}
+                          </span>
+                        </div>
+                        <div className="user-card__mini-section">
+                          <span className="user-card__mini-label">스토리지</span>
+                          <span className={`user-card__mini-value user-card__mini-value--${storageLevel}`}>
+                            {formatBytes(user.storage_used_bytes)}
+                            {user.storage_quota_bytes > 0 && ` / ${formatBytes(user.storage_quota_bytes)}`}
+                          </span>
+                        </div>
+                        <div className="user-card__mini-section">
+                          <span className="user-card__mini-label">최근활동</span>
+                          <span className="user-card__mini-value">
                             {formatRelativeTime(user.last_activity_at)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Pagination */}
@@ -411,13 +304,14 @@ export const UserActivityPage = () => {
                 <select
                   className="user-activity-page__limit-select"
                   value={limit}
-                  onChange={(e) => handleLimitChange(Number(e.target.value))}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
                   aria-label="페이지당 항목 수"
                 >
                   {LIMIT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
 
@@ -432,7 +326,7 @@ export const UserActivityPage = () => {
                       이전
                     </button>
 
-                    {Array.from({ length: Math.min(10, pagination.totalPages) }, (_, i) => {
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                       const pageNum = i + 1;
                       return (
                         <button
@@ -459,7 +353,7 @@ export const UserActivityPage = () => {
 
                 {pagination && (
                   <span className="user-activity-page__pagination-info">
-                    전체 {pagination.total}명 {pagination.totalPages > 1 && `(페이지 ${page}/${pagination.totalPages})`}
+                    전체 {pagination.total}명
                   </span>
                 )}
               </div>
@@ -467,7 +361,7 @@ export const UserActivityPage = () => {
           )}
         </div>
 
-        {/* Detail Panel (우측) */}
+        {/* Detail Panel */}
         {selectedUserId && (
           <UserDetailPanel
             userId={selectedUserId}

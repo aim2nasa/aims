@@ -10,10 +10,21 @@ import {
   userActivityApi,
   formatBytes,
   formatTokens,
+  formatCredits,
+  formatCost,
   formatDateTime,
   formatRelativeTime,
   type UserError,
 } from '@/features/users/userActivityApi';
+
+// AI 소스 표시명
+const AI_SOURCE_LABELS: Record<string, string> = {
+  chat: '채팅',
+  embed: '임베딩',
+  rag: 'RAG 검색',
+  summary: '요약',
+  unknown: '기타',
+};
 import { Button } from '@/shared/ui/Button/Button';
 import { ActivityTimeline } from './ActivityTimeline';
 import './UserActivityPage.css';
@@ -202,7 +213,7 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
 
       {/* AI 사용량 */}
       <div className="user-detail-panel__section">
-        <h4 className="user-detail-panel__section-title">AI 사용량 (30일)</h4>
+        <h4 className="user-detail-panel__section-title">AI 사용량 (30일) - 소스별</h4>
         <div className="user-detail-panel__stats-grid">
           <div className="stat-item stat-item--primary">
             <span className="stat-value">{formatTokens(activity_summary.ai_usage.total_tokens)}</span>
@@ -211,10 +222,39 @@ export const UserDetailPanel = ({ userId, onClose }: UserDetailPanelProps) => {
           {Object.entries(activity_summary.ai_usage.by_source || {}).map(([source, tokens]) => (
             <div key={source} className="stat-item">
               <span className="stat-value">{formatTokens(tokens as number)}</span>
-              <span className="stat-label">{source}</span>
+              <span className="stat-label">{AI_SOURCE_LABELS[source] || source}</span>
             </div>
           ))}
         </div>
+        {/* AI 소스별 상세 테이블 */}
+        {Object.keys(activity_summary.ai_usage.by_source || {}).length > 0 && (
+          <div className="user-detail-panel__source-table">
+            <table className="source-detail-table">
+              <thead>
+                <tr>
+                  <th>소스</th>
+                  <th>토큰</th>
+                  <th>비율</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(activity_summary.ai_usage.by_source || {}).map(([source, tokens]) => {
+                  const tokenNum = tokens as number;
+                  const percent = activity_summary.ai_usage.total_tokens > 0
+                    ? Math.round((tokenNum / activity_summary.ai_usage.total_tokens) * 100)
+                    : 0;
+                  return (
+                    <tr key={source}>
+                      <td>{AI_SOURCE_LABELS[source] || source}</td>
+                      <td className="text-right">{formatTokens(tokenNum)}</td>
+                      <td className="text-right">{percent}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* OCR 사용량 */}
