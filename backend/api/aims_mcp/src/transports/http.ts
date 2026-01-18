@@ -65,15 +65,9 @@ async function loadToolHandlers() {
     list_relationships: relationships.handleListRelationships,
     // Phase 2: Annual Report
     get_annual_reports: annualReports.handleGetAnnualReports,
-    get_ar_parsing_status: annualReports.handleGetArParsingStatus,
-    trigger_ar_parsing: annualReports.handleTriggerArParsing,
-    get_ar_queue_status: annualReports.handleGetArQueueStatus,
     get_ar_contract_history: annualReports.handleGetArContractHistory,
     // Customer Review (변액리포트)
     get_customer_reviews: customerReviews.handleGetCustomerReviews,
-    get_cr_parsing_status: customerReviews.handleGetCrParsingStatus,
-    trigger_cr_parsing: customerReviews.handleTriggerCrParsing,
-    get_cr_queue_status: customerReviews.handleGetCrQueueStatus,
     get_cr_contract_history: customerReviews.handleGetCrContractHistory,
     // Phase 4: 유틸리티
     get_storage_info: utilities.handleGetStorageInfo,

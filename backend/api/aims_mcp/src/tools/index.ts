@@ -14,8 +14,8 @@ import { documentToolDefinitions, handleSearchDocuments, handleGetDocument, hand
 import { memoToolDefinitions, handleAddMemo, handleListMemos, handleDeleteMemo } from './memos.js';
 import { productToolDefinitions, handleSearchProducts } from './products.js';
 import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRelationship, handleListRelationships } from './relationships.js';
-import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArParsingStatus, handleTriggerArParsing, handleGetArQueueStatus, handleGetArContractHistory } from './annual_reports.js';
-import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrParsingStatus, handleTriggerCrParsing, handleGetCrQueueStatus, handleGetCrContractHistory } from './customer_reviews.js';
+import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArContractHistory } from './annual_reports.js';
+import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrContractHistory } from './customer_reviews.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
 import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
@@ -71,15 +71,9 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   list_relationships: handleListRelationships,
   // Annual Report 관련
   get_annual_reports: handleGetAnnualReports,
-  get_ar_parsing_status: handleGetArParsingStatus,
-  trigger_ar_parsing: handleTriggerArParsing,
-  get_ar_queue_status: handleGetArQueueStatus,
   get_ar_contract_history: handleGetArContractHistory,
   // Customer Review (변액리포트) 관련
   get_customer_reviews: handleGetCustomerReviews,
-  get_cr_parsing_status: handleGetCrParsingStatus,
-  trigger_cr_parsing: handleTriggerCrParsing,
-  get_cr_queue_status: handleGetCrQueueStatus,
   get_cr_contract_history: handleGetCrContractHistory,
   // 유틸리티 관련
   get_storage_info: handleGetStorageInfo,
