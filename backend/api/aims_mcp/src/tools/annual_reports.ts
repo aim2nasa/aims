@@ -196,7 +196,30 @@ export async function handleGetArContractHistory(args: unknown) {
       const contracts = report.contracts || [];
 
       // 발행일별 AR 문서 정보 저장
-      const issueDateStr = typeof issueDate === 'string' ? issueDate : String(issueDate || '');
+      // Date 객체인 경우 YYYY.MM.DD 형식으로 변환
+      let issueDateStr: string;
+      if (typeof issueDate === 'string') {
+        issueDateStr = issueDate;
+      } else if (issueDate instanceof Date) {
+        const y = issueDate.getFullYear();
+        const m = String(issueDate.getMonth() + 1).padStart(2, '0');
+        const d = String(issueDate.getDate()).padStart(2, '0');
+        issueDateStr = `${y}.${m}.${d}`;
+      } else if (issueDate) {
+        // Date-like object (MongoDB Date 등)
+        const dateObj = new Date(issueDate);
+        if (!isNaN(dateObj.getTime())) {
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const d = String(dateObj.getDate()).padStart(2, '0');
+          issueDateStr = `${y}.${m}.${d}`;
+        } else {
+          issueDateStr = '';
+        }
+      } else {
+        issueDateStr = '';
+      }
+
       if (issueDateStr && sourceFileId && !arDocumentsMap.has(issueDateStr)) {
         arDocumentsMap.set(issueDateStr, {
           issueDate: issueDateStr,
