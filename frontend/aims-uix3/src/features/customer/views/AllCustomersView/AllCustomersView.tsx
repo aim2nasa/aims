@@ -726,7 +726,19 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
       try {
         const ids = Array.from(selectedCustomerIds);
-        await CustomerService.deleteCustomers(ids);
+
+        if (isDevMode) {
+          // 개발자 모드: Hard Delete (DB에서 완전 삭제)
+          await Promise.all(ids.map(id => CustomerService.permanentDeleteCustomer(id)));
+          showAlert({
+            title: '삭제 완료',
+            message: `${ids.length}명의 고객이 영구 삭제되었습니다.`,
+            iconType: 'success'
+          });
+        } else {
+          // 일반 모드: Soft Delete (휴면 처리)
+          await CustomerService.deleteCustomers(ids);
+        }
 
         // 삭제 완료 후 새로고침 및 상태 초기화
         await refresh({ limit: 10000, page: 1 });
