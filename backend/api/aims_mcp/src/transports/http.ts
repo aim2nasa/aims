@@ -40,8 +40,6 @@ async function loadToolHandlers() {
     get_customer: customers.handleGetCustomer,
     create_customer: customers.handleCreateCustomer,
     update_customer: customers.handleUpdateCustomer,
-    restore_customer: customers.handleRestoreCustomer,
-    list_deleted_customers: customers.handleListDeletedCustomers,
     // 계약 관련
     list_contracts: contracts.handleListContracts,
     get_contract_details: contracts.handleGetContractDetails,

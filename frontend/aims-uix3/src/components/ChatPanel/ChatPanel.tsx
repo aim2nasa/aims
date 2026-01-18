@@ -32,7 +32,7 @@ import './ChatPanel.css';
 // 데이터 변경을 유발하는 MCP 도구 목록
 const DATA_MUTATING_TOOLS = {
   // 고객 관련
-  customers: ['create_customer', 'update_customer', 'restore_customer'],
+  customers: ['create_customer', 'update_customer'],
   // 문서 관련
   documents: ['delete_document', 'delete_documents', 'link_document_to_customer'],
   // 관계 관련
@@ -79,7 +79,6 @@ const HELP_FEATURES = [
       '서울 지역 고객 목록 보여줘',
       '법인 고객 목록 보여줘',
       '개인 고객 중 부산 사는 분 찾아줘',
-      '휴면 고객 목록 조회해줘',
       '010-1234로 시작하는 전화번호 가진 고객 검색해줘',
       '경기도에 사는 개인 고객 찾아줘',
       '이메일 주소가 gmail인 고객 검색해줘',
