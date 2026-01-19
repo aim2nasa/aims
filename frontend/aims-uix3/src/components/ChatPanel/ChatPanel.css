@@ -1955,33 +1955,3 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
  * --mainpane-height: calc(100dvh - 50px) 로 오버라이드됨
  * 따라서 ChatPanel도 자동으로 100dvh 기반 높이를 사용함
  */
-
-/* ==================== Mermaid Diagram ==================== */
-.chat-panel__mermaid {
-  margin: 8px 0;
-  padding: 12px;
-  background: var(--color-bg-secondary);
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-.chat-panel__mermaid svg {
-  max-width: 100%;
-  height: auto;
-}
-
-.chat-panel__mermaid-error {
-  padding: 8px 12px;
-  background: rgba(255, 59, 48, 0.1);
-  color: var(--color-error-500);
-  border-radius: 6px;
-  font-size: var(--font-size-caption1);
-}
-
-html[data-theme="dark"] .chat-panel__mermaid {
-  background: rgba(30, 26, 46, 0.8);
-}
-
-html[data-theme="dark"] .chat-panel__mermaid svg {
-  filter: invert(0.9) hue-rotate(180deg);
-}

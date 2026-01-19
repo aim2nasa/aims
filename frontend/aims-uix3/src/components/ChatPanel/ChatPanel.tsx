@@ -27,53 +27,7 @@ import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCus
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { errorReporter } from '@/shared/lib/errorReporter';
 import { api } from '@/shared/lib/api';
-import mermaid from 'mermaid';
 import './ChatPanel.css';
-
-// Mermaid 초기화
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-  flowchart: {
-    useMaxWidth: true,
-    htmlLabels: true,
-    curve: 'basis'
-  }
-});
-
-// Mermaid 다이어그램 컴포넌트
-const MermaidDiagram: React.FC<{ chart: string; id: string }> = ({ chart, id }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [svg, setSvg] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const renderChart = async () => {
-      try {
-        const { svg: renderedSvg } = await mermaid.render(`mermaid-${id}`, chart);
-        setSvg(renderedSvg);
-        setError(null);
-      } catch (err) {
-        console.error('Mermaid render error:', err);
-        setError('다이어그램 렌더링 실패');
-      }
-    };
-    renderChart();
-  }, [chart, id]);
-
-  if (error) {
-    return <div className="chat-panel__mermaid-error">{error}</div>;
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      className="chat-panel__mermaid"
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
-  );
-};
 
 // 데이터 변경을 유발하는 MCP 도구 목록
 const DATA_MUTATING_TOOLS = {
@@ -1602,31 +1556,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
   }, [handleDocumentPreviewClick, parseChangedValues]);
 
   // 메시지 내용에서 테이블, 문서 링크, 변경값을 파싱하여 렌더링
-  // Mermaid 코드블록 파싱 함수
-  const parseMermaidBlock = useCallback((lines: string[], startIdx: number, keyPrefix: string): { element: React.ReactElement; endIdx: number } | null => {
-    const line = lines[startIdx]?.trim();
-    if (!line?.startsWith('```mermaid')) return null;
-
-    // mermaid 코드블록 끝 찾기
-    let endIdx = startIdx + 1;
-    const mermaidLines: string[] = [];
-    while (endIdx < lines.length) {
-      if (lines[endIdx].trim() === '```') {
-        break;
-      }
-      mermaidLines.push(lines[endIdx]);
-      endIdx++;
-    }
-
-    if (mermaidLines.length === 0) return null;
-
-    const chart = mermaidLines.join('\n');
-    return {
-      element: <MermaidDiagram key={keyPrefix} chart={chart} id={keyPrefix} />,
-      endIdx
-    };
-  }, []);
-
   const renderMessageContent = useCallback((content: string) => {
     const lines = content.split('\n');
     const result: React.ReactNode[] = [];
@@ -1648,15 +1577,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
 
     let i = 0;
     while (i < lines.length) {
-      // Mermaid 코드블록 감지
-      const mermaidResult = parseMermaidBlock(lines, i, `mermaid-${i}`);
-      if (mermaidResult) {
-        flushTextBuffer(i);
-        result.push(mermaidResult.element);
-        i = mermaidResult.endIdx + 1;
-        continue;
-      }
-
       // 테이블 시작 감지
       const tableResult = parseMarkdownTable(lines, i, `table-${i}`);
       if (tableResult) {
@@ -1676,7 +1596,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     if (result.length === 1 && typeof result[0] === 'string') return result[0];
 
     return <>{result}</>;
-  }, [parseTextContent, parseMarkdownTable, parseMermaidBlock]);
+  }, [parseTextContent, parseMarkdownTable]);
 
   // 메시지 전송
   const handleSubmit = async (e?: React.FormEvent) => {
