@@ -85,11 +85,21 @@ export function useDocumentStatusListSSE(
           console.log('[DocumentStatusListSSE] 진행률 업데이트:', eventData.documentId, `${eventData.progress}%`, eventData.stage)
         }
 
-        // 콜백 호출 (progress-update 타입으로)
-        onDocumentChangeRef.current?.(eventData)
-
-        // 🔄 진행률 변경 시 즉시 새로고침 (MongoDB에 이미 저장됨)
-        onRefreshRef.current()
+        // 🔧 FIX: SSE 이벤트에서 받은 progress 값을 직접 상태에 반영
+        // onDocumentChange 콜백이 있으면 직접 상태 업데이트 (API 호출 없이 즉시 반영)
+        // 없으면 기존 방식대로 전체 새로고침 (300ms 딜레이로 MongoDB 동기화 보장)
+        if (onDocumentChangeRef.current) {
+          onDocumentChangeRef.current(eventData)
+          // 🛡️ 안전장치: 3초 후 최종 상태 확인 (SSE 누락/불일치 자동 복구)
+          setTimeout(() => {
+            onRefreshRef.current()
+          }, 3000)
+        } else {
+          // fallback: 콜백이 없으면 딜레이 후 새로고침
+          setTimeout(() => {
+            onRefreshRef.current()
+          }, 300)
+        }
       } catch (error) {
         console.error('[DocumentStatusListSSE] document-progress 이벤트 처리 실패:', error)
         errorReporter.reportApiError(error as Error, { component: 'useDocumentStatusListSSE.documentProgress' })

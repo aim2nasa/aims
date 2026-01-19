@@ -375,7 +375,28 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       fetchDocumentsRef.current(false)
       checkApiHealthRef.current()
     },
-    { enabled: isPollingEnabled }
+    {
+      enabled: isPollingEnabled,
+      // 🔧 FIX: SSE 이벤트에서 받은 progress 값을 직접 상태에 반영
+      // API 재호출 없이 즉시 UI 업데이트 (MongoDB 동기화 지연 문제 해결)
+      onDocumentChange: (event) => {
+        if (event.type === 'progress-update' && event.documentId && event.progress !== undefined) {
+          setDocuments((prevDocs) =>
+            prevDocs.map((doc) => {
+              const docId = doc._id || doc.id
+              if (docId === event.documentId) {
+                return {
+                  ...doc,
+                  progress: event.progress,
+                  overallStatus: event.progress === 100 ? 'completed' : doc.overallStatus
+                }
+              }
+              return doc
+            })
+          )
+        }
+      }
+    }
   )
 
   /**
