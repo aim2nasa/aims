@@ -13,7 +13,26 @@ export const getCustomerNetworkSchema = z.object({
 export const networkToolDefinitions = [
   {
     name: 'get_customer_network',
-    description: '특정 고객의 관계 네트워크를 조회합니다. 가족, 친척, 지인 등의 관계를 확인할 수 있습니다.',
+    description: `특정 고객의 관계 네트워크를 조회합니다.
+
+**반드시 모든 카테고리를 표시해야 합니다:**
+- 가족 관계 (family): 배우자, 부모, 자녀, 형제자매
+- 법인 관계 (corporate): 대표이사, 임원, 직원, 주주 등
+- 전문 관계 (professional): 동료, 상사, 부하 등
+- 친척 관계 (relative): 삼촌/이모, 조카, 사촌 등
+- 사회 관계 (social): 친구, 지인, 이웃 등
+
+**응답 형식 (예시):**
+🔗 **가족 관계**
+- 배우자: 김다영 (010-1234-5678)
+- 자녀: 김준호
+
+🔗 **법인 관계**
+- 대표이사: (주)캐치업코리아
+
+📊 총 3건의 관계가 있습니다.
+
+⚠️ byCategory에 있는 모든 카테고리를 빠짐없이 표시하세요!`,
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -174,15 +193,53 @@ export async function handleGetCustomerNetwork(args: unknown) {
       byCategory[category].push(rel);
     });
 
+    // 카테고리별 요약 생성
+    const categorySummary: Record<string, string[]> = {};
+    const categoryLabels: Record<string, string> = {
+      family: '가족 관계',
+      corporate: '법인 관계',
+      professional: '전문 관계',
+      relative: '친척 관계',
+      social: '사회 관계',
+      other: '기타 관계'
+    };
+
+    // 중복 제거를 위해 relatedCustomerId 기준으로 유니크하게 처리
+    const uniqueRelationships = new Map<string, typeof network[0]>();
+    network.forEach(rel => {
+      const key = `${rel.relatedCustomerId}-${rel.relationshipCategory}-${rel.relationshipType}`;
+      if (!uniqueRelationships.has(key)) {
+        uniqueRelationships.set(key, rel);
+      }
+    });
+
+    const uniqueNetwork = Array.from(uniqueRelationships.values());
+
+    uniqueNetwork.forEach(rel => {
+      const category = rel.relationshipCategory || 'other';
+      if (!categorySummary[category]) {
+        categorySummary[category] = [];
+      }
+      const phoneInfo = rel.relatedCustomerPhone ? ` (${rel.relatedCustomerPhone})` : '';
+      categorySummary[category].push(`${rel.relationshipLabel}: ${rel.relatedCustomerName}${phoneInfo}`);
+    });
+
     return {
       content: [{
         type: 'text' as const,
         text: JSON.stringify({
           customerId: params.customerId,
           customerName: customer.personal_info?.name,
-          totalRelationships: network.length,
+          totalRelationships: uniqueNetwork.length,
           byCategory,
-          relationships: network
+          relationships: uniqueNetwork,
+          // AI가 응답 형식을 명확히 알 수 있도록 display_hint 추가
+          display_hint: {
+            instruction: '아래 categorySummary의 모든 카테고리를 빠짐없이 표시하세요',
+            categorySummary,
+            categoryLabels,
+            format_example: '🔗 **가족 관계**\\n- 배우자: 김다영\\n\\n🔗 **법인 관계**\\n- 대표이사: (주)캐치업코리아\\n\\n📊 총 N건의 관계가 있습니다.'
+          }
         }, null, 2)
       }]
     };
