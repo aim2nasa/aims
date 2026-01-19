@@ -10,6 +10,8 @@ import { sendErrorLog } from '../systemLogger.js';
 
 export const getStorageInfoSchema = z.object({});
 
+export const getCreditInfoSchema = z.object({});
+
 export const checkCustomerNameSchema = z.object({
   name: z.string().min(1).describe('확인할 고객명')
 });
@@ -38,6 +40,14 @@ export const utilityToolDefinitions = [
   {
     name: 'get_storage_info',
     description: '현재 사용자의 저장소 사용량을 조회합니다. 할당량, 사용량, 남은 용량을 확인할 수 있습니다.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {}
+    }
+  },
+  {
+    name: 'get_credit_info',
+    description: '현재 사용자의 크레딧 사용량을 조회합니다. AI/OCR 크레딧 사용량, 남은 크레딧, 사용률(%), 리셋 기한을 확인할 수 있습니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {}
@@ -232,6 +242,261 @@ export async function handleGetStorageInfo(args: unknown) {
         text: `저장소 정보 조회 실패: ${errorMessage}`
       }]
     };
+  }
+}
+
+/**
+ * 크레딧 정보 조회 핸들러
+ * AI/OCR 크레딧 사용량, 남은 크레딧, 사용률, 리셋 기한 조회
+ */
+export async function handleGetCreditInfo(args: unknown) {
+  try {
+    getCreditInfoSchema.parse(args || {});
+    const db = getDB();
+    const userId = getCurrentUserId();
+
+    // 1. 사용자 정보 조회
+    const userObjectId = toSafeObjectId(userId);
+    const user = userObjectId
+      ? await db.collection('users').findOne({ _id: userObjectId })
+      : await db.collection('users').findOne({ _id: userId as unknown as ObjectId });
+
+    if (!user) {
+      return {
+        isError: true,
+        content: [{
+          type: 'text' as const,
+          text: '사용자 정보를 찾을 수 없습니다.'
+        }]
+      };
+    }
+
+    // 2. 티어 정의 조회
+    const settingsCollection = db.collection('settings');
+    const tierSettings = await settingsCollection.findOne({ key: 'tier_definitions' });
+    const tierDefinitions = tierSettings?.tiers || DEFAULT_TIER_DEFINITIONS;
+
+    // 3. 사용자 티어 정보
+    const tierName = user?.tier?.tier_id || user?.storage?.tier || DEFAULT_TIER;
+    const tierDef = tierDefinitions[tierName] || tierDefinitions[DEFAULT_TIER];
+    const creditQuota = tierDef.credit_quota ?? 2000;
+    const isUnlimited = creditQuota === -1;
+
+    // 4. 사이클 계산 (가입일 기반 월간 사이클)
+    const subscriptionStartDate = user?.tier?.start_date || user?.createdAt || new Date();
+    const cycle = calculateCreditCycle(new Date(subscriptionStartDate));
+
+    // 5. OCR 크레딧 사용량 계산
+    const ocrUsage = await calculateOcrCredits(db, userId, cycle.cycleStart, cycle.cycleEnd);
+
+    // 6. AI 크레딧 사용량 계산 (aims_analytics DB에서 조회)
+    const aiUsage = await calculateAiCredits(db, userId, cycle.cycleStart, cycle.cycleEnd);
+
+    // 7. 총 크레딧 계산
+    const totalCreditsUsed = Math.round((ocrUsage.credits + aiUsage.credits) * 100) / 100;
+    const creditsRemaining = isUnlimited ? -1 : Math.max(0, creditQuota - totalCreditsUsed);
+    const usagePercent = isUnlimited ? 0 : Math.round((totalCreditsUsed / creditQuota) * 100 * 100) / 100;
+
+    // 8. 날짜 포맷팅 (MM/DD 형식)
+    const formatDateShort = (date: Date) => {
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${month}/${day}`;
+    };
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          tier: tierName,
+          tierName: tierDef.name,
+          creditQuota: isUnlimited ? '무제한' : creditQuota,
+          creditsUsed: totalCreditsUsed,
+          creditsRemaining: isUnlimited ? '무제한' : creditsRemaining,
+          usagePercent: isUnlimited ? 0 : usagePercent,
+          usagePercentDisplay: isUnlimited ? '무제한' : `${usagePercent}%`,
+          breakdown: {
+            ocr: {
+              pages: ocrUsage.pages,
+              credits: ocrUsage.credits,
+              description: `OCR ${ocrUsage.pages}페이지 = ${ocrUsage.credits}C`
+            },
+            ai: {
+              tokens: aiUsage.tokens,
+              credits: aiUsage.credits,
+              description: `AI ${Math.round(aiUsage.tokens / 1000)}K토큰 = ${aiUsage.credits}C`
+            }
+          },
+          cycle: {
+            start: formatDateShort(cycle.cycleStart),
+            end: formatDateShort(cycle.cycleEnd),
+            daysUntilReset: cycle.daysUntilReset
+          },
+          summary: isUnlimited
+            ? `무제한 크레딧 (${tierDef.name})`
+            : `크레딧: ${totalCreditsUsed.toFixed(2)} / ${creditQuota} (${usagePercent}%) ~${formatDateShort(cycle.cycleEnd)}`,
+          message: isUnlimited
+            ? '무제한 크레딧입니다.'
+            : usagePercent >= 90
+              ? `⚠️ 크레딧 사용량이 ${usagePercent}%입니다. ${cycle.daysUntilReset}일 후 리셋됩니다.`
+              : `크레딧 ${usagePercent}% 사용 중. ${cycle.daysUntilReset}일 후 리셋됩니다.`
+        }, null, 2)
+      }]
+    };
+  } catch (error) {
+    console.error('[MCP] get_credit_info 에러:', error);
+    sendErrorLog('aims_mcp', 'get_credit_info 에러', error);
+    const errorMessage = error instanceof ZodError
+      ? formatZodError(error)
+      : (error instanceof Error ? error.message : '알 수 없는 오류');
+    return {
+      isError: true,
+      content: [{
+        type: 'text' as const,
+        text: `크레딧 정보 조회 실패: ${errorMessage}`
+      }]
+    };
+  }
+}
+
+/**
+ * 크레딧 사이클 계산 (가입일 기준 월간 사이클)
+ */
+function calculateCreditCycle(subscriptionStartDate: Date): { cycleStart: Date; cycleEnd: Date; daysUntilReset: number } {
+  const now = new Date();
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+
+  // KST 기준으로 변환
+  const nowKST = new Date(now.getTime() + KST_OFFSET);
+  const startKST = new Date(subscriptionStartDate.getTime() + KST_OFFSET);
+
+  // 가입일의 일(day) 추출
+  const subscriptionDay = startKST.getUTCDate();
+
+  // 현재 날짜 기준 사이클 시작/종료 계산
+  let cycleStartYear = nowKST.getUTCFullYear();
+  let cycleStartMonth = nowKST.getUTCMonth();
+
+  // 현재 일이 가입일보다 작으면 이전 달이 사이클 시작
+  if (nowKST.getUTCDate() < subscriptionDay) {
+    cycleStartMonth--;
+    if (cycleStartMonth < 0) {
+      cycleStartMonth = 11;
+      cycleStartYear--;
+    }
+  }
+
+  // 사이클 시작일 (해당 월의 가입일 또는 말일)
+  const lastDayOfMonth = new Date(Date.UTC(cycleStartYear, cycleStartMonth + 1, 0)).getUTCDate();
+  const actualStartDay = Math.min(subscriptionDay, lastDayOfMonth);
+  const cycleStart = new Date(Date.UTC(cycleStartYear, cycleStartMonth, actualStartDay, 0, 0, 0, 0) - KST_OFFSET);
+
+  // 사이클 종료일 (다음 달 가입일 전날)
+  let cycleEndYear = cycleStartYear;
+  let cycleEndMonth = cycleStartMonth + 1;
+  if (cycleEndMonth > 11) {
+    cycleEndMonth = 0;
+    cycleEndYear++;
+  }
+  const lastDayOfEndMonth = new Date(Date.UTC(cycleEndYear, cycleEndMonth + 1, 0)).getUTCDate();
+  const actualEndDay = Math.min(subscriptionDay, lastDayOfEndMonth) - 1;
+  const cycleEnd = new Date(Date.UTC(cycleEndYear, cycleEndMonth, actualEndDay, 23, 59, 59, 999) - KST_OFFSET);
+
+  // 리셋까지 남은 일수
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysUntilReset = Math.ceil((cycleEnd.getTime() - now.getTime()) / msPerDay);
+
+  return {
+    cycleStart,
+    cycleEnd,
+    daysUntilReset: Math.max(0, daysUntilReset)
+  };
+}
+
+/**
+ * OCR 크레딧 사용량 계산
+ */
+async function calculateOcrCredits(db: ReturnType<typeof getDB>, userId: string, cycleStart: Date, cycleEnd: Date): Promise<{ pages: number; credits: number }> {
+  const filesCollection = db.collection(COLLECTIONS.FILES);
+  const cycleStartISO = cycleStart.toISOString();
+  const cycleEndISO = cycleEnd.toISOString();
+
+  const result = await filesCollection.aggregate([
+    {
+      $match: {
+        ownerId: userId,
+        'ocr.status': 'done',
+        $or: [
+          { 'ocr.done_at': { $gte: cycleStart, $lte: cycleEnd } },
+          { 'ocr.done_at': { $gte: cycleStartISO, $lte: cycleEndISO } }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total_pages: { $sum: { $ifNull: ['$ocr.page_count', 1] } }
+      }
+    }
+  ]).toArray();
+
+  const pages = result.length > 0 ? (result[0] as { total_pages: number }).total_pages : 0;
+  return {
+    pages,
+    credits: pages * 2  // OCR 1페이지 = 2 크레딧
+  };
+}
+
+/**
+ * AI 크레딧 사용량 계산
+ */
+async function calculateAiCredits(db: ReturnType<typeof getDB>, userId: string, cycleStart: Date, cycleEnd: Date): Promise<{ tokens: number; credits: number }> {
+  // aims_analytics DB의 ai_token_usage 컬렉션 조회
+  // MCP에서는 docupload DB만 접근 가능하므로,
+  // ai_token_usage는 별도의 컬렉션이 아닌 files 내 메타데이터로 추적하거나
+  // aims_api의 internal API를 호출해야 함
+  // 여기서는 간단히 0으로 반환하고, 추후 API 연동 시 수정
+
+  // TODO: aims_analytics DB 연동 또는 internal API 호출로 대체
+  // 임시로 docupload의 chat_sessions에서 토큰 사용량 추정
+  try {
+    const chatSessions = db.collection('chat_sessions');
+    const result = await chatSessions.aggregate([
+      {
+        $match: {
+          userId: userId,
+          updatedAt: { $gte: cycleStart, $lte: cycleEnd }
+        }
+      },
+      {
+        $project: {
+          totalTokens: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ['$messages', []] },
+                as: 'msg',
+                in: { $ifNull: ['$$msg.tokenCount', 0] }
+              }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          tokens: { $sum: '$totalTokens' }
+        }
+      }
+    ]).toArray();
+
+    const tokens = result.length > 0 ? (result[0] as { tokens: number }).tokens : 0;
+    return {
+      tokens,
+      credits: Math.round((tokens / 1000) * 0.5 * 100) / 100  // AI 1K 토큰 = 0.5 크레딧
+    };
+  } catch {
+    // chat_sessions 컬렉션이 없거나 오류 시 0 반환
+    return { tokens: 0, credits: 0 };
   }
 }
 
