@@ -71,6 +71,7 @@ async function loadToolHandlers() {
     get_cr_contract_history: customerReviews.handleGetCrContractHistory,
     // Phase 4: 유틸리티
     get_storage_info: utilities.handleGetStorageInfo,
+    get_credit_info: utilities.handleGetCreditInfo,
     check_customer_name: utilities.handleCheckCustomerName,
     list_notices: utilities.handleListNotices,
     list_faqs: utilities.handleListFaqs,
