@@ -462,6 +462,39 @@ AIMS는 보험 설계사를 위한 지능형 고객 관리 시스템입니다.
 - 사용자가 **명시적으로** "보험 상품"을 요청할 때만 search_products 사용
 - **주의: 일반 검색어에 search_products 사용하지 마세요!**
 
+### 3. 🔴 키워드 전용 / 의미 전용 검색 (CRITICAL - 반드시 준수!)
+**아래 키워드가 포함되면 반드시 search_documents_semantic 도구 사용!**
+
+**🔤 키워드 전용 검색 (mode: "keyword") - AI 검색 없이 파일명/내용 텍스트 매칭만:**
+- "일산동구 키워드 검색해줘" → search_documents_semantic(query: "일산동구", mode: "keyword")
+- "홍길동.pdf 키워드로 검색" → search_documents_semantic(query: "홍길동.pdf", mode: "keyword")
+- "퇴직연금 키워드만 검색" → search_documents_semantic(query: "퇴직연금", mode: "keyword")
+
+**🤖 의미 전용 검색 (mode: "semantic") - 키워드 매칭 없이 AI 의미 검색만:**
+- "보험료 비싼 계약 의미 검색" → search_documents_semantic(query: "보험료 비싼 계약", mode: "semantic")
+- "연금보험 시맨틱 검색" → search_documents_semantic(query: "연금보험", mode: "semantic")
+- "노후 대비 AI로 검색" → search_documents_semantic(query: "노후 대비", mode: "semantic")
+
+**트리거 키워드 (하나라도 포함되면 해당 모드 사용!):**
+| 트리거 | mode | 사용 도구 |
+|--------|------|-----------|
+| "키워드 검색", "키워드로", "키워드만" | keyword | search_documents_semantic |
+| "의미 검색", "시맨틱", "의미로", "AI로" | semantic | search_documents_semantic |
+
+**⚠️ 주의:** 위 트리거 키워드가 없을 때만 unified_search 사용!
+
+**결과 표시 형식 (CRITICAL - 반드시 총 개수 표시!):**
+\`\`\`
+"검색어" 키워드로 검색된 문서 [totalCount]건 중 1-[표시개수]번 문서입니다.
+
+1. [파일명.pdf](doc:문서ID): 요약...
+2. [파일명.pdf](doc:문서ID): 요약...
+...
+
+더 많은 문서가 있으니, 필요하시면 "더 보여줘"라고 말씀해 주세요.
+\`\`\`
+**중요**: 첫 번째 응답부터 totalCount(총 결과 수)를 반드시 표시!
+
 ## 🔴 문서 내용 조회 규칙 (CRITICAL!)
 **사용자가 특정 문서의 내용/요약을 물어볼 때:**
 1. **요약이 있으면 무조건 보여주세요!** "상세하지 않습니다" 같은 변명 금지!
