@@ -2387,29 +2387,146 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       {/* 🎯 AR 일괄 매핑 모달 */}
       <BatchArMappingModal
-        isOpen={arBatch.batchState.isModalOpen}
-        onClose={() => arBatch.closeModal()}
-        batchState={arBatch.batchState}
+        state={arBatch.batchState}
+        onClose={() => {
+          arBatch.closeModal()
+          addLog('warning', 'AR 일괄 등록 취소')
+        }}
         onSelectCustomer={arBatch.selectGroupCustomer}
         onSetNewCustomerName={arBatch.setGroupNewCustomerName}
         onToggleGroup={arBatch.toggleGroup}
         onToggleFile={arBatch.toggleFile}
-        onOpenNewCustomerModal={(groupId) => {
-          // 새 고객 등록 모달 열기 (추후 구현)
-          console.log('[AR Batch] Open new customer modal for group:', groupId)
+        onOpenNewCustomerModal={(groupId, defaultName) => {
+          // 새 고객 등록 - 해당 그룹에 새 고객명 설정
+          arBatch.setGroupNewCustomerName(groupId, defaultName)
+          addLog('info', `새 고객으로 등록 예정: ${defaultName}`)
         }}
         onOpenCustomerSearchModal={(groupId) => {
-          // 고객 검색 모달 열기 (추후 구현)
+          // 고객 검색 모달 열기 (추후 구현 - 현재는 드롭다운으로 선택)
           console.log('[AR Batch] Open customer search modal for group:', groupId)
         }}
         onRegister={async () => {
-          // 일괄 등록 처리 (Phase 4에서 구현)
-          console.log('[AR Batch] Register all AR files')
+          // 🎯 AR 일괄 등록 처리
+          console.log('[AR Batch] 일괄 등록 시작')
           addLog('info', 'AR 일괄 등록 시작...')
-        }}
-        onCancel={() => {
-          arBatch.closeModal()
-          addLog('warning', 'AR 일괄 등록 취소')
+
+          const { groups } = arBatch.batchState
+
+          // 등록할 파일 수 계산
+          let totalFilesToRegister = 0
+          for (const group of groups) {
+            if (!group.selectedCustomerId && !group.newCustomerName) continue
+            for (const file of group.files) {
+              if (file.included && !file.duplicateStatus.isHashDuplicate) {
+                totalFilesToRegister++
+              }
+            }
+          }
+
+          if (totalFilesToRegister === 0) {
+            addLog('warning', '등록할 파일이 없습니다')
+            arBatch.closeModal()
+            return
+          }
+
+          arBatch.setProcessing(true, 0)
+
+          let completedCount = 0
+          let successCount = 0
+          let errorCount = 0
+
+          for (const group of groups) {
+            // 고객이 선택되지 않은 그룹은 건너뜀
+            let customerId = group.selectedCustomerId
+            const customerName = group.selectedCustomerName || group.newCustomerName
+
+            // 새 고객 등록 필요
+            if (!customerId && group.newCustomerName) {
+              try {
+                addLog('info', `새 고객 등록 중: ${group.newCustomerName}`)
+                const newCustomer = await CustomerService.createCustomer({
+                  personal_info: { name: group.newCustomerName },
+                  insurance_info: { customer_type: '개인' },
+                  contracts: [],
+                  documents: [],
+                  consultations: [],
+                })
+                customerId = newCustomer._id
+                addLog('success', `새 고객 등록 완료: ${group.newCustomerName}`)
+              } catch (error) {
+                console.error('[AR Batch] 고객 등록 실패:', error)
+                addLog('error', `고객 등록 실패: ${group.newCustomerName}`, String(error))
+                errorCount += group.files.filter(f => f.included && !f.duplicateStatus.isHashDuplicate).length
+                continue
+              }
+            }
+
+            if (!customerId) {
+              addLog('warning', `[${group.customerNameFromAr}] 고객이 선택되지 않아 건너뜀`)
+              continue
+            }
+
+            // 그룹 내 포함된 파일들 등록
+            for (const arFile of group.files) {
+              if (!arFile.included || arFile.duplicateStatus.isHashDuplicate) continue
+
+              arBatch.setProcessing(true, Math.round((completedCount / totalFilesToRegister) * 100), arFile.file.name)
+
+              try {
+                // 중복 체크 (발행일 기준)
+                const processResult = await processAnnualReportFile(arFile.file, customerId, arFile.metadata.issue_date)
+
+                if (processResult.isDuplicateDoc) {
+                  addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
+                  completedCount++
+                  continue
+                }
+
+                if (processResult.isDuplicateIssueDate) {
+                  const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
+                  addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
+                  completedCount++
+                  continue
+                }
+
+                // AR 등록
+                const result = await registerArDocument(arFile.file, customerId, arFile.metadata.issue_date, {
+                  addLog: (level, msg, detail) => addLog(level, msg, detail),
+                  generateFileId: () => arFile.fileId,
+                  addToUploadQueue: () => {},
+                  trackArFile: () => {},
+                })
+
+                if (result.success) {
+                  successCount++
+                  addLog('success', `[${customerName}] AR 등록 완료: ${arFile.file.name}`)
+                } else {
+                  errorCount++
+                  addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
+                }
+              } catch (error) {
+                console.error('[AR Batch] 파일 등록 실패:', arFile.file.name, error)
+                addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, String(error))
+                errorCount++
+              }
+
+              completedCount++
+              arBatch.incrementCompleted()
+            }
+          }
+
+          arBatch.setProcessing(false, 100)
+
+          // 결과 요약
+          addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 실패: ${errorCount}건`)
+
+          // 모달 닫기
+          setTimeout(() => {
+            arBatch.closeModal()
+            // 업로드 상태 초기화
+            setUploadState(prev => ({ ...prev, files: [] }))
+            setIsLogVisible(true)
+          }, 500)
         }}
       />
     </CenterPaneView>
