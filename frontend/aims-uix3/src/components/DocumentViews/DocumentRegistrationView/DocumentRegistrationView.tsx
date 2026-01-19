@@ -119,6 +119,18 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   })
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false)
 
+  // 🎯 AR 파일 큐 - 다중 AR 파일 순차 처리용
+  // 문제: 여러 AR 파일 업로드 시 두 번째 파일이 첫 번째를 덮어씀
+  // 해결: 큐에 저장 후 한 파일씩 순차 처리
+  interface PendingArFile {
+    file: File
+    arMetadata: { customer_name: string; issue_date: string }
+    matchingCustomers: Customer[]
+    fileId: string
+    existingHashes: ExistingFileHash[]
+  }
+  const pendingArFilesQueueRef = useRef<PendingArFile[]>([])
+
   // 🎯 CRS 고객 선택 모달 상태 (AR과 동일한 패턴)
   const [crCustomerSelectionState, setCrCustomerSelectionState] = useState<{
     isOpen: boolean
@@ -624,13 +636,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     continue;
                   }
                 } else {
-                  // Case 2: 유사 이름 고객 1명 이상 → 선택 모달 표시
+                  // Case 2: 유사 이름 고객 1명 이상 → 큐에 추가 후 순차 처리
                   addLog('info', `[3/5] ${matchingCustomers.length}명의 유사 고객 발견 → 선택 필요`);
 
-                  // 모달 상태 설정 (사용자 선택 대기)
-                  setArCustomerSelectionState({
-                    isOpen: true,
-                    arFile: file,
+                  // 🎯 AR 파일을 큐에 추가 (다중 파일 순차 처리)
+                  const pendingArFile: PendingArFile = {
+                    file,
                     arMetadata: {
                       customer_name: arCustomerName,
                       issue_date: checkResult.metadata?.issue_date || '',
@@ -638,9 +649,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     matchingCustomers,
                     fileId,
                     existingHashes,
-                  });
+                  };
+                  pendingArFilesQueueRef.current.push(pendingArFile);
 
-                  // 현재 파일은 모달에서 처리될 예정이므로 건너뜀
+                  // 현재 파일은 큐에서 순차 처리될 예정
                   updateFileStatus(file, 'pending', '고객 선택 대기 중');
                   continue;
                 }
@@ -974,6 +986,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           console.log(`🔗 [고객 파일 자동 연결] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}`)
         })
       }
+    }
+
+    // 🎯 AR 큐에 파일이 있으면 첫 번째 파일부터 순차 처리 시작
+    if (pendingArFilesQueueRef.current.length > 0) {
+      const firstArFile = pendingArFilesQueueRef.current.shift()!;
+      console.log('[DocumentRegistrationView] 🎯 AR 큐 처리 시작:', firstArFile.file.name, '(대기:', pendingArFilesQueueRef.current.length, '개)');
+      setArCustomerSelectionState({
+        isOpen: true,
+        arFile: firstArFile.file,
+        arMetadata: firstArFile.arMetadata,
+        matchingCustomers: firstArFile.matchingCustomers,
+        fileId: firstArFile.fileId,
+        existingHashes: firstArFile.existingHashes,
+      });
     }
 
   }, [generateFileId, addLog, customerFileCustomer, promptDuplicateAction])
@@ -1679,6 +1705,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     prevCustomerIdRef.current = currentCustomerId
   }, [customerFileCustomer])
 
+  // 🎯 AR 큐에서 다음 파일 처리
+  const processNextArFile = useCallback(() => {
+    if (pendingArFilesQueueRef.current.length > 0) {
+      const nextArFile = pendingArFilesQueueRef.current.shift()!;
+      console.log('[DocumentRegistrationView] 🎯 AR 큐 다음 파일 처리:', nextArFile.file.name, '(남은 파일:', pendingArFilesQueueRef.current.length, '개)');
+      setArCustomerSelectionState({
+        isOpen: true,
+        arFile: nextArFile.file,
+        arMetadata: nextArFile.arMetadata,
+        matchingCustomers: nextArFile.matchingCustomers,
+        fileId: nextArFile.fileId,
+        existingHashes: nextArFile.existingHashes,
+      });
+    } else {
+      console.log('[DocumentRegistrationView] 🎯 AR 큐 처리 완료 (모든 파일 처리됨)');
+    }
+  }, []);
+
   // 🎯 AR 고객 선택 완료 핸들러
   const handleArCustomerSelected = useCallback(async (customerId: string) => {
     const { arFile, arMetadata, fileId } = arCustomerSelectionState;
@@ -1704,6 +1748,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       if (processResult.isDuplicateDoc) {
         addLog('warning', `🔴 중복 파일 건너뜀: ${arFile.name}`, '이미 등록된 파일입니다.');
         updateFileStatusByFile(arFile, 'skipped', '중복 파일 - 이미 등록됨');
+        // 🎯 다음 AR 파일 처리
+        processNextArFile();
         return;
       }
 
@@ -1715,6 +1761,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           `${arFile.name} 업로드를 건너뜁니다.`
         );
         updateFileStatusByFile(arFile, 'skipped', `${formattedDate} 발행일 보고서 이미 존재`);
+        // 🎯 다음 AR 파일 처리
+        processNextArFile();
         return;
       }
 
@@ -1739,12 +1787,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         console.log('[DocumentRegistrationView] AR 문서 등록 성공 (모달 선택):', arFile.name);
         arProcessedCountRef.current += 1;
       }
+      // 🎯 다음 AR 파일 처리 (성공 여부와 관계없이)
+      processNextArFile();
     } catch (error) {
       console.error('[DocumentRegistrationView] AR 등록 실패:', error);
       addLog('error', `AR 등록 실패: ${arFile.name}`, String(error));
       updateFileStatusByFile(arFile, 'error', 'AR 등록 실패');
+      // 🎯 다음 AR 파일 처리
+      processNextArFile();
     }
-  }, [arCustomerSelectionState, addLog, updateFileStatusByFile]);
+  }, [arCustomerSelectionState, addLog, updateFileStatusByFile, processNextArFile]);
 
   // 🎯 새 고객 등록 모달 열기
   const handleArCreateNewCustomer = useCallback(() => {
@@ -1761,6 +1813,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     if (!arFile || !arMetadata) {
       console.error('[DocumentRegistrationView] AR 파일 또는 메타데이터 없음');
+      // 🎯 파일이 없어도 다음 AR 파일 처리 시도
+      processNextArFile();
       return;
     }
 
@@ -1789,12 +1843,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         console.log('[DocumentRegistrationView] AR 문서 등록 성공 (새 고객):', arFile.name);
         arProcessedCountRef.current += 1;
       }
+      // 🎯 다음 AR 파일 처리 (성공 여부와 관계없이)
+      processNextArFile();
     } catch (error) {
       console.error('[DocumentRegistrationView] AR 등록 실패:', error);
       addLog('error', `AR 등록 실패: ${arFile.name}`, String(error));
       updateFileStatusByFile(arFile, 'error', 'AR 등록 실패');
+      // 🎯 다음 AR 파일 처리
+      processNextArFile();
     }
-  }, [arCustomerSelectionState, addLog, updateFileStatusByFile]);
+  }, [arCustomerSelectionState, addLog, updateFileStatusByFile, processNextArFile]);
 
   // 🎯 새 고객 등록 모달에서 뒤로가기
   const handleNewCustomerBack = useCallback(() => {
@@ -2223,7 +2281,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       {arCustomerSelectionState.arMetadata && (
         <CustomerSelectionModal
           isOpen={arCustomerSelectionState.isOpen}
-          onClose={() => setArCustomerSelectionState(prev => ({ ...prev, isOpen: false }))}
+          onClose={() => {
+            // 모달 닫기 (고객 선택 취소)
+            setArCustomerSelectionState(prev => ({ ...prev, isOpen: false }));
+            // 현재 파일 취소 처리
+            if (arCustomerSelectionState.arFile) {
+              updateFileStatusByFile(arCustomerSelectionState.arFile, 'skipped', '고객 선택 취소');
+              addLog('warning', `AR 업로드 취소: ${arCustomerSelectionState.arFile.name}`, '사용자가 고객 선택을 취소했습니다.');
+            }
+            // 🎯 다음 AR 파일 처리
+            processNextArFile();
+          }}
           arMetadata={arCustomerSelectionState.arMetadata}
           matchingCustomers={arCustomerSelectionState.matchingCustomers}
           onSelectCustomer={handleArCustomerSelected}
@@ -2235,7 +2303,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       {arCustomerSelectionState.arMetadata && (
         <NewCustomerInputModal
           isOpen={showNewCustomerModal}
-          onClose={() => setShowNewCustomerModal(false)}
+          onClose={() => {
+            // 모달 닫기 (새 고객 등록 취소)
+            setShowNewCustomerModal(false);
+            // 현재 파일 취소 처리
+            if (arCustomerSelectionState.arFile) {
+              updateFileStatusByFile(arCustomerSelectionState.arFile, 'skipped', '새 고객 등록 취소');
+              addLog('warning', `AR 업로드 취소: ${arCustomerSelectionState.arFile.name}`, '사용자가 새 고객 등록을 취소했습니다.');
+            }
+            // 🎯 다음 AR 파일 처리
+            processNextArFile();
+          }}
           arMetadata={arCustomerSelectionState.arMetadata}
           onSubmit={handleNewCustomerCreated}
           onBack={handleNewCustomerBack}
