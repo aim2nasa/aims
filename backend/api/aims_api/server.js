@@ -37,9 +37,13 @@ const ALLOWED_ORIGINS = [
   'https://aims.giize.com',
   'https://admin.aims.giize.com',
   'http://localhost:5177',
+  'https://localhost:5177',
   'http://localhost:5178',
+  'https://localhost:5178',
   'http://localhost:5179',
+  'https://localhost:5179',
   'http://localhost:5173',
+  'https://localhost:5173',
   // Expo 개발 환경 (모바일 앱)
   'http://localhost:8081',
   'http://localhost:19000',
@@ -8540,7 +8544,7 @@ app.post('/api/webhooks/document-processing-complete', async (req, res) => {
 
     // API Key 인증 (n8n에서 호출 시 사용)
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+    if (apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-DocStatus] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }
@@ -8723,7 +8727,7 @@ app.post('/api/webhooks/document-progress', async (req, res) => {
 
     // API Key 인증
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+    if (apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-Progress] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }
@@ -8830,7 +8834,7 @@ app.post('/api/webhooks/document-list-change', (req, res) => {
 
     // API Key 인증 (내부 호출용)
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== 'aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8') {
+    if (apiKey !== process.env.N8N_API_KEY) {
       console.warn('[SSE-DocList] 잘못된 API Key로 webhook 호출 시도');
       return res.status(401).json({ success: false, error: '인증 실패' });
     }

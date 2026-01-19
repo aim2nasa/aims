@@ -1172,9 +1172,23 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           }
         } else if (result.status === 'timeout') {
           console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
+          addLog('error', `AR 처리 시간 초과: ${fileName}`, undefined, customerName);
         } else {
+          // 🔴 에러 상태: 중복 파일 등의 오류
           console.error(`❌ [AR] 문서 처리 실패:`, result);
+          const errorMessage = result.status === 'error' ? '동일한 파일이 이미 등록되어 있습니다.' : `처리 실패: ${result.status}`;
+          addLog('error', `AR 처리 실패: ${fileName} - ${errorMessage}`, undefined, customerName);
           errorReporter.reportApiError(new Error(`AR 문서 처리 실패: ${result.status}`), { component: 'DocumentRegistrationView.linkARDocument.result', payload: { documentId, result } })
+
+          // 🔴 파일 상태를 'error'로 변경
+          setUploadState(prev => ({
+            ...prev,
+            files: prev.files.map(f =>
+              f.file.name === fileName
+                ? { ...f, status: 'error' as UploadStatus, error: errorMessage }
+                : f
+            )
+          }));
         }
 
         // 매핑에서 제거

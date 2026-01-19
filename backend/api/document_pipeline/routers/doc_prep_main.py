@@ -7,11 +7,12 @@ Main orchestrator for document processing pipeline
 - UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from bson import ObjectId
+from pymongo.errors import DuplicateKeyError
 
 from config import get_settings
 from services.mongo_service import MongoService
@@ -451,6 +452,15 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
         if progress == 100 and stage == "complete":
             update_fields["status"] = "completed"
 
+        # 🔴 에러 상태 처리 (progress == -1)
+        if progress == -1 and stage == "error":
+            update_fields["status"] = "failed"
+            update_fields["error"] = {
+                "statusCode": 409,
+                "statusMessage": message,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
             {"$set": update_fields}
@@ -475,6 +485,23 @@ async def _notify_progress(doc_id: str, owner_id: str, progress: int, stage: str
             )
             if response.status_code != 200:
                 logger.warning(f"Failed to send progress update: {response.text}")
+
+            # 🔴 에러 상태일 때 document-processing-complete webhook도 호출
+            if progress == -1 and stage == "error":
+                complete_response = await client.post(
+                    f"{settings.AIMS_API_URL}/api/webhooks/document-processing-complete",
+                    json={
+                        "document_id": doc_id,
+                        "status": "failed",
+                        "owner_id": owner_id
+                    },
+                    headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                    timeout=5.0
+                )
+                if complete_response.status_code != 200:
+                    logger.warning(f"Failed to send error complete notification: {complete_response.text}")
+                else:
+                    logger.info(f"🔴 에러 완료 알림 전송: doc_id={doc_id}")
     except Exception as e:
         logger.warning(f"Error sending progress update: {e}")
 
@@ -664,10 +691,37 @@ async def process_document_pipeline(
             "meta.exif": meta_result.get("exif"),
         }
 
-        await files_collection.update_one(
-            {"_id": ObjectId(doc_id)},
-            {"$set": meta_update}
-        )
+        # 🔴 중복 파일 해시 처리: 고아 문서(customerId: null) 안전하게 정리
+        file_hash = meta_result.get("file_hash")
+        if file_hash:
+            # 안전한 삭제 조건 (race condition 완벽 방지):
+            # 1. customerId가 null인 문서만 (고아 상태)
+            # 2. status가 "completed"가 아닌 문서만 (처리 완료된 정상 문서 보호)
+            # 3. 생성된 지 30초 이상 된 문서만 (동시 업로드 시 처리 중인 문서 보호)
+            # 4. 현재 문서가 아닌 것만
+            orphan_threshold = datetime.utcnow() - timedelta(seconds=30)
+            delete_result = await files_collection.delete_one({
+                "ownerId": user_id,
+                "customerId": None,
+                "meta.file_hash": file_hash,
+                "_id": {"$ne": ObjectId(doc_id)},
+                "status": {"$ne": "completed"},  # 처리 완료된 문서 보호
+                "createdAt": {"$lt": orphan_threshold}  # 30초 이상 된 문서만
+            })
+            if delete_result.deleted_count > 0:
+                logger.info(f"🗑️ 고아 문서 삭제 완료 (file_hash: {file_hash[:16]}...)")
+
+        try:
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": meta_update}
+            )
+        except DuplicateKeyError as e:
+            # 중복 에러 발생 시 SSE로 에러 전달
+            error_msg = "동일한 파일이 이미 등록되어 있습니다."
+            logger.error(f"🔴 중복 파일 에러: {doc_id} - {error_msg}")
+            await _notify_progress(doc_id, user_id, -1, "error", error_msg)
+            raise Exception(error_msg) from e
 
         detected_mime = meta_result.get("mime_type", "")
 
