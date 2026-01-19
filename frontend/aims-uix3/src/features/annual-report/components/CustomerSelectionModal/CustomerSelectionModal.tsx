@@ -4,11 +4,13 @@
  * AR 업로드 시 고객 선택 모달
  * - 유사 이름 고객 목록 표시
  * - 기존 고객 선택 또는 새 고객 등록 선택
+ * - 새 고객 추가 시 목록에 표시 후 선택
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/shared/ui/Modal';
 import { Button } from '@/shared/ui/Button';
+import { Tooltip } from '@/shared/ui/Tooltip';
 import type { Customer } from '@/entities/customer';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerSelectionModal.css';
@@ -33,6 +35,8 @@ export interface CustomerSelectionModalProps {
   isLoading?: boolean;
   /** AR 파일명 (선택) */
   fileName?: string;
+  /** 새로 생성된 고객 ID (자동 선택용) */
+  newlyCreatedCustomerId?: string | null;
 }
 
 /**
@@ -51,8 +55,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
   onCreateNewCustomer,
   isLoading = false,
   fileName,
+  newlyCreatedCustomerId,
 }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  // 새로 생성된 고객 자동 선택
+  useEffect(() => {
+    if (newlyCreatedCustomerId) {
+      setSelectedCustomerId(newlyCreatedCustomerId);
+    }
+  }, [newlyCreatedCustomerId]);
 
   const handleSelect = () => {
     if (selectedCustomerId) {
@@ -151,13 +163,6 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
   const footer = (
     <div className="customer-selection-modal__footer">
       <Button
-        variant="secondary"
-        onClick={onCreateNewCustomer}
-        disabled={isLoading}
-      >
-        새 고객으로 등록
-      </Button>
-      <Button
         variant="primary"
         onClick={handleSelect}
         disabled={!selectedCustomerId || isLoading}
@@ -186,6 +191,22 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
           <strong>{arMetadata.customer_name}</strong>님의 AR을 등록할 고객을 선택하세요.
         </p>
 
+        <div className="customer-selection-modal__table-header">
+          <Tooltip content="새 고객 추가" placement="bottom">
+            <button
+              type="button"
+              className="customer-selection-modal__add-btn"
+              onClick={onCreateNewCustomer}
+              disabled={isLoading}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              새 고객
+            </button>
+          </Tooltip>
+        </div>
+
         <div className="customer-selection-modal__table-container">
           <table className="customer-selection-modal__table">
             <thead>
@@ -204,11 +225,12 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
               {matchingCustomers.map((customer) => {
                 const customerId = customer._id;
                 const isSelected = selectedCustomerId === customerId;
+                const isNewlyCreated = customerId === newlyCreatedCustomerId;
 
                 return (
                   <tr
                     key={customerId}
-                    className={`customer-selection-modal__row ${isSelected ? 'customer-selection-modal__row--selected' : ''}`}
+                    className={`customer-selection-modal__row ${isSelected ? 'customer-selection-modal__row--selected' : ''} ${isNewlyCreated ? 'customer-selection-modal__row--new' : ''}`}
                     onClick={() => handleRowClick(customerId)}
                     onDoubleClick={() => handleRowDoubleClick(customerId)}
                   >
@@ -223,6 +245,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                     </td>
                     <td className="customer-selection-modal__td--name">
                       {customer.personal_info?.name || '-'}
+                      {isNewlyCreated && <span className="customer-selection-modal__new-badge">NEW</span>}
                     </td>
                     <td className="customer-selection-modal__td--birth">
                       {formatBirthDate(customer)}
