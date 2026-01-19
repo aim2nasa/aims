@@ -78,9 +78,6 @@ async function loadToolHandlers() {
     list_usage_guides: utilities.handleListUsageGuides,
     // Phase 5: RAG 검색
     search_documents_semantic: rag.handleSearchDocumentsSemantic,
-    get_search_analytics: rag.handleGetSearchAnalytics,
-    get_failed_queries: rag.handleGetFailedQueries,
-    submit_search_feedback: rag.handleSubmitSearchFeedback,
     // 주소 검색
     search_address: address.handleSearchAddress,
     // 통합 검색
