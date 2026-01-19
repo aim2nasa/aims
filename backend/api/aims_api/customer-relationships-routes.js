@@ -579,7 +579,109 @@ const setupCustomerRelationshipRoutes = (app, db) => {
     }
   });
 
-  // 6. 관계 유형 목록 조회
+  // 6. 전체 관계 조회 (N-iteration 제거를 위한 벌크 API)
+  // 🔧 프론트엔드에서 모든 고객의 관계를 한 번에 조회
+  app.get('/api/relationships', async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'];
+
+      if (!userId || !ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          success: false,
+          error: '유효한 사용자 ID가 필요합니다.'
+        });
+      }
+
+      // 1. 해당 사용자의 모든 고객 ID 조회
+      const userCustomers = await db.collection(COLLECTIONS.CUSTOMERS)
+        .find({ userId: new ObjectId(userId), 'meta.status': { $ne: 'deleted' } })
+        .project({ _id: 1 })
+        .toArray();
+
+      const customerIds = userCustomers.map(c => c._id);
+
+      if (customerIds.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            relationships: [],
+            customers: [],
+            total_count: 0
+          }
+        });
+      }
+
+      // 2. 해당 고객들의 모든 관계를 한 번에 조회
+      const relationships = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS)
+        .find({
+          $or: [
+            { 'relationship_info.from_customer_id': { $in: customerIds } },
+            { 'relationship_info.to_customer_id': { $in: customerIds } }
+          ],
+          'relationship_info.status': 'active'
+        })
+        .sort({ 'meta.created_at': -1 })
+        .toArray();
+
+      // 3. 관련된 모든 고객 정보 조회 (populate)
+      const allRelatedCustomerIds = new Set();
+      relationships.forEach(rel => {
+        allRelatedCustomerIds.add(rel.relationship_info.from_customer_id.toString());
+        allRelatedCustomerIds.add(rel.relationship_info.to_customer_id.toString());
+        if (rel.family_representative) {
+          allRelatedCustomerIds.add(rel.family_representative.toString());
+        }
+      });
+
+      const customers = await db.collection(COLLECTIONS.CUSTOMERS)
+        .find({
+          _id: { $in: Array.from(allRelatedCustomerIds).map(id => new ObjectId(id)) },
+          'meta.status': { $ne: 'deleted' }
+        })
+        .toArray();
+
+      const customerMap = {};
+      customers.forEach(c => {
+        customerMap[c._id.toString()] = c;
+      });
+
+      // 4. 관계에 고객 정보 포함
+      const populatedRelationships = relationships.map(rel => {
+        const fromCustomerId = rel.relationship_info.from_customer_id.toString();
+        const toCustomerId = rel.relationship_info.to_customer_id.toString();
+
+        return {
+          ...rel,
+          from_customer: customerMap[fromCustomerId] || null,
+          related_customer: customerMap[toCustomerId] || null,
+          family_representative: rel.family_representative
+            ? customerMap[rel.family_representative.toString()] || null
+            : null,
+          display_relationship_label: getAllRelationshipTypes()[rel.relationship_info.relationship_type]?.label || rel.relationship_info.relationship_type
+        };
+      });
+
+      res.json({
+        success: true,
+        data: {
+          relationships: populatedRelationships,
+          customers: customers,
+          total_count: populatedRelationships.length,
+          timestamp: Date.now()
+        }
+      });
+
+    } catch (error) {
+      console.error('전체 관계 조회 오류:', error);
+      backendLogger.error('CustomerRelationship', '전체 관계 조회 오류', error);
+      res.status(500).json({
+        success: false,
+        error: '전체 관계 조회 중 오류가 발생했습니다.'
+      });
+    }
+  });
+
+  // 7. 관계 유형 목록 조회
   app.get('/api/relationship-types', (req, res) => {
     try {
       res.json({
@@ -671,7 +773,8 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
   console.log('✅ 고객 관계 관리 라우트가 설정되었습니다.');
   console.log('  POST /api/customers/:id/relationships - 관계 생성');
-  console.log('  GET  /api/customers/:id/relationships - 관계 조회');
+  console.log('  GET  /api/customers/:id/relationships - 특정 고객 관계 조회');
+  console.log('  GET  /api/relationships - 전체 관계 조회 (벌크)');
   console.log('  GET  /api/customers/:id/network-analysis - 네트워크 분석');
   console.log('  PUT  /api/customers/:id/relationships/:relationshipId - 관계 수정');
   console.log('  DELETE /api/customers/:id/relationships/:relationshipId - 관계 삭제');

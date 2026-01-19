@@ -10,6 +10,100 @@
 // API 로그 디버그 모드 (필요시 true로 변경)
 const API_DEBUG = false;
 
+// ============================================================================
+// 🔧 GET 요청 중복 방지 시스템
+// ============================================================================
+
+/**
+ * 진행 중인 GET 요청 추적 (중복 요청 방지)
+ * key: URL
+ * value: Promise
+ */
+const pendingGetRequests = new Map<string, Promise<unknown>>();
+
+/**
+ * 진행 중인 GET 요청의 AbortController 추적
+ * key: URL
+ * value: AbortController
+ */
+const getRequestControllers = new Map<string, AbortController>();
+
+/**
+ * 현재 활성 고객 ID (고객 전환 감지용)
+ */
+let activeCustomerId: string | null = null;
+
+/**
+ * URL에서 고객 ID 추출
+ */
+function extractCustomerId(url: string): string | null {
+  const match = url.match(/\/api\/customers\/([a-f0-9]{24})/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * 고객 전환 시 이전 고객의 모든 진행 중인 요청 취소 (내부 함수)
+ */
+function cancelStaleCustomerRequests(newCustomerId: string): void {
+  if (!activeCustomerId || activeCustomerId === newCustomerId) {
+    activeCustomerId = newCustomerId;
+    return;
+  }
+
+  const oldCustomerId = activeCustomerId;
+  activeCustomerId = newCustomerId;
+
+  let cancelledCount = 0;
+  for (const [url, controller] of getRequestControllers) {
+    if (url.includes(`/api/customers/${oldCustomerId}`)) {
+      controller.abort();
+      getRequestControllers.delete(url);
+      pendingGetRequests.delete(url);
+      cancelledCount++;
+    }
+  }
+
+  if (cancelledCount > 0 && import.meta.env.DEV) {
+    console.log(`[API] 🚫 고객 전환 (${oldCustomerId.slice(-6)} → ${newCustomerId.slice(-6)}): ${cancelledCount}개 요청 취소`);
+  }
+}
+
+/**
+ * 🔧 활성 고객 설정 (명시적 호출 전용)
+ *
+ * 사용자가 실제로 고객을 선택했을 때만 호출해야 합니다.
+ * 이 함수를 호출하면 이전 고객의 진행 중인 요청이 모두 취소됩니다.
+ *
+ * ⚠️ 주의: 백그라운드 작업(getAllRelationshipsWithCustomers 등)에서는 절대 호출하지 마세요!
+ *
+ * @param customerId - 새로 선택된 고객 ID
+ *
+ * @example
+ * ```typescript
+ * // CustomerFullDetailView에서 고객 로드 시
+ * api.setActiveCustomer(customerId);
+ * const customer = await api.get(`/api/customers/${customerId}`);
+ * ```
+ */
+export function setActiveCustomer(customerId: string): void {
+  console.log('🔥🔥🔥 [API] setActiveCustomer 호출됨:', {
+    customerId: customerId,
+    customerIdLast6: customerId?.slice(-6),
+    previousActiveCustomer: activeCustomerId?.slice(-6)
+  });
+  if (!customerId) return;
+  cancelStaleCustomerRequests(customerId);
+}
+
+/**
+ * 🔧 활성 고객 초기화
+ *
+ * 고객 선택이 해제되었을 때 호출합니다.
+ */
+export function clearActiveCustomer(): void {
+  activeCustomerId = null;
+}
+
 /**
  * JWT 토큰만 가져오기
  * localStorage에서 토큰 추출 (v2 우선, 하위 호환성 위해 v1도 확인)
@@ -138,6 +232,17 @@ export class TimeoutError extends Error {
 }
 
 /**
+ * 요청 취소 에러 클래스 (고객 전환 등 정상적인 취소)
+ * 이 에러는 UI에 표시되면 안 됨 - 조용히 무시해야 함
+ */
+export class RequestCancelledError extends Error {
+  constructor(message = '요청이 취소되었습니다') {
+    super(message);
+    this.name = 'RequestCancelledError';
+  }
+}
+
+/**
  * API 요청 옵션 타입
  */
 export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
@@ -184,67 +289,13 @@ async function fetchWithTimeout(
 }
 
 /**
- * API 요청 함수
+ * API 요청 함수 (내부 실행)
  */
-export async function apiRequest<T = unknown>(
-  endpoint: string,
-  options: ApiRequestOptions = {}
+async function executeApiRequest<T = unknown>(
+  url: string,
+  requestOptions: RequestInit,
+  timeout: number
 ): Promise<T> {
-  const {
-    timeout = API_CONFIG.TIMEOUT,
-    baseUrl = API_CONFIG.BASE_URL,
-    headers,
-    body,
-    ...fetchOptions
-  } = options;
-
-  // URL 구성
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-
-  // 헤더 구성
-  const currentUserId = typeof window !== 'undefined'
-    ? (() => {
-        const storedId = localStorage.getItem('aims-current-user-id');
-        if (!storedId && import.meta.env.DEV) {
-          console.warn('[API] ⚠️ 사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
-        }
-        return storedId || '';
-      })()
-    : '';
-
-  const requestHeaders: Record<string, string> = {
-    ...API_CONFIG.DEFAULT_HEADERS,
-    'x-user-id': currentUserId, // ⭐ localStorage에서 현재 사용자 ID 가져오기
-    ...getAuthHeaders(), // JWT 토큰 헤더 추가
-    ...(headers as Record<string, string>),
-  };
-
-  // 요청 옵션 구성
-  const requestOptions: RequestInit = {
-    ...fetchOptions,
-    headers: requestHeaders,
-  };
-
-  // 바디 처리
-  if (body !== undefined) {
-    if (body instanceof FormData) {
-      // FormData의 경우 Content-Type을 자동으로 설정하도록 제거
-      delete (requestHeaders as Record<string, string>)['Content-Type'];
-      requestOptions.body = body;
-    } else if (typeof body === 'string') {
-      requestOptions.body = body;
-    } else {
-      requestOptions.body = JSON.stringify(body);
-    }
-  }
-
-  // 요청 전 로그 (개발 환경에서만)
-  if (import.meta.env.DEV && API_DEBUG) {
-    console.log(`🌐 API Request: ${requestOptions.method || 'GET'} ${url}`);
-  }
-
   let response: Response;
 
   try {
@@ -276,9 +327,84 @@ export async function apiRequest<T = unknown>(
     );
   }
 
-  // 응답 후 로그 (개발 환경에서만)
-  if (import.meta.env.DEV && API_DEBUG) {
-    console.log(`API Response: ${response.status} ${url}`, data);
+  // 에러 응답 처리
+  if (!response.ok) {
+    const message = typeof data === 'object' && data !== null && 'message' in data
+      ? String((data as { message: string }).message)
+      : `HTTP ${response.status}: ${response.statusText}`;
+
+    throw new ApiError(message, response.status, response.statusText, data);
+  }
+
+  return data as T;
+}
+
+/**
+ * AbortController를 지원하는 API 요청 함수 (GET 요청용)
+ * 고객 전환 시 요청 취소를 위해 사용
+ */
+async function executeApiRequestWithAbort<T = unknown>(
+  url: string,
+  requestOptions: RequestInit,
+  timeout: number,
+  controller: AbortController
+): Promise<T> {
+  // 타임아웃 설정 (별도 AbortController 사용)
+  const timeoutId = setTimeout(() => {
+    // 타임아웃 시에도 abort 호출하되, 이미 abort된 상태면 무시됨
+    if (!controller.signal.aborted) {
+      controller.abort('timeout');
+    }
+  }, timeout);
+
+  let response: Response;
+
+  try {
+    response = await fetch(url, requestOptions);
+    clearTimeout(timeoutId);
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        // abort 이유에 따라 다른 에러 던지기
+        if (controller.signal.reason === 'timeout') {
+          throw new TimeoutError();
+        }
+        // 고객 전환 등으로 인한 정상적인 취소
+        throw new RequestCancelledError();
+      }
+      throw new NetworkError(`네트워크 오류: ${error.message}`, error);
+    }
+
+    throw new NetworkError('알 수 없는 네트워크 오류');
+  }
+
+  // 응답 처리
+  let data: unknown;
+  const contentType = response.headers.get('content-type');
+
+  try {
+    if (contentType?.includes('application/json')) {
+      data = await response.json();
+    } else if (contentType?.includes('text/')) {
+      data = await response.text();
+    } else {
+      data = await response.blob();
+    }
+  } catch {
+    // 🔧 응답 읽기 중 abort된 경우 RequestCancelledError 던지기
+    if (controller.signal.aborted) {
+      if (controller.signal.reason === 'timeout') {
+        throw new TimeoutError();
+      }
+      throw new RequestCancelledError();
+    }
+    throw new ApiError(
+      '응답 파싱 중 오류가 발생했습니다',
+      response.status,
+      response.statusText
+    );
   }
 
   // 에러 응답 처리
@@ -291,6 +417,112 @@ export async function apiRequest<T = unknown>(
   }
 
   return data as T;
+}
+
+/**
+ * API 요청 함수
+ */
+export async function apiRequest<T = unknown>(
+  endpoint: string,
+  options: ApiRequestOptions = {}
+): Promise<T> {
+  const {
+    timeout = API_CONFIG.TIMEOUT,
+    baseUrl = API_CONFIG.BASE_URL,
+    headers,
+    body,
+    ...fetchOptions
+  } = options;
+
+  // URL 구성
+  const url = endpoint.startsWith('http')
+    ? endpoint
+    : `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+
+  // ============================================================================
+  // 🔧 GET 요청 중복 방지
+  // ============================================================================
+  // ⚠️ 고객 전환 감지는 더 이상 자동으로 하지 않음!
+  // setActiveCustomer()를 명시적으로 호출해야만 이전 요청이 취소됨
+  // 이유: getAllRelationshipsWithCustomers 등 백그라운드 순회가 고객 전환으로 오인되는 문제 해결
+  if (method === 'GET') {
+    // 이미 동일한 GET 요청이 진행 중이면 기존 Promise 반환
+    const existingRequest = pendingGetRequests.get(url);
+    if (existingRequest) {
+      if (import.meta.env.DEV && API_DEBUG) {
+        console.log(`[API] ♻️ 중복 요청 재사용: ${url}`);
+      }
+      return existingRequest as Promise<T>;
+    }
+  }
+
+  // 헤더 구성
+  const currentUserId = typeof window !== 'undefined'
+    ? (() => {
+        const storedId = localStorage.getItem('aims-current-user-id');
+        if (!storedId && import.meta.env.DEV) {
+          console.warn('[API] ⚠️ 사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
+        }
+        return storedId || '';
+      })()
+    : '';
+
+  const requestHeaders: Record<string, string> = {
+    ...API_CONFIG.DEFAULT_HEADERS,
+    'x-user-id': currentUserId,
+    ...getAuthHeaders(),
+    ...(headers as Record<string, string>),
+  };
+
+  // 요청 옵션 구성
+  const requestOptions: RequestInit = {
+    ...fetchOptions,
+    method,
+    headers: requestHeaders,
+  };
+
+  // GET 요청에 AbortController 추가 (고객 전환 시 취소 지원)
+  let controller: AbortController | null = null;
+  if (method === 'GET') {
+    controller = new AbortController();
+    getRequestControllers.set(url, controller);
+    requestOptions.signal = controller.signal;
+  }
+
+  // 바디 처리
+  if (body !== undefined) {
+    if (body instanceof FormData) {
+      delete (requestHeaders as Record<string, string>)['Content-Type'];
+      requestOptions.body = body;
+    } else if (typeof body === 'string') {
+      requestOptions.body = body;
+    } else {
+      requestOptions.body = JSON.stringify(body);
+    }
+  }
+
+  // 요청 전 로그 (개발 환경에서만)
+  if (import.meta.env.DEV && API_DEBUG) {
+    console.log(`🌐 API Request: ${method} ${url}`);
+  }
+
+  // 요청 실행 (GET은 중복 방지 추적)
+  if (method === 'GET') {
+    const requestPromise = executeApiRequestWithAbort<T>(url, requestOptions, timeout, controller!)
+      .finally(() => {
+        // 요청 완료 시 추적 정리
+        pendingGetRequests.delete(url);
+        getRequestControllers.delete(url);
+      });
+
+    pendingGetRequests.set(url, requestPromise);
+    return requestPromise;
+  }
+
+  // GET 이외의 요청은 그냥 실행
+  return executeApiRequest<T>(url, requestOptions, timeout);
 }
 
 /**
@@ -317,6 +549,11 @@ export const api = {
  * 에러 핸들러 유틸리티
  */
 export function handleApiError(error: unknown): string {
+  // 🔧 요청 취소 에러는 빈 문자열 반환 (UI에 표시하지 않음)
+  if (error instanceof RequestCancelledError) {
+    return '';
+  }
+
   if (error instanceof ApiError) {
     return error.message;
   }
@@ -334,6 +571,13 @@ export function handleApiError(error: unknown): string {
   }
 
   return '알 수 없는 오류가 발생했습니다';
+}
+
+/**
+ * 요청 취소 에러인지 확인하는 헬퍼 함수
+ */
+export function isRequestCancelledError(error: unknown): boolean {
+  return error instanceof RequestCancelledError;
 }
 
 /**

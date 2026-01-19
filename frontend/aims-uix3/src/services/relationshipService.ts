@@ -78,6 +78,7 @@ export interface CreateRelationshipData {
  */
 const ENDPOINTS = {
   RELATIONSHIP_TYPES: '/api/relationship-types',
+  ALL_RELATIONSHIPS: '/api/relationships',  // 🔧 전체 관계 조회 (N-iteration 제거)
   CUSTOMER_RELATIONSHIPS: (customerId: string) => `/api/customers/${customerId}/relationships`,
   RELATIONSHIP: (customerId: string, relationshipId: string) =>
     `/api/customers/${customerId}/relationships/${relationshipId}`,
@@ -184,47 +185,32 @@ export class RelationshipService {
 
   /**
    * 모든 고객의 관계 데이터 조회 (트리뷰용)
+   * 🔧 N-iteration 제거: 단일 API 호출로 모든 관계 조회
    */
   static async getAllRelationshipsWithCustomers(): Promise<{
     customers: Customer[];
     relationships: Relationship[];
     timestamp: number;
   }> {
-    // 1. 모든 고객 조회
-    const customersResponse = await api.get<{
+    // 🔧 새 벌크 API 사용 - 단일 호출로 모든 관계 + 고객 정보 조회
+    const response = await api.get<{
       success: boolean;
-      data: { customers: Customer[] };
-    }>('/api/customers?page=1&limit=1000');
+      data: {
+        relationships: Relationship[];
+        customers: Customer[];
+        total_count: number;
+        timestamp: number;
+      };
+    }>(ENDPOINTS.ALL_RELATIONSHIPS);
 
-    if (!customersResponse.success || !customersResponse.data) {
-      throw new Error('고객 데이터 조회에 실패했습니다');
-    }
-
-    const customers = customersResponse.data.customers;
-    const allRelationships: Relationship[] = [];
-
-    // 2. 각 고객의 관계 정보 조회
-    for (const customer of customers) {
-      try {
-        const relationships = await RelationshipService.getCustomerRelationships(
-          customer._id
-        );
-        relationships.forEach((rel) => {
-          allRelationships.push({
-            ...rel,
-            from_customer: customer,
-          });
-        });
-      } catch (error) {
-        console.warn(`고객 ${customer.personal_info?.name}의 관계 조회 실패:`, error);
-        errorReporter.reportApiError(error as Error, { component: 'RelationshipService.getAllRelationshipsWithCustomers', payload: { customerId: customer._id } });
-      }
+    if (!response.success || !response.data) {
+      throw new Error('관계 데이터 조회에 실패했습니다');
     }
 
     return {
-      customers,
-      relationships: allRelationships,
-      timestamp: Date.now(),
+      customers: response.data.customers,
+      relationships: response.data.relationships,
+      timestamp: response.data.timestamp,
     };
   }
 }

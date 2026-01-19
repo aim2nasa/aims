@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CustomerSearchQuerySchema, type Customer, type CustomerSearchQuery } from '@/entities/customer/model';
-import { api, ApiError } from '@/shared/lib/api';
+import { api, ApiError, isRequestCancelledError } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
 
 interface UseCustomersControllerProps {
@@ -118,16 +118,22 @@ export const useCustomersController = ({
       if (data.pagination) {
         setPagination(data.pagination);
       }
+      setIsLoading(false); // 🔧 성공 시에만 로딩 종료
     } catch (err) {
+      // 🔧 취소된 요청은 조용히 무시 (고객 전환 등 정상적인 상황)
+      if (isRequestCancelledError(err)) {
+        // setIsLoading(false) 호출하지 않음 - 새 요청이 진행 중
+        return;
+      }
       const message = err instanceof ApiError
         ? err.message
         : (err instanceof Error ? err.message : '고객 목록 조회 중 오류가 발생했습니다.');
       setError(message);
       console.error('[useCustomersController] Fetch error:', err);
       errorReporter.reportApiError(err as Error, { component: 'useCustomersController.fetchCustomers' });
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // 🔧 실제 에러 시에만 로딩 종료
     }
+    // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false) 호출하면 새 요청의 로딩 상태가 풀림
   }, []);
 
   /**

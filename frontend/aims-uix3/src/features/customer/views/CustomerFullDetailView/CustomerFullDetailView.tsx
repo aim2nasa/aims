@@ -36,6 +36,7 @@ import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { isRequestCancelledError, setActiveCustomer } from '@/shared/lib/api'
 import './CustomerFullDetailView.css'
 
 interface CustomerFullDetailViewProps {
@@ -73,7 +74,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const { isDevMode } = useDevModeStore()
 
   // 🍎 최근 고객 목록 관리
-  const { removeRecentCustomer } = useRecentCustomersStore()
+  const { addRecentCustomer, removeRecentCustomer } = useRecentCustomersStore()
 
   // 🍎 모달 상태
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
@@ -209,14 +210,40 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       return
     }
 
+    console.log('🔥🔥🔥 [CustomerFullDetailView] loadCustomer 시작 [BUILD v0.375.0]:', {
+      customerId: customerId,
+      customerIdLast6: customerId.slice(-6),
+      timestamp: new Date().toISOString()
+    })
+
     setIsLoading(true)
     setError(null)
     setIsDeleted(false)
 
+    // 🔧 사용자가 실제로 고객을 선택했으므로 이전 고객의 요청 취소
+    // 이 호출은 CustomerFullDetailView에서만 해야 함 (백그라운드 작업에서는 절대 호출 금지!)
+    console.log('🔥🔥🔥 [CustomerFullDetailView] setActiveCustomer 호출 전')
+    setActiveCustomer(customerId)
+    console.log('🔥🔥🔥 [CustomerFullDetailView] setActiveCustomer 호출 후')
+
+    // 🔧 브라우저가 abort된 HTTP 연결을 해제할 시간을 줌
+    // abort()는 즉시 연결 슬롯을 해제하지 않으므로, 새 요청이 블록될 수 있음
+    await new Promise(resolve => setTimeout(resolve, 50))
+    console.log('🔥🔥🔥 [CustomerFullDetailView] 연결 정리 대기 완료')
+
     try {
       const data = await CustomerService.getCustomer(customerId)
       setCustomer(data)
+      addRecentCustomer(data) // 🔧 최근 검색 고객 목록에 추가
+      setIsLoading(false) // 🔧 성공 시에만 로딩 종료
     } catch (err) {
+      // 🔧 취소된 요청은 조용히 무시 (고객 전환 등 정상적인 상황)
+      // setIsLoading(false) 호출하지 않음 - 새 고객 로딩이 진행 중이므로
+      if (isRequestCancelledError(err)) {
+        console.log('[CustomerFullDetailView] 요청 취소됨 (무시):', customerId)
+        return
+      }
+
       console.error('[CustomerFullDetailView] 고객 로드 실패:', err)
       errorReporter.reportApiError(err as Error, { component: 'CustomerFullDetailView.loadCustomer', payload: { customerId } })
       const errorMessage = err instanceof Error ? err.message : '고객 정보를 불러올 수 없습니다.'
@@ -233,13 +260,18 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
       } else {
         setError(errorMessage)
       }
-    } finally {
-      setIsLoading(false)
+      setIsLoading(false) // 🔧 실제 에러 시에만 로딩 종료
     }
-  }, [customerId, removeRecentCustomer])
+    // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false)가 호출되면 안 됨
+  }, [customerId, addRecentCustomer, removeRecentCustomer])
 
   // 🍎 초기 로드
   useEffect(() => {
+    console.log('🔥🔥🔥 [CustomerFullDetailView] useEffect 트리거 [BUILD v0.375.0]:', {
+      visible,
+      customerId: customerId?.slice(-6),
+      willLoad: !!(visible && customerId)
+    })
     if (visible && customerId) {
       void loadCustomer()
     }

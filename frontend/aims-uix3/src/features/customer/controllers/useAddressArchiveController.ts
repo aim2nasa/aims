@@ -13,6 +13,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { isRequestCancelledError } from '@/shared/lib/api';
 
 /**
  * Controller 반환 타입
@@ -84,15 +85,21 @@ export const useAddressArchiveController = (
         console.log('[AddressArchiveController] 주소 이력 로드 성공:', history.length, '건');
       }
       setAddressHistory(history);
+      setIsLoading(false); // 🔧 성공 시에만 로딩 종료
     } catch (err) {
+      // 🔧 취소된 요청은 조용히 무시 (고객 전환 등 정상적인 상황)
+      if (isRequestCancelledError(err)) {
+        // setIsLoading(false) 호출하지 않음 - 새 요청이 진행 중
+        return;
+      }
       const errorMessage = err instanceof Error ? err.message : '주소 이력을 불러오는데 실패했습니다.';
       setError(errorMessage);
       console.error('[AddressArchiveController] 주소 이력 로드 실패:', err);
       errorReporter.reportApiError(err as Error, { component: 'useAddressArchiveController.loadAddressHistory', payload: { customerId } });
       setAddressHistory([]); // 에러 시 빈 배열로 초기화
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // 🔧 실제 에러 시에만 로딩 종료
     }
+    // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false) 호출하면 새 요청의 로딩 상태가 풀림
   }, []);
 
   /**

@@ -11,7 +11,7 @@
 
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { formatDateTime } from '@/shared/lib/timeUtils';
-import { api } from '@/shared/lib/api';
+import { api, isRequestCancelledError } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
@@ -51,6 +51,11 @@ export class AddressService {
 
       return data.data || [];
     } catch (error) {
+      // 🔧 취소된 요청은 조용히 다시 던지기 (고객 전환 등 정상적인 상황)
+      if (isRequestCancelledError(error)) {
+        throw error;
+      }
+
       console.error('[AddressService] 주소 이력 조회 실패:', error);
       errorReporter.reportApiError(error as Error, { component: 'AddressService.getAddressHistory', payload: { customerId } });
 

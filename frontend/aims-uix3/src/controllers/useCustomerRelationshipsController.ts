@@ -14,6 +14,7 @@ import {
   type RelationshipTypeData,
 } from '@/services/relationshipService';
 import { errorReporter } from '@/shared/lib/errorReporter';
+import { isRequestCancelledError } from '@/shared/lib/api';
 interface UseCustomerRelationshipsControllerOptions {
   /** 대상 고객 ID */
   customerId?: string;
@@ -95,7 +96,16 @@ export const useCustomerRelationshipsController = (
           setRelationshipTypes(types);
         }
         setRelationships(relations);
+        // 🔧 성공 시에만 로딩 종료
+        if (!options?.silent) {
+          setIsLoading(false);
+        }
       } catch (err) {
+        // 🔧 취소된 요청은 조용히 무시 (고객 전환 등 정상적인 상황)
+        if (isRequestCancelledError(err)) {
+          // setIsLoading(false) 호출하지 않음 - 새 요청이 진행 중
+          return;
+        }
         console.error('[useCustomerRelationshipsController] Failed to load relationships:', err);
         errorReporter.reportApiError(err as Error, { component: 'useCustomerRelationshipsController.loadRelationships', payload: { customerId } });
         setError(
@@ -103,11 +113,12 @@ export const useCustomerRelationshipsController = (
             ? err.message
             : '고객 관계 정보를 불러오는데 실패했습니다.',
         );
-      } finally {
+        // 🔧 실제 에러 시에만 로딩 종료
         if (!options?.silent) {
           setIsLoading(false);
         }
       }
+      // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false) 호출하면 새 요청의 로딩 상태가 풀림
     },
     [customerId, loadRelationshipTypes, relationshipTypes],
   );

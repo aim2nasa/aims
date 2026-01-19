@@ -9,7 +9,7 @@
 
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import type { DefaultOptions } from '@tanstack/react-query';
-import { ApiError, NetworkError, TimeoutError, handleApiError } from '@/shared/lib/api';
+import { ApiError, NetworkError, TimeoutError, RequestCancelledError, handleApiError } from '@/shared/lib/api';
 import { errorReporter } from '@/shared/lib/errorReporter';
 
 /**
@@ -25,6 +25,11 @@ const defaultOptions: DefaultOptions = {
 
     // 재시도 로직
     retry: (failureCount, error) => {
+      // 🔧 요청 취소 에러는 재시도하지 않음 (고객 전환 등 정상적인 취소)
+      if (error instanceof RequestCancelledError) {
+        return false;
+      }
+
       // 네트워크 에러나 타임아웃은 최대 3번 재시도
       if (error instanceof NetworkError || error instanceof TimeoutError) {
         return failureCount < 3;
@@ -63,6 +68,11 @@ const defaultOptions: DefaultOptions = {
 
     // 에러 처리 (에러 리포팅은 mutationCache.onError에서 처리)
     onError: (error) => {
+      // 🔧 요청 취소 에러는 조용히 무시 (고객 전환 등 정상적인 취소)
+      if (error instanceof RequestCancelledError) {
+        return;
+      }
+
       // 전역 에러 처리 로직
       const errorMessage = handleApiError(error);
 
@@ -83,6 +93,11 @@ const defaultOptions: DefaultOptions = {
  */
 const queryCache = new QueryCache({
   onError: (error) => {
+    // 🔧 요청 취소 에러는 조용히 무시 (고객 전환 등 정상적인 취소)
+    if (error instanceof RequestCancelledError) {
+      return;
+    }
+
     // Query 에러 시 에러 리포터에 전송
     if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
       errorReporter.reportApiError(error, { component: 'QueryCache' });
@@ -102,6 +117,11 @@ const queryCache = new QueryCache({
  */
 const mutationCache = new MutationCache({
   onError: (error) => {
+    // 🔧 요청 취소 에러는 조용히 무시 (고객 전환 등 정상적인 취소)
+    if (error instanceof RequestCancelledError) {
+      return;
+    }
+
     // Mutation 에러 시 에러 리포터에 전송
     if (error instanceof ApiError || error instanceof NetworkError || error instanceof TimeoutError) {
       errorReporter.reportApiError(error, { component: 'MutationCache' });

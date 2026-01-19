@@ -13,7 +13,7 @@ import {
   type CustomerDocumentItem
 } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
-import { handleApiError } from '@/shared/lib/api'
+import { handleApiError, isRequestCancelledError } from '@/shared/lib/api'
 
 interface UseCustomerDocumentsControllerOptions {
   /** 마운트 시 자동 로드 여부 (기본값 true) */
@@ -213,15 +213,19 @@ export const useCustomerDocumentsController = (
       const nextDocuments = response.documents ?? []
       setDocuments(nextDocuments)
       setLastUpdated(Date.now())
+      setIsLoading(false) // 🔧 성공 시에만 로딩 종료
     } catch (err) {
       if (!mountedRef.current) return
+      // 🔧 취소된 요청은 조용히 무시 (고객 전환 등 정상적인 상황)
+      if (isRequestCancelledError(err)) {
+        // setIsLoading(false) 호출하지 않음 - 새 요청이 진행 중
+        return
+      }
       setError(handleApiError(err))
       setDocuments([])
-    } finally {
-      if (mountedRef.current) {
-        setIsLoading(false)
-      }
+      setIsLoading(false) // 🔧 실제 에러 시에만 로딩 종료
     }
+    // 🔧 finally 제거 - 취소된 요청에서 setIsLoading(false) 호출하면 새 요청의 로딩 상태가 풀림
   }, [customerId, enabled])
 
   // 자동 로드
