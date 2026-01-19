@@ -350,14 +350,25 @@ proxy: {
 **금지**: HTML `<button>` 직접 사용, Portal/ESC 직접 구현
 
 ### Backend Services
-| 서비스 | 경로 | 포트 |
-|--------|------|------|
-| aims_api | `backend/api/aims_api/` | 3010 |
-| aims_rag_api | `backend/api/aims_rag_api/` | 8000 |
-| aims_mcp | `backend/api/aims_mcp/` | 3011 |
-| pdf_proxy | `backend/api/pdf_proxy/` | 8002 |
-| annual_report_api | `backend/api/annual_report_api/` | 8004 |
-| pdf_converter | `tools/convert/` | 8005 |
+| 서비스 | 경로 | 포트 | 런타임 |
+|--------|------|------|--------|
+| aims_api | `backend/api/aims_api/` | 3010 | Docker |
+| aims_rag_api | `backend/api/aims_rag_api/` | 8000 | Docker |
+| aims_mcp | `backend/api/aims_mcp/` | 3011 | PM2 |
+| pdf_proxy | `backend/api/pdf_proxy/` | 8002 | PM2 |
+| annual_report_api | `backend/api/annual_report_api/` | 8004 | PM2 |
+| pdf_converter | `tools/convert/` | 8005 | PM2 |
+| document_pipeline | `backend/api/document_pipeline/` | 8100 | PM2 |
+
+### 🔴 문서 처리 파이프라인 (n8n 사용 안함!)
+**AIMS는 n8n 워크플로우 엔진을 사용하지 않는다!**
+
+문서 처리는 **FastAPI 기반 document_pipeline** 서비스에서 처리:
+- 경로: `backend/api/document_pipeline/`
+- 워커: `workers/upload_worker.py` (MongoDB 큐 소비)
+- 진행률: `_notify_progress()` 함수가 SSE webhook 호출
+
+**⚔️ n8n 관련 코드/설정을 찾지 마라. 존재하지 않는다!**
 
 ---
 
