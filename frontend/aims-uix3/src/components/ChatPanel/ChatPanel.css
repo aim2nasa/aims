@@ -1555,6 +1555,17 @@ html[data-theme="dark"] .chat-panel__context-menu-item:hover {
   background: rgba(139, 92, 246, 0.15);
 }
 
+/* ==================== 변경된 값 하이라이트 ==================== */
+/* 이전 발행일과 달라진 계약 값 (예: 실효, 보험료 변경 등)을 빨간색으로 표시 */
+.chat-panel__changed-value {
+  color: var(--color-destructive, #dc2626);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .chat-panel__changed-value {
+  color: #f87171;
+}
+
 /* ==================== 문서 링크 ==================== */
 .chat-panel__doc-link {
   display: inline;

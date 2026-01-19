@@ -1386,8 +1386,41 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   }, [previewDocument?.id, handleDocumentPreviewClick]);
 
+  // 문자열에서 {!변경값!} 패턴을 파싱하여 빨간색 span으로 변환하는 헬퍼 함수
+  const parseChangedValues = useCallback((text: string, keyPrefix: string): (string | React.ReactElement)[] => {
+    const changePattern = /\{!([^!]+)!\}/g;
+    const result: (string | React.ReactElement)[] = [];
+    let lastIdx = 0;
+    let changeMatch;
+
+    while ((changeMatch = changePattern.exec(text)) !== null) {
+      // 변경 마커 앞의 텍스트 추가
+      if (changeMatch.index > lastIdx) {
+        result.push(text.slice(lastIdx, changeMatch.index));
+      }
+      // 변경된 값을 빨간색 span으로 추가
+      result.push(
+        <span
+          key={`${keyPrefix}-change-${changeMatch.index}`}
+          className="chat-panel__changed-value"
+        >
+          {changeMatch[1]}
+        </span>
+      );
+      lastIdx = changeMatch.index + changeMatch[0].length;
+    }
+
+    // 나머지 텍스트 추가
+    if (lastIdx < text.length) {
+      result.push(text.slice(lastIdx));
+    }
+
+    return result.length > 0 ? result : [text];
+  }, []);
+
   // 메시지 내용에서 문서 링크를 파싱하여 클릭 가능한 요소로 변환
   // 파일명에 []가 포함된 경우도 처리 (예: [비용+준비서류 안내]_xxx.pdf)
+  // {!변경값!} 패턴은 빨간색으로 표시 (이전 발행일과 달라진 값)
   const renderMessageContent = useCallback((content: string) => {
     // ](doc:문서ID) 패턴을 먼저 찾고, 매칭되는 여는 [ 를 역추적
     const docSuffixPattern = /\]\(doc:([a-f0-9]{24})\)/g;
@@ -1416,9 +1449,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
 
       if (openBracketPos !== -1) {
-        // 링크 앞의 텍스트 추가
+        // 링크 앞의 텍스트 추가 (변경값 파싱 적용)
         if (openBracketPos > lastIndex) {
-          parts.push(content.slice(lastIndex, openBracketPos));
+          const textBefore = content.slice(lastIndex, openBracketPos);
+          parts.push(...parseChangedValues(textBefore, `pre-${match.index}`));
         }
 
         // 파일명 추출 ([ 와 ] 사이)
@@ -1443,18 +1477,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
     }
 
-    // 나머지 텍스트 추가
+    // 나머지 텍스트 추가 (변경값 파싱 적용)
     if (lastIndex < content.length) {
-      parts.push(content.slice(lastIndex));
+      const remainingText = content.slice(lastIndex);
+      parts.push(...parseChangedValues(remainingText, 'end'));
     }
 
-    // 링크가 없으면 원본 텍스트 반환
+    // 링크가 없으면 변경값 파싱만 적용
     if (parts.length === 0) {
-      return content;
+      const parsedParts = parseChangedValues(content, 'full');
+      if (parsedParts.length === 1 && typeof parsedParts[0] === 'string') {
+        return content;
+      }
+      return <>{parsedParts}</>;
     }
 
     return <>{parts}</>;
-  }, [handleDocumentPreviewClick]);
+  }, [handleDocumentPreviewClick, parseChangedValues]);
 
   // 메시지 전송
   const handleSubmit = async (e?: React.FormEvent) => {
