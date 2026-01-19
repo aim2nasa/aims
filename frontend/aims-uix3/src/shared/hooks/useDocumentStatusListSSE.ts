@@ -108,10 +108,15 @@ export function useDocumentStatusListSSE(
   }, [])
 
   // 연결 성공 핸들러
+  // 🔧 근본 해결: SSE 연결/재연결 시 즉시 DB에서 최신 상태 조회
+  // - 페이지 이동 중 놓친 이벤트가 있어도 최신 상태 반영
+  // - SSE 이벤트만 의존하지 않고 DB 상태를 신뢰
   const handleConnect = useCallback((data: unknown) => {
     if (import.meta.env.DEV) {
       console.log('[DocumentStatusListSSE] 연결됨:', data)
     }
+    // 연결 즉시 최신 상태 조회 (놓친 이벤트 복구)
+    onRefreshRef.current()
   }, [])
 
   // 오류 핸들러

@@ -5,6 +5,12 @@
  */
 
 // 타입 정의
+interface BufferedEvent {
+  eventType: string
+  data: unknown
+  timestamp: number
+}
+
 interface Connection {
   eventSource: EventSource
   subscribers: Set<MessagePort>
@@ -12,6 +18,8 @@ interface Connection {
   params: Record<string, string>
   retryCount: number
   retryTimeout: ReturnType<typeof setTimeout> | null
+  // 🔧 근본 해결: 구독자가 없을 때 받은 이벤트 버퍼
+  eventBuffer: BufferedEvent[]
 }
 
 interface SubscribePayload {
@@ -76,8 +84,13 @@ function buildUrl(endpoint: string, params: Record<string, string>): string {
   return url.toString()
 }
 
+// 상수
+const EVENT_BUFFER_MAX_SIZE = 100 // 버퍼 최대 크기
+const EVENT_BUFFER_MAX_AGE_MS = 60000 // 1분 이상 된 이벤트는 삭제
+
 /**
  * 구독자들에게 메시지 브로드캐스트
+ * 🔧 근본 해결: 구독자가 없으면 버퍼에 저장
  */
 function broadcastToSubscribers(streamKey: string, type: string, data: unknown) {
   const conn = connections.get(streamKey)
@@ -94,6 +107,25 @@ function broadcastToSubscribers(streamKey: string, type: string, data: unknown) 
 
   // 🔍 DEBUG: 브로드캐스트 로깅
   log(`📢 브로드캐스트 - streamKey: ${streamKey}, eventType: ${type}, 구독자: ${conn.subscribers.size}명`)
+
+  // 🔧 근본 해결: 구독자가 없으면 버퍼에 저장
+  if (conn.subscribers.size === 0) {
+    // connected 이벤트는 버퍼링하지 않음 (새 구독 시 자동 전송)
+    if (type !== 'connected') {
+      conn.eventBuffer.push({
+        eventType: type,
+        data,
+        timestamp: Date.now()
+      })
+      log(`📦 이벤트 버퍼에 저장 - streamKey: ${streamKey}, eventType: ${type}, 버퍼 크기: ${conn.eventBuffer.length}`)
+
+      // 버퍼 크기 제한
+      if (conn.eventBuffer.length > EVENT_BUFFER_MAX_SIZE) {
+        conn.eventBuffer.shift()
+      }
+    }
+    return
+  }
 
   conn.subscribers.forEach(port => {
     try {
@@ -358,7 +390,8 @@ function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
       endpoint,
       params,
       retryCount: 0,
-      retryTimeout: null
+      retryTimeout: null,
+      eventBuffer: [] // 🔧 근본 해결: 이벤트 버퍼 초기화
     }
 
     setupEventListeners(streamKey, conn)
@@ -367,6 +400,33 @@ function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
     // 기존 연결에 구독자 추가
     log(`기존 연결에 구독자 추가: ${streamKey} (총 ${conn.subscribers.size + 1}명)`)
     conn.subscribers.add(port)
+
+    // 🔧 근본 해결 Step 1: 버퍼된 이벤트 전달 (최대 1분 이내)
+    // - 페이지 이동 중 놓친 이벤트를 새 구독자에게 즉시 전달
+    const now = Date.now()
+    const validEvents = conn.eventBuffer.filter(e => now - e.timestamp < EVENT_BUFFER_MAX_AGE_MS)
+
+    if (validEvents.length > 0) {
+      log(`📦 버퍼된 이벤트 전달: ${streamKey}, ${validEvents.length}개`)
+      validEvents.forEach(bufferedEvent => {
+        sendToPort(port, 'event', {
+          streamKey,
+          eventType: bufferedEvent.eventType,
+          data: bufferedEvent.data
+        })
+      })
+      // 버퍼 클리어 (전달 완료)
+      conn.eventBuffer = []
+    }
+
+    // 🔧 근본 해결 Step 2: connected 이벤트 전송
+    // - 새 구독자가 handleConnect에서 DB 최신 상태 조회 트리거
+    // - 버퍼된 이벤트가 없어도 DB 조회로 최신 상태 보장 (Single Source of Truth)
+    sendToPort(port, 'event', {
+      streamKey,
+      eventType: 'connected',
+      data: { message: 'Joined existing connection', bufferedEventsDelivered: validEvents.length, timestamp: Date.now() }
+    })
   }
 
   sendToPort(port, 'subscribed', { streamKey })
@@ -380,6 +440,10 @@ function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
 
 /**
  * 구독 해제 처리
+ * 🔧 근본 해결: 구독자가 없어도 SSE 연결 유지 (탭 종료 전까지)
+ * - 페이지 이동 시에도 SSE 연결 끊기지 않음
+ * - Backend에서 보내는 이벤트를 놓치지 않음
+ * - 새 구독이 들어오면 기존 연결 재사용
  */
 function handleUnsubscribe(port: MessagePort, payload: UnsubscribePayload) {
   const { streamKey } = payload
@@ -391,15 +455,12 @@ function handleUnsubscribe(port: MessagePort, payload: UnsubscribePayload) {
     conn.subscribers.delete(port)
     portSubscriptions.get(port)?.delete(streamKey)
 
-    // 구독자가 없으면 연결 종료
+    // 🔧 근본 해결: 구독자가 없어도 SSE 연결 유지
+    // 탭이 열려 있는 동안 연결을 끊지 않음
+    // 새 구독이 들어오면 기존 연결 재사용
     if (conn.subscribers.size === 0) {
-      log(`연결 종료 (구독자 없음): ${streamKey}`)
-
-      if (conn.retryTimeout) {
-        clearTimeout(conn.retryTimeout)
-      }
-      conn.eventSource.close()
-      connections.delete(streamKey)
+      log(`구독자 없음, 연결 유지: ${streamKey} (새 구독 대기)`)
+      // 연결을 끊지 않음 - 탭 종료(handleDisconnect) 또는 모든 포트 해제 시에만 끊음
     }
   }
 
