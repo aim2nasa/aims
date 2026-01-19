@@ -17,7 +17,7 @@ import { relationshipToolDefinitions, handleCreateRelationship, handleDeleteRela
 import { annualReportToolDefinitions, handleGetAnnualReports, handleGetArContractHistory } from './annual_reports.js';
 import { customerReviewToolDefinitions, handleGetCustomerReviews, handleGetCrContractHistory } from './customer_reviews.js';
 import { utilityToolDefinitions, handleGetStorageInfo, handleCheckCustomerName, handleListNotices, handleListFaqs, handleListUsageGuides } from './utilities.js';
-import { ragToolDefinitions, handleSearchDocumentsSemantic, handleGetSearchAnalytics, handleGetFailedQueries, handleSubmitSearchFeedback } from './rag.js';
+import { ragToolDefinitions, handleSearchDocumentsSemantic } from './rag.js';
 import { addressToolDefinitions, handleSearchAddress } from './address.js';
 import { unifiedSearchToolDefinitions, handleUnifiedSearch } from './unified_search.js';
 
@@ -83,9 +83,6 @@ const toolHandlers: Record<string, (args: unknown) => Promise<{ content: { type:
   list_usage_guides: handleListUsageGuides,
   // RAG 검색 관련
   search_documents_semantic: handleSearchDocumentsSemantic,
-  get_search_analytics: handleGetSearchAnalytics,
-  get_failed_queries: handleGetFailedQueries,
-  submit_search_feedback: handleSubmitSearchFeedback,
   // 주소 검색 관련
   search_address: handleSearchAddress,
   // 통합 검색
