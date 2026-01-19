@@ -31,6 +31,8 @@ export interface CustomerSelectionModalProps {
   onCreateNewCustomer: () => void;
   /** 로딩 상태 */
   isLoading?: boolean;
+  /** AR 파일명 (선택) */
+  fileName?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
   onSelectCustomer,
   onCreateNewCustomer,
   isLoading = false,
+  fileName,
 }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
@@ -174,6 +177,11 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
       backdropClosable={false}
     >
       <div className="customer-selection-modal">
+        {fileName && (
+          <p className="customer-selection-modal__filename">
+            📄 {fileName}
+          </p>
+        )}
         <p className="customer-selection-modal__description">
           <strong>{arMetadata.customer_name}</strong>님의 AR을 등록할 고객을 선택하세요.
         </p>

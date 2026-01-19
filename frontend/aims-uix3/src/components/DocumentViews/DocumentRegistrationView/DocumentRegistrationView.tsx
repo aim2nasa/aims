@@ -2296,6 +2296,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           matchingCustomers={arCustomerSelectionState.matchingCustomers}
           onSelectCustomer={handleArCustomerSelected}
           onCreateNewCustomer={handleArCreateNewCustomer}
+          fileName={arCustomerSelectionState.arFile?.name}
         />
       )}
 
