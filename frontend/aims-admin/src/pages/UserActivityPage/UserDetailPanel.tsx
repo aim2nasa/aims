@@ -10,8 +10,6 @@ import {
   userActivityApi,
   formatBytes,
   formatTokens,
-  formatCredits,
-  formatCost,
   formatDateTime,
   formatRelativeTime,
   type UserError,
@@ -27,16 +25,6 @@ const AI_SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 // 레거시 키 호환
-const AI_SOURCE_LABELS: Record<string, string> = {
-  chat: '채팅',
-  embed: '임베딩',
-  doc_embedding: '임베딩',
-  rag: 'RAG 검색',
-  rag_api: 'RAG',
-  summary: '요약',
-  n8n_docsummary: '요약',
-  unknown: '기타',
-};
 import { Button } from '@/shared/ui/Button/Button';
 import { ActivityTimeline } from './ActivityTimeline';
 import './UserActivityPage.css';
