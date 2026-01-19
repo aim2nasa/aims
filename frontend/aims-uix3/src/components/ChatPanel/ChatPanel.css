@@ -1566,6 +1566,45 @@ html[data-theme="dark"] .chat-panel__changed-value {
   color: #f87171;
 }
 
+/* ==================== 마크다운 테이블 ==================== */
+.chat-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.chat-panel__table th,
+.chat-panel__table td {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.chat-panel__table th {
+  background: var(--color-bg-secondary, #f9fafb);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.chat-panel__table tr:hover {
+  background: var(--color-bg-hover, #f3f4f6);
+}
+
+html[data-theme="dark"] .chat-panel__table th,
+html[data-theme="dark"] .chat-panel__table td {
+  border-color: var(--color-border-dark, #374151);
+}
+
+html[data-theme="dark"] .chat-panel__table th {
+  background: var(--color-bg-secondary-dark, #1f2937);
+}
+
+html[data-theme="dark"] .chat-panel__table tr:hover {
+  background: var(--color-bg-hover-dark, #374151);
+}
+
 /* ==================== 문서 링크 ==================== */
 .chat-panel__doc-link {
   display: inline;

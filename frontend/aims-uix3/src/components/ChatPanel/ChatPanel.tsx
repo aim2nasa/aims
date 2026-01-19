@@ -1386,6 +1386,88 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     }
   }, [previewDocument?.id, handleDocumentPreviewClick]);
 
+  // 마크다운 테이블을 HTML 테이블로 변환하는 헬퍼 함수
+  const parseMarkdownTable = useCallback((lines: string[], startIdx: number, keyPrefix: string): { element: React.ReactElement; endIdx: number } | null => {
+    // 테이블 시작 확인 (| 로 시작하는 줄)
+    if (!lines[startIdx]?.trim().startsWith('|')) return null;
+
+    const tableLines: string[] = [];
+    let idx = startIdx;
+
+    // 연속된 테이블 행 수집
+    while (idx < lines.length && lines[idx].trim().startsWith('|')) {
+      tableLines.push(lines[idx]);
+      idx++;
+    }
+
+    // 최소 2줄 필요 (헤더 + 구분선)
+    if (tableLines.length < 2) return null;
+
+    // 구분선 확인 (|---|---|)
+    const separatorIdx = tableLines.findIndex(line => /^\|[\s\-:|]+\|$/.test(line.trim()));
+    if (separatorIdx === -1) return null;
+
+    // 셀 파싱 함수 ({!값!} 패턴 처리 포함)
+    const parseCell = (cell: string, cellKey: string): React.ReactNode => {
+      const trimmed = cell.trim();
+      const changePattern = /\{!([^!]+)!\}/g;
+      const parts: React.ReactNode[] = [];
+      let lastIdx = 0;
+      let match;
+
+      while ((match = changePattern.exec(trimmed)) !== null) {
+        if (match.index > lastIdx) {
+          parts.push(trimmed.slice(lastIdx, match.index));
+        }
+        parts.push(
+          <span key={`${cellKey}-${match.index}`} className="chat-panel__changed-value">
+            {match[1]}
+          </span>
+        );
+        lastIdx = match.index + match[0].length;
+      }
+
+      if (lastIdx < trimmed.length) {
+        parts.push(trimmed.slice(lastIdx));
+      }
+
+      return parts.length > 0 ? <>{parts}</> : trimmed;
+    };
+
+    // 행을 셀로 분할
+    const parseRow = (line: string): string[] => {
+      return line.split('|').slice(1, -1); // 앞뒤 빈 요소 제거
+    };
+
+    const headerCells = parseRow(tableLines[0]);
+    const bodyRows = tableLines.slice(separatorIdx + 1);
+
+    const tableElement = (
+      <table key={`${keyPrefix}-table`} className="chat-panel__table">
+        <thead>
+          <tr>
+            {headerCells.map((cell, i) => (
+              <th key={`${keyPrefix}-th-${i}`}>{cell.trim()}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, rowIdx) => (
+            <tr key={`${keyPrefix}-tr-${rowIdx}`}>
+              {parseRow(row).map((cell, cellIdx) => (
+                <td key={`${keyPrefix}-td-${rowIdx}-${cellIdx}`}>
+                  {parseCell(cell, `${keyPrefix}-cell-${rowIdx}-${cellIdx}`)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+
+    return { element: tableElement, endIdx: idx - 1 };
+  }, []);
+
   // 문자열에서 {!변경값!} 패턴을 파싱하여 빨간색 span으로 변환하는 헬퍼 함수
   const parseChangedValues = useCallback((text: string, keyPrefix: string): (string | React.ReactElement)[] => {
     const changePattern = /\{!([^!]+)!\}/g;
@@ -1418,28 +1500,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     return result.length > 0 ? result : [text];
   }, []);
 
-  // 메시지 내용에서 문서 링크를 파싱하여 클릭 가능한 요소로 변환
-  // 파일명에 []가 포함된 경우도 처리 (예: [비용+준비서류 안내]_xxx.pdf)
-  // {!변경값!} 패턴은 빨간색으로 표시 (이전 발행일과 달라진 값)
-  const renderMessageContent = useCallback((content: string) => {
-    // ](doc:문서ID) 패턴을 먼저 찾고, 매칭되는 여는 [ 를 역추적
+  // 텍스트에서 문서 링크와 변경값을 파싱하는 헬퍼 함수
+  const parseTextContent = useCallback((text: string, keyPrefix: string): (string | React.ReactElement)[] => {
     const docSuffixPattern = /\]\(doc:([a-f0-9]{24})\)/g;
     const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = docSuffixPattern.exec(content)) !== null) {
-      const suffixStart = match.index; // ] 위치
+    while ((match = docSuffixPattern.exec(text)) !== null) {
+      const suffixStart = match.index;
       const docId = match[1];
 
-      // 여는 [ 를 찾기 위해 역추적 (중첩 bracket 고려)
-      let bracketCount = 1; // 닫는 ] 를 이미 찾았으므로 1로 시작
+      let bracketCount = 1;
       let openBracketPos = -1;
 
       for (let i = suffixStart - 1; i >= lastIndex; i--) {
-        if (content[i] === ']') {
-          bracketCount++;
-        } else if (content[i] === '[') {
+        if (text[i] === ']') bracketCount++;
+        else if (text[i] === '[') {
           bracketCount--;
           if (bracketCount === 0) {
             openBracketPos = i;
@@ -1449,20 +1526,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
       }
 
       if (openBracketPos !== -1) {
-        // 링크 앞의 텍스트 추가 (변경값 파싱 적용)
         if (openBracketPos > lastIndex) {
-          const textBefore = content.slice(lastIndex, openBracketPos);
-          parts.push(...parseChangedValues(textBefore, `pre-${match.index}`));
+          parts.push(...parseChangedValues(text.slice(lastIndex, openBracketPos), `${keyPrefix}-pre-${match.index}`));
         }
 
-        // 파일명 추출 ([ 와 ] 사이)
-        const fileName = content.slice(openBracketPos + 1, suffixStart);
-
-        // 문서 링크 추가 (데스크톱에서만 클릭 가능)
+        const fileName = text.slice(openBracketPos + 1, suffixStart);
         const isDesktop = window.innerWidth >= 768;
         parts.push(
           <button
-            key={`doc-${docId}-${match.index}`}
+            key={`${keyPrefix}-doc-${docId}-${match.index}`}
             type="button"
             className={`chat-panel__doc-link${isDesktop ? '' : ' chat-panel__doc-link--disabled'}`}
             onClick={() => isDesktop && handleDocumentPreviewClick(docId)}
@@ -1472,28 +1544,59 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
             📄 {fileName}
           </button>
         );
-
         lastIndex = match.index + match[0].length;
       }
     }
 
-    // 나머지 텍스트 추가 (변경값 파싱 적용)
-    if (lastIndex < content.length) {
-      const remainingText = content.slice(lastIndex);
-      parts.push(...parseChangedValues(remainingText, 'end'));
+    if (lastIndex < text.length) {
+      parts.push(...parseChangedValues(text.slice(lastIndex), `${keyPrefix}-end`));
     }
 
-    // 링크가 없으면 변경값 파싱만 적용
-    if (parts.length === 0) {
-      const parsedParts = parseChangedValues(content, 'full');
-      if (parsedParts.length === 1 && typeof parsedParts[0] === 'string') {
-        return content;
-      }
-      return <>{parsedParts}</>;
-    }
-
-    return <>{parts}</>;
+    return parts.length > 0 ? parts : parseChangedValues(text, keyPrefix);
   }, [handleDocumentPreviewClick, parseChangedValues]);
+
+  // 메시지 내용에서 테이블, 문서 링크, 변경값을 파싱하여 렌더링
+  const renderMessageContent = useCallback((content: string) => {
+    const lines = content.split('\n');
+    const result: React.ReactNode[] = [];
+    let textBuffer: string[] = [];
+
+    // 버퍼에 쌓인 텍스트를 처리하고 result에 추가
+    const flushTextBuffer = (idx: number) => {
+      if (textBuffer.length > 0) {
+        const text = textBuffer.join('\n');
+        const parsed = parseTextContent(text, `text-${idx}`);
+        if (parsed.length === 1 && typeof parsed[0] === 'string') {
+          result.push(parsed[0]);
+        } else {
+          result.push(<React.Fragment key={`frag-${idx}`}>{parsed}</React.Fragment>);
+        }
+        textBuffer = [];
+      }
+    };
+
+    let i = 0;
+    while (i < lines.length) {
+      // 테이블 시작 감지
+      const tableResult = parseMarkdownTable(lines, i, `table-${i}`);
+      if (tableResult) {
+        flushTextBuffer(i);
+        result.push(tableResult.element);
+        i = tableResult.endIdx + 1;
+      } else {
+        textBuffer.push(lines[i]);
+        i++;
+      }
+    }
+
+    // 남은 텍스트 처리
+    flushTextBuffer(lines.length);
+
+    if (result.length === 0) return content;
+    if (result.length === 1 && typeof result[0] === 'string') return result[0];
+
+    return <>{result}</>;
+  }, [parseTextContent, parseMarkdownTable]);
 
   // 메시지 전송
   const handleSubmit = async (e?: React.FormEvent) => {
