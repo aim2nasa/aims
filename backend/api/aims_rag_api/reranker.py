@@ -94,8 +94,8 @@ class SearchReranker:
                     # 파일명 매칭 약함: semantic 위주 (semantic 5배)
                     result["final_score"] = original * 0.5 + semantic * 5.0
 
-            # 🔥 수정: final_score 기준으로 정렬 (원본 점수 + semantic 점수 조합)
-            reranked = sorted(search_results, key=lambda x: x["final_score"], reverse=True)
+            # 🔥 수정: final_score 기준으로 정렬 (동일 점수일 경우 doc_id로 일관된 순서 보장)
+            reranked = sorted(search_results, key=lambda x: (-x["final_score"], x.get("doc_id", "")))
 
             # Top-K 반환
             return reranked[:top_k]

@@ -154,8 +154,8 @@ class HybridSearchEngine:
                 }
             })
 
-        # 점수 기준 정렬
-        results.sort(key=lambda x: x["score"], reverse=True)
+        # 점수 기준 정렬 (같은 점수일 경우 doc_id로 일관된 순서 보장)
+        results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
 
     def _vector_search(self, query: str, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
@@ -236,7 +236,8 @@ class HybridSearchEngine:
                 send_error_log("aims_rag_api", f"MongoDB 고객 필터링 오류: {e}", e)
 
         results = list(doc_map.values())
-        results.sort(key=lambda x: x["score"], reverse=True)
+        # 점수 기준 정렬 (같은 점수일 경우 doc_id로 일관된 순서 보장)
+        results.sort(key=lambda x: (-x["score"], x["doc_id"]))
         return results[:top_k]
 
     def _hybrid_search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
@@ -282,12 +283,12 @@ class HybridSearchEngine:
                     "source": "vector"
                 }
 
-        # 점수 기준 정렬
+        # 점수 기준 정렬 (같은 점수일 경우 doc_id로 일관된 순서 보장)
         merged_results = [
             {"doc_id": doc_id, **data}
             for doc_id, data in doc_scores.items()
         ]
-        merged_results.sort(key=lambda x: x["score"], reverse=True)
+        merged_results.sort(key=lambda x: (-x["score"], x["doc_id"]))
 
         return merged_results[:top_k]
 

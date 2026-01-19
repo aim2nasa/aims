@@ -335,7 +335,8 @@ export async function handleUnifiedSearch(args: unknown) {
         searchDocumentsAI(params.query, userId, limit, aiOffset)
       ]);
 
-      // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거
+      // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거 (doc_id 기준)
+      // 주의: 같은 파일명이라도 다른 고객에게 연결된 별개 문서는 중복이 아님
       const keywordFileIds = new Set(keywordDocs.results.map(d => d.fileId));
       const uniqueAiResults = aiDocs.results.filter(d => !keywordFileIds.has(d.fileId));
 
@@ -355,6 +356,10 @@ export async function handleUnifiedSearch(args: unknown) {
         ...r
       }));
 
+      // 페이지네이션 정보 계산
+      const keywordShown = keywordOffset + keywordResultsWithNumbers.length;
+      const aiShown = aiOffset + aiResultsWithNumbers.length;
+
       return {
         content: [{
           type: 'text' as const,
@@ -363,23 +368,26 @@ export async function handleUnifiedSearch(args: unknown) {
             documentsOnly: true,
             documents: {
               keyword: keywordResultsWithNumbers.length > 0 ? {
-                sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordOffset + keywordResultsWithNumbers.length}번)`,
+                sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordShown}번, 전체 ${keywordDocs.count}건)`,
                 totalCount: keywordDocs.count,
+                shown: keywordShown,
                 results: keywordResultsWithNumbers,
                 hasMore: keywordDocs.hasMore,
                 nextOffset: keywordDocs.nextOffset
               } : null,
               ai: aiResultsWithNumbers.length > 0 ? {
-                sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiOffset + aiResultsWithNumbers.length}번)`,
+                sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiShown}번, 전체 ${aiDocs.count}건)`,
                 totalCount: aiDocs.count,
+                shown: aiShown,
                 results: aiResultsWithNumbers,
                 hasMore: aiDocs.hasMore,
                 nextOffset: aiDocs.nextOffset
               } : null
             },
             _paginationHint: {
-              keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", documentsOnly=true, keywordOffset=${keywordDocs.nextOffset})` : null,
-              ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", documentsOnly=true, aiOffset=${aiDocs.nextOffset})` : null
+              // 🔴 CRITICAL: "더 보여줘" 요청 시 반드시 이 offset 값을 사용하세요!
+              keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", documentsOnly=true, keywordOffset=${keywordDocs.nextOffset}) - 현재 ${keywordShown}/${keywordDocs.count}건 표시됨` : null,
+              ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", documentsOnly=true, aiOffset=${aiDocs.nextOffset}) - 현재 ${aiShown}/${aiDocs.count}건 표시됨` : null
             },
             summary
           }, null, 2)
@@ -395,7 +403,8 @@ export async function handleUnifiedSearch(args: unknown) {
       searchContracts(params.query, userId, limit)
     ]);
 
-    // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거
+    // AI 검색 결과에서 키워드 검색과 중복되는 항목 제거 (doc_id 기준)
+    // 주의: 같은 파일명이라도 다른 고객에게 연결된 별개 문서는 중복이 아님
     const keywordFileIds = new Set(keywordDocs.results.map(d => d.fileId));
     const uniqueAiResults = aiDocs.results.filter(d => !keywordFileIds.has(d.fileId));
 
@@ -428,19 +437,25 @@ export async function handleUnifiedSearch(args: unknown) {
       ...r
     }));
 
+    // 페이지네이션 정보 계산
+    const keywordShown = keywordOffset + keywordResultsWithNumbers.length;
+    const aiShown = aiOffset + aiResultsWithNumbers.length;
+
     const result = {
       query: params.query,
       documents: {
         keyword: keywordResultsWithNumbers.length > 0 ? {
-          sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordOffset + keywordResultsWithNumbers.length}번)`,
+          sectionHeader: `🔤 키워드 일치 문서 (${keywordOffset + 1}~${keywordShown}번, 전체 ${keywordDocs.count}건)`,
           totalCount: keywordDocs.count,
+          shown: keywordShown,
           results: keywordResultsWithNumbers,
           hasMore: keywordDocs.hasMore,
           nextOffset: keywordDocs.nextOffset
         } : null,
         ai: aiResultsWithNumbers.length > 0 ? {
-          sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiOffset + aiResultsWithNumbers.length}번)`,
+          sectionHeader: `🤖 AI 검색 문서 (${aiOffset + 1}~${aiShown}번, 전체 ${aiDocs.count}건)`,
           totalCount: aiDocs.count,
+          shown: aiShown,
           results: aiResultsWithNumbers,
           hasMore: aiDocs.hasMore,
           nextOffset: aiDocs.nextOffset
@@ -449,8 +464,9 @@ export async function handleUnifiedSearch(args: unknown) {
       customers,
       contracts,
       _paginationHint: {
-        keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", keywordOffset=${keywordDocs.nextOffset})` : null,
-        ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", aiOffset=${aiDocs.nextOffset})` : null
+        // 🔴 CRITICAL: "더 보여줘" 요청 시 반드시 이 offset 값을 사용하세요!
+        keyword: keywordDocs.hasMore ? `키워드 더 보기: unified_search(query="${params.query}", keywordOffset=${keywordDocs.nextOffset}) - 현재 ${keywordShown}/${keywordDocs.count}건 표시됨` : null,
+        ai: aiDocs.hasMore ? `AI 더 보기: unified_search(query="${params.query}", aiOffset=${aiDocs.nextOffset}) - 현재 ${aiShown}/${aiDocs.count}건 표시됨` : null
       },
       summary
     };
