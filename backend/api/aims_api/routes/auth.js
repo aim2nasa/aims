@@ -14,12 +14,20 @@ const backendLogger = require('../lib/backendLogger');
 const ALLOWED_REDIRECT_ORIGINS = [
   'https://aims.giize.com',
   'https://admin.aims.giize.com',
+  // HTTP 개발 서버
   'http://localhost:5177',
   'http://localhost:5178',
   'http://localhost:5173',
   'http://127.0.0.1:5177',
   'http://127.0.0.1:5178',
   'http://127.0.0.1:5173',
+  // HTTPS 개발 서버 (HTTP/2 지원)
+  'https://localhost:5177',
+  'https://localhost:5178',
+  'https://localhost:5173',
+  'https://127.0.0.1:5177',
+  'https://127.0.0.1:5178',
+  'https://127.0.0.1:5173',
   // 모바일 앱 딥링크 (고정 경로만 허용)
   'aims-mobile://callback'
 ];
@@ -38,16 +46,21 @@ function isAllowedRedirect(url) {
   // URL 파싱으로 추가 검증 (호스트명 기반)
   try {
     const parsed = new URL(url);
+    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    const isAllowedPort = ['5177', '5178', '5173'].includes(parsed.port);
 
-    // HTTPS 도메인 검증
+    // HTTPS 검증
     if (parsed.protocol === 'https:') {
-      return ['aims.giize.com', 'admin.aims.giize.com'].includes(parsed.hostname);
+      // 프로덕션 도메인
+      if (['aims.giize.com', 'admin.aims.giize.com'].includes(parsed.hostname)) {
+        return true;
+      }
+      // 로컬 개발 환경 (HTTPS localhost - HTTP/2 지원)
+      return isLocalhost && isAllowedPort;
     }
 
-    // 로컬 개발 환경 (HTTP localhost/127.0.0.1)
+    // HTTP 로컬 개발 환경
     if (parsed.protocol === 'http:') {
-      const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-      const isAllowedPort = ['5177', '5178', '5173'].includes(parsed.port);
       return isLocalhost && isAllowedPort;
     }
   } catch {

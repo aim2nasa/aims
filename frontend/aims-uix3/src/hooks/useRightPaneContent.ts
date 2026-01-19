@@ -376,12 +376,7 @@ export function useRightPaneContent(
 
   // 고객 전체 정보 페이지 열기 핸들러
   const handleOpenFullDetail = useCallback(
-    async (customerId: string) => {
-      console.log('🔥🔥🔥 [handleOpenFullDetail] 호출됨 [BUILD v0.375.0]:', {
-        newCustomerId: customerId?.slice(-6),
-        currentView: activeDocumentView
-      })
-
+    (customerId: string) => {
       // 현재 전체 UI 상태 저장 (돌아가기 버튼에서 복원용)
       previousUIStateRef.current = {
         view: activeDocumentView,
@@ -395,13 +390,8 @@ export function useRightPaneContent(
       setRightPaneContentType(null)
       setRightPaneVisible(false)
 
-      // 🔧 최근 검색 고객 목록 추가는 CustomerFullDetailView에서 처리
-      // 여기서 await로 API 호출하면 HTTP 연결 제한에 걸려 고객 전환이 블록됨!
-
       // CustomerFullDetailView 표시
-      console.log('🔥🔥🔥 [handleOpenFullDetail] setFullDetailCustomerId 호출 전:', customerId?.slice(-6))
       setFullDetailCustomerId(customerId)
-      console.log('🔥🔥🔥 [handleOpenFullDetail] setFullDetailCustomerId 호출 후')
       setActiveDocumentView('customers-full-detail')
 
       // URL 업데이트 (customerId는 전체 정보 뷰용으로 유지)

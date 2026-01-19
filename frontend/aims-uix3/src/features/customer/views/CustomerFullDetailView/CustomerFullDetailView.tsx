@@ -222,14 +222,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
     // 🔧 사용자가 실제로 고객을 선택했으므로 이전 고객의 요청 취소
     // 이 호출은 CustomerFullDetailView에서만 해야 함 (백그라운드 작업에서는 절대 호출 금지!)
-    console.log('🔥🔥🔥 [CustomerFullDetailView] setActiveCustomer 호출 전')
     setActiveCustomer(customerId)
-    console.log('🔥🔥🔥 [CustomerFullDetailView] setActiveCustomer 호출 후')
-
-    // 🔧 브라우저가 abort된 HTTP 연결을 해제할 시간을 줌
-    // abort()는 즉시 연결 슬롯을 해제하지 않으므로, 새 요청이 블록될 수 있음
-    await new Promise(resolve => setTimeout(resolve, 50))
-    console.log('🔥🔥🔥 [CustomerFullDetailView] 연결 정리 대기 완료')
 
     try {
       const data = await CustomerService.getCustomer(customerId)
