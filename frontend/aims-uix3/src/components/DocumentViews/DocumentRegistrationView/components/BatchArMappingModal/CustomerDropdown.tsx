@@ -80,18 +80,21 @@ export const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
     onOpenCustomerSearchModal()
   }
 
+  // 선택이 필요한지 판단
+  const needsSelection = matchStatus === 'needs_selection' && !selectedCustomerId
+
   return (
     <div className="customer-dropdown" ref={dropdownRef}>
       <button
         type="button"
-        className={`customer-dropdown__trigger ${isOpen ? 'customer-dropdown__trigger--open' : ''}`}
+        className={`customer-dropdown__trigger ${isOpen ? 'customer-dropdown__trigger--open' : ''} ${needsSelection ? 'customer-dropdown__trigger--needs-selection' : ''}`}
         onClick={handleToggle}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
         <span className="customer-dropdown__value">{value}</span>
-        <span className="customer-dropdown__arrow">▼</span>
+        <span className="customer-dropdown__arrow">{needsSelection ? '▼' : '▼'}</span>
       </button>
 
       {isOpen && (
