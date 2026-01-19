@@ -63,8 +63,12 @@ export const createRelationshipSchema = z.object({
 
 export const deleteRelationshipSchema = z.object({
   fromCustomerId: z.string().describe('관계의 기준 고객 ID'),
-  relationshipId: z.string().describe('삭제할 관계 ID')
-});
+  relationshipId: z.string().optional().describe('삭제할 관계 ID (toCustomerId와 둘 중 하나 필수)'),
+  toCustomerId: z.string().optional().describe('관계 대상 고객 ID - 관계 ID 없이 고객명으로 삭제할 때 사용')
+}).refine(
+  data => data.relationshipId || data.toCustomerId,
+  { message: 'relationshipId 또는 toCustomerId 중 하나는 필수입니다' }
+);
 
 export const listRelationshipsSchema = z.object({
   customerId: z.string().describe('고객 ID'),
@@ -97,14 +101,15 @@ export const relationshipToolDefinitions = [
   },
   {
     name: 'delete_relationship',
-    description: '두 고객 간의 관계를 삭제합니다. 양방향 관계인 경우 역방향 관계도 함께 삭제됩니다.',
+    description: '두 고객 간의 관계를 삭제합니다. 양방향 관계인 경우 역방향 관계도 함께 삭제됩니다. relationshipId 또는 toCustomerId 중 하나만 있으면 됩니다.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         fromCustomerId: { type: 'string', description: '관계의 기준 고객 ID' },
-        relationshipId: { type: 'string', description: '삭제할 관계 ID' }
+        relationshipId: { type: 'string', description: '삭제할 관계 ID (toCustomerId와 둘 중 하나 필수)' },
+        toCustomerId: { type: 'string', description: '관계 대상 고객 ID - 관계 ID 없이 고객 ID로 삭제할 때 사용 (relationshipId와 둘 중 하나 필수)' }
       },
-      required: ['fromCustomerId', 'relationshipId']
+      required: ['fromCustomerId']
     }
   },
   {
@@ -323,6 +328,8 @@ export async function handleCreateRelationship(args: unknown) {
 
 /**
  * 관계 삭제 핸들러
+ * - relationshipId로 삭제: 기존 방식
+ * - toCustomerId로 삭제: 관계 ID 없이 고객 ID로 직접 삭제 (UX 개선)
  */
 export async function handleDeleteRelationship(args: unknown) {
   try {
@@ -331,12 +338,10 @@ export async function handleDeleteRelationship(args: unknown) {
     const userId = getCurrentUserId();
 
     const fromObjectId = toSafeObjectId(params.fromCustomerId);
-    const relationshipObjectId = toSafeObjectId(params.relationshipId);
-
-    if (!fromObjectId || !relationshipObjectId) {
+    if (!fromObjectId) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '유효하지 않은 ID입니다.' }]
+        content: [{ type: 'text' as const, text: '유효하지 않은 기준 고객 ID입니다.' }]
       };
     }
 
@@ -349,26 +354,95 @@ export async function handleDeleteRelationship(args: unknown) {
     if (!customer) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '고객을 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: '기준 고객을 찾을 수 없습니다.' }]
       };
     }
 
-    // 관계 정보 조회
-    const relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
-      _id: relationshipObjectId,
-      'relationship_info.from_customer_id': fromObjectId
-    });
+    let relationship;
+    let toCustomer;
+
+    // 모드 1: relationshipId로 삭제 (기존 방식)
+    if (params.relationshipId) {
+      const relationshipObjectId = toSafeObjectId(params.relationshipId);
+      if (!relationshipObjectId) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '유효하지 않은 관계 ID입니다.' }]
+        };
+      }
+
+      relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+        _id: relationshipObjectId,
+        'relationship_info.from_customer_id': fromObjectId
+      });
+
+      if (!relationship) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '관계를 찾을 수 없습니다.' }]
+        };
+      }
+
+      // 대상 고객 정보 조회
+      toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: relationship.relationship_info.to_customer_id
+      });
+    }
+    // 모드 2: toCustomerId로 삭제 (UX 개선 - 관계 ID 없이 삭제)
+    else if (params.toCustomerId) {
+      const toObjectId = toSafeObjectId(params.toCustomerId);
+      if (!toObjectId) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '유효하지 않은 대상 고객 ID입니다.' }]
+        };
+      }
+
+      // 대상 고객이 해당 설계사의 고객인지 확인
+      toCustomer = await db.collection(COLLECTIONS.CUSTOMERS).findOne({
+        _id: toObjectId,
+        'meta.created_by': userId
+      });
+
+      if (!toCustomer) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: '대상 고객을 찾을 수 없습니다.' }]
+        };
+      }
+
+      // 두 고객 간의 관계 찾기
+      relationship = await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).findOne({
+        'relationship_info.from_customer_id': fromObjectId,
+        'relationship_info.to_customer_id': toObjectId,
+        'relationship_info.status': 'active'
+      });
+
+      if (!relationship) {
+        return {
+          isError: true,
+          content: [{
+            type: 'text' as const,
+            text: `${customer.personal_info?.name}과(와) ${toCustomer.personal_info?.name} 사이에 등록된 관계가 없습니다.`
+          }]
+        };
+      }
+    }
 
     if (!relationship) {
       return {
         isError: true,
-        content: [{ type: 'text' as const, text: '관계를 찾을 수 없습니다.' }]
+        content: [{ type: 'text' as const, text: '삭제할 관계를 찾을 수 없습니다.' }]
       };
     }
 
+    const allTypes = getAllRelationshipTypes();
+    const typeConfig = allTypes[relationship.relationship_info.relationship_type];
+    const relationshipLabel = typeConfig?.label || relationship.relationship_info.relationship_type;
+
     // 관계 삭제 (hard delete)
     await db.collection(COLLECTIONS.CUSTOMER_RELATIONSHIPS).deleteOne({
-      _id: relationshipObjectId
+      _id: relationship._id
     });
 
     // 양방향 관계이거나 family 관계인 경우 역방향 관계도 삭제
@@ -387,10 +461,13 @@ export async function handleDeleteRelationship(args: unknown) {
         type: 'text' as const,
         text: JSON.stringify({
           success: true,
-          deletedRelationshipId: params.relationshipId,
+          deletedRelationshipId: relationship._id.toString(),
+          fromCustomerName: customer.personal_info?.name,
+          toCustomerName: toCustomer?.personal_info?.name,
           relationshipType: relationship.relationship_info.relationship_type,
+          relationshipLabel,
           reverseRelationDeleted: reverseDeleted,
-          message: '관계가 성공적으로 삭제되었습니다.'
+          message: `${customer.personal_info?.name} 고객과 ${toCustomer?.personal_info?.name} 고객 간의 가족 관계(${relationshipLabel})가 삭제되었습니다.`
         }, null, 2)
       }]
     };
