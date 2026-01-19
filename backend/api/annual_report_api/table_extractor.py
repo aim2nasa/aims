@@ -132,6 +132,10 @@ def extract_header_info(page) -> Dict[str, Any]:
     규칙:
     - 텍스트에서 "{이름} {숫자}" 패턴 찾기
     - "현재 납입중인 월 보험료" 근처에서 금액 찾기
+
+    지원 PDF 형식:
+    - 메트라이프 원본 PDF
+    - ar_generator로 생성한 PDF
     """
     text = page.extract_text() or ""
     lines = text.split('\n')
@@ -142,6 +146,27 @@ def extract_header_info(page) -> Dict[str, Any]:
         "monthlyPremiumTotal": 0
     }
 
+    # 1. 전체 텍스트에서 월보험료 직접 추출 시도 (가장 신뢰성 높음)
+    # PDF 텍스트 추출 시 줄바꿈이 다양하게 처리될 수 있으므로, 전체 텍스트에서 패턴 매칭
+    text_single_line = re.sub(r'\s+', ' ', text)  # 모든 공백을 단일 공백으로
+
+    premium_patterns = [
+        r'월\s*보험료[는은가]?\s*총\s*([\d,]+)\s*원',      # "월 보험료는 총 1,809,150 원"
+        r'총\s*월\s*보험료[:\s]*([\d,]+)\s*원',            # "총 월보험료: 1,809,150원"
+        r'납입중인\s*월\s*보험료.*?([\d,]+)\s*원',         # "납입중인 월 보험료...1,809,150 원"
+    ]
+
+    for pattern in premium_patterns:
+        match = re.search(pattern, text_single_line)
+        if match:
+            try:
+                result["monthlyPremiumTotal"] = int(match.group(1).replace(',', ''))
+                logger.debug(f"월보험료 추출 (패턴 매칭): {result['monthlyPremiumTotal']}")
+                break
+            except (ValueError, IndexError):
+                continue
+
+    # 2. 라인별 분석
     for i, line in enumerate(lines):
         # "{이름} {숫자}" 패턴 (피보험자 + 계약건수)
         # 예: "김보성 6", "안영미 10"
@@ -151,14 +176,25 @@ def extract_header_info(page) -> Dict[str, Any]:
             result["totalContracts"] = int(match.group(2))
             continue
 
-        # 월보험료 (숫자만 있는 줄, 일반적으로 "{숫자}" 형태)
-        # 다음 줄에 "현재 납입중인" 이 있으면 월보험료
-        if i + 1 < len(lines):
-            next_line = lines[i + 1]
-            if '현재 납입중인' in next_line or '월 보험료' in next_line:
-                premium_match = re.match(r'^([\d,]+)$', line.strip())
-                if premium_match:
-                    result["monthlyPremiumTotal"] = int(premium_match.group(1).replace(',', ''))
+        # 월보험료 (아직 추출 안 된 경우에만)
+        if result["monthlyPremiumTotal"] == 0:
+            # 패턴 A: 숫자만 있는 줄 → 다음 줄에 "현재 납입중인"
+            if i + 1 < len(lines):
+                next_line = lines[i + 1]
+                if '현재 납입중인' in next_line or '월 보험료' in next_line:
+                    premium_match = re.match(r'^([\d,]+)$', line.strip())
+                    if premium_match:
+                        result["monthlyPremiumTotal"] = int(premium_match.group(1).replace(',', ''))
+                        logger.debug(f"월보험료 추출 (패턴 A): {result['monthlyPremiumTotal']}")
+
+            # 패턴 B: "현재 납입중인" 줄 → 이전 줄에 숫자 (역순)
+            if result["monthlyPremiumTotal"] == 0 and i > 0:
+                if '현재 납입중인' in line or '월 보험료' in line:
+                    prev_line = lines[i - 1]
+                    premium_match = re.match(r'^([\d,]+)$', prev_line.strip())
+                    if premium_match:
+                        result["monthlyPremiumTotal"] = int(premium_match.group(1).replace(',', ''))
+                        logger.debug(f"월보험료 추출 (패턴 B): {result['monthlyPremiumTotal']}")
 
     return result
 
