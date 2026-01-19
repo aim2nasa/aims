@@ -44,6 +44,9 @@ import StorageExceededDialog from '@/features/batch-upload/components/StorageExc
 import DuplicateDialog, { type DuplicateAction, type DuplicateFile } from '@/features/batch-upload/components/DuplicateDialog'
 import { errorReporter } from '@/shared/lib/errorReporter'
 import { autoClassifyDocument } from '@/services/documentTypesService'
+import { useArBatchAnalysis } from './hooks/useArBatchAnalysis'
+import { BatchArMappingModal } from './components/BatchArMappingModal'
+import { registerArDocument as registerArDocumentBatch } from './utils/annualReportProcessor'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -321,6 +324,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     setProcessingLogs(prev => [newLog, ...prev])
   }, [])
 
+  // 🎯 AR 일괄 처리 훅
+  const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester'
+  const arBatch = useArBatchAnalysis({
+    userId: currentUserId,
+    addLog: (type, message, detail) => {
+      addLog(type as LogLevel, message, detail)
+    },
+  })
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -513,6 +525,36 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.error('스토리지 정보 조회 실패:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.getStorage' })
       // 에러 시에도 정상 진행 (서버에서 최종 검증)
+    }
+
+    // 🎯 AR 모드일 때: 배치 분석 사용 (새로운 UX)
+    if (documentTypeMode === 'annual_report') {
+      // PDF 파일만 필터링
+      const pdfFiles = files.filter(f => f.type === 'application/pdf')
+
+      if (pdfFiles.length === 0) {
+        addLog('warning', 'PDF 파일이 없습니다', 'Annual Report는 PDF 파일만 지원합니다.')
+        setUploadState(prev => ({ ...prev, files: [] }))
+        setIsLogVisible(false)
+        return
+      }
+
+      if (pdfFiles.length < files.length) {
+        const nonPdfCount = files.length - pdfFiles.length
+        addLog('warning', `${nonPdfCount}개 파일 제외`, 'PDF가 아닌 파일은 AR 등록에서 제외됩니다.')
+      }
+
+      // 파일 상태 업데이트 (PDF만 표시)
+      const pdfUploadFiles = initialUploadFiles.filter(uf => uf.file.type === 'application/pdf')
+      setUploadState(prev => ({
+        ...prev,
+        files: pdfUploadFiles
+      }))
+
+      // 배치 분석 시작 (모달이 자동으로 열림)
+      addLog('info', `${pdfFiles.length}개 AR 파일 배치 분석 시작...`)
+      arBatch.analyzeArFiles(pdfFiles)
+      return // 이후 처리는 BatchArMappingModal에서 진행
     }
 
     // 🔴 중복 파일 검사 (고객이 선택된 경우에만)
@@ -1004,7 +1046,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       });
     }
 
-  }, [generateFileId, addLog, customerFileCustomer, promptDuplicateAction])
+  }, [generateFileId, addLog, customerFileCustomer, promptDuplicateAction, documentTypeMode, arBatch.analyzeArFiles])
 
   /**
    * 파일 재시도 핸들러
@@ -2342,6 +2384,34 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           onBack={handleNewCustomerBackForCR}
         />
       )}
+
+      {/* 🎯 AR 일괄 매핑 모달 */}
+      <BatchArMappingModal
+        isOpen={arBatch.batchState.isModalOpen}
+        onClose={() => arBatch.closeModal()}
+        batchState={arBatch.batchState}
+        onSelectCustomer={arBatch.selectGroupCustomer}
+        onSetNewCustomerName={arBatch.setGroupNewCustomerName}
+        onToggleGroup={arBatch.toggleGroup}
+        onToggleFile={arBatch.toggleFile}
+        onOpenNewCustomerModal={(groupId) => {
+          // 새 고객 등록 모달 열기 (추후 구현)
+          console.log('[AR Batch] Open new customer modal for group:', groupId)
+        }}
+        onOpenCustomerSearchModal={(groupId) => {
+          // 고객 검색 모달 열기 (추후 구현)
+          console.log('[AR Batch] Open customer search modal for group:', groupId)
+        }}
+        onRegister={async () => {
+          // 일괄 등록 처리 (Phase 4에서 구현)
+          console.log('[AR Batch] Register all AR files')
+          addLog('info', 'AR 일괄 등록 시작...')
+        }}
+        onCancel={() => {
+          arBatch.closeModal()
+          addLog('warning', 'AR 일괄 등록 취소')
+        }}
+      />
     </CenterPaneView>
   )
 }
