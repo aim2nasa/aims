@@ -13,7 +13,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerRelationshipsController } from '@/controllers/useCustomerRelationshipsController';
 import type { Relationship } from '@/services/relationshipService';
-import { formatDateTime } from '@/shared/lib/timeUtils';
+import { formatDate } from '@/shared/lib/timeUtils';
 import Button from '@/shared/ui/Button';
 import SFSymbol, {
   SFSymbolAnimation,
@@ -149,7 +149,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       const relationshipType = relationship.relationship_info?.relationship_type ?? '';
       const createdAt =
         relationship.meta?.created_at ?? relationship.created_at ?? '';
-      const createdAtLabel = formatDateTime(createdAt);
+      const createdAtLabel = formatDate(createdAt);
       const relatedCustomerName = relatedCustomer?.personal_info?.name || '';
 
       return {
