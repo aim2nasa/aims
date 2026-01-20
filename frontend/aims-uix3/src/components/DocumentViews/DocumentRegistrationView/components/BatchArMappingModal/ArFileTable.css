@@ -68,37 +68,70 @@
   color: var(--color-text-secondary);
 }
 
+/* 미매핑 전체 선택 버튼 */
+.ar-file-table__quick-select-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--color-warning, #ff9500);
+  border-radius: 6px;
+  background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
+  color: var(--color-warning, #ff9500);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.ar-file-table__quick-select-btn:hover:not(:disabled) {
+  background: var(--color-warning-bg, rgba(255, 149, 0, 0.2));
+  transform: translateY(-1px);
+}
+
+.ar-file-table__quick-select-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ===== Bulk Toolbar ===== */
 .ar-file-table__bulk-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--color-primary-bg, rgba(0, 122, 255, 0.1));
-  border-bottom: 1px solid var(--color-border);
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--color-primary-bg, rgba(0, 122, 255, 0.12)) 0%, var(--color-primary-bg, rgba(0, 122, 255, 0.08)) 100%);
+  border-bottom: 2px solid var(--color-primary);
+  animation: bulkToolbarSlideIn 0.2s ease-out;
+}
+
+@keyframes bulkToolbarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ar-file-table__bulk-count {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-primary);
-  margin-right: 8px;
+}
+
+.ar-file-table__bulk-arrow {
+  font-size: 14px;
+  color: var(--color-primary);
+  font-weight: bold;
 }
 
 .ar-file-table__bulk-btn {
-  padding: 5px 12px;
-  border: 1px solid var(--color-primary);
+  padding: 6px 14px;
   border-radius: 6px;
-  background: var(--color-primary);
-  color: white;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.ar-file-table__bulk-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  transition: all 0.15s;
 }
 
 .ar-file-table__bulk-btn:disabled {
@@ -106,7 +139,33 @@
   cursor: not-allowed;
 }
 
+.ar-file-table__bulk-btn--primary {
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+}
+
+.ar-file-table__bulk-btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover, #0066cc);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
+}
+
+.ar-file-table__bulk-btn--ghost {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.ar-file-table__bulk-btn--ghost:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+  background: var(--color-bg-hover);
+}
+
+/* 레거시 호환 */
 .ar-file-table__bulk-btn--secondary {
+  border: 1px solid var(--color-primary);
   background: transparent;
   color: var(--color-primary);
 }

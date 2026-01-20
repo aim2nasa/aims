@@ -429,10 +429,14 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
    * 모든 테이블 행 선택/해제
    */
   const selectAllTableRows = useCallback((selected: boolean) => {
-    setTableState(prev => ({
-      ...prev,
-      rows: setAllRowsSelection(prev.rows, selected),
-    }))
+    setTableState(prev => {
+      // 모든 행의 fileIds 추출
+      const allFileIds = prev.rows.map(row => row.fileInfo.fileId)
+      return {
+        ...prev,
+        rows: setAllRowsSelection(prev.rows, allFileIds, selected),
+      }
+    })
   }, [])
 
   /**

@@ -184,6 +184,15 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   // 선택된 행 수
   const selectedCount = rows.filter(row => row.isSelected).length
 
+  // 미매핑 행 목록 (중복 제외)
+  const unmappedRows = useMemo(() => {
+    return rows.filter(row =>
+      !row.fileInfo.duplicateStatus.isHashDuplicate &&
+      row.fileInfo.included &&
+      !isRowMapped(row, groups)
+    )
+  }, [rows, groups])
+
   // 정렬 토글
   const handleSortToggle = useCallback((field: ArTableSortField) => {
     if (sortField === field) {
@@ -335,29 +344,44 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
         </div>
 
         <div className="ar-file-table__toolbar-right">
+          {/* 미매핑 전체 선택 버튼 */}
+          {unmappedRows.length > 0 && selectedCount === 0 && (
+            <button
+              type="button"
+              className="ar-file-table__quick-select-btn"
+              onClick={() => {
+                const unmappedFileIds = unmappedRows.map(r => r.fileInfo.fileId)
+                onSelectAllRows(unmappedFileIds, true)
+              }}
+              disabled={disabled}
+            >
+              미매핑 {unmappedRows.length}개 전체 선택
+            </button>
+          )}
           <span className="ar-file-table__count">
             {filteredRows.length}개 파일
           </span>
         </div>
       </div>
 
-      {/* 일괄 매핑 도구바 */}
+      {/* 일괄 매핑 도구바 - 선택된 파일이 있을 때 표시 */}
       {selectedCount > 0 && (
         <div className="ar-file-table__bulk-toolbar">
           <span className="ar-file-table__bulk-count">
-            {selectedCount}개 선택됨
+            ✓ {selectedCount}개 파일 선택됨
           </span>
+          <span className="ar-file-table__bulk-arrow">→</span>
           <button
             type="button"
-            className="ar-file-table__bulk-btn"
+            className="ar-file-table__bulk-btn ar-file-table__bulk-btn--primary"
             onClick={(e) => openBulkDropdown(e.currentTarget)}
             disabled={disabled}
           >
-            고객 선택 ▼
+            같은 고객에게 일괄 매핑 ▼
           </button>
           <button
             type="button"
-            className="ar-file-table__bulk-btn ar-file-table__bulk-btn--secondary"
+            className="ar-file-table__bulk-btn ar-file-table__bulk-btn--ghost"
             onClick={() => {
               const selectedFileIds = rows.filter(r => r.isSelected).map(r => r.fileInfo.fileId)
               onSelectAllRows(selectedFileIds, false)
