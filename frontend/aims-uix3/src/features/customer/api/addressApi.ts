@@ -84,4 +84,39 @@ export class AddressApi {
       verification_status: 'verified'  // 주소 API에서 선택한 주소 = 검증됨
     };
   }
+
+  /**
+   * 주소 자동 검증
+   * 현재 주소를 API로 검색하여 존재하는 주소인지 확인
+   * @param address1 검증할 도로명주소
+   * @returns 'verified' (존재함) 또는 'failed' (존재하지 않음)
+   */
+  static async verifyAddress(address1: string): Promise<'verified' | 'failed'> {
+    if (!address1 || !address1.trim()) {
+      return 'failed';
+    }
+
+    try {
+      // 주소 검색 수행
+      const result = await this.searchAddress(address1.trim(), 1, 10);
+
+      if (!result.success || !result.data?.results?.length) {
+        return 'failed';
+      }
+
+      // 검색 결과 중 도로명주소가 입력값을 포함하거나 일치하는지 확인
+      const normalizedInput = address1.trim().replace(/\s+/g, ' ').toLowerCase();
+      const hasMatch = result.data.results.some(item => {
+        const roadAddr = (item.roadAddrPart1 || item.roadAddr || '').toLowerCase();
+        // 입력값이 검색 결과에 포함되거나, 검색 결과가 입력값을 포함하면 검증 성공
+        return roadAddr.includes(normalizedInput) || normalizedInput.includes(roadAddr.split(' ').slice(0, 3).join(' '));
+      });
+
+      return hasMatch ? 'verified' : 'failed';
+    } catch (error) {
+      console.error('AddressApi.verifyAddress:', error);
+      errorReporter.reportApiError(error as Error, { component: 'AddressApi.verifyAddress', payload: { address1 } });
+      return 'failed';
+    }
+  }
 }

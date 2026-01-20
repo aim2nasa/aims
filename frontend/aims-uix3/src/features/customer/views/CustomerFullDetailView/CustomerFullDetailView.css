@@ -658,6 +658,42 @@ html[data-theme="dark"] .customer-info-grid__type-badge {
   color: var(--color-danger, #ef4444);
 }
 
+/* 클릭 가능한 검증 아이콘 (버튼) */
+button.customer-info-grid__verified-icon--clickable {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+button.customer-info-grid__verified-icon--clickable:hover {
+  transform: scale(1.15);
+  opacity: 0.8;
+}
+
+button.customer-info-grid__verified-icon--clickable:active {
+  transform: scale(0.95);
+}
+
+/* 검증 중 스피너 애니메이션 */
+.customer-info-grid__verified-icon--verifying {
+  color: var(--color-icon-blue, #007aff);
+}
+
+.customer-info-grid__verified-icon-spinner {
+  animation: address-verify-spin 1s linear infinite;
+}
+
+@keyframes address-verify-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .customer-info-grid__history-btn {
   display: inline-flex;
   align-items: center;

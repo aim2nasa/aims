@@ -36,6 +36,7 @@ import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { errorReporter } from '@/shared/lib/errorReporter'
+import { AddressApi } from '../../api/addressApi'
 import { isRequestCancelledError, setActiveCustomer } from '@/shared/lib/api'
 import './CustomerFullDetailView.css'
 
@@ -112,6 +113,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 문서 내용 검색 모달 상태
   const [isDocContentSearchModalOpen, setIsDocContentSearchModalOpen] = useState(false)
+
+  // 🍎 주소 검증 상태
+  const [isVerifyingAddress, setIsVerifyingAddress] = useState(false)
 
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
@@ -516,6 +520,37 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     void loadCustomer()
   }, [loadCustomer])
 
+  // 🍎 주소 자동 검증 핸들러
+  const handleVerifyAddress = useCallback(async () => {
+    if (!customer || !customerId) return
+    const address1 = customer.personal_info?.address?.address1
+    if (!address1) return
+
+    setIsVerifyingAddress(true)
+    try {
+      // 주소 검증 수행
+      const verificationResult = await AddressApi.verifyAddress(address1)
+
+      // 고객 정보 업데이트
+      await CustomerService.updateCustomer(customerId, {
+        personal_info: {
+          address: {
+            ...customer.personal_info?.address,
+            verification_status: verificationResult
+          }
+        }
+      })
+
+      // 고객 정보 새로고침
+      await loadCustomer()
+    } catch (error) {
+      console.error('[CustomerFullDetailView] 주소 검증 실패:', error)
+      errorReporter.reportApiError(error as Error, { component: 'CustomerFullDetailView.handleVerifyAddress' })
+    } finally {
+      setIsVerifyingAddress(false)
+    }
+  }, [customer, customerId, loadCustomer])
+
   // 🍎 리사이즈 핸들러 - 수평 (상단/하단 독립 조절)
   const handleHorizontalResize = useCallback((e: React.MouseEvent, handleType: 'top-h' | 'bottom-h') => {
     e.preventDefault()
@@ -856,25 +891,46 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                             {/* 주소 검증 상태 아이콘 */}
                             {customer.personal_info?.address?.address1 && (() => {
                               const status = customer.personal_info?.address?.verification_status;
-                              const tooltipText = status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패' : '미검증 주소';
+                              const isPending = status !== 'verified' && status !== 'failed';
+                              const tooltipText = isVerifyingAddress ? '검증 중...' : status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패 (클릭하여 재검증)' : '미검증 주소 (클릭하여 검증)';
                               const iconClass = status === 'verified' ? 'customer-info-grid__verified-icon--verified' : status === 'failed' ? 'customer-info-grid__verified-icon--failed' : 'customer-info-grid__verified-icon--pending';
+                              const isClickable = !isVerifyingAddress && (isPending || status === 'failed');
+
+                              const iconContent = isVerifyingAddress ? (
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="customer-info-grid__verified-icon-spinner">
+                                  <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11z" opacity="0.25"/>
+                                  <path d="M8 1a7 7 0 017 7h-1.5A5.5 5.5 0 008 2.5V1z"/>
+                                </svg>
+                              ) : status === 'verified' ? (
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                  <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
+                                </svg>
+                              ) : status === 'failed' ? (
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                  <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.53 4.47a.75.75 0 010 1.06L9.06 8l2.47 2.47a.75.75 0 11-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 01-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 011.06-1.06L8 6.94l2.47-2.47a.75.75 0 011.06 0z"/>
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                  <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm-.75 4.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7.25a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                              );
+
                               return (
                                 <Tooltip content={tooltipText}>
-                                  <span className={`customer-info-grid__verified-icon ${iconClass}`}>
-                                    {status === 'verified' ? (
-                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
-                                      </svg>
-                                    ) : status === 'failed' ? (
-                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.53 4.47a.75.75 0 010 1.06L9.06 8l2.47 2.47a.75.75 0 11-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 01-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 011.06-1.06L8 6.94l2.47-2.47a.75.75 0 011.06 0z"/>
-                                      </svg>
-                                    ) : (
-                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm-.75 4.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7.25a1 1 0 110-2 1 1 0 010 2z"/>
-                                      </svg>
-                                    )}
-                                  </span>
+                                  {isClickable ? (
+                                    <button
+                                      type="button"
+                                      className={`customer-info-grid__verified-icon ${iconClass} customer-info-grid__verified-icon--clickable`}
+                                      onClick={handleVerifyAddress}
+                                      aria-label={tooltipText}
+                                    >
+                                      {iconContent}
+                                    </button>
+                                  ) : (
+                                    <span className={`customer-info-grid__verified-icon ${iconClass} ${isVerifyingAddress ? 'customer-info-grid__verified-icon--verifying' : ''}`}>
+                                      {iconContent}
+                                    </span>
+                                  )}
                                 </Tooltip>
                               );
                             })()}
