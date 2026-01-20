@@ -98,6 +98,9 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const dropdownTriggerRef = useRef<HTMLButtonElement | null>(null)
 
+  // Shift+Click 범위 선택을 위한 마지막 클릭 인덱스
+  const lastClickedIndexRef = useRef<number | null>(null)
+
   // 필터링된 행
   const filteredRows = useMemo(() => {
     let result = rows
@@ -211,6 +214,47 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     const pageFileIds = paginatedRows.map(row => row.fileInfo.fileId)
     onSelectAllRows(pageFileIds, !isAllPageSelected)
   }, [paginatedRows, isAllPageSelected, onSelectAllRows])
+
+  // Shift+Click 범위 선택 핸들러
+  const handleRowCheckboxClick = useCallback((
+    e: React.MouseEvent,
+    rowIndex: number,
+    fileId: string
+  ) => {
+    // Shift 키가 눌려있고 이전에 클릭한 행이 있으면 범위 선택
+    if (e.shiftKey && lastClickedIndexRef.current !== null) {
+      const start = Math.min(lastClickedIndexRef.current, rowIndex)
+      const end = Math.max(lastClickedIndexRef.current, rowIndex)
+
+      // 범위 내 파일 ID 수집
+      const rangeFileIds = paginatedRows
+        .slice(start, end + 1)
+        .map(row => row.fileInfo.fileId)
+
+      // 범위 선택 (모두 선택 상태로)
+      onSelectAllRows(rangeFileIds, true)
+    } else {
+      // 일반 클릭 - 단일 토글
+      onToggleRowSelection(fileId)
+    }
+
+    // 마지막 클릭 인덱스 저장
+    lastClickedIndexRef.current = rowIndex
+  }, [paginatedRows, onSelectAllRows, onToggleRowSelection])
+
+  // AR 고객명 클릭 시 같은 고객명 파일들 선택 토글
+  const handleExtractedNameClick = useCallback((customerName: string) => {
+    // 현재 표시된 행 중 같은 AR 고객명을 가진 파일들
+    const sameNameRows = paginatedRows.filter(
+      row => row.extractedCustomerName === customerName
+    )
+
+    // 모두 선택되어 있으면 해제, 아니면 선택
+    const allSelected = sameNameRows.every(row => row.isSelected)
+    const fileIds = sameNameRows.map(row => row.fileInfo.fileId)
+
+    onSelectAllRows(fileIds, !allSelected)
+  }, [paginatedRows, onSelectAllRows])
 
   // 드롭다운 열기
   const openDropdown = useCallback((fileId: string, triggerElement: HTMLButtonElement) => {
@@ -465,7 +509,7 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
               : '파일이 없습니다'}
           </div>
         ) : (
-          paginatedRows.map(row => {
+          paginatedRows.map((row, rowIndex) => {
             const isMapped = isRowMapped(row, groups)
             const isDuplicate = row.fileInfo.duplicateStatus.isHashDuplicate
             const isDateDuplicate = row.fileInfo.duplicateStatus.isIssueDateDuplicate
@@ -473,17 +517,26 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             const group = getGroupForRow(row)
             const needsSelection = !isMapped && !isDuplicate
 
+            // 같은 AR 고객명을 가진 파일 수 계산
+            const sameNameCount = paginatedRows.filter(
+              r => r.extractedCustomerName === row.extractedCustomerName
+            ).length
+
             return (
               <div
                 key={row.fileInfo.fileId}
                 className={`ar-file-table__row ${row.isSelected ? 'ar-file-table__row--selected' : ''} ${!row.fileInfo.included ? 'ar-file-table__row--excluded' : ''} ${isDuplicate ? 'ar-file-table__row--duplicate' : ''}`}
               >
-                {/* 체크박스 */}
+                {/* 체크박스 - Shift+Click 지원 */}
                 <div className="ar-file-table__col ar-file-table__col--checkbox">
                   <input
                     type="checkbox"
                     checked={row.isSelected}
-                    onChange={() => onToggleRowSelection(row.fileInfo.fileId)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRowCheckboxClick(e, rowIndex, row.fileInfo.fileId)
+                    }}
+                    onChange={() => {/* onClick에서 처리 */}}
                     disabled={disabled}
                   />
                 </div>
@@ -495,11 +548,20 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
                   </span>
                 </div>
 
-                {/* AR 추출 고객명 */}
+                {/* AR 추출 고객명 - 클릭 시 같은 고객명 선택 */}
                 <div className="ar-file-table__col ar-file-table__col--extracted">
-                  <span title={row.extractedCustomerName}>
+                  <button
+                    type="button"
+                    className="ar-file-table__extracted-name"
+                    onClick={() => handleExtractedNameClick(row.extractedCustomerName)}
+                    disabled={disabled}
+                    title={sameNameCount > 1 ? `클릭하여 "${row.extractedCustomerName}" ${sameNameCount}개 파일 선택/해제` : row.extractedCustomerName}
+                  >
                     {row.extractedCustomerName === '__UNKNOWN__' ? '(알 수 없음)' : row.extractedCustomerName}
-                  </span>
+                    {sameNameCount > 1 && (
+                      <span className="ar-file-table__extracted-count">({sameNameCount})</span>
+                    )}
+                  </button>
                 </div>
 
                 {/* 매핑 고객 드롭다운 */}

@@ -85,6 +85,8 @@ export interface UseArBatchAnalysisReturn {
   toggleTableRow: (fileId: string) => void
   /** 모든 테이블 행 선택/해제 */
   selectAllTableRows: (selected: boolean) => void
+  /** 특정 행들 선택/해제 (토글이 아닌 직접 설정) */
+  setRowsSelection: (fileIds: string[], selected: boolean) => void
   /** 선택된 행들에 고객 일괄 할당 */
   bulkAssignToCustomer: (fileIds: string[], customerId: string, customerName: string) => void
   /** 선택된 행들에 새 고객 이름 일괄 할당 */
@@ -440,6 +442,16 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
   }, [])
 
   /**
+   * 특정 행들 선택/해제 (토글이 아닌 직접 설정)
+   */
+  const setRowsSelection = useCallback((fileIds: string[], selected: boolean) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: setAllRowsSelection(prev.rows, fileIds, selected),
+    }))
+  }, [])
+
+  /**
    * 선택된 행들에 고객 일괄 할당
    */
   const bulkAssignToCustomer = useCallback((
@@ -566,6 +578,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     updateTableRowNewCustomer,
     toggleTableRow,
     selectAllTableRows,
+    setRowsSelection,
     bulkAssignToCustomer,
     bulkAssignToNewCustomer,
     toggleTableFileIncluded,

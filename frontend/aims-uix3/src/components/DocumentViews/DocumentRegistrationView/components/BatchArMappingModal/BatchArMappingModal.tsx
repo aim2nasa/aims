@@ -38,6 +38,8 @@ export interface BatchArMappingModalProps {
   onToggleRow: (fileId: string) => void
   /** 모든 테이블 행 선택/해제 */
   onSelectAllRows: (selected: boolean) => void
+  /** 특정 행들 선택/해제 (토글이 아닌 직접 설정) */
+  onSetRowsSelection: (fileIds: string[], selected: boolean) => void
   /** 선택된 행들에 고객 일괄 할당 */
   onBulkAssignCustomer: (fileIds: string[], customerId: string, customerName: string) => void
   /** 선택된 행들에 새 고객 이름 일괄 할당 */
@@ -70,6 +72,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onUpdateRowNewCustomer,
   onToggleRow,
   onSelectAllRows,
+  onSetRowsSelection,
   onBulkAssignCustomer,
   onBulkAssignNewCustomer,
   onToggleFileIncluded,
@@ -196,11 +199,8 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
             disabled={isProcessing}
             onToggleRowSelection={onToggleRow}
             onSelectAllRows={(fileIds, selected) => {
-              if (selected) {
-                fileIds.forEach(id => onToggleRow(id))
-              } else {
-                onSelectAllRows(false)
-              }
+              // 토글이 아닌 직접 선택/해제 설정
+              onSetRowsSelection(fileIds, selected)
             }}
             onUpdateRowMapping={onUpdateRowMapping}
             onUpdateRowNewCustomer={onUpdateRowNewCustomer}

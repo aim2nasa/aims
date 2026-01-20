@@ -2396,6 +2396,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         onUpdateRowNewCustomer={arBatch.updateTableRowNewCustomer}
         onToggleRow={arBatch.toggleTableRow}
         onSelectAllRows={arBatch.selectAllTableRows}
+        onSetRowsSelection={arBatch.setRowsSelection}
         onBulkAssignCustomer={arBatch.bulkAssignToCustomer}
         onBulkAssignNewCustomer={arBatch.bulkAssignToNewCustomer}
         onToggleFileIncluded={arBatch.toggleTableFileIncluded}
