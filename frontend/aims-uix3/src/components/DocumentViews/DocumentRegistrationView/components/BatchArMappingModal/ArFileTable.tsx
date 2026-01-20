@@ -342,12 +342,38 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   // 총 페이지 수
   const totalPages = Math.ceil(sortedRows.length / itemsPerPage)
 
-  // 현재 페이지의 모든 행이 선택되었는지
-  const isAllPageSelected = paginatedRows.length > 0 && paginatedRows.every(row => row.isSelected)
-  const isSomePageSelected = paginatedRows.some(row => row.isSelected)
-
   // 선택된 행 수
   const selectedCount = rows.filter(row => row.isSelected).length
+
+  // 선택된 파일들의 공통 고객명 확인 (여기서 먼저 정의)
+  const selectedRowsInfo = useMemo(() => {
+    const selectedRows = rows.filter(r => r.isSelected)
+    if (selectedRows.length === 0) {
+      return { firstCustomerName: null, commonCustomerName: null, isAllSameName: true, selectedRows: [] }
+    }
+
+    const firstCustomerName = selectedRows[0].extractedCustomerName
+    const isAllSameName = selectedRows.every(r => r.extractedCustomerName === firstCustomerName)
+
+    return {
+      firstCustomerName,  // 체크박스 비활성화용 (항상 첫 번째 선택된 파일의 고객명)
+      commonCustomerName: isAllSameName ? firstCustomerName : null,  // 일괄 매핑용
+      isAllSameName,
+      selectedRows,
+    }
+  }, [rows])
+
+  // 현재 페이지에서 enable된 행만 필터링 (1개 이상 선택 시 같은 AR 고객명만 enable)
+  const enabledPageRows = useMemo(() => {
+    return paginatedRows.filter(row => {
+      if (selectedRowsInfo.firstCustomerName === null) return true
+      return row.extractedCustomerName === selectedRowsInfo.firstCustomerName
+    })
+  }, [paginatedRows, selectedRowsInfo.firstCustomerName])
+
+  // 현재 페이지의 모든 enable된 행이 선택되었는지
+  const isAllPageSelected = enabledPageRows.length > 0 && enabledPageRows.every(row => row.isSelected)
+  const isSomePageSelected = paginatedRows.some(row => row.isSelected)
 
   // 미매핑 행 목록 (중복 제외)
   const unmappedRows = useMemo(() => {
@@ -368,6 +394,10 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     return map
   }, [paginatedRows])
 
+  // 페이지에 여러 AR 고객명이 있으면 헤더 체크박스 비활성화
+  const hasMultipleCustomerNames = sameNameCountMap.size > 1
+  const isHeaderCheckboxDisabled = hasMultipleCustomerNames
+
   // 정렬 토글
   const handleSortToggle = useCallback((field: ArTableSortField) => {
     if (sortField === field) {
@@ -381,13 +411,18 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     }
   }, [sortField, sortDirection, onSortChange])
 
-  // 전체 선택 토글
+  // 전체 선택 토글 (enable된 체크박스만 선택)
   const handleSelectAllToggle = useCallback(() => {
-    const pageFileIds = paginatedRows.map(row => row.fileInfo.fileId)
+    // 1개 이상 선택 시, 같은 AR 고객명만 선택 가능 (disabled 체크박스 제외)
+    const enabledRows = paginatedRows.filter(row => {
+      if (selectedRowsInfo.firstCustomerName === null) return true
+      return row.extractedCustomerName === selectedRowsInfo.firstCustomerName
+    })
+    const pageFileIds = enabledRows.map(row => row.fileInfo.fileId)
     onSelectAllRows(pageFileIds, !isAllPageSelected)
-  }, [paginatedRows, isAllPageSelected, onSelectAllRows])
+  }, [paginatedRows, isAllPageSelected, onSelectAllRows, selectedRowsInfo.firstCustomerName])
 
-  // Shift+Click 범위 선택 핸들러
+  // Shift+Click 범위 선택 핸들러 (enable된 체크박스만 선택)
   const handleRowCheckboxClick = useCallback((
     e: React.MouseEvent,
     rowIndex: number,
@@ -396,15 +431,19 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     if (e.shiftKey && lastClickedIndexRef.current !== null) {
       const start = Math.min(lastClickedIndexRef.current, rowIndex)
       const end = Math.max(lastClickedIndexRef.current, rowIndex)
-      const rangeFileIds = paginatedRows
-        .slice(start, end + 1)
-        .map(row => row.fileInfo.fileId)
+      // 범위 내에서 enable된 행만 선택 (같은 AR 고객명)
+      const rangeRows = paginatedRows.slice(start, end + 1)
+      const enabledRangeRows = rangeRows.filter(row => {
+        if (selectedRowsInfo.firstCustomerName === null) return true
+        return row.extractedCustomerName === selectedRowsInfo.firstCustomerName
+      })
+      const rangeFileIds = enabledRangeRows.map(row => row.fileInfo.fileId)
       onSelectAllRows(rangeFileIds, true)
     } else {
       onToggleRowSelection(fileId)
     }
     lastClickedIndexRef.current = rowIndex
-  }, [paginatedRows, onSelectAllRows, onToggleRowSelection])
+  }, [paginatedRows, onSelectAllRows, onToggleRowSelection, selectedRowsInfo.firstCustomerName])
 
   // AR 고객명 클릭 시 같은 고객명 파일들 선택 토글
   const handleExtractedNameClick = useCallback((customerName: string) => {
@@ -477,24 +516,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     onBulkAssignCustomer(selectedFileIds, customer._id, customer.personal_info?.name || '')
     closeBulkDropdown()
   }, [rows, onBulkAssignCustomer, closeBulkDropdown])
-
-  // 선택된 파일들의 공통 고객명 확인
-  const selectedRowsInfo = useMemo(() => {
-    const selectedRows = rows.filter(r => r.isSelected)
-    if (selectedRows.length === 0) {
-      return { firstCustomerName: null, commonCustomerName: null, isAllSameName: true, selectedRows: [] }
-    }
-
-    const firstCustomerName = selectedRows[0].extractedCustomerName
-    const isAllSameName = selectedRows.every(r => r.extractedCustomerName === firstCustomerName)
-
-    return {
-      firstCustomerName,  // 체크박스 비활성화용 (항상 첫 번째 선택된 파일의 고객명)
-      commonCustomerName: isAllSameName ? firstCustomerName : null,  // 일괄 매핑용
-      isAllSameName,
-      selectedRows,
-    }
-  }, [rows])
 
   // 일괄 매핑용 고객 목록 (선택된 파일들의 그룹에서 가져옴)
   const bulkMatchingCustomers = useMemo(() => {
@@ -679,7 +700,8 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
                     if (input) input.indeterminate = isSomePageSelected && !isAllPageSelected
                   }}
                   onChange={handleSelectAllToggle}
-                  disabled={disabled}
+                  disabled={disabled || isHeaderCheckboxDisabled}
+                  title={isHeaderCheckboxDisabled ? 'AR 고객명별로 개별 선택하세요' : undefined}
                 />
               </th>
               <th
