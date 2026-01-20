@@ -11,6 +11,7 @@ import type {
   MatchStatus,
   GroupingResult,
   ArAnalysisResult,
+  ArFileTableRow,
 } from '../types/arBatchTypes'
 
 /**
@@ -304,4 +305,272 @@ export function getGroupStatusLabel(matchStatus: MatchStatus, isSelected: boolea
     return isSelected ? '선택 완료' : '선택 필요'
   }
   return '새 고객'
+}
+
+// ============================================
+// 테이블 뷰 유틸리티 (파일별 개별 매핑 지원)
+// ============================================
+
+/**
+ * 그룹에서 테이블 행 목록으로 변환
+ * @description 그룹 구조를 플랫한 테이블 행 목록으로 변환
+ */
+export function groupsToTableRows(groups: ArFileGroup[]): ArFileTableRow[] {
+  return groups.flatMap(group =>
+    group.files.map(fileInfo => {
+      // 자동 매칭(auto)인 경우 그룹의 선택값을 개별 매핑으로 복사
+      const isAutoMatched = group.matchStatus === 'auto'
+
+      return {
+        fileInfo,
+        individualCustomerId: isAutoMatched ? group.selectedCustomerId : null,
+        individualCustomerName: isAutoMatched ? group.selectedCustomerName : undefined,
+        individualNewCustomerName: undefined,
+        isSelected: false,
+        groupId: group.groupId,
+        extractedCustomerName: group.customerNameFromAr,
+      }
+    })
+  )
+}
+
+/**
+ * 테이블 행에서 실제 매핑 정보 추출 (등록 시 사용)
+ * @description 개별 매핑이 있으면 개별 값 사용
+ */
+export function getEffectiveMapping(
+  row: ArFileTableRow,
+  groups: ArFileGroup[]
+): {
+  customerId: string | null
+  customerName: string | undefined
+  newCustomerName: string | undefined
+} {
+  // 개별 매핑이 있으면 우선
+  if (row.individualCustomerId !== null) {
+    return {
+      customerId: row.individualCustomerId,
+      customerName: row.individualCustomerName,
+      newCustomerName: undefined,
+    }
+  }
+  if (row.individualNewCustomerName) {
+    return {
+      customerId: null,
+      customerName: undefined,
+      newCustomerName: row.individualNewCustomerName,
+    }
+  }
+
+  // 그룹 기본값 사용 (호환성)
+  const group = groups.find(g => g.groupId === row.groupId)
+  return {
+    customerId: group?.selectedCustomerId ?? null,
+    customerName: group?.selectedCustomerName,
+    newCustomerName: group?.newCustomerName,
+  }
+}
+
+/**
+ * 행의 매핑 여부 확인
+ */
+export function isRowMapped(row: ArFileTableRow, groups: ArFileGroup[]): boolean {
+  const mapping = getEffectiveMapping(row, groups)
+  return mapping.customerId !== null || !!mapping.newCustomerName
+}
+
+/**
+ * 행의 매핑 표시 텍스트 가져오기
+ */
+export function getRowMappingDisplayText(row: ArFileTableRow, groups: ArFileGroup[]): string {
+  const mapping = getEffectiveMapping(row, groups)
+
+  if (mapping.customerId && mapping.customerName) {
+    return mapping.customerName
+  }
+  if (mapping.newCustomerName) {
+    return `새 고객: ${mapping.newCustomerName}`
+  }
+
+  return '선택하세요'
+}
+
+/**
+ * 테이블 행의 고객 매핑 업데이트
+ */
+export function updateRowCustomerMapping(
+  rows: ArFileTableRow[],
+  fileId: string,
+  customerId: string | null,
+  customerName?: string
+): ArFileTableRow[] {
+  return rows.map(row => {
+    if (row.fileInfo.fileId !== fileId) return row
+
+    return {
+      ...row,
+      individualCustomerId: customerId,
+      individualCustomerName: customerName,
+      individualNewCustomerName: customerId ? undefined : row.individualNewCustomerName,
+    }
+  })
+}
+
+/**
+ * 테이블 행의 새 고객 이름 업데이트
+ */
+export function updateRowNewCustomerName(
+  rows: ArFileTableRow[],
+  fileId: string,
+  newCustomerName: string
+): ArFileTableRow[] {
+  return rows.map(row => {
+    if (row.fileInfo.fileId !== fileId) return row
+
+    return {
+      ...row,
+      individualCustomerId: null,
+      individualCustomerName: undefined,
+      individualNewCustomerName: newCustomerName,
+    }
+  })
+}
+
+/**
+ * 다중 행 선택 토글
+ */
+export function toggleRowSelection(
+  rows: ArFileTableRow[],
+  fileId: string
+): ArFileTableRow[] {
+  return rows.map(row => {
+    if (row.fileInfo.fileId !== fileId) return row
+    return { ...row, isSelected: !row.isSelected }
+  })
+}
+
+/**
+ * 모든 행 선택/해제 (현재 페이지용)
+ */
+export function setAllRowsSelection(
+  rows: ArFileTableRow[],
+  fileIds: string[],
+  selected: boolean
+): ArFileTableRow[] {
+  const fileIdSet = new Set(fileIds)
+  return rows.map(row => {
+    if (!fileIdSet.has(row.fileInfo.fileId)) return row
+    return { ...row, isSelected: selected }
+  })
+}
+
+/**
+ * 일괄 고객 매핑
+ */
+export function bulkAssignCustomer(
+  rows: ArFileTableRow[],
+  fileIds: string[],
+  customerId: string,
+  customerName: string
+): ArFileTableRow[] {
+  const fileIdSet = new Set(fileIds)
+  return rows.map(row => {
+    if (!fileIdSet.has(row.fileInfo.fileId)) return row
+
+    return {
+      ...row,
+      individualCustomerId: customerId,
+      individualCustomerName: customerName,
+      individualNewCustomerName: undefined,
+      isSelected: false, // 선택 해제
+    }
+  })
+}
+
+/**
+ * 일괄 새 고객 매핑
+ */
+export function bulkAssignNewCustomer(
+  rows: ArFileTableRow[],
+  fileIds: string[],
+  newCustomerName: string
+): ArFileTableRow[] {
+  const fileIdSet = new Set(fileIds)
+  return rows.map(row => {
+    if (!fileIdSet.has(row.fileInfo.fileId)) return row
+
+    return {
+      ...row,
+      individualCustomerId: null,
+      individualCustomerName: undefined,
+      individualNewCustomerName: newCustomerName,
+      isSelected: false, // 선택 해제
+    }
+  })
+}
+
+/**
+ * 파일 포함/제외 토글 (테이블 행용)
+ */
+export function toggleTableRowIncluded(
+  rows: ArFileTableRow[],
+  fileId: string
+): ArFileTableRow[] {
+  return rows.map(row => {
+    if (row.fileInfo.fileId !== fileId) return row
+
+    return {
+      ...row,
+      fileInfo: {
+        ...row.fileInfo,
+        included: !row.fileInfo.included,
+      },
+    }
+  })
+}
+
+/**
+ * 모든 행이 매핑되었는지 확인 (등록 가능 여부)
+ */
+export function isAllRowsMapped(rows: ArFileTableRow[], groups: ArFileGroup[]): boolean {
+  return rows
+    .filter(row => row.fileInfo.included && !row.fileInfo.duplicateStatus.isHashDuplicate)
+    .every(row => isRowMapped(row, groups))
+}
+
+/**
+ * 매핑 완료된 행 수 계산
+ */
+export function getMappedRowsCount(rows: ArFileTableRow[], groups: ArFileGroup[]): number {
+  return rows.filter(row =>
+    row.fileInfo.included &&
+    !row.fileInfo.duplicateStatus.isHashDuplicate &&
+    isRowMapped(row, groups)
+  ).length
+}
+
+/**
+ * 등록 가능한 행 수 계산
+ */
+export function getIncludedRowsCount(rows: ArFileTableRow[]): number {
+  return rows.filter(row =>
+    row.fileInfo.included &&
+    !row.fileInfo.duplicateStatus.isHashDuplicate
+  ).length
+}
+
+/**
+ * 선택된 행 수 계산
+ */
+export function getSelectedRowsCount(rows: ArFileTableRow[]): number {
+  return rows.filter(row => row.isSelected).length
+}
+
+/**
+ * 선택된 행의 파일 ID 목록
+ */
+export function getSelectedFileIds(rows: ArFileTableRow[]): string[] {
+  return rows
+    .filter(row => row.isSelected)
+    .map(row => row.fileInfo.fileId)
 }

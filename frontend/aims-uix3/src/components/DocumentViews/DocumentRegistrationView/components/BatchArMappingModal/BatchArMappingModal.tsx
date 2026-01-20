@@ -1,78 +1,109 @@
 /**
  * BatchArMappingModal
- * @description AR 파일 일괄 매핑 확인 모달
+ * @description AR 파일 일괄 매핑 확인 모달 (엑셀 스타일 테이블 UI)
  * @see docs/AR_MULTI_UPLOAD_UX_ANALYSIS.md
  */
 
 import React, { useMemo } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
-import type { ArFileGroup, BatchMappingState } from '../../types/arBatchTypes'
+import type {
+  ArFileGroup,
+  BatchMappingState,
+  ArTableViewState,
+  ArFileTableRow,
+  ArTableSortField,
+  ArMappingStatusFilter,
+} from '../../types/arBatchTypes'
+// Customer type은 ArFileTable 내부에서 직접 사용
 import {
-  isAllGroupsSelected,
-  getTotalIncludedFilesCount,
+  isAllRowsMapped,
+  getIncludedRowsCount,
+  getEffectiveMapping,
 } from '../../utils/arGroupingUtils'
-import { ArFileGroupCard } from './ArFileGroupCard'
+import { ArFileTable } from './ArFileTable'
 import './BatchArMappingModal.css'
 
 export interface BatchArMappingModalProps {
   /** 일괄 매핑 상태 */
   state: BatchMappingState
+  /** 테이블 뷰 상태 */
+  tableState: ArTableViewState
   /** 모달 닫기 */
   onClose: () => void
-  /** 그룹 고객 선택 */
-  onSelectCustomer: (groupId: string, customerId: string | null, customerName?: string) => void
-  /** 그룹 새 고객 이름 설정 */
-  onSetNewCustomerName: (groupId: string, name: string) => void
-  /** 그룹 펼침/접힘 토글 */
-  onToggleGroup: (groupId: string) => void
-  /** 파일 포함/제외 토글 */
-  onToggleFile: (groupId: string, fileId: string) => void
-  /** 등록 시작 (현재 groups 전달) */
-  onRegister: (groups: ArFileGroup[]) => void
+  /** 테이블 행 고객 매핑 업데이트 */
+  onUpdateRowMapping: (fileId: string, customerId: string | null, customerName?: string) => void
+  /** 테이블 행 새 고객 이름 업데이트 */
+  onUpdateRowNewCustomer: (fileId: string, newCustomerName: string) => void
+  /** 테이블 행 선택 토글 */
+  onToggleRow: (fileId: string) => void
+  /** 모든 테이블 행 선택/해제 */
+  onSelectAllRows: (selected: boolean) => void
+  /** 선택된 행들에 고객 일괄 할당 */
+  onBulkAssignCustomer: (fileIds: string[], customerId: string, customerName: string) => void
+  /** 선택된 행들에 새 고객 이름 일괄 할당 */
+  onBulkAssignNewCustomer: (fileIds: string[], newCustomerName: string) => void
+  /** 테이블 행 포함/제외 토글 */
+  onToggleFileIncluded: (fileId: string) => void
+  /** 테이블 정렬 설정 */
+  onSetSort: (field: ArTableSortField | null, direction: 'asc' | 'desc') => void
+  /** 테이블 페이지 변경 */
+  onSetPage: (page: number) => void
+  /** 페이지당 항목 수 변경 */
+  onSetItemsPerPage: (count: number) => void
+  /** 테이블 검색어 설정 */
+  onSetSearchQuery: (query: string) => void
+  /** 테이블 필터 설정 */
+  onSetFilter: (filter: ArMappingStatusFilter) => void
+  /** 등록 시작 (현재 테이블 행 전달) */
+  onRegister: (rows: ArFileTableRow[]) => void
   /** 새 고객 등록 모달 열기 */
-  onOpenNewCustomerModal: (groupId: string, defaultName: string) => void
+  onOpenNewCustomerModal: (fileId: string, defaultName: string) => void
   /** 고객 검색 모달 열기 */
-  onOpenCustomerSearchModal: (groupId: string) => void
+  onOpenCustomerSearchModal: (fileId: string) => void
 }
 
 export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   state,
+  tableState,
   onClose,
-  onSelectCustomer,
-  onSetNewCustomerName,
-  onToggleGroup,
-  onToggleFile,
+  onUpdateRowMapping,
+  onUpdateRowNewCustomer,
+  onToggleRow,
+  onSelectAllRows,
+  onBulkAssignCustomer,
+  onBulkAssignNewCustomer,
+  onToggleFileIncluded,
+  onSetSort,
+  onSetPage,
+  onSetItemsPerPage,
+  onSetSearchQuery,
+  onSetFilter,
   onRegister,
   onOpenNewCustomerModal,
   onOpenCustomerSearchModal,
 }) => {
-  const { groups, isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
-
+  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
+  const { rows, groups } = tableState
 
   // 통계 계산
   const stats = useMemo(() => {
-    const autoCount = groups.filter(g => g.matchStatus === 'auto').length
-    const needsSelectionCount = groups.filter(g => g.matchStatus === 'needs_selection').length
-    const noMatchCount = groups.filter(g => g.matchStatus === 'no_match').length
-    const includedFiles = getTotalIncludedFilesCount(groups)
-    const allSelected = isAllGroupsSelected(groups)
-    const unselectedCount = groups.filter(g => {
-      if (g.matchStatus === 'auto') return false
-      if (g.selectedCustomerId) return false
-      if (g.matchStatus === 'no_match' && g.newCustomerName) return false
-      return true
+    const includedFiles = getIncludedRowsCount(rows)
+    const allMapped = isAllRowsMapped(rows, groups)
+    const unmappedCount = rows.filter(row => {
+      if (!row.fileInfo.included) return false
+      const mapping = getEffectiveMapping(row, groups)
+      return !mapping.customerId && !mapping.newCustomerName
     }).length
+    const duplicateCount = rows.filter(row => row.fileInfo.duplicateStatus.isHashDuplicate).length
 
     return {
-      autoCount,
-      needsSelectionCount,
-      noMatchCount,
-      totalGroups: groups.length,
+      totalFiles: rows.length,
       includedFiles,
-      allSelected,
-      unselectedCount,
+      allMapped,
+      unmappedCount,
+      duplicateCount,
     }
-  }, [groups])
+  }, [rows, groups])
 
   // 모달 제목
   const title = isAnalyzing
@@ -116,8 +147,8 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
           </Button>
           <Button
             variant="primary"
-            onClick={() => onRegister(groups)}
-            disabled={!stats.allSelected || stats.includedFiles === 0}
+            onClick={() => onRegister(rows)}
+            disabled={!stats.allMapped || stats.includedFiles === 0}
           >
             {stats.includedFiles > 0
               ? `${stats.includedFiles}개 파일 등록`
@@ -137,69 +168,59 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
       backdropClosable={false}
       escapeToClose={!isAnalyzing && !isProcessing}
       className="batch-ar-mapping-modal"
-      initialWidth={700}
-      initialHeight={500}
-      minWidth={500}
-      minHeight={300}
+      initialWidth={1000}
+      initialHeight={600}
+      minWidth={700}
+      minHeight={400}
       storageKey="batch-ar-mapping-modal"
     >
-      <div className="batch-ar-modal__content">
-        {/* 분석 결과 요약 */}
-        {!isAnalyzing && groups.length > 0 && (
-          <div className="batch-ar-modal__summary">
-            <span className="batch-ar-modal__summary-icon">📊</span>
-            <span className="batch-ar-modal__summary-text">
-              분석 결과: {totalFiles}개 파일 → {stats.totalGroups}개 그룹
-            </span>
-            {stats.autoCount > 0 && (
-              <span className="batch-ar-modal__badge batch-ar-modal__badge--auto">
-                ✅ 자동 {stats.autoCount}
-              </span>
-            )}
-            {stats.needsSelectionCount > 0 && (
-              <span className="batch-ar-modal__badge batch-ar-modal__badge--selection">
-                ⚠️ 선택 {stats.needsSelectionCount}
-              </span>
-            )}
-            {stats.noMatchCount > 0 && (
-              <span className="batch-ar-modal__badge batch-ar-modal__badge--new">
-                🆕 새 고객 {stats.noMatchCount}
-              </span>
+      <div className="batch-ar-modal__content batch-ar-modal__content--table">
+        {isAnalyzing && rows.length === 0 ? (
+          <div className="batch-ar-modal__analyzing">
+            <div className="batch-ar-modal__spinner" />
+            <p>AR 파일 분석 중...</p>
+            {currentFileName && (
+              <p className="batch-ar-modal__current-file">{currentFileName}</p>
             )}
           </div>
+        ) : (
+          <ArFileTable
+            rows={rows}
+            groups={groups}
+            sortField={tableState.sortField}
+            sortDirection={tableState.sortDirection}
+            searchQuery={tableState.searchQuery}
+            mappingStatusFilter={tableState.mappingStatusFilter}
+            currentPage={tableState.currentPage}
+            itemsPerPage={tableState.itemsPerPage}
+            disabled={isProcessing}
+            onToggleRowSelection={onToggleRow}
+            onSelectAllRows={(fileIds, selected) => {
+              if (selected) {
+                fileIds.forEach(id => onToggleRow(id))
+              } else {
+                onSelectAllRows(false)
+              }
+            }}
+            onUpdateRowMapping={onUpdateRowMapping}
+            onUpdateRowNewCustomer={onUpdateRowNewCustomer}
+            onToggleRowIncluded={onToggleFileIncluded}
+            onSortChange={onSetSort}
+            onSearchChange={onSetSearchQuery}
+            onFilterChange={onSetFilter}
+            onPageChange={onSetPage}
+            onItemsPerPageChange={onSetItemsPerPage}
+            onBulkAssignCustomer={onBulkAssignCustomer}
+            onBulkAssignNewCustomer={onBulkAssignNewCustomer}
+            onOpenNewCustomerModal={onOpenNewCustomerModal}
+            onOpenCustomerSearchModal={onOpenCustomerSearchModal}
+          />
         )}
 
-        {/* 그룹 목록 */}
-        <div className="batch-ar-modal__groups">
-          {isAnalyzing && groups.length === 0 ? (
-            <div className="batch-ar-modal__analyzing">
-              <div className="batch-ar-modal__spinner" />
-              <p>AR 파일 분석 중...</p>
-              {currentFileName && (
-                <p className="batch-ar-modal__current-file">{currentFileName}</p>
-              )}
-            </div>
-          ) : (
-            groups.map(group => (
-              <ArFileGroupCard
-                key={group.groupId}
-                group={group}
-                onSelectCustomer={onSelectCustomer}
-                onSetNewCustomerName={onSetNewCustomerName}
-                onToggleGroup={onToggleGroup}
-                onToggleFile={onToggleFile}
-                onOpenNewCustomerModal={onOpenNewCustomerModal}
-                onOpenCustomerSearchModal={onOpenCustomerSearchModal}
-                disabled={isProcessing}
-              />
-            ))
-          )}
-        </div>
-
         {/* 선택 필요 안내 */}
-        {!isAnalyzing && !isProcessing && stats.unselectedCount > 0 && (
+        {!isAnalyzing && !isProcessing && stats.unmappedCount > 0 && (
           <div className="batch-ar-modal__warning">
-            ⚠️ {stats.unselectedCount}개 그룹의 고객 선택이 필요합니다
+            ⚠️ {stats.unmappedCount}개 파일의 고객 매핑이 필요합니다
           </div>
         )}
       </div>

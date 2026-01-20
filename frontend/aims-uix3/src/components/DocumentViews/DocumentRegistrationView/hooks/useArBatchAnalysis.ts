@@ -13,6 +13,10 @@ import type {
   ArFileGroup,
   BatchMappingState,
   GroupingResult,
+  ArTableViewState,
+  ArFileTableRow,
+  ArTableSortField,
+  ArMappingStatusFilter,
 } from '../types/arBatchTypes'
 import {
   generateFileId,
@@ -26,6 +30,17 @@ import {
   toggleFileIncluded,
   isAllGroupsSelected,
   getTotalIncludedFilesCount,
+  // 테이블 뷰 유틸리티
+  groupsToTableRows,
+  updateRowCustomerMapping,
+  updateRowNewCustomerName,
+  toggleRowSelection,
+  setAllRowsSelection,
+  bulkAssignCustomer,
+  bulkAssignNewCustomer,
+  toggleTableRowIncluded,
+  isAllRowsMapped,
+  getIncludedRowsCount,
 } from '../utils/arGroupingUtils'
 
 export interface UseArBatchAnalysisOptions {
@@ -38,6 +53,8 @@ export interface UseArBatchAnalysisOptions {
 export interface UseArBatchAnalysisReturn {
   /** 일괄 매핑 상태 */
   batchState: BatchMappingState
+  /** 테이블 뷰 상태 */
+  tableState: ArTableViewState
   /** AR 파일 분석 시작 */
   analyzeArFiles: (files: File[]) => Promise<GroupingResult | null>
   /** 그룹 고객 선택 업데이트 */
@@ -58,6 +75,36 @@ export interface UseArBatchAnalysisReturn {
   setProcessing: (isProcessing: boolean, progress?: number, currentFileName?: string) => void
   /** 완료 파일 수 증가 */
   incrementCompleted: () => void
+
+  // ===== 테이블 뷰 함수들 =====
+  /** 테이블 행 고객 매핑 업데이트 */
+  updateTableRowMapping: (fileId: string, customerId: string | null, customerName?: string) => void
+  /** 테이블 행 새 고객 이름 업데이트 */
+  updateTableRowNewCustomer: (fileId: string, newCustomerName: string) => void
+  /** 테이블 행 선택 토글 */
+  toggleTableRow: (fileId: string) => void
+  /** 모든 테이블 행 선택/해제 */
+  selectAllTableRows: (selected: boolean) => void
+  /** 선택된 행들에 고객 일괄 할당 */
+  bulkAssignToCustomer: (fileIds: string[], customerId: string, customerName: string) => void
+  /** 선택된 행들에 새 고객 이름 일괄 할당 */
+  bulkAssignToNewCustomer: (fileIds: string[], newCustomerName: string) => void
+  /** 테이블 행 포함/제외 토글 */
+  toggleTableFileIncluded: (fileId: string) => void
+  /** 테이블 정렬 설정 */
+  setTableSort: (field: ArTableSortField | null, direction: 'asc' | 'desc') => void
+  /** 테이블 페이지 변경 */
+  setTablePage: (page: number) => void
+  /** 페이지당 항목 수 변경 */
+  setTableItemsPerPage: (count: number) => void
+  /** 테이블 검색어 설정 */
+  setTableSearchQuery: (query: string) => void
+  /** 테이블 필터 설정 */
+  setTableFilter: (filter: ArMappingStatusFilter) => void
+  /** 모든 행이 매핑되었는지 확인 */
+  isTableAllMapped: () => boolean
+  /** 테이블 행 목록 (읽기용) */
+  getTableRows: () => ArFileTableRow[]
 }
 
 const initialState: BatchMappingState = {
@@ -71,12 +118,24 @@ const initialState: BatchMappingState = {
   completedFiles: 0,
 }
 
+const initialTableState: ArTableViewState = {
+  rows: [],
+  groups: [],
+  currentPage: 1,
+  itemsPerPage: 50,
+  sortField: null,
+  sortDirection: 'asc',
+  searchQuery: '',
+  mappingStatusFilter: 'all',
+}
+
 /**
  * AR 파일 일괄 분석 및 그룹핑 훅
  */
 export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBatchAnalysisReturn {
   const { userId, addLog } = options
   const [batchState, setBatchState] = useState<BatchMappingState>(initialState)
+  const [tableState, setTableState] = useState<ArTableViewState>(initialTableState)
 
   // 분석 중단 플래그
   const abortRef = useRef(false)
@@ -202,6 +261,14 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       currentFileName: undefined,
     }))
 
+    // 5. 테이블 상태 초기화
+    const tableRows = groupsToTableRows(groups)
+    setTableState({
+      ...initialTableState,
+      rows: tableRows,
+      groups: groups,
+    })
+
     addLog?.('success', `[AR 일괄 분석 완료]`,
       `${groups.length}개 그룹 (자동: ${result.autoMatchedCount}, 선택필요: ${result.needsSelectionCount}, 새고객: ${result.noMatchCount})`)
 
@@ -290,6 +357,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
   const reset = useCallback(() => {
     abortRef.current = true
     setBatchState(initialState)
+    setTableState(initialTableState)
   }, [])
 
   /**
@@ -318,8 +386,167 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     }))
   }, [])
 
+  // ===== 테이블 뷰 함수들 =====
+
+  /**
+   * 테이블 행 고객 매핑 업데이트
+   */
+  const updateTableRowMapping = useCallback((
+    fileId: string,
+    customerId: string | null,
+    customerName?: string
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: updateRowCustomerMapping(prev.rows, fileId, customerId, customerName),
+    }))
+  }, [])
+
+  /**
+   * 테이블 행 새 고객 이름 업데이트
+   */
+  const updateTableRowNewCustomer = useCallback((
+    fileId: string,
+    newCustomerName: string
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: updateRowNewCustomerName(prev.rows, fileId, newCustomerName),
+    }))
+  }, [])
+
+  /**
+   * 테이블 행 선택 토글
+   */
+  const toggleTableRow = useCallback((fileId: string) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: toggleRowSelection(prev.rows, fileId),
+    }))
+  }, [])
+
+  /**
+   * 모든 테이블 행 선택/해제
+   */
+  const selectAllTableRows = useCallback((selected: boolean) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: setAllRowsSelection(prev.rows, selected),
+    }))
+  }, [])
+
+  /**
+   * 선택된 행들에 고객 일괄 할당
+   */
+  const bulkAssignToCustomer = useCallback((
+    fileIds: string[],
+    customerId: string,
+    customerName: string
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: bulkAssignCustomer(prev.rows, fileIds, customerId, customerName),
+    }))
+  }, [])
+
+  /**
+   * 선택된 행들에 새 고객 이름 일괄 할당
+   */
+  const bulkAssignToNewCustomer = useCallback((
+    fileIds: string[],
+    newCustomerName: string
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: bulkAssignNewCustomer(prev.rows, fileIds, newCustomerName),
+    }))
+  }, [])
+
+  /**
+   * 테이블 행 포함/제외 토글
+   */
+  const toggleTableFileIncluded = useCallback((fileId: string) => {
+    setTableState(prev => ({
+      ...prev,
+      rows: toggleTableRowIncluded(prev.rows, fileId),
+    }))
+  }, [])
+
+  /**
+   * 테이블 정렬 설정
+   */
+  const setTableSort = useCallback((
+    field: ArTableSortField | null,
+    direction: 'asc' | 'desc'
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      sortField: field,
+      sortDirection: direction,
+      currentPage: 1, // 정렬 변경 시 첫 페이지로
+    }))
+  }, [])
+
+  /**
+   * 테이블 페이지 변경
+   */
+  const setTablePage = useCallback((page: number) => {
+    setTableState(prev => ({
+      ...prev,
+      currentPage: page,
+    }))
+  }, [])
+
+  /**
+   * 페이지당 항목 수 변경
+   */
+  const setTableItemsPerPage = useCallback((count: number) => {
+    setTableState(prev => ({
+      ...prev,
+      itemsPerPage: count,
+      currentPage: 1, // 항목 수 변경 시 첫 페이지로
+    }))
+  }, [])
+
+  /**
+   * 테이블 검색어 설정
+   */
+  const setTableSearchQuery = useCallback((query: string) => {
+    setTableState(prev => ({
+      ...prev,
+      searchQuery: query,
+      currentPage: 1, // 검색 시 첫 페이지로
+    }))
+  }, [])
+
+  /**
+   * 테이블 필터 설정
+   */
+  const setTableFilter = useCallback((filter: ArMappingStatusFilter) => {
+    setTableState(prev => ({
+      ...prev,
+      mappingStatusFilter: filter,
+      currentPage: 1, // 필터 변경 시 첫 페이지로
+    }))
+  }, [])
+
+  /**
+   * 모든 행이 매핑되었는지 확인
+   */
+  const isTableAllMapped = useCallback(() => {
+    return isAllRowsMapped(tableState.rows, tableState.groups)
+  }, [tableState.rows, tableState.groups])
+
+  /**
+   * 테이블 행 목록 반환 (읽기용)
+   */
+  const getTableRows = useCallback(() => {
+    return tableState.rows
+  }, [tableState.rows])
+
   return {
     batchState,
+    tableState,
     analyzeArFiles,
     selectGroupCustomer,
     setGroupNewCustomerName,
@@ -330,5 +557,20 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     reset,
     setProcessing,
     incrementCompleted,
+    // 테이블 뷰 함수들
+    updateTableRowMapping,
+    updateTableRowNewCustomer,
+    toggleTableRow,
+    selectAllTableRows,
+    bulkAssignToCustomer,
+    bulkAssignToNewCustomer,
+    toggleTableFileIncluded,
+    setTableSort,
+    setTablePage,
+    setTableItemsPerPage,
+    setTableSearchQuery,
+    setTableFilter,
+    isTableAllMapped,
+    getTableRows,
   }
 }

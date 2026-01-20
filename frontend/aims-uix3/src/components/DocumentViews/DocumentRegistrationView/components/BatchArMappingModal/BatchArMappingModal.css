@@ -13,6 +13,12 @@
   overflow: visible; /* 드롭다운이 잘리지 않도록 visible로 변경 */
 }
 
+/* 테이블 모드일 때 - 테이블이 전체 공간 차지 */
+.batch-ar-modal__content--table {
+  gap: 8px;
+  overflow: hidden;
+}
+
 /* ===== Summary ===== */
 .batch-ar-modal__summary {
   display: flex;

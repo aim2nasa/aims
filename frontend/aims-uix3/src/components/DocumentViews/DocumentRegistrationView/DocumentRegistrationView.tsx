@@ -47,6 +47,8 @@ import { autoClassifyDocument } from '@/services/documentTypesService'
 import { useArBatchAnalysis } from './hooks/useArBatchAnalysis'
 import { BatchArMappingModal } from './components/BatchArMappingModal'
 import { registerArDocument as registerArDocumentBatch } from './utils/annualReportProcessor'
+import { getEffectiveMapping } from './utils/arGroupingUtils'
+import type { ArFileTableRow } from './types/arBatchTypes'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -2382,41 +2384,48 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         />
       )}
 
-      {/* 🎯 AR 일괄 매핑 모달 */}
+      {/* 🎯 AR 일괄 매핑 모달 (테이블 UI) */}
       <BatchArMappingModal
         state={arBatch.batchState}
+        tableState={arBatch.tableState}
         onClose={() => {
           arBatch.closeModal()
           addLog('warning', 'AR 일괄 등록 취소')
         }}
-        onSelectCustomer={arBatch.selectGroupCustomer}
-        onSetNewCustomerName={arBatch.setGroupNewCustomerName}
-        onToggleGroup={arBatch.toggleGroup}
-        onToggleFile={arBatch.toggleFile}
-        onOpenNewCustomerModal={(groupId, defaultName) => {
-          // 새 고객 등록 - 해당 그룹에 새 고객명 설정
-          arBatch.setGroupNewCustomerName(groupId, defaultName)
+        onUpdateRowMapping={arBatch.updateTableRowMapping}
+        onUpdateRowNewCustomer={arBatch.updateTableRowNewCustomer}
+        onToggleRow={arBatch.toggleTableRow}
+        onSelectAllRows={arBatch.selectAllTableRows}
+        onBulkAssignCustomer={arBatch.bulkAssignToCustomer}
+        onBulkAssignNewCustomer={arBatch.bulkAssignToNewCustomer}
+        onToggleFileIncluded={arBatch.toggleTableFileIncluded}
+        onSetSort={arBatch.setTableSort}
+        onSetPage={arBatch.setTablePage}
+        onSetItemsPerPage={arBatch.setTableItemsPerPage}
+        onSetSearchQuery={arBatch.setTableSearchQuery}
+        onSetFilter={arBatch.setTableFilter}
+        onOpenNewCustomerModal={(fileId, defaultName) => {
+          // 새 고객 등록 - 해당 파일에 새 고객명 설정
+          arBatch.updateTableRowNewCustomer(fileId, defaultName)
           addLog('info', `새 고객으로 등록 예정: ${defaultName}`)
         }}
-        onOpenCustomerSearchModal={(groupId) => {
+        onOpenCustomerSearchModal={(_fileId) => {
           // 고객 검색 모달 열기 (추후 구현 - 현재는 드롭다운으로 선택)
         }}
-        onRegister={async (groups) => {
-          // 🎯 AR 일괄 등록 처리
+        onRegister={async (rows: ArFileTableRow[]) => {
+          // 🎯 AR 일괄 등록 처리 (테이블 행 기반)
           addLog('info', 'AR 일괄 등록 시작...')
 
-          // 등록할 파일 수 계산
-          let totalFilesToRegister = 0
-          for (const group of groups) {
-            if (!group.selectedCustomerId && !group.newCustomerName) continue
-            for (const file of group.files) {
-              if (file.included && !file.duplicateStatus.isHashDuplicate) {
-                totalFilesToRegister++
-              }
-            }
-          }
+          const { groups } = arBatch.tableState
 
-          if (totalFilesToRegister === 0) {
+          // 등록할 파일 수 계산 (포함되고 중복 아닌 파일만)
+          const filesToRegister = rows.filter(row => {
+            if (!row.fileInfo.included || row.fileInfo.duplicateStatus.isHashDuplicate) return false
+            const mapping = getEffectiveMapping(row, groups)
+            return mapping.customerId || mapping.newCustomerName
+          })
+
+          if (filesToRegister.length === 0) {
             addLog('warning', '등록할 파일이 없습니다')
             arBatch.closeModal()
             return
@@ -2428,124 +2437,126 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           let successCount = 0
           let errorCount = 0
 
-          for (const group of groups) {
-            // 고객이 선택되지 않은 그룹은 건너뜀
-            let customerId = group.selectedCustomerId
-            const customerName = group.selectedCustomerName || group.newCustomerName
+          // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
+          const newCustomerCache = new Map<string, string>() // name -> customerId
+
+          for (const row of filesToRegister) {
+            const arFile = row.fileInfo
+            const mapping = getEffectiveMapping(row, groups)
+
+            arBatch.setProcessing(true, Math.round((completedCount / filesToRegister.length) * 100), arFile.file.name)
+
+            let customerId = mapping.customerId
+            const customerName = mapping.customerName || mapping.newCustomerName
 
             // 새 고객 등록 필요
-            if (!customerId && group.newCustomerName) {
-              try {
-                addLog('info', `새 고객 등록 중: ${group.newCustomerName}`)
-                const newCustomer = await CustomerService.createCustomer({
-                  personal_info: { name: group.newCustomerName },
-                  insurance_info: { customer_type: '개인' },
-                  contracts: [],
-                  documents: [],
-                  consultations: [],
-                })
-                customerId = newCustomer._id
-                addLog('success', `새 고객 등록 완료: ${group.newCustomerName}`)
-              } catch (error) {
-                addLog('error', `고객 등록 실패: ${group.newCustomerName}`, String(error))
-                errorCount += group.files.filter(f => f.included && !f.duplicateStatus.isHashDuplicate).length
-                continue
+            if (!customerId && mapping.newCustomerName) {
+              // 캐시에서 확인 (같은 이름의 새 고객이 이미 생성되었는지)
+              if (newCustomerCache.has(mapping.newCustomerName)) {
+                customerId = newCustomerCache.get(mapping.newCustomerName)!
+              } else {
+                try {
+                  addLog('info', `새 고객 등록 중: ${mapping.newCustomerName}`)
+                  const newCustomer = await CustomerService.createCustomer({
+                    personal_info: { name: mapping.newCustomerName },
+                    insurance_info: { customer_type: '개인' },
+                    contracts: [],
+                    documents: [],
+                    consultations: [],
+                  })
+                  customerId = newCustomer._id
+                  newCustomerCache.set(mapping.newCustomerName, customerId)
+                  addLog('success', `새 고객 등록 완료: ${mapping.newCustomerName}`)
+                } catch (error) {
+                  addLog('error', `고객 등록 실패: ${mapping.newCustomerName}`, String(error))
+                  errorCount++
+                  completedCount++
+                  continue
+                }
               }
             }
 
             if (!customerId) {
-              addLog('warning', `[${group.customerNameFromAr}] 고객이 선택되지 않아 건너뜀`)
+              addLog('warning', `[${row.extractedCustomerName}] 고객이 선택되지 않아 건너뜀`)
+              completedCount++
               continue
             }
 
-            // 그룹 내 포함된 파일들 등록
-            for (const arFile of group.files) {
-              if (!arFile.included || arFile.duplicateStatus.isHashDuplicate) continue
+            try {
+              // 중복 체크 (발행일 기준)
+              const processResult = await processAnnualReportFile(arFile.file, customerId, arFile.metadata.issue_date)
 
-              arBatch.setProcessing(true, Math.round((completedCount / totalFilesToRegister) * 100), arFile.file.name)
-
-              try {
-                // 중복 체크 (발행일 기준)
-                const processResult = await processAnnualReportFile(arFile.file, customerId, arFile.metadata.issue_date)
-
-                if (processResult.isDuplicateDoc) {
-                  addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
-                  // 🔴 FIX: 중복 파일도 UI에 표시 (skipped 상태)
-                  setUploadState(prev => ({
-                    ...prev,
-                    files: [...prev.files, {
-                      id: arFile.fileId,
-                      file: arFile.file,
-                      fileSize: arFile.file.size,
-                      status: 'skipped' as const,
-                      progress: 100,
-                      error: '중복 파일 (동일한 문서가 이미 존재)',
-                      customerId,
-                    }]
-                  }))
-                  completedCount++
-                  continue
-                }
-
-                if (processResult.isDuplicateIssueDate) {
-                  const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
-                  addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
-                  // 🔴 FIX: 중복 파일도 UI에 표시 (skipped 상태)
-                  setUploadState(prev => ({
-                    ...prev,
-                    files: [...prev.files, {
-                      id: arFile.fileId,
-                      file: arFile.file,
-                      fileSize: arFile.file.size,
-                      status: 'skipped' as const,
-                      progress: 100,
-                      error: `중복 발행일 (${formattedDate} AR 이미 존재)`,
-                      customerId,
-                    }]
-                  }))
-                  completedCount++
-                  continue
-                }
-
-                // AR 등록
-                const result = await registerArDocument(arFile.file, customerId, arFile.metadata.issue_date, {
-                  addLog: (level, msg, detail) => addLog(level, msg, detail),
-                  generateFileId: () => arFile.fileId,
-                  addToUploadQueue: (uploadFile) => {
-                    // 🚀 실제 업로드 시작! (uploadService에 큐잉)
-                    const uploadFileWithId = { ...uploadFile, id: arFile.fileId }
-                    uploadService.queueFiles([uploadFileWithId])
-
-                    // 🔴 FIX: uploadState.files에도 추가해서 UI에 표시!
-                    setUploadState(prev => ({
-                      ...prev,
-                      files: [...prev.files, uploadFileWithId]
-                    }))
-                  },
-                  trackArFile: (fileName, custId) => {
-                    // AR 파일 추적 정보 저장
-                    arFilenamesRef.current.add(fileName)
-                    arCustomerMappingRef.current.set(fileName, custId)
-                    arMetadataMappingRef.current.set(fileName, arFile.metadata)
-                    customerNameMappingRef.current.set(custId, customerName!)
-                  },
-                })
-
-                if (result.success) {
-                  successCount++
-                  addLog('success', `[${customerName}] AR 등록 완료: ${arFile.file.name}`)
-                } else {
-                  errorCount++
-                  addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
-                }
-              } catch (error) {
-                addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, String(error))
-                errorCount++
+              if (processResult.isDuplicateDoc) {
+                addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
+                setUploadState(prev => ({
+                  ...prev,
+                  files: [...prev.files, {
+                    id: arFile.fileId,
+                    file: arFile.file,
+                    fileSize: arFile.file.size,
+                    status: 'skipped' as const,
+                    progress: 100,
+                    error: '중복 파일 (동일한 문서가 이미 존재)',
+                    customerId,
+                  }]
+                }))
+                completedCount++
+                continue
               }
 
-              completedCount++
-              arBatch.incrementCompleted()
+              if (processResult.isDuplicateIssueDate) {
+                const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
+                addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
+                setUploadState(prev => ({
+                  ...prev,
+                  files: [...prev.files, {
+                    id: arFile.fileId,
+                    file: arFile.file,
+                    fileSize: arFile.file.size,
+                    status: 'skipped' as const,
+                    progress: 100,
+                    error: `중복 발행일 (${formattedDate} AR 이미 존재)`,
+                    customerId,
+                  }]
+                }))
+                completedCount++
+                continue
+              }
+
+              // AR 등록
+              const result = await registerArDocument(arFile.file, customerId, arFile.metadata.issue_date, {
+                addLog: (level, msg, detail) => addLog(level, msg, detail),
+                generateFileId: () => arFile.fileId,
+                addToUploadQueue: (uploadFile) => {
+                  const uploadFileWithId = { ...uploadFile, id: arFile.fileId }
+                  uploadService.queueFiles([uploadFileWithId])
+                  setUploadState(prev => ({
+                    ...prev,
+                    files: [...prev.files, uploadFileWithId]
+                  }))
+                },
+                trackArFile: (fileName, custId) => {
+                  arFilenamesRef.current.add(fileName)
+                  arCustomerMappingRef.current.set(fileName, custId)
+                  arMetadataMappingRef.current.set(fileName, arFile.metadata)
+                  customerNameMappingRef.current.set(custId, customerName!)
+                },
+              })
+
+              if (result.success) {
+                successCount++
+                addLog('success', `[${customerName}] AR 등록 완료: ${arFile.file.name}`)
+              } else {
+                errorCount++
+                addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
+              }
+            } catch (error) {
+              addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, String(error))
+              errorCount++
             }
+
+            completedCount++
+            arBatch.incrementCompleted()
           }
 
           arBatch.setProcessing(false, 100)
@@ -2556,8 +2567,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 모달 닫기 (파일 목록은 유지 - 진행률/결과 보여줌)
           setTimeout(() => {
             arBatch.closeModal()
-            // 🔴 FIX: files 초기화 제거 - 업로드 진행/결과가 화면에 보여야 함!
-            // setUploadState(prev => ({ ...prev, files: [] }))
             setIsLogVisible(true)
           }, 500)
         }}

@@ -145,3 +145,66 @@ export interface BatchRegistrationResult {
     message: string
   }>
 }
+
+// ============================================
+// 테이블 뷰 타입 (파일별 개별 매핑 지원)
+// ============================================
+
+/**
+ * 테이블 정렬 필드
+ */
+export type ArTableSortField =
+  | 'fileName'
+  | 'extractedCustomer'
+  | 'mappedCustomer'
+  | 'issueDate'
+  | 'status'
+
+/**
+ * 매핑 상태 필터
+ */
+export type ArMappingStatusFilter = 'all' | 'mapped' | 'unmapped' | 'duplicate'
+
+/**
+ * 테이블 행 데이터 (파일별 개별 매핑 지원)
+ * @description 각 파일이 독립적인 고객 선택을 가질 수 있음
+ */
+export interface ArFileTableRow {
+  /** 파일 정보 (기존 ArFileInfo) */
+  fileInfo: ArFileInfo
+  /** 파일별 개별 선택된 고객 ID (null = 미선택 또는 새 고객) */
+  individualCustomerId: string | null
+  /** 파일별 개별 선택된 고객명 */
+  individualCustomerName?: string
+  /** 파일별 새 고객 생성 이름 */
+  individualNewCustomerName?: string
+  /** 행 선택 상태 (다중 선택용) */
+  isSelected: boolean
+  /** 원본 그룹 ID (드롭다운 옵션 참조용) */
+  groupId: string
+  /** AR에서 추출한 고객명 (표시용) */
+  extractedCustomerName: string
+}
+
+/**
+ * 테이블 뷰 상태
+ * @description 페이지네이션, 정렬, 필터 등 테이블 UI 상태 관리
+ */
+export interface ArTableViewState {
+  /** 전체 행 목록 */
+  rows: ArFileTableRow[]
+  /** 그룹 정보 (드롭다운 옵션용) - 기존 구조 유지 */
+  groups: ArFileGroup[]
+  /** 현재 페이지 (1-based) */
+  currentPage: number
+  /** 페이지당 항목 수 */
+  itemsPerPage: number
+  /** 정렬 필드 */
+  sortField: ArTableSortField | null
+  /** 정렬 방향 */
+  sortDirection: 'asc' | 'desc'
+  /** 검색어 (파일명 검색) */
+  searchQuery: string
+  /** 필터: 매핑 상태 */
+  mappingStatusFilter: ArMappingStatusFilter
+}
