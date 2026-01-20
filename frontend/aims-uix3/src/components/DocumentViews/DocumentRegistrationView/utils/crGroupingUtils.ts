@@ -74,43 +74,46 @@ export function normalizeCustomerName(name: string): string {
 
 /**
  * CRS 파일들을 계약자명별로 그룹핑
+ * @description O(n) 복잡도 - 정규화된 이름을 키로 하는 Map 사용
  */
 export function groupCrFilesByContractorName(
   crFiles: CrFileInfo[]
 ): Map<string, CrFileInfo[]> {
-  const groups = new Map<string, CrFileInfo[]>()
+  // 정규화된 이름 → { 원본 이름, 파일 목록 } 매핑
+  const normalizedMap = new Map<string, { originalName: string; files: CrFileInfo[] }>()
 
   for (const crFile of crFiles) {
     const contractorName = crFile.metadata.contractor_name
     if (!contractorName) {
       // 계약자명이 없는 경우 별도 그룹
       const unknownKey = '__UNKNOWN__'
-      const existing = groups.get(unknownKey) || []
-      existing.push(crFile)
-      groups.set(unknownKey, existing)
+      const existing = normalizedMap.get(unknownKey)
+      if (existing) {
+        existing.files.push(crFile)
+      } else {
+        normalizedMap.set(unknownKey, { originalName: unknownKey, files: [crFile] })
+      }
       continue
     }
 
-    // 정규화된 계약자명으로 그룹핑 키 생성
-    const normalizedName = normalizeCustomerName(contractorName)
+    // 정규화된 계약자명으로 O(1) 조회
+    const normalized = normalizeCustomerName(contractorName)
 
-    // 기존 그룹 찾기 (원본 계약자명 기준)
-    let foundKey: string | null = null
-    for (const [key] of groups) {
-      if (normalizeCustomerName(key) === normalizedName) {
-        foundKey = key
-        break
-      }
-    }
-
-    if (foundKey) {
-      groups.get(foundKey)!.push(crFile)
+    const existing = normalizedMap.get(normalized)
+    if (existing) {
+      existing.files.push(crFile)
     } else {
-      groups.set(contractorName, [crFile])
+      normalizedMap.set(normalized, { originalName: contractorName, files: [crFile] })
     }
   }
 
-  return groups
+  // 원본 형태 (원본 계약자명 → 파일 목록)로 변환
+  const result = new Map<string, CrFileInfo[]>()
+  for (const { originalName, files } of normalizedMap.values()) {
+    result.set(originalName, files)
+  }
+
+  return result
 }
 
 /**

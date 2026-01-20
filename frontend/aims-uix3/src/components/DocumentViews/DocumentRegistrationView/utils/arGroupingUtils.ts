@@ -68,43 +68,46 @@ export function normalizeCustomerName(name: string): string {
 
 /**
  * AR 파일들을 고객명별로 그룹핑
+ * @description O(n) 복잡도 - 정규화된 이름을 키로 하는 Map 사용
  */
 export function groupArFilesByCustomerName(
   arFiles: ArFileInfo[]
 ): Map<string, ArFileInfo[]> {
-  const groups = new Map<string, ArFileInfo[]>()
+  // 정규화된 이름 → { 원본 이름, 파일 목록 } 매핑
+  const normalizedMap = new Map<string, { originalName: string; files: ArFileInfo[] }>()
 
   for (const arFile of arFiles) {
     const customerName = arFile.metadata.customer_name
     if (!customerName) {
       // 고객명이 없는 경우 별도 그룹
       const unknownKey = '__UNKNOWN__'
-      const existing = groups.get(unknownKey) || []
-      existing.push(arFile)
-      groups.set(unknownKey, existing)
+      const existing = normalizedMap.get(unknownKey)
+      if (existing) {
+        existing.files.push(arFile)
+      } else {
+        normalizedMap.set(unknownKey, { originalName: unknownKey, files: [arFile] })
+      }
       continue
     }
 
-    // 정규화된 고객명으로 그룹핑 키 생성
-    const normalizedName = normalizeCustomerName(customerName)
+    // 정규화된 고객명으로 O(1) 조회
+    const normalized = normalizeCustomerName(customerName)
 
-    // 기존 그룹 찾기 (원본 고객명 기준)
-    let foundKey: string | null = null
-    for (const [key] of groups) {
-      if (normalizeCustomerName(key) === normalizedName) {
-        foundKey = key
-        break
-      }
-    }
-
-    if (foundKey) {
-      groups.get(foundKey)!.push(arFile)
+    const existing = normalizedMap.get(normalized)
+    if (existing) {
+      existing.files.push(arFile)
     } else {
-      groups.set(customerName, [arFile])
+      normalizedMap.set(normalized, { originalName: customerName, files: [arFile] })
     }
   }
 
-  return groups
+  // 원본 형태 (원본 고객명 → 파일 목록)로 변환
+  const result = new Map<string, ArFileInfo[]>()
+  for (const { originalName, files } of normalizedMap.values()) {
+    result.set(originalName, files)
+  }
+
+  return result
 }
 
 /**
