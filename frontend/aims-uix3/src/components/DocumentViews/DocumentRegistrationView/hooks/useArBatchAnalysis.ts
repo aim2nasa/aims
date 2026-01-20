@@ -190,7 +190,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
         const result = await checkAnnualReportFromPDF(file)
 
         if (result.is_annual_report && result.metadata?.customer_name) {
-          const arFile = createArFileInfo(file, result, generateFileId())
+          const arFile = createArFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
           arFiles.push(arFile)
           addLog?.('success', `[AR 감지] ${file.name}`, `고객: ${result.metadata.customer_name}`)
         } else {

@@ -1049,6 +1049,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         matchingCustomers: firstArFile.matchingCustomers,
         fileId: firstArFile.fileId,
         existingHashes: firstArFile.existingHashes,
+        newlyCreatedCustomerId: null,
       });
     }
 
@@ -1882,7 +1883,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         customer_type: customerType as '개인' | '법인',
       },
       meta: {
+        status: "active" as const,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      meta: {
+        status: "active" as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       contracts: [],
       documents: [],
