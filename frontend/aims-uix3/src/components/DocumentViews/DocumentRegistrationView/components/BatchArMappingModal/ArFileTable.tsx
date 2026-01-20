@@ -372,7 +372,14 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
 
   // 정렬된 행
   const sortedRows = useMemo(() => {
-    if (!sortField) return filteredRows
+    // 기본 정렬 순서: 미매핑(0) → 매핑됨(1)
+    const getDefaultSortOrder = (row: ArFileTableRow) => {
+      return isRowMapped(row, groups) ? 1 : 0
+    }
+
+    if (!sortField) {
+      return [...filteredRows].sort((a, b) => getDefaultSortOrder(a) - getDefaultSortOrder(b))
+    }
 
     return [...filteredRows].sort((a, b) => {
       let comparison = 0
