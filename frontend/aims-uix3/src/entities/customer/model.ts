@@ -11,14 +11,28 @@
 import { z } from 'zod';
 
 /**
+ * 주소 검증 상태
+ * - verified: 주소 API로 검증 완료
+ * - pending: 미검증 (기존 데이터, 수동 입력)
+ * - failed: 검증 실패 (존재하지 않는 주소)
+ */
+export const AddressVerificationStatus = {
+  VERIFIED: 'verified',
+  PENDING: 'pending',
+  FAILED: 'failed',
+} as const;
+
+export type AddressVerificationStatusType = typeof AddressVerificationStatus[keyof typeof AddressVerificationStatus];
+
+/**
  * 주소 정보 스키마
  */
 export const AddressSchema = z.object({
   postal_code: z.string().optional(),
   address1: z.string().optional(),
   address2: z.string().optional(),
-  /** 주소 API로 검증된 주소 여부 (true: 검증됨, false/undefined: 미검증) */
-  is_verified: z.boolean().optional(),
+  /** 주소 검증 상태: verified(검증됨), pending(미검증), failed(검증실패) */
+  verification_status: z.enum(['verified', 'pending', 'failed']).optional(),
 });
 
 /**

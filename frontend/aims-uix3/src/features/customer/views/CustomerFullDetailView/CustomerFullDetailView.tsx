@@ -854,21 +854,30 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           <span className="customer-info-grid__label">주소</span>
                           <span className="customer-info-grid__value customer-info-grid__address">
                             {/* 주소 검증 상태 아이콘 */}
-                            {customer.personal_info?.address?.address1 && (
-                              <Tooltip content={customer.personal_info?.address?.is_verified ? '검증된 주소' : '미검증 주소'}>
-                                <span className={`customer-info-grid__verified-icon ${customer.personal_info?.address?.is_verified ? 'customer-info-grid__verified-icon--verified' : 'customer-info-grid__verified-icon--unverified'}`}>
-                                  {customer.personal_info?.address?.is_verified ? (
-                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                      <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
-                                    </svg>
-                                  ) : (
-                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                      <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 018 3zm0 8a1 1 0 110 2 1 1 0 010-2z"/>
-                                    </svg>
-                                  )}
-                                </span>
-                              </Tooltip>
-                            )}
+                            {customer.personal_info?.address?.address1 && (() => {
+                              const status = customer.personal_info?.address?.verification_status;
+                              const tooltipText = status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패' : '미검증 주소';
+                              const iconClass = status === 'verified' ? 'customer-info-grid__verified-icon--verified' : status === 'failed' ? 'customer-info-grid__verified-icon--failed' : 'customer-info-grid__verified-icon--pending';
+                              return (
+                                <Tooltip content={tooltipText}>
+                                  <span className={`customer-info-grid__verified-icon ${iconClass}`}>
+                                    {status === 'verified' ? (
+                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
+                                      </svg>
+                                    ) : status === 'failed' ? (
+                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.53 4.47a.75.75 0 010 1.06L9.06 8l2.47 2.47a.75.75 0 11-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 01-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 011.06-1.06L8 6.94l2.47-2.47a.75.75 0 011.06 0z"/>
+                                      </svg>
+                                    ) : (
+                                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm-.75 4.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7.25a1 1 0 110-2 1 1 0 010 2z"/>
+                                      </svg>
+                                    )}
+                                  </span>
+                                </Tooltip>
+                              );
+                            })()}
                             <span className="customer-info-grid__address-text">
                               {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
                               {customer.personal_info?.address?.address1 || '-'}

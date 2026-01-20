@@ -119,12 +119,17 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
                   {AddressService.formatAddress(item.address)}
                 </div>
                 {/* 주소 검증 상태 배지 */}
-                <span
-                  className={`address-item__verified-badge ${item.address?.is_verified ? 'address-item__verified-badge--verified' : 'address-item__verified-badge--unverified'}`}
-                  title={item.address?.is_verified ? '검증된 주소' : '미검증 주소'}
-                >
-                  {item.address?.is_verified ? '✓ 검증됨' : '⚠ 미검증'}
-                </span>
+                {(() => {
+                  const status = item.address?.verification_status;
+                  const badgeClass = status === 'verified' ? 'address-item__verified-badge--verified' : status === 'failed' ? 'address-item__verified-badge--failed' : 'address-item__verified-badge--pending';
+                  const badgeText = status === 'verified' ? '✓ 검증됨' : status === 'failed' ? '✕ 검증실패' : '? 미검증';
+                  const titleText = status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패' : '미검증 주소';
+                  return (
+                    <span className={`address-item__verified-badge ${badgeClass}`} title={titleText}>
+                      {badgeText}
+                    </span>
+                  );
+                })()}
               </div>
               {/* 메모 표시 */}
               {item.notes && (

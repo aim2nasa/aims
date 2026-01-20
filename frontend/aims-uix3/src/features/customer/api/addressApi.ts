@@ -28,8 +28,8 @@ export interface FormattedAddress {
   postal_code: string;
   address1: string;
   address2: string;
-  /** 주소 API로 검증된 주소 여부 */
-  is_verified?: boolean;
+  /** 주소 검증 상태: verified(검증됨), pending(미검증), failed(검증실패) */
+  verification_status?: 'verified' | 'pending' | 'failed';
 }
 
 export class AddressApi {
@@ -81,7 +81,7 @@ export class AddressApi {
       postal_code: addressData.zipNo || '',
       address1: addressData.roadAddrPart1 || addressData.roadAddr || '',
       address2: '',
-      is_verified: true  // 주소 API에서 선택한 주소 = 검증됨
+      verification_status: 'verified'  // 주소 API에서 선택한 주소 = 검증됨
     };
   }
 }

@@ -650,8 +650,12 @@ html[data-theme="dark"] .customer-info-grid__type-badge {
   color: var(--color-success-500, #22c55e);
 }
 
-.customer-info-grid__verified-icon--unverified {
-  color: var(--color-warning-500, #f59e0b);
+.customer-info-grid__verified-icon--pending {
+  color: var(--color-text-tertiary, #9ca3af);
+}
+
+.customer-info-grid__verified-icon--failed {
+  color: var(--color-danger, #ef4444);
 }
 
 .customer-info-grid__history-btn {
