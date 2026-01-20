@@ -616,68 +616,47 @@ html[data-theme="dark"] .document-type-card--selected {
   }
 }
 
-/* 🎯 AR 파일 미발견 경고 메시지 - 화면 중앙 고정 */
+/* 🎯 AR 파일 미발견 경고 메시지 - 토스트 스타일 (상단 중앙) */
 .no-ar-warning {
   position: fixed;
-  top: 50%;
+  top: 72px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 1000;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background-color: var(--color-warning-100);
-  border: 1px solid var(--color-warning-500);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  max-width: 500px;
-  width: calc(100% - 32px);
-  box-sizing: border-box;
-  animation: noArWarningFadeIn 0.2s ease-out;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: rgba(0, 0, 0, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: noArWarningSlideDown 0.25s ease-out;
 }
 
-@keyframes noArWarningFadeIn {
+@keyframes noArWarningSlideDown {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
+    transform: translateX(-50%) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
 .no-ar-warning__icon {
-  font-size: 24px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
 .no-ar-warning__message {
-  flex: 1;
-  font-size: var(--font-size-body);
-  color: var(--color-text-primary);
-  line-height: 1.5;
+  font-size: 14px;
+  color: white;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .no-ar-warning__close {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.no-ar-warning__close:hover {
-  background-color: var(--color-fill-tertiary);
-  color: var(--color-text-primary);
+  display: none;
 }

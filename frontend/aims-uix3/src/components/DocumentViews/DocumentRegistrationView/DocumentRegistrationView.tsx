@@ -522,7 +522,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       // AR 파일이 하나도 발견되지 않은 경우
       if (!arAnalysisResult) {
-        setNoArFoundWarning('AR문서가 발견되지 않았습니다. 선택된 PDF 파일들이 Annual Report 형식이 아닙니다.')
+        setNoArFoundWarning('Annual Report가 아닙니다.')
         return
       }
 
