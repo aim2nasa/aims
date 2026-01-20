@@ -126,6 +126,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   })
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false)
 
+  // 🎯 AR 파일 미발견 경고 메시지 (5초 후 자동 사라짐)
+  const [noArFoundWarning, setNoArFoundWarning] = useState<string | null>(null)
+
+  // 경고 메시지 자동 사라짐 타이머
+  useEffect(() => {
+    if (noArFoundWarning) {
+      const timer = setTimeout(() => {
+        setNoArFoundWarning(null)
+      }, 3000) // 3초 후 사라짐
+      return () => clearTimeout(timer)
+    }
+  }, [noArFoundWarning])
+
   // 🎯 AR 파일 큐 - 다중 AR 파일 순차 처리용
   // 문제: 여러 AR 파일 업로드 시 두 번째 파일이 첫 번째를 덮어씀
   // 해결: 큐에 저장 후 한 파일씩 순차 처리
@@ -504,7 +517,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       // 배치 분석 시작 (모달이 자동으로 열림)
       addLog('info', `${pdfFiles.length}개 AR 파일 배치 분석 시작...`)
-      arBatch.analyzeArFiles(pdfFiles)
+      setNoArFoundWarning(null) // 이전 경고 초기화
+      const arAnalysisResult = await arBatch.analyzeArFiles(pdfFiles)
+
+      // AR 파일이 하나도 발견되지 않은 경우
+      if (!arAnalysisResult) {
+        setNoArFoundWarning('AR문서가 발견되지 않았습니다. 선택된 PDF 파일들이 Annual Report 형식이 아닙니다.')
+        return
+      }
+
       return // 이후 처리는 BatchArMappingModal에서 진행
     }
 
@@ -1710,13 +1731,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   /**
    * 파일 선택 옵션
+   * - AR/CRS 모드: PDF만 허용 (강제)
+   * - 일반 모드: 모든 파일 허용
    */
   const fileSelectionOptions = useMemo(() => ({
     multiple: true,
     directory: true,
     maxFileSize: uploadConfig.limits.maxFileSize,
-    maxFileCount: uploadConfig.limits.maxFileCount
-  }), [])
+    maxFileCount: uploadConfig.limits.maxFileCount,
+    // AR/CRS 모드에서는 PDF만 허용
+    accept: (documentTypeMode === 'annual_report' || documentTypeMode === 'customer_review')
+      ? 'application/pdf,.pdf'
+      : undefined
+  }), [documentTypeMode])
 
   /**
    * 통계 계산
@@ -2183,6 +2210,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* 🎯 AR 파일 미발견 경고 메시지 */}
+        {documentTypeMode === 'annual_report' && noArFoundWarning && !isLogVisible && (
+          <div className="no-ar-warning">
+            <div className="no-ar-warning__icon">⚠️</div>
+            <div className="no-ar-warning__message">{noArFoundWarning}</div>
+            <button
+              type="button"
+              className="no-ar-warning__close"
+              onClick={() => setNoArFoundWarning(null)}
+              aria-label="닫기"
+            >
+              ✕
+            </button>
           </div>
         )}
 

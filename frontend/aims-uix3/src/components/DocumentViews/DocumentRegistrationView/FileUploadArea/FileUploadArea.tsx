@@ -258,6 +258,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
           ref={folderInputRef}
           type="file"
           multiple
+          accept={accept}
           onChange={handleFileInputChange}
           style={{ display: 'none' }}
         />
