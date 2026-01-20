@@ -141,8 +141,8 @@
 
 .ar-file-table__bulk-btn--primary {
   border: none;
-  background: var(--color-primary);
-  color: white;
+  background: #007aff;
+  color: #ffffff;
 }
 
 .ar-file-table__bulk-btn--primary:hover:not(:disabled) {
@@ -295,6 +295,10 @@
 
 .ar-file-table__tr--selected {
   background: var(--color-primary-bg, rgba(0, 122, 255, 0.12)) !important;
+}
+
+.ar-file-table__tr--selected .ar-file-table__td {
+  color: #1c1c1e !important;
 }
 
 .ar-file-table__tr--selected:hover {
@@ -652,18 +656,233 @@
   font-size: 11px;
 }
 
-/* ===== Dark Mode ===== */
-@media (prefers-color-scheme: dark) {
-  .ar-file-table__tr--duplicate {
-    background: rgba(255, 59, 48, 0.1);
-  }
+/* ===== Dark Mode (html[data-theme="dark"]) ===== */
 
-  .ar-file-table__tr--duplicate:hover {
-    background: rgba(255, 59, 48, 0.15);
-  }
+/* Container */
+html[data-theme="dark"] .ar-file-table {
+  background: var(--color-bg-primary);
+}
 
-  .ar-table-dropdown {
-    border-color: var(--color-border-strong, #48484a);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
+/* Toolbar */
+html[data-theme="dark"] .ar-file-table__toolbar {
+  background: var(--color-bg-tertiary);
+  border-bottom-color: var(--color-border-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__search {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__filter {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+/* Bulk Toolbar */
+html[data-theme="dark"] .ar-file-table__bulk-toolbar {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.1) 100%);
+  border-bottom-color: var(--color-primary-500);
+}
+
+/* Table Container */
+html[data-theme="dark"] .ar-file-table__table-container {
+  border-color: var(--color-border-primary, #48484a);
+  background: var(--color-bg-primary);
+}
+
+/* Table Header - ExcelRefiner 스타일 그라데이션 */
+html[data-theme="dark"] .ar-file-table__th {
+  background: linear-gradient(
+    to bottom,
+    var(--color-primary-600, #0066cc) 0%,
+    var(--color-primary-700, #005299) 100%
+  );
+  color: var(--color-neutral-0, #ffffff);
+  border-bottom: 2px solid var(--color-primary-400, #3399ff);
+  border-right-color: var(--color-primary-500, #007aff);
+}
+
+html[data-theme="dark"] .ar-file-table__th--rownum {
+  background: linear-gradient(
+    to bottom,
+    var(--color-neutral-700, #48484a) 0%,
+    var(--color-neutral-800, #3a3a3c) 100%
+  );
+  color: var(--color-neutral-300, #aeaeb2);
+  border-right-color: var(--color-neutral-600, #636366);
+}
+
+html[data-theme="dark"] .ar-file-table__th--sortable:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--color-primary-500, #007aff) 0%,
+    var(--color-primary-600, #0066cc) 100%
+  );
+  color: var(--color-neutral-0, #ffffff);
+}
+
+html[data-theme="dark"] .ar-file-table__th--sorted {
+  background: linear-gradient(
+    to bottom,
+    var(--color-primary-400, #3399ff) 0%,
+    var(--color-primary-500, #007aff) 100%
+  );
+  color: var(--color-neutral-0, #ffffff);
+}
+
+/* Table Body */
+html[data-theme="dark"] .ar-file-table__table tbody {
+  background: var(--color-bg-primary);
+}
+
+/* Zebra stripes - 다크 모드 */
+html[data-theme="dark"] .ar-file-table__table tbody tr:nth-child(even) {
+  background: var(--color-neutral-900, rgba(255, 255, 255, 0.03));
+}
+
+html[data-theme="dark"] .ar-file-table__tr:hover {
+  background: var(--color-neutral-800, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--selected {
+  background: var(--color-primary-900, rgba(0, 122, 255, 0.2)) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--selected .ar-file-table__td {
+  color: var(--color-text-primary) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--selected:hover {
+  background: var(--color-primary-800, rgba(0, 122, 255, 0.3)) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--duplicate {
+  background: rgba(255, 59, 48, 0.15) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--duplicate:hover {
+  background: rgba(255, 59, 48, 0.2) !important;
+}
+
+/* Table Cells */
+html[data-theme="dark"] .ar-file-table__td {
+  border-bottom-color: var(--color-border-primary, #38383a);
+  border-right-color: var(--color-border-primary, #38383a);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__td--rownum {
+  background: var(--color-neutral-800, #2c2c2e);
+  color: var(--color-neutral-400, #8e8e93);
+  border-right-color: var(--color-neutral-700, #48484a);
+}
+
+html[data-theme="dark"] .ar-file-table__td--extracted {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .ar-file-table__td--date {
+  color: var(--color-text-secondary);
+}
+
+/* Dropdown Trigger */
+html[data-theme="dark"] .ar-file-table__dropdown-trigger {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__dropdown-trigger:hover:not(:disabled) {
+  border-color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .ar-file-table__dropdown-trigger--needs {
+  background: var(--color-warning-900, rgba(255, 149, 0, 0.15));
+  border-color: var(--color-warning-500, #ff9500);
+}
+
+/* Dropdown Menu */
+html[data-theme="dark"] .ar-table-dropdown {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary, #48484a);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .ar-table-dropdown__option:hover {
+  background: var(--color-neutral-700, rgba(255, 255, 255, 0.1));
+}
+
+html[data-theme="dark"] .ar-table-dropdown__option--selected {
+  background: var(--color-primary-900, rgba(0, 122, 255, 0.2));
+  color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .ar-table-dropdown__divider {
+  background: var(--color-border-primary);
+}
+
+/* Badges */
+html[data-theme="dark"] .ar-file-table__badge--ok {
+  color: var(--color-success-400, #30d158);
+}
+
+html[data-theme="dark"] .ar-file-table__badge--pending {
+  background: var(--color-warning-900, rgba(255, 149, 0, 0.2));
+  color: var(--color-warning-400, #ffcc00);
+}
+
+html[data-theme="dark"] .ar-file-table__badge--duplicate {
+  background: var(--color-error-900, rgba(255, 59, 48, 0.2));
+  color: var(--color-error-400, #ff6961);
+}
+
+/* Pagination */
+html[data-theme="dark"] .ar-file-table__pagination {
+  background: var(--color-bg-tertiary);
+  border-top-color: var(--color-border-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__pagination-btn {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .ar-file-table__pagination-btn:hover:not(:disabled) {
+  background: var(--color-neutral-700);
+  border-color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .ar-file-table__pagination-size {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+/* AR 고객명 클릭 버튼 */
+html[data-theme="dark"] .ar-file-table__extracted-name {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .ar-file-table__extracted-name:hover:not(:disabled) {
+  background: var(--color-primary-900, rgba(0, 122, 255, 0.2));
+  color: var(--color-primary-400);
+}
+
+/* Quick Select 버튼 */
+html[data-theme="dark"] .ar-file-table__quick-select-btn {
+  background: var(--color-warning-900, rgba(255, 149, 0, 0.2));
+  border-color: var(--color-warning-500);
+  color: var(--color-warning-400, #ffcc00);
+}
+
+html[data-theme="dark"] .ar-file-table__quick-select-btn:hover:not(:disabled) {
+  background: var(--color-warning-800, rgba(255, 149, 0, 0.3));
+}
+
+/* Empty State */
+html[data-theme="dark"] .ar-file-table__empty {
+  color: var(--color-text-tertiary);
 }
