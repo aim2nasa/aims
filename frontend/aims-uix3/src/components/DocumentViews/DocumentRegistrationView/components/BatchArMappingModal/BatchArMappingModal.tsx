@@ -171,13 +171,16 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
       backdropClosable={false}
       escapeToClose={!isAnalyzing && !isProcessing}
       className="batch-ar-mapping-modal"
-      initialWidth={1000}
-      initialHeight={600}
+      initialWidth={900}
+      initialHeight={700}
       minWidth={700}
-      minHeight={400}
+      minHeight={450}
       storageKey="batch-ar-mapping-modal"
     >
-      <div className="batch-ar-modal__content batch-ar-modal__content--table">
+      <div
+        className="batch-ar-modal__content batch-ar-modal__content--table"
+        style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0, height: '100%', overflow: 'hidden', gap: '8px' }}
+      >
         {isAnalyzing && rows.length === 0 ? (
           <div className="batch-ar-modal__analyzing">
             <div className="batch-ar-modal__spinner" />

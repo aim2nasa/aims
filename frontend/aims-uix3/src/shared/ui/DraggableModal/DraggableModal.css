@@ -330,9 +330,10 @@ html[data-theme="dark"] .draggable-modal--immersive .viewer-controls {
 /* ===== Content ===== */
 
 .draggable-modal__content {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 20px;
   background-color: var(--color-layout-secondary-light);
   min-height: 0;

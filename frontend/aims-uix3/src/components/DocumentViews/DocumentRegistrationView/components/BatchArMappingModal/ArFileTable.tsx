@@ -1,6 +1,6 @@
 /**
  * ArFileTable
- * @description AR 파일 매핑 테이블 컴포넌트 (엑셀 스타일)
+ * @description AR 파일 매핑 테이블 컴포넌트 (엑셀 스타일 - native table)
  */
 
 import React, { useMemo, useState, useCallback, useRef } from 'react'
@@ -18,6 +18,8 @@ import {
   getRowMappingDisplayText,
 } from '../../utils/arGroupingUtils'
 import './ArFileTable.css'
+
+// ===== 타입 정의 =====
 
 export interface ArFileTableProps {
   /** 테이블 행 데이터 */
@@ -68,6 +70,156 @@ export interface ArFileTableProps {
   onOpenCustomerSearchModal: (fileId: string) => void
 }
 
+interface ArFileTableRowProps {
+  row: ArFileTableRow
+  rowIndex: number
+  rowNumber: number // 표시용 행 번호
+  group: ArFileGroup | undefined
+  isMapped: boolean
+  isDuplicate: boolean
+  isDateDuplicate: boolean
+  displayText: string
+  sameNameCount: number
+  isDropdownOpen: boolean
+  disabled: boolean
+  onCheckboxClick: (e: React.MouseEvent, rowIndex: number, fileId: string) => void
+  onExtractedNameClick: (customerName: string) => void
+  onDropdownOpen: (fileId: string, el: HTMLButtonElement) => void
+  onToggleIncluded: (fileId: string) => void
+}
+
+// ===== 행 컴포넌트 (React.memo) =====
+
+const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
+  row,
+  rowIndex,
+  rowNumber,
+  group,
+  isMapped,
+  isDuplicate,
+  isDateDuplicate,
+  displayText,
+  sameNameCount,
+  isDropdownOpen,
+  disabled,
+  onCheckboxClick,
+  onExtractedNameClick,
+  onDropdownOpen,
+  onToggleIncluded,
+}) => {
+  const needsSelection = !isMapped && !isDuplicate
+
+  // 행 클래스 계산
+  const rowClassName = [
+    'ar-file-table__tr',
+    row.isSelected && 'ar-file-table__tr--selected',
+    !row.fileInfo.included && 'ar-file-table__tr--excluded',
+    isDuplicate && 'ar-file-table__tr--duplicate',
+  ].filter(Boolean).join(' ')
+
+  return (
+    <tr className={rowClassName}>
+      {/* 행 번호 */}
+      <td className="ar-file-table__td ar-file-table__td--rownum">
+        {rowNumber}
+      </td>
+
+      {/* 체크박스 */}
+      <td className="ar-file-table__td ar-file-table__td--checkbox">
+        <input
+          type="checkbox"
+          checked={row.isSelected}
+          onClick={(e) => {
+            e.stopPropagation()
+            onCheckboxClick(e, rowIndex, row.fileInfo.fileId)
+          }}
+          onChange={() => {/* onClick에서 처리 */}}
+          disabled={disabled}
+        />
+      </td>
+
+      {/* 파일명 */}
+      <td className="ar-file-table__td ar-file-table__td--filename" title={row.fileInfo.file.name}>
+        {row.fileInfo.file.name}
+      </td>
+
+      {/* AR 추출 고객명 */}
+      <td className="ar-file-table__td ar-file-table__td--extracted">
+        <button
+          type="button"
+          className="ar-file-table__extracted-name"
+          onClick={() => onExtractedNameClick(row.extractedCustomerName)}
+          disabled={disabled}
+          title={sameNameCount > 1 ? `클릭하여 "${row.extractedCustomerName}" ${sameNameCount}개 파일 선택/해제` : row.extractedCustomerName}
+        >
+          {row.extractedCustomerName === '__UNKNOWN__' ? '(알 수 없음)' : row.extractedCustomerName}
+          {sameNameCount > 1 && (
+            <span className="ar-file-table__extracted-count">({sameNameCount})</span>
+          )}
+        </button>
+      </td>
+
+      {/* 매핑 고객 드롭다운 */}
+      <td className="ar-file-table__td ar-file-table__td--mapped">
+        <button
+          type="button"
+          className={[
+            'ar-file-table__dropdown-trigger',
+            needsSelection && 'ar-file-table__dropdown-trigger--needs',
+            isDropdownOpen && 'ar-file-table__dropdown-trigger--open',
+          ].filter(Boolean).join(' ')}
+          onClick={(e) => onDropdownOpen(row.fileInfo.fileId, e.currentTarget)}
+          disabled={disabled || isDuplicate}
+        >
+          <span className="ar-file-table__dropdown-text">{displayText}</span>
+          <span className="ar-file-table__dropdown-arrow">▼</span>
+        </button>
+      </td>
+
+      {/* 발행일 */}
+      <td className="ar-file-table__td ar-file-table__td--date">
+        {formatIssueDate(row.fileInfo.metadata.issue_date)}
+      </td>
+
+      {/* 상태 */}
+      <td className="ar-file-table__td ar-file-table__td--status">
+        {isDuplicate ? (
+          <span className="ar-file-table__badge ar-file-table__badge--duplicate">중복</span>
+        ) : isDateDuplicate ? (
+          <span className="ar-file-table__badge ar-file-table__badge--warning">날짜중복</span>
+        ) : isMapped ? (
+          <span className="ar-file-table__badge ar-file-table__badge--ok">✓</span>
+        ) : (
+          <span className="ar-file-table__badge ar-file-table__badge--pending">미매핑</span>
+        )}
+      </td>
+
+      {/* 포함 여부 */}
+      <td className="ar-file-table__td ar-file-table__td--include">
+        <input
+          type="checkbox"
+          checked={row.fileInfo.included}
+          onChange={() => onToggleIncluded(row.fileInfo.fileId)}
+          disabled={disabled || isDuplicate}
+        />
+      </td>
+    </tr>
+  )
+}, (prev, next) => {
+  // 얕은 비교로 불필요한 리렌더링 방지
+  return (
+    prev.row === next.row &&
+    prev.isMapped === next.isMapped &&
+    prev.isDropdownOpen === next.isDropdownOpen &&
+    prev.sameNameCount === next.sameNameCount &&
+    prev.disabled === next.disabled
+  )
+})
+
+ArFileTableRowComponent.displayName = 'ArFileTableRow'
+
+// ===== 메인 컴포넌트 =====
+
 export const ArFileTable: React.FC<ArFileTableProps> = ({
   rows,
   groups,
@@ -81,7 +233,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   onToggleRowSelection,
   onSelectAllRows,
   onUpdateRowMapping,
-  onUpdateRowNewCustomer,
   onToggleRowIncluded,
   onSortChange,
   onSearchChange,
@@ -89,11 +240,10 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   onPageChange,
   onItemsPerPageChange,
   onBulkAssignCustomer,
-  onBulkAssignNewCustomer,
   onOpenNewCustomerModal,
   onOpenCustomerSearchModal,
 }) => {
-  // 드롭다운 상태
+  // 드롭다운 상태 (단일 관리)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const dropdownTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -196,6 +346,16 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     )
   }, [rows, groups])
 
+  // 같은 AR 고객명 카운트 맵
+  const sameNameCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    paginatedRows.forEach(row => {
+      const name = row.extractedCustomerName
+      map.set(name, (map.get(name) || 0) + 1)
+    })
+    return map
+  }, [paginatedRows])
+
   // 정렬 토글
   const handleSortToggle = useCallback((field: ArTableSortField) => {
     if (sortField === field) {
@@ -221,38 +381,26 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     rowIndex: number,
     fileId: string
   ) => {
-    // Shift 키가 눌려있고 이전에 클릭한 행이 있으면 범위 선택
     if (e.shiftKey && lastClickedIndexRef.current !== null) {
       const start = Math.min(lastClickedIndexRef.current, rowIndex)
       const end = Math.max(lastClickedIndexRef.current, rowIndex)
-
-      // 범위 내 파일 ID 수집
       const rangeFileIds = paginatedRows
         .slice(start, end + 1)
         .map(row => row.fileInfo.fileId)
-
-      // 범위 선택 (모두 선택 상태로)
       onSelectAllRows(rangeFileIds, true)
     } else {
-      // 일반 클릭 - 단일 토글
       onToggleRowSelection(fileId)
     }
-
-    // 마지막 클릭 인덱스 저장
     lastClickedIndexRef.current = rowIndex
   }, [paginatedRows, onSelectAllRows, onToggleRowSelection])
 
   // AR 고객명 클릭 시 같은 고객명 파일들 선택 토글
   const handleExtractedNameClick = useCallback((customerName: string) => {
-    // 현재 표시된 행 중 같은 AR 고객명을 가진 파일들
     const sameNameRows = paginatedRows.filter(
       row => row.extractedCustomerName === customerName
     )
-
-    // 모두 선택되어 있으면 해제, 아니면 선택
     const allSelected = sameNameRows.every(row => row.isSelected)
     const fileIds = sameNameRows.map(row => row.fileInfo.fileId)
-
     onSelectAllRows(fileIds, !allSelected)
   }, [paginatedRows, onSelectAllRows])
 
@@ -291,7 +439,7 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     onOpenCustomerSearchModal(fileId)
   }, [closeDropdown, onOpenCustomerSearchModal])
 
-  // 일괄 매핑용 드롭다운 열기
+  // 일괄 매핑용 드롭다운
   const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false)
   const [bulkDropdownPosition, setBulkDropdownPosition] = useState({ top: 0, left: 0 })
   const bulkTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -334,6 +482,17 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     return groups.find(g => g.groupId === row.groupId)
   }, [groups])
 
+  // 현재 열린 드롭다운의 행과 그룹
+  const openDropdownRow = useMemo(() => {
+    if (!openDropdownId) return null
+    return paginatedRows.find(r => r.fileInfo.fileId === openDropdownId) || null
+  }, [openDropdownId, paginatedRows])
+
+  const openDropdownGroup = useMemo(() => {
+    if (!openDropdownRow) return null
+    return getGroupForRow(openDropdownRow)
+  }, [openDropdownRow, getGroupForRow])
+
   // 외부 클릭 시 드롭다운 닫기
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -358,12 +517,27 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openDropdownId, bulkDropdownOpen, closeDropdown, closeBulkDropdown])
 
+  // 헤더 정렬 아이콘 렌더
+  const renderSortIcon = (field: ArTableSortField) => {
+    if (sortField !== field) return null
+    return <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+  }
+
+  // 헤더 클래스
+  const getThClass = (field: ArTableSortField) => {
+    return [
+      'ar-file-table__th',
+      `ar-file-table__th--${field.toLowerCase()}`,
+      'ar-file-table__th--sortable',
+      sortField === field && 'ar-file-table__th--sorted',
+    ].filter(Boolean).join(' ')
+  }
+
   return (
-    <div className="ar-file-table">
+    <div className="ar-file-table" style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0, height: '100%' }}>
       {/* 도구바 */}
       <div className="ar-file-table__toolbar">
         <div className="ar-file-table__toolbar-left">
-          {/* 검색 */}
           <input
             type="text"
             className="ar-file-table__search"
@@ -372,8 +546,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             onChange={(e) => onSearchChange(e.target.value)}
             disabled={disabled}
           />
-
-          {/* 필터 */}
           <select
             className="ar-file-table__filter"
             value={mappingStatusFilter}
@@ -388,7 +560,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
         </div>
 
         <div className="ar-file-table__toolbar-right">
-          {/* 미매핑 전체 선택 버튼 */}
           {unmappedRows.length > 0 && selectedCount === 0 && (
             <button
               type="button"
@@ -408,7 +579,7 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
         </div>
       </div>
 
-      {/* 일괄 매핑 도구바 - 선택된 파일이 있을 때 표시 */}
+      {/* 일괄 매핑 도구바 */}
       {selectedCount > 0 && (
         <div className="ar-file-table__bulk-toolbar">
           <span className="ar-file-table__bulk-count">
@@ -437,238 +608,112 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
         </div>
       )}
 
-      {/* 테이블 헤더 */}
-      <div className="ar-file-table__header">
-        <div className="ar-file-table__col ar-file-table__col--checkbox">
-          <input
-            type="checkbox"
-            checked={isAllPageSelected}
-            ref={input => {
-              if (input) input.indeterminate = isSomePageSelected && !isAllPageSelected
-            }}
-            onChange={handleSelectAllToggle}
-            disabled={disabled}
-          />
-        </div>
-        <div
-          className={`ar-file-table__col ar-file-table__col--filename ar-file-table__col--sortable ${sortField === 'fileName' ? 'ar-file-table__col--sorted' : ''}`}
-          onClick={() => handleSortToggle('fileName')}
-        >
-          파일명
-          {sortField === 'fileName' && (
-            <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </div>
-        <div
-          className={`ar-file-table__col ar-file-table__col--extracted ar-file-table__col--sortable ${sortField === 'extractedCustomer' ? 'ar-file-table__col--sorted' : ''}`}
-          onClick={() => handleSortToggle('extractedCustomer')}
-        >
-          AR 고객명
-          {sortField === 'extractedCustomer' && (
-            <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </div>
-        <div
-          className={`ar-file-table__col ar-file-table__col--mapped ar-file-table__col--sortable ${sortField === 'mappedCustomer' ? 'ar-file-table__col--sorted' : ''}`}
-          onClick={() => handleSortToggle('mappedCustomer')}
-        >
-          매핑 고객
-          {sortField === 'mappedCustomer' && (
-            <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </div>
-        <div
-          className={`ar-file-table__col ar-file-table__col--date ar-file-table__col--sortable ${sortField === 'issueDate' ? 'ar-file-table__col--sorted' : ''}`}
-          onClick={() => handleSortToggle('issueDate')}
-        >
-          발행일
-          {sortField === 'issueDate' && (
-            <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </div>
-        <div
-          className={`ar-file-table__col ar-file-table__col--status ar-file-table__col--sortable ${sortField === 'status' ? 'ar-file-table__col--sorted' : ''}`}
-          onClick={() => handleSortToggle('status')}
-        >
-          상태
-          {sortField === 'status' && (
-            <span className="ar-file-table__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </div>
-        <div className="ar-file-table__col ar-file-table__col--include">
-          포함
-        </div>
-      </div>
-
-      {/* 테이블 바디 */}
-      <div className="ar-file-table__body">
-        {paginatedRows.length === 0 ? (
-          <div className="ar-file-table__empty">
-            {searchQuery || mappingStatusFilter !== 'all'
-              ? '검색 결과가 없습니다'
-              : '파일이 없습니다'}
-          </div>
-        ) : (
-          paginatedRows.map((row, rowIndex) => {
-            const isMapped = isRowMapped(row, groups)
-            const isDuplicate = row.fileInfo.duplicateStatus.isHashDuplicate
-            const isDateDuplicate = row.fileInfo.duplicateStatus.isIssueDateDuplicate
-            const displayText = getRowMappingDisplayText(row, groups)
-            const group = getGroupForRow(row)
-            const needsSelection = !isMapped && !isDuplicate
-
-            // 같은 AR 고객명을 가진 파일 수 계산
-            const sameNameCount = paginatedRows.filter(
-              r => r.extractedCustomerName === row.extractedCustomerName
-            ).length
-
-            return (
-              <div
-                key={row.fileInfo.fileId}
-                className={`ar-file-table__row ${row.isSelected ? 'ar-file-table__row--selected' : ''} ${!row.fileInfo.included ? 'ar-file-table__row--excluded' : ''} ${isDuplicate ? 'ar-file-table__row--duplicate' : ''}`}
+      {/* 테이블 컨테이너 */}
+      <div className="ar-file-table__table-container" style={{ flex: '1 1 0', minHeight: 0, overflow: 'auto' }}>
+        <table className="ar-file-table__table">
+          <colgroup>
+            <col className="ar-file-table__col--rownum" />
+            <col className="ar-file-table__col--checkbox" />
+            <col className="ar-file-table__col--filename" />
+            <col className="ar-file-table__col--extracted" />
+            <col className="ar-file-table__col--mapped" />
+            <col className="ar-file-table__col--date" />
+            <col className="ar-file-table__col--status" />
+            <col className="ar-file-table__col--include" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th className="ar-file-table__th ar-file-table__th--rownum">#</th>
+              <th className="ar-file-table__th ar-file-table__th--checkbox">
+                <input
+                  type="checkbox"
+                  checked={isAllPageSelected}
+                  ref={input => {
+                    if (input) input.indeterminate = isSomePageSelected && !isAllPageSelected
+                  }}
+                  onChange={handleSelectAllToggle}
+                  disabled={disabled}
+                />
+              </th>
+              <th
+                className={getThClass('fileName')}
+                onClick={() => handleSortToggle('fileName')}
               >
-                {/* 체크박스 - Shift+Click 지원 */}
-                <div className="ar-file-table__col ar-file-table__col--checkbox">
-                  <input
-                    type="checkbox"
-                    checked={row.isSelected}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleRowCheckboxClick(e, rowIndex, row.fileInfo.fileId)
-                    }}
-                    onChange={() => {/* onClick에서 처리 */}}
+                파일명 {renderSortIcon('fileName')}
+              </th>
+              <th
+                className={getThClass('extractedCustomer')}
+                onClick={() => handleSortToggle('extractedCustomer')}
+              >
+                AR 고객명 {renderSortIcon('extractedCustomer')}
+              </th>
+              <th
+                className={getThClass('mappedCustomer')}
+                onClick={() => handleSortToggle('mappedCustomer')}
+              >
+                매핑 고객 {renderSortIcon('mappedCustomer')}
+              </th>
+              <th
+                className={getThClass('issueDate')}
+                onClick={() => handleSortToggle('issueDate')}
+              >
+                발행일 {renderSortIcon('issueDate')}
+              </th>
+              <th
+                className={getThClass('status')}
+                onClick={() => handleSortToggle('status')}
+              >
+                상태 {renderSortIcon('status')}
+              </th>
+              <th className="ar-file-table__th ar-file-table__th--include">
+                포함
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedRows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="ar-file-table__empty">
+                  {searchQuery || mappingStatusFilter !== 'all'
+                    ? '검색 결과가 없습니다'
+                    : '파일이 없습니다'}
+                </td>
+              </tr>
+            ) : (
+              paginatedRows.map((row, rowIndex) => {
+                const isMapped = isRowMapped(row, groups)
+                const isDuplicate = row.fileInfo.duplicateStatus.isHashDuplicate
+                const isDateDuplicate = row.fileInfo.duplicateStatus.isIssueDateDuplicate
+                const displayText = getRowMappingDisplayText(row, groups)
+                const group = getGroupForRow(row)
+                const sameNameCount = sameNameCountMap.get(row.extractedCustomerName) || 1
+                // 행 번호: (현재 페이지 - 1) * 페이지당 항목 수 + rowIndex + 1
+                const rowNumber = (currentPage - 1) * itemsPerPage + rowIndex + 1
+
+                return (
+                  <ArFileTableRowComponent
+                    key={row.fileInfo.fileId}
+                    row={row}
+                    rowIndex={rowIndex}
+                    rowNumber={rowNumber}
+                    group={group}
+                    isMapped={isMapped}
+                    isDuplicate={isDuplicate}
+                    isDateDuplicate={isDateDuplicate}
+                    displayText={displayText}
+                    sameNameCount={sameNameCount}
+                    isDropdownOpen={openDropdownId === row.fileInfo.fileId}
                     disabled={disabled}
+                    onCheckboxClick={handleRowCheckboxClick}
+                    onExtractedNameClick={handleExtractedNameClick}
+                    onDropdownOpen={openDropdown}
+                    onToggleIncluded={onToggleRowIncluded}
                   />
-                </div>
-
-                {/* 파일명 */}
-                <div className="ar-file-table__col ar-file-table__col--filename">
-                  <span className="ar-file-table__filename" title={row.fileInfo.file.name}>
-                    {row.fileInfo.file.name}
-                  </span>
-                </div>
-
-                {/* AR 추출 고객명 - 클릭 시 같은 고객명 선택 */}
-                <div className="ar-file-table__col ar-file-table__col--extracted">
-                  <button
-                    type="button"
-                    className="ar-file-table__extracted-name"
-                    onClick={() => handleExtractedNameClick(row.extractedCustomerName)}
-                    disabled={disabled}
-                    title={sameNameCount > 1 ? `클릭하여 "${row.extractedCustomerName}" ${sameNameCount}개 파일 선택/해제` : row.extractedCustomerName}
-                  >
-                    {row.extractedCustomerName === '__UNKNOWN__' ? '(알 수 없음)' : row.extractedCustomerName}
-                    {sameNameCount > 1 && (
-                      <span className="ar-file-table__extracted-count">({sameNameCount})</span>
-                    )}
-                  </button>
-                </div>
-
-                {/* 매핑 고객 드롭다운 */}
-                <div className="ar-file-table__col ar-file-table__col--mapped">
-                  <button
-                    type="button"
-                    className={`ar-file-table__dropdown-trigger ${needsSelection ? 'ar-file-table__dropdown-trigger--needs' : ''} ${openDropdownId === row.fileInfo.fileId ? 'ar-file-table__dropdown-trigger--open' : ''}`}
-                    onClick={(e) => openDropdown(row.fileInfo.fileId, e.currentTarget)}
-                    disabled={disabled || isDuplicate}
-                  >
-                    <span className="ar-file-table__dropdown-text">{displayText}</span>
-                    <span className="ar-file-table__dropdown-arrow">▼</span>
-                  </button>
-                </div>
-
-                {/* 발행일 */}
-                <div className="ar-file-table__col ar-file-table__col--date">
-                  {formatIssueDate(row.fileInfo.metadata.issue_date)}
-                </div>
-
-                {/* 상태 */}
-                <div className="ar-file-table__col ar-file-table__col--status">
-                  {isDuplicate ? (
-                    <span className="ar-file-table__badge ar-file-table__badge--duplicate">중복</span>
-                  ) : isDateDuplicate ? (
-                    <span className="ar-file-table__badge ar-file-table__badge--warning">날짜중복</span>
-                  ) : isMapped ? (
-                    <span className="ar-file-table__badge ar-file-table__badge--ok">✓</span>
-                  ) : (
-                    <span className="ar-file-table__badge ar-file-table__badge--pending">미매핑</span>
-                  )}
-                </div>
-
-                {/* 포함 여부 */}
-                <div className="ar-file-table__col ar-file-table__col--include">
-                  <input
-                    type="checkbox"
-                    checked={row.fileInfo.included}
-                    onChange={() => onToggleRowIncluded(row.fileInfo.fileId)}
-                    disabled={disabled || isDuplicate}
-                  />
-                </div>
-
-                {/* 행별 드롭다운 메뉴 (Portal) */}
-                {openDropdownId === row.fileInfo.fileId && group && createPortal(
-                  <div
-                    className="ar-table-dropdown ar-table-dropdown--open"
-                    style={{
-                      position: 'fixed',
-                      top: dropdownPosition.top,
-                      left: dropdownPosition.left,
-                    }}
-                  >
-                    {/* 매칭된 고객 목록 */}
-                    {group.matchingCustomers.length > 0 && (
-                      <>
-                        <div className="ar-table-dropdown__section-title">추천 고객</div>
-                        {group.matchingCustomers.map(customer => (
-                          <button
-                            key={customer._id}
-                            type="button"
-                            className={`ar-table-dropdown__option ${row.individualCustomerId === customer._id ? 'ar-table-dropdown__option--selected' : ''}`}
-                            onClick={() => handleSelectCustomer(row.fileInfo.fileId, customer)}
-                          >
-                            <span className="ar-table-dropdown__option-name">
-                              {customer.personal_info?.name || '이름 없음'}
-                            </span>
-                            <span className="ar-table-dropdown__option-type">
-                              ({customer.insurance_info?.customer_type || '개인'})
-                            </span>
-                            {row.individualCustomerId === customer._id && (
-                              <span className="ar-table-dropdown__option-check">✓</span>
-                            )}
-                          </button>
-                        ))}
-                        <div className="ar-table-dropdown__divider" />
-                      </>
-                    )}
-
-                    {/* 새 고객 등록 */}
-                    <button
-                      type="button"
-                      className="ar-table-dropdown__option ar-table-dropdown__option--action"
-                      onClick={() => handleNewCustomer(row.fileInfo.fileId, row.extractedCustomerName)}
-                    >
-                      <span className="ar-table-dropdown__option-icon">+</span>
-                      <span className="ar-table-dropdown__option-text">새 고객 등록</span>
-                    </button>
-
-                    {/* 다른 고객 검색 */}
-                    <button
-                      type="button"
-                      className="ar-table-dropdown__option ar-table-dropdown__option--action"
-                      onClick={() => handleSearchCustomer(row.fileInfo.fileId)}
-                    >
-                      <span className="ar-table-dropdown__option-icon">Q</span>
-                      <span className="ar-table-dropdown__option-text">
-                        {group.matchingCustomers.length > 0 ? '다른 고객 검색' : '기존 고객 검색'}
-                      </span>
-                    </button>
-                  </div>,
-                  document.body
-                )}
-              </div>
-            )
-          })
-        )}
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* 페이지네이션 */}
@@ -704,12 +749,70 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
             disabled={disabled}
           >
-            <option value={10}>10개씩</option>
             <option value={20}>20개씩</option>
             <option value={50}>50개씩</option>
             <option value={100}>100개씩</option>
+            <option value={200}>200개씩</option>
           </select>
         </div>
+      )}
+
+      {/* 행별 드롭다운 메뉴 (Portal - 단일 관리) */}
+      {openDropdownId && openDropdownRow && openDropdownGroup && createPortal(
+        <div
+          className="ar-table-dropdown ar-table-dropdown--open"
+          style={{
+            position: 'fixed',
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+          }}
+        >
+          {openDropdownGroup.matchingCustomers.length > 0 && (
+            <>
+              <div className="ar-table-dropdown__section-title">추천 고객</div>
+              {openDropdownGroup.matchingCustomers.map(customer => (
+                <button
+                  key={customer._id}
+                  type="button"
+                  className={`ar-table-dropdown__option ${openDropdownRow.individualCustomerId === customer._id ? 'ar-table-dropdown__option--selected' : ''}`}
+                  onClick={() => handleSelectCustomer(openDropdownRow.fileInfo.fileId, customer)}
+                >
+                  <span className="ar-table-dropdown__option-name">
+                    {customer.personal_info?.name || '이름 없음'}
+                  </span>
+                  <span className="ar-table-dropdown__option-type">
+                    ({customer.insurance_info?.customer_type || '개인'})
+                  </span>
+                  {openDropdownRow.individualCustomerId === customer._id && (
+                    <span className="ar-table-dropdown__option-check">✓</span>
+                  )}
+                </button>
+              ))}
+              <div className="ar-table-dropdown__divider" />
+            </>
+          )}
+
+          <button
+            type="button"
+            className="ar-table-dropdown__option ar-table-dropdown__option--action"
+            onClick={() => handleNewCustomer(openDropdownRow.fileInfo.fileId, openDropdownRow.extractedCustomerName)}
+          >
+            <span className="ar-table-dropdown__option-icon">+</span>
+            <span className="ar-table-dropdown__option-text">새 고객 등록</span>
+          </button>
+
+          <button
+            type="button"
+            className="ar-table-dropdown__option ar-table-dropdown__option--action"
+            onClick={() => handleSearchCustomer(openDropdownRow.fileInfo.fileId)}
+          >
+            <span className="ar-table-dropdown__option-icon">Q</span>
+            <span className="ar-table-dropdown__option-text">
+              {openDropdownGroup.matchingCustomers.length > 0 ? '다른 고객 검색' : '기존 고객 검색'}
+            </span>
+          </button>
+        </div>,
+        document.body
       )}
 
       {/* 일괄 매핑 드롭다운 (Portal) */}
@@ -748,7 +851,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             className="ar-table-dropdown__option ar-table-dropdown__option--action"
             onClick={() => {
               closeBulkDropdown()
-              // 첫 번째 선택된 행의 추출 고객명 사용
               const firstSelected = rows.find(r => r.isSelected)
               if (firstSelected) {
                 onOpenNewCustomerModal('__BULK__', firstSelected.extractedCustomerName)

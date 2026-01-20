@@ -1,17 +1,16 @@
 /**
  * ArFileTable Styles
- * @description AR 파일 매핑 테이블 스타일 (엑셀 스타일)
+ * @description AR 파일 매핑 테이블 스타일 (엑셀 스타일 - native table)
  */
 
 /* ===== Container ===== */
 .ar-file-table {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
   min-height: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
   background: var(--color-bg-primary);
 }
 
@@ -20,16 +19,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 6px 8px;
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .ar-file-table__toolbar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ar-file-table__toolbar-right {
@@ -39,11 +39,11 @@
 }
 
 .ar-file-table__search {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 12px;
-  width: 200px;
+  border-radius: 4px;
+  font-size: 11px;
+  width: 180px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
 }
@@ -54,36 +54,35 @@
 }
 
 .ar-file-table__filter {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 11px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   cursor: pointer;
 }
 
 .ar-file-table__count {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-secondary);
 }
 
 /* 미매핑 전체 선택 버튼 */
 .ar-file-table__quick-select-btn {
-  padding: 5px 10px;
+  padding: 4px 8px;
   border: 1px solid var(--color-warning, #ff9500);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--color-warning-bg, rgba(255, 149, 0, 0.1));
   color: var(--color-warning, #ff9500);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s, transform 0.1s;
+  transition: background-color 0.15s;
 }
 
 .ar-file-table__quick-select-btn:hover:not(:disabled) {
   background: var(--color-warning-bg, rgba(255, 149, 0, 0.2));
-  transform: translateY(-1px);
 }
 
 .ar-file-table__quick-select-btn:disabled {
@@ -95,17 +94,18 @@
 .ar-file-table__bulk-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, var(--color-primary-bg, rgba(0, 122, 255, 0.12)) 0%, var(--color-primary-bg, rgba(0, 122, 255, 0.08)) 100%);
   border-bottom: 2px solid var(--color-primary);
-  animation: bulkToolbarSlideIn 0.2s ease-out;
+  animation: bulkToolbarSlideIn 0.15s ease-out;
+  flex-shrink: 0;
 }
 
 @keyframes bulkToolbarSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -114,21 +114,21 @@
 }
 
 .ar-file-table__bulk-count {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-primary);
 }
 
 .ar-file-table__bulk-arrow {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-primary);
   font-weight: bold;
 }
 
 .ar-file-table__bulk-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -143,13 +143,10 @@
   border: none;
   background: var(--color-primary);
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
 }
 
 .ar-file-table__bulk-btn--primary:hover:not(:disabled) {
   background: var(--color-primary-hover, #0066cc);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
 }
 
 .ar-file-table__bulk-btn--ghost {
@@ -163,143 +160,243 @@
   background: var(--color-bg-hover);
 }
 
-/* 레거시 호환 */
-.ar-file-table__bulk-btn--secondary {
-  border: 1px solid var(--color-primary);
-  background: transparent;
-  color: var(--color-primary);
+/* ===== Table Container ===== */
+.ar-file-table__table-container {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  overflow: auto;
+  min-height: 0;
+  border: 1px solid #8e8e93;
+  border-radius: 2px;
+  margin: 0 4px;
+  background: var(--color-bg-primary);
 }
 
-.ar-file-table__bulk-btn--secondary:hover:not(:disabled) {
-  background: var(--color-primary-bg, rgba(0, 122, 255, 0.1));
-}
-
-/* ===== Header ===== */
-.ar-file-table__header {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border);
+/* ===== Table (Native) ===== */
+.ar-file-table__table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  user-select: none;
+  table-layout: fixed;
 }
 
-.ar-file-table__col--sortable {
-  cursor: pointer;
-  transition: color 0.15s;
-}
-
-.ar-file-table__col--sortable:hover {
-  color: var(--color-primary);
-}
-
-.ar-file-table__col--sorted {
-  color: var(--color-primary);
-}
-
-.ar-file-table__sort-icon {
-  margin-left: 4px;
-  font-size: 9px;
-}
-
-/* ===== Body ===== */
-.ar-file-table__body {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 100px;
-}
-
-.ar-file-table__empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 16px;
-  color: var(--color-text-tertiary);
-  font-size: 13px;
-}
-
-/* ===== Row ===== */
-.ar-file-table__row {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.05));
-  font-size: 12px;
-  transition: background-color 0.15s;
-}
-
-.ar-file-table__row:hover {
-  background: var(--color-bg-hover, rgba(0, 0, 0, 0.02));
-}
-
-.ar-file-table__row--selected {
-  background: var(--color-primary-bg, rgba(0, 122, 255, 0.08));
-}
-
-.ar-file-table__row--selected:hover {
-  background: var(--color-primary-bg, rgba(0, 122, 255, 0.12));
-}
-
-.ar-file-table__row--excluded {
-  opacity: 0.5;
-}
-
-.ar-file-table__row--duplicate {
-  background: var(--color-error-bg, rgba(255, 59, 48, 0.05));
-}
-
-/* ===== Columns ===== */
-.ar-file-table__col {
-  display: flex;
-  align-items: center;
+/* ===== Colgroup (컬럼 너비) ===== */
+.ar-file-table__col--rownum {
+  width: 36px;
 }
 
 .ar-file-table__col--checkbox {
   width: 32px;
-  flex-shrink: 0;
-  justify-content: center;
-}
-
-.ar-file-table__col--checkbox input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
 }
 
 .ar-file-table__col--filename {
-  flex: 1;
-  min-width: 0;
-  padding-right: 12px;
+  /* 남은 공간 모두 차지 */
 }
 
-.ar-file-table__filename {
+.ar-file-table__col--extracted {
+  width: 80px;
+}
+
+.ar-file-table__col--mapped {
+  width: 120px;
+}
+
+.ar-file-table__col--date {
+  width: 75px;
+}
+
+.ar-file-table__col--status {
+  width: 50px;
+}
+
+.ar-file-table__col--include {
+  width: 36px;
+}
+
+/* ===== Table Header ===== */
+.ar-file-table__th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 4px 6px;
+  background: var(--color-bg-tertiary, #f2f2f7);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: left;
+  border-bottom: 2px solid var(--color-border, #d1d1d6);
+  border-right: 1px solid var(--color-border, #d1d1d6);
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ar-file-table__th:last-child {
+  border-right: none;
+}
+
+.ar-file-table__th--rownum {
+  text-align: center;
+  padding: 4px 2px;
+  background: var(--color-bg-tertiary, #e5e5ea);
+}
+
+.ar-file-table__th--checkbox {
+  text-align: center;
+  padding: 4px 2px;
+}
+
+.ar-file-table__th--date,
+.ar-file-table__th--status,
+.ar-file-table__th--include {
+  text-align: center;
+}
+
+.ar-file-table__th--sortable {
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.ar-file-table__th--sortable:hover {
+  color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.ar-file-table__th--sorted {
+  color: var(--color-primary);
+  background: var(--color-primary-bg, rgba(0, 122, 255, 0.05));
+}
+
+.ar-file-table__sort-icon {
+  margin-left: 4px;
+  font-size: 8px;
+}
+
+/* ===== Table Body ===== */
+.ar-file-table__table tbody {
+  background: var(--color-bg-primary);
+}
+
+/* ===== Table Row ===== */
+.ar-file-table__tr {
+  transition: background-color 0.1s;
+  height: 28px; /* 컴팩트 행 높이 */
+}
+
+/* 줄무늬 (엑셀 스타일) */
+.ar-file-table__table tbody tr:nth-child(even) {
+  background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
+}
+
+.ar-file-table__tr:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.05)) !important;
+}
+
+.ar-file-table__tr--selected {
+  background: var(--color-primary-bg, rgba(0, 122, 255, 0.12)) !important;
+}
+
+.ar-file-table__tr--selected:hover {
+  background: var(--color-primary-bg, rgba(0, 122, 255, 0.18)) !important;
+}
+
+.ar-file-table__tr--excluded {
+  opacity: 0.5;
+}
+
+.ar-file-table__tr--duplicate {
+  background: var(--color-error-bg, rgba(255, 59, 48, 0.08)) !important;
+}
+
+.ar-file-table__tr--duplicate:hover {
+  background: var(--color-error-bg, rgba(255, 59, 48, 0.12)) !important;
+}
+
+/* ===== Table Cell ===== */
+.ar-file-table__td {
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--color-border, #d1d1d6);
+  border-right: 1px solid var(--color-border, #d1d1d6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--color-text-primary);
+  vertical-align: middle;
+  font-size: 11px;
 }
 
-.ar-file-table__col--extracted {
-  width: 120px;
-  flex-shrink: 0;
-  padding-right: 12px;
+.ar-file-table__td:last-child {
+  border-right: none;
+}
+
+.ar-file-table__td--rownum {
+  text-align: center;
+  padding: 2px 4px;
+  background: var(--color-bg-tertiary, #f2f2f7);
+  color: var(--color-text-tertiary, #8e8e93);
+  font-size: 10px;
+}
+
+.ar-file-table__td--checkbox {
+  text-align: center;
+  padding: 2px;
+}
+
+.ar-file-table__td--checkbox input {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.ar-file-table__td--filename {
+  font-weight: 400;
+  max-width: 0; /* text-overflow 작동을 위해 필요 */
+}
+
+.ar-file-table__td--extracted {
   color: var(--color-text-secondary);
 }
 
-/* AR 고객명 클릭 버튼 */
+.ar-file-table__td--date {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.ar-file-table__td--status {
+  text-align: center;
+}
+
+.ar-file-table__td--include {
+  text-align: center;
+}
+
+.ar-file-table__td--include input {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* ===== Empty State ===== */
+.ar-file-table__empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+/* ===== AR 고객명 클릭 버튼 ===== */
 .ar-file-table__extracted-name {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  gap: 2px;
+  padding: 2px 4px;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
   white-space: nowrap;
@@ -323,47 +420,15 @@
   font-weight: 500;
 }
 
-.ar-file-table__col--mapped {
-  width: 180px;
-  flex-shrink: 0;
-  padding-right: 12px;
-}
-
-.ar-file-table__col--date {
-  width: 90px;
-  flex-shrink: 0;
-  text-align: right;
-  color: var(--color-text-secondary);
-  padding-right: 12px;
-}
-
-.ar-file-table__col--status {
-  width: 70px;
-  flex-shrink: 0;
-  justify-content: center;
-}
-
-.ar-file-table__col--include {
-  width: 50px;
-  flex-shrink: 0;
-  justify-content: center;
-}
-
-.ar-file-table__col--include input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
 /* ===== Dropdown Trigger ===== */
 .ar-file-table__dropdown-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  padding: 5px 8px;
+  padding: 3px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: 3px;
   background: var(--color-bg-primary);
   font-size: 11px;
   cursor: pointer;
@@ -381,7 +446,7 @@
 }
 
 .ar-file-table__dropdown-trigger--needs {
-  border: 2px solid var(--color-warning, #ff9500);
+  border: 1px solid var(--color-warning, #ff9500);
   background: var(--color-warning-bg, rgba(255, 149, 0, 0.08));
 }
 
@@ -411,8 +476,8 @@
 /* ===== Badges ===== */
 .ar-file-table__badge {
   display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 5px;
+  border-radius: 3px;
   font-size: 10px;
   font-weight: 500;
 }
@@ -441,10 +506,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 6px 8px;
   background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
 .ar-file-table__pagination-info {
@@ -454,16 +520,16 @@
 .ar-file-table__pagination-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ar-file-table__pagination-btn {
-  padding: 4px 8px;
+  padding: 3px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
   transition: border-color 0.15s, background-color 0.15s;
 }
@@ -480,35 +546,35 @@
 
 .ar-file-table__pagination-current {
   color: var(--color-text-secondary);
-  min-width: 60px;
+  min-width: 50px;
   text-align: center;
 }
 
 .ar-file-table__pagination-size {
-  padding: 4px 8px;
+  padding: 3px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-bg-primary);
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
 }
 
 /* ===== Dropdown Menu (Portal) ===== */
 .ar-table-dropdown {
-  min-width: 200px;
-  max-width: 280px;
+  min-width: 180px;
+  max-width: 260px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-strong, #d1d1d6);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
   z-index: 10000;
   overflow: hidden;
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
 }
 
 .ar-table-dropdown__section-title {
-  padding: 8px 12px 4px;
+  padding: 6px 10px 3px;
   font-size: 10px;
   font-weight: 600;
   color: var(--color-text-tertiary);
@@ -519,13 +585,13 @@
 .ar-table-dropdown__option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 7px 10px;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   text-align: left;
   color: var(--color-text-primary);
   transition: background-color 0.15s;
@@ -554,7 +620,7 @@
 .ar-table-dropdown__option-type {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .ar-table-dropdown__option-check {
@@ -564,7 +630,7 @@
 }
 
 .ar-table-dropdown__option-icon {
-  width: 16px;
+  width: 14px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -580,20 +646,24 @@
 }
 
 .ar-table-dropdown__empty {
-  padding: 12px;
+  padding: 10px;
   text-align: center;
   color: var(--color-text-tertiary);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 /* ===== Dark Mode ===== */
 @media (prefers-color-scheme: dark) {
-  .ar-file-table__row--duplicate {
+  .ar-file-table__tr--duplicate {
     background: rgba(255, 59, 48, 0.1);
+  }
+
+  .ar-file-table__tr--duplicate:hover {
+    background: rgba(255, 59, 48, 0.15);
   }
 
   .ar-table-dropdown {
     border-color: var(--color-border-strong, #48484a);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }

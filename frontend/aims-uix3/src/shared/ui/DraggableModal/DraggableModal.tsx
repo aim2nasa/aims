@@ -244,7 +244,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="draggable-modal__content">
+        <div className="draggable-modal__content" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           {children}
         </div>
 
