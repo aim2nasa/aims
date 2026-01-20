@@ -194,12 +194,18 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
                 year, month, day = alt_date_match.groups()
                 result["issue_date"] = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-        # 3. 계약자 추출
-        # 패턴: "계약자 : 고영자" 또는 "계약자: 고영자"
-        contractor_pattern = r"계약자\s*[:\s]+([가-힣]{2,4})"
-        contractor_match = re.search(contractor_pattern, first_page_text)
-        if contractor_match:
-            result["contractor_name"] = contractor_match.group(1).strip()
+        # 3. 계약자(고객명) 추출
+        # 우선 패턴: "참씨큐리티 고객님을 위한" - 첫 페이지 제목에서 추출 (글자 수 제한 없음)
+        customer_name_pattern = r"([가-힣]+)\s*고객님을\s*위한"
+        customer_name_match = re.search(customer_name_pattern, first_page_text)
+        if customer_name_match:
+            result["contractor_name"] = customer_name_match.group(1).strip()
+        else:
+            # fallback: "계약자 : XXX" 패턴 (글자 수 제한 없음)
+            contractor_pattern = r"계약자\s*[:\s]+([가-힣]+)"
+            contractor_match = re.search(contractor_pattern, first_page_text)
+            if contractor_match:
+                result["contractor_name"] = contractor_match.group(1).strip()
 
         # 4. 피보험자 추출
         # 패턴: "피보험자 : 유진호" 또는 "피보험자: 유진호"

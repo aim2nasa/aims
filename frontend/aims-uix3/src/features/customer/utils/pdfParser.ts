@@ -210,11 +210,19 @@ function extractCRMetadata(text: string) {
     }
   }
 
-  // 3. 계약자 추출: "계약자 : 홍길동"
-  const contractorPattern = /계약자\s*[:\s]+([가-힣]{2,4})/;
-  const contractorMatch = text.match(contractorPattern);
-  if (contractorMatch) {
-    metadata.contractor_name = contractorMatch[1].trim();
+  // 3. 계약자(고객명) 추출
+  // 우선 패턴: "참씨큐리티 고객님을 위한" - 첫 페이지 제목에서 추출 (글자 수 제한 없음)
+  const customerNamePattern = /([가-힣]+)\s*고객님을\s*위한/;
+  const customerNameMatch = text.match(customerNamePattern);
+  if (customerNameMatch) {
+    metadata.contractor_name = customerNameMatch[1].trim();
+  } else {
+    // fallback: "계약자 : XXX" 패턴 (글자 수 제한 없음)
+    const contractorPattern = /계약자\s*[:\s]+([가-힣]+)/;
+    const contractorMatch = text.match(contractorPattern);
+    if (contractorMatch) {
+      metadata.contractor_name = contractorMatch[1].trim();
+    }
   }
 
   // 4. 피보험자 추출: "피보험자 : 홍길동"
