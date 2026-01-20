@@ -27,7 +27,7 @@ const CUSTOMER_VALIDATE_NAMES_API = '/api/customers/validate-names'
  * 엑셀 표준규격 버전 (EXCEL_IMPORT_SPECIFICATION.md 기준)
  * 검증 로직 변경 시 이 버전도 함께 업데이트해야 함
  */
-export const EXCEL_SPEC_VERSION = 'v0.2.1'
+export const EXCEL_SPEC_VERSION = 'v0.2.2'
 
 /**
  * 증권번호 검증 함수
@@ -462,15 +462,15 @@ const SHEET_REQUIREMENTS: Record<string, {
     required: [
       { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
     ],
-    optional: ['이메일', '연락처', '주소', '성별', '생년월일'],
-    columnOrder: ['고객명', '이메일', '연락처', '주소', '성별', '생년월일']
+    optional: ['이메일', '휴대폰', '주소', '성별', '생년월일'],
+    columnOrder: ['고객명', '이메일', '휴대폰', '주소', '성별', '생년월일']
   },
   '법인고객': {
     required: [
       { name: '고객명', patterns: ['고객명', '이름', '성명', '고객'] }
     ],
-    optional: ['이메일', '연락처', '주소', '사업자번호', '대표자명'],
-    columnOrder: ['고객명', '이메일', '연락처', '주소', '사업자번호', '대표자명']
+    optional: ['이메일', '대표전화', '주소', '사업자번호', '대표자명'],
+    columnOrder: ['고객명', '이메일', '대표전화', '주소', '사업자번호', '대표자명']
   },
   '계약': {
     required: [
