@@ -1890,6 +1890,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       contracts: [],
       documents: [],
       consultations: [],
+      tags: [],
     };
 
     addLog('success', `새 고객 등록 완료: ${customerName} (${customerType})`);
