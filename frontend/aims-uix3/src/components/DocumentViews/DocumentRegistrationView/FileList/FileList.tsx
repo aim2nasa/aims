@@ -169,8 +169,9 @@ export const FileList: React.FC<FileListProps> = ({
     const error = files.filter(f => f.status === 'error').length
     const uploading = files.filter(f => f.status === 'uploading').length
     const cancelled = files.filter(f => f.status === 'cancelled').length
+    const skipped = files.filter(f => f.status === 'skipped').length
 
-    return { total, completed, error, uploading, cancelled }
+    return { total, completed, error, uploading, cancelled, skipped }
   }, [files])
 
   // 🍎 FILTERED FILES: Smart filtering with Apple UX
@@ -199,18 +200,19 @@ export const FileList: React.FC<FileListProps> = ({
         <div className="file-list__header-left">
           <div className="file-list__title-compact">
             {stats.total} {stats.total === 1 ? 'file' : 'files'}
-            {stats.total > 1 && (stats.completed > 0 || stats.uploading > 0 || stats.error > 0) && (
+            {stats.total > 1 && (stats.completed > 0 || stats.uploading > 0 || stats.error > 0 || stats.skipped > 0) && (
               <>
                 {' • '}{stats.completed} 완료
                 {stats.uploading > 0 && ` • ${stats.uploading} 업로드 중`}
                 {stats.error > 0 && ` • ${stats.error} 오류`}
                 {stats.cancelled > 0 && ` • ${stats.cancelled} 취소`}
+                {stats.skipped > 0 && ` • ${stats.skipped} 건너뜀`}
               </>
             )}
           </div>
 
           {/* 🍎 SUBTLE STATS: Ultra-minimal badges */}
-          {(stats.completed > 0 || stats.uploading > 0 || stats.error > 0 || stats.cancelled > 0) && (
+          {(stats.completed > 0 || stats.uploading > 0 || stats.error > 0 || stats.cancelled > 0 || stats.skipped > 0) && (
             <div className="file-list__stats">
               {stats.completed > 0 && (
                 <button
@@ -273,6 +275,23 @@ export const FileList: React.FC<FileListProps> = ({
                   {stats.cancelled}
                 </button>
               )}
+              {stats.skipped > 0 && (
+                <button
+                  type="button"
+                  className={`file-list__stat file-list__stat--skipped file-list__stat--clickable ${
+                    filterStatus === 'skipped' ? 'file-list__stat--active' : ''
+                  }`}
+                  onClick={() => handleFilterToggle('skipped')}
+                  aria-label={filterStatus === 'skipped' ? '모든 파일 보기' : '건너뛴 파일만 보기'}
+                >
+                  <SFSymbol
+                    name="forward.fill"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                  {stats.skipped}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -285,6 +304,7 @@ export const FileList: React.FC<FileListProps> = ({
               {filterStatus === 'completed' && '완료된 파일만 표시 중'}
               {filterStatus === 'uploading' && '업로드 중인 파일만 표시 중'}
               {filterStatus === 'cancelled' && '취소된 파일만 표시 중'}
+              {filterStatus === 'skipped' && '건너뛴 파일만 표시 중'}
             </span>
             <button
               type="button"
@@ -360,6 +380,12 @@ export const FileList: React.FC<FileListProps> = ({
                   {uploadFile.error.length > 20 ? `${uploadFile.error.substring(0, 20)}...` : uploadFile.error}
                 </span>
               )}
+              {/* 🔴 SKIPPED MESSAGE: Inline minimal display */}
+              {uploadFile.status === 'skipped' && uploadFile.error && (
+                <span className="file-item__skipped-inline" title={uploadFile.error}>
+                  {uploadFile.error.length > 30 ? `${uploadFile.error.substring(0, 30)}...` : uploadFile.error}
+                </span>
+              )}
               {/* 🍎 PATH: Subtle secondary info */}
               {uploadFile.relativePath && (
                 <span className="file-item__path-compact" title={uploadFile.relativePath}>
@@ -425,6 +451,15 @@ export const FileList: React.FC<FileListProps> = ({
                   size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.LIGHT}
                   className="file-item__cancelled-compact"
+                />
+              )}
+
+              {uploadFile.status === 'skipped' && (
+                <SFSymbol
+                  name="forward.fill"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.LIGHT}
+                  className="file-item__skipped-compact"
                 />
               )}
             </div>

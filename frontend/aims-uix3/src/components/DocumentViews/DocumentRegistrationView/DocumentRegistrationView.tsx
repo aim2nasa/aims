@@ -2470,6 +2470,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
                 if (processResult.isDuplicateDoc) {
                   addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
+                  // 🔴 FIX: 중복 파일도 UI에 표시 (skipped 상태)
+                  setUploadState(prev => ({
+                    ...prev,
+                    files: [...prev.files, {
+                      id: arFile.fileId,
+                      file: arFile.file,
+                      fileSize: arFile.file.size,
+                      status: 'skipped' as const,
+                      progress: 100,
+                      error: '중복 파일 (동일한 문서가 이미 존재)',
+                      customerId,
+                    }]
+                  }))
                   completedCount++
                   continue
                 }
@@ -2477,6 +2490,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 if (processResult.isDuplicateIssueDate) {
                   const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
                   addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
+                  // 🔴 FIX: 중복 파일도 UI에 표시 (skipped 상태)
+                  setUploadState(prev => ({
+                    ...prev,
+                    files: [...prev.files, {
+                      id: arFile.fileId,
+                      file: arFile.file,
+                      fileSize: arFile.file.size,
+                      status: 'skipped' as const,
+                      progress: 100,
+                      error: `중복 발행일 (${formattedDate} AR 이미 존재)`,
+                      customerId,
+                    }]
+                  }))
                   completedCount++
                   continue
                 }
