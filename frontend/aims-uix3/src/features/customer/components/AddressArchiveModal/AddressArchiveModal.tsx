@@ -13,6 +13,7 @@
 import React from 'react';
 import Modal from '@/shared/ui/Modal';
 import { CloseButton } from '@/shared/ui/CloseButton';
+import { Tooltip } from '@/shared/ui/Tooltip';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
 import './AddressArchiveModal.css';
@@ -102,9 +103,6 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
             >
               <div className="address-item__header">
                 <div className="address-item__date">
-                  <span className={`address-item__icon ${isCurrent ? 'current' : 'past'}`}>
-                    {isCurrent ? '✓' : '○'}
-                  </span>
                   {AddressService.formatDate(item.changed_at)}
                 </div>
                 {isCurrent ? (
@@ -114,22 +112,34 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
                 )}
               </div>
               <div className="address-item__content">
-                <div className="address-item__pin">📍</div>
+                {/* 주소 검증 상태 아이콘 (고객 전체보기와 동일) */}
+                {(() => {
+                  const status = item.address?.verification_status;
+                  const iconClass = status === 'verified' ? 'address-item__verified-icon--verified' : status === 'failed' ? 'address-item__verified-icon--failed' : 'address-item__verified-icon--pending';
+                  const tooltipText = status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패' : '미검증 주소';
+                  return (
+                    <Tooltip content={tooltipText}>
+                      <span className={`address-item__verified-icon ${iconClass}`}>
+                        {status === 'verified' ? (
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
+                          </svg>
+                        ) : status === 'failed' ? (
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.53 4.47a.75.75 0 010 1.06L9.06 8l2.47 2.47a.75.75 0 11-1.06 1.06L8 9.06l-2.47 2.47a.75.75 0 01-1.06-1.06L6.94 8 4.47 5.53a.75.75 0 011.06-1.06L8 6.94l2.47-2.47a.75.75 0 011.06 0z"/>
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm-.75 4.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 7.25a1 1 0 110-2 1 1 0 010 2z"/>
+                          </svg>
+                        )}
+                      </span>
+                    </Tooltip>
+                  );
+                })()}
                 <div className="address-item__text">
                   {AddressService.formatAddress(item.address)}
                 </div>
-                {/* 주소 검증 상태 배지 */}
-                {(() => {
-                  const status = item.address?.verification_status;
-                  const badgeClass = status === 'verified' ? 'address-item__verified-badge--verified' : status === 'failed' ? 'address-item__verified-badge--failed' : 'address-item__verified-badge--pending';
-                  const badgeText = status === 'verified' ? '✓ 검증됨' : status === 'failed' ? '✕ 검증실패' : '? 미검증';
-                  const titleText = status === 'verified' ? '검증된 주소' : status === 'failed' ? '검증 실패' : '미검증 주소';
-                  return (
-                    <span className={`address-item__verified-badge ${badgeClass}`} title={titleText}>
-                      {badgeText}
-                    </span>
-                  );
-                })()}
               </div>
               {/* 메모 표시 */}
               {item.notes && (

@@ -279,47 +279,26 @@
   color: var(--color-text-primary);
 }
 
-/* 주소 검증 상태 배지 */
-.address-item__verified-badge {
+/* 주소 검증 상태 아이콘 (고객 전체보기와 동일) */
+.address-item__verified-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  padding: 2px 8px;
-  font-size: var(--font-size-caption-2, 11px);
-  font-family: var(--font-family-text);
-  border-radius: 4px;
-  font-weight: 500;
+  width: 16px;
+  height: 16px;
 }
 
-.address-item__verified-badge--verified {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: var(--color-success-600, #16a34a);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+.address-item__verified-icon--verified {
+  color: var(--color-success-500, #22c55e);
 }
 
-.address-item__verified-badge--pending {
-  background-color: rgba(156, 163, 175, 0.15);
-  color: var(--color-text-secondary, #6b7280);
-  border: 1px solid rgba(156, 163, 175, 0.3);
-}
-
-.address-item__verified-badge--failed {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger, #ef4444);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-[data-theme="dark"] .address-item__verified-badge--verified {
-  background-color: rgba(34, 197, 94, 0.2);
-  color: var(--color-success-400, #4ade80);
-}
-
-[data-theme="dark"] .address-item__verified-badge--pending {
-  background-color: rgba(156, 163, 175, 0.2);
+.address-item__verified-icon--pending {
   color: var(--color-text-tertiary, #9ca3af);
 }
 
-[data-theme="dark"] .address-item__verified-badge--failed {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+.address-item__verified-icon--failed {
+  color: var(--color-danger, #ef4444);
 }
 
 /* Reason & Notes */
