@@ -5,7 +5,7 @@
  */
 
 import React, { useMemo } from 'react'
-import { Modal, Button } from '@/shared/ui'
+import { DraggableModal, Button } from '@/shared/ui'
 import type { ArFileGroup, BatchMappingState } from '../../types/arBatchTypes'
 import {
   isAllGroupsSelected,
@@ -129,15 +129,19 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   )
 
   return (
-    <Modal
+    <DraggableModal
       visible={isOpen}
       onClose={onClose}
       title={title}
-      size="lg"
       footer={footer}
       backdropClosable={false}
       escapeToClose={!isAnalyzing && !isProcessing}
       className="batch-ar-mapping-modal"
+      initialWidth={700}
+      initialHeight={500}
+      minWidth={500}
+      minHeight={300}
+      storageKey="batch-ar-mapping-modal"
     >
       <div className="batch-ar-modal__content">
         {/* 분석 결과 요약 */}
@@ -199,7 +203,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
           </div>
         )}
       </div>
-    </Modal>
+    </DraggableModal>
   )
 }
 

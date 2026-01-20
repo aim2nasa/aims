@@ -8,7 +8,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 60vh;
+  flex: 1;
+  min-height: 0; /* flex 자식이 축소될 수 있도록 */
   overflow: visible; /* 드롭다운이 잘리지 않도록 visible로 변경 */
 }
 
@@ -60,12 +61,13 @@
 /* ===== Groups Container ===== */
 .batch-ar-modal__groups {
   flex: 1;
-  overflow: visible; /* 드롭다운이 잘리지 않도록 visible */
+  overflow-y: auto;
+  overflow-x: visible;
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding-right: 4px;
-  max-height: calc(60vh - 100px); /* 스크롤 대신 max-height 사용 */
+  min-height: 0; /* flex 자식이 축소될 수 있도록 */
 }
 
 /* ===== Analyzing State ===== */
@@ -483,11 +485,12 @@
   margin: 4px 0;
 }
 
-/* ===== Modal Content Overflow Override ===== */
-/* 🔴 Modal.css의 .modal__content가 overflow-y: auto라서 드롭다운이 잘림 */
-/* batch-ar-mapping-modal 클래스를 사용해서 이 모달에서만 overflow 재정의 */
-.batch-ar-mapping-modal .modal__content {
+/* ===== DraggableModal Content Override ===== */
+/* DraggableModal 컨텐츠 영역 스타일 오버라이드 */
+.batch-ar-mapping-modal .draggable-modal__content {
   overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== Dark Mode Adjustments ===== */
