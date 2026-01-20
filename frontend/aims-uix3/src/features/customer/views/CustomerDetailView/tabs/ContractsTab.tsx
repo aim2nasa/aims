@@ -257,6 +257,11 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [arSortField, setArSortField] = useState<ArSortField>('policyNumber')
   const [arSortDirection, setArSortDirection] = useState<SortDirection>('asc')
 
+  // 🍎 CRS 계약 이력 정렬 상태
+  type CrSortField = 'policyNumber' | 'productName' | 'contractorName' | 'contractDate' | 'insuredAmount' | 'accumulatedAmount' | 'investmentReturnRate' | 'issueDate'
+  const [crSortField, setCrSortField] = useState<CrSortField>('policyNumber')
+  const [crSortDirection, setCrSortDirection] = useState<SortDirection>('asc')
+
   // 🍎 검색어 상태 (외부/내부)
   const [internalSearchTerm, setInternalSearchTerm] = useState('')
   const searchTerm = externalSearchTerm ?? internalSearchTerm
@@ -871,6 +876,73 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return null
   }
 
+  // 🍎 CRS 계약 이력 정렬 핸들러
+  const handleCrSort = useCallback((field: CrSortField) => {
+    if (crSortField === field) {
+      setCrSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setCrSortField(field)
+      setCrSortDirection('asc')
+    }
+  }, [crSortField])
+
+  // 🍎 정렬된 CRS 계약 이력
+  const sortedCrContractHistories = useMemo(() => {
+    return [...crContractHistories].sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (crSortField) {
+        case 'policyNumber':
+          aValue = a.policyNumber || ''
+          bValue = b.policyNumber || ''
+          break
+        case 'productName':
+          aValue = a.productName || ''
+          bValue = b.productName || ''
+          break
+        case 'contractorName':
+          aValue = a.contractorName || ''
+          bValue = b.contractorName || ''
+          break
+        case 'contractDate':
+          aValue = a.contractDate || ''
+          bValue = b.contractDate || ''
+          break
+        case 'insuredAmount':
+          aValue = a.latestSnapshot?.insuredAmount || 0
+          bValue = b.latestSnapshot?.insuredAmount || 0
+          break
+        case 'accumulatedAmount':
+          aValue = a.latestSnapshot?.accumulatedAmount || 0
+          bValue = b.latestSnapshot?.accumulatedAmount || 0
+          break
+        case 'investmentReturnRate':
+          aValue = a.latestSnapshot?.investmentReturnRate || 0
+          bValue = b.latestSnapshot?.investmentReturnRate || 0
+          break
+        case 'issueDate':
+          aValue = a.latestSnapshot?.issueDate || ''
+          bValue = b.latestSnapshot?.issueDate || ''
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return crSortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return crSortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [crContractHistories, crSortField, crSortDirection])
+
+  // 🍎 CRS 정렬 인디케이터 렌더링
+  const renderCrSortIndicator = (field: CrSortField) => {
+    if (crSortField === field) {
+      return <span className="cr-sort-indicator">{crSortDirection === 'asc' ? '▲' : '▼'}</span>
+    }
+    return null
+  }
+
   const renderState = () => {
     if (isLoading && contracts.length === 0) {
       return (
@@ -1188,17 +1260,81 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           {/* 헤더 행 */}
           <div className="cr-contract-history-header">
             <div className="cr-contract-history-header__seq">순번</div>
-            <div className="cr-contract-history-header__policy">증권번호</div>
-            <div className="cr-contract-history-header__product">보험상품</div>
-            <div className="cr-contract-history-header__contractor">계약자</div>
-            <div className="cr-contract-history-header__date">계약일</div>
-            <div className="cr-contract-history-header__insured-amount">보험가입금액</div>
-            <div className="cr-contract-history-header__accumulated">적립금</div>
-            <div className="cr-contract-history-header__return-rate">투자수익률</div>
-            <div className="cr-contract-history-header__issue-date">발행일</div>
+            <div
+              className="cr-contract-history-header__policy header-sortable"
+              onClick={() => handleCrSort('policyNumber')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>증권번호</span>
+              {renderCrSortIndicator('policyNumber')}
+            </div>
+            <div
+              className="cr-contract-history-header__product header-sortable"
+              onClick={() => handleCrSort('productName')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>보험상품</span>
+              {renderCrSortIndicator('productName')}
+            </div>
+            <div
+              className="cr-contract-history-header__contractor header-sortable"
+              onClick={() => handleCrSort('contractorName')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>계약자</span>
+              {renderCrSortIndicator('contractorName')}
+            </div>
+            <div
+              className="cr-contract-history-header__date header-sortable"
+              onClick={() => handleCrSort('contractDate')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>계약일</span>
+              {renderCrSortIndicator('contractDate')}
+            </div>
+            <div
+              className="cr-contract-history-header__insured-amount header-sortable"
+              onClick={() => handleCrSort('insuredAmount')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>보험가입금액</span>
+              {renderCrSortIndicator('insuredAmount')}
+            </div>
+            <div
+              className="cr-contract-history-header__accumulated header-sortable"
+              onClick={() => handleCrSort('accumulatedAmount')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>적립금</span>
+              {renderCrSortIndicator('accumulatedAmount')}
+            </div>
+            <div
+              className="cr-contract-history-header__return-rate header-sortable"
+              onClick={() => handleCrSort('investmentReturnRate')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>투자수익률</span>
+              {renderCrSortIndicator('investmentReturnRate')}
+            </div>
+            <div
+              className="cr-contract-history-header__issue-date header-sortable"
+              onClick={() => handleCrSort('issueDate')}
+              role="button"
+              tabIndex={0}
+            >
+              <span>발행일</span>
+              {renderCrSortIndicator('issueDate')}
+            </div>
           </div>
           <div className="cr-contract-history-list">
-            {crContractHistories.map((history, idx) => {
+            {sortedCrContractHistories.map((history, idx) => {
               const isExpanded = expandedCrPolicyNumber === history.policyNumber
               const { latestSnapshot } = history
 

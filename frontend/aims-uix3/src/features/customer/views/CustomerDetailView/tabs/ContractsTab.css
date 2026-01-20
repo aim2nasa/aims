@@ -870,6 +870,17 @@ html[data-theme="dark"] .ar-sort-indicator {
   color: var(--color-ios-blue-dark);
 }
 
+/* CRS 정렬 인디케이터 */
+.cr-sort-indicator {
+  font-size: 8px;
+  color: var(--color-ios-blue-light);
+  margin-left: 2px;
+}
+
+html[data-theme="dark"] .cr-sort-indicator {
+  color: var(--color-ios-blue-dark);
+}
+
 /* contract-history-header는 전역 column-resize.css 스타일 사용
    (.resizable-header, .column-resize-handle) */
 
@@ -1268,6 +1279,22 @@ html[data-theme="dark"] .cr-contract-history-header {
   align-items: center;
   justify-content: center;
   gap: 2px;
+}
+
+/* CRS 헤더 정렬 가능 스타일 */
+.cr-contract-history-header .header-sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.cr-contract-history-header .header-sortable:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme="dark"] .cr-contract-history-header .header-sortable:hover {
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 /* 숫자 칼럼 우측 정렬 */
