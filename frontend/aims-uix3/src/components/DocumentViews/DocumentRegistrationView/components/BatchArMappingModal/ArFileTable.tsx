@@ -232,6 +232,30 @@ ArFileTableRowComponent.displayName = 'ArFileTableRow'
 
 // ===== 메인 컴포넌트 =====
 
+// 컬럼 기본 너비 설정
+const DEFAULT_COL_WIDTHS = {
+  rownum: 36,
+  checkbox: 32,
+  filename: 0, // flex (자동)
+  extracted: 80,
+  mapped: 150, // 증가: "새 고객: 신상철" 등 표시
+  date: 75,
+  status: 50,
+  include: 36,
+}
+
+// 컬럼 최소 너비
+const MIN_COL_WIDTHS = {
+  rownum: 30,
+  checkbox: 28,
+  filename: 100,
+  extracted: 60,
+  mapped: 100,
+  date: 60,
+  status: 40,
+  include: 30,
+}
+
 export const ArFileTable: React.FC<ArFileTableProps> = ({
   rows,
   groups,
@@ -262,6 +286,57 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
 
   // Shift+Click 범위 선택을 위한 마지막 클릭 인덱스
   const lastClickedIndexRef = useRef<number | null>(null)
+
+  // 컬럼 리사이즈 상태
+  const [colWidths, setColWidths] = useState(DEFAULT_COL_WIDTHS)
+  const [isResizing, setIsResizing] = useState(false)
+  const resizingColRef = useRef<keyof typeof DEFAULT_COL_WIDTHS | null>(null)
+  const resizeStartXRef = useRef<number>(0)
+  const resizeStartWidthRef = useRef<number>(0)
+
+  // 컬럼 리사이즈 핸들러
+  const handleResizeMouseDown = useCallback((
+    e: React.MouseEvent,
+    colKey: keyof typeof DEFAULT_COL_WIDTHS
+  ) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizingColRef.current = colKey
+    resizeStartXRef.current = e.clientX
+    resizeStartWidthRef.current = colWidths[colKey]
+    setIsResizing(true)
+  }, [colWidths])
+
+  // 리사이즈 중 마우스 이동 처리
+  React.useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizingColRef.current) return
+
+      const colKey = resizingColRef.current
+      const delta = e.clientX - resizeStartXRef.current
+      const newWidth = Math.max(MIN_COL_WIDTHS[colKey], resizeStartWidthRef.current + delta)
+
+      setColWidths(prev => ({
+        ...prev,
+        [colKey]: newWidth,
+      }))
+    }
+
+    const handleMouseUp = () => {
+      resizingColRef.current = null
+      setIsResizing(false)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
 
   // 필터링된 행
   const filteredRows = useMemo(() => {
@@ -680,14 +755,14 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
       <div className="ar-file-table__table-container" style={{ flex: '1 1 0', minHeight: 0, overflow: 'auto' }}>
         <table className="ar-file-table__table">
           <colgroup>
-            <col className="ar-file-table__col--rownum" />
-            <col className="ar-file-table__col--checkbox" />
-            <col className="ar-file-table__col--filename" />
-            <col className="ar-file-table__col--extracted" />
-            <col className="ar-file-table__col--mapped" />
-            <col className="ar-file-table__col--date" />
-            <col className="ar-file-table__col--status" />
-            <col className="ar-file-table__col--include" />
+            <col style={{ width: colWidths.rownum }} />
+            <col style={{ width: colWidths.checkbox }} />
+            <col /> {/* filename - 자동 */}
+            <col style={{ width: colWidths.extracted }} />
+            <col style={{ width: colWidths.mapped }} />
+            <col style={{ width: colWidths.date }} />
+            <col style={{ width: colWidths.status }} />
+            <col style={{ width: colWidths.include }} />
           </colgroup>
           <thead>
             <tr>
@@ -714,25 +789,49 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
                 className={getThClass('extractedCustomer')}
                 onClick={() => handleSortToggle('extractedCustomer')}
               >
-                AR 고객명 {renderSortIcon('extractedCustomer')}
+                <span className="ar-file-table__th-content">
+                  AR 고객명 {renderSortIcon('extractedCustomer')}
+                </span>
+                <span
+                  className="ar-file-table__resize-handle"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'extracted')}
+                />
               </th>
               <th
                 className={getThClass('mappedCustomer')}
                 onClick={() => handleSortToggle('mappedCustomer')}
               >
-                매핑 고객 {renderSortIcon('mappedCustomer')}
+                <span className="ar-file-table__th-content">
+                  매핑 고객 {renderSortIcon('mappedCustomer')}
+                </span>
+                <span
+                  className="ar-file-table__resize-handle"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'mapped')}
+                />
               </th>
               <th
                 className={getThClass('issueDate')}
                 onClick={() => handleSortToggle('issueDate')}
               >
-                발행일 {renderSortIcon('issueDate')}
+                <span className="ar-file-table__th-content">
+                  발행일 {renderSortIcon('issueDate')}
+                </span>
+                <span
+                  className="ar-file-table__resize-handle"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'date')}
+                />
               </th>
               <th
                 className={getThClass('status')}
                 onClick={() => handleSortToggle('status')}
               >
-                상태 {renderSortIcon('status')}
+                <span className="ar-file-table__th-content">
+                  상태 {renderSortIcon('status')}
+                </span>
+                <span
+                  className="ar-file-table__resize-handle"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'status')}
+                />
               </th>
               <th className="ar-file-table__th ar-file-table__th--include">
                 포함

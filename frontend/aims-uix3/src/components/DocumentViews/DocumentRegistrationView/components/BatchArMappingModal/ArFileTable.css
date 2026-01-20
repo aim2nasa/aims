@@ -287,6 +287,37 @@
   font-size: 8px;
 }
 
+/* ===== 컬럼 리사이즈 핸들 ===== */
+.ar-file-table__th {
+  position: relative;
+}
+
+.ar-file-table__th-content {
+  display: inline;
+}
+
+.ar-file-table__resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 3;
+  transition: background-color 0.15s;
+}
+
+.ar-file-table__resize-handle:hover {
+  background: var(--color-primary, #007aff);
+  opacity: 0.5;
+}
+
+.ar-file-table__resize-handle:active {
+  background: var(--color-primary, #007aff);
+  opacity: 0.8;
+}
+
 /* ===== Table Body ===== */
 .ar-file-table__table tbody {
   background: var(--color-bg-primary);
