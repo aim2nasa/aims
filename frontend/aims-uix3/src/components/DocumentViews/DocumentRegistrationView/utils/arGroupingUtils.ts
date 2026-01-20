@@ -398,6 +398,71 @@ export function getRowMappingDisplayText(row: ArFileTableRow, groups: ArFileGrou
   return '선택하세요'
 }
 
+// ============================================
+// groupMap 캐싱 버전 (O(1) 조회)
+// ============================================
+
+/**
+ * 테이블 행에서 실제 매핑 정보 추출 (groupMap 캐싱 버전)
+ * @description O(1) 복잡도 - Map.get() 사용
+ */
+export function getEffectiveMappingWithMap(
+  row: ArFileTableRow,
+  groupMap: Map<string, ArFileGroup>
+): {
+  customerId: string | null
+  customerName: string | undefined
+  newCustomerName: string | undefined
+} {
+  // 개별 매핑이 있으면 우선
+  if (row.individualCustomerId !== null) {
+    return {
+      customerId: row.individualCustomerId,
+      customerName: row.individualCustomerName,
+      newCustomerName: undefined,
+    }
+  }
+  if (row.individualNewCustomerName) {
+    return {
+      customerId: null,
+      customerName: undefined,
+      newCustomerName: row.individualNewCustomerName,
+    }
+  }
+
+  // 그룹 기본값 사용 - O(1) Map.get()
+  const group = groupMap.get(row.groupId)
+  return {
+    customerId: group?.selectedCustomerId ?? null,
+    customerName: group?.selectedCustomerName,
+    newCustomerName: group?.newCustomerName,
+  }
+}
+
+/**
+ * 행의 매핑 여부 확인 (groupMap 캐싱 버전)
+ */
+export function isRowMappedWithMap(row: ArFileTableRow, groupMap: Map<string, ArFileGroup>): boolean {
+  const mapping = getEffectiveMappingWithMap(row, groupMap)
+  return mapping.customerId !== null || !!mapping.newCustomerName
+}
+
+/**
+ * 행의 매핑 표시 텍스트 가져오기 (groupMap 캐싱 버전)
+ */
+export function getRowMappingDisplayTextWithMap(row: ArFileTableRow, groupMap: Map<string, ArFileGroup>): string {
+  const mapping = getEffectiveMappingWithMap(row, groupMap)
+
+  if (mapping.customerId && mapping.customerName) {
+    return mapping.customerName
+  }
+  if (mapping.newCustomerName) {
+    return `새 고객: ${mapping.newCustomerName}`
+  }
+
+  return '선택하세요'
+}
+
 /**
  * 테이블 행의 고객 매핑 업데이트
  */

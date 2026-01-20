@@ -17,6 +17,8 @@ import {
   formatIssueDate,
   isRowMapped,
   getRowMappingDisplayText,
+  isRowMappedWithMap,
+  getRowMappingDisplayTextWithMap,
 } from '../../utils/crGroupingUtils'
 // CSS는 AR 스타일 재사용 (Phase 2에서 공통화)
 import '../BatchArMappingModal/ArFileTable.css'
@@ -344,6 +346,12 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
     }
   }, [isResizing])
 
+  // groupMap 캐싱 (O(1) 조회용)
+  const groupMap = useMemo(
+    () => new Map(groups.map(g => [g.groupId, g])),
+    [groups]
+  )
+
   // 필터링된 행
   const filteredRows = useMemo(() => {
     let result = rows
@@ -361,7 +369,7 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
     // 매핑 상태 필터
     if (mappingStatusFilter !== 'all') {
       result = result.filter(row => {
-        const isMapped = isRowMapped(row, groups)
+        const isMapped = isRowMappedWithMap(row, groupMap)
         const isDuplicate = row.fileInfo.duplicateStatus.isHashDuplicate
 
         switch (mappingStatusFilter) {
@@ -378,13 +386,13 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
     }
 
     return result
-  }, [rows, searchQuery, mappingStatusFilter, groups])
+  }, [rows, searchQuery, mappingStatusFilter, groupMap])
 
   // 정렬된 행
   const sortedRows = useMemo(() => {
     // 기본 정렬 순서: 미매핑(0) → 매핑됨(1)
     const getDefaultSortOrder = (row: CrFileTableRow) => {
-      return isRowMapped(row, groups) ? 1 : 0
+      return isRowMappedWithMap(row, groupMap) ? 1 : 0
     }
 
     if (!sortField) {
@@ -402,8 +410,8 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
           comparison = a.extractedContractorName.localeCompare(b.extractedContractorName)
           break
         case 'mappedCustomer': {
-          const aText = getRowMappingDisplayText(a, groups)
-          const bText = getRowMappingDisplayText(b, groups)
+          const aText = getRowMappingDisplayTextWithMap(a, groupMap)
+          const bText = getRowMappingDisplayTextWithMap(b, groupMap)
           comparison = aText.localeCompare(bText)
           break
         }
@@ -414,8 +422,8 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
           comparison = (a.fileInfo.metadata.issue_date || '').localeCompare(b.fileInfo.metadata.issue_date || '')
           break
         case 'status': {
-          const aStatus = a.fileInfo.duplicateStatus.isHashDuplicate ? 2 : (isRowMapped(a, groups) ? 0 : 1)
-          const bStatus = b.fileInfo.duplicateStatus.isHashDuplicate ? 2 : (isRowMapped(b, groups) ? 0 : 1)
+          const aStatus = a.fileInfo.duplicateStatus.isHashDuplicate ? 2 : (isRowMappedWithMap(a, groupMap) ? 0 : 1)
+          const bStatus = b.fileInfo.duplicateStatus.isHashDuplicate ? 2 : (isRowMappedWithMap(b, groupMap) ? 0 : 1)
           comparison = aStatus - bStatus
           break
         }
@@ -423,7 +431,7 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
 
       return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [filteredRows, sortField, sortDirection, groups])
+  }, [filteredRows, sortField, sortDirection, groupMap])
 
   // 페이지네이션된 행
   const paginatedRows = useMemo(() => {
@@ -472,9 +480,9 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
     return rows.filter(row =>
       !row.fileInfo.duplicateStatus.isHashDuplicate &&
       row.fileInfo.included &&
-      !isRowMapped(row, groups)
+      !isRowMappedWithMap(row, groupMap)
     )
-  }, [rows, groups])
+  }, [rows, groupMap])
 
   // 같은 계약자명 카운트 맵
   const sameNameCountMap = useMemo(() => {
@@ -872,10 +880,10 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
               </tr>
             ) : (
               paginatedRows.map((row, rowIndex) => {
-                const isMapped = isRowMapped(row, groups)
+                const isMapped = isRowMappedWithMap(row, groupMap)
                 const isDuplicate = row.fileInfo.duplicateStatus.isHashDuplicate
                 const isIssueDatePolicyDuplicate = row.fileInfo.duplicateStatus.isIssueDatePolicyDuplicate
-                const displayText = getRowMappingDisplayText(row, groups)
+                const displayText = getRowMappingDisplayTextWithMap(row, groupMap)
                 const group = getGroupForRow(row)
                 const sameNameCount = sameNameCountMap.get(row.extractedContractorName) || 1
                 // 행 번호: (현재 페이지 - 1) * 페이지당 항목 수 + rowIndex + 1
