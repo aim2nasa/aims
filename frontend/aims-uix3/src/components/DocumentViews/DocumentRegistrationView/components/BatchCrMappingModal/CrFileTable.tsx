@@ -195,7 +195,7 @@ const CrFileTableRowComponent = React.memo<CrFileTableRowProps>(({
 
       {/* 발행일 */}
       <td className="ar-file-table__td ar-file-table__td--date">
-        {formatIssueDate(row.fileInfo.metadata.issue_date)}
+        {formatIssueDate(row.fileInfo.metadata.issue_date ?? "")}
       </td>
 
       {/* 상태 */}

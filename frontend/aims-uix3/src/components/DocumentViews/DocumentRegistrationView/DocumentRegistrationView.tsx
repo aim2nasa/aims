@@ -141,6 +141,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }, 3000) // 3초 후 사라짐
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [noArFoundWarning])
 
   // 🎯 AR 파일 큐 - 다중 AR 파일 순차 처리용

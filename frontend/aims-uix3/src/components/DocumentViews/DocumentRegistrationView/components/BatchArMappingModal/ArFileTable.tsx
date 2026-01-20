@@ -188,7 +188,7 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
 
       {/* 발행일 */}
       <td className="ar-file-table__td ar-file-table__td--date">
-        {formatIssueDate(row.fileInfo.metadata.issue_date)}
+        {formatIssueDate(row.fileInfo.metadata.issue_date ?? "")}
       </td>
 
       {/* 상태 */}
@@ -406,7 +406,7 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
           break
         }
         case 'issueDate':
-          comparison = a.fileInfo.metadata.issue_date.localeCompare(b.fileInfo.metadata.issue_date)
+          comparison = (a.fileInfo.metadata.issue_date ?? "").localeCompare(b.fileInfo.metadata.issue_date ?? "")
           break
         case 'status': {
           const aStatus = a.fileInfo.duplicateStatus.isHashDuplicate ? 2 : (isRowMappedWithMap(a, groupMap) ? 0 : 1)
