@@ -853,6 +853,22 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         <div className="customer-info-grid__item customer-info-grid__item--full">
                           <span className="customer-info-grid__label">주소</span>
                           <span className="customer-info-grid__value customer-info-grid__address">
+                            {/* 주소 검증 상태 아이콘 */}
+                            {customer.personal_info?.address?.address1 && (
+                              <Tooltip content={customer.personal_info?.address?.is_verified ? '검증된 주소' : '미검증 주소'}>
+                                <span className={`customer-info-grid__verified-icon ${customer.personal_info?.address?.is_verified ? 'customer-info-grid__verified-icon--verified' : 'customer-info-grid__verified-icon--unverified'}`}>
+                                  {customer.personal_info?.address?.is_verified ? (
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                      <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 5.28l-4.5 6a.75.75 0 01-1.14.06l-2.25-2.25a.75.75 0 111.06-1.06l1.64 1.64 3.97-5.3a.75.75 0 111.22.88z"/>
+                                    </svg>
+                                  ) : (
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                      <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 018 3zm0 8a1 1 0 110 2 1 1 0 010-2z"/>
+                                    </svg>
+                                  )}
+                                </span>
+                              </Tooltip>
+                            )}
                             <span className="customer-info-grid__address-text">
                               {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
                               {customer.personal_info?.address?.address1 || '-'}

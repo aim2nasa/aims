@@ -118,6 +118,13 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
                 <div className="address-item__text">
                   {AddressService.formatAddress(item.address)}
                 </div>
+                {/* 주소 검증 상태 배지 */}
+                <span
+                  className={`address-item__verified-badge ${item.address?.is_verified ? 'address-item__verified-badge--verified' : 'address-item__verified-badge--unverified'}`}
+                  title={item.address?.is_verified ? '검증된 주소' : '미검증 주소'}
+                >
+                  {item.address?.is_verified ? '✓ 검증됨' : '⚠ 미검증'}
+                </span>
               </div>
               {/* 메모 표시 */}
               {item.notes && (

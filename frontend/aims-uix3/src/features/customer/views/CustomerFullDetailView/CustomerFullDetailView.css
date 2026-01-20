@@ -636,6 +636,24 @@ html[data-theme="dark"] .customer-info-grid__type-badge {
   white-space: nowrap;
 }
 
+/* 🍎 주소 검증 상태 아이콘 */
+.customer-info-grid__verified-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.customer-info-grid__verified-icon--verified {
+  color: var(--color-success-500, #22c55e);
+}
+
+.customer-info-grid__verified-icon--unverified {
+  color: var(--color-warning-500, #f59e0b);
+}
+
 .customer-info-grid__history-btn {
   display: inline-flex;
   align-items: center;

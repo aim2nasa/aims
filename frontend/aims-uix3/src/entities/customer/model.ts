@@ -17,6 +17,8 @@ export const AddressSchema = z.object({
   postal_code: z.string().optional(),
   address1: z.string().optional(),
   address2: z.string().optional(),
+  /** 주소 API로 검증된 주소 여부 (true: 검증됨, false/undefined: 미검증) */
+  is_verified: z.boolean().optional(),
 });
 
 /**
