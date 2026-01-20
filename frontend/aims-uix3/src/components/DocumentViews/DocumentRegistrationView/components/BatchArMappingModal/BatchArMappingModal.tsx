@@ -176,6 +176,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
       minWidth={700}
       minHeight={450}
       storageKey="batch-ar-mapping-modal"
+      transparent={true}
     >
       <div
         className="batch-ar-modal__content batch-ar-modal__content--table"
