@@ -25,8 +25,6 @@ export interface ArFileGroupCardProps {
   onToggleFile: (groupId: string, fileId: string) => void
   /** 새 고객 등록 모달 열기 */
   onOpenNewCustomerModal: (groupId: string, defaultName: string) => void
-  /** 고객 검색 모달 열기 */
-  onOpenCustomerSearchModal: (groupId: string) => void
   /** 비활성화 */
   disabled?: boolean
 }
@@ -38,7 +36,6 @@ export const ArFileGroupCard: React.FC<ArFileGroupCardProps> = ({
   onToggleGroup,
   onToggleFile,
   onOpenNewCustomerModal,
-  onOpenCustomerSearchModal,
   disabled = false,
 }) => {
   const {
@@ -104,7 +101,6 @@ export const ArFileGroupCard: React.FC<ArFileGroupCardProps> = ({
             selectedCustomerId={selectedCustomerId}
             onSelectCustomer={onSelectCustomer}
             onOpenNewCustomerModal={() => onOpenNewCustomerModal(groupId, customerNameFromAr)}
-            onOpenCustomerSearchModal={() => onOpenCustomerSearchModal(groupId)}
             disabled={disabled}
           />
           {isSelected && (

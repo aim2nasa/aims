@@ -60,8 +60,6 @@ export interface BatchArMappingModalProps {
   onRegister: (rows: ArFileTableRow[]) => void
   /** 새 고객 등록 모달 열기 */
   onOpenNewCustomerModal: (fileId: string, defaultName: string) => void
-  /** 고객 검색 모달 열기 */
-  onOpenCustomerSearchModal: (fileId: string) => void
 }
 
 export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
@@ -83,7 +81,6 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onSetFilter,
   onRegister,
   onOpenNewCustomerModal,
-  onOpenCustomerSearchModal,
 }) => {
   const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
   const { rows, groups } = tableState
@@ -217,7 +214,6 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
             onBulkAssignCustomer={onBulkAssignCustomer}
             onBulkAssignNewCustomer={onBulkAssignNewCustomer}
             onOpenNewCustomerModal={onOpenNewCustomerModal}
-            onOpenCustomerSearchModal={onOpenCustomerSearchModal}
           />
         )}
 

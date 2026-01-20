@@ -2502,9 +2502,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             defaultName,
           })
         }}
-        onOpenCustomerSearchModal={(_fileId) => {
-          // 고객 검색 모달 열기 (추후 구현 - 현재는 드롭다운으로 선택)
-        }}
         onRegister={async (rows: ArFileTableRow[]) => {
           // 🎯 AR 일괄 등록 처리 (테이블 행 기반)
           addLog('info', 'AR 일괄 등록 시작...')

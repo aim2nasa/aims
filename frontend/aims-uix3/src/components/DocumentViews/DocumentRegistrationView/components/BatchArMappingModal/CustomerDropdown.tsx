@@ -23,8 +23,6 @@ export interface CustomerDropdownProps {
   onSelectCustomer: (groupId: string, customerId: string | null, customerName?: string) => void
   /** 새 고객 등록 모달 열기 */
   onOpenNewCustomerModal: () => void
-  /** 고객 검색 모달 열기 */
-  onOpenCustomerSearchModal: () => void
   /** 비활성화 */
   disabled?: boolean
 }
@@ -37,7 +35,6 @@ export const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   selectedCustomerId,
   onSelectCustomer,
   onOpenNewCustomerModal,
-  onOpenCustomerSearchModal,
   disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -103,11 +100,6 @@ export const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
     onOpenNewCustomerModal()
   }
 
-  const handleSearchCustomer = () => {
-    setIsOpen(false)
-    onOpenCustomerSearchModal()
-  }
-
   // 선택이 필요한지 판단
   const needsSelection = matchStatus === 'needs_selection' && !selectedCustomerId
 
@@ -160,19 +152,6 @@ export const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
       >
         <span className="customer-dropdown__option-icon">➕</span>
         <span className="customer-dropdown__option-text">새 고객 등록</span>
-      </button>
-
-      {/* 다른 고객 검색 */}
-      <button
-        type="button"
-        className="customer-dropdown__option customer-dropdown__option--action"
-        onClick={handleSearchCustomer}
-        role="option"
-      >
-        <span className="customer-dropdown__option-icon">🔍</span>
-        <span className="customer-dropdown__option-text">
-          {matchingCustomers.length > 0 ? '다른 고객 검색' : '기존 고객 검색'}
-        </span>
       </button>
     </div>,
     document.body

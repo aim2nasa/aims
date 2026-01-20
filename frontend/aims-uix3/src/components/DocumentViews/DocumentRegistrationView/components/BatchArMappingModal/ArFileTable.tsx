@@ -66,8 +66,6 @@ export interface ArFileTableProps {
   onBulkAssignNewCustomer: (fileIds: string[], newCustomerName: string) => void
   /** 새 고객 등록 모달 열기 */
   onOpenNewCustomerModal: (fileId: string, defaultName: string) => void
-  /** 고객 검색 모달 열기 */
-  onOpenCustomerSearchModal: (fileId: string) => void
 }
 
 interface ArFileTableRowProps {
@@ -277,7 +275,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
   onItemsPerPageChange,
   onBulkAssignCustomer,
   onOpenNewCustomerModal,
-  onOpenCustomerSearchModal,
 }) => {
   // 드롭다운 상태 (단일 관리)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
@@ -559,12 +556,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     onOpenNewCustomerModal(fileId, defaultName)
   }, [closeDropdown, onOpenNewCustomerModal])
 
-  // 고객 검색
-  const handleSearchCustomer = useCallback((fileId: string) => {
-    closeDropdown()
-    onOpenCustomerSearchModal(fileId)
-  }, [closeDropdown, onOpenCustomerSearchModal])
-
   // 일괄 매핑용 드롭다운
   const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false)
   const [bulkDropdownPosition, setBulkDropdownPosition] = useState({ top: 0, left: 0 })
@@ -687,7 +678,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             <option value="all">전체</option>
             <option value="mapped">매핑 완료</option>
             <option value="unmapped">미매핑</option>
-            <option value="duplicate">중복</option>
           </select>
         </div>
 
@@ -977,17 +967,6 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
           >
             <span className="ar-table-dropdown__option-icon">+</span>
             <span className="ar-table-dropdown__option-text">새 고객 등록</span>
-          </button>
-
-          <button
-            type="button"
-            className="ar-table-dropdown__option ar-table-dropdown__option--action"
-            onClick={() => handleSearchCustomer(openDropdownRow.fileInfo.fileId)}
-          >
-            <span className="ar-table-dropdown__option-icon">Q</span>
-            <span className="ar-table-dropdown__option-text">
-              {openDropdownGroup.matchingCustomers.length > 0 ? '다른 고객 검색' : '기존 고객 검색'}
-            </span>
           </button>
         </div>,
         document.body
