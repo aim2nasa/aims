@@ -1886,10 +1886,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         status: "active" as const,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      meta: {
-        status: "active" as const,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       },
       contracts: [],
       documents: [],
