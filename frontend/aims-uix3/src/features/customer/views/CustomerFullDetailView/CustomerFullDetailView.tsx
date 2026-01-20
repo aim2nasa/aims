@@ -89,6 +89,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [documentCount, setDocumentCount] = useState(0)
   const [annualReportCount, setAnnualReportCount] = useState(0)
   const [customerReviewCount, setCustomerReviewCount] = useState(0)
+  const [arHistoryCount, setArHistoryCount] = useState(0)
+  const [crHistoryCount, setCrHistoryCount] = useState(0)
 
   // 🍎 계약 검색 상태
   const [contractSearchTerm, setContractSearchTerm] = useState('')
@@ -1000,6 +1002,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => setHistoryTab('ar')}
                     >
                       Annual Report 이력
+                      {arHistoryCount > 0 && (
+                        <span className="history-tabs__count">{arHistoryCount}</span>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -1007,6 +1012,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onClick={() => setHistoryTab('cr')}
                     >
                       변액 리포트 이력
+                      {crHistoryCount > 0 && (
+                        <span className="history-tabs__count">{crHistoryCount}</span>
+                      )}
                     </button>
                   </div>
                   {/* 🍎 계약 검색 */}
@@ -1050,6 +1058,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       onSearchChange={setContractSearchTerm}
                       refreshTrigger={annualReportRefreshTrigger}
                       historyTab={historyTab}
+                      onArHistoryCountChange={setArHistoryCount}
+                      onCrHistoryCountChange={setCrHistoryCount}
                     />
                   </div>
                 </section>

@@ -1053,6 +1053,25 @@ html[data-theme="dark"] .history-tabs__tab--active {
   color: var(--color-text-primary);
 }
 
+/* 🍎 이력 탭 갯수 배지 */
+.history-tabs__count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-600);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+
+html[data-theme="dark"] .history-tabs__count {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
 /* 🍎 보고서 탭 패널 (항상 렌더링, 비활성 시 숨김 - SSE 실시간 업데이트 유지) */
 .report-tab-panel {
   display: none;

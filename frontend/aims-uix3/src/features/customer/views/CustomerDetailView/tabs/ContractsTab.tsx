@@ -48,6 +48,10 @@ interface ContractsTabProps {
   refreshTrigger?: number
   /** 보험 이력 탭 (ar: Annual Report 이력, cr: 변액 리포트 이력) */
   historyTab?: 'ar' | 'cr'
+  /** AR 이력 갯수 변경 콜백 (증권번호 기준) */
+  onArHistoryCountChange?: (count: number) => void
+  /** CR 이력 갯수 변경 콜백 (증권번호 기준) */
+  onCrHistoryCountChange?: (count: number) => void
 }
 
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
@@ -227,7 +231,9 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   searchTerm: externalSearchTerm,
   onSearchChange,
   refreshTrigger,
-  historyTab = 'ar'
+  historyTab = 'ar',
+  onArHistoryCountChange,
+  onCrHistoryCountChange
 }) => {
   // 🍎 상태 관리
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -480,6 +486,20 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm])
+
+  // 🍎 AR 이력 갯수 콜백 호출 (증권번호별 발행일 갯수 중 최대값)
+  useEffect(() => {
+    const maxCount = contractHistories.reduce((max, history) =>
+      Math.max(max, history.snapshots.length), 0)
+    onArHistoryCountChange?.(maxCount)
+  }, [contractHistories, onArHistoryCountChange])
+
+  // 🍎 CR 이력 갯수 콜백 호출 (증권번호별 발행일 갯수 중 최대값)
+  useEffect(() => {
+    const maxCount = crContractHistories.reduce((max, history) =>
+      Math.max(max, history.snapshots.length), 0)
+    onCrHistoryCountChange?.(maxCount)
+  }, [crContractHistories, onCrHistoryCountChange])
 
   // 🍎 검색어로 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
