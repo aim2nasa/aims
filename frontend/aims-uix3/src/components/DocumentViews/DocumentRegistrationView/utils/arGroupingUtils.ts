@@ -4,7 +4,7 @@
  * @see docs/AR_MULTI_UPLOAD_UX_ANALYSIS.md
  */
 
-import type { Customer } from '@/features/customer/types/customer'
+import type { Customer } from '@/entities/customer/model'
 import type {
   ArFileInfo,
   ArFileGroup,

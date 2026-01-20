@@ -5,7 +5,7 @@
 
 import React, { useMemo, useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import type { Customer } from '@/features/customer/types/customer'
+import type { Customer } from '@/entities/customer/model'
 import type {
   ArFileTableRow,
   ArFileGroup,

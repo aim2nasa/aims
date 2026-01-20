@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import type { Customer } from '@/features/customer/types/customer'
+import type { Customer } from '@/entities/customer/model'
 import type { MatchStatus } from '../../types/arBatchTypes'
 
 export interface CustomerDropdownProps {
