@@ -207,17 +207,16 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
             if contractor_match:
                 result["contractor_name"] = contractor_match.group(1).strip()
 
-        # 4. 피보험자 추출
-        # 패턴: "피보험자 : 유진호" 또는 "피보험자: 유진호"
-        insured_pattern = r"피보험자\s*[:\s]+([가-힣]{2,4})"
+        # 4. 피보험자 추출 (글자 수 제한 없음 - 법인명 지원)
+        # 패턴: "피보험자 : 유진호" 또는 "피보험자: 참씨큐리티"
+        insured_pattern = r"피보험자\s*[:\s]+([가-힣]+)"
         insured_match = re.search(insured_pattern, first_page_text)
         if insured_match:
             result["insured_name"] = insured_match.group(1).strip()
 
-        # 5. 사망 수익자 추출
-        # 패턴: "사망 수익자 :상속인" 또는 "사망수익자: 상속인" 등
-        # 더 유연한 패턴 사용 - colon 후 공백 없이 바로 이름이 오는 경우 처리
-        beneficiary_pattern = r"사망\s*수익자\s*[:：\s]+([가-힣]{2,6})"
+        # 5. 사망 수익자 추출 (글자 수 제한 없음 - 법인명 지원)
+        # 패턴: "사망 수익자 :상속인" 또는 "사망수익자: 참씨큐리티" 등
+        beneficiary_pattern = r"사망\s*수익자\s*[:：\s]+([가-힣]+)"
         beneficiary_match = re.search(beneficiary_pattern, first_page_text)
         if beneficiary_match:
             result["death_beneficiary"] = beneficiary_match.group(1).strip()

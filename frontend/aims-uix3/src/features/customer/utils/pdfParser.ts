@@ -225,8 +225,8 @@ function extractCRMetadata(text: string) {
     }
   }
 
-  // 4. 피보험자 추출: "피보험자 : 홍길동"
-  const insuredPattern = /피보험자\s*[:\s]+([가-힣]{2,4})/;
+  // 4. 피보험자 추출 (글자 수 제한 없음 - 법인명 지원)
+  const insuredPattern = /피보험자\s*[:\s]+([가-힣]+)/;
   const insuredMatch = text.match(insuredPattern);
   if (insuredMatch) {
     metadata.insured_name = insuredMatch[1].trim();

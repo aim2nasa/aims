@@ -151,15 +151,15 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
         result = {}
         import re
 
-        # 1. 고객명 추출
-        # 패턴 1: "안영미 고객님을 위한" (이름이 앞에 오는 경우)
-        customer_pattern1 = r"([가-힣]{2,4})\s*고객님을\s*위한"
+        # 1. 고객명 추출 (글자 수 제한 없음 - 법인명 지원)
+        # 패턴 1: "참씨큐리티 고객님을 위한" (이름이 앞에 오는 경우)
+        customer_pattern1 = r"([가-힣]+)\s*고객님을\s*위한"
         customer_match1 = re.search(customer_pattern1, first_page_text)
         if customer_match1:
             result["customer_name"] = customer_match1.group(1).strip()
         else:
-            # 패턴 2: "고객님: 안영미" (이름이 뒤에 오는 경우)
-            customer_pattern2 = r"고객님[:\s]*([가-힣]{2,4})"
+            # 패턴 2: "고객님: 참씨큐리티" (이름이 뒤에 오는 경우)
+            customer_pattern2 = r"고객님[:\s]*([가-힣]+)"
             customer_match2 = re.search(customer_pattern2, first_page_text)
             if customer_match2:
                 result["customer_name"] = customer_match2.group(1).strip()
