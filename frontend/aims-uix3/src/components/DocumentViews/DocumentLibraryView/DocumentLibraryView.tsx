@@ -822,30 +822,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
       const results = await Promise.all(deletePromises)
       const failedDeletes = results.filter((r) => !r.success)
-      const successfulIds = results
-        .filter((r) => r.success)
-        .map((r) => r.docId)
 
-      // 🍎 Optimistic Update: 즉시 로컬 상태에서 제거
-      if (successfulIds.length > 0 && removeDocumentsFnRef.current) {
-        removeDocumentsFnRef.current(new Set(successfulIds))
-      }
-
-      // 선택 초기화 및 삭제 모드 종료
-      setSelectedDocumentIds(new Set())
-      setIsDeleteMode(false)
-      setIsDeleting(false) // 모달 표시 전에 상태 복원
-
-      // 부모 컴포넌트에 삭제 완료 알림
-      if (onDocumentDeleted) {
-        onDocumentDeleted()
-      }
-
-      // 🔄 백그라운드로 새로고침 (정확한 상태 동기화)
-      void loadDocuments(searchParams, true)
-
-      // 실패한 경우만 오류 모달 표시
+      // 실패한 경우 오류 모달 표시
       if (failedDeletes.length > 0) {
+        setIsDeleting(false)
         await confirmModal.actions.openModal({
           title: '삭제 실패',
           message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
@@ -853,7 +833,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           showCancel: false,
         })
       }
-      // 성공한 경우: 모달 없이 바로 종료 (Optimistic Update로 이미 UI 반영됨)
+
+      // 🔄 삭제 완료 후 페이지 새로고침 (CLAUDE.md 규칙 12-1)
+      window.location.reload()
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteSelected' })
@@ -865,7 +847,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         showCancel: false,
       })
     }
-  }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
+  }, [selectedDocumentIds, confirmModal])
 
   // 🍎 단일 문서 삭제 핸들러 (컨텍스트 메뉴용)
   const handleDeleteSingleDocument = React.useCallback(async (documentId: string, documentName: string) => {
@@ -885,29 +867,16 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     try {
       setIsDeleting(true)
 
-      // Optimistic Update: UI에서 먼저 제거
-      if (removeDocumentsFnRef.current) {
-        removeDocumentsFnRef.current(new Set([documentId]))
-      }
-
       // API 호출하여 삭제
       await api.delete(`/api/documents/${documentId}`)
 
-      // 삭제 완료 콜백
-      onDocumentDeleted?.()
-
-      // 삭제 모드 해제
-      setIsDeleteMode(false)
-      setSelectedDocumentIds(new Set())
-      setIsDeleting(false)
+      // 🔄 삭제 완료 후 페이지 새로고침 (CLAUDE.md 규칙 12-1)
+      window.location.reload()
 
     } catch (error) {
       console.error('Error in handleDeleteSingleDocument:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteSingleDocument' })
       setIsDeleting(false)
-
-      // 삭제 실패 시 목록 다시 로드
-      await loadDocuments(searchParams)
 
       await confirmModal.actions.openModal({
         title: '삭제 실패',
@@ -916,7 +885,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         showCancel: false,
       })
     }
-  }, [confirmModal, onDocumentDeleted, loadDocuments, searchParams])
+  }, [confirmModal])
 
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
