@@ -463,7 +463,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 파일 선택 핸들러
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
-    console.log('🚨🚨🚨 handleFilesSelected 실행! files:', files.length);
 
     // 🧹 새 업로드 시작 시 기존 로그 클리어
     setProcessingLogs([])
@@ -472,7 +471,35 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🔴 중복 처리 일괄 적용 설정 초기화
     duplicateApplyAllRef.current = null
 
-    // 🚀 [UX 개선] 파일 선택 즉시 목록 표시 (analyzing 상태)
+    // 🎯🎯🎯 AR 배치 모드: 제일 먼저 체크! (uploadState 건드리기 전에 처리)
+    // 이유: setUploadState → useEffect → uploadService.queueFiles 자동 호출 방지
+    if (documentTypeMode === 'annual_report') {
+      // 🔴🔴🔴 자동 업로드 완전 차단!
+      // 1. uploadState.files를 빈 배열로 설정 (이전 파일 제거)
+      // 2. uploadService 큐 취소 (혹시 큐에 있던 파일도 취소)
+      setUploadState(prev => ({ ...prev, files: [] }))
+      uploadService.cancelAllUploads()
+
+      // PDF 파일만 필터링
+      const pdfFiles = files.filter(f => f.type === 'application/pdf')
+
+      if (pdfFiles.length === 0) {
+        addLog('warning', 'PDF 파일이 없습니다', 'Annual Report는 PDF 파일만 지원합니다.')
+        return
+      }
+
+      if (pdfFiles.length < files.length) {
+        const nonPdfCount = files.length - pdfFiles.length
+        addLog('warning', `${nonPdfCount}개 파일 제외`, 'PDF가 아닌 파일은 AR 등록에서 제외됩니다.')
+      }
+
+      // 배치 분석 시작 (모달이 자동으로 열림)
+      addLog('info', `${pdfFiles.length}개 AR 파일 배치 분석 시작...`)
+      arBatch.analyzeArFiles(pdfFiles)
+      return // 이후 처리는 BatchArMappingModal에서 진행
+    }
+
+    // 🚀 [UX 개선] 파일 선택 즉시 목록 표시 (analyzing 상태) - AR 모드 아닐 때만!
     const initialUploadFiles: UploadFile[] = files.map(file => ({
       id: generateFileId(),
       file,
@@ -525,36 +552,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.error('스토리지 정보 조회 실패:', error)
       errorReporter.reportApiError(error as Error, { component: 'DocumentRegistrationView.handleFilesSelected.getStorage' })
       // 에러 시에도 정상 진행 (서버에서 최종 검증)
-    }
-
-    // 🎯 AR 모드일 때: 배치 분석 사용 (새로운 UX)
-    if (documentTypeMode === 'annual_report') {
-      // PDF 파일만 필터링
-      const pdfFiles = files.filter(f => f.type === 'application/pdf')
-
-      if (pdfFiles.length === 0) {
-        addLog('warning', 'PDF 파일이 없습니다', 'Annual Report는 PDF 파일만 지원합니다.')
-        setUploadState(prev => ({ ...prev, files: [] }))
-        setIsLogVisible(false)
-        return
-      }
-
-      if (pdfFiles.length < files.length) {
-        const nonPdfCount = files.length - pdfFiles.length
-        addLog('warning', `${nonPdfCount}개 파일 제외`, 'PDF가 아닌 파일은 AR 등록에서 제외됩니다.')
-      }
-
-      // 파일 상태 업데이트 (PDF만 표시)
-      const pdfUploadFiles = initialUploadFiles.filter(uf => uf.file.type === 'application/pdf')
-      setUploadState(prev => ({
-        ...prev,
-        files: pdfUploadFiles
-      }))
-
-      // 배치 분석 시작 (모달이 자동으로 열림)
-      addLog('info', `${pdfFiles.length}개 AR 파일 배치 분석 시작...`)
-      arBatch.analyzeArFiles(pdfFiles)
-      return // 이후 처리는 BatchArMappingModal에서 진행
     }
 
     // 🔴 중복 파일 검사 (고객이 선택된 경우에만)
@@ -2403,14 +2400,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         }}
         onOpenCustomerSearchModal={(groupId) => {
           // 고객 검색 모달 열기 (추후 구현 - 현재는 드롭다운으로 선택)
-          console.log('[AR Batch] Open customer search modal for group:', groupId)
         }}
-        onRegister={async () => {
+        onRegister={async (groups) => {
           // 🎯 AR 일괄 등록 처리
-          console.log('[AR Batch] 일괄 등록 시작')
           addLog('info', 'AR 일괄 등록 시작...')
-
-          const { groups } = arBatch.batchState
 
           // 등록할 파일 수 계산
           let totalFilesToRegister = 0
@@ -2454,7 +2447,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 customerId = newCustomer._id
                 addLog('success', `새 고객 등록 완료: ${group.newCustomerName}`)
               } catch (error) {
-                console.error('[AR Batch] 고객 등록 실패:', error)
                 addLog('error', `고객 등록 실패: ${group.newCustomerName}`, String(error))
                 errorCount += group.files.filter(f => f.included && !f.duplicateStatus.isHashDuplicate).length
                 continue
@@ -2493,8 +2485,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 const result = await registerArDocument(arFile.file, customerId, arFile.metadata.issue_date, {
                   addLog: (level, msg, detail) => addLog(level, msg, detail),
                   generateFileId: () => arFile.fileId,
-                  addToUploadQueue: () => {},
-                  trackArFile: () => {},
+                  addToUploadQueue: (uploadFile) => {
+                    // 🚀 실제 업로드 시작! (uploadService에 큐잉)
+                    const uploadFileWithId = { ...uploadFile, id: arFile.fileId }
+                    uploadService.queueFiles([uploadFileWithId])
+
+                    // 🔴 FIX: uploadState.files에도 추가해서 UI에 표시!
+                    setUploadState(prev => ({
+                      ...prev,
+                      files: [...prev.files, uploadFileWithId]
+                    }))
+                  },
+                  trackArFile: (fileName, custId) => {
+                    // AR 파일 추적 정보 저장
+                    arFilenamesRef.current.add(fileName)
+                    arCustomerMappingRef.current.set(fileName, custId)
+                    arMetadataMappingRef.current.set(fileName, arFile.metadata)
+                    customerNameMappingRef.current.set(custId, customerName!)
+                  },
                 })
 
                 if (result.success) {
@@ -2505,7 +2513,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
                 }
               } catch (error) {
-                console.error('[AR Batch] 파일 등록 실패:', arFile.file.name, error)
                 addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, String(error))
                 errorCount++
               }
@@ -2520,11 +2527,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 결과 요약
           addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 실패: ${errorCount}건`)
 
-          // 모달 닫기
+          // 모달 닫기 (파일 목록은 유지 - 진행률/결과 보여줌)
           setTimeout(() => {
             arBatch.closeModal()
-            // 업로드 상태 초기화
-            setUploadState(prev => ({ ...prev, files: [] }))
+            // 🔴 FIX: files 초기화 제거 - 업로드 진행/결과가 화면에 보여야 함!
+            // setUploadState(prev => ({ ...prev, files: [] }))
             setIsLogVisible(true)
           }, 500)
         }}

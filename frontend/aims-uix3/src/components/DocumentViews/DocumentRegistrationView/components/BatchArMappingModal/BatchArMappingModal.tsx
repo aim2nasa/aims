@@ -27,8 +27,8 @@ export interface BatchArMappingModalProps {
   onToggleGroup: (groupId: string) => void
   /** 파일 포함/제외 토글 */
   onToggleFile: (groupId: string, fileId: string) => void
-  /** 등록 시작 */
-  onRegister: () => void
+  /** 등록 시작 (현재 groups 전달) */
+  onRegister: (groups: ArFileGroup[]) => void
   /** 새 고객 등록 모달 열기 */
   onOpenNewCustomerModal: (groupId: string, defaultName: string) => void
   /** 고객 검색 모달 열기 */
@@ -47,6 +47,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onOpenCustomerSearchModal,
 }) => {
   const { groups, isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
+
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -115,7 +116,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
           </Button>
           <Button
             variant="primary"
-            onClick={onRegister}
+            onClick={() => onRegister(groups)}
             disabled={!stats.allSelected || stats.includedFiles === 0}
           >
             {stats.includedFiles > 0
