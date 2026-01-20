@@ -4,7 +4,7 @@
  * @see docs/AR_MULTI_UPLOAD_UX_ANALYSIS.md
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
 import type {
   ArFileGroup,
@@ -84,6 +84,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
 }) => {
   const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
   const { rows, groups } = tableState
+  const [showHelp, setShowHelp] = useState(false)
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -179,6 +180,30 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
         className="batch-ar-modal__content batch-ar-modal__content--table"
         style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0, height: '100%', overflow: 'hidden', gap: '8px' }}
       >
+        {/* 사용자 안내 문구 */}
+        {!isAnalyzing && !isProcessing && (
+          <div className="batch-ar-modal__guide">
+            <div className="batch-ar-modal__guide-summary">
+              <span><span className="batch-ar-modal__guide-highlight">미매핑</span> 파일은 고객을 직접 선택해주세요.</span>
+              <button
+                type="button"
+                className="batch-ar-modal__guide-help"
+                onClick={() => setShowHelp(!showHelp)}
+                aria-expanded={showHelp ? 'true' : 'false'}
+              >
+                {showHelp ? '접기' : '?'}
+              </button>
+            </div>
+            {showHelp && (
+              <div className="batch-ar-modal__guide-detail">
+                <p>• AR 고객명과 일치하는 고객이 1명이면 자동 추천됩니다.</p>
+                <p>• 동명이인이 있으면 미매핑 처리되어 직접 선택이 필요합니다.</p>
+                <p>• 일치하는 고객이 없으면 AR 고객명으로 새 고객이 자동 등록됩니다.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {isAnalyzing && rows.length === 0 ? (
           <div className="batch-ar-modal__analyzing">
             <div className="batch-ar-modal__spinner" />

@@ -27,6 +27,72 @@
   overflow: hidden;
 }
 
+/* ===== Guide (사용자 안내 문구) ===== */
+.batch-ar-modal__guide {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.batch-ar-modal__guide-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.batch-ar-modal__guide-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-bg-primary);
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.batch-ar-modal__guide-help:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.batch-ar-modal__guide-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+}
+
+.batch-ar-modal__guide-detail p {
+  margin: 0 0 4px 0;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.batch-ar-modal__guide-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.batch-ar-modal__guide-highlight {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--color-warning-bg, rgba(255, 149, 0, 0.15));
+  color: var(--color-warning, #ff9500);
+  border-radius: 3px;
+  font-weight: 600;
+}
+
 /* ===== Summary ===== */
 .batch-ar-modal__summary {
   display: flex;
