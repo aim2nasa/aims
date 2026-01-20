@@ -660,10 +660,11 @@ export class AnnualReportApi {
   static async searchCustomersByName(name: string, _userId: string): Promise<Customer[]> {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
+      // ⭐ status=all로 활성+휴면 고객 모두 검색 (동명이인 표시용)
       const data = await api.get<{
         success?: boolean;
         data?: { customers?: Customer[] };
-      }>(`/api/customers?search=${encodeURIComponent(name)}`);
+      }>(`/api/customers?search=${encodeURIComponent(name)}&status=all`);
 
       // 백엔드 응답 구조: { success: true, data: { customers: [...] } }
       return data.data?.customers || [];

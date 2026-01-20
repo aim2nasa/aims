@@ -82,6 +82,10 @@ interface ArFileTableRowProps {
   sameNameCount: number
   isDropdownOpen: boolean
   disabled: boolean
+  /** 체크박스 비활성화 (다른 고객명 선택 시) */
+  isCheckboxDisabled: boolean
+  /** 드롭다운 비활성화 (2개 이상 선택 시 - 일괄 매핑만 가능) */
+  isDropdownDisabled: boolean
   onCheckboxClick: (e: React.MouseEvent, rowIndex: number, fileId: string) => void
   onExtractedNameClick: (customerName: string) => void
   onDropdownOpen: (fileId: string, el: HTMLButtonElement) => void
@@ -102,6 +106,8 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
   sameNameCount,
   isDropdownOpen,
   disabled,
+  isCheckboxDisabled,
+  isDropdownDisabled,
   onCheckboxClick,
   onExtractedNameClick,
   onDropdownOpen,
@@ -115,6 +121,7 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
     row.isSelected && 'ar-file-table__tr--selected',
     !row.fileInfo.included && 'ar-file-table__tr--excluded',
     isDuplicate && 'ar-file-table__tr--duplicate',
+    isCheckboxDisabled && 'ar-file-table__tr--disabled',
   ].filter(Boolean).join(' ')
 
   return (
@@ -134,7 +141,8 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
             onCheckboxClick(e, rowIndex, row.fileInfo.fileId)
           }}
           onChange={() => {/* onClick에서 처리 */}}
-          disabled={disabled}
+          disabled={disabled || isCheckboxDisabled}
+          title={isCheckboxDisabled ? '다른 AR 고객명의 파일이 선택되어 있습니다' : undefined}
         />
       </td>
 
@@ -165,11 +173,13 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
           type="button"
           className={[
             'ar-file-table__dropdown-trigger',
-            needsSelection && 'ar-file-table__dropdown-trigger--needs',
+            needsSelection && !isDropdownDisabled && 'ar-file-table__dropdown-trigger--needs',
             isDropdownOpen && 'ar-file-table__dropdown-trigger--open',
+            isDropdownDisabled && 'ar-file-table__dropdown-trigger--disabled',
           ].filter(Boolean).join(' ')}
           onClick={(e) => onDropdownOpen(row.fileInfo.fileId, e.currentTarget)}
-          disabled={disabled || isDuplicate}
+          disabled={disabled || isDuplicate || isDropdownDisabled}
+          title={isDropdownDisabled ? '2개 이상 선택 시 "같은 고객에게 일괄 매핑"만 사용 가능' : undefined}
         >
           <span className="ar-file-table__dropdown-text">{displayText}</span>
           <span className="ar-file-table__dropdown-arrow">▼</span>
@@ -212,7 +222,9 @@ const ArFileTableRowComponent = React.memo<ArFileTableRowProps>(({
     prev.isMapped === next.isMapped &&
     prev.isDropdownOpen === next.isDropdownOpen &&
     prev.sameNameCount === next.sameNameCount &&
-    prev.disabled === next.disabled
+    prev.disabled === next.disabled &&
+    prev.isCheckboxDisabled === next.isCheckboxDisabled &&
+    prev.isDropdownDisabled === next.isDropdownDisabled
   )
 })
 
@@ -466,16 +478,40 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
     closeBulkDropdown()
   }, [rows, onBulkAssignCustomer, closeBulkDropdown])
 
-  // 모든 그룹의 매칭 고객 목록 (중복 제거)
-  const allMatchingCustomers = useMemo(() => {
-    const customerMap = new Map<string, Customer>()
-    groups.forEach(group => {
-      group.matchingCustomers.forEach(customer => {
-        customerMap.set(customer._id, customer)
-      })
-    })
-    return Array.from(customerMap.values())
-  }, [groups])
+  // 선택된 파일들의 공통 고객명 확인
+  const selectedRowsInfo = useMemo(() => {
+    const selectedRows = rows.filter(r => r.isSelected)
+    if (selectedRows.length === 0) {
+      return { firstCustomerName: null, commonCustomerName: null, isAllSameName: true, selectedRows: [] }
+    }
+
+    const firstCustomerName = selectedRows[0].extractedCustomerName
+    const isAllSameName = selectedRows.every(r => r.extractedCustomerName === firstCustomerName)
+
+    return {
+      firstCustomerName,  // 체크박스 비활성화용 (항상 첫 번째 선택된 파일의 고객명)
+      commonCustomerName: isAllSameName ? firstCustomerName : null,  // 일괄 매핑용
+      isAllSameName,
+      selectedRows,
+    }
+  }, [rows])
+
+  // 일괄 매핑용 고객 목록 (선택된 파일들의 그룹에서 가져옴)
+  const bulkMatchingCustomers = useMemo(() => {
+    if (!selectedRowsInfo.isAllSameName || selectedRowsInfo.selectedRows.length === 0) {
+      return []
+    }
+
+    // 첫 번째 선택된 행의 groupId로 그룹 찾기 (extractedCustomerName 대신 groupId 사용)
+    const firstRow = selectedRowsInfo.selectedRows[0]
+    const matchingGroup = groups.find(g => g.groupId === firstRow.groupId)
+
+    if (!matchingGroup) {
+      return []
+    }
+
+    return matchingGroup.matchingCustomers
+  }, [groups, selectedRowsInfo])
 
   // 현재 행의 그룹 찾기
   const getGroupForRow = useCallback((row: ArFileTableRow) => {
@@ -584,16 +620,27 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
         <div className="ar-file-table__bulk-toolbar">
           <span className="ar-file-table__bulk-count">
             ✓ {selectedCount}개 파일 선택됨
+            {selectedRowsInfo.isAllSameName && selectedRowsInfo.commonCustomerName && (
+              <span className="ar-file-table__bulk-group-name">
+                ({selectedRowsInfo.commonCustomerName})
+              </span>
+            )}
           </span>
           <span className="ar-file-table__bulk-arrow">→</span>
-          <button
-            type="button"
-            className="ar-file-table__bulk-btn ar-file-table__bulk-btn--primary"
-            onClick={(e) => openBulkDropdown(e.currentTarget)}
-            disabled={disabled}
-          >
-            같은 고객에게 일괄 매핑 ▼
-          </button>
+          {selectedRowsInfo.isAllSameName ? (
+            <button
+              type="button"
+              className="ar-file-table__bulk-btn ar-file-table__bulk-btn--primary"
+              onClick={(e) => openBulkDropdown(e.currentTarget)}
+              disabled={disabled}
+            >
+              같은 고객에게 일괄 매핑 ▼
+            </button>
+          ) : (
+            <span className="ar-file-table__bulk-warning">
+              ⚠️ AR 고객명이 다른 파일은 함께 매핑할 수 없습니다
+            </span>
+          )}
           <button
             type="button"
             className="ar-file-table__bulk-btn ar-file-table__bulk-btn--ghost"
@@ -690,6 +737,14 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
                 // 행 번호: (현재 페이지 - 1) * 페이지당 항목 수 + rowIndex + 1
                 const rowNumber = (currentPage - 1) * itemsPerPage + rowIndex + 1
 
+                // 다른 고객명이 선택되어 있으면 체크박스 비활성화
+                // (선택된 파일이 있고, 현재 행의 고객명이 첫 번째 선택된 파일의 고객명과 다르면)
+                const isCheckboxDisabled = selectedRowsInfo.firstCustomerName !== null &&
+                  row.extractedCustomerName !== selectedRowsInfo.firstCustomerName
+
+                // 2개 이상 선택 시 개별 드롭다운 비활성화 (일괄 매핑만 사용 가능)
+                const isDropdownDisabled = selectedCount >= 2
+
                 return (
                   <ArFileTableRowComponent
                     key={row.fileInfo.fileId}
@@ -702,6 +757,8 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
                     isDateDuplicate={isDateDuplicate}
                     displayText={displayText}
                     sameNameCount={sameNameCount}
+                    isCheckboxDisabled={isCheckboxDisabled}
+                    isDropdownDisabled={isDropdownDisabled}
                     isDropdownOpen={openDropdownId === row.fileInfo.fileId}
                     disabled={disabled}
                     onCheckboxClick={handleRowCheckboxClick}
@@ -816,7 +873,7 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
       )}
 
       {/* 일괄 매핑 드롭다운 (Portal) */}
-      {bulkDropdownOpen && createPortal(
+      {bulkDropdownOpen && selectedRowsInfo.isAllSameName && createPortal(
         <div
           className="ar-table-dropdown ar-table-bulk-dropdown--open"
           style={{
@@ -825,9 +882,11 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             left: bulkDropdownPosition.left,
           }}
         >
-          <div className="ar-table-dropdown__section-title">일괄 매핑할 고객 선택</div>
-          {allMatchingCustomers.length > 0 ? (
-            allMatchingCustomers.map(customer => (
+          <div className="ar-table-dropdown__section-title">
+            "{selectedRowsInfo.commonCustomerName}" 매칭 고객
+          </div>
+          {bulkMatchingCustomers.length > 0 ? (
+            bulkMatchingCustomers.map(customer => (
               <button
                 key={customer._id}
                 type="button"
@@ -843,7 +902,9 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
               </button>
             ))
           ) : (
-            <div className="ar-table-dropdown__empty">매칭된 고객이 없습니다</div>
+            <div className="ar-table-dropdown__empty">
+              "{selectedRowsInfo.commonCustomerName}"과 일치하는 고객이 없습니다
+            </div>
           )}
           <div className="ar-table-dropdown__divider" />
           <button
@@ -851,14 +912,15 @@ export const ArFileTable: React.FC<ArFileTableProps> = ({
             className="ar-table-dropdown__option ar-table-dropdown__option--action"
             onClick={() => {
               closeBulkDropdown()
-              const firstSelected = rows.find(r => r.isSelected)
-              if (firstSelected) {
-                onOpenNewCustomerModal('__BULK__', firstSelected.extractedCustomerName)
+              if (selectedRowsInfo.commonCustomerName) {
+                onOpenNewCustomerModal('__BULK__', selectedRowsInfo.commonCustomerName)
               }
             }}
           >
             <span className="ar-table-dropdown__option-icon">+</span>
-            <span className="ar-table-dropdown__option-text">새 고객으로 일괄 등록</span>
+            <span className="ar-table-dropdown__option-text">
+              "{selectedRowsInfo.commonCustomerName}" 새 고객 등록
+            </span>
           </button>
         </div>,
         document.body

@@ -160,6 +160,20 @@
   background: var(--color-bg-hover);
 }
 
+/* 공통 고객명 표시 */
+.ar-file-table__bulk-group-name {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-left: 4px;
+}
+
+/* 경고 메시지 (고객명이 다를 때) */
+.ar-file-table__bulk-warning {
+  font-size: 11px;
+  color: var(--color-warning, #ff9500);
+  font-weight: 500;
+}
+
 /* ===== Table Container ===== */
 .ar-file-table__table-container {
   flex-grow: 1;
@@ -317,6 +331,16 @@
   background: var(--color-error-bg, rgba(255, 59, 48, 0.12)) !important;
 }
 
+/* 다른 고객명 파일이 선택되어 있을 때 비활성화 */
+.ar-file-table__tr--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ar-file-table__tr--disabled .ar-file-table__checkbox {
+  cursor: not-allowed;
+}
+
 /* ===== Table Cell ===== */
 .ar-file-table__td {
   padding: 2px 6px;
@@ -461,6 +485,17 @@
 
 .ar-file-table__dropdown-trigger--open {
   border-color: var(--color-primary);
+}
+
+/* 2개 이상 선택 시 드롭다운 비활성화 */
+.ar-file-table__dropdown-trigger--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--color-bg-tertiary);
+}
+
+.ar-file-table__dropdown-trigger--disabled .ar-file-table__dropdown-text {
+  color: var(--color-text-tertiary);
 }
 
 .ar-file-table__dropdown-text {
@@ -765,6 +800,10 @@ html[data-theme="dark"] .ar-file-table__tr--duplicate {
 
 html[data-theme="dark"] .ar-file-table__tr--duplicate:hover {
   background: rgba(255, 59, 48, 0.2) !important;
+}
+
+html[data-theme="dark"] .ar-file-table__tr--disabled {
+  opacity: 0.4;
 }
 
 /* Table Cells */

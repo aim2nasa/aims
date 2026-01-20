@@ -156,6 +156,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   })
   const [showNewCustomerModalForCR, setShowNewCustomerModalForCR] = useState(false)
 
+  // 🎯 AR 일괄 매핑용 새 고객 등록 모달 상태
+  const [batchNewCustomerModal, setBatchNewCustomerModal] = useState<{
+    isOpen: boolean
+    fileId: string | null  // '__BULK__'면 일괄 매핑, 아니면 개별 파일
+    defaultName: string
+  }>({ isOpen: false, fileId: null, defaultName: '' })
+
   // 🎯 문서 유형 선택 상태 (AR/CRS는 고객 선택 불필요 - 업로드 후 모달로 선택)
   type DocumentTypeMode = 'normal' | 'annual_report' | 'customer_review' | null
   const [documentTypeMode, setDocumentTypeMode] = useState<DocumentTypeMode>(null)
@@ -2384,6 +2391,34 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         />
       )}
 
+      {/* 🎯 AR 일괄 매핑용 새 고객 등록 모달 */}
+      <NewCustomerInputModal
+        isOpen={batchNewCustomerModal.isOpen}
+        onClose={() => setBatchNewCustomerModal({ isOpen: false, fileId: null, defaultName: '' })}
+        arMetadata={{
+          customer_name: batchNewCustomerModal.defaultName,
+          issue_date: new Date().toISOString().split('T')[0],
+        }}
+        onSubmit={(customerId, customerName, customerType) => {
+          // 모달 내부에서 고객 생성이 완료된 후 호출됨
+          addLog('success', `새 고객 "${customerName}" (${customerType}) 등록 완료`)
+
+          const fileId = batchNewCustomerModal.fileId
+          if (fileId === '__BULK__') {
+            // 일괄 매핑: 선택된 모든 파일에 새 고객 할당
+            const selectedFileIds = arBatch.tableState.rows
+              .filter(r => r.isSelected)
+              .map(r => r.fileInfo.fileId)
+            arBatch.bulkAssignToCustomer(selectedFileIds, customerId, customerName)
+          } else if (fileId) {
+            // 개별 파일에 새 고객 할당
+            arBatch.updateTableRowMapping(fileId, customerId, customerName)
+          }
+
+          setBatchNewCustomerModal({ isOpen: false, fileId: null, defaultName: '' })
+        }}
+      />
+
       {/* 🎯 AR 일괄 매핑 모달 (테이블 UI) */}
       <BatchArMappingModal
         state={arBatch.batchState}
@@ -2406,9 +2441,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         onSetSearchQuery={arBatch.setTableSearchQuery}
         onSetFilter={arBatch.setTableFilter}
         onOpenNewCustomerModal={(fileId, defaultName) => {
-          // 새 고객 등록 - 해당 파일에 새 고객명 설정
-          arBatch.updateTableRowNewCustomer(fileId, defaultName)
-          addLog('info', `새 고객으로 등록 예정: ${defaultName}`)
+          // 새 고객 등록 모달 열기
+          setBatchNewCustomerModal({
+            isOpen: true,
+            fileId,
+            defaultName,
+          })
         }}
         onOpenCustomerSearchModal={(_fileId) => {
           // 고객 검색 모달 열기 (추후 구현 - 현재는 드롭다운으로 선택)
