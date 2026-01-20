@@ -2407,6 +2407,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 모달 내부에서 고객 생성이 완료된 후 호출됨
           addLog('success', `새 고객 "${customerName}" (${customerType}) 등록 완료`)
 
+          // 🎯 새 고객을 그룹의 matchingCustomers에 추가 (같은 AR 고객명의 다른 파일 드롭다운에서도 보이도록)
+          arBatch.addCustomerToGroups(batchNewCustomerModal.defaultName, {
+            _id: customerId,
+            name: customerName,
+            customer_type: customerType,
+          })
+
           const fileId = batchNewCustomerModal.fileId
           if (fileId === '__BULK__') {
             // 일괄 매핑: 선택된 모든 파일에 새 고객 할당

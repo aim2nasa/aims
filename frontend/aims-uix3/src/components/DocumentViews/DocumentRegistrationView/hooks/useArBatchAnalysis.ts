@@ -107,6 +107,8 @@ export interface UseArBatchAnalysisReturn {
   isTableAllMapped: () => boolean
   /** 테이블 행 목록 (읽기용) */
   getTableRows: () => ArFileTableRow[]
+  /** 새 고객을 그룹의 matchingCustomers에 추가 */
+  addCustomerToGroups: (extractedCustomerName: string, customer: { _id: string; name: string; customer_type?: string }) => void
 }
 
 const initialState: BatchMappingState = {
@@ -560,6 +562,39 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     return tableState.rows
   }, [tableState.rows])
 
+  /**
+   * 새 고객을 그룹의 matchingCustomers에 추가
+   * @description 새 고객 생성 후 같은 AR 고객명 그룹의 드롭다운에 표시되도록 함
+   */
+  const addCustomerToGroups = useCallback((
+    extractedCustomerName: string,
+    customer: { _id: string; name: string; customer_type?: string }
+  ) => {
+    setTableState(prev => ({
+      ...prev,
+      groups: prev.groups.map(group => {
+        if (group.customerNameFromAr === extractedCustomerName) {
+          // 이미 존재하는지 확인
+          const exists = group.matchingCustomers.some(c => c._id === customer._id)
+          if (exists) return group
+
+          // 새 고객을 matchingCustomers 맨 앞에 추가
+          const newCustomer: Customer = {
+            _id: customer._id,
+            personal_info: { name: customer.name },
+            insurance_info: { customer_type: customer.customer_type || '개인' },
+          } as Customer
+
+          return {
+            ...group,
+            matchingCustomers: [newCustomer, ...group.matchingCustomers],
+          }
+        }
+        return group
+      }),
+    }))
+  }, [])
+
   return {
     batchState,
     tableState,
@@ -589,5 +624,6 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     setTableFilter,
     isTableAllMapped,
     getTableRows,
+    addCustomerToGroups,
   }
 }
