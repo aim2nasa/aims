@@ -9,7 +9,7 @@
   flex-direction: column;
   gap: 16px;
   max-height: 60vh;
-  overflow: hidden;
+  overflow: visible; /* 드롭다운이 잘리지 않도록 visible로 변경 */
 }
 
 /* ===== Summary ===== */
@@ -60,11 +60,12 @@
 /* ===== Groups Container ===== */
 .batch-ar-modal__groups {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible; /* 드롭다운이 잘리지 않도록 visible */
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding-right: 4px;
+  max-height: calc(60vh - 100px); /* 스크롤 대신 max-height 사용 */
 }
 
 /* ===== Analyzing State ===== */
@@ -145,7 +146,7 @@
 .ar-group-card {
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible; /* 드롭다운이 잘리지 않도록 visible로 변경 */
   background: var(--color-bg-primary);
 }
 
@@ -407,11 +408,19 @@
   min-width: 180px;
   max-width: 280px;
   background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong, #d1d1d6);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
   z-index: 100;
   overflow: hidden;
+}
+
+/* Portal로 렌더링되는 드롭다운 메뉴 */
+.customer-dropdown__menu--portal {
+  position: fixed;
+  margin-top: 0;
+  max-width: 280px;
+  z-index: 10000;
 }
 
 .customer-dropdown__option {
@@ -474,6 +483,13 @@
   margin: 4px 0;
 }
 
+/* ===== Modal Content Overflow Override ===== */
+/* 🔴 Modal.css의 .modal__content가 overflow-y: auto라서 드롭다운이 잘림 */
+/* batch-ar-mapping-modal 클래스를 사용해서 이 모달에서만 overflow 재정의 */
+.batch-ar-mapping-modal .modal__content {
+  overflow: visible;
+}
+
 /* ===== Dark Mode Adjustments ===== */
 @media (prefers-color-scheme: dark) {
   .ar-file-row--duplicate {
@@ -481,6 +497,7 @@
   }
 
   .customer-dropdown__menu {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-color: var(--color-border-strong, #48484a);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
