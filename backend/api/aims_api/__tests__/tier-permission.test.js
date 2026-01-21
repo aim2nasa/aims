@@ -182,9 +182,8 @@ describe('사용자 활동 API 티어 일관성', () => {
   );
 
   it('user-activity-routes.js에서 DEFAULT_TIER를 import해야 함', () => {
-    expect(userActivityRoutesCode).toContain(
-      "const { DEFAULT_TIER } = require('../lib/storageQuotaService')"
-    );
+    // DEFAULT_TIER가 storageQuotaService에서 import되는지 확인 (다른 export와 함께 import될 수 있음)
+    expect(userActivityRoutesCode).toMatch(/const\s*\{[^}]*DEFAULT_TIER[^}]*\}\s*=\s*require\(['"]\.\.\/lib\/storageQuotaService['"]\)/);
   });
 
   it('사용자 tier가 없을 때 DEFAULT_TIER를 사용해야 함', () => {

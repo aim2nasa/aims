@@ -4,9 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test:migration": "node tests/test_customer_relation_fix.js && node tests/test_customer_cascade_delete.js && node tests/test_qdrant_deletion.js && node tests/ocr-auto-retry.test.js && node tests/test_ar_crs_displayname.js && node tests/test_cascade_delete_objectid_compat.js && node tests/test_filesize_check.js",
-    "test:cr-duplicate": "cd ../annual_report_api && ./venv/bin/python -m pytest tests/test_cr_duplicate_check.py -v",
-    "test:cr-duplicate-integration": "cd ../annual_report_api && ./venv/bin/python tests/test_cr_duplicate_integration.py",
-    "test:annual-report-api": "cd ../annual_report_api && ./venv/bin/python -m pytest tests/ -v --ignore=tests/test_cr_detector_real_files.py",
+    "test:cr-duplicate": "node scripts/run-python-tests.js cr-duplicate",
+    "test:cr-duplicate-integration": "node scripts/run-python-tests.js cr-duplicate-integration",
+    "test:annual-report-api": "node scripts/run-python-tests.js annual-report-api",
     "test": "npm run test:migration && npm run test:cr-duplicate && node scripts/setup-test-env.js && cross-env MONGO_URI=mongodb://localhost:27017 jest --runInBand && node scripts/teardown-test-env.js",
     "test:ci": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
     "test:watch": "jest --watch",
@@ -44,6 +44,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
       "/node_modules/"
     ],

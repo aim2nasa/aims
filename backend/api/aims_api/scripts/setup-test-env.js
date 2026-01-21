@@ -56,9 +56,23 @@ async function setupSSHTunnel() {
       });
     }
 
-    // 연결 대기
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('SSH tunnel established (localhost:27017 -> tars.giize.com:27017)');
+    // 연결 대기 및 확인 (최대 10초)
+    let connected = false;
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      connected = await checkMongoConnection();
+      if (connected) {
+        console.log('SSH tunnel established (localhost:27017 -> tars.giize.com:27017)');
+        break;
+      }
+      console.log(`Waiting for SSH tunnel... (${i + 1}/10)`);
+    }
+
+    if (!connected) {
+      console.error('Failed to establish SSH tunnel after 10 seconds');
+      console.error('Please ensure SSH key authentication is configured for tars.giize.com');
+      process.exit(1);
+    }
   } catch (error) {
     console.error('Failed to setup SSH tunnel:', error.message);
     process.exit(1);
