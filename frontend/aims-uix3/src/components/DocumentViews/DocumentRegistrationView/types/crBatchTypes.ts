@@ -17,11 +17,14 @@ import type {
   MappingStatusFilter,
   BaseFileTableRow,
   BaseTableViewState,
+  FileAnalysisStatus,
+  AnalyzingFileInfo,
 } from './batchTypes'
 
 // 공통 타입 re-export
 export type { MatchStatus as CrMatchStatus, BatchRegistrationResult as CrBatchRegistrationResult, MappingStatusFilter }
 export type { CrMetadata, CrDuplicateStatus }
+export type { FileAnalysisStatus, AnalyzingFileInfo }
 
 // ============================================
 // CRS 전용 타입

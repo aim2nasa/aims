@@ -17,6 +17,7 @@ import type {
   CrFileTableRow,
   CrTableSortField,
   CrMappingStatusFilter,
+  AnalyzingFileInfo,
 } from '../types/crBatchTypes'
 import {
   generateFileId,
@@ -119,6 +120,7 @@ const initialState: CrBatchMappingState = {
   progress: 0,
   totalFiles: 0,
   completedFiles: 0,
+  analyzingFiles: [],
 }
 
 const initialTableState: CrTableViewState = {
@@ -151,6 +153,12 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
 
     abortRef.current = false
 
+    // 초기 파일 목록 생성 (모두 pending 상태)
+    const initialAnalyzingFiles: AnalyzingFileInfo[] = files.map(f => ({
+      fileName: f.name,
+      status: 'pending' as const,
+    }))
+
     setBatchState(prev => ({
       ...prev,
       isAnalyzing: true,
@@ -158,13 +166,32 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
       totalFiles: files.length,
       completedFiles: 0,
       groups: [],
+      analyzingFiles: initialAnalyzingFiles,
     }))
+
+    // 테이블 상태도 초기화 (이전 분석 결과 제거)
+    setTableState({
+      ...initialTableState,
+      rows: [],
+      groups: [],
+    })
 
     addLog?.('info', `[CRS 일괄 분석] ${files.length}개 파일 분석 시작`)
 
     const crFiles: CrFileInfo[] = []
     const nonCrFiles: File[] = []
     const failedFiles: Array<{ file: File; error: string }> = []
+
+    // 파일 상태 업데이트 헬퍼 함수
+    const updateFileStatus = (index: number, status: AnalyzingFileInfo['status'], error?: string) => {
+      setBatchState(prev => {
+        const newFiles = [...(prev.analyzingFiles || [])]
+        if (newFiles[index]) {
+          newFiles[index] = { ...newFiles[index], status, error }
+        }
+        return { ...prev, analyzingFiles: newFiles }
+      })
+    }
 
     // 1. 각 파일 CRS 분석
     for (let i = 0; i < files.length; i++) {
@@ -174,6 +201,9 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
       }
 
       const file = files[i]
+
+      // 현재 파일을 analyzing 상태로 변경
+      updateFileStatus(i, 'analyzing')
 
       setBatchState(prev => ({
         ...prev,
@@ -185,6 +215,7 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
         // PDF 파일만 CRS 분석
         if (file.type !== 'application/pdf') {
           nonCrFiles.push(file)
+          updateFileStatus(i, 'non_ar')
           continue
         }
 
@@ -193,13 +224,16 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
         if (result.is_customer_review && result.metadata?.contractor_name) {
           const crFile = createCrFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
           crFiles.push(crFile)
+          updateFileStatus(i, 'completed')
           addLog?.('success', `[CRS 감지] ${file.name}`, `계약자: ${result.metadata.contractor_name}`)
         } else {
           nonCrFiles.push(file)
+          updateFileStatus(i, 'non_ar')
         }
       } catch (error) {
         console.error('[useCrBatchAnalysis] CRS 분석 실패:', file.name, error)
         failedFiles.push({ file, error: String(error) })
+        updateFileStatus(i, 'failed', String(error))
         addLog?.('error', `[CRS 분석 실패] ${file.name}`, String(error))
       }
     }
