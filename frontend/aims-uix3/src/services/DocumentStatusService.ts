@@ -212,9 +212,16 @@ export class DocumentStatusService {
 
   /**
    * MongoDB 구조에서 파일명 추출
+   * AR/CRS 파일의 경우 displayName이 있으면 우선 반환
    * @deprecated raw 필드 사용 권장 (extractFilenameFromRaw)
    */
   static extractFilename(document: Document): string {
+    // 1. displayName이 있으면 우선 사용 (AR/CRS 내용 기반 이름)
+    if (document.displayName) {
+      return document.displayName
+    }
+
+    // 2. 기존 로직 (originalName fallback)
     const uploadData = parseStage<UploadData>(document.upload)
     if (uploadData?.originalName) {
       return uploadData.originalName
@@ -260,6 +267,35 @@ export class DocumentStatusService {
         }
       }
     }
+
+    return 'Unknown File'
+  }
+
+  /**
+   * MongoDB 구조에서 원본 파일명 추출 (displayName 무시)
+   * AR/CRS 파일의 툴팁에 원본 파일명 표시용
+   */
+  static extractOriginalFilename(document: Document): string {
+    // displayName 무시하고 항상 originalName 반환
+    const uploadData = parseStage<UploadData>(document.upload)
+    if (uploadData?.originalName) {
+      return uploadData.originalName
+    }
+
+    const stageUpload = parseStage<UploadData>(document.stages?.upload)
+    if (stageUpload?.originalName) {
+      return stageUpload.originalName
+    }
+
+    // 기본 필드에서 찾기
+    const filename =
+      document.originalName ||
+      document.filename ||
+      document.file_name ||
+      document.name ||
+      document.title
+
+    if (filename) return filename
 
     return 'Unknown File'
   }

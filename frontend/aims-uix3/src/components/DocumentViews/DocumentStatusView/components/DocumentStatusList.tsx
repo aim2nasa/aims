@@ -978,12 +978,17 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 파일명 + PDF 변환 상태 아이콘 */}
             <div className="status-filename">
-              <span className="status-filename-text">
-                {DocumentStatusService.extractFilename(document)}
-              </span>
-              {/* 🍎 고객리뷰 파일만 displayName 표시 */}
-              {(document.docType === 'customer_review' || document.document_type === 'customer_review') && document.displayName && (
-                <span className="display-name-suffix">({document.displayName})</span>
+              {/* 🍎 displayName이 있으면 원본 파일명을 툴팁으로 표시 (AR/CRS) */}
+              {document.displayName ? (
+                <Tooltip content={`원본: ${DocumentStatusService.extractOriginalFilename(document)}`}>
+                  <span className="status-filename-text">
+                    {document.displayName}
+                  </span>
+                </Tooltip>
+              ) : (
+                <span className="status-filename-text">
+                  {DocumentStatusService.extractFilename(document)}
+                </span>
               )}
               {/* PDF 변환 상태 배지 (변환 대상 파일에만 표시) */}
               {(() => {

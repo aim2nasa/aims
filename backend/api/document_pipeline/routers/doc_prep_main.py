@@ -376,12 +376,22 @@ async def _detect_and_process_annual_report(
             except Exception as e:
                 logger.warning(f"고객 생성/검색 중 오류: {e}")
 
-        # 5. DB 업데이트
+        # 5. displayName 생성 (AR)
+        # 형식: {고객명}_AR_{YYYY-MM-DD}.pdf
+        display_name = None
+        if customer_name and issue_date:
+            display_name = f"{customer_name}_AR_{issue_date}.pdf"
+            logger.info(f"📄 AR displayName 생성: {display_name}")
+
+        # 6. DB 업데이트
         update_fields = {
             "is_annual_report": True,
             "document_type": "annual_report",
             "ar_parsing_status": "pending",  # 백그라운드 파싱 대기
         }
+
+        if display_name:
+            update_fields["displayName"] = display_name
 
         if customer_id:
             update_fields["customerId"] = customer_id
@@ -406,6 +416,213 @@ async def _detect_and_process_annual_report(
     except Exception as e:
         logger.error(f"AR 자동 감지 중 오류: {e}", exc_info=True)
         return {"is_annual_report": False, "customer_id": None, "customer_name": None}
+
+
+async def _detect_and_process_customer_review(
+    doc_id: str,
+    full_text: str,
+    original_name: str,
+    user_id: str,
+    files_collection
+) -> Dict[str, Any]:
+    """
+    🔴 CRS (Customer Review Service) 자동 감지 및 displayName 생성
+
+    Args:
+        doc_id: 문서 ID
+        full_text: PDF에서 추출된 전체 텍스트
+        original_name: 원본 파일명
+        user_id: 사용자 ID
+        files_collection: MongoDB 컬렉션
+
+    Returns:
+        dict: {
+            "is_customer_review": bool,
+            "customer_name": str | None,
+            "product_name": str | None,
+            "issue_date": str | None,
+            "display_name": str | None
+        }
+    """
+    import httpx
+
+    settings = get_settings()
+
+    try:
+        # 1. CRS 패턴 매칭
+        normalized_text = re.sub(r'\s+', ' ', full_text)
+
+        required_keywords = ['Customer Review Service']
+        optional_keywords = ['메트라이프', '변액', '적립금', '투자수익률', '펀드', '해지환급금']
+
+        matched_required = [kw for kw in required_keywords if kw in normalized_text]
+        matched_optional = [kw for kw in optional_keywords if kw in normalized_text]
+
+        # CRS 판단: "Customer Review Service" 필수 + 선택 키워드 1개 이상
+        has_cr_keyword = "Customer Review Service" in normalized_text
+        is_customer_review = has_cr_keyword and len(matched_optional) >= 1
+
+        if not is_customer_review:
+            logger.debug(f"CRS 패턴 불일치: doc_id={doc_id}")
+            return {"is_customer_review": False}
+
+        logger.info(f"🔍 CRS 감지: doc_id={doc_id}, 매칭={matched_required + matched_optional}")
+
+        # 2. 메타데이터 추출 (고객명, 상품명, 발행일)
+
+        # 2-1. 고객명 추출: "XXX 고객님을 위한" 패턴
+        customer_name = None
+        customer_pattern = r'([가-힣]+)\s*고객님을?\s*위한'
+        customer_match = re.search(customer_pattern, normalized_text)
+        if customer_match:
+            customer_name = customer_match.group(1).strip()
+            logger.info(f"📄 CRS 고객명 추출: {customer_name}")
+        else:
+            # fallback: "계약자 : XXX" 패턴
+            contractor_pattern = r'계약자\s*[:\s]+([가-힣]+)'
+            contractor_match = re.search(contractor_pattern, full_text)
+            if contractor_match:
+                customer_name = contractor_match.group(1).strip()
+                logger.info(f"📄 CRS 계약자명 추출: {customer_name}")
+
+        # 2-2. 상품명 추출
+        # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 등
+        product_name = None
+        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기))"
+        product_match = re.search(product_pattern, full_text)
+        if product_match:
+            product_name = product_match.group(1).strip()
+            # 발행일 이후 텍스트 제거
+            if "발행" in product_name:
+                product_name = product_name.split("발행")[0].strip()
+            logger.info(f"📄 CRS 상품명 추출: {product_name}")
+        else:
+            # 대체 패턴: 변액 보험 상품명
+            alt_product_pattern = r"([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)"
+            alt_match = re.search(alt_product_pattern, full_text)
+            if alt_match:
+                product_name = alt_match.group(1).strip()
+                logger.info(f"📄 CRS 상품명 추출 (대체): {product_name}")
+
+        # 2-3. 발행일 추출
+        issue_date = None
+        date_pattern = r'발행\s*(?:\(기준\))?\s*일[:\s]*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+        date_match = re.search(date_pattern, full_text)
+        if date_match:
+            year, month, day = date_match.groups()
+            issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            logger.info(f"📅 CRS 발행일 추출: {issue_date}")
+        else:
+            # 대체 패턴: 일반 날짜
+            alt_date_pattern = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+            alt_date_match = re.search(alt_date_pattern, full_text)
+            if alt_date_match:
+                year, month, day = alt_date_match.groups()
+                issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                logger.info(f"📅 CRS 발행일 추출 (대체): {issue_date}")
+
+        # 3. displayName 생성
+        # 형식: {고객명}_CRS_{상품명}_{YYYY-MM-DD}.pdf
+        display_name = None
+        if customer_name and product_name and issue_date:
+            # 상품명 정규화 (파일명에 사용 불가 문자 제거)
+            safe_product = re.sub(r'[\\/:*?"<>|]', '', product_name)
+            safe_product = re.sub(r'\s+', ' ', safe_product).strip()
+            display_name = f"{customer_name}_CRS_{safe_product}_{issue_date}.pdf"
+            logger.info(f"📄 CRS displayName 생성: {display_name}")
+        elif customer_name and issue_date:
+            # 상품명 없이 생성
+            display_name = f"{customer_name}_CRS_{issue_date}.pdf"
+            logger.info(f"📄 CRS displayName 생성 (상품명 없음): {display_name}")
+
+        # 4. 고객 생성/검색 (AR과 동일한 로직)
+        customer_id = None
+        if customer_name and user_id:
+            try:
+                async with httpx.AsyncClient() as client:
+                    # 고객 검색 (이름으로)
+                    search_response = await client.get(
+                        f"{settings.AIMS_API_URL}/api/customers/search",
+                        params={"q": customer_name, "userId": user_id},
+                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                        timeout=10.0
+                    )
+
+                    if search_response.status_code == 200:
+                        search_result = search_response.json()
+                        customers = search_result.get("customers", [])
+
+                        # 정확히 일치하는 고객 찾기
+                        exact_match = None
+                        for c in customers:
+                            c_name = c.get("personal_info", {}).get("name", "")
+                            if c_name == customer_name:
+                                exact_match = c
+                                break
+
+                        if exact_match:
+                            customer_id = exact_match.get("_id")
+                            logger.info(f"✅ CRS 기존 고객 발견: {customer_name} (ID: {customer_id})")
+                        else:
+                            # 새 고객 생성
+                            create_response = await client.post(
+                                f"{settings.AIMS_API_URL}/api/customers",
+                                json={
+                                    "personal_info": {"name": customer_name},
+                                    "insurance_info": {"customer_type": "개인"},
+                                    "userId": user_id
+                                },
+                                headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                                timeout=10.0
+                            )
+
+                            if create_response.status_code in [200, 201]:
+                                new_customer = create_response.json()
+                                customer_id = new_customer.get("_id")
+                                logger.info(f"✅ CRS 새 고객 생성: {customer_name} (ID: {customer_id})")
+                            else:
+                                logger.warning(f"CRS 고객 생성 실패: {create_response.text}")
+                    else:
+                        logger.warning(f"CRS 고객 검색 실패: {search_response.text}")
+            except Exception as e:
+                logger.warning(f"CRS 고객 생성/검색 중 오류: {e}")
+
+        # 5. DB 업데이트
+        update_fields = {
+            "is_customer_review": True,
+            "document_type": "customer_review",
+            "cr_metadata": {
+                "contractor_name": customer_name,
+                "product_name": product_name,
+                "issue_date": issue_date,
+            }
+        }
+
+        if display_name:
+            update_fields["displayName"] = display_name
+
+        if customer_id:
+            update_fields["customerId"] = customer_id
+
+        await files_collection.update_one(
+            {"_id": ObjectId(doc_id)},
+            {"$set": update_fields}
+        )
+
+        logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
+
+        return {
+            "is_customer_review": True,
+            "customer_id": customer_id,
+            "customer_name": customer_name,
+            "product_name": product_name,
+            "issue_date": issue_date,
+            "display_name": display_name
+        }
+
+    except Exception as e:
+        logger.error(f"CRS 자동 감지 중 오류: {e}", exc_info=True)
+        return {"is_customer_review": False}
 
 
 async def _connect_document_to_customer(customer_id: str, doc_id: str, user_id: str):
@@ -728,7 +945,7 @@ async def process_document_pipeline(
         # Progress: 50% - Meta extraction complete
         await _notify_progress(doc_id, user_id, 50, "meta", "메타데이터 추출 완료")
 
-        # 🔴 AR 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
+        # 🔴 AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
         if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
             ar_detection = await _detect_and_process_annual_report(
                 doc_id=doc_id,
@@ -739,6 +956,17 @@ async def process_document_pipeline(
             )
             if ar_detection.get("is_annual_report"):
                 logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, customer_id={ar_detection.get('customer_id')}")
+            else:
+                # AR이 아닌 경우 CRS 감지 시도
+                crs_detection = await _detect_and_process_customer_review(
+                    doc_id=doc_id,
+                    full_text=full_text,
+                    original_name=original_name,
+                    user_id=user_id,
+                    files_collection=files_collection
+                )
+                if crs_detection.get("is_customer_review"):
+                    logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, customer_id={crs_detection.get('customer_id')}")
 
         # Step 4: Route based on MIME type
 
