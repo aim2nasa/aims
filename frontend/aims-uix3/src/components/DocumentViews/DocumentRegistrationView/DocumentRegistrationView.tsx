@@ -130,10 +130,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   })
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false)
 
-  // 🎯 AR 파일 미발견 경고 메시지 (5초 후 자동 사라짐)
+  // 🎯 AR 파일 미발견 경고 메시지 (3초 후 자동 사라짐)
   const [noArFoundWarning, setNoArFoundWarning] = useState<string | null>(null)
 
-  // 경고 메시지 자동 사라짐 타이머
+  // 🎯 CRS 파일 미발견 경고 메시지 (3초 후 자동 사라짐)
+  const [noCrFoundWarning, setNoCrFoundWarning] = useState<string | null>(null)
+
+  // 경고 메시지 자동 사라짐 타이머 (AR)
   useEffect(() => {
     if (noArFoundWarning) {
       const timer = setTimeout(() => {
@@ -143,6 +146,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     }
     return undefined
   }, [noArFoundWarning])
+
+  // 경고 메시지 자동 사라짐 타이머 (CRS)
+  useEffect(() => {
+    if (noCrFoundWarning) {
+      const timer = setTimeout(() => {
+        setNoCrFoundWarning(null)
+      }, 3000) // 3초 후 사라짐
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [noCrFoundWarning])
 
   // 🎯 AR 파일 큐 - 다중 AR 파일 순차 처리용
   // 문제: 여러 AR 파일 업로드 시 두 번째 파일이 첫 번째를 덮어씀
@@ -574,7 +588,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       // CRS 파일이 하나도 발견되지 않은 경우
       if (!crAnalysisResult) {
-        addLog('warning', 'Customer Review가 아닙니다', '선택한 파일에서 Customer Review를 감지하지 못했습니다.')
+        setNoCrFoundWarning('Customer Review가 아닙니다.')
         return
       }
 
@@ -2135,6 +2149,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               type="button"
               className="no-ar-warning__close"
               onClick={() => setNoArFoundWarning(null)}
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* 🎯 CRS 파일 미발견 경고 메시지 */}
+        {documentTypeMode === 'customer_review' && noCrFoundWarning && !isLogVisible && (
+          <div className="no-ar-warning">
+            <div className="no-ar-warning__icon">⚠️</div>
+            <div className="no-ar-warning__message">{noCrFoundWarning}</div>
+            <button
+              type="button"
+              className="no-ar-warning__close"
+              onClick={() => setNoCrFoundWarning(null)}
               aria-label="닫기"
             >
               ✕
