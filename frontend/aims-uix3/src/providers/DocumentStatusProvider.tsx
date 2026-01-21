@@ -328,6 +328,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const fetchDocumentsRef = useRef(fetchDocuments)
   const checkApiHealthRef = useRef(checkApiHealth)
 
+  // 🛡️ 완료 상태인데 fileSize가 0인 문서 재시도 타이머 ref
+  const completionVerifyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   // 최신 함수로 ref 업데이트 (렌더링마다)
   useEffect(() => {
     fetchDocumentsRef.current = fetchDocuments
@@ -469,6 +472,54 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }, 100)
     return () => clearTimeout(timeoutId)
   }, [documents, fetchCustomerTypesInBackground])
+
+  /**
+   * 🛡️ 완료 상태인데 fileSize가 0인 문서 자동 재시도
+   * - SSE 업데이트가 MongoDB write 완료 전에 도착하는 경우 대비
+   * - 2초 후 재조회하여 file size 등 누락된 정보 보완
+   */
+  useEffect(() => {
+    if (documents.length === 0 || typeof window === 'undefined') {
+      return
+    }
+
+    // 완료 상태인데 fileSize가 0 또는 없는 문서 찾기
+    const incompleteDataDocs = documents.filter((doc) => {
+      const status = doc.overallStatus
+      const isCompleted = status === 'completed'
+      // upload.fileSize 또는 fileSize 체크
+      const fileSize = (typeof doc.upload === 'object' ? doc.upload?.fileSize : null) || doc.fileSize || 0
+      return isCompleted && fileSize === 0
+    })
+
+    if (incompleteDataDocs.length > 0) {
+      // 이미 예약된 타이머가 있으면 취소 (debounce)
+      if (completionVerifyTimeoutRef.current) {
+        clearTimeout(completionVerifyTimeoutRef.current)
+      }
+
+      // 2초 후 재조회 (MongoDB write 완료 대기)
+      if (import.meta.env.DEV) {
+        console.log(`[DocumentStatusProvider] 🔄 ${incompleteDataDocs.length}개 문서의 fileSize가 0, 2초 후 재조회 예약`)
+      }
+
+      completionVerifyTimeoutRef.current = setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log('[DocumentStatusProvider] 🔄 fileSize 0 문서 재조회 실행')
+        }
+        fetchDocumentsRef.current(false)
+        completionVerifyTimeoutRef.current = null
+      }, 2000)
+    }
+
+    // cleanup
+    return () => {
+      if (completionVerifyTimeoutRef.current) {
+        clearTimeout(completionVerifyTimeoutRef.current)
+        completionVerifyTimeoutRef.current = null
+      }
+    }
+  }, [documents])
 
   // 🍎 Pagination Logic
   // 백엔드에서 이미 페이지네이션된 데이터를 받으므로 filteredDocuments를 그대로 사용
