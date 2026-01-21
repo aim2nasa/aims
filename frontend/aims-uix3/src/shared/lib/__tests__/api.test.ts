@@ -271,14 +271,17 @@ describe('apiRequest', () => {
     it('커스텀 타임아웃을 적용해야 함', async () => {
       vi.spyOn(global, 'fetch').mockImplementation((_, options) => {
         // AbortController signal이 전달되었는지 확인
-        const signal = (options as RequestInit)?.signal;
+        const signal = (options as RequestInit)?.signal as AbortSignal;
         expect(signal).toBeInstanceOf(AbortSignal);
 
-        // 타임아웃 발생 시뮬레이션
+        // 타임아웃 발생 시뮬레이션 - 실제 타임아웃을 트리거하기 위해 대기
         return new Promise((_, reject) => {
-          const error = new Error('AbortError');
-          error.name = 'AbortError';
-          reject(error);
+          // signal이 abort되면 에러 throw
+          signal.addEventListener('abort', () => {
+            const error = new Error('AbortError');
+            error.name = 'AbortError';
+            reject(error);
+          });
         });
       });
 

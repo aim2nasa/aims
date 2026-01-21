@@ -39,6 +39,9 @@ vi.mock('@/shared/lib/api', () => ({
       super(message);
       this.name = 'TimeoutError';
     }
+  },
+  isRequestCancelledError: (error: unknown) => {
+    return error instanceof Error && error.name === 'RequestCancelledError';
   }
 }));
 

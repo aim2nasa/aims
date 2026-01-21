@@ -31,6 +31,9 @@ vi.mock('@/shared/lib/api', () => ({
       this.name = 'TimeoutError';
     }
   },
+  isRequestCancelledError: (error: unknown) => {
+    return error instanceof Error && error.name === 'RequestCancelledError';
+  },
 }));
 
 // errorReporter mock 설정

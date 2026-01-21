@@ -19,6 +19,9 @@ vi.mock('@/shared/lib/api', () => ({
     post: vi.fn(),
     delete: vi.fn(),
   },
+  isRequestCancelledError: (error: unknown) => {
+    return error instanceof Error && error.name === 'RequestCancelledError';
+  },
 }))
 
 describe('RelationshipService', () => {
@@ -298,36 +301,33 @@ describe('RelationshipService', () => {
     ]
 
     it('모든 고객과 관계 데이터를 조회해야 함', async () => {
-      vi.mocked(api.get)
-        .mockResolvedValueOnce({
-          success: true,
-          data: { customers: mockCustomers },
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: { relationships: [mockRelationship] },
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: { relationships: [] },
-        })
+      // 새 벌크 API는 단일 호출로 모든 데이터를 반환
+      vi.mocked(api.get).mockResolvedValueOnce({
+        success: true,
+        data: {
+          customers: mockCustomers,
+          relationships: [mockRelationship],
+          total_count: 1,
+          timestamp: Date.now(),
+        },
+      })
 
       const result = await RelationshipService.getAllRelationshipsWithCustomers()
 
-      expect(api.get).toHaveBeenCalledWith('/api/customers?page=1&limit=1000')
+      expect(api.get).toHaveBeenCalledWith('/api/relationships')
       expect(result.customers).toHaveLength(2)
       expect(result.relationships).toHaveLength(1)
       expect(result.timestamp).toBeGreaterThan(0)
     })
 
-    it('고객 데이터 조회 실패 시 에러를 던져야 함', async () => {
+    it('관계 데이터 조회 실패 시 에러를 던져야 함', async () => {
       vi.mocked(api.get).mockResolvedValueOnce({
         success: false,
         data: null,
       })
 
       await expect(RelationshipService.getAllRelationshipsWithCustomers()).rejects.toThrow(
-        '고객 데이터 조회에 실패했습니다'
+        '관계 데이터 조회에 실패했습니다'
       )
     })
   })
