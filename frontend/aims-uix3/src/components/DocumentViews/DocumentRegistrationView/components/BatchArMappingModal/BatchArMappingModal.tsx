@@ -4,7 +4,7 @@
  * @see docs/AR_MULTI_UPLOAD_UX_ANALYSIS.md
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
 import type {
   ArFileGroup,
@@ -82,9 +82,27 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onRegister,
   onOpenNewCustomerModal,
 }) => {
-  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName } = state
+  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName, analyzingFiles } = state
   const { rows, groups } = tableState
   const [showHelp, setShowHelp] = useState(false)
+
+  // 파일 목록 아이템 refs (자동 스크롤용)
+  const fileItemRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  // 현재 분석 중인 파일의 인덱스 찾기
+  const currentAnalyzingIndex = useMemo(() => {
+    return analyzingFiles?.findIndex(f => f.status === 'analyzing') ?? -1
+  }, [analyzingFiles])
+
+  // 분석 중인 파일로 자동 스크롤
+  useEffect(() => {
+    if (currentAnalyzingIndex >= 0 && fileItemRefs.current[currentAnalyzingIndex]) {
+      fileItemRefs.current[currentAnalyzingIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, [currentAnalyzingIndex])
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -205,12 +223,46 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
         )}
 
         {isAnalyzing && rows.length === 0 ? (
-          <div className="batch-ar-modal__analyzing">
-            <div className="batch-ar-modal__spinner" />
-            <p>AR 파일 분석 중...</p>
-            {currentFileName && (
-              <p className="batch-ar-modal__current-file">{currentFileName}</p>
-            )}
+          <div className="batch-ar-modal__analyzing-container">
+            {/* 상단 진행 상황 헤더 */}
+            <div className="batch-ar-modal__analyzing-header">
+              <div className="batch-ar-modal__analyzing-spinner" />
+              <div className="batch-ar-modal__analyzing-info">
+                <span className="batch-ar-modal__analyzing-title">AR 파일 분석 중...</span>
+                <span className="batch-ar-modal__analyzing-count">
+                  {analyzingFiles?.filter(f => f.status === 'completed' || f.status === 'non_ar' || f.status === 'failed').length || 0} / {totalFiles} 완료
+                </span>
+              </div>
+            </div>
+
+            {/* 파일 목록 */}
+            <div className="batch-ar-modal__file-list">
+              {analyzingFiles?.map((file, index) => (
+                <div
+                  key={index}
+                  ref={(el) => { fileItemRefs.current[index] = el }}
+                  className={`batch-ar-modal__file-item batch-ar-modal__file-item--${file.status}`}
+                >
+                  <span className="batch-ar-modal__file-status-icon">
+                    {file.status === 'pending' && '○'}
+                    {file.status === 'analyzing' && <span className="batch-ar-modal__file-spinner" />}
+                    {file.status === 'completed' && '✓'}
+                    {file.status === 'non_ar' && '−'}
+                    {file.status === 'failed' && '✗'}
+                  </span>
+                  <span className="batch-ar-modal__file-name" title={file.fileName}>
+                    {file.fileName}
+                  </span>
+                  <span className="batch-ar-modal__file-status-text">
+                    {file.status === 'pending' && '대기'}
+                    {file.status === 'analyzing' && '분석 중'}
+                    {file.status === 'completed' && 'AR 감지'}
+                    {file.status === 'non_ar' && 'AR 아님'}
+                    {file.status === 'failed' && '실패'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <ArFileTable

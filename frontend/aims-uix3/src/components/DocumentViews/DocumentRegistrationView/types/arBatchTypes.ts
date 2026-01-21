@@ -18,11 +18,14 @@ import type {
   MappingStatusFilter,
   BaseFileTableRow,
   BaseTableViewState,
+  FileAnalysisStatus,
+  AnalyzingFileInfo,
 } from './batchTypes'
 
 // 공통 타입 re-export
 export type { MatchStatus, BatchRegistrationResult, MappingStatusFilter }
 export type { ArMetadata, ArDuplicateStatus }
+export type { FileAnalysisStatus, AnalyzingFileInfo }
 
 // ============================================
 // AR 전용 타입

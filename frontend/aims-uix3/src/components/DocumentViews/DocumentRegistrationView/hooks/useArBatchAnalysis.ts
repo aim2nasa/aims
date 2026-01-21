@@ -17,6 +17,7 @@ import type {
   ArFileTableRow,
   ArTableSortField,
   ArMappingStatusFilter,
+  AnalyzingFileInfo,
 } from '../types/arBatchTypes'
 import {
   generateFileId,
@@ -120,6 +121,7 @@ const initialState: BatchMappingState = {
   progress: 0,
   totalFiles: 0,
   completedFiles: 0,
+  analyzingFiles: [],
 }
 
 const initialTableState: ArTableViewState = {
@@ -152,6 +154,12 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
 
     abortRef.current = false
 
+    // 초기 파일 목록 생성 (모두 pending 상태)
+    const initialAnalyzingFiles: AnalyzingFileInfo[] = files.map(f => ({
+      fileName: f.name,
+      status: 'pending' as const,
+    }))
+
     setBatchState(prev => ({
       ...prev,
       isAnalyzing: true,
@@ -159,13 +167,32 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       totalFiles: files.length,
       completedFiles: 0,
       groups: [],
+      analyzingFiles: initialAnalyzingFiles,
     }))
+
+    // 테이블 상태도 초기화 (이전 분석 결과 제거)
+    setTableState({
+      ...initialTableState,
+      rows: [],
+      groups: [],
+    })
 
     addLog?.('info', `[AR 일괄 분석] ${files.length}개 파일 분석 시작`)
 
     const arFiles: ArFileInfo[] = []
     const nonArFiles: File[] = []
     const failedFiles: Array<{ file: File; error: string }> = []
+
+    // 파일 상태 업데이트 헬퍼 함수
+    const updateFileStatus = (index: number, status: AnalyzingFileInfo['status'], error?: string) => {
+      setBatchState(prev => {
+        const newFiles = [...(prev.analyzingFiles || [])]
+        if (newFiles[index]) {
+          newFiles[index] = { ...newFiles[index], status, error }
+        }
+        return { ...prev, analyzingFiles: newFiles }
+      })
+    }
 
     // 1. 각 파일 AR 분석
     for (let i = 0; i < files.length; i++) {
@@ -175,6 +202,9 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       }
 
       const file = files[i]
+
+      // 현재 파일을 analyzing 상태로 변경
+      updateFileStatus(i, 'analyzing')
 
       setBatchState(prev => ({
         ...prev,
@@ -186,6 +216,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
         // PDF 파일만 AR 분석
         if (file.type !== 'application/pdf') {
           nonArFiles.push(file)
+          updateFileStatus(i, 'non_ar')
           continue
         }
 
@@ -194,13 +225,16 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
         if (result.is_annual_report && result.metadata?.customer_name) {
           const arFile = createArFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
           arFiles.push(arFile)
+          updateFileStatus(i, 'completed')
           addLog?.('success', `[AR 감지] ${file.name}`, `고객: ${result.metadata.customer_name}`)
         } else {
           nonArFiles.push(file)
+          updateFileStatus(i, 'non_ar')
         }
       } catch (error) {
         console.error('[useArBatchAnalysis] AR 분석 실패:', file.name, error)
         failedFiles.push({ file, error: String(error) })
+        updateFileStatus(i, 'failed', String(error))
         addLog?.('error', `[AR 분석 실패] ${file.name}`, String(error))
       }
     }

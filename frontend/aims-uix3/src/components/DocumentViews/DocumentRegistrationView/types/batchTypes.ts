@@ -143,6 +143,27 @@ export interface BaseFileGroup<TFileInfo> {
 }
 
 // ============================================
+// 분석 중 파일 상태
+// ============================================
+
+/**
+ * 개별 파일 분석 상태
+ */
+export type FileAnalysisStatus = 'pending' | 'analyzing' | 'completed' | 'failed' | 'non_ar'
+
+/**
+ * 분석 중인 파일 정보
+ */
+export interface AnalyzingFileInfo {
+  /** 파일명 */
+  fileName: string
+  /** 분석 상태 */
+  status: FileAnalysisStatus
+  /** 에러 메시지 (실패 시) */
+  error?: string
+}
+
+// ============================================
 // 일괄 매핑 모달 상태
 // ============================================
 
@@ -169,6 +190,8 @@ export interface BaseBatchMappingState<TFileGroup> {
   totalFiles: number
   /** 완료된 파일 수 */
   completedFiles: number
+  /** 분석 중인 파일 목록 (실시간 표시용) */
+  analyzingFiles?: AnalyzingFileInfo[]
 }
 
 // ============================================
