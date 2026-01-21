@@ -487,8 +487,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     const incompleteDataDocs = documents.filter((doc) => {
       const status = doc.overallStatus
       const isCompleted = status === 'completed'
-      // upload.fileSize 또는 fileSize 체크
-      const fileSize = (typeof doc.upload === 'object' ? doc.upload?.fileSize : null) || doc.fileSize || 0
+      // upload.fileSize, fileSize, meta.size_bytes 모두 체크
+      const metaObj = typeof doc.meta === 'object' ? doc.meta : null
+      const uploadObj = typeof doc.upload === 'object' ? doc.upload : null
+      const fileSize = uploadObj?.fileSize || doc.fileSize || metaObj?.size_bytes || 0
       return isCompleted && fileSize === 0
     })
 
