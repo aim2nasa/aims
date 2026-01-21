@@ -7,6 +7,7 @@ Main orchestrator for document processing pipeline
 - UPLOAD_QUEUE_ENABLED=False: 기존 동기 처리 (롤백용)
 """
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
