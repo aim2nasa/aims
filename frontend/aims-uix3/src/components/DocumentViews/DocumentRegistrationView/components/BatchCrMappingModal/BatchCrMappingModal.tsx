@@ -230,7 +230,11 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
               <div className="batch-ar-modal__analyzing-info">
                 <span className="batch-ar-modal__analyzing-title">CRS 파일 분석 중...</span>
                 <span className="batch-ar-modal__analyzing-count">
-                  {analyzingFiles?.filter(f => f.status === 'completed' || f.status === 'non_ar' || f.status === 'failed').length || 0} / {totalFiles} 완료
+                  {(() => {
+                    const completed = analyzingFiles?.filter(f => f.status === 'completed' || f.status === 'non_ar' || f.status === 'failed').length || 0
+                    const percent = totalFiles > 0 ? Math.round((completed / totalFiles) * 100) : 0
+                    return `${completed} / ${totalFiles} 완료 (${percent}%)`
+                  })()}
                 </span>
               </div>
             </div>
