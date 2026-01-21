@@ -51,7 +51,8 @@ class MongoService:
             "createdAt": datetime.utcnow(),
         }
         if customer_id:
-            doc["customerId"] = customer_id
+            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+            doc["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
 
         result = await db.files.insert_one(doc)
         return str(result.inserted_id)

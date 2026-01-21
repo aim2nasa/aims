@@ -4677,8 +4677,12 @@ app.delete('/api/customers/:id', authenticateJWTorAPIKey, async (req, res) => {
     let deletedDocumentsCount = 0;
 
     // 고객과 연결된 모든 문서 조회
+    // ⚠️ customerId가 ObjectId 또는 문자열로 저장될 수 있으므로 둘 다 검색
     const customerDocuments = await db.collection(COLLECTION_NAME).find({
-      customerId: new ObjectId(id)
+      $or: [
+        { customerId: new ObjectId(id) },
+        { customerId: id }  // 문자열 형태 대응 (document_pipeline 호환)
+      ]
     }).toArray();
 
     console.log(`🗑️ [Hard Delete] 고객 ${id}와 연결된 문서 ${customerDocuments.length}개 삭제 시작`);

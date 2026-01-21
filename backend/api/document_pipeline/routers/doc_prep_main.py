@@ -187,7 +187,8 @@ async def doc_prep_main(
                 "status": "processing"  # 처리 중 상태 (set-annual-report가 찾을 수 있음)
             }
             if customerId:
-                doc_data["customerId"] = customerId
+                # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+                doc_data["customerId"] = ObjectId(customerId) if ObjectId.is_valid(customerId) else customerId
 
             result = await files_collection.insert_one(doc_data)
             doc_id = str(result.inserted_id)
@@ -395,7 +396,8 @@ async def _detect_and_process_annual_report(
             update_fields["displayName"] = display_name
 
         if customer_id:
-            update_fields["customerId"] = customer_id
+            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+            update_fields["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
 
         if issue_date:
             update_fields["ar_issue_date"] = issue_date
@@ -603,7 +605,8 @@ async def _detect_and_process_customer_review(
             update_fields["displayName"] = display_name
 
         if customer_id:
-            update_fields["customerId"] = customer_id
+            # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+            update_fields["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
 
         await files_collection.update_one(
             {"_id": ObjectId(doc_id)},
@@ -812,7 +815,8 @@ async def process_document_pipeline(
                 "status": "processing"
             }
             if customer_id:
-                doc_data["customerId"] = customer_id
+                # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
+                doc_data["customerId"] = ObjectId(customer_id) if ObjectId.is_valid(customer_id) else customer_id
 
             result = await files_collection.insert_one(doc_data)
             doc_id = str(result.inserted_id)
