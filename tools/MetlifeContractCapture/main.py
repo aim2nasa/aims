@@ -22,6 +22,7 @@ from capture.scroll_controller import ScrollController, ScrollConfig
 from capture.duplicate_detector import DuplicateDetector
 from extract.upstage_ocr import UpstageOCRExtractor
 from extract.claude_vision import ClaudeVisionExtractor
+from extract.clova_ocr import ClovaOCRExtractor
 from extract.table_parser import TableParser
 from output.json_exporter import JsonExporter
 from output.excel_exporter import ExcelExporter
@@ -185,8 +186,8 @@ def capture(output, monitor, delay, max_pages, region, scroll_pos, scroll_amount
               type=click.Choice(["json", "excel", "both"]), default="both",
               help="출력 형식")
 @click.option("--engine", "-e",
-              type=click.Choice(["upstage", "claude"]), default="claude",
-              help="추출 엔진 (기본: claude)")
+              type=click.Choice(["clova", "claude", "upstage"]), default="clova",
+              help="추출 엔진 (기본: clova - 한글 최적화)")
 @click.option("--model", "-m",
               type=click.Choice(["opus", "sonnet"]), default="opus",
               help="Claude 모델 (기본: opus, 정확도↑ 비용↑)")
@@ -215,14 +216,21 @@ def extract(input_path, output, output_format, engine, model):
     console.print(f"[cyan]결과 저장: {output_dir}[/cyan]")
 
     # 추출기 선택
-    if engine == "upstage":
+    if engine == "clova":
+        try:
+            extractor = ClovaOCRExtractor()
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            console.print("[dim]CLOVA_OCR_API_URL, CLOVA_OCR_SECRET_KEY 환경변수를 설정하세요.[/dim]")
+            return
+    elif engine == "upstage":
         try:
             extractor = UpstageOCRExtractor()
         except ValueError as e:
             console.print(f"[red]{e}[/red]")
             console.print("[dim]UPSTAGE_API_KEY 환경변수를 설정하세요.[/dim]")
             return
-    else:
+    else:  # claude
         try:
             model_id = f"claude-{model}-4-20250514"
             extractor = ClaudeVisionExtractor(model=model_id)
@@ -296,8 +304,8 @@ def extract(input_path, output, output_format, engine, model):
 @click.option("--output", "-o", default="D:\\captures", help="캡처 및 결과 저장 폴더")
 @click.option("--delay", "-d", default=5, type=int, help="시작 전 대기 시간(초)")
 @click.option("--engine", "-e",
-              type=click.Choice(["upstage", "claude"]), default="upstage",
-              help="추출 엔진 (기본: upstage)")
+              type=click.Choice(["clova", "claude", "upstage"]), default="clova",
+              help="추출 엔진 (기본: clova - 한글 최적화)")
 @click.option("--region", "-r", default=None, help="캡처 영역 (left,top,width,height)")
 @click.option("--scroll-pos", "-s", default=None, help="스크롤 위치 (x,y)")
 @click.pass_context
