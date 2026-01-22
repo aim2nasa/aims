@@ -49,10 +49,10 @@ param(
 
     [string]$Output = "output",
 
-    [string]$Input = "",
+    [string]$InputPath = "",
 
-    [ValidateSet("upstage", "claude")]
-    [string]$Engine = "upstage",
+    [ValidateSet("upstage", "claude", "clova")]
+    [string]$Engine = "clova",
 
     [int]$Delay = 5,
 
@@ -64,7 +64,9 @@ param(
 
     [switch]$Install,
 
-    [switch]$Help
+    [switch]$Help,
+
+    [switch]$Debug
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -93,8 +95,9 @@ switch ($Command) {
         if ($ScrollPos) { $PythonArgs += @("-s", $ScrollPos) }
     }
     "extract" {
-        if (-not $Input) { $Input = "captures" }
-        $PythonArgs += @("-i", $Input, "-o", $Output, "-e", $Engine)
+        if (-not $InputPath) { $InputPath = "D:\captures" }
+        $PythonArgs += @("-i", $InputPath, "-e", $Engine)
+        if ($Debug) { $PythonArgs += "--debug" }
     }
     "run" {
         $PythonArgs += @("-o", $Output, "-d", $Delay, "-e", $Engine)

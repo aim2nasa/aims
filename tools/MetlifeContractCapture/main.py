@@ -191,7 +191,8 @@ def capture(output, monitor, delay, max_pages, region, scroll_pos, scroll_amount
 @click.option("--model", "-m",
               type=click.Choice(["opus", "sonnet"]), default="opus",
               help="Claude 모델 (기본: opus, 정확도↑ 비용↑)")
-def extract(input_path, output, output_format, engine, model):
+@click.option("--debug", is_flag=True, help="디버그 모드 (API 응답을 파일로 저장)")
+def extract(input_path, output, output_format, engine, model, debug):
     """2단계: 데이터 추출"""
 
     input_dir = Path(input_path)
@@ -225,7 +226,7 @@ def extract(input_path, output, output_format, engine, model):
             return
     elif engine == "upstage":
         try:
-            extractor = UpstageOCRExtractor()
+            extractor = UpstageOCRExtractor(debug=debug)
         except ValueError as e:
             console.print(f"[red]{e}[/red]")
             console.print("[dim]UPSTAGE_API_KEY 환경변수를 설정하세요.[/dim]")
