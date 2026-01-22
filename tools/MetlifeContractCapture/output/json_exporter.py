@@ -47,7 +47,7 @@ class JsonExporter:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8-sig") as f:
             json.dump(output, f, ensure_ascii=False, indent=indent)
 
         return str(path)
@@ -72,7 +72,7 @@ class JsonExporter:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8-sig") as f:
             json.dump(data, f, ensure_ascii=False, indent=indent)
 
         return str(path)
