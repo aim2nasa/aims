@@ -7,6 +7,7 @@
 import os
 import sys
 import time
+import winsound
 from datetime import datetime
 
 try:
@@ -50,21 +51,33 @@ def get_timestamp_filename():
 
 def capture_screen():
     """화면 캡처 실행"""
-    with mss.mss() as sct:
-        # 모니터 정보 확인
-        if MONITOR_INDEX >= len(sct.monitors):
-            print(f"[ERROR] 모니터 {MONITOR_INDEX}가 없습니다. 사용 가능: 0~{len(sct.monitors)-1}")
-            return
+    global capture_count
+    try:
+        with mss.mss() as sct:
+            # 모니터 정보 확인
+            if MONITOR_INDEX >= len(sct.monitors):
+                print(f"[ERROR] 모니터 {MONITOR_INDEX}가 없습니다. 사용 가능: 0~{len(sct.monitors)-1}")
+                return
 
-        # 캡처
-        monitor = sct.monitors[MONITOR_INDEX]
-        screenshot = sct.grab(monitor)
+            # 캡처
+            monitor = sct.monitors[MONITOR_INDEX]
+            screenshot = sct.grab(monitor)
 
-        # 저장
-        filename = get_next_filename()
-        mss.tools.to_png(screenshot.rgb, screenshot.size, output=filename)
+            # 저장
+            filename = get_next_filename()
+            mss.tools.to_png(screenshot.rgb, screenshot.size, output=filename)
 
-        print(f"[캡처] {filename} ({screenshot.width}x{screenshot.height})")
+            # 파일 저장 검증
+            if os.path.exists(filename) and os.path.getsize(filename) > 0:
+                # 캡처 성공 알림음
+                winsound.Beep(1000, 100)  # 1000Hz, 100ms
+                print(f"[캡처] {filename} ({screenshot.width}x{screenshot.height})")
+            else:
+                capture_count -= 1  # 실패 시 카운터 롤백
+                print(f"[ERROR] 파일 저장 실패: {filename}")
+    except Exception as e:
+        capture_count -= 1  # 실패 시 카운터 롤백
+        print(f"[ERROR] 캡처 실패: {e}")
 
 def show_monitors():
     """사용 가능한 모니터 목록 표시"""
