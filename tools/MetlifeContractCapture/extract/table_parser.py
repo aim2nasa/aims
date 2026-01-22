@@ -87,6 +87,13 @@ class TableParser:
 
         return gender_str
 
+    @staticmethod
+    def _safe_str(value: Any, default: str = "") -> str:
+        """None-safe 문자열 변환 (None → 빈 문자열)"""
+        if value is None:
+            return default
+        return str(value).strip()
+
     def parse_row(self, raw_row: Dict[str, Any]) -> ContractRow:
         """
         원시 데이터를 ContractRow로 변환
@@ -97,24 +104,27 @@ class TableParser:
         Returns:
             정규화된 ContractRow
         """
+        # 모집/이양 키 처리 (슬래시 포함된 키 대응)
+        모집이양_value = raw_row.get("모집이양") or raw_row.get("모집/이양")
+
         return ContractRow(
             순번=self.normalize_number(raw_row.get("순번")),
             계약일=self.normalize_date(raw_row.get("계약일")),
-            계약자=str(raw_row.get("계약자", "")).strip(),
+            계약자=self._safe_str(raw_row.get("계약자")),
             생년월일=self.normalize_date(raw_row.get("생년월일")),
             성별=self.normalize_gender(raw_row.get("성별")),
-            지역=raw_row.get("지역"),
-            피보험자=str(raw_row.get("피보험자", "")).strip(),
-            증권번호=str(raw_row.get("증권번호", "")).strip(),
-            보험상품=str(raw_row.get("보험상품", "")).strip(),
-            통화=str(raw_row.get("통화", "KRW")).strip(),
+            지역=self._safe_str(raw_row.get("지역")) or None,
+            피보험자=self._safe_str(raw_row.get("피보험자")),
+            증권번호=self._safe_str(raw_row.get("증권번호")),
+            보험상품=self._safe_str(raw_row.get("보험상품")),
+            통화=self._safe_str(raw_row.get("통화"), "KRW"),
             월납입보험료=self.normalize_number(raw_row.get("월납입보험료")),
-            상태=str(raw_row.get("상태", "")).strip(),
-            수금방법=raw_row.get("수금방법"),
-            납입상태=raw_row.get("납입상태"),
-            전자청약=raw_row.get("전자청약"),
-            모집이양=str(raw_row.get("모집이양", raw_row.get("모집/이양", ""))).strip(),
-            신탁=raw_row.get("신탁"),
+            상태=self._safe_str(raw_row.get("상태")) or None,
+            수금방법=self._safe_str(raw_row.get("수금방법")) or None,
+            납입상태=self._safe_str(raw_row.get("납입상태")) or None,
+            전자청약=self._safe_str(raw_row.get("전자청약")) or None,
+            모집이양=self._safe_str(모집이양_value),
+            신탁=self._safe_str(raw_row.get("신탁")) or None,
         )
 
     def merge_results(

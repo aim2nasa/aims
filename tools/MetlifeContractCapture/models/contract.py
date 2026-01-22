@@ -20,11 +20,11 @@ class ContractRow:
     보험상품: str = ""
     통화: str = "KRW"
     월납입보험료: int = 0
-    상태: str = ""
+    상태: Optional[str] = None  # 정상, 만기, 생존소멸 등
     수금방법: Optional[str] = None
     납입상태: Optional[str] = None
     전자청약: Optional[str] = None
-    모집이양: str = ""
+    모집이양: Optional[str] = None  # 이양, 모집 등
     신탁: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
