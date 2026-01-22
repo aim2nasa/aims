@@ -1,10 +1,9 @@
 """
-Upstage OCR 연동 모듈
-이미지에서 텍스트 추출 후 파싱
+Upstage Document AI 연동 모듈
+테이블 구조 인식이 가능한 Document Parse API 사용
 """
 import os
 import re
-import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -12,11 +11,12 @@ import httpx
 
 
 class UpstageOCRExtractor:
-    """Upstage OCR을 사용한 테이블 데이터 추출기"""
+    """Upstage Document AI를 사용한 테이블 데이터 추출기"""
 
-    API_URL = "https://api.upstage.ai/v1/document-digitization"
+    # Document Parse API (테이블 인식 지원)
+    API_URL = "https://api.upstage.ai/v1/document-ai/document-parse"
 
-    # 테이블 컬럼 순서 (OCR 텍스트 파싱용)
+    # 테이블 컬럼 순서
     COLUMNS = [
         "순번", "계약일", "계약자", "생년월일", "성별", "지역",
         "피보험자", "증권번호", "보험상품", "통화", "월납입보험료",
@@ -35,9 +35,9 @@ class UpstageOCRExtractor:
 
         self.timeout = timeout
 
-    def _call_ocr_api(self, image_path: str) -> Dict[str, Any]:
+    def _call_document_parse_api(self, image_path: str) -> Dict[str, Any]:
         """
-        Upstage OCR API 호출
+        Upstage Document Parse API 호출
 
         Args:
             image_path: 이미지 파일 경로
@@ -61,103 +61,126 @@ class UpstageOCRExtractor:
                         "document": (filename, file_content)
                     },
                     data={
-                        "model": "ocr"
+                        "output_formats": '["html", "text"]',  # HTML과 텍스트 둘 다 요청
                     }
                 )
 
                 if response.status_code != 200:
+                    error_detail = ""
+                    try:
+                        error_detail = response.json().get("message", "")
+                    except Exception:
+                        error_detail = response.text[:200]
                     return {
                         "error": True,
                         "status": response.status_code,
-                        "message": f"OCR API 오류: HTTP {response.status_code}",
-                        "text": None
+                        "message": f"Document Parse API 오류: HTTP {response.status_code} - {error_detail}",
+                        "elements": [],
                     }
 
                 data = response.json()
                 return {
                     "error": False,
                     "status": 200,
+                    "elements": data.get("elements", []),
                     "text": data.get("text", ""),
-                    "confidence": data.get("confidence"),
-                    "pages": data.get("pages", [])
+                    "html": data.get("html", ""),
                 }
 
         except httpx.TimeoutException:
             return {
                 "error": True,
                 "status": 504,
-                "message": "OCR 처리 시간 초과",
-                "text": None
+                "message": "Document Parse 처리 시간 초과",
+                "elements": [],
             }
         except Exception as e:
             return {
                 "error": True,
                 "status": 500,
-                "message": f"OCR 처리 실패: {str(e)}",
-                "text": None
+                "message": f"Document Parse 처리 실패: {str(e)}",
+                "elements": [],
             }
 
-    def _parse_table_row(self, line: str) -> Optional[Dict[str, Any]]:
+    def _parse_table_elements(self, elements: List[Dict]) -> List[Dict[str, Any]]:
         """
-        OCR 텍스트 라인을 테이블 행으로 파싱
+        Document Parse 응답에서 테이블 요소 파싱
 
         Args:
-            line: OCR에서 추출된 한 줄
+            elements: Document Parse API 응답의 elements
 
         Returns:
-            파싱된 행 데이터 또는 None
+            파싱된 행 목록
         """
-        # 순번으로 시작하는 줄만 처리 (숫자 3~4자리)
-        if not re.match(r"^\d{3,4}\s", line):
-            return None
+        rows = []
 
-        # 공백으로 분리
-        parts = line.split()
-        if len(parts) < 10:  # 최소 필수 필드
-            return None
+        for element in elements:
+            category = element.get("category", "")
 
-        try:
-            row = {
-                "순번": int(parts[0]),
-                "계약일": parts[1] if len(parts) > 1 else None,
-                "계약자": parts[2] if len(parts) > 2 else "",
-                "생년월일": parts[3] if len(parts) > 3 else None,
-                "성별": parts[4] if len(parts) > 4 else None,
-            }
+            # 테이블 요소 처리
+            if category == "table":
+                table_data = element.get("data", {})
+                table_rows = table_data.get("rows", [])
 
-            # 나머지 필드는 패턴에 따라 파싱 (복잡한 경우가 많음)
-            # 증권번호: 10자리 숫자
-            for i, part in enumerate(parts):
-                if re.match(r"^\d{10}$", part):
-                    row["증권번호"] = part
-                    break
+                for row_data in table_rows:
+                    row = self._parse_table_row_data(row_data)
+                    if row:
+                        rows.append(row)
 
-            # 월납입보험료: 쉼표가 있는 숫자 또는 순수 숫자
-            for part in parts:
-                cleaned = re.sub(r"[,]", "", part)
-                if re.match(r"^\d{4,}$", cleaned) and int(cleaned) > 1000:
-                    row["월납입보험료"] = int(cleaned)
-                    break
+            # 테이블 셀 요소 (개별 셀로 오는 경우)
+            elif category == "table_cell":
+                # 셀 단위로 오는 경우 처리 필요
+                pass
 
-            # 통화: KRW, USD 등
-            for part in parts:
-                if part in ("KRW", "USD", "EUR", "JPY"):
-                    row["통화"] = part
-                    break
-            else:
-                row["통화"] = "KRW"
+        return rows
 
-            return row
-
-        except (ValueError, IndexError):
-            return None
-
-    def _parse_ocr_text(self, text: str) -> List[Dict[str, Any]]:
+    def _parse_table_row_data(self, row_data: List[Dict]) -> Optional[Dict[str, Any]]:
         """
-        OCR 텍스트를 테이블 행 목록으로 파싱
+        테이블 행 데이터를 컬럼에 매핑
 
         Args:
-            text: OCR 전체 텍스트
+            row_data: 테이블 행의 셀 목록
+
+        Returns:
+            매핑된 행 데이터
+        """
+        if not row_data:
+            return None
+
+        row = {}
+        for i, cell in enumerate(row_data):
+            if i >= len(self.COLUMNS):
+                break
+
+            col_name = self.COLUMNS[i]
+            cell_text = cell.get("text", "").strip() if isinstance(cell, dict) else str(cell).strip()
+
+            if col_name == "순번":
+                try:
+                    row[col_name] = int(cell_text) if cell_text else None
+                except ValueError:
+                    row[col_name] = None
+            elif col_name == "월납입보험료":
+                try:
+                    cleaned = re.sub(r"[,\s]", "", cell_text)
+                    row[col_name] = int(cleaned) if cleaned else 0
+                except ValueError:
+                    row[col_name] = 0
+            else:
+                row[col_name] = cell_text if cell_text else None
+
+        # 순번이 없으면 유효하지 않은 행
+        if row.get("순번") is None:
+            return None
+
+        return row
+
+    def _parse_text_fallback(self, text: str) -> List[Dict[str, Any]]:
+        """
+        테이블 인식 실패 시 텍스트 기반 파싱 (폴백)
+
+        Args:
+            text: OCR 텍스트
 
         Returns:
             파싱된 행 목록
@@ -170,9 +193,48 @@ class UpstageOCRExtractor:
             if not line:
                 continue
 
-            row = self._parse_table_row(line)
-            if row:
+            # 순번(3~4자리 숫자)으로 시작하는 줄
+            if not re.match(r"^\d{3,4}\s", line):
+                continue
+
+            parts = line.split()
+            if len(parts) < 10:
+                continue
+
+            try:
+                row = {
+                    "순번": int(parts[0]),
+                    "계약일": parts[1] if len(parts) > 1 else None,
+                    "계약자": parts[2] if len(parts) > 2 else "",
+                    "생년월일": parts[3] if len(parts) > 3 else None,
+                    "성별": parts[4] if len(parts) > 4 else None,
+                }
+
+                # 증권번호: 10자리 숫자
+                for part in parts:
+                    if re.match(r"^\d{10}$", part):
+                        row["증권번호"] = part
+                        break
+
+                # 월납입보험료: 쉼표 숫자
+                for part in parts:
+                    cleaned = re.sub(r"[,]", "", part)
+                    if re.match(r"^\d{4,}$", cleaned) and int(cleaned) > 1000:
+                        row["월납입보험료"] = int(cleaned)
+                        break
+
+                # 통화
+                for part in parts:
+                    if part in ("KRW", "USD", "EUR", "JPY"):
+                        row["통화"] = part
+                        break
+                else:
+                    row["통화"] = "KRW"
+
                 rows.append(row)
+
+            except (ValueError, IndexError):
+                continue
 
         return rows
 
@@ -186,28 +248,31 @@ class UpstageOCRExtractor:
         Returns:
             추출된 데이터
         """
-        ocr_result = self._call_ocr_api(image_path)
+        api_result = self._call_document_parse_api(image_path)
 
-        if ocr_result.get("error"):
+        if api_result.get("error"):
             return {
-                "error": ocr_result.get("message"),
+                "error": api_result.get("message"),
                 "source_image": image_path,
                 "rows": [],
                 "page_info": {"visible_rows": 0},
-                "raw_text": None
             }
 
-        text = ocr_result.get("text", "")
-        rows = self._parse_ocr_text(text)
+        # 테이블 요소에서 파싱 시도
+        elements = api_result.get("elements", [])
+        rows = self._parse_table_elements(elements)
+
+        # 테이블 인식 실패 시 텍스트 폴백
+        if not rows:
+            text = api_result.get("text", "")
+            rows = self._parse_text_fallback(text)
 
         return {
             "source_image": image_path,
             "rows": rows,
             "page_info": {
                 "visible_rows": len(rows),
-                "confidence": ocr_result.get("confidence")
             },
-            "raw_text": text  # 디버깅용
         }
 
     def extract_from_images(
@@ -236,8 +301,3 @@ class UpstageOCRExtractor:
             results.append(result)
 
         return results
-
-
-# 참고: Upstage OCR은 테이블 구조를 직접 파악하지 못하므로
-# Claude Vision에 비해 정확도가 떨어질 수 있습니다.
-# 복잡한 테이블의 경우 Claude Vision 사용을 권장합니다.
