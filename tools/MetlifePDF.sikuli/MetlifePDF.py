@@ -66,10 +66,13 @@ click("1769097064941.png")
 sleep(3)
 
 print("  [1-6] 종료일 필드에 날짜 입력...")
+# 환경변수에서 종료일 가져오기 (없으면 오늘 날짜)
+end_date = os.environ.get("METLIFE_END_DATE", time.strftime("%Y-%m-%d"))
+print("        -> 종료일: " + end_date)
 # 1769095658706.png = ~ (물결) 기호, 오른쪽 80px = 종료일 필드
 click(Pattern("1769095658706.png").targetOffset(80, 0))
 type("a", Key.CTRL)
-type("2026-01-23")
+type(end_date)
 type(Key.TAB)  # 포커스를 다음 필드로 이동
 sleep(3)
 
