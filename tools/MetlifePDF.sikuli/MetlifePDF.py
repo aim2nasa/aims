@@ -116,11 +116,11 @@ if found_img == "1769013114864.png":
 elif found_img == "1769095061022.png":
     print("        -> 오름차순 상태, 클릭하여 내림차순으로...")
     click(found_img)
-    sleep(4)
+    sleep(5)
 else:
     print("        -> 정렬 안됨, 클릭...")
     click(found_img)
-    sleep(4)
+    sleep(5)
 
 # 정렬 후 검증: 내림차순 상태인지 확인
 print("        -> 정렬 상태 검증...")
@@ -163,11 +163,11 @@ sleep(WAIT_TIME)
 
 print("  [2-7] 계약사항및기타 체크...")
 click("1769013368545.png")
-sleep(0.5)
+sleep(2)
 
 print("  [2-8] 펀드이력관리 체크...")
 click("1769013393100.png")
-sleep(0.5)
+sleep(2)
 
 print("  [2-9] > 버튼 클릭...")
 click("1769013422226.png")
@@ -185,6 +185,14 @@ sleep(WAIT_TIME)
 print("  [2-12] 저장(S) 버튼 클릭...")
 click("1769013531968.png")
 sleep(WAIT_TIME)
+
+# 파일 덮어쓰기 확인 다이얼로그 체크
+if exists("1769099551754.png", 3):
+    print("        -> 동일 파일 존재, 덮어쓰기 취소")
+    click("1769099551754.png")  # 아니요(N) 클릭
+    sleep(WAIT_TIME)
+    click("1769099662780.png")  # 취소 버튼 클릭
+    sleep(WAIT_TIME)
 
 print("  [2-13] PDF 닫기 (Alt+F4)...")
 type(Key.F4, Key.ALT)
@@ -221,6 +229,14 @@ sleep(WAIT_TIME)
 print("  [3-3] 저장(S) 버튼 클릭...")
 click("1769013531968.png")
 sleep(WAIT_TIME)
+
+# 파일 덮어쓰기 확인 다이얼로그 체크
+if exists("1769099551754.png", 3):
+    print("        -> 동일 파일 존재, 덮어쓰기 취소")
+    click("1769099551754.png")  # 아니요(N) 클릭
+    sleep(WAIT_TIME)
+    click("1769099662780.png")  # 취소 버튼 클릭
+    sleep(WAIT_TIME)
 
 print("  [3-4] PDF 닫기 (Alt+F4)...")
 type(Key.F4, Key.ALT)
