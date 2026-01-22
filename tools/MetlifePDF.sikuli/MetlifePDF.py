@@ -38,6 +38,8 @@ print("=" * 50)
 print("MetLife PDF 자동 다운로드 시작")
 print("=" * 50)
 
+start_time = time.time()
+
 ###########################################
 # 1단계: 초기 설정
 ###########################################
@@ -230,6 +232,11 @@ sleep(3)
 
 print("[Annual Report 저장 완료]")
 
+elapsed_time = time.time() - start_time
+minutes = int(elapsed_time // 60)
+seconds = int(elapsed_time % 60)
+
 print("\n" + "=" * 50)
 print("모든 작업 완료!")
+print("소요 시간: %d분 %d초" % (minutes, seconds))
 print("=" * 50)
