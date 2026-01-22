@@ -1,0 +1,44 @@
+# MetLife 계약사항 캡처 설정
+
+# 캡처 설정
+capture:
+  # 캡처 영역 (모니터 기준 상대 좌표)
+  # position 명령으로 마우스 위치 확인하여 설정
+  region:
+    left: 18        # 테이블 좌측 X
+    top: 295        # 테이블 상단 Y
+    width: 1890     # 테이블 너비
+    height: 560     # 테이블 높이 (11행 기준)
+
+  # 스크롤 설정
+  scroll:
+    amount: -3      # 스크롤 양 (음수 = 아래)
+    delay: 0.8      # 스크롤 후 대기 (초)
+    position:       # 스크롤할 마우스 위치 (테이블 내부)
+      x: 700
+      y: 450
+
+  # 기타 설정
+  monitor: 0        # 0=전체, 1=메인, 2=보조
+  initial_delay: 5  # 시작 전 대기 (초)
+  max_pages: 100    # 최대 페이지
+  duplicate_threshold: 5  # 중복 감지 임계값
+
+# 추출 설정
+extract:
+  # 기본 엔진: upstage (또는 claude)
+  engine: upstage
+
+  # Claude Vision 설정 (engine: claude 사용 시)
+  claude:
+    model: "claude-sonnet-4-20250514"
+    max_tokens: 4096
+
+  # Upstage OCR 설정 (engine: upstage 사용 시)
+  upstage:
+    timeout: 120
+
+# 출력 설정
+output:
+  format: both      # json, excel, both
+  save_path: output
