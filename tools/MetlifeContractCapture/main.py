@@ -22,6 +22,7 @@ from capture.scroll_controller import ScrollController, ScrollConfig
 from capture.duplicate_detector import DuplicateDetector
 from extract.upstage_ocr import UpstageOCRExtractor
 from extract.upstage_ie import UpstageIEExtractor
+from extract.upstage_enhanced import UpstageEnhancedExtractor
 from extract.claude_vision import ClaudeVisionExtractor
 from extract.clova_ocr import ClovaOCRExtractor
 from extract.table_parser import TableParser
@@ -187,8 +188,8 @@ def capture(output, monitor, delay, max_pages, region, scroll_pos, scroll_amount
               type=click.Choice(["json", "excel", "both"]), default="both",
               help="출력 형식")
 @click.option("--engine", "-e",
-              type=click.Choice(["clova", "claude", "upstage", "upstage-ie"]), default="clova",
-              help="추출 엔진 (기본: clova, upstage-ie: 스키마 기반 $0.04/page)")
+              type=click.Choice(["clova", "claude", "upstage", "upstage-ie", "upstage-enhanced"]), default="clova",
+              help="추출 엔진 (기본: clova, upstage-enhanced: 향상된 테이블 인식)")
 @click.option("--model", "-m",
               type=click.Choice(["opus", "sonnet"]), default="opus",
               help="Claude 모델 (기본: opus, 정확도↑ 비용↑)")
@@ -235,6 +236,13 @@ def extract(input_path, output, output_format, engine, model, debug):
     elif engine == "upstage-ie":
         try:
             extractor = UpstageIEExtractor(debug=debug)
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            console.print("[dim]UPSTAGE_API_KEY 환경변수를 설정하세요.[/dim]")
+            return
+    elif engine == "upstage-enhanced":
+        try:
+            extractor = UpstageEnhancedExtractor(debug=debug)
         except ValueError as e:
             console.print(f"[red]{e}[/red]")
             console.print("[dim]UPSTAGE_API_KEY 환경변수를 설정하세요.[/dim]")
@@ -313,8 +321,8 @@ def extract(input_path, output, output_format, engine, model, debug):
 @click.option("--output", "-o", default="D:\\captures", help="캡처 및 결과 저장 폴더")
 @click.option("--delay", "-d", default=5, type=int, help="시작 전 대기 시간(초)")
 @click.option("--engine", "-e",
-              type=click.Choice(["clova", "claude", "upstage", "upstage-ie"]), default="clova",
-              help="추출 엔진 (기본: clova, upstage-ie: 스키마 기반 $0.04/page)")
+              type=click.Choice(["clova", "claude", "upstage", "upstage-ie", "upstage-enhanced"]), default="clova",
+              help="추출 엔진 (기본: clova, upstage-enhanced: 향상된 테이블 인식)")
 @click.option("--region", "-r", default=None, help="캡처 영역 (left,top,width,height)")
 @click.option("--scroll-pos", "-s", default=None, help="스크롤 위치 (x,y)")
 @click.pass_context
