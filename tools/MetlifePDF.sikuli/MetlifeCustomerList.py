@@ -188,16 +188,18 @@ def print_customer_table(customers, chosung_name, page_num):
 
 
 def scroll_down(steps):
-    """휠 스크롤 (테이블 왼쪽 여백 클릭으로 포커스)"""
+    """휠 스크롤 (휴대폰 컬럼 클릭 후)"""
     header = find(IMG_CUSTNAME)
-    # 테이블 왼쪽 여백 (고객명 헤더 왼쪽) - 데이터 영역 바깥
-    left_margin = header.left(50).below(200)
-    log(u"  [SCROLL] 왼쪽 여백 클릭 (포커스)...")
-    click(left_margin)
+    # 휴대폰 컬럼: 고객명에서 오른쪽 600px (이메일 다음)
+    # - 이메일은 링크라 클릭하면 "파일 열기" 다이얼로그 뜸
+    # - 휴대폰은 텍스트라 클릭해도 아무 동작 없음 (안전)
+    scroll_area = header.right(600).below(150)
+    log(u"  [SCROLL] 휴대폰 컬럼 클릭 (포커스)...")
+    click(scroll_area)
     sleep(0.5)
     # 휠 스크롤
     log(u"  [SCROLL] 휠 스크롤 %d steps..." % steps)
-    wheel(left_margin, WHEEL_DOWN, steps)
+    wheel(scroll_area, WHEEL_DOWN, steps)
     sleep(1)
 
 
