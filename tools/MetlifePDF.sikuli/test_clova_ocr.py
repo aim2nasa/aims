@@ -132,7 +132,11 @@ def main():
     print("Naver Clova OCR 테스트 - 고객목록")
     print("=" * 50)
 
-    image_path = r"D:\captures\customerList.png"
+    # 명령줄 인자로 이미지 경로 받기
+    if len(sys.argv) > 1:
+        image_path = sys.argv[1]
+    else:
+        image_path = r"D:\captures\customerList.png"
 
     if not os.path.exists(image_path):
         print(f"[ERROR] 이미지 없음: {image_path}")
