@@ -237,6 +237,24 @@ def is_same_page(customers, prev_first_customer):
     return customer_matches(customers[0], prev_first_customer)
 
 
+def dismiss_alert_if_exists():
+    """
+    알림 팝업이 있으면 확인 클릭하여 닫기
+
+    Returns:
+        bool: 팝업이 있어서 닫았으면 True
+    """
+    try:
+        if exists(IMG_ALERT_OK, 1):  # 1초 대기
+            log(u"        -> [ALERT] 알림 팝업 감지! 확인 클릭...")
+            click(IMG_ALERT_OK)
+            sleep(1)
+            return True
+    except:
+        pass
+    return False
+
+
 # 설정
 WAIT_TIME = 3
 FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
@@ -251,6 +269,7 @@ IMG_ARROW_ASC = "1769233207559.png"        # ↑ (오름차순 화살표)
 
 # 고객등록/조회 페이지
 IMG_CLOSE_BTN = "1769234950471.png"        # 종료(x) 버튼
+IMG_ALERT_OK = "1769251121685.png"         # 알림 팝업 "확인" 버튼
 
 # 초성 버튼 이미지 (테스트: ㄱ만)
 CHOSUNG_BUTTONS = [
@@ -367,11 +386,21 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             ))
 
             click(Pattern(IMG_CUSTNAME).targetOffset(0, offset_y))
-            sleep(5)  # 고객등록/조회 페이지 로딩 대기
+            sleep(3)  # 고객등록/조회 페이지 로딩 대기
+
+            # 알림 팝업 처리
+            dismiss_alert_if_exists()
+            sleep(2)
 
             # 종료(x) 버튼 클릭
             log(u"        -> %s: 종료(x) 클릭..." % customer_name)
-            click(IMG_CLOSE_BTN)
+            try:
+                click(IMG_CLOSE_BTN)
+            except:
+                # 종료 버튼 못 찾으면 알림 팝업 재확인
+                if dismiss_alert_if_exists():
+                    sleep(1)
+                    click(IMG_CLOSE_BTN)
             sleep(3)  # 고객목록조회 페이지 복귀 대기
 
             log(u"        -> %s 처리 완료" % customer_name)
