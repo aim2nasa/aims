@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
-# MetLife PDF 자동 다운로드 (고객목록조회 - 테스트 버전)
+# MetLife PDF 자동 다운로드 (고객목록조회 - OCR 연동 버전)
 # 고객 클릭 → 고객등록/조회 → 종료(x) 테스트
+# Upstage Enhanced OCR로 고객명 인식
 
 import os
 import time
+import subprocess
+import json
 
 # SikuliX 설정
 Settings.ActionLogs = False  # [log] CLICK 메시지 숨김
 setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
+
+# 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
+SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
+CAPTURE_DIR = r"D:\captures\metlife_ocr"
+OCR_SCRIPT = SCRIPT_DIR + r"\upstage_ocr_api.py"
+
+# 캡처 디렉토리 생성
+if not os.path.exists(CAPTURE_DIR):
+    os.makedirs(CAPTURE_DIR)
 
 # 헬퍼 함수
 def find_any(*imgs):
@@ -18,10 +30,109 @@ def find_any(*imgs):
     print("[ERROR] 다음 이미지 중 하나도 찾을 수 없음: " + str(imgs))
     exit(1)
 
+
+def capture_and_ocr(chosung_name, page_num):
+    """
+    화면 캡처 후 Upstage Enhanced OCR 호출
+
+    Returns:
+        list: 고객 데이터 리스트 (15행)
+        str: JSON 파일 경로
+    """
+    timestamp = int(time.time())
+    capture_filename = "page_%s_%d_%d.png" % (chosung_name, page_num, timestamp)
+    capture_path = os.path.join(CAPTURE_DIR, capture_filename)
+    json_path = capture_path.replace(".png", ".json")
+
+    print("  [OCR] ----------------------------------------")
+    print("  [OCR] 1/4. 화면 캡처: %s" % capture_filename)
+
+    # SikuliX capture() 사용 - 전체 화면 캡처
+    captured = capture(SCREEN)
+
+    # 캡처된 파일을 지정 경로로 복사
+    import shutil
+    shutil.copy(captured, capture_path)
+
+    # Python3로 OCR 스크립트 호출
+    print("  [OCR] 2/4. Upstage Enhanced API 호출 (약 35초)...")
+
+    ocr_start = time.time()
+    try:
+        # Jython 호환: timeout 파라미터 없이 호출
+        result = subprocess.call(["python", OCR_SCRIPT, capture_path, json_path])
+        ocr_elapsed = time.time() - ocr_start
+
+        if result != 0:
+            print("  [OCR] ERROR: OCR 스크립트 실패 (exit: %d)" % result)
+            return [], json_path
+    except Exception as e:
+        print("  [OCR] ERROR: %s" % str(e))
+        return [], json_path
+
+    # JSON 결과 로드
+    print("  [OCR] 3/4. API 응답 (%.1f초)" % ocr_elapsed)
+    if os.path.exists(json_path):
+        import codecs
+        with codecs.open(json_path, "r", "utf-8") as f:
+            customers = json.load(f)
+        print("  [OCR] 4/4. %d명 인식 완료" % len(customers))
+        print("  [OCR] ----------------------------------------")
+        return customers, json_path
+    else:
+        print("  [OCR] ERROR: JSON 없음")
+        print("  [OCR] ----------------------------------------")
+        return [], json_path
+
+
+def get_customer_name(customers, row_index):
+    """
+    고객 리스트에서 해당 인덱스의 고객명 반환
+
+    Args:
+        customers: OCR로 추출한 고객 리스트
+        row_index: 0-based 행 인덱스
+
+    Returns:
+        str: 고객명 또는 "?"
+    """
+    if row_index < len(customers):
+        return customers[row_index].get(u"고객명", "?")
+    return "?"
+
+
+def print_customer_table(customers, chosung_name, page_num):
+    """
+    OCR로 읽은 고객 표를 로그에 출력
+
+    Args:
+        customers: OCR로 추출한 고객 리스트
+        chosung_name: 초성 이름
+        page_num: 페이지 번호
+    """
+    print("")
+    print("  [OCR] === [%s] 페이지 %d - OCR 결과 (%d명) ===" % (chosung_name, page_num, len(customers)))
+    print("  [OCR]  No  고객명      구분   생년월일     나이  성별   휴대폰")
+    print("  [OCR] ---- ----------  ----  ----------  ----  ----  --------------")
+
+    for i, c in enumerate(customers):
+        # Jython 유니코드 키 호환
+        name = c.get(u"고객명", "") or ""
+        gubun = c.get(u"구분", "") or ""
+        birth = c.get(u"생년월일", "") or ""
+        age = c.get(u"보험나이", "") or ""
+        gender = c.get(u"성별", "") or ""
+        phone = c.get(u"휴대폰", "") or ""
+        print("  [OCR]  %2d  %-8s  %-4s  %-10s  %4s  %-4s  %s" % (i+1, name[:8], gubun[:4], birth[:10], age[:4], gender[:4], phone[:14]))
+
+    print("  [OCR] ================================================")
+
+
 # 설정
 WAIT_TIME = 3
 FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
 ROW_HEIGHT = 33        # 행 간 간격 (픽셀)
+MAX_CUSTOMERS_PER_PAGE = 15  # OCR로 인식하는 행 수 (마지막 행 잘림으로 15행)
 
 # 고객명 정렬 이미지
 IMG_CUSTNAME = "1769233187438.png"         # 고객명 헤더 (클릭용)
@@ -50,9 +161,9 @@ CHOSUNG_BUTTONS = [
     # ("기타", "1769223008588.png"),
 ]
 
-print("=" * 50)
-print("MetLife 고객목록조회 - 초성 버튼 테스트")
-print("=" * 50)
+print("=" * 60)
+print("MetLife 고객목록조회 - Upstage Enhanced OCR 연동")
+print("=" * 60)
 
 start_time = time.time()
 
@@ -85,6 +196,7 @@ print("[1단계 완료]")
 print("\n[2단계] 초성 버튼 및 고객 처리")
 
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
+    print("\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     print("  [%s] 버튼 클릭..." % chosung_name)
     click(chosung_img)
     sleep(5)  # 목록 로딩 대기
@@ -104,26 +216,44 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         print("[ERROR] 내림차순 정렬 실패!")
         exit(1)
 
-    # 고객 처리 (화면에 보이는 고객들 - 스크롤 없음)
-    print("  [%s] 고객 처리 시작..." % chosung_name)
+    ###########################################
+    # 화면 캡처 및 OCR로 고객 목록 인식
+    ###########################################
+    page_num = 1
+    customers, json_path = capture_and_ocr(chosung_name, page_num)
 
-    MAX_CUSTOMERS = 16  # 한 페이지에 보이는 고객 수
-    for row in range(MAX_CUSTOMERS):
+    if not customers:
+        print("  [WARN] OCR 결과 없음. offset 기반으로 처리합니다.")
+        # OCR 실패 시 기존 방식 사용
+        customers = [{"고객명": "고객%d" % (i+1)} for i in range(MAX_CUSTOMERS_PER_PAGE)]
+
+    # OCR 결과 표 출력
+    print_customer_table(customers, chosung_name, page_num)
+
+    # 고객 처리 (화면에 보이는 고객들 - 스크롤 없음)
+    print("\n  [%s] 고객 처리 시작 (JSON: %s)" % (chosung_name, os.path.basename(json_path)))
+
+    for row in range(MAX_CUSTOMERS_PER_PAGE):
+        customer_name = get_customer_name(customers, row)
         offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)  # 첫 행 + 행간격
-        print("        -> 고객 %d 클릭 (offset: %dpx)..." % (row + 1, offset_y))
+
+        print(u"        -> [%d/%d] %s 클릭 (offset: %dpx)..." % (
+            row + 1, MAX_CUSTOMERS_PER_PAGE, customer_name, offset_y
+        ))
+
         click(Pattern(IMG_CUSTNAME).targetOffset(0, offset_y))
         sleep(5)  # 고객등록/조회 페이지 로딩 대기
 
         # 종료(x) 버튼 클릭
-        print("        -> 종료(x) 버튼 클릭...")
+        print(u"        -> %s: 종료(x) 클릭..." % customer_name)
         click(IMG_CLOSE_BTN)
         sleep(3)  # 고객목록조회 페이지 복귀 대기
 
-        print("        -> 고객 %d 처리 완료" % (row + 1))
+        print(u"        -> %s 처리 완료" % customer_name)
 
-    print("  [%s] 총 %d명 처리 완료" % (chosung_name, MAX_CUSTOMERS))
+    print(u"\n  [%s] 총 %d명 처리 완료" % (chosung_name, MAX_CUSTOMERS_PER_PAGE))
 
-print("[2단계 완료]")
+print(u"\n[2단계 완료]")
 
 ###########################################
 # 완료
@@ -132,7 +262,8 @@ elapsed_time = time.time() - start_time
 minutes = int(elapsed_time // 60)
 seconds = int(elapsed_time % 60)
 
-print("\n" + "=" * 50)
-print("초성 버튼 테스트 완료!")
-print("소요 시간: %d분 %d초" % (minutes, seconds))
-print("=" * 50)
+print(u"\n" + "=" * 60)
+print(u"초성 버튼 테스트 완료!")
+print(u"소요 시간: %d분 %d초" % (minutes, seconds))
+print(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
+print("=" * 60)

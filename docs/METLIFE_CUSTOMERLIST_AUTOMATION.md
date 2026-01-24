@@ -17,8 +17,9 @@ cd D:\aims\tools\MetlifePDF.sikuli
 |------|-----|------|
 | `FIRST_ROW_OFFSET` | 40px | 헤더에서 첫 번째 행까지 거리 |
 | `ROW_HEIGHT` | 33px | 행 간 간격 |
-| `CUSTOMERS_PER_PAGE` | 16 | 한 페이지에 보이는 고객 수 |
+| `MAX_CUSTOMERS_PER_PAGE` | 15 | OCR로 인식하는 행 수 (마지막 행 잘림) |
 | `SCROLL_CLICKS` | 5 | 스크롤 휠 클릭 수 (캘리브레이션 필요) |
+| `CAPTURE_DIR` | `D:\captures\metlife_ocr` | 캡처/OCR 결과 저장 위치 |
 
 ### 오프셋 계산 공식
 
@@ -183,7 +184,61 @@ MAX_CUSTOMERS = 16     # 한 페이지에 보이는 고객 수
 | `e0137f03` | feat: 고객 클릭 → 종료(x) 로직 추가 |
 | `73b4c5ad` | docs: 이 문서 추가 |
 
-#### 7. 다음 작업 예정
+#### 7. Upstage Enhanced OCR 연동 (2026-01-24)
+
+**목적**: 화면 캡처 후 OCR로 고객명을 인식하여 로그에 표시
+
+**파일 구조**:
+| 파일 | 역할 |
+|------|------|
+| `MetlifeCustomerList.py` | SikuliX 메인 스크립트 (Jython) |
+| `upstage_ocr_api.py` | Upstage Enhanced OCR API 호출 (Python 3) |
+
+**동작 흐름**:
+```
+1. 초성 클릭 + 내림차순 정렬
+2. 화면 캡처 (SikuliX capture())
+3. subprocess로 upstage_ocr_api.py 호출
+4. OCR 결과 JSON 저장 (15행, 마지막 행은 잘림)
+5. JSON에서 고객명 읽어 로그에 표시
+```
+
+**캡처/OCR 결과 저장 위치**: `D:\captures\metlife_ocr\`
+
+**파일명 규칙**:
+- 캡처: `page_ㄱ_1_1737729600.png` (초성_페이지_타임스탬프)
+- JSON: `page_ㄱ_1_1737729600.json`
+
+**JSON 구조**:
+```json
+[
+  {"고객명": "강보경", "구분": "계약", "생년월일": "1978-05-23", ...},
+  {"고객명": "강새봄", "구분": "계약", "생년월일": "1970-02-15", ...},
+  ...
+]
+```
+
+**로그 출력 예시**:
+```
+  [OCR] 화면 캡처: page_ㄱ_1_1737729600.png
+  [OCR] Upstage Enhanced API 호출 중... (약 35초 소요)
+  [OCR] 15명 고객 인식 완료
+
+  [ㄱ] 고객 처리 시작 (JSON: page_ㄱ_1_1737729600.json)
+        -> [1/15] 강보경 클릭 (offset: 40px)...
+        -> 강보경: 종료(x) 클릭...
+        -> 강보경 처리 완료
+        -> [2/15] 강새봄 클릭 (offset: 73px)...
+        ...
+```
+
+**OCR 정확도**: 100% (테스트 결과 기준)
+- 상세: `tools/MetlifePDF.sikuli/OCR_TEST_RESULTS.md`
+
+---
+
+#### 8. 다음 작업 예정
 - [ ] 스크롤 로직 구현 및 캘리브레이션
+- [ ] 스크롤 후 OCR 재호출 (페이지별)
 - [ ] 모든 초성 버튼 활성화 (ㄱ~ㅎ, 기타)
 - [ ] 실제 PDF 다운로드 로직 추가 (변액보험리포트, Annual Report)
