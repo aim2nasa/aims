@@ -113,9 +113,30 @@ offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)
 3. **스크롤 끝 감지** - `IMG_SCROLL_BOTTOM` 이미지로 감지
 
 ### 스크롤 캘리브레이션
-- `SCROLL_CLICKS = 5`로 설정 시 약 15행 스크롤
+
+**테스트 결과 (2026-01-24)**:
+- `SCROLL_CLICKS = 5` → 정확히 15행 스크롤
+- 스크롤 전: 강정모 (15번) 마지막
+- 스크롤 후: 강지선 (16번)이 첫 번째 행에 표시
+
+**스크롤 방법**:
+```python
+# 스크롤바 영역 클릭 후 휠 스크롤 (데이터 행 클릭 방지)
+scrollbar_area = header.right(1300).below(300)
+click(scrollbar_area)   # 포커스
+wheel(scrollbar_area, WHEEL_DOWN, 5)  # 15행 스크롤
+```
+
+**주의사항**:
+- 데이터 행 직접 클릭 시 고객 상세 페이지로 이동함
+- 스크롤바 영역 클릭으로 포커스를 주고 휠 스크롤해야 함
 - 16행 처리 후 15행 스크롤 → 1행 중복 (안전)
 - 휠 클릭당 스크롤 양은 시스템마다 다를 수 있음
+
+**캘리브레이션 테스트 스크립트**:
+```powershell
+.\run_scroll_test.ps1 -ScrollClicks 5  # 테스트 실행
+```
 
 ## 태그
 
@@ -316,10 +337,30 @@ MetLife 고객목록조회 - Upstage Enhanced OCR 연동
 
 ---
 
-#### 8. 커밋 히스토리 (업데이트)
+#### 8. 스크롤 캘리브레이션 테스트 완료 (2026-01-24)
+
+**테스트 스크립트**:
+- `test_scroll.py` - OCR 없이 휠 스크롤만 테스트
+- `run_scroll_test.ps1` - `-ScrollClicks` 파라미터로 스크롤량 조절
+
+**테스트 결과**:
+| SCROLL_CLICKS | 결과 |
+|---------------|------|
+| 15 | 너무 많이 스크롤 (50행 이상) |
+| 5 | 정확히 15행 스크롤 ✓ |
+
+**스크롤 방법 발견**:
+- 데이터 행 클릭 시 상세 페이지로 이동 → 스크롤 안 됨
+- 스크롤바 영역 클릭 (`header.right(1300).below(300)`) → 포커스만 이동
+- 그 후 `wheel(scrollbar_area, WHEEL_DOWN, 5)` → 정상 스크롤
+
+---
+
+#### 9. 커밋 히스토리 (업데이트)
 
 | 해시 | 메시지 |
 |------|--------|
+| `cca332fa` | feat(tools): 스크롤 캘리브레이션 테스트 스크립트 추가 |
 | `868dadf9` | feat(tools): 고객목록조회 Upstage Enhanced OCR 연동 |
 | `55d0457d` | fix(tools): Jython 유니코드 호환성 수정 |
 | `167a8a3c` | fix: ROW_HEIGHT 33으로 조정 (전체화면 최적화) |
@@ -329,8 +370,8 @@ MetLife 고객목록조회 - Upstage Enhanced OCR 연동
 
 ---
 
-#### 9. 다음 작업 예정
-- [ ] 스크롤 로직 구현 및 캘리브레이션
+#### 10. 다음 작업 예정
+- [x] 스크롤 캘리브레이션 테스트 (SCROLL_CLICKS = 5)
 - [ ] 스크롤 후 OCR 재호출 (페이지별)
 - [ ] 모든 초성 버튼 활성화 (ㄱ~ㅎ, 기타)
 - [ ] 실제 PDF 다운로드 로직 추가 (변액보험리포트, Annual Report)
