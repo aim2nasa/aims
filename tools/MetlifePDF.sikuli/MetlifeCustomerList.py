@@ -20,7 +20,8 @@ def find_any(*imgs):
 
 # 설정
 WAIT_TIME = 3
-ROW_HEIGHT = 25  # 행 높이 (픽셀)
+FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
+ROW_HEIGHT = 32        # 행 간 간격 (픽셀)
 
 # 고객명 정렬 이미지
 IMG_CUSTNAME = "1769233187438.png"         # 고객명 헤더 (클릭용)
@@ -66,7 +67,7 @@ sleep(WAIT_TIME)
 
 print("  [1-2] 고객관리 클릭...")
 click("1769012299692.png")
-sleep(3)
+sleep(5)  # 서브메뉴 열릴 시간 확보
 
 print("  [1-3] 고객등록 클릭...")
 click("1769219913324.png")
@@ -106,9 +107,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     # 고객 처리 (화면에 보이는 고객들 - 스크롤 없음)
     print("  [%s] 고객 처리 시작..." % chosung_name)
 
-    MAX_CUSTOMERS = 1  # 테스트: 1명만
+    MAX_CUSTOMERS = 16  # 한 페이지에 보이는 고객 수
     for row in range(MAX_CUSTOMERS):
-        offset_y = ROW_HEIGHT * (row + 1)  # 헤더 아래로 offset
+        offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)  # 첫 행 + 행간격
         print("        -> 고객 %d 클릭 (offset: %dpx)..." % (row + 1, offset_y))
         click(Pattern(IMG_CUSTNAME).targetOffset(0, offset_y))
         sleep(5)  # 고객등록/조회 페이지 로딩 대기
