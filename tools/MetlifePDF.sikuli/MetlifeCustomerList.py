@@ -293,28 +293,47 @@ IMG_ARROW_ASC = "1769233207559.png"        # ↑ (오름차순 화살표)
 IMG_CLOSE_BTN = "1769234950471.png"        # 종료(x) 버튼
 IMG_ALERT_OK = "1769251121685.png"         # 알림 팝업 "확인" 버튼
 
-# 초성 버튼 이미지 (테스트: ㄱ만)
-CHOSUNG_BUTTONS = [
+# 초성 버튼 이미지 (전체)
+ALL_CHOSUNG_BUTTONS = [
     (u"ㄱ", "1769222878862.png"),
-    # (u"ㄴ", "1769222888632.png"),
-    # (u"ㄷ", "1769222898000.png"),
-    # (u"ㄹ", "1769222904295.png"),
-    # (u"ㅁ", "1769222910966.png"),
-    # (u"ㅂ", "1769222917685.png"),
-    # (u"ㅅ", "1769222927091.png"),
-    # (u"ㅇ", "1769222937404.png"),
-    # (u"ㅈ", "1769222945758.png"),
-    # (u"ㅊ", "1769222954865.png"),
-    # (u"ㅋ", "1769222967149.png"),
-    # (u"ㅌ", "1769222983005.png"),
-    # (u"ㅍ", "1769222990533.png"),
-    # (u"ㅎ", "1769222997942.png"),
-    # (u"기타", "1769223008588.png"),
+    (u"ㄴ", "1769222888632.png"),
+    (u"ㄷ", "1769222898000.png"),
+    (u"ㄹ", "1769222904295.png"),
+    (u"ㅁ", "1769222910966.png"),
+    (u"ㅂ", "1769222917685.png"),
+    (u"ㅅ", "1769222927091.png"),
+    (u"ㅇ", "1769222937404.png"),
+    (u"ㅈ", "1769222945758.png"),
+    (u"ㅊ", "1769222954865.png"),
+    (u"ㅋ", "1769222967149.png"),
+    (u"ㅌ", "1769222983005.png"),
+    (u"ㅍ", "1769222990533.png"),
+    (u"ㅎ", "1769222997942.png"),
+    (u"기타", "1769223008588.png"),
 ]
+
+# 환경 변수로 특정 초성만 선택 (없으면 전체)
+_raw_chosung = os.environ.get("METLIFE_CHOSUNG", "")
+# Jython: 환경변수는 바이트 문자열, ALL_CHOSUNG_BUTTONS는 유니코드
+if _raw_chosung:
+    if isinstance(_raw_chosung, str):
+        SELECTED_CHOSUNG = _raw_chosung.decode('utf-8')
+    else:
+        SELECTED_CHOSUNG = _raw_chosung
+    CHOSUNG_BUTTONS = [(name, img) for name, img in ALL_CHOSUNG_BUTTONS if name == SELECTED_CHOSUNG]
+    if not CHOSUNG_BUTTONS:
+        raise ValueError(u"잘못된 초성: %s (가능: ㄱ,ㄴ,ㄷ,ㄹ,ㅁ,ㅂ,ㅅ,ㅇ,ㅈ,ㅊ,ㅋ,ㅌ,ㅍ,ㅎ,기타)" % SELECTED_CHOSUNG)
+else:
+    SELECTED_CHOSUNG = u""
+    CHOSUNG_BUTTONS = ALL_CHOSUNG_BUTTONS
 
 log("=" * 60)
 log(u"MetLife 고객목록조회 - Upstage Enhanced OCR 연동")
 log(u"로그 파일: %s" % os.path.basename(LOG_FILE))
+if SELECTED_CHOSUNG:
+    log(u"선택 초성: %s" % SELECTED_CHOSUNG)
+else:
+    log(u"선택 초성: 전체 (%d개)" % len(CHOSUNG_BUTTONS))
 log("=" * 60)
 
 start_time = time.time()
