@@ -351,6 +351,15 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         log(u"[ERROR] 내림차순 정렬 실패!")
         exit(1)
 
+    # 스크롤을 맨 위로 (정렬 후 스크롤이 중간에 있을 수 있음)
+    log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
+    header = find(IMG_CUSTNAME)
+    click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
+    sleep(0.5)
+    type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
+    sleep(1)
+    log(u"  [SCROLL] 스크롤 맨 위 완료")
+
     ###########################################
     # 스크롤 루프: 모든 페이지 OCR 및 고객 처리
     ###########################################
