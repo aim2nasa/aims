@@ -188,16 +188,16 @@ def print_customer_table(customers, chosung_name, page_num):
 
 
 def scroll_down(steps):
-    """스크롤바 영역 클릭 후 휠 스크롤"""
+    """휠 스크롤 (테이블 왼쪽 여백 클릭으로 포커스)"""
     header = find(IMG_CUSTNAME)
-    # 스크롤바 영역 (오른쪽 끝) 클릭 - 데이터 행 클릭 방지
-    scrollbar_area = header.right(1300).below(300)
-    log(u"  [SCROLL] 스크롤바 영역 클릭 (포커스)...")
-    click(scrollbar_area)
+    # 테이블 왼쪽 여백 (고객명 헤더 왼쪽) - 데이터 영역 바깥
+    left_margin = header.left(50).below(200)
+    log(u"  [SCROLL] 왼쪽 여백 클릭 (포커스)...")
+    click(left_margin)
     sleep(0.5)
     # 휠 스크롤
     log(u"  [SCROLL] 휠 스크롤 %d steps..." % steps)
-    wheel(scrollbar_area, WHEEL_DOWN, steps)
+    wheel(left_margin, WHEEL_DOWN, steps)
     sleep(1)
 
 
