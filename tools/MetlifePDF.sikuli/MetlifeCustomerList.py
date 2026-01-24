@@ -21,7 +21,7 @@ def find_any(*imgs):
 # 설정
 WAIT_TIME = 3
 FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
-ROW_HEIGHT = 32        # 행 간 간격 (픽셀)
+ROW_HEIGHT = 33        # 행 간 간격 (픽셀)
 
 # 고객명 정렬 이미지
 IMG_CUSTNAME = "1769233187438.png"         # 고객명 헤더 (클릭용)
