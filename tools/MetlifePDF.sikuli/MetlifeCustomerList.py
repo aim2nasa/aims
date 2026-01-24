@@ -15,7 +15,7 @@ setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 
 # 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
-CAPTURE_DIR = r"D:\captures\metlife_ocr"
+CAPTURE_DIR = os.environ.get("METLIFE_CAPTURE_DIR", r"D:\captures\metlife_ocr")
 OCR_SCRIPT = SCRIPT_DIR + r"\upstage_ocr_api.py"
 
 # 캡처 디렉토리 생성
