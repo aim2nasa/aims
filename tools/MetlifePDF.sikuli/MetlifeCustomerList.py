@@ -74,12 +74,26 @@ def find_any(*imgs):
 
 def capture_and_ocr(chosung_name, page_num):
     """
-    화면 캡처 후 Upstage Enhanced OCR 호출
+    화면 캡처 후 Upstage Enhanced OCR 호출 (캐시 지원)
 
     Returns:
         list: 고객 데이터 리스트 (15행)
         str: JSON 파일 경로
     """
+    # 캐시 파일 경로 (고정 - 타임스탬프 없음)
+    cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, page_num))
+
+    # 캐시 확인 - 있으면 바로 반환
+    if os.path.exists(cache_json):
+        log(u"  [OCR] ----------------------------------------")
+        log(u"  [OCR] [CACHE HIT] %s" % os.path.basename(cache_json))
+        with codecs.open(cache_json, "r", "utf-8") as f:
+            customers = json.load(f)
+        log(u"  [OCR] %d명 로드 (캐시 사용 - OCR 스킵)" % len(customers))
+        log(u"  [OCR] ----------------------------------------")
+        return customers, cache_json
+
+    # 캐시 없음 - OCR 수행
     timestamp = int(time.time())
     capture_filename = u"page_%s_%d_%d.png" % (chosung_name, page_num, timestamp)
     capture_path = os.path.join(CAPTURE_DIR, capture_filename)
@@ -117,8 +131,13 @@ def capture_and_ocr(chosung_name, page_num):
         with codecs.open(json_path, "r", "utf-8") as f:
             customers = json.load(f)
         log(u"  [OCR] 4/4. %d명 인식 완료" % len(customers))
+
+        # 캐시 파일에 저장 (다음 실행 시 재사용)
+        with codecs.open(cache_json, "w", "utf-8") as f:
+            json.dump(customers, f, ensure_ascii=False, indent=2)
+        log(u"  [OCR] [CACHE SAVE] %s" % os.path.basename(cache_json))
         log(u"  [OCR] ----------------------------------------")
-        return customers, json_path
+        return customers, cache_json
     else:
         log(u"  [OCR] ERROR: JSON 없음")
         log(u"  [OCR] ----------------------------------------")
