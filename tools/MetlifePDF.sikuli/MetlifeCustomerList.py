@@ -9,26 +9,40 @@ import time
 Settings.ActionLogs = False  # [log] CLICK 메시지 숨김
 setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 
+# 헬퍼 함수
+def find_any(*imgs):
+    """여러 이미지 중 하나라도 있으면 해당 이미지 반환. 모두 없으면 종료."""
+    for img in imgs:
+        if exists(img):
+            return img
+    print("[ERROR] 다음 이미지 중 하나도 찾을 수 없음: " + str(imgs))
+    exit(1)
+
 # 설정
 WAIT_TIME = 3
 
-# 초성 버튼 이미지 (ㄱ ~ 기타)
+# 고객명 정렬 이미지
+IMG_CUSTNAME = "1769233187438.png"         # 고객명 (클릭용)
+IMG_ARROW_DESC = "1769233198595.png"       # ↓ (내림차순 화살표)
+IMG_ARROW_ASC = "1769233207559.png"        # ↑ (오름차순 화살표)
+
+# 초성 버튼 이미지 (테스트: ㄱㄴㄷ만)
 CHOSUNG_BUTTONS = [
     ("ㄱ", "1769222878862.png"),
     ("ㄴ", "1769222888632.png"),
     ("ㄷ", "1769222898000.png"),
-    ("ㄹ", "1769222904295.png"),
-    ("ㅁ", "1769222910966.png"),
-    ("ㅂ", "1769222917685.png"),
-    ("ㅅ", "1769222927091.png"),
-    ("ㅇ", "1769222937404.png"),
-    ("ㅈ", "1769222945758.png"),
-    ("ㅊ", "1769222954865.png"),
-    ("ㅋ", "1769222967149.png"),
-    ("ㅌ", "1769222983005.png"),
-    ("ㅍ", "1769222990533.png"),
-    ("ㅎ", "1769222997942.png"),
-    ("기타", "1769223008588.png"),
+    # ("ㄹ", "1769222904295.png"),
+    # ("ㅁ", "1769222910966.png"),
+    # ("ㅂ", "1769222917685.png"),
+    # ("ㅅ", "1769222927091.png"),
+    # ("ㅇ", "1769222937404.png"),
+    # ("ㅈ", "1769222945758.png"),
+    # ("ㅊ", "1769222954865.png"),
+    # ("ㅋ", "1769222967149.png"),
+    # ("ㅌ", "1769222983005.png"),
+    # ("ㅍ", "1769222990533.png"),
+    # ("ㅎ", "1769222997942.png"),
+    # ("기타", "1769223008588.png"),
 ]
 
 print("=" * 50)
@@ -68,8 +82,22 @@ print("\n[2단계] 초성 버튼 테스트")
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     print("  [%s] 버튼 클릭..." % chosung_name)
     click(chosung_img)
-    sleep(2)
-    print("        -> 목록 표시됨")
+    sleep(5)  # 목록 로딩 대기
+
+    # 고객명 내림차순 정렬 - ↓ 화살표가 나타날 때까지 클릭
+    for attempt in range(3):
+        desc_found = exists(IMG_ARROW_DESC, 2)
+        asc_found = exists(IMG_ARROW_ASC, 2)
+        print("        -> 감지: ↓=%s, ↑=%s" % (desc_found is not None, asc_found is not None))
+        if desc_found:
+            print("        -> 내림차순 확인됨")
+            break
+        print("        -> 고객명 클릭 (%d차)" % (attempt + 1))
+        click(IMG_CUSTNAME)
+        sleep(3)
+    else:
+        print("[ERROR] 내림차순 정렬 실패!")
+        exit(1)
 
 print("[2단계 완료]")
 
