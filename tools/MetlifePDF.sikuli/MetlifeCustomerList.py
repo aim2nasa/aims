@@ -8,6 +8,7 @@ import time
 import subprocess
 import json
 import codecs
+import traceback
 
 # SikuliX 설정
 Settings.ActionLogs = False  # [log] CLICK 메시지 숨김
@@ -325,6 +326,10 @@ log(u"[1단계 완료]")
 ###########################################
 log(u"\n[2단계] 초성 버튼 및 고객 처리")
 
+# 전체 통계 (모든 초성 합산)
+all_total_processed = 0
+all_error_customers = []
+
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
@@ -351,8 +356,16 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     ###########################################
     page_num = 1
     total_processed = 0
+    total_errors = 0
+    error_customers = []           # 이번 초성의 오류 발생 고객 목록
     prev_last_customer = None      # 이전 페이지 마지막 고객 (중복 감지용)
     prev_first_customer = None     # 이전 페이지 첫 고객 (무한 루프 방지용)
+
+    # x좌표 고정 (한 번만 측정) - 이메일 컬럼 오클릭 방지
+    header = find(IMG_CUSTNAME)
+    fixed_x = header.getCenter().getX()
+    base_y = header.getCenter().getY()
+    log(u"  [INIT] 고객명 헤더 위치 고정: x=%d, y=%d" % (fixed_x, base_y))
 
     while True:
         log(u"\n  [PAGE %d] 캡처 및 OCR 시작..." % page_num)
@@ -379,36 +392,66 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         page_processed = 0
         for row in range(start_index, len(customers)):
             customer_name = get_customer_name(customers, row)
+            customer_data = customers[row] if row < len(customers) else {}
             offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)
 
-            log(u"        -> [P%d R%d] %s 클릭 (offset: %dpx)..." % (
-                page_num, row + 1, customer_name, offset_y
+            log(u"        -> [P%d R%d] %s 클릭 (x=%d, y=%d)..." % (
+                page_num, row + 1, customer_name, fixed_x, base_y + offset_y
             ))
 
-            click(Pattern(IMG_CUSTNAME).targetOffset(0, offset_y))
-            sleep(3)  # 고객등록/조회 페이지 로딩 대기
-
-            # 알림 팝업 처리
-            dismiss_alert_if_exists()
-            sleep(2)
-
-            # 종료(x) 버튼 클릭
-            log(u"        -> %s: 종료(x) 클릭..." % customer_name)
             try:
-                click(IMG_CLOSE_BTN)
-            except:
-                # 종료 버튼 못 찾으면 알림 팝업 재확인
-                if dismiss_alert_if_exists():
-                    sleep(1)
+                # x좌표 고정, y만 offset (이메일 컬럼 오클릭 방지)
+                click(Location(fixed_x, base_y + offset_y))
+                sleep(3)  # 고객등록/조회 페이지 로딩 대기
+
+                # 알림 팝업 처리
+                dismiss_alert_if_exists()
+                sleep(2)
+
+                # 종료(x) 버튼 클릭
+                log(u"        -> %s: 종료(x) 클릭..." % customer_name)
+                try:
                     click(IMG_CLOSE_BTN)
-            sleep(3)  # 고객목록조회 페이지 복귀 대기
+                except:
+                    # 종료 버튼 못 찾으면 알림 팝업 재확인
+                    if dismiss_alert_if_exists():
+                        sleep(1)
+                        click(IMG_CLOSE_BTN)
+                sleep(3)  # 고객목록조회 페이지 복귀 대기
 
-            log(u"        -> %s 처리 완료" % customer_name)
-            page_processed += 1
-            total_processed += 1
+                log(u"        -> %s 처리 완료 (누적: %d)" % (customer_name, total_processed + 1))
+                page_processed += 1
+                total_processed += 1
 
-        log(u"  [PAGE %d] %d명 처리 (스킵: %d, 누적: %d)" % (
-            page_num, page_processed, start_index, total_processed))
+            except Exception as e:
+                error_msg = str(e)
+                error_trace = traceback.format_exc()
+                log(u"        -> [ERROR] %s 처리 실패: %s" % (customer_name, error_msg))
+                log(u"        -> [TRACEBACK]")
+                for line in error_trace.split("\n"):
+                    if line.strip():
+                        log(u"           %s" % line)
+                error_customers.append({
+                    u"초성": chosung_name,
+                    u"페이지": page_num,
+                    u"행": row + 1,
+                    u"고객명": customer_name,
+                    u"고객데이터": customer_data,
+                    u"오류": error_msg,
+                    u"traceback": error_trace
+                })
+                total_errors += 1
+                # 오류 발생해도 다음 고객 계속 처리
+                continue
+
+        # 페이지 처리 완료 요약
+        page_errors = len([e for e in error_customers if e.get(u"페이지") == page_num])
+        log(u"  [PAGE %d] 완료 - 처리: %d, 오류: %d (누적 처리: %d, 누적 오류: %d)" % (
+            page_num, page_processed, page_errors, total_processed, total_errors))
+        if page_errors > 0:
+            log(u"        오류 고객: %s" % ", ".join([
+                e.get(u"고객명", "?") for e in error_customers if e.get(u"페이지") == page_num
+            ]))
 
         # 5. 마지막 페이지 감지: 15명 미만이면 종료
         if len(customers) < MAX_CUSTOMERS_PER_PAGE:
@@ -424,7 +467,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         scroll_down(SCROLL_CLICKS)
         page_num += 1
 
-    log(u"\n  [%s] 총 %d명 처리 완료 (페이지: %d)" % (chosung_name, total_processed, page_num))
+    log(u"\n  [%s] 총 %d명 처리 완료, 오류 %d명 (페이지: %d)" % (
+        chosung_name, total_processed, total_errors, page_num))
+
+    # 전체 통계에 합산
+    all_total_processed += total_processed
+    all_error_customers.extend(error_customers)
 
 log(u"\n[2단계 완료]")
 
@@ -438,8 +486,26 @@ seconds = int(elapsed_time % 60)
 log(u"\n" + "=" * 60)
 log(u"초성 버튼 테스트 완료!")
 log(u"소요 시간: %d분 %d초" % (minutes, seconds))
+log(u"총 처리: %d명, 오류: %d명" % (all_total_processed, len(all_error_customers)))
 log(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
 log(u"로그 파일: %s" % LOG_FILE)
+
+# 오류 고객 목록 (로그에 기록)
+if all_error_customers:
+    log(u"")
+    log(u"[WARNING] 오류 발생 고객: %d명" % len(all_error_customers))
+    for err in all_error_customers:
+        log(u"  - [%s] P%d R%d: %s" % (
+            err.get(u"초성", "?"),
+            err.get(u"페이지", 0),
+            err.get(u"행", 0),
+            err.get(u"고객명", "?")
+        ))
+        log(u"    오류: %s" % err.get(u"오류", "?"))
+else:
+    log(u"")
+    log(u"[OK] 오류 없이 완료!")
+
 log("=" * 60)
 
 # 로그 파일 닫기
