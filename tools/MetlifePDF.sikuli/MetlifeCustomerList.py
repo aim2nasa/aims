@@ -188,19 +188,13 @@ def print_customer_table(customers, chosung_name, page_num):
 
 
 def scroll_down(steps):
-    """휠 스크롤 (휴대폰 컬럼 클릭 후)"""
+    """Page Down 키로 스크롤 (휠보다 안정적)"""
     header = find(IMG_CUSTNAME)
-    # 휴대폰 컬럼: 고객명에서 오른쪽 600px (이메일 다음)
-    # - 이메일은 링크라 클릭하면 "파일 열기" 다이얼로그 뜸
-    # - 휴대폰은 텍스트라 클릭해도 아무 동작 없음 (안전)
     scroll_area = header.right(600).below(150)
-    log(u"  [SCROLL] 휴대폰 컬럼 클릭 (포커스)...")
+
+    # 클릭으로 포커스 확보 후 Page Down
     click(scroll_area)
-    sleep(0.5)
-    # 휠 스크롤
-    log(u"  [SCROLL] 휠 스크롤 %d steps..." % steps)
-    wheel(scroll_area, WHEEL_DOWN, steps)
-    sleep(1)
+    type(Key.PAGE_DOWN)
 
 
 def customer_matches(c1, c2):
@@ -419,6 +413,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     while True:
         log(u"\n  [PAGE %d] 캡처 및 OCR 시작..." % page_num)
 
+        # 스크롤 후 화면 안정화 대기
+        sleep(3)
+
         # 1. OCR 수행
         customers, json_path = capture_and_ocr(chosung_name, page_num)
 
@@ -437,70 +434,69 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # 3. 중복 감지: 이전 마지막 고객 위치 찾기
         start_index = find_start_index(customers, prev_last_customer)
 
-        # 4. start_index부터 고객 처리
-        page_processed = 0
-        for row in range(start_index, len(customers)):
-            customer_name = get_customer_name(customers, row)
-            customer_data = customers[row] if row < len(customers) else {}
-            offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)
+        # 4. start_index부터 고객 처리 (주석처리 - 스크롤 테스트용)
+        page_processed = len(customers) - start_index  # 처리할 고객 수만 카운트
+        total_processed += page_processed
+        log(u"  [PAGE %d] 신규 고객 %d명 (start_index=%d)" % (page_num, page_processed, start_index))
 
-            log(u"        -> [P%d R%d] %s 클릭 (x=%d, y=%d)..." % (
-                page_num, row + 1, customer_name, fixed_x, base_y + offset_y
-            ))
-
-            try:
-                # x좌표 고정, y만 offset (이메일 컬럼 오클릭 방지)
-                click(Location(fixed_x, base_y + offset_y))
-                sleep(3)  # 고객등록/조회 페이지 로딩 대기
-
-                # 알림 팝업 처리
-                dismiss_alert_if_exists()
-                sleep(2)
-
-                # 종료(x) 버튼 클릭
-                log(u"        -> %s: 종료(x) 클릭..." % customer_name)
-                try:
-                    click(IMG_CLOSE_BTN)
-                except:
-                    # 종료 버튼 못 찾으면 알림 팝업 재확인
-                    if dismiss_alert_if_exists():
-                        sleep(1)
-                        click(IMG_CLOSE_BTN)
-                sleep(3)  # 고객목록조회 페이지 복귀 대기
-
-                log(u"        -> %s 처리 완료 (누적: %d)" % (customer_name, total_processed + 1))
-                page_processed += 1
-                total_processed += 1
-
-            except Exception as e:
-                error_msg = str(e)
-                error_trace = traceback.format_exc()
-                log(u"        -> [ERROR] %s 처리 실패: %s" % (customer_name, error_msg))
-                log(u"        -> [TRACEBACK]")
-                for line in error_trace.split("\n"):
-                    if line.strip():
-                        log(u"           %s" % line)
-                error_customers.append({
-                    u"초성": chosung_name,
-                    u"페이지": page_num,
-                    u"행": row + 1,
-                    u"고객명": customer_name,
-                    u"고객데이터": customer_data,
-                    u"오류": error_msg,
-                    u"traceback": error_trace
-                })
-                total_errors += 1
-                # 오류 발생해도 다음 고객 계속 처리
-                continue
+        # === 고객 클릭 코드 주석처리 시작 ===
+        # for row in range(start_index, len(customers)):
+        #     customer_name = get_customer_name(customers, row)
+        #     customer_data = customers[row] if row < len(customers) else {}
+        #     offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)
+        #
+        #     log(u"        -> [P%d R%d] %s 클릭 (x=%d, y=%d)..." % (
+        #         page_num, row + 1, customer_name, fixed_x, base_y + offset_y
+        #     ))
+        #
+        #     try:
+        #         # x좌표 고정, y만 offset (이메일 컬럼 오클릭 방지)
+        #         click(Location(fixed_x, base_y + offset_y))
+        #         sleep(3)  # 고객등록/조회 페이지 로딩 대기
+        #
+        #         # 알림 팝업 처리
+        #         dismiss_alert_if_exists()
+        #         sleep(2)
+        #
+        #         # 종료(x) 버튼 클릭
+        #         log(u"        -> %s: 종료(x) 클릭..." % customer_name)
+        #         try:
+        #             click(IMG_CLOSE_BTN)
+        #         except:
+        #             # 종료 버튼 못 찾으면 알림 팝업 재확인
+        #             if dismiss_alert_if_exists():
+        #                 sleep(1)
+        #                 click(IMG_CLOSE_BTN)
+        #         sleep(3)  # 고객목록조회 페이지 복귀 대기
+        #
+        #         log(u"        -> %s 처리 완료 (누적: %d)" % (customer_name, total_processed + 1))
+        #         page_processed += 1
+        #         total_processed += 1
+        #
+        #     except Exception as e:
+        #         error_msg = str(e)
+        #         error_trace = traceback.format_exc()
+        #         log(u"        -> [ERROR] %s 처리 실패: %s" % (customer_name, error_msg))
+        #         log(u"        -> [TRACEBACK]")
+        #         for line in error_trace.split("\n"):
+        #             if line.strip():
+        #                 log(u"           %s" % line)
+        #         error_customers.append({
+        #             u"초성": chosung_name,
+        #             u"페이지": page_num,
+        #             u"행": row + 1,
+        #             u"고객명": customer_name,
+        #             u"고객데이터": customer_data,
+        #             u"오류": error_msg,
+        #             u"traceback": error_trace
+        #         })
+        #         total_errors += 1
+        #         # 오류 발생해도 다음 고객 계속 처리
+        #         continue
+        # === 고객 클릭 코드 주석처리 끝 ===
 
         # 페이지 처리 완료 요약
-        page_errors = len([e for e in error_customers if e.get(u"페이지") == page_num])
-        log(u"  [PAGE %d] 완료 - 처리: %d, 오류: %d (누적 처리: %d, 누적 오류: %d)" % (
-            page_num, page_processed, page_errors, total_processed, total_errors))
-        if page_errors > 0:
-            log(u"        오류 고객: %s" % ", ".join([
-                e.get(u"고객명", "?") for e in error_customers if e.get(u"페이지") == page_num
-            ]))
+        log(u"  [PAGE %d] 완료 - 신규: %d명 (누적: %d)" % (page_num, page_processed, total_processed))
 
         # 5. 마지막 페이지 감지: 15명 미만이면 종료
         if len(customers) < MAX_CUSTOMERS_PER_PAGE:
