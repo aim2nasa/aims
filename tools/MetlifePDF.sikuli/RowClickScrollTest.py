@@ -231,11 +231,27 @@ def capture_first_row_region():
     capture_region = Region(int(capture_x), int(row_1_y - 12), 200, 28)
     return capture(capture_region)
 
+def save_page_screenshot(page_num):
+    """페이지 전체 화면 캡처 및 저장"""
+    import shutil
+    timestamp = int(time.time())
+    filename = u"page_%03d_%d.png" % (page_num, timestamp)
+    filepath = os.path.join(LOG_DIR, filename)
+
+    # 전체 화면 캡처
+    captured = capture(SCREEN)
+    shutil.copy(captured, filepath)
+    log(u"  [SAVE] 페이지 %d 캡처 저장: %s" % (page_num, filename))
+    return filepath
+
 page = 1
 while page <= MAX_PAGES:
     log(u"\n  " + "=" * 40)
     log(u"  [PAGE %d] 스크롤 테스트" % page)
     log(u"  " + "=" * 40)
+
+    # 현재 페이지 스크린샷 저장
+    save_page_screenshot(page)
 
     # 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
     prev_capture = capture_first_row_region()
