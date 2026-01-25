@@ -187,70 +187,96 @@ def print_customer_table(customers, chosung_name, page_num):
     log(u"  [OCR] ================================================")
 
 
-def scroll_down(steps):
-    """Page Down 키로 스크롤 (휠보다 안정적)"""
-    header = find(IMG_CUSTNAME)
-    scroll_area = header.right(600).below(150)
-
-    # 클릭으로 포커스 확보 후 Page Down
-    click(scroll_area)
-    type(Key.PAGE_DOWN)
-
-
-def customer_matches(c1, c2):
+def get_row_y(header_y, row_index):
     """
-    두 고객이 동일한지 비교 (고객명 + 생년월일 + 휴대폰)
+    특정 행의 Y좌표 계산
 
     Args:
-        c1, c2: 고객 딕셔너리
+        header_y: 고객명 헤더 Y좌표
+        row_index: 0-based 행 인덱스
+
     Returns:
-        bool: 동일하면 True
+        int: 행의 Y좌표
     """
-    if not c1 or not c2:
-        return False
-    return (c1.get(u"고객명", "") == c2.get(u"고객명", "") and
-            c1.get(u"생년월일", "") == c2.get(u"생년월일", "") and
-            c1.get(u"휴대폰", "") == c2.get(u"휴대폰", ""))
+    return header_y + FIRST_ROW_OFFSET + (ROW_HEIGHT * row_index)
 
 
-def find_start_index(customers, prev_last_customer):
+def scroll_by_row_click(scroll_x, header_y):
     """
-    현재 페이지에서 이전 마지막 고객 위치를 찾아 시작 인덱스 반환
+    16번째 행(잘린 행) 클릭 × 15회로 정확히 15행 스크롤
 
     Args:
-        customers: 현재 페이지 고객 리스트
-        prev_last_customer: 이전 페이지의 마지막 고객
-
-    Returns:
-        int: 처리 시작 인덱스 (중복 이후)
+        scroll_x: 스크롤 클릭 X좌표 (구분 컬럼)
+        header_y: 고객명 헤더 Y좌표
     """
-    if not prev_last_customer:
-        return 0
+    scroll_clicks = ROWS_PER_PAGE  # 15
+    row_16_y = get_row_y(header_y, ROWS_PER_PAGE)  # index 15 = 16번째 행
 
-    for i, c in enumerate(customers):
-        if customer_matches(c, prev_last_customer):
-            log(u"  [DUP] 이전 마지막 고객 '%s' 발견 at Row %d → Row %d부터 처리" % (
-                prev_last_customer.get(u"고객명", "?"), i, i + 1))
-            return i + 1
+    for i in range(scroll_clicks):
+        click(Location(scroll_x, row_16_y))
+        sleep(0.3)
 
-    # 매칭 없음 = 정상 스크롤 (중복 없음)
-    return 0
+        if (i + 1) % 5 == 0:
+            log(u"        -> %d번 클릭 완료" % (i + 1))
+
+    sleep(0.5)  # 스크롤 완료 대기
 
 
-def is_same_page(customers, prev_first_customer):
+def capture_first_row_region(header, header_y):
     """
-    현재 페이지가 이전 페이지와 동일한지 확인 (무한 루프 방지)
+    첫 번째 행 영역 캡처 (마지막 페이지 감지용)
 
     Args:
-        customers: 현재 페이지 고객 리스트
-        prev_first_customer: 이전 페이지의 첫 번째 고객
+        header: 고객명 헤더 Match 객체
+        header_y: 헤더 Y좌표
 
     Returns:
-        bool: 동일하면 True (스크롤 안 됨)
+        str: 캡처된 이미지 경로
     """
-    if not prev_first_customer or not customers:
-        return False
-    return customer_matches(customers[0], prev_first_customer)
+    row_1_y = get_row_y(header_y, 0)
+    capture_x = header.getCenter().getX() - 30
+    capture_region = Region(int(capture_x), int(row_1_y - 12), 200, 28)
+    return capture(capture_region)
+
+
+def is_last_page(prev_capture):
+    """
+    스크롤 전후 화면 비교로 마지막 페이지 감지
+
+    Args:
+        prev_capture: 스크롤 전 첫 번째 행 캡처 이미지
+
+    Returns:
+        bool: 마지막 페이지면 True
+    """
+    try:
+        if exists(Pattern(prev_capture).similar(0.95), 0.5):
+            return True
+    except:
+        pass
+    return False
+
+
+def save_page_screenshot(chosung_name, page_num):
+    """
+    페이지 전체 화면 캡처 및 저장
+
+    Args:
+        chosung_name: 초성 이름
+        page_num: 페이지 번호
+
+    Returns:
+        str: 저장된 파일 경로
+    """
+    import shutil
+    timestamp = int(time.time())
+    filename = u"page_%s_%03d_%d.png" % (chosung_name, page_num, timestamp)
+    filepath = os.path.join(CAPTURE_DIR, filename)
+
+    captured = capture(SCREEN)
+    shutil.copy(captured, filepath)
+    log(u"  [SAVE] 페이지 %d 캡처 저장: %s" % (page_num, filename))
+    return filepath
 
 
 def dismiss_alert_if_exists():
@@ -275,8 +301,8 @@ def dismiss_alert_if_exists():
 WAIT_TIME = 3
 FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
 ROW_HEIGHT = 33        # 행 간 간격 (픽셀)
-MAX_CUSTOMERS_PER_PAGE = 15  # OCR로 인식하는 행 수 (마지막 행 잘림으로 15행)
-SCROLL_CLICKS = 5      # 15행 스크롤에 필요한 휠 클릭 수
+ROWS_PER_PAGE = 15     # 화면에 보이는 행 수 (16번째 행은 잘림)
+MAX_CUSTOMERS_PER_PAGE = 15  # OCR로 인식하는 행 수
 
 # 고객명 정렬 이미지
 IMG_CUSTNAME = "img/1769233187438.png"         # 고객명 헤더 (클릭용)
@@ -306,9 +332,39 @@ ALL_CHOSUNG_BUTTONS = [
     (u"기타", "img/1769223008588.png"),
 ]
 
-# 환경 변수로 특정 초성만 선택 (없으면 전체)
-_raw_chosung = os.environ.get("METLIFE_CHOSUNG", "")
-# Jython: 환경변수는 바이트 문자열, ALL_CHOSUNG_BUTTONS는 유니코드
+# 초성 선택: 명령줄 인자 > 환경변수 > 전체
+# 사용법: java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ
+#        java -jar sikulixide.jar -r MetlifeCustomerList.py -- --chosung ㄱ
+import sys
+
+def parse_chosung_arg():
+    """명령줄 인자에서 초성 파싱"""
+    # sys.argv 예시: ['MetlifeCustomerList.py', '--', 'ㄱ'] 또는 ['...', '--', '--chosung', 'ㄱ']
+    args = sys.argv[1:] if len(sys.argv) > 1 else []
+
+    # '--' 이후의 인자만 처리 (SikuliX 방식)
+    if '--' in args:
+        args = args[args.index('--') + 1:]
+
+    # --chosung 옵션 처리
+    if '--chosung' in args:
+        idx = args.index('--chosung')
+        if idx + 1 < len(args):
+            return args[idx + 1]
+
+    # 단순 위치 인자 (첫 번째 인자가 초성)
+    if args and not args[0].startswith('-'):
+        return args[0]
+
+    return None
+
+_arg_chosung = parse_chosung_arg()
+_env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
+
+# 우선순위: 명령줄 > 환경변수
+_raw_chosung = _arg_chosung or _env_chosung
+
+# Jython: 바이트 문자열 → 유니코드 변환
 if _raw_chosung:
     if isinstance(_raw_chosung, str):
         SELECTED_CHOSUNG = _raw_chosung.decode('utf-8')
@@ -396,62 +452,62 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
     ###########################################
     # 스크롤 루프: 모든 페이지 OCR 및 고객 처리
+    # (RowClickScrollTest.py 방식 적용)
     ###########################################
     page_num = 1
     total_processed = 0
     total_errors = 0
     error_customers = []           # 이번 초성의 오류 발생 고객 목록
-    prev_last_customer = None      # 이전 페이지 마지막 고객 (중복 감지용)
-    prev_first_customer = None     # 이전 페이지 첫 고객 (무한 루프 방지용)
 
-    # x좌표 고정 (한 번만 측정) - 이메일 컬럼 오클릭 방지
+    # 좌표 설정 (한 번만 측정)
     header = find(IMG_CUSTNAME)
-    fixed_x = header.getCenter().getX()
+    fixed_x = header.getCenter().getX()       # 고객명 클릭용 X좌표
     base_y = header.getCenter().getY()
-    log(u"  [INIT] 고객명 헤더 위치 고정: x=%d, y=%d" % (fixed_x, base_y))
+    scroll_x = fixed_x + 100                  # 스크롤 클릭용 X좌표 (구분 컬럼)
+    log(u"  [INIT] 고객명 클릭: x=%d, 스크롤 클릭: x=%d, 기준 y=%d" % (fixed_x, scroll_x, base_y))
 
     while True:
-        log(u"\n  [PAGE %d] 캡처 및 OCR 시작..." % page_num)
+        log(u"\n  " + "=" * 40)
+        log(u"  [PAGE %d] 처리 시작" % page_num)
+        log(u"  " + "=" * 40)
 
-        # 스크롤 후 화면 안정화 대기
-        sleep(3)
+        # 화면 안정화 대기
+        sleep(2)
 
-        # 1. OCR 수행
+        # 1. 페이지 스크린샷 저장
+        save_page_screenshot(chosung_name, page_num)
+
+        # 2. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
+        prev_capture = capture_first_row_region(header, base_y)
+        log(u"  [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
+
+        # 3. OCR 수행
         customers, json_path = capture_and_ocr(chosung_name, page_num)
 
         if not customers:
             log(u"  [WARN] OCR 결과 없음 → 루프 종료")
             break
 
-        # 2. 무한 루프 감지: 첫 번째 고객이 이전과 동일하면 스크롤 안 됨
-        if is_same_page(customers, prev_first_customer):
-            log(u"  [END] 이전 페이지와 동일 (스크롤 끝) → 루프 종료")
-            break
-
         # OCR 결과 표 출력
         print_customer_table(customers, chosung_name, page_num)
 
-        # 3. 중복 감지: 이전 마지막 고객 위치 찾기
-        start_index = find_start_index(customers, prev_last_customer)
-
-        # 4. start_index부터 고객 처리 (주석처리 - 스크롤 테스트용)
-        page_processed = len(customers) - start_index  # 처리할 고객 수만 카운트
+        # 4. 고객 처리 (전체 15명)
+        page_processed = len(customers)
         total_processed += page_processed
-        log(u"  [PAGE %d] 신규 고객 %d명 (start_index=%d)" % (page_num, page_processed, start_index))
+        log(u"  [PAGE %d] 고객 %d명 처리" % (page_num, page_processed))
 
         # === 고객 클릭 코드 주석처리 시작 ===
-        # for row in range(start_index, len(customers)):
+        # for row in range(len(customers)):
         #     customer_name = get_customer_name(customers, row)
         #     customer_data = customers[row] if row < len(customers) else {}
-        #     offset_y = FIRST_ROW_OFFSET + (ROW_HEIGHT * row)
+        #     row_y = get_row_y(base_y, row)
         #
         #     log(u"        -> [P%d R%d] %s 클릭 (x=%d, y=%d)..." % (
-        #         page_num, row + 1, customer_name, fixed_x, base_y + offset_y
+        #         page_num, row + 1, customer_name, fixed_x, row_y
         #     ))
         #
         #     try:
-        #         # x좌표 고정, y만 offset (이메일 컬럼 오클릭 방지)
-        #         click(Location(fixed_x, base_y + offset_y))
+        #         click(Location(fixed_x, row_y))
         #         sleep(3)  # 고객등록/조회 페이지 로딩 대기
         #
         #         # 알림 팝업 처리
@@ -463,54 +519,44 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         #         try:
         #             click(IMG_CLOSE_BTN)
         #         except:
-        #             # 종료 버튼 못 찾으면 알림 팝업 재확인
         #             if dismiss_alert_if_exists():
         #                 sleep(1)
         #                 click(IMG_CLOSE_BTN)
         #         sleep(3)  # 고객목록조회 페이지 복귀 대기
         #
-        #         log(u"        -> %s 처리 완료 (누적: %d)" % (customer_name, total_processed + 1))
-        #         page_processed += 1
-        #         total_processed += 1
+        #         log(u"        -> %s 처리 완료" % customer_name)
         #
         #     except Exception as e:
         #         error_msg = str(e)
         #         error_trace = traceback.format_exc()
         #         log(u"        -> [ERROR] %s 처리 실패: %s" % (customer_name, error_msg))
-        #         log(u"        -> [TRACEBACK]")
-        #         for line in error_trace.split("\n"):
-        #             if line.strip():
-        #                 log(u"           %s" % line)
         #         error_customers.append({
         #             u"초성": chosung_name,
         #             u"페이지": page_num,
         #             u"행": row + 1,
         #             u"고객명": customer_name,
-        #             u"고객데이터": customer_data,
-        #             u"오류": error_msg,
-        #             u"traceback": error_trace
+        #             u"오류": error_msg
         #         })
         #         total_errors += 1
-        #         # 오류 발생해도 다음 고객 계속 처리
         #         continue
         # === 고객 클릭 코드 주석처리 끝 ===
 
         # 페이지 처리 완료 요약
-        log(u"  [PAGE %d] 완료 - 신규: %d명 (누적: %d)" % (page_num, page_processed, total_processed))
+        log(u"  [PAGE %d] 완료 - %d명 (누적: %d)" % (page_num, page_processed, total_processed))
 
-        # 5. 마지막 페이지 감지: 15명 미만이면 종료
-        if len(customers) < MAX_CUSTOMERS_PER_PAGE:
-            log(u"  [END] 마지막 페이지 (%d < %d) → 루프 종료" % (
-                len(customers), MAX_CUSTOMERS_PER_PAGE))
+        # 5. 스크롤 (16번째 행 클릭 × 15회)
+        log(u"  [SCROLL] 16번째 행 클릭 × %d회 시작..." % ROWS_PER_PAGE)
+        scroll_by_row_click(scroll_x, base_y)
+
+        # 6. 마지막 페이지 감지 (화면 캡처 비교)
+        if is_last_page(prev_capture):
+            log(u"\n  *** 마지막 페이지 도달! (스크롤 전후 동일) ***")
+            log(u"  *** [%s] 총 %d 페이지 ***" % (chosung_name, page_num))
             break
 
-        # 6. 다음 페이지 준비
-        prev_first_customer = customers[0]   # 무한 루프 감지용
-        prev_last_customer = customers[-1]   # 중복 감지용
-
-        # 7. 스크롤
-        scroll_down(SCROLL_CLICKS)
+        log(u"\n  *** %d페이지 → %d페이지 이동 완료 ***" % (page_num, page_num + 1))
         page_num += 1
+        sleep(1)  # 다음 페이지 전 대기
 
     log(u"\n  [%s] 총 %d명 처리 완료, 오류 %d명 (페이지: %d)" % (
         chosung_name, total_processed, total_errors, page_num))
