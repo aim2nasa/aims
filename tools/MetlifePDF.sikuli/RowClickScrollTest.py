@@ -67,7 +67,7 @@ ROW_HEIGHT = 33         # 행 간 간격 (픽셀)
 ROWS_PER_PAGE = 15      # 화면에 보이는 행 수
 
 # 테스트 설정
-MAX_PAGES = 3           # 테스트할 최대 페이지 수 (1->2->3->4 페이지)
+MAX_PAGES = 999         # 최대 페이지 수 (마지막 페이지 자동 감지로 종료)
 
 # 스크롤 방식 선택:
 # "row_click"     - 마지막 행 클릭 방식 (새로운 방식)
@@ -220,13 +220,26 @@ for row in range(ROWS_PER_PAGE):
     y = get_row_y(base_y, row)
     log(u"        Row %2d: y=%d" % (row + 1, y))
 
-# 행 클릭 방식 스크롤 테스트
-# 16번째 행(잘린 행) 클릭 → 1행 스크롤 → 14번 반복 = 14행 이동
+# 행 클릭 방식 스크롤 테스트 (마지막 페이지 자동 감지)
+# 16번째 행(잘린 행) 클릭 → 1행 스크롤 → 15번 반복 = 15행 이동
 
-for page in range(1, MAX_PAGES + 1):
+def capture_first_row_region():
+    """첫 번째 행 영역 캡처 (마지막 페이지 감지용)"""
+    row_1_y = get_row_y(base_y, 0)
+    # 첫 번째 행의 고객명~구분 영역 캡처 (x: 고객명 헤더 위치, 너비 200px, 높이 30px)
+    capture_x = header.getCenter().getX() - 30
+    capture_region = Region(int(capture_x), int(row_1_y - 12), 200, 28)
+    return capture(capture_region)
+
+page = 1
+while page <= MAX_PAGES:
     log(u"\n  " + "=" * 40)
-    log(u"  [PAGE %d/%d] 스크롤 테스트" % (page, MAX_PAGES))
+    log(u"  [PAGE %d] 스크롤 테스트" % page)
     log(u"  " + "=" * 40)
+
+    # 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
+    prev_capture = capture_first_row_region()
+    log(u"  [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
 
     # 16번째 행(잘린 행)을 15번 클릭 → 15행 이동
     scroll_clicks = ROWS_PER_PAGE  # 15
@@ -241,9 +254,26 @@ for page in range(1, MAX_PAGES + 1):
         if (i + 1) % 5 == 0:
             log(u"        -> %d번 클릭 완료" % (i + 1))
 
-    log(u"\n  *** 현재 %d페이지 → %d페이지 이동 완료 ***" % (page, page + 1))
-    log(u"  *** 5초 대기 - 화면 확인해주세요 ***")
-    sleep(5)  # 페이지 이동 완료 후 5초 대기
+    sleep(0.5)  # 스크롤 완료 대기
+
+    # 스크롤 후 첫 번째 행 캡처
+    curr_capture = capture_first_row_region()
+    log(u"  [CAPTURE] 스크롤 후 첫 번째 행 캡처 완료")
+
+    # 이미지 비교 - 동일하면 마지막 페이지
+    # SikuliX에서는 exists()로 이미지 매칭 확인
+    try:
+        # 스크롤 전 캡처 이미지가 현재 화면에서 발견되면 스크롤 안 됨 = 마지막 페이지
+        if exists(Pattern(prev_capture).similar(0.95), 0.5):
+            log(u"\n  *** 마지막 페이지 도달! (스크롤 전후 동일) ***")
+            log(u"  *** 총 %d 페이지 ***" % page)
+            break
+    except:
+        pass  # 매칭 실패 = 스크롤됨 = 계속 진행
+
+    log(u"\n  *** %d페이지 → %d페이지 이동 완료 ***" % (page, page + 1))
+    page += 1
+    sleep(1)  # 다음 페이지 전 대기
 
 log(u"\n[3단계 완료]")
 
