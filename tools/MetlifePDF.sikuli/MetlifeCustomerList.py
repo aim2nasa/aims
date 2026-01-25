@@ -17,7 +17,7 @@ setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 # 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
 CAPTURE_DIR = os.environ.get("METLIFE_CAPTURE_DIR", r"D:\captures\metlife_ocr")
-OCR_SCRIPT = SCRIPT_DIR + r"\upstage_ocr_api.py"
+OCR_SCRIPT = SCRIPT_DIR + r"\ocr\upstage_ocr_api.py"
 
 # 캡처 디렉토리 생성
 if not os.path.exists(CAPTURE_DIR):
@@ -279,31 +279,31 @@ MAX_CUSTOMERS_PER_PAGE = 15  # OCR로 인식하는 행 수 (마지막 행 잘림
 SCROLL_CLICKS = 5      # 15행 스크롤에 필요한 휠 클릭 수
 
 # 고객명 정렬 이미지
-IMG_CUSTNAME = "1769233187438.png"         # 고객명 헤더 (클릭용)
-IMG_ARROW_DESC = "1769233198595.png"       # ↓ (내림차순 화살표)
-IMG_ARROW_ASC = "1769233207559.png"        # ↑ (오름차순 화살표)
+IMG_CUSTNAME = "img/1769233187438.png"         # 고객명 헤더 (클릭용)
+IMG_ARROW_DESC = "img/1769233198595.png"       # ↓ (내림차순 화살표)
+IMG_ARROW_ASC = "img/1769233207559.png"        # ↑ (오름차순 화살표)
 
 # 고객등록/조회 페이지
-IMG_CLOSE_BTN = "1769234950471.png"        # 종료(x) 버튼
-IMG_ALERT_OK = "1769251121685.png"         # 알림 팝업 "확인" 버튼
+IMG_CLOSE_BTN = "img/1769234950471.png"        # 종료(x) 버튼
+IMG_ALERT_OK = "img/1769251121685.png"         # 알림 팝업 "확인" 버튼
 
 # 초성 버튼 이미지 (전체)
 ALL_CHOSUNG_BUTTONS = [
-    (u"ㄱ", "1769222878862.png"),
-    (u"ㄴ", "1769222888632.png"),
-    (u"ㄷ", "1769222898000.png"),
-    (u"ㄹ", "1769222904295.png"),
-    (u"ㅁ", "1769222910966.png"),
-    (u"ㅂ", "1769222917685.png"),
-    (u"ㅅ", "1769222927091.png"),
-    (u"ㅇ", "1769222937404.png"),
-    (u"ㅈ", "1769222945758.png"),
-    (u"ㅊ", "1769222954865.png"),
-    (u"ㅋ", "1769222967149.png"),
-    (u"ㅌ", "1769222983005.png"),
-    (u"ㅍ", "1769222990533.png"),
-    (u"ㅎ", "1769222997942.png"),
-    (u"기타", "1769223008588.png"),
+    (u"ㄱ", "img/1769222878862.png"),
+    (u"ㄴ", "img/1769222888632.png"),
+    (u"ㄷ", "img/1769222898000.png"),
+    (u"ㄹ", "img/1769222904295.png"),
+    (u"ㅁ", "img/1769222910966.png"),
+    (u"ㅂ", "img/1769222917685.png"),
+    (u"ㅅ", "img/1769222927091.png"),
+    (u"ㅇ", "img/1769222937404.png"),
+    (u"ㅈ", "img/1769222945758.png"),
+    (u"ㅊ", "img/1769222954865.png"),
+    (u"ㅋ", "img/1769222967149.png"),
+    (u"ㅌ", "img/1769222983005.png"),
+    (u"ㅍ", "img/1769222990533.png"),
+    (u"ㅎ", "img/1769222997942.png"),
+    (u"기타", "img/1769223008588.png"),
 ]
 
 # 환경 변수로 특정 초성만 선택 (없으면 전체)
@@ -338,19 +338,19 @@ start_time = time.time()
 log(u"\n[1단계] 고객목록조회 진입")
 
 log(u"  [1-1] 메인 화면으로 이동...")
-click("1769018868271.png")
+click("img/1769018868271.png")
 sleep(WAIT_TIME)
 
 log(u"  [1-2] 고객관리 클릭...")
-click("1769012299692.png")
+click("img/1769012299692.png")
 sleep(5)  # 서브메뉴 열릴 시간 확보
 
 log(u"  [1-3] 고객등록 클릭...")
-click("1769219913324.png")
+click("img/1769219913324.png")
 sleep(3)
 
 log(u"  [1-4] 고객목록조회 클릭...")
-click("1769220000076.png")
+click("img/1769220000076.png")
 sleep(5)
 
 log(u"[1단계 완료]")
