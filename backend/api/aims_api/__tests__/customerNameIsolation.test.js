@@ -9,13 +9,12 @@
  * - 수정: 인덱스에 meta.created_by 추가 → 사용자별 격리
  */
 
-const { MongoClient } = require('mongodb');
 const { generateToken } = require('../middleware/auth');
+const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
 
 // 테스트 설정
 const TEST_CONFIG = {
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017',
-  DB_NAME: 'docupload',
+  DB_NAME: TEST_DB_NAME,
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3010',
   JWT_SECRET: process.env.JWT_SECRET || '09d0ec3fa027dba25479492f323417f39e13b00437628b82aa12f2e593791c71e88a75097f8ca6bf32ae1cd64ce1020779b2cf6458aa34f013af9c6869e742b4',
 };
@@ -70,10 +69,11 @@ beforeAll(async () => {
   // JWT_SECRET 설정 (테스트용)
   process.env.JWT_SECRET = TEST_CONFIG.JWT_SECRET;
 
-  // MongoDB 연결
-  mongoClient = new MongoClient(TEST_CONFIG.MONGO_URI);
-  await mongoClient.connect();
+  // MongoDB 연결 (자동 fallback)
+  const result = await connectWithFallback();
+  mongoClient = result.client;
   db = mongoClient.db(TEST_CONFIG.DB_NAME);
+  console.log(`[Setup] MongoDB connected: ${result.uri}`);
 
   // JWT 토큰 생성
   tokenUserA = generateToken({ id: USER_A, name: 'Test User A', role: 'user' });

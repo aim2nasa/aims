@@ -8,11 +8,8 @@
  * 3. 계약 벌크 삭제 시 고객 역참조 정리
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
-
-// 테스트용 MongoDB 연결 설정
-const TEST_MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const TEST_DB_NAME = 'docupload';
+const { ObjectId } = require('mongodb');
+const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
 
 describe('Cascading Delete 테스트', () => {
   let client;
@@ -29,7 +26,8 @@ describe('Cascading Delete 테스트', () => {
   let createdRelationshipIds = [];
 
   beforeAll(async () => {
-    client = await MongoClient.connect(TEST_MONGO_URI);
+    const result = await connectWithFallback();
+    client = result.client;
     db = client.db(TEST_DB_NAME);
     customersCollection = db.collection('customers');
     contractsCollection = db.collection('contracts');

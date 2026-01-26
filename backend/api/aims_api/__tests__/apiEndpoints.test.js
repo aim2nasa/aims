@@ -11,11 +11,8 @@
 
 const request = require('supertest');
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
-
-// 테스트용 MongoDB 연결 설정
-const TEST_MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const TEST_DB_NAME = 'docupload';
+const { ObjectId } = require('mongodb');
+const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
 
 describe('Health Check API', () => {
   test('GET /api/health - 헬스 체크 성공', async () => {
@@ -41,7 +38,8 @@ describe('Documents API - 조회', () => {
   let filesCollection;
 
   beforeAll(async () => {
-    client = await MongoClient.connect(TEST_MONGO_URI);
+    const result = await connectWithFallback();
+    client = result.client;
     db = client.db(TEST_DB_NAME);
     filesCollection = db.collection('files');
   });
@@ -150,7 +148,8 @@ describe('Customers API - CRUD', () => {
   let testCustomerId;
 
   beforeAll(async () => {
-    client = await MongoClient.connect(TEST_MONGO_URI);
+    const result = await connectWithFallback();
+    client = result.client;
     db = client.db(TEST_DB_NAME);
     customersCollection = db.collection('customers');
   });

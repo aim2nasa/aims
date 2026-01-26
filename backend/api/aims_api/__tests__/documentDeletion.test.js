@@ -8,12 +8,9 @@
  * 3. 참조 없는 문서 삭제
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const fs = require('fs').promises;
-
-// 테스트용 MongoDB 연결 설정
-const TEST_MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const TEST_DB_NAME = 'docupload';
+const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
 const COLLECTION_NAME = 'files';
 const CUSTOMERS_COLLECTION = 'customers';
 
@@ -29,8 +26,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
 
   // 각 테스트 전에 MongoDB 연결 및 테스트 데이터 준비
   beforeAll(async () => {
-    client = await MongoClient.connect(TEST_MONGO_URI);
+    const result = await connectWithFallback();
+    client = result.client;
     db = client.db(TEST_DB_NAME);
+    console.log(`[Setup] MongoDB connected: ${result.uri}`);
     filesCollection = db.collection(COLLECTION_NAME);
     customersCollection = db.collection(CUSTOMERS_COLLECTION);
   });

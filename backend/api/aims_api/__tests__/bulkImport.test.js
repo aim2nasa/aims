@@ -4,11 +4,11 @@
  * @since 2025-12-04
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const { connectWithFallback } = require('./testDbHelper');
 
 // 테스트 설정
 const TEST_CONFIG = {
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017',
   DB_NAME: 'aims_test',
 };
 
@@ -25,8 +25,8 @@ const TEST_USER_ID = new ObjectId();
  * 테스트 전 설정
  */
 beforeAll(async () => {
-  mongoClient = new MongoClient(TEST_CONFIG.MONGO_URI);
-  await mongoClient.connect();
+  const result = await connectWithFallback();
+  mongoClient = result.client;
   db = mongoClient.db(TEST_CONFIG.DB_NAME);
   customersCollection = db.collection('customers_bulk_test');
   contractsCollection = db.collection('contracts_bulk_test');

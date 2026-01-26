@@ -9,11 +9,9 @@
  * 4. 일반 문서 삭제 시 AR 파싱 데이터에 영향 없음
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
 
-// 테스트용 MongoDB 연결 설정
-const TEST_MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const TEST_DB_NAME = 'docupload';
 const FILES_COLLECTION = 'files';
 const CUSTOMERS_COLLECTION = 'customers';
 
@@ -29,7 +27,8 @@ describe('Annual Report 문서 삭제 시 파싱 데이터 자동 삭제', () =>
 
   // 각 테스트 전에 MongoDB 연결
   beforeAll(async () => {
-    client = await MongoClient.connect(TEST_MONGO_URI);
+    const result = await connectWithFallback();
+    client = result.client;
     db = client.db(TEST_DB_NAME);
     filesCollection = db.collection(FILES_COLLECTION);
     customersCollection = db.collection(CUSTOMERS_COLLECTION);

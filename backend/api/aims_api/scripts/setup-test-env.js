@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 /**
  * setup-test-env.js
- * SSH 터널 설정 스크립트 (Node.js 크로스 플랫폼)
+ * MongoDB 연결 사전 체크 스크립트
+ *
+ * 참고: 실제 MongoDB 연결은 각 테스트 파일에서 testDbHelper.js를 통해 처리됨
+ * - 1순위: localhost:27017 (서버 환경)
+ * - 2순위: Tailscale IP 100.110.215.65:27017 (로컬 개발 환경)
  */
 
-const { execSync } = require('child_process');
 const net = require('net');
 
-console.log('Checking MongoDB connection...');
+console.log('Checking MongoDB connection availability...');
 
 // MongoDB 연결 테스트 함수
-function checkMongoConnection() {
+function checkMongoConnection(host, port) {
   return new Promise((resolve) => {
-    const client = net.createConnection({ port: 27017, host: 'localhost' }, () => {
+    const client = net.createConnection({ port, host }, () => {
       client.end();
       resolve(true);
     });
@@ -22,7 +25,7 @@ function checkMongoConnection() {
     });
 
     // 타임아웃 설정
-    client.setTimeout(1000);
+    client.setTimeout(2000);
     client.on('timeout', () => {
       client.destroy();
       resolve(false);
@@ -30,57 +33,28 @@ function checkMongoConnection() {
   });
 }
 
-async function setupSSHTunnel() {
-  const isConnected = await checkMongoConnection();
-
-  if (isConnected) {
-    console.log('MongoDB connection already available on port 27017');
+async function checkConnections() {
+  // 1순위: localhost
+  const localConnected = await checkMongoConnection('localhost', 27017);
+  if (localConnected) {
+    console.log('✅ MongoDB available on localhost:27017');
     return;
   }
 
-  console.log('Setting up SSH tunnel to MongoDB...');
-
-  try {
-    const isWindows = process.platform === 'win32';
-
-    if (isWindows) {
-      // Windows: background 실행
-      execSync('start /B ssh -N -L 27017:localhost:27017 tars.giize.com', {
-        shell: 'cmd.exe',
-        stdio: 'ignore'
-      });
-    } else {
-      // Linux/Mac: background 실행
-      execSync('ssh -f -N -L 27017:localhost:27017 tars.giize.com', {
-        stdio: 'ignore'
-      });
-    }
-
-    // 연결 대기 및 확인 (최대 10초)
-    let connected = false;
-    for (let i = 0; i < 10; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      connected = await checkMongoConnection();
-      if (connected) {
-        console.log('SSH tunnel established (localhost:27017 -> tars.giize.com:27017)');
-        break;
-      }
-      console.log(`Waiting for SSH tunnel... (${i + 1}/10)`);
-    }
-
-    if (!connected) {
-      console.error('Failed to establish SSH tunnel after 10 seconds');
-      console.error('Please ensure SSH key authentication is configured for tars.giize.com');
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error('Failed to setup SSH tunnel:', error.message);
-    process.exit(1);
+  // 2순위: Tailscale
+  const tailscaleConnected = await checkMongoConnection('100.110.215.65', 27017);
+  if (tailscaleConnected) {
+    console.log('✅ MongoDB available via Tailscale (100.110.215.65:27017)');
+    return;
   }
+
+  // 둘 다 안 되면 경고만 출력 (테스트는 testDbHelper.js에서 다시 시도)
+  console.log('⚠️  MongoDB not immediately available on localhost or Tailscale');
+  console.log('    Tests will attempt connection via testDbHelper.js fallback mechanism');
 }
 
 // 실행
-setupSSHTunnel().catch(err => {
-  console.error('Error:', err);
-  process.exit(1);
+checkConnections().catch(err => {
+  console.error('Warning:', err.message);
+  // 에러가 나도 종료하지 않음 - testDbHelper.js가 fallback 처리
 });
