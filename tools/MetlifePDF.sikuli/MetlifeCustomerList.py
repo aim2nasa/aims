@@ -326,6 +326,77 @@ def dismiss_alert_if_exists():
     return False
 
 
+def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0):
+    """
+    OCR로 인식한 고객들을 순차적으로 클릭하여 처리
+
+    Args:
+        customers: OCR로 추출한 고객 리스트
+        fixed_x: 고객명 클릭 X좌표
+        base_y: 고객명 헤더 Y좌표
+        chosung_name: 초성 이름
+        global_page: 전체 페이지 번호
+        skip_count: 스크롤 중복으로 스킵할 행 수
+
+    Returns:
+        tuple: (처리한 고객 수, 오류 발생 고객 목록)
+    """
+    error_customers = []
+    processed = 0
+
+    # 화면에 보이는 행 수만큼 처리 (최대 15행, 중복 제외)
+    customers_to_process = customers[skip_count:ROWS_PER_PAGE]
+    total_to_process = len(customers_to_process)
+
+    if total_to_process == 0:
+        log(u"        [SKIP] 처리할 고객 없음 (중복 %d행 스킵)" % skip_count)
+        return 0, error_customers
+
+    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵)" % (total_to_process, skip_count))
+
+    for i, customer in enumerate(customers_to_process):
+        row_index = skip_count + i  # 실제 화면상 행 인덱스
+        name = customer.get(u"고객명", "") or ""
+
+        if not name:
+            continue
+
+        log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
+
+        try:
+            # 고객명 클릭 (행 Y좌표 계산)
+            row_y = get_row_y(base_y, row_index)
+            click(Location(fixed_x, row_y))
+            sleep(5)  # 고객등록/조회 페이지 로딩 대기
+
+            # 알림 팝업 확인
+            dismiss_alert_if_exists()
+
+            # 종료(x) 버튼 클릭
+            log(u"        -> 종료(x) 클릭...")
+            click(IMG_CLOSE_BTN)
+            sleep(3)  # 목록 복귀 대기
+
+            # 알림 팝업 확인
+            dismiss_alert_if_exists()
+
+            log(u"        -> %s 처리 완료" % name)
+            processed += 1
+
+        except Exception as e:
+            log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+            error_customers.append({
+                u"초성": chosung_name,
+                u"페이지": global_page,
+                u"행": row_index + 1,
+                u"고객명": name,
+                u"오류": str(e)
+            })
+
+    log(u"      [고객처리] %d명 처리 완료" % processed)
+    return processed, error_customers
+
+
 # 설정
 WAIT_TIME = 3
 FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
@@ -578,6 +649,29 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                         if name:
                             log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
                             total_rows += 1
+
+                            # 16번째 행 고객 클릭 처리
+                            log(u"        [LAST] %s 클릭..." % name)
+                            try:
+                                row_y = get_row_y(base_y, ROWS_PER_PAGE)
+                                click(Location(fixed_x, row_y))
+                                sleep(5)
+                                dismiss_alert_if_exists()
+                                log(u"        -> 종료(x) 클릭...")
+                                click(IMG_CLOSE_BTN)
+                                sleep(3)
+                                dismiss_alert_if_exists()
+                                log(u"        -> %s 처리 완료" % name)
+                            except Exception as e:
+                                log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+                                total_errors += 1
+                                error_customers.append({
+                                    u"초성": chosung_name,
+                                    u"페이지": global_page - 1,
+                                    u"행": ROWS_PER_PAGE + 1,
+                                    u"고객명": name,
+                                    u"오류": str(e)
+                                })
                     break  # 스크롤 루프 탈출
             else:
                 # OCR 성공 시 연속 실패 카운터 리셋
@@ -616,15 +710,22 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             else:
                 log(u"    [%s] %d행" % (page_label, page_rows))
 
-            # 4. 스크롤 (16번째 행 클릭 × 15회)
+            # 4. 고객 클릭 처리 (스크롤 중복 제외)
+            processed, errors = process_customers(
+                customers, fixed_x, base_y, chosung_name, global_page, skip_count=scroll_dups
+            )
+            total_errors += len(errors)
+            error_customers.extend(errors)
+
+            # 5. 스크롤 (16번째 행 클릭 × 15회)
             log(u"    [SCROLL] 16번째 행 클릭 × %d회..." % ROWS_PER_PAGE)
             scroll_by_row_click(scroll_x, base_y)
 
-            # 5. 스크롤 끝 감지 (화면 캡처 비교)
+            # 6. 스크롤 끝 감지 (화면 캡처 비교)
             if is_last_page(prev_capture):
                 log(u"\n    *** 스크롤 끝 도달! (스크롤 전후 동일) ***")
 
-                # 마지막 페이지: 16번째 행이 있으면 추가
+                # 마지막 페이지: 16번째 행이 있으면 처리
                 if len(customers) > ROWS_PER_PAGE:
                     extra_customer = customers[ROWS_PER_PAGE]
                     name = extra_customer.get(u"고객명", "") or ""
@@ -632,6 +733,29 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     if name:
                         log(u"    [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
                         total_rows += 1
+
+                        # 16번째 행 고객 클릭 처리
+                        log(u"        [LAST] %s 클릭..." % name)
+                        try:
+                            row_y = get_row_y(base_y, ROWS_PER_PAGE)  # 16번째 행
+                            click(Location(fixed_x, row_y))
+                            sleep(5)
+                            dismiss_alert_if_exists()
+                            log(u"        -> 종료(x) 클릭...")
+                            click(IMG_CLOSE_BTN)
+                            sleep(3)
+                            dismiss_alert_if_exists()
+                            log(u"        -> %s 처리 완료" % name)
+                        except Exception as e:
+                            log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+                            total_errors += 1
+                            error_customers.append({
+                                u"초성": chosung_name,
+                                u"페이지": global_page,
+                                u"행": ROWS_PER_PAGE + 1,
+                                u"고객명": name,
+                                u"오류": str(e)
+                            })
 
                 log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
                 break  # 스크롤 루프 탈출
