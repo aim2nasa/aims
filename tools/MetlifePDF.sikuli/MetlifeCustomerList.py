@@ -4,6 +4,7 @@
 # Upstage Enhanced OCR로 고객명 인식
 
 import os
+import sys
 import time
 import subprocess
 import json
@@ -69,6 +70,48 @@ def log(msg):
             f.flush()
     except:
         pass  # 파일 쓰기 실패 무시 (프로세스 종료 시 발생 가능)
+
+
+def _global_exception_handler(exc_type, exc_value, exc_tb):
+    """전역 예외 핸들러 - 모든 미처리 예외를 로그에 기록"""
+    try:
+        # 타임스탬프
+        import datetime
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # 예외 정보 포맷팅
+        tb_lines = traceback.format_exception(exc_type, exc_value, exc_tb)
+        tb_str = "".join(tb_lines)
+
+        # 에러 로그 기록
+        log(u"")
+        log(u"=" * 60)
+        log(u"[FATAL ERROR] %s" % ts)
+        log(u"=" * 60)
+        log(u"예외 타입: %s" % exc_type.__name__)
+        log(u"예외 메시지: %s" % unicode(str(exc_value), "utf-8"))
+        log(u"")
+        log(u"스택 트레이스:")
+        for line in tb_str.split("\n"):
+            if line.strip():
+                log(u"  %s" % unicode(line, "utf-8"))
+        log(u"=" * 60)
+
+        # 로그 파일 닫기
+        _close_log_file()
+
+    except Exception as e:
+        # 로깅 실패해도 콘솔에는 출력 시도
+        print("[FATAL] Exception handler failed: %s" % str(e))
+        traceback.print_exception(exc_type, exc_value, exc_tb)
+
+    # 종료 코드 1로 종료
+    sys.exit(1)
+
+
+# 전역 예외 핸들러 등록
+sys.excepthook = _global_exception_handler
+
 
 # 헬퍼 함수
 def find_any(*imgs):
