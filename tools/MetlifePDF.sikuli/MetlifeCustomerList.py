@@ -456,6 +456,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     ###########################################
     page_num = 1
     total_processed = 0
+    total_duplicates = 0           # 중복 스킵된 고객 수
     total_errors = 0
     error_customers = []           # 이번 초성의 오류 발생 고객 목록
     processed_customers = set()    # 중복 제거용: (고객명, 생년월일) 추적
@@ -517,18 +518,25 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
         # 4. 고객 처리 (15행만 - 중복 제거)
         page_processed = 0
-        page_duplicates = 0
+        page_duplicates = 0      # 스크롤로 인한 중복 (이전 페이지와 겹침)
+        page_data_dups = 0       # 실제 데이터 중복 (같은 페이지 내 중복)
+        seen_in_page = set()     # 현재 페이지에서 본 고객
         for c in customers[:ROWS_PER_PAGE]:
             name = c.get(u"고객명", "") or ""
             birth = c.get(u"생년월일", "") or ""
             if name:
                 key = (name, birth)
-                if key not in processed_customers:
+                if key in seen_in_page:
+                    # 같은 페이지 내 데이터 중복 (먼저 체크!)
+                    page_data_dups += 1
+                elif key not in processed_customers:
+                    seen_in_page.add(key)
                     processed_customers.add(key)
                     page_processed += 1
                 else:
-                    page_duplicates += 1
+                    page_duplicates += 1  # 스크롤 중복
         total_processed += page_processed
+        total_duplicates += page_data_dups  # 데이터 중복만 합산
 
         # === 고객 클릭 코드 주석처리 시작 ===
         # for row in range(len(customers)):
@@ -576,10 +584,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # === 고객 클릭 코드 주석처리 끝 ===
 
         # 페이지 처리 완료 요약
+        summary_parts = [u"고객 %d명" % page_processed]
+        if page_data_dups > 0:
+            summary_parts.append(u"데이터중복 %d명" % page_data_dups)
         if page_duplicates > 0:
-            log(u"  [PAGE %d] 고객 %d명 (중복 %d명 제외)" % (page_num, page_processed, page_duplicates))
-        else:
-            log(u"  [PAGE %d] 고객 %d명" % (page_num, page_processed))
+            summary_parts.append(u"스크롤중복 %d명 제외" % page_duplicates)
+        log(u"  [PAGE %d] %s" % (page_num, u", ".join(summary_parts)))
 
         # 5. 스크롤 (16번째 행 클릭 × 15회)
         log(u"  [SCROLL] 16번째 행 클릭 × %d회 시작..." % ROWS_PER_PAGE)
@@ -611,8 +621,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         page_num += 1
         sleep(1)  # 다음 페이지 전 대기
 
-    log(u"\n  [%s] 총 %d명 처리 완료, 오류 %d명 (페이지: %d)" % (
-        chosung_name, total_processed, total_errors, page_num))
+    dup_info = u", 데이터중복 %d명" % total_duplicates if total_duplicates > 0 else u""
+    log(u"\n  [%s] 총 %d명 처리 완료%s, 오류 %d명 (페이지: %d)" % (
+        chosung_name, total_processed, dup_info, total_errors, page_num))
 
     # 전체 통계에 합산
     all_total_processed += total_processed
