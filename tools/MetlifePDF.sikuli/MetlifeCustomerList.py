@@ -339,10 +339,11 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         skip_count: 스크롤 중복으로 스킵할 행 수
 
     Returns:
-        tuple: (처리한 고객 수, 오류 발생 고객 목록)
+        tuple: (처리한 고객 수, 오류 발생 고객 목록, 갱신된 base_y)
     """
     error_customers = []
     processed = 0
+    current_base_y = base_y  # ALERT 발생 시 갱신될 수 있음
 
     # 화면에 보이는 행 수만큼 처리 (최대 15행, 중복 제외)
     customers_to_process = customers[skip_count:ROWS_PER_PAGE]
@@ -350,7 +351,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
     if total_to_process == 0:
         log(u"        [SKIP] 처리할 고객 없음 (중복 %d행 스킵)" % skip_count)
-        return 0, error_customers
+        return 0, error_customers, current_base_y
 
     log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵)" % (total_to_process, skip_count))
 
@@ -365,12 +366,12 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
         try:
             # 고객명 클릭 (행 Y좌표 계산)
-            row_y = get_row_y(base_y, row_index)
+            row_y = get_row_y(current_base_y, row_index)
             click(Location(fixed_x, row_y))
             sleep(5)  # 고객등록/조회 페이지 로딩 대기
 
             # 알림 팝업 확인
-            dismiss_alert_if_exists()
+            alert_occurred = dismiss_alert_if_exists()
 
             # 종료(x) 버튼 클릭
             log(u"        -> 종료(x) 클릭...")
@@ -378,7 +379,18 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             sleep(3)  # 목록 복귀 대기
 
             # 알림 팝업 확인
-            dismiss_alert_if_exists()
+            alert_occurred = dismiss_alert_if_exists() or alert_occurred
+
+            # ALERT 발생 시 헤더 위치 재측정 (화면 위치가 변경될 수 있음)
+            if alert_occurred:
+                try:
+                    header = find(IMG_CUSTNAME)
+                    new_base_y = header.getCenter().getY()
+                    if new_base_y != current_base_y:
+                        log(u"        -> [RECALIBRATE] base_y: %d → %d" % (current_base_y, new_base_y))
+                        current_base_y = new_base_y
+                except:
+                    pass  # 헤더 못 찾으면 기존 값 유지
 
             log(u"        -> %s 처리 완료" % name)
             processed += 1
@@ -394,7 +406,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             })
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
-    return processed, error_customers
+    return processed, error_customers, current_base_y
 
 
 # 설정
@@ -731,7 +743,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
             # 4. 고객 클릭 처리 (스크롤 중복 제외, CLICK_ENABLED일 때만)
             if CLICK_ENABLED:
-                processed, errors = process_customers(
+                processed, errors, base_y = process_customers(
                     customers, fixed_x, base_y, chosung_name, global_page, skip_count=scroll_dups
                 )
                 total_errors += len(errors)
