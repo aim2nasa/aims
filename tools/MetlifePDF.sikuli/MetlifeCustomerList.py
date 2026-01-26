@@ -312,6 +312,7 @@ IMG_ARROW_ASC = "img/1769233207559.png"        # ↑ (오름차순 화살표)
 # 고객등록/조회 페이지
 IMG_CLOSE_BTN = "img/1769234950471.png"        # 종료(x) 버튼
 IMG_ALERT_OK = "img/1769251121685.png"         # 알림 팝업 "확인" 버튼
+IMG_NEXT_BTN = "img/1769401640056.png"         # 다음 버튼 (페이지 네비게이션)
 
 # 초성 버튼 이미지 (전체)
 ALL_CHOSUNG_BUTTONS = [
@@ -451,12 +452,13 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     log(u"  [SCROLL] 스크롤 맨 위 완료")
 
     ###########################################
-    # 스크롤 루프: 모든 페이지 OCR 및 고객 처리
-    # (RowClickScrollTest.py 방식 적용)
+    # 페이지 처리 루프
+    # 구조: [네비 루프 (다음버튼)] → [스크롤 루프]
     ###########################################
-    page_num = 1
+    nav_page = 1                   # 네비게이션 페이지 (다음 버튼으로 이동)
+    global_page = 0                # 전체 페이지 번호 (누적)
     total_processed = 0
-    total_duplicates = 0           # 중복 스킵된 고객 수
+    total_duplicates = 0           # 데이터 중복 수
     total_errors = 0
     error_customers = []           # 이번 초성의 오류 발생 고객 목록
     processed_customers = set()    # 중복 제거용: (고객명, 생년월일) 추적
@@ -469,161 +471,179 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     scroll_x = fixed_x + 100                  # 스크롤 클릭용 X좌표 (구분 컬럼)
     log(u"  [INIT] 고객명 클릭: x=%d, 스크롤 클릭: x=%d, 기준 y=%d" % (fixed_x, scroll_x, base_y))
 
+    # ========================================
+    # 네비게이션 루프 (외부) - 다음 버튼으로 이동
+    # ========================================
     while True:
-        log(u"\n  " + "=" * 40)
-        log(u"  [PAGE %d] 처리 시작" % page_num)
-        log(u"  " + "=" * 40)
+        scroll_page = 1  # 스크롤 페이지 (각 네비 페이지마다 리셋)
 
-        # 화면 안정화 대기
-        sleep(2)
+        log(u"\n  " + u"=" * 50)
+        log(u"  [네비 %d] 시작" % nav_page)
+        log(u"  " + u"=" * 50)
 
-        # 1. 페이지 스크린샷 저장
-        save_page_screenshot(chosung_name, page_num)
+        # 네비 페이지 시작 시 스크롤 맨 위로 이동
+        log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
+        header = find(IMG_CUSTNAME)
+        click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
+        sleep(0.5)
+        type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
+        sleep(1)
+        log(u"  [SCROLL] 스크롤 맨 위 완료")
 
-        # 2. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
-        prev_capture = capture_first_row_region(header, base_y)
-        log(u"  [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
+        # ========================================
+        # 스크롤 루프 (내부) - 스크롤로 이동
+        # ========================================
+        while True:
+            global_page += 1
+            page_label = u"N%d-S%d" % (nav_page, scroll_page)  # 예: N1-S3
 
-        # 3. OCR 수행
-        customers, json_path = capture_and_ocr(chosung_name, page_num)
+            log(u"\n    " + u"-" * 40)
+            log(u"    [%s] 스크롤 페이지 %d (전체 %d)" % (page_label, scroll_page, global_page))
+            log(u"    " + u"-" * 40)
 
-        if not customers:
-            log(u"  [WARN] OCR 결과 없음 → 캐시 삭제 후 재시도...")
-            # 캐시 삭제
-            cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, page_num))
-            if os.path.exists(cache_json):
-                os.remove(cache_json)
-                log(u"  [RETRY] 캐시 삭제: %s" % os.path.basename(cache_json))
-            # 재시도
+            # 화면 안정화 대기
             sleep(2)
-            customers, json_path = capture_and_ocr(chosung_name, page_num)
+
+            # 1. 페이지 스크린샷 저장
+            save_page_screenshot(chosung_name, global_page)
+
+            # 2. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
+            prev_capture = capture_first_row_region(header, base_y)
+            log(u"    [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
+
+            # 3. OCR 수행
+            customers, json_path = capture_and_ocr(chosung_name, global_page)
 
             if not customers:
-                log(u"  [WARN] 재시도 실패 → 마지막 페이지로 간주")
-                # 이전 페이지의 16번째 행이 있으면 처리
-                if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
-                    extra = prev_customers[ROWS_PER_PAGE]
-                    name = extra.get(u"고객명", "") or ""
-                    birth = extra.get(u"생년월일", "") or ""
+                log(u"    [WARN] OCR 결과 없음 → 캐시 삭제 후 재시도...")
+                # 캐시 삭제
+                cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, global_page))
+                if os.path.exists(cache_json):
+                    os.remove(cache_json)
+                    log(u"    [RETRY] 캐시 삭제: %s" % os.path.basename(cache_json))
+                # 재시도
+                sleep(2)
+                customers, json_path = capture_and_ocr(chosung_name, global_page)
+
+                if not customers:
+                    log(u"    [WARN] 재시도 실패 → 스크롤 끝으로 간주")
+                    # 이전 페이지의 16번째 행이 있으면 처리
+                    if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
+                        extra = prev_customers[ROWS_PER_PAGE]
+                        name = extra.get(u"고객명", "") or ""
+                        birth = extra.get(u"생년월일", "") or ""
+                        if name:
+                            key = (name, birth)
+                            if key not in processed_customers:
+                                processed_customers.add(key)
+                                log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
+                                total_processed += 1
+                    break  # 스크롤 루프 탈출
+
+            # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
+            print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, global_page)
+
+            # 4. 고객 처리 (15행만 - 중복 제거)
+            page_processed = 0
+            page_duplicates = 0      # 스크롤로 인한 중복 (이전 페이지와 겹침)
+            page_data_dups = 0       # 실제 데이터 중복 (같은 페이지 내 중복)
+            seen_in_page = set()     # 현재 페이지에서 본 고객
+            for c in customers[:ROWS_PER_PAGE]:
+                name = c.get(u"고객명", "") or ""
+                birth = c.get(u"생년월일", "") or ""
+                if name:
+                    key = (name, birth)
+                    if key in seen_in_page:
+                        # 같은 페이지 내 데이터 중복 (먼저 체크!)
+                        page_data_dups += 1
+                    elif key not in processed_customers:
+                        seen_in_page.add(key)
+                        processed_customers.add(key)
+                        page_processed += 1
+                    else:
+                        page_duplicates += 1  # 스크롤 중복
+            total_processed += page_processed
+            total_duplicates += page_data_dups  # 데이터 중복만 합산
+
+            # 페이지 처리 완료 요약
+            summary_parts = [u"고객 %d명" % page_processed]
+            if page_data_dups > 0:
+                summary_parts.append(u"데이터중복 %d명" % page_data_dups)
+            if page_duplicates > 0:
+                summary_parts.append(u"스크롤중복 %d명 제외" % page_duplicates)
+            log(u"    [%s] %s" % (page_label, u", ".join(summary_parts)))
+
+            # 5. 스크롤 (16번째 행 클릭 × 15회)
+            log(u"    [SCROLL] 16번째 행 클릭 × %d회..." % ROWS_PER_PAGE)
+            scroll_by_row_click(scroll_x, base_y)
+
+            # 6. 스크롤 끝 감지 (화면 캡처 비교)
+            if is_last_page(prev_capture):
+                log(u"\n    *** 스크롤 끝 도달! (스크롤 전후 동일) ***")
+
+                # 마지막 페이지: 16번째 행이 있으면 추가 (누락된 고객, 중복 체크)
+                if len(customers) > ROWS_PER_PAGE:
+                    extra_customer = customers[ROWS_PER_PAGE]
+                    name = extra_customer.get(u"고객명", "") or ""
+                    birth = extra_customer.get(u"생년월일", "") or ""
                     if name:
                         key = (name, birth)
                         if key not in processed_customers:
                             processed_customers.add(key)
-                            log(u"  [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
+                            log(u"    [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
                             total_processed += 1
-                break
+                        else:
+                            log(u"    [LAST] 16번째 행 중복 스킵: %s (%s)" % (name, birth))
 
-        # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
-        print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, page_num)
+                log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
+                break  # 스크롤 루프 탈출
 
-        # 4. 고객 처리 (15행만 - 중복 제거)
-        page_processed = 0
-        page_duplicates = 0      # 스크롤로 인한 중복 (이전 페이지와 겹침)
-        page_data_dups = 0       # 실제 데이터 중복 (같은 페이지 내 중복)
-        seen_in_page = set()     # 현재 페이지에서 본 고객
-        for c in customers[:ROWS_PER_PAGE]:
-            name = c.get(u"고객명", "") or ""
-            birth = c.get(u"생년월일", "") or ""
-            if name:
-                key = (name, birth)
-                if key in seen_in_page:
-                    # 같은 페이지 내 데이터 중복 (먼저 체크!)
-                    page_data_dups += 1
-                elif key not in processed_customers:
-                    seen_in_page.add(key)
-                    processed_customers.add(key)
-                    page_processed += 1
-                else:
-                    page_duplicates += 1  # 스크롤 중복
-        total_processed += page_processed
-        total_duplicates += page_data_dups  # 데이터 중복만 합산
+            log(u"\n    *** 스크롤 %d → %d 이동 ***" % (scroll_page, scroll_page + 1))
+            prev_customers = customers  # 다음 페이지 OCR 실패 시 복구용
+            scroll_page += 1
+            sleep(1)  # 다음 페이지 전 대기
 
-        # === 고객 클릭 코드 주석처리 시작 ===
-        # for row in range(len(customers)):
-        #     customer_name = get_customer_name(customers, row)
-        #     customer_data = customers[row] if row < len(customers) else {}
-        #     row_y = get_row_y(base_y, row)
-        #
-        #     log(u"        -> [P%d R%d] %s 클릭 (x=%d, y=%d)..." % (
-        #         page_num, row + 1, customer_name, fixed_x, row_y
-        #     ))
-        #
-        #     try:
-        #         click(Location(fixed_x, row_y))
-        #         sleep(3)  # 고객등록/조회 페이지 로딩 대기
-        #
-        #         # 알림 팝업 처리
-        #         dismiss_alert_if_exists()
-        #         sleep(2)
-        #
-        #         # 종료(x) 버튼 클릭
-        #         log(u"        -> %s: 종료(x) 클릭..." % customer_name)
-        #         try:
-        #             click(IMG_CLOSE_BTN)
-        #         except:
-        #             if dismiss_alert_if_exists():
-        #                 sleep(1)
-        #                 click(IMG_CLOSE_BTN)
-        #         sleep(3)  # 고객목록조회 페이지 복귀 대기
-        #
-        #         log(u"        -> %s 처리 완료" % customer_name)
-        #
-        #     except Exception as e:
-        #         error_msg = str(e)
-        #         error_trace = traceback.format_exc()
-        #         log(u"        -> [ERROR] %s 처리 실패: %s" % (customer_name, error_msg))
-        #         error_customers.append({
-        #             u"초성": chosung_name,
-        #             u"페이지": page_num,
-        #             u"행": row + 1,
-        #             u"고객명": customer_name,
-        #             u"오류": error_msg
-        #         })
-        #         total_errors += 1
-        #         continue
-        # === 고객 클릭 코드 주석처리 끝 ===
+        # ========================================
+        # 다음 버튼 확인 (스크롤 루프 탈출 후)
+        # ========================================
+        log(u"\n  [네비 %d] 스크롤 완료 → '다음' 버튼 확인..." % nav_page)
+        sleep(1)
 
-        # 페이지 처리 완료 요약
-        summary_parts = [u"고객 %d명" % page_processed]
-        if page_data_dups > 0:
-            summary_parts.append(u"데이터중복 %d명" % page_data_dups)
-        if page_duplicates > 0:
-            summary_parts.append(u"스크롤중복 %d명 제외" % page_duplicates)
-        log(u"  [PAGE %d] %s" % (page_num, u", ".join(summary_parts)))
+        if exists(IMG_NEXT_BTN, 2):
+            log(u"\n  " + u"#" * 50)
+            log(u"  #  [다음] 버튼 발견! 클릭...")
+            log(u"  #  네비 %d → 네비 %d 페이지로 이동" % (nav_page, nav_page + 1))
+            log(u"  " + u"#" * 50)
+            click(IMG_NEXT_BTN)
+            sleep(3)  # 다음 페이지 로딩 대기
 
-        # 5. 스크롤 (16번째 행 클릭 × 15회)
-        log(u"  [SCROLL] 16번째 행 클릭 × %d회 시작..." % ROWS_PER_PAGE)
-        scroll_by_row_click(scroll_x, base_y)
+            # 스크롤 맨 위로 이동
+            log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
+            header = find(IMG_CUSTNAME)
+            click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
+            sleep(0.5)
+            type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
+            sleep(1)
+            log(u"  [SCROLL] 스크롤 맨 위 완료")
 
-        # 6. 마지막 페이지 감지 (화면 캡처 비교)
-        if is_last_page(prev_capture):
-            log(u"\n  *** 마지막 페이지 도달! (스크롤 전후 동일) ***")
+            nav_page += 1
+            # 네비 루프 계속 (다음 네비 페이지 처리)
+        else:
+            log(u"\n  " + u"#" * 50)
+            log(u"  #  [다음] 버튼 없음!")
+            log(u"  #  초성 [%s] 모든 페이지 처리 완료!" % chosung_name)
+            log(u"  " + u"#" * 50)
+            break  # 네비 루프 탈출
 
-            # 마지막 페이지: 16번째 행이 있으면 추가 (누락된 고객, 중복 체크)
-            if len(customers) > ROWS_PER_PAGE:
-                extra_customer = customers[ROWS_PER_PAGE]
-                name = extra_customer.get(u"고객명", "") or ""
-                birth = extra_customer.get(u"생년월일", "") or ""
-                if name:
-                    key = (name, birth)
-                    if key not in processed_customers:
-                        processed_customers.add(key)
-                        log(u"  [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
-                        total_processed += 1
-                    else:
-                        log(u"  [LAST] 16번째 행 중복 스킵: %s (%s)" % (name, birth))
-
-            log(u"  *** [%s] 총 %d 페이지 ***" % (chosung_name, page_num))
-            break
-
-        log(u"\n  *** %d페이지 → %d페이지 이동 완료 ***" % (page_num, page_num + 1))
-        prev_customers = customers  # 다음 페이지 OCR 실패 시 복구용
-        page_num += 1
-        sleep(1)  # 다음 페이지 전 대기
-
+    # 초성 처리 완료 요약
     dup_info = u", 데이터중복 %d명" % total_duplicates if total_duplicates > 0 else u""
-    log(u"\n  [%s] 총 %d명 처리 완료%s, 오류 %d명 (페이지: %d)" % (
-        chosung_name, total_processed, dup_info, total_errors, page_num))
+    log(u"\n  " + u"*" * 50)
+    log(u"  *  [%s] 초성 결산" % chosung_name)
+    log(u"  " + u"*" * 50)
+    log(u"  *  총 고객: %d명 처리%s, 오류 %d명" % (total_processed, dup_info, total_errors))
+    log(u"  *  네비 페이지: %d회 (다음 버튼 %d회 클릭)" % (nav_page, nav_page - 1))
+    log(u"  *  스크롤 페이지: %d개 (전체 누적)" % global_page)
+    log(u"  " + u"*" * 50)
 
     # 전체 통계에 합산
     all_total_processed += total_processed
