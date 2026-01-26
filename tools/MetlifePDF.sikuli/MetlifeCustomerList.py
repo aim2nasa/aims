@@ -421,7 +421,11 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
     # 사용할 오프셋 결정
     offset_used = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
-    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵, offset=%d, scrolled=%s)" % (total_to_process, skip_count, offset_used, is_scrolled))
+    nav_mode = u"Arrow" if USE_ARROW_NAV else u"Offset"
+    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵, mode=%s, offset=%d)" % (total_to_process, skip_count, nav_mode, offset_used))
+
+    # Arrow Down 방식: 현재 Y좌표 추적
+    current_click_y = None
 
     for i, customer in enumerate(customers_to_process):
         row_index = skip_count + i  # 실제 화면상 행 인덱스
@@ -433,10 +437,25 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
         try:
-            # 고객명 클릭 (행 Y좌표 계산)
-            row_y = get_row_y(current_base_y, row_index, is_scrolled)
-            offset_val = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
-            log(u"        [DEBUG] base_y=%d + offset=%d + (33*%d) = click_y=%d, scrolled=%s" % (current_base_y, offset_val, row_index, row_y, is_scrolled))
+            if USE_ARROW_NAV:
+                # ===== Arrow Down 방식 =====
+                if i == 0:
+                    # 첫 행: offset으로 Y좌표 계산 (선택 상태 진입)
+                    current_click_y = get_row_y(current_base_y, row_index, is_scrolled)
+                    log(u"        [ARROW] 첫 행 클릭 (offset): y=%d" % current_click_y)
+                else:
+                    # 다음 행: Arrow Down으로 선택 이동 + ROW_HEIGHT로 클릭 위치 계산
+                    type(Key.DOWN)
+                    sleep(0.3)
+                    current_click_y += ROW_HEIGHT
+                    log(u"        [ARROW] Arrow Down + ROW_HEIGHT: y=%d" % current_click_y)
+
+                row_y = current_click_y
+            else:
+                # ===== Offset 방식 (기존) =====
+                row_y = get_row_y(current_base_y, row_index, is_scrolled)
+                offset_val = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
+                log(u"        [OFFSET] base_y=%d + offset=%d + (33*%d) = click_y=%d" % (current_base_y, offset_val, row_index, row_y))
 
             # 진단용 스크린샷 (클릭 전)
             save_click_diagnostic(fixed_x, row_y, name, global_page, row_index)
@@ -455,15 +474,16 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 알림 팝업 확인
             dismiss_alert_if_exists()
 
-            # 매 클릭 후 헤더 위치 재측정 (다음 행 클릭 위치 보정)
-            try:
-                header = find(IMG_CUSTNAME)
-                new_base_y = header.getCenter().getY()
-                if new_base_y != current_base_y:
-                    log(u"        -> [RECALIBRATE] base_y: %d → %d" % (current_base_y, new_base_y))
-                    current_base_y = new_base_y
-            except:
-                pass  # 헤더 못 찾으면 기존 값 유지
+            # 매 클릭 후 헤더 위치 재측정 (Offset 방식에서만 사용)
+            if not USE_ARROW_NAV:
+                try:
+                    header = find(IMG_CUSTNAME)
+                    new_base_y = header.getCenter().getY()
+                    if new_base_y != current_base_y:
+                        log(u"        -> [RECALIBRATE] base_y: %d → %d" % (current_base_y, new_base_y))
+                        current_base_y = new_base_y
+                except:
+                    pass  # 헤더 못 찾으면 기존 값 유지
 
             log(u"        -> %s 처리 완료" % name)
             processed += 1
@@ -484,7 +504,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
 # 설정
 WAIT_TIME = 3
-# ===== 클릭 위치 튜닝 파라미터 =====
+# ===== 클릭 위치 튜닝 파라미터 (offset 방식용) =====
 # 클릭이 위로 밀리면: 값 증가 (+1~2)
 # 클릭이 아래로 밀리면: 값 감소 (-1~2)
 FIRST_ROW_OFFSET = 38           # 첫 페이지: 헤더 → 첫 행 중앙 (픽셀)
@@ -527,10 +547,11 @@ ALL_CHOSUNG_BUTTONS = [
 # 사용법: java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ
 #        java -jar sikulixide.jar -r MetlifeCustomerList.py -- --chosung ㄱ
 #        java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ --no-click
+#        java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ --arrow-nav
 import sys
 
 def parse_args():
-    """명령줄 인자 파싱 (초성, --no-click 등)"""
+    """명령줄 인자 파싱 (초성, --no-click, --arrow-nav 등)"""
     # sys.argv 예시: ['MetlifeCustomerList.py', '--', 'ㄱ'] 또는 ['...', '--', '--chosung', 'ㄱ', '--no-click']
     args = sys.argv[1:] if len(sys.argv) > 1 else []
 
@@ -541,12 +562,18 @@ def parse_args():
     result = {
         'chosung': None,
         'no_click': False,
+        'arrow_nav': False,
     }
 
     # --no-click 옵션 처리
     if '--no-click' in args:
         result['no_click'] = True
         args = [a for a in args if a != '--no-click']
+
+    # --arrow-nav 옵션 처리
+    if '--arrow-nav' in args:
+        result['arrow_nav'] = True
+        args = [a for a in args if a != '--arrow-nav']
 
     # --chosung 옵션 처리
     if '--chosung' in args:
@@ -563,14 +590,19 @@ def parse_args():
 _parsed_args = parse_args()
 _arg_chosung = _parsed_args['chosung']
 _arg_no_click = _parsed_args['no_click']
+_arg_arrow_nav = _parsed_args['arrow_nav']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
+_env_arrow_nav = os.environ.get("METLIFE_ARROW_NAV", "").lower() in ("1", "true", "yes")
 
 # 우선순위: 명령줄 > 환경변수
 _raw_chosung = _arg_chosung or _env_chosung
 
 # 고객 클릭 기능: 기본 활성화, --no-click 또는 환경변수로 비활성화
 CLICK_ENABLED = not (_arg_no_click or _env_no_click)
+
+# 네비게이션 모드: 기본 Offset, --arrow-nav 또는 환경변수로 Arrow Down 모드
+USE_ARROW_NAV = _arg_arrow_nav or _env_arrow_nav
 
 # Jython: 바이트 문자열 → 유니코드 변환
 if _raw_chosung:
@@ -593,6 +625,7 @@ if SELECTED_CHOSUNG:
 else:
     log(u"선택 초성: 전체 (%d개)" % len(CHOSUNG_BUTTONS))
 log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (--no-click)"))
+log(u"네비 모드: %s" % (u"Arrow Down (키보드)" if USE_ARROW_NAV else u"Offset (픽셀 계산)"))
 log("=" * 60)
 
 start_time = time.time()

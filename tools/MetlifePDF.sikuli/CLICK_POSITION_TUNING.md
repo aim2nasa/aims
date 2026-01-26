@@ -1,5 +1,25 @@
 # MetLife 고객목록 클릭 위치 튜닝 기록
 
+## 네비게이션 모드
+
+| 모드 | 설정 | 설명 |
+|------|------|------|
+| **Offset** | `USE_ARROW_NAV = False` | 픽셀 좌표 계산 방식 (기본값) |
+| **Arrow Down** | `USE_ARROW_NAV = True` | 키보드 네비게이션 + 상대 이동 |
+
+### Arrow Down 모드 동작 원리
+1. **첫 행**: offset으로 Y좌표 계산 → 고객명 클릭 (선택 상태 진입)
+2. **상세 화면**: 닫기 → 목록 복귀 (선택 상태 유지됨)
+3. **다음 행**: `Key.DOWN` → 선택 이동 → `previous_y + ROW_HEIGHT` 위치 클릭
+
+**장점:**
+- 첫 행만 offset 의존, 이후는 ROW_HEIGHT만 의존
+- P1/P2 offset 차이 문제 해소 (첫 행만 정확하면 됨)
+- 환경 변화에 강함
+
+**제약:**
+- Enter 키 미지원 → 클릭 필요
+
 ## 최종 설정값 (2026-01-26)
 
 | 페이지 | 파라미터 | 값 | 상태 |
@@ -26,26 +46,62 @@
 
 ## 클릭 위치 계산 공식
 
+### Offset 방식
 ```python
 def get_row_y(header_y, row_index, is_scrolled=False):
     offset = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
     return header_y + offset + (ROW_HEIGHT * row_index)
 ```
 
-- `header_y`: 고객명 헤더 Y좌표 (이미지 인식)
-- `row_index`: 0-based 행 인덱스
-- `is_scrolled`: `scroll_page > 1`이면 True
+### Arrow Down 방식
+```python
+if i == 0:
+    # 첫 행: offset으로 계산
+    current_y = get_row_y(base_y, row_index, is_scrolled)
+else:
+    # 다음 행: Arrow Down + ROW_HEIGHT
+    type(Key.DOWN)
+    current_y += ROW_HEIGHT
+click(Location(fixed_x, current_y))
+```
 
-## 튜닝 가이드
+## 튜닝 가이드 (Offset 방식)
 
 | 증상 | 조치 |
 |------|------|
 | 클릭이 위로 밀림 | offset 값 증가 (+1~2) |
 | 클릭이 아래로 밀림 | offset 값 감소 (-1~2) |
 
-## 향후 개선 방안
+## 환경 조건
 
-Arrow Down 키보드 네비게이션 방식 검토:
-- 장점: offset 튜닝 불필요, 안정적
-- 확인 사항: 상세 화면 닫고 목록 복귀 시 선택 상태 유지됨, Arrow Down 동작함
-- 제약: Enter 키 미지원 (클릭 필요)
+안정적인 동작을 위한 권장 환경:
+- 해상도: 1920x1080
+- 브라우저: 전체화면
+- 줌: 100%
+
+## 테스트 기록
+
+### 2026-01-27 00:05 (Offset 방식)
+
+| 페이지 | 대상 고객 | 클릭 위치 | 결과 |
+|--------|----------|----------|------|
+| P1 (R00) | 나루에스앤에프 | 행 중앙 | ✅ OK |
+| P2 (R04) | 남지연 | 행 중앙 | ✅ OK |
+
+- 모드: Offset (기본)
+- P1 offset: 38, P2 offset: 28
+- 전체 26명 처리 완료 (P1: 15명, P2: 11명)
+- 스크린샷: `D:\captures\metlife_ocr\diagnostic\click_001~026_*.png`
+
+### 명령줄 옵션
+
+```bash
+# Offset 방식 (기본)
+java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄴ
+
+# Arrow Down 방식
+java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄴ --arrow-nav
+
+# 클릭 비활성화 (OCR만)
+java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄴ --no-click
+```
