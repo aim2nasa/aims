@@ -92,7 +92,7 @@ def call_upstage_enhanced(image_path: str) -> dict:
                     headers={"Authorization": f"Bearer {API_KEY}"},
                     files={"document": (filename, file_content)},
                     data={
-                        "model": "document-parse-nightly",
+                        "model": "document-parse-nightly",  # Enhanced 모드 (표 파싱 성능 우수)
                         "mode": "enhanced",
                         "output_formats": '["html", "text"]',
                     },

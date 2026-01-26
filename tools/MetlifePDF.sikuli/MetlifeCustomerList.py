@@ -53,14 +53,22 @@ def _close_log_file():
 
 
 def log(msg):
-    """콘솔과 파일에 동시 로그 출력"""
-    print(msg)
-    f = _open_log_file()
-    if isinstance(msg, unicode):
-        f.write(msg + u"\n")
-    else:
-        f.write(unicode(msg, "utf-8") + u"\n")
-    f.flush()
+    """콘솔과 파일에 동시 로그 출력 (예외 안전)"""
+    try:
+        print(msg)
+    except:
+        pass  # 콘솔 출력 실패 무시
+
+    try:
+        f = _open_log_file()
+        if f and not f.closed:
+            if isinstance(msg, unicode):
+                f.write(msg + u"\n")
+            else:
+                f.write(unicode(msg, "utf-8") + u"\n")
+            f.flush()
+    except:
+        pass  # 파일 쓰기 실패 무시 (프로세스 종료 시 발생 가능)
 
 # 헬퍼 함수
 def find_any(*imgs):
@@ -399,6 +407,10 @@ log(u"\n[2단계] 초성 버튼 및 고객 처리")
 all_total_rows = 0
 all_error_customers = []
 
+# OCR 연속 실패 추적
+MAX_OCR_FAILURES = 3  # 연속 실패 허용 횟수
+ocr_consecutive_failures = 0  # 연속 실패 카운터
+
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
@@ -500,6 +512,20 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 customers, json_path = capture_and_ocr(chosung_name, global_page)
 
                 if not customers:
+                    # OCR 연속 실패 카운터 증가
+                    ocr_consecutive_failures += 1
+                    log(u"    [ERROR] OCR 연속 실패: %d/%d회" % (ocr_consecutive_failures, MAX_OCR_FAILURES))
+
+                    if ocr_consecutive_failures >= MAX_OCR_FAILURES:
+                        log(u"")
+                        log(u"=" * 60)
+                        log(u"[FATAL] OCR %d회 연속 실패 - 프로그램 종료!" % MAX_OCR_FAILURES)
+                        log(u"        Upstage API 장애 가능성 있음")
+                        log(u"        잠시 후 다시 시도하세요")
+                        log(u"=" * 60)
+                        _close_log_file()
+                        exit(1)
+
                     log(u"    [WARN] 재시도 실패 → 스크롤 끝으로 간주")
                     # 이전 페이지의 16번째 행이 있으면 처리
                     if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
@@ -510,6 +536,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
                             total_rows += 1
                     break  # 스크롤 루프 탈출
+            else:
+                # OCR 성공 시 연속 실패 카운터 리셋
+                ocr_consecutive_failures = 0
 
             # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
             print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, global_page)
