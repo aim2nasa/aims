@@ -61,8 +61,8 @@ describe('Cascading Delete 테스트', () => {
   });
 
   afterAll(async () => {
-    // 혹시 모를 테스트 데이터 정리 (최종 정리)
-    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트고객_캐스케이드/ } });
+    // ID 기반 정리는 afterEach에서 처리됨
+    // regex 삭제는 다른 테스트 파일과 충돌할 수 있어 제거
     await client.close();
   });
 
