@@ -257,28 +257,6 @@ def is_last_page(prev_capture):
     return False
 
 
-def save_page_screenshot(chosung_name, page_num):
-    """
-    페이지 전체 화면 캡처 및 저장
-
-    Args:
-        chosung_name: 초성 이름
-        page_num: 페이지 번호
-
-    Returns:
-        str: 저장된 파일 경로
-    """
-    import shutil
-    timestamp = int(time.time())
-    filename = u"page_%s_%03d_%d.png" % (chosung_name, page_num, timestamp)
-    filepath = os.path.join(CAPTURE_DIR, filename)
-
-    captured = capture(SCREEN)
-    shutil.copy(captured, filepath)
-    log(u"  [SAVE] 페이지 %d 캡처 저장: %s" % (page_num, filename))
-    return filepath
-
-
 def dismiss_alert_if_exists():
     """
     알림 팝업이 있으면 확인 클릭하여 닫기
@@ -504,14 +482,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 화면 안정화 대기
             sleep(2)
 
-            # 1. 페이지 스크린샷 저장
-            save_page_screenshot(chosung_name, global_page)
-
-            # 2. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
+            # 1. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
             prev_capture = capture_first_row_region(header, base_y)
             log(u"    [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
 
-            # 3. OCR 수행
+            # 2. OCR 수행 (화면 캡처 포함)
             customers, json_path = capture_and_ocr(chosung_name, global_page)
 
             if not customers:
@@ -543,7 +518,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
             print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, global_page)
 
-            # 4. 고객 처리 (15행만 - 중복 제거)
+            # 3. 고객 처리 (15행만 - 중복 제거)
             page_processed = 0
             page_duplicates = 0      # 스크롤로 인한 중복 (이전 페이지와 겹침)
             page_data_dups = 0       # 실제 데이터 중복 (같은 페이지 내 중복)
@@ -573,11 +548,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 summary_parts.append(u"스크롤중복 %d명 제외" % page_duplicates)
             log(u"    [%s] %s" % (page_label, u", ".join(summary_parts)))
 
-            # 5. 스크롤 (16번째 행 클릭 × 15회)
+            # 4. 스크롤 (16번째 행 클릭 × 15회)
             log(u"    [SCROLL] 16번째 행 클릭 × %d회..." % ROWS_PER_PAGE)
             scroll_by_row_click(scroll_x, base_y)
 
-            # 6. 스크롤 끝 감지 (화면 캡처 비교)
+            # 5. 스크롤 끝 감지 (화면 캡처 비교)
             if is_last_page(prev_capture):
                 log(u"\n    *** 스크롤 끝 도달! (스크롤 전후 동일) ***")
 
