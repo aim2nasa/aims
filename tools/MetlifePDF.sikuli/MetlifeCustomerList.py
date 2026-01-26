@@ -10,6 +10,11 @@ import subprocess
 import json
 import codecs
 import traceback
+from java.awt import Robot
+from java.awt.event import KeyEvent
+
+# Java Robot 인스턴스 (Page Up 키 입력용)
+_robot = Robot()
 
 # SikuliX 설정
 Settings.ActionLogs = False  # [log] CLICK 메시지 숨김
@@ -315,6 +320,24 @@ def get_row_y(header_y, row_index, is_scrolled=False):
     """
     offset = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
     return header_y + offset + (ROW_HEIGHT * row_index)
+
+
+def scroll_to_top(header, max_pageup=20):
+    """
+    Java Robot의 Page Up 키로 스크롤을 맨 위로 이동
+    (Sikuli type()은 메트라이프 사이트에서 동작하지 않음)
+
+    Args:
+        header: 고객명 헤더 Match 객체
+        max_pageup: 최대 Page Up 횟수 (무한루프 방지)
+    """
+    click(header.right(300).below(150))
+    sleep(0.3)
+    for i in range(max_pageup):
+        _robot.keyPress(KeyEvent.VK_PAGE_UP)
+        _robot.keyRelease(KeyEvent.VK_PAGE_UP)
+        sleep(0.1)
+    sleep(0.5)
 
 
 def scroll_by_row_click(scroll_x, header_y):
@@ -690,10 +713,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     # 스크롤을 맨 위로 (정렬 후 스크롤이 중간에 있을 수 있음)
     log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
     header = find(IMG_CUSTNAME)
-    click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
-    sleep(0.5)
-    type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
-    sleep(1)
+    scroll_to_top(header)
     log(u"  [SCROLL] 스크롤 맨 위 완료")
 
     ###########################################
@@ -728,10 +748,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # 네비 페이지 시작 시 스크롤 맨 위로 이동
         log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
         header = find(IMG_CUSTNAME)
-        click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
-        sleep(0.5)
-        type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
-        sleep(1)
+        scroll_to_top(header)
         log(u"  [SCROLL] 스크롤 맨 위 완료")
 
         # ========================================
@@ -962,10 +979,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 스크롤 맨 위로 이동
             log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
             header = find(IMG_CUSTNAME)
-            click(header.right(500).below(200))  # 목록 영역 클릭 (포커스)
-            sleep(0.5)
-            type(Key.HOME, KeyModifier.CTRL)     # Ctrl+Home: 문서 맨 위로
-            sleep(1)
+            scroll_to_top(header)
             log(u"  [SCROLL] 스크롤 맨 위 완료")
 
             nav_page += 1
