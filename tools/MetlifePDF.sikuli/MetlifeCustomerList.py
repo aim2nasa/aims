@@ -72,6 +72,69 @@ def log(msg):
         pass  # 파일 쓰기 실패 무시 (프로세스 종료 시 발생 가능)
 
 
+# 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
+DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
+DIAGNOSTIC_DIR = os.path.join(CAPTURE_DIR, "diagnostic")
+if DIAGNOSTIC_MODE and not os.path.exists(DIAGNOSTIC_DIR):
+    os.makedirs(DIAGNOSTIC_DIR)
+_diagnostic_counter = [0]  # 스크린샷 순번
+
+
+def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
+    """클릭 위치 진단용 스크린샷 저장 (클릭 위치에 빨간 점 표시)"""
+    if not DIAGNOSTIC_MODE:
+        return None
+
+    try:
+        from javax.imageio import ImageIO
+        from java.io import File
+        from java.awt import Color, BasicStroke
+        from java.awt.image import BufferedImage
+
+        _diagnostic_counter[0] += 1
+        seq = _diagnostic_counter[0]
+
+        # 스크린샷 캡처
+        screen = Screen()
+        img = screen.capture()
+        buffered_img = img.getImage()
+
+        # Graphics2D로 클릭 위치 표시
+        g2d = buffered_img.createGraphics()
+
+        # 빨간색 십자선 + 원 그리기
+        g2d.setColor(Color.RED)
+        g2d.setStroke(BasicStroke(3))
+
+        # 십자선
+        g2d.drawLine(click_x - 20, click_y, click_x + 20, click_y)
+        g2d.drawLine(click_x, click_y - 20, click_x, click_y + 20)
+
+        # 원
+        g2d.drawOval(click_x - 10, click_y - 10, 20, 20)
+
+        # 텍스트 (클릭 정보)
+        g2d.setColor(Color.YELLOW)
+        from java.awt import Font
+        g2d.setFont(Font("Arial", Font.BOLD, 14))
+        info_text = "P%d R%d: %s (y=%d)" % (page_num, row_idx, customer_name, click_y)
+        g2d.drawString(info_text, click_x + 25, click_y + 5)
+
+        g2d.dispose()
+
+        # 파일 저장
+        filename = "click_%03d_P%d_R%02d_%s.png" % (seq, page_num, row_idx, customer_name[:10])
+        filepath = os.path.join(DIAGNOSTIC_DIR, filename)
+        ImageIO.write(buffered_img, "PNG", File(filepath))
+
+        log(u"        [DIAG] 스크린샷 저장: %s" % filename)
+        return filepath
+
+    except Exception as e:
+        log(u"        [DIAG] 스크린샷 저장 실패: %s" % str(e))
+        return None
+
+
 def _global_exception_handler(exc_type, exc_value, exc_tb):
     """전역 예외 핸들러 - 모든 미처리 예외를 로그에 기록"""
     try:
@@ -238,18 +301,20 @@ def print_customer_table(customers, chosung_name, page_num):
     log(u"  [OCR] ================================================")
 
 
-def get_row_y(header_y, row_index):
+def get_row_y(header_y, row_index, is_scrolled=False):
     """
     특정 행의 Y좌표 계산
 
     Args:
         header_y: 고객명 헤더 Y좌표
         row_index: 0-based 행 인덱스
+        is_scrolled: 스크롤 후 페이지 여부 (True면 FIRST_ROW_OFFSET_SCROLLED 사용)
 
     Returns:
         int: 행의 Y좌표
     """
-    return header_y + FIRST_ROW_OFFSET + (ROW_HEIGHT * row_index)
+    offset = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
+    return header_y + offset + (ROW_HEIGHT * row_index)
 
 
 def scroll_by_row_click(scroll_x, header_y):
@@ -326,7 +391,7 @@ def dismiss_alert_if_exists():
     return False
 
 
-def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0):
+def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0, is_scrolled=False):
     """
     OCR로 인식한 고객들을 순차적으로 클릭하여 처리
 
@@ -337,6 +402,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         chosung_name: 초성 이름
         global_page: 전체 페이지 번호
         skip_count: 스크롤 중복으로 스킵할 행 수
+        is_scrolled: 스크롤 후 페이지 여부 (True면 FIRST_ROW_OFFSET_SCROLLED 사용)
 
     Returns:
         tuple: (처리한 고객 수, 오류 발생 고객 목록, 갱신된 base_y)
@@ -353,7 +419,9 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         log(u"        [SKIP] 처리할 고객 없음 (중복 %d행 스킵)" % skip_count)
         return 0, error_customers, current_base_y
 
-    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵)" % (total_to_process, skip_count))
+    # 사용할 오프셋 결정
+    offset_used = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
+    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵, offset=%d, scrolled=%s)" % (total_to_process, skip_count, offset_used, is_scrolled))
 
     for i, customer in enumerate(customers_to_process):
         row_index = skip_count + i  # 실제 화면상 행 인덱스
@@ -366,7 +434,13 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
         try:
             # 고객명 클릭 (행 Y좌표 계산)
-            row_y = get_row_y(current_base_y, row_index)
+            row_y = get_row_y(current_base_y, row_index, is_scrolled)
+            offset_val = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
+            log(u"        [DEBUG] base_y=%d + offset=%d + (33*%d) = click_y=%d, scrolled=%s" % (current_base_y, offset_val, row_index, row_y, is_scrolled))
+
+            # 진단용 스크린샷 (클릭 전)
+            save_click_diagnostic(fixed_x, row_y, name, global_page, row_index)
+
             click(Location(fixed_x, row_y))
             sleep(5)  # 고객등록/조회 페이지 로딩 대기
 
@@ -379,18 +453,17 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             sleep(3)  # 목록 복귀 대기
 
             # 알림 팝업 확인
-            alert_occurred = dismiss_alert_if_exists() or alert_occurred
+            dismiss_alert_if_exists()
 
-            # ALERT 발생 시 헤더 위치 재측정 (화면 위치가 변경될 수 있음)
-            if alert_occurred:
-                try:
-                    header = find(IMG_CUSTNAME)
-                    new_base_y = header.getCenter().getY()
-                    if new_base_y != current_base_y:
-                        log(u"        -> [RECALIBRATE] base_y: %d → %d" % (current_base_y, new_base_y))
-                        current_base_y = new_base_y
-                except:
-                    pass  # 헤더 못 찾으면 기존 값 유지
+            # 매 클릭 후 헤더 위치 재측정 (다음 행 클릭 위치 보정)
+            try:
+                header = find(IMG_CUSTNAME)
+                new_base_y = header.getCenter().getY()
+                if new_base_y != current_base_y:
+                    log(u"        -> [RECALIBRATE] base_y: %d → %d" % (current_base_y, new_base_y))
+                    current_base_y = new_base_y
+            except:
+                pass  # 헤더 못 찾으면 기존 값 유지
 
             log(u"        -> %s 처리 완료" % name)
             processed += 1
@@ -411,8 +484,13 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
 # 설정
 WAIT_TIME = 3
-FIRST_ROW_OFFSET = 40  # 헤더에서 첫 번째 행까지 거리 (픽셀)
-ROW_HEIGHT = 33        # 행 간 간격 (픽셀)
+# ===== 클릭 위치 튜닝 파라미터 =====
+# 클릭이 위로 밀리면: 값 증가 (+1~2)
+# 클릭이 아래로 밀리면: 값 감소 (-1~2)
+FIRST_ROW_OFFSET = 38           # 첫 페이지: 헤더 → 첫 행 중앙 (픽셀)
+FIRST_ROW_OFFSET_SCROLLED = 28  # 스크롤 후 페이지: 헤더 → 첫 행 중앙 (픽셀)
+ROW_HEIGHT = 33                 # 행 간 간격 (픽셀)
+# ================================
 ROWS_PER_PAGE = 15     # 화면에 보이는 행 수 (16번째 행은 잘림)
 MAX_CUSTOMERS_PER_PAGE = 15  # OCR로 인식하는 행 수
 
@@ -682,9 +760,19 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
                             # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
                             if CLICK_ENABLED:
+                                # 16번째 행 클릭 전 헤더 위치 재측정
+                                try:
+                                    header = find(IMG_CUSTNAME)
+                                    new_base_y = header.getCenter().getY()
+                                    if new_base_y != base_y:
+                                        log(u"        [RECALIBRATE] 16번째 행: base_y %d → %d" % (base_y, new_base_y))
+                                        base_y = new_base_y
+                                except:
+                                    pass
+
                                 log(u"        [LAST] %s 클릭..." % name)
                                 try:
-                                    row_y = get_row_y(base_y, ROWS_PER_PAGE)
+                                    row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
                                     click(Location(fixed_x, row_y))
                                     sleep(5)
                                     dismiss_alert_if_exists()
@@ -743,8 +831,24 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
             # 4. 고객 클릭 처리 (스크롤 중복 제외, CLICK_ENABLED일 때만)
             if CLICK_ENABLED:
+                # 페이지 시작 전 헤더 위치 재측정 (마지막 페이지 등 레이아웃 변화 대응)
+                try:
+                    header = find(IMG_CUSTNAME)
+                    new_base_y = header.getCenter().getY()
+                    if new_base_y != base_y:
+                        log(u"      [RECALIBRATE] 페이지 시작: base_y %d → %d" % (base_y, new_base_y))
+                        base_y = new_base_y
+                except:
+                    pass
+
+                # 디버그: scroll_page와 is_scrolled 판단
+                is_scrolled_page = (scroll_page > 1)
+                offset_to_use = FIRST_ROW_OFFSET_SCROLLED if is_scrolled_page else FIRST_ROW_OFFSET
+                log(u"      [PAGE_INFO] scroll_page=%d, is_scrolled=%s, offset=%d" % (scroll_page, is_scrolled_page, offset_to_use))
+
                 processed, errors, base_y = process_customers(
-                    customers, fixed_x, base_y, chosung_name, global_page, skip_count=scroll_dups
+                    customers, fixed_x, base_y, chosung_name, global_page,
+                    skip_count=scroll_dups, is_scrolled=is_scrolled_page
                 )
                 total_errors += len(errors)
                 error_customers.extend(errors)
@@ -768,9 +872,19 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
                         # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
                         if CLICK_ENABLED:
+                            # 16번째 행 클릭 전 헤더 위치 재측정
+                            try:
+                                header = find(IMG_CUSTNAME)
+                                new_base_y = header.getCenter().getY()
+                                if new_base_y != base_y:
+                                    log(u"        [RECALIBRATE] 16번째 행: base_y %d → %d" % (base_y, new_base_y))
+                                    base_y = new_base_y
+                            except:
+                                pass
+
                             log(u"        [LAST] %s 클릭..." % name)
                             try:
-                                row_y = get_row_y(base_y, ROWS_PER_PAGE)  # 16번째 행
+                                row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))  # 16번째 행
                                 click(Location(fixed_x, row_y))
                                 sleep(5)
                                 dismiss_alert_if_exists()
