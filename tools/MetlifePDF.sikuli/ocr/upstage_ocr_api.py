@@ -11,6 +11,8 @@ import sys
 import json
 import time
 import re
+import logging
+from datetime import datetime
 from pathlib import Path
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
@@ -21,35 +23,163 @@ import httpx
 API_URL = "https://api.upstage.ai/v1/document-digitization"
 API_KEY = os.environ.get("UPSTAGE_API_KEY")
 
+# 재시도 설정
+MAX_RETRIES = 3
+RETRY_DELAYS = [5, 10, 20]  # 지수 백오프: 5초, 10초, 20초
+RETRIABLE_STATUS_CODES = {500, 502, 503, 504, 429}  # 재시도 가능한 HTTP 상태 코드
+
+# 로그 설정
+LOG_DIR = Path("D:/captures/metlife_ocr/logs")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_logger():
+    """날짜별 로그 파일 생성"""
+    today = datetime.now().strftime("%Y%m%d")
+    log_file = LOG_DIR / f"ocr_api_{today}.log"
+
+    logger = logging.getLogger("upstage_ocr")
+    if not logger.handlers:
+        logger.setLevel(logging.DEBUG)
+
+        # 파일 핸들러
+        fh = logging.FileHandler(log_file, encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+
+        # 포맷터
+        formatter = logging.Formatter(
+            "[%(asctime)s] [%(levelname)s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    return logger
+
 
 def call_upstage_enhanced(image_path: str) -> dict:
-    """Upstage Document Digitization API 호출 (Enhanced 모드)"""
+    """Upstage Document Digitization API 호출 (Enhanced 모드) - 재시도 로직 포함"""
+    logger = get_logger()
+
     with open(image_path, "rb") as f:
         file_content = f.read()
 
     filename = Path(image_path).name
+    file_size_kb = len(file_content) / 1024
 
-    start = time.time()
+    logger.info(f"=" * 60)
+    logger.info(f"OCR API 요청 시작")
+    logger.info(f"  파일: {filename}")
+    logger.info(f"  경로: {image_path}")
+    logger.info(f"  크기: {file_size_kb:.1f} KB")
 
-    with httpx.Client(timeout=180.0) as client:
-        response = client.post(
-            API_URL,
-            headers={"Authorization": f"Bearer {API_KEY}"},
-            files={"document": (filename, file_content)},
-            data={
-                "model": "document-parse-nightly",
-                "mode": "enhanced",
-                "output_formats": '["html", "text"]',
-            },
-        )
+    last_error = None
+    last_response = None
 
-    elapsed = time.time() - start
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            start = time.time()
 
-    if response.status_code != 200:
-        print(f"  [OCR] ERROR: HTTP {response.status_code}")
-        return {"error": True}
+            if attempt > 0:
+                delay = RETRY_DELAYS[attempt - 1] if attempt - 1 < len(RETRY_DELAYS) else RETRY_DELAYS[-1]
+                logger.warning(f"  재시도 {attempt}/{MAX_RETRIES} - {delay}초 대기 후 시도...")
+                print(f"  [OCR] RETRY {attempt}/{MAX_RETRIES}: {delay}초 대기 후 재시도...")
+                time.sleep(delay)
 
-    return response.json()
+            with httpx.Client(timeout=180.0) as client:
+                response = client.post(
+                    API_URL,
+                    headers={"Authorization": f"Bearer {API_KEY}"},
+                    files={"document": (filename, file_content)},
+                    data={
+                        "model": "document-parse-nightly",
+                        "mode": "enhanced",
+                        "output_formats": '["html", "text"]',
+                    },
+                )
+
+            elapsed = time.time() - start
+            last_response = response
+
+            # 성공
+            if response.status_code == 200:
+                logger.info(f"  응답: HTTP 200 OK ({elapsed:.1f}초)")
+                logger.info(f"  시도: {attempt + 1}회")
+                return response.json()
+
+            # 재시도 가능한 에러
+            if response.status_code in RETRIABLE_STATUS_CODES:
+                error_body = ""
+                try:
+                    error_body = response.text[:500]  # 최대 500자
+                except:
+                    pass
+
+                logger.error(f"  응답: HTTP {response.status_code} ({elapsed:.1f}초)")
+                logger.error(f"  응답 헤더: {dict(response.headers)}")
+                logger.error(f"  응답 본문: {error_body}")
+
+                print(f"  [OCR] ERROR: HTTP {response.status_code}")
+
+                last_error = f"HTTP {response.status_code}"
+
+                # 마지막 시도가 아니면 재시도
+                if attempt < MAX_RETRIES:
+                    continue
+            else:
+                # 재시도 불가능한 에러 (4xx 클라이언트 에러 등)
+                error_body = ""
+                try:
+                    error_body = response.text[:500]
+                except:
+                    pass
+
+                logger.error(f"  응답: HTTP {response.status_code} (재시도 불가)")
+                logger.error(f"  응답 헤더: {dict(response.headers)}")
+                logger.error(f"  응답 본문: {error_body}")
+
+                print(f"  [OCR] ERROR: HTTP {response.status_code}")
+                return {"error": True, "status_code": response.status_code}
+
+        except httpx.TimeoutException as e:
+            elapsed = time.time() - start
+            logger.error(f"  타임아웃: {elapsed:.1f}초 후 연결 실패")
+            logger.error(f"  에러 타입: {type(e).__name__}")
+            logger.error(f"  에러 상세: {str(e)}")
+
+            print(f"  [OCR] ERROR: Timeout ({elapsed:.1f}s)")
+            last_error = f"Timeout: {str(e)}"
+
+            if attempt < MAX_RETRIES:
+                continue
+
+        except httpx.ConnectError as e:
+            logger.error(f"  연결 에러: {str(e)}")
+            logger.error(f"  에러 타입: {type(e).__name__}")
+
+            print(f"  [OCR] ERROR: Connection failed")
+            last_error = f"ConnectError: {str(e)}"
+
+            if attempt < MAX_RETRIES:
+                continue
+
+        except Exception as e:
+            logger.error(f"  예외 발생: {type(e).__name__}")
+            logger.error(f"  에러 상세: {str(e)}")
+
+            print(f"  [OCR] ERROR: {type(e).__name__}: {str(e)}")
+            last_error = f"{type(e).__name__}: {str(e)}"
+
+            if attempt < MAX_RETRIES:
+                continue
+
+    # 모든 재시도 실패
+    logger.error(f"  최종 실패: {MAX_RETRIES + 1}회 시도 후 포기")
+    logger.error(f"  마지막 에러: {last_error}")
+    logger.info(f"=" * 60)
+
+    print(f"  [OCR] FAILED: {MAX_RETRIES + 1}회 시도 후 실패 - {last_error}")
+    return {"error": True, "last_error": last_error}
 
 
 def parse_html_table(html: str) -> list:
