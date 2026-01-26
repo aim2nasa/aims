@@ -101,32 +101,50 @@ def parse_html_table(html: str) -> list:
 
 def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
     """OCR 결과에서 고객 데이터 추출 (기본 15행)"""
+    all_tables = []
+
+    # 1. content.html에서 테이블 추출
     html = ocr_result.get("content", {}).get("html", "") or ocr_result.get("html", "")
+    if html:
+        tables = parse_html_table(html)
+        all_tables.extend(tables)
 
-    if not html:
-        # elements에서 테이블 찾기
-        for element in ocr_result.get("elements", []):
-            if element.get("category") == "table":
-                content = element.get("content", {})
-                if isinstance(content, dict):
-                    html = content.get("html", "")
-                    if html:
-                        break
+    # 2. elements에서 테이블 추출 (더 정확한 테이블이 여기 있을 수 있음)
+    for element in ocr_result.get("elements", []):
+        if element.get("category") == "table":
+            content = element.get("content", {})
+            if isinstance(content, dict):
+                element_html = content.get("html", "")
+                if element_html:
+                    tables = parse_html_table(element_html)
+                    all_tables.extend(tables)
 
-    if not html:
+    if not all_tables:
         return []
 
-    tables = parse_html_table(html)
-    if not tables:
-        return []
+    # 고객 데이터 테이블 선택: 행이 10개 이상이고 고객명이 포함된 테이블
+    main_table = None
 
-    # 가장 큰 테이블 선택
-    main_table = max(tables, key=lambda t: len(t))
+    # 1. 행이 10개 이상인 테이블 중 고객명 포함된 것 찾기
+    large_tables = [t for t in all_tables if len(t) >= 10]
+    for table in large_tables:
+        for row in table:
+            if any("고객명" in str(cell) for cell in row):
+                main_table = table
+                break
+        if main_table:
+            break
+
+    # 2. 없으면 가장 큰 테이블 선택
+    if not main_table:
+        main_table = max(all_tables, key=lambda t: len(t))
 
     # 헤더 정규화 매핑
     HEADER_NORMALIZE = {
         "고객명 ↓": "고객명",
         "고객명↓": "고객명",
+        "고객명 →": "고객명",
+        "고객명→": "고객명",
         "고객명": "고객명",
         "구분": "구분",
         "생년월일": "생년월일",
@@ -139,11 +157,44 @@ def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
 
     rows = []
     headers = None
+    first_row_data = None  # 헤더+데이터 합쳐진 경우 첫 고객
 
     for row in main_table:
         # 헤더 행 찾기 (고객명 포함하는 셀이 있으면)
         if any("고객명" in str(cell) for cell in row):
-            headers = [HEADER_NORMALIZE.get(cell.strip(), cell.strip()) for cell in row]
+            # 헤더+데이터 합쳐진 형식 감지: "고객명 ↓ 김태형" (↓ 기호가 있으면)
+            first_cell = str(row[0]) if row else ""
+            if "↓" in first_cell or ("고객명" in first_cell and " " in first_cell and len(first_cell) > 5):
+                # 합쳐진 형식 - 헤더와 데이터 분리
+                headers = []
+                first_row_data = {}
+                for cell in row:
+                    cell_str = str(cell).strip() if cell else ""
+                    # "고객명 ↓ 김태형" → 헤더: "고객명", 데이터: "김태형"
+                    # "구분 계약" → 헤더: "구분", 데이터: "계약"
+                    # "생년월일 1991-02-10" → 헤더: "생년월일", 데이터: "1991-02-10"
+
+                    # ↓ 기호로 분리 시도
+                    if "↓" in cell_str:
+                        parts = cell_str.split("↓", 1)
+                        header_part = parts[0].strip()
+                        data_part = parts[1].strip() if len(parts) >= 2 else ""
+                    else:
+                        # 공백으로 분리
+                        parts = cell_str.split(" ", 1)
+                        if len(parts) >= 2:
+                            header_part = parts[0].strip()
+                            data_part = parts[1].strip()
+                        else:
+                            header_part = cell_str
+                            data_part = ""
+
+                    normalized_header = HEADER_NORMALIZE.get(header_part, header_part)
+                    headers.append(normalized_header)
+                    first_row_data[normalized_header] = data_part
+            else:
+                # 일반 헤더 행
+                headers = [HEADER_NORMALIZE.get(cell.strip(), cell.strip()) for cell in row]
             continue
 
         # 데이터 행
@@ -156,6 +207,10 @@ def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
 
             if row_data.get("고객명"):
                 rows.append(row_data)
+
+    # 헤더+데이터 합쳐진 첫 행이 있으면 맨 앞에 추가
+    if first_row_data and first_row_data.get("고객명"):
+        rows.insert(0, first_row_data)
 
     # 최대 행수 제한 (마지막 행은 잘릴 수 있으므로)
     return rows[:max_rows]
@@ -185,7 +240,7 @@ def main():
         sys.exit(1)
 
     # 고객 데이터 추출 (15행)
-    customers = extract_customer_data(ocr_result, max_rows=15)
+    customers = extract_customer_data(ocr_result, max_rows=16)
 
     # 결과 저장
     with open(output_json_path, "w", encoding="utf-8") as f:

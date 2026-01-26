@@ -458,6 +458,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     total_processed = 0
     total_errors = 0
     error_customers = []           # 이번 초성의 오류 발생 고객 목록
+    processed_customers = set()    # 중복 제거용: (고객명, 생년월일) 추적
+    prev_customers = None          # 이전 페이지 OCR 결과 (OCR 실패 시 복구용)
 
     # 좌표 설정 (한 번만 측정)
     header = find(IMG_CUSTNAME)
@@ -485,16 +487,48 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         customers, json_path = capture_and_ocr(chosung_name, page_num)
 
         if not customers:
-            log(u"  [WARN] OCR 결과 없음 → 루프 종료")
-            break
+            log(u"  [WARN] OCR 결과 없음 → 캐시 삭제 후 재시도...")
+            # 캐시 삭제
+            cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, page_num))
+            if os.path.exists(cache_json):
+                os.remove(cache_json)
+                log(u"  [RETRY] 캐시 삭제: %s" % os.path.basename(cache_json))
+            # 재시도
+            sleep(2)
+            customers, json_path = capture_and_ocr(chosung_name, page_num)
 
-        # OCR 결과 표 출력
-        print_customer_table(customers, chosung_name, page_num)
+            if not customers:
+                log(u"  [WARN] 재시도 실패 → 마지막 페이지로 간주")
+                # 이전 페이지의 16번째 행이 있으면 처리
+                if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
+                    extra = prev_customers[ROWS_PER_PAGE]
+                    name = extra.get(u"고객명", "") or ""
+                    birth = extra.get(u"생년월일", "") or ""
+                    if name:
+                        key = (name, birth)
+                        if key not in processed_customers:
+                            processed_customers.add(key)
+                            log(u"  [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
+                            total_processed += 1
+                break
 
-        # 4. 고객 처리 (전체 15명)
-        page_processed = len(customers)
+        # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
+        print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, page_num)
+
+        # 4. 고객 처리 (15행만 - 중복 제거)
+        page_processed = 0
+        page_duplicates = 0
+        for c in customers[:ROWS_PER_PAGE]:
+            name = c.get(u"고객명", "") or ""
+            birth = c.get(u"생년월일", "") or ""
+            if name:
+                key = (name, birth)
+                if key not in processed_customers:
+                    processed_customers.add(key)
+                    page_processed += 1
+                else:
+                    page_duplicates += 1
         total_processed += page_processed
-        log(u"  [PAGE %d] 고객 %d명 처리" % (page_num, page_processed))
 
         # === 고객 클릭 코드 주석처리 시작 ===
         # for row in range(len(customers)):
@@ -542,7 +576,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # === 고객 클릭 코드 주석처리 끝 ===
 
         # 페이지 처리 완료 요약
-        log(u"  [PAGE %d] 완료 - %d명 (누적: %d)" % (page_num, page_processed, total_processed))
+        if page_duplicates > 0:
+            log(u"  [PAGE %d] 고객 %d명 (중복 %d명 제외)" % (page_num, page_processed, page_duplicates))
+        else:
+            log(u"  [PAGE %d] 고객 %d명" % (page_num, page_processed))
 
         # 5. 스크롤 (16번째 행 클릭 × 15회)
         log(u"  [SCROLL] 16번째 행 클릭 × %d회 시작..." % ROWS_PER_PAGE)
@@ -551,10 +588,26 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # 6. 마지막 페이지 감지 (화면 캡처 비교)
         if is_last_page(prev_capture):
             log(u"\n  *** 마지막 페이지 도달! (스크롤 전후 동일) ***")
+
+            # 마지막 페이지: 16번째 행이 있으면 추가 (누락된 고객, 중복 체크)
+            if len(customers) > ROWS_PER_PAGE:
+                extra_customer = customers[ROWS_PER_PAGE]
+                name = extra_customer.get(u"고객명", "") or ""
+                birth = extra_customer.get(u"생년월일", "") or ""
+                if name:
+                    key = (name, birth)
+                    if key not in processed_customers:
+                        processed_customers.add(key)
+                        log(u"  [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
+                        total_processed += 1
+                    else:
+                        log(u"  [LAST] 16번째 행 중복 스킵: %s (%s)" % (name, birth))
+
             log(u"  *** [%s] 총 %d 페이지 ***" % (chosung_name, page_num))
             break
 
         log(u"\n  *** %d페이지 → %d페이지 이동 완료 ***" % (page_num, page_num + 1))
+        prev_customers = customers  # 다음 페이지 OCR 실패 시 복구용
         page_num += 1
         sleep(1)  # 다음 페이지 전 대기
 
