@@ -436,34 +436,51 @@ ALL_CHOSUNG_BUTTONS = [
 # 초성 선택: 명령줄 인자 > 환경변수 > 전체
 # 사용법: java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ
 #        java -jar sikulixide.jar -r MetlifeCustomerList.py -- --chosung ㄱ
+#        java -jar sikulixide.jar -r MetlifeCustomerList.py -- ㄱ --no-click
 import sys
 
-def parse_chosung_arg():
-    """명령줄 인자에서 초성 파싱"""
-    # sys.argv 예시: ['MetlifeCustomerList.py', '--', 'ㄱ'] 또는 ['...', '--', '--chosung', 'ㄱ']
+def parse_args():
+    """명령줄 인자 파싱 (초성, --no-click 등)"""
+    # sys.argv 예시: ['MetlifeCustomerList.py', '--', 'ㄱ'] 또는 ['...', '--', '--chosung', 'ㄱ', '--no-click']
     args = sys.argv[1:] if len(sys.argv) > 1 else []
 
     # '--' 이후의 인자만 처리 (SikuliX 방식)
     if '--' in args:
         args = args[args.index('--') + 1:]
 
+    result = {
+        'chosung': None,
+        'no_click': False,
+    }
+
+    # --no-click 옵션 처리
+    if '--no-click' in args:
+        result['no_click'] = True
+        args = [a for a in args if a != '--no-click']
+
     # --chosung 옵션 처리
     if '--chosung' in args:
         idx = args.index('--chosung')
         if idx + 1 < len(args):
-            return args[idx + 1]
+            result['chosung'] = args[idx + 1]
 
     # 단순 위치 인자 (첫 번째 인자가 초성)
-    if args and not args[0].startswith('-'):
-        return args[0]
+    elif args and not args[0].startswith('-'):
+        result['chosung'] = args[0]
 
-    return None
+    return result
 
-_arg_chosung = parse_chosung_arg()
+_parsed_args = parse_args()
+_arg_chosung = _parsed_args['chosung']
+_arg_no_click = _parsed_args['no_click']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
+_env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
 
 # 우선순위: 명령줄 > 환경변수
 _raw_chosung = _arg_chosung or _env_chosung
+
+# 고객 클릭 기능: 기본 활성화, --no-click 또는 환경변수로 비활성화
+CLICK_ENABLED = not (_arg_no_click or _env_no_click)
 
 # Jython: 바이트 문자열 → 유니코드 변환
 if _raw_chosung:
@@ -485,6 +502,7 @@ if SELECTED_CHOSUNG:
     log(u"선택 초성: %s" % SELECTED_CHOSUNG)
 else:
     log(u"선택 초성: 전체 (%d개)" % len(CHOSUNG_BUTTONS))
+log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (--no-click)"))
 log("=" * 60)
 
 start_time = time.time()
@@ -650,28 +668,29 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
                             total_rows += 1
 
-                            # 16번째 행 고객 클릭 처리
-                            log(u"        [LAST] %s 클릭..." % name)
-                            try:
-                                row_y = get_row_y(base_y, ROWS_PER_PAGE)
-                                click(Location(fixed_x, row_y))
-                                sleep(5)
-                                dismiss_alert_if_exists()
-                                log(u"        -> 종료(x) 클릭...")
-                                click(IMG_CLOSE_BTN)
-                                sleep(3)
-                                dismiss_alert_if_exists()
-                                log(u"        -> %s 처리 완료" % name)
-                            except Exception as e:
-                                log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
-                                total_errors += 1
-                                error_customers.append({
-                                    u"초성": chosung_name,
-                                    u"페이지": global_page - 1,
-                                    u"행": ROWS_PER_PAGE + 1,
-                                    u"고객명": name,
-                                    u"오류": str(e)
-                                })
+                            # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
+                            if CLICK_ENABLED:
+                                log(u"        [LAST] %s 클릭..." % name)
+                                try:
+                                    row_y = get_row_y(base_y, ROWS_PER_PAGE)
+                                    click(Location(fixed_x, row_y))
+                                    sleep(5)
+                                    dismiss_alert_if_exists()
+                                    log(u"        -> 종료(x) 클릭...")
+                                    click(IMG_CLOSE_BTN)
+                                    sleep(3)
+                                    dismiss_alert_if_exists()
+                                    log(u"        -> %s 처리 완료" % name)
+                                except Exception as e:
+                                    log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+                                    total_errors += 1
+                                    error_customers.append({
+                                        u"초성": chosung_name,
+                                        u"페이지": global_page - 1,
+                                        u"행": ROWS_PER_PAGE + 1,
+                                        u"고객명": name,
+                                        u"오류": str(e)
+                                    })
                     break  # 스크롤 루프 탈출
             else:
                 # OCR 성공 시 연속 실패 카운터 리셋
@@ -710,12 +729,13 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             else:
                 log(u"    [%s] %d행" % (page_label, page_rows))
 
-            # 4. 고객 클릭 처리 (스크롤 중복 제외)
-            processed, errors = process_customers(
-                customers, fixed_x, base_y, chosung_name, global_page, skip_count=scroll_dups
-            )
-            total_errors += len(errors)
-            error_customers.extend(errors)
+            # 4. 고객 클릭 처리 (스크롤 중복 제외, CLICK_ENABLED일 때만)
+            if CLICK_ENABLED:
+                processed, errors = process_customers(
+                    customers, fixed_x, base_y, chosung_name, global_page, skip_count=scroll_dups
+                )
+                total_errors += len(errors)
+                error_customers.extend(errors)
 
             # 5. 스크롤 (16번째 행 클릭 × 15회)
             log(u"    [SCROLL] 16번째 행 클릭 × %d회..." % ROWS_PER_PAGE)
@@ -734,28 +754,29 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                         log(u"    [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
                         total_rows += 1
 
-                        # 16번째 행 고객 클릭 처리
-                        log(u"        [LAST] %s 클릭..." % name)
-                        try:
-                            row_y = get_row_y(base_y, ROWS_PER_PAGE)  # 16번째 행
-                            click(Location(fixed_x, row_y))
-                            sleep(5)
-                            dismiss_alert_if_exists()
-                            log(u"        -> 종료(x) 클릭...")
-                            click(IMG_CLOSE_BTN)
-                            sleep(3)
-                            dismiss_alert_if_exists()
-                            log(u"        -> %s 처리 완료" % name)
-                        except Exception as e:
-                            log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
-                            total_errors += 1
-                            error_customers.append({
-                                u"초성": chosung_name,
-                                u"페이지": global_page,
-                                u"행": ROWS_PER_PAGE + 1,
-                                u"고객명": name,
-                                u"오류": str(e)
-                            })
+                        # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
+                        if CLICK_ENABLED:
+                            log(u"        [LAST] %s 클릭..." % name)
+                            try:
+                                row_y = get_row_y(base_y, ROWS_PER_PAGE)  # 16번째 행
+                                click(Location(fixed_x, row_y))
+                                sleep(5)
+                                dismiss_alert_if_exists()
+                                log(u"        -> 종료(x) 클릭...")
+                                click(IMG_CLOSE_BTN)
+                                sleep(3)
+                                dismiss_alert_if_exists()
+                                log(u"        -> %s 처리 완료" % name)
+                            except Exception as e:
+                                log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+                                total_errors += 1
+                                error_customers.append({
+                                    u"초성": chosung_name,
+                                    u"페이지": global_page,
+                                    u"행": ROWS_PER_PAGE + 1,
+                                    u"고객명": name,
+                                    u"오류": str(e)
+                                })
 
                 log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
                 break  # 스크롤 루프 탈출
