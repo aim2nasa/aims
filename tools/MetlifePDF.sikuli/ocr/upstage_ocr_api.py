@@ -10,6 +10,7 @@ import os
 import sys
 import json
 import time
+import re
 from pathlib import Path
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
@@ -122,20 +123,41 @@ def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
     if not all_tables:
         return []
 
-    # 고객 데이터 테이블 선택: 행이 10개 이상이고 고객명이 포함된 테이블
+    # 고객 데이터 테이블 선택
     main_table = None
 
-    # 1. 행이 10개 이상인 테이블 중 고객명 포함된 것 찾기
-    large_tables = [t for t in all_tables if len(t) >= 10]
-    for table in large_tables:
+    # 1. "고객명" 헤더가 있고 실제 데이터(생년월일 패턴)가 있는 테이블 찾기
+    date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}')
+
+    for table in all_tables:
+        has_header = False
+        has_data = False
         for row in table:
-            if any("고객명" in str(cell) for cell in row):
+            row_str = " ".join(str(cell) for cell in row)
+            if "고객명" in row_str:
+                has_header = True
+            if date_pattern.search(row_str):
+                has_data = True
+            if has_header and has_data:
                 main_table = table
                 break
         if main_table:
             break
 
-    # 2. 없으면 가장 큰 테이블 선택
+    # 2. 없으면 "고객명" 헤더만 있는 테이블 (데이터가 적은 경우)
+    if not main_table:
+        for table in all_tables:
+            for row in table:
+                if any("고객명" in str(cell) for cell in row):
+                    # 필터 영역 텍스트 제외 (너무 긴 셀은 필터 영역)
+                    first_cell = str(row[0]) if row else ""
+                    if len(first_cell) < 50:  # 필터 영역은 보통 매우 긴 텍스트
+                        main_table = table
+                        break
+            if main_table:
+                break
+
+    # 3. 그래도 없으면 가장 큰 테이블 선택
     if not main_table:
         main_table = max(all_tables, key=lambda t: len(t))
 
