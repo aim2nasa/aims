@@ -230,6 +230,100 @@ def parse_html_table(html: str) -> list:
     return parser.tables
 
 
+def parse_text_based(text: str) -> list:
+    """텍스트 기반 고객 데이터 파싱 (테이블이 없을 때 fallback)
+
+    고정 컬럼 순서:
+    고객명, 구분, 생년월일, 보험나이, 성별, 이메일, 휴대폰, 가입설계만료일, 변액적합성유효일, 외화적합성유효일
+    """
+    if not text or "고객명" not in text:
+        return []
+
+    lines = text.strip().split('\n')
+    if len(lines) < 2:  # 최소 헤더 + 1개 데이터
+        return []
+
+    # 정규식 패턴
+    date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}')
+    phone_pattern = re.compile(r'0\d{1,2}-\d{3,4}-\d{4}')
+    email_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+    gender_pattern = re.compile(r'남자|여자')
+    type_pattern = re.compile(r'계약|가망')
+
+    rows = []
+
+    for line in lines[1:]:  # 첫 줄(헤더) 건너뛰기
+        line = line.strip()
+        if not line:
+            continue
+
+        # 각 필드 추출
+        row_data = {}
+
+        # 이메일 추출 및 제거
+        email_match = email_pattern.search(line)
+        if email_match:
+            row_data["이메일"] = email_match.group()
+            line = line.replace(email_match.group(), " ")
+
+        # 휴대폰 추출 및 제거
+        phone_match = phone_pattern.search(line)
+        if phone_match:
+            row_data["휴대폰"] = phone_match.group()
+            line = line.replace(phone_match.group(), " ")
+
+        # 날짜들 추출 (생년월일, 가입설계만료일, 변액적합성유효일, 외화적합성유효일)
+        dates = date_pattern.findall(line)
+        if len(dates) >= 1:
+            row_data["생년월일"] = dates[0]
+        if len(dates) >= 2:
+            row_data["가입설계만료일"] = dates[1]
+        if len(dates) >= 3:
+            row_data["변액적합성유효일"] = dates[2]
+        if len(dates) >= 4:
+            row_data["외화적합성유효일"] = dates[3]
+
+        # 날짜 제거
+        for d in dates:
+            line = line.replace(d, " ")
+
+        # 성별 추출 및 제거
+        gender_match = gender_pattern.search(line)
+        if gender_match:
+            row_data["성별"] = gender_match.group()
+            line = line.replace(gender_match.group(), " ")
+
+        # 구분 추출 및 제거
+        type_match = type_pattern.search(line)
+        if type_match:
+            row_data["구분"] = type_match.group()
+            line = line.replace(type_match.group(), " ")
+
+        # 남은 토큰 분석 (고객명, 보험나이)
+        tokens = line.split()
+
+        # 보험나이 찾기 (1~3자리 숫자)
+        age_idx = -1
+        for i, token in enumerate(tokens):
+            if token.isdigit() and 1 <= int(token) <= 150:
+                row_data["보험나이"] = token
+                age_idx = i
+                break
+
+        # 보험나이 제거
+        if age_idx >= 0:
+            tokens.pop(age_idx)
+
+        # 남은 첫 토큰이 고객명
+        if tokens:
+            row_data["고객명"] = tokens[0]
+
+        if row_data.get("고객명"):
+            rows.append(row_data)
+
+    return rows
+
+
 def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
     """OCR 결과에서 고객 데이터 추출 (기본 15행)"""
     all_tables = []
@@ -250,7 +344,13 @@ def extract_customer_data(ocr_result: dict, max_rows: int = 15) -> list:
                     tables = parse_html_table(element_html)
                     all_tables.extend(tables)
 
+    # 3. 테이블이 없으면 텍스트 기반 파싱으로 fallback
     if not all_tables:
+        text = ocr_result.get("content", {}).get("text", "") or ocr_result.get("text", "")
+        if text:
+            rows = parse_text_based(text)
+            if rows:
+                return rows[:max_rows]
         return []
 
     # 고객 데이터 테이블 선택
