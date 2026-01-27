@@ -432,7 +432,7 @@ def click_all_rows_with_scroll():
             total_clicked += 1
             log(u"    [%d] 클릭 Y=%d" % (total_clicked, current_y))
             click(Location(base_x, current_y))
-            sleep(0.3)
+            sleep(0.8)  # UI 업데이트 대기
 
             # 다음 행으로 이동
             current_y += ROW_HEIGHT
@@ -505,7 +505,7 @@ def click_all_rows_with_scroll():
                                 total_clicked += 1
                                 log(u"    [%d] 남은 행 클릭 Y=%d" % (total_clicked, match_y))
                                 click(match)
-                                sleep(0.3)
+                                sleep(0.8)  # UI 업데이트 대기
                     except Exception as e:
                         log(u"    [ERROR] findAll 실패: %s" % str(e))
                     break
@@ -526,7 +526,7 @@ def click_all_rows_with_scroll():
                         total_clicked += 1
                         log(u"    [%d] 첫 unchecked 클릭 Y=%d" % (total_clicked, match_y))
                         click(first_match)
-                        sleep(0.3)
+                        sleep(0.8)  # UI 업데이트 대기
                         current_y = match_y + ROW_HEIGHT
                     else:
                         log(u"    [CHECKED] unchecked 없음 = 끝!")
