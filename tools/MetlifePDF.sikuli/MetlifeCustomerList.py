@@ -219,22 +219,37 @@ def capture_and_ocr(chosung_name, page_num):
     json_path = capture_path.replace(".png", ".json")
 
     log(u"  [OCR] ----------------------------------------")
-    log(u"  [OCR] 1/4. 화면 캡처: %s" % capture_filename)
+    log(u"  [OCR] 1/4. 화면 캡처")
 
-    # SikuliX capture() 사용 - 전체 화면 캡처
-    captured = capture(SCREEN)
-
-    # 캡처된 파일을 지정 경로로 복사
+    # 1. 전체 화면 캡처 (원본 보관용)
     import shutil
-    shutil.copy(captured, capture_path)
+    captured_full = capture(SCREEN)
+    shutil.copy(captured_full, capture_path)
+    log(u"  [OCR]   - 원본: %s" % capture_filename)
+
+    # 2. 테이블 영역만 크롭 (필터 영역 제외)
+    # 크롭 좌표: docs/TABLE_CROP_REGION.md 참조
+    TABLE_REGION_X = 20
+    TABLE_REGION_Y = 362
+    TABLE_REGION_WIDTH = 1890
+    TABLE_REGION_HEIGHT = 590
+    table_region = Region(TABLE_REGION_X, TABLE_REGION_Y, TABLE_REGION_WIDTH, TABLE_REGION_HEIGHT)
+    captured_cropped = capture(table_region)
+    cropped_filename = capture_filename.replace(".png", "_cropped.png")
+    cropped_path = os.path.join(CAPTURE_DIR, cropped_filename)
+    shutil.copy(captured_cropped, cropped_path)
+    log(u"  [OCR]   - 크롭: %s" % cropped_filename)
+
+    # 크롭된 이미지로 OCR 수행
+    json_path = cropped_path.replace(".png", ".json")
 
     # Python3로 OCR 스크립트 호출
     log(u"  [OCR] 2/4. Upstage Enhanced API 호출 (약 35초)...")
 
     ocr_start = time.time()
     try:
-        # Jython 호환: timeout 파라미터 없이 호출
-        result = subprocess.call(["python", OCR_SCRIPT, capture_path, json_path])
+        # Jython 호환: timeout 파라미터 없이 호출 (크롭된 이미지 사용)
+        result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path])
         ocr_elapsed = time.time() - ocr_start
 
         if result != 0:
