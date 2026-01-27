@@ -121,7 +121,7 @@ def test_row_clicks():
     행 클릭 테스트 - 맨 위부터 맨 아래까지 모든 행을 하나씩 클릭
     오프셋이 제대로 지켜지는지 확인
     """
-    ROW_HEIGHT = 28
+    ROW_HEIGHT = 37
     VISIBLE_ROWS = 6
     MAX_ROWS = 100
 
@@ -140,23 +140,24 @@ def test_row_clicks():
     log(u"    [기준점] 헤더 위치: (%d, %d), 체크박스 X: %d, 첫 행 Y: %d" % (header_x, header_y, base_x, first_row_y))
     log(u"    [설정] ROW_HEIGHT=%d, VISIBLE_ROWS=%d" % (ROW_HEIGHT, VISIBLE_ROWS))
 
-    # 첫 번째 행만 클릭
-    click_y = first_row_y
-    log(u"    [행 1] 클릭 위치: (%d, %d)" % (base_x, click_y))
+    # 화면에 보이는 6개 행만 클릭 (ROW_HEIGHT 검증용)
+    for i in range(VISIBLE_ROWS):
+        click_y = first_row_y + (i * ROW_HEIGHT)
 
-    # 스크린샷 캡처
-    temp_path = r"D:\aims\tools\MetlifePDF.sikuli\temp_capture.png"
-    screenshot_path = r"D:\aims\tools\MetlifePDF.sikuli\click_row_1.png"
-    img = Screen().capture()
-    shutil.move(img.getFile(), temp_path)
+        log(u"    [행 %d] Y=%d (오프셋: +%d)" % (i + 1, click_y, i * ROW_HEIGHT))
 
-    # 빨간색 + 표시 그려서 저장
-    draw_crosshair(temp_path, int(base_x), int(click_y), screenshot_path)
-    os.remove(temp_path)
-    log(u"    스크린샷 저장: %s" % screenshot_path)
+        # 스크린샷 캡처 및 + 표시
+        temp_path = r"D:\aims\tools\MetlifePDF.sikuli\temp_capture.png"
+        screenshot_path = r"D:\aims\tools\MetlifePDF.sikuli\click_row_%d.png" % (i + 1)
+        img = Screen().capture()
+        shutil.move(img.getFile(), temp_path)
+        draw_crosshair(temp_path, int(base_x), int(click_y), screenshot_path)
+        os.remove(temp_path)
 
-    click(Location(base_x, click_y))
-    log(u"    클릭 완료")
+        click(Location(base_x, click_y))
+        sleep(1)
+
+    log(u"    [완료] 6개 행 클릭 테스트 끝")
 
 
 def wait_and_click(img, description, wait_time=10):
