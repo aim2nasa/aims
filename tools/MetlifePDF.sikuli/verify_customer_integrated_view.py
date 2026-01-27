@@ -20,6 +20,11 @@
 import os
 import sys
 import time
+from java.awt import Robot
+from java.awt.event import KeyEvent
+
+# Java Robot 인스턴스 (Page Up 키 입력용)
+_robot = Robot()
 
 # SikuliX 설정
 Settings.ActionLogs = True  # 디버깅용 로그 활성화
@@ -44,6 +49,29 @@ WAIT_LONG = 5
 def log(msg):
     """로그 출력"""
     print(msg)
+
+
+def scroll_to_top(scroll_count=20):
+    """
+    마우스 휠로 스크롤을 맨 위로 이동
+
+    Args:
+        scroll_count: 휠 스크롤 횟수
+    """
+    # 콘텐츠 영역 클릭하여 포커스 확보
+    screen = Screen()
+    center_x = screen.getW() / 2
+    center_y = screen.getH() / 2
+    click(Location(center_x, center_y))
+    log(u"    포커스 클릭: (%d, %d)" % (center_x, center_y))
+    sleep(0.3)
+
+    # 마우스 휠 UP으로 맨 위로 이동
+    log(u"    마우스 휠 UP x %d..." % scroll_count)
+    for i in range(scroll_count):
+        wheel(WHEEL_UP, 3)  # 3 notches per scroll
+        sleep(0.1)
+    sleep(0.5)
 
 
 def wait_and_click(img, description, wait_time=10):
@@ -100,21 +128,21 @@ def verify_customer_integrated_view():
 
     sleep(WAIT_LONG)  # 고객통합뷰 로딩 대기
 
-    # 3단계: 고객통합뷰 화면 확인 (선택적)
+    # 3단계: 스크롤 맨 위로 이동
     log(u"")
-    log(u"[3단계] 고객통합뷰 화면 로딩 대기")
-    log(u"    5초 대기...")
-    sleep(WAIT_LONG)
+    log(u"[3단계] 스크롤 맨 위로 이동")
+    log(u"    마우스 휠로 스크롤...")
+    scroll_to_top()
+    log(u"    스크롤 완료")
 
     # 4단계: X 버튼 클릭하여 종료
     log(u"")
-    log(u"[4단계] 고객통합뷰 X 버튼 클릭")
-    if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"고객통합뷰 X 버튼"):
-        log(u"    [FAIL] 고객통합뷰 X 버튼을 찾을 수 없습니다.")
+    log(u"[4단계] X 버튼 클릭하여 종료")
+    if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"X 버튼"):
+        log(u"    [FAIL] X 버튼을 찾을 수 없습니다.")
         log(u"        - 고객통합뷰 화면이 표시되어 있는지 확인하세요.")
         log(u"        - 이미지가 올바르게 캡처되었는지 확인하세요.")
         return False
-
     sleep(WAIT_MEDIUM)  # 화면 전환 대기
 
     # 5단계: 완료
