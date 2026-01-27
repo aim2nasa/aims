@@ -34,9 +34,10 @@ setFindFailedResponse(ABORT)
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
 
 # 이미지 경로 설정
-IMG_CUSTOMER_INTEGRATED_VIEW_BTN = "img/1769481281041.png"  # 고객통합뷰 버튼
-IMG_INTEGRATED_VIEW_CLOSE_BTN = "img/1769481289302.png"  # 고객통합뷰 X 버튼
-IMG_VARIABLE_INSURANCE_REPORT_BTN = "img/1769483651370.png"  # 변액보험리포트 버튼
+IMG_CUSTOMER_INTEGRATED_VIEW_BTN = "img/1769492134172.png"  # 고객통합뷰 버튼
+IMG_INTEGRATED_VIEW_CLOSE_BTN = "img/1769492160505.png"  # 고객통합뷰 X 버튼
+IMG_VARIABLE_INSURANCE_REPORT_BTN = "img/1769492311473.png"  # 변액보험리포트 버튼
+IMG_VARIABLE_REPORT_CLOSE_BTN = "img/1769493031653.png"  # 변액보험리포트 팝업 X 버튼
 IMG_ALERT_CONFIRM_BTN = "img/1769483666560.png"  # 알림 팝업 확인 버튼
 
 # 기존 이미지 (고객등록/조회 페이지)
@@ -155,17 +156,25 @@ def verify_customer_integrated_view():
     else:
         log(u"    변액계약이 존재합니다 (또는 알림 없음)")
 
-    # 6단계: X 버튼 클릭하여 종료
+    # 6단계: 변액보험리포트 팝업 X 버튼 클릭
     log(u"")
-    log(u"[6단계] X 버튼 클릭하여 종료")
-    if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"X 버튼"):
-        log(u"    [FAIL] X 버튼을 찾을 수 없습니다.")
+    log(u"[6단계] 변액보험리포트 팝업 X 버튼 클릭")
+    if not wait_and_click(IMG_VARIABLE_REPORT_CLOSE_BTN, u"변액보험리포트 X 버튼"):
+        log(u"    [FAIL] 변액보험리포트 X 버튼을 찾을 수 없습니다.")
+        return False
+    sleep(WAIT_SHORT)
+
+    # 7단계: 고객통합뷰 X 버튼 클릭하여 종료
+    log(u"")
+    log(u"[7단계] 고객통합뷰 X 버튼 클릭하여 종료")
+    if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"고객통합뷰 X 버튼"):
+        log(u"    [FAIL] 고객통합뷰 X 버튼을 찾을 수 없습니다.")
         log(u"        - 고객통합뷰 화면이 표시되어 있는지 확인하세요.")
         log(u"        - 이미지가 올바르게 캡처되었는지 확인하세요.")
         return False
     sleep(WAIT_MEDIUM)  # 화면 전환 대기
 
-    # 7단계: 완료
+    # 8단계: 완료
     log(u"")
     log(u"=" * 60)
     log(u"[SUCCESS] 고객통합뷰 검증 완료!")
