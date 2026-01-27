@@ -20,8 +20,12 @@
 import os
 import sys
 import time
-from java.awt import Robot
+import shutil
+from java.awt import Robot, Color, BasicStroke
 from java.awt.event import KeyEvent
+from java.awt.image import BufferedImage
+from javax.imageio import ImageIO
+from java.io import File
 
 # Java Robot 인스턴스 (Page Up 키 입력용)
 _robot = Robot()
@@ -39,6 +43,10 @@ IMG_INTEGRATED_VIEW_CLOSE_BTN = "img/1769492160505.png"  # 고객통합뷰 X 버
 IMG_VARIABLE_INSURANCE_REPORT_BTN = "img/1769492311473.png"  # 변액보험리포트 버튼
 IMG_VARIABLE_REPORT_CLOSE_BTN = "img/1769493031653.png"  # 변액보험리포트 팝업 X 버튼
 IMG_ALERT_CONFIRM_BTN = "img/1769483666560.png"  # 알림 팝업 확인 버튼
+
+# 변액보험리포트 행 클릭 테스트용 이미지
+IMG_REPORT_HEADER = "img/1769494674991.png"  # 증권번호 헤더
+IMG_SELECT_BTN = "img/1769013332392.png"  # 선택 버튼
 
 # 기존 이미지 (고객등록/조회 페이지)
 IMG_CLOSE_BTN = "img/1769234950471.png"  # 고객등록/조회 종료(x) 버튼
@@ -75,6 +83,80 @@ def scroll_to_top(scroll_count=20):
         wheel(WHEEL_UP, 3)  # 3 notches per scroll
         sleep(0.1)
     sleep(0.5)
+
+
+def draw_crosshair(image_path, x, y, output_path):
+    """
+    이미지에 빨간색 + 표시를 그려서 저장
+
+    Args:
+        image_path: 원본 이미지 경로
+        x, y: + 표시할 좌표
+        output_path: 저장할 경로
+    """
+    # 이미지 로드
+    img = ImageIO.read(File(image_path))
+
+    # Graphics2D로 그리기
+    g2d = img.createGraphics()
+    g2d.setColor(Color.RED)
+    g2d.setStroke(BasicStroke(3))  # 선 두께 3px
+
+    # + 표시 그리기 (크기 40px)
+    cross_size = 20
+    g2d.drawLine(x - cross_size, y, x + cross_size, y)  # 가로선
+    g2d.drawLine(x, y - cross_size, x, y + cross_size)  # 세로선
+
+    # 원 그리기 (더 눈에 띄게)
+    g2d.drawOval(x - 15, y - 15, 30, 30)
+
+    g2d.dispose()
+
+    # 저장
+    ImageIO.write(img, "png", File(output_path))
+
+
+def test_row_clicks():
+    """
+    행 클릭 테스트 - 맨 위부터 맨 아래까지 모든 행을 하나씩 클릭
+    오프셋이 제대로 지켜지는지 확인
+    """
+    ROW_HEIGHT = 28
+    VISIBLE_ROWS = 6
+    MAX_ROWS = 100
+
+    # 증권번호 헤더를 기준점으로 사용
+    if not exists(IMG_REPORT_HEADER, 5):
+        log(u"    [ERROR] 증권번호 헤더를 찾을 수 없습니다.")
+        return
+
+    header_match = find(IMG_REPORT_HEADER)
+    header_x = header_match.getCenter().getX()
+    header_y = header_match.getCenter().getY()
+    # 체크박스는 증권번호 헤더 왼쪽 약 54px
+    base_x = header_x - 54
+    # 첫 번째 행은 헤더 아래 약 33px
+    first_row_y = header_y + 33
+    log(u"    [기준점] 헤더 위치: (%d, %d), 체크박스 X: %d, 첫 행 Y: %d" % (header_x, header_y, base_x, first_row_y))
+    log(u"    [설정] ROW_HEIGHT=%d, VISIBLE_ROWS=%d" % (ROW_HEIGHT, VISIBLE_ROWS))
+
+    # 첫 번째 행만 클릭
+    click_y = first_row_y
+    log(u"    [행 1] 클릭 위치: (%d, %d)" % (base_x, click_y))
+
+    # 스크린샷 캡처
+    temp_path = r"D:\aims\tools\MetlifePDF.sikuli\temp_capture.png"
+    screenshot_path = r"D:\aims\tools\MetlifePDF.sikuli\click_row_1.png"
+    img = Screen().capture()
+    shutil.move(img.getFile(), temp_path)
+
+    # 빨간색 + 표시 그려서 저장
+    draw_crosshair(temp_path, int(base_x), int(click_y), screenshot_path)
+    os.remove(temp_path)
+    log(u"    스크린샷 저장: %s" % screenshot_path)
+
+    click(Location(base_x, click_y))
+    log(u"    클릭 완료")
 
 
 def wait_and_click(img, description, wait_time=10):
@@ -154,7 +236,8 @@ def verify_customer_integrated_view():
         click(IMG_ALERT_CONFIRM_BTN)
         sleep(WAIT_SHORT)
     else:
-        log(u"    변액계약이 존재합니다 (또는 알림 없음)")
+        log(u"    변액계약이 존재합니다 - 행 클릭 테스트 시작")
+        test_row_clicks()
 
     # 6단계: 변액보험리포트 팝업 X 버튼 클릭
     log(u"")
