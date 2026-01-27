@@ -71,8 +71,9 @@ import codecs
 
 def log(msg):
     """로그 출력 및 파일 저장"""
+    # 콘솔 출력 (그대로)
     print(msg)
-    # 유니코드로 변환
+    # 파일 저장 (유니코드 변환 후)
     if isinstance(msg, str):
         msg = msg.decode("utf-8", errors="replace")
     with codecs.open(LOG_FILE, "a", encoding="utf-8") as f:
@@ -679,5 +680,5 @@ if __name__ == "__main__":
 
     success = verify_customer_integrated_view()
 
-    log("=== 실행 종료 ===")
+    log(u"=== 실행 종료 ===")
     sys.exit(0 if success else 1)
