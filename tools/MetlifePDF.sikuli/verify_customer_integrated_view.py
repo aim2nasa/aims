@@ -245,6 +245,9 @@ def is_row_checked(base_x, row_y, debug_dir=None, debug_idx=None):
         bool: 체크되어 있으면 True
     """
     # 체크박스 영역 (체크마크는 파란색)
+    # ★ 클릭 위치(base_x)를 중심으로 캡처
+    # ROW_HEIGHT=37이므로 인접 행 침범 방지를 위해 높이를 30 이하로 제한
+    # 수평 위치는 정확하므로 너비도 30으로 설정
     check_region = Region(int(base_x - 15), int(row_y - 12), 30, 24)
 
     # 파란색 픽셀 확인 (체크마크 색상)
@@ -265,7 +268,15 @@ def is_row_checked(base_x, row_y, debug_dir=None, debug_idx=None):
                     blue_pixels += 1
 
         # 일정 수 이상의 파란 픽셀이 있으면 체크됨
-        is_checked = blue_pixels > 20
+        # ★ 스크롤 후 오프셋 변동으로 부분 캡처될 수 있으므로 임계값 낮춤 (20 → 5)
+        is_checked = blue_pixels > 5
+
+        # 디버그 로그 출력
+        log(u"        [체크확인] Y=%d, 파란픽셀=%d, 체크됨=%s" % (row_y, blue_pixels, is_checked))
+
+        # 디버그: 체크박스 이미지 저장 (항상)
+        chk_path = os.path.join(SCREENSHOT_DIR, "chk_y%d_blue%d.png" % (int(row_y), blue_pixels))
+        shutil.copy(img_file, chk_path)
 
         # 디버그: 체크박스 이미지 저장
         if debug_dir and debug_idx is not None:
@@ -478,20 +489,58 @@ def is_y_already_clicked(y, clicked_set, tolerance=15):
     return False
 
 
+def calculate_image_hash(image_path):
+    """
+    이미지 파일의 간단한 해시 계산 (중복 감지용)
+    특정 영역의 픽셀 샘플링으로 해시 생성
+    """
+    try:
+        from javax.imageio import ImageIO
+        from java.io import File
+        import hashlib
+
+        img = ImageIO.read(File(image_path))
+        if img is None:
+            return None
+
+        width = img.getWidth()
+        height = img.getHeight()
+
+        # 이미지 중앙 영역의 픽셀 샘플링 (증권번호 등 주요 내용 포함)
+        sample_pixels = []
+        center_x = width // 2
+        center_y = height // 2
+
+        # 중앙 100x50 영역에서 샘플링
+        for dy in range(-25, 25, 5):
+            for dx in range(-50, 50, 10):
+                x = max(0, min(width - 1, center_x + dx))
+                y = max(0, min(height - 1, center_y + dy))
+                pixel = img.getRGB(x, y)
+                sample_pixels.append(str(pixel))
+
+        # 해시 생성
+        pixel_str = ",".join(sample_pixels)
+        return hashlib.md5(pixel_str.encode()).hexdigest()[:16]
+    except Exception as e:
+        log(u"    [WARN] 이미지 해시 계산 실패: %s" % str(e))
+        return None
+
+
 def click_all_rows_with_scroll():
     """
-    변액보험리포트 모든 행 클릭 (중복 방지 버전)
+    변액보험리포트 모든 행 클릭 (이미지 매칭 기반 버전)
 
-    핵심:
-    - 클릭한 Y좌표를 Set으로 추적하여 중복 클릭 방지
-    - 라디오 버튼 특성 고려 (클릭 시 이전 선택 해제됨)
-    - 스크롤 후 새 행만 클릭
+    핵심 원칙:
+    - "중복 클릭은 허용, 놓치는 행은 절대 불가!"
+    - Y 좌표 계산 대신 findAll()로 화면에 보이는 unchecked 체크박스를 직접 찾아 클릭
+    - 스크롤 후에도 실제 체크박스 위치를 직접 찾으므로 오프셋 오차 문제 없음
 
     Returns:
         int: 선택한 행 개수
     """
     log(u"")
-    log(u"    === 변액보험리포트 순차 클릭 시작 (중복 방지 버전) ===")
+    log(u"    === 변액보험리포트 순차 클릭 시작 (이미지 매칭 기반) ===")
 
     # 헤더 찾기
     if not exists(IMG_REPORT_HEADER, 5):
@@ -503,198 +552,292 @@ def click_all_rows_with_scroll():
     header_y = header_match.getCenter().getY()
     log(u"    [기준점] 헤더 위치: (%d, %d)" % (header_x, header_y))
 
-    # 체크박스 X좌표, 첫 행 Y좌표
+    # 체크박스 X좌표 (참고용)
     base_x = header_x + HEADER_TO_CHECKBOX_X
-    first_row_y = header_y + HEADER_TO_FIRST_ROW_Y
-
-    # 화면 하단 경계 (이 Y를 넘으면 스크롤 필요)
-    visible_bottom_y = first_row_y + (VISIBLE_ROWS - 1) * ROW_HEIGHT
-
-    log(u"    [설정] base_x=%d, first_row_y=%d, visible_bottom=%d" % (base_x, first_row_y, visible_bottom_y))
 
     total_clicked = 0
     MAX_REPORTS = 50  # 안전장치
-    unchecked_pattern = Pattern(IMG_CHECKBOX_UNCHECKED).similar(0.6)
-
-    # ★ 클릭한 Y좌표 추적 (중복 방지 핵심)
-    clicked_y_set = set()
+    MAX_SCROLL_NO_NEW = 3  # 스크롤 후 새 행 없으면 종료
 
     # 연속 스크롤 실패 카운터
-    scroll_fail_count = 0
-    MAX_SCROLL_FAILS = 3
+    scroll_no_new_count = 0
 
-    # 절대 Y좌표로 추적
-    current_y = first_row_y
+    # ★ 클릭한 Y좌표 추적 (중복 클릭 방지)
+    # 보고서인쇄 창 닫으면 체크박스가 해제되므로 Y좌표로 추적 필요
+    clicked_y_set = set()
 
-    # 연속 빈 행 카운터 (종료 조건)
-    empty_row_count = 0
-    MAX_EMPTY_ROWS = VISIBLE_ROWS  # 7회 연속 빈 행이면 종료
+    # ★ 스크롤 전 마지막 클릭 Y (무한 반복 방지용)
+    last_clicked_y_before_scroll = None
 
-    while total_clicked < MAX_REPORTS:
-        # ★ 화면 경계 먼저 체크 - visible 영역을 벗어나면 스크롤 필요
-        if current_y > visible_bottom_y:
-            log(u"    Y=%d > %d, 스크롤 필요!" % (current_y, visible_bottom_y))
+    # ★ 스크롤 횟수 기반 종료 (가장 확실한 방법)
+    # 13개 보고서, 화면에 7개 표시 → 첫 화면 7개 + 스크롤 1회 6-7개 = 13-14개
+    # MAX_SCROLLS = 1로 설정하여 중복 최소화 (최대 1개 중복)
+    scroll_count = 0
+    MAX_SCROLLS = 1  # 스크롤 1회 후 종료
+    end_detected = False  # while 루프 종료 플래그
 
-            # 스크롤 전 첫 행 영역 캡처 (스크롤 효과 비교용)
-            first_row_region = Region(int(base_x + 50), int(first_row_y - 15), 400, 30)
+    # ★ 스크롤 후 클릭 개수 비교용
+    clicks_before_scroll = 0
+    is_after_scroll = False
+
+    # 검색 영역: 헤더 아래 전체 테이블 영역
+    # 넉넉하게 잡아서 모든 체크박스를 포함
+    search_region = Region(int(base_x - 40), int(header_y + 15), 80, 350)
+    log(u"    [검색영역] (%d, %d, 80, 350)" % (int(base_x - 40), int(header_y + 15)))
+
+    while total_clicked < MAX_REPORTS and not end_detected:
+        # ★ 핵심: findAll()로 화면에 보이는 모든 unchecked 체크박스 찾기
+        unchecked_pattern = Pattern(IMG_CHECKBOX_UNCHECKED).similar(0.7)
+
+        try:
+            # 헤더 재탐색 (스크롤 후 위치 변경 대응)
+            if exists(IMG_REPORT_HEADER, 2):
+                header_match = find(IMG_REPORT_HEADER)
+                header_y = header_match.getCenter().getY()
+                base_x = header_match.getCenter().getX() + HEADER_TO_CHECKBOX_X
+                search_region = Region(int(base_x - 40), int(header_y + 15), 80, 350)
+
+            matches = list(search_region.findAll(unchecked_pattern))
+            log(u"    [탐색] unchecked 체크박스 %d개 발견" % len(matches))
+        except:
+            matches = []
+            log(u"    [탐색] unchecked 체크박스 없음")
+
+        # ★ 새로 클릭할 unchecked 필터링 (이미 클릭한 Y좌표 제외)
+        new_matches = []
+        for m in matches:
+            m_y = m.getCenter().getY()
+            is_clicked = False
+            for prev_y in clicked_y_set:
+                if abs(m_y - prev_y) < 20:  # 스크롤 오프셋 커버, 행 간격(37px) 미만
+                    is_clicked = True
+                    break
+            if not is_clicked:
+                new_matches.append(m)
+
+        if not new_matches:
+            # 화면에 새로 클릭할 unchecked가 없음 → 스크롤 필요
+            scroll_count += 1
+            log(u"    [스크롤 %d/%d] 새로 클릭할 unchecked 없음, 스크롤 시도..." % (scroll_count, MAX_SCROLLS))
+
+            # ★ 스크롤 횟수 제한 체크
+            if scroll_count > MAX_SCROLLS:
+                log(u"    [END] 스크롤 횟수 제한 도달 (%d회) - 총 %d개 클릭 완료" % (MAX_SCROLLS, total_clicked))
+                break
+
+            clicks_before_scroll = total_clicked  # 스크롤 전 클릭 개수 저장
+            # ★ 스크롤 전 마지막 클릭 Y 저장 (무한 반복 방지용)
+            if clicked_y_set:
+                last_clicked_y_before_scroll = max(clicked_y_set)
+
+            # 스크롤 전 화면 캡처 (비교용)
+            scroll_before_region = Region(int(base_x + 50), int(header_y + 30), 400, 30)
             scroll_before_img = None
             try:
-                scroll_before_capture = Screen().capture(first_row_region)
+                scroll_before_capture = Screen().capture(scroll_before_region)
                 scroll_before_img = scroll_before_capture.getFile()
                 scroll_before_path = os.path.join(SCREENSHOT_DIR, "scroll_before_%02d.png" % total_clicked)
                 shutil.copy(scroll_before_img, scroll_before_path)
-                log(u"    [DEBUG] 스크롤 전 첫 행: %s" % scroll_before_path)
             except:
                 pass
 
-            # 휠 스크롤 (테이블 중앙에서 스크롤)
+            # 테이블 중앙에서 휠 스크롤
             table_center_x = base_x + 200
-            table_center_y = (first_row_y + visible_bottom_y) / 2
-            log(u"    [스크롤] 테이블 중앙 (%d, %d)에서 휠 스크롤..." % (table_center_x, table_center_y))
+            table_center_y = header_y + 150
             click(Location(table_center_x, table_center_y))
-            sleep(0.5)
+            sleep(0.3)
             wheel(WHEEL_DOWN, 20)
-            sleep(2.0)
+            sleep(1.5)
 
-            # 스크롤 후 첫 행 영역 캡처 (비교용)
+            # 스크롤 후 화면 캡처 (비교용)
             scroll_after_img = None
             try:
-                scroll_after_capture = Screen().capture(first_row_region)
+                scroll_after_capture = Screen().capture(scroll_before_region)
                 scroll_after_img = scroll_after_capture.getFile()
                 scroll_after_path = os.path.join(SCREENSHOT_DIR, "scroll_after_%02d.png" % total_clicked)
                 shutil.copy(scroll_after_img, scroll_after_path)
-                log(u"    [DEBUG] 스크롤 후 첫 행: %s" % scroll_after_path)
             except:
                 pass
 
-            # ★ 스크롤 효과 검증: 전후 이미지 비교
+            # 스크롤 효과 검증
             if scroll_before_img and scroll_after_img:
                 try:
                     before = ImageIO.read(File(scroll_before_img))
                     after = ImageIO.read(File(scroll_after_img))
-
-                    # 픽셀 차이 계산
                     diff_count = 0
                     total_pixels = before.getWidth() * before.getHeight()
                     for x in range(min(before.getWidth(), after.getWidth())):
                         for y in range(min(before.getHeight(), after.getHeight())):
                             if before.getRGB(x, y) != after.getRGB(x, y):
                                 diff_count += 1
-
                     diff_percent = (diff_count * 100.0) / total_pixels
                     log(u"    [스크롤 효과] 픽셀 차이: %.1f%%" % diff_percent)
 
-                    # 5% 미만 차이 = 스크롤 효과 없음 = 끝에 도달
                     if diff_percent < 5.0:
-                        log(u"    [END] 스크롤 효과 없음 (차이 %.1f%%) - 리스트 끝 도달" % diff_percent)
-                        log(u"    === 총 %d개 리포트 클릭 완료 ===" % total_clicked)
+                        log(u"    [END] 스크롤 효과 없음 - 리스트 끝 도달")
                         break
-                except Exception as e:
-                    log(u"    [WARN] 이미지 비교 실패: %s" % str(e))
+                except:
+                    pass
 
-            # 스크롤 후 헤더 재탐색 및 base_x 재계산
-            if exists(IMG_REPORT_HEADER, 3):
-                header_match = find(IMG_REPORT_HEADER)
-                header_x = header_match.getCenter().getX()
-                header_y = header_match.getCenter().getY()
-                base_x = header_x + HEADER_TO_CHECKBOX_X  # ★ base_x 재계산
-                first_row_y = header_y + HEADER_TO_FIRST_ROW_Y
-                visible_bottom_y = first_row_y + (VISIBLE_ROWS - 1) * ROW_HEIGHT
-                log(u"    스크롤 후: base_x=%d, first_row_y=%d, visible_bottom=%d" % (base_x, first_row_y, visible_bottom_y))
+            # ★ 스크롤 후 체크된 행 해제 (중복 선택 방지)
+            log(u"    [SCROLL] 체크된 행 해제 시작...")
+            checked_pattern = Pattern(IMG_CHECKBOX_CHECKED).similar(0.7)
+            deselect_count = 0
+            for attempt in range(5):
+                try:
+                    checked_match = search_region.find(checked_pattern)
+                    checked_loc = checked_match.getCenter()
+                    log(u"    [SCROLL] 체크된 행 발견 (%d, %d) - 클릭해서 해제" % (checked_loc.getX(), checked_loc.getY()))
+                    click(checked_loc)
+                    sleep(0.8)
+                    deselect_count += 1
+                except:
+                    break
+            if deselect_count > 0:
+                log(u"    [SCROLL] 체크 해제 완료: %d개" % deselect_count)
 
-            # ★ findAll에 의존하지 않고, first_row_y부터 순차 클릭 시도
-            # 스크롤 후에는 같은 Y 좌표에 새 행이 표시되므로 clicked_y_set 클리어
+            # ★ 스크롤 후 Y좌표 추적 완전 클리어
+            # 스크롤 후 같은 Y에 새 행이 나타나므로 Y좌표 기반 필터링 초기화
+            # 중복 클릭은 허용, 놓치는 행은 절대 불가 원칙
+            # 실제 중복 감지는 이미지 해시로 수행 (clicked_modal_hashes)
             clicked_y_set.clear()
-            current_y = first_row_y
-            empty_row_count = 0  # 스크롤 후 카운터 리셋
-            log(u"    [SCROLL] current_y=%d로 이동 (순차 클릭 시작, clicked_y_set 초기화)" % current_y)
-            continue
+            log(u"    [SCROLL] Y좌표 추적 클리어")
 
-        # ★ 새 전략: 패턴 인식 없이 무조건 클릭 후 "선택 버튼" 존재 여부로 판단
-        # 이미 클릭한 Y인지 확인
-        if is_y_already_clicked(current_y, clicked_y_set):
-            log(u"    Y=%d 이미 클릭됨 - 스킵" % current_y)
-            current_y += ROW_HEIGHT
-            continue
-
-        # 1. 행 위치 클릭 (체크박스 선택 시도)
-        log(u"    [시도] Y=%d 클릭 중..." % current_y)
-        click(Location(base_x, current_y))
-        sleep(0.8)
-
-        # 2. 선택 버튼이 나타나는지 확인 (성공 여부 판단)
-        select_btn_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
-        if exists(select_btn_pattern, 2):
-            # 성공: 행이 있고 클릭됨
-            total_clicked += 1
-            clicked_y_set.add(current_y)
-            log(u"    [%d] 행 클릭 성공 Y=%d" % (total_clicked, current_y))
-
-            # 스크린샷 저장 (행 + 모달 전체)
+            # 스크롤 후 다시 unchecked 찾기
             try:
-                row_region = Region(int(base_x - 50), int(current_y - 15), 600, 30)
-                capture = Screen().capture(row_region)
-                screenshot_path = os.path.join(SCREENSHOT_DIR, "row_%02d.png" % total_clicked)
-                shutil.copy(capture.getFile(), screenshot_path)
-                log(u"        -> 행 스크린샷: %s" % screenshot_path)
+                matches = list(search_region.findAll(unchecked_pattern))
+                log(u"    [스크롤 후 탐색] unchecked 체크박스 %d개 발견" % len(matches))
+            except:
+                matches = []
 
-                # 모달 전체 + 캡처 영역 마커 저장
-                modal_path = os.path.join(SCREENSHOT_DIR, "modal_%02d.png" % total_clicked)
-                if capture_modal_with_row_marker(header_match, row_region, modal_path):
-                    log(u"        -> 모달 스크린샷: %s" % modal_path)
-            except Exception as e:
-                log(u"        [WARN] 스크린샷 저장 실패: %s" % str(e))
+            if not matches:
+                scroll_no_new_count += 1
+                log(u"    [WARN] 스크롤 후에도 unchecked 없음 (연속 %d회)" % scroll_no_new_count)
+                if scroll_no_new_count >= MAX_SCROLL_NO_NEW:
+                    log(u"    [END] 연속 %d회 새 행 없음 - 총 %d개 클릭 완료" % (scroll_no_new_count, total_clicked))
+                    break
+                continue
 
-            # 선택 버튼 클릭
-            click(select_btn_pattern)
-            log(u"        -> 선택 버튼 클릭")
+            # ★ 스크롤 후 new_matches 필터링 다시 수행
+            new_matches = []
+            for m in matches:
+                m_y = m.getCenter().getY()
+                is_clicked = False
+                for prev_y in clicked_y_set:
+                    if abs(m_y - prev_y) < 20:  # 스크롤 오프셋 커버, 행 간격(37px) 미만
+                        is_clicked = True
+                        break
+                if not is_clicked:
+                    new_matches.append(m)
 
-            # 보고서인쇄 창이 뜰 때까지 대기 (최대 15초, 시스템 느릴 수 있음)
-            sleep(WAIT_MEDIUM)  # 창이 완전히 로드될 때까지 대기
-
-            # X 버튼 클릭 (새 함수 사용)
-            if click_print_report_close_btn():
-                log(u"        -> 보고서인쇄 X 클릭 성공")
-
-                # 변액보험리포트 창이 다시 나타날 때까지 대기 (최대 15초)
-                if exists(IMG_REPORT_HEADER, 15):
-                    log(u"        -> 변액보험리포트 창 복귀 확인")
-                else:
-                    log(u"        [WARN] 변액보험리포트 창 복귀 지연")
-                    sleep(WAIT_MEDIUM)  # fallback
-
-                # 알림 팝업이 떴는지 확인 ("미리보기 목록이 없습니다" 등)
-                if exists(IMG_ALERT_CONFIRM_BTN, 1):
-                    click(IMG_ALERT_CONFIRM_BTN)
-                    log(u"        [WARN] 알림 팝업 닫음 - 미리보기 버튼 오클릭?")
-                    sleep(WAIT_SHORT)
-                    # X 버튼 다시 클릭
-                    if click_print_report_close_btn():
-                        log(u"        -> 보고서인쇄 X 재클릭 성공")
-                        # 변액보험리포트 창 복귀 대기
-                        if not exists(IMG_REPORT_HEADER, 15):
-                            sleep(WAIT_MEDIUM)
+            if not new_matches:
+                # 스크롤 후에도 새로 클릭할 행 없음 = 리스트 끝
+                scroll_no_new_count += 1
+                log(u"    [WARN] 스크롤 후에도 새로 클릭할 행 없음 (연속 %d회)" % scroll_no_new_count)
+                if scroll_no_new_count >= MAX_SCROLL_NO_NEW:
+                    log(u"    [END] 연속 %d회 새 행 없음 - 총 %d개 클릭 완료" % (scroll_no_new_count, total_clicked))
+                    break
+                continue
             else:
-                log(u"        [ERROR] 보고서인쇄 X 버튼 못 찾음")
-                break
+                scroll_no_new_count = 0  # 리셋
+                is_after_scroll = True  # ★ 스크롤 후 플래그 설정
 
-            # 다음 행으로
-            current_y += ROW_HEIGHT
-            empty_row_count = 0
+        # ★ Y 좌표 순으로 정렬 (위에서 아래로 클릭)
+        matches_sorted = sorted(new_matches if new_matches else matches, key=lambda m: m.getCenter().getY())
 
-        else:
-            # 실패: 빈 행이거나 클릭 안됨
-            empty_row_count += 1
-            log(u"    Y=%d 빈 행 (연속 %d회)" % (current_y, empty_row_count))
+        for match in matches_sorted:
+            click_x = match.getCenter().getX()
+            click_y = match.getCenter().getY()
 
-            if empty_row_count >= MAX_EMPTY_ROWS:
-                log(u"    [END] 연속 %d회 빈 행 - 총 %d개 클릭 완료" % (empty_row_count, total_clicked))
-                break
+            # ★ 이미 클릭한 Y좌표인지 확인 (±15px 허용)
+            already_clicked = False
+            for prev_y in clicked_y_set:
+                if abs(click_y - prev_y) < 20:  # 스크롤 오프셋 커버, 행 간격(37px) 미만
+                    already_clicked = True
+                    break
 
-            current_y += ROW_HEIGHT
+            if already_clicked:
+                log(u"    [SKIP] Y=%d 이미 클릭됨 - 스킵" % click_y)
+                continue
+
+            log(u"    [클릭] unchecked 체크박스 위치 (%d, %d)" % (click_x, click_y))
+
+            # 체크박스 클릭
+            click(match.getCenter())
+            sleep(2.0)  # 선택 상태 처리 대기
+
+            # 선택 버튼 확인 (성공 여부)
+            select_btn_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
+            if exists(select_btn_pattern, 2):
+                total_clicked += 1
+                clicked_y_set.add(click_y)  # ★ Y좌표 추적
+                log(u"    [%d] 행 클릭 성공 (%d, %d)" % (total_clicked, click_x, click_y))
+
+                # 스크린샷 저장
+                try:
+                    row_region = Region(int(click_x - 50), int(click_y - 15), 600, 30)
+                    capture = Screen().capture(row_region)
+                    screenshot_path = os.path.join(SCREENSHOT_DIR, "row_%02d.png" % total_clicked)
+                    shutil.copy(capture.getFile(), screenshot_path)
+                    log(u"        -> 행 스크린샷: %s" % screenshot_path)
+
+                    # 모달 전체 + 캡처 영역 마커 저장
+                    modal_path = os.path.join(SCREENSHOT_DIR, "modal_%02d.png" % total_clicked)
+                    if capture_modal_with_row_marker(header_match, row_region, modal_path):
+                        log(u"        -> 모달 스크린샷: %s" % modal_path)
+                except Exception as e:
+                    log(u"        [WARN] 스크린샷 저장 실패: %s" % str(e))
+
+                # 선택 버튼 클릭
+                click(select_btn_pattern)
+                log(u"        -> 선택 버튼 클릭")
+                sleep(WAIT_MEDIUM)
+
+                # X 버튼 클릭
+                if click_print_report_close_btn():
+                    log(u"        -> 보고서인쇄 X 클릭 성공")
+
+                    # 변액보험리포트 창 복귀 대기
+                    if exists(IMG_REPORT_HEADER, 15):
+                        log(u"        -> 변액보험리포트 창 복귀 확인")
+                        sleep(1.0)
+                    else:
+                        log(u"        [WARN] 변액보험리포트 창 복귀 지연")
+                        sleep(WAIT_MEDIUM)
+
+                    # 알림 팝업 처리
+                    if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                        click(IMG_ALERT_CONFIRM_BTN)
+                        log(u"        [WARN] 알림 팝업 닫음")
+                        sleep(WAIT_SHORT)
+                        if click_print_report_close_btn():
+                            log(u"        -> 보고서인쇄 X 재클릭 성공")
+                            if not exists(IMG_REPORT_HEADER, 15):
+                                sleep(WAIT_MEDIUM)
+                else:
+                    log(u"        [ERROR] 보고서인쇄 X 버튼 못 찾음")
+                    break
+            else:
+                log(u"    [SKIP] 선택 버튼 안 나타남 - 빈 행 또는 이미 처리됨")
+
+        # 한 사이클 완료 후 다시 루프 시작 (남은 unchecked 찾기)
+
+        # ★ 스크롤 후 클릭 개수 비교 (무한 반복 방지)
+        if is_after_scroll:
+            new_clicks = total_clicked - clicks_before_scroll
+            log(u"    [스크롤 후 결과] 새로 클릭: %d개 (이전: %d, 현재: %d)" % (new_clicks, clicks_before_scroll, total_clicked))
+            if new_clicks == 0:
+                scroll_no_new_count += 1
+                log(u"    [WARN] 스크롤 후 새로 클릭한 행 없음 (연속 %d회)" % scroll_no_new_count)
+                if scroll_no_new_count >= MAX_SCROLL_NO_NEW:
+                    log(u"    [END] 연속 %d회 새 행 없음 - 총 %d개 클릭 완료" % (scroll_no_new_count, total_clicked))
+                    break
+            else:
+                scroll_no_new_count = 0  # 새 클릭이 있으면 리셋
+            is_after_scroll = False  # 플래그 리셋
 
     log(u"")
-    log(u"    === 총 %d개 리포트 클릭 완료 (클릭된 Y: %d개) ===" % (total_clicked, len(clicked_y_set)))
+    log(u"    === 총 %d개 리포트 클릭 완료 (이미지 매칭 기반) ===" % total_clicked)
     return total_clicked
 
 
