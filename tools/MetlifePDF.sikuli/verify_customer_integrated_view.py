@@ -79,6 +79,9 @@ IMG_CANCEL_BTN = "img/1769099662780.png"             # 취소 버튼
 IMG_YES_BTN = "img/1769013568800.png"                # 예(Y) 버튼
 IMG_REPORT_PRINT_X_BTN = "img/1769013600633.png"     # 보고서인쇄 X 버튼 (MetlifePDF용)
 
+# Annual Report 관련 이미지
+IMG_ANNUAL_REPORT_BTN = "img/1769595503860.png"      # Annual Report 버튼
+
 # 행 클릭 오프셋 설정 (보정 완료)
 ROW_HEIGHT = 37  # 행 간격
 VISIBLE_ROWS = 7  # 스크롤 없을 때 보이는 최대 행 수 (모달에 7개 표시)
@@ -1102,6 +1105,76 @@ def take_screenshot(step_name):
     return capture_step_screenshot(0, step_name)
 
 
+def download_annual_report():
+    """
+    Annual Report PDF 다운로드
+    변액리포트와 달리 목록 선택 없이 바로 PDF 다운로드 화면 표시
+
+    Returns:
+        bool: 다운로드 성공 여부
+    """
+    log(u"")
+    log(u"[7단계] Annual Report 다운로드")
+
+    # 7-1: Annual Report 버튼 클릭
+    log(u"    [Annual Report 버튼] 찾는 중...")
+    if not exists(IMG_ANNUAL_REPORT_BTN, 10):
+        log(u"    [WARN] Annual Report 버튼을 찾을 수 없음 - 스킵")
+        take_screenshot(u"step7_annual_report_btn_not_found")
+        return False
+
+    click(IMG_ANNUAL_REPORT_BTN)
+    log(u"    [Annual Report 버튼] 클릭 완료")
+
+    # 7-2: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
+    log(u"    PDF 로딩 대기 중 (최대 30초)...")
+    if not exists(IMG_PDF_SAVE_BTN, 30):
+        log(u"    [ERROR] PDF 로딩 타임아웃")
+        take_screenshot(u"step7_annual_report_timeout")
+        return False
+    take_screenshot(u"step7_annual_report_loaded")
+    log(u"    PDF 로딩 완료")
+
+    # 7-3: PDF 저장 버튼 클릭
+    log(u"    PDF 저장 버튼 클릭...")
+    click(IMG_PDF_SAVE_BTN)
+    sleep(WAIT_SHORT)
+
+    # 7-4: 저장(S) 버튼 클릭
+    if exists(IMG_SAVE_S_BTN, 5):
+        log(u"    저장(S) 버튼 클릭...")
+        click(IMG_SAVE_S_BTN)
+        sleep(WAIT_SHORT)
+
+    # 7-5: 파일 중복 체크
+    if exists(IMG_NO_BTN, 3):
+        log(u"    동일 파일 존재 - 덮어쓰기 취소")
+        click(IMG_NO_BTN)
+        sleep(0.5)
+        if exists(IMG_CANCEL_BTN, 3):
+            click(IMG_CANCEL_BTN)
+        sleep(WAIT_SHORT)
+        take_screenshot(u"step7_annual_report_duplicate")
+    else:
+        log(u"    PDF 저장 중...")
+        sleep(2)
+        take_screenshot(u"step7_annual_report_saved")
+
+    # 7-6: PDF 닫기 (Alt+F4)
+    log(u"    PDF 닫기 (Alt+F4)...")
+    type(Key.F4, Key.ALT)
+    sleep(WAIT_MEDIUM)
+
+    # 7-7: 예(Y) 클릭 (저장 확인)
+    if exists(IMG_YES_BTN, 5):
+        log(u"    예(Y) 클릭...")
+        click(IMG_YES_BTN)
+        sleep(WAIT_SHORT)
+
+    log(u"    Annual Report 다운로드 완료")
+    return True
+
+
 def recover_to_report_list(report_number):
     """
     오류 발생 시 변액보험리포트 팝업(목록 화면)으로 복구
@@ -1758,14 +1831,17 @@ def verify_customer_integrated_view():
             capture_and_exit(u"변액보험리포트 X 버튼을 찾을 수 없음 - 예상치 못한 화면 상태")
         sleep(WAIT_SHORT)
 
-    # 7단계: 고객통합뷰 X 버튼 클릭하여 종료
+    # 7단계: Annual Report 다운로드
+    download_annual_report()
+
+    # 8단계: 고객통합뷰 X 버튼 클릭하여 종료
     log(u"")
-    log(u"[7단계] 고객통합뷰 X 버튼 클릭하여 종료")
+    log(u"[8단계] 고객통합뷰 X 버튼 클릭하여 종료")
     if not wait_and_click(IMG_INTEGRATED_VIEW_CLOSE_BTN, u"고객통합뷰 X 버튼"):
         capture_and_exit(u"고객통합뷰 X 버튼을 찾을 수 없음 - 예상치 못한 화면 상태")
     sleep(WAIT_MEDIUM)  # 화면 전환 대기
 
-    # 8단계: 완료
+    # 9단계: 완료
     log(u"")
     log(u"=" * 60)
     log(u"[SUCCESS] 고객통합뷰 검증 완료!")
