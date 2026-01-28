@@ -81,6 +81,8 @@ IMG_REPORT_PRINT_X_BTN = "img/1769013600633.png"     # 보고서인쇄 X 버튼 
 
 # Annual Report 관련 이미지
 IMG_ANNUAL_REPORT_BTN = "img/1769595503860.png"      # Annual Report 버튼
+IMG_NO_ANNUAL_REPORT_ALERT = "img/1769596744951.png" # Annual Report 없음 (null) 알림
+IMG_NO_ANNUAL_REPORT_CONFIRM = "img/1769596756382.png" # Annual Report 없음 확인 버튼
 
 # 행 클릭 오프셋 설정 (보정 완료)
 ROW_HEIGHT = 37  # 행 간격
@@ -1125,8 +1127,21 @@ def download_annual_report():
 
     click(IMG_ANNUAL_REPORT_BTN)
     log(u"    [Annual Report 버튼] 클릭 완료")
+    sleep(WAIT_SHORT)
 
-    # 7-2: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
+    # 7-2: Annual Report 미존재 확인 (null 알림 감지)
+    if exists(IMG_NO_ANNUAL_REPORT_ALERT, 3):
+        log(u"    [INFO] 'Annual Report가 존재하지 않습니다' 알림 감지")
+        take_screenshot(u"step7_no_annual_report_alert")
+        # 확인 버튼 클릭
+        if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3):
+            click(IMG_NO_ANNUAL_REPORT_CONFIRM)
+            sleep(WAIT_SHORT)
+        log(u"    Annual Report가 존재하지 않습니다 - 확인 버튼 클릭")
+        log(u"    -> Annual Report 미존재로 스킵, 다음 단계로 진행")
+        return True  # 오류가 아니라 정상 스킵
+
+    # 7-3: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
     log(u"    PDF 로딩 대기 중 (최대 30초)...")
     if not exists(IMG_PDF_SAVE_BTN, 30):
         log(u"    [ERROR] PDF 로딩 타임아웃")
