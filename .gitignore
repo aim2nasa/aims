@@ -37,3 +37,7 @@ nul
 _build_info.json
 .requirements_hash
 tmpclaude-*
+
+# Sikuli screenshots (테스트 실행 중 생성)
+tools/MetlifePDF.sikuli/screenshots/
+tools/MetlifePDF.sikuli/debug_log.txt
