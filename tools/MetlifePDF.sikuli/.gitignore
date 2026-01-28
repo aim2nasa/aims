@@ -1,0 +1,8 @@
+# 오류 스크린샷 폴더
+errors/
+
+# 스크린샷 폴더 (테스트 실행 시 자동 생성)
+screenshots/
+
+# 디버그 로그
+debug_log.txt

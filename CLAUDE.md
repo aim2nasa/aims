@@ -314,6 +314,31 @@ proxy: {
 
 **⚔️ 삭제된 고객이 휴면 목록에 나타나면 참수형에 처한다.**
 
+### 16. 🔴 SikuliX 테스트 실행 규칙 (/sikuli 스킬)
+**SikuliX GUI 자동화 테스트는 `/sikuli` 스킬로 실행한다!**
+
+| 트리거 | 설명 |
+|--------|------|
+| `/sikuli` | SikuliX 테스트 사이클 실행 |
+| `sikuli 테스트` | 동일 |
+| `sikulix 실행` | 동일 |
+
+**실행 방법 (PowerShell 백그라운드):**
+```bash
+# 1. 스크린샷 폴더 비우기
+cmd.exe /c "rd /s /q D:\aims\tools\MetlifePDF.sikuli\screenshots && mkdir D:\aims\tools\MetlifePDF.sikuli\screenshots"
+
+# 2. PowerShell로 백그라운드 실행 (run_in_background: true)
+powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'verify_customer_integrated_view.py'"
+```
+
+**주의사항:**
+- `cmd.exe`로 직접 실행 불가 → 반드시 `powershell.exe` 사용
+- 실행 전 스크린샷 폴더 비우기 필수
+- 완료 후 `debug_log.txt` 읽어서 결과 분석
+
+**스킬 정의:** `.claude/skills/sikuli.md`
+
 ---
 
 ## System Overview
