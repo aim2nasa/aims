@@ -552,6 +552,18 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             log(u"        [%d/%d] %s 스킵 (재개모드: %d행까지 스킵)" % (i + 1, total_to_process, name, resume_skip_until))
             continue
 
+        # --only 모드: 특정 고객명만 처리
+        global _only_found_count, _only_all_done
+        if ONLY_MODE:
+            if name != ONLY_CUSTOMER:
+                log(u"        [%d/%d] %s 스킵 (--only '%s' 모드)" % (i + 1, total_to_process, name, ONLY_CUSTOMER))
+                # 이미 처리한 고객이 있고, 다른 이름이 나왔으면 종료 플래그 설정
+                if _only_found_count > 0:
+                    _only_all_done = True
+                    log(u"        [ONLY] '%s' 처리 완료 (%d명) → 종료 예정" % (ONLY_CUSTOMER, _only_found_count))
+                    return processed, error_customers, current_base_y
+                continue
+
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
         try:
@@ -603,6 +615,11 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
             log(u"        -> %s 처리 완료" % name)
             processed += 1
+
+            # --only 모드: 처리 카운트 증가
+            if ONLY_MODE and name == ONLY_CUSTOMER:
+                _only_found_count += 1
+                log(u"        [ONLY] '%s' %d번째 처리 완료" % (ONLY_CUSTOMER, _only_found_count))
 
             # 체크포인트 저장 (성공한 고객)
             save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
@@ -686,6 +703,7 @@ def parse_args():
         'integrated_view': False,  # 고객통합뷰 진입 및 리포트 다운로드 옵션
         'start_after': None,  # 특정 고객 다음부터 시작 (재개용)
         'resume': False,  # checkpoint.json에서 위치 읽어서 재개
+        'only': None,  # 특정 고객명만 처리 (동일 이름 여러 명 처리용)
     }
 
     # --no-click 옵션 처리
@@ -714,6 +732,17 @@ def parse_args():
         result['resume'] = True
         args = [a for a in args if a != '--resume']
 
+    # --only 옵션 처리 (특정 고객명만 처리)
+    if '--only' in args:
+        idx = args.index('--only')
+        if idx + 1 < len(args):
+            raw_name = args[idx + 1]
+            if isinstance(raw_name, str):
+                result['only'] = raw_name.decode('utf-8')
+            else:
+                result['only'] = raw_name
+            args = args[:idx] + args[idx + 2:]
+
     # --chosung 옵션 처리
     if '--chosung' in args:
         idx = args.index('--chosung')
@@ -732,6 +761,7 @@ _arg_no_click = _parsed_args['no_click']
 _arg_integrated_view = _parsed_args['integrated_view']
 _arg_start_after = _parsed_args['start_after']
 _arg_resume = _parsed_args['resume']
+_arg_only = _parsed_args['only']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
 _env_integrated_view = os.environ.get("METLIFE_INTEGRATED_VIEW", "").lower() in ("1", "true", "yes")
@@ -752,6 +782,12 @@ START_AFTER_CUSTOMER = _arg_start_after
 # --start-after 모드 플래그
 START_AFTER_MODE = START_AFTER_CUSTOMER is not None
 _start_after_found = False  # 해당 고객을 찾았는지 여부
+
+# --only 모드: 특정 고객명만 처리
+ONLY_CUSTOMER = _arg_only
+ONLY_MODE = ONLY_CUSTOMER is not None
+_only_found_count = 0  # 해당 고객 처리 횟수
+_only_all_done = False  # 모든 해당 고객 처리 완료 여부
 
 # 에러/체크포인트 파일 경로
 ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
@@ -847,6 +883,8 @@ else:
     log(u"선택 초성: 전체 (%d개)" % len(CHOSUNG_BUTTONS))
 log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (--no-click)"))
 log(u"통합뷰/리포트: %s" % (u"활성화 (--integrated-view)" if INTEGRATED_VIEW_ENABLED else u"비활성화"))
+if ONLY_MODE:
+    log(u"특정 고객만: '%s' (--only 모드)" % ONLY_CUSTOMER)
 log(u"네비 모드: Arrow Down (키보드)")
 
 # --resume 모드 처리
@@ -1156,6 +1194,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 total_errors += len(errors)
                 error_customers.extend(errors)
 
+                # --only 모드: 대상 고객 처리 완료 시 즉시 종료
+                if ONLY_MODE and _only_all_done:
+                    log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로그램 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
+                    break
+
             # 5. 스크롤 (Page Down 키)
             log(u"    [SCROLL] Page Down 스크롤...")
             scroll_page_down()
@@ -1218,6 +1261,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # ========================================
         # 다음 버튼 확인 (스크롤 루프 탈출 후)
         # ========================================
+
+        # --only 모드: 대상 고객 처리 완료 시 네비 루프도 탈출
+        if ONLY_MODE and _only_all_done:
+            log(u"\n  [ONLY] '%s' 처리 완료 → 네비 루프 종료" % ONLY_CUSTOMER)
+            break
+
         log(u"\n  [네비 %d] 스크롤 완료 → '다음' 버튼 확인..." % nav_page)
         sleep(1)
 

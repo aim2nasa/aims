@@ -291,12 +291,12 @@ def scroll_to_top(scroll_count=20):
     Args:
         scroll_count: 휠 스크롤 횟수
     """
-    # 콘텐츠 영역 클릭하여 포커스 확보
-    screen = Screen()
-    center_x = screen.getW() / 2
-    center_y = screen.getH() / 2
-    click(Location(center_x, center_y))
-    log(u"    포커스 클릭: (%d, %d)" % (center_x, center_y))
+    # 페이지 전체 영역 클릭하여 포커스 확보 (왼쪽 상단 - 내부 테이블이 아닌 페이지 자체)
+    # 화면 중앙 클릭 시 통합접촉이력 테이블 내부에 클릭되어 그 테이블만 스크롤됨
+    focus_x = 300  # 왼쪽 영역 (고객 정보 패널 좌측)
+    focus_y = 250  # 상단 영역 (변액보험리포트 버튼 근처)
+    click(Location(focus_x, focus_y))
+    log(u"    포커스 클릭: (%d, %d) - 페이지 좌상단" % (focus_x, focus_y))
     sleep(0.3)
 
     # 마우스 휠 UP으로 맨 위로 이동
