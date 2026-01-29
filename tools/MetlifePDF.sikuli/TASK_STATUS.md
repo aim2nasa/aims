@@ -243,9 +243,30 @@ line 678: click("img/1769018868271.png")  # 메인 화면으로 이동
 
 ---
 
+---
+
+### 2026-01-29 13:15 - 정렬 기능 테스트 준비
+
+**테스트 스크립트:** `test_sort_feature.py`
+
+**테스트 시나리오:**
+1. 초기 정렬 상태 3가지 준비 (정렬안됨, 내림차순, 오름차순)
+2. 각 상태에서 테스트 실행
+3. 최종적으로 내림차순 정렬 확인
+
+**실행 명령:**
+```bash
+powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'test_sort_feature.py'"
+```
+
+**출력 위치:** `D:\captures\metlife_ocr\sort_test\`
+
+---
+
 ## 다음 단계
 
 1. [x] 진단 스크린샷 분석 (click_*.png)
 2. [x] 100% 화면용 설정값 적용
 3. [x] 100% 화면용 이미지 교체
-4. [ ] 27행 전체 클릭 테스트
+4. [ ] 정렬 기능 테스트 (3가지 초기 상태)
+5. [ ] 27행 전체 클릭 테스트
