@@ -537,15 +537,16 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         if not name:
             continue
 
-        # --start-after 모드: 지정된 고객을 찾을 때까지 스킵
-        global _start_after_found
-        if START_AFTER_MODE and not _start_after_found:
-            if name == START_AFTER_CUSTOMER:
-                _start_after_found = True
-                log(u"        [%d/%d] %s 발견! → 이 고객도 스킵, 다음부터 처리" % (i + 1, total_to_process, name))
+        # --start-from 모드: 지정된 고객을 찾을 때까지 스킵 (해당 고객 포함 처리)
+        global _start_from_found
+        if START_FROM_MODE and not _start_from_found:
+            if name == START_FROM_CUSTOMER:
+                _start_from_found = True
+                log(u"        [%d/%d] %s 발견! → 이 고객부터 처리 시작" % (i + 1, total_to_process, name))
+                # continue 없음 - 이 고객부터 처리
             else:
-                log(u"        [%d/%d] %s 스킵 (--start-after '%s' 찾는 중)" % (i + 1, total_to_process, name, START_AFTER_CUSTOMER))
-            continue
+                log(u"        [%d/%d] %s 스킵 (--start-from '%s' 찾는 중)" % (i + 1, total_to_process, name, START_FROM_CUSTOMER))
+                continue
 
         # --resume 모드: 재개 위치까지 스킵
         if resume_skip_until >= 0 and row_in_page <= resume_skip_until:
@@ -568,7 +569,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
         try:
             # Arrow Down 방식으로 행 이동
-            # (--start-after 모드에서 스킵 후 처음 처리하는 행도 첫 행처럼 처리)
+            # (--start-from 모드에서 스킵 후 처음 처리하는 행도 첫 행처럼 처리)
             if i == 0 or current_click_y is None:
                 # 첫 행 (또는 스킵 후 첫 처리 행): offset으로 Y좌표 계산 (선택 상태 진입)
                 current_click_y = get_row_y(current_base_y, row_index, is_scrolled)
@@ -701,7 +702,7 @@ def parse_args():
         'chosung': None,
         'no_click': False,
         'integrated_view': False,  # 고객통합뷰 진입 및 리포트 다운로드 옵션
-        'start_after': None,  # 특정 고객 다음부터 시작 (재개용)
+        'start_from': None,  # 특정 고객부터 시작 (해당 고객 포함)
         'resume': False,  # checkpoint.json에서 위치 읽어서 재개
         'only': None,  # 특정 고객명만 처리 (동일 이름 여러 명 처리용)
     }
@@ -716,15 +717,15 @@ def parse_args():
         result['integrated_view'] = True
         args = [a for a in args if a != '--integrated-view']
 
-    # --start-after 옵션 처리 (특정 고객 다음부터 시작)
-    if '--start-after' in args:
-        idx = args.index('--start-after')
+    # --start-from 옵션 처리 (특정 고객부터 시작 - 해당 고객 포함)
+    if '--start-from' in args:
+        idx = args.index('--start-from')
         if idx + 1 < len(args):
             raw_name = args[idx + 1]
             if isinstance(raw_name, str):
-                result['start_after'] = raw_name.decode('utf-8')
+                result['start_from'] = raw_name.decode('utf-8')
             else:
-                result['start_after'] = raw_name
+                result['start_from'] = raw_name
             args = args[:idx] + args[idx + 2:]
 
     # --resume 옵션 처리 (checkpoint.json에서 위치 읽어서 재개)
@@ -759,7 +760,7 @@ _parsed_args = parse_args()
 _arg_chosung = _parsed_args['chosung']
 _arg_no_click = _parsed_args['no_click']
 _arg_integrated_view = _parsed_args['integrated_view']
-_arg_start_after = _parsed_args['start_after']
+_arg_start_from = _parsed_args['start_from']
 _arg_resume = _parsed_args['resume']
 _arg_only = _parsed_args['only']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
@@ -777,11 +778,11 @@ INTEGRATED_VIEW_ENABLED = _arg_integrated_view or _env_integrated_view
 
 # 재개 기능: --resume으로 checkpoint에서 자동 재개
 RESUME_MODE = _arg_resume
-START_AFTER_CUSTOMER = _arg_start_after
+START_FROM_CUSTOMER = _arg_start_from
 
-# --start-after 모드 플래그
-START_AFTER_MODE = START_AFTER_CUSTOMER is not None
-_start_after_found = False  # 해당 고객을 찾았는지 여부
+# --start-from 모드 플래그 (해당 고객부터 처리 시작)
+START_FROM_MODE = START_FROM_CUSTOMER is not None
+_start_from_found = False  # 해당 고객을 찾았는지 여부
 
 # --only 모드: 특정 고객명만 처리
 ONLY_CUSTOMER = _arg_only
