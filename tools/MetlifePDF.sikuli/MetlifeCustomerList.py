@@ -557,6 +557,17 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 알림 팝업 확인
             alert_occurred = dismiss_alert_if_exists()
 
+            # 고객통합뷰 모드인 경우 리포트 다운로드
+            if INTEGRATED_VIEW_ENABLED:
+                log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
+                try:
+                    from verify_customer_integrated_view import verify_customer_integrated_view
+                    verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
+                    log(u"        -> 고객통합뷰 처리 완료")
+                except Exception as e:
+                    log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % str(e))
+                sleep(2)  # 화면 안정화 대기
+
             # 종료(x) 버튼 클릭
             log(u"        -> 종료(x) 클릭...")
             click(IMG_CLOSE_BTN)
@@ -630,7 +641,7 @@ ALL_CHOSUNG_BUTTONS = [
 import sys
 
 def parse_args():
-    """명령줄 인자 파싱 (초성, --no-click 등)"""
+    """명령줄 인자 파싱 (초성, --no-click, --integrated-view 등)"""
     # sys.argv 예시: ['MetlifeCustomerList.py', '--', 'ㄱ'] 또는 ['...', '--', '--chosung', 'ㄱ', '--no-click']
     args = sys.argv[1:] if len(sys.argv) > 1 else []
 
@@ -641,12 +652,18 @@ def parse_args():
     result = {
         'chosung': None,
         'no_click': False,
+        'integrated_view': False,  # 고객통합뷰 진입 및 리포트 다운로드 옵션
     }
 
     # --no-click 옵션 처리
     if '--no-click' in args:
         result['no_click'] = True
         args = [a for a in args if a != '--no-click']
+
+    # --integrated-view 옵션 처리 (고객통합뷰 진입 및 리포트 다운로드)
+    if '--integrated-view' in args:
+        result['integrated_view'] = True
+        args = [a for a in args if a != '--integrated-view']
 
     # --chosung 옵션 처리
     if '--chosung' in args:
@@ -663,14 +680,24 @@ def parse_args():
 _parsed_args = parse_args()
 _arg_chosung = _parsed_args['chosung']
 _arg_no_click = _parsed_args['no_click']
+_arg_integrated_view = _parsed_args['integrated_view']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
+_env_integrated_view = os.environ.get("METLIFE_INTEGRATED_VIEW", "").lower() in ("1", "true", "yes")
 
 # 우선순위: 명령줄 > 환경변수
 _raw_chosung = _arg_chosung or _env_chosung
 
 # 고객 클릭 기능: 기본 활성화, --no-click 또는 환경변수로 비활성화
 CLICK_ENABLED = not (_arg_no_click or _env_no_click)
+
+# 고객통합뷰 기능: --integrated-view 또는 환경변수로 활성화
+INTEGRATED_VIEW_ENABLED = _arg_integrated_view or _env_integrated_view
+
+# PDF 저장 디렉토리 (고객통합뷰 모드에서 사용)
+PDF_SAVE_DIR = os.path.join(CAPTURE_DIR, "pdf") if INTEGRATED_VIEW_ENABLED else None
+if PDF_SAVE_DIR and not os.path.exists(PDF_SAVE_DIR):
+    os.makedirs(PDF_SAVE_DIR)
 
 # Jython: 바이트 문자열 → 유니코드 변환
 if _raw_chosung:
@@ -693,6 +720,7 @@ if SELECTED_CHOSUNG:
 else:
     log(u"선택 초성: 전체 (%d개)" % len(CHOSUNG_BUTTONS))
 log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (--no-click)"))
+log(u"통합뷰/리포트: %s" % (u"활성화 (--integrated-view)" if INTEGRATED_VIEW_ENABLED else u"비활성화"))
 log(u"네비 모드: Arrow Down (키보드)")
 log("=" * 60)
 

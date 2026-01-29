@@ -27,12 +27,21 @@ from java.awt.image import BufferedImage
 from javax.imageio import ImageIO
 from java.io import File
 
+# SikuliX 함수 명시적 import (외부 모듈에서 import 시 필요)
+try:
+    from sikuli import *
+except ImportError:
+    pass  # 직접 실행 시에는 이미 전역 네임스페이스에 있음
+
 # Java Robot 인스턴스 (Page Up 키 입력용)
 _robot = Robot()
 
-# SikuliX 설정
-Settings.ActionLogs = True  # 디버깅용 로그 활성화
-setFindFailedResponse(ABORT)
+# SikuliX 설정 (외부 import 시에도 안전하게 처리)
+try:
+    Settings.ActionLogs = True  # 디버깅용 로그 활성화
+    setFindFailedResponse(ABORT)
+except NameError:
+    pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
 # 경로 설정
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
@@ -121,6 +130,10 @@ save_results = []  # [{'report_num': 1, 'saved': True, 'duplicate': False, 'erro
 
 # 스크린샷 전역 순서 카운터 (처음부터 끝까지 연속 번호)
 global_screenshot_counter = 0
+
+# 외부 호출 시 사용되는 전역 변수
+PDF_DOWNLOAD_DIR = None  # PDF 저장 디렉토리 (외부에서 설정)
+CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사용)
 
 
 LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
@@ -1721,16 +1734,35 @@ def wait_and_click(img, description, wait_time=10):
         return False
 
 
-def verify_customer_integrated_view():
+def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
     """
     고객통합뷰 진입/종료 검증
+
+    Args:
+        pdf_save_dir: PDF 저장 디렉토리 (None이면 기본 위치)
+        customer_name: 고객명 (파일명에 사용, None이면 기본명)
 
     Returns:
         bool: 검증 성공 여부
     """
+    # 외부에서 호출 시 PDF 저장 경로 설정
+    global PDF_DOWNLOAD_DIR
+    if pdf_save_dir:
+        PDF_DOWNLOAD_DIR = pdf_save_dir
+        if not os.path.exists(PDF_DOWNLOAD_DIR):
+            os.makedirs(PDF_DOWNLOAD_DIR)
+
+    # 외부에서 호출 시 고객명 저장 (파일명에 사용)
+    global CURRENT_CUSTOMER_NAME
+    CURRENT_CUSTOMER_NAME = customer_name
+
     log(u"")
     log(u"=" * 60)
     log(u"고객통합뷰 진입/종료 검증 시작")
+    if customer_name:
+        log(u"고객명: %s" % customer_name)
+    if pdf_save_dir:
+        log(u"PDF 저장 경로: %s" % pdf_save_dir)
     log(u"=" * 60)
 
     # 1단계: 고객등록/조회 페이지 확인
