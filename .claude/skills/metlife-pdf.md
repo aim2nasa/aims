@@ -31,6 +31,8 @@ D:\captures\metlife_ocr\{초성}\
 ├── page_*.png              # 페이지 캡처 이미지
 ├── page_*.json             # OCR 결과
 ├── run_*.log               # 실행 로그
+├── checkpoint.json         # 마지막 처리 위치 (재개용)
+├── errors.json             # 오류 발생 고객 목록
 └── pdf\                    # PDF 저장 폴더
     ├── {고객명}_변액리포트.pdf
     └── {고객명}_AnnualReport.pdf
@@ -51,6 +53,15 @@ powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -j
 ```
 - `run_in_background: true` 옵션 사용
 - TaskOutput으로 상태 모니터링
+
+### Phase 2-1: 재개 (오류 발생 후)
+```bash
+# --resume 옵션으로 중단 지점부터 재개
+powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'MetlifeCustomerList.py' -- --chosung '{초성}' --integrated-view --resume"
+```
+- checkpoint.json에서 마지막 처리 위치 자동 로드
+- 해당 네비/스크롤 페이지까지 자동 이동
+- 마지막 처리 고객 다음부터 처리 재개
 
 ### Phase 3: 완료 대기
 - TaskOutput block=false로 주기적 확인
@@ -85,6 +96,46 @@ powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -j
 | 2 | 김철수 | ✅ | ❌ | 리포트 없음 |
 ```
 
+## 오류 발생 시 재개
+
+### checkpoint.json (자동 저장)
+매 고객 처리 성공 시 자동 저장됩니다:
+```json
+{
+  "마지막고객": "강민수",
+  "초성": "ㄱ",
+  "네비페이지": 1,
+  "스크롤페이지": 3,
+  "행": 5,
+  "시간": "2026-01-29 23:45:00"
+}
+```
+
+### errors.json (오류 발생 시)
+오류 발생 고객 정보가 누적됩니다:
+```json
+[
+  {
+    "고객명": "고채윤",
+    "초성": "ㄱ",
+    "네비페이지": 1,
+    "스크롤페이지": 3,
+    "행": 2,
+    "오류": "변액보험리포트 X 버튼 찾을 수 없음",
+    "시간": "2026-01-29 23:40:00"
+  }
+]
+```
+
+### 재개 명령
+```bash
+# 중단 지점부터 자동 재개
+--resume 옵션 추가
+```
+- checkpoint.json에서 위치(네비페이지, 스크롤페이지, 행) 읽음
+- 해당 위치까지 자동 이동 (다음 버튼, Page Down)
+- 마지막 처리 고객 다음 행부터 처리 재개
+
 ## 주의사항
 
 - SikuliX는 GUI 자동화 도구이므로 **화면이 보이는 상태**에서만 동작
@@ -92,6 +143,7 @@ powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -j
 - 백그라운드 실행 시 PowerShell 사용 필수
 - 실행 전 반드시 스크린샷 폴더 비우기
 - PDF 다운로드에는 고객 수에 따라 상당한 시간 소요
+- **재개 시 스크린샷 폴더 비우지 않음** (기존 스크린샷 유지)
 
 ## 관련 파일
 

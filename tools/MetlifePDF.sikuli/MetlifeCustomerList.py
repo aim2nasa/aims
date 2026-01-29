@@ -489,7 +489,8 @@ def dismiss_alert_if_exists():
     return False
 
 
-def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0, is_scrolled=False):
+def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0, is_scrolled=False,
+                      nav_page=1, scroll_page=1, resume_skip_until=-1):
     """
     OCR로 인식한 고객들을 순차적으로 클릭하여 처리
 
@@ -501,6 +502,9 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
         global_page: 전체 페이지 번호
         skip_count: 스크롤 중복으로 스킵할 행 수
         is_scrolled: 스크롤 후 페이지 여부 (True면 FIRST_ROW_OFFSET_SCROLLED 사용)
+        nav_page: 현재 네비게이션 페이지 번호
+        scroll_page: 현재 스크롤 페이지 번호
+        resume_skip_until: --resume 모드에서 이 행까지 스킵 (-1이면 스킵 없음)
 
     Returns:
         tuple: (처리한 고객 수, 오류 발생 고객 목록, 갱신된 base_y)
@@ -519,26 +523,44 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
     # 사용할 오프셋 결정
     offset_used = FIRST_ROW_OFFSET_SCROLLED if is_scrolled else FIRST_ROW_OFFSET
-    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵, offset=%d)" % (total_to_process, skip_count, offset_used))
+    resume_info = u" (재개모드: %d행까지 스킵)" % resume_skip_until if resume_skip_until >= 0 else ""
+    log(u"      [고객처리] %d명 처리 시작 (중복 %d행 스킵, offset=%d)%s" % (total_to_process, skip_count, offset_used, resume_info))
 
     # Arrow Down 방식: 현재 Y좌표 추적
     current_click_y = None
 
     for i, customer in enumerate(customers_to_process):
         row_index = skip_count + i  # 실제 화면상 행 인덱스
+        row_in_page = i + 1  # 페이지 내 행 번호 (1-based)
         name = customer.get(u"고객명", "") or ""
 
         if not name:
+            continue
+
+        # --start-after 모드: 지정된 고객을 찾을 때까지 스킵
+        global _start_after_found
+        if START_AFTER_MODE and not _start_after_found:
+            if name == START_AFTER_CUSTOMER:
+                _start_after_found = True
+                log(u"        [%d/%d] %s 발견! → 이 고객도 스킵, 다음부터 처리" % (i + 1, total_to_process, name))
+            else:
+                log(u"        [%d/%d] %s 스킵 (--start-after '%s' 찾는 중)" % (i + 1, total_to_process, name, START_AFTER_CUSTOMER))
+            continue
+
+        # --resume 모드: 재개 위치까지 스킵
+        if resume_skip_until >= 0 and row_in_page <= resume_skip_until:
+            log(u"        [%d/%d] %s 스킵 (재개모드: %d행까지 스킵)" % (i + 1, total_to_process, name, resume_skip_until))
             continue
 
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
         try:
             # Arrow Down 방식으로 행 이동
-            if i == 0:
-                # 첫 행: offset으로 Y좌표 계산 (선택 상태 진입)
+            # (--start-after 모드에서 스킵 후 처음 처리하는 행도 첫 행처럼 처리)
+            if i == 0 or current_click_y is None:
+                # 첫 행 (또는 스킵 후 첫 처리 행): offset으로 Y좌표 계산 (선택 상태 진입)
                 current_click_y = get_row_y(current_base_y, row_index, is_scrolled)
-                log(u"        [ARROW] 첫 행 클릭 (offset): y=%d" % current_click_y)
+                log(u"        [ARROW] 첫 행 클릭 (offset): y=%d (row_index=%d)" % (current_click_y, row_index))
             else:
                 # 다음 행: Arrow Down으로 선택 이동 + ROW_HEIGHT로 클릭 위치 계산
                 type(Key.DOWN)
@@ -557,16 +579,19 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 알림 팝업 확인
             alert_occurred = dismiss_alert_if_exists()
 
-            # 고객통합뷰 모드인 경우 리포트 다운로드
+            # 고객통합뷰 모드인 경우 리포트 다운로드 (알림이 없었을 때만)
             if INTEGRATED_VIEW_ENABLED:
-                log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
-                try:
-                    from verify_customer_integrated_view import verify_customer_integrated_view
-                    verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
-                    log(u"        -> 고객통합뷰 처리 완료")
-                except Exception as e:
-                    log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % str(e))
-                sleep(2)  # 화면 안정화 대기
+                if alert_occurred:
+                    log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵")
+                else:
+                    log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
+                    try:
+                        from verify_customer_integrated_view import verify_customer_integrated_view
+                        verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
+                        log(u"        -> 고객통합뷰 처리 완료")
+                    except Exception as e:
+                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % str(e))
+                    sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭
             log(u"        -> 종료(x) 클릭...")
@@ -579,6 +604,9 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             log(u"        -> %s 처리 완료" % name)
             processed += 1
 
+            # 체크포인트 저장 (성공한 고객)
+            save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
+
         except Exception as e:
             log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
             error_customers.append({
@@ -588,6 +616,9 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                 u"고객명": name,
                 u"오류": str(e)
             })
+
+            # 오류 발생 고객 저장
+            save_error(name, str(e), chosung_name, nav_page, scroll_page, row_in_page)
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
     return processed, error_customers, current_base_y
@@ -653,6 +684,8 @@ def parse_args():
         'chosung': None,
         'no_click': False,
         'integrated_view': False,  # 고객통합뷰 진입 및 리포트 다운로드 옵션
+        'start_after': None,  # 특정 고객 다음부터 시작 (재개용)
+        'resume': False,  # checkpoint.json에서 위치 읽어서 재개
     }
 
     # --no-click 옵션 처리
@@ -664,6 +697,22 @@ def parse_args():
     if '--integrated-view' in args:
         result['integrated_view'] = True
         args = [a for a in args if a != '--integrated-view']
+
+    # --start-after 옵션 처리 (특정 고객 다음부터 시작)
+    if '--start-after' in args:
+        idx = args.index('--start-after')
+        if idx + 1 < len(args):
+            raw_name = args[idx + 1]
+            if isinstance(raw_name, str):
+                result['start_after'] = raw_name.decode('utf-8')
+            else:
+                result['start_after'] = raw_name
+            args = args[:idx] + args[idx + 2:]
+
+    # --resume 옵션 처리 (checkpoint.json에서 위치 읽어서 재개)
+    if '--resume' in args:
+        result['resume'] = True
+        args = [a for a in args if a != '--resume']
 
     # --chosung 옵션 처리
     if '--chosung' in args:
@@ -681,6 +730,8 @@ _parsed_args = parse_args()
 _arg_chosung = _parsed_args['chosung']
 _arg_no_click = _parsed_args['no_click']
 _arg_integrated_view = _parsed_args['integrated_view']
+_arg_start_after = _parsed_args['start_after']
+_arg_resume = _parsed_args['resume']
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
 _env_integrated_view = os.environ.get("METLIFE_INTEGRATED_VIEW", "").lower() in ("1", "true", "yes")
@@ -693,6 +744,81 @@ CLICK_ENABLED = not (_arg_no_click or _env_no_click)
 
 # 고객통합뷰 기능: --integrated-view 또는 환경변수로 활성화
 INTEGRATED_VIEW_ENABLED = _arg_integrated_view or _env_integrated_view
+
+# 재개 기능: --resume으로 checkpoint에서 자동 재개
+RESUME_MODE = _arg_resume
+START_AFTER_CUSTOMER = _arg_start_after
+
+# --start-after 모드 플래그
+START_AFTER_MODE = START_AFTER_CUSTOMER is not None
+_start_after_found = False  # 해당 고객을 찾았는지 여부
+
+# 에러/체크포인트 파일 경로
+ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
+CHECKPOINT_FILE = os.path.join(CAPTURE_DIR, u"checkpoint.json")
+
+# 재개 위치 정보 (--resume 모드에서 사용)
+_resume_info = None
+_skip_until_row = -1  # 이 행까지 스킵 (해당 행 포함)
+
+
+def load_checkpoint():
+    """checkpoint.json에서 마지막 위치 로드"""
+    if not os.path.exists(CHECKPOINT_FILE):
+        return None
+    try:
+        with codecs.open(CHECKPOINT_FILE, "r", "utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        log(u"[ERROR] 체크포인트 로드 실패: %s" % str(e))
+        return None
+
+
+def save_error(customer_name, error_msg, chosung, nav_page, scroll_page, row_in_page):
+    """오류 발생 고객을 errors.json에 기록 (위치 정보 포함)"""
+    try:
+        errors = []
+        if os.path.exists(ERROR_FILE):
+            with codecs.open(ERROR_FILE, "r", "utf-8") as f:
+                errors = json.load(f)
+
+        import datetime
+        errors.append({
+            u"고객명": customer_name,
+            u"초성": chosung,
+            u"네비페이지": nav_page,
+            u"스크롤페이지": scroll_page,
+            u"행": row_in_page,
+            u"오류": error_msg,
+            u"시간": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        with codecs.open(ERROR_FILE, "w", "utf-8") as f:
+            json.dump(errors, f, ensure_ascii=False, indent=2)
+
+        log(u"    [ERROR_LOG] 오류 기록됨: %s (N%d-S%d-R%d)" % (customer_name, nav_page, scroll_page, row_in_page))
+    except Exception as e:
+        log(u"    [ERROR_LOG] 오류 기록 실패: %s" % str(e))
+
+
+def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
+    """마지막 성공 고객을 checkpoint.json에 기록 (위치 정보 포함)"""
+    try:
+        import datetime
+        checkpoint = {
+            u"마지막고객": customer_name,
+            u"초성": chosung,
+            u"네비페이지": nav_page,
+            u"스크롤페이지": scroll_page,
+            u"행": row_in_page,
+            u"시간": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        with codecs.open(CHECKPOINT_FILE, "w", "utf-8") as f:
+            json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        log(u"    [CHECKPOINT] 저장 실패: %s" % str(e))
+
 
 # PDF 저장 디렉토리 (고객통합뷰 모드에서 사용)
 PDF_SAVE_DIR = os.path.join(CAPTURE_DIR, "pdf") if INTEGRATED_VIEW_ENABLED else None
@@ -722,6 +848,25 @@ else:
 log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (--no-click)"))
 log(u"통합뷰/리포트: %s" % (u"활성화 (--integrated-view)" if INTEGRATED_VIEW_ENABLED else u"비활성화"))
 log(u"네비 모드: Arrow Down (키보드)")
+
+# --resume 모드 처리
+if RESUME_MODE:
+    _resume_info = load_checkpoint()
+    if _resume_info:
+        log(u"재개 모드: 활성화")
+        log(u"  - 마지막 고객: %s" % _resume_info.get(u"마지막고객", "?"))
+        log(u"  - 위치: N%d-S%d-R%d" % (
+            _resume_info.get(u"네비페이지", 1),
+            _resume_info.get(u"스크롤페이지", 1),
+            _resume_info.get(u"행", 0)
+        ))
+    else:
+        log(u"[WARN] --resume 지정되었지만 checkpoint.json 없음 → 처음부터 시작")
+        RESUME_MODE = False
+        _resume_info = None
+else:
+    _resume_info = None
+
 log("=" * 60)
 
 start_time = time.time()
@@ -809,6 +954,21 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     log(u"  [INIT] 고객명 클릭: x=%d, 스크롤 클릭: x=%d, 기준 y=%d" % (fixed_x, scroll_x, base_y))
 
     # ========================================
+    # 재개 모드: 시작 위치 계산
+    # ========================================
+    resume_nav_page = 1
+    resume_scroll_page = 1
+    resume_row = -1  # -1이면 스킵 없음
+
+    if RESUME_MODE and _resume_info:
+        resume_chosung = _resume_info.get(u"초성", "")
+        if resume_chosung == chosung_name:
+            resume_nav_page = _resume_info.get(u"네비페이지", 1)
+            resume_scroll_page = _resume_info.get(u"스크롤페이지", 1)
+            resume_row = _resume_info.get(u"행", 0)
+            log(u"  [RESUME] 재개 위치: N%d-S%d-R%d (다음 행부터 처리)" % (resume_nav_page, resume_scroll_page, resume_row))
+
+    # ========================================
     # 네비게이션 루프 (외부) - 다음 버튼으로 이동
     # ========================================
     while True:
@@ -817,6 +977,18 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         log(u"\n  " + u"=" * 50)
         log(u"  [네비 %d] 시작" % nav_page)
         log(u"  " + u"=" * 50)
+
+        # 재개 모드: 네비 페이지 스킵
+        if RESUME_MODE and nav_page < resume_nav_page:
+            log(u"  [RESUME] 네비 %d 스킵 (재개 위치: N%d)" % (nav_page, resume_nav_page))
+            if exists(IMG_NEXT_BTN, 2):
+                click(IMG_NEXT_BTN)
+                sleep(3)
+                nav_page += 1
+                continue
+            else:
+                log(u"  [WARN] 다음 버튼 없음 - 재개 불가")
+                break
 
         # 네비 페이지 시작 시 스크롤 맨 위로 이동
         log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
@@ -834,6 +1006,13 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"\n    " + u"-" * 40)
             log(u"    [%s] 스크롤 페이지 %d (전체 %d)" % (page_label, scroll_page, global_page))
             log(u"    " + u"-" * 40)
+
+            # 재개 모드: 스크롤 페이지 스킵
+            if RESUME_MODE and nav_page == resume_nav_page and scroll_page < resume_scroll_page:
+                log(u"    [RESUME] 스크롤 %d 스킵 (재개 위치: S%d)" % (scroll_page, resume_scroll_page))
+                scroll_page_down()
+                scroll_page += 1
+                continue
 
             # 화면 안정화 대기
             sleep(2)
@@ -963,9 +1142,16 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 offset_to_use = FIRST_ROW_OFFSET_SCROLLED if is_scrolled_page else FIRST_ROW_OFFSET
                 log(u"      [PAGE_INFO] scroll_page=%d, is_scrolled=%s, offset=%d" % (scroll_page, is_scrolled_page, offset_to_use))
 
+                # 재개 모드: 현재 페이지가 재개 위치인 경우 스킵할 행 계산
+                current_resume_skip = -1
+                if RESUME_MODE and nav_page == resume_nav_page and scroll_page == resume_scroll_page:
+                    current_resume_skip = resume_row
+                    log(u"      [RESUME] 현재 페이지에서 %d행까지 스킵" % current_resume_skip)
+
                 processed, errors, base_y = process_customers(
                     customers, fixed_x, base_y, chosung_name, global_page,
-                    skip_count=scroll_dups, is_scrolled=is_scrolled_page
+                    skip_count=scroll_dups, is_scrolled=is_scrolled_page,
+                    nav_page=nav_page, scroll_page=scroll_page, resume_skip_until=current_resume_skip
                 )
                 total_errors += len(errors)
                 error_customers.extend(errors)
