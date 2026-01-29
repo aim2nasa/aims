@@ -28,8 +28,9 @@ MAX_RETRIES = 3
 RETRY_DELAYS = [5, 10, 20]  # 지수 백오프: 5초, 10초, 20초
 RETRIABLE_STATUS_CODES = {500, 502, 503, 504, 429}  # 재시도 가능한 HTTP 상태 코드
 
-# 로그 설정
-LOG_DIR = Path("D:/captures/metlife_ocr/logs")
+# 로그 설정 (환경변수로 초성 폴더 경로 전달받음)
+_log_base = os.environ.get("METLIFE_CAPTURE_DIR", "D:/captures/metlife_ocr")
+LOG_DIR = Path(_log_base) / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 

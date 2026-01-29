@@ -22,8 +22,46 @@ setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 
 # 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF.sikuli"
-CAPTURE_DIR = os.environ.get("METLIFE_CAPTURE_DIR", r"D:\captures\metlife_ocr")
+CAPTURE_BASE_DIR = r"D:\captures\metlife_ocr"
 OCR_SCRIPT = SCRIPT_DIR + r"\ocr\upstage_ocr_api.py"
+
+# ============================================================
+# 초성 파싱 (먼저 수행하여 폴더 경로 결정)
+# ============================================================
+def _parse_chosung_early():
+    """초성 인자를 미리 파싱하여 폴더 경로 결정"""
+    args = sys.argv[1:] if len(sys.argv) > 1 else []
+    if '--' in args:
+        args = args[args.index('--') + 1:]
+
+    # --no-click 제거
+    args = [a for a in args if a != '--no-click']
+
+    # --chosung 옵션
+    if '--chosung' in args:
+        idx = args.index('--chosung')
+        if idx + 1 < len(args):
+            raw = args[idx + 1]
+            if isinstance(raw, str):
+                return raw.decode('utf-8')
+            return raw
+
+    # 위치 인자
+    if args and not args[0].startswith('-'):
+        raw = args[0]
+        if isinstance(raw, str):
+            return raw.decode('utf-8')
+        return raw
+
+    return None
+
+_early_chosung = _parse_chosung_early()
+
+# 초성이 주어지면 초성 폴더에 저장, 아니면 기본 폴더
+if _early_chosung:
+    CAPTURE_DIR = os.path.join(CAPTURE_BASE_DIR, _early_chosung)
+else:
+    CAPTURE_DIR = CAPTURE_BASE_DIR
 
 # 캡처 디렉토리 생성
 if not os.path.exists(CAPTURE_DIR):
@@ -228,12 +266,15 @@ def capture_and_ocr(chosung_name, page_num):
     # 크롭된 이미지로 OCR 수행
     json_path = cropped_path.replace(".png", ".json")
 
-    # Python3로 OCR 스크립트 호출
+    # Python3로 OCR 스크립트 호출 (환경변수로 로그 디렉토리 전달)
     log(u"  [OCR] 2/4. Upstage Enhanced API 호출...")
 
     ocr_start = time.time()
     try:
-        result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path])
+        # 환경변수에 CAPTURE_DIR 추가하여 OCR 스크립트에 전달
+        ocr_env = os.environ.copy()
+        ocr_env["METLIFE_CAPTURE_DIR"] = CAPTURE_DIR
+        result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path], env=ocr_env)
         ocr_elapsed = time.time() - ocr_start
 
         if result != 0:
