@@ -193,26 +193,12 @@ def find_any(*imgs):
 
 def capture_and_ocr(chosung_name, page_num):
     """
-    화면 캡처 후 Upstage Enhanced OCR 호출 (캐시 지원)
+    화면 캡처 후 Upstage Enhanced OCR 호출
 
     Returns:
-        list: 고객 데이터 리스트 (15행)
+        list: 고객 데이터 리스트
         str: JSON 파일 경로
     """
-    # 캐시 파일 경로 (고정 - 타임스탬프 없음)
-    cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, page_num))
-
-    # 캐시 확인 - 있으면 바로 반환
-    if os.path.exists(cache_json):
-        log(u"  [OCR] ----------------------------------------")
-        log(u"  [OCR] [CACHE HIT] %s" % os.path.basename(cache_json))
-        with codecs.open(cache_json, "r", "utf-8") as f:
-            customers = json.load(f)
-        log(u"  [OCR] %d명 로드 (캐시 사용 - OCR 스킵)" % len(customers))
-        log(u"  [OCR] ----------------------------------------")
-        return customers, cache_json
-
-    # 캐시 없음 - OCR 수행
     timestamp = int(time.time())
     capture_filename = u"page_%s_%d_%d.png" % (chosung_name, page_num, timestamp)
     capture_path = os.path.join(CAPTURE_DIR, capture_filename)
@@ -228,7 +214,6 @@ def capture_and_ocr(chosung_name, page_num):
     log(u"  [OCR]   - 원본: %s" % capture_filename)
 
     # 2. 테이블 영역만 크롭 (필터 영역 제외)
-    # 크롭 좌표: docs/TABLE_CROP_REGION.md 참조
     TABLE_REGION_X = 20
     TABLE_REGION_Y = 362
     TABLE_REGION_WIDTH = 1890
@@ -244,11 +229,10 @@ def capture_and_ocr(chosung_name, page_num):
     json_path = cropped_path.replace(".png", ".json")
 
     # Python3로 OCR 스크립트 호출
-    log(u"  [OCR] 2/4. Upstage Enhanced API 호출 (약 35초)...")
+    log(u"  [OCR] 2/4. Upstage Enhanced API 호출...")
 
     ocr_start = time.time()
     try:
-        # Jython 호환: timeout 파라미터 없이 호출 (크롭된 이미지 사용)
         result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path])
         ocr_elapsed = time.time() - ocr_start
 
@@ -265,13 +249,8 @@ def capture_and_ocr(chosung_name, page_num):
         with codecs.open(json_path, "r", "utf-8") as f:
             customers = json.load(f)
         log(u"  [OCR] 4/4. %d명 인식 완료" % len(customers))
-
-        # 캐시 파일에 저장 (다음 실행 시 재사용)
-        with codecs.open(cache_json, "w", "utf-8") as f:
-            json.dump(customers, f, ensure_ascii=False, indent=2)
-        log(u"  [OCR] [CACHE SAVE] %s" % os.path.basename(cache_json))
         log(u"  [OCR] ----------------------------------------")
-        return customers, cache_json
+        return customers, json_path
     else:
         log(u"  [OCR] ERROR: JSON 없음")
         log(u"  [OCR] ----------------------------------------")
@@ -355,60 +334,100 @@ def scroll_to_top(header, max_pageup=20):
     sleep(0.5)
 
 
-def scroll_by_row_click(scroll_x, header_y):
+def scroll_page_down():
     """
-    16번째 행(잘린 행) 클릭 × 15회로 정확히 15행 스크롤
+    Page Down 키로 한 페이지 스크롤 (100% 줌 대응)
 
-    Args:
-        scroll_x: 스크롤 클릭 X좌표 (구분 컬럼)
-        header_y: 고객명 헤더 Y좌표
+    100% 줌에서는 16번째 행이 화면에 보이지 않아 클릭 방식 불가.
+    Java Robot의 Page Down 키 사용.
     """
-    scroll_clicks = ROWS_PER_PAGE  # 15
-    row_16_y = get_row_y(header_y, ROWS_PER_PAGE)  # index 15 = 16번째 행
-
-    for i in range(scroll_clicks):
-        click(Location(scroll_x, row_16_y))
-        sleep(0.3)
-
-        if (i + 1) % 5 == 0:
-            log(u"        -> %d번 클릭 완료" % (i + 1))
-
-    sleep(0.5)  # 스크롤 완료 대기
+    _robot.keyPress(KeyEvent.VK_PAGE_DOWN)
+    _robot.keyRelease(KeyEvent.VK_PAGE_DOWN)
+    sleep(0.5)
+    log(u"        -> Page Down 완료")
 
 
-def capture_first_row_region(header, header_y):
+def capture_table_region():
     """
-    첫 번째 행 영역 캡처 (마지막 페이지 감지용)
+    테이블 전체 영역 캡처 (마지막 페이지 감지용)
 
-    Args:
-        header: 고객명 헤더 Match 객체
-        header_y: 헤더 Y좌표
+    여러 행을 포함한 테이블 영역을 캡처하여 스크롤 전후 비교.
+    한 행만 비교하면 중복 영역 때문에 오판 위험이 있음.
 
     Returns:
         str: 캡처된 이미지 경로
     """
-    row_1_y = get_row_y(header_y, 0)
-    capture_x = header.getCenter().getX() - 30
-    capture_region = Region(int(capture_x), int(row_1_y - 12), 200, 28)
-    return capture(capture_region)
+    # OCR 크롭과 동일한 테이블 영역 사용
+    TABLE_REGION_X = 20
+    TABLE_REGION_Y = 362
+    TABLE_REGION_WIDTH = 1890
+    TABLE_REGION_HEIGHT = 590
+    table_region = Region(TABLE_REGION_X, TABLE_REGION_Y, TABLE_REGION_WIDTH, TABLE_REGION_HEIGHT)
+    return capture(table_region)
 
 
-def is_last_page(prev_capture):
+def is_last_page(prev_capture_path):
     """
-    스크롤 전후 화면 비교로 마지막 페이지 감지
+    스크롤 전후 테이블 전체 영역 비교로 마지막 페이지 감지
+
+    스크롤 후 테이블 전체를 다시 캡처하여 스크롤 전 캡처와 비교.
+    두 이미지가 동일하면 스크롤이 안 된 것 = 마지막 페이지.
 
     Args:
-        prev_capture: 스크롤 전 첫 번째 행 캡처 이미지
+        prev_capture_path: 스크롤 전 테이블 캡처 이미지 경로
 
     Returns:
         bool: 마지막 페이지면 True
     """
     try:
-        if exists(Pattern(prev_capture).similar(0.95), 0.5):
+        # 스크롤 후 테이블 전체 영역 캡처
+        current_capture = capture_table_region()
+
+        # 두 이미지 비교 (Java ImageIO 사용)
+        from javax.imageio import ImageIO
+        from java.io import File
+
+        img1 = ImageIO.read(File(prev_capture_path))
+        img2 = ImageIO.read(File(current_capture))
+
+        # 크기가 다르면 다른 이미지
+        if img1.getWidth() != img2.getWidth() or img1.getHeight() != img2.getHeight():
+            log(u"    [COMPARE] 이미지 크기 다름 → 계속 진행")
+            return False
+
+        # 픽셀 비교 (샘플링: 약 1000개 샘플 - 테이블 전체 비교)
+        width = img1.getWidth()
+        height = img1.getHeight()
+        sample_step = max(1, min(width, height) // 30)  # 약 900~1000개 샘플
+
+        same_count = 0
+        diff_count = 0
+
+        for y in range(0, height, sample_step):
+            for x in range(0, width, sample_step):
+                p1 = img1.getRGB(x, y)
+                p2 = img2.getRGB(x, y)
+                if p1 == p2:
+                    same_count += 1
+                else:
+                    diff_count += 1
+
+        total_samples = same_count + diff_count
+        similarity = float(same_count) / total_samples if total_samples > 0 else 0
+
+        log(u"    [COMPARE] 테이블 전체 비교: %.1f%% 동일 (%d/%d 샘플)" % (similarity * 100, same_count, total_samples))
+
+        # 95% 이상 동일하면 마지막 페이지 (테이블 전체 비교이므로 임계값 낮춤)
+        if similarity >= 0.95:
+            log(u"    [COMPARE] → 마지막 페이지 (95%+ 동일)")
             return True
-    except:
-        pass
-    return False
+        else:
+            log(u"    [COMPARE] → 계속 진행 (충분히 다름)")
+            return False
+
+    except Exception as e:
+        log(u"    [COMPARE] 비교 오류: %s → 계속 진행" % str(e))
+        return False
 
 
 def dismiss_alert_if_exists():
@@ -543,18 +562,17 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 # 설정
 WAIT_TIME = 3
 # ===== 클릭 위치 튜닝 파라미터 (offset 방식용) =====
-# 클릭이 위로 밀리면: 값 증가 (+1~2)
-# 클릭이 아래로 밀리면: 값 감소 (-1~2)
-# [100% 화면 기준 - 2026-01-29]
-FIRST_ROW_OFFSET = 41           # 첫 페이지: 헤더 → 첫 행 중앙 (픽셀)
-FIRST_ROW_OFFSET_SCROLLED = 32  # 스크롤 후 페이지: 헤더 → 첫 행 중앙 (픽셀)
-ROW_HEIGHT = 31                 # 행 간 간격 (픽셀)
+# [100% 화면 기준 - 2026-01-29 측정값]
+# IMG_CUSTNAME = "고객명 ↓" 헤더 이미지 사용
+FIRST_ROW_OFFSET = 32           # 첫 페이지: 헤더 → 첫 행 중앙 (픽셀) - 50에서 32로 수정 (행 중앙)
+FIRST_ROW_OFFSET_SCROLLED = 32  # 스크롤 후 페이지 (P1과 동일하게 테스트)
+ROW_HEIGHT = 37                 # 행 간 간격 (픽셀) - 실측값
 # ================================
 ROWS_PER_PAGE = 13     # 화면에 보이는 행 수 (100% 줌 기준)
 MAX_CUSTOMERS_PER_PAGE = 13  # OCR로 인식하는 행 수
 
 # 고객명 정렬 이미지 [100% 줌 - 2026-01-29]
-IMG_CUSTNAME = "img/1769598852427.png"         # 고객명 헤더 (클릭용)
+IMG_CUSTNAME = "img/1769599404157.png"         # 고객명 ↓ 헤더 (내림차순 상태)
 IMG_ARROW_DESC = "img/1769598882979.png"       # ↓ (내림차순 화살표)
 IMG_ARROW_ASC = "img/1769598893800.png"        # ↑ (오름차순 화살표)
 
@@ -781,21 +799,15 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 화면 안정화 대기
             sleep(2)
 
-            # 1. 스크롤 전 첫 번째 행 캡처 (마지막 페이지 감지용)
-            prev_capture = capture_first_row_region(header, base_y)
-            log(u"    [CAPTURE] 스크롤 전 첫 번째 행 캡처 완료")
+            # 1. 스크롤 전 테이블 전체 캡처 (마지막 페이지 감지용)
+            prev_capture = capture_table_region()
+            log(u"    [CAPTURE] 스크롤 전 테이블 전체 캡처 완료")
 
             # 2. OCR 수행 (화면 캡처 포함)
             customers, json_path = capture_and_ocr(chosung_name, global_page)
 
             if not customers:
-                log(u"    [WARN] OCR 결과 없음 → 캐시 삭제 후 재시도...")
-                # 캐시 삭제
-                cache_json = os.path.join(CAPTURE_DIR, u"cache_%s_P%d.json" % (chosung_name, global_page))
-                if os.path.exists(cache_json):
-                    os.remove(cache_json)
-                    log(u"    [RETRY] 캐시 삭제: %s" % os.path.basename(cache_json))
-                # 재시도
+                log(u"    [WARN] OCR 결과 없음 → 재시도...")
                 sleep(2)
                 customers, json_path = capture_and_ocr(chosung_name, global_page)
 
@@ -919,11 +931,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 total_errors += len(errors)
                 error_customers.extend(errors)
 
-            # 5. 스크롤 (16번째 행 클릭 × 15회)
-            log(u"    [SCROLL] 16번째 행 클릭 × %d회..." % ROWS_PER_PAGE)
-            scroll_by_row_click(scroll_x, base_y)
+            # 5. 스크롤 (Page Down 키)
+            log(u"    [SCROLL] Page Down 스크롤...")
+            scroll_page_down()
 
-            # 6. 스크롤 끝 감지 (화면 캡처 비교)
+            # 6. 스크롤 끝 감지 (스크롤 전후 테이블 전체 비교)
             if is_last_page(prev_capture):
                 log(u"\n    *** 스크롤 끝 도달! (스크롤 전후 동일) ***")
 
