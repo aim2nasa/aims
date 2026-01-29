@@ -559,7 +559,7 @@ IMG_ARROW_DESC = "img/1769598882979.png"       # ↓ (내림차순 화살표)
 IMG_ARROW_ASC = "img/1769598893800.png"        # ↑ (오름차순 화살표)
 
 # 고객등록/조회 페이지
-IMG_CLOSE_BTN = "img/1769234950471.png"        # 종료(x) 버튼 (TODO: 100% 캡처 필요)
+IMG_CLOSE_BTN = "img/1769602665952.png"        # 종료(x) 버튼 [100% 줌]
 IMG_ALERT_OK = "img/1769251121685.png"         # 알림 팝업 "확인" 버튼 (TODO: 100% 캡처 필요)
 IMG_NEXT_BTN = "img/1769401640056.png"         # 다음 버튼 (TODO: 100% 캡처 필요)
 
