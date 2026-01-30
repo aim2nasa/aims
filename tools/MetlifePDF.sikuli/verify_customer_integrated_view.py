@@ -1250,9 +1250,12 @@ def recover_to_report_list(report_number):
         has_pdf_viewer, has_alert_btn, has_report_header, has_preview_btn, has_select_btn))
 
     # 이미 복구 완료 상태인지 먼저 확인
-    if has_report_header and not has_pdf_viewer and not has_alert_btn:
+    # ★ 미리보기 버튼이 보이면 보고서인쇄 모달이 열려있는 것 → 복구 미완료
+    if has_report_header and not has_pdf_viewer and not has_alert_btn and not has_preview_btn:
         log(u"    [복구 완료] 이미 변액보험리포트 목록 상태!")
         return True
+    elif has_report_header and has_preview_btn:
+        log(u"    [복구 필요] 리포트헤더 보이지만 보고서인쇄 모달이 아직 열려있음!")
 
     # Step 1: Alert/확인 팝업 닫기 (PDF 타임아웃 후 "처리중 오류" 알림 등)
     log(u"        [복구 1/6] Alert/확인 팝업 닫기...")
@@ -1282,13 +1285,15 @@ def recover_to_report_list(report_number):
     type(Key.ESC)  # 한 번 더 (중첩 다이얼로그 대비)
     sleep(1)
 
-    # Step 3: PDF 뷰어 닫기 (Alt+F4) - PDF 뷰어가 열려있을 경우
+    # Step 3: PDF 뷰어 닫기 (Alt+F4) - ★ 여러 PDF 뷰어가 열려있을 수 있음 (루프)
     log(u"        [복구 3/6] PDF 뷰어 닫기 시도 (Alt+F4)...")
-    if exists(IMG_PDF_SAVE_BTN, 2):
-        log(u"        -> PDF 뷰어 열려있음 - Alt+F4로 닫기")
+    pdf_close_count = 0
+    while exists(IMG_PDF_SAVE_BTN, 2) and pdf_close_count < 5:
+        pdf_close_count += 1
+        log(u"        -> PDF 뷰어 열려있음 [%d번째] - Alt+F4로 닫기" % pdf_close_count)
         type(Key.F4, Key.ALT)
         sleep(2)
-        capture_error_screenshot(report_number, "recovery_after_altf4")
+        capture_error_screenshot(report_number, "recovery_after_altf4_%d" % pdf_close_count)
 
         # "예(Y)" 확인 버튼 클릭 (저장하지 않고 닫기)
         if exists(IMG_YES_BTN, 3):
@@ -1297,7 +1302,7 @@ def recover_to_report_list(report_number):
             yy = int(yes_match.getCenter().getY())
             click(yes_match)
             log(u"        -> 예(Y) 버튼 클릭: (%d, %d)" % (yx, yy))
-            capture_with_click_marker(yx, yy, "yes_btn", report_number, "recovery_yes")
+            capture_with_click_marker(yx, yy, "yes_btn_%d" % pdf_close_count, report_number, "recovery_yes")
             sleep(2)
         else:
             # 예 버튼 못 찾으면 Enter 키로 시도
@@ -1305,14 +1310,8 @@ def recover_to_report_list(report_number):
             log(u"        -> Enter 키로 확인 (예(Y) 버튼 미발견)")
             sleep(1)
 
-        # PDF 뷰어가 아직 열려있는지 재확인
-        if exists(IMG_PDF_SAVE_BTN, 2):
-            log(u"        -> [WARN] PDF 뷰어 아직 열려있음! 한 번 더 Alt+F4 시도")
-            type(Key.F4, Key.ALT)
-            sleep(2)
-            if exists(IMG_YES_BTN, 3):
-                click(IMG_YES_BTN)
-                sleep(2)
+    if pdf_close_count > 0:
+        log(u"        -> PDF 뷰어 %d개 닫음" % pdf_close_count)
     else:
         log(u"        -> PDF 뷰어 열려있지 않음")
 
@@ -1320,9 +1319,9 @@ def recover_to_report_list(report_number):
     log(u"        [복구 4/6] 보고서인쇄 창 닫기...")
     capture_error_screenshot(report_number, "before_close_print")
 
-    # 먼저 변액보험리포트 헤더가 보이면 이미 복구된 상태
-    if exists(IMG_REPORT_HEADER, 2):
-        log(u"        -> 이미 변액보험리포트 목록 상태 - 보고서인쇄 창 닫기 불필요")
+    # ★ 리포트헤더만으로 복구 상태를 판단하면 안됨 - 보고서인쇄 모달 뒤에서도 헤더가 보임
+    if exists(IMG_REPORT_HEADER, 2) and not exists(IMG_PREVIEW_BTN, 1):
+        log(u"        -> 이미 변액보험리포트 목록 상태 (보고서인쇄 모달 없음) - 닫기 불필요")
     else:
         print_closed = False
         # 방법 1: 보고서인쇄 창 X 버튼 이미지 매칭
@@ -1367,14 +1366,46 @@ def recover_to_report_list(report_number):
     log(u"        [복구 5/6] 복구 결과 검증...")
     capture_error_screenshot(report_number, "recovery_verify")
 
-    if exists(IMG_REPORT_HEADER, 3):
+    # ★ 리포트헤더 + 보고서인쇄 모달 없음 = 진짜 복구 완료
+    if exists(IMG_REPORT_HEADER, 3) and not exists(IMG_PREVIEW_BTN, 1):
         log(u"    [복구 완료] 변액보험리포트 목록으로 복귀 성공!")
         log(u"    " + u"=" * 50)
         return True
 
     # Step 6: 추가 복구 시도 (Step 5 실패 시)
     log(u"        [복구 6/6] 추가 복구 시도...")
-    log(u"        -> 변액보험리포트 목록 확인 안됨")
+
+    # ★ 보고서인쇄 모달이 아직 열려있으면 닫기 재시도
+    if exists(IMG_PREVIEW_BTN, 1):
+        log(u"        -> 보고서인쇄 모달 아직 열려있음! 닫기 재시도...")
+        modal_closed = False
+        if exists(IMG_PRINT_REPORT_CLOSE_BTN, 2):
+            click(find(IMG_PRINT_REPORT_CLOSE_BTN))
+            log(u"        -> 보고서인쇄 X 버튼 클릭 (재시도)")
+            sleep(2)
+            modal_closed = True
+        elif exists(IMG_REPORT_PRINT_X_BTN, 2):
+            click(find(IMG_REPORT_PRINT_X_BTN))
+            log(u"        -> 보고서인쇄 X 버튼 클릭 (대체 이미지, 재시도)")
+            sleep(2)
+            modal_closed = True
+
+        if not modal_closed:
+            # 미리보기 버튼 기준 상대좌표로 X 버튼 클릭
+            preview_pattern_retry = Pattern(IMG_PREVIEW_BTN).similar(0.8)
+            if exists(preview_pattern_retry, 1):
+                preview_m = find(preview_pattern_retry)
+                cx = int(preview_m.getCenter().getX() + PREVIEW_TO_CLOSE_X)
+                cy = int(preview_m.getCenter().getY() + PREVIEW_TO_CLOSE_Y)
+                click(Location(cx, cy))
+                log(u"        -> 상대좌표로 X 버튼 클릭 (재시도): (%d, %d)" % (cx, cy))
+                sleep(2)
+            else:
+                type(Key.ESC)
+                log(u"        -> ESC 키로 닫기 시도")
+                sleep(1)
+    else:
+        log(u"        -> 변액보험리포트 목록 확인 안됨 (보고서인쇄 모달도 없음)")
 
     # 혹시 알림 팝업이 추가로 떴을 수 있음
     if exists(alert_pattern, 2):
@@ -1383,20 +1414,23 @@ def recover_to_report_list(report_number):
         log(u"        -> 추가 알림 팝업 닫기")
         sleep(1)
 
-    # ESC 여러 번 시도
+    # ESC 여러 번 시도 (잔여 다이얼로그 대비)
     for esc_try in range(3):
         type(Key.ESC)
         sleep(0.5)
     sleep(1)
 
-    # 마지막 확인
+    # 마지막 확인 - ★ 보고서인쇄 모달까지 확인
     capture_error_screenshot(report_number, "recovery_final")
-    if exists(IMG_REPORT_HEADER, 3):
+    if exists(IMG_REPORT_HEADER, 3) and not exists(IMG_PREVIEW_BTN, 1):
         log(u"    [복구 완료] 추가 시도 후 변액보험리포트 목록 복귀 성공!")
         log(u"    " + u"=" * 50)
         return True
     else:
+        remaining_modal = exists(IMG_PREVIEW_BTN, 1)
+        remaining_pdf = exists(IMG_PDF_SAVE_BTN, 1)
         log(u"    [복구 실패] 모든 복구 시도 실패 - 수동 확인 필요")
+        log(u"    [복구 실패] 잔여상태: 보고서인쇄모달=%s, PDF뷰어=%s" % (remaining_modal, remaining_pdf))
         log(u"    [복구 실패] 오류 스크린샷 폴더: %s" % ERROR_DIR)
         log(u"    " + u"=" * 50)
         return False
@@ -1688,6 +1722,26 @@ def save_report_pdf(report_number):
             log(u"        [WARN] 예(Y) 버튼 못 찾음 - 이미 닫힘?")
             capture_search_failure("예(Y) 버튼", str(IMG_YES_BTN), 5, report_number, "yes_notfound")
 
+        # ★ PDF 뷰어 닫힘 검증 (스택에 하나만 존재 가능 - 반드시 내려야 다음 PDF 가능)
+        if exists(IMG_PDF_SAVE_BTN, 2):
+            log(u"        [WARN] PDF 뷰어 아직 열려있음! 닫기 재시도...")
+            type(Key.F4, Key.ALT)
+            sleep(2)
+            if exists(IMG_YES_BTN, 3):
+                retry_yes = find(IMG_YES_BTN)
+                click(retry_yes)
+                log(u"        -> 예(Y) 재시도 클릭: (%d, %d)" % (
+                    int(retry_yes.getCenter().getX()), int(retry_yes.getCenter().getY())))
+                sleep(2)
+            if exists(IMG_PDF_SAVE_BTN, 2):
+                # ★ PDF가 스택 최상단에 남아있으면 하위 레이어 조작 불가 → recover로 위임
+                log(u"        [ERROR] PDF 뷰어 닫기 실패! recover_to_report_list()로 위임")
+                capture_error_screenshot(report_number, "pdf_viewer_not_closed")
+                recover_to_report_list(report_number)
+                return result
+        else:
+            log(u"        -> PDF 뷰어 정상 종료 확인")
+
         # Step 11: 보고서인쇄 창 X 버튼 클릭
         log(u"    [11/11] 보고서인쇄 창 X 버튼 클릭...")
         capture_step_screenshot(report_number, "before_close_x")
@@ -1734,10 +1788,14 @@ def save_report_pdf(report_number):
             type(Key.ESC)
             sleep(1)
 
-        # 보고서인쇄 창 닫힘 검증
-        log(u"        [검증] 변액보험리포트 헤더 확인...")
-        if exists(IMG_REPORT_HEADER, 3):
+        # ★ 보고서인쇄 창 닫힘 검증 (헤더 + 모달 없음 확인 - 스택 완전 해소)
+        log(u"        [검증] 변액보험리포트 헤더 + 보고서인쇄 모달 없음 확인...")
+        if exists(IMG_REPORT_HEADER, 3) and not exists(IMG_PREVIEW_BTN, 1):
             log(u"        -> 변액보험리포트 목록으로 정상 복귀!")
+        elif exists(IMG_PREVIEW_BTN, 1):
+            log(u"        [WARN] 보고서인쇄 모달 아직 열려있음! recover로 위임")
+            capture_step_screenshot(report_number, "close_x_modal_still_open")
+            recover_to_report_list(report_number)
         else:
             log(u"        [WARN] 변액보험리포트 목록 미확인 - 추가 조치 불필요할 수 있음")
             capture_step_screenshot(report_number, "close_x_verify_warn")
