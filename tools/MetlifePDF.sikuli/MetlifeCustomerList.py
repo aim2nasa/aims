@@ -382,18 +382,25 @@ def scroll_page_down():
     100% 줌에서는 16번째 행이 화면에 보이지 않아 클릭 방식 불가.
     Java Robot의 Page Down 키 사용.
 
-    주의: 고객 처리 후 포커스가 다른 곳에 있을 수 있으므로
-    테이블 영역을 클릭하여 포커스를 확보한 후 Page Down 수행.
+    주의: Nexacro 그리드는 현재 커서 행 기준으로 Page Down 수행.
+    테이블 하단 행을 클릭하여 커서를 아래쪽에 배치한 후 Page Down해야
+    충분한 새 콘텐츠가 스크롤됨.
+    (상단 행 클릭 시 Page Down이 같은 영역 대부분을 다시 보여줌)
     """
-    # 테이블 영역 클릭하여 포커스 확보 (고객명 헤더 우측 하단 영역)
+    # 테이블 하단 행 클릭하여 포커스 확보 + 커서를 하단에 배치
     try:
         header = find(IMG_CUSTNAME)
-        focus_target = header.right(300).below(150)
-        click(focus_target)
+        hx = int(header.getCenter().getX())
+        hy = int(header.getCenter().getY())
+        # 테이블 마지막 행 근처 클릭 (header 아래 ~370px = 13번째 행 영역)
+        bottom_y = hy + 370
+        click(Location(hx + 200, bottom_y))
+        log(u"        -> 포커스: 테이블 하단 클릭 (%d, %d)" % (hx + 200, bottom_y))
         sleep(0.3)
     except:
-        # 헤더를 못 찾으면 테이블 중앙 영역 클릭
-        click(Location(500, 500))
+        # 헤더를 못 찾으면 테이블 하단 영역 클릭
+        click(Location(500, 700))
+        log(u"        -> 포커스: 폴백 위치 클릭 (500, 700)")
         sleep(0.3)
 
     _robot.keyPress(KeyEvent.VK_PAGE_DOWN)
@@ -426,7 +433,13 @@ def is_last_page(prev_capture_path):
     스크롤 전후 테이블 전체 영역 비교로 마지막 페이지 감지
 
     스크롤 후 테이블 전체를 다시 캡처하여 스크롤 전 캡처와 비교.
-    두 이미지가 동일하면 스크롤이 안 된 것 = 마지막 페이지.
+    98% 이상 동일하면 마지막 페이지로 판단.
+
+    임계값 98%인 이유:
+    - Nexacro 그리드의 Page Down은 커서 위치 기준으로 스크롤
+    - 커서가 상단에 있으면 부분 스크롤(1~2행)만 발생 가능 → 95% 유사
+    - 98% 이상이면 스크롤이 실질적으로 발생하지 않은 것으로 확정
+    - 부분 스크롤(90~97%)은 다음 루프에서 자연스럽게 처리
 
     Args:
         prev_capture_path: 스크롤 전 테이블 캡처 이미지 경로
@@ -472,9 +485,9 @@ def is_last_page(prev_capture_path):
 
         log(u"    [COMPARE] 테이블 전체 비교: %.1f%% 동일 (%d/%d 샘플)" % (similarity * 100, same_count, total_samples))
 
-        # 95% 이상 동일하면 마지막 페이지 (테이블 전체 비교이므로 임계값 낮춤)
-        if similarity >= 0.95:
-            log(u"    [COMPARE] → 마지막 페이지 (95%+ 동일)")
+        # 98% 이상 동일하면 마지막 페이지 (스크롤이 실질적으로 발생하지 않음)
+        if similarity >= 0.98:
+            log(u"    [COMPARE] → 마지막 페이지 (98%+ 동일)")
             return True
         else:
             log(u"    [COMPARE] → 계속 진행 (충분히 다름)")
@@ -1030,6 +1043,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     error_customers = []           # 이번 초성의 오류 발생 고객 목록
     prev_page_rows = []            # 이전 페이지 행 리스트 (스크롤 중복 감지용)
     prev_customers = None          # 이전 페이지 OCR 결과 (OCR 실패 시 복구용)
+    zero_new_rows_count = 0        # 연속 신규 행 0건 카운트 (무한루프 방지)
 
     # 좌표 설정 (한 번만 측정)
     header = find(IMG_CUSTNAME)
@@ -1201,6 +1215,16 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
             page_rows = len(current_rows) - scroll_dups
             total_rows += page_rows
+
+            # 무한루프 방지: 연속 신규 행 0건 감지
+            if page_rows <= 0 and len(current_rows) > 0:
+                zero_new_rows_count += 1
+                log(u"    [STUCK] 신규 행 0건 (연속 %d회)" % zero_new_rows_count)
+                if zero_new_rows_count >= 3:
+                    log(u"\n    *** 스크롤 진행 불가! 신규 행 0건 3회 연속 → 스크롤 끝 판정 ***")
+                    break
+            else:
+                zero_new_rows_count = 0
 
             # 다음 페이지를 위해 현재 페이지 행 저장
             prev_page_rows = current_rows
