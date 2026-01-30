@@ -49,7 +49,7 @@ cmd.exe /c "rd /s /q D:\aims\tools\MetlifePDF.sikuli\screenshots 2>nul & mkdir D
 ### Phase 2: 실행
 ```bash
 # PowerShell 백그라운드로 SikuliX 실행 (--integrated-view 옵션 필수!)
-powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'MetlifeCustomerList.py' -- --chosung '{초성}' --integrated-view"
+powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java '-Dfile.encoding=UTF-8' -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'MetlifeCustomerList.py' -- --chosung '{초성}' --integrated-view"
 ```
 - `run_in_background: true` 옵션 사용
 - TaskOutput으로 상태 모니터링
@@ -57,7 +57,7 @@ powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -j
 ### Phase 2-1: 재개 (오류 발생 후)
 ```bash
 # --resume 옵션으로 중단 지점부터 재개
-powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'MetlifeCustomerList.py' -- --chosung '{초성}' --integrated-view --resume"
+powershell.exe -Command "Set-Location 'D:\aims\tools\MetlifePDF.sikuli'; java '-Dfile.encoding=UTF-8' -jar 'C:\SikuliX\sikulixide-2.0.5.jar' -r 'MetlifeCustomerList.py' -- --chosung '{초성}' --integrated-view --resume"
 ```
 - checkpoint.json에서 마지막 처리 위치 자동 로드
 - 해당 네비/스크롤 페이지까지 자동 이동

@@ -63,4 +63,8 @@ $env:METLIFE_CHOSUNG = $Chosung
 $env:METLIFE_END_DATE = $EndDate
 $env:METLIFE_CAPTURE_DIR = $CaptureDir
 
-java "-Dfile.encoding=UTF-8" -jar C:\Sikulix\sikulixide-2.0.5.jar -r D:\aims\tools\MetlifePDF.sikuli\MetlifeCustomerList.py
+if ($Chosung) {
+    java "-Dfile.encoding=UTF-8" -jar C:\Sikulix\sikulixide-2.0.5.jar -r D:\aims\tools\MetlifePDF.sikuli\MetlifeCustomerList.py -- --chosung $Chosung
+} else {
+    java "-Dfile.encoding=UTF-8" -jar C:\Sikulix\sikulixide-2.0.5.jar -r D:\aims\tools\MetlifePDF.sikuli\MetlifeCustomerList.py
+}
