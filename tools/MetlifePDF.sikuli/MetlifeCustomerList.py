@@ -626,9 +626,31 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                 else:
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
-                        from verify_customer_integrated_view import verify_customer_integrated_view
-                        verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
+                        from verify_customer_integrated_view import verify_customer_integrated_view, NavigationResetRequired
+                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
                         log(u"        -> 고객통합뷰 처리 완료")
+                        # 결과 수집 (초성별 summary용)
+                        if isinstance(view_result, dict):
+                            _chosung_customer_results.append(view_result)
+                    except NavigationResetRequired as e:
+                        # === 검증 실패 → 프로그램 종료 ===
+                        err_msg = u"%s" % e
+                        log(u"")
+                        log(u"    " + u"=" * 60)
+                        log(u"    [FATAL] 검증 실패 - 프로그램 종료")
+                        log(u"    " + u"=" * 60)
+                        log(u"    고객명: %s" % name)
+                        log(u"    초성: %s" % chosung_name)
+                        log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
+                        log(u"    원인: %s" % err_msg)
+                        log(u"    ")
+                        log(u"    → 문제 분석 후 --resume 옵션으로 재개하세요.")
+                        log(u"    " + u"=" * 60)
+                        take_screenshot(u"FATAL_verification_failed_%s" % name)
+                        # 에러 + 체크포인트 저장
+                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                        save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
+                        raise SystemExit(1)
                     except Exception as e:
                         err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
                         log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
@@ -916,6 +938,96 @@ def save_checkpoint(customer_name, chosung, nav_page, scroll_page, row_in_page):
         log(u"    [CHECKPOINT] 저장 실패: %s" % str(e))
 
 
+# ★ 초성별 고객통합뷰 처리 결과 수집용
+_chosung_customer_results = []
+
+
+def generate_chosung_summary(chosung_name, total_rows, total_errors, error_customers, nav_page, global_page, elapsed_sec):
+    """
+    초성 처리 완료 후 Summary + 문제 Report 출력
+
+    Args:
+        chosung_name: 초성 이름 (예: 'ㅁ')
+        total_rows: 처리한 총 행수
+        total_errors: 오류 발생 고객 수
+        error_customers: 오류 고객 목록 (process_customers에서 반환)
+        nav_page: 네비게이션 페이지 수
+        global_page: 스크롤 페이지 수
+        elapsed_sec: 소요 시간 (초)
+    """
+    global _chosung_customer_results
+
+    results = _chosung_customer_results
+    minutes = int(elapsed_sec // 60)
+    seconds = int(elapsed_sec % 60)
+
+    log(u"")
+    log(u"=" * 70)
+    log(u"  [%s] 초성 처리 결과 Summary" % chosung_name)
+    log(u"=" * 70)
+
+    # 기본 통계
+    log(u"  총 행수: %d행 | 오류: %d건 | 소요: %d분 %d초" % (total_rows, total_errors, minutes, seconds))
+    log(u"  네비 페이지: %d회 | 스크롤 페이지: %d개" % (nav_page, global_page))
+
+    # 고객통합뷰 결과 통계 (결과가 있는 경우)
+    if results:
+        log(u"  고객통합뷰 처리: %d명" % len(results))
+
+        # 변액리포트 통계
+        var_exists_count = sum(1 for r in results if r.get('variable_insurance', {}).get('exists'))
+        var_saved_total = sum(r.get('variable_insurance', {}).get('saved', 0) for r in results)
+        var_dup_total = sum(r.get('variable_insurance', {}).get('duplicate', 0) for r in results)
+        var_metlife_err = sum(r.get('variable_insurance', {}).get('metlife_errors', 0) for r in results)
+        var_no_contract = sum(1 for r in results if r.get('variable_insurance', {}).get('no_variable_contract'))
+
+        log(u"")
+        log(u"  [변액리포트]")
+        log(u"    변액보험 존재: %d명 | 미존재: %d명" % (var_exists_count, var_no_contract))
+        log(u"    PDF 저장: %d건 | 중복스킵: %d건 | MetLife 오류 스킵: %d건" % (var_saved_total, var_dup_total, var_metlife_err))
+
+        # Annual Report 통계
+        ar_exists = sum(1 for r in results if r.get('annual_report', {}).get('exists') == True)
+        ar_saved = sum(1 for r in results if r.get('annual_report', {}).get('saved') == True)
+        ar_not_exists = sum(1 for r in results if r.get('annual_report', {}).get('exists') == False)
+        ar_unknown = sum(1 for r in results if r.get('annual_report', {}).get('exists') is None)
+
+        log(u"")
+        log(u"  [Annual Report]")
+        log(u"    존재+저장: %d건 | 미존재: %d건 | 버튼없음: %d건" % (ar_saved, ar_not_exists, ar_unknown))
+
+    # ★ 문제 Report (별도 섹션)
+    issues_found = []
+
+    # 고객통합뷰 내 문제
+    for r in results:
+        cname = r.get('customer_name', u'?')
+        for issue in r.get('issues', []):
+            issues_found.append(u"[%s] %s" % (cname, issue))
+
+    # process_customers 오류
+    for err in error_customers:
+        issues_found.append(u"[%s] 클릭 처리 오류: %s" % (
+            err.get(u"고객명", u"?"), err.get(u"오류", u"?")))
+
+    if issues_found:
+        log(u"")
+        log(u"  " + u"!" * 60)
+        log(u"  [문제 Report] %d건" % len(issues_found))
+        log(u"  " + u"!" * 60)
+        for idx, issue in enumerate(issues_found, 1):
+            log(u"    %d. %s" % (idx, issue))
+        log(u"  " + u"!" * 60)
+    else:
+        log(u"")
+        log(u"  [문제 Report] 문제 없음!")
+
+    log(u"=" * 70)
+
+    # 결과 초기화 (다음 초성용)
+    _chosung_customer_results = []
+
+
 # PDF 저장 디렉토리 (고객통합뷰 모드에서 사용)
 PDF_SAVE_DIR = os.path.join(CAPTURE_DIR, "pdf") if INTEGRATED_VIEW_ENABLED else None
 if PDF_SAVE_DIR and not os.path.exists(PDF_SAVE_DIR):
@@ -1006,6 +1118,8 @@ MAX_OCR_FAILURES = 3  # 연속 실패 허용 횟수
 ocr_consecutive_failures = 0  # 연속 실패 카운터
 
 for chosung_name, chosung_img in CHOSUNG_BUTTONS:
+    chosung_start_time = time.time()
+    _chosung_customer_results = []  # 초성별 결과 초기화
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
     click(chosung_img)
@@ -1366,14 +1480,12 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"  " + u"#" * 50)
             break  # 네비 루프 탈출
 
-    # 초성 처리 완료 요약
-    log(u"\n  " + u"*" * 50)
-    log(u"  *  [%s] 초성 결산" % chosung_name)
-    log(u"  " + u"*" * 50)
-    log(u"  *  총 행수: %d행, 오류 %d명" % (total_rows, total_errors))
-    log(u"  *  네비 페이지: %d회 (다음 버튼 %d회 클릭)" % (nav_page, nav_page - 1))
-    log(u"  *  스크롤 페이지: %d개 (전체 누적)" % global_page)
-    log(u"  " + u"*" * 50)
+    # 초성 처리 완료 Summary + 문제 Report
+    chosung_elapsed = time.time() - chosung_start_time
+    generate_chosung_summary(
+        chosung_name, total_rows, total_errors, error_customers,
+        nav_page, global_page, chosung_elapsed
+    )
 
     # 전체 통계에 합산
     all_total_rows += total_rows
