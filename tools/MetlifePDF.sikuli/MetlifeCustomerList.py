@@ -381,7 +381,21 @@ def scroll_page_down():
 
     100% 줌에서는 16번째 행이 화면에 보이지 않아 클릭 방식 불가.
     Java Robot의 Page Down 키 사용.
+
+    주의: 고객 처리 후 포커스가 다른 곳에 있을 수 있으므로
+    테이블 영역을 클릭하여 포커스를 확보한 후 Page Down 수행.
     """
+    # 테이블 영역 클릭하여 포커스 확보 (고객명 헤더 우측 하단 영역)
+    try:
+        header = find(IMG_CUSTNAME)
+        focus_target = header.right(300).below(150)
+        click(focus_target)
+        sleep(0.3)
+    except:
+        # 헤더를 못 찾으면 테이블 중앙 영역 클릭
+        click(Location(500, 500))
+        sleep(0.3)
+
     _robot.keyPress(KeyEvent.VK_PAGE_DOWN)
     _robot.keyRelease(KeyEvent.VK_PAGE_DOWN)
     sleep(0.5)
@@ -604,6 +618,17 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         log(u"        -> 고객통합뷰 처리 완료")
                     except Exception as e:
                         log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % str(e))
+                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                        try:
+                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                sleep(2)
+                        except:
+                            pass  # 이미 닫혀있으면 무시
+                        # 오류 기록
+                        save_error(name, str(e), chosung_name, nav_page, scroll_page, row_in_page)
                     sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭

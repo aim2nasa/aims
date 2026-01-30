@@ -33,6 +33,11 @@ try:
 except ImportError:
     pass  # 직접 실행 시에는 이미 전역 네임스페이스에 있음
 
+
+class IntegratedViewError(Exception):
+    """고객통합뷰 처리 중 복구 불가능한 오류 (스킵 후 다음 고객 처리 계속)"""
+    pass
+
 # Java Robot 인스턴스 (Page Up 키 입력용)
 _robot = Robot()
 
@@ -251,7 +256,10 @@ def copy_report_screenshots_to_error_folder(report_number):
 
 def capture_and_exit(reason):
     """
-    예상치 못한 상황 발생 시 화면 캡처 후 종료 (전역 순서 번호 포함)
+    예상치 못한 상황 발생 시 화면 캡처 후 예외 발생 (전역 순서 번호 포함)
+
+    외부에서 import하여 호출 시: IntegratedViewError 발생 → 호출자가 catch하여 다음 고객 계속 처리
+    단독 실행 시: __main__ 블록에서 catch하여 sys.exit(1)
 
     Args:
         reason: 종료 사유
@@ -260,7 +268,7 @@ def capture_and_exit(reason):
 
     log(u"")
     log(u"=" * 60)
-    log(u"[ABORT] 예상치 못한 상황 발생!")
+    log(u"[ERROR] 예상치 못한 상황 발생!")
     log(u"    사유: %s" % reason)
     log(u"=" * 60)
 
@@ -271,8 +279,7 @@ def capture_and_exit(reason):
 
         screen = Screen()
         capture = screen.capture(screen.getBounds())
-        # 파일명 형식: 001_ABORT_reason.png
-        filename = "%03d_ABORT.png" % seq_num
+        filename = "%03d_ERROR.png" % seq_num
         screenshot_path = os.path.join(SCREENSHOT_DIR, filename)
         shutil.copy(capture.getFile(), screenshot_path)
         log(u"    [스크린샷 #%03d] %s" % (seq_num, filename))
@@ -280,8 +287,8 @@ def capture_and_exit(reason):
         log(u"    [WARN] 스크린샷 저장 실패: %s" % str(e))
 
     log(u"")
-    log(u"=== 테스트 강제 종료 ===")
-    sys.exit(1)
+    log(u"=== 고객통합뷰 처리 중단 (다음 고객으로 계속) ===")
+    raise IntegratedViewError(reason)
 
 
 def scroll_to_top(scroll_count=20):
@@ -1789,8 +1796,8 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
     # 4단계: 변액보험리포트 클릭
     log(u"")
     log(u"[4단계] 변액보험리포트 클릭")
-    if not wait_and_click(IMG_VARIABLE_INSURANCE_REPORT_BTN, u"변액보험리포트 버튼", 15):
-        capture_and_exit(u"변액보험리포트 버튼을 찾을 수 없음 - 예상치 못한 화면 상태")
+    if not wait_and_click(IMG_VARIABLE_INSURANCE_REPORT_BTN, u"변액보험리포트 버튼", 25):
+        capture_and_exit(u"변액보험리포트 버튼을 찾을 수 없음 - 고객통합뷰 미로딩 또는 화면 전환 실패")
 
     # 짧은 대기 후 알림창 먼저 확인 (변액보험 없음 알림은 빠르게 나타남)
     sleep(WAIT_MEDIUM)
@@ -1831,8 +1838,12 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
             click(IMG_NO_VARIABLE_CONTRACT_CONFIRM)
             sleep(0.5)
             # 더블클릭 대응: 알림창이 아직 있으면 한 번 더 클릭
-            if exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 1):
-                click(IMG_NO_VARIABLE_CONTRACT_CONFIRM)
+            # (첫 번째 클릭으로 닫혔을 수 있으므로 예외 처리)
+            try:
+                if exists(IMG_NO_VARIABLE_CONTRACT_CONFIRM, 1):
+                    click(IMG_NO_VARIABLE_CONTRACT_CONFIRM)
+            except:
+                pass  # 이미 닫혔으면 무시
         sleep(WAIT_SHORT)
 
         log(u"    -> 변액계약 미존재로 스킵, 다음 단계로 진행")
@@ -1919,7 +1930,11 @@ if __name__ == "__main__":
                 os.remove(filepath)
         print("[INFO] 오류 폴더 초기화 완료")
 
-    success = verify_customer_integrated_view()
+    try:
+        success = verify_customer_integrated_view()
+    except IntegratedViewError as e:
+        log(u"[FATAL] 단독 실행 중 복구 불가 오류: %s" % str(e))
+        success = False
 
     log(u"=== 실행 종료 ===")
     sys.exit(0 if success else 1)
