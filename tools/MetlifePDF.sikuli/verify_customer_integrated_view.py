@@ -1223,12 +1223,50 @@ def download_annual_report():
         log(u"    [Annual Report 버튼] 클릭 완료: (%d, %d)" % (ar_x, ar_y))
         capture_with_click_marker(ar_x, ar_y, "annual_report_btn", 0, "step7_btn_click")
         sleep(WAIT_SHORT)
+        take_screenshot(u"step7_after_ar_click" if attempt == 1 else u"step7_retry%d_after_click" % attempt)
 
-        # 7-2: Annual Report 미존재 확인 (null 알림 감지)
-        if exists(IMG_NO_ANNUAL_REPORT_ALERT, 3):
-            log(u"    [INFO] 'Annual Report가 존재하지 않습니다' 알림 감지")
+        # 7-2: AR 결과 대기 (폴링 방식 - 로딩 중 오탐지 방지)
+        # 문제: 로딩 화면("Loading... 잠시만 기다려 주시기 바랍니다")에서
+        #        IMG_NO_ANNUAL_REPORT_ALERT가 오탐지되어 AR이 있는데도 "없음"으로 판정
+        # 해결: alert + confirm 버튼 이중 확인 + PDF 아이콘 동시 폴링
+        log(u"    AR 결과 대기 (PDF 아이콘 또는 알림 폴링)... [시도 %d/%d]" % (attempt, MAX_RETRY))
+        ar_not_exist = False
+        ar_alert_reason = None
+
+        for poll_idx in range(20):  # 최대 ~60초 (3초 x 20)
+            # 1) PDF 저장 아이콘 → AR PDF 로딩 완료
+            if exists(IMG_PDF_SAVE_BTN, 0):
+                log(u"    [감지] PDF 저장 아이콘 발견 → AR PDF 로딩 완료")
+                pdf_loaded = True
+                break
+
+            # 2) "없음" 알림 + 확인 버튼 이중 확인 (오탐지 방지)
+            alert_found = exists(IMG_NO_ANNUAL_REPORT_ALERT, 0)
+            confirm_found = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 0)
+
+            if alert_found and confirm_found:
+                log(u"    [감지] AR 미존재 알림 + 확인 버튼 → AR 없음 확정")
+                ar_not_exist = True
+                ar_alert_reason = u'AR 미존재'
+                break
+
+            # 3) 확인 버튼만 단독 (기타 알림: 기계약 미존재 등)
+            if confirm_found and not alert_found:
+                log(u"    [감지] 확인 버튼 단독 → 기타 알림 (기계약 미존재 등)")
+                ar_not_exist = True
+                ar_alert_reason = u'기계약 미존재 알림'
+                break
+
+            # 4) alert만 감지, confirm 미감지 → 오탐지 가능성 (로딩 중)
+            if alert_found and not confirm_found:
+                log(u"    [WARN] 알림 이미지만 감지, 확인 버튼 없음 → 로딩 중 오탐지 가능, 계속 대기")
+                take_screenshot(u"step7_possible_false_positive_%d" % poll_idx)
+
+            sleep(3)
+
+        # 알림 확인 → AR 미존재 처리
+        if ar_not_exist:
             take_screenshot(u"step7_no_annual_report_alert")
-            # 확인 버튼 클릭 (좌표 로깅)
             if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3):
                 confirm_match = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
                 cx = int(confirm_match.getCenter().getX())
@@ -1237,32 +1275,12 @@ def download_annual_report():
                 log(u"    [확인 버튼] 클릭: (%d, %d)" % (cx, cy))
                 capture_with_click_marker(cx, cy, "no_annual_confirm", 0, "step7_no_annual_confirm")
                 sleep(WAIT_SHORT)
-            log(u"    Annual Report가 존재하지 않습니다 - 확인 버튼 클릭")
-            log(u"    -> Annual Report 미존재로 스킵, 다음 단계로 진행")
-            return {'exists': False, 'saved': False, 'reason': u'AR 미존재'}
+            log(u"    -> %s → 스킵, 다음 단계로 진행" % ar_alert_reason)
+            return {'exists': False, 'saved': False, 'reason': ar_alert_reason}
 
-        # 7-2b: 기타 알림 감지 (기계약 미존재 등)
-        # "기계약이 존재하지 않습니다" 등 다른 종류의 알림 팝업 처리
-        # 확인 버튼은 MetLife 알림에서 공통 스타일이므로 버튼만 단독 체크
-        confirm_btn = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2)
-        if confirm_btn:
-            log(u"    [INFO] 알림 팝업 감지 (기계약 미존재 등) - 확인 클릭")
-            take_screenshot(u"step7_alert_other")
-            alert_match = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
-            ax = int(alert_match.getCenter().getX())
-            ay = int(alert_match.getCenter().getY())
-            click(alert_match)
-            log(u"    [알림 확인] 클릭: (%d, %d)" % (ax, ay))
-            capture_with_click_marker(ax, ay, "alert_other_confirm", 0, "step7_alert_confirm")
-            sleep(WAIT_SHORT)
-            log(u"    -> 알림 확인 후 스킵, 다음 단계로 진행")
-            return {'exists': False, 'saved': False, 'reason': u'기계약 미존재 알림'}
-
-        # 7-3: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
-        log(u"    PDF 로딩 대기 중 (최대 60초)... [시도 %d/%d]" % (attempt, MAX_RETRY))
-        if exists(IMG_PDF_SAVE_BTN, 60):
-            pdf_loaded = True
-            break  # PDF 로딩 성공 → 저장 단계로 진행
+        # PDF 로딩 성공
+        if pdf_loaded:
+            break  # → 저장 단계로 진행
 
         # --- 타임아웃 처리 ---
         log(u"    [ERROR] PDF 로딩 타임아웃 (60초) [시도 %d/%d]" % (attempt, MAX_RETRY))
@@ -2529,6 +2547,11 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
     # 8단계: 고객통합뷰 X 버튼 클릭 + 닫힘 검증
     log(u"")
     log(u"[8단계] 고객통합뷰 X 버튼 클릭하여 종료")
+    # 검증 방식 변경: "X 버튼 사라짐" → "고객통합뷰 버튼 나타남"
+    # 이유: 고객등록/조회 페이지에도 비슷한 X 버튼이 있어서
+    #        "X 버튼 사라짐" 검증이 실패 → 재클릭 → 고객등록/조회까지 연쇄 닫힘
+    # 해결: 고객통합뷰 버튼은 고객등록/조회 페이지에만 존재하므로
+    #        이 버튼이 보이면 고객통합뷰가 닫히고 고객등록/조회로 복귀한 것
     step8_closed = False
     for attempt in range(1, 4):
         log(u"    [시도 %d/3] 고객통합뷰 X 버튼 클릭..." % attempt)
@@ -2539,15 +2562,17 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
             continue
 
         sleep(WAIT_MEDIUM)
+        take_screenshot(u"step8_after_x_click_%d" % attempt)
 
-        # 검증: 고객통합뷰 X 버튼이 사라졌으면 닫힌 것
-        if not exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-            log(u"    [검증 성공] 고객통합뷰 닫힘 확인")
+        # 검증: 고객통합뷰 버튼이 보이면 고객등록/조회 페이지로 복귀한 것
+        # (고객통합뷰 페이지에서는 이 버튼이 보이지 않음)
+        if exists(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, 5):
+            log(u"    [검증 성공] 고객등록/조회 페이지 복귀 확인 (고객통합뷰 버튼 감지)")
             take_screenshot(u"step8_verified_closed")
             step8_closed = True
             break
         else:
-            log(u"    [검증 실패] 고객통합뷰 미닫힘 (시도 %d/3)" % attempt)
+            log(u"    [검증 실패] 고객등록/조회 미복귀 (시도 %d/3)" % attempt)
             take_screenshot(u"step8_close_fail_%d" % attempt)
 
     if not step8_closed:
