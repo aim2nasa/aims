@@ -146,12 +146,6 @@ LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
 import codecs
 import subprocess
 
-# Windows 콘솔 코드페이지를 UTF-8로 설정
-try:
-    subprocess.call("chcp 65001", shell=True)
-except:
-    pass
-
 def log(msg):
     """로그 출력 및 파일 저장 (Windows 한글 인코딩 대응)"""
     # 유니코드로 통일
@@ -160,11 +154,11 @@ def log(msg):
     else:
         msg_unicode = msg
 
-    # 콘솔 출력 (UTF-8 인코딩)
+    # 콘솔 출력 (Java -Dfile.encoding=UTF-8 설정으로 unicode 직접 출력)
     try:
-        print(msg_unicode.encode("utf-8"))
-    except:
         print(msg_unicode)
+    except:
+        pass
 
     # 파일 저장
     with codecs.open(LOG_FILE, "a", encoding="utf-8") as f:

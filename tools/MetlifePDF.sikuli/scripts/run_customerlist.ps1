@@ -47,6 +47,8 @@ if ($Help) {
 }
 
 chcp 65001 | Out-Null
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 if ($Chosung) {
     Write-Host "초성: $Chosung" -ForegroundColor Cyan
@@ -61,4 +63,4 @@ $env:METLIFE_CHOSUNG = $Chosung
 $env:METLIFE_END_DATE = $EndDate
 $env:METLIFE_CAPTURE_DIR = $CaptureDir
 
-java -jar C:\Sikulix\sikulixide-2.0.5.jar -r D:\aims\tools\MetlifePDF.sikuli\MetlifeCustomerList.py
+java "-Dfile.encoding=UTF-8" -jar C:\Sikulix\sikulixide-2.0.5.jar -r D:\aims\tools\MetlifePDF.sikuli\MetlifeCustomerList.py
