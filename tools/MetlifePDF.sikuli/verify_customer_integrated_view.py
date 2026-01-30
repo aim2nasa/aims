@@ -1121,10 +1121,66 @@ def take_screenshot(step_name):
     return capture_step_screenshot(0, step_name)
 
 
+def _cleanup_annual_report_retry():
+    """
+    Annual Report 재시도 전 상태 정리
+    PDF 뷰어, 알림 팝업 등을 닫고 페이지 포커스를 확보한다.
+    """
+    log(u"    [상태 정리] 재시도 전 화면 정리 시작...")
+
+    # 1. PDF 뷰어가 열려있으면 닫기
+    if exists(IMG_PDF_SAVE_BTN, 2):
+        log(u"    [상태 정리] PDF 뷰어 감지 - Alt+F4로 닫기")
+        type(Key.F4, Key.ALT)
+        sleep(1)
+        if exists(IMG_YES_BTN, 2):
+            yes_match = find(IMG_YES_BTN)
+            yx = int(yes_match.getCenter().getX())
+            yy = int(yes_match.getCenter().getY())
+            click(yes_match)
+            log(u"    [상태 정리] 예(Y) 클릭: (%d, %d)" % (yx, yy))
+            capture_with_click_marker(yx, yy, "cleanup_yes", 0, "step7_cleanup_yes")
+            sleep(1)
+
+    # 2. 알림 팝업이 있으면 닫기
+    if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2):
+        log(u"    [상태 정리] 알림 팝업 감지 - 확인 클릭")
+        confirm_m = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
+        cmx = int(confirm_m.getCenter().getX())
+        cmy = int(confirm_m.getCenter().getY())
+        click(confirm_m)
+        log(u"    [상태 정리] 확인 클릭: (%d, %d)" % (cmx, cmy))
+        capture_with_click_marker(cmx, cmy, "cleanup_confirm", 0, "step7_cleanup_confirm")
+        sleep(1)
+
+    # 3. ESC로 기타 팝업/다이얼로그 닫기
+    type(Key.ESC)
+    sleep(0.5)
+
+    # 4. 페이지 포커스 확보 + 스크롤 위로 이동
+    # 기존 scroll_to_top() 패턴과 동일: 좌상단 클릭 후 휠 업
+    log(u"    [상태 정리] 페이지 포커스 확보 + 스크롤 위로...")
+    focus_x, focus_y = 300, 250
+    click(Location(focus_x, focus_y))
+    log(u"    [상태 정리] 포커스 클릭: (%d, %d)" % (focus_x, focus_y))
+    capture_with_click_marker(focus_x, focus_y, "cleanup_focus", 0, "step7_cleanup_focus")
+    sleep(0.3)
+    for _ in range(5):
+        wheel(WHEEL_UP, 3)
+        sleep(0.1)
+    sleep(WAIT_SHORT)
+
+    take_screenshot(u"step7_retry_cleanup_done")
+    log(u"    [상태 정리] 완료")
+
+
 def download_annual_report():
     """
     Annual Report PDF 다운로드
     변액리포트와 달리 목록 선택 없이 바로 PDF 다운로드 화면 표시
+
+    - 모든 클릭에 좌표 로깅 + 클릭 마커 스크린샷 캡처
+    - PDF 로딩 타임아웃 시 최대 3회 재시도
 
     Returns:
         bool: 다운로드 성공 여부
@@ -1132,69 +1188,136 @@ def download_annual_report():
     log(u"")
     log(u"[7단계] Annual Report 다운로드")
 
-    # 7-1: Annual Report 버튼 클릭
-    log(u"    [Annual Report 버튼] 찾는 중...")
-    if not exists(IMG_ANNUAL_REPORT_BTN, 10):
-        log(u"    [WARN] Annual Report 버튼을 찾을 수 없음 - 스킵")
-        take_screenshot(u"step7_annual_report_btn_not_found")
-        return False
+    MAX_RETRY = 3
+    pdf_loaded = False
 
-    click(IMG_ANNUAL_REPORT_BTN)
-    log(u"    [Annual Report 버튼] 클릭 완료")
-    sleep(WAIT_SHORT)
+    for attempt in range(1, MAX_RETRY + 1):
+        # --- 재시도 시 상태 정리 ---
+        if attempt > 1:
+            log(u"")
+            log(u"    ========== [재시도 %d/%d] Annual Report 다운로드 ==========" % (attempt, MAX_RETRY))
+            _cleanup_annual_report_retry()
 
-    # 7-2: Annual Report 미존재 확인 (null 알림 감지)
-    if exists(IMG_NO_ANNUAL_REPORT_ALERT, 3):
-        log(u"    [INFO] 'Annual Report가 존재하지 않습니다' 알림 감지")
-        take_screenshot(u"step7_no_annual_report_alert")
-        # 확인 버튼 클릭
-        if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3):
-            click(IMG_NO_ANNUAL_REPORT_CONFIRM)
-            sleep(WAIT_SHORT)
-        log(u"    Annual Report가 존재하지 않습니다 - 확인 버튼 클릭")
-        log(u"    -> Annual Report 미존재로 스킵, 다음 단계로 진행")
-        return True  # 오류가 아니라 정상 스킵
+        # 7-1: Annual Report 버튼 찾기 & 클릭 (좌표 로깅 + 클릭 마커)
+        log(u"    [Annual Report 버튼] 찾는 중... [시도 %d/%d]" % (attempt, MAX_RETRY))
+        take_screenshot(u"step7_before_annual_report_btn" if attempt == 1 else u"step7_retry%d_before_btn" % attempt)
 
-    # 7-2b: 기타 알림 감지 (기계약 미존재 등)
-    # "기계약이 존재하지 않습니다" 등 다른 종류의 알림 팝업 처리
-    # 확인 버튼은 MetLife 알림에서 공통 스타일이므로 버튼만 단독 체크
-    confirm_btn = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2)
-    if confirm_btn:
-        log(u"    [INFO] 알림 팝업 감지 (기계약 미존재 등) - 확인 클릭")
-        take_screenshot(u"step7_alert_other")
-        click(confirm_btn)
+        if not exists(IMG_ANNUAL_REPORT_BTN, 10):
+            log(u"    [WARN] Annual Report 버튼을 찾을 수 없음 - 스킵")
+            take_screenshot(u"step7_annual_report_btn_not_found")
+            return False
+
+        ar_match = find(IMG_ANNUAL_REPORT_BTN)
+        ar_x = int(ar_match.getCenter().getX())
+        ar_y = int(ar_match.getCenter().getY())
+        log(u"    [Annual Report 버튼] 이미지 매칭 성공: (%d, %d) [이미지: %s]" % (ar_x, ar_y, str(IMG_ANNUAL_REPORT_BTN)))
+        click(ar_match)
+        log(u"    [Annual Report 버튼] 클릭 완료: (%d, %d)" % (ar_x, ar_y))
+        capture_with_click_marker(ar_x, ar_y, "annual_report_btn", 0, "step7_btn_click")
         sleep(WAIT_SHORT)
-        log(u"    -> 알림 확인 후 스킵, 다음 단계로 진행")
-        return True  # 오류가 아니라 정상 스킵
 
-    # 7-3: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
-    log(u"    PDF 로딩 대기 중 (최대 60초)...")
-    if not exists(IMG_PDF_SAVE_BTN, 60):
-        log(u"    [ERROR] PDF 로딩 타임아웃 (60초)")
-        take_screenshot(u"step7_annual_report_timeout")
-        capture_search_failure("PDF 저장 아이콘 (Annual Report)", str(IMG_PDF_SAVE_BTN), 60, 0, "annual_pdf_timeout")
+        # 7-2: Annual Report 미존재 확인 (null 알림 감지)
+        if exists(IMG_NO_ANNUAL_REPORT_ALERT, 3):
+            log(u"    [INFO] 'Annual Report가 존재하지 않습니다' 알림 감지")
+            take_screenshot(u"step7_no_annual_report_alert")
+            # 확인 버튼 클릭 (좌표 로깅)
+            if exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 3):
+                confirm_match = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
+                cx = int(confirm_match.getCenter().getX())
+                cy = int(confirm_match.getCenter().getY())
+                click(confirm_match)
+                log(u"    [확인 버튼] 클릭: (%d, %d)" % (cx, cy))
+                capture_with_click_marker(cx, cy, "no_annual_confirm", 0, "step7_no_annual_confirm")
+                sleep(WAIT_SHORT)
+            log(u"    Annual Report가 존재하지 않습니다 - 확인 버튼 클릭")
+            log(u"    -> Annual Report 미존재로 스킵, 다음 단계로 진행")
+            return True  # 오류가 아니라 정상 스킵
+
+        # 7-2b: 기타 알림 감지 (기계약 미존재 등)
+        # "기계약이 존재하지 않습니다" 등 다른 종류의 알림 팝업 처리
+        # 확인 버튼은 MetLife 알림에서 공통 스타일이므로 버튼만 단독 체크
+        confirm_btn = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2)
+        if confirm_btn:
+            log(u"    [INFO] 알림 팝업 감지 (기계약 미존재 등) - 확인 클릭")
+            take_screenshot(u"step7_alert_other")
+            alert_match = find(IMG_NO_ANNUAL_REPORT_CONFIRM)
+            ax = int(alert_match.getCenter().getX())
+            ay = int(alert_match.getCenter().getY())
+            click(alert_match)
+            log(u"    [알림 확인] 클릭: (%d, %d)" % (ax, ay))
+            capture_with_click_marker(ax, ay, "alert_other_confirm", 0, "step7_alert_confirm")
+            sleep(WAIT_SHORT)
+            log(u"    -> 알림 확인 후 스킵, 다음 단계로 진행")
+            return True  # 오류가 아니라 정상 스킵
+
+        # 7-3: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
+        log(u"    PDF 로딩 대기 중 (최대 60초)... [시도 %d/%d]" % (attempt, MAX_RETRY))
+        if exists(IMG_PDF_SAVE_BTN, 60):
+            pdf_loaded = True
+            break  # PDF 로딩 성공 → 저장 단계로 진행
+
+        # --- 타임아웃 처리 ---
+        log(u"    [ERROR] PDF 로딩 타임아웃 (60초) [시도 %d/%d]" % (attempt, MAX_RETRY))
+        # 타임아웃 스크린샷에 이전에 클릭한 Annual Report 버튼 위치 표시
+        capture_with_click_marker(ar_x, ar_y, "annual_btn_timeout", 0, "step7_timeout_attempt%d" % attempt)
+        capture_search_failure(
+            "PDF 저장 아이콘 (Annual Report)",
+            str(IMG_PDF_SAVE_BTN), 60, 0,
+            "annual_pdf_timeout_attempt%d" % attempt
+        )
+
+        if attempt < MAX_RETRY:
+            log(u"    [재시도 준비] %d초 대기 후 재시도..." % WAIT_MEDIUM)
+            sleep(WAIT_MEDIUM)
+
+    # 3회 모두 실패
+    if not pdf_loaded:
+        log(u"    [ERROR] Annual Report PDF 로딩 최종 실패 - %d회 시도 모두 타임아웃" % MAX_RETRY)
         return False
+
     take_screenshot(u"step7_annual_report_loaded")
     log(u"    PDF 로딩 완료")
 
-    # 7-3: PDF 저장 버튼 클릭
+    # 7-4: PDF 저장 버튼 클릭 (좌표 로깅 + 클릭 마커)
     log(u"    PDF 저장 버튼 클릭...")
-    click(IMG_PDF_SAVE_BTN)
+    take_screenshot(u"step7_before_save_icon")
+    save_match = find(IMG_PDF_SAVE_BTN)
+    save_x = int(save_match.getCenter().getX())
+    save_y = int(save_match.getCenter().getY())
+    log(u"        [좌표] PDF 저장 아이콘 클릭: (%d, %d)" % (save_x, save_y))
+    click(save_match)
+    capture_with_click_marker(save_x, save_y, "pdf_save_icon", 0, "step7_save_icon")
     sleep(WAIT_SHORT)
 
-    # 7-4: 저장(S) 버튼 클릭
+    # 7-5: 저장(S) 버튼 클릭 (좌표 로깅 + 클릭 마커)
     if exists(IMG_SAVE_S_BTN, 5):
         log(u"    저장(S) 버튼 클릭...")
-        click(IMG_SAVE_S_BTN)
+        take_screenshot(u"step7_before_save_s_btn")
+        save_s_match = find(IMG_SAVE_S_BTN)
+        ss_x = int(save_s_match.getCenter().getX())
+        ss_y = int(save_s_match.getCenter().getY())
+        log(u"        [좌표] 저장(S) 버튼 클릭: (%d, %d)" % (ss_x, ss_y))
+        click(save_s_match)
+        capture_with_click_marker(ss_x, ss_y, "save_s_btn", 0, "step7_save_s")
         sleep(WAIT_SHORT)
 
-    # 7-5: 파일 중복 체크
+    # 7-6: 파일 중복 체크 (좌표 로깅)
     if exists(IMG_NO_BTN, 3):
         log(u"    동일 파일 존재 - 덮어쓰기 취소")
-        click(IMG_NO_BTN)
+        no_match = find(IMG_NO_BTN)
+        no_x = int(no_match.getCenter().getX())
+        no_y = int(no_match.getCenter().getY())
+        log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
+        click(no_match)
+        capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
         sleep(0.5)
         if exists(IMG_CANCEL_BTN, 3):
-            click(IMG_CANCEL_BTN)
+            cancel_match = find(IMG_CANCEL_BTN)
+            cancel_x = int(cancel_match.getCenter().getX())
+            cancel_y = int(cancel_match.getCenter().getY())
+            log(u"        [좌표] 취소 버튼 클릭: (%d, %d)" % (cancel_x, cancel_y))
+            click(cancel_match)
+            capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", 0, "step7_cancel")
         sleep(WAIT_SHORT)
         take_screenshot(u"step7_annual_report_duplicate")
     else:
@@ -1202,15 +1325,20 @@ def download_annual_report():
         sleep(2)
         take_screenshot(u"step7_annual_report_saved")
 
-    # 7-6: PDF 닫기 (Alt+F4)
+    # 7-7: PDF 닫기 (Alt+F4)
     log(u"    PDF 닫기 (Alt+F4)...")
     type(Key.F4, Key.ALT)
     sleep(WAIT_MEDIUM)
 
-    # 7-7: 예(Y) 클릭 (저장 확인)
+    # 7-8: 예(Y) 클릭 (저장 확인 - 좌표 로깅 + 클릭 마커)
     if exists(IMG_YES_BTN, 5):
         log(u"    예(Y) 클릭...")
-        click(IMG_YES_BTN)
+        yes_match = find(IMG_YES_BTN)
+        yes_x = int(yes_match.getCenter().getX())
+        yes_y = int(yes_match.getCenter().getY())
+        log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
+        click(yes_match)
+        capture_with_click_marker(yes_x, yes_y, "yes_btn", 0, "step7_yes_confirm")
         sleep(WAIT_SHORT)
 
     log(u"    Annual Report 다운로드 완료")
@@ -2291,6 +2419,20 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
         take_screenshot(u"step6_after_close")
 
     # 7단계: Annual Report 다운로드
+    # 포커스 안정화: 변액보험리포트 팝업 닫기 직후 브라우저 포커스가 불안정할 수 있음
+    log(u"")
+    log(u"    [포커스 안정화] 페이지 좌상단 클릭 + 스크롤 위로...")
+    focus_x, focus_y = 300, 250
+    click(Location(focus_x, focus_y))
+    log(u"    [포커스 안정화] 클릭: (%d, %d)" % (focus_x, focus_y))
+    capture_with_click_marker(focus_x, focus_y, "focus_stabilize", 0, "step7_focus")
+    sleep(0.3)
+    # 스크롤 위로 이동 (Annual Report 버튼이 상단에 있으므로)
+    for _ in range(5):
+        wheel(WHEEL_UP, 3)
+        sleep(0.1)
+    sleep(WAIT_SHORT)
+
     download_annual_report()
 
     # 8단계: 고객통합뷰 X 버튼 클릭하여 종료
