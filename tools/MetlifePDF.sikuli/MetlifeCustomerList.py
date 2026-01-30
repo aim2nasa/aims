@@ -617,7 +617,8 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
                         log(u"        -> 고객통합뷰 처리 완료")
                     except Exception as e:
-                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % str(e))
+                        err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
+                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
                         # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
                         try:
                             from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
@@ -628,7 +629,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                         except:
                             pass  # 이미 닫혀있으면 무시
                         # 오류 기록
-                        save_error(name, str(e), chosung_name, nav_page, scroll_page, row_in_page)
+                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
                     sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭
@@ -638,6 +639,25 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
             # 알림 팝업 확인
             dismiss_alert_if_exists()
+
+            # 고객 목록 복귀 검증 (고객명 헤더가 보이는지 확인)
+            if not exists(IMG_CUSTNAME, 3):
+                log(u"        -> [WARN] 고객목록 미복귀! 복구 시도...")
+                # 1차: 종료(x) 버튼 재시도
+                if exists(IMG_CLOSE_BTN, 2):
+                    click(IMG_CLOSE_BTN)
+                    sleep(2)
+                    dismiss_alert_if_exists()
+                # 2차: 여전히 목록이 아니면 ESC 시도
+                if not exists(IMG_CUSTNAME, 3):
+                    type(Key.ESC)
+                    sleep(2)
+                    dismiss_alert_if_exists()
+                # 최종 확인
+                if exists(IMG_CUSTNAME, 3):
+                    log(u"        -> [WARN] 고객목록 복귀 성공")
+                else:
+                    log(u"        -> [ERROR] 고객목록 복귀 실패! 다음 고객 처리에 영향 가능")
 
             log(u"        -> %s 처리 완료" % name)
             processed += 1
@@ -651,17 +671,18 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
 
         except Exception as e:
-            log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+            err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
+            log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, err_msg))
             error_customers.append({
                 u"초성": chosung_name,
                 u"페이지": global_page,
                 u"행": row_index + 1,
                 u"고객명": name,
-                u"오류": str(e)
+                u"오류": err_msg
             })
 
             # 오류 발생 고객 저장
-            save_error(name, str(e), chosung_name, nav_page, scroll_page, row_in_page)
+            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
     return processed, error_customers, current_base_y

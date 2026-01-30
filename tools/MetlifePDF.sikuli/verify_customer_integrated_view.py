@@ -1161,6 +1161,18 @@ def download_annual_report():
         log(u"    -> Annual Report 미존재로 스킵, 다음 단계로 진행")
         return True  # 오류가 아니라 정상 스킵
 
+    # 7-2b: 기타 알림 감지 (기계약 미존재 등)
+    # "기계약이 존재하지 않습니다" 등 다른 종류의 알림 팝업 처리
+    # 확인 버튼은 MetLife 알림에서 공통 스타일이므로 버튼만 단독 체크
+    confirm_btn = exists(IMG_NO_ANNUAL_REPORT_CONFIRM, 2)
+    if confirm_btn:
+        log(u"    [INFO] 알림 팝업 감지 (기계약 미존재 등) - 확인 클릭")
+        take_screenshot(u"step7_alert_other")
+        click(confirm_btn)
+        sleep(WAIT_SHORT)
+        log(u"    -> 알림 확인 후 스킵, 다음 단계로 진행")
+        return True  # 오류가 아니라 정상 스킵
+
     # 7-3: PDF 로딩 대기 (PDF 저장 아이콘 나타날 때까지)
     log(u"    PDF 로딩 대기 중 (최대 30초)...")
     if not exists(IMG_PDF_SAVE_BTN, 30):
@@ -1933,7 +1945,7 @@ if __name__ == "__main__":
     try:
         success = verify_customer_integrated_view()
     except IntegratedViewError as e:
-        log(u"[FATAL] 단독 실행 중 복구 불가 오류: %s" % str(e))
+        log(u"[FATAL] 단독 실행 중 복구 불가 오류: %s" % unicode(e))
         success = False
 
     log(u"=== 실행 종료 ===")
