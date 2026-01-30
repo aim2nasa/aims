@@ -178,6 +178,37 @@ def save_click_diagnostic(click_x, click_y, customer_name, page_num, row_idx):
         return None
 
 
+DEBUG_LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
+
+
+def _crash_log(msg):
+    """크래시 로그를 run_*.log + debug_log.txt 양쪽에 기록"""
+    log(msg)  # run_*.log + 콘솔
+    try:
+        with codecs.open(DEBUG_LOG_FILE, "a", "utf-8") as f:
+            if isinstance(msg, unicode):
+                f.write(msg + u"\n")
+            else:
+                f.write(unicode(msg, "utf-8") + u"\n")
+            f.flush()
+    except:
+        pass
+
+
+def _take_crash_screenshot(label):
+    """크래시 시 스크린샷 저장 (SikuliX capture 사용)"""
+    try:
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        temp_path = capture(SCREEN)
+        if temp_path:
+            import shutil
+            dest = os.path.join(CAPTURE_DIR, u"CRASH_%s_%s.png" % (label, ts))
+            shutil.copy(temp_path, dest)
+            log(u"[CRASH 스크린샷] %s" % dest)
+    except:
+        log(u"[WARN] 크래시 스크린샷 저장 실패")
+
+
 def _global_exception_handler(exc_type, exc_value, exc_tb):
     """전역 예외 핸들러 - 모든 미처리 예외를 로그에 기록"""
     try:
@@ -203,6 +234,9 @@ def _global_exception_handler(exc_type, exc_value, exc_tb):
                 log(u"  %s" % unicode(line, "utf-8"))
         log(u"=" * 60)
 
+        # 크래시 스크린샷
+        _take_crash_screenshot(u"FATAL_excepthook")
+
         # 로그 파일 닫기
         _close_log_file()
 
@@ -217,6 +251,44 @@ def _global_exception_handler(exc_type, exc_value, exc_tb):
 
 # 전역 예외 핸들러 등록
 sys.excepthook = _global_exception_handler
+
+
+def _fatal_crash(context, chosung, exception=None):
+    """인프라 크래시 시 상세 로그 → run_*.log + debug_log.txt + 프로그램 종료
+
+    SikuliX FindFailed는 Java 예외이므로 except Exception으로 잡히지 않음.
+    bare except: + sys.exc_info()로 잡아야 함.
+    """
+    _crash_log(u"")
+    _crash_log(u"=" * 60)
+    _crash_log(u"[FATAL] 크래시 발생 - 프로그램 종료")
+    _crash_log(u"=" * 60)
+    _crash_log(u"위치: %s" % context)
+    _crash_log(u"초성: %s" % chosung)
+    try:
+        if exception is not None:
+            _crash_log(u"오류 타입: %s" % exception.__class__.__name__)
+            _crash_log(u"오류 내용: %s" % exception)
+        else:
+            exc_info = sys.exc_info()
+            if exc_info[1] is not None:
+                _crash_log(u"오류 타입: %s" % exc_info[0])
+                _crash_log(u"오류 내용: %s" % exc_info[1])
+    except:
+        _crash_log(u"오류 정보: (표시 불가)")
+    _crash_log(u"")
+    _crash_log(u"스택 트레이스:")
+    try:
+        tb_str = traceback.format_exc()
+        for line in tb_str.split("\n"):
+            if line.strip():
+                _crash_log(u"  %s" % line)
+    except:
+        pass
+    _crash_log(u"=" * 60)
+    _take_crash_screenshot(u"FATAL")
+    _close_log_file()
+    raise SystemExit(1)
 
 
 # 헬퍼 함수
@@ -626,45 +698,70 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                 else:
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
-                        from verify_customer_integrated_view import verify_customer_integrated_view, NavigationResetRequired
+                        from verify_customer_integrated_view import verify_customer_integrated_view
                         view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
                         log(u"        -> 고객통합뷰 처리 완료")
                         # 결과 수집 (초성별 summary용)
                         if isinstance(view_result, dict):
                             _chosung_customer_results.append(view_result)
-                    except NavigationResetRequired as e:
-                        # === 검증 실패 → 프로그램 종료 ===
-                        err_msg = u"%s" % e
-                        log(u"")
-                        log(u"    " + u"=" * 60)
-                        log(u"    [FATAL] 검증 실패 - 프로그램 종료")
-                        log(u"    " + u"=" * 60)
-                        log(u"    고객명: %s" % name)
-                        log(u"    초성: %s" % chosung_name)
-                        log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
-                        log(u"    원인: %s" % err_msg)
-                        log(u"    ")
-                        log(u"    → 문제 분석 후 --resume 옵션으로 재개하세요.")
-                        log(u"    " + u"=" * 60)
-                        take_screenshot(u"FATAL_verification_failed_%s" % name)
-                        # 에러 + 체크포인트 저장
-                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
-                        save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
-                        raise SystemExit(1)
                     except Exception as e:
-                        err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
-                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
-                        # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                        # Jython/SikuliX 모듈 로딩 특성상 클래스명으로 비교
+                        # (cross-module 예외 클래스 identity 불일치 문제 회피)
+                        # 주의: SikuliX가 type()을 키보드 입력 함수로 오버라이드하므로 __class__ 사용
+                        err_type_name = e.__class__.__name__
+                        err_msg = u"%s" % e
+                        if err_type_name == 'NavigationResetRequired':
+                            # === 검증 실패 → 프로그램 종료 ===
+                            _crash_log(u"")
+                            _crash_log(u"    " + u"=" * 60)
+                            _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
+                            _crash_log(u"    " + u"=" * 60)
+                            _crash_log(u"    고객명: %s" % name)
+                            _crash_log(u"    초성: %s" % chosung_name)
+                            _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
+                            _crash_log(u"    원인: %s" % err_msg)
+                            _crash_log(u"    ")
+                            _crash_log(u"    → 문제 분석 후 --start-from '%s' 옵션으로 재개하세요." % name)
+                            _crash_log(u"    " + u"=" * 60)
+                            _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                            # 에러 + 체크포인트 저장
+                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                            save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
+                            _close_log_file()
+                            raise SystemExit(1)
+                        else:
+                            log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                            # 고객통합뷰가 열려있을 수 있으므로 닫기 시도
+                            try:
+                                from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                    click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                    log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                    sleep(2)
+                            except:
+                                pass  # 이미 닫혀있으면 무시
+                            # 오류 기록
+                            save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                    except:
+                        # Java 예외 (SikuliX FindFailed 등) - Python except Exception으로 안 잡힘
+                        exc_info = sys.exc_info()
+                        _crash_log(u"")
+                        _crash_log(u"    " + u"=" * 60)
+                        _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                        _crash_log(u"    " + u"=" * 60)
+                        _crash_log(u"    고객명: %s" % name)
+                        _crash_log(u"    초성: %s" % chosung_name)
+                        _crash_log(u"    위치: N%d-S%d-R%d" % (nav_page, scroll_page, row_in_page))
                         try:
-                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
-                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
-                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
-                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
-                                sleep(2)
+                            _crash_log(u"    오류 타입: %s" % exc_info[0])
+                            _crash_log(u"    오류 내용: %s" % exc_info[1])
                         except:
-                            pass  # 이미 닫혀있으면 무시
-                        # 오류 기록
-                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+                            pass
+                        _crash_log(u"    " + u"=" * 60)
+                        _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                        save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, row_in_page)
+                        _close_log_file()
+                        raise SystemExit(1)
                     sleep(2)  # 화면 안정화 대기
 
             # 종료(x) 버튼 클릭
@@ -705,7 +802,15 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 체크포인트 저장 (성공한 고객)
             save_checkpoint(name, chosung_name, nav_page, scroll_page, row_in_page)
 
+        except SystemExit:
+            raise  # SystemExit는 절대 삼키지 않음 → 프로그램 종료
         except Exception as e:
+            # NavigationResetRequired가 inner try에서 안 잡혔을 경우 대비
+            err_type_name = e.__class__.__name__
+            if err_type_name == 'NavigationResetRequired':
+                log(u"        -> [FATAL] 검증 실패 (outer catch): %s" % e)
+                _close_log_file()
+                raise SystemExit(1)
             err_msg = u"%s" % e if isinstance(e, BaseException) else unicode(e)
             log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, err_msg))
             error_customers.append({
@@ -718,6 +823,25 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
 
             # 오류 발생 고객 저장
             save_error(name, err_msg, chosung_name, nav_page, scroll_page, row_in_page)
+        except:
+            # Java 예외 (SikuliX FindFailed 등) - outer 레벨
+            exc_info = sys.exc_info()
+            _crash_log(u"")
+            _crash_log(u"=" * 60)
+            _crash_log(u"[FATAL] 고객 처리 중 Java 예외 - 프로그램 종료")
+            _crash_log(u"=" * 60)
+            _crash_log(u"고객명: %s" % name)
+            _crash_log(u"초성: %s" % chosung_name)
+            try:
+                _crash_log(u"오류 타입: %s" % exc_info[0])
+                _crash_log(u"오류 내용: %s" % exc_info[1])
+            except:
+                pass
+            _crash_log(u"=" * 60)
+            _take_crash_screenshot(u"FATAL_outer_java_%s" % name)
+            save_error(name, u"Java exception (outer)", chosung_name, nav_page, scroll_page, row_in_page)
+            _close_log_file()
+            raise SystemExit(1)
 
     log(u"      [고객처리] %d명 처리 완료" % processed)
     return processed, error_customers, current_base_y
@@ -1086,21 +1210,45 @@ start_time = time.time()
 ###########################################
 log(u"\n[1단계] 고객목록조회 진입")
 
-log(u"  [1-1] 메인 화면으로 이동...")
-click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
-sleep(WAIT_TIME)
+try:
+    log(u"  [1-1] 메인 화면으로 이동...")
+    click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
+    sleep(WAIT_TIME)
 
-log(u"  [1-2] 고객관리 클릭...")
-click("img/1769598228284.png")  # 고객관리 [100% 줌]
-sleep(5)  # 서브메뉴 열릴 시간 확보
+    log(u"  [1-2] 고객관리 클릭...")
+    click("img/1769598228284.png")  # 고객관리 [100% 줌]
+    sleep(5)  # 서브메뉴 열릴 시간 확보
 
-log(u"  [1-3] 고객등록 클릭...")
-click("img/1769598252586.png")  # 고객등록 [100% 줌]
-sleep(3)
+    log(u"  [1-3] 고객등록 클릭...")
+    click("img/1769598252586.png")  # 고객등록 [100% 줌]
+    sleep(3)
 
-log(u"  [1-4] 고객목록조회 클릭...")
-click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
-sleep(5)
+    log(u"  [1-4] 고객목록조회 클릭...")
+    click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
+    sleep(5)
+except:
+    # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
+    exc_info = sys.exc_info()
+    _crash_log(u"")
+    _crash_log(u"=" * 60)
+    _crash_log(u"[FATAL] 1단계 네비게이션 실패 - 프로그램 종료")
+    _crash_log(u"=" * 60)
+    _crash_log(u"오류 타입: %s" % exc_info[0])
+    _crash_log(u"오류 내용: %s" % exc_info[1])
+    _crash_log(u"화면이 고객목록조회 메뉴에 접근 가능한 상태인지 확인하세요.")
+    _crash_log(u"")
+    _crash_log(u"스택 트레이스:")
+    try:
+        tb_str = traceback.format_exc()
+        for line in tb_str.split("\n"):
+            if line.strip():
+                _crash_log(u"  %s" % line)
+    except:
+        pass
+    _crash_log(u"=" * 60)
+    _take_crash_screenshot(u"FATAL_navigation_failed")
+    _close_log_file()
+    raise SystemExit(1)
 
 log(u"[1단계 완료]")
 
@@ -1122,7 +1270,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     _chosung_customer_results = []  # 초성별 결과 초기화
     log(u"\n  === [%s] 초성 처리 시작 ===" % chosung_name)
     log(u"  [%s] 버튼 클릭..." % chosung_name)
-    click(chosung_img)
+    try:
+        click(chosung_img)
+    except:
+        _fatal_crash(u"초성 [%s] 버튼 클릭" % chosung_name, chosung_name)
     sleep(5)  # 목록 로딩 대기
 
     # 고객명 내림차순 정렬 - ↓ 화살표가 나타날 때까지 클릭
@@ -1134,7 +1285,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"        -> 내림차순 확인됨")
             break
         log(u"        -> 고객명 클릭 (%d차)" % (attempt + 1))
-        click(IMG_CUSTNAME)
+        try:
+            click(IMG_CUSTNAME)
+        except:
+            _fatal_crash(u"내림차순 정렬 - 고객명 헤더 클릭 (%d차)" % (attempt + 1), chosung_name)
         sleep(3)
     else:
         log(u"[ERROR] 내림차순 정렬 실패!")
@@ -1142,8 +1296,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
     # 스크롤을 맨 위로 (정렬 후 스크롤이 중간에 있을 수 있음)
     log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
-    header = find(IMG_CUSTNAME)
-    scroll_to_top(header)
+    try:
+        header = find(IMG_CUSTNAME)
+        scroll_to_top(header)
+    except:
+        _fatal_crash(u"정렬 후 스크롤 맨 위 이동", chosung_name)
     log(u"  [SCROLL] 스크롤 맨 위 완료")
 
     ###########################################
@@ -1160,10 +1317,13 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
     zero_new_rows_count = 0        # 연속 신규 행 0건 카운트 (무한루프 방지)
 
     # 좌표 설정 (한 번만 측정)
-    header = find(IMG_CUSTNAME)
-    fixed_x = header.getCenter().getX()       # 고객명 클릭용 X좌표
-    base_y = header.getCenter().getY()
-    scroll_x = fixed_x + 100                  # 스크롤 클릭용 X좌표 (구분 컬럼)
+    try:
+        header = find(IMG_CUSTNAME)
+        fixed_x = header.getCenter().getX()       # 고객명 클릭용 X좌표
+        base_y = header.getCenter().getY()
+        scroll_x = fixed_x + 100                  # 스크롤 클릭용 X좌표 (구분 컬럼)
+    except:
+        _fatal_crash(u"좌표 설정 (header find)", chosung_name)
     log(u"  [INIT] 고객명 클릭: x=%d, 스크롤 클릭: x=%d, 기준 y=%d" % (fixed_x, scroll_x, base_y))
 
     # ========================================
@@ -1206,8 +1366,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
         # 네비 페이지 시작 시 스크롤 맨 위로 이동
         log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
-        header = find(IMG_CUSTNAME)
-        scroll_to_top(header)
+        try:
+            header = find(IMG_CUSTNAME)
+            scroll_to_top(header)
+        except:
+            _fatal_crash(u"네비 페이지 시작 - 스크롤 맨 위 이동", chosung_name)
         log(u"  [SCROLL] 스크롤 맨 위 완료")
 
         # ========================================
@@ -1467,8 +1630,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
 
             # 스크롤 맨 위로 이동
             log(u"  [SCROLL] 스크롤을 맨 위로 이동...")
-            header = find(IMG_CUSTNAME)
-            scroll_to_top(header)
+            try:
+                header = find(IMG_CUSTNAME)
+                scroll_to_top(header)
+            except:
+                _fatal_crash(u"다음 페이지 후 스크롤 맨 위 이동", chosung_name)
             log(u"  [SCROLL] 스크롤 맨 위 완료")
 
             nav_page += 1
