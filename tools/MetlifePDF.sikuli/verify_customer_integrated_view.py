@@ -2282,9 +2282,11 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
     log(u"[1단계] 현재 화면 확인")
     log(u"    고객등록/조회 페이지가 표시되어 있어야 합니다.")
 
-    # 2단계: 고객통합뷰 버튼 클릭 (검증 + 재시도)
+    # 2단계: 고객통합뷰 버튼 클릭 + 스크롤 + 검증 (재시도 포함)
+    # 고객통합뷰가 스크롤 아래 상태로 열릴 수 있으므로
+    # 클릭 → 스크롤 맨 위 → 변액보험리포트 버튼 검증 순서로 진행
     log(u"")
-    log(u"[2단계] 고객통합뷰 버튼 클릭")
+    log(u"[2단계] 고객통합뷰 버튼 클릭 + 스크롤 + 검증")
     integrated_view_opened = False
     for attempt in range(1, 4):
         log(u"    [시도 %d/3] 고객통합뷰 버튼 클릭..." % attempt)
@@ -2296,6 +2298,12 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
             continue
 
         sleep(WAIT_LONG + 3)  # 고객통합뷰 로딩 대기
+
+        # 스크롤 맨 위로 이동 (페이지가 아래로 스크롤된 상태로 열릴 수 있음)
+        log(u"    [스크롤] 페이지 맨 위로 이동...")
+        scroll_to_top()
+        sleep(2)  # 스크롤 후 안정화 대기
+        log(u"    [스크롤] 완료")
 
         # 검증: 변액보험리포트 버튼이 보이면 고객통합뷰가 열린 것
         if exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 10):
@@ -2315,13 +2323,10 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
         take_screenshot(u"step2_all_attempts_failed")
         raise NavigationResetRequired(u"고객통합뷰 3회 클릭 실패")
 
-    # 3단계: 스크롤 맨 위로 이동
+    # 3단계는 2단계에 통합됨 (스크롤 맨 위로 이동)
     log(u"")
-    log(u"[3단계] 스크롤 맨 위로 이동")
-    log(u"    키보드로 스크롤...")
-    scroll_to_top()
-    sleep(2)  # 스크롤 후 안정화 대기
-    log(u"    스크롤 완료")
+    log(u"[3단계] 스크롤 확인 (2단계에서 완료)")
+    log(u"    스크롤 이미 완료됨")
 
     # 4단계: 변액보험리포트 클릭
     log(u"")
