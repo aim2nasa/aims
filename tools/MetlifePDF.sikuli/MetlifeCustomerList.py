@@ -687,7 +687,7 @@ IMG_ARROW_ASC = "img/1769598893800.png"        # ↑ (오름차순 화살표)
 # 고객등록/조회 페이지
 IMG_CLOSE_BTN = "img/1769602665952.png"        # 종료(x) 버튼 [100% 줌]
 IMG_ALERT_OK = "img/1769251121685.png"         # 알림 팝업 "확인" 버튼 (TODO: 100% 캡처 필요)
-IMG_NEXT_BTN = "img/1769401640056.png"         # 다음 버튼 (TODO: 100% 캡처 필요)
+IMG_NEXT_BTN = "img/next_btn_100.png"           # 다음 버튼 [100% 줌 - 2026-01-30]
 
 # 초성 버튼 이미지 (전체) [100% 줌 - 2026-01-29]
 ALL_CHOSUNG_BUTTONS = [
@@ -1045,8 +1045,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         # 재개 모드: 네비 페이지 스킵
         if RESUME_MODE and nav_page < resume_nav_page:
             log(u"  [RESUME] 네비 %d 스킵 (재개 위치: N%d)" % (nav_page, resume_nav_page))
-            if exists(IMG_NEXT_BTN, 2):
-                click(IMG_NEXT_BTN)
+            next_btn = exists(IMG_NEXT_BTN, 5)
+            if next_btn:
+                click(next_btn)
                 sleep(3)
                 nav_page += 1
                 continue
@@ -1296,12 +1297,13 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
         log(u"\n  [네비 %d] 스크롤 완료 → '다음' 버튼 확인..." % nav_page)
         sleep(1)
 
-        if exists(IMG_NEXT_BTN, 2):
+        next_btn = exists(IMG_NEXT_BTN, 5)
+        if next_btn:
             log(u"\n  " + u"#" * 50)
             log(u"  #  [다음] 버튼 발견! 클릭...")
             log(u"  #  네비 %d → 네비 %d 페이지로 이동" % (nav_page, nav_page + 1))
             log(u"  " + u"#" * 50)
-            click(IMG_NEXT_BTN)
+            click(next_btn)
             sleep(3)  # 다음 페이지 로딩 대기
 
             # 스크롤 맨 위로 이동
