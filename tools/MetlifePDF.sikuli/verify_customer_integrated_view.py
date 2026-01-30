@@ -1891,8 +1891,30 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
     if not variable_insurance_exists:
         log(u"    -> 변액보험이 없어 팝업이 없음, 스킵")
     else:
+        # 시도 1: 이미지 매칭
         if not wait_and_click(IMG_VARIABLE_REPORT_CLOSE_BTN, u"변액보험리포트 X 버튼"):
-            capture_and_exit(u"변액보험리포트 X 버튼을 찾을 수 없음 - 예상치 못한 화면 상태")
+            # 시도 2: "선택" 버튼 기준 상대좌표로 X 버튼 클릭
+            log(u"    [FALLBACK] '선택' 버튼 기준 상대좌표로 X 버튼 클릭 시도...")
+            try:
+                select_btn_pattern = Pattern(IMG_SELECT_BTN).similar(0.7)
+                if exists(select_btn_pattern, 5):
+                    select_match = find(select_btn_pattern)
+                    sx = select_match.getCenter().getX()
+                    sy = select_match.getCenter().getY()
+                    # X 버튼은 "선택" 버튼 기준 dx=+13, dy=-62 위치 (실측 검증 완료)
+                    x_btn_x = sx + 13
+                    x_btn_y = sy - 62
+                    log(u"    [FALLBACK] 선택 버튼 (%d, %d) → X 버튼 (%d, %d)" % (sx, sy, x_btn_x, x_btn_y))
+                    click(Location(x_btn_x, x_btn_y))
+                    log(u"    [FALLBACK] 상대좌표 클릭 완료")
+                else:
+                    log(u"    [FALLBACK] '선택' 버튼도 찾을 수 없음")
+                    log(u"    [WARN] 변액보험리포트 X 버튼 닫기 실패 - 스킵 후 계속")
+                    take_screenshot(u"step6_WARN_close_failed")
+            except Exception as e:
+                log(u"    [FALLBACK] 실패: %s" % str(e))
+                log(u"    [WARN] 변액보험리포트 X 버튼 닫기 실패 - 스킵 후 계속")
+                take_screenshot(u"step6_WARN_close_failed")
         sleep(WAIT_SHORT)
 
     # 7단계: Annual Report 다운로드
