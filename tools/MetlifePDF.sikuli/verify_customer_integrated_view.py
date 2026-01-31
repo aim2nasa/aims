@@ -1322,8 +1322,11 @@ def download_annual_report():
         take_screenshot(u"step7_save_dialog_not_opened")
         # 재시도: PDF 뷰어에 포커스 후 재클릭
         save_match2 = find(IMG_PDF_SAVE_BTN)
+        save_x2 = int(save_match2.getCenter().getX())
+        save_y2 = int(save_match2.getCenter().getY())
         click(save_match2)
-        capture_with_click_marker(save_x, save_y, "pdf_save_icon_retry", 0, "step7_save_icon_retry")
+        capture_with_click_marker(save_x2, save_y2, "pdf_save_icon_retry", 0, "step7_save_icon_retry")
+        log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (save_x2, save_y2))
         sleep(WAIT_MEDIUM)
         if not exists(IMG_SAVE_S_BTN, 5):
             log(u"    [FATAL] 저장 다이얼로그 2회 실패 → 종료 요청")
@@ -1341,8 +1344,9 @@ def download_annual_report():
     capture_with_click_marker(ss_x, ss_y, "save_s_btn", 0, "step7_save_s")
     sleep(WAIT_SHORT)
 
-    # 7-6: 파일 중복 체크 (좌표 로깅)
+    # 7-6: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
     if exists(IMG_NO_BTN, 3):
+        # ★ CASE A: 중복 파일 → 덮어쓰기 취소
         log(u"    동일 파일 존재 - 덮어쓰기 취소")
         no_match = find(IMG_NO_BTN)
         no_x = int(no_match.getCenter().getX())
@@ -1360,10 +1364,18 @@ def download_annual_report():
             capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", 0, "step7_cancel")
         sleep(WAIT_SHORT)
         take_screenshot(u"step7_annual_report_duplicate")
+        log(u"    [VERIFIED] Annual Report 중복 파일 확인 → 스킵 완료")
     else:
+        # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
         log(u"    PDF 저장 중...")
         sleep(2)
+        # 검증: 저장(S) 버튼이 사라졌으면 저장 다이얼로그가 닫힌 것 = 저장 실행됨
+        if exists(IMG_SAVE_S_BTN, 2):
+            log(u"    [FATAL] 저장(S) 버튼 아직 표시됨 - AR PDF 저장 실행 안 됨!")
+            take_screenshot(u"step7_save_NOT_completed")
+            raise NavigationResetRequired(u"Annual Report PDF 저장 실패 (저장 다이얼로그 미닫힘)")
         take_screenshot(u"step7_annual_report_saved")
+        log(u"    [VERIFIED] Annual Report 저장 완료 확인 (저장 다이얼로그 정상 닫힘)")
 
     # 7-7: PDF 닫기 (포커스 확보 + Alt+F4 + 검증 + 3회 재시도)
     pdf_closed = False
@@ -1852,9 +1864,11 @@ def save_report_pdf(report_number):
             # 재시도: 저장 아이콘 다시 찾아서 클릭
             if exists(IMG_PDF_SAVE_BTN, 3):
                 retry_match = find(IMG_PDF_SAVE_BTN)
+                rx = int(retry_match.getCenter().getX())
+                ry = int(retry_match.getCenter().getY())
                 click(retry_match)
-                log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (
-                    int(retry_match.getCenter().getX()), int(retry_match.getCenter().getY())))
+                capture_with_click_marker(rx, ry, "pdf_save_icon_retry", report_number, "save_icon_retry")
+                log(u"        [재시도] 저장 아이콘 재클릭: (%d, %d)" % (rx, ry))
                 sleep(3)
             if not exists(IMG_SAVE_S_BTN, 5):
                 log(u"        [FATAL] 저장 다이얼로그 2회 실패")
@@ -1876,21 +1890,32 @@ def save_report_pdf(report_number):
         sleep(3)
         capture_step_screenshot(report_number, "after_save_btn")
 
-        # Step 8: 저장 완료 확인 + 중복 파일 처리
+        # Step 8: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
         log(u"    [8/11] 저장 완료 확인...")
         if exists(IMG_NO_BTN, 3):
+            # ★ CASE A: 중복 파일 → 덮어쓰기 취소
             log(u"        -> 동일 파일 존재! 스킵 처리...")
             capture_step_screenshot(report_number, "duplicate")
-            click(IMG_NO_BTN)  # 아니요(N) 클릭
+            no_match = find(IMG_NO_BTN)
+            no_x = int(no_match.getCenter().getX())
+            no_y = int(no_match.getCenter().getY())
+            click(no_match)
+            capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
+            log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
             sleep(WAIT_MEDIUM)
             if exists(IMG_CANCEL_BTN, 3):
-                click(IMG_CANCEL_BTN)  # 취소 버튼 클릭
+                cancel_match = find(IMG_CANCEL_BTN)
+                cancel_x = int(cancel_match.getCenter().getX())
+                cancel_y = int(cancel_match.getCenter().getY())
+                click(cancel_match)
+                capture_with_click_marker(cancel_x, cancel_y, "cancel_btn", report_number, "cancel_clicked")
+                log(u"        [좌표] 취소 클릭: (%d, %d)" % (cancel_x, cancel_y))
                 sleep(WAIT_MEDIUM)
             result['duplicate'] = True
             result['success'] = True
-            log(u"        -> 중복 파일 스킵 완료")
+            log(u"        [VERIFIED] 변액리포트 #%d 중복 파일 확인 → 스킵 완료" % report_number)
         else:
-            # 검증: 저장(S) 버튼이 사라졌으면 저장 다이얼로그가 닫힌 것 = 저장 실행됨
+            # ★ CASE B: 저장 실행됨 → 저장 다이얼로그 닫힘 검증 필수
             if exists(IMG_SAVE_S_BTN, 2):
                 log(u"        [FATAL] 저장(S) 버튼 아직 표시됨 - 저장 실행 안 됨")
                 capture_error_screenshot(report_number, "save_not_completed")
@@ -1899,8 +1924,8 @@ def save_report_pdf(report_number):
                 raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number)
             result['saved'] = True
             result['success'] = True
-            log(u"        -> [검증 성공] 저장 완료 (저장 다이얼로그 닫힘 확인)")
             capture_step_screenshot(report_number, "saved")
+            log(u"        [VERIFIED] 변액리포트 #%d 저장 완료 확인 (저장 다이얼로그 정상 닫힘)" % report_number)
 
         # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
         # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
