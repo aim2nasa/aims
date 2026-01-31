@@ -1365,15 +1365,22 @@ def download_annual_report():
         sleep(2)
         take_screenshot(u"step7_annual_report_saved")
 
-    # 7-7: PDF 닫기 (Alt+F4) + 검증 + 재시도
+    # 7-7: PDF 닫기 (포커스 확보 + Alt+F4 + 검증 + 3회 재시도)
     pdf_closed = False
     for close_attempt in range(1, 4):
         log(u"    PDF 닫기 (Alt+F4)... [시도 %d/3]" % close_attempt)
+
+        # ★ 포커스 확보: PDF 뷰어 영역 클릭 후 Alt+F4
+        if exists(IMG_PDF_SAVE_BTN, 2):
+            pdf_icon = find(IMG_PDF_SAVE_BTN)
+            click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+            sleep(0.5)
+
         type(Key.F4, Key.ALT)
         sleep(WAIT_MEDIUM)
 
         # 7-8: 예(Y) 클릭 (저장 확인)
-        if exists(IMG_YES_BTN, 5):
+        if exists(IMG_YES_BTN, 7):
             log(u"    예(Y) 클릭...")
             yes_match = find(IMG_YES_BTN)
             yes_x = int(yes_match.getCenter().getX())
@@ -1392,6 +1399,9 @@ def download_annual_report():
         else:
             log(u"    [검증 실패] PDF 뷰어 아직 열림 (시도 %d/3)" % close_attempt)
             take_screenshot(u"step7_pdf_close_fail_%d" % close_attempt)
+            # 예상치 못한 다이얼로그 닫기
+            type(Key.ESCAPE)
+            sleep(1)
 
     if not pdf_closed:
         log(u"    [FATAL] PDF 뷰어 3회 닫기 실패 → 종료 요청")
@@ -1892,46 +1902,53 @@ def save_report_pdf(report_number):
             log(u"        -> [검증 성공] 저장 완료 (저장 다이얼로그 닫힘 확인)")
             capture_step_screenshot(report_number, "saved")
 
-        # Step 9: PDF 뷰어 종료 (Alt+F4)
-        log(u"    [9/11] PDF 뷰어 종료 (Alt+F4)...")
-        type(Key.F4, Key.ALT)
-        sleep(2)
+        # Step 9-10: PDF 뷰어 닫기 (포커스 확보 + 3회 재시도)
+        # ★ 근본 원인: PDF 저장 후 포커스가 PDF 뷰어에서 이탈할 수 있음
+        #   Alt+F4가 바탕화면에 전달되면 Windows 종료 다이얼로그가 나타남
+        #   해결: 매 시도마다 PDF 뷰어 클릭으로 포커스 강제 확보 후 Alt+F4
+        log(u"    [9/11] PDF 뷰어 종료...")
+        pdf_viewer_closed = False
+        for close_attempt in range(1, 4):
+            log(u"        [시도 %d/3] PDF 뷰어 닫기..." % close_attempt)
 
-        # Step 10: 예(Y) 확인 클릭
-        log(u"    [10/11] 예(Y) 확인 클릭...")
-        if exists(IMG_YES_BTN, 5):
-            yes_match = find(IMG_YES_BTN)
-            ymx = int(yes_match.getCenter().getX())
-            ymy = int(yes_match.getCenter().getY())
-            click(yes_match)
-            log(u"        [좌표] 예(Y) 클릭: (%d, %d)" % (ymx, ymy))
-            capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
-            sleep(2)
-            capture_step_screenshot(report_number, "yes_confirm")
-        else:
-            log(u"        [WARN] 예(Y) 버튼 못 찾음 - 이미 닫힘?")
-            capture_search_failure("예(Y) 버튼", str(IMG_YES_BTN), 5, report_number, "yes_notfound")
+            # 포커스 확보: PDF 뷰어 타이틀바 영역 클릭
+            if exists(IMG_PDF_SAVE_BTN, 2):
+                pdf_icon = find(IMG_PDF_SAVE_BTN)
+                # 저장 아이콘 옆 빈 영역 클릭 (메뉴 안 열리도록)
+                click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+                sleep(0.5)
 
-        # ★ PDF 뷰어 닫힘 검증 (스택에 하나만 존재 가능 - 반드시 내려야 다음 PDF 가능)
-        if exists(IMG_PDF_SAVE_BTN, 2):
-            log(u"        [WARN] PDF 뷰어 아직 열려있음! 닫기 재시도...")
             type(Key.F4, Key.ALT)
             sleep(2)
-            if exists(IMG_YES_BTN, 3):
-                retry_yes = find(IMG_YES_BTN)
-                click(retry_yes)
-                log(u"        -> 예(Y) 재시도 클릭: (%d, %d)" % (
-                    int(retry_yes.getCenter().getX()), int(retry_yes.getCenter().getY())))
+
+            # 예(Y) 확인 클릭
+            if exists(IMG_YES_BTN, 7):
+                yes_match = find(IMG_YES_BTN)
+                ymx = int(yes_match.getCenter().getX())
+                ymy = int(yes_match.getCenter().getY())
+                click(yes_match)
+                log(u"        [좌표] 예(Y) 클릭: (%d, %d)" % (ymx, ymy))
+                capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
                 sleep(2)
-            if exists(IMG_PDF_SAVE_BTN, 2):
-                # ★ PDF 뷰어 닫기 실패 = 코드 검증 실패 → 종료
-                log(u"        [FATAL] PDF 뷰어 닫기 실패!")
-                capture_error_screenshot(report_number, "pdf_viewer_not_closed")
-                log_error(report_number, u"PDF 뷰어 닫기 실패")
-                recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: PDF 뷰어 닫기 실패" % report_number)
-        else:
-            log(u"        -> PDF 뷰어 정상 종료 확인")
+
+            # 검증: PDF 뷰어 닫혔는지 확인
+            if not exists(IMG_PDF_SAVE_BTN, 3):
+                log(u"        -> PDF 뷰어 정상 종료 확인")
+                pdf_viewer_closed = True
+                break
+            else:
+                log(u"        [WARN] PDF 뷰어 아직 열려있음 (시도 %d/3)" % close_attempt)
+                take_screenshot(u"step9_pdf_close_fail_%d" % close_attempt)
+                # 예상치 못한 다이얼로그 닫기 (Windows 종료 다이얼로그 등)
+                type(Key.ESCAPE)
+                sleep(1)
+
+        if not pdf_viewer_closed:
+            log(u"        [FATAL] PDF 뷰어 3회 닫기 실패!")
+            capture_error_screenshot(report_number, "pdf_viewer_not_closed")
+            log_error(report_number, u"PDF 뷰어 닫기 실패")
+            recover_to_report_list(report_number)
+            raise NavigationResetRequired(u"변액리포트 #%d: PDF 뷰어 닫기 실패" % report_number)
 
         # Step 11: 보고서인쇄 창 X 버튼 클릭
         log(u"    [11/11] 보고서인쇄 창 X 버튼 클릭...")
@@ -2207,6 +2224,12 @@ def capture_search_failure(description, img_path, wait_time, report_num=0, step_
     """
     global global_screenshot_counter
     try:
+        # Python 2 한글 안전 처리: byte string → unicode 변환
+        if isinstance(description, bytes):
+            description = description.decode('utf-8')
+        if isinstance(img_path, bytes):
+            img_path = img_path.decode('utf-8')
+
         global_screenshot_counter += 1
         seq_num = global_screenshot_counter
 
