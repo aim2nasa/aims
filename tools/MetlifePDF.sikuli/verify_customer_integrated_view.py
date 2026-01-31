@@ -213,10 +213,15 @@ def capture_error_screenshot(report_number, step_name):
 
         screen = Screen()
         capture = screen.capture(screen.getBounds())
+        capture_file = capture.getFile()
         # 파일명 형식: 015_ERROR_report01_timeout.png
         filename = "%03d_ERROR_report%02d_%s.png" % (seq_num, report_number, step_name)
+        # errors 폴더에 저장
         screenshot_path = os.path.join(ERROR_DIR, filename)
-        shutil.copy(capture.getFile(), screenshot_path)
+        shutil.copy(capture_file, screenshot_path)
+        # screenshots 폴더에도 동시 저장 (번호 연속성 보장)
+        screenshots_path = os.path.join(SCREENSHOT_DIR, filename)
+        shutil.copy(capture_file, screenshots_path)
         log(u"    [ERROR SCREENSHOT #%03d] %s" % (seq_num, filename))
         return screenshot_path
     except Exception as e:
