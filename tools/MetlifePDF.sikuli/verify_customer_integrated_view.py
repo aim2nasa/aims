@@ -1734,50 +1734,76 @@ def save_report_pdf(report_number):
         capture_step_screenshot(report_number, "before_arrow")
         log(u"        [좌표] > 버튼 클릭: (%d, %d)" % (arrow_x, arrow_y))
         click(arrow_match)
-        sleep(1.0)
+        capture_with_click_marker(arrow_x, arrow_y, "arrow_btn", report_number, "arrow_clicked")
+        sleep(3.0)  # UI 전환 완료 대기 (1.0 → 3.0 증가)
         capture_step_screenshot(report_number, "after_arrow")
 
-        # Step 4: 미리보기 버튼 클릭 (이미지 매칭)
-        log(u"    [4/11] 미리보기 버튼 클릭...")
-        capture_step_screenshot(report_number, "before_preview")
-        preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
-        if not exists(preview_pattern, 5):
-            result['error'] = u"미리보기 버튼 못 찾음"
-            log(u"        [FATAL] %s" % result['error'])
-            capture_error_screenshot(report_number, "preview_btn_not_found")
-            log_error(report_number, result['error'])
-            # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
-            recover_to_report_list(report_number)
-            raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number)
-        preview_match = find(preview_pattern)
-        preview_x = preview_match.getCenter().getX()
-        preview_y = preview_match.getCenter().getY()
-        log(u"        [좌표] 미리보기 버튼 클릭: (%d, %d)" % (preview_x, preview_y))
-        click(preview_match)
-        log(u"        -> PDF 로딩 대기 (최대 60초)...")
-        capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked")
+        # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (Click-Verify-Retry, 최대 3회)
+        # 지수 백오프: 30초 → 60초 → 120초 (총 최대 ~210초)
+        preview_timeouts = [30, 60, 120]
+        log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 3회 시도: %s초)..." % str(preview_timeouts))
+        pdf_loaded = False
+        metlife_error_in_retry = False
 
-        # Step 5: PDF 로딩 대기 (60초 타임아웃)
-        try:
-            wait(IMG_PDF_SAVE_BTN, 60)
-            log(u"        -> PDF 로딩 완료")
-            capture_step_screenshot(report_number, "preview")
-        except:
-            result['error'] = u"PDF 로딩 타임아웃 (60초) - 처리중 오류 발생"
+        for preview_attempt in range(1, 4):
+            wait_seconds = preview_timeouts[preview_attempt - 1]
+            log(u"        [미리보기 시도 %d/3] (대기 %d초)" % (preview_attempt, wait_seconds))
+            capture_step_screenshot(report_number, "before_preview_%d" % preview_attempt)
+
+            preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
+            if not exists(preview_pattern, 5):
+                result['error'] = u"미리보기 버튼 못 찾음"
+                log(u"        [FATAL] %s" % result['error'])
+                capture_error_screenshot(report_number, "preview_btn_not_found")
+                log_error(report_number, result['error'])
+                recover_to_report_list(report_number)
+                raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number)
+
+            preview_match = find(preview_pattern)
+            preview_x = int(preview_match.getCenter().getX())
+            preview_y = int(preview_match.getCenter().getY())
+            log(u"        [좌표] 미리보기 버튼 클릭: (%d, %d)" % (preview_x, preview_y))
+            click(preview_match)
+            capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % preview_attempt)
+
+            # PDF 로딩 대기 (지수 백오프: 30초 → 60초 → 120초)
+            log(u"        -> PDF 로딩 대기 (최대 %d초)..." % wait_seconds)
+            try:
+                wait(IMG_PDF_SAVE_BTN, wait_seconds)
+                log(u"        -> [검증 성공] PDF 로딩 완료 (시도 %d/3)" % preview_attempt)
+                capture_step_screenshot(report_number, "preview")
+                pdf_loaded = True
+                break
+            except:
+                log(u"        [WARN] PDF 미로딩 (시도 %d/3, %d초 대기 후 타임아웃)" % (preview_attempt, wait_seconds))
+                capture_step_screenshot(report_number, "preview_timeout_%d" % preview_attempt)
+
+                # MetLife 명시적 오류 알림 확인 → 재시도 불가
+                alert_check_pattern = Pattern(IMG_ALERT_CONFIRM_BTN).similar(0.7)
+                if exists(alert_check_pattern, 2):
+                    log(u"        [MetLife 오류] 처리중 오류 발생 감지 → 재시도 중단")
+                    metlife_error_in_retry = True
+                    break
+
+                if preview_attempt < 3:
+                    log(u"        -> 3초 대기 후 재시도...")
+                    sleep(3)
+
+        if not pdf_loaded:
+            # === 3회 시도 모두 실패 (또는 MetLife 오류 감지) ===
+            if metlife_error_in_retry:
+                result['error'] = u"PDF 로딩 중 MetLife 오류 발생"
+            else:
+                result['error'] = u"PDF 로딩 타임아웃 (30초+60초+120초) - 미리보기 3회 재시도 모두 실패"
             log(u"")
             log(u"    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             log(u"    [ERROR] 보고서 #%d 처리 오류 발생!" % report_number)
             log(u"    [ERROR] %s" % result['error'])
             log(u"    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-            # 일반 스크린샷 폴더에도 저장
             capture_step_screenshot(report_number, "timeout_error")
-
-            # ★★★ 오류 전용 폴더에 별도 저장 ★★★
             capture_error_screenshot(report_number, "processing_error")
             log_error(report_number, result['error'])
-
-            # 오류 모달 상태 스크린샷 (오류 폴더에 저장)
             capture_error_screenshot(report_number, "error_modal")
 
             # 현재 화면 상태 분석 (디버그용)
@@ -1787,30 +1813,31 @@ def save_report_pdf(report_number):
                 exists(IMG_REPORT_HEADER, 1)
             ))
 
-            # MetLife 명시적 오류 알림 확인 ("처리중 오류가 발생하였습니다" 등)
+            # MetLife 명시적 오류 알림 확인
             alert_confirm_pattern = Pattern(IMG_ALERT_CONFIRM_BTN).similar(0.7)
-            metlife_explicit_error = exists(alert_confirm_pattern, 3)
+            metlife_explicit_error = metlife_error_in_retry or exists(alert_confirm_pattern, 3)
 
             if metlife_explicit_error:
                 # === MetLife 명시적 오류 → 확인 클릭 후 다음 보고서로 스킵 ===
                 log(u"        [MetLife 오류] 처리중 오류 발생 확인 → 확인 클릭 후 다음 보고서로")
-                # 첫 번째 클릭
-                alert_match1 = find(alert_confirm_pattern)
-                am1x = int(alert_match1.getCenter().getX())
-                am1y = int(alert_match1.getCenter().getY())
-                click(alert_match1)
-                log(u"        -> 확인 버튼 첫 번째 클릭: (%d, %d)" % (am1x, am1y))
-                capture_with_click_marker(am1x, am1y, "alert_confirm_1", report_number, "timeout_alert1")
-                sleep(1)
-                # 두 번째 클릭 (메트라이프 사이트 버그 대응)
                 if exists(alert_confirm_pattern, 2):
-                    alert_match2 = find(alert_confirm_pattern)
-                    am2x = int(alert_match2.getCenter().getX())
-                    am2y = int(alert_match2.getCenter().getY())
-                    click(alert_match2)
-                    log(u"        -> 확인 버튼 두 번째 클릭: (%d, %d) (메트라이프 버그 대응)" % (am2x, am2y))
-                    capture_with_click_marker(am2x, am2y, "alert_confirm_2", report_number, "timeout_alert2")
+                    # 첫 번째 클릭
+                    alert_match1 = find(alert_confirm_pattern)
+                    am1x = int(alert_match1.getCenter().getX())
+                    am1y = int(alert_match1.getCenter().getY())
+                    click(alert_match1)
+                    log(u"        -> 확인 버튼 첫 번째 클릭: (%d, %d)" % (am1x, am1y))
+                    capture_with_click_marker(am1x, am1y, "alert_confirm_1", report_number, "timeout_alert1")
                     sleep(1)
+                    # 두 번째 클릭 (메트라이프 사이트 버그 대응)
+                    if exists(alert_confirm_pattern, 2):
+                        alert_match2 = find(alert_confirm_pattern)
+                        am2x = int(alert_match2.getCenter().getX())
+                        am2y = int(alert_match2.getCenter().getY())
+                        click(alert_match2)
+                        log(u"        -> 확인 버튼 두 번째 클릭: (%d, %d) (메트라이프 버그 대응)" % (am2x, am2y))
+                        capture_with_click_marker(am2x, am2y, "alert_confirm_2", report_number, "timeout_alert2")
+                        sleep(1)
 
                 # 확인 후 스크린샷
                 capture_error_screenshot(report_number, "after_confirm")
@@ -1838,12 +1865,12 @@ def save_report_pdf(report_number):
                 log(u"    [INFO] 보고서 #%d MetLife 오류 스킵 - 다음 보고서로 진행" % report_number)
                 return result
             else:
-                # === MetLife 오류 알림 없음 → PDF 로딩 타임아웃 = 종료 ===
-                log(u"        [FATAL] MetLife 오류 알림 없이 PDF 로딩 타임아웃 - 프로그램 종료")
+                # === MetLife 오류 없이 3회 타임아웃 → 종료 ===
+                log(u"        [FATAL] 미리보기 3회 시도 모두 PDF 로딩 실패 → 프로그램 종료")
                 capture_error_screenshot(report_number, "timeout_no_metlife_error")
                 copy_report_screenshots_to_error_folder(report_number)
                 recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: PDF 로딩 타임아웃 (MetLife 오류 아님)" % report_number)
+                raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 3회 시도 PDF 로딩 실패" % report_number)
 
         # Step 6: PDF 저장 아이콘 클릭 + 검증
         log(u"    [6/11] PDF 저장 아이콘 클릭...")
