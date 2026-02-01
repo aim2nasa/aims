@@ -53,21 +53,31 @@ function formatCurrentTime(): string {
   return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
 }
 
+/**
+ * 헤더 시계 (독립 컴포넌트)
+ *
+ * App에 직접 setState를 두면 1초마다 전체 트리(Outlet 포함)가 리렌더되어
+ * SystemHealthPage의 Recharts가 매초 SVG를 재구성 → OOM.
+ * 별도 컴포넌트로 분리하면 시계만 리렌더되고 Outlet은 영향 없음.
+ */
+function HeaderClock() {
+  const [time, setTime] = useState(formatCurrentTime);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(formatCurrentTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return <span className="app__current-time">{time}</span>;
+}
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = usePersistentTheme();
-
-  // 현재 시간 표시
-  const [currentTime, setCurrentTime] = useState(formatCurrentTime);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(formatCurrentTime());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // 문의 알림 관리 (SSE 실시간 알림)
   const inquiryNotifications = useInquiryNotifications();
@@ -247,7 +257,7 @@ function App() {
             <h1 className="app__logo">AIMS Admin</h1>
           </div>
           <div className="app__header-right">
-            <span className="app__current-time">{currentTime}</span>
+            <HeaderClock />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <span className="app__user-name">{user?.name || user?.email || '관리자'}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
