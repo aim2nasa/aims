@@ -112,23 +112,67 @@ def detect_customer_review(text: str) -> dict:
 # 고객명 추출 (AR/CRS 공통)
 # ──────────────────────────────────────────────
 
+def _find_customer_name_line(text: str) -> str:
+    """
+    고객명이 있는 줄을 찾는다.
+    AR: "Annual" 바로 윗줄
+    CRS: "Customer" 바로 윗줄
+    찾지 못하면 빈 문자열 반환.
+    """
+    lines = text.strip().split("\n")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("Annual") or stripped.startswith("Customer"):
+            if i > 0:
+                return lines[i - 1].strip()
+            break
+    return ""
+
+
 def extract_customer_name(text: str) -> str:
     """
     고객명 추출.
-    패턴 1: "XXX 고객님을 위한" (pdfParser.ts:215, doc_prep_main.py:478)
-    패턴 2: "계약자 : XXX" (pdfParser.ts:221, doc_prep_main.py:485)
-
-    한글 및 영문 고객명 모두 지원 (예: "CHOINAKJUNG 고객님을 위한")
+    "Customer" 또는 "Annual" 바로 윗줄 = 고객명 라인.
+    해당 줄에서 접미사 ("고객님을 위한" → "고객" → "고") 를 제거하면 고객명.
+    긴 법인명의 경우 접미사가 잘리거나 아예 없을 수 있다.
+    "계약자" 필드가 있으면 보완하여 가장 긴(완전한) 이름을 반환한다.
     """
-    # 패턴 1: "고채윤 고객님을 위한" 또는 "CHOINAKJUNG 고객님을 위한"
-    m = re.search(r"([가-힣A-Za-z]+)\s*고객님을?\s*위한", text)
-    if m:
-        return m.group(1).strip()
+    candidates = []
 
-    # 패턴 2: "계약자 : 고채윤" 또는 "계약자 : CHOINAKJUNG"
-    m = re.search(r"계약자\s*[:\s：]+([가-힣A-Za-z]+)", text)
-    if m:
-        return m.group(1).strip()
+    # 방법 1: "Customer"/"Annual" 바로 윗줄에서 접미사 제거
+    name_line = _find_customer_name_line(text)
+    if name_line:
+        name = name_line
+        for suffix in [" 고객님을 위한", " 고객님을", " 고객님", " 고객", " 고"]:
+            if name.endswith(suffix):
+                name = name[: -len(suffix)].strip()
+                break
+        # 괄호 제거: "NAME(한글명)" → "NAME"
+        paren = name.find("(")
+        if paren > 0:
+            name = name[:paren].strip()
+        # "고객..."으로 시작하면 이름이 아닌 접미사 잔여물 → 무시
+        if name and len(name) >= 2 and not name.startswith("고객"):
+            candidates.append(name)
+
+    # 방법 2: "계약자" 필드 (CRS 등에서 전체 이름 보장)
+    normalized = re.sub(r"\s+", " ", text)
+    idx = normalized.find("계약자")
+    if idx >= 0:
+        after = normalized[idx + len("계약자") :].lstrip(" :：\t")
+        # 다음 필드 마커 앞까지
+        end = len(after)
+        for marker in ["피보험자", "사망", "증권번호", "보험기간", "보험료"]:
+            pos = after.find(marker)
+            if 0 < pos < end:
+                end = pos
+        name = after[:end].strip()
+        if name:
+            candidates.append(name)
+
+    # 가장 긴 이름 반환 (잘림 방지)
+    if candidates:
+        return max(candidates, key=len)
 
     return ""
 
