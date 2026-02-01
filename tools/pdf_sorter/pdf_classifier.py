@@ -184,26 +184,18 @@ def extract_customer_name(text: str) -> str:
 def extract_product_name(text: str) -> str:
     """
     CRS 상품명 추출.
-    예: "무) My Fund 변액종신보험 종신, 55세납"
-        "무) 실버플랜 변액유니버셜V보험(월납) 종신, 전기납"
-
-    패턴: "무)" 또는 "유)"로 시작하는 줄 전체를 캡처한 뒤,
-          "발행" 등 무관한 텍스트를 제거한다.
+    "Review Service" 바로 아랫줄 전체 = 상품명.
+    예: "무배당 My Fund 변액연금IV보험 적립형 종신, 20년납"
     """
-    # 패턴 1: "무)" 또는 "유)"로 시작하는 한 줄 전체 캡처
-    m = re.search(r"([무유]\)[^\n\r]+)", text)
-    if m:
-        product = m.group(1).strip()
-        # "발행" 이후 텍스트가 섞여 들어온 경우 제거
-        if "발행" in product:
-            product = product.split("발행")[0].strip()
-        return product
-
-    # 패턴 2: "변액유니버셜보험" 등 (무/유 접두사 없는 경우)
-    m = re.search(r"([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)", text)
-    if m:
-        return m.group(1).strip()
-
+    lines = text.strip().split("\n")
+    for i, line in enumerate(lines):
+        if line.strip().startswith("Review Service"):
+            # 다음 비어있지 않은 줄 = 상품명
+            for j in range(i + 1, len(lines)):
+                candidate = lines[j].strip()
+                if candidate:
+                    return candidate
+            break
     return ""
 
 
