@@ -3344,6 +3344,154 @@ app.delete('/api/dev/contracts/all', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 개발 환경 전용: 모든 문서 삭제
+ * DELETE /api/dev/documents/all
+ * 주의: 개발 환경에서만 사용! 프로덕션에서는 절대 사용 금지!
+ *
+ * Cascade 삭제:
+ *  1. 고객 참조 정리 (customers.documents[])
+ *  2. AR 파싱 큐 정리 (ar_parse_queue)
+ *  3. AR 파싱 데이터 정리 (customers.annual_reports[])
+ *  4. 물리 파일 삭제
+ *  5. Qdrant 임베딩 삭제
+ *  6. DB 문서 삭제 (files collection)
+ */
+app.delete('/api/dev/documents/all', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    const fs = require('fs').promises;
+
+    // 1. 설계사 소유 문서 전체 조회
+    const documents = await db.collection(COLLECTION_NAME)
+      .find({ ownerId: userId })
+      .toArray();
+
+    const docIds = documents.map(d => d._id);
+    const docIdStrings = docIds.map(id => id.toString());
+
+    console.log(`🗑️ [DEV] 문서 전체 삭제 시작: userId=${userId}, docCount=${docIds.length}`);
+
+    if (docIds.length === 0) {
+      return res.json({
+        success: true,
+        message: '삭제할 문서가 없습니다.',
+        deletedCount: 0
+      });
+    }
+
+    // 2. 고객 참조 정리 (customers.documents[] 배열에서 제거)
+    let customerRefsCleanedCount = 0;
+    try {
+      const customersUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
+        { 'documents.document_id': { $in: docIds } },
+        {
+          $pull: { documents: { document_id: { $in: docIds } } },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+      customerRefsCleanedCount = customersUpdateResult.modifiedCount;
+      if (customerRefsCleanedCount > 0) {
+        console.log(`✅ [DEV 문서 삭제] 고객 참조 정리: ${customerRefsCleanedCount}명`);
+      }
+    } catch (err) {
+      console.warn('⚠️ [DEV 문서 삭제] 고객 참조 정리 실패:', err.message);
+    }
+
+    // 3. AR 파싱 큐 정리
+    let arQueueCleanedCount = 0;
+    try {
+      const queueResult = await db.collection('ar_parse_queue').deleteMany({
+        file_id: { $in: docIds }
+      });
+      arQueueCleanedCount = queueResult.deletedCount;
+      if (arQueueCleanedCount > 0) {
+        console.log(`✅ [DEV 문서 삭제] AR 파싱 큐 정리: ${arQueueCleanedCount}건`);
+      }
+    } catch (err) {
+      console.warn('⚠️ [DEV 문서 삭제] AR 파싱 큐 정리 실패:', err.message);
+    }
+
+    // 4. AR 파싱 데이터 정리 (customers.annual_reports[] 에서 source_file_id 매칭 제거)
+    let arDataCleanedCount = 0;
+    try {
+      const arDocs = documents.filter(d => d.is_annual_report && d.customerId);
+      if (arDocs.length > 0) {
+        const arResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
+          { annual_reports: { $exists: true } },
+          {
+            $pull: { annual_reports: { source_file_id: { $in: docIds } } },
+            $set: { 'meta.updated_at': utcNowDate() }
+          }
+        );
+        arDataCleanedCount = arResult.modifiedCount;
+        if (arDataCleanedCount > 0) {
+          console.log(`✅ [DEV 문서 삭제] AR 파싱 데이터 정리: ${arDataCleanedCount}명의 고객`);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ [DEV 문서 삭제] AR 파싱 데이터 정리 실패:', err.message);
+    }
+
+    // 5. 물리 파일 삭제
+    let filesDeletedCount = 0;
+    for (const doc of documents) {
+      if (doc.upload?.destPath) {
+        try {
+          await fs.unlink(doc.upload.destPath);
+          filesDeletedCount++;
+        } catch (fileErr) {
+          // ENOENT는 이미 파일이 없는 경우 → 무시
+          if (fileErr.code !== 'ENOENT') {
+            console.warn(`⚠️ 파일 삭제 실패: ${doc.upload.destPath} - ${fileErr.message}`);
+          }
+        }
+      }
+    }
+    if (filesDeletedCount > 0) {
+      console.log(`✅ [DEV 문서 삭제] 물리 파일 삭제: ${filesDeletedCount}개`);
+    }
+
+    // 6. Qdrant 임베딩 삭제 (배치)
+    try {
+      for (const docIdStr of docIdStrings) {
+        await qdrantClient.delete(QDRANT_COLLECTION, {
+          filter: {
+            must: [{ key: 'doc_id', match: { value: docIdStr } }]
+          }
+        });
+      }
+      console.log(`✅ [DEV 문서 삭제] Qdrant 임베딩 삭제 완료: ${docIdStrings.length}건`);
+    } catch (qdrantErr) {
+      console.warn('⚠️ [DEV 문서 삭제] Qdrant 임베딩 삭제 실패:', qdrantErr.message);
+    }
+
+    // 7. DB 문서 삭제 (files collection)
+    const deleteResult = await db.collection(COLLECTION_NAME).deleteMany({
+      _id: { $in: docIds }
+    });
+
+    console.log(`🗑️ [DEV] 문서 전체 삭제 완료: deleted=${deleteResult.deletedCount}, customerRefs=${customerRefsCleanedCount}, arQueue=${arQueueCleanedCount}, arData=${arDataCleanedCount}, physicalFiles=${filesDeletedCount}`);
+
+    res.json({
+      success: true,
+      message: `${deleteResult.deletedCount}건의 문서가 삭제되었습니다.`,
+      deletedCount: deleteResult.deletedCount,
+      customerRefsCleanedCount,
+      arQueueCleanedCount,
+      arDataCleanedCount,
+      filesDeletedCount
+    });
+  } catch (error) {
+    console.error('❌ 문서 전체 삭제 실패:', error);
+    backendLogger.error('Documents', '문서 전체 삭제 실패', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * 특정 사용자 정보 조회 API
  * GET /api/users/:id
  * 개발자 모드 및 계정 설정에서 사용

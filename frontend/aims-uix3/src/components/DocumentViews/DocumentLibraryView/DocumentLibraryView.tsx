@@ -31,6 +31,7 @@ import { LinkIcon } from '../components/DocumentActionIcons'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
+import { DocumentService } from '@/services/DocumentService'
 import DownloadHelper from '../../../utils/downloadHelper'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
@@ -87,13 +88,14 @@ const DocumentLibraryContent: React.FC<{
   onDocumentDoubleClick?: (document: Document) => void
   onDeleteSelected: () => void
   onDeleteSingleDocument: (documentId: string, documentName: string) => Promise<void>
+  onDeleteAll?: () => void
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
   onCustomerDoubleClick?: (customerId: string) => void
   onBulkLinkClick: (documents: Document[]) => void
   onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
   onNavigate?: (viewKey: string) => void
-}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
+}> = ({ initialType, onInitialTypeChange, selectedInitial, onSelectedInitialChange, isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDocumentDoubleClick, onDeleteSelected, onDeleteSingleDocument, onDeleteAll, isDeleting, onCustomerClick, onCustomerDoubleClick, onBulkLinkClick, onRemoveDocumentsExpose, onNavigate }) => {
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore()
 
@@ -416,6 +418,16 @@ const DocumentLibraryContent: React.FC<{
               >
                 {isDeleting ? '삭제 중...' : '삭제'}
               </Button>
+              {import.meta.env.DEV && onDeleteAll && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onDeleteAll}
+                  disabled={isDeleting || state.totalCount === 0}
+                >
+                  전체 삭제 ({state.totalCount})
+                </Button>
+              )}
             </>
           )}
 
@@ -887,6 +899,38 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }, [confirmModal])
 
+  // 🍎 전체 문서 삭제 핸들러 (개발자 모드 전용)
+  const handleDeleteAllDocuments = React.useCallback(async () => {
+    const confirmed = await confirmModal.actions.openModal({
+      title: '전체 문서 삭제',
+      message: '모든 문서를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
+      confirmText: '전체 삭제',
+      cancelText: '취소',
+      showCancel: true,
+      confirmStyle: 'destructive',
+      iconType: 'warning',
+    })
+
+    if (!confirmed) return
+
+    try {
+      setIsDeleting(true)
+      const result = await DocumentService.deleteAllDocuments()
+      console.log(`🗑️ [DEV] 문서 전체 삭제 완료: ${result.deletedCount}건`)
+      window.location.reload()
+    } catch (error) {
+      console.error('Error in handleDeleteAllDocuments:', error)
+      errorReporter.reportApiError(error as Error, { component: 'DocumentLibraryView.handleDeleteAllDocuments' })
+      setIsDeleting(false)
+      await confirmModal.actions.openModal({
+        title: '삭제 실패',
+        message: '전체 문서 삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+      })
+    }
+  }, [confirmModal])
+
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="전체 문서 보기" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>} breadcrumbItems={breadcrumbItems} onBreadcrumbClick={onNavigate}>
       <div className="document-library-view">
@@ -914,6 +958,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onToggleBulkLinkMode={handleToggleBulkLinkMode}
             onDeleteSelected={handleDeleteSelected}
             onDeleteSingleDocument={handleDeleteSingleDocument}
+            onDeleteAll={handleDeleteAllDocuments}
             isDeleting={isDeleting}
             onBulkLinkClick={(documents) => {
               setSelectedDocumentsForLink(documents)

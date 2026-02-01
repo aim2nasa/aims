@@ -852,6 +852,15 @@ export class DocumentService {
   }
 
   /**
+   * 개발 환경 전용: 모든 문서 삭제
+   * 주의: 개발 환경에서만 사용!
+   */
+  static async deleteAllDocuments(): Promise<{ deletedCount: number }> {
+    const response = await api.delete<{ success: boolean; deletedCount: number }>('/api/dev/documents/all');
+    return { deletedCount: response.deletedCount };
+  }
+
+  /**
    * 문서 보관 처리
    */
   static async archiveDocument(id: string): Promise<Document> {
