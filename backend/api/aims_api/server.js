@@ -7616,6 +7616,53 @@ app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * 고객 문서 해시 일괄 조회 API
+ * AR 배치 등록 시 중복 검사를 위해 고객의 모든 문서 해시를 한 번에 반환
+ * 기존: 문서 N개 → N번 /api/documents/:id/status 호출 (순차)
+ * 개선: 1번 호출로 모든 해시 반환 → 프론트엔드에서 로컬 비교
+ */
+app.get('/api/customers/:id/document-hashes', authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    const userId = req.user.id;
+
+    // 해당 고객의 모든 문서에서 file_hash만 추출
+    const docs = await db.collection(COLLECTION_NAME).find(
+      {
+        customerId: new ObjectId(id),
+        ownerId: userId,
+        'meta.file_hash': { $exists: true, $ne: null }
+      },
+      { projection: { 'meta.file_hash': 1 } }
+    ).toArray();
+
+    const hashes = docs.map(doc => doc.meta.file_hash);
+
+    res.json({
+      success: true,
+      hashes,
+      total: hashes.length
+    });
+  } catch (error) {
+    console.error('고객 문서 해시 조회 오류:', error);
+    backendLogger.error('Customers', '고객 문서 해시 조회 오류', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 문서 해시 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 테스트용 간단한 주소 검색 엔드포인트
  */
 app.get('/api/address/test', async (req, res) => {

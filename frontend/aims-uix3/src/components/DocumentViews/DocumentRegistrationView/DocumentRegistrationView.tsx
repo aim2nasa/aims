@@ -25,7 +25,7 @@ import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
-import { processAnnualReportFile, registerArDocument, formatIssueDateKorean } from './utils/annualReportProcessor'
+import { processAnnualReportFile, registerArDocument, formatIssueDateKorean, clearDuplicateCheckCache } from './utils/annualReportProcessor'
 import { processCustomerReviewFile, formatIssueDateKorean as formatIssueDateKoreanCR } from './utils/customerReviewProcessor'
 import { CustomerSelectionModal } from '@/features/annual-report/components/CustomerSelectionModal'
 import { NewCustomerInputModal } from '@/features/annual-report/components/NewCustomerInputModal'
@@ -2447,6 +2447,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         }}
         onRegister={async (rows: ArFileTableRow[]) => {
           // 🎯 AR 일괄 등록 처리 (테이블 행 기반)
+          clearDuplicateCheckCache() // 배치 시작 전 캐시 초기화
           addLog('info', 'AR 일괄 등록 시작...')
 
           const { groups } = arBatch.tableState
@@ -2621,6 +2622,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             completedCount++
             arBatch.incrementCompleted()
           }
+
+          // 배치 완료 → 캐시 클리어
+          clearDuplicateCheckCache()
 
           // 결과 요약
           addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)

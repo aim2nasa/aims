@@ -3,7 +3,7 @@
  * @since 1.0.0
  *
  * Annual Report 처리 로직 테스트
- * - 문서 중복 검사
+ * - 문서 중복 검사 (캐시 기반 해시 일괄 조회)
  * - AR 문서 등록 처리
  * - 에러 처리
  */
@@ -11,13 +11,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   processAnnualReportFile,
-  registerArDocument
+  registerArDocument,
+  clearDuplicateCheckCache
 } from '../annualReportProcessor'
-import { DocumentService } from '@/services/DocumentService'
 import { calculateFileHash } from '@/features/customer/utils/fileHash'
 
 // Mock dependencies
-vi.mock('@/services/DocumentService')
 vi.mock('@/features/customer/utils/fileHash')
 
 describe('processAnnualReportFile', () => {
@@ -27,6 +26,7 @@ describe('processAnnualReportFile', () => {
   beforeEach(() => {
     mockFile = new File(['test content'], 'annual-report.pdf', { type: 'application/pdf' })
     vi.clearAllMocks()
+    clearDuplicateCheckCache() // 테스트 간 캐시 초기화
     global.fetch = vi.fn()
   })
 
@@ -37,11 +37,10 @@ describe('processAnnualReportFile', () => {
   describe('문서 중복 검사 성공', () => {
     it('중복 문서가 없으면 shouldUploadDoc=true를 반환해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash123')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [],
-        total: 0
-      } as any)
+      // 새 API: /api/customers/:id/document-hashes → 빈 해시 목록
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
+      } as Response)
 
       const result = await processAnnualReportFile(mockFile, mockCustomerId)
 
@@ -55,32 +54,13 @@ describe('processAnnualReportFile', () => {
 
     it('기존 문서가 있지만 해시가 다르면 shouldUploadDoc=true를 반환해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash-new')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [{ _id: 'doc1' }, { _id: 'doc2' }],
-        total: 2
-      } as any)
-
-      vi.mocked(global.fetch).mockImplementation((url) => {
-        const urlStr = typeof url === 'string' ? url : url.toString()
-        if (urlStr.includes('doc1')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-old-1' } } }
-            })
-          } as Response)
-        }
-        if (urlStr.includes('doc2')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-old-2' } } }
-            })
-          } as Response)
-        }
-        return Promise.reject(new Error('Unknown URL'))
-      })
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({
+          success: true,
+          hashes: ['hash-old-1', 'hash-old-2'],
+          total: 2
+        })
+      } as Response)
 
       const result = await processAnnualReportFile(mockFile, mockCustomerId)
 
@@ -94,32 +74,13 @@ describe('processAnnualReportFile', () => {
 
     it('중복 문서가 있으면 shouldUploadDoc=false를 반환해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash-duplicate')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [{ _id: 'doc1' }, { _id: 'doc2' }],
-        total: 2
-      } as any)
-
-      vi.mocked(global.fetch).mockImplementation((url) => {
-        const urlStr = typeof url === 'string' ? url : url.toString()
-        if (urlStr.includes('doc1')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-different' } } }
-            })
-          } as Response)
-        }
-        if (urlStr.includes('doc2')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-duplicate' } } }
-            })
-          } as Response)
-        }
-        return Promise.reject(new Error('Unknown URL'))
-      })
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({
+          success: true,
+          hashes: ['hash-different', 'hash-duplicate'],
+          total: 2
+        })
+      } as Response)
 
       const result = await processAnnualReportFile(mockFile, mockCustomerId)
 
@@ -131,33 +92,28 @@ describe('processAnnualReportFile', () => {
       })
     })
 
-    it('첫 번째 문서에서 중복이 발견되면 즉시 반환해야 함', async () => {
-      vi.mocked(calculateFileHash).mockResolvedValue('hash-match')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [{ _id: 'doc1' }, { _id: 'doc2' }, { _id: 'doc3' }],
-        total: 3
-      } as any)
+    it('캐시된 해시로 API 호출 없이 중복을 감지해야 함', async () => {
+      // 첫 번째 호출: API에서 해시 로드
+      vi.mocked(calculateFileHash).mockResolvedValue('hash-first')
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({
+          success: true,
+          hashes: ['hash-existing'],
+          total: 1
+        })
+      } as Response)
 
-      const fetchSpy = vi.fn()
-      vi.mocked(global.fetch).mockImplementation((url) => {
-        fetchSpy(url)
-        const urlStr = typeof url === 'string' ? url : url.toString()
-        if (urlStr.includes('doc1')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-match' } } }
-            })
-          } as Response)
-        }
-        return Promise.reject(new Error('Should not reach here'))
-      })
+      await processAnnualReportFile(mockFile, mockCustomerId)
+
+      // 두 번째 호출: 같은 고객 → 캐시에서 조회 (API 재호출 없음)
+      vi.mocked(calculateFileHash).mockResolvedValue('hash-existing')
+      const fetchCallCount = vi.mocked(global.fetch).mock.calls.length
 
       const result = await processAnnualReportFile(mockFile, mockCustomerId)
 
       expect(result.isDuplicateDoc).toBe(true)
-      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      // 캐시 히트 → fetch 추가 호출 없음
+      expect(vi.mocked(global.fetch).mock.calls.length).toBe(fetchCallCount)
     })
   })
 
@@ -180,9 +136,9 @@ describe('processAnnualReportFile', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('문서 목록 조회 실패 시 안전하게 진행해야 함', async () => {
+    it('해시 일괄 조회 API 실패 시 안전하게 진행해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash123')
-      vi.mocked(DocumentService.getCustomerDocuments).mockRejectedValue(new Error('Network error'))
+      vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'))
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -199,36 +155,21 @@ describe('processAnnualReportFile', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('개별 문서 상태 조회 실패 시 다음 문서 계속 확인해야 함', async () => {
+    it('API 실패 후에도 캐시가 설정되어 중복 재호출을 방지해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash123')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [{ _id: 'doc1' }, { _id: 'doc2' }],
-        total: 2
-      } as any)
-
-      vi.mocked(global.fetch).mockImplementation((url) => {
-        const urlStr = typeof url === 'string' ? url : url.toString()
-        if (urlStr.includes('doc1')) {
-          return Promise.reject(new Error('Network error'))
-        }
-        if (urlStr.includes('doc2')) {
-          return Promise.resolve({
-            json: () => Promise.resolve({
-              success: true,
-              data: { raw: { meta: { file_hash: 'hash-different' } } }
-            })
-          } as Response)
-        }
-        return Promise.reject(new Error('Unknown URL'))
-      })
+      vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'))
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const result = await processAnnualReportFile(mockFile, mockCustomerId)
+      // 첫 번째 호출: API 실패
+      await processAnnualReportFile(mockFile, mockCustomerId)
+      const callsAfterFirst = vi.mocked(global.fetch).mock.calls.length
 
-      expect(result.isDuplicateDoc).toBe(false)
-      expect(consoleErrorSpy).toHaveBeenCalled()
+      // 두 번째 호출: 캐시 히트 (빈 Set이 캐시됨)
+      await processAnnualReportFile(mockFile, mockCustomerId)
+
+      // 캐시에서 조회하므로 fetch 추가 호출 없음
+      expect(vi.mocked(global.fetch).mock.calls.length).toBe(callsAfterFirst)
 
       consoleErrorSpy.mockRestore()
     })
@@ -252,6 +193,7 @@ describe('registerArDocument', () => {
     }
 
     vi.clearAllMocks()
+    clearDuplicateCheckCache()
     global.fetch = vi.fn()
   })
 
@@ -262,11 +204,9 @@ describe('registerArDocument', () => {
   describe('정상 처리', () => {
     it('중복이 아닌 문서는 성공적으로 등록해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash123')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [],
-        total: 0
-      } as any)
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
+      } as Response)
 
       const result = await registerArDocument(
         mockFile,
@@ -287,11 +227,9 @@ describe('registerArDocument', () => {
 
     it('파일 ID를 생성하고 업로드 큐에 추가해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash456')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [],
-        total: 0
-      } as any)
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
+      } as Response)
 
       await registerArDocument(mockFile, mockCustomerId, mockIssueDate, mockCallbacks)
 
@@ -310,15 +248,11 @@ describe('registerArDocument', () => {
   describe('중복 문서 처리', () => {
     it('중복 문서는 경고 후 종료해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash-dup')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [{ _id: 'doc1' }],
-        total: 1
-      } as any)
       vi.mocked(global.fetch).mockResolvedValue({
         json: () => Promise.resolve({
           success: true,
-          data: { raw: { meta: { file_hash: 'hash-dup' } } }
+          hashes: ['hash-dup'],
+          total: 1
         })
       } as Response)
 
@@ -349,11 +283,9 @@ describe('registerArDocument', () => {
   describe('전체 처리 흐름', () => {
     it('정상 흐름: 중복 검사 → 추적 등록 → 큐 추가 순서로 실행해야 함', async () => {
       vi.mocked(calculateFileHash).mockResolvedValue('hash789')
-      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue({
-        customer_id: mockCustomerId,
-        documents: [],
-        total: 0
-      } as any)
+      vi.mocked(global.fetch).mockResolvedValue({
+        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
+      } as Response)
 
       const executionOrder: string[] = []
 
