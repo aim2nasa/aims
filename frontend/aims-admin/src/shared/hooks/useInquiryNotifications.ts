@@ -47,7 +47,7 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initReceivedRef = useRef(false); // init 이벤트 수신 여부
-  const processedEventIdsRef = useRef<Set<string>>(new Set()); // 처리된 이벤트 ID 추적
+  const processedEventIdsRef = useRef<Set<string>>(new Set()); // 처리된 이벤트 ID 추적 (init 시 리셋)
 
   // 초기 데이터 로드
   const loadInitialData = useCallback(async () => {
@@ -120,8 +120,12 @@ export function useInquiryNotifications(enabled: boolean = true): UseInquiryNoti
           console.log('[AdminInquiryNotifications] 이미 처리된 이벤트 무시:', data.inquiryId);
           return;
         }
-        // 처리됨으로 표시
+        // 처리됨으로 표시 (상한선 1000개 초과 시 오래된 항목 정리)
         processedEventIdsRef.current.add(data.inquiryId);
+        if (processedEventIdsRef.current.size > 1000) {
+          const entries = Array.from(processedEventIdsRef.current);
+          processedEventIdsRef.current = new Set(entries.slice(-500));
+        }
 
         // 미확인 목록에 추가 및 카운트 증가
         setUnreadIds((prev) => {

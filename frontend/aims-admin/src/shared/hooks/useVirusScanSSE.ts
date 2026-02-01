@@ -94,9 +94,8 @@ export function useVirusScanSSE(): UseVirusScanSSEReturn {
       addEvent('connected', data);
     });
 
-    eventSource.addEventListener('ping', (event) => {
-      const data = JSON.parse(event.data);
-      addEvent('ping', data);
+    eventSource.addEventListener('ping', () => {
+      // Keep-alive, 상태 업데이트 불필요 (이벤트 배열에 추가하지 않음)
     });
 
     eventSource.addEventListener('virus-detected', (event) => {

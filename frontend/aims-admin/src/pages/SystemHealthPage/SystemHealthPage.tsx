@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
@@ -161,8 +161,8 @@ const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
 // localStorage 키
 const TIME_RANGE_STORAGE_KEY = 'aims-admin-metrics-time-range';
 
-// 서버 리소스 섹션 컴포넌트
-const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) => {
+// 서버 리소스 섹션 컴포넌트 (memo: 부모 리렌더 차단)
+const ServerResourcesSection = memo(function ServerResourcesSection({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) {
   const [timeRange, setTimeRange] = useState<number>(() => {
     const stored = localStorage.getItem(TIME_RANGE_STORAGE_KEY);
     if (stored) {
@@ -311,15 +311,16 @@ const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
       </div>
     </section>
   );
-};
+});
 
-// 실시간 메트릭 섹션 컴포넌트
-const RealtimeMetricsSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) => {
+// 실시간 메트릭 섹션 컴포넌트 (memo: 부모 리렌더 차단)
+const RealtimeMetricsSection = memo(function RealtimeMetricsSection({ isAimsApiHealthy }: { isAimsApiHealthy: boolean }) {
   const { data: metrics, isLoading, isError } = useQuery({
     queryKey: ['admin', 'metrics', 'realtime'],
     queryFn: dashboardApi.getMetricsRealtime,
-    refetchInterval: 3000, // 3초마다 갱신
+    refetchInterval: 10000, // 10초마다 갱신 (3초 → 10초: OOM 방지)
     refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
+    staleTime: 8000, // 8초간 fresh 유지 (중간 리렌더 시 불필요한 refetch 방지)
     retry: 0, // 즉시 실패 감지 (딜레이 최소화)
   });
 
@@ -514,7 +515,7 @@ const RealtimeMetricsSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
       </div>
     </section>
   );
-};
+});
 
 // 상태 이력 날짜 포맷
 const formatHistoryDate = (isoString: string): string => {
@@ -529,8 +530,8 @@ const formatHistoryDate = (isoString: string): string => {
   });
 };
 
-// 서비스 상태 이력 섹션
-const HealthHistorySection = () => {
+// 서비스 상태 이력 섹션 (memo: props 없으므로 부모 리렌더 완전 차단)
+const HealthHistorySection = memo(function HealthHistorySection() {
   const [filter, setFilter] = useState<'all' | 'down' | 'recovered'>('all');
   const queryClient = useQueryClient();
 
@@ -657,14 +658,14 @@ const HealthHistorySection = () => {
       )}
     </section>
   );
-};
+});
 
-// 포트 현황 섹션 컴포넌트 (컴팩트 칩 형태)
-const PortsSection = () => {
+// 포트 현황 섹션 컴포넌트 (memo: props 없으므로 부모 리렌더 완전 차단)
+const PortsSection = memo(function PortsSection() {
   const { data: ports, isLoading } = useQuery({
     queryKey: ['admin', 'ports'],
     queryFn: dashboardApi.getPorts,
-    refetchInterval: 10000, // 다른 섹션과 동기화 (10초)
+    refetchInterval: 30000, // 30초마다 갱신 (포트 상태는 자주 변하지 않음)
     refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
   });
 
@@ -705,7 +706,7 @@ const PortsSection = () => {
       </div>
     </section>
   );
-};
+});
 
 // 독립 헬스 모니터 응답을 기존 HealthStatus 형식으로 변환
 type HealthMonitorResponse = Awaited<ReturnType<typeof dashboardApi.getHealthCurrent>>;
@@ -756,7 +757,7 @@ export const SystemHealthPage = () => {
   const { data } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: dashboardApi.getDashboard,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // 30초마다 갱신 (보조 데이터, 주 상태는 health-monitor에서)
     refetchIntervalInBackground: false, // 백그라운드 탭에서 refetch 중지 (메모리 절약)
     retry: 0, // 즉시 실패 감지
   });
