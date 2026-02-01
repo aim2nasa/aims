@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
@@ -203,12 +203,12 @@ const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
   // aims_api 연결 실패 여부 (헬스 모니터 기준 또는 API 에러)
   const apiUnavailable = !isAimsApiHealthy || (isCurrentError && isHistoryError);
 
-  // 라인 차트용 데이터 변환
+  // 라인 차트용 데이터 변환 (useMemo: historyData 변경 시에만 재계산)
   // 백엔드에서 이미 샘플링된 데이터가 반환됨 (시간 범위에 따라 자동 샘플링)
   // - 1~6시간: 전체 데이터, 24시간: 5분 간격, 72시간: 15분 간격, 168시간: 30분 간격
   const rawMetrics = historyData?.metrics || [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chartData = rawMetrics.map((m: any) => ({
+  const chartData = useMemo(() => rawMetrics.map((m: any) => ({
     timestamp: m.timestamp,
     // 새 형식 (aggregation): 플랫 값 / 구 형식: 중첩 객체
     cpu: typeof m.cpu === 'number' ? m.cpu : m.cpu?.usage ?? 0,
@@ -216,7 +216,7 @@ const ServerResourcesSection = ({ isAimsApiHealthy }: { isAimsApiHealthy: boolea
     disk: m.diskRoot ?? (typeof m.disk === 'number' ? m.disk : m.disk?.usagePercent ?? 0),
     diskRoot: m.diskRoot ?? m.disks?.root?.usagePercent ?? (typeof m.disk === 'number' ? m.disk : m.disk?.usagePercent ?? 0),
     diskData: m.diskData ?? m.disks?.data?.usagePercent ?? null,
-  }));
+  })), [rawMetrics]);
 
   return (
     <section className="server-resources">
@@ -835,8 +835,8 @@ export const SystemHealthPage = () => {
     return h;
   };
 
-  // Tier별 서비스 구성
-  const serviceTiers = [
+  // Tier별 서비스 구성 (useMemo: health 변경 시에만 재생성)
+  const serviceTiers = useMemo(() => [
     {
       tier: 'Tier 1: Infrastructure',
       description: '핵심 인프라 - 장애 시 전체 서비스 중단',
@@ -909,10 +909,10 @@ export const SystemHealthPage = () => {
         },
       ],
     },
-  ];
+  ], [health]);
 
   // 모든 서비스 평탄화 (전체 상태 계산용)
-  const services = serviceTiers.flatMap((tier) => tier.services);
+  const services = useMemo(() => serviceTiers.flatMap((tier) => tier.services), [serviceTiers]);
 
   const healthyCount = services.filter((s) => s.health.status === 'healthy').length;
   const allHealthy = healthyCount === services.length;

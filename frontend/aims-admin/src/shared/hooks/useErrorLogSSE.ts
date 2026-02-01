@@ -12,6 +12,9 @@ import { errorReporter } from '@/shared/lib/errorReporter';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
+// SSE로 수신된 로그의 최대 보관 수 (메모리 무한 성장 방지)
+const MAX_NEW_LOGS = 500;
+
 interface UseErrorLogSSEReturn {
   /** SSE 연결 상태 */
   isConnected: boolean;
@@ -117,7 +120,10 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
       try {
         const errorLog: ErrorLog = JSON.parse(e.data);
         console.log('[SystemLogSSE] 새 에러 수신:', errorLog);
-        setNewLogs((prev) => [errorLog, ...prev]);
+        setNewLogs((prev) => {
+          const next = [errorLog, ...prev];
+          return next.length > MAX_NEW_LOGS ? next.slice(0, MAX_NEW_LOGS) : next;
+        });
         updateStats(errorLog);
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
@@ -131,7 +137,10 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
       try {
         const log: ErrorLog = JSON.parse(e.data);
         console.log('[SystemLogSSE] 새 로그 수신:', log);
-        setNewLogs((prev) => [log, ...prev]);
+        setNewLogs((prev) => {
+          const next = [log, ...prev];
+          return next.length > MAX_NEW_LOGS ? next.slice(0, MAX_NEW_LOGS) : next;
+        });
         updateStats(log);
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
@@ -146,7 +155,10 @@ export function useErrorLogSSE(enabled: boolean = true, retentionHours?: number)
         const logs: ErrorLog[] = JSON.parse(e.data);
         console.log('[SystemLogSSE] 배치 로그 수신:', logs.length, '개');
         // 배치는 역순으로 추가 (최신이 앞에)
-        setNewLogs((prev) => [...logs.reverse(), ...prev]);
+        setNewLogs((prev) => {
+          const next = [...logs.reverse(), ...prev];
+          return next.length > MAX_NEW_LOGS ? next.slice(0, MAX_NEW_LOGS) : next;
+        });
         logs.forEach(updateStats);
         queryClient.invalidateQueries({ queryKey: ['admin', 'error-logs'] });
       } catch (error) {
