@@ -157,8 +157,8 @@ describe('useArBatchAnalysis - OOM 방지 대량 파일 시뮬레이션', () => 
       await result.current.analyzeArFiles(files)
     })
 
-    // GC_YIELD_INTERVAL = 10 → 800/10 = 80회 예상
-    const expectedYields = Math.floor(FILE_COUNT / 10)
+    // GC_YIELD_INTERVAL = 50 → 800/50 = 16회 예상
+    const expectedYields = Math.floor(FILE_COUNT / 50)
     expect(setTimeoutCallCount).toBeGreaterThanOrEqual(expectedYields - 2)
     expect(setTimeoutCallCount).toBeLessThanOrEqual(expectedYields + 2)
 

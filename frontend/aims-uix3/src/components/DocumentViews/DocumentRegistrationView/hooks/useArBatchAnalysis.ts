@@ -191,7 +191,9 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
 
     // 메모리 효율적 처리를 위한 상수
     const STATE_FLUSH_INTERVAL = 20  // N개 파일마다 React state 갱신
-    const GC_YIELD_INTERVAL = 10     // N개 파일마다 이벤트 루프에 양보 (GC 기회)
+    const GC_YIELD_INTERVAL = 50     // N개 파일마다 이벤트 루프에 양보 (GC 기회)
+    // pdf.destroy()가 매 파일마다 PDF.js 메모리를 즉시 해제하므로
+    // 50개 간격이면 충분 (738파일: 74회→15회, ~240ms 절약)
 
     // 1. 각 파일 AR 분석
     for (let i = 0; i < files.length; i++) {
