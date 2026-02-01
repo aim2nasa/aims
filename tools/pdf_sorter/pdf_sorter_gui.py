@@ -13,10 +13,12 @@ PDF 분류 및 정리 도구 (PDF Sorter)
   pip install pdfminer.six
 """
 
+import json
 import shutil
 import threading
 import queue
 from pathlib import Path
+from datetime import datetime
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -86,6 +88,9 @@ class PDFSorterApp(tk.Tk):
         # 워커 스레드 → 메인 스레드 통신용 큐
         self._ui_queue: queue.Queue = queue.Queue()
 
+        self._sort_col: str = ""       # 현재 정렬 컬럼
+        self._sort_reverse: bool = False  # 내림차순 여부
+
         self._build_ui()
         self._setup_log_tags()
         self._poll_ui_queue()
@@ -119,10 +124,16 @@ class PDFSorterApp(tk.Tk):
 
         columns = ("filename", "type", "customer", "title")
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=12)
-        self.tree.heading("filename", text="파일명")
-        self.tree.heading("type", text="유형")
-        self.tree.heading("customer", text="고객명")
-        self.tree.heading("title", text="읽기쉬운 제목 (displayName)")
+
+        # 컬럼 헤딩 텍스트 (정렬 화살표 표시용)
+        self._heading_text = {
+            "filename": "파일명",
+            "type": "유형",
+            "customer": "고객명",
+            "title": "읽기쉬운 제목 (displayName)",
+        }
+        for col, text in self._heading_text.items():
+            self.tree.heading(col, text=text, command=lambda c=col: self._sort_column(c))
 
         self.tree.column("filename", width=260, minwidth=150)
         self.tree.column("type", width=60, minwidth=50, anchor="center")
@@ -169,6 +180,40 @@ class PDFSorterApp(tk.Tk):
         """로그 텍스트 위젯의 색상 태그 설정"""
         for tag, color in LOG_COLORS.items():
             self.log_text.tag_configure(tag, foreground=color)
+
+    # ──────────────────────────────────────────
+    # Treeview 컬럼 정렬
+    # ──────────────────────────────────────────
+
+    def _sort_column(self, col: str):
+        """Treeview 컬럼 클릭 시 정렬 (오름차순/내림차순 토글)"""
+        if self._worker_running:
+            return
+
+        # 같은 컬럼 재클릭 → 정렬 방향 토글, 다른 컬럼 → 오름차순
+        if self._sort_col == col:
+            self._sort_reverse = not self._sort_reverse
+        else:
+            self._sort_col = col
+            self._sort_reverse = False
+
+        # 현재 행 데이터 수집
+        items = [(self.tree.set(iid, col), iid) for iid in self.tree.get_children("")]
+
+        # 정렬 (대소문자 무시)
+        items.sort(key=lambda t: t[0].lower(), reverse=self._sort_reverse)
+
+        # 정렬된 순서로 재배치
+        for idx, (_val, iid) in enumerate(items):
+            self.tree.move(iid, "", idx)
+
+        # 헤딩 텍스트에 정렬 방향 화살표 표시
+        arrow = " \u25bc" if self._sort_reverse else " \u25b2"
+        for c, text in self._heading_text.items():
+            if c == col:
+                self.tree.heading(c, text=text + arrow)
+            else:
+                self.tree.heading(c, text=text)
 
     # ──────────────────────────────────────────
     # 워커 스레드 → 메인 스레드 UI 업데이트
@@ -314,7 +359,8 @@ class PDFSorterApp(tk.Tk):
 
     def _scan_update_ui(self, row_values, row_tag, log_msg, log_tag, idx, total):
         """메인 스레드: 스캔 중 한 파일 처리 후 UI 업데이트"""
-        self.tree.insert("", "end", values=row_values, tags=(row_tag,))
+        item = self.tree.insert("", "end", values=row_values, tags=(row_tag,))
+        self.tree.see(item)
         self._log(log_msg, log_tag)
         self.progress.configure(value=idx)
         self.progress_label.configure(text=f"{idx} / {total}")
@@ -347,7 +393,7 @@ class PDFSorterApp(tk.Tk):
             f"  AR (Annual Report): {ar_count}개\n"
             f"  CRS (변액리포트): {crs_count}개\n"
             f"  미분류 → UNKNOWN: {unknown_count}개\n\n"
-            f"파일이 이동됩니다. 계속하시겠습니까?"
+            f"파일이 복사됩니다 (원본 유지). 계속하시겠습니까?"
         )
         if not messagebox.askyesno("정리 실행 확인", msg):
             return
@@ -363,10 +409,11 @@ class PDFSorterApp(tk.Tk):
         thread.start()
 
     def _organize_worker(self, total: int):
-        """백그라운드 스레드: 파일 이동 작업"""
+        """백그라운드 스레드: 파일 복사 작업 (원본 유지) + 매핑 JSON 생성"""
         base = self.input_folder
         success = 0
         fail = 0
+        mapping = []  # 원본 → displayName 매핑 기록
 
         for idx, meta in enumerate(self.scan_results, 1):
             log_msg = ""
@@ -392,12 +439,25 @@ class PDFSorterApp(tk.Tk):
 
                     target_dir.mkdir(parents=True, exist_ok=True)
                     target_path = unique_path(target_dir / new_name)
-                    shutil.move(str(src), str(target_path))
+                    shutil.copy2(str(src), str(target_path))
 
                     success += 1
-                    rel_path = target_path.relative_to(base)
+                    rel_path = str(target_path.relative_to(base))
                     log_msg = f"  [OK] {src.name} -> {rel_path}"
                     log_tag = "success"
+
+                    # 매핑 기록
+                    entry = {
+                        "original": src.name,
+                        "displayName": target_path.name,
+                        "path": rel_path,
+                        "type": meta.doc_type,
+                        "customer": meta.customer_name,
+                        "issueDate": meta.issue_date,
+                    }
+                    if meta.product_name:
+                        entry["product"] = meta.product_name
+                    mapping.append(entry)
 
             except Exception as e:
                 fail += 1
@@ -407,6 +467,21 @@ class PDFSorterApp(tk.Tk):
             _idx, _total = idx, total
             _log_msg, _log_tag = log_msg, log_tag
             self._enqueue(lambda lm=_log_msg, lt=_log_tag, i=_idx, t=_total: self._organize_update_ui(lm, lt, i, t))
+
+        # 매핑 JSON 저장
+        if mapping:
+            mapping_data = {
+                "created": datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
+                "sourceFolder": str(base),
+                "totalFiles": total,
+                "success": success,
+                "fail": fail,
+                "files": mapping,
+            }
+            json_path = base / "file_mapping.json"
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(mapping_data, f, ensure_ascii=False, indent=2)
+            self._enqueue(lambda: self._log(f"  매핑 파일 생성: {json_path.name}", "info"))
 
         _success, _fail = success, fail
         self._enqueue(lambda: self._organize_done(_success, _fail))
