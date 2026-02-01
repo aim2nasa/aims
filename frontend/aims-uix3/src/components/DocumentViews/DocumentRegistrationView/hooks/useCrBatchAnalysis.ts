@@ -210,11 +210,14 @@ export function useCrBatchAnalysis(options: UseCrBatchAnalysisOptions): UseCrBat
 
         const result = await checkCustomerReviewFromPDF(file)
 
-        if (result.is_customer_review && result.metadata?.contractor_name) {
+        if (result.is_customer_review) {
+          // CRS로 감지된 파일은 contractor_name 없어도 포함
+          // contractor_name 없으면 __UNKNOWN__ 그룹으로 자동 분류 (crGroupingUtils에서 처리)
           const crFile = createCrFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
           crFiles.push(crFile)
           analyzingFilesData[i] = { fileName: file.name, status: 'completed' }
-          addLog?.('success', `[CRS 감지] ${file.name}`, `계약자: ${result.metadata.contractor_name}`)
+          const contractorDisplay = result.metadata?.contractor_name || '(알 수 없음)'
+          addLog?.('success', `[CRS 감지] ${file.name}`, `계약자: ${contractorDisplay}`)
         } else {
           nonCrFiles.push(file)
           analyzingFilesData[i] = { fileName: file.name, status: 'non_ar' }

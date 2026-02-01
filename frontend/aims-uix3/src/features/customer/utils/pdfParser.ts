@@ -93,11 +93,21 @@ function extractMetadata(text: string, normalizedText?: string) {
     metadata.issue_date = `${year}-${month}-${day}`;
   }
 
-  // 고객명 추출: "XXX 고객님을 위한" 패턴
-  const customerNamePattern = /([가-힣]{2,10})\s*고객님을\s*위한/;
-  const customerNameMatch = searchText.match(customerNamePattern);
-  if (customerNameMatch && customerNameMatch[1]) {
-    metadata.customer_name = customerNameMatch[1].trim();
+  // 고객명 추출: " 고객" 위치 기반 (영문/한글 무관)
+  // Reference: tools/pdf_sorter/pdf_classifier.py extract_customer_name()
+  const gogaekIdx = searchText.indexOf(' 고객')
+  if (gogaekIdx > 0) {
+    const before = searchText.substring(0, gogaekIdx).trim()
+    const lastSpace = before.lastIndexOf(' ')
+    let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
+    // 괄호 제거: "NAME(한글명)" → "NAME"
+    const parenIdx = name.indexOf('(')
+    if (parenIdx > 0) {
+      name = name.substring(0, parenIdx).trim()
+    }
+    if (name.length >= 2) {
+      metadata.customer_name = name
+    }
   }
 
   return metadata;
@@ -216,26 +226,69 @@ function extractCRMetadata(text: string) {
     }
   }
 
-  // 3. 계약자(고객명) 추출
-  // 우선 패턴: "참씨큐리티 고객님을 위한" - 첫 페이지 제목에서 추출 (글자 수 제한 없음)
-  const customerNamePattern = /([가-힣]+)\s*고객님을\s*위한/;
-  const customerNameMatch = text.match(customerNamePattern);
-  if (customerNameMatch) {
-    metadata.contractor_name = customerNameMatch[1].trim();
-  } else {
-    // fallback: "계약자 : XXX" 패턴 (글자 수 제한 없음)
-    const contractorPattern = /계약자\s*[:\s]+([가-힣]+)/;
-    const contractorMatch = text.match(contractorPattern);
-    if (contractorMatch) {
-      metadata.contractor_name = contractorMatch[1].trim();
+  // 3. 계약자(고객명) 추출 - 위치 기반 (영문/한글/혼합 이름 지원)
+  // Reference: tools/pdf_sorter/pdf_classifier.py extract_customer_name()
+  const nameCandidates: string[] = []
+  const normalizedForFields = text.replace(/\s+/g, ' ')
+
+  // 방법 1: " 고객" 위치 기반 (join(' ')된 평면 텍스트에서 추출)
+  // "LEEJOOHYUN 고객님을 위한" → "LEEJOOHYUN"
+  // "홍길동 고객님을 위한" → "홍길동"
+  const gogaekIdx = normalizedForFields.indexOf(' 고객')
+  if (gogaekIdx > 0) {
+    const before = normalizedForFields.substring(0, gogaekIdx).trim()
+    const lastSpace = before.lastIndexOf(' ')
+    let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
+    // 괄호 제거: "NAME(한글명)" → "NAME"
+    const parenIdx = name.indexOf('(')
+    if (parenIdx > 0) {
+      name = name.substring(0, parenIdx).trim()
+    }
+    if (name.length >= 2) {
+      nameCandidates.push(name)
     }
   }
 
-  // 4. 피보험자 추출 (글자 수 제한 없음 - 법인명 지원)
-  const insuredPattern = /피보험자\s*[:\s]+([가-힣]+)/;
-  const insuredMatch = text.match(insuredPattern);
-  if (insuredMatch) {
-    metadata.insured_name = insuredMatch[1].trim();
+  // 방법 2: "계약자" 필드 + 다음 필드 마커까지 (영문/한글 무관)
+  // Reference: pdf_classifier.py:167-180
+  const contractorIdx = normalizedForFields.indexOf('계약자')
+  if (contractorIdx >= 0) {
+    let after = normalizedForFields.substring(contractorIdx + 3).replace(/^[\s:：]+/, '')
+    const fieldMarkers = ['피보험자', '사망', '증권번호', '보험기간', '보험료']
+    let end = after.length
+    for (const marker of fieldMarkers) {
+      const pos = after.indexOf(marker)
+      if (pos > 0 && pos < end) {
+        end = pos
+      }
+    }
+    const name = after.substring(0, end).trim()
+    if (name.length >= 2) {
+      nameCandidates.push(name)
+    }
+  }
+
+  // 가장 긴 이름 반환 (잘림 방지, Reference: pdf_classifier.py:183)
+  if (nameCandidates.length > 0) {
+    metadata.contractor_name = nameCandidates.sort((a, b) => b.length - a.length)[0]
+  }
+
+  // 4. 피보험자 추출 (영문/한글 무관 - 필드 마커 기반)
+  const insuredIdx = normalizedForFields.indexOf('피보험자')
+  if (insuredIdx >= 0) {
+    let after = normalizedForFields.substring(insuredIdx + 4).replace(/^[\s:：]+/, '')
+    const insuredMarkers = ['사망', '증권번호', '보험기간', '보험료', 'FSR']
+    let end = after.length
+    for (const marker of insuredMarkers) {
+      const pos = after.indexOf(marker)
+      if (pos > 0 && pos < end) {
+        end = pos
+      }
+    }
+    const name = after.substring(0, end).trim()
+    if (name.length >= 2) {
+      metadata.insured_name = name
+    }
   }
 
   // 5. FSR 이름 추출: "송유미FSR"

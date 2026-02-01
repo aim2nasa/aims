@@ -85,6 +85,7 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
   const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName, analyzingFiles } = state
   const { rows, groups } = tableState
   const [showHelp, setShowHelp] = useState(false)
+  const [showExcluded, setShowExcluded] = useState(false)
 
   // 파일 목록 아이템 refs (자동 스크롤용)
   const fileItemRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -103,6 +104,12 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
       })
     }
   }, [currentAnalyzingIndex])
+
+  // 분석 제외 파일 목록 (CRS 아님 + 분석 실패)
+  const excludedFiles = useMemo(() => {
+    if (!analyzingFiles || isAnalyzing) return []
+    return analyzingFiles.filter(f => f.status === 'non_ar' || f.status === 'failed')
+  }, [analyzingFiles, isAnalyzing])
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -217,6 +224,46 @@ export const BatchCrMappingModal: React.FC<BatchCrMappingModalProps> = ({
                 <p>* CRS 계약자명과 일치하는 고객이 1명이면 자동 추천됩니다.</p>
                 <p>* 동명이인이 있으면 미매핑 처리되어 직접 선택이 필요합니다.</p>
                 <p>* 일치하는 고객이 없으면 계약자명으로 새 고객이 자동 등록됩니다.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 분석 제외 파일 요약 (분석 완료 후) */}
+        {!isAnalyzing && !isProcessing && excludedFiles.length > 0 && (
+          <div className="batch-ar-modal__excluded-section">
+            <button
+              type="button"
+              className="batch-ar-modal__excluded-toggle"
+              onClick={() => setShowExcluded(!showExcluded)}
+            >
+              <span className="batch-ar-modal__excluded-icon">
+                {showExcluded ? '\u25BE' : '\u25B8'}
+              </span>
+              <span className="batch-ar-modal__excluded-text">
+                {excludedFiles.length}개 파일 제외됨 (CRS 아님 또는 분석 실패)
+              </span>
+            </button>
+            {showExcluded && (
+              <div className="batch-ar-modal__excluded-list">
+                {excludedFiles.map((f, idx) => (
+                  <div
+                    key={idx}
+                    className={`batch-ar-modal__excluded-item batch-ar-modal__excluded-item--${f.status}`}
+                  >
+                    <span className="batch-ar-modal__excluded-status">
+                      {f.status === 'failed' ? '\u2717' : '\u2212'}
+                    </span>
+                    <span className="batch-ar-modal__excluded-name" title={f.fileName}>
+                      {f.fileName}
+                    </span>
+                    {f.status === 'failed' && f.error && (
+                      <span className="batch-ar-modal__excluded-error" title={f.error}>
+                        {f.error.length > 40 ? f.error.substring(0, 40) + '...' : f.error}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
