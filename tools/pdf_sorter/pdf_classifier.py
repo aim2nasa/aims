@@ -32,6 +32,7 @@ class PDFMetadata:
     new_filename: str = ""          # 새 파일명
     issue_date: str = ""            # YYYY-MM-DD
     product_name: str = ""          # 상품명 (CRS only)
+    policy_number: str = ""         # 증권번호 (CRS only)
     error_message: str = ""
 
 
@@ -39,11 +40,11 @@ class PDFMetadata:
 # PDF 텍스트 추출
 # ──────────────────────────────────────────────
 
-def extract_first_page_text(pdf_path: Path) -> str:
-    """PDF 첫 페이지 텍스트 추출 (pdfminer.six)"""
+def extract_page_text(pdf_path: Path, page: int = 0) -> str:
+    """PDF 특정 페이지 텍스트 추출 (pdfminer.six)"""
     if extract_text is None:
         raise ImportError("pdfminer.six가 설치되어 있지 않습니다. pip install pdfminer.six")
-    return extract_text(str(pdf_path), page_numbers=[0]) or ""
+    return extract_text(str(pdf_path), page_numbers=[page]) or ""
 
 
 # ──────────────────────────────────────────────
@@ -208,6 +209,20 @@ def extract_product_name(text: str) -> str:
 
 
 # ──────────────────────────────────────────────
+# CRS 증권번호 추출 (2페이지)
+# ──────────────────────────────────────────────
+
+def extract_policy_number(text_page2: str) -> str:
+    """
+    CRS 2페이지에서 증권번호 추출.
+    패턴: "증권번호" 다음에 나오는 7자리 이상 숫자.
+    예: "·증권번호 :\n0013365124"
+    """
+    m = re.search(r"증권번호\s*[:\s]*(\d{7,})", text_page2)
+    return m.group(1) if m else ""
+
+
+# ──────────────────────────────────────────────
 # 날짜 추출
 # ──────────────────────────────────────────────
 
@@ -275,18 +290,22 @@ def unique_path(dest: Path) -> Path:
 # displayName 생성 (aims 시스템 형식)
 # ──────────────────────────────────────────────
 
-def build_display_name(doc_type: str, customer: str, issue_date: str, product: str = "") -> str:
+def build_display_name(doc_type: str, customer: str, issue_date: str,
+                       product: str = "", policy_number: str = "") -> str:
     """
     aims 시스템과 동일한 displayName 형식 생성.
 
-    AR:  {고객명}_AR_{YYYY-MM-DD}.pdf           (doc_prep_main.py:385)
-    CRS: {고객명}_CRS_{상품명}_{YYYY-MM-DD}.pdf  (doc_prep_main.py:534)
-    CRS (상품명 없음): {고객명}_CRS_{YYYY-MM-DD}.pdf (doc_prep_main.py:538)
+    AR:  {고객명}_AR_{YYYY-MM-DD}.pdf
+    CRS: {고객명}_CRS_{상품명}_{증권번호}_{YYYY-MM-DD}.pdf
+    CRS (증권번호 없음): {고객명}_CRS_{상품명}_{YYYY-MM-DD}.pdf
     """
     if doc_type == "AR":
         base = f"{customer}_AR_{issue_date}.pdf"
     elif doc_type == "CRS":
-        if product:
+        if product and policy_number:
+            safe_product = sanitize_filename(product)
+            base = f"{customer}_CRS_{safe_product}_{policy_number}_{issue_date}.pdf"
+        elif product:
             safe_product = sanitize_filename(product)
             base = f"{customer}_CRS_{safe_product}_{issue_date}.pdf"
         else:
@@ -319,7 +338,7 @@ def classify_and_extract(pdf_path: Path) -> PDFMetadata:
     meta = PDFMetadata(file_path=pdf_path)
 
     try:
-        text = extract_first_page_text(pdf_path)
+        text = extract_page_text(pdf_path, page=0)
     except Exception as e:
         meta.error_message = f"텍스트 추출 실패: {e}"
         return meta
@@ -359,6 +378,13 @@ def classify_and_extract(pdf_path: Path) -> PDFMetadata:
         meta.product_name = extract_product_name(text)
         meta.issue_date = extract_issue_date(text, is_crs=True)
 
+        # 2페이지에서 증권번호 추출
+        try:
+            text_page2 = extract_page_text(pdf_path, page=1)
+            meta.policy_number = extract_policy_number(text_page2)
+        except Exception:
+            meta.policy_number = ""
+
         # 추출 실패 항목 수집 (fallback 없음)
         errors = []
         if not meta.customer_name:
@@ -367,10 +393,15 @@ def classify_and_extract(pdf_path: Path) -> PDFMetadata:
             errors.append("상품명")
         if not meta.issue_date:
             errors.append("발행일")
+        if not meta.policy_number:
+            errors.append("증권번호")
         if errors:
             meta.error_message = f"추출 실패: {', '.join(errors)}"
         else:
-            display = build_display_name("CRS", meta.customer_name, meta.issue_date, meta.product_name)
+            display = build_display_name(
+                "CRS", meta.customer_name, meta.issue_date,
+                meta.product_name, meta.policy_number,
+            )
             meta.readable_title = display
             meta.new_filename = display
         return meta
