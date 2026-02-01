@@ -194,6 +194,32 @@ export interface BaseBatchMappingState<TFileGroup> {
   completedFiles: number
   /** 분석 중인 파일 목록 (실시간 표시용) */
   analyzingFiles?: AnalyzingFileInfo[]
+  /** 등록 완료 결과 (요약 화면 표시용) */
+  registrationResult?: BatchRegistrationSummary
+}
+
+/**
+ * 일괄 등록 결과 요약 (AR/CRS 공통)
+ */
+export interface BatchRegistrationSummary {
+  /** 등록 성공 파일 수 */
+  successCount: number
+  /** 등록 실패 파일 수 */
+  errorCount: number
+  /** 건너뛴 파일 수 (중복 등) */
+  skippedCount: number
+  /** 신규 생성된 고객 수 */
+  newCustomerCount: number
+  /** 기존 고객 매핑 수 */
+  existingCustomerCount: number
+  /** 건너뛴 파일 목록 */
+  skippedFiles: Array<{ fileName: string; reason: string }>
+  /** 실패 파일 목록 */
+  failedFiles: Array<{ fileName: string; error: string }>
+  /** 등록 시작 시간 (timestamp) */
+  startedAt: number
+  /** 등록 완료 시간 (timestamp) */
+  completedAt: number
 }
 
 // ============================================

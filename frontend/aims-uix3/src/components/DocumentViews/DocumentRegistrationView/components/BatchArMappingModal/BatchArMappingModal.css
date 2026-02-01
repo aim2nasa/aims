@@ -930,6 +930,192 @@
   text-overflow: ellipsis;
 }
 
+/* ===== Registration Result Summary ===== */
+
+.batch-ar-modal__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px var(--spacing-lg);
+  text-align: center;
+  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* 상태 아이콘 */
+.batch-ar-modal__result-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--color-text-tertiary);
+}
+
+.batch-ar-modal__result-icon.success {
+  color: var(--color-ios-green, #34c759);
+}
+
+.batch-ar-modal__result-icon.warning {
+  color: var(--color-ios-orange, #ff9500);
+}
+
+/* 제목 */
+.batch-ar-modal__result-title {
+  font-size: var(--font-size-footnote, 13px);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+/* 설명 */
+.batch-ar-modal__result-description {
+  font-size: var(--font-size-caption-1, 12px);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin: 0 0 24px 0;
+}
+
+/* 통계 카드 행 */
+.batch-ar-modal__result-stats {
+  display: flex;
+  gap: 24px;
+  padding: 14px 24px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+/* 개별 통계 */
+.batch-ar-modal__result-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 48px;
+}
+
+.batch-ar-modal__result-stat-value {
+  font-size: var(--font-size-subheadline, 15px);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.batch-ar-modal__result-stat-value.success {
+  color: var(--color-ios-green, #34c759);
+}
+
+.batch-ar-modal__result-stat-value.skipped {
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.batch-ar-modal__result-stat-value.error {
+  color: var(--color-ios-red, #ff3b30);
+}
+
+.batch-ar-modal__result-stat-label {
+  font-size: var(--font-size-caption-2, 11px);
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+}
+
+/* 상세 목록 (건너뜀/실패/제외) */
+.batch-ar-modal__result-detail {
+  width: 100%;
+  max-width: 520px;
+  text-align: left;
+  margin-top: 4px;
+}
+
+.batch-ar-modal__result-detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+  width: 100%;
+}
+
+.batch-ar-modal__result-detail-toggle:hover {
+  background: var(--color-bg-secondary);
+}
+
+.batch-ar-modal__result-detail-label {
+  font-size: var(--font-size-caption-1, 12px);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.batch-ar-modal__result-detail-label.skipped {
+  color: var(--color-ios-orange, #ff9500);
+}
+
+.batch-ar-modal__result-detail-label.error {
+  color: var(--color-ios-red, #ff3b30);
+}
+
+.batch-ar-modal__result-detail-label.muted {
+  color: var(--color-text-tertiary);
+}
+
+.batch-ar-modal__result-detail-arrow {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-left: 2px;
+}
+
+/* 상세 파일 리스트 */
+.batch-ar-modal__result-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 4px 8px;
+  margin-top: 4px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.batch-ar-modal__result-detail-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: var(--font-size-caption-2, 11px);
+}
+
+.batch-ar-modal__result-detail-item.error {
+  color: var(--color-ios-red, #ff3b30);
+}
+
+.batch-ar-modal__result-detail-name {
+  font-weight: 400;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+  flex-shrink: 1;
+}
+
+.batch-ar-modal__result-detail-item.error .batch-ar-modal__result-detail-name {
+  color: var(--color-ios-red, #ff3b30);
+}
+
+.batch-ar-modal__result-detail-reason {
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* ===== Dark Mode Adjustments ===== */
 @media (prefers-color-scheme: dark) {
   .ar-file-row--duplicate {

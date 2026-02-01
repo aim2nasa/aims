@@ -19,6 +19,7 @@ import type {
   ArMappingStatusFilter,
   AnalyzingFileInfo,
 } from '../types/arBatchTypes'
+import type { BatchRegistrationSummary } from '../types/batchTypes'
 import {
   generateFileId,
   createArFileInfo,
@@ -76,6 +77,8 @@ export interface UseArBatchAnalysisReturn {
   setProcessing: (isProcessing: boolean, progress?: number, currentFileName?: string) => void
   /** 완료 파일 수 증가 */
   incrementCompleted: () => void
+  /** 등록 결과 저장 (요약 화면 표시용) */
+  setRegistrationResult: (result: BatchRegistrationSummary) => void
 
   // ===== 테이블 뷰 함수들 =====
   /** 테이블 행 고객 매핑 업데이트 */
@@ -436,6 +439,19 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     }))
   }, [])
 
+  /**
+   * 등록 결과 저장 (요약 화면 표시용)
+   * isProcessing을 false로 전환하되 모달은 유지
+   */
+  const setRegistrationResult = useCallback((result: BatchRegistrationSummary) => {
+    setBatchState(prev => ({
+      ...prev,
+      isProcessing: false,
+      progress: 100,
+      registrationResult: result,
+    }))
+  }, [])
+
   // ===== 테이블 뷰 함수들 =====
 
   /**
@@ -654,6 +670,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     reset,
     setProcessing,
     incrementCompleted,
+    setRegistrationResult,
     // 테이블 뷰 함수들
     updateTableRowMapping,
     updateTableRowNewCustomer,

@@ -6,6 +6,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { DraggableModal, Button } from '@/shared/ui'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '@/components/SFSymbol'
 import type {
   ArFileGroup,
   BatchMappingState,
@@ -14,6 +15,7 @@ import type {
   ArTableSortField,
   ArMappingStatusFilter,
 } from '../../types/arBatchTypes'
+import type { BatchRegistrationSummary } from '../../types/batchTypes'
 // Customer type은 ArFileTable 내부에서 직접 사용
 import {
   isAllRowsMapped,
@@ -22,6 +24,215 @@ import {
 } from '../../utils/arGroupingUtils'
 import { ArFileTable } from './ArFileTable'
 import './BatchArMappingModal.css'
+
+// ============================================
+// 등록 결과 요약 컴포넌트
+// ============================================
+
+function formatElapsedTime(startedAt: number, completedAt: number): string {
+  const elapsed = Math.floor((completedAt - startedAt) / 1000)
+  const minutes = Math.floor(elapsed / 60)
+  const seconds = elapsed % 60
+  if (minutes > 0) return `${minutes}분 ${seconds}초`
+  return `${seconds}초`
+}
+
+interface RegistrationSummaryProps {
+  result: BatchRegistrationSummary
+  originalTotalFiles: number
+  arDetectedFiles: number
+  excludedFiles: Array<{ fileName: string; status: string; error?: string }>
+  showSkipped: boolean
+  showFailed: boolean
+  showExcluded: boolean
+  onToggleSkipped: () => void
+  onToggleFailed: () => void
+  onToggleExcluded: () => void
+}
+
+const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
+  result,
+  originalTotalFiles,
+  arDetectedFiles,
+  excludedFiles,
+  showSkipped,
+  showFailed,
+  showExcluded,
+  onToggleSkipped,
+  onToggleFailed,
+  onToggleExcluded,
+}) => {
+  const isFullSuccess = result.errorCount === 0 && result.skippedCount === 0
+  const hasErrors = result.errorCount > 0
+  const totalCustomers = result.newCustomerCount + result.existingCustomerCount
+
+  const statusIcon = hasErrors ? 'exclamationmark-circle-fill' : 'checkmark-circle-fill'
+  const statusClass = hasErrors ? 'warning' : 'success'
+  const statusTitle = hasErrors
+    ? 'AR 일괄 등록 완료 (일부 실패)'
+    : isFullSuccess
+    ? 'AR 일괄 등록 완료'
+    : 'AR 일괄 등록 완료'
+
+  const description = `${originalTotalFiles}개 파일 중 ${result.successCount}개 등록 완료`
+
+  return (
+    <div className="batch-ar-modal__result">
+      {/* 상태 아이콘 */}
+      <div className={`batch-ar-modal__result-icon ${statusClass}`}>
+        <SFSymbol name={statusIcon} size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />
+      </div>
+
+      {/* 제목 및 설명 */}
+      <h2 className="batch-ar-modal__result-title">{statusTitle}</h2>
+      <p className="batch-ar-modal__result-description">{description}</p>
+
+      {/* 파일 처리 통계 */}
+      <div className="batch-ar-modal__result-stats">
+        <div className="batch-ar-modal__result-stat">
+          <span className="batch-ar-modal__result-stat-value">{originalTotalFiles}개</span>
+          <span className="batch-ar-modal__result-stat-label">업로드</span>
+        </div>
+        <div className="batch-ar-modal__result-stat">
+          <span className="batch-ar-modal__result-stat-value">{arDetectedFiles}개</span>
+          <span className="batch-ar-modal__result-stat-label">AR 감지</span>
+        </div>
+        <div className="batch-ar-modal__result-stat">
+          <span className="batch-ar-modal__result-stat-value success">{result.successCount}개</span>
+          <span className="batch-ar-modal__result-stat-label">등록</span>
+        </div>
+        {result.skippedCount > 0 && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value skipped">{result.skippedCount}개</span>
+            <span className="batch-ar-modal__result-stat-label">건너뜀</span>
+          </div>
+        )}
+        {result.errorCount > 0 && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value error">{result.errorCount}개</span>
+            <span className="batch-ar-modal__result-stat-label">실패</span>
+          </div>
+        )}
+      </div>
+
+      {/* 고객 통계 */}
+      <div className="batch-ar-modal__result-stats">
+        {result.newCustomerCount > 0 && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value">{result.newCustomerCount}명</span>
+            <span className="batch-ar-modal__result-stat-label">신규 고객</span>
+          </div>
+        )}
+        {result.existingCustomerCount > 0 && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value">{result.existingCustomerCount}명</span>
+            <span className="batch-ar-modal__result-stat-label">기존 고객</span>
+          </div>
+        )}
+        {totalCustomers > 0 && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value">{totalCustomers}명</span>
+            <span className="batch-ar-modal__result-stat-label">총 고객</span>
+          </div>
+        )}
+        <div className="batch-ar-modal__result-stat">
+          <span className="batch-ar-modal__result-stat-value">{formatElapsedTime(result.startedAt, result.completedAt)}</span>
+          <span className="batch-ar-modal__result-stat-label">소요 시간</span>
+        </div>
+      </div>
+
+      {/* 건너뛴 파일 목록 */}
+      {result.skippedFiles.length > 0 && (
+        <div className="batch-ar-modal__result-detail">
+          <button
+            type="button"
+            className="batch-ar-modal__result-detail-toggle"
+            onClick={onToggleSkipped}
+          >
+            <span className="batch-ar-modal__result-detail-label skipped">
+              건너뛴 파일 ({result.skippedFiles.length}개)
+            </span>
+            <span className="batch-ar-modal__result-detail-arrow">
+              {showSkipped ? '\u25BE' : '\u25B8'}
+            </span>
+          </button>
+          {showSkipped && (
+            <div className="batch-ar-modal__result-detail-list">
+              {result.skippedFiles.map((f, idx) => (
+                <div key={idx} className="batch-ar-modal__result-detail-item">
+                  <span className="batch-ar-modal__result-detail-name" title={f.fileName}>{f.fileName}</span>
+                  <span className="batch-ar-modal__result-detail-reason">{f.reason}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 실패 파일 목록 */}
+      {result.failedFiles.length > 0 && (
+        <div className="batch-ar-modal__result-detail">
+          <button
+            type="button"
+            className="batch-ar-modal__result-detail-toggle"
+            onClick={onToggleFailed}
+          >
+            <span className="batch-ar-modal__result-detail-label error">
+              실패 파일 ({result.failedFiles.length}개)
+            </span>
+            <span className="batch-ar-modal__result-detail-arrow">
+              {showFailed ? '\u25BE' : '\u25B8'}
+            </span>
+          </button>
+          {showFailed && (
+            <div className="batch-ar-modal__result-detail-list">
+              {result.failedFiles.map((f, idx) => (
+                <div key={idx} className="batch-ar-modal__result-detail-item error">
+                  <span className="batch-ar-modal__result-detail-name" title={f.fileName}>{f.fileName}</span>
+                  <span className="batch-ar-modal__result-detail-reason">{f.error}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 제외 파일 목록 (AR 아님 / 분석 실패) */}
+      {excludedFiles.length > 0 && (
+        <div className="batch-ar-modal__result-detail">
+          <button
+            type="button"
+            className="batch-ar-modal__result-detail-toggle"
+            onClick={onToggleExcluded}
+          >
+            <span className="batch-ar-modal__result-detail-label muted">
+              제외된 파일 ({excludedFiles.length}개)
+            </span>
+            <span className="batch-ar-modal__result-detail-arrow">
+              {showExcluded ? '\u25BE' : '\u25B8'}
+            </span>
+          </button>
+          {showExcluded && (
+            <div className="batch-ar-modal__result-detail-list">
+              {excludedFiles.map((f, idx) => (
+                <div key={idx} className="batch-ar-modal__result-detail-item">
+                  <span className="batch-ar-modal__result-detail-name" title={f.fileName}>{f.fileName}</span>
+                  <span className="batch-ar-modal__result-detail-reason">
+                    {f.status === 'failed' ? 'AR 분석 실패' : 'AR 아님'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// 메인 모달 컴포넌트
+// ============================================
 
 export interface BatchArMappingModalProps {
   /** 일괄 매핑 상태 */
@@ -82,10 +293,12 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onRegister,
   onOpenNewCustomerModal,
 }) => {
-  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, originalTotalFiles, completedFiles, currentFileName, analyzingFiles } = state
+  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, originalTotalFiles, completedFiles, currentFileName, analyzingFiles, registrationResult } = state
   const { rows, groups } = tableState
   const [showHelp, setShowHelp] = useState(false)
-  const [showExcluded, setShowExcluded] = useState(false)
+  const [showExcluded, setShowExcluded] = useState(true)
+  const [showSkipped, setShowSkipped] = useState(true)
+  const [showFailed, setShowFailed] = useState(true)
 
   // 파일 목록 아이템 refs (자동 스크롤용)
   const fileItemRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -132,7 +345,9 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   }, [rows, groups])
 
   // 모달 제목
-  const title = isAnalyzing
+  const title = registrationResult
+    ? 'AR 일괄 등록 완료'
+    : isAnalyzing
     ? 'AR 파일 분석 중...'
     : isProcessing
     ? 'AR 파일 등록 중...'
@@ -141,7 +356,11 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   // Footer 버튼들
   const footer = (
     <div className="batch-ar-modal__footer">
-      {isAnalyzing ? (
+      {registrationResult ? (
+        <Button variant="primary" onClick={onClose}>
+          확인
+        </Button>
+      ) : isAnalyzing ? (
         <div className="batch-ar-modal__progress">
           <div className="batch-ar-modal__progress-bar">
             <div
@@ -201,6 +420,20 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
       storageKey="batch-ar-mapping-modal"
       transparent={true}
     >
+      {registrationResult ? (
+        <RegistrationSummary
+          result={registrationResult}
+          originalTotalFiles={originalTotalFiles}
+          arDetectedFiles={rows.length}
+          excludedFiles={excludedFiles}
+          showSkipped={showSkipped}
+          showFailed={showFailed}
+          showExcluded={showExcluded}
+          onToggleSkipped={() => setShowSkipped(!showSkipped)}
+          onToggleFailed={() => setShowFailed(!showFailed)}
+          onToggleExcluded={() => setShowExcluded(!showExcluded)}
+        />
+      ) : (
       <div
         className="batch-ar-modal__content batch-ar-modal__content--table"
         style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0, height: '100%', overflow: 'hidden', gap: '8px' }}
@@ -358,6 +591,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
           </div>
         )}
       </div>
+      )}
     </DraggableModal>
   )
 }

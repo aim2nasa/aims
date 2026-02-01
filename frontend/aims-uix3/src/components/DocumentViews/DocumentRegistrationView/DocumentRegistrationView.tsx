@@ -2469,6 +2469,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           let completedCount = 0
           let successCount = 0
           let errorCount = 0
+          let skippedCount = 0
+          const skippedFiles: Array<{ fileName: string; reason: string }> = []
+          const failedFiles: Array<{ fileName: string; error: string }> = []
+          const existingCustomerIds = new Set<string>()
+          const registrationStartedAt = Date.now()
 
           // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
           const newCustomerCache = new Map<string, string>() // name -> customerId
@@ -2481,6 +2486,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
             let customerId = mapping.customerId
             const customerName = mapping.customerName || mapping.newCustomerName
+
+            // 기존 고객 매핑 추적
+            if (customerId) {
+              existingCustomerIds.add(customerId)
+            }
 
             // 새 고객 등록 필요
             if (!customerId && mapping.newCustomerName) {
@@ -2503,6 +2513,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 } catch (error) {
                   addLog('error', `고객 등록 실패: ${mapping.newCustomerName}`, String(error))
                   errorCount++
+                  failedFiles.push({ fileName: arFile.file.name, error: `고객 등록 실패: ${String(error)}` })
                   completedCount++
                   continue
                 }
@@ -2520,6 +2531,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const processResult = await processAnnualReportFile(arFile.file, customerId, arFile.metadata.issue_date)
 
               if (processResult.isDuplicateDoc) {
+                const reason = '중복 파일 (동일한 문서가 이미 존재)'
                 addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
                 setUploadState(prev => ({
                   ...prev,
@@ -2529,16 +2541,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     fileSize: arFile.file.size,
                     status: 'skipped' as const,
                     progress: 100,
-                    error: '중복 파일 (동일한 문서가 이미 존재)',
+                    error: reason,
                     customerId,
                   }]
                 }))
+                skippedCount++
+                skippedFiles.push({ fileName: arFile.file.name, reason })
                 completedCount++
                 continue
               }
 
               if (processResult.isDuplicateIssueDate) {
                 const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
+                const reason = `중복 발행일 (${formattedDate} AR 이미 존재)`
                 addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
                 setUploadState(prev => ({
                   ...prev,
@@ -2548,10 +2563,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     fileSize: arFile.file.size,
                     status: 'skipped' as const,
                     progress: 100,
-                    error: `중복 발행일 (${formattedDate} AR 이미 존재)`,
+                    error: reason,
                     customerId,
                   }]
                 }))
+                skippedCount++
+                skippedFiles.push({ fileName: arFile.file.name, reason })
                 completedCount++
                 continue
               }
@@ -2579,29 +2596,47 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               if (result.success) {
                 successCount++
                 addLog('success', `[${customerName}] AR 등록 완료: ${arFile.file.name}`)
+              } else if (result.isDuplicate) {
+                // registerArDocument 내부에서 감지한 해시 중복 → 건너뜀 처리
+                skippedCount++
+                skippedFiles.push({ fileName: arFile.file.name, reason: '중복 문서 (파일 해시 일치)' })
+                addLog('warning', `[${customerName}] 중복 문서 건너뜀: ${arFile.file.name}`)
+              } else if (result.isDuplicateIssueDate) {
+                // registerArDocument 내부에서 감지한 발행일 중복 → 건너뜀 처리
+                skippedCount++
+                skippedFiles.push({ fileName: arFile.file.name, reason: `중복 발행일 (${arFile.metadata.issue_date || '날짜 미상'} AR 이미 존재)` })
+                addLog('warning', `[${customerName}] 발행일 중복 건너뜀: ${arFile.file.name}`)
               } else {
                 errorCount++
+                failedFiles.push({ fileName: arFile.file.name, error: 'AR 등록 실패 (원인 불명)' })
                 addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
               }
             } catch (error) {
-              addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, String(error))
+              const errorMsg = error instanceof Error ? error.message : String(error)
+              addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, errorMsg)
               errorCount++
+              failedFiles.push({ fileName: arFile.file.name, error: `등록 중 오류: ${errorMsg}` })
             }
 
             completedCount++
             arBatch.incrementCompleted()
           }
 
-          arBatch.setProcessing(false, 100)
-
           // 결과 요약
-          addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 실패: ${errorCount}건`)
+          addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)
 
-          // 모달 닫기 (파일 목록은 유지 - 진행률/결과 보여줌)
-          setTimeout(() => {
-            arBatch.closeModal()
-            setIsLogVisible(true)
-          }, 500)
+          // 결과 요약 화면 표시 (모달 유지)
+          arBatch.setRegistrationResult({
+            successCount,
+            errorCount,
+            skippedCount,
+            newCustomerCount: newCustomerCache.size,
+            existingCustomerCount: existingCustomerIds.size,
+            skippedFiles,
+            failedFiles,
+            startedAt: registrationStartedAt,
+            completedAt: Date.now(),
+          })
         }}
       />
 
@@ -2693,6 +2728,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           let completedCount = 0
           let successCount = 0
           let errorCount = 0
+          let skippedCount = 0
+          const skippedFiles: Array<{ fileName: string; reason: string }> = []
+          const failedFiles: Array<{ fileName: string; error: string }> = []
+          const existingCustomerIds = new Set<string>()
+          const registrationStartedAt = Date.now()
 
           // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
           const newCustomerCache = new Map<string, string>() // name -> customerId
@@ -2703,6 +2743,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
             let customerId = mapping.customerId
             let customerName = mapping.customerName
+
+            // 기존 고객 매핑 추적
+            if (customerId) {
+              existingCustomerIds.add(customerId)
+            }
 
             // 새 고객 생성이 필요한 경우
             if (!customerId && mapping.newCustomerName) {
@@ -2729,6 +2774,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 } catch (error) {
                   addLog('error', `새 고객 생성 실패: ${mapping.newCustomerName}`, String(error))
                   errorCount++
+                  failedFiles.push({ fileName: crFile.file.name, error: `고객 등록 실패: ${String(error)}` })
                   completedCount++
                   continue
                 }
@@ -2754,6 +2800,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               )
 
               if (processResult.isDuplicateDoc) {
+                const reason = '중복 파일 (동일한 문서가 이미 존재)'
                 addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${crFile.file.name}`)
                 setUploadState(prev => ({
                   ...prev,
@@ -2763,16 +2810,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     fileSize: crFile.file.size,
                     status: 'skipped' as const,
                     progress: 100,
-                    error: '중복 파일 (동일한 문서가 이미 존재)',
+                    error: reason,
                     customerId,
                   }]
                 }))
+                skippedCount++
+                skippedFiles.push({ fileName: crFile.file.name, reason })
                 completedCount++
                 continue
               }
 
               if (processResult.isDuplicateIssueDatePolicy) {
                 const formattedDate = formatIssueDateKoreanCR(processResult.duplicateIssueDate)
+                const reason = `중복 (${formattedDate} 발행, 증권번호 ${processResult.duplicatePolicyNumber})`
                 addLog('warning', `[${customerName}] ${formattedDate} 발행, 증권번호 ${processResult.duplicatePolicyNumber} CRS 이미 존재: ${crFile.file.name}`)
                 setUploadState(prev => ({
                   ...prev,
@@ -2782,10 +2832,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     fileSize: crFile.file.size,
                     status: 'skipped' as const,
                     progress: 100,
-                    error: `중복 (${formattedDate} 발행, 증권번호 ${processResult.duplicatePolicyNumber})`,
+                    error: reason,
                     customerId,
                   }]
                 }))
+                skippedCount++
+                skippedFiles.push({ fileName: crFile.file.name, reason })
                 completedCount++
                 continue
               }
@@ -2818,24 +2870,31 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               successCount++
               addLog('success', `[${customerName}] CRS 등록 완료: ${crFile.file.name}`)
             } catch (error) {
-              addLog('error', `[${customerName}] 등록 실패: ${crFile.file.name}`, String(error))
+              const errorMsg = error instanceof Error ? error.message : String(error)
+              addLog('error', `[${customerName}] 등록 실패: ${crFile.file.name}`, errorMsg)
               errorCount++
+              failedFiles.push({ fileName: crFile.file.name, error: `등록 중 오류: ${errorMsg}` })
             }
 
             completedCount++
             crBatch.incrementCompleted()
           }
 
-          crBatch.setProcessing(false, 100)
-
           // 결과 요약
-          addLog('success', `CRS 일괄 등록 완료`, `성공: ${successCount}건, 실패: ${errorCount}건`)
+          addLog('success', `CRS 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)
 
-          // 모달 닫기 (파일 목록은 유지 - 진행률/결과 보여줌)
-          setTimeout(() => {
-            crBatch.closeModal()
-            setIsLogVisible(true)
-          }, 500)
+          // 결과 요약 화면 표시 (모달 유지)
+          crBatch.setRegistrationResult({
+            successCount,
+            errorCount,
+            skippedCount,
+            newCustomerCount: newCustomerCache.size,
+            existingCustomerCount: existingCustomerIds.size,
+            skippedFiles,
+            failedFiles,
+            startedAt: registrationStartedAt,
+            completedAt: Date.now(),
+          })
         }}
       />
     </CenterPaneView>
