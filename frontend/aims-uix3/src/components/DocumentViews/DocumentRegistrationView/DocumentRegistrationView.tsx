@@ -51,6 +51,7 @@ import { BatchCrMappingModal } from './components/BatchCrMappingModal'
 import { registerArDocument as registerArDocumentBatch } from './utils/annualReportProcessor'
 import { getEffectiveMapping } from './utils/arGroupingUtils'
 import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGroupingUtils'
+import { BatchUploadApi } from '@/features/batch-upload/api/batchUploadApi'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
 import './DocumentRegistrationView.css'
@@ -2622,13 +2623,76 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 🚀 진행률 업데이트 스로틀: 매 파일마다 → 10개 간격
           const PROGRESS_UPDATE_INTERVAL = 10
 
+          // 🚀 직접 업로드 배치 (인메모리 큐 대신 직접 HTTP 업로드로 파일 손실 방지)
+          // 기존: uploadService.queueFiles() → 인메모리 배열 → 백그라운드 업로드 → 페이지 이동 시 손실
+          // 변경: BatchUploadApi.uploadFile() → 직접 HTTP POST → 서버 도착 확인 후 완료
+          const UPLOAD_CONCURRENCY = 10
+          const uploadBatch: Array<{
+            file: File
+            customerId: string
+            fileId: string
+            customerName: string
+          }> = []
+
+          const flushUploadBatch = async () => {
+            if (uploadBatch.length === 0) return
+            const batch = uploadBatch.splice(0)
+
+            const results = await Promise.all(batch.map(async (item) => {
+              try {
+                const result = await BatchUploadApi.uploadFile(item.file, item.customerId)
+                return { ...result, item }
+              } catch (error) {
+                return { success: false as const, fileName: item.file.name, customerId: item.customerId, error: String(error), item }
+              }
+            }))
+
+            for (const r of results) {
+              if (r.success) {
+                successCount++
+                addFileToState({
+                  id: r.item.fileId,
+                  file: r.item.file,
+                  fileSize: r.item.file.size,
+                  status: 'completed' as const,
+                  progress: 100,
+                  customerId: r.item.customerId,
+                })
+                addLog('success', `[${r.item.customerName}] 업로드 완료: ${r.item.file.name}`)
+              } else {
+                errorCount++
+                const errorMsg = r.error || '업로드 실패'
+                failedFiles.push({ fileName: r.item.file.name, error: errorMsg })
+                addFileToState({
+                  id: r.item.fileId,
+                  file: r.item.file,
+                  fileSize: r.item.file.size,
+                  status: 'error' as const,
+                  progress: 0,
+                  error: errorMsg,
+                  customerId: r.item.customerId,
+                })
+                addLog('error', `[${r.item.customerName}] 업로드 실패: ${r.item.file.name}`, errorMsg)
+              }
+              completedCount++
+            }
+
+            // UI 업데이트
+            arBatch.batchSetProgress(completedCount, filesToRegister.length)
+            flushFileUpdates()
+            flushPendingLogs()
+          }
+
+          let loopIdx = 0
+
           for (const row of filesToRegister) {
             const arFile = row.fileInfo
             const mapping = getEffectiveMapping(row, groups)
+            loopIdx++
 
             // 스로틀: 10개 간격 또는 첫 파일에만 진행률 UI 업데이트
-            if (completedCount % PROGRESS_UPDATE_INTERVAL === 0) {
-              arBatch.batchSetProgress(completedCount, filesToRegister.length, arFile.file.name)
+            if (loopIdx % PROGRESS_UPDATE_INTERVAL === 0) {
+              arBatch.batchSetProgress(completedCount, filesToRegister.length, `검사 중... ${loopIdx}/${filesToRegister.length}`)
             }
 
             let customerId = mapping.customerId
@@ -2714,62 +2778,42 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 continue
               }
 
-              // AR 등록
-              const result = await registerArDocument(arFile.file, customerId, arFile.metadata.issue_date, {
-                addLog: (level, msg, detail) => addLog(level, msg, detail),
-                generateFileId: () => arFile.fileId,
-                addToUploadQueue: (uploadFile) => {
-                  const uploadFileWithId = { ...uploadFile, id: arFile.fileId }
-                  uploadService.queueFiles([uploadFileWithId])
-                  addFileToState(uploadFileWithId)
-                },
-                trackArFile: (fileName, custId) => {
-                  arFilenamesRef.current.add(fileName)
-                  arCustomerMappingRef.current.set(fileName, custId)
-                  arMetadataMappingRef.current.set(fileName, arFile.metadata)
-                  customerNameMappingRef.current.set(custId, customerName!)
-                },
+              // AR 파일 추적 등록
+              arFilenamesRef.current.add(arFile.file.name)
+              arCustomerMappingRef.current.set(arFile.file.name, customerId)
+              arMetadataMappingRef.current.set(arFile.file.name, arFile.metadata)
+              customerNameMappingRef.current.set(customerId, customerName!)
+
+              // 업로드 배치에 추가 (인메모리 큐 대신 직접 HTTP 업로드)
+              uploadBatch.push({
+                file: arFile.file,
+                customerId,
+                fileId: arFile.fileId,
+                customerName: customerName!,
               })
 
-              if (result.success) {
-                successCount++
-                addLog('success', `[${customerName}] AR 등록 완료: ${arFile.file.name}`)
-              } else if (result.isDuplicate) {
-                // registerArDocument 내부에서 감지한 해시 중복 → 건너뜀 처리
-                skippedCount++
-                skippedFiles.push({ fileName: arFile.file.name, reason: '중복 문서 (파일 해시 일치)' })
-                addLog('warning', `[${customerName}] 중복 문서 건너뜀: ${arFile.file.name}`)
-              } else if (result.isDuplicateIssueDate) {
-                // registerArDocument 내부에서 감지한 발행일 중복 → 건너뜀 처리
-                skippedCount++
-                skippedFiles.push({ fileName: arFile.file.name, reason: `중복 발행일 (${arFile.metadata.issue_date || '날짜 미상'} AR 이미 존재)` })
-                addLog('warning', `[${customerName}] 발행일 중복 건너뜀: ${arFile.file.name}`)
-              } else {
-                errorCount++
-                failedFiles.push({ fileName: arFile.file.name, error: 'AR 등록 실패 (원인 불명)' })
-                addLog('error', `[${customerName}] AR 등록 실패: ${arFile.file.name}`)
+              // 배치가 차면 직접 업로드 (10개씩 병렬)
+              if (uploadBatch.length >= UPLOAD_CONCURRENCY) {
+                await flushUploadBatch()
               }
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : String(error)
               addLog('error', `[${customerName}] 등록 실패: ${arFile.file.name}`, errorMsg)
               errorCount++
+              completedCount++
               failedFiles.push({ fileName: arFile.file.name, error: `등록 중 오류: ${errorMsg}` })
             }
 
-            completedCount++
-
-            // 🚀 10개 간격 진행률 업데이트 (매 파일 → 10개 단위)
-            if (completedCount % PROGRESS_UPDATE_INTERVAL === 0 || completedCount === filesToRegister.length) {
-              arBatch.batchSetProgress(completedCount, filesToRegister.length, arFile.file.name)
-            }
-
             // 🚀 50개마다 GC 양보 — 이벤트 루프에 제어권 반환하여 UI 응답성 유지
-            if (completedCount % 50 === 0) {
+            if (loopIdx % 50 === 0) {
               flushFileUpdates()
               flushPendingLogs()
               await new Promise(resolve => setTimeout(resolve, 0))
             }
           }
+
+          // 잔여 업로드 배치 플러시 (루프 종료 후 남은 파일)
+          await flushUploadBatch()
 
           // 최종 진행률 보장
           arBatch.batchSetProgress(completedCount, filesToRegister.length)
