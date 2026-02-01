@@ -122,7 +122,7 @@ class PDFSorterApp(tk.Tk):
         tree_frame = ttk.Frame(main)
         tree_frame.pack(fill="both", expand=True, pady=(0, 4))
 
-        columns = ("filename", "type", "customer", "title")
+        columns = ("filename", "type", "customer", "title", "status")
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=12)
 
         # 컬럼 헤딩 텍스트 (정렬 화살표 표시용)
@@ -131,14 +131,16 @@ class PDFSorterApp(tk.Tk):
             "type": "유형",
             "customer": "고객명",
             "title": "읽기쉬운 제목 (displayName)",
+            "status": "상태",
         }
         for col, text in self._heading_text.items():
             self.tree.heading(col, text=text, command=lambda c=col: self._sort_column(c))
 
-        self.tree.column("filename", width=260, minwidth=150)
-        self.tree.column("type", width=60, minwidth=50, anchor="center")
-        self.tree.column("customer", width=100, minwidth=70, anchor="center")
-        self.tree.column("title", width=400, minwidth=200)
+        self.tree.column("filename", width=250, minwidth=150)
+        self.tree.column("type", width=50, minwidth=40, anchor="center")
+        self.tree.column("customer", width=90, minwidth=60, anchor="center")
+        self.tree.column("title", width=350, minwidth=200)
+        self.tree.column("status", width=80, minwidth=60, anchor="center")
 
         # 스크롤바
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
@@ -150,6 +152,7 @@ class PDFSorterApp(tk.Tk):
         self.tree.tag_configure("ar", foreground="#0066CC")
         self.tree.tag_configure("crs", foreground="#CC6600")
         self.tree.tag_configure("unknown", foreground="#999999")
+        self.tree.tag_configure("name_error", foreground="#CC0000")
 
         # ── 진행률 바 ──
         prog_frame = ttk.Frame(main)
@@ -309,41 +312,52 @@ class PDFSorterApp(tk.Tk):
         ar_count = 0
         crs_count = 0
         unknown_count = 0
+        error_count = 0
 
         for idx, pdf_path in enumerate(pdf_files, 1):
             try:
                 meta = classify_and_extract(pdf_path)
                 self.scan_results.append(meta)
 
-                if meta.doc_type == "AR":
+                # error_message가 있으면 무조건 ERROR (추출 실패, fallback 없음)
+                if meta.error_message:
+                    tag = "name_error"
+                    error_count += 1
+                    status = "오류"
+                    display_title = f"({meta.error_message})"
+                    log_msg = f"  [ERR] {pdf_path.name} -> {meta.error_message} ({meta.doc_type})"
+                    log_tag = "error"
+                elif meta.doc_type == "AR":
                     tag = "ar"
                     ar_count += 1
-                    display_title = meta.readable_title or pdf_path.name
+                    status = "OK"
+                    display_title = meta.readable_title
                     log_msg = f"  [AR]  {pdf_path.name} -> {meta.customer_name} (신뢰도: {meta.confidence:.2f})"
                     log_tag = "ar"
                 elif meta.doc_type == "CRS":
                     tag = "crs"
                     crs_count += 1
-                    display_title = meta.readable_title or pdf_path.name
+                    status = "OK"
+                    display_title = meta.readable_title
                     log_msg = f"  [CRS] {pdf_path.name} -> {meta.customer_name} / {meta.product_name} (신뢰도: {meta.confidence:.2f})"
                     log_tag = "crs"
                 else:
                     tag = "unknown"
                     unknown_count += 1
+                    status = "오류"
                     display_title = "(분류 불가)"
-                    err = meta.error_message or "키워드 미감지"
-                    log_msg = f"  [??]  {pdf_path.name} -> {err}"
+                    log_msg = f"  [??]  {pdf_path.name} -> AR/CRS 키워드 미감지"
                     log_tag = "unknown"
 
-                row_values = (pdf_path.name, meta.doc_type, meta.customer_name or "-", display_title)
+                row_values = (pdf_path.name, meta.doc_type, meta.customer_name or "-", display_title, status)
                 row_tag = tag
 
             except Exception as e:
-                unknown_count += 1
+                error_count += 1
                 err_meta = PDFMetadata(file_path=pdf_path, error_message=str(e))
                 self.scan_results.append(err_meta)
-                row_values = (pdf_path.name, "UNKNOWN", "-", f"(에러: {e})")
-                row_tag = "unknown"
+                row_values = (pdf_path.name, "UNKNOWN", "-", f"(에러: {e})", "오류")
+                row_tag = "name_error"
                 log_msg = f"  [ERR] {pdf_path.name} -> {e}"
                 log_tag = "error"
 
@@ -354,8 +368,8 @@ class PDFSorterApp(tk.Tk):
             self._enqueue(lambda rv=_row_values, rt=_row_tag, lm=_log_msg, lt=_log_tag, i=_idx, t=_total: self._scan_update_ui(rv, rt, lm, lt, i, t))
 
         # 스캔 완료
-        _ar, _crs, _unk, _total = ar_count, crs_count, unknown_count, total
-        self._enqueue(lambda: self._scan_done(_ar, _crs, _unk, _total))
+        _ar, _crs, _unk, _err, _total = ar_count, crs_count, unknown_count, error_count, total
+        self._enqueue(lambda: self._scan_done(_ar, _crs, _unk, _err, _total))
 
     def _scan_update_ui(self, row_values, row_tag, log_msg, log_tag, idx, total):
         """메인 스레드: 스캔 중 한 파일 처리 후 UI 업데이트"""
@@ -365,13 +379,96 @@ class PDFSorterApp(tk.Tk):
         self.progress.configure(value=idx)
         self.progress_label.configure(text=f"{idx} / {total}")
 
-    def _scan_done(self, ar_count, crs_count, unknown_count, total):
+    def _scan_done(self, ar_count, crs_count, unknown_count, error_count, total):
         """메인 스레드: 스캔 완료 후 처리"""
-        self.result_label.configure(text=f"스캔 결과 ({total}개) - AR: {ar_count}, CRS: {crs_count}, 미분류: {unknown_count}")
-        self._log(f"스캔 완료 - AR: {ar_count}, CRS: {crs_count}, 미분류: {unknown_count}", "info")
+        parts = [f"AR: {ar_count}", f"CRS: {crs_count}"]
+        if error_count:
+            parts.append(f"오류: {error_count}")
+        if unknown_count:
+            parts.append(f"미분류: {unknown_count}")
+        summary = ", ".join(parts)
+        self.result_label.configure(text=f"스캔 결과 ({total}개) - {summary}")
+        self._log(f"스캔 완료 - {summary}", "info")
         self._set_buttons_busy(False)
         if ar_count + crs_count > 0:
             self.organize_btn.configure(state="normal")
+
+        # 오류 파일이 있으면 별도 창으로 표시
+        if error_count > 0:
+            self._show_error_files()
+
+    # ──────────────────────────────────────────
+    # 오류 파일 목록 창
+    # ──────────────────────────────────────────
+
+    def _show_error_files(self):
+        """오류 파일 목록을 별도 창으로 표시 (파일명 복사 가능)"""
+        error_items = [m for m in self.scan_results if m.error_message]
+        if not error_items:
+            return
+
+        win = tk.Toplevel(self)
+        win.title(f"오류 파일 목록 ({len(error_items)}개)")
+        win.geometry("700x400")
+        win.transient(self)
+
+        frame = ttk.Frame(win, padding=8)
+        frame.pack(fill="both", expand=True)
+
+        ttk.Label(frame, text=f"오류 파일: {len(error_items)}개 (우클릭 → 파일명 복사)").pack(anchor="w", pady=(0, 4))
+
+        # Treeview
+        tree_frame = ttk.Frame(frame)
+        tree_frame.pack(fill="both", expand=True)
+
+        cols = ("filename", "type", "error")
+        tree = ttk.Treeview(tree_frame, columns=cols, show="headings", height=15)
+        tree.heading("filename", text="파일명")
+        tree.heading("type", text="유형")
+        tree.heading("error", text="오류 사유")
+        tree.column("filename", width=320, minwidth=200)
+        tree.column("type", width=60, minwidth=50, anchor="center")
+        tree.column("error", width=250, minwidth=150)
+
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=vsb.set)
+        tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
+
+        for meta in error_items:
+            tree.insert("", "end", values=(meta.file_path.name, meta.doc_type, meta.error_message))
+
+        # 우클릭 → 파일명 복사
+        def _copy_filename(event):
+            sel = tree.selection()
+            if sel:
+                fname = tree.set(sel[0], "filename")
+                win.clipboard_clear()
+                win.clipboard_append(fname)
+
+        ctx_menu = tk.Menu(win, tearoff=0)
+        ctx_menu.add_command(label="파일명 복사", command=lambda: _copy_filename(None))
+
+        def _show_context(event):
+            row = tree.identify_row(event.y)
+            if row:
+                tree.selection_set(row)
+                ctx_menu.tk_popup(event.x_root, event.y_root)
+
+        tree.bind("<Button-3>", _show_context)
+
+        # 하단 버튼
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(fill="x", pady=(8, 0))
+
+        def _copy_all():
+            names = "\n".join(m.file_path.name for m in error_items)
+            win.clipboard_clear()
+            win.clipboard_append(names)
+            self._log(f"오류 파일명 {len(error_items)}개 클립보드 복사 완료", "info")
+
+        ttk.Button(btn_frame, text="전체 파일명 복사", command=_copy_all).pack(side="left")
+        ttk.Button(btn_frame, text="닫기", command=win.destroy).pack(side="right")
 
     # ──────────────────────────────────────────
     # 2단계: 정리 실행 - 백그라운드 스레드
@@ -384,17 +481,21 @@ class PDFSorterApp(tk.Tk):
             messagebox.showwarning("경고", "먼저 스캔을 실행하세요.")
             return
 
-        ar_count = sum(1 for m in self.scan_results if m.doc_type == "AR")
-        crs_count = sum(1 for m in self.scan_results if m.doc_type == "CRS")
-        unknown_count = sum(1 for m in self.scan_results if m.doc_type == "UNKNOWN")
+        ar_count = sum(1 for m in self.scan_results if m.doc_type == "AR" and not m.error_message)
+        crs_count = sum(1 for m in self.scan_results if m.doc_type == "CRS" and not m.error_message)
+        error_count = sum(1 for m in self.scan_results if m.error_message)
+        unknown_count = sum(1 for m in self.scan_results if m.doc_type == "UNKNOWN" and not m.error_message)
 
         msg = (
             f"다음과 같이 파일을 정리합니다:\n\n"
             f"  AR (Annual Report): {ar_count}개\n"
             f"  CRS (변액리포트): {crs_count}개\n"
-            f"  미분류 → UNKNOWN: {unknown_count}개\n\n"
-            f"파일이 복사됩니다 (원본 유지). 계속하시겠습니까?"
         )
+        if error_count:
+            msg += f"  오류 (추출 실패) → ERROR: {error_count}개\n"
+        if unknown_count:
+            msg += f"  미분류 → UNKNOWN: {unknown_count}개\n"
+        msg += f"\n파일이 복사됩니다 (원본 유지). 계속하시겠습니까?"
         if not messagebox.askyesno("정리 실행 확인", msg):
             return
 
@@ -425,14 +526,16 @@ class PDFSorterApp(tk.Tk):
                     log_tag = "error"
                     fail += 1
                 else:
-                    if meta.doc_type == "AR":
-                        customer = meta.customer_name or "미확인"
-                        target_dir = base / "AR" / customer
-                        new_name = meta.new_filename or src.name
+                    if meta.error_message:
+                        # 추출 실패 → ERROR 폴더, 원본 파일명 유지
+                        target_dir = base / "ERROR"
+                        new_name = src.name
+                    elif meta.doc_type == "AR":
+                        target_dir = base / "AR" / meta.customer_name
+                        new_name = meta.new_filename
                     elif meta.doc_type == "CRS":
-                        customer = meta.customer_name or "미확인"
-                        target_dir = base / "CRS" / customer
-                        new_name = meta.new_filename or src.name
+                        target_dir = base / "CRS" / meta.customer_name
+                        new_name = meta.new_filename
                     else:
                         target_dir = base / "UNKNOWN"
                         new_name = src.name
