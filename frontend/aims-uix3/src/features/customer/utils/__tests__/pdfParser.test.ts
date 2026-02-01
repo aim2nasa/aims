@@ -50,7 +50,8 @@ describe('pdfParser', () => {
     }
 
     mockPdf = {
-      getPage: vi.fn().mockResolvedValue(mockPage)
+      getPage: vi.fn().mockResolvedValue(mockPage),
+      destroy: vi.fn(),
     }
 
     // pdfjs-dist 모듈 모킹 다시 가져오기
@@ -250,7 +251,8 @@ describe('checkCustomerReviewFromPDF', () => {
     }
 
     mockPdf = {
-      getPage: vi.fn().mockResolvedValue(mockPage)
+      getPage: vi.fn().mockResolvedValue(mockPage),
+      destroy: vi.fn(),
     }
 
     const pdfjsLib = await import('pdfjs-dist')

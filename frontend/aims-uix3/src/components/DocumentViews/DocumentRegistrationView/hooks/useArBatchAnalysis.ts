@@ -148,14 +148,20 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
 
   /**
    * AR 파일들 분석 및 그룹핑
+   *
+   * 메모리 최적화:
+   * - analyzingFiles를 로컬 배열로 관리 (per-file React state 업데이트 방지)
+   * - STATE_FLUSH_INTERVAL 마다 한 번만 React state 갱신 (~2,250회 → ~40회)
+   * - GC_YIELD_INTERVAL 마다 이벤트 루프에 양보하여 GC 실행 기회 제공
    */
   const analyzeArFiles = useCallback(async (files: File[]): Promise<GroupingResult | null> => {
     if (files.length === 0) return null
 
     abortRef.current = false
 
-    // 초기 파일 목록 생성 (모두 pending 상태)
-    const initialAnalyzingFiles: AnalyzingFileInfo[] = files.map(f => ({
+    // analyzingFiles 데이터를 로컬 배열로 관리 (per-file state update 제거 → OOM 방지)
+    // React state는 주기적으로만 갱신하여 리렌더링 최소화
+    const analyzingFilesData: AnalyzingFileInfo[] = files.map(f => ({
       fileName: f.name,
       status: 'pending' as const,
     }))
@@ -167,7 +173,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       totalFiles: files.length,
       completedFiles: 0,
       groups: [],
-      analyzingFiles: initialAnalyzingFiles,
+      analyzingFiles: analyzingFilesData.slice(),
     }))
 
     // 테이블 상태도 초기화 (이전 분석 결과 제거)
@@ -183,16 +189,9 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     const nonArFiles: File[] = []
     const failedFiles: Array<{ file: File; error: string }> = []
 
-    // 파일 상태 업데이트 헬퍼 함수
-    const updateFileStatus = (index: number, status: AnalyzingFileInfo['status'], error?: string) => {
-      setBatchState(prev => {
-        const newFiles = [...(prev.analyzingFiles || [])]
-        if (newFiles[index]) {
-          newFiles[index] = { ...newFiles[index], status, error }
-        }
-        return { ...prev, analyzingFiles: newFiles }
-      })
-    }
+    // 메모리 효율적 처리를 위한 상수
+    const STATE_FLUSH_INTERVAL = 20  // N개 파일마다 React state 갱신
+    const GC_YIELD_INTERVAL = 10     // N개 파일마다 이벤트 루프에 양보 (GC 기회)
 
     // 1. 각 파일 AR 분석
     for (let i = 0; i < files.length; i++) {
@@ -203,20 +202,14 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
 
       const file = files[i]
 
-      // 현재 파일을 analyzing 상태로 변경
-      updateFileStatus(i, 'analyzing')
-
-      setBatchState(prev => ({
-        ...prev,
-        currentFileName: file.name,
-        progress: Math.round(((i + 1) / files.length) * 50), // 분석 50%
-      }))
+      // 로컬 배열 직접 업데이트 (React state가 아님 - 리렌더링 없음)
+      analyzingFilesData[i] = { fileName: file.name, status: 'analyzing' }
 
       try {
         // PDF 파일만 AR 분석
         if (file.type !== 'application/pdf') {
           nonArFiles.push(file)
-          updateFileStatus(i, 'non_ar')
+          analyzingFilesData[i] = { fileName: file.name, status: 'non_ar' }
           continue
         }
 
@@ -225,17 +218,32 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
         if (result.is_annual_report && result.metadata?.customer_name) {
           const arFile = createArFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
           arFiles.push(arFile)
-          updateFileStatus(i, 'completed')
+          analyzingFilesData[i] = { fileName: file.name, status: 'completed' }
           addLog?.('success', `[AR 감지] ${file.name}`, `고객: ${result.metadata.customer_name}`)
         } else {
           nonArFiles.push(file)
-          updateFileStatus(i, 'non_ar')
+          analyzingFilesData[i] = { fileName: file.name, status: 'non_ar' }
         }
       } catch (error) {
         console.error('[useArBatchAnalysis] AR 분석 실패:', file.name, error)
         failedFiles.push({ file, error: String(error) })
-        updateFileStatus(i, 'failed', String(error))
+        analyzingFilesData[i] = { fileName: file.name, status: 'failed', error: String(error) }
         addLog?.('error', `[AR 분석 실패] ${file.name}`, String(error))
+      }
+
+      // 주기적으로 React state 갱신 (배치 처리 - 리렌더링 최소화)
+      if ((i + 1) % STATE_FLUSH_INTERVAL === 0 || i === files.length - 1) {
+        setBatchState(prev => ({
+          ...prev,
+          currentFileName: file.name,
+          progress: Math.round(((i + 1) / files.length) * 50),
+          analyzingFiles: analyzingFilesData.slice(),
+        }))
+      }
+
+      // 주기적으로 이벤트 루프에 양보 → GC + 렌더링 기회 제공
+      if ((i + 1) % GC_YIELD_INTERVAL === 0) {
+        await new Promise<void>(resolve => setTimeout(resolve, 0))
       }
     }
 

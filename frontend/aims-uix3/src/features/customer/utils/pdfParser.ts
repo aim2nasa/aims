@@ -37,13 +37,14 @@ export interface CheckCustomerReviewResult {
  * PDF 첫 페이지 텍스트 추출
  */
 async function extractFirstPageText(file: File): Promise<string> {
+  let pdf: pdfjsLib.PDFDocumentProxy | null = null;
   try {
     if (import.meta.env.DEV) {
       console.log('[pdfParser] 📄 PDF 텍스트 추출 시작:', file.name);
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const page = await pdf.getPage(1);
     const textContent = await page.getTextContent();
     const text = textContent.items
@@ -60,6 +61,11 @@ async function extractFirstPageText(file: File): Promise<string> {
     console.error('[pdfParser] PDF 텍스트 추출 실패:', error);
     errorReporter.reportApiError(error as Error, { component: 'pdfParser.extractFirstPageText', payload: { fileName: file.name } });
     throw new Error('PDF 텍스트 추출에 실패했습니다.');
+  } finally {
+    // PDF 문서 객체를 즉시 해제하여 메모리 누적 방지
+    if (pdf) {
+      pdf.destroy();
+    }
   }
 }
 
