@@ -173,9 +173,14 @@ class PDFSorterApp(tk.Tk):
         self.log_text.pack(side="left", fill="both", expand=True)
         log_vsb.pack(side="right", fill="y")
 
-        # ── 하단: 정리 실행 버튼 ──
+        # ── 하단: 옵션 + 정리 실행 버튼 ──
         bottom = ttk.Frame(main)
         bottom.pack(fill="x", pady=(4, 0))
+        self._use_customer_subfolder = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            bottom, text="고객명별 하위 폴더 생성",
+            variable=self._use_customer_subfolder,
+        ).pack(side="left")
         self.organize_btn = ttk.Button(bottom, text="정리 실행", command=self._organize_files, state="disabled")
         self.organize_btn.pack(side="right")
 
@@ -506,10 +511,11 @@ class PDFSorterApp(tk.Tk):
         total = len(self.scan_results)
         self.progress.configure(maximum=total, value=0)
 
-        thread = threading.Thread(target=self._organize_worker, args=(total,), daemon=True)
+        use_subfolder = self._use_customer_subfolder.get()
+        thread = threading.Thread(target=self._organize_worker, args=(total, use_subfolder), daemon=True)
         thread.start()
 
-    def _organize_worker(self, total: int):
+    def _organize_worker(self, total: int, use_subfolder: bool):
         """백그라운드 스레드: 파일 복사 작업 (원본 유지) + 매핑 JSON 생성"""
         base = self.input_folder
         success = 0
@@ -531,10 +537,14 @@ class PDFSorterApp(tk.Tk):
                         target_dir = base / "ERROR"
                         new_name = src.name
                     elif meta.doc_type == "AR":
-                        target_dir = base / "AR" / meta.customer_name
+                        target_dir = base / "AR"
+                        if use_subfolder:
+                            target_dir = target_dir / meta.customer_name
                         new_name = meta.new_filename
                     elif meta.doc_type == "CRS":
-                        target_dir = base / "CRS" / meta.customer_name
+                        target_dir = base / "CRS"
+                        if use_subfolder:
+                            target_dir = target_dir / meta.customer_name
                         new_name = meta.new_filename
                     else:
                         target_dir = base / "UNKNOWN"
