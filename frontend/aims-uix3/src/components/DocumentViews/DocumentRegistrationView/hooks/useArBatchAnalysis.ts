@@ -120,6 +120,7 @@ const initialState: BatchMappingState = {
   isProcessing: false,
   progress: 0,
   totalFiles: 0,
+  originalTotalFiles: 0,
   completedFiles: 0,
   analyzingFiles: [],
 }
@@ -171,6 +172,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
       isAnalyzing: true,
       isOpen: true,
       totalFiles: files.length,
+      originalTotalFiles: files.length,
       completedFiles: 0,
       groups: [],
       analyzingFiles: analyzingFilesData.slice(),

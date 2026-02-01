@@ -186,8 +186,10 @@ export interface BaseBatchMappingState<TFileGroup> {
   progress: number
   /** 현재 처리 중인 파일명 */
   currentFileName?: string
-  /** 총 파일 수 */
+  /** 총 파일 수 (AR 감지된 파일) */
   totalFiles: number
+  /** 원본 업로드 파일 수 (분석 전 전체) */
+  originalTotalFiles: number
   /** 완료된 파일 수 */
   completedFiles: number
   /** 분석 중인 파일 목록 (실시간 표시용) */

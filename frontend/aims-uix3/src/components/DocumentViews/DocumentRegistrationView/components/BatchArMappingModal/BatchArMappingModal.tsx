@@ -82,7 +82,7 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
   onRegister,
   onOpenNewCustomerModal,
 }) => {
-  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, completedFiles, currentFileName, analyzingFiles } = state
+  const { isOpen, isAnalyzing, isProcessing, progress, totalFiles, originalTotalFiles, completedFiles, currentFileName, analyzingFiles } = state
   const { rows, groups } = tableState
   const [showHelp, setShowHelp] = useState(false)
   const [showExcluded, setShowExcluded] = useState(false)
@@ -229,19 +229,22 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
           </div>
         )}
 
-        {/* 분석 제외 파일 요약 (분석 완료 후) */}
+        {/* 파일 수 요약 (업로드 수 ≠ AR 감지 수일 때) */}
         {!isAnalyzing && !isProcessing && excludedFiles.length > 0 && (
-          <div className="batch-ar-modal__excluded-section">
+          <div className="batch-ar-modal__file-summary">
+            <span className="batch-ar-modal__file-summary-text">
+              총 {originalTotalFiles}개 파일 중 {rows.length}개 AR 파일 감지
+            </span>
             <button
               type="button"
-              className="batch-ar-modal__excluded-toggle"
+              className="batch-ar-modal__file-summary-toggle"
               onClick={() => setShowExcluded(!showExcluded)}
             >
-              <span className="batch-ar-modal__excluded-icon">
-                {showExcluded ? '\u25BE' : '\u25B8'}
+              <span className="batch-ar-modal__file-summary-excluded">
+                {excludedFiles.length}개 제외
               </span>
-              <span className="batch-ar-modal__excluded-text">
-                {excludedFiles.length}개 파일 제외됨 (AR 아님 또는 분석 실패)
+              <span className="batch-ar-modal__file-summary-arrow">
+                {showExcluded ? '\u25BE' : '\u25B8'}
               </span>
             </button>
             {showExcluded && (
@@ -256,6 +259,9 @@ export const BatchArMappingModal: React.FC<BatchArMappingModalProps> = ({
                     </span>
                     <span className="batch-ar-modal__excluded-name" title={f.fileName}>
                       {f.fileName}
+                    </span>
+                    <span className="batch-ar-modal__excluded-reason">
+                      {f.status === 'failed' ? 'AR 분석 실패' : 'AR 아님'}
                     </span>
                     {f.status === 'failed' && f.error && (
                       <span className="batch-ar-modal__excluded-error" title={f.error}>

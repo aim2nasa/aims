@@ -93,20 +93,40 @@ function extractMetadata(text: string, normalizedText?: string) {
     metadata.issue_date = `${year}-${month}-${day}`;
   }
 
-  // 고객명 추출: " 고객" 위치 기반 (영문/한글 무관)
-  // Reference: tools/pdf_sorter/pdf_classifier.py extract_customer_name()
-  const gogaekIdx = searchText.indexOf(' 고객')
-  if (gogaekIdx > 0) {
-    const before = searchText.substring(0, gogaekIdx).trim()
+  // 고객명 추출: "고객님을 위한" 패턴 우선, " 고객" 반복 탐색 fallback
+  // "고객님을 위한"이 가장 정확 (고객센터, 고객님들 등 오매칭 방지)
+  // 영문/한글 무관 지원 (indexOf 기반)
+  const primaryMarker = '고객님을 위한'
+  const primaryIdx = searchText.indexOf(primaryMarker)
+  if (primaryIdx > 0) {
+    const before = searchText.substring(0, primaryIdx).trim()
     const lastSpace = before.lastIndexOf(' ')
     let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
-    // 괄호 제거: "NAME(한글명)" → "NAME"
     const parenIdx = name.indexOf('(')
     if (parenIdx > 0) {
       name = name.substring(0, parenIdx).trim()
     }
     if (name.length >= 2) {
       metadata.customer_name = name
+    }
+  }
+  // fallback: " 고객" 위치 기반 반복 탐색 (유효한 이름을 찾을 때까지)
+  if (!metadata.customer_name) {
+    let searchStart = 0
+    let gogaekIdx: number
+    while ((gogaekIdx = searchText.indexOf(' 고객', searchStart)) > 0) {
+      const before = searchText.substring(0, gogaekIdx).trim()
+      const lastSpace = before.lastIndexOf(' ')
+      let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
+      const parenIdx = name.indexOf('(')
+      if (parenIdx > 0) {
+        name = name.substring(0, parenIdx).trim()
+      }
+      if (name.length >= 2 && /^[가-힣a-zA-Z]/.test(name)) {
+        metadata.customer_name = name
+        break
+      }
+      searchStart = gogaekIdx + 1
     }
   }
 
