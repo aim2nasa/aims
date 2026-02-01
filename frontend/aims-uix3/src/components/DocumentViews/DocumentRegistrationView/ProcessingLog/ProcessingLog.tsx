@@ -62,13 +62,36 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   const hasFiles = uploadState && uploadState.files.length > 0
   const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
 
-  // 파일 상태별 분류
-  const analyzingFiles = uploadState?.files.filter(f => f.status === 'analyzing') || []
-  const pendingFiles = uploadState?.files.filter(f => f.status === 'pending') || []
-  const uploadingFiles = uploadState?.files.filter(f => f.status === 'uploading') || []
-  const completedFiles = uploadState?.files.filter(f => f.status === 'completed' || f.status === 'warning') || []
-  const errorFiles = uploadState?.files.filter(f => f.status === 'error') || []
-  const skippedFiles = uploadState?.files.filter(f => f.status === 'skipped') || []
+  // 파일 상태별 분류 (useMemo: 대량 파일 등록 시 매 렌더마다 6회 filter 방지)
+  const { analyzingFiles, pendingFiles, uploadingFiles, completedFiles, errorFiles, skippedFiles } = useMemo(() => {
+    const files = uploadState?.files || []
+    const analyzing: typeof files = []
+    const pending: typeof files = []
+    const uploading: typeof files = []
+    const completed: typeof files = []
+    const error: typeof files = []
+    const skipped: typeof files = []
+
+    for (const f of files) {
+      switch (f.status) {
+        case 'analyzing': analyzing.push(f); break
+        case 'pending': pending.push(f); break
+        case 'uploading': uploading.push(f); break
+        case 'completed': case 'warning': completed.push(f); break
+        case 'error': error.push(f); break
+        case 'skipped': skipped.push(f); break
+      }
+    }
+
+    return {
+      analyzingFiles: analyzing,
+      pendingFiles: pending,
+      uploadingFiles: uploading,
+      completedFiles: completed,
+      errorFiles: error,
+      skippedFiles: skipped,
+    }
+  }, [uploadState?.files])
 
   // 파일 크기 포맷팅
   const formatFileSize = (bytes: number): string => {

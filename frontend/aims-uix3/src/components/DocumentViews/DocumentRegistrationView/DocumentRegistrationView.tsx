@@ -25,7 +25,7 @@ import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
-import { processAnnualReportFile, registerArDocument, formatIssueDateKorean, clearDuplicateCheckCache } from './utils/annualReportProcessor'
+import { processAnnualReportFile, registerArDocument, formatIssueDateKorean, clearDuplicateCheckCache, prefetchCustomerData, precomputeFileHashes } from './utils/annualReportProcessor'
 import { processCustomerReviewFile, formatIssueDateKorean as formatIssueDateKoreanCR } from './utils/customerReviewProcessor'
 import { CustomerSelectionModal } from '@/features/annual-report/components/CustomerSelectionModal'
 import { NewCustomerInputModal } from '@/features/annual-report/components/NewCustomerInputModal'
@@ -302,6 +302,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 📊 AR 처리 성공 카운터 (중복 건너뛴 건 제외)
   const arProcessedCountRef = useRef<number>(0)
 
+  // 🚀 진행률 스로틀: 파일당 최소 300ms 간격으로만 UI 업데이트
+  const progressThrottleRef = useRef<Map<string, number>>(new Map())
+
+  // 🚀 로그 배치 버퍼: 대량 등록 시 addLog 호출마다 배열 복사 방지
+  const pendingLogsRef = useRef<Log[]>([])
+  const logFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // 🏷️ CRS 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
   const crFilenamesRef = useRef<Set<string>>(new Set())
 
@@ -353,6 +360,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * @param details - 상세 정보 (선택)
    * @param customerName - 고객명 (선택)
    */
+  // 로그 버퍼 플러시: 버퍼에 쌓인 로그를 한 번에 state에 반영
+  const flushPendingLogs = useCallback(() => {
+    if (pendingLogsRef.current.length === 0) return
+    const batch = pendingLogsRef.current.splice(0)
+    // 최신 로그가 앞에 오도록 reverse
+    setProcessingLogs(prev => [...batch.reverse(), ...prev])
+  }, [])
+
   const addLog = useCallback((level: LogLevel, message: string, details?: string, customerName?: string) => {
     logCounterRef.current += 1
     const counter = logCounterRef.current
@@ -369,8 +384,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       details
     }
 
-    setProcessingLogs(prev => [newLog, ...prev])
-  }, [])
+    // 버퍼에 추가, 20개마다 즉시 플러시 (대량 등록 시 배열 복사 횟수 20배 감소)
+    pendingLogsRef.current.push(newLog)
+    if (pendingLogsRef.current.length >= 20) {
+      flushPendingLogs()
+      return
+    }
+
+    // 소량 호출 시 100ms 후 자동 플러시 (일반 사용 시 즉각적 피드백)
+    if (logFlushTimerRef.current) clearTimeout(logFlushTimerRef.current)
+    logFlushTimerRef.current = setTimeout(flushPendingLogs, 100)
+  }, [flushPendingLogs])
 
   // 🎯 AR 일괄 처리 훅
   const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester'
@@ -1090,9 +1114,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
-   * 업로드 진행률 콜백
+   * 업로드 진행률 콜백 (스로틀: 파일당 300ms 간격, 100%는 즉시 반영)
+   * 대량 등록 시 수백 개 파일의 progress event가 연속 발생 →
+   * 매번 files.map() 전체 순회 + React 리렌더 = 심각한 병목
    */
   const handleProgress = useCallback((event: UploadProgressEvent) => {
+    const now = Date.now()
+    const lastUpdate = progressThrottleRef.current.get(event.fileId) || 0
+    if (event.progress < 100 && now - lastUpdate < 300) return
+    progressThrottleRef.current.set(event.fileId, now)
+
     setUploadState(prev => ({
       ...prev,
       files: prev.files.map(f =>
@@ -1467,51 +1498,52 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const currentFile = uploadState.files.find(f => f.id === fileId);
 
     setUploadState(prev => {
+      // 🚀 Single-pass: map + count를 한 번에 (기존 map + 2 filter + reduce = 4회 순회 → 1회)
+      let newCompletedCount = 0
+      let uploadingCount = 0
+      let progressSum = 0
+
       const updatedFiles = prev.files.map(f => {
+        let result = f
         if (f.id === fileId) {
-          console.log(`🔍 [handleStatusChange] Matched file: name=${f.file.name}, type=${f.file.type}`);
-          const updatedFile = { ...f, status, error }
+          result = { ...f, status, error }
 
           if (status === 'completed' || status === 'warning') {
-            updatedFile.completedAt = new Date()
-            updatedFile.progress = 100
+            result.completedAt = new Date()
+            result.progress = 100
 
             // 🏷️ Annual Report 파일이면 DB 플래그 설정 및 고객 자동 연결
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
               const fileName = f.file.name;
-              // ⚠️ 중요: arFilenamesRef 삭제를 setAnnualReportFlag로 이동
-              // (handleStatusChange가 두 번 호출될 때 race condition 방지)
-              // 즉시 실행 (arCustomerMappingRef는 setAnnualReportFlag 내부에서 사용됨)
               setTimeout(() => setAnnualReportFlag(fileName), 0);
             }
 
             // 🏷️ Customer Review 파일이면 DB 플래그 설정 및 고객 자동 연결
             if (status === 'completed' && crFilenamesRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] CRS 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
               const fileName = f.file.name;
-              // ⚠️ 중요: crFilenamesRef 삭제를 setCustomerReviewFlag로 이동
-              // (handleStatusChange가 두 번 호출될 때 race condition 방지)
               setTimeout(() => setCustomerReviewFlag(fileName), 0);
             }
           }
-          return updatedFile
         }
-        return f
-      })
 
-      const completedCount = updatedFiles.filter(f => f.status === 'completed' || f.status === 'warning').length
-      const uploadingCount = updatedFiles.filter(f => f.status === 'uploading').length
-      const totalProgress = updatedFiles.length > 0
-        ? Math.round(updatedFiles.reduce((sum, f) => sum + (f.status === 'completed' || f.status === 'warning' ? 100 : f.progress), 0) / updatedFiles.length)
-        : 0
+        // Single-pass counting
+        if (result.status === 'completed' || result.status === 'warning') {
+          newCompletedCount++
+          progressSum += 100
+        } else {
+          progressSum += result.progress
+        }
+        if (result.status === 'uploading') uploadingCount++
+
+        return result
+      })
 
       return {
         ...prev,
         files: updatedFiles,
         uploading: uploadingCount > 0,
-        totalProgress,
-        completedCount
+        totalProgress: updatedFiles.length > 0 ? Math.round(progressSum / updatedFiles.length) : 0,
+        completedCount: newCompletedCount,
       }
     })
 
@@ -2476,14 +2508,128 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           const existingCustomerIds = new Set<string>()
           const registrationStartedAt = Date.now()
 
-          // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
+          // ═══════════════════════════════════════════════════
+          // 🚀 3-Phase 사전 준비 (순차 → 병렬)
+          // 기존: 루프 중 고객 생성/해시 계산/API 호출 모두 순차
+          // 개선: 루프 전 3단계 병렬 준비 → 루프는 캐시 히트만
+          // ═══════════════════════════════════════════════════
+          const prepStartedAt = performance.now()
+
           const newCustomerCache = new Map<string, string>() // name -> customerId
+
+          // ── Phase 1: 새 고객 병렬 일괄 생성 ──
+          // 기존: 루프 중 새 고객 만날 때마다 1개씩 순차 생성 API
+          // 개선: 루프 전 5개씩 병렬 생성
+          const customerNamesToCreate = new Set<string>()
+          for (const row of filesToRegister) {
+            const mapping = getEffectiveMapping(row, groups)
+            if (!mapping.customerId && mapping.newCustomerName) {
+              customerNamesToCreate.add(mapping.newCustomerName)
+            }
+          }
+
+          if (customerNamesToCreate.size > 0) {
+            const phase1Start = performance.now()
+            addLog('info', `[준비 1/3] 새 고객 ${customerNamesToCreate.size}명 일괄 등록 중...`)
+            const CUSTOMER_BATCH_SIZE = 5
+            const namesToCreate = [...customerNamesToCreate]
+            let customerCreatedCount = 0
+
+            for (let i = 0; i < namesToCreate.length; i += CUSTOMER_BATCH_SIZE) {
+              const batch = namesToCreate.slice(i, i + CUSTOMER_BATCH_SIZE)
+              await Promise.all(batch.map(async (name) => {
+                try {
+                  const newCustomer = await CustomerService.createCustomer({
+                    personal_info: { name },
+                    insurance_info: { customer_type: '개인' },
+                    contracts: [],
+                    documents: [],
+                    consultations: [],
+                  })
+                  newCustomerCache.set(name, newCustomer._id)
+                  customerCreatedCount++
+                } catch (error) {
+                  addLog('error', `고객 등록 실패: ${name}`, String(error))
+                }
+              }))
+              arBatch.batchSetProgress(0, filesToRegister.length,
+                `고객 등록 중... ${Math.min(i + CUSTOMER_BATCH_SIZE, namesToCreate.length)}/${namesToCreate.length}`)
+            }
+            const phase1Elapsed = ((performance.now() - phase1Start) / 1000).toFixed(1)
+            addLog('success', `[준비 1/3] 새 고객 ${customerCreatedCount}명 등록 완료 (${phase1Elapsed}초)`)
+          }
+
+          // ── Phase 2: 고객 데이터 병렬 프리페치 (해시 + 발행일) ──
+          // 기존 고객 + 방금 생성한 새 고객 모두 프리페치
+          const allCustomerIds = filesToRegister
+            .map(row => {
+              const mapping = getEffectiveMapping(row, groups)
+              return mapping.customerId || (mapping.newCustomerName ? newCustomerCache.get(mapping.newCustomerName) : null)
+            })
+            .filter((id): id is string => !!id)
+          const uniqueCustomerIds = [...new Set(allCustomerIds)]
+
+          if (uniqueCustomerIds.length > 0) {
+            const phase2Start = performance.now()
+            addLog('info', `[준비 2/3] 고객 데이터 프리페치 중 (${uniqueCustomerIds.length}명)...`)
+            await prefetchCustomerData(uniqueCustomerIds, (completed, total) => {
+              arBatch.batchSetProgress(0, filesToRegister.length,
+                `데이터 로딩 중... ${completed}/${total}`)
+            })
+            const phase2Elapsed = ((performance.now() - phase2Start) / 1000).toFixed(1)
+            addLog('success', `[준비 2/3] 고객 데이터 프리페치 완료 (${phase2Elapsed}초)`)
+          }
+
+          // ── Phase 3: 파일 해시 병렬 사전 계산 ──
+          const phase3Start = performance.now()
+          const allFiles = filesToRegister.map(row => row.fileInfo.file)
+          addLog('info', `[준비 3/3] 파일 해시 계산 중 (${allFiles.length}개)...`)
+          await precomputeFileHashes(allFiles, (completed, total) => {
+            arBatch.batchSetProgress(0, filesToRegister.length,
+              `해시 계산 중... ${completed}/${total}`)
+          })
+          const phase3Elapsed = ((performance.now() - phase3Start) / 1000).toFixed(1)
+          addLog('success', `[준비 3/3] 파일 해시 계산 완료 (${phase3Elapsed}초)`)
+
+          const prepTotalElapsed = ((performance.now() - prepStartedAt) / 1000).toFixed(1)
+          addLog('info', `[사전 준비 완료] 총 ${prepTotalElapsed}초`)
+
+          // ═══════════════════════════════════════════════════
+          // 🚀 Main Loop: 모든 캐시가 워밍된 상태 → O(1) 룩업 + 큐 추가만
+          // ═══════════════════════════════════════════════════
+          const mainLoopStart = performance.now()
+
+          // 🚀 배치 상태 업데이트 (O(n²) → O(n))
+          // 매 파일마다 setUploadState([...prev.files, newItem]) → 배열 전체 복사 = O(n²)
+          // 버퍼에 모아서 일정 간격으로 플러시 = O(n)
+          const BATCH_FLUSH_SIZE = 50
+          const pendingFileUpdates: UploadFile[] = []
+          const flushFileUpdates = () => {
+            if (pendingFileUpdates.length === 0) return
+            const batch = pendingFileUpdates.splice(0)
+            setUploadState(prev => ({
+              ...prev,
+              files: [...prev.files, ...batch]
+            }))
+          }
+          const addFileToState = (file: UploadFile) => {
+            pendingFileUpdates.push(file)
+            if (pendingFileUpdates.length >= BATCH_FLUSH_SIZE) {
+              flushFileUpdates()
+            }
+          }
+
+          // 🚀 진행률 업데이트 스로틀: 매 파일마다 → 10개 간격
+          const PROGRESS_UPDATE_INTERVAL = 10
 
           for (const row of filesToRegister) {
             const arFile = row.fileInfo
             const mapping = getEffectiveMapping(row, groups)
 
-            arBatch.setProcessing(true, Math.round((completedCount / filesToRegister.length) * 100), arFile.file.name)
+            // 스로틀: 10개 간격 또는 첫 파일에만 진행률 UI 업데이트
+            if (completedCount % PROGRESS_UPDATE_INTERVAL === 0) {
+              arBatch.batchSetProgress(completedCount, filesToRegister.length, arFile.file.name)
+            }
 
             let customerId = mapping.customerId
             const customerName = mapping.customerName || mapping.newCustomerName
@@ -2534,18 +2680,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               if (processResult.isDuplicateDoc) {
                 const reason = '중복 파일 (동일한 문서가 이미 존재)'
                 addLog('warning', `[${customerName}] 중복 파일 건너뜀: ${arFile.file.name}`)
-                setUploadState(prev => ({
-                  ...prev,
-                  files: [...prev.files, {
-                    id: arFile.fileId,
-                    file: arFile.file,
-                    fileSize: arFile.file.size,
-                    status: 'skipped' as const,
-                    progress: 100,
-                    error: reason,
-                    customerId,
-                  }]
-                }))
+                addFileToState({
+                  id: arFile.fileId,
+                  file: arFile.file,
+                  fileSize: arFile.file.size,
+                  status: 'skipped' as const,
+                  progress: 100,
+                  error: reason,
+                  customerId,
+                })
                 skippedCount++
                 skippedFiles.push({ fileName: arFile.file.name, reason })
                 completedCount++
@@ -2556,18 +2699,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 const formattedDate = formatIssueDateKorean(processResult.duplicateIssueDate)
                 const reason = `중복 발행일 (${formattedDate} AR 이미 존재)`
                 addLog('warning', `[${customerName}] ${formattedDate} 발행일 AR 이미 존재: ${arFile.file.name}`)
-                setUploadState(prev => ({
-                  ...prev,
-                  files: [...prev.files, {
-                    id: arFile.fileId,
-                    file: arFile.file,
-                    fileSize: arFile.file.size,
-                    status: 'skipped' as const,
-                    progress: 100,
-                    error: reason,
-                    customerId,
-                  }]
-                }))
+                addFileToState({
+                  id: arFile.fileId,
+                  file: arFile.file,
+                  fileSize: arFile.file.size,
+                  status: 'skipped' as const,
+                  progress: 100,
+                  error: reason,
+                  customerId,
+                })
                 skippedCount++
                 skippedFiles.push({ fileName: arFile.file.name, reason })
                 completedCount++
@@ -2581,10 +2721,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 addToUploadQueue: (uploadFile) => {
                   const uploadFileWithId = { ...uploadFile, id: arFile.fileId }
                   uploadService.queueFiles([uploadFileWithId])
-                  setUploadState(prev => ({
-                    ...prev,
-                    files: [...prev.files, uploadFileWithId]
-                  }))
+                  addFileToState(uploadFileWithId)
                 },
                 trackArFile: (fileName, custId) => {
                   arFilenamesRef.current.add(fileName)
@@ -2620,14 +2757,37 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             }
 
             completedCount++
-            arBatch.incrementCompleted()
+
+            // 🚀 10개 간격 진행률 업데이트 (매 파일 → 10개 단위)
+            if (completedCount % PROGRESS_UPDATE_INTERVAL === 0 || completedCount === filesToRegister.length) {
+              arBatch.batchSetProgress(completedCount, filesToRegister.length, arFile.file.name)
+            }
+
+            // 🚀 50개마다 GC 양보 — 이벤트 루프에 제어권 반환하여 UI 응답성 유지
+            if (completedCount % 50 === 0) {
+              flushFileUpdates()
+              flushPendingLogs()
+              await new Promise(resolve => setTimeout(resolve, 0))
+            }
           }
+
+          // 최종 진행률 보장
+          arBatch.batchSetProgress(completedCount, filesToRegister.length)
+
+          // 잔여 버퍼 플러시 (루프 종료 후 남은 파일/로그 상태 반영)
+          flushFileUpdates()
+          flushPendingLogs()
+
+          // 스로틀 캐시 정리
+          progressThrottleRef.current.clear()
 
           // 배치 완료 → 캐시 클리어
           clearDuplicateCheckCache()
 
-          // 결과 요약
-          addLog('success', `AR 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)
+          // 결과 요약 + 타이밍
+          const mainLoopElapsed = ((performance.now() - mainLoopStart) / 1000).toFixed(1)
+          const totalElapsed = ((performance.now() - prepStartedAt) / 1000).toFixed(1)
+          addLog('success', `AR 일괄 등록 완료 (총 ${totalElapsed}초: 준비 ${prepTotalElapsed}초 + 등록 ${mainLoopElapsed}초)`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)
 
           // 결과 요약 화면 표시 (모달 유지)
           arBatch.setRegistrationResult({

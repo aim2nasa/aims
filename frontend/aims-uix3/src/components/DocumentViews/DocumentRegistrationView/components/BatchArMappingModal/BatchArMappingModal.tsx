@@ -76,9 +76,9 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
     ? 'AR 일괄 등록 완료'
     : 'AR 일괄 등록 완료'
 
-  const description = totalCustomers > 0
-    ? `${originalTotalFiles}개 파일 중 ${result.successCount}개가 ${totalCustomers}명 고객에게 등록됨`
-    : `${originalTotalFiles}개 파일 중 ${result.successCount}개 등록 완료`
+  // 설명: 핵심 결과만 간결하게 (상세는 breakdown에서)
+  const skippedSuffix = result.skippedCount > 0 ? `, ${result.skippedCount}개 중복 건너뜀` : ''
+  const description = `${originalTotalFiles}개 중 ${result.successCount}개 등록 완료${skippedSuffix}`
 
   return (
     <div className="batch-ar-modal__result">
@@ -97,10 +97,13 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
           <span className="batch-ar-modal__result-stat-value">{originalTotalFiles}개</span>
           <span className="batch-ar-modal__result-stat-label">업로드</span>
         </div>
-        <div className="batch-ar-modal__result-stat">
-          <span className="batch-ar-modal__result-stat-value">{arDetectedFiles}개</span>
-          <span className="batch-ar-modal__result-stat-label">AR 감지</span>
-        </div>
+        {/* AR 감지 수가 업로드와 다를 때만 표시 (같으면 중복 정보) */}
+        {arDetectedFiles !== originalTotalFiles && (
+          <div className="batch-ar-modal__result-stat">
+            <span className="batch-ar-modal__result-stat-value">{arDetectedFiles}개</span>
+            <span className="batch-ar-modal__result-stat-label">AR 감지</span>
+          </div>
+        )}
         <div className="batch-ar-modal__result-stat">
           <span className="batch-ar-modal__result-stat-value success">{result.successCount}개</span>
           <span className="batch-ar-modal__result-stat-label">등록</span>
@@ -128,13 +131,14 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
             </span>
             <div className="batch-ar-modal__result-breakdown-content">
               <span className="batch-ar-modal__result-breakdown-main">
-                {result.successCount}개 파일 → {totalCustomers}명 고객에게 등록
+                {totalCustomers}명 고객에게 {result.successCount}개 파일 등록
               </span>
               <span className="batch-ar-modal__result-breakdown-sub">
-                {result.newCustomerCount > 0 && `신규 ${result.newCustomerCount}명`}
-                {result.newCustomerCount > 0 && result.existingCustomerCount > 0 && ' · '}
-                {result.existingCustomerCount > 0 && `기존 ${result.existingCustomerCount}명`}
-                {multiFileCount > 0 && ` · 동일 고객 다중 등록 ${multiFileCount}건`}
+                {multiFileCount > 0
+                  ? `${totalCustomers}명 × 1파일 + 동일 고객 추가 ${multiFileCount}건 = ${result.successCount}개`
+                  : `${totalCustomers}명 각 1파일씩 등록`
+                }
+                {result.existingCustomerCount > 0 && ` · 기존 AR 보유 ${result.existingCustomerCount}명`}
               </span>
             </div>
           </div>

@@ -17,6 +17,8 @@ import type { UploadFile } from '../types/uploadTypes';
 import type { LogLevel } from '../types/logTypes';
 
 // ── 배치 등록 세션 캐시 ──
+// 파일 해시 캐시: 파일명 → 해시 (사전 계산된 해시)
+const fileHashCache = new Map<string, string>();
 // 고객별 해시 캐시: 고객 ID → 해당 고객의 모든 문서 해시 Set
 const hashCache = new Map<string, Set<string>>();
 // 고객별 AR 발행일 캐시: 고객 ID → 해당 고객의 모든 AR 발행일 Set
@@ -26,8 +28,70 @@ const arDatesCache = new Map<string, Set<string>>();
  * 중복 검사 캐시 초기화 (배치 등록 시작/종료 시 호출)
  */
 export function clearDuplicateCheckCache(): void {
+  fileHashCache.clear();
   hashCache.clear();
   arDatesCache.clear();
+}
+
+/**
+ * 🚀 Phase 3: 파일 해시 병렬 사전 계산
+ * 기존: 등록 루프에서 파일마다 순차 계산 (1개씩)
+ * 개선: 루프 전 10개씩 병렬 계산
+ *
+ * @param files - 해시를 계산할 File 배열
+ * @param onProgress - 진행률 콜백
+ */
+export async function precomputeFileHashes(
+  files: File[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<void> {
+  const CONCURRENCY = 10;
+
+  for (let i = 0; i < files.length; i += CONCURRENCY) {
+    const batch = files.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(async (file) => {
+      try {
+        const hash = await calculateFileHash(file);
+        fileHashCache.set(file.name, hash);
+      } catch {
+        // 실패해도 루프에서 재시도 가능
+      }
+    }));
+    onProgress?.(Math.min(i + CONCURRENCY, files.length), files.length);
+  }
+}
+
+/**
+ * 🚀 Phase 2: 배치 등록 전 고객 데이터 병렬 프리페치
+ *
+ * 기존: 등록 루프에서 새 고객 만날 때마다 2 API 순차 호출
+ *   → 745 고객 × 2 API = 1,490회 순차 (빨랐다-멈췄다 패턴 원인)
+ * 개선: 루프 시작 전 10개씩 병렬 프리페치
+ *   → 75 라운드 × 병렬 10개 = 동일 데이터를 ~10x 빠르게 확보
+ *
+ * @param customerIds - 프리페치할 고객 ID 배열 (중복 허용, 내부에서 제거)
+ * @param onProgress - 진행률 콜백 (completed, total)
+ */
+export async function prefetchCustomerData(
+  customerIds: string[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<void> {
+  const uniqueIds = [...new Set(customerIds)];
+  if (uniqueIds.length === 0) return;
+
+  const CONCURRENCY = 10;
+
+  for (let i = 0; i < uniqueIds.length; i += CONCURRENCY) {
+    const batch = uniqueIds.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(async (customerId) => {
+      // 각 고객에 대해 해시 + 발행일 조회를 병렬 실행
+      await Promise.all([
+        getCustomerDocumentHashes(customerId),
+        getCustomerArIssueDates(customerId),
+      ]);
+    }));
+    onProgress?.(Math.min(i + CONCURRENCY, uniqueIds.length), uniqueIds.length);
+  }
 }
 
 /**
@@ -142,7 +206,8 @@ export async function processAnnualReportFile(
   // 1. 문서 중복 검사 (파일 해시 기반)
   // 캐시된 해시 Set으로 O(1) 비교 (기존: 문서 N개 × 순차 API 호출)
   try {
-    const uploadFileHash = await calculateFileHash(file);
+    // 사전 계산된 해시가 있으면 사용, 없으면 실시간 계산
+    const uploadFileHash = fileHashCache.get(file.name) || await calculateFileHash(file);
     const existingHashes = await getCustomerDocumentHashes(customerId);
 
     if (existingHashes.has(uploadFileHash)) {

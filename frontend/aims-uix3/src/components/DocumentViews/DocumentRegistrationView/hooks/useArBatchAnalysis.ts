@@ -77,6 +77,8 @@ export interface UseArBatchAnalysisReturn {
   setProcessing: (isProcessing: boolean, progress?: number, currentFileName?: string) => void
   /** 완료 파일 수 증가 */
   incrementCompleted: () => void
+  /** 🚀 진행 상태 + 완료 수 일괄 업데이트 */
+  batchSetProgress: (completedCount: number, totalCount: number, currentFileName?: string) => void
   /** 등록 결과 저장 (요약 화면 표시용) */
   setRegistrationResult: (result: BatchRegistrationSummary) => void
 
@@ -440,6 +442,24 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
   }, [])
 
   /**
+   * 🚀 진행 상태 + 완료 수 일괄 업데이트 (setProcessing + incrementCompleted 통합)
+   * 매 파일마다 2번 상태 업데이트 → 1번으로 합침, 호출도 N개 간격으로 스로틀
+   */
+  const batchSetProgress = useCallback((
+    completedCount: number,
+    totalCount: number,
+    currentFileName?: string
+  ) => {
+    setBatchState(prev => ({
+      ...prev,
+      isProcessing: true,
+      progress: Math.round((completedCount / totalCount) * 100),
+      currentFileName,
+      completedFiles: completedCount,
+    }))
+  }, [])
+
+  /**
    * 등록 결과 저장 (요약 화면 표시용)
    * isProcessing을 false로 전환하되 모달은 유지
    */
@@ -670,6 +690,7 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
     reset,
     setProcessing,
     incrementCompleted,
+    batchSetProgress,
     setRegistrationResult,
     // 테이블 뷰 함수들
     updateTableRowMapping,
