@@ -192,13 +192,16 @@ export async function processAnnualReportFile(
 /**
  * AR 문서 등록 처리
  *
- * 중복 검사 → AR 파싱 → 문서 업로드를 일괄 처리
+ * AR 파일 추적 등록 → 문서 업로드 큐 추가
+ *
+ * 주의: 중복 검사는 호출자가 사전에 processAnnualReportFile()로 수행해야 함.
+ * registerArDocument는 등록 로직만 담당한다 (캐시 기반 중복 검사와의 이중 호출 방지).
  *
  * @param file - 업로드할 AR 파일
  * @param customerId - 대상 고객 ID
- * @param issueDate - AR 발행일 (YYYY-MM-DD 형식)
+ * @param issueDate - AR 발행일 (YYYY-MM-DD 형식, 현재 미사용이나 확장성 유지)
  * @param callbacks - 외부 함수 콜백 객체
- * @returns 처리 결과 (성공 여부, 중복 여부, 발행일 중복 여부)
+ * @returns 처리 결과 (항상 success: true)
  */
 export async function registerArDocument(
   file: File,
@@ -211,32 +214,12 @@ export async function registerArDocument(
     trackArFile: (fileName: string, customerId: string) => void;
   }
 ): Promise<{ success: boolean; isDuplicate: boolean; isDuplicateIssueDate?: boolean }> {
-  const { addLog, generateFileId, addToUploadQueue, trackArFile } = callbacks;
+  const { generateFileId, addToUploadQueue, trackArFile } = callbacks;
 
-  // 1. 문서 중복 검사 (해시 + 발행일)
-  const checkResult = await processAnnualReportFile(file, customerId, issueDate);
-
-  if (checkResult.isDuplicateDoc) {
-    // 해시 중복이면 경고 후 종료
-    addLog('warning', `중복 문서 감지: ${file.name}`, '이미 존재하는 파일이므로 업로드를 건너뜁니다.');
-    return { success: false, isDuplicate: true, isDuplicateIssueDate: false };
-  }
-
-  if (checkResult.isDuplicateIssueDate) {
-    // 발행일 중복이면 경고 후 종료
-    const formattedDate = formatIssueDateKorean(checkResult.duplicateIssueDate);
-    addLog(
-      'warning',
-      `${formattedDate} 발행일 보고서 이미 존재`,
-      `${file.name} 업로드를 건너뜁니다.`
-    );
-    return { success: false, isDuplicate: false, isDuplicateIssueDate: true };
-  }
-
-  // 2. AR 파일 추적 등록
+  // 1. AR 파일 추적 등록
   trackArFile(file.name, customerId);
 
-  // 3. 문서 업로드 큐에 추가
+  // 2. 문서 업로드 큐에 추가
   const uploadFile: UploadFile = {
     id: generateFileId(),
     file,

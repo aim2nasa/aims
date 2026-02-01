@@ -193,21 +193,14 @@ describe('registerArDocument', () => {
     }
 
     vi.clearAllMocks()
-    clearDuplicateCheckCache()
-    global.fetch = vi.fn()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  describe('정상 처리', () => {
-    it('중복이 아닌 문서는 성공적으로 등록해야 함', async () => {
-      vi.mocked(calculateFileHash).mockResolvedValue('hash123')
-      vi.mocked(global.fetch).mockResolvedValue({
-        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
-      } as Response)
-
+  describe('등록 처리 (중복 검사는 호출자 책임)', () => {
+    it('추적 등록 및 업로드 큐에 추가해야 함', async () => {
       const result = await registerArDocument(
         mockFile,
         mockCustomerId,
@@ -226,11 +219,6 @@ describe('registerArDocument', () => {
     })
 
     it('파일 ID를 생성하고 업로드 큐에 추가해야 함', async () => {
-      vi.mocked(calculateFileHash).mockResolvedValue('hash456')
-      vi.mocked(global.fetch).mockResolvedValue({
-        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
-      } as Response)
-
       await registerArDocument(mockFile, mockCustomerId, mockIssueDate, mockCallbacks)
 
       expect(mockCallbacks.generateFileId).toHaveBeenCalled()
@@ -245,48 +233,8 @@ describe('registerArDocument', () => {
     })
   })
 
-  describe('중복 문서 처리', () => {
-    it('중복 문서는 경고 후 종료해야 함', async () => {
-      vi.mocked(calculateFileHash).mockResolvedValue('hash-dup')
-      vi.mocked(global.fetch).mockResolvedValue({
-        json: () => Promise.resolve({
-          success: true,
-          hashes: ['hash-dup'],
-          total: 1
-        })
-      } as Response)
-
-      const result = await registerArDocument(
-        mockFile,
-        mockCustomerId,
-        mockIssueDate,
-        mockCallbacks
-      )
-
-      expect(result).toEqual({
-        success: false,
-        isDuplicate: true,
-        isDuplicateIssueDate: false
-      })
-
-      expect(mockCallbacks.addLog).toHaveBeenCalledWith(
-        'warning',
-        expect.stringContaining('중복 문서 감지'),
-        expect.any(String)
-      )
-
-      expect(mockCallbacks.addToUploadQueue).not.toHaveBeenCalled()
-      expect(mockCallbacks.trackArFile).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('전체 처리 흐름', () => {
-    it('정상 흐름: 중복 검사 → 추적 등록 → 큐 추가 순서로 실행해야 함', async () => {
-      vi.mocked(calculateFileHash).mockResolvedValue('hash789')
-      vi.mocked(global.fetch).mockResolvedValue({
-        json: () => Promise.resolve({ success: true, hashes: [], total: 0 })
-      } as Response)
-
+  describe('실행 순서', () => {
+    it('추적 등록 → 큐 추가 순서로 실행해야 함', async () => {
       const executionOrder: string[] = []
 
       mockCallbacks.trackArFile.mockImplementation(() => {

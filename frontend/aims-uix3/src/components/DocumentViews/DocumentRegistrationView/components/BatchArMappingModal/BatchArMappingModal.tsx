@@ -66,6 +66,8 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
   const hasErrors = result.errorCount > 0
   const totalCustomers = result.newCustomerCount + result.existingCustomerCount
 
+  const multiFileCount = result.successCount > totalCustomers ? result.successCount - totalCustomers : 0
+
   const statusIcon = hasErrors ? 'exclamationmark-circle-fill' : 'checkmark-circle-fill'
   const statusClass = hasErrors ? 'warning' : 'success'
   const statusTitle = hasErrors
@@ -74,7 +76,9 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
     ? 'AR 일괄 등록 완료'
     : 'AR 일괄 등록 완료'
 
-  const description = `${originalTotalFiles}개 파일 중 ${result.successCount}개 등록 완료`
+  const description = totalCustomers > 0
+    ? `${originalTotalFiles}개 파일 중 ${result.successCount}개가 ${totalCustomers}명 고객에게 등록됨`
+    : `${originalTotalFiles}개 파일 중 ${result.successCount}개 등록 완료`
 
   return (
     <div className="batch-ar-modal__result">
@@ -115,29 +119,54 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
         )}
       </div>
 
-      {/* 고객 통계 */}
-      <div className="batch-ar-modal__result-stats">
-        {result.newCustomerCount > 0 && (
-          <div className="batch-ar-modal__result-stat">
-            <span className="batch-ar-modal__result-stat-value">{result.newCustomerCount}명</span>
-            <span className="batch-ar-modal__result-stat-label">신규 고객</span>
+      {/* 결과 요약 (숫자 간 관계 설명) */}
+      <div className="batch-ar-modal__result-breakdown">
+        {result.successCount > 0 && (
+          <div className="batch-ar-modal__result-breakdown-row success">
+            <span className="batch-ar-modal__result-breakdown-icon">
+              <SFSymbol name="checkmark-circle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            </span>
+            <div className="batch-ar-modal__result-breakdown-content">
+              <span className="batch-ar-modal__result-breakdown-main">
+                {result.successCount}개 파일 → {totalCustomers}명 고객에게 등록
+              </span>
+              <span className="batch-ar-modal__result-breakdown-sub">
+                {result.newCustomerCount > 0 && `신규 ${result.newCustomerCount}명`}
+                {result.newCustomerCount > 0 && result.existingCustomerCount > 0 && ' · '}
+                {result.existingCustomerCount > 0 && `기존 ${result.existingCustomerCount}명`}
+                {multiFileCount > 0 && ` · 동일 고객 다중 등록 ${multiFileCount}건`}
+              </span>
+            </div>
           </div>
         )}
-        {result.existingCustomerCount > 0 && (
-          <div className="batch-ar-modal__result-stat">
-            <span className="batch-ar-modal__result-stat-value">{result.existingCustomerCount}명</span>
-            <span className="batch-ar-modal__result-stat-label">기존 고객</span>
+        {result.skippedCount > 0 && (
+          <div className="batch-ar-modal__result-breakdown-row skipped">
+            <span className="batch-ar-modal__result-breakdown-icon">
+              <SFSymbol name="minus-circle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            </span>
+            <div className="batch-ar-modal__result-breakdown-content">
+              <span className="batch-ar-modal__result-breakdown-main">
+                {result.skippedCount}개 건너뜀
+              </span>
+              <span className="batch-ar-modal__result-breakdown-sub">중복 문서 또는 중복 발행일</span>
+            </div>
           </div>
         )}
-        {totalCustomers > 0 && (
-          <div className="batch-ar-modal__result-stat">
-            <span className="batch-ar-modal__result-stat-value">{totalCustomers}명</span>
-            <span className="batch-ar-modal__result-stat-label">총 고객</span>
+        {result.errorCount > 0 && (
+          <div className="batch-ar-modal__result-breakdown-row error">
+            <span className="batch-ar-modal__result-breakdown-icon">
+              <SFSymbol name="xmark-circle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            </span>
+            <div className="batch-ar-modal__result-breakdown-content">
+              <span className="batch-ar-modal__result-breakdown-main">
+                {result.errorCount}개 실패
+              </span>
+              <span className="batch-ar-modal__result-breakdown-sub">상세 내용은 아래 목록 참조</span>
+            </div>
           </div>
         )}
-        <div className="batch-ar-modal__result-stat">
-          <span className="batch-ar-modal__result-stat-value">{formatElapsedTime(result.startedAt, result.completedAt)}</span>
-          <span className="batch-ar-modal__result-stat-label">소요 시간</span>
+        <div className="batch-ar-modal__result-breakdown-time">
+          소요 시간: {formatElapsedTime(result.startedAt, result.completedAt)}
         </div>
       </div>
 

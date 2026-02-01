@@ -1021,6 +1021,78 @@
   color: var(--color-text-tertiary);
 }
 
+/* 결과 요약 (숫자 간 관계 설명) */
+.batch-ar-modal__result-breakdown {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.batch-ar-modal__result-breakdown-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.batch-ar-modal__result-breakdown-row + .batch-ar-modal__result-breakdown-row {
+  border-top: 1px solid var(--color-border-light);
+}
+
+.batch-ar-modal__result-breakdown-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.batch-ar-modal__result-breakdown-row.success .batch-ar-modal__result-breakdown-icon {
+  color: var(--color-success);
+}
+
+.batch-ar-modal__result-breakdown-row.skipped .batch-ar-modal__result-breakdown-icon {
+  color: var(--color-warning);
+}
+
+.batch-ar-modal__result-breakdown-row.error .batch-ar-modal__result-breakdown-icon {
+  color: var(--color-error);
+}
+
+.batch-ar-modal__result-breakdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.batch-ar-modal__result-breakdown-main {
+  font-size: var(--font-size-caption-1, 12px);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.batch-ar-modal__result-breakdown-sub {
+  font-size: var(--font-size-caption-2, 11px);
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+}
+
+.batch-ar-modal__result-breakdown-time {
+  font-size: var(--font-size-caption-2, 11px);
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 2px;
+}
+
 /* 상세 목록 (건너뜀/실패/제외) */
 .batch-ar-modal__result-detail {
   width: 100%;
