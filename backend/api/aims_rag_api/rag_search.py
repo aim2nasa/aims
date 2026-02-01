@@ -46,6 +46,31 @@ log_version_info()
 
 # CORS는 nginx에서 처리하므로 여기서는 제거
 
+# 🛡️ Qdrant 컬렉션 자동 확인/생성 (서비스 시작 시)
+QDRANT_COLLECTION = "docembed"
+QDRANT_VECTOR_SIZE = 1536
+
+@app.on_event("startup")
+async def ensure_qdrant_collection():
+    """Qdrant 컬렉션이 없으면 자동 생성"""
+    try:
+        client = QdrantClient(host="localhost", port=6333, check_compatibility=False)
+        if not client.collection_exists(collection_name=QDRANT_COLLECTION):
+            client.create_collection(
+                collection_name=QDRANT_COLLECTION,
+                vectors_config=models.VectorParams(
+                    size=QDRANT_VECTOR_SIZE,
+                    distance=models.Distance.COSINE,
+                ),
+            )
+            print(f"⚠️ [Startup] Qdrant 컬렉션 '{QDRANT_COLLECTION}' 자동 생성됨")
+            send_error_log("WARNING", "Qdrant", f"컬렉션 '{QDRANT_COLLECTION}'이 없어 자동 생성했습니다. 임베딩 재생성이 필요할 수 있습니다.")
+        else:
+            info = client.get_collection(collection_name=QDRANT_COLLECTION)
+            print(f"✅ [Startup] Qdrant 컬렉션 '{QDRANT_COLLECTION}' 확인 완료 (포인트: {info.points_count}개)")
+    except Exception as e:
+        print(f"⚠️ [Startup] Qdrant 연결 실패: {e}")
+
 # 🔥 Phase 1: 하이브리드 검색 엔진 초기화
 query_analyzer = QueryAnalyzer()
 hybrid_engine = HybridSearchEngine()
