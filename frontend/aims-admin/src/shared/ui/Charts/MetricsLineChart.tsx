@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   LineChart,
   Line,
@@ -80,7 +81,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRangeHours = 24 }: MetricsLineChartProps) => {
+export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk = false, height = 200, timeRangeHours = 24 }: MetricsLineChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="metrics-line-chart metrics-line-chart--empty">
@@ -161,4 +162,4 @@ export const MetricsLineChart = ({ data, showDisk = false, height = 200, timeRan
       </ResponsiveContainer>
     </div>
   );
-};
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 import './Charts.css';
 
@@ -9,13 +10,13 @@ interface ResourceGaugeProps {
   color?: 'cpu' | 'memory' | 'disk' | 'disk-data';
 }
 
-export const ResourceGauge = ({
+export const ResourceGauge = memo(function ResourceGauge({
   label,
   value,
   total,
   used,
   color = 'cpu',
-}: ResourceGaugeProps) => {
+}: ResourceGaugeProps) {
   const data = [
     { name: 'used', value: value },
     { name: 'free', value: 100 - value },
@@ -66,4 +67,11 @@ export const ResourceGauge = ({
       </div>
     </div>
   );
-};
+}, (prev, next) => {
+  // 반올림 비교: 45.2→45.3은 둘 다 "45%"이므로 PieChart 재구성 불필요
+  return prev.label === next.label
+    && Math.round(prev.value) === Math.round(next.value)
+    && prev.total === next.total
+    && prev.used === next.used
+    && prev.color === next.color;
+});
