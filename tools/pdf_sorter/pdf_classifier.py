@@ -133,26 +133,34 @@ def extract_customer_name(text: str) -> str:
     """
     고객명 추출.
     "Customer" 또는 "Annual" 바로 윗줄 = 고객명 라인.
-    해당 줄에서 접미사 ("고객님을 위한" → "고객" → "고") 를 제거하면 고객명.
+    해당 줄에서 " 고객" 위치를 찾아 그 앞까지가 고객명.
     긴 법인명의 경우 접미사가 잘리거나 아예 없을 수 있다.
     "계약자" 필드가 있으면 보완하여 가장 긴(완전한) 이름을 반환한다.
     """
     candidates = []
 
-    # 방법 1: "Customer"/"Annual" 바로 윗줄에서 접미사 제거
+    # 방법 1: "Customer"/"Annual" 바로 윗줄에서 고객명 추출
     name_line = _find_customer_name_line(text)
     if name_line:
-        name = name_line
-        for suffix in [" 고객님을 위한", " 고객님을", " 고객님", " 고객", " 고"]:
-            if name.endswith(suffix):
-                name = name[: -len(suffix)].strip()
-                break
+        # " 고객" 위치로 이름 경계 식별 (모든 truncation 변형을 커버)
+        # "XXX 고객님을 위한", "XXX 고객님을 위", "XXX 고객님", "XXX 고객" 등
+        idx = name_line.find(" 고객")
+        if idx > 0:
+            name = name_line[:idx].strip()
+        elif name_line.endswith(" 고"):
+            # " 고객"의 "객"까지 잘린 경우: "XXX 고"
+            name = name_line[:-2].strip()
+        else:
+            # 접미사 없음 (매우 긴 이름) 또는 접미사만 있는 경우
+            name = name_line
+            if name.startswith("고객"):
+                name = ""  # 접미사 잔여물
         # 괄호 제거: "NAME(한글명)" → "NAME"
-        paren = name.find("(")
-        if paren > 0:
-            name = name[:paren].strip()
-        # "고객..."으로 시작하면 이름이 아닌 접미사 잔여물 → 무시
-        if name and len(name) >= 2 and not name.startswith("고객"):
+        if name:
+            paren = name.find("(")
+            if paren > 0:
+                name = name[:paren].strip()
+        if name and len(name) >= 2:
             candidates.append(name)
 
     # 방법 2: "계약자" 필드 (CRS 등에서 전체 이름 보장)
