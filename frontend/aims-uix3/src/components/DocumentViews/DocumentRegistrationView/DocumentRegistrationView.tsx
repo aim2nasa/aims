@@ -92,6 +92,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
   const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
 
+  // 🍎 AR/CRS 일괄등록 완료 후 네비게이션 버튼 표시
+  const [showBatchCompletionNav, setShowBatchCompletionNav] = useState(false)
+
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
 
@@ -549,6 +552,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🧹 새 업로드 시작 시 기존 로그 클리어
     setProcessingLogs([])
     logCounterRef.current = 0
+    setShowBatchCompletionNav(false)
 
     // 🔴 중복 처리 일괄 적용 설정 초기화
     duplicateApplyAllRef.current = null
@@ -2286,6 +2290,40 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
+        {/* 🍎 AR/CRS 일괄등록 완료 후 네비게이션 */}
+        {showBatchCompletionNav && (
+          <div className="view-status-button-container">
+            <button
+              type="button"
+              className="view-status-button"
+              onClick={() => {
+                setShowBatchCompletionNav(false)
+                setProcessingLogs([])
+                setUploadState({
+                  uploading: false,
+                  files: [],
+                  totalProgress: 0,
+                  completedCount: 0,
+                  errors: [],
+                  context: {
+                    identifierType: 'userId',
+                    identifierValue: localStorage.getItem('aims-current-user-id') || 'tester'
+                  }
+                })
+                setIsLogVisible(false)
+                onClose()
+                const url = new URL(window.location.href)
+                url.searchParams.set('view', 'documents-library')
+                window.history.pushState({}, '', url.toString())
+                window.dispatchEvent(new PopStateEvent('popstate'))
+              }}
+            >
+              <span className="icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} /></span>
+              전체 문서 보기
+            </button>
+          </div>
+        )}
+
       </div>
 
       {/* 🍎 도움말 모달 */}
@@ -2461,8 +2499,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         state={arBatch.batchState}
         tableState={arBatch.tableState}
         onClose={() => {
+          if (arBatch.batchState.registrationResult) {
+            setShowBatchCompletionNav(true)
+          } else {
+            addLog('warning', 'AR 일괄 등록 취소')
+          }
           arBatch.closeModal()
-          addLog('warning', 'AR 일괄 등록 취소')
         }}
         onUpdateRowMapping={arBatch.updateTableRowMapping}
         onUpdateRowNewCustomer={arBatch.updateTableRowNewCustomer}
@@ -2901,8 +2943,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         state={crBatch.batchState}
         tableState={crBatch.tableState}
         onClose={() => {
+          if (crBatch.batchState.registrationResult) {
+            setShowBatchCompletionNav(true)
+          } else {
+            addLog('warning', 'CRS 일괄 등록 취소')
+          }
           crBatch.closeModal()
-          addLog('warning', 'CRS 일괄 등록 취소')
         }}
         onUpdateRowMapping={crBatch.updateTableRowMapping}
         onUpdateRowNewCustomer={crBatch.updateTableRowNewCustomer}
