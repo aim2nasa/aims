@@ -24,6 +24,8 @@ export interface TooltipProps {
   placement?: 'top' | 'bottom' | 'left' | 'right'
   /** 툴팁 표시 지연 시간 (ms, 기본값: 300ms) */
   delay?: number
+  /** true이면 자식 텍스트가 잘린(truncated) 경우에만 툴팁 표시 */
+  showOnlyWhenTruncated?: boolean
 }
 
 /**
@@ -40,7 +42,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
   content,
   children,
   placement = 'top',
-  delay = 300
+  delay = 300,
+  showOnlyWhenTruncated = false
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
@@ -116,6 +119,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
    * 마우스 진입 시 지연 후 툴팁 표시
    */
   const handleMouseEnter = (e: React.MouseEvent) => {
+    if (showOnlyWhenTruncated) {
+      const el = triggerRef.current?.firstElementChild as HTMLElement | null
+      if (el && el.scrollWidth <= el.clientWidth) return
+    }
     setMousePos({ x: e.clientX, y: e.clientY })
     timeoutRef.current = window.setTimeout(() => {
       setIsVisible(true)

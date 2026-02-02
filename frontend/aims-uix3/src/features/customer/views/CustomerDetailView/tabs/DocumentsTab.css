@@ -388,6 +388,12 @@
   overflow: hidden;
 }
 
+.status-filename > .tooltip-trigger {
+  min-width: 0;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+
 .status-filename-text {
   flex-shrink: 1;
   overflow: hidden;

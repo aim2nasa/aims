@@ -1355,13 +1355,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       }
                     }}
                   >
-                    <span className="status-filename-text">
-                      {document.originalName ?? '이름 없는 문서'}
-                    </span>
-                    {/* 🍎 고객리뷰 파일만 displayName 표시 */}
-                    {document.document_type === 'customer_review' && document.displayName && (
-                      <span className="display-name-suffix">({document.displayName})</span>
-                    )}
+                    <Tooltip content={document.originalName ?? '이름 없는 문서'} showOnlyWhenTruncated>
+                      <span className="status-filename-text">
+                        {document.originalName ?? '이름 없는 문서'}
+                      </span>
+                    </Tooltip>
                     {/* 🍎 PDF 변환 배지 - DocumentStatusList.tsx와 동일 */}
                     {(() => {
                       // 파일명에서 확장자 추출하여 변환 대상 여부 판단
