@@ -122,8 +122,7 @@
     var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
     var(--size-column-width, 50px)              /* 크기 (동적) */
     var(--type-column-width, 42px)              /* 타입 (동적) */
-    var(--date-column-width, 68px)              /* 연결일 (동적) */
-    70px;                                       /* 작업 */
+    var(--date-column-width, 68px);              /* 연결일 (동적) */
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -182,11 +181,6 @@
   white-space: nowrap;
 }
 
-.customer-documents-list-header .header-actions {
-  justify-content: center;
-  text-align: center;
-}
-
 /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
 .header-filename {
   overflow: hidden;
@@ -208,14 +202,6 @@
 
 .header-date .header-icon-svg {
   color: var(--color-icon-green);  /* 날짜 - 초록색 */
-}
-
-.header-actions .header-icon-svg {
-  color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
-}
-
-[data-theme="dark"] .header-actions .header-icon-svg {
-  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
@@ -289,8 +275,7 @@
     var(--doctype-column-width, 65px)           /* 문서유형 (동적) */
     var(--size-column-width, 50px)              /* 크기 (동적) */
     var(--type-column-width, 42px)              /* 타입 (동적) */
-    var(--date-column-width, 68px)              /* 연결일 (동적) */
-    70px;                                       /* 작업 버튼 */
+    var(--date-column-width, 68px);              /* 연결일 (동적) */
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -491,70 +476,6 @@ html[data-theme="dark"] .pdf-conversion-badge--completed {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   font-size: 11px;
-}
-
-/* === 액션 버튼 === */
-.status-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.action-btn {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background-color: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color 0.15s ease-out,
-    color 0.15s ease-out,
-    transform 0.15s ease-out;
-}
-
-[data-theme="dark"] .action-btn {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.action-btn:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-light);
-  color: var(--color-primary-600);
-  transform: scale(1.1);
-}
-
-[data-theme="dark"] .action-btn:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-dark);
-  color: var(--color-primary-400);
-}
-
-.action-btn:active:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-light);
-  transform: scale(0.95);
-}
-
-[data-theme="dark"] .action-btn:active:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-.action-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* 연결 해제 버튼 */
-.action-btn--unlink:hover:not(:disabled) {
-  color: var(--color-icon-red);
-}
-
-[data-theme="dark"] .action-btn--unlink:hover:not(:disabled) {
-  color: var(--color-icon-red);
 }
 
 /* === 🍎 페이지네이션 === */
@@ -1141,8 +1062,7 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
     55px   /* 문서유형 */
     40px   /* 크기 */
     35px   /* 타입 */
-    60px   /* 연결일 */
-    36px;  /* 작업 버튼 */
+    60px;  /* 연결일 */
   gap: 3px;
 }
 
@@ -1154,8 +1074,7 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
     55px   /* 문서유형 */
     40px   /* 크기 */
     35px   /* 타입 */
-    60px   /* 연결일 */
-    36px;  /* 작업 버튼 */
+    60px;  /* 연결일 */
   gap: 3px;
 }
 

@@ -3,7 +3,7 @@
  * @since 2025-10-25
  *
  * 🍎 CenterPane DocumentLibraryView 디자인 100% 복제
- * - 칼럼: 파일 타입 아이콘, 파일명, 크기, 연결일, 작업 (문서보기, 연결해제)
+ * - 칼럼: 파일 타입 아이콘, 파일명, 크기, 연결일
  * - 헤더 아이콘 및 스타일 동일
  * - 페이지네이션, 정렬 기능 포함
  */
@@ -30,10 +30,6 @@ import DownloadHelper from '../../../../../utils/downloadHelper'
 import type { CustomerDocumentItem } from '@/services/DocumentService'
 import { DocumentService } from '@/services/DocumentService'
 import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
-import {
-  PreviewIcon,
-  LinkIcon
-} from '../../../../../components/DocumentViews/components/DocumentActionIcons'
 import { DocumentNotesModal } from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentNotesModal'
 import DocumentSummaryModal from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentSummaryModal'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
@@ -120,10 +116,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     isLoading,
     isEmpty,
     error,
-    unlinkingId,
     lastUpdated,
     refresh,
-    unlinkDocument,
     updateDocumentLocally,
     previewState,
     previewTarget,
@@ -624,40 +618,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       void openPreview(document)
     },
     [openPreview]
-  )
-
-  const handleUnlink = useCallback(
-    async (document: CustomerDocumentItem) => {
-      const confirmed = await confirmController.actions.openModal({
-        title: '문서 연결 해제',
-        message: `"${document.originalName ?? document._id}" 문서를 고객과의 연결에서 해제하시겠습니까?`,
-        confirmText: '해제',
-        cancelText: '취소',
-        confirmStyle: 'destructive',
-        showCancel: true,
-        iconType: 'warning'
-      })
-
-      if (!confirmed) return
-
-      await unlinkDocument(document._id)
-
-      // 🍎 AR 문서인 경우 Annual Report 탭 즉시 새로고침
-      if (document.isAnnualReport) {
-        onAnnualReportNeedRefresh?.()
-      }
-      // 🍎 Customer Review 문서인 경우 고객리뷰 탭 즉시 새로고침
-      if (document.document_type === 'customer_review') {
-        onCustomerReviewNeedRefresh?.()
-      }
-
-      onRefresh?.()
-      // 🍎 문서 라이브러리 즉시 새로고침
-      if (onDocumentLibraryRefresh) {
-        await onDocumentLibraryRefresh()
-      }
-    },
-    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh, onAnnualReportNeedRefresh, onCustomerReviewNeedRefresh]
   )
 
   const handleDownload = useCallback(async () => {
@@ -1252,13 +1212,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 )}
                 <div {...getResizeHandleProps('date')} />
               </div>
-              <div className="header-actions">
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
-                  <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
-                </svg>
-                <span>작업</span>
-              </div>
             </div>
 
             {/* 🍎 문서 리스트 - CenterPane과 동일한 구조 */}
@@ -1478,42 +1431,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     {formattedDate}
                   </div>
 
-                  {/* 액션 버튼 */}
-                  <div className="status-actions">
-                    <Tooltip content="문서 보기">
-                      <button
-                        type="button"
-                        className="action-btn action-btn--detail"
-                        onClick={() => handlePreview(document)}
-                        aria-label="문서 보기"
-                      >
-                        <PreviewIcon />
-                      </button>
-                    </Tooltip>
-                    {/* 🍎 연결 해제 버튼 (DEV 모드에서만 표시) */}
-                    {isDevMode && (
-                      <Tooltip content="연결된 문서는 해제할 수 없습니다">
-                        <button
-                          type="button"
-                          className="action-btn action-btn--unlink"
-                          onClick={() => void handleUnlink(document)}
-                          aria-label="연결 해제"
-                          disabled={true}
-                        >
-                          {unlinkingId === document._id ? (
-                            <SFSymbol
-                              name="arrow.clockwise"
-                              animation={SFSymbolAnimation.ROTATE}
-                              size={SFSymbolSize.CAPTION_1}
-                              weight={SFSymbolWeight.REGULAR}
-                            />
-                          ) : (
-                            <LinkIcon />
-                          )}
-                        </button>
-                      </Tooltip>
-                    )}
-                  </div>
                 </div>
               )
             })}
