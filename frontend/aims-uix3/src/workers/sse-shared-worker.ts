@@ -399,36 +399,54 @@ function handleSubscribe(port: MessagePort, payload: SubscribePayload) {
     setupEventListeners(streamKey, conn)
     connections.set(streamKey, conn)
   } else {
-    // 기존 연결에 구독자 추가
-    log(`기존 연결에 구독자 추가: ${streamKey} (총 ${conn.subscribers.size + 1}명)`)
-    conn.subscribers.add(port)
+    // 🔧 EventSource가 닫힌 상태 확인 (구독자 0명일 때 오류로 닫힌 경우)
+    // 시나리오: 페이지 이동(unsubscribe) → 서버 재시작(onerror, subscribers=0이라 재시도 안 함)
+    //          → 페이지 복귀(subscribe) → dead EventSource 감지 → 재연결
+    if (conn.eventSource.readyState === EventSource.CLOSED) {
+      log(`기존 연결 EventSource 닫힘, 재연결: ${streamKey}`)
+      conn.subscribers.add(port)
 
-    // 🔧 근본 해결 Step 1: 버퍼된 이벤트 전달 (최대 1분 이내)
-    // - 페이지 이동 중 놓친 이벤트를 새 구독자에게 즉시 전달
-    const now = Date.now()
-    const validEvents = conn.eventBuffer.filter(e => now - e.timestamp < EVENT_BUFFER_MAX_AGE_MS)
+      // 대기 중인 재시도 타이머 취소 (이중 재연결 방지)
+      if (conn.retryTimeout) {
+        clearTimeout(conn.retryTimeout)
+        conn.retryTimeout = null
+      }
+      conn.retryCount = 0
+      conn.eventBuffer = [] // 서버 재시작 후 오래된 버퍼 무효화
+      reconnect(streamKey, conn)
+      // 서버 연결 성공 시 'connected' 이벤트가 setupEventListeners에서 자동 브로드캐스트
+    } else {
+      // 기존 연결에 구독자 추가
+      log(`기존 연결에 구독자 추가: ${streamKey} (총 ${conn.subscribers.size + 1}명)`)
+      conn.subscribers.add(port)
 
-    if (validEvents.length > 0) {
-      log(`📦 버퍼된 이벤트 전달: ${streamKey}, ${validEvents.length}개`)
-      validEvents.forEach(bufferedEvent => {
-        sendToPort(port, 'event', {
-          streamKey,
-          eventType: bufferedEvent.eventType,
-          data: bufferedEvent.data
+      // 🔧 근본 해결 Step 1: 버퍼된 이벤트 전달 (최대 1분 이내)
+      // - 페이지 이동 중 놓친 이벤트를 새 구독자에게 즉시 전달
+      const now = Date.now()
+      const validEvents = conn.eventBuffer.filter(e => now - e.timestamp < EVENT_BUFFER_MAX_AGE_MS)
+
+      if (validEvents.length > 0) {
+        log(`📦 버퍼된 이벤트 전달: ${streamKey}, ${validEvents.length}개`)
+        validEvents.forEach(bufferedEvent => {
+          sendToPort(port, 'event', {
+            streamKey,
+            eventType: bufferedEvent.eventType,
+            data: bufferedEvent.data
+          })
         })
-      })
-      // 버퍼 클리어 (전달 완료)
-      conn.eventBuffer = []
-    }
+        // 버퍼 클리어 (전달 완료)
+        conn.eventBuffer = []
+      }
 
-    // 🔧 근본 해결 Step 2: connected 이벤트 전송
-    // - 새 구독자가 handleConnect에서 DB 최신 상태 조회 트리거
-    // - 버퍼된 이벤트가 없어도 DB 조회로 최신 상태 보장 (Single Source of Truth)
-    sendToPort(port, 'event', {
-      streamKey,
-      eventType: 'connected',
-      data: { message: 'Joined existing connection', bufferedEventsDelivered: validEvents.length, timestamp: Date.now() }
-    })
+      // 🔧 근본 해결 Step 2: connected 이벤트 전송
+      // - 새 구독자가 handleConnect에서 DB 최신 상태 조회 트리거
+      // - 버퍼된 이벤트가 없어도 DB 조회로 최신 상태 보장 (Single Source of Truth)
+      sendToPort(port, 'event', {
+        streamKey,
+        eventType: 'connected',
+        data: { message: 'Joined existing connection', bufferedEventsDelivered: validEvents.length, timestamp: Date.now() }
+      })
+    }
   }
 
   sendToPort(port, 'subscribed', { streamKey })
