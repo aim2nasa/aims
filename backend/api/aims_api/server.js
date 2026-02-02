@@ -12270,6 +12270,26 @@ app.post("/api/webhooks/ar-status-change", async (req, res) => {
       timestamp: utcNowISO()
     });
 
+    // SSE 알림 전송: 전체 문서 보기 Status Bar용 (파싱 진행률 실시간 반영)
+    if (file_id) {
+      try {
+        const fileDoc = await db.collection(COLLECTIONS.FILES).findOne(
+          { _id: new ObjectId(file_id) },
+          { projection: { ownerId: 1 } }
+        );
+        if (fileDoc?.ownerId) {
+          notifyDocumentListSubscribers(fileDoc.ownerId, 'document-list-change', {
+            type: 'ar-parsing-update',
+            documentId: file_id,
+            status,
+            timestamp: utcNowISO()
+          });
+        }
+      } catch (e) {
+        console.warn(`[AR 웹훅] document-list-change 알림 실패 (무시):`, e.message);
+      }
+    }
+
     res.json({ success: true, message: 'SSE notification sent' });
   } catch (error) {
     console.error("❌ [AR 웹훅] 실패:", error.message);
@@ -12310,6 +12330,26 @@ app.post("/api/webhooks/cr-status-change", async (req, res) => {
       documentName: 'Customer Review',
       timestamp: utcNowISO()
     });
+
+    // SSE 알림 전송: 전체 문서 보기 Status Bar용 (파싱 진행률 실시간 반영)
+    if (file_id) {
+      try {
+        const fileDoc = await db.collection(COLLECTIONS.FILES).findOne(
+          { _id: new ObjectId(file_id) },
+          { projection: { ownerId: 1 } }
+        );
+        if (fileDoc?.ownerId) {
+          notifyDocumentListSubscribers(fileDoc.ownerId, 'document-list-change', {
+            type: 'cr-parsing-update',
+            documentId: file_id,
+            status,
+            timestamp: utcNowISO()
+          });
+        }
+      } catch (e) {
+        console.warn(`[CR 웹훅] document-list-change 알림 실패 (무시):`, e.message);
+      }
+    }
 
     res.json({ success: true, message: 'SSE notification sent' });
   } catch (error) {
