@@ -2605,6 +2605,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 🚀 Main Loop: 모든 캐시가 워밍된 상태 → O(1) 룩업 + 큐 추가만
           // ═══════════════════════════════════════════════════
           const mainLoopStart = performance.now()
+          uploadService.setBatchUploadActive(true)
 
           // 🚀 배치 상태 업데이트 (O(n²) → O(n))
           // 매 파일마다 setUploadState([...prev.files, newItem]) → 배열 전체 복사 = O(n²)
@@ -2691,6 +2692,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           let loopIdx = 0
 
+          try {
           for (const row of filesToRegister) {
             const arFile = row.fileInfo
             const mapping = getEffectiveMapping(row, groups)
@@ -2821,6 +2823,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 잔여 업로드 배치 플러시 (루프 종료 후 남은 파일)
           await flushUploadBatch()
 
+          } finally {
+            uploadService.setBatchUploadActive(false)
+          }
+
           // 최종 진행률 보장
           arBatch.batchSetProgress(completedCount, filesToRegister.length)
 
@@ -2938,6 +2944,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           }
 
           crBatch.setProcessing(true, 0)
+          uploadService.setBatchUploadActive(true)
 
           let completedCount = 0
           let successCount = 0
@@ -3014,6 +3021,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             crBatch.setProcessing(true, Math.round((completedCount / filesToRegister.length) * 100))
           }
 
+          try {
           for (const row of filesToRegister) {
             const crFile = row.fileInfo
             const mapping = getCrEffectiveMapping(row, groups)
@@ -3151,6 +3159,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           // 잔여 업로드 배치 플러시
           await flushCrsUploadBatch()
+
+          } finally {
+            uploadService.setBatchUploadActive(false)
+          }
 
           // 결과 요약
           addLog('success', `CRS 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)

@@ -319,9 +319,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // Phase 4: 업로드 중 뷰 전환 시 확인
     if (isViewChange && uploadService.isUploading()) {
       const counts = uploadService.getUploadCounts()
-      const confirmed = window.confirm(
-        `파일 업로드가 진행 중입니다 (${counts.total}개 남음).\n페이지를 이동하면 진행 상황을 확인할 수 없습니다.\n\n계속 이동하시겠습니까?`
-      )
+      const message = counts.total > 0
+        ? `파일 업로드가 진행 중입니다 (${counts.total}개 남음).\n페이지를 이동하면 업로드가 중단될 수 있습니다.\n\n계속 이동하시겠습니까?`
+        : `일괄 등록이 진행 중입니다.\n페이지를 이동하면 등록이 중단될 수 있습니다.\n\n계속 이동하시겠습니까?`
+      const confirmed = window.confirm(message)
       if (!confirmed) return
     }
 

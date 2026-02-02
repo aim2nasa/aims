@@ -44,6 +44,7 @@ export class UploadService {
   private uploadQueue: UploadFile[] = []
   private pendingResolvers = new Map<string, (result: UploadResult) => void>()
   private isProcessing = false
+  private batchUploadActive = false
 
   // Map<owner, callback>: owner별로 하나의 콜백만 유지 (HMR/StrictMode 중복 등록 방지)
   private progressCallbacks = new Map<string, ProgressCallback>()
@@ -589,11 +590,20 @@ export class UploadService {
   }
 
   /**
+   * 배치 업로드(AR/CRS 직접 업로드) 활성 상태 설정
+   * BatchUploadApi를 직접 사용하는 경로에서 호출
+   */
+  setBatchUploadActive(active: boolean): void {
+    this.batchUploadActive = active
+  }
+
+  /**
    * 업로드 진행 중 여부 확인
    * Phase 4: 페이지 이탈 차단에서 사용
+   * - uploadService 큐 업로드 + 배치 직접 업로드 모두 포함
    */
   isUploading(): boolean {
-    return this.activeUploads.size > 0 || this.uploadQueue.length > 0
+    return this.activeUploads.size > 0 || this.uploadQueue.length > 0 || this.batchUploadActive
   }
 
   /**
