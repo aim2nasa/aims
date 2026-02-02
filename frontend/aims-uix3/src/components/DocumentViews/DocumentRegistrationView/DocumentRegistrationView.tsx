@@ -2945,6 +2945,69 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 새 고객 생성을 위한 캐시 (같은 이름의 새 고객은 한 번만 생성)
           const newCustomerCache = new Map<string, string>() // name -> customerId
 
+          // 🚀 직접 업로드 배치 (인메모리 큐 대신 직접 HTTP 업로드로 파일 손실 방지)
+          const CRS_UPLOAD_CONCURRENCY = 10
+          const crsUploadBatch: Array<{
+            file: File
+            customerId: string
+            fileId: string
+            customerName: string
+          }> = []
+
+          const flushCrsUploadBatch = async () => {
+            if (crsUploadBatch.length === 0) return
+            const batch = crsUploadBatch.splice(0)
+
+            const results = await Promise.all(batch.map(async (item) => {
+              try {
+                const result = await BatchUploadApi.uploadFile(item.file, item.customerId)
+                return { ...result, item }
+              } catch (error) {
+                return { success: false as const, fileName: item.file.name, customerId: item.customerId, error: String(error), item }
+              }
+            }))
+
+            for (const r of results) {
+              if (r.success) {
+                successCount++
+                setUploadState(prev => ({
+                  ...prev,
+                  files: [...prev.files, {
+                    id: r.item.fileId,
+                    file: r.item.file,
+                    fileSize: r.item.file.size,
+                    status: 'completed' as const,
+                    progress: 100,
+                    customerId: r.item.customerId,
+                  }]
+                }))
+                addLog('success', `[${r.item.customerName}] 업로드 완료: ${r.item.file.name}`)
+              } else {
+                errorCount++
+                const errorMsg = r.error || '업로드 실패'
+                failedFiles.push({ fileName: r.item.file.name, error: errorMsg })
+                setUploadState(prev => ({
+                  ...prev,
+                  files: [...prev.files, {
+                    id: r.item.fileId,
+                    file: r.item.file,
+                    fileSize: r.item.file.size,
+                    status: 'error' as const,
+                    progress: 0,
+                    error: errorMsg,
+                    customerId: r.item.customerId,
+                  }]
+                }))
+                addLog('error', `[${r.item.customerName}] 업로드 실패: ${r.item.file.name}`, errorMsg)
+              }
+              completedCount++
+              crBatch.incrementCompleted()
+            }
+
+            // 진행률 업데이트
+            crBatch.setProcessing(true, Math.round((completedCount / filesToRegister.length) * 100))
+          }
+
           for (const row of filesToRegister) {
             const crFile = row.fileInfo
             const mapping = getCrEffectiveMapping(row, groups)
@@ -3050,16 +3113,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 continue
               }
 
-              // CRS 문서 업로드 및 등록
-              const uploadFile: UploadFile = {
-                id: crFile.fileId,
-                file: crFile.file,
-                fileSize: crFile.file.size,
-                status: 'pending' as const,
-                progress: 0,
-                customerId,
-              }
-
               // 파일 추적 등록
               crFilenamesRef.current.add(crFile.file.name)
               crCustomerMappingRef.current.set(crFile.file.name, customerId)
@@ -3068,25 +3121,30 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }
               customerNameMappingRef.current.set(customerId, customerName!)
 
-              // 업로드 큐에 추가
-              uploadService.queueFiles([uploadFile])
-              setUploadState(prev => ({
-                ...prev,
-                files: [...prev.files, uploadFile]
-              }))
+              // 업로드 배치에 추가 (인메모리 큐 대신 직접 HTTP 업로드)
+              crsUploadBatch.push({
+                file: crFile.file,
+                customerId,
+                fileId: crFile.fileId,
+                customerName: customerName!,
+              })
 
-              successCount++
-              addLog('success', `[${customerName}] CRS 등록 완료: ${crFile.file.name}`)
+              // 배치가 차면 직접 업로드 (10개씩 병렬)
+              if (crsUploadBatch.length >= CRS_UPLOAD_CONCURRENCY) {
+                await flushCrsUploadBatch()
+              }
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : String(error)
               addLog('error', `[${customerName}] 등록 실패: ${crFile.file.name}`, errorMsg)
               errorCount++
+              completedCount++
+              crBatch.incrementCompleted()
               failedFiles.push({ fileName: crFile.file.name, error: `등록 중 오류: ${errorMsg}` })
             }
-
-            completedCount++
-            crBatch.incrementCompleted()
           }
+
+          // 잔여 업로드 배치 플러시
+          await flushCrsUploadBatch()
 
           // 결과 요약
           addLog('success', `CRS 일괄 등록 완료`, `성공: ${successCount}건, 건너뜀: ${skippedCount}건, 실패: ${errorCount}건`)
