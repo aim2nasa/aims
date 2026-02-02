@@ -67,7 +67,7 @@ const SORT_ICON_WIDTH = 14
 
 // 🍎 컬럼 리사이즈 설정
 const DOCUMENTS_COLUMNS: ColumnConfig[] = [
-  { id: 'filename', minWidth: 120, maxWidth: 500 },
+  { id: 'filename', minWidth: 120, maxWidth: 1200 },
   { id: 'docType', minWidth: 50, maxWidth: 120 },
   { id: 'size', minWidth: 40, maxWidth: 115 },
   { id: 'type', minWidth: 35, maxWidth: 80 },
