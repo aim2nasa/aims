@@ -136,6 +136,97 @@ async def scan_pending_ar_documents(log_always: bool = False):
         return (0, 0, 0)
 
 
+async def scan_and_process_pending_cr_documents(log_always: bool = False):
+    """
+    CRS 파싱이 필요한 문서를 찾아 즉시 파싱 처리
+
+    AR과 달리 큐 없이 직접 처리 (OpenAI 불필요, regex/pdfplumber만 사용)
+
+    조건: is_customer_review=true AND overallStatus=completed
+          AND cr_parsing_status != completed AND customerId 존재
+
+    Args:
+        log_always: True면 0건이어도 로그 출력 (heartbeat용)
+
+    Returns:
+        tuple: (processed_count, found_count, skipped_count)
+    """
+    try:
+        from bson import ObjectId
+        from routes.cr_background import parse_single_cr_document
+
+        pending_docs = list(db["files"].find({
+            "is_customer_review": True,
+            "overallStatus": "completed",
+            "cr_parsing_status": {"$nin": ["completed", "processing"]},
+            "customerId": {"$exists": True, "$ne": None}
+        }).limit(10))
+
+        found_count = len(pending_docs)
+        processed_count = 0
+        skipped_count = 0
+
+        for doc in pending_docs:
+            file_id = doc["_id"]
+            customer_id = doc.get("customerId")
+            filename = doc.get("upload", {}).get("originalName", "unknown")
+
+            if not customer_id:
+                skipped_count += 1
+                continue
+
+            # 상태를 processing으로 업데이트
+            db["files"].update_one(
+                {"_id": file_id},
+                {"$set": {"cr_parsing_status": "processing"}}
+            )
+
+            logger.info(f"📄 CRS 파싱 시작: {filename} (file_id={file_id})")
+
+            try:
+                result = await asyncio.to_thread(
+                    parse_single_cr_document,
+                    db,
+                    str(file_id),
+                    str(customer_id)
+                )
+
+                if result and result.get("success"):
+                    if result.get("skipped"):
+                        skipped_count += 1
+                        logger.info(f"⏭️ CRS 이미 파싱됨: {filename}")
+                    else:
+                        processed_count += 1
+                        logger.info(f"✅ CRS 파싱 완료: {filename}")
+                else:
+                    skipped_count += 1
+                    error_msg = result.get("error", "Unknown error") if result else "Parsing failed"
+                    logger.warning(f"⚠️ CRS 파싱 실패: {filename}, error={error_msg}")
+
+            except Exception as parse_error:
+                skipped_count += 1
+                logger.error(f"❌ CRS 파싱 예외: {filename}, error={parse_error}", exc_info=True)
+                db["files"].update_one(
+                    {"_id": file_id},
+                    {"$set": {
+                        "cr_parsing_status": "error",
+                        "cr_parsing_error": str(parse_error)
+                    }}
+                )
+
+        if found_count > 0:
+            logger.info(f"🔍 CRS 스캔: 발견={found_count}, 처리={processed_count}, 스킵={skipped_count}")
+        elif log_always:
+            logger.info(f"💓 CRS 워커 정상 (파싱 대기 파일 없음)")
+
+        return (processed_count, found_count, skipped_count)
+
+    except Exception as e:
+        logger.error(f"❌ CRS 스캔 오류: {e}", exc_info=True)
+        send_error_log("annual_report_api", f"CRS 스캔 오류: {e}", e)
+        return (0, 0, 0)
+
+
 async def queue_worker():
     """큐 기반 AR 파싱 워커 (1초마다 폴링, 3초마다 스캔)"""
     global background_task_running
@@ -146,7 +237,7 @@ async def queue_worker():
     await asyncio.sleep(3)
 
     background_task_running = True
-    logger.info("🔄 큐 기반 AR 파싱 워커 시작 (3초마다 pending 스캔)")
+    logger.info("🔄 AR+CRS 파싱 워커 시작 (3초마다 pending 스캔)")
 
     # 시작 시 좀비 작업 복구 (5분 타임아웃)
     reset_count = await asyncio.to_thread(queue_manager.reset_stale_processing_tasks, 300)
@@ -158,6 +249,11 @@ async def queue_worker():
     if enqueued > 0:
         logger.info(f"📥 시작 시 {enqueued}건 AR 문서 큐 등록")
 
+    # 시작 시 pending CRS 문서 스캔 및 처리
+    cr_processed, cr_found, cr_skipped = await scan_and_process_pending_cr_documents(log_always=True)
+    if cr_processed > 0:
+        logger.info(f"📥 시작 시 {cr_processed}건 CRS 문서 파싱 완료")
+
     last_scan_time = time.time()
     last_heartbeat_time = time.time()
     SCAN_INTERVAL = 3  # 3초마다 스캔 (기존 5초에서 단축)
@@ -167,11 +263,13 @@ async def queue_worker():
         try:
             current_time = time.time()
 
-            # 3초마다 pending AR 문서 스캔
+            # 3초마다 pending AR + CRS 문서 스캔
             if current_time - last_scan_time >= SCAN_INTERVAL:
                 # 30초마다는 heartbeat 로그 포함
                 log_heartbeat = (current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL)
                 await scan_pending_ar_documents(log_always=log_heartbeat)
+                # CRS 스캔 및 즉시 처리 (큐 불필요 - OpenAI 미사용)
+                await scan_and_process_pending_cr_documents(log_always=log_heartbeat)
                 last_scan_time = current_time
                 if log_heartbeat:
                     last_heartbeat_time = current_time

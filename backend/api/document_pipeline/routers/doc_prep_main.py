@@ -594,6 +594,7 @@ async def _detect_and_process_customer_review(
         update_fields = {
             "is_customer_review": True,
             "document_type": "customer_review",
+            "cr_parsing_status": "pending",  # 백그라운드 파싱 대기
             "cr_metadata": {
                 "contractor_name": customer_name,
                 "product_name": product_name,
