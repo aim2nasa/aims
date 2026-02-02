@@ -63,7 +63,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
     AR 파싱이 필요한 문서를 찾아 큐에 추가
 
     🔴 100% 신뢰 설계:
-    - 조건: is_annual_report=true AND overallStatus=completed AND ar_parsing_status != completed
+    - 조건: is_annual_report=true AND status=completed AND ar_parsing_status != completed
     - Frontend trigger 실패해도 Backend가 반드시 처리
     - customerId가 없으면 스킵 (고객 연결 필요)
 
@@ -78,12 +78,12 @@ async def scan_pending_ar_documents(log_always: bool = False):
 
         # 🔴 단순하고 확실한 조건:
         # 1. is_annual_report: true - AR로 식별됨
-        # 2. overallStatus: completed - 문서 처리 완료
+        # 2. status: completed - 파이프라인 처리 완료 (overallStatus는 캐시값이라 갱신 지연 가능)
         # 3. ar_parsing_status != completed - 아직 파싱 안됨
         # 4. customerId 존재 - 고객 연결됨
         pending_docs = list(db["files"].find({
             "is_annual_report": True,
-            "overallStatus": "completed",
+            "status": "completed",
             "ar_parsing_status": {"$ne": "completed"},
             "customerId": {"$exists": True, "$ne": None}
         }).limit(10))
@@ -142,7 +142,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 
     AR과 달리 큐 없이 직접 처리 (OpenAI 불필요, regex/pdfplumber만 사용)
 
-    조건: is_customer_review=true AND overallStatus=completed
+    조건: is_customer_review=true AND status=completed
           AND cr_parsing_status != completed AND customerId 존재
 
     Args:
@@ -157,7 +157,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 
         pending_docs = list(db["files"].find({
             "is_customer_review": True,
-            "overallStatus": "completed",
+            "status": "completed",  # overallStatus는 캐시값이라 갱신 지연 가능 → 파이프라인 권위값 status 사용
             "cr_parsing_status": {"$nin": ["completed", "processing"]},
             "customerId": {"$exists": True, "$ne": None}
         }).limit(10))
