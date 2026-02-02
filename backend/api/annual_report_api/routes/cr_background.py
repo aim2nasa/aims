@@ -165,6 +165,28 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             logger.info(f"📄 [CR Parsing] 메타데이터 재추출 필요: {file_path}")
             metadata = extract_cr_metadata_from_first_page(file_path)
 
+        # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+        original_name = doc.get("upload", {}).get("originalName", "")
+        from utils.filename_parser import parse_crs_filename
+        fn_meta = parse_crs_filename(original_name)
+        if fn_meta:
+            if fn_meta.get("issue_date"):
+                metadata["issue_date"] = fn_meta["issue_date"]
+            if fn_meta.get("product_name"):
+                metadata["product_name"] = fn_meta["product_name"]
+            if fn_meta.get("policy_number"):
+                metadata["policy_number"] = fn_meta["policy_number"]
+            if fn_meta.get("customer_name"):
+                metadata["contractor_name"] = fn_meta["customer_name"]
+            logger.info(f"📎 [CR Parsing] 파일명 메타데이터 적용: {fn_meta}")
+
+            # 파일명의 policy_number를 contract_info에도 반영
+            if fn_meta.get("policy_number"):
+                if "contract_info" not in result:
+                    result["contract_info"] = {}
+                if not result["contract_info"].get("policy_number"):
+                    result["contract_info"]["policy_number"] = fn_meta["policy_number"]
+
         # 5. MongoDB 저장
         logger.info(f"💾 [CR Parsing] DB 저장 중...")
 

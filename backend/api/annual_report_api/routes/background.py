@@ -152,6 +152,17 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         logger.info(f"💾 [Queue Parsing] DB 저장 중...")
         metadata = doc.get("ar_metadata", {})
 
+        # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+        original_name = doc.get("upload", {}).get("originalName", "")
+        from utils.filename_parser import parse_ar_filename
+        fn_meta = parse_ar_filename(original_name)
+        if fn_meta:
+            if fn_meta.get("issue_date"):
+                metadata["issue_date"] = fn_meta["issue_date"]
+            if fn_meta.get("customer_name"):
+                metadata["customer_name"] = fn_meta["customer_name"]
+            logger.info(f"📎 [Queue Parsing] 파일명 메타데이터 적용: {fn_meta}")
+
         # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
         parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
 
@@ -363,6 +374,17 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # 7. MongoDB 저장
                 logger.info(f"💾 [BG Parsing] DB 저장 중...")
                 metadata = doc.get("ar_metadata", {})
+
+                # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+                original_name = doc.get("upload", {}).get("originalName", "")
+                from utils.filename_parser import parse_ar_filename
+                fn_meta = parse_ar_filename(original_name)
+                if fn_meta:
+                    if fn_meta.get("issue_date"):
+                        metadata["issue_date"] = fn_meta["issue_date"]
+                    if fn_meta.get("customer_name"):
+                        metadata["customer_name"] = fn_meta["customer_name"]
+                    logger.info(f"📎 [BG Parsing] 파일명 메타데이터 적용: {fn_meta}")
 
                 # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
                 parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
