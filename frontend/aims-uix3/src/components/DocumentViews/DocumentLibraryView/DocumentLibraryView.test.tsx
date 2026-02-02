@@ -310,6 +310,14 @@ vi.mock('@/shared/store/useUserStore', () => ({
   }),
 }))
 
+vi.mock('@/hooks/useDocumentStatistics', () => ({
+  useDocumentStatistics: () => ({
+    statistics: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  }),
+}))
+
 describe('DocumentLibraryView - 고객 연결 버튼 테스트', () => {
   beforeEach(() => {
     vi.clearAllMocks()

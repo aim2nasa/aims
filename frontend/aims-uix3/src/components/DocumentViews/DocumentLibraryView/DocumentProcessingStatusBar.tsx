@@ -6,7 +6,6 @@
 
 import { useMemo } from 'react'
 import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistics'
-import { Tooltip } from '@/shared/ui'
 import './DocumentProcessingStatusBar.css'
 
 interface DocumentProcessingStatusBarProps {
@@ -60,12 +59,8 @@ export function DocumentProcessingStatusBar({ statistics, isLoading }: DocumentP
 
   const { total, completed, processing, error, pending, completed_with_skip } = statistics
   const allCompleted = completed + completed_with_skip
-
-  // 세그먼트 비율 계산
-  const completedPct = total > 0 ? (allCompleted / total) * 100 : 0
-  const processingPct = total > 0 ? (processing / total) * 100 : 0
-  const errorPct = total > 0 ? (error / total) * 100 : 0
-  const pendingPct = total > 0 ? (pending / total) * 100 : 0
+  const completedPct = total > 0 ? Math.round((allCompleted / total) * 100) : 0
+  const isActive = completedPct < 100
 
   const hasAr = arParsing.total > 0
   const hasCrs = crsParsing.total > 0
@@ -74,67 +69,27 @@ export function DocumentProcessingStatusBar({ statistics, isLoading }: DocumentP
 
   return (
     <div className={`processing-status-bar ${isVisible ? 'processing-status-bar--visible' : ''}`}>
-      {/* 좌측: 파이프라인 상태 세그먼트 바 */}
+      {/* 좌측: 파이프라인 진행률 (채우기형) */}
       <div className="psb-pipeline">
-        <div className="psb-pipeline-bar">
-          {completedPct > 0 && (
-            <Tooltip content={`완료 ${fmt(allCompleted)}건`}>
-              <div
-                className="psb-segment psb-segment--completed"
-                style={{ width: `${completedPct}%` }}
-              />
-            </Tooltip>
-          )}
-          {processingPct > 0 && (
-            <Tooltip content={`처리중 ${fmt(processing)}건`}>
-              <div
-                className="psb-segment psb-segment--processing"
-                style={{ width: `${processingPct}%` }}
-              />
-            </Tooltip>
-          )}
-          {errorPct > 0 && (
-            <Tooltip content={`에러 ${fmt(error)}건`}>
-              <div
-                className="psb-segment psb-segment--error"
-                style={{ width: `${errorPct}%` }}
-              />
-            </Tooltip>
-          )}
-          {pendingPct > 0 && (
-            <Tooltip content={`대기 ${fmt(pending)}건`}>
-              <div
-                className="psb-segment psb-segment--pending"
-                style={{ width: `${pendingPct}%` }}
-              />
-            </Tooltip>
-          )}
-        </div>
-
-        {/* 카운터 라벨 */}
-        <div className="psb-labels">
-          <span className="psb-label psb-label--completed">
-            <span className="psb-dot psb-dot--completed" />
-            {fmt(allCompleted)} 완료
+        <div className="psb-pipeline-header">
+          <span className="psb-pipeline-text">
+            {fmt(allCompleted)}/{fmt(total)} 처리완료 ({completedPct}%)
           </span>
           {processing > 0 && (
-            <span className="psb-label psb-label--processing">
-              <span className="psb-dot psb-dot--processing" />
-              {fmt(processing)} 처리중
-            </span>
-          )}
-          {error > 0 && (
-            <span className="psb-label psb-label--error">
-              <span className="psb-dot psb-dot--error" />
-              {fmt(error)} 에러
-            </span>
+            <span className="psb-pipeline-processing">{fmt(processing)} 처리중</span>
           )}
           {pending > 0 && (
-            <span className="psb-label psb-label--pending">
-              <span className="psb-dot psb-dot--pending" />
-              {fmt(pending)} 대기
-            </span>
+            <span className="psb-pipeline-pending">{fmt(pending)} 대기</span>
           )}
+          {error > 0 && (
+            <span className="psb-pipeline-error">{fmt(error)} 에러</span>
+          )}
+        </div>
+        <div className="psb-pipeline-bar">
+          <div
+            className={`psb-pipeline-fill ${isActive ? 'psb-pipeline-fill--active' : ''}`}
+            style={{ width: `${completedPct}%` }}
+          />
         </div>
       </div>
 
@@ -146,7 +101,7 @@ export function DocumentProcessingStatusBar({ statistics, isLoading }: DocumentP
               <div className="psb-parsing-header">
                 <span className="psb-parsing-badge psb-parsing-badge--ar">AR</span>
                 <span className="psb-parsing-text">
-                  {fmt(arParsing.completed)}/{fmt(arParsing.total)} 파싱완료
+                  {fmt(arParsing.completed)}/{fmt(arParsing.total)} 파싱완료 ({arPercent}%)
                 </span>
                 {arParsing.failed > 0 && (
                   <span className="psb-parsing-failed">{arParsing.failed} 실패</span>
@@ -165,7 +120,7 @@ export function DocumentProcessingStatusBar({ statistics, isLoading }: DocumentP
               <div className="psb-parsing-header">
                 <span className="psb-parsing-badge psb-parsing-badge--crs">CRS</span>
                 <span className="psb-parsing-text">
-                  {fmt(crsParsing.completed)}/{fmt(crsParsing.total)} 파싱완료
+                  {fmt(crsParsing.completed)}/{fmt(crsParsing.total)} 파싱완료 ({crsPercent}%)
                 </span>
                 {crsParsing.failed > 0 && (
                   <span className="psb-parsing-failed">{crsParsing.failed} 실패</span>

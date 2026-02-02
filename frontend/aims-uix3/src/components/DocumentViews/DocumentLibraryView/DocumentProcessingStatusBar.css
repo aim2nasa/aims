@@ -55,7 +55,7 @@
   50% { opacity: 0.8; }
 }
 
-/* === Pipeline Section (좌측) === */
+/* === Pipeline Section (좌측: 채우기형 프로그레스바) === */
 .psb-pipeline {
   flex: 1;
   min-width: 0;
@@ -64,9 +64,39 @@
   gap: 4px;
 }
 
-/* 세그먼트 프로그레스바 */
-.psb-pipeline-bar {
+.psb-pipeline-header {
   display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.psb-pipeline-text {
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.psb-pipeline-processing {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-primary-500);
+}
+
+.psb-pipeline-pending {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-neutral-400);
+}
+
+.psb-pipeline-error {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.psb-pipeline-bar {
   width: 100%;
   height: 3px;
   border-radius: 2px;
@@ -74,73 +104,21 @@
   background: var(--color-neutral-200);
 }
 
-.psb-segment {
+.psb-pipeline-fill {
   height: 100%;
-  transition: width 0.5s ease;
-  min-width: 1px;
-}
-
-.psb-segment--completed {
+  border-radius: 2px;
   background: var(--color-success);
+  transition: width 0.5s ease;
 }
 
-.psb-segment--processing {
+.psb-pipeline-fill--active {
   background: var(--color-primary-500);
   animation: psb-processing-pulse 2s ease-in-out infinite;
-}
-
-.psb-segment--error {
-  background: var(--color-error);
-}
-
-.psb-segment--pending {
-  background: var(--color-neutral-400);
 }
 
 @keyframes psb-processing-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
-}
-
-/* 카운터 라벨 */
-.psb-labels {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.psb-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-caption-2);
-  font-weight: 400;
-  color: var(--color-ios-text-secondary);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.psb-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.psb-dot--completed {
-  background: var(--color-success);
-}
-
-.psb-dot--processing {
-  background: var(--color-primary-500);
-}
-
-.psb-dot--error {
-  background: var(--color-error);
-}
-
-.psb-dot--pending {
-  background: var(--color-neutral-400);
 }
 
 /* === AR/CRS Parsing Section (우측) === */
