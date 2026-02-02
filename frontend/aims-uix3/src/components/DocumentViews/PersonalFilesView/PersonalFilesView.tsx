@@ -640,7 +640,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [])
 
   // 파일 선택 후 업로드
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
     if (selectedFiles.length === 0) return
 
@@ -661,12 +661,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
     setUploadingFiles(prev => [...prev, ...newUploadFiles])
 
-    // uploadService에 큐잉 (docprep-main webhook 호출)
-    uploadService.queueFiles(newUploadFiles)
-
     // 파일 input 초기화
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+
+    // 업로드 완료까지 대기 (Phase 3: 완료 전 "완료" 표시 방지)
+    const results = await uploadService.queueFiles(newUploadFiles)
+    const failCount = results.filter(r => !r.success).length
+    setUploading(false)
+    setUploadProgress(100)
+    if (failCount > 0) {
+      setError(`${failCount}개 파일 업로드 실패`)
     }
   }, [userId, currentFolderId])
 

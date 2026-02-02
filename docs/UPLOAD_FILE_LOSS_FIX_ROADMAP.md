@@ -56,51 +56,34 @@
 
 ---
 
-### Phase 2: uploadService 리팩토링 — queueFiles()가 Promise 반환 (근본 수정)
+### Phase 2: uploadService 리팩토링 — queueFiles()가 Promise 반환 ✅ 완료
 
 현재 `queueFiles()`는 fire-and-forget (void 반환). 호출부가 업로드 완료를 알 수 없음.
 
-**변경**: `queueFiles()`가 모든 파일 업로드 완료 시 resolve되는 Promise 반환.
+**변경**: `queueFiles()`가 모든 파일 업로드 완료 시 resolve되는 `Promise<UploadResult[]>` 반환.
 
-```typescript
-// 변경 전
-async queueFiles(files: UploadFile[]): Promise<void> {
-  this.uploadQueue.push(...files)  // 큐에 넣고 끝
-  if (!this.isProcessing) this.processQueue()
-}
-
-// 변경 후
-async queueFiles(files: UploadFile[]): Promise<UploadResult[]> {
-  const promises = files.map(file => {
-    return new Promise<UploadResult>((resolve) => {
-      file._resolve = resolve  // 업로드 완료 시 resolve
-    })
-  })
-  this.uploadQueue.push(...files)
-  if (!this.isProcessing) this.processQueue()
-  return Promise.all(promises)  // 모든 파일 업로드 완료까지 대기
-}
-```
+**구현 방식**: `pendingResolvers` Map을 사용하여 각 파일의 Promise resolve 함수를 관리.
+`uploadFile()` 내부의 모든 종료 지점 (성공/경고/바이러스/취소/에러)에서 `resolveFile()` 호출.
 
 | 항목 | 내용 |
 |------|------|
 | 수정 파일 | `uploadService.ts` |
 | 효과 | 모든 호출부에서 `await uploadService.queueFiles(files)` 가능 |
-| 하위 호환 | 기존 호출부는 await 안 해도 동작 (반환값 무시) |
+| 하위 호환 | 기존 호출부 6곳 모두 fire-and-forget — await 안 해도 동작 |
 
 ---
 
-### Phase 3: 모든 업로드 경로에서 완료 대기 적용
+### Phase 3: 모든 업로드 경로에서 완료 대기 적용 ✅ 완료
 
-Phase 2의 Promise 반환을 활용하여, 모든 업로드 경로에서 "완료" 표시를 업로드 완료 후로 변경.
+Phase 2의 Promise 반환을 활용하여, 업로드 경로별로 적절한 완료 대기 적용.
 
-| 업로드 경로 | 현재 | 변경 |
+| 업로드 경로 | 변경 | 비고 |
 |------------|------|------|
-| AR 배치 등록 | ✅ 직접 업로드 (Phase 1에서 완료) | 유지 |
-| CRS 배치 등록 | ✅ 직접 업로드 (Phase 1에서 완료) | 유지 |
-| 일반 파일 업로드 (드래그앤드롭) | 큐 추가 후 "완료" | `await queueFiles()` 후 "완료" |
-| 내 파일 업로드 | 큐 추가 후 "완료" | `await queueFiles()` 후 "완료" |
-| 고객별 문서 업로드 | 큐 추가 후 "완료" | `await queueFiles()` 후 "완료" |
+| AR 배치 등록 | ✅ 직접 업로드 (Phase 1) | 유지 |
+| CRS 배치 등록 | ✅ 직접 업로드 (Phase 1) | 유지 |
+| 일반 파일 업로드 (드래그앤드롭) | `.then()` 완료 추적 | await 불가 — AR큐 블로킹 방지 |
+| 내 파일 업로드 (PersonalFilesView) | `await queueFiles()` 후 "완료" | 핵심 수정 |
+| 단건 모달 업로드 (AR/CRS) | 변경 없음 | 1개씩 즉시 시작, 손실 위험 극히 낮음 |
 
 ---
 
@@ -139,3 +122,5 @@ Phase 2~4는 Phase 1 완료 후 순차 진행.
 | 2026-02-02 | 1-A | AR 배치 등록 직접 업로드 전환 완료 (커밋 `d55f0d59`) |
 | 2026-02-02 | 1-A | 테스트 완료: 745→724건, 누락 0건, 1분 5초 |
 | 2026-02-02 | 1-B | CRS 배치 등록 직접 업로드 전환 완료 (커밋 `4a5794c8`) |
+| 2026-02-02 | 2 | uploadService `queueFiles()` → `Promise<UploadResult[]>` 반환으로 리팩토링 |
+| 2026-02-02 | 3 | PersonalFilesView `await queueFiles()` 적용, DocumentRegistrationView `.then()` 완료 추적 |

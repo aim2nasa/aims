@@ -11,6 +11,7 @@ import {
   UploadFile,
   UploadProgressEvent,
   UploadStatus,
+  UploadResult,
   DocPrepResponse
 } from '../types/uploadTypes'
 import { UserContextService, uploadConfig } from './userContextService'
@@ -41,6 +42,7 @@ interface ErrorWithResponse extends Error {
 export class UploadService {
   private activeUploads = new Map<string, AbortController>()
   private uploadQueue: UploadFile[] = []
+  private pendingResolvers = new Map<string, (result: UploadResult) => void>()
   private isProcessing = false
 
   // Map<owner, callback>: owner별로 하나의 콜백만 유지 (HMR/StrictMode 중복 등록 방지)
@@ -91,8 +93,18 @@ export class UploadService {
 
   /**
    * 파일들을 업로드 큐에 추가
+   * @returns 모든 파일 업로드 완료 시 결과 배열 반환
    */
-  async queueFiles(files: UploadFile[]): Promise<void> {
+  async queueFiles(files: UploadFile[]): Promise<UploadResult[]> {
+    if (files.length === 0) return []
+
+    // 각 파일에 대한 Promise 생성 (업로드 완료 시 resolve)
+    const promises = files.map(file => {
+      return new Promise<UploadResult>((resolve) => {
+        this.pendingResolvers.set(file.id, resolve)
+      })
+    })
+
     // 큐에 추가
     this.uploadQueue.push(...files)
 
@@ -100,6 +112,9 @@ export class UploadService {
     if (!this.isProcessing) {
       this.processQueue()
     }
+
+    // 모든 파일 업로드 완료까지 대기
+    return Promise.all(promises)
   }
 
   /**
@@ -113,28 +128,52 @@ export class UploadService {
       this.statusCallbacks.forEach(callback => callback(fileId, 'cancelled'))
     }
 
-    // 큐에서도 제거
+    // 큐에서 제거 + 대기 중 Promise resolve
+    const queuedFile = this.uploadQueue.find(file => file.id === fileId)
     this.uploadQueue = this.uploadQueue.filter(file => file.id !== fileId)
+    if (queuedFile) {
+      this.resolveFile(fileId, {
+        fileId,
+        success: false,
+        error: { fileId, fileName: queuedFile.file.name, message: '업로드가 취소되었습니다', retryable: false },
+      })
+    }
   }
 
   /**
    * 모든 업로드 취소
    */
   cancelAllUploads(): void {
-    // 활성 업로드들 취소
+    // 활성 업로드들 취소 (resolve는 uploadFile() catch에서 처리)
     this.activeUploads.forEach((controller, fileId) => {
       controller.abort()
       this.statusCallbacks.forEach(callback => callback(fileId, 'cancelled'))
     })
     this.activeUploads.clear()
 
-    // 큐 비우기
+    // 큐 비우기 + 대기 중 Promise resolve
     this.uploadQueue.forEach(file => {
       this.statusCallbacks.forEach(callback => callback(file.id, 'cancelled'))
+      this.resolveFile(file.id, {
+        fileId: file.id,
+        success: false,
+        error: { fileId: file.id, fileName: file.file.name, message: '업로드가 취소되었습니다', retryable: false },
+      })
     })
     this.uploadQueue = []
 
     this.isProcessing = false
+  }
+
+  /**
+   * 파일 업로드 완료 시 대기 중인 Promise resolve
+   */
+  private resolveFile(id: string, result: UploadResult): void {
+    const resolver = this.pendingResolvers.get(id)
+    if (resolver) {
+      resolver(result)
+      this.pendingResolvers.delete(id)
+    }
   }
 
   /**
@@ -188,6 +227,11 @@ export class UploadService {
           const errorMessage = `🛡️ 바이러스 감지: ${scanResult.virusName || '알 수 없는 위협'}`
           console.warn(`[UploadService] ⚠️ ${errorMessage} - 파일: ${file.name}`)
           this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
+          this.resolveFile(id, {
+            fileId: id,
+            success: false,
+            error: { fileId: id, fileName: file.name, message: errorMessage, retryable: false },
+          })
           return
         }
 
@@ -249,6 +293,9 @@ export class UploadService {
         }
       }
 
+      // 업로드 완료 (성공/경고) — 대기 중 Promise resolve
+      this.resolveFile(id, { fileId: id, success: true })
+
     } catch (error) {
       // 에러 처리
       this.activeUploads.delete(id)
@@ -259,17 +306,32 @@ export class UploadService {
             console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
           }
           this.statusCallbacks.forEach(callback => callback(id, 'cancelled'))
+          this.resolveFile(id, {
+            fileId: id,
+            success: false,
+            error: { fileId: id, fileName: file.name, message: '업로드가 취소되었습니다', retryable: false },
+          })
         } else {
           const response = (error as ErrorWithResponse).response
           const errorMessage = this.getErrorMessage(error, response)
           this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
           errorReporter.reportApiError(error, { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
+          this.resolveFile(id, {
+            fileId: id,
+            success: false,
+            error: { fileId: id, fileName: file.name, message: errorMessage, retryable: true },
+          })
         }
       } else {
         this.statusCallbacks.forEach(callback => callback(id, 'error', '알 수 없는 오류가 발생했습니다'))
         console.error(`[UploadService] 알 수 없는 오류: ${file.name}`, error)
         errorReporter.reportApiError(new Error('Unknown upload error'), { component: 'UploadService.uploadFile', payload: { fileName: file.name, customerId } })
+        this.resolveFile(id, {
+          fileId: id,
+          success: false,
+          error: { fileId: id, fileName: file.name, message: '알 수 없는 오류가 발생했습니다', retryable: false },
+        })
       }
     }
   }

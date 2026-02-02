@@ -994,7 +994,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🔄 유효한 파일들만 업로드 큐에 추가 (상태는 이미 개별적으로 업데이트됨)
     const validFiles = newUploadFiles.filter(f => f.status === 'pending')
     if (validFiles.length > 0) {
-      uploadService.queueFiles(validFiles)
+      // Phase 3: 완료 추적 (await하면 AR큐 블로킹되므로 .then()으로 비동기 추적)
+      uploadService.queueFiles(validFiles).then((results) => {
+        const failCount = results.filter(r => !r.success).length
+        if (failCount > 0) {
+          addLog('warning', `일반 문서 업로드 완료: ${results.length - failCount}/${results.length} 성공`)
+        }
+      })
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
 
       // 🔗 고객이 선택되어 있으면 추적 목록에 추가 (업로드 후 자동 연결)

@@ -90,7 +90,8 @@ describe('UploadService', () => {
         }
       ]
 
-      await uploadService.queueFiles(files)
+      // queueFiles()는 업로드 완료까지 대기하는 Promise 반환 — 큐 동작만 테스트하므로 await 안 함
+      void uploadService.queueFiles(files)
 
       // 큐 처리를 위한 짧은 대기
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -122,7 +123,7 @@ describe('UploadService', () => {
         progress: 0
       }))
 
-      await uploadService.queueFiles(files)
+      void uploadService.queueFiles(files)
 
       // 잠시 대기 후 활성 업로드 확인
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -188,7 +189,7 @@ describe('UploadService', () => {
         }
       ]
 
-      await uploadService.queueFiles(files)
+      void uploadService.queueFiles(files)
       await new Promise(resolve => setTimeout(resolve, 50))
 
       uploadService.cancelUpload('file-1')
@@ -209,7 +210,7 @@ describe('UploadService', () => {
         progress: 0
       }))
 
-      await uploadService.queueFiles(files)
+      void uploadService.queueFiles(files)
       await new Promise(resolve => setTimeout(resolve, 50))
 
       uploadService.cancelAllUploads()
@@ -338,7 +339,7 @@ describe('UploadService', () => {
         }
       ]
 
-      await uploadService.queueFiles(files)
+      void uploadService.queueFiles(files)
       await new Promise(resolve => setTimeout(resolve, 50))
 
       const activeBeforeCleanup = uploadService.getActiveUploads().length
