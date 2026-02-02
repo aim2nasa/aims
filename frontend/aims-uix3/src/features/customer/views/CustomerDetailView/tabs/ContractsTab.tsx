@@ -35,6 +35,7 @@ import { errorReporter } from '@/shared/lib/errorReporter'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { formatDate } from '@/shared/lib/timeUtils'
 import { useAnnualReportSSE } from '@/shared/hooks/useAnnualReportSSE'
+import { CustomerReviewModal } from '@/features/customer/components/CustomerReviewModal'
 import './ContractsTab.css'
 
 interface ContractsTabProps {
@@ -251,6 +252,10 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [crContractHistories, setCrContractHistories] = useState<CrContractHistory[]>([])
   const [expandedCrPolicyNumber, setExpandedCrPolicyNumber] = useState<string | null>(null)
   const [isLoadingCr, setIsLoadingCr] = useState(false)
+
+  // 🍎 AR이력에서 변액 리포트 모달
+  const [crModalReview, setCrModalReview] = useState<CustomerReview | null>(null)
+  const [isCrModalOpen, setIsCrModalOpen] = useState(false)
 
   // 🍎 AR 계약 이력 정렬 상태
   type ArSortField = 'policyNumber' | 'productName' | 'holder' | 'contractDate' | 'status' | 'coverageAmount' | 'insurancePeriod' | 'paymentPeriod' | 'premium' | 'issueDate'
@@ -798,6 +803,25 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
   }, [])
 
+  // 🍎 CRS 증권번호 → CustomerReview 매칭 (AR이력에서 변액 리포트 모달용)
+  const crReviewByPolicyNumber = useMemo(() => {
+    const map = new Map<string, CustomerReview>()
+    for (const review of crReviews) {
+      const pn = review.contract_info?.policy_number
+      if (pn) map.set(pn, review)
+    }
+    return map
+  }, [crReviews])
+
+  // 🍎 AR이력 순번 클릭 → CRS 상세 모달 열기
+  const handleOpenCrModal = useCallback((policyNumber: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const review = crReviewByPolicyNumber.get(policyNumber)
+    if (!review) return
+    setCrModalReview(review)
+    setIsCrModalOpen(true)
+  }, [crReviewByPolicyNumber])
+
   // 🍎 AR 계약 이력 정렬 핸들러
   const handleArSort = useCallback((field: typeof arSortField) => {
     // 리사이즈 직후 클릭은 무시 (정렬 방지)
@@ -1164,6 +1188,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           <div className="contract-history-list">
             {sortedContractHistories.map((history, idx) => {
               const isExpanded = expandedPolicyNumber === history.policyNumber
+              const hasCrs = crReviewByPolicyNumber.has(history.policyNumber)
               const { latestSnapshot } = history
 
               return (
@@ -1176,7 +1201,20 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                     tabIndex={0}
                     aria-expanded={isExpanded ? 'true' : 'false'}
                   >
-                    <span className="contract-history-item__seq">{idx + 1}</span>
+                    {hasCrs ? (
+                      <Tooltip content="변액 리포트 상세 보기">
+                        <span
+                          className="contract-history-item__seq contract-history-item__seq--crs"
+                          onClick={(e) => handleOpenCrModal(history.policyNumber, e)}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          {idx + 1}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <span className="contract-history-item__seq">{idx + 1}</span>
+                    )}
                     <span className="contract-history-item__policy">
                       <span className="contract-history-item__toggle">{isExpanded ? '▼' : '▶'}</span>
                       {history.policyNumber}
@@ -1256,6 +1294,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                       <span>변경 이력이 없습니다. (1건의 AR에서만 발견)</span>
                     </div>
                   )}
+
                 </div>
               )
             })}
@@ -1695,6 +1734,12 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           )}
         </>
       )}
+      {/* 🍎 AR이력 → 변액 리포트 상세 모달 */}
+      <CustomerReviewModal
+        isOpen={isCrModalOpen}
+        onClose={() => { setIsCrModalOpen(false); setCrModalReview(null) }}
+        review={crModalReview}
+      />
     </div>
   )
 }

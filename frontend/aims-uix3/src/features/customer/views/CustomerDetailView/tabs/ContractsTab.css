@@ -1553,3 +1553,35 @@ html[data-theme="dark"] .cr-snapshot-item__issue-date {
 html[data-theme="dark"] .cr-snapshot-item--changed {
   color: var(--color-button-destructive-bg-dark, #ff453a);
 }
+
+/* === 🍎 AR이력 순번 뱃지: 변액 리포트 존재 시 클릭 가능 === */
+.contract-history-item__seq--crs {
+  background: var(--color-primary-500);
+  color: var(--color-white, #fff);
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.contract-history-item__seq--crs:hover {
+  background: var(--color-primary-600);
+  transform: scale(1.15);
+}
+
+html[data-theme="dark"] .contract-history-item__seq--crs {
+  background: var(--color-primary-400);
+  color: var(--color-neutral-900);
+}
+
+html[data-theme="dark"] .contract-history-item__seq--crs:hover {
+  background: var(--color-primary-300);
+}
