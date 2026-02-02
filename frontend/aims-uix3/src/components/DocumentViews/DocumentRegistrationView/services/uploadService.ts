@@ -589,6 +589,23 @@ export class UploadService {
   }
 
   /**
+   * 업로드 진행 중 여부 확인
+   * Phase 4: 페이지 이탈 차단에서 사용
+   */
+  isUploading(): boolean {
+    return this.activeUploads.size > 0 || this.uploadQueue.length > 0
+  }
+
+  /**
+   * 업로드 진행 상태 요약
+   */
+  getUploadCounts(): { active: number; queued: number; total: number } {
+    const active = this.activeUploads.size
+    const queued = this.uploadQueue.length
+    return { active, queued, total: active + queued }
+  }
+
+  /**
    * 서비스 정리 - 진행 중인 업로드는 유지
    */
   cleanup(): void {

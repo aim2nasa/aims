@@ -66,6 +66,7 @@ import type { SearchResultItem } from './entities/search'
 import type { StorageInfo } from './services/userService'
 import type { AIUsageData } from './services/aiUsageService'
 import { UsageQuotaWidget } from './shared/ui/UsageQuotaWidget'
+import { uploadService } from './components/DocumentViews/DocumentRegistrationView/services/uploadService'
 
 // 유틸리티 함수 및 타입 import (App.tsx에서 추출됨)
 import type { SelectedDocument as _SelectedDocument, SmartSearchDocumentResponse } from './utils/documentTransformers'
@@ -194,6 +195,19 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   })
 
+  // Phase 4: 글로벌 업로드 이탈 차단 (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (uploadService.isUploading()) {
+        e.preventDefault()
+        e.returnValue = '파일 업로드가 진행 중입니다. 페이지를 떠나면 업로드가 중단됩니다.'
+        return e.returnValue
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
   // isChatOpen 상태 변경 시 localStorage 동기화
   useEffect(() => {
     try {
@@ -301,6 +315,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const url = new URL(window.location.href)
     const currentView = url.searchParams.get('view')
     const isViewChange = params.view !== undefined && params.view !== currentView
+
+    // Phase 4: 업로드 중 뷰 전환 시 확인
+    if (isViewChange && uploadService.isUploading()) {
+      const counts = uploadService.getUploadCounts()
+      const confirmed = window.confirm(
+        `파일 업로드가 진행 중입니다 (${counts.total}개 남음).\n페이지를 이동하면 진행 상황을 확인할 수 없습니다.\n\n계속 이동하시겠습니까?`
+      )
+      if (!confirmed) return
+    }
 
     if (params.view !== undefined) {
       if (params.view) {
