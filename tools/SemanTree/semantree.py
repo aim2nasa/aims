@@ -305,7 +305,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.7.1 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.8.0 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -565,7 +565,8 @@ class DocumentViewer:
         self.collection_combo.bind("<<ComboboxSelected>>", self.on_collection_changed)
 
         # 로드 버튼
-        ttk.Button(collection_row, text="🔄 로드", command=self.load_raw_collection_data).pack(side=tk.LEFT, padx=10)
+        self.raw_load_btn = ttk.Button(collection_row, text="🔄 로드", command=self.load_raw_collection_data)
+        self.raw_load_btn.pack(side=tk.LEFT, padx=10)
 
         # 문서 개수 표시
         self.raw_count_label = ttk.Label(collection_row, text="문서: 0개", font=("Arial", 10))
@@ -575,7 +576,8 @@ class DocumentViewer:
         ttk.Button(collection_row, text="🗑️ 패턴 삭제", command=self.delete_by_pattern).pack(side=tk.LEFT, padx=10)
 
         # MongoDB 컬렉션 초기화 버튼
-        ttk.Button(collection_row, text="🔥 초기화", command=self.clear_mongodb_collection).pack(side=tk.LEFT, padx=10)
+        self.raw_clear_btn = ttk.Button(collection_row, text="🔥 초기화", command=self.clear_mongodb_collection)
+        self.raw_clear_btn.pack(side=tk.LEFT, padx=10)
 
         # 검색 프레임
         search_row = ttk.Frame(raw_data_tab, padding="10")
@@ -675,14 +677,16 @@ class DocumentViewer:
             self.qdrant_collection_combo.pack(side=tk.LEFT, padx=5)
 
             # 로드 버튼
-            ttk.Button(qdrant_coll_row, text="🔄 로드", command=self.load_qdrant_collection_data).pack(side=tk.LEFT, padx=10)
+            self.qdrant_load_btn = ttk.Button(qdrant_coll_row, text="🔄 로드", command=self.load_qdrant_collection_data)
+            self.qdrant_load_btn.pack(side=tk.LEFT, padx=10)
 
             # 포인트 개수 표시
             self.qdrant_count_label = ttk.Label(qdrant_coll_row, text="포인트: 0개", font=("Arial", 10))
             self.qdrant_count_label.pack(side=tk.LEFT, padx=10)
 
             # Qdrant 컬렉션 초기화 버튼
-            ttk.Button(qdrant_coll_row, text="🔥 초기화", command=self.clear_qdrant_collection).pack(side=tk.LEFT, padx=10)
+            self.qdrant_clear_btn = ttk.Button(qdrant_coll_row, text="🔥 초기화", command=self.clear_qdrant_collection)
+            self.qdrant_clear_btn.pack(side=tk.LEFT, padx=10)
 
             # Qdrant 데이터 네비게이션 프레임
             qdrant_nav_frame = ttk.Frame(qdrant_tab, padding="10")
@@ -741,51 +745,76 @@ class DocumentViewer:
         # 연결
         self.connect_and_load()
 
+    # ========== 백그라운드 스레드 헬퍼 ==========
+
+    def _run_in_background(self, task_fn, on_success, error_title="작업 실패", cleanup_fn=None):
+        """백그라운드 스레드에서 task_fn 실행 후, 결과를 메인 스레드에서 on_success에 전달"""
+        def worker():
+            try:
+                result = task_fn()
+                self.root.after(0, lambda: on_success(result))
+            except Exception as e:
+                def handle_error():
+                    if cleanup_fn:
+                        cleanup_fn()
+                    messagebox.showerror(error_title, f"{e}")
+                self.root.after(0, handle_error)
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
     def connect_and_load(self):
         """MongoDB 연결 및 문서 로드"""
         host = self.host_var.get().strip()
         self.status_label.config(text=f"Connecting to {host}...", foreground="orange")
-        self.root.update()
+        self.root.update_idletasks()
 
-        if self.mongo.connect():
-            self.status_label.config(text=f"✓ Connected: MongoDB {host}:{self.mongo.port}", foreground="green")
-            self.reload_documents()
-            # Raw 탭의 DB/Collection 선택기 초기화
-            self.initialize_raw_selectors()
-        else:
-            self.status_label.config(text="✗ MongoDB Connection Failed", foreground="red")
-            messagebox.showerror("Connection Error", f"Failed to connect to MongoDB at {host}:{self.mongo.port}")
-            return
+        def bg_connect():
+            mongo_ok = self.mongo.connect()
+            qdrant_ok = False
+            if QDRANT_AVAILABLE and self.qdrant:
+                qdrant_ok = self.qdrant.connect()
+            return (mongo_ok, qdrant_ok)
 
-        # Qdrant 연결 시도 (선택적)
-        if QDRANT_AVAILABLE and self.qdrant:
-            if self.qdrant.connect():
+        def on_connected(result):
+            mongo_ok, qdrant_ok = result
+            if not mongo_ok:
+                self.status_label.config(text="✗ MongoDB Connection Failed", foreground="red")
+                messagebox.showerror("Connection Error", f"Failed to connect to MongoDB at {host}:{self.mongo.port}")
+                return
+
+            if qdrant_ok:
                 self.status_label.config(text=f"✓ Connected: MongoDB + Qdrant ({host})", foreground="green")
                 self.initialize_qdrant_selectors()
             else:
-                # Qdrant 연결 실패해도 MongoDB는 사용 가능
-                print("Qdrant connection failed, but MongoDB is available")
+                self.status_label.config(text=f"✓ Connected: MongoDB {host}:{self.mongo.port}", foreground="green")
+                if QDRANT_AVAILABLE and self.qdrant:
+                    print("Qdrant connection failed, but MongoDB is available")
+
+            self.reload_documents()
+            self.initialize_raw_selectors()
+
+        self._run_in_background(bg_connect, on_connected, error_title="연결 실패")
 
     def reload_documents(self):
-        """문서 목록 새로고침"""
+        """문서 목록 새로고침 (백그라운드 스레드)"""
         collection = self.mongo.get_files_collection()
         if collection is None:
             return
 
-        try:
-            # 모든 문서 로드 (정렬 순서에 따라)
-            self.documents = list(collection.find().sort("upload.uploaded_at", -1))
+        self.count_label.config(text="문서 로딩 중...")
+
+        def bg_load():
+            return list(collection.find().sort("upload.uploaded_at", -1))
+
+        def on_loaded(documents):
+            self.documents = documents
             self.count_label.config(text=f"문서: {len(self.documents)}개")
-
-            # 태그 트리 구축
             self.build_tag_tree()
-
-            # Raw 데이터 뷰어 초기화
             self.current_raw_index = 0
             self.update_raw_viewer()
 
-        except Exception as e:
-            messagebox.showerror("오류", f"문서 로드 실패: {e}")
+        self._run_in_background(bg_load, on_loaded, error_title="문서 로드 실패")
 
     def get_filtered_documents(self):
         """필터링된 문서 목록 반환"""
@@ -1597,14 +1626,21 @@ class DocumentViewer:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
 
     def on_db_changed(self, event=None):
-        """DB 선택 변경 시 이벤트 핸들러"""
+        """DB 선택 변경 시 이벤트 핸들러 (백그라운드)"""
         selected_db = self.current_db.get()
         if selected_db:
-            # 선택된 DB의 컬렉션 목록 로드
-            collection_list = self.mongo.get_collection_list(selected_db)
-            self.collection_combo['values'] = collection_list
-            if collection_list:
-                self.current_collection.set(collection_list[0])
+            self.raw_count_label.config(text="컬렉션 목록 로딩...")
+
+            def bg_load():
+                return self.mongo.get_collection_list(selected_db)
+
+            def on_loaded(collection_list):
+                self.collection_combo['values'] = collection_list
+                if collection_list:
+                    self.current_collection.set(collection_list[0])
+                self.raw_count_label.config(text="")
+
+            self._run_in_background(bg_load, on_loaded, error_title="컬렉션 목록 로드 실패")
 
     def on_collection_changed(self, event=None):
         """Collection 선택 변경 시 이벤트 핸들러"""
@@ -1612,7 +1648,7 @@ class DocumentViewer:
         pass
 
     def load_raw_collection_data(self):
-        """선택된 DB/Collection의 데이터 로드"""
+        """선택된 DB/Collection의 데이터 로드 (백그라운드 스레드)"""
         selected_db = self.current_db.get()
         selected_collection = self.current_collection.get()
 
@@ -1620,42 +1656,45 @@ class DocumentViewer:
             messagebox.showwarning("선택 오류", "DB와 Collection을 선택해주세요.")
             return
 
-        try:
-            # DB 전환
-            self.mongo.switch_database(selected_db)
+        # UI: 로딩 상태 표시
+        self.raw_load_btn.config(state=tk.DISABLED)
+        self.raw_count_label.config(text="로딩 중...")
 
-            # Collection 가져오기
+        def bg_load():
+            self.mongo.switch_database(selected_db)
             collection = self.mongo.get_collection(selected_collection)
             if collection is None:
-                messagebox.showerror("오류", "Collection을 가져올 수 없습니다.")
-                return
-
-            # 전체 문서 개수 확인
+                raise Exception("Collection을 가져올 수 없습니다.")
             total_count = collection.count_documents({})
+            documents = list(collection.find().sort("_id", -1).limit(10000))
+            return (documents, total_count)
 
-            # 문서 로드 (최대 10000개)
-            self.raw_documents = list(collection.find().sort("_id", -1).limit(10000))
-            self.raw_documents_loaded = True  # 로드 완료 플래그 설정
-            self.loaded_collection_name = f"{selected_db}.{selected_collection}"  # 로드된 컬렉션 저장
+        def on_loaded(result):
+            documents, total_count = result
+            self.raw_documents = documents
+            self.raw_documents_loaded = True
+            self.loaded_collection_name = f"{selected_db}.{selected_collection}"
             self.raw_count_label.config(text=f"[{self.loaded_collection_name}] 문서: {len(self.raw_documents)}/{total_count}개")
 
-            # 검색 UI 활성화 및 이전 검색 초기화
             self.search_entry.config(state=tk.NORMAL)
             self.search_btn.config(state=tk.NORMAL)
             self.search_reset_btn.config(state=tk.NORMAL)
-            self.clear_search()  # 이전 검색 결과 초기화
+            self.clear_search()
 
-            # 첫 문서로 이동
             self.current_raw_index = 0
             self.update_raw_viewer()
+            self.raw_load_btn.config(state=tk.NORMAL)
 
             if total_count > 10000:
                 print(f"총 {total_count}개 중 최근 {len(self.raw_documents)}개 로드 (메모리 효율을 위해 10000개로 제한)")
             else:
                 print(f"{len(self.raw_documents)}개 문서 로드 완료")
 
-        except Exception as e:
-            messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
+        self._run_in_background(
+            bg_load, on_loaded,
+            error_title="로드 실패",
+            cleanup_fn=lambda: self.raw_load_btn.config(state=tk.NORMAL)
+        )
 
     def search_documents(self):
         """컬렉션 내에서 특정 문구가 포함된 문서들을 검색"""
@@ -1840,42 +1879,35 @@ class DocumentViewer:
             self.raw_doc_label.config(text=f"{self.current_raw_index + 1} / {len(self.raw_documents)}")
 
     def initialize_raw_selectors(self):
-        """Raw 탭의 DB/Collection 선택기 초기화"""
-        try:
-            # DB 목록 로드
+        """Raw 탭의 DB/Collection 선택기 초기화 (백그라운드)"""
+        def bg_load():
             db_list = self.mongo.get_database_list()
+            default_db = "docupload" if "docupload" in db_list else (db_list[0] if db_list else "")
+            collection_list = self.mongo.get_collection_list(default_db) if default_db else []
+            return (db_list, default_db, collection_list)
+
+        def on_loaded(result):
+            db_list, default_db, collection_list = result
             self.db_combo['values'] = db_list
+            if default_db:
+                self.current_db.set(default_db)
+            self.collection_combo['values'] = collection_list
+            if "files" in collection_list:
+                self.current_collection.set("files")
+            elif collection_list:
+                self.current_collection.set(collection_list[0])
 
-            # 기본 DB 설정
-            if "docupload" in db_list:
-                self.current_db.set("docupload")
-            elif db_list:
-                self.current_db.set(db_list[0])
-
-            # Collection 목록 로드
-            if self.current_db.get():
-                collection_list = self.mongo.get_collection_list(self.current_db.get())
-                self.collection_combo['values'] = collection_list
-
-                if "files" in collection_list:
-                    self.current_collection.set("files")
-                elif collection_list:
-                    self.current_collection.set(collection_list[0])
-
-        except Exception as e:
-            print(f"Failed to initialize raw selectors: {e}")
+        self._run_in_background(bg_load, on_loaded, error_title="셀렉터 초기화 실패")
 
     def refresh_current_raw_document(self):
-        """현재 표시 중인 Raw 문서를 DB에서 다시 조회"""
-        # Raw 탭 데이터가 명시적으로 로드되지 않은 경우 건너뜀
+        """현재 표시 중인 Raw 문서를 DB에서 다시 조회 (백그라운드)"""
         if not self.raw_documents_loaded:
             return
 
-        # 검색 모드일 때는 검색 결과 문서를 새로고침
+        # 현재 문서 정보 캡처 (메인 스레드에서)
         if self.search_mode and self.search_results:
             if self.search_index < 0 or self.search_index >= len(self.search_results):
                 return
-            # 검색 결과는 (원본_인덱스, 문서) 튜플
             original_idx, current_doc = self.search_results[self.search_index]
         else:
             original_idx = None
@@ -1884,40 +1916,32 @@ class DocumentViewer:
                 return
             current_doc = docs_to_use[self.current_raw_index]
 
-        try:
-            doc_id = current_doc.get("_id")
-            if not doc_id:
-                return
+        doc_id = current_doc.get("_id")
+        if not doc_id:
+            return
 
-            # DB에서 해당 문서 다시 조회
-            selected_db = self.current_db.get()
-            selected_collection = self.current_collection.get()
+        selected_db = self.current_db.get()
+        selected_collection = self.current_collection.get()
+        if not selected_db or not selected_collection:
+            return
 
-            if not selected_db or not selected_collection:
-                return
-
-            # DB/Collection 가져오기
+        def bg_refresh():
             self.mongo.switch_database(selected_db)
             collection = self.mongo.get_collection(selected_collection)
-
             if collection is None:
-                return
+                return None
+            return collection.find_one({"_id": doc_id})
 
-            # 문서 조회
-            refreshed_doc = collection.find_one({"_id": doc_id})
-
+        def on_refreshed(refreshed_doc):
             if refreshed_doc:
-                # 검색 모드일 때는 검색 결과 업데이트 (튜플 형태 유지)
                 if self.search_mode and self.search_results and original_idx is not None:
                     self.search_results[self.search_index] = (original_idx, refreshed_doc)
                 else:
                     if self.raw_documents:
                         self.raw_documents[self.current_raw_index] = refreshed_doc
-                # 화면 업데이트 (자동 새로고침 스케줄링 제외)
                 self.update_raw_viewer_without_scheduling()
 
-        except Exception as e:
-            print(f"현재 문서 새로고침 실패: {e}")
+        self._run_in_background(bg_refresh, on_refreshed, error_title="새로고침 실패")
 
     def update_raw_viewer_without_scheduling(self):
         """Raw 데이터 뷰어 업데이트 (자동 새로고침 스케줄링 제외)"""
@@ -2016,36 +2040,33 @@ class DocumentViewer:
         self.schedule_raw_auto_refresh()
 
     def refresh_collection_list(self):
-        """컬렉션 목록 새로고침 (삭제된 컬렉션 반영)"""
-        try:
-            selected_db = self.current_db.get()
-            if not selected_db:
-                return
+        """컬렉션 목록 새로고침 (백그라운드)"""
+        selected_db = self.current_db.get()
+        if not selected_db:
+            return
 
-            # 현재 컬렉션 목록 가져오기
-            current_collections = list(self.collection_combo['values'])
-            new_collections = self.mongo.get_collection_list(selected_db)
+        current_collections = list(self.collection_combo['values'])
 
-            # 컬렉션 목록이 변경되었으면 업데이트
+        def bg_load():
+            return self.mongo.get_collection_list(selected_db)
+
+        def on_loaded(new_collections):
             if current_collections != new_collections:
                 self.collection_combo['values'] = new_collections
-
-                # 현재 선택된 컬렉션이 삭제되었으면 처리
                 selected_collection = self.current_collection.get()
                 if selected_collection and selected_collection not in new_collections:
                     if new_collections:
                         self.current_collection.set(new_collections[0])
                     else:
                         self.current_collection.set("")
-                    # 문서 목록 초기화
                     self.raw_documents = []
                     self.raw_documents_loaded = False
                     self.loaded_collection_name = ""
                     self.current_raw_index = 0
                     self.update_raw_viewer()
                     self.raw_count_label.config(text="문서: 0개 (컬렉션 삭제됨)")
-        except Exception as e:
-            print(f"컬렉션 목록 새로고침 실패: {e}")
+
+        self._run_in_background(bg_load, on_loaded, error_title="컬렉션 목록 새로고침 실패")
 
     def delete_by_pattern(self):
         """패턴 기반 문서 일괄 삭제"""
@@ -2161,57 +2182,64 @@ class DocumentViewer:
             regex_pattern = pattern.replace("*", ".*").replace("?", ".")
             regex_pattern = f"^{regex_pattern}$"
 
-            # DB/Collection 가져오기
-            self.mongo.switch_database(selected_db)
-            collection = self.mongo.get_collection(selected_collection)
-
-            if collection is None:
-                messagebox.showerror("오류", "컬렉션을 가져올 수 없습니다.")
-                return
-
             # 쿼리 생성
             if case_sensitive:
                 query = {field: {"$regex": regex_pattern}}
             else:
                 query = {field: {"$regex": regex_pattern, "$options": "i"}}
 
-            # 매칭 문서 수 확인
-            count = collection.count_documents(query)
+            # 백그라운드에서 매칭 문서 수 확인 → 확인 다이얼로그 → 삭제 실행
+            def bg_count():
+                self.mongo.switch_database(selected_db)
+                collection = self.mongo.get_collection(selected_collection)
+                if collection is None:
+                    raise Exception("컬렉션을 가져올 수 없습니다.")
+                count = collection.count_documents(query)
+                return count
 
-            if count == 0:
-                messagebox.showinfo("정보", f"패턴 '{pattern}'에 맞는 문서가 없습니다.")
-                return
+            def on_count_done(count):
+                if count == 0:
+                    messagebox.showinfo("정보", f"패턴 '{pattern}'에 맞는 문서가 없습니다.")
+                    return
 
-            # 삭제 확인 다이얼로그
-            response = messagebox.askyesno(
-                "삭제 확인",
-                f"'{selected_db}.{selected_collection}' 컬렉션에서\n"
-                f"총 {count}개의 문서를 삭제하시겠습니까?\n\n"
-                f"필드: {field}\n"
-                f"패턴: {pattern}\n"
-                f"대소문자 구분: {'예' if case_sensitive else '아니오'}\n\n"
-                f"⚠️ 이 작업은 되돌릴 수 없습니다!",
-                icon='warning'
-            )
+                # 삭제 확인 다이얼로그 (메인 스레드)
+                response = messagebox.askyesno(
+                    "삭제 확인",
+                    f"'{selected_db}.{selected_collection}' 컬렉션에서\n"
+                    f"총 {count}개의 문서를 삭제하시겠습니까?\n\n"
+                    f"필드: {field}\n"
+                    f"패턴: {pattern}\n"
+                    f"대소문자 구분: {'예' if case_sensitive else '아니오'}\n\n"
+                    f"⚠️ 이 작업은 되돌릴 수 없습니다!",
+                    icon='warning'
+                )
 
-            if not response:
-                return
+                if not response:
+                    return
 
-            # 삭제 실행
-            result = collection.delete_many(query)
-            deleted_count = result.deleted_count
+                # 삭제 실행도 백그라운드로
+                def bg_delete():
+                    self.mongo.switch_database(selected_db)
+                    collection = self.mongo.get_collection(selected_collection)
+                    if collection is None:
+                        raise Exception("컬렉션을 가져올 수 없습니다.")
+                    result = collection.delete_many(query)
+                    return result.deleted_count
 
-            # 결과 메시지
-            print(f"{deleted_count}개의 문서가 삭제되었습니다.")
+                def on_deleted(deleted_count):
+                    print(f"{deleted_count}개의 문서가 삭제되었습니다.")
+                    # Raw 데이터 목록 새로고침 (삭제 후 자동 로드)
+                    self.load_raw_collection_data()
 
-            # Raw 데이터 목록 새로고침 (삭제 후 자동 로드)
-            self.load_raw_collection_data()
+                self._run_in_background(bg_delete, on_deleted, error_title="삭제 실패")
+
+            self._run_in_background(bg_count, on_count_done, error_title="패턴 검색 실패")
 
         except Exception as e:
             messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
 
     def delete_current_document(self):
-        """현재 보고 있는 문서 삭제"""
+        """현재 보고 있는 문서 삭제 (백그라운드 스레드)"""
         try:
             # 현재 문서 목록 가져오기
             docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
@@ -2236,41 +2264,41 @@ class DocumentViewer:
                 messagebox.showwarning("경고", "DB와 Collection을 먼저 선택해주세요.")
                 return
 
-            # DB/Collection 가져오기
-            self.mongo.switch_database(selected_db)
-            collection = self.mongo.get_collection(selected_collection)
+            # 삭제할 정보 캡처 (스레드 안전)
+            delete_index = self.current_raw_index
 
-            if collection is None:
-                messagebox.showerror("오류", "컬렉션을 가져올 수 없습니다.")
-                return
+            def bg_delete():
+                self.mongo.switch_database(selected_db)
+                collection = self.mongo.get_collection(selected_collection)
+                if collection is None:
+                    raise Exception("컬렉션을 가져올 수 없습니다.")
+                result = collection.delete_one({"_id": doc_id})
+                return result.deleted_count
 
-            # 문서 삭제
-            result = collection.delete_one({"_id": doc_id})
+            def on_deleted(deleted_count):
+                if deleted_count == 0:
+                    messagebox.showerror("오류", "문서를 삭제하지 못했습니다.")
+                    return
 
-            if result.deleted_count == 0:
-                messagebox.showerror("오류", "문서를 삭제하지 못했습니다.")
-                return
+                # 로컬 목록에서도 제거
+                docs_to_use.pop(delete_index)
 
-            # 로컬 목록에서도 제거
-            docs_to_use.pop(self.current_raw_index)
+                # 문서 개수 업데이트
+                if self.raw_documents:
+                    self.raw_count_label.config(text=f"[{self.loaded_collection_name}] 문서: {len(self.raw_documents)}개")
+                else:
+                    self.count_label.config(text=f"문서: {len(self.documents)}개")
 
-            # 문서 개수 업데이트
-            if self.raw_documents:
-                self.raw_count_label.config(text=f"[{self.loaded_collection_name}] 문서: {len(self.raw_documents)}개")
-            else:
-                self.count_label.config(text=f"문서: {len(self.documents)}개")
+                # 다음 문서로 이동 (또는 이전 문서)
+                if not docs_to_use:
+                    self.current_raw_index = 0
+                    self.update_raw_viewer()
+                else:
+                    if self.current_raw_index >= len(docs_to_use):
+                        self.current_raw_index = len(docs_to_use) - 1
+                    self.update_raw_viewer()
 
-            # 다음 문서로 이동 (또는 이전 문서)
-            if not docs_to_use:
-                # 모든 문서가 삭제된 경우
-                self.current_raw_index = 0
-                self.update_raw_viewer()
-            else:
-                # 현재 인덱스가 범위를 벗어나면 조정
-                if self.current_raw_index >= len(docs_to_use):
-                    self.current_raw_index = len(docs_to_use) - 1
-
-                self.update_raw_viewer()
+            self._run_in_background(bg_delete, on_deleted, error_title="삭제 실패")
 
         except Exception as e:
             messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
@@ -2278,24 +2306,22 @@ class DocumentViewer:
     # ========== Qdrant 데이터 뷰어 메서드 ==========
 
     def initialize_qdrant_selectors(self):
-        """Qdrant 탭의 Collection 선택기 초기화"""
+        """Qdrant 탭의 Collection 선택기 초기화 (백그라운드 스레드)"""
         if not QDRANT_AVAILABLE or not self.qdrant:
             return
 
-        try:
-            # Collection 목록 로드
-            collection_list = self.qdrant.get_collection_list()
-            self.qdrant_collection_combo['values'] = collection_list
+        def bg_load():
+            return self.qdrant.get_collection_list()
 
-            # 기본 Collection 설정
+        def on_loaded(collection_list):
+            self.qdrant_collection_combo['values'] = collection_list
             if collection_list:
                 self.current_qdrant_collection.set(collection_list[0])
 
-        except Exception as e:
-            print(f"Failed to initialize qdrant selectors: {e}")
+        self._run_in_background(bg_load, on_loaded, error_title="Qdrant 초기화 실패")
 
     def load_qdrant_collection_data(self):
-        """선택된 Qdrant Collection의 데이터 로드"""
+        """선택된 Qdrant Collection의 데이터 로드 (백그라운드 스레드)"""
         if not QDRANT_AVAILABLE or not self.qdrant:
             messagebox.showerror("오류", "Qdrant가 사용 불가능합니다.")
             return
@@ -2306,41 +2332,44 @@ class DocumentViewer:
             messagebox.showwarning("선택 오류", "Collection을 선택해주세요.")
             return
 
-        try:
-            # 전체 포인트 개수 확인
+        # UI: 로딩 상태 표시
+        self.qdrant_load_btn.config(state=tk.DISABLED)
+        self.qdrant_count_label.config(text="로딩 중...")
+
+        def bg_load():
             collection_info = self.qdrant.get_collection_info(selected_collection)
             total_count = collection_info.points_count if collection_info else 0
-
-            # 포인트 조회 (최대 10000개)
             points, next_offset = self.qdrant.scroll_points(selected_collection, limit=10000)
-
             if points is None:
-                messagebox.showerror("오류", "포인트를 조회할 수 없습니다.")
-                return
-
-            # 포인트를 딕셔너리 형태로 변환
-            self.qdrant_points = []
+                raise Exception("포인트를 조회할 수 없습니다.")
+            # 포인트를 딕셔너리 형태로 변환 (백그라운드에서 처리)
+            point_list = []
             for point in points:
-                point_dict = {
+                point_list.append({
                     "id": point.id,
                     "vector": point.vector if hasattr(point, 'vector') else None,
                     "payload": point.payload if hasattr(point, 'payload') else {}
-                }
-                self.qdrant_points.append(point_dict)
+                })
+            return (point_list, total_count)
 
+        def on_loaded(result):
+            point_list, total_count = result
+            self.qdrant_points = point_list
             self.qdrant_count_label.config(text=f"포인트: {len(self.qdrant_points)}/{total_count}개")
-
-            # 첫 포인트로 이동
             self.current_qdrant_index = 0
             self.update_qdrant_viewer()
+            self.qdrant_load_btn.config(state=tk.NORMAL)
 
             if total_count > 10000:
                 print(f"총 {total_count}개 중 최근 {len(self.qdrant_points)}개 로드 (메모리 효율을 위해 10000개로 제한)")
             else:
                 print(f"{len(self.qdrant_points)}개 포인트 로드 완료")
 
-        except Exception as e:
-            messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
+        self._run_in_background(
+            bg_load, on_loaded,
+            error_title="로드 실패",
+            cleanup_fn=lambda: self.qdrant_load_btn.config(state=tk.NORMAL)
+        )
 
     def update_qdrant_viewer(self):
         """Qdrant 데이터 뷰어 업데이트"""
@@ -2435,7 +2464,7 @@ class DocumentViewer:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
 
     def clear_qdrant_collection(self):
-        """현재 선택된 Qdrant 컬렉션 초기화"""
+        """현재 선택된 Qdrant 컬렉션 초기화 (백그라운드 스레드)"""
         if not QDRANT_AVAILABLE or not self.qdrant:
             messagebox.showerror("오류", "Qdrant가 사용 불가능합니다.")
             return
@@ -2446,7 +2475,6 @@ class DocumentViewer:
             messagebox.showwarning("선택 오류", "초기화할 Collection을 선택해주세요.")
             return
 
-        # 확인 다이얼로그
         response = messagebox.askyesno(
             "초기화 확인",
             f"Qdrant '{selected_collection}' 컬렉션을 초기화하시겠습니까?\n\n"
@@ -2458,25 +2486,32 @@ class DocumentViewer:
         if not response:
             return
 
-        try:
-            # 컬렉션 초기화
-            if self.qdrant.clear_collection(selected_collection):
-                print(f"Qdrant '{selected_collection}' 컬렉션 초기화 완료")
-                # 메모리에 남아있는 이전 데이터 먼저 완전 제거
-                self.qdrant_points = []
-                self.current_qdrant_index = 0
-                # Qdrant에서 데이터 다시 로드 (초기화 확인)
-                self.load_qdrant_collection_data()
-            else:
-                messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
+        self.qdrant_clear_btn.config(state=tk.DISABLED)
+        self.qdrant_count_label.config(text="초기화 중...")
 
-        except Exception as e:
-            messagebox.showerror("초기화 실패", f"컬렉션 초기화 실패:\n{e}")
+        def bg_clear():
+            success = self.qdrant.clear_collection(selected_collection)
+            if not success:
+                raise Exception("컬렉션 초기화에 실패했습니다.")
+            return True
+
+        def on_cleared(_):
+            print(f"Qdrant '{selected_collection}' 컬렉션 초기화 완료")
+            self.qdrant_points = []
+            self.current_qdrant_index = 0
+            self.qdrant_clear_btn.config(state=tk.NORMAL)
+            self.load_qdrant_collection_data()
+
+        self._run_in_background(
+            bg_clear, on_cleared,
+            error_title="초기화 실패",
+            cleanup_fn=lambda: self.qdrant_clear_btn.config(state=tk.NORMAL)
+        )
 
     # ========== MongoDB 컬렉션 초기화 메서드 ==========
 
     def clear_mongodb_collection(self):
-        """현재 선택된 MongoDB 컬렉션 초기화"""
+        """현재 선택된 MongoDB 컬렉션 초기화 (백그라운드 스레드)"""
         selected_db = self.current_db.get()
         selected_collection = self.current_collection.get()
 
@@ -2484,7 +2519,6 @@ class DocumentViewer:
             messagebox.showwarning("선택 오류", "초기화할 DB와 Collection을 선택해주세요.")
             return
 
-        # 확인 다이얼로그
         response = messagebox.askyesno(
             "초기화 확인",
             f"MongoDB '{selected_db}.{selected_collection}' 컬렉션을 초기화하시겠습니까?\n\n"
@@ -2496,28 +2530,31 @@ class DocumentViewer:
         if not response:
             return
 
-        try:
-            print(f"UI: Attempting to clear {selected_db}.{selected_collection}")
-            # 컬렉션 초기화
-            if self.mongo.clear_collection(selected_db, selected_collection):
-                print(f"MongoDB '{selected_db}.{selected_collection}' 컬렉션 초기화 완료")
-                # 메모리에 남아있는 이전 데이터 먼저 완전 제거
-                self.raw_documents = []
-                self.documents = []
-                self.tag_to_docs = {}
-                self.doc_id_to_doc = {}
-                self.current_raw_index = 0
-                # MongoDB에서 데이터 다시 로드 (초기화 확인)
-                self.load_raw_collection_data()
-            else:
-                messagebox.showerror("초기화 실패",
-                    "컬렉션 초기화에 실패했습니다.\n"
-                    "콘솔에서 에러 메시지를 확인하세요.")
+        self.raw_clear_btn.config(state=tk.DISABLED)
+        self.raw_count_label.config(text="초기화 중...")
 
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            messagebox.showerror("초기화 실패", f"컬렉션 초기화 실패:\n{e}")
+        def bg_clear():
+            print(f"UI: Attempting to clear {selected_db}.{selected_collection}")
+            success = self.mongo.clear_collection(selected_db, selected_collection)
+            if not success:
+                raise Exception("컬렉션 초기화에 실패했습니다.\n콘솔에서 에러 메시지를 확인하세요.")
+            return True
+
+        def on_cleared(_):
+            print(f"MongoDB '{selected_db}.{selected_collection}' 컬렉션 초기화 완료")
+            self.raw_documents = []
+            self.documents = []
+            self.tag_to_docs = {}
+            self.doc_id_to_doc = {}
+            self.current_raw_index = 0
+            self.raw_clear_btn.config(state=tk.NORMAL)
+            self.load_raw_collection_data()
+
+        self._run_in_background(
+            bg_clear, on_cleared,
+            error_title="초기화 실패",
+            cleanup_fn=lambda: self.raw_clear_btn.config(state=tk.NORMAL)
+        )
 
     def on_closing(self):
         """애플리케이션 종료"""
