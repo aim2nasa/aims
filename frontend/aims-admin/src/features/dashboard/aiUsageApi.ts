@@ -186,6 +186,49 @@ export interface OCRTopUsersResponse {
   data: OCRTopUser[];
 }
 
+// Embedding 실패 문서 타입
+export interface FailedEmbeddingDocument {
+  _id: string;
+  originalName: string;
+  ownerId: string;
+  ownerName: string;
+  customerId: string;
+  customerName: string;
+  status: string;
+  errorCode: string;
+  errorMessage: string;
+  retryCount: number;
+  failed_at: string;
+}
+
+export interface EmbedSummary {
+  total: number;
+  done: number;
+  pending: number;
+  failed: number;
+  skipped: number;
+}
+
+export interface FailedEmbeddingResponse {
+  success: boolean;
+  data: {
+    total_count: number;
+    summary: EmbedSummary;
+    documents: FailedEmbeddingDocument[];
+  };
+}
+
+export interface EmbedReprocessResponse {
+  success: boolean;
+  message: string;
+  data: {
+    document_id?: string;
+    retry_count?: number;
+    total_count?: number;
+    reset_count?: number;
+  };
+}
+
 // 숫자 포맷팅 함수들
 export function formatTokens(tokens: number): string {
   if (tokens >= 1000000) {
@@ -408,5 +451,41 @@ export const aiUsageApi = {
       `/api/admin/ocr-usage/top-users?start=${start}&end=${end}`
     );
     return res.data;
+  },
+
+  // =====================
+  // Embedding Management API
+  // =====================
+
+  /**
+   * 임베딩 실패 문서 목록
+   */
+  getFailedEmbeddings: async (): Promise<FailedEmbeddingResponse['data']> => {
+    const res = await apiClient.get<FailedEmbeddingResponse>(
+      `/api/admin/embed/failed-documents`
+    );
+    return res.data;
+  },
+
+  /**
+   * 임베딩 실패 문서 단건 재처리
+   */
+  reprocessEmbedding: async (documentId: string): Promise<EmbedReprocessResponse> => {
+    const res = await apiClient.post<EmbedReprocessResponse>(
+      `/api/admin/embed/reprocess`,
+      { document_id: documentId }
+    );
+    return res;
+  },
+
+  /**
+   * 임베딩 실패 문서 일괄 재처리
+   */
+  reprocessAllEmbeddings: async (): Promise<EmbedReprocessResponse> => {
+    const res = await apiClient.post<EmbedReprocessResponse>(
+      `/api/admin/embed/reprocess-all`,
+      {}
+    );
+    return res;
   },
 };

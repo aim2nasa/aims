@@ -4,7 +4,7 @@
  * @updated 2025-12-17 - 주간/월간 기간 선택 UI 재설계
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BarChart,
@@ -29,6 +29,8 @@ import type {
   HourlyUsagePoint,
   AIModelSettingsUpdate,
   OCRDailyUsagePoint,
+  FailedEmbeddingDocument,
+  EmbedSummary,
 } from '@/features/dashboard/aiUsageApi';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -611,6 +613,47 @@ export const AIUsagePage = () => {
     },
   });
 
+  // 재시도 후 빠른 폴링 모드 (10초 간격, 2분간)
+  const [embedFastPoll, setEmbedFastPoll] = useState(false);
+  const fastPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const startFastPoll = () => {
+    setEmbedFastPoll(true);
+    if (fastPollTimerRef.current) clearTimeout(fastPollTimerRef.current);
+    fastPollTimerRef.current = setTimeout(() => setEmbedFastPoll(false), 120000);
+  };
+
+  useEffect(() => {
+    return () => { if (fastPollTimerRef.current) clearTimeout(fastPollTimerRef.current); };
+  }, []);
+
+  // 임베딩 실패 문서 조회 (재시도 후 10초 폴링, 평상시 60초)
+  const { data: failedEmbeddings, isLoading: failedEmbeddingsLoading, refetch: refetchFailedEmbeddings } = useQuery({
+    queryKey: ['admin', 'embed', 'failed'],
+    queryFn: () => aiUsageApi.getFailedEmbeddings(),
+    refetchInterval: embedFastPoll ? 10000 : 60000,
+  });
+
+  const embedSummary: EmbedSummary | undefined = failedEmbeddings?.summary;
+
+  // 임베딩 단건 재처리 뮤테이션
+  const reprocessMutation = useMutation({
+    mutationFn: (docId: string) => aiUsageApi.reprocessEmbedding(docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'embed', 'failed'] });
+      startFastPoll();
+    },
+  });
+
+  // 임베딩 일괄 재처리 뮤테이션
+  const reprocessAllMutation = useMutation({
+    mutationFn: () => aiUsageApi.reprocessAllEmbeddings(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'embed', 'failed'] });
+      startFastPoll();
+    },
+  });
+
   // 모델 변경 핸들러
   const handleModelChange = (service: 'chat' | 'rag', model: string) => {
     updateModelMutation.mutate({
@@ -672,6 +715,7 @@ export const AIUsagePage = () => {
     refetchOcrOverview();
     refetchOcrDaily();
     refetchOcrTopUsers();
+    refetchFailedEmbeddings();
     if (periodType === 'hourly') {
       refetchHourly();
     }
@@ -1211,6 +1255,161 @@ export const AIUsagePage = () => {
             </div>
           </div>
         )}
+      </section>
+
+      {/* ======================================================
+          임베딩 처리 현황
+          ====================================================== */}
+      <section className="ai-usage-page__section">
+        <div className="embed-section__header">
+          <h2 className="ai-usage-page__section-title">임베딩 처리 현황</h2>
+          <div className="embed-section__actions">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => refetchFailedEmbeddings()}
+            >
+              새로고침
+            </Button>
+            {failedEmbeddings && failedEmbeddings.documents.length > 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => reprocessAllMutation.mutate()}
+                disabled={reprocessAllMutation.isPending}
+              >
+                {reprocessAllMutation.isPending ? '재시도 중...' : `전체 재시도 (${failedEmbeddings.documents.length}건)`}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* 임베딩 상태 요약 카드 */}
+        {embedSummary && (
+          <div className="embed-summary">
+            <div className="embed-summary__item">
+              <span className="embed-summary__value">{embedSummary.total}</span>
+              <span className="embed-summary__label">전체 문서</span>
+            </div>
+            <div className="embed-summary__item embed-summary__item--done">
+              <span className="embed-summary__value">{embedSummary.done}</span>
+              <span className="embed-summary__label">완료</span>
+            </div>
+            <div className="embed-summary__item embed-summary__item--pending">
+              <span className="embed-summary__value">{embedSummary.pending}</span>
+              <span className="embed-summary__label">처리중</span>
+            </div>
+            <div className="embed-summary__item embed-summary__item--failed">
+              <span className="embed-summary__value">{embedSummary.failed}</span>
+              <span className="embed-summary__label">실패</span>
+            </div>
+            {embedFastPoll && (
+              <div className="embed-summary__poll-indicator">자동 갱신 중</div>
+            )}
+          </div>
+        )}
+
+        {/* QUOTA_EXCEEDED 경고 배너 */}
+        {failedEmbeddings && failedEmbeddings.documents.some(
+          (doc: FailedEmbeddingDocument) => doc.errorCode === 'OPENAI_QUOTA_EXCEEDED'
+        ) && (
+          <div className="embed-alert embed-alert--quota">
+            <div className="embed-alert__icon">!</div>
+            <div className="embed-alert__content">
+              <strong className="embed-alert__title">OpenAI API 크레딧 소진</strong>
+              <p className="embed-alert__desc">
+                임베딩 생성에 필요한 OpenAI 크레딧이 부족합니다. 크레딧 충전 후 "전체 재시도" 버튼을 클릭하면 대기 중인 문서가 자동으로 처리됩니다.
+              </p>
+              <a
+                href="https://platform.openai.com/account/billing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="embed-alert__link"
+              >
+                OpenAI 크레딧 충전 페이지
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 성공 메시지 */}
+        {reprocessAllMutation.isSuccess && (
+          <div className="embed-alert embed-alert--success">
+            <div className="embed-alert__content">
+              <strong className="embed-alert__title">재처리 요청 완료</strong>
+              <p className="embed-alert__desc">
+                {reprocessAllMutation.data?.data?.reset_count || 0}건의 문서가 pending 상태로 전환되었습니다.
+                1분 이내에 cron이 자동으로 처리합니다.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 실패 문서 테이블 */}
+        {failedEmbeddingsLoading ? (
+          <div className="ai-usage-page__loading ai-usage-page__loading--compact">
+            로딩 중...
+          </div>
+        ) : !failedEmbeddings || failedEmbeddings.documents.length === 0 ? (
+          <div className="embed-empty">
+            <span className="embed-empty__icon">&#10003;</span>
+            <span className="embed-empty__text">임베딩 실패 문서가 없습니다</span>
+          </div>
+        ) : (
+          <div className="ai-usage-page__table-container">
+            <table className="ai-usage-page__table">
+              <thead>
+                <tr>
+                  <th>파일명</th>
+                  <th>소유자</th>
+                  <th>에러</th>
+                  <th>재시도</th>
+                  <th>실패 시각</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {failedEmbeddings.documents.map((doc: FailedEmbeddingDocument) => (
+                  <tr key={doc._id}>
+                    <td className="embed-table__filename" title={doc.originalName}>
+                      {doc.originalName}
+                    </td>
+                    <td>{doc.ownerName || doc.ownerId || '-'}</td>
+                    <td>
+                      <span className={`embed-error-badge ${doc.errorCode === 'OPENAI_QUOTA_EXCEEDED' ? 'embed-error-badge--quota' : ''}`}>
+                        {doc.errorCode}
+                      </span>
+                    </td>
+                    <td className="embed-table__retry-count">{doc.retryCount}/3</td>
+                    <td className="embed-table__time">
+                      {doc.failed_at ? new Date(doc.failed_at).toLocaleString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }) : '-'}
+                    </td>
+                    <td>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => reprocessMutation.mutate(doc._id)}
+                        disabled={reprocessMutation.isPending}
+                      >
+                        재시도
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="embed-section__note">
+          재시도 클릭 시 pending 상태로 전환되며, 매분 실행되는 cron이 자동으로 임베딩을 처리합니다. 자동 재시도는 최대 3회이며, Admin 수동 재시도 시 횟수가 초기화됩니다.
+        </p>
       </section>
     </div>
   );

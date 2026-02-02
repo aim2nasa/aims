@@ -573,8 +573,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
           ownerId: 1,
           customerId: 1,
           'docembed.status': 1,
+          'docembed.error_code': 1,
           'docembed.error_message': 1,
-          'docembed.updated_at': 1
+          'docembed.retry_count': 1,
+          'docembed.updated_at': 1,
+          'docembed.failed_at': 1
         })
         .toArray();
 
@@ -633,17 +636,43 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         customerId: doc.customerId?.toString() || '',
         customerName: customerNameMap[doc.customerId?.toString()] || '(알 수 없음)',
         status: doc.docembed?.status || '',
+        errorCode: doc.docembed?.error_code || '',
         errorMessage: doc.docembed?.error_message || '',
-        failed_at: doc.docembed?.updated_at || ''
+        retryCount: doc.docembed?.retry_count || 0,
+        failed_at: doc.docembed?.failed_at || doc.docembed?.updated_at || ''
       }));
 
       // 전체 실패 문서 수 (필터 적용)
       const totalCount = await filesCollection.countDocuments(matchCondition);
 
+      // 임베딩 상태별 카운트 (전체 현황 파악용)
+      const hasText = { 'meta.full_text': { $exists: true, $ne: '' } };
+      const [totalDocs, doneCount, pendingCount, failedCount, skippedCount] = await Promise.all([
+        filesCollection.countDocuments(hasText),
+        filesCollection.countDocuments({ ...hasText, 'docembed.status': 'done' }),
+        filesCollection.countDocuments({ ...hasText, $or: [
+          { 'docembed.status': 'pending' },
+          { 'docembed.status': { $exists: false } },
+          { 'docembed': { $exists: false } }
+        ]}),
+        filesCollection.countDocuments({ ...hasText, $or: [
+          { 'docembed.status': 'failed' },
+          { 'docembed.status': 'error' }
+        ]}),
+        filesCollection.countDocuments({ ...hasText, 'docembed.status': 'skipped' })
+      ]);
+
       res.json({
         success: true,
         data: {
           total_count: totalCount,
+          summary: {
+            total: totalDocs,
+            done: doneCount,
+            pending: pendingCount,
+            failed: failedCount,
+            skipped: skippedCount
+          },
           documents
         }
       });
@@ -655,6 +684,157 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         error: '임베딩 실패 문서 조회에 실패했습니다.',
         details: error.message
       });
+    }
+  });
+
+  /**
+   * POST /api/admin/embed/reprocess
+   * 임베딩 실패 문서 단건 재처리
+   *
+   * Body:
+   * - document_id: string (필수)
+   *
+   * docembed.status를 'pending'으로 리셋하면 cron full_pipeline.py(매분)가 자동 픽업
+   */
+  router.post('/admin/embed/reprocess', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { document_id } = req.body;
+      if (!document_id) {
+        return res.status(400).json({ success: false, error: 'document_id가 필요합니다.' });
+      }
+
+      const filesCollection = db.collection('files');
+
+      const doc = await filesCollection.findOne(
+        { _id: new ObjectId(document_id) },
+        { projection: { 'docembed': 1, 'upload.originalName': 1 } }
+      );
+
+      if (!doc) {
+        return res.status(404).json({ success: false, error: '문서를 찾을 수 없습니다.' });
+      }
+
+      const currentStatus = doc.docembed?.status;
+      if (currentStatus !== 'failed' && currentStatus !== 'error') {
+        return res.status(400).json({
+          success: false,
+          error: `재처리 대상이 아닙니다. 현재 상태: ${currentStatus || '없음'}`
+        });
+      }
+
+      const now = new Date().toISOString();
+
+      // Admin 수동 재시도: retry_count를 0으로 리셋하여 자동 재시도 3회 기회 부여
+      await filesCollection.updateOne(
+        { _id: new ObjectId(document_id) },
+        {
+          $set: {
+            'docembed.status': 'pending',
+            'docembed.queued_at': now,
+            'docembed.retry_count': 0,
+            'docembed.last_retry_at': now
+          },
+          $unset: {
+            'docembed.error_code': '',
+            'docembed.error_message': '',
+            'docembed.failed_at': ''
+          }
+        }
+      );
+
+      console.log(`[POST /api/admin/embed/reprocess] 재처리 요청: ${document_id} (retry_count 초기화)`);
+
+      res.json({
+        success: true,
+        message: '임베딩 재처리가 요청되었습니다. 1분 내 자동 처리됩니다.',
+        data: {
+          document_id,
+          originalName: doc.upload?.originalName || '',
+          retry_count: 0,
+          queued_at: now
+        }
+      });
+    } catch (error) {
+      console.error('[POST /api/admin/embed/reprocess] 오류:', error);
+      backendLogger.error('EmbedUsage', '임베딩 단건 재처리 오류', error);
+      res.status(500).json({ success: false, error: '임베딩 재처리에 실패했습니다.', details: error.message });
+    }
+  });
+
+  /**
+   * POST /api/admin/embed/reprocess-all
+   * 임베딩 실패 문서 일괄 재처리
+   *
+   * Body:
+   * - errorCode: string (선택, 특정 에러코드만 필터)
+   * - maxRetry: number (기본값: 3, 재시도 최대 횟수)
+   *
+   * 모든 failed/error 문서의 status를 'pending'으로 리셋
+   */
+  router.post('/admin/embed/reprocess-all', authenticateJWT, requireRole('admin'), async (req, res) => {
+    try {
+      const { errorCode } = req.body;
+
+      const filesCollection = db.collection('files');
+
+      // Admin 수동 재시도: retry_count 제한 없이 모든 failed/error 문서 대상
+      const matchCondition = {
+        $or: [
+          { 'docembed.status': 'failed' },
+          { 'docembed.status': 'error' }
+        ]
+      };
+
+      if (errorCode) {
+        matchCondition['docembed.error_code'] = errorCode;
+      }
+
+      const totalCount = await filesCollection.countDocuments(matchCondition);
+
+      if (totalCount === 0) {
+        return res.json({
+          success: true,
+          message: '재처리할 실패 문서가 없습니다.',
+          data: { total_count: 0, reset_count: 0 }
+        });
+      }
+
+      const now = new Date().toISOString();
+
+      // Admin 수동 재시도: retry_count를 0으로 리셋하여 자동 재시도 3회 기회 부여
+      const result = await filesCollection.updateMany(
+        matchCondition,
+        {
+          $set: {
+            'docembed.status': 'pending',
+            'docembed.queued_at': now,
+            'docembed.retry_count': 0,
+            'docembed.last_retry_at': now
+          },
+          $unset: {
+            'docembed.error_code': '',
+            'docembed.error_message': '',
+            'docembed.failed_at': ''
+          }
+        }
+      );
+
+      const resetCount = result.modifiedCount;
+
+      console.log(`[POST /api/admin/embed/reprocess-all] 일괄 재처리: ${resetCount}건 리셋 (retry_count 초기화)`);
+
+      res.json({
+        success: true,
+        message: `${resetCount}건의 문서가 재처리 대기열에 등록되었습니다. 1분 내 자동 처리됩니다.`,
+        data: {
+          total_count: totalCount,
+          reset_count: resetCount
+        }
+      });
+    } catch (error) {
+      console.error('[POST /api/admin/embed/reprocess-all] 오류:', error);
+      backendLogger.error('EmbedUsage', '임베딩 일괄 재처리 오류', error);
+      res.status(500).json({ success: false, error: '임베딩 일괄 재처리에 실패했습니다.', details: error.message });
     }
   });
 

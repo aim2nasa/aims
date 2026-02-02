@@ -149,7 +149,8 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
             print(f"[FIX] 불일치 상태 수정 완료")
 
         # 2단계: full_text가 있고, 임베딩이 아직 완료되지 않은 문서를 찾습니다.
-        # docembed.status가 없거나 'pending'인 경우 처리 대상
+        # - docembed.status가 없거나 'pending'인 경우: 신규 처리 대상
+        # - docembed.status가 'failed'이고 retry_count < 3인 경우: 재시도 대상
         query_filter = {
             '$and': [
                 {'$or': [
@@ -159,7 +160,14 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 ]},
                 {'$or': [
                     {'docembed.status': {'$exists': False}},
-                    {'docembed.status': 'pending'}
+                    {'docembed.status': 'pending'},
+                    {'$and': [
+                        {'docembed.status': 'failed'},
+                        {'$or': [
+                            {'docembed.retry_count': {'$exists': False}},
+                            {'docembed.retry_count': {'$lt': 3}}
+                        ]}
+                    ]}
                 ]}
             ]
         }
@@ -253,17 +261,17 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 trigger_virus_scan(doc_id, owner_id)
             except EmbeddingError as e:
                 # OpenAI API 크레딧 소진 등 명확한 임베딩 에러
-                print(f"!!! 문서 ID: {doc_id} 임베딩 에러: [{e.error_code}] {e.message} !!!")
+                prev_retry = doc_data.get('docembed', {}).get('retry_count', 0)
+                print(f"!!! 문서 ID: {doc_id} 임베딩 에러: [{e.error_code}] {e.message} (retry: {prev_retry + 1}) !!!")
                 collection.update_one(
                     {'_id': ObjectId(doc_id)},
                     {'$set': {
-                        'docembed': {
-                            'status': 'failed',
-                            'error_code': e.error_code,
-                            'error_message': e.message,
-                            'failed_at': datetime.now(timezone.utc).isoformat()
-                        },
-                        'overallStatus': 'error',  # 임베딩 실패 = 전체 처리 실패
+                        'docembed.status': 'failed',
+                        'docembed.error_code': e.error_code,
+                        'docembed.error_message': e.message,
+                        'docembed.failed_at': datetime.now(timezone.utc).isoformat(),
+                        'docembed.retry_count': prev_retry + 1,
+                        'overallStatus': 'error',
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
@@ -273,18 +281,17 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                     print(f"   충전 페이지: https://platform.openai.com/account/billing")
                     break
             except Exception as e:
-                print(f"!!! 문서 ID: {doc_id} 처리 중 오류 발생: {e} !!!")
-                # 오류 발생 시 MongoDB에 상태 기록
+                prev_retry = doc_data.get('docembed', {}).get('retry_count', 0)
+                print(f"!!! 문서 ID: {doc_id} 처리 중 오류 발생: {e} (retry: {prev_retry + 1}) !!!")
                 collection.update_one(
                     {'_id': ObjectId(doc_id)},
                     {'$set': {
-                        'docembed': {
-                            'status': 'failed',
-                            'error_code': 'UNKNOWN',
-                            'error_message': str(e),
-                            'failed_at': datetime.now(timezone.utc).isoformat()
-                        },
-                        'overallStatus': 'error',  # 임베딩 실패 = 전체 처리 실패
+                        'docembed.status': 'failed',
+                        'docembed.error_code': 'UNKNOWN',
+                        'docembed.error_message': str(e),
+                        'docembed.failed_at': datetime.now(timezone.utc).isoformat(),
+                        'docembed.retry_count': prev_retry + 1,
+                        'overallStatus': 'error',
                         'overallStatusUpdatedAt': datetime.now(timezone.utc)
                     }}
                 )
