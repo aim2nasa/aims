@@ -811,9 +811,20 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     }
   }, [arSortField, wasArJustResizing])
 
+  // 🍎 검색어로 필터링된 AR 계약 이력
+  const filteredContractHistories = useMemo(() => {
+    if (!searchTerm.trim()) return contractHistories
+    const term = searchTerm.toLowerCase().trim()
+    return contractHistories.filter(h =>
+      (h.policyNumber || '').toLowerCase().includes(term) ||
+      (h.productName || '').toLowerCase().includes(term) ||
+      (h.holder || '').toLowerCase().includes(term)
+    )
+  }, [contractHistories, searchTerm])
+
   // 🍎 정렬된 AR 계약 이력
   const sortedContractHistories = useMemo(() => {
-    return [...contractHistories].sort((a, b) => {
+    return [...filteredContractHistories].sort((a, b) => {
       let aValue: string | number
       let bValue: string | number
 
@@ -866,7 +877,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       if (aValue > bValue) return arSortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [contractHistories, arSortField, arSortDirection])
+  }, [filteredContractHistories, arSortField, arSortDirection])
 
   // 🍎 AR 정렬 인디케이터 렌더링
   const renderArSortIndicator = (field: typeof arSortField) => {
@@ -886,9 +897,20 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     }
   }, [crSortField])
 
+  // 🍎 검색어로 필터링된 CRS 계약 이력
+  const filteredCrContractHistories = useMemo(() => {
+    if (!searchTerm.trim()) return crContractHistories
+    const term = searchTerm.toLowerCase().trim()
+    return crContractHistories.filter(h =>
+      (h.policyNumber || '').toLowerCase().includes(term) ||
+      (h.productName || '').toLowerCase().includes(term) ||
+      (h.contractorName || '').toLowerCase().includes(term)
+    )
+  }, [crContractHistories, searchTerm])
+
   // 🍎 정렬된 CRS 계약 이력
   const sortedCrContractHistories = useMemo(() => {
-    return [...crContractHistories].sort((a, b) => {
+    return [...filteredCrContractHistories].sort((a, b) => {
       let aValue: string | number
       let bValue: string | number
 
@@ -933,7 +955,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
       if (aValue > bValue) return crSortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [crContractHistories, crSortField, crSortDirection])
+  }, [filteredCrContractHistories, crSortField, crSortDirection])
 
   // 🍎 CRS 정렬 인디케이터 렌더링
   const renderCrSortIndicator = (field: CrSortField) => {
