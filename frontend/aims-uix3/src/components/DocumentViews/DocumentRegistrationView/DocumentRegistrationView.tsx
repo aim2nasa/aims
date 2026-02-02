@@ -242,25 +242,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             }
           )
 
+          // 실제 업로드 프로세스(XHR)는 리마운트 시 소멸하므로
+          // 'uploading' 상태 파일은 중단된 것으로 처리
+          const wasUploading = savedFile.status === 'uploading' || savedFile.status === 'pending'
+
           return {
             id: savedFile.id,
             file: dummyFile,
             fileSize: savedFile.fileSize ?? savedFile.fileInfo?.size ?? 0,
-            status: savedFile.status,
-            progress: savedFile.progress,
-            error: savedFile.error,
+            status: wasUploading ? 'error' as const : savedFile.status,
+            progress: wasUploading ? 0 : savedFile.progress,
+            error: wasUploading ? '업로드가 중단되었습니다 (페이지 새로고침)' : savedFile.error,
             completedAt: savedFile.completedAt ? new Date(savedFile.completedAt) : undefined,
             relativePath: savedFile.relativePath
           }
         }) ?? []
 
-        // 업로드 중인 파일이 있으면 uploading 상태 복원
-        const hasUploadingFiles = restoredFiles.some((f) => f.status === 'uploading')
-
         return {
           ...parsed,
           files: restoredFiles,
-          uploading: hasUploadingFiles // 업로드 중인 파일이 있으면 true 유지
+          uploading: false // 실제 업로드 프로세스는 리마운트 시 소멸 — 항상 false
         }
       }
     } catch (error) {
