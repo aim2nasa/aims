@@ -803,24 +803,46 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
   }, [])
 
-  // 🍎 CRS 증권번호 → CustomerReview 매칭 (AR이력에서 변액 리포트 모달용)
-  const crReviewByPolicyNumber = useMemo(() => {
-    const map = new Map<string, CustomerReview>()
+  // 🍎 CRS 증권번호 → CustomerReview[] 매칭 (발행일 최신순, 한 증권에 여러 리뷰)
+  const crReviewsByPolicy = useMemo(() => {
+    const map = new Map<string, CustomerReview[]>()
     for (const review of crReviews) {
       const pn = review.contract_info?.policy_number
-      if (pn) map.set(pn, review)
+      if (!pn) continue
+      const arr = map.get(pn) || []
+      arr.push(review)
+      map.set(pn, arr)
+    }
+    for (const arr of map.values()) {
+      arr.sort((a, b) => (b.issue_date || '').localeCompare(a.issue_date || ''))
     }
     return map
   }, [crReviews])
 
-  // 🍎 AR이력 순번 클릭 → CRS 상세 모달 열기
+  // 🍎 특정 증권번호 + 발행일로 리뷰 찾기
+  const findCrReview = useCallback((policyNumber: string, issueDate?: string) => {
+    const reviews = crReviewsByPolicy.get(policyNumber)
+    if (!reviews?.length) return null
+    if (!issueDate) return reviews[0]
+    return reviews.find(r => r.issue_date === issueDate) || reviews[0]
+  }, [crReviewsByPolicy])
+
+  // 🍎 순번 클릭 → CRS 상세 모달 열기 (최신 리뷰)
   const handleOpenCrModal = useCallback((policyNumber: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const review = crReviewByPolicyNumber.get(policyNumber)
+    const review = findCrReview(policyNumber)
     if (!review) return
     setCrModalReview(review)
     setIsCrModalOpen(true)
-  }, [crReviewByPolicyNumber])
+  }, [findCrReview])
+
+  // 🍎 CRS 스냅샷 행 클릭 → 해당 발행일 CRS 모달 열기
+  const handleOpenCrSnapshotModal = useCallback((policyNumber: string, issueDate: string) => {
+    const review = findCrReview(policyNumber, issueDate)
+    if (!review) return
+    setCrModalReview(review)
+    setIsCrModalOpen(true)
+  }, [findCrReview])
 
   // 🍎 AR 계약 이력 정렬 핸들러
   const handleArSort = useCallback((field: typeof arSortField) => {
@@ -1188,7 +1210,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           <div className="contract-history-list">
             {sortedContractHistories.map((history, idx) => {
               const isExpanded = expandedPolicyNumber === history.policyNumber
-              const hasCrs = crReviewByPolicyNumber.has(history.policyNumber)
+              const hasCrs = crReviewsByPolicy.has(history.policyNumber)
               const { latestSnapshot } = history
 
               return (
@@ -1409,7 +1431,16 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                     tabIndex={0}
                     aria-expanded={isExpanded ? 'true' : 'false'}
                   >
-                    <span className="cr-contract-history-item__seq">{idx + 1}</span>
+                    <Tooltip content="변액 리포트 상세 보기">
+                      <span
+                        className="cr-contract-history-item__seq cr-contract-history-item__seq--crs"
+                        onClick={(e) => handleOpenCrModal(history.policyNumber, e)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        {idx + 1}
+                      </span>
+                    </Tooltip>
                     <span className="cr-contract-history-item__policy">
                       <span className="cr-contract-history-item__toggle">{isExpanded ? '▼' : '▶'}</span>
                       {history.policyNumber}
@@ -1453,29 +1484,33 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                         const hasChanges = changedFields.length > 0
 
                         return (
-                          <div
-                            key={`${history.policyNumber}-${snapshot.issueDate}`}
-                            className={`cr-contract-history-snapshot-item ${hasChanges ? 'cr-contract-history-snapshot-item--changed' : ''}`}
-                          >
-                            <span className="cr-snapshot-item__issue-date">
-                              {formatDate(snapshot.issueDate)}
-                            </span>
-                            <span className={`cr-snapshot-item__insured-amount ${changedFields.includes('insuredAmount') ? 'cr-snapshot-item--changed' : ''}`}>
-                              {snapshot.insuredAmount ? snapshot.insuredAmount.toLocaleString('ko-KR') : '-'}
-                            </span>
-                            <span className={`cr-snapshot-item__accumulated ${changedFields.includes('accumulatedAmount') ? 'cr-snapshot-item--changed' : ''}`}>
-                              {snapshot.accumulatedAmount ? snapshot.accumulatedAmount.toLocaleString('ko-KR') : '-'}
-                            </span>
-                            <span className={`cr-snapshot-item__return-rate ${changedFields.includes('investmentReturnRate') ? 'cr-snapshot-item--changed' : ''}`}>
-                              {snapshot.investmentReturnRate !== undefined ? `${snapshot.investmentReturnRate.toFixed(2)}%` : '-'}
-                            </span>
-                            <span className={`cr-snapshot-item__surrender-value ${changedFields.includes('surrenderValue') ? 'cr-snapshot-item--changed' : ''}`}>
-                              {snapshot.surrenderValue ? snapshot.surrenderValue.toLocaleString('ko-KR') : '-'}
-                            </span>
-                            <span className={`cr-snapshot-item__surrender-rate ${changedFields.includes('surrenderRate') ? 'cr-snapshot-item--changed' : ''}`}>
-                              {snapshot.surrenderRate !== undefined ? `${snapshot.surrenderRate.toFixed(2)}%` : '-'}
-                            </span>
-                          </div>
+                          <Tooltip key={`${history.policyNumber}-${snapshot.issueDate}`} content="클릭하여 해당 발행일 변액 리포트 보기">
+                            <div
+                              className={`cr-contract-history-snapshot-item cr-contract-history-snapshot-item--clickable ${hasChanges ? 'cr-contract-history-snapshot-item--changed' : ''}`}
+                              onClick={() => handleOpenCrSnapshotModal(history.policyNumber, snapshot.issueDate)}
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <span className="cr-snapshot-item__issue-date">
+                                {formatDate(snapshot.issueDate)}
+                              </span>
+                              <span className={`cr-snapshot-item__insured-amount ${changedFields.includes('insuredAmount') ? 'cr-snapshot-item--changed' : ''}`}>
+                                {snapshot.insuredAmount ? snapshot.insuredAmount.toLocaleString('ko-KR') : '-'}
+                              </span>
+                              <span className={`cr-snapshot-item__accumulated ${changedFields.includes('accumulatedAmount') ? 'cr-snapshot-item--changed' : ''}`}>
+                                {snapshot.accumulatedAmount ? snapshot.accumulatedAmount.toLocaleString('ko-KR') : '-'}
+                              </span>
+                              <span className={`cr-snapshot-item__return-rate ${changedFields.includes('investmentReturnRate') ? 'cr-snapshot-item--changed' : ''}`}>
+                                {snapshot.investmentReturnRate !== undefined ? `${snapshot.investmentReturnRate.toFixed(2)}%` : '-'}
+                              </span>
+                              <span className={`cr-snapshot-item__surrender-value ${changedFields.includes('surrenderValue') ? 'cr-snapshot-item--changed' : ''}`}>
+                                {snapshot.surrenderValue ? snapshot.surrenderValue.toLocaleString('ko-KR') : '-'}
+                              </span>
+                              <span className={`cr-snapshot-item__surrender-rate ${changedFields.includes('surrenderRate') ? 'cr-snapshot-item--changed' : ''}`}>
+                                {snapshot.surrenderRate !== undefined ? `${snapshot.surrenderRate.toFixed(2)}%` : '-'}
+                              </span>
+                            </div>
+                          </Tooltip>
                         )
                       })}
                     </div>
@@ -1734,7 +1769,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           )}
         </>
       )}
-      {/* 🍎 AR이력 → 변액 리포트 상세 모달 */}
+      {/* 🍎 변액 리포트 상세 모달 (AR이력/변액리포트이력 공통) */}
       <CustomerReviewModal
         isOpen={isCrModalOpen}
         onClose={() => { setIsCrModalOpen(false); setCrModalReview(null) }}
