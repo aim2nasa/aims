@@ -117,6 +117,18 @@ export function groupCrFilesByContractorName(
 }
 
 /**
+ * 검색 결과에서 정확히 이름이 일치하는 고객 필터링
+ * (백엔드 search API가 부분 일치도 반환하므로 정확 매치만 걸러냄)
+ */
+function findExactMatchCustomers(nameFromCr: string, matchingCustomers: Customer[]): Customer[] {
+  const normalized = normalizeCustomerName(nameFromCr)
+  return matchingCustomers.filter(c => {
+    const name = c.personal_info?.name
+    return name ? normalizeCustomerName(name) === normalized : false
+  })
+}
+
+/**
  * 매칭 상태 결정
  */
 export function determineMatchStatus(matchingCustomers: Customer[]): CrMatchStatus {
@@ -137,24 +149,27 @@ export function createCrFileGroup(
   files: CrFileInfo[],
   matchingCustomers: Customer[]
 ): CrFileGroup {
-  const matchStatus = determineMatchStatus(matchingCustomers)
+  // 정확 매치 우선: "이경" 검색 시 이경아/이경옥 등 부분 매치 제외
+  const exactMatches = findExactMatchCustomers(contractorNameFromCr, matchingCustomers)
+  const effectiveCustomers = exactMatches.length > 0 ? exactMatches : matchingCustomers
+  const matchStatus = determineMatchStatus(effectiveCustomers)
 
   // 자동 매칭인 경우 첫 번째 고객 선택
-  const selectedCustomerId = matchStatus === 'auto' ? matchingCustomers[0]._id : null
+  const selectedCustomerId = matchStatus === 'auto' ? effectiveCustomers[0]._id : null
   const selectedCustomerName = matchStatus === 'auto'
-    ? matchingCustomers[0].personal_info?.name
+    ? effectiveCustomers[0].personal_info?.name
     : undefined
 
   return {
     groupId: generateGroupId(),
     contractorNameFromCr,
     files,
-    matchingCustomers,
+    matchingCustomers,  // 드롭다운용으로 전체 검색 결과 유지
     matchStatus,
     selectedCustomerId,
     selectedCustomerName,
     newCustomerName: matchStatus === 'no_match' ? contractorNameFromCr : undefined,
-    isExpanded: true, // 기본 펼침
+    isExpanded: true,
   }
 }
 
