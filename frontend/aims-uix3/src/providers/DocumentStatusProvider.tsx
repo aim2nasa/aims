@@ -86,12 +86,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
    * 🔍 검색어가 있으면 백엔드에 전달하여 전체 라이브러리 검색
    */
   const fetchDocuments = useCallback(
-    async (isInitialLoad: boolean = false) => {
+    async (isInitialLoad: boolean = false, silent: boolean = false) => {
       try {
         if (isInitialLoad) {
           setLoading(true)
         }
-        setError(null)
+        if (!silent) setError(null)
 
         // 🍎 백엔드 정렬 파라미터 생성
         let sortParam: string | undefined = undefined
@@ -202,11 +202,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
         setLastUpdated(new Date())
       } catch (err) {
-        if (typeof window !== 'undefined') {
+        if (!silent && typeof window !== 'undefined') {
           setError('문서 목록을 불러올 수 없습니다.')
         }
-        console.error('Fetch documents error:', err)
-        errorReporter.reportApiError(err as Error, { component: 'DocumentStatusProvider.fetchDocuments' })
+        if (!silent) {
+          console.error('Fetch documents error:', err)
+          errorReporter.reportApiError(err as Error, { component: 'DocumentStatusProvider.fetchDocuments' })
+        }
         if (isInitialLoad && typeof window !== 'undefined') {
           setDocuments([])
         }
@@ -369,10 +371,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     fetchDocumentsRef.current(false)
   }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm])
 
-  // 🔄 SSE 훅 사용 (폴링 대체)
+  // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영
-  // - document-progress: 진행률 업데이트 시 즉시 반영 (폴링 제거)
-  // - Page Visibility API로 탭 비활성화 시 자동 연결 해제/재연결
+  // - document-progress: 진행률 업데이트 시 즉시 반영
+  // - Freshness Guardian (아래)가 SSE 실패 시 safety net 역할
   useDocumentStatusListSSE(
     () => {
       fetchDocumentsRef.current(false)
@@ -442,11 +444,30 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }
   }, [initialFiles, isLoading])
 
-  // 🔄 SSE 단독 사용 (폴링 제거 - 2026-01-06)
-  // - document-list-change: 문서 업로드/삭제/상태변경 시 즉시 반영
-  // - document-progress: 진행률 업데이트 시 즉시 반영 (20% → 40% → 60% → 80% → 100%)
-  // - 폴링 대비 서버 부하 60-70% 감소, 실시간성 향상
-  // 참고: useDocumentStatusListSSE 훅에서 SSE 이벤트 처리
+  // Freshness Guardian: 미완료 문서가 있을 때 30초 주기로 문서 목록 갱신
+  // SSE 연결 상태가 아닌 "로컬 데이터에 미완료 문서가 있는가?"로 판단 (content-driven)
+  // → SSE 정상, SSE 끊김, SSE zombie 모든 실패 모드에서 동작
+  // → 모든 문서가 완료되면 자동 중단 (오버헤드 0)
+  const freshnessIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const hasProcessingDocuments = documents.some(doc => {
+    const progress = doc.progress ?? 0
+    const status = doc.overallStatus
+    return progress < 100 && status !== 'completed' && status !== 'error'
+  })
+
+  useEffect(() => {
+    if (hasProcessingDocuments && isPollingEnabled) {
+      freshnessIntervalRef.current = setInterval(() => {
+        fetchDocumentsRef.current(false, true)
+      }, 30000)
+    }
+    return () => {
+      if (freshnessIntervalRef.current) {
+        clearInterval(freshnessIntervalRef.current)
+        freshnessIntervalRef.current = null
+      }
+    }
+  }, [hasProcessingDocuments, isPollingEnabled])
 
   /**
    * 🔍 검색 및 필터링

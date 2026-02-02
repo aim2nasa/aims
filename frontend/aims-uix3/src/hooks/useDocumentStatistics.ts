@@ -20,7 +20,7 @@ export function useDocumentStatistics(enabled = true) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
 
-  const fetchStatistics = useCallback(async () => {
+  const fetchStatistics = useCallback(async (silent: boolean = false) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/documents/statistics`, {
         headers: {
@@ -44,9 +44,11 @@ export function useDocumentStatistics(enabled = true) {
       if (mountedRef.current) {
         setIsLoading(false)
       }
-      errorReporter.reportApiError(error as Error, {
-        component: 'useDocumentStatistics'
-      })
+      if (!silent) {
+        errorReporter.reportApiError(error as Error, {
+          component: 'useDocumentStatistics'
+        })
+      }
     }
   }, [])
 
@@ -89,6 +91,27 @@ export function useDocumentStatistics(enabled = true) {
       }
     }
   }, [enabled, fetchStatistics])
+
+  // Freshness Guardian: 처리 중 문서가 있을 때만 30초 주기로 통계 검증
+  // SSE 상태와 무관하게 동작 — SSE zombie, 연결 끊김 등 모든 실패 모드를 커버
+  const freshnessIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const hasActiveProcessing = statistics
+    ? (statistics.processing > 0 || statistics.pending > 0)
+    : false
+
+  useEffect(() => {
+    if (hasActiveProcessing && enabled) {
+      freshnessIntervalRef.current = setInterval(() => {
+        fetchStatistics(true)
+      }, 30000)
+    }
+    return () => {
+      if (freshnessIntervalRef.current) {
+        clearInterval(freshnessIntervalRef.current)
+        freshnessIntervalRef.current = null
+      }
+    }
+  }, [hasActiveProcessing, enabled, fetchStatistics])
 
   return { statistics, isLoading, refresh: fetchStatistics }
 }

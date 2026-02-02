@@ -54,10 +54,6 @@ export function useSSESubscription<T = unknown>(
   } = options
 
   const [isConnected, setIsConnected] = useState(false)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const reconnectAttemptRef = useRef(0)
-  const MAX_RECONNECT_ATTEMPTS = 5
-  const RECONNECT_DELAY_MS = 5000
 
   // params를 안정화 (JSON 직렬화로 비교)
   const paramsKey = useMemo(() => JSON.stringify(params || {}), [params])
@@ -124,31 +120,12 @@ export function useSSESubscription<T = unknown>(
       if (eventType === 'connected') {
         console.log(`[useSSESubscription] ✅ 연결 성공 - streamKey: ${streamKey}`)
         setIsConnected(true)
-        reconnectAttemptRef.current = 0  // 🔄 연결 성공 시 재연결 카운터 리셋
         onConnectRef.current?.(data)
       } else if (eventType === 'error') {
         console.log(`[useSSESubscription] ❌ 연결 오류 - streamKey: ${streamKey}`)
         setIsConnected(false)
         onErrorRef.current?.(new Error((data as { message?: string })?.message || 'SSE error'))
-
-        // 🔄 자동 재연결 시도 (최대 MAX_RECONNECT_ATTEMPTS회)
-        if (reconnectAttemptRef.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttemptRef.current++
-          console.log(`[SSE] 재연결 시도 ${reconnectAttemptRef.current}/${MAX_RECONNECT_ATTEMPTS} (${RECONNECT_DELAY_MS}ms 후)`)
-
-          // 기존 타이머 정리
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current)
-          }
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`[SSE] 재연결 실행 중...`)
-            sseClient.syncAuthToken()
-            sseClient.subscribe(streamKey, endpointRef.current, paramsRef.current)
-          }, RECONNECT_DELAY_MS)
-        } else {
-          console.warn(`[SSE] 최대 재연결 시도 횟수(${MAX_RECONNECT_ATTEMPTS}) 초과 - streamKey: ${streamKey}`)
-        }
+        // 재연결은 SharedWorker가 exponential backoff로 무한 재시도
       } else {
         // 일반 이벤트
         console.log(`[useSSESubscription] 🎯 일반 이벤트 전달 - eventType: ${eventType}`)
@@ -178,11 +155,12 @@ export function useSSESubscription<T = unknown>(
     // 초기 연결
     const unsubscribe = connect()
 
-    // 탭 활성화 시 토큰 동기화 (연결은 끊지 않음)
+    // 탭 활성화 시 토큰 동기화 + 데이터 새로고침
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // 탭 활성화 시 토큰 동기화
         sseClient.syncAuthToken()
+        // SSE 끊김 동안 놓친 변경사항 복구 (onConnect로 fetchDocuments/fetchStatistics 트리거)
+        onConnectRef.current?.({ reason: 'visibility-change' })
       }
     }
 
@@ -192,11 +170,6 @@ export function useSSESubscription<T = unknown>(
       unsubscribe?.()
       sseClient.unsubscribe(streamKey)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      // 🔄 재연결 타이머 정리
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
     }
   }, [enabled, streamKey, connect])
 
