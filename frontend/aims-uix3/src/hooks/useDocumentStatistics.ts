@@ -1,0 +1,94 @@
+/**
+ * Document Statistics Hook
+ * @description 문서 처리 현황 통계를 조회하고 SSE로 실시간 갱신하는 훅
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import type { DocumentStatistics } from '@/types/documentStatistics'
+import { getAuthHeaders } from '@/shared/lib/api'
+import { errorReporter } from '@/shared/lib/errorReporter'
+import { useSSESubscription } from '@/shared/hooks/useSSESubscription'
+
+const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
+
+// 모듈 레벨 캐시: 네비게이션 시 빈 화면 방지
+let statisticsCache: DocumentStatistics | null = null
+
+export function useDocumentStatistics(enabled = true) {
+  const [statistics, setStatistics] = useState<DocumentStatistics | null>(statisticsCache)
+  const [isLoading, setIsLoading] = useState<boolean>(statisticsCache === null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mountedRef = useRef(true)
+
+  const fetchStatistics = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/statistics`, {
+        headers: {
+          ...getAuthHeaders()
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Statistics API error: ${response.status}`)
+      }
+
+      const json = await response.json()
+
+      if (json.success && json.data && mountedRef.current) {
+        const data = json.data as DocumentStatistics
+        statisticsCache = data
+        setStatistics(data)
+        setIsLoading(false)
+      }
+    } catch (error) {
+      if (mountedRef.current) {
+        setIsLoading(false)
+      }
+      errorReporter.reportApiError(error as Error, {
+        component: 'useDocumentStatistics'
+      })
+    }
+  }, [])
+
+  // SSE 이벤트 수신 시 디바운스 후 통계 재조회
+  const debouncedRefresh = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+    debounceRef.current = setTimeout(() => {
+      fetchStatistics()
+    }, 500)
+  }, [fetchStatistics])
+
+  // SSE 구독: 문서 상태 변경 시 통계 갱신
+  useSSESubscription({
+    streamKey: 'documents:status-list',
+    endpoint: '/api/documents/status-list/stream',
+    enabled,
+    onEvent: useCallback((eventType: string) => {
+      if (eventType === 'document-list-change' || eventType === 'document-progress') {
+        debouncedRefresh()
+      }
+    }, [debouncedRefresh]),
+    onConnect: useCallback(() => {
+      // 연결/재연결 시 최신 통계 조회
+      fetchStatistics()
+    }, [fetchStatistics])
+  })
+
+  // 초기 로드
+  useEffect(() => {
+    mountedRef.current = true
+    if (enabled) {
+      fetchStatistics()
+    }
+    return () => {
+      mountedRef.current = false
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [enabled, fetchStatistics])
+
+  return { statistics, isLoading, refresh: fetchStatistics }
+}

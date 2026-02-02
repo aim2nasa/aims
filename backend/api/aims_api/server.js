@@ -1969,6 +1969,20 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
         TXT: 0,
         OCR: 0,
         BIN: 0
+      },
+      arParsing: {
+        total: 0,
+        completed: 0,
+        processing: 0,
+        pending: 0,
+        failed: 0
+      },
+      crsParsing: {
+        total: 0,
+        completed: 0,
+        processing: 0,
+        pending: 0,
+        failed: 0
       }
     };
 
@@ -2001,6 +2015,22 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
       // Level 4: 나머지 모두 BIN (기본값 유지)
 
       stats.badgeTypes[badgeType]++;
+
+      // AR/CRS 파싱 통계 집계
+      if (doc.is_annual_report) {
+        stats.arParsing.total++;
+        const arStatus = doc.ar_parsing_status || 'pending';
+        if (stats.arParsing[arStatus] !== undefined) {
+          stats.arParsing[arStatus]++;
+        }
+      }
+      if (doc.is_customer_review) {
+        stats.crsParsing.total++;
+        const crStatus = doc.cr_parsing_status || 'pending';
+        if (stats.crsParsing[crStatus] !== undefined) {
+          stats.crsParsing[crStatus]++;
+        }
+      }
     });
 
     res.json({

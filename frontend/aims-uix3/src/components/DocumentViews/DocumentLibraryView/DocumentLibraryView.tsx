@@ -33,6 +33,8 @@ import type { Document } from '@/types/documentStatus'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import { DocumentService } from '@/services/DocumentService'
 import DownloadHelper from '../../../utils/downloadHelper'
+import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
+import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
@@ -101,6 +103,9 @@ const DocumentLibraryContent: React.FC<{
 
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 문서 처리 현황 통계 (Status Bar용)
+  const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics()
 
   // 초성 필터가 적용된 문서 목록 (연결된 고객명 기준)
   const initialFilteredDocuments = React.useMemo(() => {
@@ -519,6 +524,9 @@ const DocumentLibraryContent: React.FC<{
           />
         </div>
       </div>
+
+      {/* 문서 처리 현황 Status Bar */}
+      <DocumentProcessingStatusBar statistics={docStats} isLoading={statsLoading} />
 
       {/* 초성 필터 바 */}
       <InitialFilterBar

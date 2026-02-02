@@ -1,0 +1,251 @@
+/**
+ * DocumentProcessingStatusBar.css
+ * 문서 처리 현황 Status Bar 스타일
+ * Apple Progressive Disclosure + Dense Typography
+ */
+
+/* === Container === */
+.processing-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 12px;
+  margin: 0 0 0 0;
+  background: var(--color-bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--color-border-primary);
+
+  /* Progressive Disclosure: 숨김 → 표시 전환 */
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease,
+    padding 0.3s ease,
+    margin 0.3s ease;
+}
+
+.processing-status-bar--visible {
+  max-height: 72px;
+  opacity: 1;
+  padding: 8px 12px;
+  margin: 0 0 8px 0;
+}
+
+/* === Skeleton Loading === */
+.processing-status-bar--skeleton {
+  max-height: 18px;
+  opacity: 1;
+  padding: 4px 12px;
+  margin: 0 0 8px 0;
+  overflow: hidden;
+}
+
+.psb-skeleton-track {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-neutral-200);
+  animation: psb-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes psb-skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* === Pipeline Section (좌측) === */
+.psb-pipeline {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 세그먼트 프로그레스바 */
+.psb-pipeline-bar {
+  display: flex;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--color-neutral-200);
+}
+
+.psb-segment {
+  height: 100%;
+  transition: width 0.5s ease;
+  min-width: 1px;
+}
+
+.psb-segment--completed {
+  background: var(--color-success);
+}
+
+.psb-segment--processing {
+  background: var(--color-primary-500);
+  animation: psb-processing-pulse 2s ease-in-out infinite;
+}
+
+.psb-segment--error {
+  background: var(--color-error);
+}
+
+.psb-segment--pending {
+  background: var(--color-neutral-400);
+}
+
+@keyframes psb-processing-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 카운터 라벨 */
+.psb-labels {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.psb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.psb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.psb-dot--completed {
+  background: var(--color-success);
+}
+
+.psb-dot--processing {
+  background: var(--color-primary-500);
+}
+
+.psb-dot--error {
+  background: var(--color-error);
+}
+
+.psb-dot--pending {
+  background: var(--color-neutral-400);
+}
+
+/* === AR/CRS Parsing Section (우측) === */
+.psb-parsing {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--color-border-primary);
+}
+
+.psb-parsing-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 130px;
+}
+
+.psb-parsing-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.psb-parsing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  height: 16px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.psb-parsing-badge--ar {
+  background: var(--color-badge-ar-bg);
+  color: var(--color-badge-ar);
+}
+
+.psb-parsing-badge--crs {
+  background: var(--color-badge-crs-bg);
+  color: var(--color-primary-600);
+}
+
+.psb-parsing-text {
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.psb-parsing-failed {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+/* 파싱 미니 프로그레스바 */
+.psb-parsing-bar {
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-neutral-200);
+  overflow: hidden;
+}
+
+.psb-parsing-fill {
+  height: 100%;
+  border-radius: 1px;
+  background: var(--color-success);
+  transition: width 0.5s ease;
+}
+
+.psb-parsing-fill--active {
+  background: var(--color-primary-500);
+  animation: psb-processing-pulse 2s ease-in-out infinite;
+}
+
+/* === Dark Theme === */
+html[data-theme="dark"] .processing-status-bar {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-primary);
+}
+
+html[data-theme="dark"] .psb-skeleton-track {
+  background: var(--color-neutral-700);
+}
+
+html[data-theme="dark"] .psb-pipeline-bar {
+  background: var(--color-neutral-700);
+}
+
+html[data-theme="dark"] .psb-parsing-bar {
+  background: var(--color-neutral-700);
+}
+
+html[data-theme="dark"] .psb-parsing-badge--ar {
+  background: var(--color-badge-ar-bg-dark);
+  color: var(--color-badge-ar-dark);
+}
+
+html[data-theme="dark"] .psb-parsing-badge--crs {
+  background: var(--color-badge-crs-bg-dark);
+  color: var(--color-primary-400);
+}
