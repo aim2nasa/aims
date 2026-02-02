@@ -864,21 +864,41 @@ export const SystemHealthPage = () => {
   // 모든 서비스 평탄화 (전체 상태 계산용)
   const services = useMemo(() => serviceTiers.flatMap((tier) => tier.services), [serviceTiers]);
 
-  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
+  // aims_api 상태 변경 감지 → 활성 쿼리만 동기화 (OOM 방지: 비활성 캐시 refetch 금지)
+  const statusChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     // 최초 로드 시에는 무시
     if (prevAimsApiStatus.current === null) {
       prevAimsApiStatus.current = isAimsApiHealthy;
       return;
     }
-    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
+    // 상태가 변경되었을 때만 활성 쿼리 갱신 (debounce: 2초)
     if (prevAimsApiStatus.current !== isAimsApiHealthy) {
       prevAimsApiStatus.current = isAimsApiHealthy;
-      // 모든 관련 쿼리 즉시 갱신 (동기화)
-      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
+
+      // 이전 타이머 취소 (급격한 상태 변화 시 중복 invalidation 방지)
+      if (statusChangeTimerRef.current) {
+        clearTimeout(statusChangeTimerRef.current);
+      }
+      statusChangeTimerRef.current = setTimeout(() => {
+        // refetchType 기본값 'active': 현재 관찰 중인 쿼리만 refetch
+        queryClient.invalidateQueries({ queryKey: ['admin'] });
+        queryClient.invalidateQueries({ queryKey: ['health-monitor'] });
+      }, 2000);
     }
   }, [isAimsApiHealthy, queryClient]);
+
+  // cleanup: 컴포넌트 언마운트 시 타이머 정리 + 대용량 캐시 즉시 해제 (OOM 방지)
+  useEffect(() => {
+    return () => {
+      if (statusChangeTimerRef.current) {
+        clearTimeout(statusChangeTimerRef.current);
+      }
+      // 메트릭 히스토리/실시간 데이터: 페이지 이탈 시 즉시 GC 대상으로 전환
+      queryClient.removeQueries({ queryKey: ['admin', 'metrics', 'history'] });
+      queryClient.removeQueries({ queryKey: ['admin', 'metrics', 'realtime'] });
+    };
+  }, [queryClient]);
 
   // 모든 관련 쿼리를 동시에 갱신 (동기화)
   const refetchAll = useCallback(async () => {
@@ -889,14 +909,14 @@ export const SystemHealthPage = () => {
       // 헬스 모니터 자체가 다운된 경우 무시
     }
 
-    // 2. 모든 관련 쿼리 캐시 무효화 후 즉시 refetch (동기화)
-    // 순서: 헬스 모니터 → 대시보드 → 메트릭 → 포트 → 이력
+    // 2. 활성 쿼리만 invalidate (OOM 방지: 비활성 캐시 refetch 금지)
+    // refetchType 기본값 'active': 현재 관찰 중인 쿼리만 refetch
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'metrics'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'ports'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'metrics'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ports'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'] }),
     ]);
   }, [queryClient]);
 

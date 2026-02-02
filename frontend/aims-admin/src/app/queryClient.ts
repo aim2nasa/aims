@@ -21,7 +21,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5분
-      gcTime: 1000 * 60 * 10, // 10분 (구 cacheTime)
+      gcTime: 1000 * 60 * 3, // 3분 (OOM 방지: 비활성 캐시 빠르게 해제)
       retry: 1,
       refetchOnWindowFocus: false,
     },

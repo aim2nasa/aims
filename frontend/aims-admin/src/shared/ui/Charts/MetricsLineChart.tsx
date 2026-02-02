@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -25,6 +25,40 @@ interface MetricsLineChartProps {
   showDisk?: boolean;
   height?: number | string;
   timeRangeHours?: number;
+}
+
+// 차트 렌더링용 최대 데이터 포인트 수 (SVG DOM 노드 제한 → OOM 방지)
+const MAX_CHART_POINTS = 120;
+
+/**
+ * LTTB (Largest Triangle Three Buckets) 간소화 다운샘플링
+ * 시각적 형태를 최대한 보존하면서 데이터 포인트를 줄인다.
+ */
+function downsampleData(data: MetricsDataPoint[], maxPoints: number): MetricsDataPoint[] {
+  if (data.length <= maxPoints) return data;
+
+  const result: MetricsDataPoint[] = [data[0]]; // 첫 포인트 유지
+  const bucketSize = (data.length - 2) / (maxPoints - 2);
+
+  for (let i = 0; i < maxPoints - 2; i++) {
+    const bucketStart = Math.floor(i * bucketSize) + 1;
+    const bucketEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, data.length - 1);
+
+    // 버킷에서 CPU 값이 가장 큰 포인트 선택 (피크 보존)
+    let maxIdx = bucketStart;
+    let maxVal = -Infinity;
+    for (let j = bucketStart; j < bucketEnd; j++) {
+      const val = Math.abs(data[j].cpu) + Math.abs(data[j].memory);
+      if (val > maxVal) {
+        maxVal = val;
+        maxIdx = j;
+      }
+    }
+    result.push(data[maxIdx]);
+  }
+
+  result.push(data[data.length - 1]); // 마지막 포인트 유지
+  return result;
 }
 
 const formatTime = (timestamp: string, timeRangeHours: number = 24) => {
@@ -82,7 +116,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk = false, height = 200, timeRangeHours = 24 }: MetricsLineChartProps) {
-  if (!data || data.length === 0) {
+  // 다운샘플링: SVG DOM 노드 수 제한 (OOM 방지)
+  const chartData = useMemo(() => downsampleData(data, MAX_CHART_POINTS), [data]);
+
+  if (!chartData || chartData.length === 0) {
     return (
       <div className="metrics-line-chart metrics-line-chart--empty">
         <p>데이터가 없습니다</p>
@@ -96,7 +133,7 @@ export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk 
   return (
     <div className="metrics-line-chart">
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="timestamp"
@@ -125,6 +162,7 @@ export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk 
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
+            isAnimationActive={false}
           />
           <Line
             type="monotone"
@@ -134,6 +172,7 @@ export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk 
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
+            isAnimationActive={false}
           />
           {showDisk && [
             <Line
@@ -145,6 +184,7 @@ export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk 
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
+              isAnimationActive={false}
             />,
             <Line
               key="diskData"
@@ -155,6 +195,7 @@ export const MetricsLineChart = memo(function MetricsLineChart({ data, showDisk 
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
+              isAnimationActive={false}
               connectNulls={true}
             />
           ]}
