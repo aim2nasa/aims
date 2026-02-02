@@ -773,58 +773,6 @@ export const SystemHealthPage = () => {
   // aims_api 상태 변경 감지용 ref (모든 훅은 조기 리턴 전에 선언해야 함)
   const prevAimsApiStatus = useRef<boolean | null>(null);
 
-  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
-  useEffect(() => {
-    // 최초 로드 시에는 무시
-    if (prevAimsApiStatus.current === null) {
-      prevAimsApiStatus.current = isAimsApiHealthy;
-      return;
-    }
-    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
-    if (prevAimsApiStatus.current !== isAimsApiHealthy) {
-      prevAimsApiStatus.current = isAimsApiHealthy;
-      // 모든 관련 쿼리 즉시 갱신 (동기화)
-      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
-    }
-  }, [isAimsApiHealthy, queryClient]);
-
-  // 모든 관련 쿼리를 동시에 갱신 (동기화)
-  const refetchAll = useCallback(async () => {
-    // 1. 독립 헬스 모니터에 강제 체크 요청 (최신 상태 수집)
-    try {
-      await dashboardApi.forceHealthCheck();
-    } catch {
-      // 헬스 모니터 자체가 다운된 경우 무시
-    }
-
-    // 2. 모든 관련 쿼리 캐시 무효화 후 즉시 refetch (동기화)
-    // 순서: 헬스 모니터 → 대시보드 → 메트릭 → 포트 → 이력
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'metrics'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'ports'], refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'], refetchType: 'all' }),
-    ]);
-  }, [queryClient]);
-
-  // 헬스 모니터 로딩 중 (모든 훅 선언 후에 조기 리턴)
-  if (isHealthLoading) {
-    return <div className="system-health-page__loading">데이터를 불러오는 중...</div>;
-  }
-
-  // 헬스 모니터도 실패한 경우 (심각한 문제)
-  if (!healthData) {
-    return (
-      <div className="system-health-page__error">
-        <p>헬스 모니터 서비스에 연결할 수 없습니다.</p>
-        <p>독립 모니터링 서비스(3012)를 확인하세요.</p>
-        <Button onClick={() => refetchAll()}>다시 시도</Button>
-      </div>
-    );
-  }
-
   // 하위 호환성: 이전 API 형식 지원 (string → object)
   const normalizeHealth = (h: ServiceHealth | string | undefined): ServiceHealth => {
     if (!h) {
@@ -837,6 +785,7 @@ export const SystemHealthPage = () => {
   };
 
   // Tier별 서비스 구성 (useMemo: health 변경 시에만 재생성)
+  // ⚠️ 반드시 조기 리턴 전에 선언 (React Hooks 규칙: 모든 렌더에서 동일 순서)
   const serviceTiers = useMemo(() => [
     {
       tier: 'Tier 1: Infrastructure',
@@ -914,6 +863,58 @@ export const SystemHealthPage = () => {
 
   // 모든 서비스 평탄화 (전체 상태 계산용)
   const services = useMemo(() => serviceTiers.flatMap((tier) => tier.services), [serviceTiers]);
+
+  // aims_api 상태 변경 감지 → 모든 쿼리 즉시 동기화
+  useEffect(() => {
+    // 최초 로드 시에는 무시
+    if (prevAimsApiStatus.current === null) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      return;
+    }
+    // 상태가 변경되었을 때만 모든 쿼리 즉시 갱신
+    if (prevAimsApiStatus.current !== isAimsApiHealthy) {
+      prevAimsApiStatus.current = isAimsApiHealthy;
+      // 모든 관련 쿼리 즉시 갱신 (동기화)
+      queryClient.invalidateQueries({ queryKey: ['admin'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' });
+    }
+  }, [isAimsApiHealthy, queryClient]);
+
+  // 모든 관련 쿼리를 동시에 갱신 (동기화)
+  const refetchAll = useCallback(async () => {
+    // 1. 독립 헬스 모니터에 강제 체크 요청 (최신 상태 수집)
+    try {
+      await dashboardApi.forceHealthCheck();
+    } catch {
+      // 헬스 모니터 자체가 다운된 경우 무시
+    }
+
+    // 2. 모든 관련 쿼리 캐시 무효화 후 즉시 refetch (동기화)
+    // 순서: 헬스 모니터 → 대시보드 → 메트릭 → 포트 → 이력
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['health-monitor'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'metrics'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ports'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'health-history'], refetchType: 'all' }),
+    ]);
+  }, [queryClient]);
+
+  // 헬스 모니터 로딩 중 (모든 훅 선언 후에 조기 리턴)
+  if (isHealthLoading) {
+    return <div className="system-health-page__loading">데이터를 불러오는 중...</div>;
+  }
+
+  // 헬스 모니터도 실패한 경우 (심각한 문제)
+  if (!healthData) {
+    return (
+      <div className="system-health-page__error">
+        <p>헬스 모니터 서비스에 연결할 수 없습니다.</p>
+        <p>독립 모니터링 서비스(3012)를 확인하세요.</p>
+        <Button onClick={() => refetchAll()}>다시 시도</Button>
+      </div>
+    );
+  }
 
   const healthyCount = services.filter((s) => s.health.status === 'healthy').length;
   const allHealthy = healthyCount === services.length;
