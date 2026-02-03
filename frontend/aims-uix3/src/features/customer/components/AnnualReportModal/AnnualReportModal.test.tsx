@@ -350,10 +350,10 @@ describe('AnnualReportModal', () => {
         />
       );
 
-      // "보험사" 컬럼 헤더 찾기
-      const insuranceCompanyHeader = screen.getByText((content, element) => {
+      // "보험사" 컬럼 헤더 찾기 (보유계약 + 부활가능 실효계약 두 테이블 존재)
+      const insuranceCompanyHeader = screen.getAllByText((content, element) => {
         return element?.tagName === 'TH' && content.includes('보험사');
-      });
+      })[0];
 
       // 첫 번째 클릭 - 오름차순
       await user.click(insuranceCompanyHeader);
@@ -382,9 +382,9 @@ describe('AnnualReportModal', () => {
         />
       );
 
-      const premiumHeader = screen.getByText((content, element) => {
+      const premiumHeader = screen.getAllByText((content, element) => {
         return element?.tagName === 'TH' && content.includes('보험료(원)');
-      });
+      })[0];
 
       // 오름차순 정렬
       await user.click(premiumHeader);

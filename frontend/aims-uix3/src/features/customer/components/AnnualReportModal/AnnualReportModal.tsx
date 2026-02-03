@@ -414,6 +414,68 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           </div>
         </div>
 
+        {/* Lapsed Contracts Table */}
+        <div className="annual-report-contracts annual-report-contracts--lapsed">
+          <h3 className="annual-report-contracts__title">
+            부활가능 실효계약 ({report.lapsed_contracts?.length || 0}건)
+          </h3>
+
+          <div className="contracts-table-wrapper">
+            <table className="contracts-table">
+              <thead>
+                <tr>
+                  <th>순번</th>
+                  <th>보험사</th>
+                  <th>증권번호</th>
+                  <th>보험상품</th>
+                  <th>계약자</th>
+                  <th>피보험자</th>
+                  <th>계약일</th>
+                  <th>계약상태</th>
+                  <th>가입금액(만원)</th>
+                  <th>보험기간</th>
+                  <th>납입기간</th>
+                  <th>보험료(원)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!report.lapsed_contracts || report.lapsed_contracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={12} className="contracts-table__cell--empty">
+                      대상 계약이 없습니다.
+                    </td>
+                  </tr>
+                ) : (
+                  report.lapsed_contracts.map((contract: InsuranceContract, index: number) => (
+                    <tr key={index}>
+                      <td className="contracts-table__cell--number">{index + 1}</td>
+                      <td className="contracts-table__cell--company">{contract.insurance_company}</td>
+                      <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
+                      <td className="contracts-table__cell--product">{contract.product_name}</td>
+                      <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
+                      <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
+                      <td className="contracts-table__cell--date">{contract.contract_date}</td>
+                      <td className="contracts-table__cell--status">
+                        <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+                          {contract.status || '-'}
+                        </span>
+                      </td>
+                      <td className="contracts-table__cell--coverage">
+                        {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                      </td>
+                      <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
+                      <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
+                      <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
+                        {contract.monthly_premium.toLocaleString('ko-KR')}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Footer Info */}
         <div className="annual-report-modal__footer">
           <span className="annual-report-modal__footer-text">

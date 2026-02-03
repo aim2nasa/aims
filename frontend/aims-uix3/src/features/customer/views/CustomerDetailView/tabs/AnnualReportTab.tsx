@@ -64,6 +64,7 @@ interface RawAnnualReportData {
     '보험기간'?: string;
     '계약상태'?: string;
   }>;
+  lapsed_contracts?: Array<Record<string, unknown>>;
 }
 
 interface PendingDocument {
@@ -404,20 +405,23 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       if (response.success && response.data) {
         // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환
         const transformedReports: AnnualReport[] = response.data.reports.map((rawData: RawAnnualReportData) => {
-          const transformedContracts = (rawData.contracts || []).map((contract) => ({
+          const mapContract = (contract: Record<string, unknown>) => ({
             insurance_company: '메트라이프',
-            contract_number: contract['증권번호'] || '',
-            product_name: contract['보험상품'] || '',
-            contractor_name: contract['계약자'] || '',
-            insured_name: contract['피보험자'] || '',
-            monthly_premium: contract['보험료(원)'] || 0,
-            coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
-            contract_date: contract['계약일'] || '',
-            maturity_date: '',  // 백엔드 데이터에 없음
-            premium_payment_period: contract['납입기간'] || '',
-            insurance_period: contract['보험기간'] || '',
-            status: contract['계약상태'] || ''
-          }));
+            contract_number: (contract['증권번호'] || '') as string,
+            product_name: (contract['보험상품'] || '') as string,
+            contractor_name: (contract['계약자'] || '') as string,
+            insured_name: (contract['피보험자'] || '') as string,
+            monthly_premium: (contract['보험료(원)'] || 0) as number,
+            coverage_amount: ((contract['가입금액(만원)'] || 0) as number) * 10000,
+            contract_date: (contract['계약일'] || '') as string,
+            maturity_date: '',
+            premium_payment_period: (contract['납입기간'] || '') as string,
+            insurance_period: (contract['보험기간'] || '') as string,
+            status: (contract['계약상태'] || '') as string
+          });
+
+          const transformedContracts = (rawData.contracts || []).map(mapContract);
+          const transformedLapsedContracts = (rawData.lapsed_contracts || []).map(mapContract);
 
           // 🔥 status 필드 처리: error/processing 상태는 null 값 유지
           const status = rawData.status || 'completed';
@@ -434,6 +438,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
             total_coverage: rawData.total_coverage || 0,
             contract_count: isFailedOrProcessing ? (rawData.total_contracts ?? rawData.contract_count) : (rawData.total_contracts || rawData.contract_count || 0),
             contracts: transformedContracts,
+            lapsed_contracts: transformedLapsedContracts,
             source_file_id: rawData.source_file_id || rawData.file_id || '',
             created_at: rawData.uploaded_at || '',
             parsed_at: isFailedOrProcessing ? rawData.parsed_at : (rawData.parsed_at || ''),

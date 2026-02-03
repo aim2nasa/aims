@@ -92,29 +92,31 @@ def extract_contract_table(pdf_path: str, page_num: int = 1) -> Dict[str, Any]:
             data = table.extract()
             logger.debug(f"테이블 {table_idx + 1}: {len(data)}행")
 
-            # 테이블 헤더 확인
-            if data and len(data) > 0:
-                first_row_text = ' '.join([str(c) for c in data[0] if c])
+            if not data or len(data) == 0:
+                continue
 
-                # 부활가능 실효계약 섹션 감지
-                if '부활가능' in first_row_text or '실효계약' in first_row_text:
-                    is_lapsed_section = True
-                    continue
+            first_row_text = ' '.join([str(c) for c in data[0] if c])
 
-                # 계약 테이블 감지 (헤더에 "순번", "증권번호" 포함)
-                if '순번' in first_row_text and '증권번호' in first_row_text:
-                    # 헤더 행에서 열 인덱스 매핑
-                    column_map = build_column_map(data[0])
+            # 부활가능 실효계약 섹션 감지
+            if '부활가능' in first_row_text or '실효계약' in first_row_text:
+                is_lapsed_section = True
+
+            # 테이블 내 모든 행에서 계약 헤더 탐색
+            # (섹션 제목과 데이터가 하나의 테이블로 병합될 수 있음)
+            for row_idx, row in enumerate(data):
+                row_text = ' '.join([str(c) for c in row if c])
+                if '순번' in row_text and '증권번호' in row_text:
+                    column_map = build_column_map(row)
                     logger.debug(f"열 매핑: {column_map}")
 
-                    # 헤더 행 스킵하고 데이터 행 처리
-                    for row in data[1:]:
-                        contract = parse_contract_row_by_columns(row, column_map)
+                    for data_row in data[row_idx + 1:]:
+                        contract = parse_contract_row_by_columns(data_row, column_map)
                         if contract:
                             if is_lapsed_section:
                                 lapsed_contracts.append(contract)
                             else:
                                 contracts.append(contract)
+                    break
 
         logger.info(f"파싱 완료: 보유계약 {len(contracts)}건, 실효계약 {len(lapsed_contracts)}건")
 

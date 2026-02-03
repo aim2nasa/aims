@@ -42,6 +42,7 @@ export interface AnnualReport {
   total_coverage?: number;         // 총 보장금액
   contract_count?: number | null;  // 계약 건수 - 실패 시 null
   contracts: InsuranceContract[];  // 계약 목록
+  lapsed_contracts?: InsuranceContract[];  // 부활가능 실효계약
   source_file_id?: string;         // 원본 파일 ID
   created_at?: string;             // 생성일시 (ISO 8601)
   parsed_at?: string | null;       // 파싱일시 (ISO 8601) - 실패/진행중 시 null
