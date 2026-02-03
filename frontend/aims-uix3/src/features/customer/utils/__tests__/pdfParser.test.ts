@@ -38,6 +38,7 @@ File.prototype.arrayBuffer = function() {
 describe('pdfParser', () => {
   let mockPdf: {
     getPage: ReturnType<typeof vi.fn>
+    numPages: number
   }
   let mockPage: {
     getTextContent: ReturnType<typeof vi.fn>
@@ -52,6 +53,7 @@ describe('pdfParser', () => {
     mockPdf = {
       getPage: vi.fn().mockResolvedValue(mockPage),
       destroy: vi.fn(),
+      numPages: 1,
     }
 
     // pdfjs-dist 모듈 모킹 다시 가져오기
@@ -240,6 +242,7 @@ describe('pdfParser', () => {
 describe('checkCustomerReviewFromPDF', () => {
   let mockPdf: {
     getPage: ReturnType<typeof vi.fn>
+    numPages: number
   }
   let mockPage: {
     getTextContent: ReturnType<typeof vi.fn>
@@ -253,6 +256,7 @@ describe('checkCustomerReviewFromPDF', () => {
     mockPdf = {
       getPage: vi.fn().mockResolvedValue(mockPage),
       destroy: vi.fn(),
+      numPages: 1,
     }
 
     const pdfjsLib = await import('pdfjs-dist')

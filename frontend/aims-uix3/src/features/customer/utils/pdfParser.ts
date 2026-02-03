@@ -34,22 +34,32 @@ export interface CheckCustomerReviewResult {
 }
 
 /**
- * PDF 첫 페이지 텍스트 추출
+ * PDF 텍스트 추출 (지정 페이지 수만큼)
+ * @param file - PDF 파일
+ * @param maxPages - 추출할 최대 페이지 수 (기본 1)
  */
-async function extractFirstPageText(file: File): Promise<string> {
+async function extractPdfText(file: File, maxPages = 1): Promise<string> {
   let pdf: pdfjsLib.PDFDocumentProxy | null = null;
   try {
     if (import.meta.env.DEV) {
-      console.log('[pdfParser] 📄 PDF 텍스트 추출 시작:', file.name);
+      console.log('[pdfParser] 📄 PDF 텍스트 추출 시작:', file.name, `(${maxPages}페이지)`);
     }
 
     const arrayBuffer = await file.arrayBuffer();
     pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const page = await pdf.getPage(1);
-    const textContent = await page.getTextContent();
-    const text = textContent.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ');
+    const pageCount = Math.min(maxPages, pdf.numPages);
+    const texts: string[] = [];
+
+    for (let i = 1; i <= pageCount; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join(' ');
+      texts.push(pageText);
+    }
+
+    const text = texts.join('\n');
 
     if (import.meta.env.DEV) {
       console.log('[pdfParser] ✅ 텍스트 추출 완료, 길이:', text.length);
@@ -59,14 +69,18 @@ async function extractFirstPageText(file: File): Promise<string> {
     return text;
   } catch (error) {
     console.error('[pdfParser] PDF 텍스트 추출 실패:', error);
-    errorReporter.reportApiError(error as Error, { component: 'pdfParser.extractFirstPageText', payload: { fileName: file.name } });
+    errorReporter.reportApiError(error as Error, { component: 'pdfParser.extractPdfText', payload: { fileName: file.name } });
     throw new Error('PDF 텍스트 추출에 실패했습니다.');
   } finally {
-    // PDF 문서 객체를 즉시 해제하여 메모리 누적 방지
     if (pdf) {
       pdf.destroy();
     }
   }
+}
+
+/** @deprecated extractPdfText(file, 1)로 대체 */
+async function extractFirstPageText(file: File): Promise<string> {
+  return extractPdfText(file, 1);
 }
 
 /**
@@ -329,11 +343,22 @@ function extractCRMetadata(text: string) {
     metadata.fsr_name = fsrMatch[1].replace(/\s/g, '').trim();
   }
 
-  // 6. 증권번호 추출: "증권번호 : 0011423761" 또는 "증권번호: 0011423761"
-  const policyPattern = /증권\s*번호\s*[:\s]+(\d{8,15})/;
-  const policyMatch = text.match(policyPattern);
-  if (policyMatch) {
-    metadata.policy_number = policyMatch[1].trim();
+  // 6. 증권번호 추출
+  // pdf.js는 PDF 스트림 순서로 텍스트를 추출하므로
+  // "증권번호"와 실제 번호가 인접하지 않을 수 있음 → 위치 기반 탐색
+  const policyIdx = text.indexOf('증권번호');
+  if (policyIdx >= 0) {
+    // "증권번호" 이후 500자 내에서 첫 8~15자리 숫자 시퀀스 찾기
+    const afterPolicy = text.substring(policyIdx + 4, policyIdx + 504);
+    const digitMatch = afterPolicy.match(/(\d{8,15})/);
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] 증권번호 탐색:', { policyIdx, afterPolicy: afterPolicy.substring(0, 100), matched: digitMatch?.[1] ?? 'NONE' });
+    }
+    if (digitMatch) {
+      metadata.policy_number = digitMatch[1];
+    }
+  } else if (import.meta.env.DEV) {
+    console.log('[pdfParser] ⚠️ 증권번호 텍스트 없음 (전체 텍스트 길이:', text.length, ')');
   }
 
   return metadata;
@@ -350,8 +375,8 @@ export async function checkCustomerReviewFromPDF(
   }
 
   try {
-    // 1. 첫 페이지 텍스트 추출
-    const text = await extractFirstPageText(file);
+    // 1. 1~2페이지 텍스트 추출 (증권번호는 2페이지에 존재)
+    const text = await extractPdfText(file, 2);
 
     // 2. 키워드 매칭
     // 필수 키워드: "Customer Review Service" 또는 "Customer\nReview Service" (줄바꿈 포함)
@@ -382,14 +407,43 @@ export async function checkCustomerReviewFromPDF(
       return { is_customer_review: false, confidence, metadata: null };
     }
 
-    // 4. 메타데이터 추출
+    // 4. 메타데이터 추출 (PDF 파싱 = Source of Truth)
     const metadata = extractCRMetadata(text);
 
-    // 5. 파일명 = Source of Truth: PDF 텍스트 추출 결과를 파일명으로 덮어씀
+    // 5. 파일명 = Fallback: PDF 파싱에서 빈 필드만 파일명으로 보충
     // CRS 파일명 형식: {고객명}_CRS_{상품명}_{증권번호}_{YYYY-MM-DD}.pdf
-    const crsFnMatch = file.name.match(/^(.+?)_CRS_/i);
-    if (crsFnMatch) {
-      metadata.contractor_name = crsFnMatch[1];
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    const fnDateMatch = baseName.match(/_(\d{4}-\d{2}-\d{2})$/);
+    if (fnDateMatch) {
+      if (!metadata.issue_date) {
+        metadata.issue_date = fnDateMatch[1];
+      }
+      const withoutDate = baseName.slice(0, fnDateMatch.index);
+      const fnPolicyMatch = withoutDate.match(/_(\d{8,15})$/);
+      if (fnPolicyMatch) {
+        if (!metadata.policy_number) {
+          metadata.policy_number = fnPolicyMatch[1];
+        }
+        const withoutPolicy = withoutDate.slice(0, fnPolicyMatch.index);
+        const crsIdx = withoutPolicy.indexOf('_CRS_');
+        if (crsIdx !== -1 && !metadata.contractor_name) {
+          metadata.contractor_name = withoutPolicy.slice(0, crsIdx);
+        }
+      } else {
+        if (!metadata.contractor_name) {
+          const crsFnMatch = baseName.match(/^(.+?)_CRS_/i);
+          if (crsFnMatch) {
+            metadata.contractor_name = crsFnMatch[1];
+          }
+        }
+      }
+    } else {
+      if (!metadata.contractor_name) {
+        const crsFnMatch = baseName.match(/^(.+?)_CRS_/i);
+        if (crsFnMatch) {
+          metadata.contractor_name = crsFnMatch[1];
+        }
+      }
     }
 
     if (import.meta.env.DEV) {
