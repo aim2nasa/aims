@@ -772,16 +772,8 @@ export const CrFileTable: React.FC<CrFileTableProps> = ({
       {/* 테이블 컨테이너 */}
       <div className="ar-file-table__table-container" style={{ flex: '1 1 0', minHeight: 0, overflow: 'auto' }}>
         <table className="ar-file-table__table">
-          <colgroup>
-            <col style={{ width: colWidths.rownum }} />
-            <col style={{ width: colWidths.checkbox }} />
-            <col /> {/* filename - 자동 */}
-            <col style={{ width: colWidths.extracted }} />
-            <col style={{ width: colWidths.mapped }} />
-            <col style={{ width: colWidths.policy }} />
-            <col style={{ width: colWidths.date }} />
-            <col style={{ width: colWidths.status }} />
-            <col style={{ width: colWidths.include }} />
+          <colgroup>{/* prettier-ignore */}
+            <col style={{ width: colWidths.rownum }} /><col style={{ width: colWidths.checkbox }} /><col /><col style={{ width: colWidths.extracted }} /><col style={{ width: colWidths.mapped }} /><col style={{ width: colWidths.policy }} /><col style={{ width: colWidths.date }} /><col style={{ width: colWidths.status }} /><col style={{ width: colWidths.include }} />
           </colgroup>
           <thead>
             <tr>
