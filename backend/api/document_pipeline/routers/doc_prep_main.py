@@ -299,32 +299,44 @@ async def _detect_and_process_annual_report(
 
         logger.info(f"🔍 AR 감지: doc_id={doc_id}, 매칭={matched_required + matched_optional}")
 
-        # 2. 고객명 추출: "XXX 고객님을 위한" 패턴
+        # 2. 고객명 추출: 파일명 우선 (Source of Truth - 한글/영문 모두 지원)
+        # 파일명 형식: {고객명}_AR_{YYYY-MM-DD}.pdf
         customer_name = None
-        customer_pattern = r'([가-힣]{2,10})\s*고객님을?\s*위한'
-        customer_match = re.search(customer_pattern, normalized_text)
-        if customer_match:
-            customer_name = customer_match.group(1).strip()
-            logger.info(f"📄 고객명 추출: {customer_name}")
-
-        # 3. 발행기준일 추출
-        issue_date = None
-        # 패턴 1: "발행기준일: YYYY-MM-DD"
-        date_pattern1 = r'발행기준일[:\s]*(\d{4})-(\d{1,2})-(\d{1,2})'
-        date_match1 = re.search(date_pattern1, normalized_text)
-        if date_match1:
-            year, month, day = date_match1.groups()
-            issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        import os
+        base = os.path.splitext(original_name)[0]
+        fn_match = re.match(r'^(.+?)_AR_(\d{4}-\d{2}-\d{2})$', base)
+        if fn_match:
+            customer_name = fn_match.group(1).strip()
+            logger.info(f"📄 고객명 추출 (파일명): {customer_name}")
         else:
-            # 패턴 2: "YYYY년 MM월 DD일"
-            date_pattern2 = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
-            date_match2 = re.search(date_pattern2, normalized_text)
-            if date_match2:
-                year, month, day = date_match2.groups()
+            # Fallback: PDF 텍스트에서 한글 고객명 추출
+            customer_pattern = r'([가-힣]{2,10})\s*고객님을?\s*위한'
+            customer_match = re.search(customer_pattern, normalized_text)
+            if customer_match:
+                customer_name = customer_match.group(1).strip()
+                logger.info(f"📄 고객명 추출 (PDF fallback): {customer_name}")
+
+        # 3. 발행기준일 추출: 파일명 우선, PDF 텍스트 fallback
+        issue_date = None
+        if fn_match:
+            issue_date = fn_match.group(2)
+            logger.info(f"📅 발행기준일 추출 (파일명): {issue_date}")
+        else:
+            # Fallback: PDF 텍스트에서 발행일 추출
+            date_pattern1 = r'발행기준일[:\s]*(\d{4})-(\d{1,2})-(\d{1,2})'
+            date_match1 = re.search(date_pattern1, normalized_text)
+            if date_match1:
+                year, month, day = date_match1.groups()
                 issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            else:
+                date_pattern2 = r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일'
+                date_match2 = re.search(date_pattern2, normalized_text)
+                if date_match2:
+                    year, month, day = date_match2.groups()
+                    issue_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
         if issue_date:
-            logger.info(f"📅 발행기준일 추출: {issue_date}")
+            logger.info(f"📅 발행기준일: {issue_date}")
 
         # 4. 고객 생성/검색
         customer_id = None
@@ -473,20 +485,29 @@ async def _detect_and_process_customer_review(
 
         # 2. 메타데이터 추출 (고객명, 상품명, 발행일)
 
-        # 2-1. 고객명 추출: "XXX 고객님을 위한" 패턴
+        # 2-1. 고객명 추출: 파일명 우선 (Source of Truth - 한글/영문 모두 지원)
+        # 파일명 형식: {고객명}_CRS_{상품명}_{증권번호}_{YYYY-MM-DD}.pdf
         customer_name = None
-        customer_pattern = r'([가-힣]+)\s*고객님을?\s*위한'
-        customer_match = re.search(customer_pattern, normalized_text)
-        if customer_match:
-            customer_name = customer_match.group(1).strip()
-            logger.info(f"📄 CRS 고객명 추출: {customer_name}")
+        import os
+        base = os.path.splitext(original_name)[0]
+        crs_fn_match = re.match(r'^(.+?)_CRS_', base)
+        if crs_fn_match:
+            customer_name = crs_fn_match.group(1).strip()
+            logger.info(f"📄 CRS 고객명 추출 (파일명): {customer_name}")
         else:
-            # fallback: "계약자 : XXX" 패턴
-            contractor_pattern = r'계약자\s*[:\s]+([가-힣]+)'
-            contractor_match = re.search(contractor_pattern, full_text)
-            if contractor_match:
-                customer_name = contractor_match.group(1).strip()
-                logger.info(f"📄 CRS 계약자명 추출: {customer_name}")
+            # Fallback: PDF 텍스트에서 한글 고객명 추출
+            customer_pattern = r'([가-힣]+)\s*고객님을?\s*위한'
+            customer_match = re.search(customer_pattern, normalized_text)
+            if customer_match:
+                customer_name = customer_match.group(1).strip()
+                logger.info(f"📄 CRS 고객명 추출 (PDF fallback): {customer_name}")
+            else:
+                # Fallback 2: "계약자 : XXX" 패턴
+                contractor_pattern = r'계약자\s*[:\s]+([가-힣]+)'
+                contractor_match = re.search(contractor_pattern, full_text)
+                if contractor_match:
+                    customer_name = contractor_match.group(1).strip()
+                    logger.info(f"📄 CRS 계약자명 추출 (PDF fallback): {customer_name}")
 
         # 2-2. 상품명 추출
         # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 등
