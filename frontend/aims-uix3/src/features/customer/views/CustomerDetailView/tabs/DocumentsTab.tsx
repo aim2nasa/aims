@@ -139,6 +139,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // PDF 변환 재시도 중인 문서 ID
   const [retryingDocumentId, setRetryingDocumentId] = useState<string | null>(null)
 
+  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
+  const [filenameMode, setFilenameMode] = useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
   // 🍎 문서 유형 목록 상태
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
   const [updatingDocTypeId, setUpdatingDocTypeId] = useState<string | null>(null)
@@ -1129,19 +1135,39 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               <div className="header-icon"></div>
               <div
                 className="header-filename header-sortable resizable-header"
-                onClick={() => handleSort('originalName')}
-                role="button"
-                tabIndex={0}
-                aria-label="파일명으로 정렬"
               >
-                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
-                  <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
-                </svg>
-                <span>파일명</span>
-                {sortField === 'originalName' && (
-                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                )}
+                <div
+                  className="header-filename__sort-area"
+                  onClick={() => handleSort('originalName')}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="파일명으로 정렬"
+                >
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                    <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+                  </svg>
+                  <span>파일명</span>
+                  {sortField === 'originalName' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
+                <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+                  <button
+                    type="button"
+                    className="filename-mode-toggle"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const next = filenameMode === 'display' ? 'original' : 'display'
+                      setFilenameMode(next)
+                      localStorage.setItem('aims-filename-mode', next)
+                    }}
+                    aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+                  >
+                    {filenameMode === 'display' ? '별칭' : '원본'}
+                  </button>
+                </Tooltip>
                 <div {...getResizeHandleProps('filename')} />
               </div>
               {/* 🍎 문서 유형 칼럼 헤더 */}
@@ -1308,11 +1334,26 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                       }
                     }}
                   >
-                    <Tooltip content={document.originalName ?? '이름 없는 문서'} showOnlyWhenTruncated>
-                      <span className="status-filename-text">
-                        {document.originalName ?? '이름 없는 문서'}
-                      </span>
-                    </Tooltip>
+                    {/* 🍎 파일명 표시: filenameMode에 따라 원본/별칭 전환 */}
+                    {(() => {
+                      const hasDisplay = Boolean(document.displayName)
+                      const showName = filenameMode === 'display' && hasDisplay
+                        ? document.displayName!
+                        : (document.originalName ?? '이름 없는 문서')
+                      const altName = filenameMode === 'display' && hasDisplay
+                        ? `원본: ${document.originalName ?? ''}`
+                        : (hasDisplay ? `별칭: ${document.displayName}` : '')
+
+                      return altName ? (
+                        <Tooltip content={altName}>
+                          <span className="status-filename-text">{showName}</span>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip content={showName} showOnlyWhenTruncated>
+                          <span className="status-filename-text">{showName}</span>
+                        </Tooltip>
+                      )
+                    })()}
                     {/* 🍎 PDF 변환 배지 - DocumentStatusList.tsx와 동일 */}
                     {(() => {
                       // 파일명에서 확장자 추출하여 변환 대상 여부 판단
