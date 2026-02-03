@@ -377,6 +377,15 @@
   border-right-color: var(--color-ios-separator-dark);
 }
 
+/* Empty State */
+
+.contracts-table__cell--empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
 /* Cell Specific Styles */
 
 .contracts-table__cell--number {

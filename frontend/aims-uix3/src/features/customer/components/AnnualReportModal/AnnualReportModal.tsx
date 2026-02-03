@@ -377,30 +377,38 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {getSortedContracts(report.contracts).map((contract: InsuranceContract, index: number) => (
-                  <tr key={index}>
-                    <td className="contracts-table__cell--number">{index + 1}</td>
-                    <td className="contracts-table__cell--company">{contract.insurance_company}</td>
-                    <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
-                    <td className="contracts-table__cell--product">{contract.product_name}</td>
-                    <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
-                    <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
-                    <td className="contracts-table__cell--date">{contract.contract_date}</td>
-                    <td className="contracts-table__cell--status">
-                      <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
-                        {contract.status || '-'}
-                      </span>
-                    </td>
-                    <td className="contracts-table__cell--coverage">
-                      {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
-                    </td>
-                    <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
-                    <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
-                    <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
-                      {contract.monthly_premium.toLocaleString('ko-KR')}
+                {report.contracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={12} className="contracts-table__cell--empty">
+                      대상 계약이 없습니다.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  getSortedContracts(report.contracts).map((contract: InsuranceContract, index: number) => (
+                    <tr key={index}>
+                      <td className="contracts-table__cell--number">{index + 1}</td>
+                      <td className="contracts-table__cell--company">{contract.insurance_company}</td>
+                      <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
+                      <td className="contracts-table__cell--product">{contract.product_name}</td>
+                      <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
+                      <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
+                      <td className="contracts-table__cell--date">{contract.contract_date}</td>
+                      <td className="contracts-table__cell--status">
+                        <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+                          {contract.status || '-'}
+                        </span>
+                      </td>
+                      <td className="contracts-table__cell--coverage">
+                        {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                      </td>
+                      <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
+                      <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
+                      <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
+                        {contract.monthly_premium.toLocaleString('ko-KR')}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
