@@ -176,6 +176,17 @@ export async function checkAnnualReportFromPDF(
     // 4. 메타데이터 추출 (정규화된 텍스트 전달)
     const metadata = extractMetadata(text, normalizedText);
 
+    // 5. 파일명 = Source of Truth: PDF 텍스트 추출 결과를 파일명으로 덮어씀
+    // 영문 고객명(JUNGCLAIREBOKYUNG 등)은 PDF에서 "자료는" 등으로 오매칭됨
+    // 파일명은 업로드 전 이미 정제된 데이터이므로 항상 신뢰 가능
+    const fnMatch = file.name.match(/^(.+?)_AR_(\d{4}-\d{2}-\d{2})\.pdf$/i);
+    if (fnMatch) {
+      metadata.customer_name = fnMatch[1];
+      if (!metadata.issue_date) {
+        metadata.issue_date = fnMatch[2];
+      }
+    }
+
     if (import.meta.env.DEV) {
       console.log('[pdfParser] ✅ Annual Report 판단: true, metadata:', metadata);
     }
@@ -373,6 +384,13 @@ export async function checkCustomerReviewFromPDF(
 
     // 4. 메타데이터 추출
     const metadata = extractCRMetadata(text);
+
+    // 5. 파일명 = Source of Truth: PDF 텍스트 추출 결과를 파일명으로 덮어씀
+    // CRS 파일명 형식: {고객명}_CRS_{상품명}_{증권번호}_{YYYY-MM-DD}.pdf
+    const crsFnMatch = file.name.match(/^(.+?)_CRS_/i);
+    if (crsFnMatch) {
+      metadata.contractor_name = crsFnMatch[1];
+    }
 
     if (import.meta.env.DEV) {
       console.log('[pdfParser] ✅ Customer Review 판단: true, metadata:', metadata);

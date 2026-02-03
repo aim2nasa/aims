@@ -138,12 +138,13 @@ def is_customer_review(pdf_path: str) -> Dict[str, any]:
         }
 
 
-def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
+def extract_cr_metadata_from_first_page(pdf_path: str, original_filename: str = None) -> Dict[str, str]:
     """
     Customer Review Service 1페이지에서 메타데이터 추출 (AI 불사용, 간단한 텍스트 파싱)
 
     Args:
         pdf_path: PDF 파일 경로
+        original_filename: 원본 파일명 (Source of Truth, 한글/영문 모두 지원)
 
     Returns:
         dict: {
@@ -159,6 +160,15 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
         first_page_text = extract_text_from_page(pdf_path, page_num=0)
 
         result = {}
+
+        # 파일명 = Source of Truth: 파일명에서 고객명 우선 추출 (한글/영문 모두 지원)
+        if original_filename:
+            import os
+            base = os.path.splitext(original_filename)[0]
+            crs_fn_match = re.match(r'^(.+?)_CRS_', base)
+            if crs_fn_match:
+                result["contractor_name"] = crs_fn_match.group(1).strip()
+                logger.info(f"📄 CRS 고객명 추출 (파일명): {result['contractor_name']}")
 
         # 1. 상품명 추출
         # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 또는 "무) xxx 종신, 10년납"
@@ -194,18 +204,19 @@ def extract_cr_metadata_from_first_page(pdf_path: str) -> Dict[str, str]:
                 year, month, day = alt_date_match.groups()
                 result["issue_date"] = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-        # 3. 계약자(고객명) 추출
-        # 우선 패턴: "참씨큐리티 고객님을 위한" - 첫 페이지 제목에서 추출 (글자 수 제한 없음)
-        customer_name_pattern = r"([가-힣]+)\s*고객님을\s*위한"
-        customer_name_match = re.search(customer_name_pattern, first_page_text)
-        if customer_name_match:
-            result["contractor_name"] = customer_name_match.group(1).strip()
-        else:
-            # fallback: "계약자 : XXX" 패턴 (글자 수 제한 없음)
-            contractor_pattern = r"계약자\s*[:\s]+([가-힣]+)"
-            contractor_match = re.search(contractor_pattern, first_page_text)
-            if contractor_match:
-                result["contractor_name"] = contractor_match.group(1).strip()
+        # 3. 계약자(고객명) 추출: 파일명에서 이미 추출된 경우 스킵
+        if "contractor_name" not in result:
+            # PDF 텍스트 Fallback 1: "참씨큐리티 고객님을 위한" (글자 수 제한 없음)
+            customer_name_pattern = r"([가-힣]+)\s*고객님을\s*위한"
+            customer_name_match = re.search(customer_name_pattern, first_page_text)
+            if customer_name_match:
+                result["contractor_name"] = customer_name_match.group(1).strip()
+            else:
+                # PDF 텍스트 Fallback 2: "계약자 : XXX" 패턴 (글자 수 제한 없음)
+                contractor_pattern = r"계약자\s*[:\s]+([가-힣]+)"
+                contractor_match = re.search(contractor_pattern, first_page_text)
+                if contractor_match:
+                    result["contractor_name"] = contractor_match.group(1).strip()
 
         # 4. 피보험자 추출 (글자 수 제한 없음 - 법인명 지원)
         # 패턴: "피보험자 : 유진호" 또는 "피보험자: 참씨큐리티"
