@@ -1247,10 +1247,19 @@ html[data-theme="dark"] .snapshot-item--changed {
   overflow-x: auto;
 }
 
-/* 9컬럼 헤더 */
+/* 9컬럼 헤더 (리사이즈 가능 - CSS 변수 바인딩) */
 .cr-contract-history-header {
   display: grid;
-  grid-template-columns: 31px 100px 1fr 50px 75px 90px 90px 70px 80px;
+  grid-template-columns:
+    var(--cr-seq-width, 31px)
+    var(--cr-policy-width, 100px)
+    var(--cr-product-width, 200px)
+    var(--cr-contractor-width, 50px)
+    var(--cr-date-width, 75px)
+    var(--cr-insured-amount-width, 90px)
+    var(--cr-accumulated-width, 90px)
+    var(--cr-return-rate-width, 70px)
+    var(--cr-issue-date-width, 80px);
   gap: 4px;
   padding: 6px 8px;
   font-size: var(--font-size-caption-2);
@@ -1318,7 +1327,16 @@ html[data-theme="dark"] .cr-contract-history-accordion {
 /* CRS 아코디언 헤더 (계약 요약 행) */
 .cr-contract-history-accordion__header {
   display: grid;
-  grid-template-columns: 31px 100px 1fr 50px 75px 90px 90px 70px 80px;
+  grid-template-columns:
+    var(--cr-seq-width, 31px)
+    var(--cr-policy-width, 100px)
+    var(--cr-product-width, 200px)
+    var(--cr-contractor-width, 50px)
+    var(--cr-date-width, 75px)
+    var(--cr-insured-amount-width, 90px)
+    var(--cr-accumulated-width, 90px)
+    var(--cr-return-rate-width, 70px)
+    var(--cr-issue-date-width, 80px);
   gap: 4px;
   padding: 8px;
   align-items: center;
@@ -1387,7 +1405,14 @@ html[data-theme="dark"] .cr-contract-history-item__product {
 
 .cr-contract-history-item__contractor {
   text-align: center;
+  color: var(--color-ios-text-secondary-light);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme="dark"] .cr-contract-history-item__contractor {
+  color: var(--color-ios-text-secondary-dark);
 }
 
 .cr-contract-history-item__date {

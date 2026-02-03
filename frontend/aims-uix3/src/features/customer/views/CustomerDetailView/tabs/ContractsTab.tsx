@@ -798,6 +798,31 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     defaultWidths: arHistoryColumnWidths,
   })
 
+  // 🍎 CRS 계약 이력용 컬럼 기본 너비
+  const crHistoryColumnWidths = useMemo(() => ({
+    seq: 31,
+    policy: 100,
+    product: 200,
+    contractor: 50,
+    date: 75,
+    insuredAmount: 90,
+    accumulated: 90,
+    returnRate: 70,
+    issueDate: 80,
+  }), [])
+
+  // 🍎 CRS 계약 이력용 컬럼 리사이즈 훅
+  const {
+    columnWidths: crColumnWidths,
+    isResizing: isCrResizing,
+    getResizeHandleProps: getCrResizeHandleProps,
+    wasJustResizing: wasCrJustResizing,
+  } = useColumnResize({
+    storageKey: 'cr-history-tab',
+    columns: CR_HISTORY_COLUMNS,
+    defaultWidths: crHistoryColumnWidths,
+  })
+
   // 🍎 증권번호 아코디언 토글 핸들러
   const handlePolicyToggle = useCallback((policyNumber: string) => {
     setExpandedPolicyNumber(prev => prev === policyNumber ? null : policyNumber)
@@ -935,13 +960,14 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   // 🍎 CRS 계약 이력 정렬 핸들러
   const handleCrSort = useCallback((field: CrSortField) => {
+    if (wasCrJustResizing()) return
     if (crSortField === field) {
       setCrSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
       setCrSortField(field)
       setCrSortDirection('asc')
     }
-  }, [crSortField])
+  }, [crSortField, wasCrJustResizing])
 
   // 🍎 검색어로 필터링된 CRS 계약 이력
   const filteredCrContractHistories = useMemo(() => {
@@ -1337,74 +1363,94 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
         </div>
       )}
 
-      {/* 🍎 CRS 증권번호 기준 계약 이력 (아코디언) */}
+      {/* 🍎 CRS 증권번호 기준 계약 이력 (아코디언) - 9컬럼, 리사이즈 가능 */}
       {historyTab === 'cr' && crContractHistories.length > 0 && (
-        <div className="cr-contract-history-section">
+        <div
+          className={`cr-contract-history-section${isCrResizing ? ' is-resizing' : ''}`}
+          style={{
+            '--cr-seq-width': `${crColumnWidths['seq'] || crHistoryColumnWidths.seq}px`,
+            '--cr-policy-width': `${crColumnWidths['policy'] || crHistoryColumnWidths.policy}px`,
+            '--cr-product-width': `${crColumnWidths['product'] || crHistoryColumnWidths.product}px`,
+            '--cr-contractor-width': `${crColumnWidths['contractor'] || crHistoryColumnWidths.contractor}px`,
+            '--cr-date-width': `${crColumnWidths['date'] || crHistoryColumnWidths.date}px`,
+            '--cr-insured-amount-width': `${crColumnWidths['insuredAmount'] || crHistoryColumnWidths.insuredAmount}px`,
+            '--cr-accumulated-width': `${crColumnWidths['accumulated'] || crHistoryColumnWidths.accumulated}px`,
+            '--cr-return-rate-width': `${crColumnWidths['returnRate'] || crHistoryColumnWidths.returnRate}px`,
+            '--cr-issue-date-width': `${crColumnWidths['issueDate'] || crHistoryColumnWidths.issueDate}px`,
+          } as React.CSSProperties}
+        >
           {/* 헤더 행 */}
           <div className="cr-contract-history-header">
             <div className="cr-contract-history-header__seq">순번</div>
             <div
-              className="cr-contract-history-header__policy header-sortable"
+              className="cr-contract-history-header__policy resizable-header header-sortable"
               onClick={() => handleCrSort('policyNumber')}
               role="button"
               tabIndex={0}
             >
               <span>증권번호</span>
               {renderCrSortIndicator('policyNumber')}
+              <div {...getCrResizeHandleProps('policy')} />
             </div>
             <div
-              className="cr-contract-history-header__product header-sortable"
+              className="cr-contract-history-header__product resizable-header header-sortable"
               onClick={() => handleCrSort('productName')}
               role="button"
               tabIndex={0}
             >
               <span>보험상품</span>
               {renderCrSortIndicator('productName')}
+              <div {...getCrResizeHandleProps('product')} />
             </div>
             <div
-              className="cr-contract-history-header__contractor header-sortable"
+              className="cr-contract-history-header__contractor resizable-header header-sortable"
               onClick={() => handleCrSort('contractorName')}
               role="button"
               tabIndex={0}
             >
               <span>계약자</span>
               {renderCrSortIndicator('contractorName')}
+              <div {...getCrResizeHandleProps('contractor')} />
             </div>
             <div
-              className="cr-contract-history-header__date header-sortable"
+              className="cr-contract-history-header__date resizable-header header-sortable"
               onClick={() => handleCrSort('contractDate')}
               role="button"
               tabIndex={0}
             >
               <span>계약일</span>
               {renderCrSortIndicator('contractDate')}
+              <div {...getCrResizeHandleProps('date')} />
             </div>
             <div
-              className="cr-contract-history-header__insured-amount header-sortable"
+              className="cr-contract-history-header__insured-amount resizable-header header-sortable"
               onClick={() => handleCrSort('insuredAmount')}
               role="button"
               tabIndex={0}
             >
               <span>보험가입금액</span>
               {renderCrSortIndicator('insuredAmount')}
+              <div {...getCrResizeHandleProps('insuredAmount')} />
             </div>
             <div
-              className="cr-contract-history-header__accumulated header-sortable"
+              className="cr-contract-history-header__accumulated resizable-header header-sortable"
               onClick={() => handleCrSort('accumulatedAmount')}
               role="button"
               tabIndex={0}
             >
               <span>적립금</span>
               {renderCrSortIndicator('accumulatedAmount')}
+              <div {...getCrResizeHandleProps('accumulated')} />
             </div>
             <div
-              className="cr-contract-history-header__return-rate header-sortable"
+              className="cr-contract-history-header__return-rate resizable-header header-sortable"
               onClick={() => handleCrSort('investmentReturnRate')}
               role="button"
               tabIndex={0}
             >
               <span>투자수익률</span>
               {renderCrSortIndicator('investmentReturnRate')}
+              <div {...getCrResizeHandleProps('returnRate')} />
             </div>
             <div
               className="cr-contract-history-header__issue-date header-sortable"
