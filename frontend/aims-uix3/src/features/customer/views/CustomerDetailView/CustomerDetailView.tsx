@@ -68,6 +68,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 🍎 개발자 모드 (Ctrl+Alt+D)
   const { isDevMode } = useDevModeStore();
 
+  // 🍎 더보기 토글 (휴면 처리 등 드물게 사용하는 액션 펼치기)
+  const [showExtraActions, setShowExtraActions] = useState(false);
+
   // URL에서 활성 탭 복원 (초기 마운트 시에만)
   const [activeTab, setActiveTab] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -609,7 +612,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             >
               정보 수정
             </Button>
-            {customer.meta?.status === 'inactive' ? (
+            {/* 🍎 휴면 고객 → "휴면 해제" 항상 표시 */}
+            {customer.meta?.status === 'inactive' && (
               <Button
                 variant="primary"
                 size="sm"
@@ -619,27 +623,41 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               >
                 휴면 해제
               </Button>
-            ) : (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleSoftDeleteClick}
-                leftIcon={<span>💤</span>}
-                title="고객을 휴면 처리합니다 (휴면 해제 가능)"
-              >
-                휴면 처리
-              </Button>
             )}
-            {isDevMode && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handlePermanentDeleteClick}
-                leftIcon={<span>🗑️</span>}
-                title="고객과 연결된 모든 데이터를 영구 삭제합니다"
-              >
-                영구 삭제
-              </Button>
+            {/* 🍎 "···" 토글 → 클릭하면 휴면 처리/영구 삭제 버튼 펼침 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowExtraActions(prev => !prev)}
+              title={showExtraActions ? '접기' : '더보기'}
+            >
+              ···
+            </Button>
+            {showExtraActions && (
+              <>
+                {customer.meta?.status !== 'inactive' && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleSoftDeleteClick}
+                    leftIcon={<span>💤</span>}
+                    title="고객을 휴면 처리합니다 (휴면 해제 가능)"
+                  >
+                    휴면 처리
+                  </Button>
+                )}
+                {isDevMode && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handlePermanentDeleteClick}
+                    leftIcon={<span>🗑️</span>}
+                    title="고객과 연결된 모든 데이터를 영구 삭제합니다"
+                  >
+                    영구 삭제
+                  </Button>
+                )}
+              </>
             )}
             {/* 전체 보기 버튼은 제목 옆으로 이동됨 */}
           </div>

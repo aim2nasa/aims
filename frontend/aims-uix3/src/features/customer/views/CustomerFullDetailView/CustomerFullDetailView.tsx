@@ -84,6 +84,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0)
   const [customerReviewRefreshTrigger, setCustomerReviewRefreshTrigger] = useState(0)
 
+  // 🍎 더보기 토글 (휴면 처리 등 드물게 사용하는 액션 펼치기)
+  const [showExtraActions, setShowExtraActions] = useState(false)
+
   // 🍎 개수 상태
   const [contractCount, setContractCount] = useState(0)
   const [documentCount, setDocumentCount] = useState(0)
@@ -761,7 +764,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   정보 수정
                 </Button>
               </Tooltip>
-              {customer.meta?.status === 'inactive' ? (
+              {/* 🍎 휴면 고객 → "휴면 해제" 항상 표시 */}
+              {customer.meta?.status === 'inactive' && (
                 <Tooltip content="휴면 고객을 활성 상태로 변경합니다">
                   <Button
                     variant="primary"
@@ -772,29 +776,45 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     휴면 해제
                   </Button>
                 </Tooltip>
-              ) : (
-                <Tooltip content="고객을 휴면 처리합니다 (휴면 해제 가능)">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleSoftDeleteClick}
-                    leftIcon={<span>💤</span>}
-                  >
-                    휴면 처리
-                  </Button>
-                </Tooltip>
               )}
-              {isDevMode && (
-                <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handlePermanentDeleteClick}
-                    leftIcon={<span>🗑️</span>}
-                  >
-                    영구 삭제
-                  </Button>
-                </Tooltip>
+              {/* 🍎 "···" 토글 → 클릭하면 휴면 처리/영구 삭제 버튼이 인라인으로 펼쳐짐 */}
+              <Tooltip content={showExtraActions ? '접기' : '더보기'}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowExtraActions(prev => !prev)}
+                  className="more-actions-toggle"
+                >
+                  ···
+                </Button>
+              </Tooltip>
+              {showExtraActions && (
+                <>
+                  {customer.meta?.status !== 'inactive' && (
+                    <Tooltip content="고객을 휴면 처리합니다 (휴면 해제 가능)">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleSoftDeleteClick}
+                        leftIcon={<span>💤</span>}
+                      >
+                        휴면 처리
+                      </Button>
+                    </Tooltip>
+                  )}
+                  {isDevMode && (
+                    <Tooltip content="고객과 연결된 모든 데이터를 영구 삭제합니다">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handlePermanentDeleteClick}
+                        leftIcon={<span>🗑️</span>}
+                      >
+                        영구 삭제
+                      </Button>
+                    </Tooltip>
+                  )}
+                </>
               )}
               <div className="customer-full-detail__actions-spacer" />
               {/* 🍎 레이아웃 리셋 버튼 (변경 시에만 표시) */}
