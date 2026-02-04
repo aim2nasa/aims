@@ -39,6 +39,7 @@ export default defineConfig({
     // 개발 서버 포트 고정 (카카오 OAuth 콜백 URL과 일치해야 함)
     port: 5177,
     strictPort: true,  // 포트 사용 중이면 에러 (다른 포트로 변경 금지)
+    host: true,  // 네트워크 노출 (모바일 실기 테스트용 - 같은 Wi-Fi에서 PC IP로 접속)
     proxy: {
       // SSE 스트리밍 엔드포인트 - 별도 설정 필요
       '^/api/.*/stream$': {

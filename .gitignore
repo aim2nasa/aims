@@ -42,3 +42,7 @@ tmpclaude-*
 tools/MetlifePDF.sikuli/screenshots/
 tools/MetlifePDF.sikuli/debug_log.txt
 *.class
+
+# Mobile responsive screenshots (Puppeteer 자동 캡처)
+mobile/screenshots/
+mobile/node_modules/
