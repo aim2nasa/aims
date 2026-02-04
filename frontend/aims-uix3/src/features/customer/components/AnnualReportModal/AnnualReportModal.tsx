@@ -10,7 +10,7 @@
  * - 문서 프리뷰 모달 디자인 적용
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -62,6 +62,14 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   // 발행일 드롭다운 상태
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  // 모바일 감지
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   /**
    * 새 창에서 열기 핸들러
@@ -235,6 +243,106 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           />
           <span>Annual Report가 없습니다.</span>
         </div>
+      );
+    }
+
+    // 모바일: 카드형 레이아웃 (테이블 대신)
+    if (isMobileView) {
+      const renderContractCard = (contract: InsuranceContract, index: number) => (
+        <div className="ar-mobile-card" key={index}>
+          <div className="ar-mobile-card__header">
+            <span className="ar-mobile-card__product">{contract.product_name}</span>
+            <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+              {contract.status || '-'}
+            </span>
+          </div>
+          <div className="ar-mobile-card__company">{contract.insurance_company}</div>
+          <div className="ar-mobile-card__body">
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">증권번호</span>
+              <span className="ar-mobile-card__value">{contract.contract_number}</span>
+            </div>
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">계약자</span>
+              <span className="ar-mobile-card__value">{contract.contractor_name || '-'}</span>
+            </div>
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">피보험자</span>
+              <span className="ar-mobile-card__value">{contract.insured_name || '-'}</span>
+            </div>
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">계약일</span>
+              <span className="ar-mobile-card__value">{contract.contract_date}</span>
+            </div>
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">가입금액</span>
+              <span className="ar-mobile-card__value">{(contract.coverage_amount / 10000).toLocaleString('ko-KR')}만원</span>
+            </div>
+            <div className="ar-mobile-card__row">
+              <span className="ar-mobile-card__label">보험·납입</span>
+              <span className="ar-mobile-card__value">{contract.insurance_period || '-'} · {contract.premium_payment_period || '-'}</span>
+            </div>
+          </div>
+          <div className="ar-mobile-card__premium">
+            <span className="ar-mobile-card__premium-label">월 보험료</span>
+            <span className="ar-mobile-card__premium-value">{contract.monthly_premium.toLocaleString('ko-KR')}원</span>
+          </div>
+        </div>
+      );
+
+      return (
+        <>
+          {/* 모바일 요약 */}
+          <div className="ar-mobile-summary">
+            <div className="ar-mobile-summary__item">
+              <span className="ar-mobile-summary__label">발행일</span>
+              <span className="ar-mobile-summary__value">{formatDate(report.issue_date)}</span>
+            </div>
+            <div className="ar-mobile-summary__item">
+              <span className="ar-mobile-summary__label">총월보험료</span>
+              <span className="ar-mobile-summary__value ar-mobile-summary__value--primary">
+                {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
+              </span>
+            </div>
+            <div className="ar-mobile-summary__item">
+              <span className="ar-mobile-summary__label">계약수</span>
+              <span className="ar-mobile-summary__value">{report.contract_count}건</span>
+            </div>
+          </div>
+
+          {/* 모바일 계약 카드 목록 */}
+          <div className="ar-mobile-contracts">
+            <h3 className="ar-mobile-contracts__title">보험 계약 ({report.contract_count}건)</h3>
+            {report.contracts.length === 0 ? (
+              <div className="ar-mobile-empty">대상 계약이 없습니다.</div>
+            ) : (
+              report.contracts.map((contract: InsuranceContract, index: number) =>
+                renderContractCard(contract, index)
+              )
+            )}
+          </div>
+
+          {/* 모바일 부활가능 실효계약 */}
+          <div className="ar-mobile-contracts ar-mobile-contracts--lapsed">
+            <h3 className="ar-mobile-contracts__title">
+              부활가능 실효계약 ({report.lapsed_contracts?.length || 0}건)
+            </h3>
+            {!report.lapsed_contracts || report.lapsed_contracts.length === 0 ? (
+              <div className="ar-mobile-empty">대상 계약이 없습니다.</div>
+            ) : (
+              report.lapsed_contracts.map((contract: InsuranceContract, index: number) =>
+                renderContractCard(contract, index)
+              )
+            )}
+          </div>
+
+          {/* 푸터 */}
+          <div className="annual-report-modal__footer">
+            <span className="annual-report-modal__footer-text">
+              생성일: {formatDateTime(report.created_at)}
+            </span>
+          </div>
+        </>
       );
     }
 

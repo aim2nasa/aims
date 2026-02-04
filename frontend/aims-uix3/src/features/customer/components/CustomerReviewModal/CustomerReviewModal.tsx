@@ -7,7 +7,7 @@
  * - Annual Report와 동일한 레이아웃 형식 적용
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -62,6 +62,15 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
   onClose,
   review
 }) => {
+  // 모바일 감지
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!isOpen || !review) return null;
 
   const { contract_info, premium_info, fund_allocations } = review;
@@ -112,8 +121,185 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
             <h3 className="crm-empty__title">파싱 대기 중</h3>
             <p className="crm-empty__desc">문서 파싱이 아직 완료되지 않았습니다.</p>
           </div>
+        ) : isMobileView ? (
+          <>
+            {/* 모바일: 세로 스택 레이아웃 */}
+            <div className="crm-mobile__product">{cleanProductName}</div>
+
+            {/* 인적사항 - 2x2 그리드 */}
+            <div className="crm-mobile__persons">
+              <div className="crm-mobile__person">
+                <span className="crm-mobile__person-label">계약자</span>
+                <span className="crm-mobile__person-value">{review.contractor_name || '-'}</span>
+              </div>
+              <div className="crm-mobile__person">
+                <span className="crm-mobile__person-label">피보험자</span>
+                <span className="crm-mobile__person-value">{review.insured_name || '-'}</span>
+              </div>
+              <div className="crm-mobile__person">
+                <span className="crm-mobile__person-label">사망수익자</span>
+                <span className="crm-mobile__person-value">{review.death_beneficiary || '-'}</span>
+              </div>
+              <div className="crm-mobile__person">
+                <span className="crm-mobile__person-label">FSR</span>
+                <span className="crm-mobile__person-value">{review.fsr_name || '-'}</span>
+              </div>
+            </div>
+
+            {/* 계약사항 */}
+            <section className="crm-mobile__section">
+              <h3 className="crm-mobile__section-title">계약사항</h3>
+              <div className="crm-mobile__list">
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">증권번호</span>
+                  <span className="crm-mobile__item-value">{contract_info?.policy_number || '-'}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">계약일자</span>
+                  <span className="crm-mobile__item-value">{contract_info?.contract_date ? formatDate(contract_info.contract_date) : '-'}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">보험가입금액</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(contract_info?.insured_amount)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">적립금</span>
+                  <span className="crm-mobile__item-value crm-value--primary">{CustomerReviewApi.formatCurrency(contract_info?.accumulated_amount)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">투자수익률</span>
+                  <span className={`crm-mobile__item-value ${(contract_info?.investment_return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}`}>
+                    {CustomerReviewApi.formatPercent(contract_info?.investment_return_rate)}
+                  </span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">해지환급금</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(contract_info?.surrender_value)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">해지환급율</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatPercent(contract_info?.surrender_rate)}</span>
+                </div>
+                {(contract_info?.initial_premium ?? 0) > 0 && (
+                  <div className="crm-mobile__item">
+                    <span className="crm-mobile__item-label">초회 납입 보험료</span>
+                    <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(contract_info.initial_premium)}</span>
+                  </div>
+                )}
+                {(contract_info?.accumulation_rate ?? 0) > 0 && (
+                  <div className="crm-mobile__item crm-mobile__item--highlight">
+                    <span className="crm-mobile__item-label">적립금비율</span>
+                    <span className="crm-mobile__item-value">{CustomerReviewApi.formatPercent(contract_info.accumulation_rate)}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* 보험료 납입현황 */}
+            <section className="crm-mobile__section">
+              <h3 className="crm-mobile__section-title">보험료 납입현황</h3>
+              <div className="crm-mobile__list">
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">기본 보험료(A)</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(premium_info?.basic_premium)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">수시추가납(B)</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(premium_info?.additional_premium)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">정기추가납(C)</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(premium_info?.regular_additional)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">중도출금(D)</span>
+                  <span className="crm-mobile__item-value crm-value--error">{CustomerReviewApi.formatCurrency(premium_info?.withdrawal)}</span>
+                </div>
+                <div className="crm-mobile__item crm-mobile__item--highlight">
+                  <span className="crm-mobile__item-label">계(A+B+C-D)</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(premium_info?.net_premium)}</span>
+                </div>
+                <div className="crm-mobile__item">
+                  <span className="crm-mobile__item-label">약관대출</span>
+                  <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(premium_info?.policy_loan)}</span>
+                </div>
+              </div>
+            </section>
+
+            {/* 펀드 구성 현황 - 카드형 */}
+            <section className="crm-mobile__section">
+              <div className="crm-mobile__section-header">
+                <h3 className="crm-mobile__section-title">펀드 구성 현황</h3>
+                <span className="crm-mobile__badge">{review.fund_count || fund_allocations?.length || 0}개</span>
+              </div>
+              {fund_allocations && fund_allocations.length > 0 ? (
+                <>
+                  {fund_allocations.map((fund, index) => (
+                    <div className="crm-mobile__fund-card" key={index}>
+                      <div className="crm-mobile__fund-name">{fund.fund_name || '-'}</div>
+                      <div className="crm-mobile__fund-body">
+                        <div className="crm-mobile__item">
+                          <span className="crm-mobile__item-label">적립금</span>
+                          <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(fund.basic_accumulated)}</span>
+                        </div>
+                        <div className="crm-mobile__item">
+                          <span className="crm-mobile__item-label">구성비</span>
+                          <span className="crm-mobile__item-value">{CustomerReviewApi.formatPercent(fund.allocation_ratio)}</span>
+                        </div>
+                        <div className="crm-mobile__item">
+                          <span className="crm-mobile__item-label">수익률</span>
+                          <span className={`crm-mobile__item-value ${(fund.return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}`}>
+                            {CustomerReviewApi.formatPercent(fund.return_rate)}
+                          </span>
+                        </div>
+                        <div className="crm-mobile__item">
+                          <span className="crm-mobile__item-label">투입원금</span>
+                          <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(fund.invested_principal)}</span>
+                        </div>
+                        {hasAnyAdditionalData([fund]) && (
+                          <>
+                            <div className="crm-mobile__fund-divider">추가납입</div>
+                            <div className="crm-mobile__item">
+                              <span className="crm-mobile__item-label">적립금</span>
+                              <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(fund.additional_accumulated)}</span>
+                            </div>
+                            <div className="crm-mobile__item">
+                              <span className="crm-mobile__item-label">수익률</span>
+                              <span className={`crm-mobile__item-value ${(fund.additional_return_rate || 0) >= 0 ? 'crm-value--success' : 'crm-value--error'}`}>
+                                {CustomerReviewApi.formatPercent(fund.additional_return_rate)}
+                              </span>
+                            </div>
+                            <div className="crm-mobile__item">
+                              <span className="crm-mobile__item-label">투입원금</span>
+                              <span className="crm-mobile__item-value">{CustomerReviewApi.formatCurrency(fund.additional_invested_principal)}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="crm-mobile__fund-total">
+                    <span className="crm-mobile__fund-total-label">합계 적립금</span>
+                    <span className="crm-mobile__fund-total-value">{CustomerReviewApi.formatCurrency(review.total_accumulated_amount)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="crm-mobile__empty">펀드 정보 없음</div>
+              )}
+            </section>
+
+            {/* Footer */}
+            {review.parsed_at && (
+              <div className="annual-report-modal__footer">
+                <span className="annual-report-modal__footer-text">
+                  파싱일시: {formatDateTime(review.parsed_at)}
+                </span>
+              </div>
+            )}
+          </>
         ) : (
           <>
+            {/* 데스크탑: 기존 레이아웃 */}
             {/* 상품명 (중앙 정렬) */}
             <div className="crm-product-name crm-product-name--centered">
               {cleanProductName}
