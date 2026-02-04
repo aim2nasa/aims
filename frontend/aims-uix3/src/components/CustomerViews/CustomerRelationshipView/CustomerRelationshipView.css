@@ -472,8 +472,8 @@ html[data-theme="dark"] .relation-item {
 }
 
 .tree-control-button {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -484,18 +484,18 @@ html[data-theme="dark"] .relation-item {
   color: var(--color-text-secondary);
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 html[data-theme="dark"] .tree-control-button {
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
 }
 
 .tree-control-button:hover {
-  background-color: var(--color-hover-bg);
+  background: transparent;
   color: var(--color-text-primary);
-  border-color: var(--color-accent);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 .tree-control-button:active {
