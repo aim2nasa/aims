@@ -1947,6 +1947,9 @@ html[data-theme="dark"] .chat-panel__minimized-indicator:hover {
     max-width: 100%;
     border-left: none;
     border-radius: 0;
+    /* 모바일: dvh로 가상 키보드 대응 - 키보드 열리면 패널 축소되어 입력창 유지 */
+    top: var(--header-height-base, 50px);
+    height: calc(100dvh - var(--header-height-base, 50px));
   }
 }
 

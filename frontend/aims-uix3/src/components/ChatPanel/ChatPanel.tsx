@@ -887,9 +887,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, isPopup =
     scrollToBottom();
   }, [messages, currentResponse, scrollToBottom]);
 
-  // 패널 열릴 때 입력창에 자동 포커스
+  // 패널 열릴 때 입력창에 자동 포커스 (PC만)
   useEffect(() => {
     if (!isOpen) return;
+    // 모바일에서는 자동 포커스 비활성화 (가상 키보드가 즉시 올라오는 문제 방지)
+    if (window.innerWidth <= 768) return;
 
     // 애니메이션 완료 후 포커스 (300ms transition)
     const timer = setTimeout(() => {
