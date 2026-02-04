@@ -129,8 +129,8 @@
   left: 0;
   width: 280px;
   max-width: 85vw;
-  height: 100dvh;
   height: 100vh; /* fallback */
+  height: 100dvh; /* preferred - iOS Safari dynamic viewport */
   z-index: var(--z-index-modal, 1000);
   background-color: var(--color-layout-leftpane-bg);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
@@ -418,6 +418,21 @@
 /* 🍎 다크 테마 그림자 최적화 */
 [data-theme="dark"] .layout-leftpane {
   box-shadow: var(--shadow-sidebar-dark); /* 다크에서 더 진한 그림자 */
+}
+
+/* 📱 모바일 드로어: 데스크톱 사이드바 스타일 오버라이드 (specificity 0,2,0 > 0,1,0)
+ * .layout-leftpane 기본 스타일(top, z-index, padding, border-radius)이
+ * .layout-leftpane--mobile-drawer보다 뒤에 정의되어 동일 specificity에서 덮어쓰는 문제 해결 */
+.layout-leftpane.layout-leftpane--mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-index-modal, 1000);
+  border-radius: 0;
+  padding: 12px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
 }
 
 /* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음
