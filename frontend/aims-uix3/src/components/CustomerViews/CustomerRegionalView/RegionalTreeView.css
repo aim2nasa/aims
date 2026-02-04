@@ -621,3 +621,132 @@ html[data-theme="dark"] .type-filter-separator {
 .stat-checkbox-label {
   white-space: nowrap;
 }
+
+/* =============================================
+   📱 모바일 반응형 (480px 이하)
+   PC: 트리(300px) + 지도(flex:1) 가로 배치
+   모바일: 지도(상단) → 고객 트리(하단 스크롤) 세로 배치
+   ============================================= */
+@media (max-width: 480px) {
+
+  /* --- 통계 영역: 초소형 2줄 레이아웃 ---
+     Row 1: 10명 (개인 10, 법인 0)
+     Row 2: [전체 지역 ▼] [전체 구/군 ▼]  🔄
+     --- */
+  .regional-tree-stats {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: 2px var(--spacing-sm);
+  }
+
+  /* 구분자(·) 숨김 */
+  .stat-divider {
+    display: none;
+  }
+
+  /* 모든 아이콘 숨김 (공간 절약) */
+  .regional-tree-stats .stat-icon {
+    display: none;
+  }
+
+  /* 모든 라벨 숨김 (드롭다운/필터 텍스트가 이미 충분) */
+  .regional-tree-stats .stat-label {
+    display: none;
+  }
+
+  /* "빈 지역" / "빈 구/군" 체크박스 숨김 (파워유저 기능 → 모바일 불필요) */
+  .stat-checkbox {
+    display: none;
+  }
+
+  /* Row 1: 전체 고객 필터 → 전체 폭 */
+  .regional-tree-stats > .stat-item:first-child {
+    flex-basis: 100%;
+    min-height: 32px;
+  }
+
+  /* Row 2: 지역/구군 드롭다운 나란히 */
+  .regional-tree-stats > .stat-item:nth-child(3),
+  .regional-tree-stats > .stat-item:nth-child(5) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 드롭다운 터치 타겟 확대 + 전체 폭 */
+  .regional-tree-stats .ios-dropdown__trigger {
+    min-height: 36px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .stat-dropdown-group {
+    flex: 1;
+  }
+
+  /* 🔄 새로고침 버튼: 터치 타겟 확대 */
+  .tree-action-btn--icon-only {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* --- 메인 콘텐츠: 세로 스택 --- */
+  .regional-tree-content {
+    flex-direction: column;
+  }
+
+  /* --- 지도: 상단 고정 높이 --- */
+  .regional-map-container {
+    order: -1;           /* 지도를 트리 위로 */
+    flex: none;
+    height: 35vh;
+    min-height: 200px;
+    max-height: 280px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* --- 트리: 하단 스크롤 영역 --- */
+  .regional-tree-container {
+    flex: 1;
+    border-right: none;  /* 가로 구분선 제거 */
+    padding: var(--spacing-xs);
+  }
+
+  /* 트리 헤더 액션 컴팩트 */
+  .tree-header-actions {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* --- 트리 노드: 터치 타겟 확대 --- */
+  .tree-node {
+    min-height: 40px;
+    padding: var(--spacing-sm) var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .tree-node-label {
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* 계층 들여쓰기 축소 (공간 절약) */
+  .tree-node-children,
+  .tree-node-customers {
+    padding-left: var(--spacing-lg);
+    margin-left: var(--spacing-xs);
+  }
+
+  /* --- 고객 아이템: 터치 타겟 확대 --- */
+  .tree-customer-item {
+    min-height: 40px;
+    padding: var(--spacing-sm);
+    padding-left: 24px;
+    gap: var(--spacing-sm);
+  }
+
+  .tree-customer-name {
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* --- 빈 상태 / 로딩: 패딩 축소 --- */
+  .regional-tree-loading,
+  .regional-tree-empty {
+    padding: var(--spacing-lg);
+  }
+}

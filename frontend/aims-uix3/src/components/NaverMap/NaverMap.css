@@ -165,3 +165,26 @@ html[data-theme="dark"] .naver-map-progress-fill {
 .marker-blink {
   animation: marker-blink 1s ease-in-out infinite;
 }
+
+/* 📱 모바일 반응형 (480px 이하) */
+@media (max-width: 480px) {
+  /* 지도 래퍼: 모서리 둥글림 제거 (전체 폭 사용) */
+  .naver-map-wrapper {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* 리셋 버튼 위치 조정 */
+  .naver-map-reset-button {
+    bottom: var(--spacing-2);
+    left: var(--spacing-2);
+    width: 36px;
+    height: 36px;
+  }
+
+  /* 프로그레스바: 폭 축소 */
+  .naver-map-progress {
+    width: 220px;
+    padding: var(--spacing-3);
+  }
+}
