@@ -2412,3 +2412,123 @@ html[data-theme="dark"] .doc-search-highlight--current {
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.7), 0 0 20px rgba(249, 115, 22, 0.6);
   }
 }
+
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  .document-search-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* 검색바: 세로 스택 */
+  .search-bar-wrapper {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .document-search-container .search-input-wrapper {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding: 2px 4px;
+  }
+
+  .document-search-container .search-input {
+    padding: 3px 6px 3px 24px;
+  }
+
+  .document-search-container .search-icon {
+    left: 8px;
+  }
+
+  /* 유사도 범례 숨김 */
+  .similarity-legend {
+    display: none;
+  }
+
+  /* 결과 섹션 */
+  .search-results-section {
+    gap: 8px;
+  }
+
+  /* 컬럼 헤더 숨김 */
+  .search-results-column-header {
+    display: none;
+  }
+
+  /* 결과 행: 카드형 2행 레이아웃 */
+  .search-result-row,
+  .search-result-row[data-search-mode="keyword"] {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 2px 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 0.5px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .search-result-row {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* Row 1: 인덱스 + 파일명 */
+  .search-result-row .row-index {
+    grid-row: 1;
+    grid-column: 1;
+    font-size: var(--font-size-caption-2);
+    width: 20px;
+    height: 20px;
+  }
+
+  .search-result-row .row-filename {
+    grid-row: 1;
+    grid-column: 2 / 4;
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Row 2: 고객 + 상태 */
+  .search-result-row .row-customer {
+    grid-row: 2;
+    grid-column: 2;
+    font-size: var(--font-size-caption-2);
+  }
+
+  .search-result-row .row-status {
+    grid-row: 2;
+    grid-column: 3;
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* 유사도 + 액션: 모바일에서 숨김 */
+  .search-result-row .row-similarity,
+  .search-result-row .row-actions {
+    display: none;
+  }
+
+  /* 터치 피드백 */
+  .search-result-row:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
+  .search-result-row:hover {
+    transform: none;
+  }
+
+  /* 검색 범위 드롭다운 */
+  .search-scope-dropdown {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  /* 검색 결과 통계 */
+  .search-results-header {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+}

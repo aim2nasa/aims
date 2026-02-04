@@ -852,6 +852,96 @@ html[data-theme="dark"] .search-input {
   }
 }
 
+/* === 모바일 (480px 이하) === */
+@media (max-width: 480px) {
+  /* 툴바 컴팩트 */
+  .files-toolbar {
+    padding: var(--spacing-2) var(--spacing-3);
+    gap: var(--spacing-2);
+  }
+
+  /* 컬럼 헤더 숨김 */
+  .files-list-header {
+    display: none;
+  }
+
+  /* 파일 행: 카드형 2행 */
+  .file-list-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 2px 6px;
+    padding: 8px 10px;
+    min-height: var(--spacing-touch-min, 44px);
+    border-radius: 8px;
+    border: 0.5px solid var(--color-ios-separator-light);
+    border-bottom: 0.5px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .file-list-row {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* Row 1: 아이콘 + 파일명 */
+  .file-list-row .row-icon {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .file-list-row .row-name {
+    grid-row: 1;
+    grid-column: 2 / 4;
+    font-size: var(--font-size-footnote);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Row 2: 날짜 + 크기 */
+  .file-list-row .row-modified {
+    grid-row: 2;
+    grid-column: 2;
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-secondary);
+    display: block;
+  }
+
+  .file-list-row .row-size {
+    grid-row: 2;
+    grid-column: 3;
+    font-size: var(--font-size-caption-2);
+    display: block;
+  }
+
+  /* 타입/액션: 숨김 */
+  .file-list-row .row-type,
+  .file-list-row .row-actions {
+    display: none;
+  }
+
+  /* 그리드 뷰: 더 작은 카드 */
+  .files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-2);
+  }
+
+  /* 터치 피드백 */
+  .file-list-row:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
+  .file-list-row:hover {
+    transform: none;
+  }
+
+  /* 삭제 모드 */
+  .files-list--delete-mode .file-list-row {
+    grid-template-columns: 24px 24px 1fr auto;
+  }
+}
+
 /* ========================================
    정렬 가능한 컬럼 헤더 (DocumentSearchView 방식 적용)
    ======================================== */

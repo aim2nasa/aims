@@ -1065,6 +1065,126 @@ html[data-theme="dark"] .delete-confirm-content .delete-warning {
   margin-top: 8px;
 }
 
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  .contract-all-view {
+    padding: var(--spacing-2);
+    gap: 4px;
+  }
+
+  /* 검색 입력 컴팩트 */
+  .contract-all-view .search-input-wrapper {
+    padding: 2px 4px;
+  }
+
+  .contract-all-view .search-input {
+    padding: 3px 6px 3px 24px;
+  }
+
+  .contract-all-view .search-icon {
+    left: 8px;
+  }
+
+  /* 컬럼 헤더 숨김 */
+  .contract-list-header {
+    display: none;
+  }
+
+  /* 스크롤 래퍼: 가로 스크롤 해제 */
+  .contract-list-scroll-wrapper {
+    overflow-x: visible;
+    min-width: 0;
+  }
+
+  /* 계약 아이템: 카드형 3행 */
+  .contract-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    grid-template-rows: auto auto auto;
+    gap: 2px 6px;
+    min-width: 0;
+    height: auto;
+    min-height: var(--spacing-touch-min, 44px);
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 0.5px solid var(--color-ios-separator-light);
+  }
+
+  html[data-theme="dark"] .contract-item {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  /* Row 1: 유형 아이콘 + 고객명 + 상태 */
+  .contract-item > .contract-type {
+    grid-row: 1;
+    grid-column: 1;
+    width: 20px;
+    height: 20px;
+  }
+
+  .contract-item > .contract-customer {
+    grid-row: 1;
+    grid-column: 2;
+    font-weight: 600;
+    font-size: var(--font-size-footnote);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .contract-item > .contract-payment-status {
+    grid-row: 1;
+    grid-column: 3;
+    text-align: right;
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* Row 2: 상품명 */
+  .contract-item > .contract-product {
+    grid-row: 2;
+    grid-column: 2 / 4;
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Row 3: 계약일 + 보험료 */
+  .contract-item > .contract-date {
+    grid-row: 3;
+    grid-column: 2;
+    font-size: var(--font-size-caption-2);
+    color: var(--color-text-tertiary);
+  }
+
+  .contract-item > .contract-premium {
+    grid-row: 3;
+    grid-column: 3;
+    text-align: right;
+    font-size: var(--font-size-caption-2);
+    font-weight: 600;
+  }
+
+  /* 모바일에서 숨김: 증권번호, 이체일, 납입주기, 피보험자 */
+  .contract-item > .contract-policy,
+  .contract-item > .contract-payment-day,
+  .contract-item > .contract-cycle,
+  .contract-item > .contract-insured {
+    display: none;
+  }
+
+  /* 터치 피드백 */
+  .contract-item:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
+  .contract-item:hover {
+    transform: none;
+  }
+}
+
 /* === 접근성 감소 모션 === */
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner {
