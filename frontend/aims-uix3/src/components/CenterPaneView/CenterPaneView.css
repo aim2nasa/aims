@@ -253,15 +253,20 @@ html[data-theme="dark"] .center-pane-view__description {
   }
 
   .center-pane-view__header {
-    padding: 12px 12px;
+    padding: 6px 12px;
   }
 
   .center-pane-view__content {
-    padding: 12px;
+    padding: 8px;
   }
 
   .center-pane-view__breadcrumb {
     display: none;
+  }
+
+  /* 타이틀 아이콘 축소 */
+  .center-pane-view__title-icon .sf-symbol {
+    font-size: 1.1em;
   }
 }
 

@@ -845,7 +845,7 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
 
   /* 리스트 간격 */
   .document-status-list {
-    gap: 6px;
+    gap: 4px;
     padding-right: 0;
   }
 
@@ -858,7 +858,7 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
     align-items: center;
     height: auto;
     min-height: var(--spacing-touch-min, 44px);
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
     overflow: hidden;

@@ -799,8 +799,21 @@ html[data-theme="dark"] .customer-created {
    숨김: 성별, 생년월일, 이메일, 주소, 등록일 */
 @media (max-width: 480px) {
   .customer-library-container {
-    padding: 8px;
-    gap: 8px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  /* 검색 입력: 컴팩트 */
+  .customer-library-container .search-input-wrapper {
+    padding: 2px 4px;
+  }
+
+  .customer-library-container .search-input {
+    padding: 3px 6px 3px 24px;
+  }
+
+  .customer-library-container .search-icon {
+    left: 8px;
   }
 
   /* 상태 필터 탭: 수평 스크롤 */
@@ -833,7 +846,7 @@ html[data-theme="dark"] .customer-created {
 
   /* 리스트 간격 */
   .customer-list {
-    gap: 6px;
+    gap: 4px;
     padding-right: 0;
   }
 
@@ -851,7 +864,7 @@ html[data-theme="dark"] .customer-created {
     align-items: center;
     height: auto;
     min-height: var(--spacing-touch-min, 44px);
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
   }
