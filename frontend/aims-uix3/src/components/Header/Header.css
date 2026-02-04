@@ -518,21 +518,33 @@
 @media (max-width: 768px) {
   .header-progressive {
     padding: 0 var(--spacing-3);
+    overflow: visible; /* 모바일에서 아바타 잘림 방지 */
+  }
+
+  .header-branding {
+    flex: 0 1 auto; /* 모바일에서 branding 축소 허용 */
+    min-width: 0;
   }
 
   .header-title {
-    font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: mobile header title */
+    font-size: var(--font-size-callout);
     font-family: var(--font-family-display);
   }
 
   .header-controls {
     gap: var(--spacing-2);
+    flex-shrink: 0; /* controls는 절대 축소 안 됨 */
   }
 
   .header-control-button {
     width: 32px;
     height: 32px;
-    font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: mobile control buttons */
+    font-size: var(--font-size-footnote);
+  }
+
+  /* 모바일에서 레이아웃 제어 버튼 숨김 (데스크톱 전용) */
+  .header-user-selector {
+    display: none;
   }
 }
 
@@ -543,8 +555,20 @@
     padding: 0 var(--spacing-2);
   }
 
+  .header-branding {
+    gap: 0;
+  }
+
+  .header-title {
+    font-size: var(--font-size-footnote);
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .header-controls {
-    gap: var(--spacing-1);
+    gap: 4px;
   }
 
   .header-control-button {
@@ -552,12 +576,10 @@
     height: 36px;
   }
 
-  .header-title {
-    font-size: var(--font-size-footnote);
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  /* 480px 이하에서 검색바 축소 */
+  .header-quick-search-container {
+    flex: 1;
+    min-width: 0;
   }
 }
 

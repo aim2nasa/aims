@@ -183,6 +183,25 @@
   .layout-pagination {
     border-radius: 0;
   }
+
+  /* 📱 모바일 RightPane: 전체화면 오버레이 */
+  .layout-rightpane-container--mobile {
+    z-index: var(--z-index-modal, 1000);
+    background-color: var(--color-layout-rightpane-bg);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+                opacity 0.3s ease-out;
+  }
+
+  .layout-rightpane-container--mobile .layout-rightpane-content {
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
+  }
+
+  .layout-rightpane-container--mobile.layout-rightpane-container--hidden {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 /* 🍎 Tablet 최적화 (iPad Mini 제외 - 1024px 이상은 3패널) */

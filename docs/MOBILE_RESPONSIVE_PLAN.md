@@ -67,28 +67,28 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 
 | 항목 | 상태 | 파일 | 내용 |
 |------|------|------|------|
-| 2-1. 카드형 레이아웃 | ✅ 완료 | `DocumentStatusList.css` | CSS Grid 3행 카드 (아이콘+파일명 / 크기·타입·날짜 / 상태·고객) |
-| 2-2. 헤더 축소 | ✅ 완료 | `DocumentLibraryView.css` | 검색바 전체폭, 헤더 세로 스택 |
+| 2-1. 카드형 레이아웃 | ✅ 완료 | `DocumentStatusList.css` | CSS Grid 2행 카드 (아이콘+파일명 / 날짜·상태·고객) |
+| 2-2. 헤더 축소 | ✅ 완료 | `DocumentLibraryView.css` | 검색바 전체폭, 헤더 세로 스택, "최근 업데이트" 숨김 |
 | 2-3. 컬럼헤더 숨김 | ✅ 완료 | `DocumentStatusList.css` | 카드에서 컬럼 헤더 불필요 |
-| 2-4. 문서유형 드롭다운 숨김 | ✅ 완료 | `DocumentStatusList.css` | 모바일에서 select 불필요 (아이콘+MIME으로 충분) |
+| 2-4. 불필요 정보 숨김 | ✅ 완료 | `DocumentStatusList.css` | 크기·MIME타입·문서유형·액션버튼 숨김 (탭/컨텍스트 메뉴로 접근) |
 | 2-5. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
 
 ### 카드 레이아웃 구조 (480px 이하)
 
 ```
 ┌─────────────────────────────────┐
-│ [icon] 파일명.pdf          [▶️]  │  ← Row 1: 아이콘 + 파일명 + 액션
-│ 266KB · PDF · 2026.02.03       │  ← Row 2: 크기 · 타입 · 날짜
-│ ✅ 완료 · 홍길동                 │  ← Row 3: 상태 · 고객
+│ [📄] 보험증권_홍길동.pdf          │  ← Row 1: 아이콘 + 파일명
+│      2026.02.03 · ✅완료 · 홍길동 │  ← Row 2: 날짜 · 상태 · 고객
 └─────────────────────────────────┘
 ```
 
 ### 기술 구현
-- CSS Grid `grid-template-columns: 24px auto auto auto 1fr auto`
-- 3행 (`grid-template-rows: auto auto auto`)
-- 각 자식 요소에 명시적 `grid-row` / `grid-column` 할당
-- 삭제/일괄연결 모드: 체크박스 칼럼 추가 (7칼럼)
-- 터치 타겟: 액션 버튼 32px, 카드 최소 높이 44px
+- CSS Grid `grid-template-columns: 24px auto auto 1fr`
+- 2행 (`grid-template-rows: auto auto`)
+- Row 1: 아이콘(col1) + 파일명(col2-4 span)
+- Row 2: 날짜(col2) + 상태(col3) + 고객(col4)
+- 삭제/일괄연결 모드: 체크박스 칼럼 추가 (5칼럼)
+- 카드 최소 높이 44px (터치 타겟)
 
 ## Phase 3: 전체 고객 보기 (카드형 레이아웃)
 
@@ -96,18 +96,19 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 
 | 항목 | 상태 | 파일 | 내용 |
 |------|------|------|------|
-| 3-1. 고객 카드 | ✅ 완료 | `AllCustomersView.css` | CSS Grid 2행 카드 (아이콘+이름+상태 / 전화·성별·생년월일) |
+| 3-1. 고객 카드 | ✅ 완료 | `AllCustomersView.css` | CSS Grid 2행 카드 (아이콘+이름+상태 / 전화번호만) |
 | 3-2. 컬럼헤더 숨김 | ✅ 완료 | `AllCustomersView.css` | 카드에서 컬럼 헤더 불필요 |
-| 3-3. 불필요 칼럼 숨김 | ✅ 완료 | `AllCustomersView.css` | 이메일·주소·등록일 모바일에서 숨김 |
+| 3-3. 불필요 칼럼 숨김 | ✅ 완료 | `AllCustomersView.css` | 성별·생년월일·이메일·주소·등록일 모바일에서 숨김 |
 | 3-4. 컨테이너 패딩 축소 | ✅ 완료 | `AllCustomersView.css` | 16px→8px |
-| 3-5. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
+| 3-5. 상태 필터 최적화 | ✅ 완료 | `AllCustomersView.css` | 필터 탭 수평 스크롤 전환 |
+| 3-6. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
 
 ### 카드 레이아웃 구조 (480px 이하)
 
 ```
 ┌─────────────────────────────────┐
 │ [👤] 홍길동               활성  │  ← Row 1: 아이콘 + 이름 + 상태
-│ 010-1234-5678 · 남 · 1990.01.01│  ← Row 2: 전화 · 성별 · 생년월일
+│      010-1234-5678              │  ← Row 2: 전화번호
 └─────────────────────────────────┘
 ```
 
@@ -118,20 +119,26 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 | 항목 | 상태 | 파일 | 내용 |
 |------|------|------|------|
 | 3.5-1. `isMobileView` 상태 | ✅ 완료 | `App.tsx` | `window.innerWidth <= 768` 감지 + resize 연동 |
-| 3.5-2. `layoutDimensions` 분기 | ✅ 완료 | `App.tsx` | 모바일: leftPane=0, centerPane=전체폭 |
+| 3.5-2. `layoutDimensions` 분기 | ✅ 완료 | `App.tsx` | 모바일: leftPane=0, centerPane=100vw |
 | 3.5-3. 모바일 드로어 | ✅ 완료 | `App.tsx`, `layout.css` | LeftPane → 슬라이드인 오버레이 + 백드롭 |
 | 3.5-4. Header 햄버거 버튼 | ✅ 완료 | `HeaderView.tsx`, `Header.css` | 모바일에서 ☰ 버튼 → 드로어 토글 |
-| 3.5-5. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
+| 3.5-5. RightPane 전체화면 | ✅ 완료 | `App.tsx`, `layout.css` | 모바일: position:fixed + 100vw 오버레이 |
+| 3.5-6. BRB 숨김 | ✅ 완료 | `App.tsx` | 모바일에서 리사이즈 바 숨김 |
+| 3.5-7. 초성 필터 수평 스크롤 | ✅ 완료 | `InitialFilterBar.css` | 768px 이하: flex-wrap:nowrap + overflow-x:auto |
+| 3.5-8. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
 
 ### 변경된 파일
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `App.tsx` | `isMobileView`, `mobileDrawerOpen` 상태, layoutDimensions 모바일 분기, LeftPane 조건부 렌더링 |
+| `App.tsx` | `isMobileView`, `mobileDrawerOpen` 상태, layoutDimensions 모바일 분기, LeftPane/RightPane 조건부 렌더링 |
 | `Header.types.ts` | `isMobile`, `isMobileDrawerOpen`, `onMobileMenuToggle` props 추가 |
-| `HeaderView.tsx` | 모바일 햄버거 SVG 버튼 렌더링 |
-| `layout.css` | `.mobile-drawer-backdrop`, `.layout-leftpane--mobile-drawer`, `.layout-leftpane--mobile-open` |
+| `HeaderView.tsx` | 모바일 햄버거 SVG 버튼 렌더링, 터치 툴팁 숨김 |
+| `layout.css` | `.mobile-drawer-backdrop`, `.layout-leftpane--mobile-drawer`, `.layout-rightpane-container--mobile` |
 | `Header.css` | `.header-mobile-menu-btn`, 모바일 disclosure indicator 숨김 |
+| `InitialFilterBar.css` | 768px 이하 수평 스크롤 + 컴팩트 버튼 |
+| `DocumentLibraryView.css` | "최근 업데이트" 텍스트 숨김 |
+| `AllCustomersView.css` | 상태 필터 탭 수평 스크롤 |
 
 ---
 
@@ -226,4 +233,5 @@ AIMS의 데스크톱 레이아웃은 **absolute positioning + JavaScript 계산*
 | 2026-02-04 | 1 | 기반 레이아웃 완료 (Header/CenterPane/Breadcrumb) | `b25359f5` |
 | 2026-02-04 | 2 | 전체 문서 보기 카드형 레이아웃 완료 | `529bd13c` |
 | 2026-02-04 | 3 | 전체 고객 보기 카드형 레이아웃 완료 | `75404110` |
-| 2026-02-04 | 3.5 | 모바일 LeftPane→드로어, CenterPane 전체폭, Header 햄버거 | - |
+| 2026-02-04 | 3.5 | 모바일 LeftPane→드로어, CenterPane 전체폭, Header 햄버거 | `8051b871` |
+| 2026-02-04 | 2/3 개선 | 문서 카드 2행 리디자인, 고객 카드 심플화, 초성/필터 수평 스크롤 | - |

@@ -792,11 +792,38 @@ html[data-theme="dark"] .customer-created {
   }
 }
 
-/* === 모바일 카드형 레이아웃 (480px 이하) === */
+/* === 모바일 카드형 레이아웃 (480px 이하) ===
+   2행 컴팩트 디자인:
+   Row 1: [아이콘] 이름            상태
+   Row 2:          전화번호
+   숨김: 성별, 생년월일, 이메일, 주소, 등록일 */
 @media (max-width: 480px) {
   .customer-library-container {
     padding: 8px;
     gap: 8px;
+  }
+
+  /* 상태 필터 탭: 수평 스크롤 */
+  .result-count {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .result-count::-webkit-scrollbar {
+    display: none;
+  }
+
+  .type-filter-button {
+    flex-shrink: 0;
+    font-size: var(--font-size-caption-2);
+    padding: 3px 4px;
+  }
+
+  .type-filter-separator {
+    flex-shrink: 0;
   }
 
   /* 컬럼 헤더 숨김 */
@@ -815,12 +842,12 @@ html[data-theme="dark"] .customer-created {
     border-radius: 0;
   }
 
-  /* 카드형 아이템: CSS Grid 명시적 배치 */
+  /* 카드형 아이템: 2행 컴팩트 */
   .customer-item {
     display: grid;
-    grid-template-columns: 24px auto auto 1fr auto;
+    grid-template-columns: 24px 1fr auto;
     grid-template-rows: auto auto;
-    gap: 3px 6px;
+    gap: 2px 8px;
     align-items: center;
     height: auto;
     min-height: var(--spacing-touch-min, 44px);
@@ -848,40 +875,32 @@ html[data-theme="dark"] .customer-created {
 
   .customer-item > .customer-name {
     grid-row: 1;
-    grid-column: 2 / 5;
-    font-weight: 500;
+    grid-column: 2;
+    font-weight: 600;
     font-size: var(--font-size-footnote);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .customer-item > .customer-status {
     grid-row: 1;
-    grid-column: 5;
+    grid-column: 3;
     text-align: right;
   }
 
-  /* === Row 2: 전화 · 성별 · 생년월일 === */
+  /* === Row 2: 전화번호만 표시 === */
   .customer-item > .customer-phone {
     grid-row: 2;
-    grid-column: 2;
+    grid-column: 2 / 4;
     text-align: left;
     font-size: var(--font-size-caption-2);
+    color: var(--color-text-secondary);
   }
 
-  .customer-item > .customer-gender {
-    grid-row: 2;
-    grid-column: 3;
-    text-align: left;
-    font-size: var(--font-size-caption-2);
-  }
-
-  .customer-item > .customer-birth {
-    grid-row: 2;
-    grid-column: 4;
-    text-align: left;
-    font-size: var(--font-size-caption-2);
-  }
-
-  /* === 모바일에서 숨김 (이메일, 주소, 등록일) === */
+  /* === 모바일에서 숨김 (성별, 생년월일, 이메일, 주소, 등록일) === */
+  .customer-item > .customer-gender,
+  .customer-item > .customer-birth,
   .customer-item > .customer-email,
   .customer-item > .customer-address,
   .customer-item > .customer-created {
@@ -890,7 +909,7 @@ html[data-theme="dark"] .customer-created {
 
   /* === 삭제 모드: 체크박스 추가 === */
   .customer-item:has(.customer-checkbox) {
-    grid-template-columns: 24px 24px auto auto 1fr auto;
+    grid-template-columns: 24px 24px 1fr auto;
   }
 
   .customer-item > .customer-checkbox {
@@ -903,23 +922,15 @@ html[data-theme="dark"] .customer-created {
   }
 
   .customer-item:has(.customer-checkbox) > .customer-name {
-    grid-column: 3 / 6;
-  }
-
-  .customer-item:has(.customer-checkbox) > .customer-status {
-    grid-column: 6;
-  }
-
-  .customer-item:has(.customer-checkbox) > .customer-phone {
     grid-column: 3;
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-gender {
+  .customer-item:has(.customer-checkbox) > .customer-status {
     grid-column: 4;
   }
 
-  .customer-item:has(.customer-checkbox) > .customer-birth {
-    grid-column: 5;
+  .customer-item:has(.customer-checkbox) > .customer-phone {
+    grid-column: 3 / 5;
   }
 }
 

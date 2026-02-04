@@ -1016,19 +1016,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // CSS 계산식들 메모이제이션 (성능 최적화, 애플 표준 크기 사용)
   const layoutDimensions = useMemo(() => {
-    // 📱 모바일: LeftPane 숨김, CenterPane 전체폭
+    // 📱 모바일: LeftPane 숨김, CenterPane 전체폭, RightPane 전체화면 오버레이
     if (isMobileView) {
-      const mobileGap = '8px'
       return {
         leftPaneWidth: 0,
         leftPaneWidthVar: '0px',
         mainPaneWidth: '100vw',
-        centerPaneWidth: `calc(100vw - ${mobileGap} - ${mobileGap})`,
-        rightPaneWidth: '0px',
-        paginationWidth: `calc(100vw - ${mobileGap} - ${mobileGap})`,
+        centerPaneWidth: '100vw',
+        rightPaneWidth: rightPaneVisible ? '100vw' : '0px',
+        paginationWidth: '100vw',
         brbLeftPosition: '100vw',
-        centerPaneLeft: mobileGap,
-        rightPaneLeft: '100vw',
+        centerPaneLeft: '0px',
+        rightPaneLeft: rightPaneVisible ? '0px' : '100vw',
         mainContentHeight: 'var(--mainpane-height)',
         centerPaneHeight: paginationVisible ? 'var(--centerpane-height-with-pagination)' : 'var(--centerpane-height-no-pagination)',
         layoutContentHeight: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`
@@ -1843,14 +1842,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         </div>
       )}
 
-      {/* RightPane + BRB 통합 컨테이너 - 미닫이문 UX */}
+      {/* RightPane + BRB 통합 컨테이너 - 데스크톱: 미닫이문 UX / 모바일: 전체화면 오버레이 */}
       <aside
-        className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''} ${isDraggingBRB || isResizing ? 'no-transition' : ''}`}
+        className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''} ${isDraggingBRB || isResizing ? 'no-transition' : ''} ${isMobileView ? 'layout-rightpane-container--mobile' : ''}`}
         role="complementary"
         aria-label="보조 정보 패널"
         style={{
-          position: 'absolute',
-          top: `calc(var(--header-height-base) + var(--gap-top))`,
+          position: isMobileView ? 'fixed' : 'absolute',
+          top: isMobileView ? 'var(--header-height-base)' : `calc(var(--header-height-base) + var(--gap-top))`,
           left: layoutDimensions.rightPaneLeft,
           width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
           height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
@@ -1860,8 +1859,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           zIndex: 10,
         }}
       >
-        {/* BRB - RightPane 컨테이너 내부에서 좌측에 위치 */}
-        {brbVisible && (
+        {/* BRB - RightPane 컨테이너 내부에서 좌측에 위치 (모바일에서 숨김) */}
+        {brbVisible && !isMobileView && (
           <div
             className="layout-brb"
             style={{
