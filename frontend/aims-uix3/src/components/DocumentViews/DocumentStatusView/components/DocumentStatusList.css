@@ -832,6 +832,180 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   }
 }
 
+/* === 모바일 카드형 레이아웃 (480px 이하) === */
+@media (max-width: 480px) {
+  /* 컬럼 헤더 숨김 - 카드에서는 불필요 */
+  .status-list-header {
+    display: none;
+  }
+
+  /* 리스트 간격 */
+  .document-status-list {
+    gap: 6px;
+    padding-right: 0;
+  }
+
+  /* 카드형 아이템: CSS Grid 명시적 배치 */
+  .status-item {
+    display: grid;
+    grid-template-columns: 24px auto auto auto 1fr auto;
+    grid-template-rows: auto auto auto;
+    gap: 3px 6px;
+    align-items: center;
+    height: auto;
+    min-height: var(--spacing-touch-min, 44px);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 0.5px solid var(--color-ios-separator-light);
+    overflow: hidden;
+  }
+
+  html[data-theme="dark"] .status-item {
+    border-color: var(--color-ios-separator-dark);
+  }
+
+  .status-item:hover {
+    transform: none;
+  }
+
+  /* === Row 1: 아이콘 + 파일명 + 액션 === */
+  .status-item > .document-icon-wrapper {
+    grid-row: 1;
+    grid-column: 1;
+    width: 20px;
+    height: 20px;
+  }
+
+  .status-item > .status-filename {
+    grid-row: 1;
+    grid-column: 2 / 6;
+    min-width: 0;
+    font-size: var(--font-size-footnote);
+    font-weight: 500;
+  }
+
+  .status-item > .status-actions {
+    grid-row: 1;
+    grid-column: 6;
+    gap: 2px;
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* === Row 2: 크기 · 타입 · 날짜 === */
+  .status-item > .document-size {
+    grid-row: 2;
+    grid-column: 2;
+    text-align: left;
+    font-size: var(--font-size-caption-2);
+  }
+
+  .status-item > .document-type {
+    grid-row: 2;
+    grid-column: 3;
+    text-align: left;
+    font-size: var(--font-size-caption-2);
+  }
+
+  .status-item > .status-date {
+    grid-row: 2;
+    grid-column: 4;
+    text-align: left;
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* 문서유형 드롭다운: 모바일에서 숨김 (아이콘+MIME으로 충분) */
+  .status-item > .document-doctype {
+    display: none;
+  }
+
+  /* === Row 3: 상태 + 고객 === */
+  .status-item > .status-cell {
+    grid-row: 3;
+    grid-column: 2 / 4;
+    justify-content: flex-start;
+  }
+
+  .status-item > .status-customer {
+    grid-row: 3;
+    grid-column: 4 / 6;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* === 삭제/일괄연결 모드: 체크박스가 아이콘 자리를 대체 === */
+  .status-item > .document-checkbox-wrapper {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .document-status-list--delete-mode .status-item,
+  .document-status-list--bulk-link-mode .status-item {
+    grid-template-columns: 24px 24px auto auto auto 1fr auto;
+  }
+
+  .document-status-list--delete-mode .status-item > .document-icon-wrapper,
+  .document-status-list--bulk-link-mode .status-item > .document-icon-wrapper {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .document-status-list--delete-mode .status-item > .status-filename,
+  .document-status-list--bulk-link-mode .status-item > .status-filename {
+    grid-column: 3 / 7;
+  }
+
+  .document-status-list--delete-mode .status-item > .status-actions,
+  .document-status-list--bulk-link-mode .status-item > .status-actions {
+    grid-column: 7;
+  }
+
+  .document-status-list--delete-mode .status-item > .document-size,
+  .document-status-list--bulk-link-mode .status-item > .document-size {
+    grid-column: 3;
+  }
+
+  .document-status-list--delete-mode .status-item > .document-type,
+  .document-status-list--bulk-link-mode .status-item > .document-type {
+    grid-column: 4;
+  }
+
+  .document-status-list--delete-mode .status-item > .status-date,
+  .document-status-list--bulk-link-mode .status-item > .status-date {
+    grid-column: 5;
+  }
+
+  .document-status-list--delete-mode .status-item > .status-cell,
+  .document-status-list--bulk-link-mode .status-item > .status-cell {
+    grid-column: 3 / 5;
+  }
+
+  .document-status-list--delete-mode .status-item > .status-customer,
+  .document-status-list--bulk-link-mode .status-item > .status-customer {
+    grid-column: 5 / 7;
+  }
+
+  /* 배지 위치 조정 (카드 내 인라인) */
+  .document-ar-badge,
+  .document-ocr-badge,
+  .document-txt-badge,
+  .document-bin-badge {
+    position: static;
+    transform: none;
+    margin-left: 2px;
+  }
+
+  .status-item:hover .document-ar-badge,
+  .status-item:hover .document-ocr-badge,
+  .status-item:hover .document-txt-badge,
+  .status-item:hover .document-bin-badge {
+    transform: none;
+  }
+}
+
 /* === 파일 타입 아이콘 === */
 .document-icon-wrapper {
   position: relative;
