@@ -500,17 +500,113 @@
 /* ==================== Responsive ==================== */
 
 @media (max-width: 768px) {
+  /* 🍎 요약 섹션: 컴팩트 2열 */
   .annual-report-summary {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
   }
 
+  .annual-report-summary__item {
+    gap: 3px;
+  }
+
+  .annual-report-summary__label {
+    font-size: 10px;
+  }
+
+  .annual-report-summary__value {
+    font-size: 13px;
+  }
+
+  /* 🍎 계약 테이블: min-width 해제, 불필요한 컬럼 숨김 */
   .contracts-table {
-    font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 모바일 테이블 (10px deprecated) */
-    font-family: var(--font-family-text);
+    min-width: 0;
+    font-size: 11px;
   }
 
   .contracts-table th,
   .contracts-table td {
-    padding: 6px 4px;
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  /* 🍎 모바일에서 숨길 컬럼: 보험사, 증권번호, 가입금액, 보험기간, 납기, 보험료 */
+  .contracts-table .contracts-table__cell--company,
+  .contracts-table .contracts-table__cell--contract-number,
+  .contracts-table .contracts-table__cell--coverage,
+  .contracts-table .contracts-table__cell--period,
+  .contracts-table .contracts-table__cell--payment,
+  .contracts-table .contracts-table__cell--premium {
+    display: none;
+  }
+
+  /* 🍎 상품명: 더 넓게, 줄바꿈 허용 */
+  .contracts-table .contracts-table__cell--product {
+    min-width: 0;
+    max-width: none;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* 🍎 순번: 좁게 */
+  .contracts-table .contracts-table__cell--number {
+    width: 28px;
+    min-width: 28px;
+  }
+
+  /* 🍎 계약자/피보험자: 컴팩트 */
+  .contracts-table .contracts-table__cell--contractor,
+  .contracts-table .contracts-table__cell--insured {
+    min-width: 50px;
+  }
+
+  /* 🍎 날짜: 컴팩트 */
+  .contracts-table .contracts-table__cell--date {
+    min-width: 70px;
+    font-size: 10px;
+  }
+
+  /* 🍎 상태: 컴팩트 */
+  .contracts-table .contracts-table__cell--status {
+    min-width: 40px;
+  }
+
+  .contracts-table .status-badge {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+
+  /* 🍎 섹션 제목: 컴팩트 */
+  .annual-report-contracts__title {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+  }
+
+  .annual-report-contracts {
+    margin-top: 10px;
+  }
+
+  /* 🍎 실효 계약 제목 */
+  .annual-report-contracts__title--lapsed {
+    margin-top: 12px;
+  }
+
+  /* 🍎 푸터: 컴팩트 */
+  .annual-report-modal__footer {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .annual-report-modal__footer-text {
+    font-size: 11px;
+  }
+
+  /* 🍎 센터 상태 (로딩/에러): 높이 축소 */
+  .annual-report-modal__center {
+    min-height: 200px;
+    font-size: 13px;
   }
 }
