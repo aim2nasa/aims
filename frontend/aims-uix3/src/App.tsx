@@ -179,6 +179,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // iOS 햅틱 피드백 시스템
   const haptic = useHapticFeedback()
 
+  // 모바일 뷰포트 감지 (768px 이하)
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+
   // 각 레이어별 visibility 상태
   const [headerVisible, setHeaderVisible] = useState(true)
   const [leftPaneVisible, setLeftPaneVisible] = useState(true)
@@ -701,6 +705,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const handleResize = () => {
       setIsResizing(true)
 
+      // 모바일 뷰포트 감지 업데이트
+      const mobile = window.innerWidth <= 768
+      setIsMobileView(mobile)
+      if (!mobile) setMobileDrawerOpen(false)
+
       // 기존 타이머가 있으면 클리어
       if (resizeTimer) {
         clearTimeout(resizeTimer)
@@ -1007,6 +1016,26 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // CSS 계산식들 메모이제이션 (성능 최적화, 애플 표준 크기 사용)
   const layoutDimensions = useMemo(() => {
+    // 📱 모바일: LeftPane 숨김, CenterPane 전체폭
+    if (isMobileView) {
+      const mobileGap = '8px'
+      return {
+        leftPaneWidth: 0,
+        leftPaneWidthVar: '0px',
+        mainPaneWidth: '100vw',
+        centerPaneWidth: `calc(100vw - ${mobileGap} - ${mobileGap})`,
+        rightPaneWidth: '0px',
+        paginationWidth: `calc(100vw - ${mobileGap} - ${mobileGap})`,
+        brbLeftPosition: '100vw',
+        centerPaneLeft: mobileGap,
+        rightPaneLeft: '100vw',
+        mainContentHeight: 'var(--mainpane-height)',
+        centerPaneHeight: paginationVisible ? 'var(--centerpane-height-with-pagination)' : 'var(--centerpane-height-no-pagination)',
+        layoutContentHeight: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`
+      }
+    }
+
+    // 🖥️ 데스크톱: 기존 3패널 레이아웃
     const leftPaneWidth = leftPaneCollapsed ? 60 : 250
     const leftPaneWidthVar = `${leftPaneWidth}px` // 🍎 transition 동기화: 실제 픽셀 값 사용
     const mainPaneWidth = `calc(100vw - ${leftPaneWidthVar})`
@@ -1040,7 +1069,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       centerPaneHeight: paginationVisible ? 'var(--centerpane-height-with-pagination)' : 'var(--centerpane-height-no-pagination)',
       layoutContentHeight: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`
     }
-  }, [leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
+  }, [isMobileView, leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
 
   // 모달 열기 핸들러 (강화된 보호 로직)
   const handleModalOpen = useCallback(() => {
@@ -1354,44 +1383,52 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         }}
         isChatOpen={isChatOpen && !isAiPopupOpen}
         isAiPopupOpen={isAiPopupOpen}
+        isMobile={isMobileView}
+        isMobileDrawerOpen={mobileDrawerOpen}
+        onMobileMenuToggle={() => setMobileDrawerOpen(prev => !prev)}
       />
 
-      {/* LeftPane - 독립 레이어 */}
-      {leftPaneVisible && (
-        <nav
-          className={`layout-pane layout-leftpane ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
-          role="navigation"
-          aria-label="메인 네비게이션 메뉴"
-          style={{
-            top: `calc(var(--header-height-base) + var(--gap-top))`,
-            width: layoutDimensions.leftPaneWidthVar,
-            height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-            paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
-            paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
-            paddingBottom: 'var(--spacing-2)', /* 하단 여백 최소화 */
-            paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
-            transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
-          }}
-        >
-          {/* CustomMenu - 메뉴 + 최근 검색 고객 + 하단 영역 통합 */}
-          <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
-            <CustomMenu
-              collapsed={leftPaneCollapsed}
-              onMenuClick={handleMenuClick}
-              onCustomerClick={handleCustomerClick}
-              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
-              selectedKey={activeDocumentView || 'dsd'}
-              inquiryUnreadCount={inquiryUnreadCount}
-              noticeHasNew={noticeHasNew}
-              footer={
-                <div className={`leftpane-footer ${leftPaneCollapsed ? 'leftpane-footer--collapsed' : ''}`}>
-                  {/* 좌측: 사용량 파이 차트 (축소 시 숨김) */}
-                  {!leftPaneCollapsed && (
+      {/* LeftPane - 데스크톱: 고정 사이드바 / 모바일: 드로어 오버레이 */}
+      {isMobileView ? (
+        /* 📱 모바일 드로어: 백드롭 + 슬라이드인 패널 */
+        <>
+          {mobileDrawerOpen && (
+            <div
+              className="mobile-drawer-backdrop"
+              onClick={() => setMobileDrawerOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+          <nav
+            className={`layout-leftpane layout-leftpane--mobile-drawer ${mobileDrawerOpen ? 'layout-leftpane--mobile-open' : ''}`}
+            role="navigation"
+            aria-label="모바일 네비게이션 메뉴"
+          >
+            <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+              <CustomMenu
+                collapsed={false}
+                onMenuClick={(key) => {
+                  handleMenuClick(key)
+                  setMobileDrawerOpen(false)
+                }}
+                onCustomerClick={(customerId) => {
+                  handleCustomerClick(customerId)
+                  setMobileDrawerOpen(false)
+                }}
+                onCustomerDoubleClick={(customerId) => {
+                  handleOpenFullDetail(customerId)
+                  setMobileDrawerOpen(false)
+                }}
+                selectedKey={activeDocumentView || 'dsd'}
+                inquiryUnreadCount={inquiryUnreadCount}
+                noticeHasNew={noticeHasNew}
+                footer={
+                  <div className="leftpane-footer">
                     <div className="leftpane-footer__left">
                       <UsageQuotaWidget
                         storageInfo={usageStorageInfo}
                         loading={usageLoading}
-                        collapsed={leftPaneCollapsed}
+                        collapsed={false}
                         onClick={() => {
                           setRightPaneVisible(false)
                           setSelectedDocument(null)
@@ -1400,13 +1437,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                           sessionStorage.setItem('accountSettings_activeTab', 'data')
                           setActiveDocumentView('account-settings')
                           updateURLParams({ customerId: null, documentId: null })
+                          setMobileDrawerOpen(false)
                         }}
                       />
                     </div>
-                  )}
-
-                  {/* 가운데: 버전 (축소 시 숨김) */}
-                  {!leftPaneCollapsed && (
                     <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
                       <div
                         className="leftpane-footer__version"
@@ -1427,22 +1461,95 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                         v{APP_VERSION}
                       </div>
                     </Tooltip>
-                  )}
-
-                  {/* 햄버거 버튼 (항상 표시) */}
-                  <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
-                    <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
-                      <HamburgerButton
-                        collapsed={leftPaneCollapsed}
-                        onClick={toggleLeftPaneCollapsed}
-                      />
-                    </Suspense>
                   </div>
-                </div>
-              }
-            />
-          </Suspense>
-        </nav>
+                }
+              />
+            </Suspense>
+          </nav>
+        </>
+      ) : (
+        /* 🖥️ 데스크톱: 기존 고정 사이드바 */
+        leftPaneVisible && (
+          <nav
+            className={`layout-pane layout-leftpane ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
+            role="navigation"
+            aria-label="메인 네비게이션 메뉴"
+            style={{
+              top: `calc(var(--header-height-base) + var(--gap-top))`,
+              width: layoutDimensions.leftPaneWidthVar,
+              height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
+              paddingTop: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+              paddingRight: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+              paddingBottom: 'var(--spacing-2)',
+              paddingLeft: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)',
+              transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
+            }}
+          >
+            <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+              <CustomMenu
+                collapsed={leftPaneCollapsed}
+                onMenuClick={handleMenuClick}
+                onCustomerClick={handleCustomerClick}
+                onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
+                selectedKey={activeDocumentView || 'dsd'}
+                inquiryUnreadCount={inquiryUnreadCount}
+                noticeHasNew={noticeHasNew}
+                footer={
+                  <div className={`leftpane-footer ${leftPaneCollapsed ? 'leftpane-footer--collapsed' : ''}`}>
+                    {!leftPaneCollapsed && (
+                      <div className="leftpane-footer__left">
+                        <UsageQuotaWidget
+                          storageInfo={usageStorageInfo}
+                          loading={usageLoading}
+                          collapsed={leftPaneCollapsed}
+                          onClick={() => {
+                            setRightPaneVisible(false)
+                            setSelectedDocument(null)
+                            setSelectedCustomer(null)
+                            setRightPaneContentType(null)
+                            sessionStorage.setItem('accountSettings_activeTab', 'data')
+                            setActiveDocumentView('account-settings')
+                            updateURLParams({ customerId: null, documentId: null })
+                          }}
+                        />
+                      </div>
+                    )}
+                    {!leftPaneCollapsed && (
+                      <Tooltip content={`${FULL_VERSION} - 클릭하여 복사`} placement="top">
+                        <div
+                          className="leftpane-footer__version"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(FULL_VERSION)
+                              if (window.aimsHaptic) {
+                                window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.SUCCESS)
+                              }
+                            } catch (err) {
+                              console.error('버전 복사 실패:', err)
+                              errorReporter.reportApiError(err as Error, { component: 'App.copyVersion' })
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          v{APP_VERSION}
+                        </div>
+                      </Tooltip>
+                    )}
+                    <div className={`leftpane-footer__right ${leftPaneCollapsed ? 'leftpane-footer__right--centered' : ''}`}>
+                      <Suspense fallback={<div className="leftpane-footer__hamburger-skeleton" />}>
+                        <HamburgerButton
+                          collapsed={leftPaneCollapsed}
+                          onClick={toggleLeftPaneCollapsed}
+                        />
+                      </Suspense>
+                    </div>
+                  </div>
+                }
+              />
+            </Suspense>
+          </nav>
+        )
       )}
 
       {/* MainPane - 독립 레이어 (배경) */}

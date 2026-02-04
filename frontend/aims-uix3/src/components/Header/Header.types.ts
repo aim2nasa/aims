@@ -27,6 +27,12 @@ export interface HeaderProps {
   isChatOpen?: boolean;
   /** AI 팝업 창 열림 상태 (팝업 열려있으면 메인 창에서 비활성화) */
   isAiPopupOpen?: boolean;
+  /** 모바일 뷰 여부 (768px 이하) */
+  isMobile?: boolean;
+  /** 모바일 드로어 열림 상태 */
+  isMobileDrawerOpen?: boolean;
+  /** 모바일 메뉴 토글 핸들러 */
+  onMobileMenuToggle?: () => void;
   /** 추가 CSS 클래스명 */
   className?: string;
 }

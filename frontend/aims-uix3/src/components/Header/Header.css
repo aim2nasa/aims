@@ -561,6 +561,53 @@
   }
 }
 
+/* === 📱 모바일 햄버거 메뉴 버튼 === */
+
+.header-mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin-right: var(--spacing-1);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease-out;
+}
+
+.header-mobile-menu-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.header-mobile-menu-btn:active {
+  background-color: var(--color-ios-system-gray5-alpha, rgba(0, 0, 0, 0.05));
+}
+
+.header-mobile-menu-btn--active {
+  color: var(--color-primary-500);
+}
+
+/* 모바일에서 Progressive Disclosure 인디케이터 숨김 */
+@media (max-width: 768px) {
+  .header-disclosure-indicator {
+    display: none;
+  }
+
+  /* 모바일에서 헤더 항상 확장 상태 유지 */
+  .header-controls {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
 /* === 테마별 최적화 === */
 
 @media (prefers-reduced-motion: reduce) {

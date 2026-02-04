@@ -111,6 +111,30 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 └─────────────────────────────────┘
 ```
 
+## Phase 3.5: 모바일 레이아웃 핵심 (LeftPane 드로어 전환)
+
+**목표**: 768px 이하에서 LeftPane 숨김 → 드로어 오버레이, CenterPane 전체폭
+
+| 항목 | 상태 | 파일 | 내용 |
+|------|------|------|------|
+| 3.5-1. `isMobileView` 상태 | ✅ 완료 | `App.tsx` | `window.innerWidth <= 768` 감지 + resize 연동 |
+| 3.5-2. `layoutDimensions` 분기 | ✅ 완료 | `App.tsx` | 모바일: leftPane=0, centerPane=전체폭 |
+| 3.5-3. 모바일 드로어 | ✅ 완료 | `App.tsx`, `layout.css` | LeftPane → 슬라이드인 오버레이 + 백드롭 |
+| 3.5-4. Header 햄버거 버튼 | ✅ 완료 | `HeaderView.tsx`, `Header.css` | 모바일에서 ☰ 버튼 → 드로어 토글 |
+| 3.5-5. 빌드 검증 | ✅ 완료 | - | npm run build 통과 |
+
+### 변경된 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `App.tsx` | `isMobileView`, `mobileDrawerOpen` 상태, layoutDimensions 모바일 분기, LeftPane 조건부 렌더링 |
+| `Header.types.ts` | `isMobile`, `isMobileDrawerOpen`, `onMobileMenuToggle` props 추가 |
+| `HeaderView.tsx` | 모바일 햄버거 SVG 버튼 렌더링 |
+| `layout.css` | `.mobile-drawer-backdrop`, `.layout-leftpane--mobile-drawer`, `.layout-leftpane--mobile-open` |
+| `Header.css` | `.header-mobile-menu-btn`, 모바일 disclosure indicator 숨김 |
+
+---
+
 ## Phase 4: 문서 등록 화면
 
 | 항목 | 상태 | 파일 |
@@ -138,13 +162,59 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 
 ---
 
-## 원칙
+## 설계 철학: One Codebase, Responsive UI
 
-1. **CSS-only 우선**: JS 분기 최소화, 미디어 쿼리로 해결
-2. **기존 변수 활용**: `tokens.css`의 CSS 변수 오버라이드
-3. **점진적 개선**: Phase별 배포 가능한 단위로 작업
-4. **데스크톱 영향 없음**: 모바일 미디어 쿼리 내에서만 변경
-5. **Phase별 피드백**: 구현 → DevTools 확인 → 실기기 확인 → 반복
+### 핵심 원칙
+
+**"모바일과 PC 환경 모든 브라우저에서 통하는 하나의 UI 코드"**
+
+하나의 코드베이스로 모바일(iPhone/Android)과 데스크톱(Windows/Mac) 브라우저 모두 최적의 UX를 제공한다. 별도의 모바일 앱이나 분기된 코드 없이, **반응형(Responsive) 디자인**으로 해결한다.
+
+### 아키텍처 결정
+
+| 결정 | 이유 |
+|------|------|
+| **반응형 하이브리드** | CSS 미디어 쿼리 + JS 뷰포트 감지 조합 |
+| **CSS Grid 미디어 쿼리는 미사용** | 실제 레이아웃이 absolute positioning + JS 계산 기반 |
+| **JS `isMobileView` 상태** | inline style이 CSS보다 우선하므로, `layoutDimensions`를 JS에서 분기 |
+| **모바일 드로어 패턴** | LeftPane → 슬라이드인 오버레이 (iOS 표준 사이드바 패턴) |
+
+### 왜 "반응형 하이브리드"인가?
+
+AIMS의 데스크톱 레이아웃은 **absolute positioning + JavaScript 계산** 방식이다:
+
+```
+[LeftPane 250px] [CenterPane calc()] [BRB] [RightPane calc()]
+        ↑ JS가 width/left를 pixel 단위로 계산하여 inline style 적용
+```
+
+순수 CSS 미디어 쿼리만으로는 inline style을 override할 수 없다 (`!important` 금지 원칙). 따라서:
+
+1. **JS 레이어**: `isMobileView` 상태로 `layoutDimensions` 분기 (모바일: leftPane=0, centerPane=전체폭)
+2. **CSS 레이어**: 드로어 애니메이션, 카드형 레이아웃, 패딩 조정
+
+이 조합으로 **하나의 코드**가 768px 기준으로 자동 전환된다:
+
+```
+🖥️ 데스크톱 (>768px)          📱 모바일 (≤768px)
+┌────┬──────────┬─────┐      ┌────────────────────┐
+│Left│ Center   │Right│      │ ☰  AIMS  🔍  👤    │ ← 햄버거 메뉴
+│Pane│ Pane     │Pane │  →   ├────────────────────┤
+│    │          │     │      │                    │
+│    │          │     │      │   CenterPane       │ ← 전체폭
+│    │          │     │      │   (Full Width)     │
+└────┴──────────┴─────┘      └────────────────────┘
+```
+
+### 구현 원칙
+
+1. **CSS-only 우선**: 스타일링(패딩, 카드, 폰트)은 미디어 쿼리로 해결
+2. **JS는 레이아웃 분기만**: `layoutDimensions`의 값만 변경, 새 로직 최소화
+3. **기존 변수 활용**: `tokens.css`의 CSS 변수 오버라이드
+4. **점진적 개선**: Phase별 배포 가능한 단위로 작업
+5. **데스크톱 영향 없음**: 모바일 분기는 `isMobileView` 조건 내에서만
+6. **Phase별 피드백**: 구현 → DevTools 확인 → 실기기 확인 → 반복
+7. **터치 최적화**: 44px 최소 터치 타겟, `-webkit-tap-highlight-color: transparent`
 
 ---
 
@@ -155,4 +225,5 @@ iPhone / Android 브라우저에서 AIMS를 최적의 UI로 제공한다.
 | 2026-02-04 | - | 계획 수립 | - |
 | 2026-02-04 | 1 | 기반 레이아웃 완료 (Header/CenterPane/Breadcrumb) | `b25359f5` |
 | 2026-02-04 | 2 | 전체 문서 보기 카드형 레이아웃 완료 | `529bd13c` |
-| 2026-02-04 | 3 | 전체 고객 보기 카드형 레이아웃 완료 | 커밋 예정 |
+| 2026-02-04 | 3 | 전체 고객 보기 카드형 레이아웃 완료 | `75404110` |
+| 2026-02-04 | 3.5 | 모바일 LeftPane→드로어, CenterPane 전체폭, Header 햄버거 | - |

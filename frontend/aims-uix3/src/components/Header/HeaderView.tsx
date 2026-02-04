@@ -45,6 +45,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   onChatToggle,
   isChatOpen,
   isAiPopupOpen = false,
+  isMobile = false,
+  isMobileDrawerOpen = false,
+  onMobileMenuToggle,
   className = '',
   controller
 }) => {
@@ -154,13 +157,40 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     >
       {/* 서브틀한 브랜딩 - 항상 표시 */}
       <div className="header-branding">
+        {/* 📱 모바일 햄버거 메뉴 버튼 */}
+        {isMobile && onMobileMenuToggle && (
+          <button
+            type="button"
+            className={`header-mobile-menu-btn ${isMobileDrawerOpen ? 'header-mobile-menu-btn--active' : ''}`}
+            onClick={onMobileMenuToggle}
+            aria-label={isMobileDrawerOpen ? '메뉴 닫기' : '메뉴 열기'}
+            aria-expanded={isMobileDrawerOpen}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              {isMobileDrawerOpen ? (
+                /* X 아이콘 */
+                <>
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="6" y1="18" x2="18" y2="6" />
+                </>
+              ) : (
+                /* 햄버거 아이콘 */
+                <>
+                  <line x1="4" y1="7" x2="20" y2="7" />
+                  <line x1="4" y1="12" x2="20" y2="12" />
+                  <line x1="4" y1="17" x2="20" y2="17" />
+                </>
+              )}
+            </svg>
+          </button>
+        )}
         <h1 className="header-title">
           AIMS UIX3
         </h1>
         {/* Developer Mode Badge - AIMS UIX3 우측 */}
         {isDevMode && (
           <div className="header-dev-badge">
-            🔧 DEV
+            DEV
           </div>
         )}
       </div>
