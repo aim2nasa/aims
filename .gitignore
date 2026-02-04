@@ -45,4 +45,5 @@ tools/MetlifePDF.sikuli/debug_log.txt
 
 # Mobile responsive screenshots (Puppeteer 자동 캡처)
 mobile/screenshots/
+mobile/screenshots_*/
 mobile/node_modules/

@@ -601,6 +601,12 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
   transition: background-color 0.15s ease-out;
+
+  /* 📱 모바일에서 header-controls(검색바)가 branding 영역과 겹칠 때
+     터치 이벤트가 검색 요소에 가려지는 문제 방지.
+     position: relative + z-index로 검색바 위에 배치 */
+  position: relative;
+  z-index: 2;
 }
 
 .header-mobile-menu-btn svg {
