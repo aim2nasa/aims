@@ -2531,4 +2531,100 @@ html[data-theme="dark"] .doc-search-highlight--current {
     gap: 4px;
     padding: 6px 8px;
   }
+
+  /* === 고객선택 버튼: 컴팩트 === */
+  .customer-select-button {
+    height: 34px;
+    padding: 0 12px;
+    min-width: 70px;
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* 선택된 고객: min-width 제거, 유연하게 */
+  .selected-customer-display {
+    min-width: 0;
+    max-width: none;
+    height: 34px;
+    padding: 0 8px;
+    flex-shrink: 1;
+  }
+
+  /* 검색 입력: iOS zoom 방지 */
+  .document-search-container .search-input {
+    font-size: 16px;
+    height: 36px;
+  }
+
+  /* 검색 버튼: 컴팩트 */
+  .search-button {
+    height: 34px;
+    padding: 0 14px;
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* 리셋 버튼: 터치 타겟 */
+  .reset-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* fulltext 버튼: 컴팩트 */
+  .fulltext-button {
+    height: 34px;
+    padding: 0 8px;
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* === 가이드 섹션: 전체 폭 + 컴팩트 === */
+  .search-guide {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .guide-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    gap: 8px;
+  }
+
+  .guide-title {
+    font-size: var(--font-size-footnote);
+  }
+
+  .guide-content {
+    gap: 16px;
+  }
+
+  .guide-section {
+    gap: 12px;
+  }
+
+  .guide-step {
+    gap: 10px;
+  }
+
+  /* 모드 옵션: 세로 스택 */
+  .mode-options {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mode-option {
+    padding: 10px;
+  }
+
+  /* 검색 팁: 컴팩트 */
+  .guide-tips {
+    padding: 10px;
+  }
+
+  .tips-list {
+    padding-left: 16px;
+  }
+
+  /* 결과 행: 서브타이틀 1줄 제한 */
+  .search-result-row .row-subtitle {
+    -webkit-line-clamp: 1;
+  }
 }
