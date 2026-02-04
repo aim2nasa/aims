@@ -1630,4 +1630,14 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
   .doc-explorer-tree__document:hover {
     transform: none;
   }
+
+  /* 프리뷰 비활성화 (모바일에서 콘텐츠 가림) */
+  .hover-preview {
+    display: none;
+  }
+
+  /* 프리뷰 토글 버튼 숨김 (프리뷰 비활성이므로 불필요) */
+  .doc-explorer-toolbar__thumbnail-btn {
+    display: none;
+  }
 }
