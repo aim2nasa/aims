@@ -157,11 +157,17 @@
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+
+  /* 닫힌 상태: 터치 이벤트 차단 방지
+   * z-index 1000인 드로어가 화면 밖에서도 헤더 위에 위치하여
+   * 햄버거 버튼 터치를 가로챌 수 있음 */
+  pointer-events: none;
 }
 
 /* 📱 드로어 열림 상태 */
 .layout-leftpane--mobile-open {
   transform: translateX(0);
+  pointer-events: auto; /* 열림 시 터치 활성화 */
 }
 
 /* 📱 모바일 CenterPane 전체폭 조정 */
