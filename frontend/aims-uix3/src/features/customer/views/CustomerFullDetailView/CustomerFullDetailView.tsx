@@ -125,6 +125,10 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
 
+  // 🍎 모바일 뷰 감지 (768px 이하에서 탭 기반 레이아웃)
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768)
+  const [mobileActiveSection, setMobileActiveSection] = useState<'contracts' | 'documents' | 'report' | 'memo'>('contracts')
+
   // 🍎 리사이즈 기본값 및 localStorage 키
   const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
   const DEFAULT_TOP_LEFT_WIDTH = 31 // 🍎 상단: 고객정보(31%) ↔ 보험계약(69%)
@@ -390,6 +394,14 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     loadCustomerReviewCount()
   }, [customer?._id])
 
+  // 🍎 모바일 뷰포트 감지 리스너
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // 🍎 수정 핸들러
   const handleEditClick = useCallback(() => {
@@ -835,7 +847,148 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
               )}
             </div>
 
-            {/* 🍎 섹션들 - 2행 레이아웃 (상단/하단 독립 조절) */}
+            {isMobileView ? (
+              /* 🍎 모바일 레이아웃 - 탭 기반 단일 섹션 전체화면 */
+              <div className="customer-full-detail__mobile">
+                {/* 🍎 고객 정보 카드 (항상 표시) */}
+                <div className="customer-full-detail__mobile-info-card">
+                  <div className="customer-full-detail__mobile-info-grid">
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">이름</span>
+                      <span className="mobile-info-value">{customer.personal_info?.name || '-'}</span>
+                    </div>
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">유형</span>
+                      <span className="mobile-info-value">
+                        <span className="customer-info-grid__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
+                      </span>
+                    </div>
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">생년월일</span>
+                      <span className="mobile-info-value">{formatDate(customer.personal_info?.birth_date)}</span>
+                    </div>
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">성별</span>
+                      <span className="mobile-info-value">
+                        {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
+                      </span>
+                    </div>
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">휴대폰</span>
+                      <span className="mobile-info-value">{customer.personal_info?.mobile_phone || '-'}</span>
+                    </div>
+                    <div className="mobile-info-item">
+                      <span className="mobile-info-label">이메일</span>
+                      <span className="mobile-info-value">{customer.personal_info?.email || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🍎 섹션 탭 바 (iOS 세그먼트 컨트롤 스타일) */}
+                <div className="customer-full-detail__mobile-tabs">
+                  <button type="button" className={`mobile-tab ${mobileActiveSection === 'contracts' ? 'mobile-tab--active' : ''}`} onClick={() => setMobileActiveSection('contracts')}>
+                    보험이력{contractCount > 0 && <span className="mobile-tab__count">{contractCount}</span>}
+                  </button>
+                  <button type="button" className={`mobile-tab ${mobileActiveSection === 'documents' ? 'mobile-tab--active' : ''}`} onClick={() => setMobileActiveSection('documents')}>
+                    문서{documentCount > 0 && <span className="mobile-tab__count">{documentCount}</span>}
+                  </button>
+                  <button type="button" className={`mobile-tab ${mobileActiveSection === 'report' ? 'mobile-tab--active' : ''}`} onClick={() => setMobileActiveSection('report')}>
+                    보고서{(annualReportCount + customerReviewCount) > 0 && <span className="mobile-tab__count">{annualReportCount + customerReviewCount}</span>}
+                  </button>
+                  <button type="button" className={`mobile-tab ${mobileActiveSection === 'memo' ? 'mobile-tab--active' : ''}`} onClick={() => setMobileActiveSection('memo')}>
+                    메모
+                  </button>
+                </div>
+
+                {/* 🍎 섹션 패널 (모두 렌더링, display:none 전환 - SSE 실시간 업데이트 유지) */}
+                <div className="customer-full-detail__mobile-panel">
+                  {/* 보험이력 섹션 */}
+                  <div className={`mobile-panel-section ${mobileActiveSection === 'contracts' ? 'mobile-panel-section--active' : ''}`}>
+                    <div className="mobile-panel-header">
+                      <div className="history-tabs">
+                        <button type="button" className={`history-tabs__tab ${historyTab === 'ar' ? 'history-tabs__tab--active' : ''}`} onClick={() => setHistoryTab('ar')}>
+                          AR이력{arHistoryCount > 0 && <span className="history-tabs__count">{arHistoryCount}</span>}
+                        </button>
+                        <button type="button" className={`history-tabs__tab ${historyTab === 'cr' ? 'history-tabs__tab--active' : ''}`} onClick={() => setHistoryTab('cr')}>
+                          변액이력{crHistoryCount > 0 && <span className="history-tabs__count">{crHistoryCount}</span>}
+                        </button>
+                      </div>
+                      <div className="customer-full-detail__section-search">
+                        <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="section-search-icon" decorative={true} />
+                        <input type="text" value={contractSearchTerm} onChange={(e) => setContractSearchTerm(e.target.value)} placeholder="검색" className="section-search-input" />
+                        {contractSearchTerm && (
+                          <button type="button" className="section-search-clear" onClick={() => setContractSearchTerm('')} aria-label="지우기">
+                            <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} decorative={true} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="customer-full-detail__section-content customer-full-detail__section-content--contracts">
+                      <ContractsTab customer={customer} onContractCountChange={setContractCount} searchTerm={contractSearchTerm} onSearchChange={setContractSearchTerm} refreshTrigger={annualReportRefreshTrigger} historyTab={historyTab} onArHistoryCountChange={setArHistoryCount} onCrHistoryCountChange={setCrHistoryCount} />
+                    </div>
+                  </div>
+
+                  {/* 문서 섹션 */}
+                  <div className={`mobile-panel-section ${mobileActiveSection === 'documents' ? 'mobile-panel-section--active' : ''}`}>
+                    <div className="mobile-panel-header">
+                      <span className="mobile-panel-title">문서</span>
+                      {documentCount > 0 && <span className="customer-full-detail__section-count">{documentCount}</span>}
+                      <div className="customer-full-detail__section-search">
+                        <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="section-search-icon" decorative={true} />
+                        <input type="text" value={documentSearchTerm} onChange={(e) => setDocumentSearchTerm(e.target.value)} placeholder="파일명 검색" className="section-search-input" />
+                        {documentSearchTerm && (
+                          <button type="button" className="section-search-clear" onClick={() => setDocumentSearchTerm('')} aria-label="지우기">
+                            <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} decorative={true} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
+                      <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} />
+                    </div>
+                  </div>
+
+                  {/* 보고서 섹션 */}
+                  <div className={`mobile-panel-section ${mobileActiveSection === 'report' ? 'mobile-panel-section--active' : ''}`}>
+                    <div className="mobile-panel-header">
+                      <div className="report-tabs">
+                        <button type="button" className={`report-tabs__tab ${reportTab === 'annual' ? 'report-tabs__tab--active' : ''}`} onClick={() => setReportTab('annual')}>
+                          Annual Report{annualReportCount > 0 && <span className="report-tabs__count">{annualReportCount}</span>}
+                        </button>
+                        <button type="button" className={`report-tabs__tab ${reportTab === 'review' ? 'report-tabs__tab--active' : ''}`} onClick={() => setReportTab('review')}>
+                          변액 리포트{customerReviewCount > 0 && <span className="report-tabs__count">{customerReviewCount}</span>}
+                        </button>
+                      </div>
+                      <div className="customer-full-detail__section-search">
+                        <SFSymbol name="magnifyingglass" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.MEDIUM} className="section-search-icon" decorative={true} />
+                        <input type="text" value={reportTab === 'annual' ? annualReportSearchTerm : customerReviewSearchTerm} onChange={(e) => reportTab === 'annual' ? setAnnualReportSearchTerm(e.target.value) : setCustomerReviewSearchTerm(e.target.value)} placeholder="검색" className="section-search-input" />
+                        {(reportTab === 'annual' ? annualReportSearchTerm : customerReviewSearchTerm) && (
+                          <button type="button" className="section-search-clear" onClick={() => reportTab === 'annual' ? setAnnualReportSearchTerm('') : setCustomerReviewSearchTerm('')} aria-label="지우기">
+                            <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} decorative={true} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="customer-full-detail__section-content customer-full-detail__section-content--report">
+                      <div className={`report-tab-panel ${reportTab === 'annual' ? 'report-tab-panel--active' : ''}`}>
+                        <AnnualReportTab customer={customer} onAnnualReportCountChange={setAnnualReportCount} refreshTrigger={annualReportRefreshTrigger} searchTerm={annualReportSearchTerm} onSearchChange={setAnnualReportSearchTerm} />
+                      </div>
+                      <div className={`report-tab-panel ${reportTab === 'review' ? 'report-tab-panel--active' : ''}`}>
+                        <CustomerReviewTab customer={customer} onCustomerReviewCountChange={setCustomerReviewCount} refreshTrigger={customerReviewRefreshTrigger} searchTerm={customerReviewSearchTerm} onSearchChange={setCustomerReviewSearchTerm} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 메모 섹션 */}
+                  <div className={`mobile-panel-section ${mobileActiveSection === 'memo' ? 'mobile-panel-section--active' : ''}`}>
+                    <div className="customer-info-memos customer-info-memos--full">
+                      <MemosTab customer={customer} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+            /* 🍎 데스크톱 레이아웃 - 2행 4섹션 그리드 */
             <div
               ref={contentRef}
               className={`customer-full-detail__content ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
@@ -1276,6 +1429,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 </section>
               </div>
             </div>
+            )}
           </>
         )}
       </div>

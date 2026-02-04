@@ -2141,7 +2141,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 }
 
 /* ============================================
-   🍎 반응형
+   🍎 반응형 - 태블릿 (1000px 이하)
    ============================================ */
 
 @media (max-width: 1000px) {
@@ -2153,6 +2153,356 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
   .customer-full-detail__row--top,
   .customer-full-detail__row--bottom {
     grid-template-columns: 1fr;
+  }
+
+  /* 🍎 리사이즈 핸들 숨김 (터치/태블릿에서 마우스 드래그 불필요) */
+  .customer-full-detail .customer-full-detail__resize-handle {
+    display: none;
+  }
+}
+
+/* ============================================
+   🍎 반응형 - 모바일 (768px 이하)
+   고정 높이 4분할 → 세로 스크롤 스택 레이아웃
+   각 섹션이 적절한 높이를 확보하여 데이터 가독성 확보
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* 🍎 콘텐츠: 고정높이 flex 분할 → 세로 스크롤 */
+  .customer-full-detail .customer-full-detail__content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px;
+    gap: 8px;
+  }
+
+  /* 🍎 행: flex 비율 무시, 세로 스택 */
+  .customer-full-detail .customer-full-detail__row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: none;
+    min-height: 0;
+  }
+
+  .customer-full-detail .customer-full-detail__row--top {
+    flex: none;
+  }
+
+  .customer-full-detail .customer-full-detail__row--bottom {
+    flex: none;
+  }
+
+  /* 🍎 섹션: flex 비율 해제, 각자 고유 높이 사용 */
+  .customer-full-detail .customer-full-detail__section {
+    flex: none;
+    min-width: 0;
+  }
+
+  /* 🍎 고객정보 섹션: 내용에 맞게 자동 높이 */
+  .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:first-child {
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* 🍎 가족관계 리스트: 모바일에서 스크롤 없이 전체 표시 */
+  .customer-full-detail .customer-info-family-list {
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  /* 🍎 데이터 섹션 (계약/문서/보고서): 고정 높이 + 내부 스크롤 */
+  .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:last-child,
+  .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:first-child,
+  .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:last-child {
+    height: 300px;
+    min-height: 300px;
+  }
+
+  /* 🍎 액션 버튼: 가로 스크롤 + 컴팩트 */
+  .customer-full-detail .customer-full-detail__actions {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  /* 🍎 액션 버튼 내 개별 버튼: 축소 방지 */
+  .customer-full-detail .customer-full-detail__actions .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* 🍎 섹션 타이틀: 높이 축소, 패딩 축소 */
+  .customer-full-detail .customer-full-detail__section-title {
+    padding: 6px 8px;
+    gap: 4px;
+    height: 30px;
+    min-height: 30px;
+  }
+
+  .customer-full-detail .customer-full-detail__section-title svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  /* 🍎 탭 버튼 크기 축소 (고객정보/보험이력/보고서) */
+  .customer-full-detail .customer-info-tabs__tab {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
+  .customer-full-detail .history-tabs__tab {
+    font-size: 11px;
+    padding: 2px 5px;
+    white-space: nowrap;
+  }
+
+  .customer-full-detail .report-tabs__tab {
+    font-size: 12px;
+    padding: 3px 6px;
+    white-space: nowrap;
+  }
+
+  /* 🍎 탭 카운트 배지 축소 */
+  .customer-full-detail .history-tabs__count,
+  .customer-full-detail .report-tabs__count {
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 9px;
+  }
+
+  /* 🍎 검색창 축소 */
+  .customer-full-detail .customer-full-detail__section-search {
+    width: 100px;
+    max-width: 100px;
+  }
+
+  .customer-full-detail .customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+    width: 120px;
+    max-width: 120px;
+  }
+
+  /* 🍎 고객 정보 그리드: 4열 → 2열 */
+  .customer-full-detail .customer-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 10px;
+    padding: 8px 10px;
+  }
+
+  /* 🍎 주소 이력 버튼: 텍스트 숨기고 아이콘만 표시 (공간 절약) */
+  .customer-full-detail .customer-info-grid__history-label {
+    display: none;
+  }
+
+  /* 🍎 문서 테이블: 문서유형/크기/타입 숨기고 핵심 정보만 표시 */
+  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header,
+  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item {
+    grid-template-columns: 20px 1fr 80px 40px;
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--documents .header-doctype,
+  .customer-full-detail .customer-full-detail__section-content--documents .header-size,
+  .customer-full-detail .customer-full-detail__section-content--documents .header-type,
+  .customer-full-detail .customer-full-detail__section-content--documents .document-doctype,
+  .customer-full-detail .customer-full-detail__section-content--documents .document-size,
+  .customer-full-detail .customer-full-detail__section-content--documents .document-type {
+    display: none;
+  }
+
+  /* 🍎 문서 연결일: 짧은 날짜 형식으로 가독성 확보 */
+  .customer-full-detail .customer-full-detail__section-content--documents .status-date {
+    font-size: 9px;
+    text-align: center;
+  }
+
+  /* 🍎 문서 페이지네이션: 컴팩트 */
+  .customer-full-detail .customer-full-detail__section-content--documents .document-pagination {
+    grid-template-columns: auto 1fr auto;
+    gap: 4px;
+    padding: 2px 6px;
+  }
+
+  /* 🍎 문서 간편검색: 더 컴팩트 */
+  .customer-full-detail .customer-full-detail__section-content--documents .simple-document-search {
+    gap: 2px;
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--documents .simple-document-search__input {
+    min-width: 80px;
+    max-width: 100px;
+  }
+
+  /* 🍎 Annual Report 테이블: 보험료/건수 숨김 (핵심 정보만) */
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
+    grid-template-columns:
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 80px)
+      var(--parsed-at-column-width, 110px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
+    grid-template-columns:
+      28px
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 80px)
+      var(--parsed-at-column-width, 110px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-row {
+    grid-template-columns:
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 80px)
+      var(--parsed-at-column-width, 110px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
+    grid-template-columns:
+      28px
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 80px)
+      var(--parsed-at-column-width, 110px)
+      var(--status-column-width, 40px);
+  }
+
+  /* 🍎 Annual Report: 보험료/건수 칼럼 숨김 */
+  .customer-full-detail .customer-full-detail__section-content--report .header-premium,
+  .customer-full-detail .customer-full-detail__section-content--report .header-count,
+  .customer-full-detail .customer-full-detail__section-content--report .row-premium,
+  .customer-full-detail .customer-full-detail__section-content--report .row-count {
+    display: none;
+  }
+
+  /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가하므로) */
+  .customer-full-detail .customer-full-detail__reset-layout {
+    display: none;
+  }
+
+  /* 🍎 섹션 카운트 배지 축소 */
+  .customer-full-detail .customer-full-detail__section-count {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
+}
+
+/* ============================================
+   🍎 반응형 - 소형 모바일 (480px 이하)
+   최소 터치 타겟 44px 보장, 극한 컴팩트
+   ============================================ */
+
+@media (max-width: 480px) {
+  /* 🍎 콘텐츠: 더 좁은 패딩 */
+  .customer-full-detail .customer-full-detail__content {
+    padding: 2px;
+    gap: 6px;
+  }
+
+  /* 🍎 데이터 섹션: 높이 축소 */
+  .customer-full-detail .customer-full-detail__row--top > .customer-full-detail__section:last-child,
+  .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:first-child,
+  .customer-full-detail .customer-full-detail__row--bottom > .customer-full-detail__section:last-child {
+    height: 260px;
+    min-height: 260px;
+  }
+
+  /* 🍎 액션 버튼: 최소 패딩 */
+  .customer-full-detail .customer-full-detail__actions {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  /* 🍎 고객 정보 그리드: 타이트한 간격 */
+  .customer-full-detail .customer-info-grid {
+    gap: 4px 6px;
+    padding: 6px 8px;
+  }
+
+  /* 🍎 섹션 타이틀: 더 컴팩트 */
+  .customer-full-detail .customer-full-detail__section-title {
+    padding: 4px 6px;
+    height: 28px;
+    min-height: 28px;
+  }
+
+  /* 🍎 탭 버튼 더 축소 */
+  .customer-full-detail .history-tabs__tab {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  .customer-full-detail .report-tabs__tab {
+    font-size: 11px;
+    padding: 2px 5px;
+  }
+
+  /* 🍎 검색창: 최소 크기 */
+  .customer-full-detail .customer-full-detail__section-search {
+    width: 80px;
+    max-width: 80px;
+  }
+
+  .customer-full-detail .customer-full-detail__section:has(.customer-full-detail__section-content--contracts) .customer-full-detail__section-search {
+    width: 100px;
+    max-width: 100px;
+  }
+
+  /* 🍎 문서 테이블: 연결일 숨김 (아이콘 + 파일명 + 작업만) */
+  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header,
+  .customer-full-detail .customer-full-detail__section-content--documents .customer-documents-item {
+    grid-template-columns: 20px 1fr 40px;
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--documents .header-date,
+  .customer-full-detail .customer-full-detail__section-content--documents .status-date {
+    display: none;
+  }
+
+  /* 🍎 문서 내용 검색 버튼 숨김 (공간 절약) */
+  .customer-full-detail .customer-full-detail__content-search-btn {
+    display: none;
+  }
+
+  /* 🍎 Annual Report 테이블: 파싱일시도 숨김 */
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
+    grid-template-columns:
+      var(--owner-column-width, 60px)
+      var(--issue-date-column-width, 90px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
+    grid-template-columns:
+      28px
+      var(--owner-column-width, 60px)
+      var(--issue-date-column-width, 90px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-row {
+    grid-template-columns:
+      var(--owner-column-width, 60px)
+      var(--issue-date-column-width, 90px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
+    grid-template-columns:
+      28px
+      var(--owner-column-width, 60px)
+      var(--issue-date-column-width, 90px)
+      var(--status-column-width, 40px);
+  }
+
+  .customer-full-detail .customer-full-detail__section-content--report .header-parsed-at,
+  .customer-full-detail .customer-full-detail__section-content--report .row-parsed-at {
+    display: none;
   }
 }
 
@@ -2230,6 +2580,275 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
 .customer-full-detail .customer-full-detail__section-content--report .row-product {
   font-size: var(--font-body);
   font-weight: var(--weight-normal);
+}
+
+/* ============================================
+   🍎 모바일 탭 레이아웃 (768px 이하에서 React state 전환)
+   iOS 앱 스타일: 고객정보 카드 + 세그먼트 탭 + 전체 높이 섹션
+   ============================================ */
+
+/* 🍎 모바일 컨테이너 - flex column, 전체 공간 사용 */
+.customer-full-detail__mobile {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 🍎 고객 정보 카드 - 컴팩트 요약 */
+.customer-full-detail__mobile-info-card {
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: 10px 12px;
+}
+
+.customer-full-detail__mobile-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+
+.mobile-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mobile-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  min-width: 42px;
+}
+
+.mobile-info-value {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 🍎 세그먼트 탭 바 - iOS 스타일 */
+.customer-full-detail__mobile-tabs {
+  display: flex;
+  flex-shrink: 0;
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+.mobile-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mobile-tab--active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px var(--color-shadow-light, rgba(0, 0, 0, 0.08));
+}
+
+.mobile-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary, var(--color-surface));
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mobile-tab--active .mobile-tab__count {
+  background: var(--color-primary);
+}
+
+/* 🍎 패널 영역 - flex-grow로 나머지 공간 차지 */
+.customer-full-detail__mobile-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 🍎 각 섹션 패널 - 기본 숨김 (SSE 유지 위해 항상 렌더링) */
+.mobile-panel-section {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mobile-panel-section--active {
+  display: flex;
+}
+
+/* 🍎 패널 헤더 - 서브탭 + 검색 */
+.mobile-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+
+.mobile-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* 🍎 패널 내 검색은 남은 공간 사용 */
+.mobile-panel-header .customer-full-detail__section-search {
+  margin-left: auto;
+  width: auto;
+  max-width: 140px;
+}
+
+/* 🍎 패널 내 서브탭: 컴팩트 */
+.mobile-panel-header .history-tabs,
+.mobile-panel-header .report-tabs {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mobile-panel-header .history-tabs__tab,
+.mobile-panel-header .report-tabs__tab {
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* 🍎 패널 내 섹션 콘텐츠: 전체 높이 사용 */
+.mobile-panel-section .customer-full-detail__section-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 🍎 모바일 메모 섹션: 전체 높이 */
+.mobile-panel-section .customer-info-memos {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.mobile-panel-section .customer-info-memos--full {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🍎 모바일 보고서 섹션: 탭패널 전체 높이 */
+.mobile-panel-section .customer-full-detail__section-content--report {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobile-panel-section .report-tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile-panel-section .report-tab-panel--active {
+  overflow-y: auto;
+}
+
+/* 🍎 모바일에서 액션 버튼 컴팩트화 */
+@media (max-width: 768px) {
+  .customer-full-detail__actions {
+    padding: 6px 8px;
+    gap: 4px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .customer-full-detail__actions .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  /* 🍎 레이아웃 리셋 버튼 숨김 (모바일에서 리사이즈 불가) */
+  .customer-full-detail__reset-layout {
+    display: none;
+  }
+}
+
+/* 🍎 소형 모바일 (480px 이하): 더 컴팩트한 모바일 레이아웃 */
+@media (max-width: 480px) {
+  .customer-full-detail__mobile-info-card {
+    padding: 8px 10px;
+  }
+
+  .customer-full-detail__mobile-info-grid {
+    gap: 4px 10px;
+  }
+
+  .mobile-info-label {
+    font-size: 10px;
+    min-width: 36px;
+  }
+
+  .mobile-info-value {
+    font-size: 11px;
+  }
+
+  .customer-full-detail__mobile-tabs {
+    padding: 4px 6px;
+    gap: 2px;
+  }
+
+  .mobile-tab {
+    padding: 5px 4px;
+    font-size: 11px;
+  }
+
+  .mobile-tab__count {
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+
+  .mobile-panel-header {
+    padding: 4px 8px;
+    min-height: 32px;
+  }
+
+  .mobile-panel-header .customer-full-detail__section-search {
+    max-width: 110px;
+  }
 }
 
 /* 뷰 전환 버튼 스타일은 CenterPaneView.css로 이동됨 */
