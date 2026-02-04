@@ -743,10 +743,12 @@ html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
     height: 20px;
   }
 
-  /* 드로어 내 CustomMenu: flex 스크롤 전담 */
+  /* 드로어 내 CustomMenu: height 100% 유지, 스크롤 보장 */
   .custom-menu {
-    flex: 1;
+    height: auto; /* base의 height:100% 충돌 방지 */
     min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 

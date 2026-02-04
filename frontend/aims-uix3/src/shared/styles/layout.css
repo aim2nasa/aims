@@ -134,10 +134,9 @@
   z-index: var(--z-index-modal, 1000);
   background-color: var(--color-layout-leftpane-bg);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-  overflow-y: hidden; /* CustomMenu가 스크롤 전담 (이중 스크롤 방지) */
+  overflow-y: auto;
   overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
+  overscroll-behavior: contain; /* 스크롤 체이닝 방지 - 드로어 내에서만 스크롤 */
 
   /* 슬라이드인 트랜지션 */
   transform: translateX(-100%);
