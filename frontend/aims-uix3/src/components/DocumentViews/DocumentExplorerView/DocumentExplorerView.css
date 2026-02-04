@@ -1537,3 +1537,97 @@ html[data-theme="dark"] .doc-explorer-toolbar__calendar {
 }
 
 /* 초성 필터 바: 공용 InitialFilterBar.css 사용 */
+
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  /* 툴바: 줄바꿈 허용 + 컴팩트 */
+  .doc-explorer-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+  }
+
+  /* 정렬/통계 영역: 모바일에서 숨김 */
+  .doc-explorer-toolbar__sort {
+    display: none;
+  }
+
+  .doc-explorer-toolbar__stats {
+    display: none;
+  }
+
+  /* 검색: 전체 폭 */
+  .doc-explorer-toolbar__search {
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
+  /* 액션 버튼 */
+  .doc-explorer-toolbar__expand-btn,
+  .doc-explorer-toolbar__thumbnail-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* 트리 컨테이너 */
+  .doc-explorer-tree-container {
+    padding: 4px;
+  }
+
+  /* 폴더 행: 터치 친화적 */
+  .doc-explorer-tree__group-header {
+    padding: 8px var(--explorer-spacing-sm);
+    min-height: var(--spacing-touch-min, 44px);
+    gap: 8px;
+  }
+
+  /* 들여쓰기 축소 (모바일 화면 폭 절약) */
+  .doc-explorer-tree__group-header--level-0 {
+    padding-left: var(--explorer-spacing-sm);
+  }
+
+  .doc-explorer-tree__group-header--level-1 {
+    padding-left: calc(var(--explorer-spacing-sm) + 16px);
+  }
+
+  .doc-explorer-tree__group-header--level-2 {
+    padding-left: calc(var(--explorer-spacing-sm) + 32px);
+  }
+
+  /* 문서 행: 터치 친화적 */
+  .doc-explorer-tree__document {
+    padding: 6px var(--explorer-spacing-sm);
+    min-height: var(--spacing-touch-min, 44px);
+    gap: 8px;
+  }
+
+  .doc-explorer-tree__document--level-1 {
+    padding-left: calc(var(--explorer-spacing-sm) + 28px);
+  }
+
+  .doc-explorer-tree__document--level-2 {
+    padding-left: calc(var(--explorer-spacing-sm) + 44px);
+  }
+
+  .doc-explorer-tree__document--level-3 {
+    padding-left: calc(var(--explorer-spacing-sm) + 60px);
+  }
+
+  /* 폴더 라벨 */
+  .doc-explorer-tree__group-label {
+    font-size: var(--font-size-footnote);
+  }
+
+  /* 터치 피드백 */
+  .doc-explorer-tree__group-header:active,
+  .doc-explorer-tree__document:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
+  /* 호버 비활성 (터치 디바이스) */
+  .doc-explorer-tree__group-header:hover,
+  .doc-explorer-tree__document:hover {
+    transform: none;
+  }
+}
