@@ -2335,12 +2335,13 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     max-width: 100px;
   }
 
-  /* 🍎 Annual Report 테이블: 보험료/건수 숨김 (핵심 정보만) */
+  /* 🍎 Annual Report 테이블: 파싱일시 숨김, 총월보험료/계약수 표시 */
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
     grid-template-columns:
       var(--owner-column-width, 50px)
       var(--issue-date-column-width, 80px)
-      var(--parsed-at-column-width, 110px)
+      var(--premium-column-width, 70px)
+      var(--count-column-width, 35px)
       var(--status-column-width, 40px);
   }
 
@@ -2349,7 +2350,8 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
       28px
       var(--owner-column-width, 50px)
       var(--issue-date-column-width, 80px)
-      var(--parsed-at-column-width, 110px)
+      var(--premium-column-width, 70px)
+      var(--count-column-width, 35px)
       var(--status-column-width, 40px);
   }
 
@@ -2357,7 +2359,8 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     grid-template-columns:
       var(--owner-column-width, 50px)
       var(--issue-date-column-width, 80px)
-      var(--parsed-at-column-width, 110px)
+      var(--premium-column-width, 70px)
+      var(--count-column-width, 35px)
       var(--status-column-width, 40px);
   }
 
@@ -2366,15 +2369,14 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
       28px
       var(--owner-column-width, 50px)
       var(--issue-date-column-width, 80px)
-      var(--parsed-at-column-width, 110px)
+      var(--premium-column-width, 70px)
+      var(--count-column-width, 35px)
       var(--status-column-width, 40px);
   }
 
-  /* 🍎 Annual Report: 보험료/건수 칼럼 숨김 */
-  .customer-full-detail .customer-full-detail__section-content--report .header-premium,
-  .customer-full-detail .customer-full-detail__section-content--report .header-count,
-  .customer-full-detail .customer-full-detail__section-content--report .row-premium,
-  .customer-full-detail .customer-full-detail__section-content--report .row-count {
+  /* 🍎 Annual Report: 파싱일시 숨김 (모바일에서 중요도 낮음) */
+  .customer-full-detail .customer-full-detail__section-content--report .header-parsed-at,
+  .customer-full-detail .customer-full-detail__section-content--report .row-parsed-at {
     display: none;
   }
 
@@ -2469,40 +2471,43 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .annual-r
     display: none;
   }
 
-  /* 🍎 Annual Report 테이블: 파싱일시도 숨김 */
+  /* 🍎 Annual Report 테이블: 파싱일시 숨김, 총월보험료/계약수 유지 */
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header {
     grid-template-columns:
-      var(--owner-column-width, 60px)
-      var(--issue-date-column-width, 90px)
-      var(--status-column-width, 40px);
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 70px)
+      var(--premium-column-width, 60px)
+      var(--count-column-width, 30px)
+      var(--status-column-width, 35px);
   }
 
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-table-header:has(.header-checkbox) {
     grid-template-columns:
       28px
-      var(--owner-column-width, 60px)
-      var(--issue-date-column-width, 90px)
-      var(--status-column-width, 40px);
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 70px)
+      var(--premium-column-width, 60px)
+      var(--count-column-width, 30px)
+      var(--status-column-width, 35px);
   }
 
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-row {
     grid-template-columns:
-      var(--owner-column-width, 60px)
-      var(--issue-date-column-width, 90px)
-      var(--status-column-width, 40px);
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 70px)
+      var(--premium-column-width, 60px)
+      var(--count-column-width, 30px)
+      var(--status-column-width, 35px);
   }
 
   .customer-full-detail .customer-full-detail__section-content--report .annual-report-row:has(.row-checkbox) {
     grid-template-columns:
       28px
-      var(--owner-column-width, 60px)
-      var(--issue-date-column-width, 90px)
-      var(--status-column-width, 40px);
-  }
-
-  .customer-full-detail .customer-full-detail__section-content--report .header-parsed-at,
-  .customer-full-detail .customer-full-detail__section-content--report .row-parsed-at {
-    display: none;
+      var(--owner-column-width, 50px)
+      var(--issue-date-column-width, 70px)
+      var(--premium-column-width, 60px)
+      var(--count-column-width, 30px)
+      var(--status-column-width, 35px);
   }
 }
 
