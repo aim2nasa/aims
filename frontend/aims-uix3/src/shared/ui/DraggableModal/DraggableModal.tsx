@@ -10,7 +10,7 @@
  * - Portal, ESC, body overflow는 Modal이 자동 처리
  */
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
 import { useEscapeKey, useBodyOverflow, useBackdropClick } from '../Modal/hooks/useModalCore'
@@ -101,6 +101,14 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   transparent = false,
   onOpenPopup
 }) => {
+  // 모바일 감지: 인라인 스타일 대신 CSS 미디어쿼리 사용
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // Drag & Resize 기능
   const modal = useModalDragResize({
     initialWidth,
@@ -126,7 +134,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
     >
       <div
         className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${className}`}
-        style={modal.modalStyle}
+        style={isMobile ? undefined : modal.modalStyle}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -244,7 +252,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="draggable-modal__content" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        <div className="draggable-modal__content" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: isMobile ? 'auto' : 'hidden' }}>
           {children}
         </div>
 
