@@ -145,3 +145,21 @@ html[data-theme="dark"] .tabs-bar__tab--active .tabs-bar__tab-icon {
     font-size: 16px;
   }
 }
+
+@media (max-width: 480px) {
+  .tabs-bar {
+    max-width: 100%;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  /* 📱 iOS HIG: 44px 터치 타겟 */
+  .tabs-bar__tab {
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+
+  .tabs-bar__tab-icon {
+    font-size: 18px;
+  }
+}

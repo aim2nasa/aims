@@ -305,7 +305,7 @@ html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-tot
   .document-pagination,
   .contract-pagination,
   .table-pagination {
-    padding: 10px 4px;
+    padding: 12px 12px;
     gap: 8px;
   }
 
@@ -316,8 +316,9 @@ html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-tot
   }
 
   .pagination-info {
-    min-width: 50px;
+    min-width: 60px;
     gap: 4px;
+    font-size: var(--font-size-caption-1); /* 13px */
   }
 }
 

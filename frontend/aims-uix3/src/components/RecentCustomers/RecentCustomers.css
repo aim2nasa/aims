@@ -129,3 +129,41 @@
 .recent-customers__item:hover .recent-customers__item-name {
   color: var(--color-text-primary);
 }
+
+/* === 📱 모바일 반응형 === */
+@media (max-width: 768px) {
+  .recent-customers {
+    padding: var(--spacing-1) 0;
+  }
+
+  .recent-customers__header {
+    padding: 8px 16px;
+    font-size: var(--font-size-caption-2); /* 11px */
+  }
+
+  /* 전체 삭제 버튼: 모바일에서 상시 표시 (호버 불가) */
+  .recent-customers__clear-btn {
+    opacity: 0.5;
+    width: 20px;
+    height: 20px;
+    padding: 4px;
+  }
+
+  /* iOS HIG: 44px 최소 터치 타겟 */
+  .recent-customers__item {
+    min-height: 44px;
+    padding: 10px 16px;
+    padding-left: var(--spacing-11);
+    gap: var(--spacing-2);
+  }
+
+  .recent-customers__item-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .recent-customers__item-name {
+    font-size: var(--font-size-caption-1); /* 13px */
+    font-weight: var(--font-weight-medium);
+  }
+}

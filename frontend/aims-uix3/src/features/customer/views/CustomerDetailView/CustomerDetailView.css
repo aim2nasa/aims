@@ -315,6 +315,41 @@
   }
 }
 
+/* 📱 모바일 480px: 폼 + 탭 컴팩트 */
+@media (max-width: 480px) {
+  .customer-detail-view__inner {
+    padding: var(--spacing-2);
+  }
+
+  /* 폼 행: 44px 터치 타겟 */
+  .customer-detail-view .form-row {
+    min-height: 44px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+
+  .customer-detail-view .form-row__label {
+    flex: 0 0 60px;
+    font-size: var(--font-size-caption-2);
+    margin-right: 8px;
+  }
+
+  .customer-detail-view .form-row__value {
+    font-size: var(--font-size-caption-1);
+  }
+
+  /* 액션 버튼: 터치 친화적 */
+  .customer-detail-view__action-button {
+    min-height: 44px;
+    font-size: var(--font-size-footnote);
+  }
+
+  /* 탭 콘텐츠 패딩 */
+  .customer-detail-view__tab-content {
+    padding: 0;
+  }
+}
+
 /* 🍎 고객 타이틀 아이콘 스타일 (전체보기 아이콘과 일관성) */
 .customer-detail-title {
   display: inline-flex;

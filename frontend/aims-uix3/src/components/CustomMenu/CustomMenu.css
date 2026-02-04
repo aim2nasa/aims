@@ -711,12 +711,42 @@ html:not([data-theme="dark"]) .custom-menu-item:hover:not(.selected) {
 
 /* === RESPONSIVE DESIGN === */
 @media (max-width: 768px) {
+  /* 📱 iOS HIG: 44px 최소 터치 타겟 */
   .custom-menu-item {
-    padding: 8px 16px;
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: var(--font-size-footnote); /* 14px - 모바일 가독성 */
+    display: flex;
+    align-items: center;
   }
 
   .custom-menu-item.sub-menu {
+    min-height: 40px;
     padding-left: 40px;
+    font-size: var(--font-size-caption-1); /* 13px */
+  }
+
+  /* 서브메뉴 확장 높이 증가 - 모든 항목 접근 가능 */
+  .sub-menu-container.expanded {
+    max-height: 500px;
+  }
+
+  /* chevron 터치 영역 확대 */
+  .icon-chevron {
+    padding: 10px;
+    margin: -10px -10px -10px auto;
+  }
+
+  /* 메뉴 아이콘 약간 확대 */
+  .menu-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* 드로어 내 CustomMenu: flex 스크롤 전담 */
+  .custom-menu {
+    flex: 1;
+    min-height: 0;
   }
 }
 

@@ -616,6 +616,32 @@ html[data-theme="dark"] .document-type-card--selected {
   }
 }
 
+/* 📱 모바일 480px: 업로드 영역 + 로그 컴팩트 */
+@media (max-width: 480px) {
+  .document-registration-content {
+    gap: var(--spacing-1);
+  }
+
+  /* 업로드 영역: 전체 폭, 터치 친화적 */
+  .document-registration-content .file-upload-area {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* 문서 타입 카드: 44px 터치 타겟 */
+  .document-type-card {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  /* 처리 로그: 전체 폭, 컴팩트 */
+  .file-log-container {
+    max-width: 100%;
+    margin: 0;
+    border-radius: var(--radius-md);
+  }
+}
+
 /* 🎯 AR 파일 미발견 경고 메시지 - 토스트 스타일 (상단 중앙) */
 .no-ar-warning {
   position: fixed;

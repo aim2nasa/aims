@@ -235,3 +235,7 @@ AIMS의 데스크톱 레이아웃은 **absolute positioning + JavaScript 계산*
 | 2026-02-04 | 3 | 전체 고객 보기 카드형 레이아웃 완료 | `75404110` |
 | 2026-02-04 | 3.5 | 모바일 LeftPane→드로어, CenterPane 전체폭, Header 햄버거 | `8051b871` |
 | 2026-02-04 | 2/3 개선 | 문서 카드 2행 리디자인, 고객 카드 심플화, 초성/필터 수평 스크롤 | - |
+| 2026-02-04 | 4 | 드로어 메뉴 접근성: CustomMenu 44px 터치 타겟, RecentCustomers 터치 최적화, 이중 스크롤 해결 | - |
+| 2026-02-04 | 5 | 고객 목록 레이아웃: 검색 36px/16px(zoom방지), 필터 패딩 확대, 카드 gap/padding 개선, 초성 30x30px, 페이지네이션 패딩 | - |
+| 2026-02-04 | 6 | 모달 iOS Sheet: Modal 하단 시트 + slideUp, DraggableModal 전체화면 시트 + 리사이즈 숨김 | - |
+| 2026-02-04 | 7 | 나머지 뷰: DocumentRegistration 480px, CustomerDetailView 480px, Tabs 480px 터치 타겟 | - |

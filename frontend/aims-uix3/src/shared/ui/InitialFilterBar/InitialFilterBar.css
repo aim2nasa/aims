@@ -246,23 +246,25 @@ html[data-theme="dark"] .initial-filter-bar__selected {
   }
 
   .initial-filter-bar__type-toggle {
-    min-width: 42px;
-    height: 24px;
-    padding: 0 6px;
+    min-width: 44px;
+    height: 30px;
+    padding: 0 8px;
+    font-size: var(--font-size-caption-1); /* 13px */
   }
 
   .initial-filter-bar__initial {
-    min-width: 24px;
-    height: 24px;
-    font-size: 10px;
+    min-width: 30px;
+    height: 30px;
+    font-size: var(--font-size-caption-1); /* 12px -> 13px */
     flex-shrink: 0;
   }
 
   .initial-filter-bar__selected {
-    padding: 2px 6px 2px 10px;
+    padding: 4px 8px 4px 10px;
+    height: 30px;
   }
 
   .initial-filter-bar__selected-label {
-    font-size: 10px;
+    font-size: var(--font-size-caption-2); /* 11px */
   }
 }

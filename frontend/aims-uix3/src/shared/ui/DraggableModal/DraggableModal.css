@@ -477,3 +477,59 @@ html[data-theme="dark"] .draggable-modal__footer {
 html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
+
+/* === 📱 모바일 반응형: 전체화면 시트 === */
+@media (max-width: 768px) {
+  .draggable-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .draggable-modal {
+    width: 100vw;
+    max-width: 100vw;
+    height: 90vh;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    animation: dmSlideUp var(--duration-normal) var(--easing-ease-out);
+  }
+
+  /* 드래그/리사이즈 비활성화 */
+  .draggable-modal__header {
+    cursor: default;
+    padding: 12px 16px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .draggable-modal__content {
+    padding: 12px 16px;
+  }
+
+  .draggable-modal__footer {
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    border-radius: 0;
+  }
+
+  /* 리사이즈 핸들 숨김 */
+  .resize-handle {
+    display: none;
+  }
+
+  /* 최대화/리셋 버튼 숨김 (모바일에서 이미 전체화면) */
+  .draggable-modal__maximize-button,
+  .draggable-modal__reset-button {
+    display: none;
+  }
+}
+
+@keyframes dmSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
