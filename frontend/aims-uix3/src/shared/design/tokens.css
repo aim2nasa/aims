@@ -1632,3 +1632,11 @@
   --color-upload-zone-icon: var(--color-upload-zone-icon-dark);
   --color-upload-zone-icon-hover: var(--color-upload-zone-icon-hover-dark);
 }
+
+/* === MOBILE RESPONSIVE (480px 이하) === */
+@media (max-width: 480px) {
+  :root {
+    --layout-header-height: 48px;
+    --spacing-touch-min: 44px;
+  }
+}

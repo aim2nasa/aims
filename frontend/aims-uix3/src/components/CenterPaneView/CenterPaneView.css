@@ -242,6 +242,29 @@ html[data-theme="dark"] .center-pane-view__description {
   }
 }
 
+/* 모바일 (480px 이하) - 컴팩트 레이아웃 */
+@media (max-width: 480px) {
+  .center-pane-view {
+    --margin-top: 0px;
+    --margin-bottom: 0px;
+    --margin-left: 0px;
+    --margin-right: 0px;
+    border-radius: 0;
+  }
+
+  .center-pane-view__header {
+    padding: 12px 12px;
+  }
+
+  .center-pane-view__content {
+    padding: 12px;
+  }
+
+  .center-pane-view__breadcrumb {
+    display: none;
+  }
+}
+
 /* 고대비 모드 지원 */
 @media (prefers-contrast: high) {
   .center-pane-view {

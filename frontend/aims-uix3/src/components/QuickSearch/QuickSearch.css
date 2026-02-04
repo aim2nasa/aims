@@ -316,7 +316,7 @@ html[data-theme="dark"] .quick-search__advanced-link:hover {
 /* 반응형 */
 @media (max-width: 768px) {
   .quick-search {
-    width: 240px;
+    width: min(240px, calc(100vw - 160px));
   }
 
   .quick-search__input-wrapper {

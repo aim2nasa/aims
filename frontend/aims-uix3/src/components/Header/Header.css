@@ -536,6 +536,31 @@
   }
 }
 
+/* 모바일 (480px 이하) - 컴팩트 헤더 */
+@media (max-width: 480px) {
+  .header-progressive {
+    height: 48px;
+    padding: 0 var(--spacing-2);
+  }
+
+  .header-controls {
+    gap: var(--spacing-1);
+  }
+
+  .header-control-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-title {
+    font-size: var(--font-size-footnote);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 /* === 테마별 최적화 === */
 
 @media (prefers-reduced-motion: reduce) {
