@@ -2619,3 +2619,146 @@ html[data-theme="dark"] .excel-refiner__result-tr--error {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-caption-1);
 }
+
+/* =============================================
+   📱 모바일 반응형 (480px 이하)
+   ============================================= */
+@media (max-width: 480px) {
+  /* 드롭존: 전체 높이 채우되 콘텐츠는 상단부터 배치 */
+  .excel-refiner__dropzone {
+    margin: var(--spacing-1);
+    flex: 1;
+    align-items: flex-start;
+    justify-content: flex-start;
+    border-radius: var(--radius-lg);
+  }
+
+  /* ⭐ 핵심: align-items: stretch로 자식들이 부모 너비에 맞추도록
+     (base CSS의 align-items: center가 테이블을 중앙정렬하여 양쪽 잘림 발생) */
+  .excel-refiner__dropzone-inner {
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+    min-width: 0;
+    align-items: stretch;
+  }
+
+  .excel-refiner__plus-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .excel-refiner__dropzone-hint {
+    font-size: var(--font-size-caption-1);
+  }
+
+  .excel-refiner__dropzone-subhint {
+    font-size: var(--font-size-xs);
+  }
+
+  /* ⭐ 핵심: overflow: hidden으로 테이블 오버플로가 부모를 밀어내지 않도록 차단 */
+  .excel-refiner__format-guide {
+    padding: var(--spacing-2);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .excel-refiner__format-header {
+    margin-bottom: var(--spacing-2);
+  }
+
+  .excel-refiner__format-title {
+    font-size: var(--font-size-caption-1);
+  }
+
+  .excel-refiner__format-guide-header {
+    font-size: var(--font-size-caption-1);
+    margin-bottom: var(--spacing-2);
+  }
+
+  /* 시트 탭 수평 스크롤 */
+  .excel-refiner__format-tabs {
+    overflow-x: auto;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .excel-refiner__format-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 테이블 래퍼: 가로 스크롤 컨테이너 */
+  .excel-refiner__format-table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  /* 테이블: width auto로 nowrap 콘텐츠가 자연 너비 사용 → 래퍼에서 스크롤 */
+  .excel-refiner__format-table {
+    width: auto;
+    min-width: 100%;
+  }
+
+  /* 예시 테이블 셀 패딩 축소 */
+  .excel-refiner__format-th,
+  .excel-refiner__format-td {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 범례 컴팩트 */
+  .excel-refiner__format-legend {
+    gap: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-2);
+  }
+
+  /* 위저드 스텝 컴팩트 */
+  .excel-refiner__wizard-steps {
+    gap: var(--spacing-1);
+    padding: var(--spacing-2);
+  }
+
+  .excel-refiner__wizard-step {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+
+  /* 결과 테이블 컴팩트 */
+  .excel-refiner__result-tabs {
+    padding: var(--spacing-1) var(--spacing-2);
+    overflow-x: auto;
+  }
+
+  .excel-refiner__result-tab {
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .excel-refiner__result-th,
+  .excel-refiner__result-td {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  .excel-refiner__result-empty {
+    padding: var(--spacing-4);
+  }
+
+  /* 엑셀 업로드 후 데이터 뷰 */
+  .excel-refiner__content {
+    min-width: 0;
+  }
+
+  .excel-refiner__header-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2);
+  }
+
+  .excel-refiner__filename {
+    font-size: var(--font-size-caption-1);
+  }
+}

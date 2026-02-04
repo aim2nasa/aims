@@ -13,3 +13,15 @@
 .center-pane-view:has(.contract-import-view) .center-pane-view__content {
   padding: var(--spacing-2);
 }
+
+/* 📱 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  .center-pane-view:has(.contract-import-view) .center-pane-view__content {
+    padding: var(--spacing-1);
+  }
+
+  .center-pane-view:has(.contract-import-view) .center-pane-view__description {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-caption-1);
+  }
+}
