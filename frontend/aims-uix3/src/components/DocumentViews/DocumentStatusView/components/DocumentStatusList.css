@@ -872,6 +872,12 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
     transform: none;
   }
 
+  /* 터치 피드백 */
+  .status-item:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
   /* === Row 1: 아이콘 + 파일명 === */
   .status-item > .document-icon-wrapper {
     grid-row: 1;

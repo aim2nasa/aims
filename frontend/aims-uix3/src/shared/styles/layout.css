@@ -202,6 +202,46 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
+  /* 📱 모바일 RightPane 뒤로가기 헤더 */
+  .mobile-rightpane-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 0.5px solid var(--color-ios-separator-light);
+    flex-shrink: 0;
+    background: var(--color-bg-primary);
+  }
+
+  .mobile-rightpane-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px 8px 4px;
+    background: transparent;
+    border: none;
+    color: var(--color-primary-500);
+    font-family: var(--font-family-text);
+    font-size: var(--font-size-body);
+    font-weight: 400;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+
+  .mobile-rightpane-back-btn:active {
+    opacity: 0.6;
+  }
+
+  .mobile-rightpane-back-btn svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  html[data-theme="dark"] .mobile-rightpane-header {
+    border-bottom-color: var(--color-ios-separator-dark);
+  }
 }
 
 /* 🍎 Tablet 최적화 (iPad Mini 제외 - 1024px 이상은 3패널) */

@@ -298,6 +298,29 @@ html[data-theme="dark"] .customer-contracts .contract-pagination .pagination-tot
   color: var(--color-ios-text-tertiary-dark);
 }
 
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  .pagination,
+  .customer-pagination,
+  .document-pagination,
+  .contract-pagination,
+  .table-pagination {
+    padding: 10px 4px;
+    gap: 8px;
+  }
+
+  /* 터치 타겟 확대 */
+  .pagination-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .pagination-info {
+    min-width: 50px;
+    gap: 4px;
+  }
+}
+
 /* === MOTION REDUCTION === */
 @media (prefers-reduced-motion: reduce) {
   .pagination-button {

@@ -879,6 +879,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // handleDocumentClick, handleCustomerClick, handleOpenFullDetail,
   // handleCloseFullDetail, handleCustomerRefresh, handleCustomerDelete
 
+  // 📱 모바일 RightPane 닫기 핸들러
+  const handleMobileRightPaneClose = useCallback(() => {
+    setRightPaneVisible(false)
+    setTimeout(() => {
+      if (rightPaneContentType === 'customer') {
+        setSelectedCustomer(null)
+        updateURLParams({ customerId: null })
+      } else if (rightPaneContentType === 'document') {
+        setSelectedDocument(null)
+        updateURLParams({ documentId: null })
+      }
+      setRightPaneContentType(null)
+    }, 600)
+  }, [rightPaneContentType, updateURLParams])
+
   // RightPane 더블클릭 핸들러 - 모달로 전환
   const handleRightPaneDoubleClick = useCallback(() => {
     if (rightPaneContentType === 'document' && selectedDocument) {
@@ -1948,7 +1963,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         {/* RightPane - 컨테이너 내부에서 우측에 위치 */}
         <div
           className="layout-rightpane-content"
-          onDoubleClick={handleRightPaneDoubleClick}
+          onDoubleClick={isMobileView ? undefined : handleRightPaneDoubleClick}
           style={{
             flex: 1,
             padding: (selectedDocument || selectedCustomer) ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
@@ -1958,6 +1973,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             flexDirection: 'column'
           }}
         >
+          {/* 📱 모바일 뒤로가기 헤더 */}
+          {isMobileView && rightPaneVisible && rightPaneContentType && (
+            <div className="mobile-rightpane-header">
+              <button
+                type="button"
+                className="mobile-rightpane-back-btn"
+                onClick={handleMobileRightPaneClose}
+                aria-label="돌아가기"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                돌아가기
+              </button>
+            </div>
+          )}
+
           {!rightPaneContentType && (
             <>
               <h3 className="section-heading" style={{

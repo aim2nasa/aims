@@ -227,3 +227,21 @@ html[data-theme="dark"] .psb-parsing-badge--crs {
   background: var(--color-badge-crs-bg-dark);
   color: var(--color-primary-400);
 }
+
+/* === 모바일 반응형 (480px 이하) === */
+@media (max-width: 480px) {
+  .processing-status-bar {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .processing-status-bar--visible {
+    padding: 6px 8px;
+    max-height: 48px;
+  }
+
+  /* AR/CRS 파싱 상세: 모바일에서 숨김 (파이프라인만 표시) */
+  .psb-parsing {
+    display: none;
+  }
+}

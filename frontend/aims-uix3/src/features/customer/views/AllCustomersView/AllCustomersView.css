@@ -864,6 +864,12 @@ html[data-theme="dark"] .customer-created {
     transform: none;
   }
 
+  /* 터치 피드백 */
+  .customer-item:active {
+    background: var(--color-bg-hover);
+    transition: background 0.05s ease;
+  }
+
   /* === Row 1: 아이콘 + 이름 + 상태 === */
   .customer-item > .customer-type {
     grid-row: 1;
