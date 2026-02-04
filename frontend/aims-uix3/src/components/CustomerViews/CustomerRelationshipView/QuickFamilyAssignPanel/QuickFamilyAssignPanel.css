@@ -572,3 +572,87 @@ html[data-theme="dark"] .quick-family-assign-panel__custom-input-field:focus {
   border-color: var(--color-primary-400);
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
+
+/* ============================================
+   📱 모바일 반응형 (480px 이하)
+   ============================================ */
+@media (max-width: 480px) {
+  /* 패널: 전체화면, min-width 제거 */
+  .quick-family-assign-panel {
+    min-width: 0;
+    border-radius: 0;
+    animation: slideUpPanel 0.25s ease-out;
+  }
+
+  @keyframes slideUpPanel {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* 닫기 버튼 터치 타겟 */
+  .quick-family-assign-panel__close {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* 선택 고객: 세로 스택 */
+  .quick-family-assign-panel__selected-customer {
+    flex-wrap: wrap;
+    padding: var(--spacing-2);
+  }
+
+  /* 역할 버튼 터치 타겟 */
+  .quick-family-assign-panel__role-btn {
+    min-height: 36px;
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+
+  /* 검색 입력: iOS zoom 방지 */
+  .quick-family-assign-panel__search-input {
+    font-size: 16px;
+    min-height: 36px;
+  }
+
+  /* 초성 필터: 버튼 터치 타겟 확대 */
+  .quick-family-assign-panel__initial {
+    min-width: 28px;
+    height: 28px;
+  }
+
+  /* 테이블: 이름 + 전화번호만 표시 (3열) */
+  .quick-family-assign-panel__table-header {
+    grid-template-columns: 1fr 110px;
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+
+  .quick-family-assign-panel__table-row {
+    grid-template-columns: 1fr 110px;
+    padding: var(--spacing-2);
+    min-height: 44px;
+    align-items: center;
+  }
+
+  /* 생년월일, 성별, 주소 숨김 */
+  .quick-family-assign-panel__table-header .header-birth,
+  .quick-family-assign-panel__table-header .header-gender,
+  .quick-family-assign-panel__table-header .header-address,
+  .quick-family-assign-panel__table-row .cell-birth,
+  .quick-family-assign-panel__table-row .cell-gender,
+  .quick-family-assign-panel__table-row .cell-address {
+    display: none;
+  }
+
+  /* 관계 유형 버튼 그리드 */
+  .quick-family-assign-panel__type-buttons {
+    flex-wrap: wrap;
+  }
+
+  .quick-family-assign-panel__type-btn {
+    min-height: 44px;
+  }
+
+  /* 액션 버튼: safe-area 대응 */
+  .quick-family-assign-panel__actions {
+    padding: var(--spacing-2) var(--spacing-3) calc(var(--spacing-2) + env(safe-area-inset-bottom, 0px));
+  }
+}

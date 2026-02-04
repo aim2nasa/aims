@@ -594,3 +594,139 @@ html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
   background-clip: content-box;
 }
+
+/* ============================================
+   📱 모바일 반응형 (480px 이하)
+   ============================================ */
+@media (max-width: 480px) {
+  /* 헤더: 한 줄 컴팩트 - 제목 숨기고 검색+컨트롤만 */
+  .relationship-header {
+    padding: 6px var(--spacing-sm);
+    background: none;
+  }
+
+  /* 제목 숨김: 페이지 제목 "관계별 고객 보기"와 중복 */
+  .relationship-title {
+    display: none;
+  }
+
+  /* 헤더 액션: 전체 폭 */
+  .relationship-header-actions {
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  /* 뷰모드 라벨 숨김 (아이콘만 표시) */
+  .relationship-tree-controls > span {
+    display: none;
+  }
+
+  /* 뷰모드 버튼: wrapper inline 24px에 정확히 맞춤, 완전 투명 */
+  .customer-relationship-view .tree-control-button,
+  html[data-theme="dark"] .customer-relationship-view .tree-control-button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+
+  /* 검색: 남은 공간 전부 채우기 */
+  .relationship-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .relationship-search-input {
+    width: 100%;
+    height: 32px;
+    font-size: 16px; /* iOS zoom 방지 */
+    padding: 0 var(--spacing-sm);
+  }
+
+  /* 초성 필터: 컴팩트 */
+  .relationship-initial-filter {
+    padding: 2px var(--spacing-sm);
+  }
+
+  /* 트리 영역: 패딩 최소화 */
+  .relationship-tree {
+    padding: 2px;
+  }
+
+  /* 트리 계층 들여쓰기 축소 */
+  .tree-children {
+    padding-left: 10px;
+    margin-left: 2px;
+  }
+
+  /* 트리 섹션 간격 제거 */
+  .tree-section {
+    padding: 0;
+  }
+
+  /* 트리 노드: 컴팩트하되 터치 가능 */
+  .tree-node {
+    min-height: 36px;
+    padding: 4px var(--spacing-sm);
+    margin: 0;
+    border-radius: 4px;
+  }
+
+  /* 루트 노드: 컴팩트 섹션 헤더 */
+  .tree-node--root {
+    min-height: 32px;
+    padding: 4px var(--spacing-sm);
+    margin-bottom: 2px;
+  }
+
+  /* 리프 노드: 들여쓰기 축소 */
+  .tree-node--leaf {
+    padding-left: 20px;
+  }
+
+  .tree-node--member {
+    padding-left: 30px;
+  }
+
+  /* 관계 목록 들여쓰기 축소 */
+  .relation-list {
+    padding-left: 30px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  /* 관계 아이템: 컴팩트 */
+  .relation-item {
+    padding: 2px var(--spacing-sm);
+    margin: 1px 0;
+  }
+
+  /* 노드 콘텐츠 간격 축소 */
+  .tree-node__content {
+    gap: 6px;
+  }
+
+  /* 패널: 모바일에서 전체화면 오버레이 */
+  .relationship-view__panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    z-index: 200;
+    border-left: none;
+  }
+
+  /* 로딩/빈 상태 */
+  .relationship-loading,
+  .relationship-empty {
+    padding: var(--spacing-lg);
+  }
+}
