@@ -849,19 +849,19 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
     padding-right: 0;
   }
 
-  /* 카드형 아이템: 2행 컴팩트 */
+  /* 카드형 아이템: 2행 - 텍스트 잘림 방지 위해 행 높이 확보 */
   .status-item {
     display: grid;
     grid-template-columns: 24px auto auto 1fr;
     grid-template-rows: auto auto;
-    gap: 2px 6px;
+    gap: 3px 6px;
     align-items: center;
     height: auto;
-    min-height: var(--spacing-touch-min, 44px);
-    padding: 8px 10px;
+    min-height: 50px;
+    padding: 10px 10px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
-    overflow: hidden;
+    overflow: visible;
   }
 
   html[data-theme="dark"] .status-item {
