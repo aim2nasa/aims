@@ -165,6 +165,34 @@ html[data-theme="dark"] .file-type-pie-chart__path {
   }
 }
 
+@media (max-width: 480px) {
+  .file-type-pie-chart {
+    padding: var(--spacing-half, 2px);
+    gap: 2px;
+  }
+
+  .file-type-pie-chart:hover {
+    box-shadow: none;
+  }
+
+  .file-type-pie-chart__svg {
+    max-width: 80px;
+  }
+
+  .file-type-pie-chart__legend-item {
+    padding: 1px 2px;
+  }
+
+  .file-type-pie-chart__legend-description {
+    display: none;
+  }
+
+  .pie-chart-title {
+    font-size: var(--font-size-caption-2);
+    padding-left: var(--spacing-1);
+  }
+}
+
 /* === 공용 파이차트 래퍼 스타일 === */
 /* 여러 View에서 공통으로 사용하는 차트 카드 스타일 */
 

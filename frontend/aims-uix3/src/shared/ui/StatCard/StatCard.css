@@ -225,3 +225,31 @@ html[data-theme="dark"] .stat-card__trend--negative {
     font-size: var(--font-size-title-2);
   }
 }
+
+@media (max-width: 480px) {
+  .stat-card {
+    min-height: 56px;
+    padding: var(--spacing-2);
+    gap: var(--spacing-1);
+  }
+
+  .stat-card:hover {
+    transform: none;
+  }
+
+  .stat-card__header {
+    gap: var(--spacing-1);
+  }
+
+  .stat-card__icon {
+    font-size: var(--font-size-footnote);
+  }
+
+  .stat-card__title {
+    font-size: var(--font-size-caption-2);
+  }
+
+  .stat-card__value {
+    font-size: var(--font-size-subheadline);
+  }
+}
