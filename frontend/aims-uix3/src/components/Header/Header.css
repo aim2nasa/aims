@@ -548,20 +548,22 @@
   }
 }
 
-/* 모바일 (480px 이하) - 컴팩트 헤더 */
+/* 모바일 (480px 이하) - 컴팩트 헤더: 360px 뷰포트에서 모든 요소가 한 줄에 수용 */
 @media (max-width: 480px) {
   .header-progressive {
     height: 48px;
     padding: 0 var(--spacing-2);
+    overflow: hidden; /* 가로 스크롤 방지 */
   }
 
   .header-branding {
     gap: 0;
+    flex-shrink: 0;
   }
 
   .header-title {
     font-size: var(--font-size-footnote);
-    max-width: 80px;
+    max-width: 60px; /* 좁은 화면에서 공간 확보 */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -569,6 +571,8 @@
 
   .header-controls {
     gap: 4px;
+    flex-shrink: 1; /* 768px의 flex-shrink: 0 오버라이드 - 컨트롤 축소 허용 */
+    min-width: 0;
   }
 
   .header-control-button {
@@ -576,10 +580,30 @@
     height: 36px;
   }
 
-  /* 480px 이하에서 검색바 축소 */
+  /* 검색바: 남은 공간을 유동적으로 차지 */
   .header-quick-search-container {
     flex: 1;
     min-width: 0;
+  }
+
+  /* 프로필 아바타 축소: 40px → 32px */
+  .header-user-avatar-circle {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-footnote);
+  }
+
+  .header-user-avatar {
+    padding: var(--spacing-1);
+    gap: 0;
+  }
+
+  .header-user-profile {
+    flex-shrink: 0;
+  }
+
+  .header-theme-container {
+    flex-shrink: 0;
   }
 }
 

@@ -79,6 +79,8 @@
   padding: var(--spacing-2) var(--spacing-3);
   margin-left: var(--spacing-4);
   border-left: 1px solid var(--color-border-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .theme-icon {
@@ -114,19 +116,8 @@
   height: 26px;  /* iOS Control Center 표준 높이 */
 }
 
-.theme-switch-input {
-  /* 📱 모바일: label 전체 영역을 커버하여 터치 이벤트 직접 수신
-     width:0/height:0 패턴은 일부 모바일 브라우저에서 label 포워딩 실패 */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  margin: 0;
-  cursor: pointer;
-  z-index: 1;
-}
+/* checkbox 제거됨 - 컨테이너 onClick + --dark/--light 클래스로 상태 관리
+   모바일 브라우저에서 checkbox onChange 미발화 문제 근본 해결 */
 
 .theme-switch-slider {
   position: absolute;
@@ -158,18 +149,19 @@
     0 1px 3px rgba(0, 0, 0, 0.15);      /* iOS 서브틀 그림자 */
 }
 
-.theme-switch-input:checked + .theme-switch-slider {
+/* 다크 모드 활성 상태 - 컨테이너 --dark 클래스 기반 */
+.theme-toggle-container--dark .theme-switch-slider {
   background-color: var(--color-theme-switch-bg-dark);
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.25),   /* 체크 상태에서 더 진한 내부 그림자 */
-    0 0 0 2px rgba(52, 199, 89, 0.2);      /* iOS systemGreen 글로우 효과 */
+    inset 0 1px 3px rgba(0, 0, 0, 0.25),
+    0 0 0 2px rgba(52, 199, 89, 0.2);
 }
 
-.theme-switch-input:checked + .theme-switch-slider::before {
-  transform: translateX(18px); /* 더 정확한 iOS Control Center 위치 */
+.theme-toggle-container--dark .theme-switch-slider::before {
+  transform: translateX(18px);
   box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.35),       /* 체크 상태에서 더 강한 그림자 */
-    0 1px 4px rgba(0, 0, 0, 0.2);         /* iOS 서브틀 그림자 */
+    0 3px 12px rgba(0, 0, 0, 0.35),
+    0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* iOS Control Center 호버 상태 - Spring Physics */
@@ -178,20 +170,52 @@
   transition: transform var(--duration-ios-quick) var(--easing-spring-bouncy); /* 탄력적 스프링 */
 }
 
-/* iOS Control Center 포커스 접근성 */
-.theme-switch-input:focus + .theme-switch-slider {
+/* 포커스 접근성 - 컨테이너 focus-visible 기반 */
+.theme-toggle-container:focus-visible .theme-switch-slider {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.15),
-    0 0 0 4px rgba(59, 130, 246, 0.15);   /* iOS 표준 포커스 링 */
+    0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
-.theme-switch-input:focus:checked + .theme-switch-slider {
+.theme-toggle-container--dark:focus-visible .theme-switch-slider {
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.25),
     0 0 0 2px rgba(52, 199, 89, 0.2),
-    0 0 0 4px rgba(52, 199, 89, 0.15);    /* 체크 상태 포커스 링 */
+    0 0 0 4px rgba(52, 199, 89, 0.15);
+}
+
+/* 📱 모바일 480px: 테마 토글 컴팩트 - 아이콘 숨김으로 공간 절약 */
+@media (max-width: 480px) {
+  .theme-toggle-container {
+    gap: 0;
+    padding: var(--spacing-1);
+    margin-left: var(--spacing-1);
+    border-left: none;
+  }
+
+  .theme-icon {
+    display: none;
+  }
+
+  .theme-switch {
+    width: 36px;
+    height: 22px;
+  }
+
+  .theme-switch-slider {
+    border-radius: 11px;
+  }
+
+  .theme-switch-slider::before {
+    height: 18px;
+    width: 18px;
+  }
+
+  .theme-toggle-container--dark .theme-switch-slider::before {
+    transform: translateX(14px); /* (36 - 18 - 2*2) = 14 */
+  }
 }
 
 .gap-toggle-button {

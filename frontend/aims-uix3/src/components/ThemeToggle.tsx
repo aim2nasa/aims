@@ -25,7 +25,15 @@ const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   ].filter(Boolean).join(' ')
 
   return (
-    <div className={containerClasses}>
+    <div
+      className={containerClasses}
+      onClick={handleToggleWithHaptic}
+      role="switch"
+      aria-checked={isDark ? 'true' : 'false'}
+      aria-label={`테마를 ${isDark ? '라이트' : '다크'} 모드로 변경`}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleWithHaptic() } }}
+    >
       <span className="theme-icon theme-icon-sun">
         <SFSymbol
           name="sun-max"
@@ -34,16 +42,9 @@ const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
           color="var(--color-icon-orange)"
         />
       </span>
-      <label className="theme-switch haptic-enabled">
-        <input
-          type="checkbox"
-          checked={isDark}
-          onChange={handleToggleWithHaptic}
-          className="theme-switch-input"
-          aria-label={`테마를 ${isDark ? '라이트' : '다크'} 모드로 변경`}
-        />
+      <div className="theme-switch">
         <span className="theme-switch-slider"></span>
-      </label>
+      </div>
       <span className="theme-icon theme-icon-moon">
         <SFSymbol
           name="moon-stars"
