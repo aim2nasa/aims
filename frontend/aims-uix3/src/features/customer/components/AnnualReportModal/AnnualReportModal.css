@@ -500,6 +500,12 @@
 /* ==================== Responsive ==================== */
 
 @media (max-width: 768px) {
+  /* 🍎 모바일에서 콘텐츠 스크롤 활성화 (overflow: hidden 해제) */
+  .customer-document-preview .customer-document-preview__content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
   /* 🍎 요약 섹션: 컴팩트 2열 */
   .annual-report-summary {
     grid-template-columns: repeat(2, 1fr);

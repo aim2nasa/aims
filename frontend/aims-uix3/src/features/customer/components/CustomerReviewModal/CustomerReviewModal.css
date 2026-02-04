@@ -616,9 +616,11 @@
    ============================================ */
 
 @media (max-width: 768px) {
-  /* 🍎 콘텐츠 패딩 축소 */
+  /* 🍎 모바일에서 콘텐츠 스크롤 활성화 (overflow: hidden 해제) */
   .customer-document-preview .customer-document-preview__content {
     padding: 10px 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   /* 🍎 상품명: 컴팩트 */
