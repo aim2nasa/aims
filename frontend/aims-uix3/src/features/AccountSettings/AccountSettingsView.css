@@ -1778,3 +1778,154 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
 .account-settings-view__usage-footer--breakdown .account-settings-view__usage-divider {
   margin: 0 var(--spacing-2);
 }
+
+/* ============================================================
+   모바일 반응형: 계정 설정 전체 페이지 (개인정보 + 데이터 탭)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ──────────────────────────────────────
+     공통: 탭 · 콘텐츠 · 섹션
+     ────────────────────────────────────── */
+
+  .account-settings-view__tabs {
+    padding: var(--spacing-2) var(--spacing-3);
+    margin: var(--spacing-2) var(--spacing-3) 0;
+    gap: var(--spacing-2);
+  }
+
+  .account-settings-view__tab {
+    padding: 5px var(--spacing-3);
+    font-size: var(--font-size-caption-1);
+  }
+
+  .account-settings-view__content {
+    padding: var(--spacing-3);
+    max-height: none;
+  }
+
+  .account-settings-view__section {
+    gap: var(--spacing-3);
+  }
+
+  .account-settings-view__section-title {
+    margin-bottom: var(--spacing-1);
+  }
+
+  .account-settings-view__section--danger {
+    padding-top: var(--spacing-4);
+  }
+
+  /* ──────────────────────────────────────
+     개인정보 탭: 프로필 헤더 · 필드
+     ────────────────────────────────────── */
+
+  /* 프로필 헤더: 가로 배치, 컴팩트 */
+  .account-settings-view__profile-header {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+    gap: var(--spacing-3);
+  }
+
+  .account-settings-view__profile {
+    margin-bottom: 0;
+    gap: var(--spacing-3);
+  }
+
+  .account-settings-view__profile-info {
+    align-items: flex-start;
+  }
+
+  .account-settings-view__avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .account-settings-view__profile-name {
+    font-size: var(--font-size-body);
+  }
+
+  .account-settings-view__profile-email {
+    font-size: var(--font-size-caption-2);
+  }
+
+  /* 그리드 간격 축소 */
+  .account-settings-view__grid {
+    gap: var(--spacing-3);
+  }
+
+  /* 입력 필드: 컴팩트 + iOS zoom 방지 */
+  .account-settings-view__field {
+    gap: var(--spacing-1);
+  }
+
+  .account-settings-view__input {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: 16px;
+  }
+
+  /* 편집 모드 액션 버튼 */
+  .account-settings-view__actions {
+    padding-top: var(--spacing-3);
+  }
+
+  /* ──────────────────────────────────────
+     데이터 탭: 사용량 카드
+     ────────────────────────────────────── */
+
+  /* 사용량 카드: 세로 스택 */
+  .account-settings-view__usage-card {
+    flex-direction: column;
+    gap: 0;
+    padding: var(--spacing-3);
+  }
+
+  .account-settings-view__usage-card--ai {
+    margin-bottom: var(--spacing-3);
+  }
+
+  /* 구분선: 세로 → 가로 */
+  .account-settings-view__usage-separator {
+    width: 100%;
+    height: 1px;
+    margin: var(--spacing-3) 0;
+  }
+
+  /* 사용량 값: 큰 숫자로 가독성 확보 */
+  .account-settings-view__usage-value {
+    font-size: var(--font-size-lg);
+  }
+
+  /* footer: 2열 그리드 (label | value 정렬, divider 숨김) */
+  .account-settings-view__usage-footer:not(.account-settings-view__usage-footer--breakdown) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px var(--spacing-2);
+    align-items: baseline;
+  }
+
+  .account-settings-view__usage-footer:not(.account-settings-view__usage-footer--breakdown) .account-settings-view__usage-divider {
+    display: none;
+  }
+
+  /* breakdown footer: 자연스러운 줄바꿈 */
+  .account-settings-view__usage-footer--breakdown {
+    flex-wrap: wrap;
+    gap: var(--spacing-1) var(--spacing-2);
+  }
+
+  /* ──────────────────────────────────────
+     데이터 탭: 데이터 관리 액션
+     ────────────────────────────────────── */
+
+  .account-settings-view__action-buttons {
+    flex-direction: column;
+  }
+
+  .account-settings-view__action-btn {
+    justify-content: center;
+  }
+}
