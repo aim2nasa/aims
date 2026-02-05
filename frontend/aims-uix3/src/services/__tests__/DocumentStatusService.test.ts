@@ -342,6 +342,119 @@ describe('DocumentStatusService', () => {
   })
 
   // ============================================================================
+  // 3-1. NEW: extractOriginalFilename() - 원본 파일명 추출 (displayName 무시)
+  // ============================================================================
+  describe('extractOriginalFilename', () => {
+    it('upload.originalName을 반환해야 함', () => {
+      const doc: Document = {
+        upload: JSON.stringify({ originalName: 'original.pdf' }),
+        displayName: '홍길동_AR_2026.01.21.pdf',  // displayName은 무시
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('original.pdf')
+    })
+
+    it('stages.upload.originalName을 반환해야 함', () => {
+      const doc: Document = {
+        stages: {
+          upload: JSON.stringify({ originalName: 'stages-original.pdf' }),
+        },
+        displayName: '홍길동_CRS_보험상품_2026.01.21.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('stages-original.pdf')
+    })
+
+    it('기본 필드에서 originalName을 찾아야 함', () => {
+      const doc: Document = {
+        originalName: 'doc-original.pdf',
+        displayName: '김철수_AR_2026.01.21.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('doc-original.pdf')
+    })
+
+    it('기본 필드에서 filename을 fallback으로 사용해야 함', () => {
+      const doc: Document = {
+        filename: 'filename.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('filename.pdf')
+    })
+
+    it('기본 필드에서 file_name을 fallback으로 사용해야 함', () => {
+      const doc: Document = {
+        file_name: 'file_name.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('file_name.pdf')
+    })
+
+    it('기본 필드에서 name을 fallback으로 사용해야 함', () => {
+      const doc: Document = {
+        name: 'name.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('name.pdf')
+    })
+
+    it('기본 필드에서 title을 fallback으로 사용해야 함', () => {
+      const doc: Document = {
+        title: 'title.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('title.pdf')
+    })
+
+    it('모든 필드가 없으면 "Unknown File"을 반환해야 함', () => {
+      const doc: Document = {
+        displayName: '홍길동_AR_2026.01.21.pdf',  // displayName만 있으면 무시
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('Unknown File')
+    })
+
+    it('displayName이 있어도 무시하고 originalName을 반환해야 함', () => {
+      const doc: Document = {
+        upload: JSON.stringify({ originalName: 'AR20260121_00038235_original.pdf' }),
+        displayName: '홍길동_AR_2026.01.21.pdf',
+        filename: 'fallback.pdf',
+      }
+
+      // displayName이 아닌 originalName 반환
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('AR20260121_00038235_original.pdf')
+    })
+
+    it('AR 파일의 원본 파일명을 올바르게 추출해야 함', () => {
+      // 실제 AR 파일 구조 시뮬레이션
+      const doc: Document = {
+        upload: JSON.stringify({
+          originalName: 'AR20260121_00038235_홍길동_삼성생명.pdf',
+          saveName: 'abc123.pdf',
+        }),
+        meta: JSON.stringify({
+          displayName: '홍길동_AR_2026.01.21.pdf',  // 백엔드에서 생성된 displayName
+          meta_status: 'ok',
+        }),
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('AR20260121_00038235_홍길동_삼성생명.pdf')
+    })
+
+    it('CRS 파일의 원본 파일명을 올바르게 추출해야 함', () => {
+      // 실제 CRS 파일 구조 시뮬레이션
+      const doc: Document = {
+        upload: JSON.stringify({
+          originalName: 'CRS_변액종합리포트_2026.01.pdf',
+        }),
+        displayName: '김철수_CRS_변액유니버셜_2026.01.15.pdf',
+      }
+
+      expect(DocumentStatusService.extractOriginalFilename(doc)).toBe('CRS_변액종합리포트_2026.01.pdf')
+    })
+  })
+
+  // ============================================================================
   // 3. extractSaveName()
   // ============================================================================
   describe('extractSaveName', () => {

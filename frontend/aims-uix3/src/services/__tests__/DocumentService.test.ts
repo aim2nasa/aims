@@ -981,4 +981,42 @@ describe('DocumentService', () => {
       )
     })
   })
+
+  // ============================================================================
+  // 18. deleteAllDocuments() - 전체 문서 삭제 (개발자 모드)
+  // ============================================================================
+  describe('deleteAllDocuments', () => {
+    it('전체 문서를 삭제해야 함 (개발자 모드)', async () => {
+      const mockResponse = {
+        success: true,
+        deletedCount: 42,
+      }
+
+      vi.mocked(api.delete).mockResolvedValue(mockResponse)
+
+      const result = await DocumentService.deleteAllDocuments()
+
+      expect(api.delete).toHaveBeenCalledWith('/api/dev/documents/all')
+      expect(result.deletedCount).toBe(42)
+    })
+
+    it('삭제된 문서가 없을 때 0을 반환해야 함', async () => {
+      const mockResponse = {
+        success: true,
+        deletedCount: 0,
+      }
+
+      vi.mocked(api.delete).mockResolvedValue(mockResponse)
+
+      const result = await DocumentService.deleteAllDocuments()
+
+      expect(result.deletedCount).toBe(0)
+    })
+
+    it('API 에러를 그대로 전파해야 함', async () => {
+      vi.mocked(api.delete).mockRejectedValue(new Error('Forbidden'))
+
+      await expect(DocumentService.deleteAllDocuments()).rejects.toThrow('Forbidden')
+    })
+  })
 })

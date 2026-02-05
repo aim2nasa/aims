@@ -10,8 +10,38 @@
 | 배치 2 | document_pipeline workers | 완료 | 2026-02-05 | (커밋 예정) | 35개 |
 | 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | a44006c0 | 47개 |
 | 배치 4 | Frontend Hooks (SSE/채팅) | 완료 | 2026-02-05 | 26787401 | 43개 |
-| 배치 5 | ARQueue stub → 실제 구현 | 완료 | 2026-02-05 | (커밋 예정) | 12개 |
-| 배치 6 | 오래된 테스트 업데이트 | 대기 | - | - | - |
+| 배치 5 | ARQueue stub → 실제 구현 | 완료 | 2026-02-05 | e6c3a3e7 | 10개 |
+| 배치 6 | 오래된 테스트 업데이트 | 완료 | 2026-02-05 | (커밋 예정) | 14개 |
+
+---
+
+## 배치 6: 오래된 테스트 업데이트
+
+### 대상 파일
+- `frontend/aims-uix3/src/services/__tests__/DocumentService.test.ts` - 마지막 업데이트 2026-01-09
+- `frontend/aims-uix3/src/services/__tests__/DocumentStatusService.test.ts` - 마지막 업데이트 2025-11-02
+
+### 추가된 테스트 케이스
+
+**DocumentService.test.ts (+3개):**
+- `deleteAllDocuments()` - 전체 문서 삭제 (개발자 모드)
+  - 전체 문서 삭제 API 호출 테스트
+  - 삭제된 문서가 없을 때 0 반환 테스트
+  - API 에러 전파 테스트
+
+**DocumentStatusService.test.ts (+11개):**
+- `extractOriginalFilename()` - 원본 파일명 추출 (displayName 무시)
+  - upload.originalName 반환 테스트
+  - stages.upload.originalName 반환 테스트
+  - 기본 필드 (originalName, filename, file_name, name, title) fallback 테스트
+  - 모든 필드 없으면 "Unknown File" 반환 테스트
+  - displayName 무시 검증 테스트
+  - AR/CRS 파일 원본 파일명 추출 시나리오 테스트
+
+### 비고
+- DocumentService: 2026-01-10 이후 추가된 `deleteAllDocuments()` 메서드 테스트 추가
+- DocumentStatusService: 2025-11-03 이후 추가된 `extractOriginalFilename()` 메서드 테스트 추가
+- AR/CRS displayName 자동 생성 기능과 연계된 원본 파일명 추출 로직 검증
 
 ---
 
