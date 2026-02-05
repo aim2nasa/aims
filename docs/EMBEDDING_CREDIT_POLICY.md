@@ -974,3 +974,135 @@ AR 10/10 파싱완료 (100%) ⏸ 1
 - **명확한 상태 전달**: 진행률 100% + 크레딧 대기 안내로 상황 명확히 이해
 - **불안감 해소**: 영원히 미완료 상태가 아님을 시각적으로 표현
 - **다음 액션 안내**: "크레딧 충전 후 자동 처리됩니다" 툴팁으로 가이드
+
+---
+
+## batchId 기반 진행률 추적 (2026-02-05)
+
+### 문제점
+
+1. **batchId 변경 감지 안됨**: `useState` 초기값으로만 읽어서 sessionStorage 변경 시 반영 안 됨
+2. **credit_pending이 완료에 포함됨**: 진행률 100% 표시되지만 실제로는 미처리
+3. **batchId 삭제 로직 없음**: sessionStorage에 영원히 남아있음
+
+### 해결 구현
+
+#### 1. useBatchId Hook (신규)
+
+**파일**: `frontend/aims-uix3/src/hooks/useBatchId.ts`
+
+```typescript
+import { useSyncExternalStore } from 'react'
+
+const BATCH_ID_KEY = 'aims-current-batch-id'
+const subscribers = new Set<() => void>()
+
+function notifyBatchIdChange(): void {
+  subscribers.forEach(callback => callback())
+}
+
+export function setBatchId(batchId: string): void {
+  sessionStorage.setItem(BATCH_ID_KEY, batchId)
+  notifyBatchIdChange()
+}
+
+export function clearBatchId(): void {
+  sessionStorage.removeItem(BATCH_ID_KEY)
+  notifyBatchIdChange()
+}
+
+export function useBatchId(): string | null {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+}
+```
+
+**핵심**: `useSyncExternalStore`로 sessionStorage 실시간 추적
+
+#### 2. useDocumentStatistics Hook 수정
+
+**파일**: `frontend/aims-uix3/src/hooks/useDocumentStatistics.ts`
+
+```typescript
+interface UseDocumentStatisticsOptions {
+  enabled?: boolean
+  batchId?: string | null  // 배치별 필터링
+}
+
+// batchId 있으면 캐시 안 씀 (배치별 통계는 독립적)
+const useCache = enabled && !batchId
+
+// API 호출 시 batchId 쿼리 파라미터 추가
+const url = batchId
+  ? `${API_BASE_URL}/api/documents/statistics?batchId=${encodeURIComponent(batchId)}`
+  : `${API_BASE_URL}/api/documents/statistics`
+```
+
+#### 3. DocumentProcessingStatusBar 수정
+
+**파일**: `frontend/aims-uix3/src/components/DocumentViews/DocumentLibraryView/DocumentProcessingStatusBar.tsx`
+
+```typescript
+// credit_pending은 "완료"가 아님! 진행률에서 제외
+const batchCompleted = (batchStatistics?.completed ?? 0) +
+                       (batchStatistics?.completed_with_skip ?? 0)
+// credit_pending NOT included
+
+// 배치 100% 완료 + credit_pending 없음 → 2초 후 자동 정리
+const shouldCleanup = hasBatch &&
+                      batchPct === 100 &&
+                      batchProcessing === 0 &&
+                      batchPending === 0 &&
+                      batchCreditPending === 0
+
+useEffect(() => {
+  if (shouldCleanup) {
+    cleanupTimerRef.current = setTimeout(() => {
+      clearBatchId()
+    }, 2000)
+  }
+}, [shouldCleanup])
+```
+
+#### 4. Backend API 수정
+
+**파일**: `backend/api/aims_api/server.js`
+
+```javascript
+// GET /api/documents/statistics
+const { batchId } = req.query;
+
+const filter = { userId };
+if (batchId) {
+  filter.batchId = batchId;
+}
+```
+
+### Status Bar 표시 정책
+
+| 상태 | Status Bar | 이유 |
+|------|------------|------|
+| processing > 0 | ✅ 표시 | 진행 중 알림 |
+| pending > 0 | ✅ 표시 | 대기 중 알림 |
+| credit_pending > 0 | ✅ 표시 | 사용자 액션 필요 |
+| 100% 완료 + 위 모두 0 | 2초 후 숨김 | 더 이상 정보 없음 |
+
+**Progressive Disclosure**: 할 일이 있으면 표시, 없으면 숨김
+
+### 변경 파일 목록
+
+| 파일 | 변경 |
+|------|------|
+| `hooks/useBatchId.ts` | 신규 생성 |
+| `hooks/useDocumentStatistics.ts` | batchId 옵션 추가 |
+| `DocumentProcessingStatusBar.tsx` | credit_pending 제외, 자동 정리 |
+| `DocumentLibraryView.tsx` | useBatchId 훅 사용 |
+| `DocumentRegistrationView.tsx` | setBatchId 함수 사용 |
+| `backend/api/aims_api/server.js` | batchId 쿼리 파라미터 |
+
+### 테스트 결과
+
+- [x] 업로드 시작 → batchId 생성
+- [x] "📤 이번 업로드 0/1 완료 (0%) ⏸ 1 크레딧대기" 표시
+- [x] 100% 완료 → 2초 후 Status Bar 숨김
+- [x] 페이지 새로고침 후 batchId 유지
+- [x] 새 업로드 시 이전 batchId 교체
