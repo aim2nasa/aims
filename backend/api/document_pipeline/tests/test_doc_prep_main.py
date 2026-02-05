@@ -27,8 +27,12 @@ class TestDocPrepMainSuccess:
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.OpenAIService") as mock_openai, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer") as mock_connect, \
              patch("routers.doc_prep_main._notify_document_complete") as mock_notify:
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -37,6 +41,10 @@ class TestDocPrepMainSuccess:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            # delete_many mock for orphan cleanup
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -92,7 +100,11 @@ class TestDocPrepMainSuccess:
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.OpenAIService") as mock_openai, \
              patch("routers.doc_prep_main.RedisService") as mock_redis, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer") as mock_connect:
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -101,6 +113,9 @@ class TestDocPrepMainSuccess:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -157,7 +172,11 @@ class TestDocPrepMainSuccess:
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.RedisService") as mock_redis, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -166,6 +185,9 @@ class TestDocPrepMainSuccess:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -208,7 +230,11 @@ class TestDocPrepMainSuccess:
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -216,6 +242,9 @@ class TestDocPrepMainSuccess:
             mock_insert.inserted_id = ObjectId()
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -261,8 +290,12 @@ class TestDocPrepMainWithCustomer:
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.OpenAIService") as mock_openai, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer") as mock_connect, \
              patch("routers.doc_prep_main._notify_document_complete"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -271,6 +304,9 @@ class TestDocPrepMainWithCustomer:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -340,7 +376,11 @@ class TestDocPrepMainErrors:
         with patch("routers.doc_prep_main.MongoService") as mock_mongo, \
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -349,6 +389,9 @@ class TestDocPrepMainErrors:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -374,7 +417,8 @@ class TestDocPrepMainErrors:
                 data={"userId": "test_user_123"}
             )
 
-            assert response.status_code == 415
+            # 동기 처리 모드에서는 HTTP 200 반환, body에 status: 415 포함
+            assert response.status_code == 200
             data = response.json()
 
             assert data["warn"] == True
@@ -397,6 +441,9 @@ class TestDocPrepMainErrors:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -418,7 +465,12 @@ class TestDocPrepMainErrors:
                 data={"userId": "test_user_123"}
             )
 
-            assert response.status_code == 500
+            # 동기 처리 모드에서는 HTTP 200 반환, body에 result: "error" 포함
+            assert response.status_code == 200
+            data = response.json()
+            assert data["result"] == "error"
+            assert data["status"] == 500
+            assert "document_id" in data
 
 
 class TestDocPrepMainShadowMode:
@@ -505,8 +557,12 @@ class TestDocPrepMainMongoDBUpdates:
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.OpenAIService") as mock_openai, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer"), \
              patch("routers.doc_prep_main._notify_document_complete"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -515,6 +571,9 @@ class TestDocPrepMainMongoDBUpdates:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock
@@ -566,8 +625,12 @@ class TestDocPrepMainMongoDBUpdates:
              patch("routers.doc_prep_main.FileService") as mock_file, \
              patch("routers.doc_prep_main.MetaService") as mock_meta, \
              patch("routers.doc_prep_main.OpenAIService") as mock_openai, \
+             patch("routers.doc_prep_main.UploadQueueService") as mock_queue, \
              patch("routers.doc_prep_main._connect_document_to_customer"), \
              patch("routers.doc_prep_main._notify_document_complete"):
+
+            # UploadQueueService mock
+            mock_queue.enqueue = AsyncMock(return_value="queue_id_123")
 
             # MongoDB mock
             mock_collection = AsyncMock()
@@ -576,6 +639,9 @@ class TestDocPrepMainMongoDBUpdates:
             mock_insert.inserted_id = test_doc_id
             mock_collection.insert_one.return_value = mock_insert
             mock_collection.update_one.return_value = MagicMock(modified_count=1)
+            mock_delete_result = MagicMock()
+            mock_delete_result.deleted_count = 0
+            mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
             mock_mongo.get_collection.return_value = mock_collection
 
             # FileService mock

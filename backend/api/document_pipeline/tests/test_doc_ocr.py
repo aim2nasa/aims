@@ -42,10 +42,10 @@ class TestDocOCRSuccess:
             })
 
             # OpenAI mock for summary
-            mock_openai.summarize_text = AsyncMock(return_value=(
-                "PDF 문서 요약입니다.",  # summary
-                ["PDF", "문서", "테스트"]  # tags
-            ))
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "PDF 문서 요약입니다.",
+                "tags": ["PDF", "문서", "테스트"]
+            })
 
             response = await client.post(
                 "/webhook/dococr",
@@ -87,10 +87,10 @@ class TestDocOCRSuccess:
             })
 
             # OpenAI mock
-            mock_openai.summarize_text = AsyncMock(return_value=(
-                "이미지 문서 요약",
-                ["이미지"]
-            ))
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "이미지 문서 요약",
+                "tags": ["이미지"]
+            })
 
             response = await client.post(
                 "/webhook/dococr",
@@ -123,10 +123,10 @@ class TestDocOCRSuccess:
             })
 
             # OpenAI mock
-            mock_openai.summarize_text = AsyncMock(return_value=(
-                "JPEG 요약",
-                ["JPEG"]
-            ))
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "JPEG 요약",
+                "tags": ["JPEG"]
+            })
 
             # Minimal JPEG header
             jpeg_content = BytesIO(bytes([
@@ -163,7 +163,7 @@ class TestDocOCRUpstageAPI:
                 "pages": []
             })
 
-            mock_openai.summarize_text = AsyncMock(return_value=("요약", []))
+            mock_openai.summarize_text = AsyncMock(return_value={"summary": "요약", "tags": []})
 
             pdf_content = sample_pdf.read()
             response = await client.post(
@@ -195,10 +195,10 @@ class TestDocOCRUpstageAPI:
                 "pages": []
             })
 
-            mock_openai.summarize_text = AsyncMock(return_value=(
-                "긴 문서 요약",
-                ["긴", "문서"]
-            ))
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "긴 문서 요약",
+                "tags": ["긴", "문서"]
+            })
 
             sample_pdf.seek(0)
             response = await client.post(
@@ -209,7 +209,9 @@ class TestDocOCRUpstageAPI:
             assert response.status_code == 200
 
             # Verify OpenAI summarize was called with extracted text
-            mock_openai.summarize_text.assert_called_once_with(extracted_text)
+            mock_openai.summarize_text.assert_called_once()
+            call_args = mock_openai.summarize_text.call_args
+            assert call_args[0][0] == extracted_text  # 첫 번째 위치 인수
 
 
 class TestDocOCRErrors:
@@ -363,7 +365,7 @@ class TestDocOCRResponseFormat:
                 "pages": [{"page": 1, "text": "p1"}, {"page": 2, "text": "p2"}]
             })
 
-            mock_openai.summarize_text = AsyncMock(return_value=("요약", ["태그"]))
+            mock_openai.summarize_text = AsyncMock(return_value={"summary": "요약", "tags": ["태그"]})
 
             response = await client.post(
                 "/webhook/dococr",
@@ -452,10 +454,10 @@ class TestDocOCREdgeCases:
                 "pages": pages
             })
 
-            mock_openai.summarize_text = AsyncMock(return_value=(
-                "대용량 문서 요약",
-                ["대용량"]
-            ))
+            mock_openai.summarize_text = AsyncMock(return_value={
+                "summary": "대용량 문서 요약",
+                "tags": ["대용량"]
+            })
 
             # Create larger PDF content
             large_pdf = BytesIO(b"%PDF-1.4\n" + b"x" * 10000 + b"\n%%EOF")
@@ -520,7 +522,7 @@ class TestDocOCREdgeCases:
                 "pages": [{"page": 1, "text": special_text}]
             })
 
-            mock_openai.summarize_text = AsyncMock(return_value=("요약", []))
+            mock_openai.summarize_text = AsyncMock(return_value={"summary": "요약", "tags": []})
 
             sample_pdf.seek(0)
             response = await client.post(

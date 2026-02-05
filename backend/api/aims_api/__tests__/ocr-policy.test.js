@@ -81,8 +81,10 @@ describe('OCR 정책 구현 검증', () => {
       expect(storageQuotaServiceCode).toContain('KST_OFFSET = 9 * 60 * 60 * 1000');
     });
 
-    it('말일 처리 로직이 있어야 함 (31일 가입 → 2월 28/29일)', () => {
-      expect(storageQuotaServiceCode).toContain('if (subscriptionDay > daysInMonth)');
+    it('매월 1일 리셋 방식 (SaaS 표준 과금)', () => {
+      // 2026-01: SaaS 표준 과금 방식으로 전환 - 매월 1일 리셋 + 첫 달 일할 계산
+      expect(storageQuotaServiceCode).toContain('현재 월의 1일');
+      expect(storageQuotaServiceCode).toContain('isFirstMonth');
     });
 
     it('cycleStart, cycleEnd, daysUntilReset을 반환해야 함', () => {
@@ -123,10 +125,11 @@ describe('OCR 정책 구현 검증', () => {
       expect(cycleStartKST.getUTCDate()).toBe(1);
     });
 
-    it('가입일이 28일인 경우 매월 28일에 사이클 시작', () => {
+    it('가입일이 28일인 경우에도 매월 1일에 사이클 시작 (SaaS 표준)', () => {
+      // 2026-01: 매월 1일 리셋으로 변경됨
       const result = calculateOcrCycle(new Date('2025-03-28'));
       const cycleStartKST = new Date(result.cycleStart.getTime() + 9 * 60 * 60 * 1000);
-      expect(cycleStartKST.getUTCDate()).toBe(28);
+      expect(cycleStartKST.getUTCDate()).toBe(1);  // 매월 1일 시작
     });
 
     it('가입일이 31일인 경우 말일 조정 로직 적용', () => {
@@ -183,8 +186,9 @@ describe('OCR 정책 구현 검증', () => {
     });
 
     it('무제한 사용자는 항상 allowed: true여야 함', () => {
-      expect(ocrUsageRoutesCode).toContain('ocr_is_unlimited');
-      expect(ocrUsageRoutesCode).toMatch(/ocr_is_unlimited.*allowed.*true/s);
+      // 크레딧 기반으로 전환됨 - quota === -1이면 무제한
+      expect(ocrUsageRoutesCode).toContain('allowed');
+      expect(ocrUsageRoutesCode).toMatch(/quota.*-1/);
     });
   });
 
@@ -261,7 +265,8 @@ describe('OCR 정책 구현 검증', () => {
 
   describe('8. getUserStorageInfo 반환값', () => {
     it('ocr_page_quota를 반환해야 함', () => {
-      expect(storageQuotaServiceCode).toContain('ocr_page_quota: ocrPageQuota');
+      // 일할 계산이 적용된 값 (effectiveOcrPageQuota)
+      expect(storageQuotaServiceCode).toContain('ocr_page_quota: effectiveOcrPageQuota');
     });
 
     it('ocr_pages_used를 반환해야 함', () => {
@@ -1066,8 +1071,10 @@ describe('프론트엔드 표시 엣지 케이스 (크레딧 기반)', () => {
 
   describe('사이클 날짜 포맷', () => {
     it('MM/DD 형식 변환', () => {
-      expect(widgetCode).toContain("slice(5)");
-      expect(widgetCode).toContain("replace('-', '/')");
+      // 실제 구현: split('-')으로 날짜 파싱 후 parseInt로 변환
+      expect(widgetCode).toContain("split('-')");
+      expect(widgetCode).toContain("parseInt(month)");
+      expect(widgetCode).toContain("parseInt(day)");
     });
 
     it('빈 날짜 처리', () => {

@@ -308,6 +308,25 @@ def mock_mongo_service(mock_mongo_collection):
         yield mock_mongo_collection
 
 
+@pytest.fixture(autouse=True)
+def mock_upload_queue_disabled():
+    """
+    Auto-patch UPLOAD_QUEUE_ENABLED=False to run tests in synchronous mode.
+
+    This enables full pipeline testing (upload → meta extraction → summary → completed)
+    instead of just queueing tests.
+    """
+    with patch("routers.doc_prep_main.get_settings") as mock_settings:
+        # Create a mock settings object with UPLOAD_QUEUE_ENABLED=False
+        mock_config = MagicMock()
+        mock_config.UPLOAD_QUEUE_ENABLED = False
+        mock_config.AIMS_API_URL = "http://localhost:3010"
+        mock_config.WEBHOOK_API_KEY = "test-api-key"
+        mock_config.DATA_PATH = "/data/files"
+        mock_settings.return_value = mock_config
+        yield mock_config
+
+
 # ========================================
 # Mock Fixtures - External APIs
 # ========================================

@@ -12022,7 +12022,7 @@ app.get('/api/internal/credit-pending-documents', async (req, res) => {
       filter.ownerId = user_id;
     }
 
-    const pendingDocs = await db.collection('files').find(filter).toArray();
+    const pendingDocs = await collections.files.find(filter).toArray();
 
     res.json({
       success: true,
