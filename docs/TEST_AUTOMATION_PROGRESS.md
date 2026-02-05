@@ -1,6 +1,7 @@
 # AIMS 테스트 자동화 진행 기록
 
 > 시작일: 2026-02-05
+> 완료일: 2026-02-05
 
 ## 진행 현황
 
@@ -11,7 +12,7 @@
 | 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | a44006c0 | 47개 |
 | 배치 4 | Frontend Hooks (SSE/채팅) | 완료 | 2026-02-05 | 26787401 | 43개 |
 | 배치 5 | ARQueue stub → 실제 구현 | 완료 | 2026-02-05 | e6c3a3e7 | 10개 |
-| 배치 6 | 오래된 테스트 업데이트 | 완료 | 2026-02-05 | (커밋 예정) | 14개 |
+| 배치 6 | 오래된 테스트 업데이트 | 완료 | 2026-02-05 | 709ab087 | 14개 |
 
 ---
 
@@ -251,3 +252,39 @@
 - credit_pending 감지를 위해 doc.progress 필드가 설정되어 있어야 함
 
 ---
+
+## 최종 요약
+
+### 완료된 배치
+| 배치 | 테스트 수 | 주요 내용 |
+|------|----------|---------|
+| 배치 1 | 79개 | creditService.js, documentStatusHelper.js |
+| 배치 2 | 35개 | upload_worker.py, upload_queue_service.py |
+| 배치 3 | 47개 | QueryAnalyzer, SearchReranker, HybridSearch |
+| 배치 4 | 43개 | useChatSSE, useDocumentStatistics, useBatchId |
+| 배치 5 | 10개 | ARQueue stub → 실제 구현 |
+| 배치 6 | 14개 | DocumentService, DocumentStatusService 업데이트 |
+| **합계** | **228개** | |
+
+### 커밋 이력
+- `2903d388` - 배치 1: creditService, documentStatusHelper
+- `a0813fea` - 배치 2: upload_worker, upload_queue_service
+- `a44006c0` - 배치 3: aims_rag_api 검색 모듈
+- `26787401` - 배치 4: Frontend Hooks
+- `e6c3a3e7` - 배치 5: ARQueue 실제 구현
+- `709ab087` - 배치 6: 오래된 테스트 업데이트
+
+### 향후 테스트 추가 가능 영역
+
+**높은 우선순위:**
+- chatService.js (980줄) - AI 채팅, MCP 도구 호출
+- tokenUsageService.js - 토큰 사용량 계산
+- document_pipeline 서비스 계층 - anthropic_service, openai_service, file_service
+
+**중간 우선순위:**
+- aims_api 로깅/모니터링 - backendLogger, errorLogger, serviceHealthMonitor
+- Frontend 서비스 - aiUsageService, documentTypesService, settingsService
+
+**낮은 우선순위:**
+- Frontend 훅 - useAppUsageData, useColumnResize, useGlobalShortcuts
+- aims_rag_api 보조 - alert_system, quality_analyzer, search_logger
