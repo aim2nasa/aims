@@ -224,11 +224,18 @@ export function useArBatchAnalysis(options: UseArBatchAnalysisOptions): UseArBat
 
         const result = await checkAnnualReportFromPDF(file)
 
-        if (result.is_annual_report && result.metadata?.customer_name) {
-          const arFile = createArFileInfo(file, { ...result, metadata: result.metadata || undefined }, generateFileId())
+        // ⚠️ CLAUDE.md 규칙 0-2: AR은 PDF 텍스트 파싱 결과(is_annual_report)로만 판단!
+        // customer_name이 없어도 AR이면 __UNKNOWN__ 그룹으로 처리 (arGroupingUtils.ts 참조)
+        if (result.is_annual_report) {
+          // customer_name이 없으면 빈 문자열로 설정 → __UNKNOWN__ 그룹으로 분류됨
+          const metadata = result.metadata || { customer_name: '' }
+          if (!metadata.customer_name) {
+            metadata.customer_name = ''
+          }
+          const arFile = createArFileInfo(file, { ...result, metadata }, generateFileId())
           arFiles.push(arFile)
           analyzingFilesData[i] = { fileName: file.name, status: 'completed' }
-          addLog?.('success', `[AR 감지] ${file.name}`, `고객: ${result.metadata.customer_name}`)
+          addLog?.('success', `[AR 감지] ${file.name}`, `고객: ${metadata.customer_name || '(미확인)'}`)
         } else {
           nonArFiles.push(file)
           analyzingFilesData[i] = { fileName: file.name, status: 'non_ar' }

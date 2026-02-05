@@ -70,23 +70,33 @@
 
 ### 🔴🔴🔴 0-2. AR/CRS 문서 인식 원칙 (파일명 판단 절대 금지) 🔴🔴🔴
 
+> **📘 상세 스킬**: [.claude/skills/ar-crs-parsing-rules/SKILL.md](.claude/skills/ar-crs-parsing-rules/SKILL.md)
+> AR/CRS 관련 코드 수정 시 이 스킬이 자동 로딩됩니다.
+
 **AR(Annual Report)과 CRS(변액리포트) 문서 유형 판단은 반드시 PDF 텍스트 파싱으로!**
 
 | 금지 | 허용 |
 |------|------|
 | ❌ 파일명 패턴으로 판단 (`_AR_`, `_CRS_`) | ✅ PDF 텍스트 추출 후 키워드 파싱 |
-| ❌ 업로드 시점에 파일명으로 document_type 설정 | ✅ `detector.py`의 텍스트 기반 감지 로직 사용 |
+| ❌ `file.name.match()` 로 AR/CRS 판단 | ✅ `checkAnnualReportFromPDF()` 결과 사용 |
+| ❌ 파일명에서 고객명 추출 | ✅ PDF 내용에서 고객명 파싱 |
 | ❌ credit_pending 상태에서 파일명으로 AR/CRS 설정 | ✅ 크레딧 충전 후 정상 파이프라인에서 파싱 판단 |
 
 **AR 감지 로직 위치:**
+- `frontend/aims-uix3/src/features/customer/utils/pdfParser.ts`: 프론트엔드 PDF.js 기반 감지
 - `backend/api/document_pipeline/routers/doc_prep_main.py`: `_detect_and_process_annual_report()`
 - `backend/api/annual_report_api/services/detector.py`: 텍스트 기반 키워드 매칭
 
 **왜 파일명 판단이 위험한가?**
 1. 파일명은 사용자가 임의로 변경 가능
 2. 중복 업로드 시 OS가 `(2)`, `(3)` 등 자동 추가 → 패턴 매칭 실패
-3. 실제 문서 내용과 파일명이 불일치할 수 있음
-4. **문서 내용 파싱이 유일한 신뢰 가능한 방법**
+3. 원본 파일명 형식 다양 (MetLife: `AR20260121_00038235_...`) → 패턴 불일치
+4. **PDF 파싱 결과가 유일한 진실의 원천(Source of Truth)**
+
+**⚠️ 과거 버그 사례 (2026-02-05):**
+- `pdfParser.ts`에서 `file.name.match(/^(.+?)_AR_/)` 사용
+- MetLife 원본 파일 6개 중 0개 등록됨
+- **수정**: 파일명 기반 로직 전면 삭제
 
 **⚔️ 파일명으로 AR/CRS 판단하는 코드 작성 시 참수형에 처한다.**
 
@@ -521,6 +531,7 @@ npm run dev
 
 | 스킬 | 용도 | 적용 시점 |
 |------|------|----------|
+| `ar-crs-parsing-rules` | **AR/CRS 파일명 판단 금지** | AR, CRS, pdfParser 작업 |
 | `css-rules` | CSS 작성 규칙 | 스타일 수정, 색상 변경 |
 | `datetime-format` | 날짜/시간 형식 | 날짜 표시 작업 |
 | `deploy-guide` | 배포 절차 가이드 | 배포 요청 |
