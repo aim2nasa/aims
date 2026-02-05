@@ -136,9 +136,20 @@ async function updateTierDefinition(db, tierId, updates) {
 }
 
 /**
- * 가입 기념일 기반 OCR 사이클 계산 (KST)
- * @param {Date} subscriptionStartDate - 가입 시작일
- * @returns {{ cycleStart: Date, cycleEnd: Date, daysUntilReset: number }}
+ * 매월 1일 기준 사이클 계산 (KST)
+ * 업계 표준 SaaS 과금 방식: 매월 1일 리셋 + 첫 달 일할 계산
+ * @see docs/SAAS_BILLING_POLICY.md
+ *
+ * @param {Date} subscriptionStartDate - 가입 시작일 (첫 달 일할 계산에 사용)
+ * @returns {{
+ *   cycleStart: Date,
+ *   cycleEnd: Date,
+ *   daysUntilReset: number,
+ *   isFirstMonth: boolean,
+ *   proRataRatio: number,
+ *   totalDaysInCycle: number,
+ *   remainingDaysInCycle: number
+ * }}
  */
 function calculateOcrCycle(subscriptionStartDate) {
   const now = new Date();
@@ -149,56 +160,60 @@ function calculateOcrCycle(subscriptionStartDate) {
   const startDate = new Date(subscriptionStartDate);
   const startKST = new Date(startDate.getTime() + KST_OFFSET);
 
-  const subscriptionDay = startKST.getUTCDate();
-
-  // 현재 사이클 시작일 계산 (KST 기준)
-  let cycleStartKST = new Date(Date.UTC(
+  // 현재 월의 1일 (KST 기준)
+  const cycleStartKST = new Date(Date.UTC(
     nowKST.getUTCFullYear(),
     nowKST.getUTCMonth(),
-    subscriptionDay,
-    0, 0, 0, 0
+    1, 0, 0, 0, 0
   ));
 
-  // 만약 현재 날짜가 사이클 시작일보다 이전이면 이전 달로
-  if (nowKST < cycleStartKST) {
-    cycleStartKST.setUTCMonth(cycleStartKST.getUTCMonth() - 1);
-  }
+  // 현재 월의 마지막 날 (KST 기준)
+  const cycleEndKST = new Date(Date.UTC(
+    nowKST.getUTCFullYear(),
+    nowKST.getUTCMonth() + 1,
+    0, 23, 59, 59, 999
+  ));
 
-  // 말일 처리 (예: 31일 가입 -> 2월은 28/29일)
-  const daysInMonth = new Date(
-    cycleStartKST.getUTCFullYear(),
-    cycleStartKST.getUTCMonth() + 1,
-    0
-  ).getUTCDate();
-  if (subscriptionDay > daysInMonth) {
-    cycleStartKST.setUTCDate(daysInMonth);
-  }
-
-  // UTC로 변환 (KST 00:00 = UTC 이전날 15:00)
+  // UTC로 변환
   const cycleStart = new Date(cycleStartKST.getTime() - KST_OFFSET);
+  const cycleEnd = new Date(cycleEndKST.getTime() - KST_OFFSET);
 
-  // 사이클 종료일 = 다음 사이클 시작일 - 1ms
-  const cycleEndKST = new Date(cycleStartKST);
-  cycleEndKST.setUTCMonth(cycleEndKST.getUTCMonth() + 1);
-  // 다음 달 말일 처리
-  const nextMonthDays = new Date(
-    cycleEndKST.getUTCFullYear(),
-    cycleEndKST.getUTCMonth() + 1,
-    0
-  ).getUTCDate();
-  if (subscriptionDay > nextMonthDays) {
-    cycleEndKST.setUTCDate(nextMonthDays);
+  // 해당 월의 총 일수
+  const totalDaysInMonth = cycleEndKST.getUTCDate();
+
+  // 다음 달 1일까지 남은 일수
+  const nextMonthFirstKST = new Date(Date.UTC(
+    nowKST.getUTCFullYear(),
+    nowKST.getUTCMonth() + 1,
+    1, 0, 0, 0, 0
+  ));
+  const daysUntilReset = Math.ceil((nextMonthFirstKST.getTime() - KST_OFFSET - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  // 첫 달 여부 확인 (가입월과 현재월이 같은지)
+  const isFirstMonth = (
+    startKST.getUTCFullYear() === nowKST.getUTCFullYear() &&
+    startKST.getUTCMonth() === nowKST.getUTCMonth()
+  );
+
+  // 일할 계산 비율 (Pro-rata ratio)
+  let proRataRatio = 1.0;
+  let remainingDaysInCycle = totalDaysInMonth;
+
+  if (isFirstMonth) {
+    // 첫 달: 가입일부터 월말까지의 일수 비율
+    const subscriptionDay = startKST.getUTCDate();
+    remainingDaysInCycle = totalDaysInMonth - subscriptionDay + 1; // 가입일 포함
+    proRataRatio = remainingDaysInCycle / totalDaysInMonth;
   }
-  const cycleEnd = new Date(cycleEndKST.getTime() - KST_OFFSET - 1);
-
-  // 리셋까지 남은 일수 (다음 사이클 시작일까지)
-  const nextResetKST = new Date(cycleEndKST);
-  const daysUntilReset = Math.ceil((nextResetKST.getTime() - KST_OFFSET - now.getTime()) / (1000 * 60 * 60 * 24));
 
   return {
     cycleStart,
     cycleEnd,
-    daysUntilReset: Math.max(0, daysUntilReset)
+    daysUntilReset: Math.max(0, daysUntilReset),
+    isFirstMonth,
+    proRataRatio: Math.round(proRataRatio * 10000) / 10000, // 소수점 4자리
+    totalDaysInCycle: totalDaysInMonth,
+    remainingDaysInCycle
   };
 }
 
@@ -344,11 +359,22 @@ async function getUserStorageInfo(db, userId) {
   // subscription_start_date가 없으면 createdAt 사용 (마이그레이션 이전 사용자)
   const subscriptionStartDate = user?.subscription_start_date || user?.createdAt || new Date();
 
-  // 사이클 계산 (가입 기념일 기반)
-  const { cycleStart, cycleEnd, daysUntilReset } = calculateOcrCycle(subscriptionStartDate);
+  // 사이클 계산 (매월 1일 기준 + 첫 달 일할 계산)
+  const {
+    cycleStart,
+    cycleEnd,
+    daysUntilReset,
+    isFirstMonth,
+    proRataRatio,
+    totalDaysInCycle,
+    remainingDaysInCycle
+  } = calculateOcrCycle(subscriptionStartDate);
 
   // 페이지 기반 OCR 사용량 계산 (신규)
   const { pages_used, docs_count } = await calculateUserOcrPagesInCycle(db, userId, cycleStart, cycleEnd);
+
+  // 첫 달 일할 계산 적용 (관리자 제외)
+  const effectiveOcrPageQuota = isAdmin ? -1 : Math.round(ocrPageQuota * proRataRatio);
 
   // 일괄 업로드 제한
   const maxBatchUploadBytes = isAdmin ? -1 : (tierDef.max_batch_upload_bytes ?? 100 * MB);
@@ -368,18 +394,25 @@ async function getUserStorageInfo(db, userId) {
     usage_percent: quotaBytes === -1 ? 0 : Math.round((usedBytes / quotaBytes) * 100),
     is_unlimited: quotaBytes === -1,
 
-    // OCR 정보 (페이지 기반 - 신규)
+    // OCR 정보 (페이지 기반 - 일할 계산 적용)
     has_ocr_permission: hasOcrPermission,
-    ocr_page_quota: ocrPageQuota,
+    ocr_page_quota: effectiveOcrPageQuota,           // 일할 계산 적용된 한도
+    ocr_page_quota_full: ocrPageQuota,               // 원래 월간 한도 (참고용)
     ocr_pages_used: pages_used,
     ocr_docs_count: docs_count,
-    ocr_remaining: ocrPageQuota === -1 ? -1 : Math.max(0, ocrPageQuota - pages_used),
-    ocr_is_unlimited: ocrPageQuota === -1,
+    ocr_remaining: effectiveOcrPageQuota === -1 ? -1 : Math.max(0, effectiveOcrPageQuota - pages_used),
+    ocr_is_unlimited: effectiveOcrPageQuota === -1,
 
-    // 사이클 정보
+    // 사이클 정보 (매월 1일 기준)
     ocr_cycle_start: formatDateKST(cycleStart),
     ocr_cycle_end: formatDateKST(cycleEnd),
     ocr_days_until_reset: daysUntilReset,
+
+    // 일할 계산 정보 (Pro-rata)
+    is_first_month: isFirstMonth,
+    pro_rata_ratio: proRataRatio,
+    total_days_in_cycle: totalDaysInCycle,
+    remaining_days_in_cycle: remainingDaysInCycle,
 
     // 하위 호환성 (deprecated)
     ocr_quota: ocrQuota,

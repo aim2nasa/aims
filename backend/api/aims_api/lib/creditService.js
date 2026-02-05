@@ -133,7 +133,7 @@ async function getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd
 }
 
 /**
- * 사용자의 크레딧 정보 조회
+ * 사용자의 크레딧 정보 조회 (일할 계산 적용)
  * @param {Db} db - MongoDB docupload DB 인스턴스
  * @param {Db} analyticsDb - MongoDB aims_analytics DB 인스턴스
  * @param {string} userId - 사용자 ID
@@ -142,10 +142,17 @@ async function getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd
  * @param {Date} cycleStart - 사이클 시작일
  * @param {Date} cycleEnd - 사이클 종료일
  * @param {number} daysUntilReset - 리셋까지 남은 일수
+ * @param {Object} proRataInfo - 일할 계산 정보 (optional)
+ * @param {boolean} proRataInfo.isFirstMonth - 첫 달 여부
+ * @param {number} proRataInfo.proRataRatio - 일할 계산 비율
  * @returns {Promise<Object>} 크레딧 정보
  */
-async function getUserCreditInfo(db, analyticsDb, userId, tier, creditQuota, cycleStart, cycleEnd, daysUntilReset) {
+async function getUserCreditInfo(db, analyticsDb, userId, tier, creditQuota, cycleStart, cycleEnd, daysUntilReset, proRataInfo = {}) {
   const isUnlimited = creditQuota === -1;
+  const { isFirstMonth = false, proRataRatio = 1.0 } = proRataInfo;
+
+  // 일할 계산 적용된 크레딧 한도
+  const effectiveCreditQuota = isUnlimited ? -1 : Math.round(creditQuota * proRataRatio);
 
   // 크레딧 사용량 계산
   const usage = await getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd);
@@ -157,10 +164,11 @@ async function getUserCreditInfo(db, analyticsDb, userId, tier, creditQuota, cyc
   };
 
   return {
-    credit_quota: creditQuota,
+    credit_quota: effectiveCreditQuota,              // 일할 계산 적용된 한도
+    credit_quota_full: creditQuota,                  // 원래 월간 한도 (참고용)
     credits_used: usage.total_credits,
-    credits_remaining: isUnlimited ? -1 : Math.max(0, creditQuota - usage.total_credits),
-    credit_usage_percent: isUnlimited ? 0 : Math.round((usage.total_credits / creditQuota) * 100 * 100) / 100,
+    credits_remaining: isUnlimited ? -1 : Math.max(0, effectiveCreditQuota - usage.total_credits),
+    credit_usage_percent: isUnlimited ? 0 : Math.round((usage.total_credits / effectiveCreditQuota) * 100 * 100) / 100,
     credit_is_unlimited: isUnlimited,
     credit_breakdown: {
       ocr: usage.ocr,
@@ -168,7 +176,10 @@ async function getUserCreditInfo(db, analyticsDb, userId, tier, creditQuota, cyc
     },
     credit_cycle_start: formatDateKST(cycleStart),
     credit_cycle_end: formatDateKST(cycleEnd),
-    credit_days_until_reset: daysUntilReset
+    credit_days_until_reset: daysUntilReset,
+    // 일할 계산 정보
+    is_first_month: isFirstMonth,
+    pro_rata_ratio: proRataRatio
   };
 }
 
@@ -248,30 +259,38 @@ async function checkCreditBeforeAI(db, analyticsDb, userId, estimatedCredits = 5
     // 3. 티어 정의에서 credit_quota 조회
     const tierDefinitions = await getTierDefinitions(db);
     const tierDef = tierDefinitions[storageInfo.tier] || tierDefinitions['free_trial'];
-    const creditQuota = tierDef.credit_quota ?? 2000;
+    const creditQuotaFull = tierDef.credit_quota ?? 2000;
 
-    // 4. 사이클 정보 (storageInfo에서 이미 계산된 값 사용)
+    // 4. 일할 계산 적용 (첫 달인 경우)
+    const proRataRatio = storageInfo.pro_rata_ratio ?? 1.0;
+    const isFirstMonth = storageInfo.is_first_month ?? false;
+    const effectiveCreditQuota = Math.round(creditQuotaFull * proRataRatio);
+
+    // 5. 사이클 정보 (storageInfo에서 이미 계산된 값 사용)
     const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
     const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
     const daysUntilReset = storageInfo.ocr_days_until_reset;
 
-    // 5. 현재 크레딧 사용량 계산
+    // 6. 현재 크레딧 사용량 계산
     const usage = await getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd);
-    const remaining = creditQuota - usage.total_credits;
-    const usagePercent = Math.round((usage.total_credits / creditQuota) * 100 * 100) / 100;
+    const remaining = effectiveCreditQuota - usage.total_credits;
+    const usagePercent = Math.round((usage.total_credits / effectiveCreditQuota) * 100 * 100) / 100;
 
-    // 6. 한도 체크
+    // 7. 한도 체크
     if (remaining < estimatedCredits) {
       return {
         allowed: false,
         reason: 'credit_exceeded',
         credits_used: usage.total_credits,
         credits_remaining: Math.max(0, remaining),
-        credit_quota: creditQuota,
+        credit_quota: effectiveCreditQuota,
+        credit_quota_full: creditQuotaFull,
         credit_usage_percent: usagePercent,
         days_until_reset: daysUntilReset,
         tier: storageInfo.tier,
-        tier_name: storageInfo.tierName
+        tier_name: storageInfo.tierName,
+        is_first_month: isFirstMonth,
+        pro_rata_ratio: proRataRatio
       };
     }
 
@@ -280,9 +299,12 @@ async function checkCreditBeforeAI(db, analyticsDb, userId, estimatedCredits = 5
       reason: 'within_quota',
       credits_used: usage.total_credits,
       credits_remaining: remaining,
-      credit_quota: creditQuota,
+      credit_quota: effectiveCreditQuota,
+      credit_quota_full: creditQuotaFull,
       credit_usage_percent: usagePercent,
-      days_until_reset: daysUntilReset
+      days_until_reset: daysUntilReset,
+      is_first_month: isFirstMonth,
+      pro_rata_ratio: proRataRatio
     };
 
   } catch (error) {

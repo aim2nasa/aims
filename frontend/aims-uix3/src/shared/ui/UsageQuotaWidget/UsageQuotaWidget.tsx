@@ -129,16 +129,21 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   // 툴팁 콘텐츠 (소수점 2자리까지 표시)
   const storageTooltip = `저장공간: ${formatFileSize(storageInfo.used_bytes)} / ${storageInfo.is_unlimited ? '무제한' : formatFileSize(storageInfo.quota_bytes)} (${storagePercent.toFixed(2)}%)`
 
-  // 크레딧 사이클 날짜 포맷 (MM/DD 형식)
+  // 크레딧 사이클 날짜 포맷 (M/D 형식)
   const formatCycleDate = (dateStr: string) => {
     if (!dateStr) return ''
-    return dateStr.slice(5).replace('-', '/')
+    const [, month, day] = dateStr.split('-')
+    return `${parseInt(month)}/${parseInt(day)}`
   }
 
-  // 크레딧 툴팁
+  // 첫 달 표시 (일할 계산 적용 시)
+  const isFirstMonth = storageInfo.is_first_month ?? false
+  const proRataPercent = storageInfo.pro_rata_ratio ? Math.round(storageInfo.pro_rata_ratio * 100) : 100
+
+  // 크레딧 툴팁 (매월 1일 리셋, 사이클 종료일 표시)
   const creditTooltip = storageInfo.credit_is_unlimited
     ? '크레딧: 무제한'
-    : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%) ~${formatCycleDate(storageInfo.credit_cycle_end)}`
+    : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%)${isFirstMonth ? ` [첫 달 ${proRataPercent}%]` : ''} ~${formatCycleDate(storageInfo.credit_cycle_end)}`
 
   return (
     <button

@@ -113,7 +113,8 @@ export interface StorageInfo {
   }
 
   // 크레딧 정보 (신규 - TIER_PRICING_POLICY.md 참고)
-  credit_quota: number                    // 월 크레딧 한도
+  credit_quota: number                    // 월 크레딧 한도 (일할 계산 적용)
+  credit_quota_full?: number              // 원래 월간 한도 (참고용)
   credits_used: number                    // 사용한 크레딧
   credits_remaining: number               // 남은 크레딧
   credit_usage_percent: number            // 사용률 (%)
@@ -122,9 +123,15 @@ export interface StorageInfo {
     ocr: { pages: number; credits: number }
     ai: { tokens: number; credits: number }
   }
-  credit_cycle_start: string              // "YYYY-MM-DD"
-  credit_cycle_end: string                // "YYYY-MM-DD"
+  credit_cycle_start: string              // "YYYY-MM-DD" (매월 1일)
+  credit_cycle_end: string                // "YYYY-MM-DD" (해당 월 말일)
   credit_days_until_reset: number         // 리셋까지 남은 일수
+
+  // 일할 계산 정보 (Pro-rata) - SAAS_BILLING_POLICY.md 참고
+  is_first_month?: boolean                // 첫 달 여부
+  pro_rata_ratio?: number                 // 일할 계산 비율 (0~1)
+  total_days_in_cycle?: number            // 해당 월 총 일수
+  remaining_days_in_cycle?: number        // 사이클 내 남은 일수
 
   // OCR 정보 (페이지 기반 - deprecated, 하위호환)
   has_ocr_permission: boolean

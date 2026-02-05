@@ -65,7 +65,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
       const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
       const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
 
-      // 크레딧 정보 조회
+      // 크레딧 정보 조회 (일할 계산 정보 전달)
       const creditInfo = await getUserCreditInfo(
         db,
         analyticsDb,
@@ -74,7 +74,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
         creditQuota,
         cycleStart,
         cycleEnd,
-        storageInfo.ocr_days_until_reset
+        storageInfo.ocr_days_until_reset,
+        {
+          isFirstMonth: storageInfo.is_first_month,
+          proRataRatio: storageInfo.pro_rata_ratio
+        }
       );
 
       res.json({
@@ -130,7 +134,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
       const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
       const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
 
-      // 크레딧 정보 조회
+      // 크레딧 정보 조회 (일할 계산 정보 전달)
       const creditInfo = await getUserCreditInfo(
         db,
         analyticsDb,
@@ -139,7 +143,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
         creditQuota,
         cycleStart,
         cycleEnd,
-        storageInfo.ocr_days_until_reset
+        storageInfo.ocr_days_until_reset,
+        {
+          isFirstMonth: storageInfo.is_first_month,
+          proRataRatio: storageInfo.pro_rata_ratio
+        }
       );
 
       res.json({
