@@ -130,6 +130,34 @@ function prepareDocumentResponse(doc) {
   if (doc.progress !== undefined && doc.progress !== null) {
     const hasMetaText = doc.meta && doc.meta.full_text;
 
+    // 🔴 credit_pending 상태 체크 (크레딧 부족으로 처리 보류)
+    if (doc.progressStage === 'credit_pending' || doc.status === 'credit_pending' || doc.overallStatus === 'credit_pending') {
+      const uiStages = {
+        upload: { name: '업로드', status: 'completed', message: '파일 저장됨', timestamp: null },
+        credit: { name: '크레딧', status: 'warning', message: doc.credit_pending_info?.days_until_reset
+          ? `크레딧 부족 (${doc.credit_pending_info.days_until_reset}일 후 리셋)`
+          : '크레딧 부족으로 대기 중', timestamp: null }
+      };
+      return {
+        raw,
+        computed: {
+          uiStages,
+          currentStage: 1,
+          overallStatus: 'credit_pending',
+          progress: 0,
+          displayMessages: {
+            status: '크레딧 부족',
+            message: doc.credit_pending_info?.days_until_reset
+              ? `크레딧이 부족합니다. ${doc.credit_pending_info.days_until_reset}일 후 자동 처리됩니다.`
+              : '크레딧이 부족하여 처리가 보류되었습니다.'
+          },
+          creditPending: true,
+          creditInfo: doc.credit_pending_info || {},
+          ...pdfFields
+        }
+      };
+    }
+
     // progress 100이거나 complete면 완료 상태 반환
     if (doc.progress >= 100 || doc.progressStage === 'complete') {
       const uiStages = hasMetaText ? {
