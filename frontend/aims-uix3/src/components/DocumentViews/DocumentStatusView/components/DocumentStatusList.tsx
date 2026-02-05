@@ -783,6 +783,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         const statusIcon = DocumentStatusService.getStatusIcon(status)
         const isLinked = Boolean(document.customer_relation)
         const isAnnualReport = document.is_annual_report === true
+        // 🔴 크레딧 부족 상태 확인
+        const isCreditPending = status === 'credit_pending'
         // 내 파일 여부 확인 (ownerId === customerId)
         const isMyFile = document.ownerId && document.customerId && document.ownerId === document.customerId
         // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
@@ -886,10 +888,10 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   decorative={true}
                 />
               </div>
-              {/* 🍎 AR BADGE: Annual Report 표시 */}
+              {/* 🍎 AR BADGE: Annual Report 표시 (크레딧 부족 시 회색) */}
               {document.is_annual_report && (
-                <Tooltip content="Annual Report">
-                  <div className="document-ar-badge">
+                <Tooltip content={isCreditPending ? "Annual Report (크레딧 부족)" : "Annual Report"}>
+                  <div className={`document-ar-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
                     AR
                   </div>
                 </Tooltip>
@@ -1291,26 +1293,32 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </button>
                 </Tooltip>
               )}
-              <Tooltip content="요약 보기">
+              <Tooltip content={isCreditPending ? "크레딧 부족 - 요약 없음" : "요약 보기"}>
                 <button
-                  className="action-btn action-btn--summary"
+                  className={`action-btn action-btn--summary ${isCreditPending ? 'action-btn--disabled' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onSummaryClick?.(document)
+                    if (!isCreditPending) {
+                      onSummaryClick?.(document)
+                    }
                   }}
                   aria-label="요약 보기"
+                  disabled={isCreditPending}
                 >
                   <SummaryIcon />
                 </button>
               </Tooltip>
-              <Tooltip content="전체 텍스트 보기">
+              <Tooltip content={isCreditPending ? "크레딧 부족 - 텍스트 없음" : "전체 텍스트 보기"}>
                 <button
-                  className="action-btn action-btn--full"
+                  className={`action-btn action-btn--full ${isCreditPending ? 'action-btn--disabled' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onFullTextClick?.(document)
+                    if (!isCreditPending) {
+                      onFullTextClick?.(document)
+                    }
                   }}
                   aria-label="전체 텍스트 보기"
+                  disabled={isCreditPending}
                 >
                   <DocumentIcon />
                 </button>

@@ -799,6 +799,21 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   opacity: 0.2;
 }
 
+/* 🔴 크레딧 부족 상태: 버튼 비활성화 */
+.action-btn--disabled,
+.action-btn--disabled:hover {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+  color: var(--color-ios-text-tertiary-light) !important;
+}
+
+html[data-theme="dark"] .action-btn--disabled,
+html[data-theme="dark"] .action-btn--disabled:hover {
+  color: var(--color-ios-text-tertiary-dark) !important;
+  opacity: 0.25;
+}
+
 .action-btn[data-disabled="true"]:hover {
   transform: none;
 }
@@ -1040,6 +1055,22 @@ html[data-theme="dark"] .document-ar-badge {
 
 html[data-theme="dark"] .status-item:hover .document-ar-badge {
   box-shadow: 0 0 8px var(--color-badge-ar-glow);
+}
+
+/* === 🔴 크레딧 부족 상태: 뱃지 회색 처리 === */
+.badge--disabled {
+  background-color: var(--color-ios-text-tertiary-light) !important;
+  opacity: 0.5;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .badge--disabled {
+  background-color: var(--color-ios-text-tertiary-dark) !important;
+}
+
+.status-item:hover .badge--disabled {
+  transform: translateX(-50%) scale(1) !important;
+  box-shadow: none !important;
 }
 
 /* === 🍎 OCR BADGE: OCR 신뢰도 표시 (하단 중앙) === */
