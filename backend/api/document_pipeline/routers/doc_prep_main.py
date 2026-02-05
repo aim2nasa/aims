@@ -333,11 +333,12 @@ async def doc_prep_main(
                     full_text = meta_result.get("extracted_text", "")
                     detected_mime = meta_result.get("mime_type", "")
 
-                    # 메타 정보 업데이트
+                    # 메타 정보 업데이트 (🔴 full_text 포함 - 크레딧 충전 후 임베딩 처리용)
                     meta_update = {
                         "meta.mime": detected_mime,
                         "meta.pdf_pages": meta_result.get("num_pages", 0),
                         "meta.length": len(full_text) if full_text else 0,
+                        "meta.full_text": full_text or "",  # 🔴 임베딩 처리를 위해 full_text 저장
                     }
 
                     # 🍎 AR/CRS 파싱 판단 (텍스트 기반 - CLAUDE.md 0-2 규칙!)

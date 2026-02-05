@@ -579,13 +579,30 @@ async function grantBonusCredits(db, userId, amount, adminId, reason, packageInf
 
   await transactionsCollection.insertOne(transaction);
 
+  // 🔥 5. credit_pending 문서 자동 처리
+  // 크레딧 충전 후 해당 사용자의 credit_pending 문서를 자동으로 처리 대기열에 추가
+  let creditPendingResult = { processed: 0, remaining: 0, docs: [] };
+  try {
+    creditPendingResult = await processCreditPendingDocuments(db, userId);
+    if (creditPendingResult.processed > 0) {
+      console.log(`[CreditService] grantBonusCredits: credit_pending 문서 ${creditPendingResult.processed}개 → pending 상태로 전환`);
+    }
+  } catch (err) {
+    // credit_pending 처리 실패해도 크레딧 부여는 성공으로 처리
+    console.error('[CreditService] grantBonusCredits: credit_pending 처리 중 오류:', err.message);
+  }
+
   return {
     success: true,
     user_id: userId,
     amount_granted: amount,
     balance_before: balanceBefore,
     balance_after: balanceAfter,
-    transaction_id: transaction._id
+    transaction_id: transaction._id,
+    // 🔥 credit_pending 자동 처리 결과
+    credit_pending_processed: creditPendingResult.processed,
+    credit_pending_remaining: creditPendingResult.remaining,
+    credit_pending_docs: creditPendingResult.docs
   };
 }
 
@@ -933,6 +950,86 @@ async function getCreditOverview(db) {
   };
 }
 
+/**
+ * 🔥 크레딧 충전 시 credit_pending 문서 자동 처리
+ * 크레딧이 충분한 문서만 pending으로 변경
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<{processed: number, remaining: number, docs: Array}>}
+ */
+async function processCreditPendingDocuments(db, userId) {
+  const filesCollection = db.collection('files');
+  const analyticsDb = db.client.db('aims_analytics');
+
+  // 1. credit_pending 문서 조회 (오래된 순)
+  const pendingDocs = await filesCollection.find({
+    ownerId: userId,
+    overallStatus: 'credit_pending'
+  }).sort({ createdAt: 1 }).toArray();
+
+  if (pendingDocs.length === 0) {
+    console.log(`[CreditService] processCreditPendingDocuments: 사용자 ${userId}의 credit_pending 문서 없음`);
+    return { processed: 0, remaining: 0, docs: [] };
+  }
+
+  console.log(`[CreditService] processCreditPendingDocuments: 사용자 ${userId}의 credit_pending 문서 ${pendingDocs.length}개 발견`);
+
+  let processed = 0;
+  const processedDocs = [];
+
+  for (const doc of pendingDocs) {
+    // 페이지 수 추출 (다양한 필드 호환)
+    const pageCount = doc.ocr?.page_count || doc.ocr?.total_pages || doc.credit_pending_info?.page_count || 1;
+
+    // 크레딧 체크 (실시간)
+    const creditCheck = await checkCreditForDocumentProcessing(db, analyticsDb, userId, pageCount);
+
+    if (!creditCheck.allowed) {
+      // 크레딧 부족 → 루프 종료 (나머지는 credit_pending 유지)
+      console.log(`[CreditService] processCreditPendingDocuments: 크레딧 부족으로 중단 (문서: ${doc._id}, 필요: ${creditCheck.estimated_credits}C, 가용: ${creditCheck.total_available}C)`);
+      break;
+    }
+
+    // pending으로 상태 변경
+    await filesCollection.updateOne(
+      { _id: doc._id },
+      {
+        $set: {
+          overallStatus: 'pending',
+          'docembed.status': 'pending',
+          'docembed.reprocessed_from_credit_pending': true,
+          'docembed.reprocessed_at': new Date(),
+          progressStage: 'queued',
+          progressMessage: '크레딧 충전 후 재처리 대기'
+        },
+        $unset: {
+          credit_pending_since: '',
+          credit_pending_info: ''
+        }
+      }
+    );
+
+    processedDocs.push({
+      doc_id: doc._id,
+      original_name: doc.upload?.originalName || doc.filename,
+      page_count: pageCount,
+      estimated_credits: creditCheck.estimated_credits
+    });
+
+    processed++;
+    console.log(`[CreditService] processCreditPendingDocuments: 문서 ${doc._id} (${doc.upload?.originalName}) → pending (${processed}/${pendingDocs.length})`);
+  }
+
+  const remaining = pendingDocs.length - processed;
+  console.log(`[CreditService] processCreditPendingDocuments: 완료 - 처리됨: ${processed}, 남음: ${remaining}`);
+
+  return {
+    processed,
+    remaining,
+    docs: processedDocs
+  };
+}
+
 module.exports = {
   CREDIT_RATES,
   calculateOcrCredits,
@@ -953,5 +1050,6 @@ module.exports = {
   consumeCredits,
   getCreditTransactions,
   getCreditPackages,
-  getCreditOverview
+  getCreditOverview,
+  processCreditPendingDocuments
 };

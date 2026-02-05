@@ -232,31 +232,38 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
 
             try:
                 # 🔴 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
-                # 예상 페이지 수 (ocr.page_count 또는 기본 1)
-                estimated_pages = doc_data.get('ocr', {}).get('page_count', 1) or 1
-                credit_check = check_credit_for_embedding(owner_id, estimated_pages)
+                # ⭐ reprocessed_from_credit_pending 플래그가 있으면 크레딧 체크 스킵
+                # (grantBonusCredits에서 이미 크레딧 충분 여부 확인 후 pending으로 변경한 문서)
+                is_reprocessed = doc_data.get('docembed', {}).get('reprocessed_from_credit_pending', False)
 
-                if not credit_check.get('allowed', True):
-                    # 크레딧 부족: credit_pending 상태로 변경
-                    print(f"[CREDIT_PENDING] 문서 ID: {doc_id} - 크레딧 부족 (남은: {credit_check.get('credits_remaining', 0)}, 필요: {credit_check.get('estimated_credits', 0)})")
-                    collection.update_one(
-                        {'_id': ObjectId(doc_id)},
-                        {'$set': {
-                            'docembed': {
-                                'status': 'credit_pending',
-                                'credit_pending_since': datetime.now(timezone.utc).isoformat(),
-                                'credit_info': {
-                                    'credits_remaining': credit_check.get('credits_remaining', 0),
-                                    'credit_quota': credit_check.get('credit_quota', 0),
-                                    'days_until_reset': credit_check.get('days_until_reset', 0),
-                                    'estimated_credits': credit_check.get('estimated_credits', 0)
-                                }
-                            },
-                            'overallStatus': 'credit_pending',
-                            'overallStatusUpdatedAt': datetime.now(timezone.utc)
-                        }}
-                    )
-                    continue  # 다음 문서로
+                if is_reprocessed:
+                    print(f"[CREDIT_SKIP] 문서 ID: {doc_id} - 크레딧 충전 후 재처리 문서 (체크 스킵)")
+                else:
+                    # 예상 페이지 수 (ocr.page_count 또는 기본 1)
+                    estimated_pages = doc_data.get('ocr', {}).get('page_count', 1) or 1
+                    credit_check = check_credit_for_embedding(owner_id, estimated_pages)
+
+                    if not credit_check.get('allowed', True):
+                        # 크레딧 부족: credit_pending 상태로 변경
+                        print(f"[CREDIT_PENDING] 문서 ID: {doc_id} - 크레딧 부족 (남은: {credit_check.get('credits_remaining', 0)}, 필요: {credit_check.get('estimated_credits', 0)})")
+                        collection.update_one(
+                            {'_id': ObjectId(doc_id)},
+                            {'$set': {
+                                'docembed': {
+                                    'status': 'credit_pending',
+                                    'credit_pending_since': datetime.now(timezone.utc).isoformat(),
+                                    'credit_info': {
+                                        'credits_remaining': credit_check.get('credits_remaining', 0),
+                                        'credit_quota': credit_check.get('credit_quota', 0),
+                                        'days_until_reset': credit_check.get('days_until_reset', 0),
+                                        'estimated_credits': credit_check.get('estimated_credits', 0)
+                                    }
+                                },
+                                'overallStatus': 'credit_pending',
+                                'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                            }}
+                        )
+                        continue  # 다음 문서로
 
                 # full_text 추출 (우선순위: meta.full_text > ocr.full_text > text.full_text)
                 full_text = None

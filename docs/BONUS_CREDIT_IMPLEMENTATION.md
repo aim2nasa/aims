@@ -260,7 +260,212 @@ db.credit_packages.createIndex({ sort_order: 1 })
 
 ---
 
+---
+
+## 🔥 크레딧 충전 시 credit_pending 문서 자동 처리
+
+### 개요
+
+크레딧 부족으로 `credit_pending` 상태가 된 문서들을 **크레딧 충전 시 자동으로 처리 대기열에 추가**합니다.
+
+### 핵심 원칙
+
+| 원칙 | 설명 |
+|------|------|
+| 확보된 크레딧만큼만 처리 | 크레딧이 충분한 문서만 pending으로 변경 |
+| 부분 처리 허용 | 일부만 처리 가능하면 그것만 처리, 나머지는 유지 |
+| 오래된 순서 | `createdAt ASC` - 먼저 업로드된 문서 우선 |
+
+### 로직 흐름
+
+```
+grantBonusCredits(userId, amount) 호출
+    ↓
+1. 크레딧 부여 (기존 로직)
+    ↓
+2. processCreditPendingDocuments(db, userId) 호출
+    ↓
+3. credit_pending 문서 조회 (오래된 순)
+    ↓
+4. 각 문서에 대해:
+   a. 페이지 수 기반 예상 크레딧 계산
+   b. checkCreditForDocumentProcessing() 실시간 체크
+   c. 충분하면 → pending으로 변경
+   d. 부족하면 → 루프 종료 (나머지 유지)
+    ↓
+5. 결과 반환 (credit_pending_processed, remaining)
+```
+
+### 예상 크레딧 계산
+
+```javascript
+// OCR: 페이지당 2 크레딧
+// 임베딩: 페이지당 약 0.5 크레딧
+// 버퍼 1.5배 적용
+estimatedCredits = ceil((pageCount * 2 + pageCount * 0.5) * 1.5)
+                 = ceil(pageCount * 3.75)
+```
+
+### 문서 상태 변경
+
+```javascript
+// credit_pending → pending
+{
+  $set: {
+    overallStatus: 'pending',
+    'docembed.status': 'pending',
+    'docembed.reprocessed_from_credit_pending': true,
+    'docembed.reprocessed_at': ISODate,
+    progressStage: 'queued',
+    progressMessage: '크레딧 충전 후 재처리 대기'
+  },
+  $unset: {
+    credit_pending_since: '',
+    credit_pending_info: ''
+  }
+}
+```
+
+### API 응답 확장
+
+`grantBonusCredits` 결과에 자동 처리 정보 포함:
+
+```javascript
+{
+  "success": true,
+  "user_id": "...",
+  "amount_granted": 100,
+  "balance_before": 90000,
+  "balance_after": 90100,
+  "transaction_id": "...",
+  // 🔥 신규 필드
+  "credit_pending_processed": 3,        // pending으로 변환된 문서 수
+  "credit_pending_remaining": 0,        // 아직 credit_pending인 문서 수
+  "credit_pending_docs": [              // 처리된 문서 목록
+    {
+      "doc_id": "...",
+      "original_name": "AR_김보성_20250830.pdf",
+      "page_count": 1,
+      "estimated_credits": 4
+    }
+  ]
+}
+```
+
+### 테스트 결과 (2026-02-05)
+
+```
+크레딧 부여 전 credit_pending 문서:
+credit_pending 문서 수: 3
+
+100 크레딧 부여 중...
+[CreditService] processCreditPendingDocuments: 사용자 ...의 credit_pending 문서 3개 발견
+[CreditService] processCreditPendingDocuments: 문서 ... (AR_김보성_20250830.pdf) → pending (1/3)
+[CreditService] processCreditPendingDocuments: 문서 ... (AR_김보성_20251029.pdf) → pending (2/3)
+[CreditService] processCreditPendingDocuments: 문서 ... (AR20260120_...) → pending (3/3)
+[CreditService] processCreditPendingDocuments: 완료 - 처리됨: 3, 남음: 0
+
+크레딧 부여 후 credit_pending 문서:
+credit_pending 문서 수: 0
+
+pending 상태로 변경된 문서:
+재처리 대기 문서 수: 3
+```
+
+### 테스트 환경 주의사항
+
+> ⚠️ **Docker 컨테이너 내부에서 테스트해야 함!**
+>
+> `processCreditPendingDocuments` 함수는 `db.client.db('aims_analytics')`를 사용하여
+> 다른 데이터베이스에 접근합니다. Docker 외부에서 테스트할 경우 MongoDB 연결 컨텍스트가
+> 달라서 제대로 동작하지 않을 수 있습니다.
+>
+> ```bash
+> # 올바른 테스트 방법 (Docker 내부)
+> docker exec aims-api node -e "
+> const { MongoClient } = require('mongodb');
+> const { grantBonusCredits } = require('/app/lib/creditService');
+> // ... (mongodb://tars:27017 사용)
+> "
+> ```
+
+### 관련 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/api/aims_api/lib/creditService.js` | `processCreditPendingDocuments()` 함수 추가, `grantBonusCredits()` 확장 |
+
+---
+
 ## 구현 로그
+
+### 2026-02-05: credit_pending 자동 처리 기능 완성
+
+**Phase 1: 기본 기능 구현**
+- `processCreditPendingDocuments()` 함수 구현
+- `grantBonusCredits()` 함수에서 크레딧 부여 후 자동 호출
+- 부분 처리 지원 (크레딧 부족 시 처리 가능한 것만 처리)
+
+**Phase 2: 버그 수정 (full_pipeline.py 크레딧 재체크 문제)**
+
+⚠️ **발견된 문제**: 문서를 `pending`으로 변경해도 1분 후 다시 `credit_pending`으로 되돌아감
+
+**근본 원인 분석:**
+1. `full_pipeline.py`가 크론탭으로 **매 1분마다** 실행됨
+2. `docembed.status: 'pending'`인 문서를 찾아서 임베딩 처리
+3. 처리 전 `check_credit_for_embedding()` 호출하여 **크레딧 재체크**
+4. 크레딧 부족으로 판단되면 **다시 credit_pending으로 변경**
+
+**해결책:**
+1. `full_pipeline.py`에 `reprocessed_from_credit_pending` 플래그 체크 추가
+2. 이 플래그가 있으면 **크레딧 체크 스킵** (이미 검증된 문서)
+
+```python
+# full_pipeline.py 수정 내용
+is_reprocessed = doc_data.get('docembed', {}).get('reprocessed_from_credit_pending', False)
+
+if is_reprocessed:
+    print(f"[CREDIT_SKIP] 문서 ID: {doc_id} - 크레딧 충전 후 재처리 문서 (체크 스킵)")
+else:
+    # 기존 크레딧 체크 로직...
+```
+
+**Phase 3: 버그 수정 (credit_pending 문서 full_text 누락)**
+
+⚠️ **발견된 문제**: `credit_pending` 상태 문서에 `full_text`가 저장되지 않음
+
+**근본 원인:**
+- `doc_prep_main.py`에서 크레딧 부족 시 `meta.length`만 저장하고 `meta.full_text`는 누락
+
+**해결책:**
+```python
+# doc_prep_main.py 수정 내용
+meta_update = {
+    "meta.mime": detected_mime,
+    "meta.pdf_pages": meta_result.get("num_pages", 0),
+    "meta.length": len(full_text) if full_text else 0,
+    "meta.full_text": full_text or "",  # 🔴 추가됨
+}
+```
+
+**최종 테스트 결과:**
+```
+[2026-02-05 22:22:01] 시작
+총 3개의 문서를 처리할 준비가 완료되었습니다.
+[CREDIT_SKIP] 문서 ID: 698490fe66f5baefac3170c6 - 크레딧 충전 후 재처리 문서 (체크 스킵)
+--- 문서 ID: 698490fe66f5baefac3170c6 처리 완료 (overallStatus: completed) ---
+[CREDIT_SKIP] 문서 ID: 698490fe66f5baefac3170c7 - 크레딧 충전 후 재처리 문서 (체크 스킵)
+--- 문서 ID: 698490fe66f5baefac3170c7 처리 완료 (overallStatus: completed) ---
+[CREDIT_SKIP] 문서 ID: 698490fe66f5baefac3170c8 - 크레딧 충전 후 재처리 문서 (체크 스킵)
+--- 문서 ID: 698490fe66f5baefac3170c8 처리 완료 (overallStatus: completed) ---
+[2026-02-05 22:22:11] 끝
+```
+
+**수정된 파일:**
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/embedding/full_pipeline.py` | `reprocessed_from_credit_pending` 플래그 체크 추가 |
+| `backend/api/document_pipeline/routers/doc_prep_main.py` | `meta.full_text` 저장 추가 |
 
 ### 2026-02-05: Phase 1~3 완료
 
