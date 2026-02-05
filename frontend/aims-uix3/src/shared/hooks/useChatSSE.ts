@@ -57,6 +57,9 @@ export interface CreditExceededInfo {
   days_until_reset: number;
   tier?: string;
   tier_name?: string;
+  // 추가 크레딧 정보
+  bonus_balance?: number;
+  total_available?: number;
 }
 
 /**

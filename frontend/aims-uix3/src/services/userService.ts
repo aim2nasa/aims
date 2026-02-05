@@ -116,9 +116,13 @@ export interface StorageInfo {
   credit_quota: number                    // 월 크레딧 한도 (일할 계산 적용)
   credit_quota_full?: number              // 원래 월간 한도 (참고용)
   credits_used: number                    // 사용한 크레딧
-  credits_remaining: number               // 남은 크레딧
+  credits_remaining: number               // 남은 월정액 크레딧
   credit_usage_percent: number            // 사용률 (%)
   credit_is_unlimited: boolean            // 무제한 여부
+
+  // 추가 크레딧 (Bonus Credits) - BONUS_CREDIT_IMPLEMENTATION.md 참고
+  bonus_balance: number                   // 추가 크레딧 잔액
+  total_available: number                 // 총 사용가능 (월정액 남은 + 추가)
   credit_breakdown: {
     ocr: { pages: number; credits: number }
     ai: { tokens: number; credits: number }

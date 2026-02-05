@@ -11361,6 +11361,11 @@ MongoClient.connect(MONGO_URI)
     const storageRoutes = require('./routes/storage-routes')(db, analyticsDb, authenticateJWT, requireRole, notifyUserAccountSubscribers);
     app.use('/api', storageRoutes);
 
+    // 추가 크레딧 라우트 설정 (보너스 크레딧 관리)
+    const bonusCreditsRoutes = require('./routes/bonus-credits-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    app.use('/api', bonusCreditsRoutes);
+    console.log('[Server] bonusCreditsRoutes 등록 완료');
+
     // 테스트: storage routes 바로 다음에 직접 라우트 등록
     app.get('/api/storage-test', (req, res) => {
       res.json({ success: true, message: 'Direct route after storage works!' });

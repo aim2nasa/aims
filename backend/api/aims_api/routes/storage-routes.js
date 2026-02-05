@@ -17,7 +17,7 @@ const {
   updateTierDefinition,
   calculateOcrCycle
 } = require('../lib/storageQuotaService');
-const { getUserCreditInfo } = require('../lib/creditService');
+const { getUserCreditInfo, getBonusCreditBalance } = require('../lib/creditService');
 const backendLogger = require('../lib/backendLogger');
 
 /**
@@ -81,12 +81,20 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole, notifyU
         }
       );
 
+      // 추가 크레딧 (Bonus Credits) 조회
+      const bonusBalance = await getBonusCreditBalance(db, userId);
+      const monthlyRemaining = Math.max(0, creditInfo.credits_remaining);
+      const totalAvailable = storageInfo.is_unlimited ? -1 : (monthlyRemaining + bonusBalance);
+
       res.json({
         success: true,
         data: {
           ...storageInfo,
           // 크레딧 정보 추가
           ...creditInfo,
+          // 추가 크레딧 정보
+          bonus_balance: bonusBalance,
+          total_available: totalAvailable,
           formatted: {
             quota: formatBytes(storageInfo.quota_bytes),
             used: formatBytes(storageInfo.used_bytes),

@@ -1551,6 +1551,19 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
   color: var(--color-text-primary);
 }
 
+/* 추가 크레딧 표시 (Bonus Credits) */
+.account-settings-view__bonus-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--spacing-1);
+  padding: 0 var(--spacing-1);
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-green);
+  background: var(--color-accent-green-subtle, rgba(52, 199, 89, 0.12));
+  border-radius: var(--radius-sm);
+}
+
 .account-settings-view__usage-footer {
   display: flex;
   align-items: center;

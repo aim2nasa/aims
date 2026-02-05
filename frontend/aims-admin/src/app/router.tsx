@@ -24,6 +24,9 @@ import { BackupPage } from '@/pages/BackupPage';
 import { ShadowMonitorPage } from '@/pages/ShadowMonitorPage';
 import { VirusScanPage } from '@/pages/VirusScanPage';
 import { ParsingSettingsPage } from '@/pages/ParsingSettingsPage';
+import { CreditManagementPage } from '@/pages/CreditManagementPage';
+import { CreditHistoryPage } from '@/pages/CreditHistoryPage';
+import { CreditPackagesPage } from '@/pages/CreditPackagesPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -81,6 +84,18 @@ export const router = createBrowserRouter([
         // OCR 사용량 페이지는 AI 사용량 페이지로 통합됨 - 기존 URL 리다이렉트
         path: 'dashboard/ocr-usage',
         element: <Navigate to="/dashboard/ai-usage" replace />,
+      },
+      {
+        path: 'dashboard/credits',
+        element: <CreditManagementPage />,
+      },
+      {
+        path: 'dashboard/credits/history',
+        element: <CreditHistoryPage />,
+      },
+      {
+        path: 'dashboard/credits/packages',
+        element: <CreditPackagesPage />,
       },
       {
         path: 'dashboard/error-logs',

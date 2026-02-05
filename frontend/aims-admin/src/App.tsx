@@ -154,6 +154,7 @@ function App() {
         { path: '/dashboard/documents', label: '문서 처리' },
         { path: '/dashboard/storage', label: '스토리지' },
         { path: '/dashboard/tiers', label: '티어 관리' },
+        { path: '/dashboard/credits', label: '크레딧 관리' },
         { path: '/dashboard/system', label: '시스템 상태' },
         { path: '/dashboard/file-validation', label: '파일 검증' },
         { path: '/dashboard/ai-usage', label: 'AI/OCR 사용량' },

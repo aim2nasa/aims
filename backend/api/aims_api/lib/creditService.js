@@ -375,10 +375,14 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
 
     // 6. 현재 크레딧 사용량 계산
     const usage = await getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd);
-    const remaining = effectiveCreditQuota - usage.total_credits;
+    const monthlyRemaining = Math.max(0, effectiveCreditQuota - usage.total_credits);
     const usagePercent = Math.round((usage.total_credits / effectiveCreditQuota) * 100 * 100) / 100;
 
-    // 7. 예상 크레딧 계산
+    // 7. 추가 크레딧 잔액 조회
+    const bonusBalance = await getBonusCreditBalance(db, userId);
+    const totalAvailable = monthlyRemaining + bonusBalance;
+
+    // 8. 예상 크레딧 계산
     // OCR: 페이지당 2 크레딧
     // 임베딩: 페이지당 약 500자 기준, 1K 토큰 = 0.5 크레딧 → 페이지당 약 0.5 크레딧
     // 버퍼 1.5배 적용
@@ -386,13 +390,15 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
     const estimatedEmbeddingCredits = estimatedPages * 0.5;  // 페이지당 평균 500자 ≈ 0.125K 토큰
     const estimatedCredits = Math.ceil((estimatedOcrCredits + estimatedEmbeddingCredits) * 1.5);
 
-    // 8. 한도 체크
-    if (remaining < estimatedCredits) {
+    // 9. 한도 체크 (월정액 + 추가 크레딧 합산)
+    if (totalAvailable < estimatedCredits) {
       return {
         allowed: false,
         reason: 'credit_exceeded',
         credits_used: usage.total_credits,
-        credits_remaining: Math.max(0, remaining),
+        credits_remaining: monthlyRemaining,
+        bonus_balance: bonusBalance,
+        total_available: totalAvailable,
         credit_quota: effectiveCreditQuota,
         credit_quota_full: creditQuotaFull,
         credit_usage_percent: usagePercent,
@@ -407,9 +413,11 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
 
     return {
       allowed: true,
-      reason: 'within_quota',
+      reason: monthlyRemaining >= estimatedCredits ? 'within_quota' : 'bonus_available',
       credits_used: usage.total_credits,
-      credits_remaining: remaining,
+      credits_remaining: monthlyRemaining,
+      bonus_balance: bonusBalance,
+      total_available: totalAvailable,
       credit_quota: effectiveCreditQuota,
       credit_quota_full: creditQuotaFull,
       credit_usage_percent: usagePercent,
@@ -430,6 +438,487 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
   }
 }
 
+// ============================================================
+// 추가 크레딧 (Bonus Credits) 관련 함수
+// @see docs/BONUS_CREDIT_IMPLEMENTATION.md
+// ============================================================
+
+/**
+ * userId를 쿼리 형식으로 변환 (ObjectId 또는 string 처리)
+ */
+function toUserIdQuery(userId) {
+  const { ObjectId } = require('mongodb');
+  if (typeof userId === 'string' && ObjectId.isValid(userId)) {
+    return new ObjectId(userId);
+  }
+  return userId;
+}
+
+/**
+ * 사용자의 추가 크레딧 잔액 조회
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<number>} 추가 크레딧 잔액
+ */
+async function getBonusCreditBalance(db, userId) {
+  const user = await db.collection('users').findOne(
+    { _id: toUserIdQuery(userId) },
+    { projection: { 'bonus_credits.balance': 1 } }
+  );
+  return user?.bonus_credits?.balance ?? 0;
+}
+
+/**
+ * 사용자의 추가 크레딧 상세 정보 조회
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<Object>} 추가 크레딧 정보
+ */
+async function getBonusCreditInfo(db, userId) {
+  const user = await db.collection('users').findOne(
+    { _id: toUserIdQuery(userId) },
+    { projection: { bonus_credits: 1 } }
+  );
+
+  return {
+    balance: user?.bonus_credits?.balance ?? 0,
+    total_purchased: user?.bonus_credits?.total_purchased ?? 0,
+    total_used: user?.bonus_credits?.total_used ?? 0,
+    last_purchase_at: user?.bonus_credits?.last_purchase_at ?? null,
+    updated_at: user?.bonus_credits?.updated_at ?? null
+  };
+}
+
+/**
+ * 추가 크레딧 부여 (관리자용)
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 대상 사용자 ID
+ * @param {number} amount - 부여할 크레딧 (양수)
+ * @param {string} adminId - 부여하는 관리자 ID
+ * @param {string} reason - 부여 사유
+ * @param {Object} packageInfo - 패키지 정보 (선택)
+ * @returns {Promise<Object>} 결과
+ */
+async function grantBonusCredits(db, userId, amount, adminId, reason, packageInfo = null) {
+  if (amount <= 0) {
+    throw new Error('부여할 크레딧은 0보다 커야 합니다.');
+  }
+
+  const usersCollection = db.collection('users');
+  const transactionsCollection = db.collection('credit_transactions');
+
+  // 1. 현재 잔액 조회
+  const user = await usersCollection.findOne(
+    { _id: toUserIdQuery(userId) },
+    { projection: { 'bonus_credits.balance': 1, name: 1, email: 1 } }
+  );
+
+  if (!user) {
+    throw new Error('사용자를 찾을 수 없습니다.');
+  }
+
+  const balanceBefore = user?.bonus_credits?.balance ?? 0;
+  const balanceAfter = balanceBefore + amount;
+
+  // 2. 관리자 정보 조회
+  let adminName = '시스템';
+  if (adminId && adminId !== 'system') {
+    const admin = await usersCollection.findOne(
+      { _id: toUserIdQuery(adminId) },
+      { projection: { name: 1, email: 1 } }
+    );
+    adminName = admin?.name || admin?.email || adminId;
+  }
+
+  // 3. 사용자 잔액 업데이트
+  await usersCollection.updateOne(
+    { _id: toUserIdQuery(userId) },
+    {
+      $inc: {
+        'bonus_credits.balance': amount,
+        'bonus_credits.total_purchased': amount
+      },
+      $set: {
+        'bonus_credits.last_purchase_at': new Date(),
+        'bonus_credits.updated_at': new Date()
+      }
+    }
+  );
+
+  // 4. 트랜잭션 기록
+  const transaction = {
+    user_id: toUserIdQuery(userId),
+    type: packageInfo ? 'purchase' : 'admin_grant',
+    amount: amount,
+    balance_before: balanceBefore,
+    balance_after: balanceAfter,
+    description: reason || (packageInfo ? `${packageInfo.name} 패키지 구매` : '관리자 크레딧 부여'),
+    created_at: new Date(),
+    created_by: adminId ? toUserIdQuery(adminId) : 'system'
+  };
+
+  if (packageInfo) {
+    transaction.package = {
+      code: packageInfo.code,
+      name: packageInfo.name,
+      credits: packageInfo.credits,
+      price_krw: packageInfo.price_krw
+    };
+  }
+
+  if (!packageInfo && adminId) {
+    transaction.admin = {
+      granted_by: toUserIdQuery(adminId),
+      granted_by_name: adminName,
+      reason: reason || '관리자 크레딧 부여'
+    };
+  }
+
+  await transactionsCollection.insertOne(transaction);
+
+  return {
+    success: true,
+    user_id: userId,
+    amount_granted: amount,
+    balance_before: balanceBefore,
+    balance_after: balanceAfter,
+    transaction_id: transaction._id
+  };
+}
+
+/**
+ * 추가 크레딧 사용 (차감)
+ * @param {Db} db - MongoDB docupload DB
+ * @param {string} userId - 사용자 ID
+ * @param {number} amount - 사용할 크레딧 (양수)
+ * @param {Object} usageInfo - 사용 정보
+ * @returns {Promise<Object>} 결과
+ */
+async function useBonusCredits(db, userId, amount, usageInfo = {}) {
+  if (amount <= 0) {
+    throw new Error('사용할 크레딧은 0보다 커야 합니다.');
+  }
+
+  const usersCollection = db.collection('users');
+  const transactionsCollection = db.collection('credit_transactions');
+
+  // 1. 현재 잔액 조회
+  const user = await usersCollection.findOne(
+    { _id: toUserIdQuery(userId) },
+    { projection: { 'bonus_credits.balance': 1 } }
+  );
+
+  const balanceBefore = user?.bonus_credits?.balance ?? 0;
+
+  if (balanceBefore < amount) {
+    return {
+      success: false,
+      reason: 'insufficient_balance',
+      balance: balanceBefore,
+      required: amount
+    };
+  }
+
+  const balanceAfter = balanceBefore - amount;
+
+  // 2. 잔액 차감
+  await usersCollection.updateOne(
+    { _id: toUserIdQuery(userId) },
+    {
+      $inc: {
+        'bonus_credits.balance': -amount,
+        'bonus_credits.total_used': amount
+      },
+      $set: {
+        'bonus_credits.updated_at': new Date()
+      }
+    }
+  );
+
+  // 3. 트랜잭션 기록
+  const transaction = {
+    user_id: toUserIdQuery(userId),
+    type: 'usage',
+    amount: -amount,
+    balance_before: balanceBefore,
+    balance_after: balanceAfter,
+    usage: {
+      resource_type: usageInfo.resource_type || 'unknown',
+      resource_id: usageInfo.resource_id || null,
+      credits_used: amount,
+      description: usageInfo.description || '크레딧 사용'
+    },
+    description: usageInfo.description || '크레딧 사용',
+    created_at: new Date(),
+    created_by: 'system'
+  };
+
+  await transactionsCollection.insertOne(transaction);
+
+  return {
+    success: true,
+    amount_used: amount,
+    balance_before: balanceBefore,
+    balance_after: balanceAfter
+  };
+}
+
+/**
+ * 크레딧 충분 여부 체크 (월정액 + 추가 크레딧 통합)
+ * @param {Db} db - MongoDB docupload DB
+ * @param {Db} analyticsDb - MongoDB aims_analytics DB
+ * @param {string} userId - 사용자 ID
+ * @param {number} requiredCredits - 필요한 크레딧
+ * @returns {Promise<Object>} 체크 결과
+ */
+async function checkCreditWithBonus(db, analyticsDb, userId, requiredCredits = 0) {
+  try {
+    // 1. 월정액 크레딧 체크
+    const monthlyCheck = await checkCreditBeforeAI(db, analyticsDb, userId, requiredCredits);
+
+    // 무제한 사용자
+    if (monthlyCheck.reason === 'unlimited') {
+      return {
+        allowed: true,
+        source: 'unlimited',
+        monthly_remaining: -1,
+        bonus_balance: 0,
+        total_available: -1
+      };
+    }
+
+    const monthlyRemaining = monthlyCheck.credits_remaining ?? 0;
+    const bonusBalance = await getBonusCreditBalance(db, userId);
+    const totalAvailable = monthlyRemaining + bonusBalance;
+
+    // 2. 월정액만으로 충분한 경우
+    if (monthlyRemaining >= requiredCredits) {
+      return {
+        allowed: true,
+        source: 'monthly',
+        monthly_remaining: monthlyRemaining,
+        bonus_balance: bonusBalance,
+        total_available: totalAvailable,
+        required: requiredCredits
+      };
+    }
+
+    // 3. 월정액 + 추가 크레딧 합산으로 체크
+    if (totalAvailable >= requiredCredits) {
+      return {
+        allowed: true,
+        source: 'mixed',
+        monthly_remaining: monthlyRemaining,
+        bonus_balance: bonusBalance,
+        total_available: totalAvailable,
+        required: requiredCredits,
+        bonus_needed: requiredCredits - monthlyRemaining
+      };
+    }
+
+    // 4. 크레딧 부족
+    return {
+      allowed: false,
+      reason: 'insufficient_credits',
+      monthly_remaining: monthlyRemaining,
+      bonus_balance: bonusBalance,
+      total_available: totalAvailable,
+      required: requiredCredits,
+      shortage: requiredCredits - totalAvailable,
+      days_until_reset: monthlyCheck.days_until_reset
+    };
+
+  } catch (error) {
+    console.error('[CreditService] checkCreditWithBonus 오류 (fail-open):', error.message);
+    return {
+      allowed: true,
+      source: 'error_fallback',
+      error: error.message
+    };
+  }
+}
+
+/**
+ * 통합 크레딧 사용 (월정액 먼저 → 추가 크레딧)
+ * @param {Db} db - MongoDB docupload DB
+ * @param {Db} analyticsDb - MongoDB aims_analytics DB
+ * @param {string} userId - 사용자 ID
+ * @param {number} creditsToUse - 사용할 크레딧
+ * @param {Object} usageInfo - 사용 정보
+ * @returns {Promise<Object>} 사용 결과
+ */
+async function consumeCredits(db, analyticsDb, userId, creditsToUse, usageInfo = {}) {
+  try {
+    // 1. 통합 크레딧 체크
+    const check = await checkCreditWithBonus(db, analyticsDb, userId, creditsToUse);
+
+    if (!check.allowed) {
+      return {
+        success: false,
+        reason: check.reason,
+        ...check
+      };
+    }
+
+    // 2. 무제한 사용자는 차감 없음
+    if (check.source === 'unlimited') {
+      return {
+        success: true,
+        source: 'unlimited',
+        monthly_used: 0,
+        bonus_used: 0,
+        credits_used: 0
+      };
+    }
+
+    // 3. 월정액만으로 충분한 경우 (추가 크레딧 차감 없음)
+    // 월정액은 집계 기반이므로 실제 차감 로직 없음
+    if (check.source === 'monthly') {
+      return {
+        success: true,
+        source: 'monthly',
+        monthly_used: creditsToUse,
+        bonus_used: 0,
+        credits_used: creditsToUse
+      };
+    }
+
+    // 4. 혼합 사용 (월정액 전부 + 추가 크레딧 일부)
+    const bonusNeeded = check.bonus_needed || (creditsToUse - check.monthly_remaining);
+
+    const usageResult = await useBonusCredits(db, userId, bonusNeeded, {
+      ...usageInfo,
+      description: usageInfo.description || `월정액 초과분 ${bonusNeeded}C 사용`
+    });
+
+    if (!usageResult.success) {
+      return {
+        success: false,
+        reason: 'bonus_deduction_failed',
+        error: usageResult.reason
+      };
+    }
+
+    return {
+      success: true,
+      source: 'mixed',
+      monthly_used: check.monthly_remaining,
+      bonus_used: bonusNeeded,
+      credits_used: creditsToUse,
+      bonus_remaining: usageResult.balance_after
+    };
+
+  } catch (error) {
+    console.error('[CreditService] consumeCredits 오류:', error.message);
+    return {
+      success: false,
+      reason: 'error',
+      error: error.message
+    };
+  }
+}
+
+/**
+ * 크레딧 트랜잭션 이력 조회
+ * @param {Db} db - MongoDB docupload DB
+ * @param {Object} filter - 필터 조건
+ * @param {Object} options - 옵션 (limit, skip, sort)
+ * @returns {Promise<Array>} 트랜잭션 목록
+ */
+async function getCreditTransactions(db, filter = {}, options = {}) {
+  const { limit = 50, skip = 0, sort = { created_at: -1 } } = options;
+
+  const transactions = await db.collection('credit_transactions')
+    .find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+
+  return transactions;
+}
+
+/**
+ * 크레딧 패키지 목록 조회
+ * @param {Db} db - MongoDB docupload DB
+ * @param {boolean} activeOnly - 활성 패키지만 조회
+ * @returns {Promise<Array>} 패키지 목록
+ */
+async function getCreditPackages(db, activeOnly = true) {
+  const filter = activeOnly ? { is_active: true } : {};
+
+  const packages = await db.collection('credit_packages')
+    .find(filter)
+    .sort({ sort_order: 1 })
+    .toArray();
+
+  return packages;
+}
+
+/**
+ * 전체 크레딧 현황 요약 (관리자용)
+ * @param {Db} db - MongoDB docupload DB
+ * @returns {Promise<Object>} 현황 요약
+ */
+async function getCreditOverview(db) {
+  const usersCollection = db.collection('users');
+  const transactionsCollection = db.collection('credit_transactions');
+
+  // 이번 달 시작일 (KST 기준)
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0));
+
+  // 1. 전체 추가 크레딧 잔액 합계
+  const balanceAgg = await usersCollection.aggregate([
+    { $match: { 'bonus_credits.balance': { $gt: 0 } } },
+    { $group: {
+      _id: null,
+      total_balance: { $sum: '$bonus_credits.balance' },
+      user_count: { $sum: 1 }
+    }}
+  ]).toArray();
+
+  // 2. 이번 달 부여 합계
+  const grantAgg = await transactionsCollection.aggregate([
+    {
+      $match: {
+        type: { $in: ['purchase', 'admin_grant'] },
+        created_at: { $gte: monthStart }
+      }
+    },
+    { $group: {
+      _id: null,
+      total_granted: { $sum: '$amount' },
+      grant_count: { $sum: 1 }
+    }}
+  ]).toArray();
+
+  // 3. 이번 달 사용 합계
+  const usageAgg = await transactionsCollection.aggregate([
+    {
+      $match: {
+        type: 'usage',
+        created_at: { $gte: monthStart }
+      }
+    },
+    { $group: {
+      _id: null,
+      total_used: { $sum: { $abs: '$amount' } },
+      usage_count: { $sum: 1 }
+    }}
+  ]).toArray();
+
+  return {
+    total_balance: balanceAgg[0]?.total_balance || 0,
+    users_with_balance: balanceAgg[0]?.user_count || 0,
+    month_granted: grantAgg[0]?.total_granted || 0,
+    month_grant_count: grantAgg[0]?.grant_count || 0,
+    month_used: usageAgg[0]?.total_used || 0,
+    month_usage_count: usageAgg[0]?.usage_count || 0,
+    month_start: monthStart.toISOString()
+  };
+}
+
 module.exports = {
   CREDIT_RATES,
   calculateOcrCredits,
@@ -440,5 +929,15 @@ module.exports = {
   getUserCreditInfo,
   checkCreditAllowed,
   checkCreditBeforeAI,
-  checkCreditForDocumentProcessing
+  checkCreditForDocumentProcessing,
+  // 추가 크레딧 (Bonus Credits)
+  getBonusCreditBalance,
+  getBonusCreditInfo,
+  grantBonusCredits,
+  useBonusCredits,
+  checkCreditWithBonus,
+  consumeCredits,
+  getCreditTransactions,
+  getCreditPackages,
+  getCreditOverview
 };

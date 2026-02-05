@@ -78,6 +78,16 @@
   font-size: 11px;
 }
 
+/* 추가 크레딧 표시 */
+.credit-exceeded-bonus {
+  color: var(--color-accent-green, #34c759);
+  font-weight: 500;
+}
+
+.credit-exceeded-value.bonus {
+  color: var(--color-accent-green, #34c759);
+}
+
 /* 프로그레스 바 */
 .credit-exceeded-progress {
   width: 100%;

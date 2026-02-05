@@ -966,9 +966,17 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         }
 
         const getCreditPercent = () => {
-          if (!storageInfo || storageInfo.credit_is_unlimited || !storageInfo.credit_quota || storageInfo.credit_quota <= 0) return 0
-          return Math.min((storageInfo.credits_used / storageInfo.credit_quota) * 100, 100)
+          if (!storageInfo || storageInfo.credit_is_unlimited) return 0
+          // 총 크레딧 풀 = 월정액 + 추가 크레딧
+          const bonusBalance = storageInfo.bonus_balance ?? 0
+          const totalPool = (storageInfo.credit_quota || 0) + bonusBalance
+          if (totalPool <= 0) return 0
+          return Math.min((storageInfo.credits_used / totalPool) * 100, 100)
         }
+
+        // 추가 크레딧 정보
+        const bonusBalance = storageInfo?.bonus_balance ?? 0
+        const totalPool = (storageInfo?.credit_quota || 0) + bonusBalance
 
         // 크레딧 사이클 날짜 포맷 (MM/DD 형식)
         const formatCycleDate = (dateStr: string) => {
@@ -1054,7 +1062,12 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                     <span className="account-settings-view__value account-settings-view__value--muted">로딩 중...</span>
                   ) : storageInfo ? (
                     <span className="account-settings-view__usage-value">
-                      {formatCredits(storageInfo.credits_used ?? 0)}C / {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(storageInfo.credit_quota ?? 0)}C`}
+                      {formatCredits(storageInfo.credits_used ?? 0)}C / {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(totalPool)}C`}
+                      {bonusBalance > 0 && !storageInfo.credit_is_unlimited && (
+                        <span className="account-settings-view__bonus-indicator" title={`월정액 ${formatCredits(storageInfo.credit_quota ?? 0)}C + 추가 ${formatCredits(bonusBalance)}C`}>
+                          +{formatCredits(bonusBalance)}
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <span className="account-settings-view__value account-settings-view__value--muted">-</span>
@@ -1069,7 +1082,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   <span className="account-settings-view__usage-label">남은 크레딧</span>
                   {storageInfo ? (
                     <span className={`account-settings-view__usage-stat account-settings-view__usage-stat--${getLevel(getCreditPercent())}`}>
-                      {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(storageInfo.credits_remaining ?? 0)}C`}
+                      {storageInfo.credit_is_unlimited ? '무제한' : `${formatCredits(storageInfo.total_available ?? storageInfo.credits_remaining ?? 0)}C`}
                     </span>
                   ) : (
                     <span className="account-settings-view__usage-stat">-</span>

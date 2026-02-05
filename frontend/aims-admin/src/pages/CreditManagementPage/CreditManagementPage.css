@@ -1,0 +1,389 @@
+/* CreditManagementPage.css */
+
+.credit-management-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 크레딧 탭 네비게이션 */
+.credit-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.credit-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+
+.credit-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.credit-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--color-text-primary);
+}
+
+.page-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 현황 카드 */
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* 필터 바 */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.tier-filter {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.bonus-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.bonus-filter input {
+  cursor: pointer;
+}
+
+/* 테이블 */
+.users-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.users-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+.users-table tbody tr:hover {
+  background: var(--color-background-hover);
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.loading-cell,
+.empty-cell {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-text-tertiary);
+}
+
+.name-cell {
+  font-weight: 600;
+}
+
+.email-cell {
+  color: var(--color-text-secondary);
+}
+
+.tier-cell {
+  white-space: nowrap;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tier-badge.tier-free_trial {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.tier-badge.tier-standard {
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.tier-badge.tier-premium {
+  background: var(--color-purple-100);
+  color: var(--color-purple-600);
+}
+
+.tier-badge.tier-vip {
+  background: var(--color-orange-100);
+  color: var(--color-orange-600);
+}
+
+.tier-badge.tier-admin {
+  background: var(--color-red-100);
+  color: var(--color-red-600);
+}
+
+.credit-cell {
+  text-align: right;
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+}
+
+.credit-cell.bonus .bonus-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--color-green-100);
+  color: var(--color-green-700);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.credit-cell.total {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.date-cell {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.action-cell {
+  text-align: center;
+}
+
+/* 페이지네이션 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px 0;
+}
+
+.page-info {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* 크레딧 부여 모달 */
+.grant-modal-content {
+  padding: 16px 0;
+}
+
+.grant-modal-content .user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-background-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.grant-modal-content .user-info strong {
+  font-size: 16px;
+}
+
+.grant-modal-content .user-info span {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.grant-modal-content .current-credits {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-green-50);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.grant-modal-content .current-credits strong {
+  font-size: 18px;
+  color: var(--color-green-600);
+}
+
+/* 패키지 선택 */
+.package-section {
+  margin-bottom: 16px;
+}
+
+.package-section label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.package-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.package-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.package-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.package-btn.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.package-btn .pkg-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.package-btn .pkg-credits {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.package-btn .pkg-price {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* 폼 그룹 */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+}

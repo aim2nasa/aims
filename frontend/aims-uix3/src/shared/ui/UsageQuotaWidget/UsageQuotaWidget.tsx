@@ -95,10 +95,14 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
     return Math.min((storageInfo.used_bytes / storageInfo.quota_bytes) * 100, 100)
   }
 
-  // 크레딧 사용률 계산
+  // 크레딧 사용률 계산 (월정액 + 추가 크레딧 기준)
   const getCreditPercent = (): number => {
-    if (!storageInfo || storageInfo.credit_is_unlimited || !storageInfo.credit_quota || storageInfo.credit_quota <= 0) return 0
-    return Math.min((storageInfo.credits_used / storageInfo.credit_quota) * 100, 100)
+    if (!storageInfo || storageInfo.credit_is_unlimited) return 0
+    // 총 크레딧 풀 = 월정액 + 추가 크레딧
+    const bonusBalance = storageInfo.bonus_balance ?? 0
+    const totalPool = (storageInfo.credit_quota || 0) + bonusBalance
+    if (totalPool <= 0) return 0
+    return Math.min((storageInfo.credits_used / totalPool) * 100, 100)
   }
 
   // 경고 레벨 결정
@@ -140,10 +144,16 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   const isFirstMonth = storageInfo.is_first_month ?? false
   const proRataPercent = storageInfo.pro_rata_ratio ? Math.round(storageInfo.pro_rata_ratio * 100) : 100
 
-  // 크레딧 툴팁 (매월 1일 리셋, 사이클 종료일 표시)
+  // 추가 크레딧 정보
+  const bonusBalance = storageInfo.bonus_balance ?? 0
+  const totalPool = (storageInfo.credit_quota || 0) + bonusBalance
+
+  // 크레딧 툴팁 (월정액 + 추가 크레딧 표시)
   const creditTooltip = storageInfo.credit_is_unlimited
     ? '크레딧: 무제한'
-    : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%)${isFirstMonth ? ` [첫 달 ${proRataPercent}%]` : ''} ~${formatCycleDate(storageInfo.credit_cycle_end)}`
+    : bonusBalance > 0
+      ? `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${totalPool.toLocaleString()} (월정액 ${storageInfo.credit_quota?.toLocaleString()}+추가 ${bonusBalance.toLocaleString()}) ~${formatCycleDate(storageInfo.credit_cycle_end)}`
+      : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%)${isFirstMonth ? ` [첫 달 ${proRataPercent}%]` : ''} ~${formatCycleDate(storageInfo.credit_cycle_end)}`
 
   return (
     <button
