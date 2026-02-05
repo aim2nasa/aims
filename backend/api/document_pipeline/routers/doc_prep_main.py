@@ -15,6 +15,8 @@ from fastapi.responses import JSONResponse
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
 
+import httpx
+
 from config import get_settings
 from services.mongo_service import MongoService
 from services.file_service import FileService
@@ -25,6 +27,62 @@ from services.temp_file_service import TempFileService
 from services.upload_queue_service import UploadQueueService
 
 logger = logging.getLogger(__name__)
+
+# 크레딧 체크 API 설정
+CREDIT_CHECK_URL = None  # 런타임에 설정
+
+
+async def check_credit_for_upload(user_id: str, estimated_pages: int = 1) -> Dict[str, Any]:
+    """
+    문서 업로드 전 크레딧 체크 (aims_api 내부 API 호출)
+
+    Args:
+        user_id: 사용자 ID
+        estimated_pages: 예상 페이지 수
+
+    Returns:
+        dict: {
+            allowed: bool,
+            reason: str,
+            credits_remaining: int,
+            days_until_reset: int,
+            ...
+        }
+
+    @see docs/EMBEDDING_CREDIT_POLICY.md
+    """
+    global CREDIT_CHECK_URL
+    settings = get_settings()
+
+    if CREDIT_CHECK_URL is None:
+        CREDIT_CHECK_URL = f"{settings.AIMS_API_URL}/api/internal/check-credit"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                CREDIT_CHECK_URL,
+                json={
+                    "user_id": user_id,
+                    "estimated_pages": estimated_pages
+                },
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": settings.INTERNAL_API_KEY or "aims-internal-token-logging-key-2024"
+                },
+                timeout=10.0
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.warning(f"[CreditCheck] API 호출 실패: {response.status_code}")
+                # fail-open: API 실패 시 허용
+                return {"allowed": True, "reason": "api_error_fallback"}
+
+    except Exception as e:
+        logger.warning(f"[CreditCheck] 오류 (fail-open): {e}")
+        # fail-open: 오류 시 허용 (크레딧 체크 실패로 업로드 막지 않음)
+        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
 router = APIRouter()
 settings = get_settings()
 
@@ -171,33 +229,107 @@ async def doc_prep_main(
             # 큐잉 모드: 문서를 먼저 생성 후 파일 처리를 큐에 등록
             logger.info(f"Queueing upload for userId: {userId}, file: {original_name}")
 
-            # 1. MongoDB 문서 먼저 생성 (set-annual-report API가 찾을 수 있도록)
+            # 🔴 0. 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
+            # 예상 페이지 수 추정 (1페이지 기본, PDF는 나중에 정확히 계산)
+            estimated_pages = 1
+            credit_check = await check_credit_for_upload(userId, estimated_pages)
+            is_credit_pending = not credit_check.get("allowed", True)
+
+            if is_credit_pending:
+                logger.info(f"[CreditPending] 크레딧 부족으로 처리 보류: userId={userId}, reason={credit_check.get('reason')}")
+
+            # 1. MongoDB 문서 생성 (크레딧 상태에 따라 다르게)
             files_collection = MongoService.get_collection("files")
-            doc_data = {
-                "ownerId": userId,
-                "createdAt": datetime.utcnow(),
-                "upload": {
-                    "originalName": original_name,
-                    "uploaded_at": datetime.utcnow().isoformat()
-                },
-                # 초기 progress 설정 - 프론트엔드에서 즉시 표시
-                "progress": 10,
-                "progressStage": "queued",
-                "progressMessage": "대기열에 추가됨",
-                "status": "processing"  # 처리 중 상태 (set-annual-report가 찾을 수 있음)
-            }
+
+            if is_credit_pending:
+                # 🔴 크레딧 부족: credit_pending 상태로 문서 생성 (큐에 등록하지 않음)
+                doc_data = {
+                    "ownerId": userId,
+                    "createdAt": datetime.utcnow(),
+                    "upload": {
+                        "originalName": original_name,
+                        "uploaded_at": datetime.utcnow().isoformat()
+                    },
+                    # credit_pending 상태
+                    "overallStatus": "credit_pending",
+                    "ocrStatus": "credit_pending",
+                    "progress": 0,
+                    "progressStage": "credit_pending",
+                    "progressMessage": "크레딧 부족으로 처리 대기 중",
+                    "status": "credit_pending",
+                    # 크레딧 보류 정보
+                    "credit_pending_since": datetime.utcnow(),
+                    "credit_pending_info": {
+                        "credits_remaining": credit_check.get("credits_remaining", 0),
+                        "credit_quota": credit_check.get("credit_quota", 0),
+                        "days_until_reset": credit_check.get("days_until_reset", 0),
+                        "estimated_credits": credit_check.get("estimated_credits", 0)
+                    },
+                    "docembed": {
+                        "status": "credit_pending",
+                        "credit_pending_since": datetime.utcnow().isoformat()
+                    }
+                }
+            else:
+                # 크레딧 충분: 기존 로직
+                doc_data = {
+                    "ownerId": userId,
+                    "createdAt": datetime.utcnow(),
+                    "upload": {
+                        "originalName": original_name,
+                        "uploaded_at": datetime.utcnow().isoformat()
+                    },
+                    # 초기 progress 설정 - 프론트엔드에서 즉시 표시
+                    "progress": 10,
+                    "progressStage": "queued",
+                    "progressMessage": "대기열에 추가됨",
+                    "status": "processing"  # 처리 중 상태 (set-annual-report가 찾을 수 있음)
+                }
+
             if customerId:
                 # ⚠️ customerId는 ObjectId로 저장 (aims_api와 타입 일관성 유지)
                 doc_data["customerId"] = ObjectId(customerId) if ObjectId.is_valid(customerId) else customerId
 
             result = await files_collection.insert_one(doc_data)
             doc_id = str(result.inserted_id)
-            logger.info(f"Created document for queue: {doc_id}")
+            logger.info(f"Created document: {doc_id} (credit_pending={is_credit_pending})")
 
-            # 2. 임시 파일 저장
+            # 2. 파일 저장 (크레딧 상태와 무관하게 항상 저장)
+            saved_name, dest_path = await FileService.save_file(
+                content=file_content,
+                original_name=original_name,
+                user_id=userId,
+                source_path=source_path
+            )
+            logger.info(f"Saved file: {saved_name} to {dest_path}")
+
+            # 파일 저장 정보 업데이트
+            await files_collection.update_one(
+                {"_id": ObjectId(doc_id)},
+                {"$set": {
+                    "upload.saveName": saved_name,
+                    "upload.destPath": dest_path
+                }}
+            )
+
+            # 🔴 크레딧 부족 시: 큐에 등록하지 않고 즉시 응답
+            if is_credit_pending:
+                return {
+                    "result": "success",
+                    "status": "credit_pending",
+                    "document_id": doc_id,
+                    "message": "크레딧이 부족하여 문서 처리가 보류되었습니다. 크레딧 리셋 시 자동 처리됩니다.",
+                    "credit_info": {
+                        "credits_remaining": credit_check.get("credits_remaining", 0),
+                        "credit_quota": credit_check.get("credit_quota", 0),
+                        "days_until_reset": credit_check.get("days_until_reset", 0)
+                    }
+                }
+
+            # 3. 임시 파일 저장 (큐 처리용)
             temp_path = await TempFileService.save(file_content, original_name)
 
-            # 3. 큐에 작업 등록 (document_id 포함)
+            # 4. 큐에 작업 등록 (document_id 포함)
             queue_id = await UploadQueueService.enqueue(
                 file_data={
                     "temp_path": temp_path,
@@ -217,7 +349,7 @@ async def doc_prep_main(
 
             logger.info(f"Upload queued: {queue_id} for document: {doc_id}")
 
-            # 4. 즉시 응답 반환 (document_id 포함)
+            # 5. 즉시 응답 반환 (document_id 포함)
             return {
                 "result": "success",
                 "status": "queued",

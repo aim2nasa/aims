@@ -88,8 +88,65 @@ token_tracker = TokenTracker()
 
 # 🔥 AI 모델 설정 캐싱
 AIMS_API_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
 _ai_model_cache = {"model": None, "timestamp": 0}
 _AI_MODEL_CACHE_TTL = 60  # 1분
+
+# 🔴 크레딧 체크 API 설정
+CREDIT_CHECK_URL = f"{AIMS_API_URL}/api/internal/check-credit"
+
+
+def check_credit_for_rag(user_id: str, estimated_tokens: int = 1000) -> dict:
+    """
+    RAG 검색 전 크레딧 체크 (aims_api 내부 API 호출)
+
+    Args:
+        user_id: 사용자 ID
+        estimated_tokens: 예상 토큰 수 (기본 1000 = 0.5 크레딧)
+
+    Returns:
+        dict: {
+            allowed: bool,
+            reason: str,
+            credits_remaining: int,
+            ...
+        }
+
+    @see docs/EMBEDDING_CREDIT_POLICY.md
+    """
+    if not user_id or user_id == "anonymous":
+        # anonymous 사용자는 크레딧 체크 스킵 (demo/테스트용)
+        return {"allowed": True, "reason": "anonymous_user"}
+
+    try:
+        # AI 토큰을 페이지 수로 환산 (1K 토큰 ≈ 0.5 크레딧, 1페이지 = 2.5 크레딧)
+        # RAG 검색은 보통 1-2페이지 분량으로 추정
+        estimated_pages = max(1, estimated_tokens // 5000)
+
+        response = requests.post(
+            CREDIT_CHECK_URL,
+            json={
+                "user_id": user_id,
+                "estimated_pages": estimated_pages
+            },
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": INTERNAL_API_KEY
+            },
+            timeout=5
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"[CreditCheck] API 호출 실패: {response.status_code}")
+            # fail-open: API 실패 시 허용
+            return {"allowed": True, "reason": "api_error_fallback"}
+
+    except Exception as e:
+        print(f"[CreditCheck] 오류 (fail-open): {e}")
+        # fail-open: 오류 시 허용
+        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
 
 def get_rag_model() -> str:
     """
@@ -290,6 +347,21 @@ async def health_check():
 
 @app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):
+    # 🔴 크레딧 체크 (semantic 검색만 - AI 토큰 소비)
+    if request.search_mode == "semantic" and request.user_id:
+        credit_check = check_credit_for_rag(request.user_id, estimated_tokens=2000)
+        if not credit_check.get("allowed", True):
+            print(f"[CREDIT_EXCEEDED] RAG 검색 차단: user_id={request.user_id}, remaining={credit_check.get('credits_remaining', 0)}")
+            raise HTTPException(
+                status_code=402,  # Payment Required
+                detail={
+                    "error": "credit_exceeded",
+                    "message": "크레딧이 부족합니다. 다음 달 1일에 리셋됩니다.",
+                    "credits_remaining": credit_check.get("credits_remaining", 0),
+                    "days_until_reset": credit_check.get("days_until_reset", 0)
+                }
+            )
+
     if request.search_mode == "keyword":
         # 키워드 검색 로직 (페이지네이션 지원)
         payload = {"query": request.query, "mode": request.mode, "user_id": request.user_id}

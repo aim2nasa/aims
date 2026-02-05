@@ -16,9 +16,58 @@ AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
 
+# 크레딧 체크 API 설정
+CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
+
 # 바이러스 스캔 트리거용 webhook 설정
 PROCESSING_COMPLETE_WEBHOOK_URL = f"{AIMS_API_BASE_URL}/api/webhooks/document-processing-complete"
 N8N_WEBHOOK_API_KEY = "aims_n8n_webhook_secure_key_2025_v1_a7f3e9d2c1b8"
+
+
+def check_credit_for_embedding(owner_id: str, estimated_pages: int = 1) -> Dict:
+    """
+    임베딩 처리 전 크레딧 체크 (aims_api 내부 API 호출)
+
+    Args:
+        owner_id: 사용자 ID
+        estimated_pages: 예상 페이지 수
+
+    Returns:
+        dict: {
+            allowed: bool,
+            reason: str,
+            credits_remaining: int,
+            days_until_reset: int,
+            ...
+        }
+
+    @see docs/EMBEDDING_CREDIT_POLICY.md
+    """
+    try:
+        response = requests.post(
+            CREDIT_CHECK_URL,
+            json={
+                "user_id": owner_id,
+                "estimated_pages": estimated_pages
+            },
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": INTERNAL_API_KEY
+            },
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"[CreditCheck] API 호출 실패: {response.status_code}")
+            # fail-open: API 실패 시 허용
+            return {"allowed": True, "reason": "api_error_fallback"}
+
+    except Exception as e:
+        print(f"[CreditCheck] 오류 (fail-open): {e}")
+        # fail-open: 오류 시 허용 (크레딧 체크 실패로 처리 막지 않음)
+        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
 
 
 def trigger_virus_scan(doc_id: str, owner_id: str) -> bool:
@@ -178,13 +227,41 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
 
         for doc_data in documents_to_process:
             doc_id = str(doc_data['_id'])
+            owner_id = doc_data.get('ownerId')
             print(f"\n--- 문서 ID: {doc_id} 처리 시작 ---")
 
             try:
+                # 🔴 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
+                # 예상 페이지 수 (ocr.page_count 또는 기본 1)
+                estimated_pages = doc_data.get('ocr', {}).get('page_count', 1) or 1
+                credit_check = check_credit_for_embedding(owner_id, estimated_pages)
+
+                if not credit_check.get('allowed', True):
+                    # 크레딧 부족: credit_pending 상태로 변경
+                    print(f"[CREDIT_PENDING] 문서 ID: {doc_id} - 크레딧 부족 (남은: {credit_check.get('credits_remaining', 0)}, 필요: {credit_check.get('estimated_credits', 0)})")
+                    collection.update_one(
+                        {'_id': ObjectId(doc_id)},
+                        {'$set': {
+                            'docembed': {
+                                'status': 'credit_pending',
+                                'credit_pending_since': datetime.now(timezone.utc).isoformat(),
+                                'credit_info': {
+                                    'credits_remaining': credit_check.get('credits_remaining', 0),
+                                    'credit_quota': credit_check.get('credit_quota', 0),
+                                    'days_until_reset': credit_check.get('days_until_reset', 0),
+                                    'estimated_credits': credit_check.get('estimated_credits', 0)
+                                }
+                            },
+                            'overallStatus': 'credit_pending',
+                            'overallStatusUpdatedAt': datetime.now(timezone.utc)
+                        }}
+                    )
+                    continue  # 다음 문서로
+
                 # full_text 추출 (우선순위: meta.full_text > ocr.full_text > text.full_text)
                 full_text = None
                 text_source = None
-                
+
                 if doc_data.get('meta', {}).get('full_text'):
                     full_text = doc_data['meta']['full_text']
                     text_source = 'meta'
@@ -194,7 +271,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 elif doc_data.get('text', {}).get('full_text'):
                     full_text = doc_data['text']['full_text']
                     text_source = 'text'
-                
+
                 # 텍스트가 없거나 비어있으면 임베딩 스킵 (완료로 처리)
                 if not full_text or (isinstance(full_text, str) and len(full_text.strip()) == 0):
                     print(f"[SKIP] 문서 ID: {doc_id} - 텍스트 없음 또는 비어있음 (임베딩 건너뜀)")

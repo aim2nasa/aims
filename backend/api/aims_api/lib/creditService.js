@@ -318,6 +318,118 @@ async function checkCreditBeforeAI(db, analyticsDb, userId, estimatedCredits = 5
   }
 }
 
+/**
+ * 문서 처리 전 크레딧 한도 체크
+ * OCR + 임베딩에 필요한 크레딧이 충분한지 확인
+ *
+ * @param {Db} db - MongoDB docupload DB 인스턴스
+ * @param {Db} analyticsDb - MongoDB aims_analytics DB 인스턴스
+ * @param {string} userId - 사용자 ID
+ * @param {number} estimatedPages - 예상 페이지 수 (기본값: 1)
+ * @returns {Promise<{
+ *   allowed: boolean,
+ *   reason: string,
+ *   credits_used: number,
+ *   credits_remaining: number,
+ *   credit_quota: number,
+ *   estimated_credits: number,
+ *   days_until_reset: number
+ * }>}
+ *
+ * @see docs/EMBEDDING_CREDIT_POLICY.md
+ */
+async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimatedPages = 1) {
+  try {
+    const { getUserStorageInfo, getTierDefinitions } = require('./storageQuotaService');
+
+    // 1. 사용자 스토리지/티어 정보 조회
+    const storageInfo = await getUserStorageInfo(db, userId);
+
+    // 2. 무제한 사용자 (admin) 체크
+    if (storageInfo.is_unlimited) {
+      return {
+        allowed: true,
+        reason: 'unlimited',
+        credits_used: 0,
+        credits_remaining: -1,
+        credit_quota: -1,
+        estimated_credits: 0,
+        days_until_reset: 0
+      };
+    }
+
+    // 3. 티어 정의에서 credit_quota 조회
+    const tierDefinitions = await getTierDefinitions(db);
+    const tierDef = tierDefinitions[storageInfo.tier] || tierDefinitions['free_trial'];
+    const creditQuotaFull = tierDef.credit_quota ?? 2000;
+
+    // 4. 일할 계산 적용 (첫 달인 경우)
+    const proRataRatio = storageInfo.pro_rata_ratio ?? 1.0;
+    const isFirstMonth = storageInfo.is_first_month ?? false;
+    const effectiveCreditQuota = Math.round(creditQuotaFull * proRataRatio);
+
+    // 5. 사이클 정보
+    const cycleStart = new Date(storageInfo.ocr_cycle_start + 'T00:00:00+09:00');
+    const cycleEnd = new Date(storageInfo.ocr_cycle_end + 'T23:59:59.999+09:00');
+    const daysUntilReset = storageInfo.ocr_days_until_reset;
+
+    // 6. 현재 크레딧 사용량 계산
+    const usage = await getCycleCreditsUsed(db, analyticsDb, userId, cycleStart, cycleEnd);
+    const remaining = effectiveCreditQuota - usage.total_credits;
+    const usagePercent = Math.round((usage.total_credits / effectiveCreditQuota) * 100 * 100) / 100;
+
+    // 7. 예상 크레딧 계산
+    // OCR: 페이지당 2 크레딧
+    // 임베딩: 페이지당 약 500자 기준, 1K 토큰 = 0.5 크레딧 → 페이지당 약 0.5 크레딧
+    // 버퍼 1.5배 적용
+    const estimatedOcrCredits = estimatedPages * CREDIT_RATES.OCR_PER_PAGE;
+    const estimatedEmbeddingCredits = estimatedPages * 0.5;  // 페이지당 평균 500자 ≈ 0.125K 토큰
+    const estimatedCredits = Math.ceil((estimatedOcrCredits + estimatedEmbeddingCredits) * 1.5);
+
+    // 8. 한도 체크
+    if (remaining < estimatedCredits) {
+      return {
+        allowed: false,
+        reason: 'credit_exceeded',
+        credits_used: usage.total_credits,
+        credits_remaining: Math.max(0, remaining),
+        credit_quota: effectiveCreditQuota,
+        credit_quota_full: creditQuotaFull,
+        credit_usage_percent: usagePercent,
+        estimated_credits: estimatedCredits,
+        days_until_reset: daysUntilReset,
+        tier: storageInfo.tier,
+        tier_name: storageInfo.tierName,
+        is_first_month: isFirstMonth,
+        pro_rata_ratio: proRataRatio
+      };
+    }
+
+    return {
+      allowed: true,
+      reason: 'within_quota',
+      credits_used: usage.total_credits,
+      credits_remaining: remaining,
+      credit_quota: effectiveCreditQuota,
+      credit_quota_full: creditQuotaFull,
+      credit_usage_percent: usagePercent,
+      estimated_credits: estimatedCredits,
+      days_until_reset: daysUntilReset,
+      is_first_month: isFirstMonth,
+      pro_rata_ratio: proRataRatio
+    };
+
+  } catch (error) {
+    // 오류 발생 시 fail-open (사용 허용) - 크레딧 체크 실패로 사용자 차단하지 않음
+    console.error('[CreditService] checkCreditForDocumentProcessing 오류 (fail-open):', error.message);
+    return {
+      allowed: true,
+      reason: 'error_fallback',
+      error: error.message
+    };
+  }
+}
+
 module.exports = {
   CREDIT_RATES,
   calculateOcrCredits,
@@ -327,5 +439,6 @@ module.exports = {
   getCycleCreditsUsed,
   getUserCreditInfo,
   checkCreditAllowed,
-  checkCreditBeforeAI
+  checkCreditBeforeAI,
+  checkCreditForDocumentProcessing
 };

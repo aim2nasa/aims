@@ -13,6 +13,7 @@ const { calculateOCRCost } = require('../lib/ocrPricing');
 const ocrUsageLogService = require('../lib/ocrUsageLogService');
 const backendLogger = require('../lib/backendLogger');
 const { getUserStorageInfo } = require('../lib/storageQuotaService');
+const { checkCreditForDocumentProcessing } = require('../lib/creditService');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -1264,10 +1265,13 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
   /**
    * POST /api/internal/ocr/check-quota
-   * OCR 전 한도 체크 (n8n OCRWorker에서 호출)
+   * OCR 전 크레딧 체크 (OCR 워커에서 호출)
+   * 🔴 2026-02-05: 페이지 기반 한도 → 통합 크레딧 시스템으로 변경
    *
    * Body: { owner_id: string, page_count: number }
-   * Response: { allowed: boolean, current_usage: number, quota: number, remaining: number }
+   * Response: { allowed: boolean, current_usage: number, quota: number, remaining: number, ... }
+   *
+   * @see docs/EMBEDDING_CREDIT_POLICY.md
    */
   router.post('/internal/ocr/check-quota', async (req, res) => {
     try {
@@ -1280,61 +1284,46 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         });
       }
 
-      // 사용자 스토리지 정보 조회
-      const storageInfo = await getUserStorageInfo(db, owner_id);
+      // 🔴 통합 크레딧 시스템으로 체크 (OCR 페이지 = estimated_pages)
+      // checkCreditForDocumentProcessing()는 OCR + 임베딩 크레딧을 함께 계산
+      // OCR만 처리하는 경우에도 동일한 함수 사용 (일관성 유지)
+      const creditCheck = await checkCreditForDocumentProcessing(db, analyticsDb, owner_id, page_count);
 
-      // OCR 권한 체크
-      if (!storageInfo.has_ocr_permission) {
-        return res.json({
-          success: true,
-          allowed: false,
-          reason: 'no_permission',
-          message: 'OCR 권한이 없습니다.',
-          current_usage: 0,
-          quota: 0,
-          remaining: 0
-        });
-      }
-
-      // 무제한 사용자 (admin)
-      if (storageInfo.ocr_is_unlimited) {
-        return res.json({
-          success: true,
-          allowed: true,
-          reason: 'unlimited',
-          current_usage: storageInfo.ocr_pages_used,
-          quota: -1,
-          remaining: -1,
-          message: '무제한 사용자'
-        });
-      }
-
-      // 한도 체크 (페이지 기반)
-      const newTotal = storageInfo.ocr_pages_used + page_count;
-      const allowed = newTotal <= storageInfo.ocr_page_quota;
-
+      // 응답 형식 변환 (하위 호환성 유지)
+      // 기존: { current_usage, quota, remaining } (페이지 기반)
+      // 변경: { credits_used, credit_quota, credits_remaining } (크레딧 기반)
       res.json({
         success: true,
-        allowed,
-        reason: allowed ? 'within_quota' : 'quota_exceeded',
-        current_usage: storageInfo.ocr_pages_used,
-        quota: storageInfo.ocr_page_quota,
-        remaining: storageInfo.ocr_remaining,
+        allowed: creditCheck.allowed,
+        reason: creditCheck.reason,
+        // 🔴 크레딧 기반 응답 (신규)
+        credits_used: creditCheck.credits_used,
+        credits_remaining: creditCheck.credits_remaining,
+        credit_quota: creditCheck.credit_quota,
+        estimated_credits: creditCheck.estimated_credits,
+        // 🔴 하위 호환성 (기존 OCR 워커용) - 크레딧을 페이지로 환산
+        // OCR 1페이지 = 2 크레딧이므로, quota / 2 = 페이지 수
+        current_usage: Math.floor((creditCheck.credits_used || 0) / 2),
+        quota: creditCheck.credit_quota === -1 ? -1 : Math.floor((creditCheck.credit_quota || 0) / 2),
+        remaining: creditCheck.credits_remaining === -1 ? -1 : Math.floor((creditCheck.credits_remaining || 0) / 2),
         requested: page_count,
-        would_exceed_by: allowed ? 0 : newTotal - storageInfo.ocr_page_quota,
-        cycle_start: storageInfo.ocr_cycle_start,
-        cycle_end: storageInfo.ocr_cycle_end,
-        days_until_reset: storageInfo.ocr_days_until_reset
+        // 사이클 정보
+        cycle_start: creditCheck.cycle_start,
+        cycle_end: creditCheck.cycle_end,
+        days_until_reset: creditCheck.days_until_reset,
+        // 추가 정보
+        is_first_month: creditCheck.is_first_month,
+        pro_rata_ratio: creditCheck.pro_rata_ratio
       });
     } catch (error) {
       console.error('[POST /api/internal/ocr/check-quota] 오류:', error);
-      backendLogger.error('OcrUsage', 'OCR 한도 체크 오류', error);
+      backendLogger.error('OcrUsage', 'OCR 크레딧 체크 오류', error);
       // 오류 시 OCR 허용 (fail-open 정책)
       res.json({
         success: true,
         allowed: true,
         reason: 'error_fallback',
-        message: '한도 체크 중 오류 발생, 기본 허용',
+        message: '크레딧 체크 중 오류 발생, 기본 허용',
         error: error.message
       });
     }

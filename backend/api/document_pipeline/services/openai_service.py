@@ -17,6 +17,62 @@ AIMS_API_BASE_URL = os.getenv("AIMS_API_URL", "http://localhost:3010")
 TOKEN_LOGGING_URL = f"{AIMS_API_BASE_URL}/api/ai-usage/log"
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "aims-internal-token-logging-key-2024")
 
+# 🔴 크레딧 체크 API 설정
+CREDIT_CHECK_URL = f"{AIMS_API_BASE_URL}/api/internal/check-credit"
+
+
+async def check_credit_for_summary(user_id: str, estimated_tokens: int = 1000) -> dict:
+    """
+    Summary 생성 전 크레딧 체크 (aims_api 내부 API 호출)
+
+    Args:
+        user_id: 사용자 ID
+        estimated_tokens: 예상 토큰 수 (기본 1000)
+
+    Returns:
+        dict: {
+            allowed: bool,
+            reason: str,
+            credits_remaining: int,
+            ...
+        }
+
+    @see docs/EMBEDDING_CREDIT_POLICY.md
+    """
+    if not user_id or user_id == "system":
+        # system 사용자는 크레딧 체크 스킵
+        return {"allowed": True, "reason": "system_user"}
+
+    try:
+        # AI 토큰을 페이지 수로 환산 (1K 토큰 ≈ 0.5 크레딧)
+        # Summary는 보통 1페이지 미만 분량
+        estimated_pages = max(1, estimated_tokens // 5000)
+
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                CREDIT_CHECK_URL,
+                json={
+                    "user_id": user_id,
+                    "estimated_pages": estimated_pages
+                },
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": INTERNAL_API_KEY
+                }
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.warning(f"[CreditCheck] API 호출 실패: {response.status_code}")
+                # fail-open: API 실패 시 허용
+                return {"allowed": True, "reason": "api_error_fallback"}
+
+    except Exception as e:
+        logger.warning(f"[CreditCheck] 오류 (fail-open): {e}")
+        # fail-open: 오류 시 허용
+        return {"allowed": True, "reason": "error_fallback", "error": str(e)}
+
 
 class OpenAIService:
     """OpenAI service using class methods"""
@@ -107,6 +163,23 @@ class OpenAIService:
         Summarize text and extract tags.
         Returns {"summary": str, "tags": list}
         """
+        # 🔴 크레딧 체크 (EMBEDDING_CREDIT_POLICY.md 참조)
+        if owner_id:
+            # 텍스트 길이 기준 토큰 추정 (한글 1자 ≈ 2토큰)
+            estimated_tokens = min(len(text) * 2, 10000)
+            credit_check = await check_credit_for_summary(owner_id, estimated_tokens)
+
+            if not credit_check.get("allowed", True):
+                logger.warning(f"[CREDIT_EXCEEDED] Summary 스킵: owner_id={owner_id}, remaining={credit_check.get('credits_remaining', 0)}")
+                return {
+                    "summary": "크레딧 부족으로 요약이 생략되었습니다.",
+                    "tags": [],
+                    "truncated": False,
+                    "credit_skipped": True,
+                    "credits_remaining": credit_check.get("credits_remaining", 0),
+                    "days_until_reset": credit_check.get("days_until_reset", 0)
+                }
+
         # Truncate if too long
         truncated = len(text) > 10000
         if truncated:
