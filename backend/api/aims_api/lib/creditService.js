@@ -991,11 +991,13 @@ async function processCreditPendingDocuments(db, userId) {
     }
 
     // pending으로 상태 변경
+    // ⭐ status 필드도 함께 업데이트 (stale credit_pending 값 방지)
     await filesCollection.updateOne(
       { _id: doc._id },
       {
         $set: {
           overallStatus: 'pending',
+          status: 'pending',  // ✅ status 필드도 업데이트
           'docembed.status': 'pending',
           'docembed.reprocessed_from_credit_pending': true,
           'docembed.reprocessed_at': new Date(),

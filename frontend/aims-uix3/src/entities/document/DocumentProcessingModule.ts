@@ -278,12 +278,10 @@ export class DocumentProcessingModule {
    * 문서 상태 추출 (내부 헬퍼)
    */
   private static extractStatus(document: Document): DocumentStatus {
-    // 🔴 credit_pending 상태 우선 체크 (크레딧 부족으로 처리 보류)
-    if (
-      document.overallStatus === 'credit_pending' ||
-      document.status === 'credit_pending' ||
-      document.progressStage === 'credit_pending'
-    ) {
+    // 🔴 credit_pending 상태 체크 (크레딧 부족으로 처리 보류)
+    // ⭐ overallStatus만 체크! status/progressStage에 stale 값이 있어도 무시
+    // (processCreditPendingDocuments에서 overallStatus를 'pending'으로 업데이트하므로 overallStatus가 신뢰할 수 있는 필드)
+    if (document.overallStatus === 'credit_pending') {
       return 'credit_pending'
     }
 
