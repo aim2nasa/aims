@@ -293,11 +293,15 @@ async def doc_prep_main(
                 if is_ar:
                     doc_data["is_annual_report"] = True
                     doc_data["document_type"] = "annual_report"
-                    logger.info(f"[CreditPending] AR 문서 감지: {original_name}")
+                    # 🍎 AR 문서는 텍스트 추출 가능한 PDF이므로 TXT 뱃지
+                    doc_data["badgeType"] = "TXT"
+                    logger.info(f"[CreditPending] AR 문서 감지: {original_name}, badgeType=TXT")
                 elif is_crs:
                     doc_data["is_customer_review"] = True
                     doc_data["document_type"] = "customer_review"
-                    logger.info(f"[CreditPending] CRS 문서 감지: {original_name}")
+                    # 🍎 CRS 문서도 텍스트 추출 가능한 PDF이므로 TXT 뱃지
+                    doc_data["badgeType"] = "TXT"
+                    logger.info(f"[CreditPending] CRS 문서 감지: {original_name}, badgeType=TXT")
             else:
                 # 크레딧 충분: 기존 로직
                 doc_data = {

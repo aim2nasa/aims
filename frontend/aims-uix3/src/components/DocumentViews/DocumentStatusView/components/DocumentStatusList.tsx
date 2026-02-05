@@ -906,8 +906,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                     if (confidence !== null) {
                       const level = getOcrConfidenceLevel(confidence)
                       return (
-                        <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                          <div className={`document-ocr-badge ocr-${level.color}`}>
+                        <Tooltip content={isCreditPending ? `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (크레딧 부족)` : `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                          <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : `ocr-${level.color}`}`}>
                             OCR
                           </div>
                         </Tooltip>
@@ -915,8 +915,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                     }
                     // confidence 없으면 기본 OCR 뱃지
                     return (
-                      <Tooltip content="OCR 처리 완료">
-                        <div className="document-ocr-badge ocr-medium">
+                      <Tooltip content={isCreditPending ? "OCR 처리 (크레딧 부족)" : "OCR 처리 완료"}>
+                        <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : 'ocr-medium'}`}>
                           OCR
                         </div>
                       </Tooltip>
@@ -924,8 +924,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }
                   if (backendBadgeType === 'TXT') {
                     return (
-                      <Tooltip content="TXT 기반 문서">
-                        <div className="document-txt-badge">
+                      <Tooltip content={isCreditPending ? "TXT 기반 문서 (크레딧 부족)" : "TXT 기반 문서"}>
+                        <div className={`document-txt-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
                           TXT
                         </div>
                       </Tooltip>
@@ -933,8 +933,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }
                   if (backendBadgeType === 'BIN') {
                     return (
-                      <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
-                        <div className="document-bin-badge">
+                      <Tooltip content={isCreditPending ? "바이너리 파일 (크레딧 부족)" : "바이너리 파일 (텍스트 추출 불가)"}>
+                        <div className={`document-bin-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
                           BIN
                         </div>
                       </Tooltip>
@@ -949,8 +949,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   const typeLabel = DocumentUtils.getDocumentTypeLabel(document as any);
                   if (typeLabel === 'TXT') {
                     return (
-                      <Tooltip content="TXT 기반 문서">
-                        <div className="document-txt-badge">
+                      <Tooltip content={isCreditPending ? "TXT 기반 문서 (크레딧 부족)" : "TXT 기반 문서"}>
+                        <div className={`document-txt-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
                           TXT
                         </div>
                       </Tooltip>
@@ -958,8 +958,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }
                   if (typeLabel === 'BIN') {
                     return (
-                      <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
-                        <div className="document-bin-badge">
+                      <Tooltip content={isCreditPending ? "바이너리 파일 (크레딧 부족)" : "바이너리 파일 (텍스트 추출 불가)"}>
+                        <div className={`document-bin-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
                           BIN
                         </div>
                       </Tooltip>
@@ -969,8 +969,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                 }
                 const level = getOcrConfidenceLevel(confidence)
                 return (
-                  <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                    <div className={`document-ocr-badge ocr-${level.color}`}>
+                  <Tooltip content={isCreditPending ? `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (크레딧 부족)` : `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                    <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : `ocr-${level.color}`}`}>
                       OCR
                     </div>
                   </Tooltip>
