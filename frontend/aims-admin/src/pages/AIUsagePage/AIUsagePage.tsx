@@ -1534,8 +1534,16 @@ export const AIUsagePage = () => {
           사용량 리셋 확인 모달
           ====================================================== */}
       {showResetConfirmModal && (
-        <div className="modal-overlay" onClick={() => setShowResetConfirmModal(false)}>
-          <div className="modal-content reset-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowResetConfirmModal(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+        >
+          <div
+            className="modal-content reset-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', padding: '24px', width: '420px' }}
+          >
             <h3 className="reset-modal__title">
               사용량 리셋
             </h3>
@@ -1612,8 +1620,16 @@ export const AIUsagePage = () => {
           리셋 이력 모달
           ====================================================== */}
       {showResetHistoryModal && (
-        <div className="modal-overlay" onClick={() => setShowResetHistoryModal(false)}>
-          <div className="modal-content reset-history-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowResetHistoryModal(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+        >
+          <div
+            className="modal-content reset-history-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '700px', maxWidth: '90vw' }}
+          >
             <div className="reset-history-modal__header">
               <h3 className="reset-history-modal__title">사용량 리셋 이력</h3>
               <button
@@ -1681,8 +1697,16 @@ export const AIUsagePage = () => {
           리셋 상세 모달
           ====================================================== */}
       {showResetDetailModal && selectedResetDetail && (
-        <div className="modal-overlay" onClick={() => setShowResetDetailModal(false)}>
-          <div className="modal-content reset-detail-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowResetDetailModal(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+        >
+          <div
+            className="modal-content reset-detail-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#ffffff', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '600px', maxWidth: '90vw' }}
+          >
             <div className="reset-detail-modal__header">
               <h3 className="reset-detail-modal__title">
                 리셋 상세 - {new Date(selectedResetDetail.reset_at).toLocaleString('ko-KR')}
