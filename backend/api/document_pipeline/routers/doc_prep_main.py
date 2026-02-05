@@ -597,10 +597,14 @@ async def _detect_and_process_annual_report(
             logger.info(f"📄 AR displayName 생성: {display_name}")
 
         # 6. DB 업데이트
+        # ⚠️ ar_parsing_status는 "pending"으로 설정!
+        # - AR 감지(is_annual_report=True)와 AR 파싱(계약 테이블 추출)은 다름
+        # - annual_report_api가 "pending" 상태를 스캔하여 실제 파싱 수행
+        # - 파싱 완료 후 annual_report_api가 "completed"로 변경
         update_fields = {
             "is_annual_report": True,
             "document_type": "annual_report",
-            "ar_parsing_status": "completed",  # AR 감지 및 정보 추출 완료
+            "ar_parsing_status": "pending",  # AR 파싱 대기 (annual_report_api가 처리)
         }
 
         if display_name:
@@ -811,10 +815,14 @@ async def _detect_and_process_customer_review(
                 logger.warning(f"CRS 고객 생성/검색 중 오류: {e}")
 
         # 5. DB 업데이트
+        # ⚠️ cr_parsing_status는 "pending"으로 설정!
+        # - CRS 감지(is_customer_review=True)와 CRS 파싱(계약 정보 추출)은 다름
+        # - annual_report_api가 "pending" 상태를 스캔하여 실제 파싱 수행
+        # - 파싱 완료 후 annual_report_api가 "completed"로 변경
         update_fields = {
             "is_customer_review": True,
             "document_type": "customer_review",
-            "cr_parsing_status": "completed",  # CRS 감지 및 정보 추출 완료
+            "cr_parsing_status": "pending",  # CRS 파싱 대기 (annual_report_api가 처리)
             "cr_metadata": {
                 "contractor_name": customer_name,
                 "product_name": product_name,

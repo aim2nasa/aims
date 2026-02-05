@@ -63,7 +63,8 @@ async def scan_pending_ar_documents(log_always: bool = False):
     AR 파싱이 필요한 문서를 찾아 큐에 추가
 
     🔴 100% 신뢰 설계:
-    - 조건: is_annual_report=true AND status=completed AND ar_parsing_status != completed
+    - 조건: is_annual_report=true AND status IN (completed, credit_pending) AND ar_parsing_status != completed
+    - ⚠️ AR 파싱은 임베딩 크레딧과 무관! pdfplumber 기반 파싱은 AI 불필요
     - Frontend trigger 실패해도 Backend가 반드시 처리
     - customerId가 없으면 스킵 (고객 연결 필요)
 
@@ -78,12 +79,13 @@ async def scan_pending_ar_documents(log_always: bool = False):
 
         # 🔴 단순하고 확실한 조건:
         # 1. is_annual_report: true - AR로 식별됨
-        # 2. status: completed - 파이프라인 처리 완료 (overallStatus는 캐시값이라 갱신 지연 가능)
+        # 2. status: completed 또는 credit_pending - 파이프라인 처리 완료 또는 크레딧 대기
+        #    ⚠️ AR 파싱은 임베딩 크레딧과 무관! pdfplumber 기반 파싱은 AI 불필요
         # 3. ar_parsing_status != completed - 아직 파싱 안됨
         # 4. customerId 존재 - 고객 연결됨
         pending_docs = list(db["files"].find({
             "is_annual_report": True,
-            "status": "completed",
+            "status": {"$in": ["completed", "credit_pending"]},
             "ar_parsing_status": {"$ne": "completed"},
             "customerId": {"$exists": True, "$ne": None}
         }).limit(10))
@@ -142,8 +144,10 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 
     AR과 달리 큐 없이 직접 처리 (OpenAI 불필요, regex/pdfplumber만 사용)
 
-    조건: is_customer_review=true AND status=completed
+    조건: is_customer_review=true AND status IN (completed, credit_pending)
           AND cr_parsing_status != completed AND customerId 존재
+
+    ⚠️ CRS 파싱은 임베딩 크레딧과 무관! pdfplumber 기반이므로 AI 불필요
 
     Args:
         log_always: True면 0건이어도 로그 출력 (heartbeat용)
@@ -155,9 +159,10 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
         from bson import ObjectId
         from routes.cr_background import parse_single_cr_document
 
+        # ⚠️ CRS 파싱은 임베딩 크레딧과 무관! pdfplumber 기반 파싱은 AI 불필요
         pending_docs = list(db["files"].find({
             "is_customer_review": True,
-            "status": "completed",  # overallStatus는 캐시값이라 갱신 지연 가능 → 파이프라인 권위값 status 사용
+            "status": {"$in": ["completed", "credit_pending"]},  # credit_pending도 CRS 파싱 가능
             "cr_parsing_status": {"$nin": ["completed", "processing"]},
             "customerId": {"$exists": True, "$ne": None}
         }).limit(10))
