@@ -9,9 +9,41 @@
 | 배치 1 | creditService, documentStatusHelper | 완료 | 2026-02-05 | (커밋 예정) | 79개 |
 | 배치 2 | document_pipeline workers | 완료 | 2026-02-05 | (커밋 예정) | 35개 |
 | 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | a44006c0 | 47개 |
-| 배치 4 | Frontend Hooks (SSE/채팅) | 완료 | 2026-02-05 | (커밋 예정) | 56개 |
-| 배치 5 | ARQueue stub → 실제 구현 | 대기 | - | - | - |
+| 배치 4 | Frontend Hooks (SSE/채팅) | 완료 | 2026-02-05 | 26787401 | 43개 |
+| 배치 5 | ARQueue stub → 실제 구현 | 완료 | 2026-02-05 | (커밋 예정) | 12개 |
 | 배치 6 | 오래된 테스트 업데이트 | 대기 | - | - | - |
+
+---
+
+## 배치 5: ARQueue stub → 실제 구현
+
+### 대상 파일
+- `frontend/aims-uix3/src/components/DocumentViews/DocumentRegistrationView/__tests__/ARQueue.test.tsx`
+  - 기존: 모든 테스트가 `expect(true).toBe(true)` stub
+
+### 완료된 테스트
+- [x] ARQueue.test.tsx - stub 제거, 실제 구현 (12개 테스트)
+
+### 테스트 케이스 상세
+
+**ARQueue.test.tsx:**
+- 큐 시스템 - 파일 추가, 순차 처리 (2개)
+- 동시 처리 방지 - 대기, 완료 후 처리 (2개)
+- 캐시 기반 중복 방지 - 캐시 초기화, 같은 해시 중복 감지 (2개)
+- 에러 복원력 - 해시 계산 실패 시 다른 파일 계속 처리 (1개)
+- 배치 처리 크기 - CONCURRENCY=10 병렬 처리 (1개)
+- 빈 입력 처리 - 빈 파일/고객ID 배열 (2개)
+
+### 테스트 대상 함수
+- `precomputeFileHashes(files, onProgress)` - 파일 해시 미리 계산
+- `prefetchCustomerData(customerIds, onProgress)` - 고객 데이터 프리페치
+- `processAnnualReportFile(file, customerId)` - AR 파일 처리 + 중복 감지
+- `clearDuplicateCheckCache()` - 중복 체크 캐시 초기화
+
+### 비고
+- 기존 stub 테스트 (`expect(true).toBe(true)`) 전면 교체
+- `annualReportProcessor.ts`의 실제 큐 로직 테스트
+- 기존 annualReportProcessor.test.ts (9개)와 병행 사용
 
 ---
 
