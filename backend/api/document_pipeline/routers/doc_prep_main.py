@@ -600,7 +600,7 @@ async def _detect_and_process_annual_report(
         update_fields = {
             "is_annual_report": True,
             "document_type": "annual_report",
-            "ar_parsing_status": "pending",  # 백그라운드 파싱 대기
+            "ar_parsing_status": "completed",  # AR 감지 및 정보 추출 완료
         }
 
         if display_name:
@@ -814,7 +814,7 @@ async def _detect_and_process_customer_review(
         update_fields = {
             "is_customer_review": True,
             "document_type": "customer_review",
-            "cr_parsing_status": "pending",  # 백그라운드 파싱 대기
+            "cr_parsing_status": "completed",  # CRS 감지 및 정보 추출 완료
             "cr_metadata": {
                 "contractor_name": customer_name,
                 "product_name": product_name,
