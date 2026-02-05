@@ -378,9 +378,12 @@ async function checkCreditForDocumentProcessing(db, analyticsDb, userId, estimat
     const monthlyRemaining = Math.max(0, effectiveCreditQuota - usage.total_credits);
     const usagePercent = Math.round((usage.total_credits / effectiveCreditQuota) * 100 * 100) / 100;
 
-    // 7. 추가 크레딧 잔액 조회
+    // 7. 추가 크레딧 잔액 조회 및 월정액 초과분 차감
     const bonusBalance = await getBonusCreditBalance(db, userId);
-    const totalAvailable = monthlyRemaining + bonusBalance;
+    // 🔴 월정액 초과분을 보너스에서 차감해야 총 가용 크레딧이 정확함
+    const monthlyOverage = Math.max(0, usage.total_credits - effectiveCreditQuota);
+    const effectiveBonusBalance = Math.max(0, bonusBalance - monthlyOverage);
+    const totalAvailable = monthlyRemaining + effectiveBonusBalance;
 
     // 8. 예상 크레딧 계산
     // OCR: 페이지당 2 크레딧

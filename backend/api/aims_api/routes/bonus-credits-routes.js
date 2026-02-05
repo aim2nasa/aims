@@ -377,6 +377,9 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
 
           const monthlyRemaining = Math.max(0, effectiveQuota - usage.total_credits);
           const bonusBalance = user.bonus_credits?.balance ?? 0;
+          // 🔴 월정액 초과분을 보너스에서 차감해야 총 가용 크레딧이 정확함
+          const monthlyOverage = Math.max(0, usage.total_credits - effectiveQuota);
+          const effectiveBonusBalance = Math.max(0, bonusBalance - monthlyOverage);
 
           return {
             id: user._id.toString(),
@@ -388,7 +391,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
             monthly_used: usage.total_credits,
             monthly_remaining: monthlyRemaining,
             bonus_balance: bonusBalance,
-            total_available: monthlyRemaining + bonusBalance,
+            total_available: monthlyRemaining + effectiveBonusBalance,
             last_purchase_at: user.bonus_credits?.last_purchase_at
           };
         } catch (err) {
