@@ -8,8 +8,8 @@
 |------|------|------|--------|------|----------|
 | 배치 1 | creditService, documentStatusHelper | 완료 | 2026-02-05 | (커밋 예정) | 79개 |
 | 배치 2 | document_pipeline workers | 완료 | 2026-02-05 | (커밋 예정) | 35개 |
-| 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | (커밋 예정) | 47개 |
-| 배치 4 | Frontend Hooks (SSE/채팅) | 대기 | - | - | - |
+| 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | a44006c0 | 47개 |
+| 배치 4 | Frontend Hooks (SSE/채팅) | 완료 | 2026-02-05 | (커밋 예정) | 56개 |
 | 배치 5 | ARQueue stub → 실제 구현 | 대기 | - | - | - |
 | 배치 6 | 오래된 테스트 업데이트 | 대기 | - | - | - |
 
@@ -57,6 +57,58 @@
 - 기존 test_rag_search.py (80+개)와 별도로 개별 모듈 테스트 추가
 - OpenAI, Qdrant, MongoDB 모두 모킹하여 단위 테스트 실행
 - Cross-Encoder 점수 정규화 및 final_score 계산 로직 검증
+
+---
+
+## 배치 4: Frontend Hooks (SSE/채팅)
+
+### 대상 파일
+- `frontend/aims-uix3/src/shared/hooks/useChatSSE.ts` - AI 채팅 SSE 스트리밍
+- `frontend/aims-uix3/src/hooks/useDocumentStatistics.ts` - 문서 처리 통계
+- `frontend/aims-uix3/src/hooks/useBatchId.ts` - 배치 ID 관리
+
+### 완료된 테스트
+- [x] useChatSSE.test.ts (20개 테스트)
+- [x] useDocumentStatistics.test.ts (15개 테스트)
+- [x] useBatchId.test.ts (21개 테스트)
+
+### 테스트 케이스 상세
+
+**useChatSSE.test.ts:**
+- 초기 상태 - isLoading, currentResponse, activeTools 등 (2개)
+- parseSSE - SSE 데이터 파싱, 잘못된 JSON 처리 (2개)
+- sendMessage - 인증, API 호출, HTTP 에러, isLoading (4개)
+- SSE 이벤트 처리 - content, session, tool_start, done, error (6개)
+- credit_exceeded - 크레딧 초과 정보 설정 및 초기화 (2개)
+- rate_limit_retry - 재시도 상태 설정 (1개)
+- abort - 요청 중단 (1개)
+- onChunk 콜백 - 이벤트별 콜백 호출 (1개)
+- 세션 ID - 옵션으로 전달 시 API 포함 (1개)
+
+**useDocumentStatistics.test.ts:**
+- 초기화 - enabled 옵션, 하위 호환성 (4개)
+- batchId 필터링 - 쿼리 파라미터, 캐시 비활성화 (3개)
+- 에러 처리 - errorReporter 보고, silent 모드 (2개)
+- refresh - 수동 통계 재조회 (1개)
+- isLoading 상태 (1개)
+- SSE 구독 - useSSESubscription 파라미터 (1개)
+- Freshness Guardian - 30초 폴링 활성화/비활성화 (2개)
+- 언마운트 정리 - 타이머 정리 (1개)
+
+**useBatchId.test.ts:**
+- useBatchId 훅 - 초기값, 업데이트, 동기화 (5개)
+- setBatchId - sessionStorage 저장, 덮어쓰기, 알림 (3개)
+- clearBatchId - 삭제, 빈 값 처리, 알림 (3개)
+- getBatchId - 현재 값, null, React 외부 사용 (3개)
+- 교차 탭 동기화 - storage 이벤트 처리 (2개)
+- 언마운트 정리 - 구독 해제 (2개)
+- 타입 안정성 - string | null (1개)
+- UX 시나리오 - 업로드 사이클, 배치 전환 (2개)
+
+### 비고
+- vitest + @testing-library/react 사용
+- fetch, SSE, sessionStorage 모킹
+- useSyncExternalStore 기반 반응성 테스트
 
 ---
 
