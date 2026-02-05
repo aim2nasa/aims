@@ -687,9 +687,20 @@ async function checkCreditWithBonus(db, analyticsDb, userId, requiredCredits = 0
       };
     }
 
-    const monthlyRemaining = monthlyCheck.credits_remaining ?? 0;
+    // 월정액 초과분 계산 (보너스에서 차감해야 할 양)
+    const creditsUsed = monthlyCheck.credits_used ?? 0;
+    const creditQuota = monthlyCheck.credit_quota ?? 0;
+    const monthlyOverage = Math.max(0, creditsUsed - creditQuota);
+
+    // 보너스에서 초과분 차감한 유효 잔액
     const bonusBalance = await getBonusCreditBalance(db, userId);
-    const totalAvailable = monthlyRemaining + bonusBalance;
+    const effectiveBonusBalance = Math.max(0, bonusBalance - monthlyOverage);
+
+    // 월정액 남은 금액 (음수면 0)
+    const monthlyRemaining = Math.max(0, monthlyCheck.credits_remaining ?? 0);
+
+    // 총 가용 크레딧 = 월정액 남은 + 유효 보너스
+    const totalAvailable = monthlyRemaining + effectiveBonusBalance;
 
     // 2. 월정액만으로 충분한 경우
     if (monthlyRemaining >= requiredCredits) {

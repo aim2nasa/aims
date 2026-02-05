@@ -44,6 +44,9 @@ export interface ChatEvent {
   days_until_reset?: number;
   tier?: string;
   tier_name?: string;
+  // 보너스 크레딧 정보
+  bonus_balance?: number;
+  total_available?: number;
 }
 
 /**
@@ -295,7 +298,9 @@ export function useChatSSE(): UseChatSSEReturn {
                 credit_usage_percent: event.credit_usage_percent ?? 100,
                 days_until_reset: event.days_until_reset ?? 0,
                 tier: event.tier,
-                tier_name: event.tier_name
+                tier_name: event.tier_name,
+                bonus_balance: event.bonus_balance ?? 0,
+                total_available: event.total_available ?? 0
               });
               break;
 

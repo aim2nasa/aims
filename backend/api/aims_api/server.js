@@ -11674,23 +11674,27 @@ app.post('/api/chat', authenticateJWT, async (req, res) => {
   console.log(`[Chat] 채팅 시작 - userId: ${userId}, sessionId: ${sessionId || 'none'}, messages: ${messages.length}개`);
 
   try {
-    // 크레딧 한도 체크 (AI 호출 전)
-    const { checkCreditBeforeAI } = require('./lib/creditService');
-    const creditCheck = await checkCreditBeforeAI(db, analyticsDb, userId);
+    // 크레딧 한도 체크 (AI 호출 전) - 월정액 + 추가 크레딧 합산
+    const { checkCreditWithBonus, checkCreditBeforeAI } = require('./lib/creditService');
+    const creditCheck = await checkCreditWithBonus(db, analyticsDb, userId, 5);
 
     if (!creditCheck.allowed) {
-      console.log(`[Chat] 크레딧 부족 - userId: ${userId}, used: ${creditCheck.credits_used}, quota: ${creditCheck.credit_quota}`);
+      // 상세 정보를 위해 기본 체크도 수행
+      const basicCheck = await checkCreditBeforeAI(db, analyticsDb, userId, 5);
+      console.log(`[Chat] 크레딧 부족 - userId: ${userId}, monthly: ${creditCheck.monthly_remaining}, bonus: ${creditCheck.bonus_balance}, total: ${creditCheck.total_available}`);
 
       // 크레딧 부족 SSE 이벤트 전송
       res.write(`data: ${JSON.stringify({
         type: 'credit_exceeded',
-        credits_used: creditCheck.credits_used,
-        credits_remaining: creditCheck.credits_remaining,
-        credit_quota: creditCheck.credit_quota,
-        credit_usage_percent: creditCheck.credit_usage_percent,
-        days_until_reset: creditCheck.days_until_reset,
-        tier: creditCheck.tier,
-        tier_name: creditCheck.tier_name
+        credits_used: basicCheck.credits_used ?? 0,
+        credits_remaining: creditCheck.monthly_remaining ?? 0,
+        credit_quota: basicCheck.credit_quota ?? 0,
+        credit_usage_percent: basicCheck.credit_usage_percent ?? 100,
+        days_until_reset: basicCheck.days_until_reset ?? 0,
+        tier: basicCheck.tier,
+        tier_name: basicCheck.tier_name,
+        bonus_balance: creditCheck.bonus_balance ?? 0,
+        total_available: creditCheck.total_available ?? 0
       })}\n\n`);
 
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);

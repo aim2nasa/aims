@@ -144,20 +144,12 @@ export default function CreditExceededDialog({
           <div className="credit-exceeded-info-row">
             <span className="credit-exceeded-label">크레딧 사용량</span>
             <span className="credit-exceeded-value">
-              {formatCredits(creditInfo.credits_used)} / {formatCredits(creditInfo.credit_quota)}
+              {formatCredits(creditInfo.credits_used)} / {formatCredits((creditInfo.credit_quota ?? 0) + (creditInfo.bonus_balance ?? 0))}
               {(creditInfo.bonus_balance ?? 0) > 0 && (
-                <span className="credit-exceeded-bonus"> + {formatCredits(creditInfo.bonus_balance ?? 0)}</span>
+                <span className="credit-exceeded-bonus"> (+{formatCredits(creditInfo.bonus_balance ?? 0)})</span>
               )}
             </span>
           </div>
-          {(creditInfo.bonus_balance ?? 0) > 0 && (
-            <div className="credit-exceeded-info-row">
-              <span className="credit-exceeded-label">추가 크레딧</span>
-              <span className="credit-exceeded-value bonus">
-                {formatCredits(creditInfo.bonus_balance ?? 0)}
-              </span>
-            </div>
-          )}
           <div className="credit-exceeded-info-row">
             <span className="credit-exceeded-label">사용률</span>
             <span className="credit-exceeded-value exceeded">

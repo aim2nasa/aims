@@ -45,13 +45,7 @@ export default defineConfig({
       '^/api/.*/stream$': {
         target: 'http://100.110.215.65:3010',  // Tailscale VPN (보안 접속)
         secure: false,
-        changeOrigin: true,
-        // SSE 스트리밍을 위한 설정
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Connection', 'keep-alive');
-          });
-        }
+        changeOrigin: true
       },
       // AI 채팅 SSE 엔드포인트
       '/api/chat': {
@@ -65,7 +59,6 @@ export default defineConfig({
             proxyRes.headers['x-accel-buffering'] = 'no';
           });
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Connection', 'keep-alive');
             proxyReq.setHeader('Cache-Control', 'no-cache');
           });
         }
