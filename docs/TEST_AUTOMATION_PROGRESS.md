@@ -8,10 +8,55 @@
 |------|------|------|--------|------|----------|
 | 배치 1 | creditService, documentStatusHelper | 완료 | 2026-02-05 | (커밋 예정) | 79개 |
 | 배치 2 | document_pipeline workers | 완료 | 2026-02-05 | (커밋 예정) | 35개 |
-| 배치 3 | aims_rag_api 검색 모듈 | 대기 | - | - | - |
+| 배치 3 | aims_rag_api 검색 모듈 | 완료 | 2026-02-05 | (커밋 예정) | 47개 |
 | 배치 4 | Frontend Hooks (SSE/채팅) | 대기 | - | - | - |
 | 배치 5 | ARQueue stub → 실제 구현 | 대기 | - | - | - |
 | 배치 6 | 오래된 테스트 업데이트 | 대기 | - | - | - |
+
+---
+
+## 배치 3: aims_rag_api 검색 모듈
+
+### 대상 파일
+- `backend/api/aims_rag_api/query_analyzer.py` - 쿼리 의도 분석
+- `backend/api/aims_rag_api/reranker.py` - Cross-Encoder 재순위화
+- `backend/api/aims_rag_api/hybrid_search.py` - 하이브리드 검색 엔진
+
+### 완료된 테스트
+- [x] test_query_analyzer.py (13개 테스트)
+- [x] test_reranker.py (18개 테스트)
+- [x] test_hybrid_search.py (16개 테스트)
+
+### 테스트 케이스 상세
+
+**test_query_analyzer.py:**
+- QueryAnalyzer 초기화 - OpenAI 클라이언트 생성 (1개)
+- analyze() - entity/concept/mixed 쿼리 분류 (3개)
+- analyze() - 모델/파라미터 확인, 기본값 설정 (2개)
+- 에러 핸들링 - API 오류, JSON 파싱 오류, 타임아웃 (3개)
+- 프롬프트 구성 - 쿼리 포함 확인 (1개)
+- 통합 시나리오 - 고객 문서, 날짜, 한국어 인명 (3개)
+
+**test_reranker.py:**
+- SearchReranker 초기화 - 모델 로딩 (3개)
+- rerank() - 기본 재순위화, 빈 결과, top_k 제한 (4개)
+- 점수 정규화 - sigmoid 변환 (2개)
+- final_score 계산 - 파일명 매칭 우선순위 (4개)
+- 에러 핸들링 - predict 오류, null payload (3개)
+- 정렬 - final_score 내림차순, 동일 점수 시 doc_id (2개)
+
+**test_hybrid_search.py:**
+- HybridSearchEngine 초기화 (1개)
+- _entity_search() - 기본 검색, 파일명 매칭, 고객 필터 (4개)
+- _vector_search() - 기본 검색, 모델, 에러, 청크 중복 제거 (4개)
+- _hybrid_search() - 결과 병합, 점수 합산 (2개)
+- search() 라우터 - query_type별 분기 (3개)
+- 임베딩 추적 - 응답 저장, 에러 시 초기화 (2개)
+
+### 비고
+- 기존 test_rag_search.py (80+개)와 별도로 개별 모듈 테스트 추가
+- OpenAI, Qdrant, MongoDB 모두 모킹하여 단위 테스트 실행
+- Cross-Encoder 점수 정규화 및 final_score 계산 로직 검증
 
 ---
 
