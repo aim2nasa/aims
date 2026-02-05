@@ -103,6 +103,8 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
         return '⏱'
       case 'error':
         return '⚠'
+      case 'credit_pending':
+        return '⏸'  // 크레딧 부족으로 대기
       default:
         return '○'
     }
@@ -178,6 +180,7 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                           {status === 'processing' && '처리중'}
                           {status === 'pending' && '대기'}
                           {status === 'error' && '오류'}
+                          {status === 'credit_pending' && '크레딧 부족'}
                         </span>
                       </div>
                     </td>

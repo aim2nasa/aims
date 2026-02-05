@@ -278,6 +278,15 @@ export class DocumentProcessingModule {
    * 문서 상태 추출 (내부 헬퍼)
    */
   private static extractStatus(document: Document): DocumentStatus {
+    // 🔴 credit_pending 상태 우선 체크 (크레딧 부족으로 처리 보류)
+    if (
+      document.overallStatus === 'credit_pending' ||
+      document.status === 'credit_pending' ||
+      document.progressStage === 'credit_pending'
+    ) {
+      return 'credit_pending'
+    }
+
     if (document.overallStatus) {
       return document.overallStatus
     }
@@ -396,6 +405,8 @@ export class DocumentProcessingModule {
         return '○'
       case 'timeout':
         return '⏱'
+      case 'credit_pending':
+        return '⏸'  // 일시정지 아이콘 - 크레딧 부족
       default:
         return '?'
     }
@@ -416,6 +427,8 @@ export class DocumentProcessingModule {
         return '대기'
       case 'timeout':
         return '타임아웃'
+      case 'credit_pending':
+        return '크레딧 부족'
       default:
         return '알 수 없음'
     }

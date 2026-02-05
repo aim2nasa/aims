@@ -9,7 +9,7 @@
 /**
  * 문서 처리 상태
  */
-export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending' | 'timeout'
+export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending' | 'timeout' | 'credit_pending'
 
 /**
  * 처리 단계 상태
@@ -154,6 +154,7 @@ export interface Document {
   // 상태 필드들
   status?: DocumentStatus
   overallStatus?: DocumentStatus
+  progressStage?: string  // 🔴 credit_pending 등 처리 단계 상태
   progress?: number
 
   // 타임스탬프
@@ -211,6 +212,14 @@ export interface Document {
     scannedAt?: string
     deletedAt?: string
     deletedReason?: string
+  }
+
+  // 🔴 크레딧 부족으로 대기 중인 문서 정보
+  credit_pending_info?: {
+    credits_remaining?: number
+    days_until_reset?: number
+    estimated_credits?: number
+    reason?: string
   }
 }
 
