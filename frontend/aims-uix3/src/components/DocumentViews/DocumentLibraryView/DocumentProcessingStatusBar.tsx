@@ -4,8 +4,9 @@
  * Apple Progressive Disclosure: 처리 중인 문서가 없으면 자동 숨김
  */
 
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistics'
+import { clearBatchId, getBatchId } from '@/hooks/useBatchId'
 import './DocumentProcessingStatusBar.css'
 
 interface DocumentProcessingStatusBarProps {
@@ -49,15 +50,48 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
   // 현재 배치가 있고, 진행 중인지 확인
   const hasBatch = batchStatistics && batchStatistics.total > 0
   const batchTotal = batchStatistics?.total ?? 0
+  // 🔴 credit_pending은 "완료"가 아님! 진행률에서 제외
   const batchCompleted = (batchStatistics?.completed ?? 0) +
-                         (batchStatistics?.completed_with_skip ?? 0) +
-                         (batchStatistics?.credit_pending ?? 0)
+                         (batchStatistics?.completed_with_skip ?? 0)
   const batchProcessing = batchStatistics?.processing ?? 0
   const batchPending = batchStatistics?.pending ?? 0
   const batchError = batchStatistics?.error ?? 0
   const batchCreditPending = batchStatistics?.credit_pending ?? 0
   const batchPct = batchTotal > 0 ? Math.round((batchCompleted / batchTotal) * 100) : 0
-  const batchIsActive = batchPct < 100
+  // 🔴 credit_pending이 있어도 "활성" 상태 (아직 처리 안 됨)
+  const batchIsActive = batchPct < 100 || batchCreditPending > 0
+
+  // 🔴 배치 완료 시 자동 정리 (2초 딜레이 후)
+  // 조건: 100% 완료 + 진행 중/대기 중 없음 + credit_pending 없음
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const shouldCleanup = hasBatch &&
+                        batchPct === 100 &&
+                        batchProcessing === 0 &&
+                        batchPending === 0 &&
+                        batchCreditPending === 0
+
+  useEffect(() => {
+    if (shouldCleanup) {
+      // 이미 타이머가 있으면 무시
+      if (cleanupTimerRef.current) return
+
+      const currentBatchId = getBatchId()
+      cleanupTimerRef.current = setTimeout(() => {
+        // 새 업로드가 시작되지 않았는지 확인
+        if (getBatchId() === currentBatchId) {
+          clearBatchId()
+        }
+        cleanupTimerRef.current = null
+      }, 2000)
+    }
+
+    return () => {
+      if (cleanupTimerRef.current) {
+        clearTimeout(cleanupTimerRef.current)
+        cleanupTimerRef.current = null
+      }
+    }
+  }, [shouldCleanup])
 
   // 표시 여부 결정
   const isVisible = useMemo(() => {

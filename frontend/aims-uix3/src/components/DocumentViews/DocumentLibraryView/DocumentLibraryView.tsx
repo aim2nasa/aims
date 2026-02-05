@@ -35,6 +35,7 @@ import { DocumentService } from '@/services/DocumentService'
 import DownloadHelper from '../../../utils/downloadHelper'
 import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
+import { useBatchId } from '@/hooks/useBatchId'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 import { InitialFilterBar, calculateInitialCounts, filterByInitial, type InitialType } from '@/shared/ui/InitialFilterBar'
@@ -104,11 +105,8 @@ const DocumentLibraryContent: React.FC<{
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
-  // 🔴 현재 업로드 배치 ID (sessionStorage에서 즉시 읽기 - 첫 렌더링부터 사용)
-  const [currentBatchId] = React.useState<string | null>(() => {
-    if (typeof window === 'undefined') return null
-    return sessionStorage.getItem('aims-current-batch-id')
-  })
+  // 🔴 현재 업로드 배치 ID (실시간 추적 - sessionStorage 변경 시 즉시 반영)
+  const currentBatchId = useBatchId()
 
   // 문서 처리 현황 통계 (Status Bar용)
   // 1. 전체 라이브러리 통계

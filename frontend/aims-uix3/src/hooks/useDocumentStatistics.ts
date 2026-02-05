@@ -26,10 +26,15 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
     typeof options === 'boolean' ? { enabled: options } : options
   const { enabled = true, batchId = null } = normalizedOptions
 
-  // batchId가 있으면 캐시 사용 안 함 (배치별 통계는 독립적)
-  const useCache = !batchId
-  const [statistics, setStatistics] = useState<DocumentStatistics | null>(useCache ? statisticsCache : null)
-  const [isLoading, setIsLoading] = useState<boolean>(useCache ? statisticsCache === null : true)
+  // 🔴 enabled=false면 캐시 사용 안 함 (null 반환해야 함)
+  // 🔴 batchId가 있으면 캐시 사용 안 함 (배치별 통계는 독립적)
+  const useCache = enabled && !batchId
+  const [statistics, setStatistics] = useState<DocumentStatistics | null>(
+    enabled === false ? null : (useCache ? statisticsCache : null)
+  )
+  const [isLoading, setIsLoading] = useState<boolean>(
+    enabled === false ? false : (useCache ? statisticsCache === null : true)
+  )
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
 

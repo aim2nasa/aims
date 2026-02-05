@@ -54,6 +54,7 @@ import { getEffectiveMapping as getCrEffectiveMapping } from './utils/crGrouping
 import { BatchUploadApi } from '@/features/batch-upload/api/batchUploadApi'
 import type { ArFileTableRow } from './types/arBatchTypes'
 import type { CrFileTableRow } from './types/crBatchTypes'
+import { setBatchId } from '@/hooks/useBatchId'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -558,8 +559,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     duplicateApplyAllRef.current = null
 
     // 🔴 업로드 묶음 ID 생성 (현재 세션 진행률 추적용)
+    // setBatchId()가 모든 구독자에게 알림 → DocumentLibraryView 즉시 반영
     const newBatchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    sessionStorage.setItem('aims-current-batch-id', newBatchId)
+    setBatchId(newBatchId)
     if (import.meta.env.DEV) {
       console.log(`[DocumentRegistrationView] 새 배치 ID 생성: ${newBatchId}`)
     }
