@@ -7,11 +7,48 @@
 | 배치 | 대상 | 상태 | 완료일 | 커밋 | 테스트 수 |
 |------|------|------|--------|------|----------|
 | 배치 1 | creditService, documentStatusHelper | 완료 | 2026-02-05 | (커밋 예정) | 79개 |
-| 배치 2 | document_pipeline workers | 대기 | - | - | - |
+| 배치 2 | document_pipeline workers | 완료 | 2026-02-05 | (커밋 예정) | 35개 |
 | 배치 3 | aims_rag_api 검색 모듈 | 대기 | - | - | - |
 | 배치 4 | Frontend Hooks (SSE/채팅) | 대기 | - | - | - |
 | 배치 5 | ARQueue stub → 실제 구현 | 대기 | - | - | - |
 | 배치 6 | 오래된 테스트 업데이트 | 대기 | - | - | - |
+
+---
+
+## 배치 2: document_pipeline Workers
+
+### 대상 파일
+- `backend/api/document_pipeline/workers/upload_worker.py`
+- `backend/api/document_pipeline/services/upload_queue_service.py`
+
+### 완료된 테스트
+- [x] test_upload_worker.py (17개 테스트)
+- [x] test_upload_queue_service.py (18개 테스트)
+
+### 테스트 케이스 상세
+
+**test_upload_worker.py:**
+- UploadWorker 초기화 (2개)
+- 시작/중지 lifecycle (3개)
+- _process_batch() 동시성 제한 (2개)
+- _handle_failure() 재시도/실패 처리 (2개)
+- get_status() 상태 조회 (1개)
+- stop() 중지 (1개)
+- 지수 백오프 계산 (1개)
+
+**test_upload_queue_service.py:**
+- enqueue() 큐 삽입 (2개)
+- claim_next() 원자적 작업 획득 (4개)
+- mark_completed() 완료 처리 (2개)
+- mark_failed() 실패 처리 (1개)
+- reschedule() 재시도 스케줄링 (1개)
+- cleanup_stale_jobs() stale 작업 복구 (1개)
+- delete_completed_jobs() 오래된 작업 정리 (1개)
+- 상수 및 원자성 테스트 (3개)
+
+### 비고
+- 로컬 Windows 환경에서 pytest 실행 제한
+- CI/CD (GitHub Actions)에서 자동 테스트 실행 예정
 
 ---
 
