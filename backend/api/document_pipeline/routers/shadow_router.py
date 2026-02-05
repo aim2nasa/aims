@@ -134,7 +134,8 @@ async def shadow_docprep_main(
     userId: str = Form(...),
     customerId: Optional[str] = Form(None),
     customerName: Optional[str] = Form(None),
-    source: Optional[str] = Form("web")
+    source: Optional[str] = Form("web"),
+    batchId: Optional[str] = Form(None)  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적)
 ):
     """Shadow mode for docprep-main (full pipeline)"""
     try:
@@ -142,7 +143,8 @@ async def shadow_docprep_main(
             "userId": userId,
             "customerId": customerId or "",
             "customerName": customerName or "",
-            "source": source
+            "source": source,
+            "batchId": batchId or ""  # 🔴 batchId 전달
         }
 
         file_content = await file.read()

@@ -9,6 +9,7 @@ export interface ParsingStats {
   processing: number
   pending: number
   failed: number
+  credit_pending?: number  // 🔴 크레딧 부족으로 파싱 보류된 문서
 }
 
 export interface DocumentStatistics {
@@ -18,6 +19,7 @@ export interface DocumentStatistics {
   error: number
   pending: number
   completed_with_skip: number
+  credit_pending: number  // 🔴 크레딧 부족으로 처리 보류된 문서
   stages: {
     upload: number
     meta: number

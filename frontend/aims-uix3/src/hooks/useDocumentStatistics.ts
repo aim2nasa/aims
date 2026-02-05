@@ -14,15 +14,33 @@ const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
 // 모듈 레벨 캐시: 네비게이션 시 빈 화면 방지
 let statisticsCache: DocumentStatistics | null = null
 
-export function useDocumentStatistics(enabled = true) {
-  const [statistics, setStatistics] = useState<DocumentStatistics | null>(statisticsCache)
-  const [isLoading, setIsLoading] = useState<boolean>(statisticsCache === null)
+interface UseDocumentStatisticsOptions {
+  enabled?: boolean
+  /** 업로드 묶음 ID (현재 세션 필터) */
+  batchId?: string | null
+}
+
+export function useDocumentStatistics(options: UseDocumentStatisticsOptions | boolean = true) {
+  // 하위 호환성: boolean만 전달된 경우
+  const normalizedOptions: UseDocumentStatisticsOptions =
+    typeof options === 'boolean' ? { enabled: options } : options
+  const { enabled = true, batchId = null } = normalizedOptions
+
+  // batchId가 있으면 캐시 사용 안 함 (배치별 통계는 독립적)
+  const useCache = !batchId
+  const [statistics, setStatistics] = useState<DocumentStatistics | null>(useCache ? statisticsCache : null)
+  const [isLoading, setIsLoading] = useState<boolean>(useCache ? statisticsCache === null : true)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mountedRef = useRef(true)
 
   const fetchStatistics = useCallback(async (silent: boolean = false) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents/statistics`, {
+      // batchId가 있으면 쿼리 파라미터로 추가
+      const url = batchId
+        ? `${API_BASE_URL}/api/documents/statistics?batchId=${encodeURIComponent(batchId)}`
+        : `${API_BASE_URL}/api/documents/statistics`
+
+      const response = await fetch(url, {
         headers: {
           ...getAuthHeaders()
         }
@@ -36,7 +54,10 @@ export function useDocumentStatistics(enabled = true) {
 
       if (json.success && json.data && mountedRef.current) {
         const data = json.data as DocumentStatistics
-        statisticsCache = data
+        // batchId가 없을 때만 전역 캐시에 저장
+        if (!batchId) {
+          statisticsCache = data
+        }
         setStatistics(data)
         setIsLoading(false)
       }
@@ -50,7 +71,7 @@ export function useDocumentStatistics(enabled = true) {
         })
       }
     }
-  }, [])
+  }, [batchId])
 
   // SSE 이벤트 수신 시 디바운스 후 통계 재조회
   const debouncedRefresh = useCallback(() => {

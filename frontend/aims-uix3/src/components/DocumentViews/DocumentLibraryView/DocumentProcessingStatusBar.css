@@ -96,6 +96,14 @@
   color: var(--color-error);
 }
 
+/* 🔴 크레딧 대기 스타일 - 주황색으로 명확히 구분 */
+.psb-pipeline-credit {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ios-orange, #f59e0b);
+  cursor: help;
+}
+
 .psb-pipeline-bar {
   width: 100%;
   height: 3px;
@@ -119,6 +127,73 @@
 @keyframes psb-processing-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* === 현재 업로드 배치 Section (좌측) === */
+.psb-batch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.psb-batch-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.psb-batch-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-primary-500);
+  white-space: nowrap;
+}
+
+.psb-batch-text {
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* === 구분선 === */
+.psb-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--color-border-primary);
+  flex-shrink: 0;
+}
+
+/* === 전체 라이브러리 Section (우측) === */
+.psb-library {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.psb-library-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary);
+  white-space: nowrap;
+}
+
+.psb-library-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.psb-library-text {
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* === AR/CRS Parsing Section (우측) === */
@@ -177,6 +252,14 @@
   font-size: 10px;
   font-weight: 600;
   color: var(--color-error);
+}
+
+/* 🔴 AR/CRS 크레딧 대기 스타일 */
+.psb-parsing-credit {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ios-orange, #f59e0b);
+  cursor: help;
 }
 
 /* 파싱 미니 프로그레스바 */
@@ -238,6 +321,16 @@ html[data-theme="dark"] .psb-parsing-badge--crs {
   .processing-status-bar--visible {
     padding: 6px 8px;
     max-height: 48px;
+  }
+
+  /* 구분선 숨김 */
+  .psb-divider {
+    display: none;
+  }
+
+  /* 전체 라이브러리: 모바일에서 숨김 (배치만 표시) */
+  .psb-library {
+    display: none;
   }
 
   /* AR/CRS 파싱 상세: 모바일에서 숨김 (파이프라인만 표시) */

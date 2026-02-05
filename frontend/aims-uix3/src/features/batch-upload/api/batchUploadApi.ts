@@ -98,12 +98,14 @@ export class BatchUploadApi {
    * @param customerId - 고객 ID
    * @param onProgress - 진행률 콜백
    * @param signal - 취소 신호
+   * @param batchId - 업로드 묶음 ID (현재 세션 진행률 추적용)
    */
   static async uploadFile(
     file: File,
     customerId: string,
     onProgress?: UploadProgressCallback,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    batchId?: string
   ): Promise<FileUploadResult> {
     // 🛡️ 바이러스 검사 (ClamAV 활성화된 경우만)
     const scanAvailable = await isScanAvailable()
@@ -201,6 +203,12 @@ export class BatchUploadApi {
         ? localStorage.getItem('aims-current-user-id') || ''
         : ''
       formData.append('userId', currentUserId)
+
+      // 🔴 업로드 묶음 ID 추가 (현재 세션 진행률 추적용)
+      const effectiveBatchId = batchId || sessionStorage.getItem('aims-current-batch-id')
+      if (effectiveBatchId) {
+        formData.append('batchId', effectiveBatchId)
+      }
 
       // 요청 설정
       xhr.open('POST', UPLOAD_ENDPOINT)

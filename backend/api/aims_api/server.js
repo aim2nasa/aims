@@ -1942,13 +1942,22 @@ app.get('/webhook/get-status/:document_id', async (req, res) => {
 
 /**
  * 문서 처리 상태 통계를 조회하는 API
+ * @query batchId - 특정 업로드 묶음의 통계만 조회 (현재 세션 진행률)
  */
 app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
   try {
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
+    const { batchId } = req.query;  // 🔴 업로드 묶음 ID (현재 세션 필터)
+
     // 사용자별 필터링 (ownerId 기준)
     const filter = { ownerId: userId };
+
+    // 🔴 batchId가 있으면 해당 배치만 필터링
+    if (batchId) {
+      filter.batchId = batchId;
+    }
+
     const documents = await db.collection(COLLECTION_NAME).find(filter).toArray();
 
     const stats = {
@@ -1958,6 +1967,7 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
       error: 0,
       pending: 0,
       completed_with_skip: 0,
+      credit_pending: 0,  // 🔴 크레딧 부족으로 처리 보류된 문서
       stages: {
         upload: 0,
         meta: 0,
@@ -1975,14 +1985,16 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
         completed: 0,
         processing: 0,
         pending: 0,
-        failed: 0
+        failed: 0,
+        credit_pending: 0  // 🔴 크레딧 부족으로 파싱 보류된 AR 문서
       },
       crsParsing: {
         total: 0,
         completed: 0,
         processing: 0,
         pending: 0,
-        failed: 0
+        failed: 0,
+        credit_pending: 0  // 🔴 크레딧 부족으로 파싱 보류된 CRS 문서
       }
     };
 
@@ -2017,18 +2029,31 @@ app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
       stats.badgeTypes[badgeType]++;
 
       // AR/CRS 파싱 통계 집계
+      // 🔴 credit_pending 문서는 별도 카운트 (진행률 100%에 포함하기 위해)
+      const isDocCreditPending = overallStatus === 'credit_pending';
+
       if (doc.is_annual_report) {
         stats.arParsing.total++;
-        const arStatus = doc.ar_parsing_status || 'pending';
-        if (stats.arParsing[arStatus] !== undefined) {
-          stats.arParsing[arStatus]++;
+        if (isDocCreditPending) {
+          // credit_pending AR 문서는 별도 카운트
+          stats.arParsing.credit_pending++;
+        } else {
+          const arStatus = doc.ar_parsing_status || 'pending';
+          if (stats.arParsing[arStatus] !== undefined) {
+            stats.arParsing[arStatus]++;
+          }
         }
       }
       if (doc.is_customer_review) {
         stats.crsParsing.total++;
-        const crStatus = doc.cr_parsing_status || 'pending';
-        if (stats.crsParsing[crStatus] !== undefined) {
-          stats.crsParsing[crStatus]++;
+        if (isDocCreditPending) {
+          // credit_pending CRS 문서는 별도 카운트
+          stats.crsParsing.credit_pending++;
+        } else {
+          const crStatus = doc.cr_parsing_status || 'pending';
+          if (stats.crsParsing[crStatus] !== undefined) {
+            stats.crsParsing[crStatus]++;
+          }
         }
       }
     });

@@ -100,6 +100,7 @@ async def doc_prep_main(
     userId: str = Form(...),
     customerId: Optional[str] = Form(None),
     source_path: Optional[str] = Form(None),
+    batchId: Optional[str] = Form(None),  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적용)
     shadow: bool = False,  # Shadow mode: 문서 생성 없이 응답만 시뮬레이션
     shadow_saved_name: Optional[str] = Form(None),  # n8n이 생성한 파일명 (shadow mode용)
     shadow_created_at: Optional[str] = Form(None),  # n8n이 생성한 created_at (shadow mode용)
@@ -243,26 +244,18 @@ async def doc_prep_main(
 
             if is_credit_pending:
                 # 🔴 크레딧 부족: credit_pending 상태로 문서 생성 (큐에 등록하지 않음)
-                # 🍎 AR 감지: 파일명 패턴으로 문서 유형 판단 (크레딧과 무관하게 설정)
-                import os as _os
-                base_name = _os.path.splitext(original_name)[0]
-                ar_pattern = re.match(r'^(.+?)_AR_(\d{4}-\d{2}-\d{2})$', base_name)
-                crs_pattern = re.match(r'^(.+?)_CRS_', base_name)
-
-                is_ar = ar_pattern is not None
-                is_crs = crs_pattern is not None
-
+                # ⚠️ AR/CRS 판단은 텍스트 기반이므로, 크레딧 충전 후 정상 파이프라인에서 처리
+                # ⚠️ 파일명 기반 AR/CRS 판단 절대 금지! (detector.py의 텍스트 파싱으로만 판단)
                 doc_data = {
                     "ownerId": userId,
                     "createdAt": datetime.utcnow(),
+                    "batchId": batchId,  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적)
                     "upload": {
                         "originalName": original_name,
                         "uploaded_at": datetime.utcnow().isoformat(),
-                        # 🍎 파일 크기, MIME 타입 추가 (크레딧 부족해도 표시 가능)
                         "fileSize": len(file_content),
                         "mimeType": file.content_type
                     },
-                    # 🍎 메타 정보 (기본 값) - UI에서 표시용
                     "meta": {
                         "size_bytes": len(file_content),
                         "mime": file.content_type,
@@ -288,25 +281,13 @@ async def doc_prep_main(
                         "credit_pending_since": datetime.utcnow().isoformat()
                     }
                 }
-
-                # 🍎 AR/CRS 문서 유형 설정 (크레딧과 무관하게)
-                if is_ar:
-                    doc_data["is_annual_report"] = True
-                    doc_data["document_type"] = "annual_report"
-                    # 🍎 AR 문서는 텍스트 추출 가능한 PDF이므로 TXT 뱃지
-                    doc_data["badgeType"] = "TXT"
-                    logger.info(f"[CreditPending] AR 문서 감지: {original_name}, badgeType=TXT")
-                elif is_crs:
-                    doc_data["is_customer_review"] = True
-                    doc_data["document_type"] = "customer_review"
-                    # 🍎 CRS 문서도 텍스트 추출 가능한 PDF이므로 TXT 뱃지
-                    doc_data["badgeType"] = "TXT"
-                    logger.info(f"[CreditPending] CRS 문서 감지: {original_name}, badgeType=TXT")
+                logger.info(f"[CreditPending] 크레딧 부족 문서 저장 (AR/CRS 판단은 크레딧 충전 후 텍스트 파싱으로): {original_name}")
             else:
                 # 크레딧 충분: 기존 로직
                 doc_data = {
                     "ownerId": userId,
                     "createdAt": datetime.utcnow(),
+                    "batchId": batchId,  # 🔴 업로드 묶음 ID (현재 세션 진행률 추적)
                     "upload": {
                         "originalName": original_name,
                         "uploaded_at": datetime.utcnow().isoformat()
@@ -344,8 +325,61 @@ async def doc_prep_main(
                 }}
             )
 
-            # 🔴 크레딧 부족 시: 큐에 등록하지 않고 즉시 응답
+            # 🔴 크레딧 부족 시: 텍스트 추출 + AR/CRS 파싱 판단 (임베딩만 안함)
             if is_credit_pending:
+                # 🍎 PDF 텍스트 추출 (pdfplumber - 크레딧 소모 없음)
+                try:
+                    meta_result = await MetaService.extract_metadata(dest_path)
+                    full_text = meta_result.get("extracted_text", "")
+                    detected_mime = meta_result.get("mime_type", "")
+
+                    # 메타 정보 업데이트
+                    meta_update = {
+                        "meta.mime": detected_mime,
+                        "meta.pdf_pages": meta_result.get("num_pages", 0),
+                        "meta.length": len(full_text) if full_text else 0,
+                    }
+
+                    # 🍎 AR/CRS 파싱 판단 (텍스트 기반 - CLAUDE.md 0-2 규칙!)
+                    if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
+                        # AR 감지
+                        ar_result = await _detect_and_process_annual_report(
+                            doc_id=doc_id,
+                            full_text=full_text,
+                            original_name=original_name,
+                            user_id=userId,
+                            files_collection=files_collection
+                        )
+                        if ar_result.get("is_annual_report"):
+                            meta_update["is_annual_report"] = True
+                            meta_update["document_type"] = "annual_report"
+                            meta_update["badgeType"] = "TXT"  # AR은 텍스트 추출 가능한 PDF
+                            logger.info(f"[CreditPending] AR 문서 감지 (텍스트 파싱): {original_name}")
+                        else:
+                            # CRS 감지
+                            crs_result = await _detect_and_process_customer_review(
+                                doc_id=doc_id,
+                                full_text=full_text,
+                                original_name=original_name,
+                                user_id=userId,
+                                files_collection=files_collection
+                            )
+                            if crs_result.get("is_customer_review"):
+                                meta_update["is_customer_review"] = True
+                                meta_update["document_type"] = "customer_review"
+                                meta_update["badgeType"] = "TXT"  # CRS도 텍스트 추출 가능한 PDF
+                                logger.info(f"[CreditPending] CRS 문서 감지 (텍스트 파싱): {original_name}")
+
+                    # 문서 업데이트
+                    await files_collection.update_one(
+                        {"_id": ObjectId(doc_id)},
+                        {"$set": meta_update}
+                    )
+                    logger.info(f"[CreditPending] 메타 정보 및 AR/CRS 판단 완료: {doc_id}")
+
+                except Exception as meta_error:
+                    logger.warning(f"[CreditPending] 메타 추출 실패 (무시): {meta_error}")
+
                 return {
                     "result": "success",
                     "status": "credit_pending",

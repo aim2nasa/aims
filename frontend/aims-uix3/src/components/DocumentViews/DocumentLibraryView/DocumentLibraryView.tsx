@@ -104,8 +104,20 @@ const DocumentLibraryContent: React.FC<{
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
+  // 🔴 현재 업로드 배치 ID (sessionStorage에서 즉시 읽기 - 첫 렌더링부터 사용)
+  const [currentBatchId] = React.useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return sessionStorage.getItem('aims-current-batch-id')
+  })
+
   // 문서 처리 현황 통계 (Status Bar용)
+  // 1. 전체 라이브러리 통계
   const { statistics: docStats, isLoading: statsLoading } = useDocumentStatistics()
+  // 2. 현재 배치 통계 (batchId가 있을 때만)
+  const { statistics: batchStats, isLoading: batchLoading } = useDocumentStatistics({
+    enabled: !!currentBatchId,
+    batchId: currentBatchId
+  })
 
   // 초성 필터가 적용된 문서 목록 (연결된 고객명 기준)
   const initialFilteredDocuments = React.useMemo(() => {
@@ -525,8 +537,12 @@ const DocumentLibraryContent: React.FC<{
         </div>
       </div>
 
-      {/* 문서 처리 현황 Status Bar */}
-      <DocumentProcessingStatusBar statistics={docStats} isLoading={statsLoading} />
+      {/* 문서 처리 현황 Status Bar (2분할: 현재 업로드 + 전체 라이브러리) */}
+      <DocumentProcessingStatusBar
+        statistics={docStats}
+        batchStatistics={batchStats}
+        isLoading={statsLoading || batchLoading}
+      />
 
       {/* 초성 필터 바 */}
       <InitialFilterBar

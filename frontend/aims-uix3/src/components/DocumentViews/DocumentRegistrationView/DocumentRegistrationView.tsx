@@ -557,6 +557,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 🔴 중복 처리 일괄 적용 설정 초기화
     duplicateApplyAllRef.current = null
 
+    // 🔴 업로드 묶음 ID 생성 (현재 세션 진행률 추적용)
+    const newBatchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    sessionStorage.setItem('aims-current-batch-id', newBatchId)
+    if (import.meta.env.DEV) {
+      console.log(`[DocumentRegistrationView] 새 배치 ID 생성: ${newBatchId}`)
+    }
+
     // 🎯🎯🎯 AR 배치 모드: 제일 먼저 체크! (uploadState 건드리기 전에 처리)
     // 이유: setUploadState → useEffect → uploadService.queueFiles 자동 호출 방지
     if (documentTypeMode === 'annual_report') {
@@ -634,7 +641,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       progress: 0,
       error: undefined,
       completedAt: undefined,
-      relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
+      relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
+      batchId: newBatchId  // 🔴 업로드 묶음 ID 추가
     }))
 
     // 즉시 UI 업데이트 - 파일 목록 표시

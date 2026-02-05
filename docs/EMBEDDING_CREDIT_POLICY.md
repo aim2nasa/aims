@@ -923,3 +923,54 @@ PASS __tests__/credit-check-simulation.test.js (21 tests)
 | Summary | `check_credit_for_summary()` | 요약 스킵 | ✅ |
 
 **하나도 빠지는 구멍 없음!**
+
+---
+
+## 진행률 표시 UX 개선 (2026-02-05)
+
+### 문제점
+
+credit_pending 문서가 있으면 진행률이 영원히 100%에 도달할 수 없음:
+- 예: "17/18 처리완료 (94%)" - credit_pending 1건으로 인해 100% 불가
+- AR 파싱률도 마찬가지: "9/10 파싱완료 (90%)"
+
+### 해결 방안 (채택)
+
+**설계사 페르소나 기반 결정:**
+1. 설계사는 "내가 올린 문서가 잘 들어갔는지" 확인하고 싶음
+2. 94%에서 멈춘 진행률은 "뭔가 잘못된 건가?" 불안감 유발
+3. 100% 업로드 완료를 보면 "일단 다 올렸구나" 안심
+
+**구현:**
+- `credit_pending` 문서를 "업로드 완료"로 간주하여 진행률 100% 달성 가능
+- 별도로 "⏸ X건 크레딧 대기" 안내 표시
+- AR/CRS 파싱률도 동일하게 처리
+
+### 표시 형식
+
+**변경 전:**
+```
+17/18 처리완료 (94%)
+AR 9/10 파싱완료 (90%)
+```
+
+**변경 후:**
+```
+18/18 처리완료 (100%) ⏸ 1 크레딧 대기
+AR 10/10 파싱완료 (100%) ⏸ 1
+```
+
+### 변경 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `server.js` | stats에 credit_pending 필드 추가, arParsing/crsParsing에도 추가 |
+| `documentStatistics.ts` | DocumentStatistics, ParsingStats에 credit_pending 타입 추가 |
+| `DocumentProcessingStatusBar.tsx` | credit_pending을 완료로 간주, 별도 안내 UI |
+| `DocumentProcessingStatusBar.css` | 크레딧 대기 스타일 (주황색) |
+
+### UX 원칙
+
+- **명확한 상태 전달**: 진행률 100% + 크레딧 대기 안내로 상황 명확히 이해
+- **불안감 해소**: 영원히 미완료 상태가 아님을 시각적으로 표현
+- **다음 액션 안내**: "크레딧 충전 후 자동 처리됩니다" 툴팁으로 가이드

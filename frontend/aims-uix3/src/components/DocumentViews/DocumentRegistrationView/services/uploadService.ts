@@ -204,7 +204,7 @@ export class UploadService {
    * 개별 파일 업로드 (바이러스 검사 + 자동 재시도 지원)
    */
   private async uploadFile(uploadFile: UploadFile): Promise<void> {
-    const { id, file, customerId, folderId } = uploadFile
+    const { id, file, customerId, folderId, batchId } = uploadFile
     const controller = new AbortController()
 
     try {
@@ -256,6 +256,14 @@ export class UploadService {
       if (folderId) {
         formData.append('folderId', folderId)
         console.log(`[UploadService] 폴더 업로드 - folderId: ${folderId}`)
+      }
+
+      // 🔴 업로드 묶음 ID: 현재 세션 진행률 추적용
+      if (batchId) {
+        formData.append('batchId', batchId)
+        if (import.meta.env.DEV) {
+          console.log(`[UploadService] 배치 업로드 - batchId: ${batchId}`)
+        }
       }
 
       // XMLHttpRequest로 업로드 (진행률 추적을 위해)

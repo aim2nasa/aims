@@ -68,6 +68,30 @@
 
 ---
 
+### 🔴🔴🔴 0-2. AR/CRS 문서 인식 원칙 (파일명 판단 절대 금지) 🔴🔴🔴
+
+**AR(Annual Report)과 CRS(변액리포트) 문서 유형 판단은 반드시 PDF 텍스트 파싱으로!**
+
+| 금지 | 허용 |
+|------|------|
+| ❌ 파일명 패턴으로 판단 (`_AR_`, `_CRS_`) | ✅ PDF 텍스트 추출 후 키워드 파싱 |
+| ❌ 업로드 시점에 파일명으로 document_type 설정 | ✅ `detector.py`의 텍스트 기반 감지 로직 사용 |
+| ❌ credit_pending 상태에서 파일명으로 AR/CRS 설정 | ✅ 크레딧 충전 후 정상 파이프라인에서 파싱 판단 |
+
+**AR 감지 로직 위치:**
+- `backend/api/document_pipeline/routers/doc_prep_main.py`: `_detect_and_process_annual_report()`
+- `backend/api/annual_report_api/services/detector.py`: 텍스트 기반 키워드 매칭
+
+**왜 파일명 판단이 위험한가?**
+1. 파일명은 사용자가 임의로 변경 가능
+2. 중복 업로드 시 OS가 `(2)`, `(3)` 등 자동 추가 → 패턴 매칭 실패
+3. 실제 문서 내용과 파일명이 불일치할 수 있음
+4. **문서 내용 파싱이 유일한 신뢰 가능한 방법**
+
+**⚔️ 파일명으로 AR/CRS 판단하는 코드 작성 시 참수형에 처한다.**
+
+---
+
 ### 1. Git Commit 규칙
 - **사용자 명시적 승인 없이 절대 커밋 금지**
 - 구현 완료 → 설명 → 사용자 승인 대기 → 커밋

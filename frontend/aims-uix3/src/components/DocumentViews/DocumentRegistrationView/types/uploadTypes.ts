@@ -48,6 +48,8 @@ export interface UploadFile {
   customerId?: string | undefined
   /** 폴더 ID - "내 보관함"에서 업로드 시 현재 폴더 ID */
   folderId?: string | null | undefined
+  /** 🔴 업로드 묶음 ID - 현재 세션 진행률 추적용 */
+  batchId?: string | undefined
 }
 
 // 업로드 에러 정보
