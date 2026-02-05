@@ -243,12 +243,30 @@ async def doc_prep_main(
 
             if is_credit_pending:
                 # 🔴 크레딧 부족: credit_pending 상태로 문서 생성 (큐에 등록하지 않음)
+                # 🍎 AR 감지: 파일명 패턴으로 문서 유형 판단 (크레딧과 무관하게 설정)
+                import os as _os
+                base_name = _os.path.splitext(original_name)[0]
+                ar_pattern = re.match(r'^(.+?)_AR_(\d{4}-\d{2}-\d{2})$', base_name)
+                crs_pattern = re.match(r'^(.+?)_CRS_', base_name)
+
+                is_ar = ar_pattern is not None
+                is_crs = crs_pattern is not None
+
                 doc_data = {
                     "ownerId": userId,
                     "createdAt": datetime.utcnow(),
                     "upload": {
                         "originalName": original_name,
-                        "uploaded_at": datetime.utcnow().isoformat()
+                        "uploaded_at": datetime.utcnow().isoformat(),
+                        # 🍎 파일 크기, MIME 타입 추가 (크레딧 부족해도 표시 가능)
+                        "fileSize": len(file_content),
+                        "mimeType": file.content_type
+                    },
+                    # 🍎 메타 정보 (기본 값) - UI에서 표시용
+                    "meta": {
+                        "size_bytes": len(file_content),
+                        "mime": file.content_type,
+                        "filename": original_name
                     },
                     # credit_pending 상태
                     "overallStatus": "credit_pending",
@@ -270,6 +288,16 @@ async def doc_prep_main(
                         "credit_pending_since": datetime.utcnow().isoformat()
                     }
                 }
+
+                # 🍎 AR/CRS 문서 유형 설정 (크레딧과 무관하게)
+                if is_ar:
+                    doc_data["is_annual_report"] = True
+                    doc_data["document_type"] = "annual_report"
+                    logger.info(f"[CreditPending] AR 문서 감지: {original_name}")
+                elif is_crs:
+                    doc_data["is_customer_review"] = True
+                    doc_data["document_type"] = "customer_review"
+                    logger.info(f"[CreditPending] CRS 문서 감지: {original_name}")
             else:
                 # 크레딧 충분: 기존 로직
                 doc_data = {
