@@ -148,12 +148,13 @@ const UsageQuotaWidget: React.FC<UsageQuotaWidgetProps> = ({
   const bonusBalance = storageInfo.bonus_balance ?? 0
   const totalPool = (storageInfo.credit_quota || 0) + bonusBalance
 
-  // 크레딧 툴팁 (월정액 + 추가 크레딧 표시)
+  // 크레딧 툴팁 (월정액 + 추가 크레딧 표시) - 소수점 제거
+  const creditsUsedInt = Math.floor(storageInfo.credits_used ?? 0)
   const creditTooltip = storageInfo.credit_is_unlimited
     ? '크레딧: 무제한'
     : bonusBalance > 0
-      ? `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${totalPool.toLocaleString()} (월정액 ${storageInfo.credit_quota?.toLocaleString()}+추가 ${bonusBalance.toLocaleString()}) ~${formatCycleDate(storageInfo.credit_cycle_end)}`
-      : `크레딧: ${storageInfo.credits_used?.toLocaleString() ?? 0} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%)${isFirstMonth ? ` [첫 달 ${proRataPercent}%]` : ''} ~${formatCycleDate(storageInfo.credit_cycle_end)}`
+      ? `크레딧: ${creditsUsedInt.toLocaleString()} / ${totalPool.toLocaleString()} (월정액 ${storageInfo.credit_quota?.toLocaleString()}+추가 ${bonusBalance.toLocaleString()}) ~${formatCycleDate(storageInfo.credit_cycle_end)}`
+      : `크레딧: ${creditsUsedInt.toLocaleString()} / ${storageInfo.credit_quota?.toLocaleString() ?? 0} (${creditPercent.toFixed(0)}%)${isFirstMonth ? ` [첫 달 ${proRataPercent}%]` : ''} ~${formatCycleDate(storageInfo.credit_cycle_end)}`
 
   return (
     <button
