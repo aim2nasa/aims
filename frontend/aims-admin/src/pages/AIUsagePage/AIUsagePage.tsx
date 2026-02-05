@@ -31,6 +31,8 @@ import type {
   OCRDailyUsagePoint,
   FailedEmbeddingDocument,
   EmbedSummary,
+  UsageResetHistoryItem,
+  UsageResetDetail,
 } from '@/features/dashboard/aiUsageApi';
 import { Button } from '@/shared/ui/Button/Button';
 import './AIUsagePage.css';
@@ -627,6 +629,63 @@ export const AIUsagePage = () => {
     return () => { if (fastPollTimerRef.current) clearTimeout(fastPollTimerRef.current); };
   }, []);
 
+  // =====================
+  // 사용량 리셋 관련 state
+  // =====================
+  const [showResetDropdown, setShowResetDropdown] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showResetHistoryModal, setShowResetHistoryModal] = useState(false);
+  const [showResetDetailModal, setShowResetDetailModal] = useState(false);
+  const [resetType, setResetType] = useState<'all' | 'ai' | 'ocr'>('all');
+  const [resetReason, setResetReason] = useState('');
+  const [selectedResetDetail, setSelectedResetDetail] = useState<UsageResetDetail | null>(null);
+  const resetDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 리셋 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (resetDropdownRef.current && !resetDropdownRef.current.contains(event.target as Node)) {
+        setShowResetDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 리셋 이력 쿼리
+  const { data: resetHistory } = useQuery({
+    queryKey: ['admin', 'usage', 'reset-history'],
+    queryFn: () => aiUsageApi.getResetHistory(20, 0),
+    enabled: showResetHistoryModal,
+  });
+
+  // 리셋 실행 mutation
+  const resetMutation = useMutation({
+    mutationFn: (params: { reset_type: 'all' | 'ai' | 'ocr'; reason?: string }) =>
+      aiUsageApi.resetUsage(params),
+    onSuccess: () => {
+      // 모든 데이터 새로고침
+      queryClient.invalidateQueries({ queryKey: ['admin'] });
+      setShowResetConfirmModal(false);
+      setResetReason('');
+      alert('사용량이 리셋되었습니다.');
+    },
+    onError: (error) => {
+      alert(`리셋 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    },
+  });
+
+  // 리셋 상세 조회
+  const handleViewResetDetail = async (resetId: string) => {
+    try {
+      const detail = await aiUsageApi.getResetDetail(resetId);
+      setSelectedResetDetail(detail);
+      setShowResetDetailModal(true);
+    } catch (error) {
+      alert('상세 정보를 불러오는데 실패했습니다.');
+    }
+  };
+
   // 임베딩 실패 문서 조회 (재시도 후 10초 폴링, 평상시 60초)
   const { data: failedEmbeddings, isLoading: failedEmbeddingsLoading, refetch: refetchFailedEmbeddings } = useQuery({
     queryKey: ['admin', 'embed', 'failed'],
@@ -814,6 +873,65 @@ export const AIUsagePage = () => {
             <Button variant="secondary" size="sm" onClick={handleRefreshAll}>
               새로고침
             </Button>
+
+            {/* 리셋 드롭다운 */}
+            <div className="ai-usage-page__reset-dropdown" ref={resetDropdownRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowResetDropdown(!showResetDropdown)}
+              >
+                리셋 ▼
+              </Button>
+              {showResetDropdown && (
+                <div className="ai-usage-page__reset-menu">
+                  <button
+                    type="button"
+                    className="ai-usage-page__reset-menu-item"
+                    onClick={() => {
+                      setResetType('all');
+                      setShowResetConfirmModal(true);
+                      setShowResetDropdown(false);
+                    }}
+                  >
+                    전체 리셋 (AI + OCR)
+                  </button>
+                  <button
+                    type="button"
+                    className="ai-usage-page__reset-menu-item"
+                    onClick={() => {
+                      setResetType('ai');
+                      setShowResetConfirmModal(true);
+                      setShowResetDropdown(false);
+                    }}
+                  >
+                    AI 사용량만 리셋
+                  </button>
+                  <button
+                    type="button"
+                    className="ai-usage-page__reset-menu-item"
+                    onClick={() => {
+                      setResetType('ocr');
+                      setShowResetConfirmModal(true);
+                      setShowResetDropdown(false);
+                    }}
+                  >
+                    OCR 사용량만 리셋
+                  </button>
+                  <div className="ai-usage-page__reset-menu-divider" />
+                  <button
+                    type="button"
+                    className="ai-usage-page__reset-menu-item"
+                    onClick={() => {
+                      setShowResetHistoryModal(true);
+                      setShowResetDropdown(false);
+                    }}
+                  >
+                    리셋 이력 보기
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1411,6 +1529,232 @@ export const AIUsagePage = () => {
           재시도 클릭 시 pending 상태로 전환되며, 매분 실행되는 cron이 자동으로 임베딩을 처리합니다. 자동 재시도는 최대 3회이며, Admin 수동 재시도 시 횟수가 초기화됩니다.
         </p>
       </section>
+
+      {/* ======================================================
+          사용량 리셋 확인 모달
+          ====================================================== */}
+      {showResetConfirmModal && (
+        <div className="modal-overlay" onClick={() => setShowResetConfirmModal(false)}>
+          <div className="modal-content reset-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="reset-modal__title">
+              사용량 리셋
+            </h3>
+
+            <div className="reset-modal__body">
+              <p className="reset-modal__desc">
+                {resetType === 'all' && '모든 AI + OCR 사용량을 0으로 초기화합니다.'}
+                {resetType === 'ai' && 'AI 사용량만 0으로 초기화합니다.'}
+                {resetType === 'ocr' && 'OCR 사용량만 0으로 초기화합니다.'}
+              </p>
+
+              <div className="reset-modal__current">
+                <h4>리셋 전 현황</h4>
+                {(resetType === 'all' || resetType === 'ai') && (
+                  <div className="reset-modal__stat">
+                    <span>AI 토큰:</span>
+                    <span>{formatTokens(overview?.total_tokens || 0)}</span>
+                  </div>
+                )}
+                {(resetType === 'all' || resetType === 'ai') && (
+                  <div className="reset-modal__stat">
+                    <span>AI 비용:</span>
+                    <span>{formatCost(overview?.estimated_cost_usd || 0)}</span>
+                  </div>
+                )}
+                {(resetType === 'all' || resetType === 'ocr') && (
+                  <div className="reset-modal__stat">
+                    <span>OCR 페이지:</span>
+                    <span>{(ocrOverview?.pages_total || 0).toLocaleString()} pages</span>
+                  </div>
+                )}
+                {(resetType === 'all' || resetType === 'ocr') && (
+                  <div className="reset-modal__stat">
+                    <span>OCR 비용:</span>
+                    <span>{formatCost(ocrOverview?.estimated_cost_usd || 0)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="reset-modal__reason">
+                <label htmlFor="reset-reason">리셋 사유 (선택)</label>
+                <input
+                  type="text"
+                  id="reset-reason"
+                  value={resetReason}
+                  onChange={(e) => setResetReason(e.target.value)}
+                  placeholder="예: 월간 정산 완료"
+                  maxLength={500}
+                />
+              </div>
+
+              <p className="reset-modal__note">
+                리셋 이전 데이터는 이력에서 확인할 수 있습니다.
+              </p>
+            </div>
+
+            <div className="reset-modal__actions">
+              <Button variant="secondary" onClick={() => setShowResetConfirmModal(false)}>
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => resetMutation.mutate({ reset_type: resetType, reason: resetReason || undefined })}
+                disabled={resetMutation.isPending}
+              >
+                {resetMutation.isPending ? '처리중...' : '리셋 실행'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          리셋 이력 모달
+          ====================================================== */}
+      {showResetHistoryModal && (
+        <div className="modal-overlay" onClick={() => setShowResetHistoryModal(false)}>
+          <div className="modal-content reset-history-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="reset-history-modal__header">
+              <h3 className="reset-history-modal__title">사용량 리셋 이력</h3>
+              <button
+                type="button"
+                className="reset-history-modal__close"
+                onClick={() => setShowResetHistoryModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="reset-history-modal__body">
+              {!resetHistory || resetHistory.items.length === 0 ? (
+                <p className="reset-history-modal__empty">리셋 이력이 없습니다.</p>
+              ) : (
+                <table className="reset-history-table">
+                  <thead>
+                    <tr>
+                      <th>리셋일</th>
+                      <th>유형</th>
+                      <th>AI 토큰</th>
+                      <th>OCR 페이지</th>
+                      <th>관리자</th>
+                      <th>상세</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resetHistory.items.map((item: UsageResetHistoryItem) => (
+                      <tr key={item.reset_id}>
+                        <td>
+                          {new Date(item.reset_at).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })}
+                        </td>
+                        <td>
+                          {item.reset_type === 'all' && '전체'}
+                          {item.reset_type === 'ai' && 'AI'}
+                          {item.reset_type === 'ocr' && 'OCR'}
+                        </td>
+                        <td>{item.snapshot.ai ? formatTokens(item.snapshot.ai.total_tokens) : '-'}</td>
+                        <td>{item.snapshot.ocr ? `${item.snapshot.ocr.page_count.toLocaleString()} p` : '-'}</td>
+                        <td>{item.reset_by.user_name}</td>
+                        <td>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewResetDetail(item.reset_id)}
+                          >
+                            보기
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          리셋 상세 모달
+          ====================================================== */}
+      {showResetDetailModal && selectedResetDetail && (
+        <div className="modal-overlay" onClick={() => setShowResetDetailModal(false)}>
+          <div className="modal-content reset-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="reset-detail-modal__header">
+              <h3 className="reset-detail-modal__title">
+                리셋 상세 - {new Date(selectedResetDetail.reset_at).toLocaleString('ko-KR')}
+              </h3>
+              <button
+                type="button"
+                className="reset-detail-modal__close"
+                onClick={() => setShowResetDetailModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="reset-detail-modal__body">
+              <div className="reset-detail-modal__info">
+                <div><strong>리셋 유형:</strong> {
+                  selectedResetDetail.reset_type === 'all' ? '전체 (AI + OCR)' :
+                  selectedResetDetail.reset_type === 'ai' ? 'AI만' : 'OCR만'
+                }</div>
+                <div><strong>관리자:</strong> {selectedResetDetail.reset_by.user_name}</div>
+                {selectedResetDetail.reason && (
+                  <div><strong>사유:</strong> {selectedResetDetail.reason}</div>
+                )}
+              </div>
+
+              {selectedResetDetail.snapshot.ai && (
+                <div className="reset-detail-modal__section">
+                  <h4>AI 사용량 스냅샷</h4>
+                  <div className="reset-detail-modal__stats">
+                    <div><span>총 토큰:</span> <span>{selectedResetDetail.snapshot.ai.total_tokens.toLocaleString()}</span></div>
+                    <div><span>예상 비용:</span> <span>{formatCost(selectedResetDetail.snapshot.ai.estimated_cost_usd)}</span></div>
+                  </div>
+                </div>
+              )}
+
+              {selectedResetDetail.snapshot.ocr && (
+                <div className="reset-detail-modal__section">
+                  <h4>OCR 사용량 스냅샷</h4>
+                  <div className="reset-detail-modal__stats">
+                    <div><span>총 페이지:</span> <span>{selectedResetDetail.snapshot.ocr.page_count.toLocaleString()}</span></div>
+                    <div><span>예상 비용:</span> <span>{formatCost(selectedResetDetail.snapshot.ocr.estimated_cost_usd)}</span></div>
+                  </div>
+                </div>
+              )}
+
+              {selectedResetDetail.user_snapshots && selectedResetDetail.user_snapshots.length > 0 && (
+                <div className="reset-detail-modal__section">
+                  <h4>Top 사용자 스냅샷</h4>
+                  <table className="reset-detail-table">
+                    <thead>
+                      <tr>
+                        <th>사용자</th>
+                        <th>AI 토큰</th>
+                        <th>OCR 페이지</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedResetDetail.user_snapshots.map((user, idx) => (
+                        <tr key={idx}>
+                          <td>{user.user_name}</td>
+                          <td>{user.ai_tokens.toLocaleString()}</td>
+                          <td>{user.ocr_pages.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

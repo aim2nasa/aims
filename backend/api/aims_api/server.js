@@ -11352,6 +11352,11 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', ocrUsageRoutes);
     console.log('[Server] ocrUsageRoutes 등록 완료');
 
+    // 사용량 리셋 라우트 설정
+    const usageResetRoutes = require('./routes/usage-reset-routes')(db, analyticsDb, authenticateJWT, requireRole);
+    app.use('/api', usageResetRoutes);
+    console.log('[Server] usageResetRoutes 등록 완료');
+
     // 사용자 활동 라우트 설정
     const userActivityRoutes = require('./routes/user-activity-routes')(db, analyticsDb, authenticateJWT, requireRole);
     app.use('/api', userActivityRoutes);

@@ -14,6 +14,7 @@ const ocrUsageLogService = require('../lib/ocrUsageLogService');
 const backendLogger = require('../lib/backendLogger');
 const { getUserStorageInfo } = require('../lib/storageQuotaService');
 const { checkCreditForDocumentProcessing } = require('../lib/creditService');
+const { getLastResetTime } = require('../lib/usageResetService');
 
 // Redis 클라이언트 (host network 모드이므로 localhost 사용)
 const redis = new Redis({
@@ -91,10 +92,14 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // 리셋 시점 반영: 리셋 이후 데이터만 집계
+      const lastReset = await getLastResetTime(analyticsDb, 'ocr');
+      const effectiveStartDate = lastReset && lastReset > startDate ? lastReset : startDate;
+
       // 영구 로그에서 OCR 통계 조회 (문서 삭제 후에도 유지)
       const [logStats, ocrPending, ocrProcessing, ocrFailed] = await Promise.all([
         // ocr_usage_log에서 통계 조회 (영구)
-        ocrUsageLogService.getOcrUsageStats(analyticsDb, startDate, endDate),
+        ocrUsageLogService.getOcrUsageStats(analyticsDb, effectiveStartDate, endDate),
         // OCR 대기 (실시간 - files에서 조회)
         filesCollection.countDocuments({
           $or: [
@@ -119,8 +124,8 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         })
       ]);
 
-      // 전체 기간 통계 (처음부터 지금까지)
-      const allTimeStart = new Date('2020-01-01');
+      // 전체 기간 통계 (리셋 시점부터 지금까지)
+      const allTimeStart = lastReset || new Date('2020-01-01');
       const allTimeStats = await ocrUsageLogService.getOcrUsageStats(analyticsDb, allTimeStart, endDate);
 
       // 페이지 수 및 예상 비용 계산
@@ -304,8 +309,12 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // 리셋 시점 반영
+      const lastReset = await getLastResetTime(analyticsDb, 'ocr');
+      const effectiveStartDate = lastReset && lastReset > startDate ? lastReset : startDate;
+
       // 영구 로그에서 일별 통계 조회 (문서 삭제 후에도 유지)
-      const usageData = await ocrUsageLogService.getDailyOcrUsage(analyticsDb, startDate, endDate);
+      const usageData = await ocrUsageLogService.getDailyOcrUsage(analyticsDb, effectiveStartDate, endDate);
 
       res.json({
         success: true,
@@ -350,8 +359,12 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // 리셋 시점 반영
+      const lastReset = await getLastResetTime(analyticsDb, 'ocr');
+      const effectiveStartDate = lastReset && lastReset > startDate ? lastReset : startDate;
+
       // 영구 로그에서 Top 사용자 조회 (문서 삭제 후에도 유지)
-      const topUsers = await ocrUsageLogService.getTopOcrUsers(analyticsDb, startDate, endDate, limit);
+      const topUsers = await ocrUsageLogService.getTopOcrUsers(analyticsDb, effectiveStartDate, endDate, limit);
 
       // 사용자 이름 조회
       const userIds = topUsers

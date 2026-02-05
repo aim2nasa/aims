@@ -229,6 +229,112 @@ export interface EmbedReprocessResponse {
   };
 }
 
+// =====================
+// Usage Reset Types
+// =====================
+
+export interface UsageResetSnapshot {
+  ai: {
+    total_tokens: number;
+    prompt_tokens: number;
+    completion_tokens: number;
+    estimated_cost_usd: number;
+    request_count: number;
+    by_source: Record<string, number>;
+    period_start?: string;
+    period_end?: string;
+  } | null;
+  ocr: {
+    total_count: number;
+    success_count: number;
+    failed_count: number;
+    page_count: number;
+    estimated_cost_usd: number;
+    period_start?: string;
+    period_end?: string;
+  } | null;
+}
+
+export interface UsageResetHistoryItem {
+  reset_id: string;
+  reset_type: 'all' | 'ai' | 'ocr';
+  reset_at: string;
+  reset_by: {
+    user_id: string;
+    user_name: string;
+  };
+  reason: string | null;
+  snapshot: {
+    ai?: {
+      total_tokens: number;
+      estimated_cost_usd: number;
+    };
+    ocr?: {
+      page_count: number;
+      estimated_cost_usd: number;
+    };
+  };
+}
+
+export interface UsageResetDetail {
+  reset_id: string;
+  reset_type: 'all' | 'ai' | 'ocr';
+  reset_at: string;
+  reset_by: {
+    user_id: string;
+    user_name: string;
+    ip?: string;
+  };
+  reason: string | null;
+  snapshot: UsageResetSnapshot;
+  user_snapshots: Array<{
+    user_id: string;
+    user_name: string;
+    ai_tokens: number;
+    ai_cost: number;
+    ocr_pages: number;
+    ocr_cost: number;
+  }>;
+  created_at: string;
+}
+
+export interface UsageResetRequest {
+  reset_type: 'all' | 'ai' | 'ocr';
+  reason?: string;
+}
+
+export interface UsageResetResponse {
+  success: boolean;
+  data: {
+    reset_id: string;
+    reset_at: string;
+    reset_type: string;
+    snapshot: UsageResetSnapshot;
+    message: string;
+  };
+}
+
+export interface UsageResetHistoryResponse {
+  success: boolean;
+  data: {
+    total_count: number;
+    items: UsageResetHistoryItem[];
+  };
+}
+
+export interface UsageResetDetailResponse {
+  success: boolean;
+  data: UsageResetDetail;
+}
+
+export interface LastResetResponse {
+  success: boolean;
+  data: {
+    ai_last_reset: string | null;
+    ocr_last_reset: string | null;
+  };
+}
+
 // 숫자 포맷팅 함수들
 export function formatTokens(tokens: number): string {
   if (tokens >= 1000000) {
@@ -487,5 +593,50 @@ export const aiUsageApi = {
       {}
     );
     return res;
+  },
+
+  // =====================
+  // Usage Reset API
+  // =====================
+
+  /**
+   * 사용량 리셋 실행
+   */
+  resetUsage: async (request: UsageResetRequest): Promise<UsageResetResponse['data']> => {
+    const res = await apiClient.post<UsageResetResponse>(
+      `/api/admin/usage/reset`,
+      request
+    );
+    return res.data;
+  },
+
+  /**
+   * 리셋 이력 목록 조회
+   */
+  getResetHistory: async (limit: number = 20, offset: number = 0): Promise<UsageResetHistoryResponse['data']> => {
+    const res = await apiClient.get<UsageResetHistoryResponse>(
+      `/api/admin/usage/reset-history?limit=${limit}&offset=${offset}`
+    );
+    return res.data;
+  },
+
+  /**
+   * 리셋 이력 상세 조회
+   */
+  getResetDetail: async (resetId: string): Promise<UsageResetDetail> => {
+    const res = await apiClient.get<UsageResetDetailResponse>(
+      `/api/admin/usage/reset-history/${resetId}`
+    );
+    return res.data;
+  },
+
+  /**
+   * 최신 리셋 시점 조회
+   */
+  getLastReset: async (): Promise<LastResetResponse['data']> => {
+    const res = await apiClient.get<LastResetResponse>(
+      `/api/admin/usage/last-reset`
+    );
+    return res.data;
   },
 };

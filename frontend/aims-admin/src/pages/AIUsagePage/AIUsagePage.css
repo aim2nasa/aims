@@ -1397,3 +1397,315 @@
   margin: var(--spacing-sm) 0 0 0;
   line-height: 1.4;
 }
+
+/* ======================================================
+   사용량 리셋 드롭다운 & 모달
+   ====================================================== */
+
+.ai-usage-page__reset-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.ai-usage-page__reset-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 180px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.ai-usage-page__reset-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ai-usage-page__reset-menu-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.ai-usage-page__reset-menu-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--color-border);
+}
+
+/* 모달 오버레이 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* 리셋 확인 모달 */
+.reset-modal {
+  width: 420px;
+  padding: var(--spacing-lg);
+}
+
+.reset-modal__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.reset-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.reset-modal__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.reset-modal__current {
+  padding: var(--spacing-sm);
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-md);
+}
+
+.reset-modal__current h4 {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--spacing-xs) 0;
+  text-transform: uppercase;
+}
+
+.reset-modal__stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  padding: 4px 0;
+}
+
+.reset-modal__stat span:last-child {
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-mono, monospace);
+}
+
+.reset-modal__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reset-modal__reason label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.reset-modal__reason input {
+  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.reset-modal__reason input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.reset-modal__note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.reset-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+/* 리셋 이력 모달 */
+.reset-history-modal {
+  width: 700px;
+  max-width: 90vw;
+}
+
+.reset-history-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reset-history-modal__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.reset-history-modal__close {
+  font-size: 24px;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.reset-history-modal__close:hover {
+  color: var(--color-text-primary);
+}
+
+.reset-history-modal__body {
+  padding: var(--spacing-lg);
+}
+
+.reset-history-modal__empty {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-xl);
+}
+
+.reset-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.reset-history-table th,
+.reset-history-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reset-history-table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-secondary);
+}
+
+/* 리셋 상세 모달 */
+.reset-detail-modal {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.reset-detail-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reset-detail-modal__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.reset-detail-modal__close {
+  font-size: 24px;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.reset-detail-modal__body {
+  padding: var(--spacing-lg);
+}
+
+.reset-detail-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.reset-detail-modal__section {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.reset-detail-modal__section h4 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.reset-detail-modal__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+}
+
+.reset-detail-modal__stats > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.reset-detail-modal__stats span:last-child {
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-mono, monospace);
+}
+
+.reset-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.reset-detail-table th,
+.reset-detail-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reset-detail-table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-secondary);
+}

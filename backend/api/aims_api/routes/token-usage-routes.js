@@ -20,6 +20,7 @@ const {
   formatTokens,
   ensureIndexes
 } = require('../lib/tokenUsageService');
+const { getLastResetTime } = require('../lib/usageResetService');
 
 // 내부 API 키 (환경변수 또는 기본값)
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'aims-internal-token-logging-key-2024';
@@ -246,11 +247,15 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // 리셋 시점 반영: 리셋 이후 데이터만 집계
+      const lastReset = await getLastResetTime(analyticsDb, 'ai');
+      const effectiveStartDate = lastReset && lastReset > startDate ? lastReset : startDate;
+
       // 전체 등록 사용자 수 조회 (관리자 포함)
       const usersCollection = db.collection('users');
       const totalUsers = await usersCollection.countDocuments();
 
-      const overview = await getSystemOverview(analyticsDb, startDate, endDate);
+      const overview = await getSystemOverview(analyticsDb, effectiveStartDate, endDate);
 
       res.json({
         success: true,
@@ -288,18 +293,35 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
    */
   router.get('/admin/ai-usage/daily', authenticateJWT, requireRole('admin'), async (req, res) => {
     try {
+      // 리셋 시점 조회
+      const lastReset = await getLastResetTime(analyticsDb, 'ai');
+
       let dailyUsage;
 
       if (req.query.start && req.query.end) {
         // start/end 범위로 조회 (UTC 기준)
-        const startDate = new Date(req.query.start + 'T00:00:00.000Z');
+        let startDate = new Date(req.query.start + 'T00:00:00.000Z');
         const endDate = new Date(req.query.end + 'T23:59:59.999Z');
+
+        // 리셋 시점 반영
+        if (lastReset && lastReset > startDate) {
+          startDate = lastReset;
+        }
 
         dailyUsage = await getDailyUsageByRange(analyticsDb, startDate, endDate);
       } else {
         // 기존 days 파라미터로 조회
         const days = parseInt(req.query.days) || 30;
-        dailyUsage = await getDailyUsage(analyticsDb, null, days);
+        let startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        const endDate = new Date();
+
+        // 리셋 시점 반영
+        if (lastReset && lastReset > startDate) {
+          startDate = lastReset;
+        }
+
+        dailyUsage = await getDailyUsageByRange(analyticsDb, startDate, endDate);
       }
 
       res.json({
@@ -342,7 +364,11 @@ module.exports = function(db, analyticsDb, authenticateJWT, requireRole) {
         startDate.setDate(startDate.getDate() - days);
       }
 
-      const topUsersList = await getTopUsersWithRange(analyticsDb, startDate, endDate, 10);
+      // 리셋 시점 반영
+      const lastReset = await getLastResetTime(analyticsDb, 'ai');
+      const effectiveStartDate = lastReset && lastReset > startDate ? lastReset : startDate;
+
+      const topUsersList = await getTopUsersWithRange(analyticsDb, effectiveStartDate, endDate, 10);
 
       // 사용자 이름 조회
       const { ObjectId } = require('mongodb');
