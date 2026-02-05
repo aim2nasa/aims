@@ -122,7 +122,7 @@ export function useDocumentStatistics(options: UseDocumentStatisticsOptions | bo
   // SSE 상태와 무관하게 동작 — SSE zombie, 연결 끊김 등 모든 실패 모드를 커버
   const freshnessIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasActiveProcessing = statistics
-    ? (statistics.processing > 0 || statistics.pending > 0)
+    ? (statistics.processing > 0 || statistics.pending > 0 || (statistics.credit_pending ?? 0) > 0)
     : false
 
   useEffect(() => {
