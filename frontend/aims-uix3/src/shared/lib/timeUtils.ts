@@ -25,7 +25,18 @@ export function formatDateTime(timestamp: string | Date | undefined | null): str
   if (!timestamp) return '-';
 
   try {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    let dateInput = timestamp;
+
+    // 🔴 UTC 날짜 문자열 정규화: 'Z'가 없으면 추가 (백엔드 datetime.utcnow().isoformat() 호환)
+    // 예: "2026-02-05T06:22:51.652531" → "2026-02-05T06:22:51.652531Z"
+    if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && !dateInput.includes('+')) {
+      // ISO 8601 형식인지 확인 (T가 포함된 경우)
+      if (dateInput.includes('T')) {
+        dateInput = dateInput + 'Z';
+      }
+    }
+
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
     // KST로 변환하여 각 부분 추출
@@ -73,7 +84,16 @@ export function formatDate(timestamp: string | Date | undefined | null): string 
   if (!timestamp) return '-';
 
   try {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    let dateInput = timestamp;
+
+    // 🔴 UTC 날짜 문자열 정규화
+    if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && !dateInput.includes('+')) {
+      if (dateInput.includes('T')) {
+        dateInput = dateInput + 'Z';
+      }
+    }
+
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     if (isNaN(date.getTime())) return '잘못된 날짜';
 
     // KST로 변환하여 각 부분 추출
@@ -109,7 +129,16 @@ export function formatTime(timestamp: string | Date | undefined | null): string 
   if (!timestamp) return '-';
 
   try {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    let dateInput = timestamp;
+
+    // 🔴 UTC 날짜 문자열 정규화
+    if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && !dateInput.includes('+')) {
+      if (dateInput.includes('T')) {
+        dateInput = dateInput + 'Z';
+      }
+    }
+
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
     // KST로 변환하여 각 부분 추출
@@ -151,7 +180,16 @@ export function formatRelativeTime(timestamp: string | undefined | null): string
   if (!timestamp) return '-';
 
   try {
-    const date = new Date(timestamp);
+    let dateInput = timestamp;
+
+    // 🔴 UTC 날짜 문자열 정규화
+    if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && !dateInput.includes('+')) {
+      if (dateInput.includes('T')) {
+        dateInput = dateInput + 'Z';
+      }
+    }
+
+    const date = new Date(dateInput);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
     const now = new Date();
@@ -219,7 +257,16 @@ export function parseISOTimestamp(timestamp: string | undefined | null): Date | 
   if (!timestamp) return null;
 
   try {
-    const date = new Date(timestamp);
+    let dateInput = timestamp;
+
+    // 🔴 UTC 날짜 문자열 정규화
+    if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && !dateInput.includes('+')) {
+      if (dateInput.includes('T')) {
+        dateInput = dateInput + 'Z';
+      }
+    }
+
+    const date = new Date(dateInput);
     return isNaN(date.getTime()) ? null : date;
   } catch (e) {
     return null;
