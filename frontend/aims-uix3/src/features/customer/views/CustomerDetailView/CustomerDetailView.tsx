@@ -518,21 +518,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         key: 'customer_review',
         label: '변액 리포트',
         icon: (
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{
-              '--icon-bg': 'var(--color-info-overlay-bg)',
-              '--icon-color': 'var(--color-info-overlay-icon)'
-            } as React.CSSProperties}
-          >
-            {/* Document background */}
-            <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--icon-bg)"/>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+            {/* Document outline */}
+            <rect x="3" y="1.5" width="10" height="13" rx="1.5" />
             {/* Trend line */}
-            <polyline points="4,11 7,8 9,10 12,5" stroke="var(--icon-color)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <polyline points="5,11 7.5,7.5 9.5,9.5 11,6" strokeWidth="1.4" />
           </svg>
         ),
         count: customerReviewCount
