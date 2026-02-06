@@ -516,9 +516,10 @@ html[data-theme="dark"] .draggable-modal-backdrop--transparent .draggable-modal 
     display: none;
   }
 
-  /* 최대화/리셋 버튼 숨김 (모바일에서 이미 전체화면) */
+  /* 최대화/리셋/팝업 버튼 숨김 (모바일에서 이미 전체화면) */
   .draggable-modal__maximize-button,
-  .draggable-modal__reset-button {
+  .draggable-modal__reset-button,
+  .draggable-modal__popup-button {
     display: none;
   }
 }
