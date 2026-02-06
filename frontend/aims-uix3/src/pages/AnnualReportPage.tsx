@@ -24,6 +24,13 @@ const AnnualReportPage: React.FC = () => {
   const [report, setReport] = useState<AnnualReport | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [sortConfig, setSortConfig] = useState<SortConfig>(null)
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // 컴포넌트 마운트 시 localStorage에서 데이터 로드
   useEffect(() => {
@@ -255,143 +262,276 @@ const AnnualReportPage: React.FC = () => {
 
       {/* 메인 콘텐츠 */}
       <main className="annual-report-page__content">
-        {/* Summary Section */}
-        <div className="annual-report-summary">
-          <div className="annual-report-summary__item">
-            <span className="annual-report-summary__label">발행일</span>
-            <span className="annual-report-summary__value">
-              {formatDate(report.issue_date)}
-            </span>
-          </div>
-          <div className="annual-report-summary__item">
-            <span className="annual-report-summary__label">총 월보험료</span>
-            <span className="annual-report-summary__value annual-report-summary__value--primary">
-              {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
-            </span>
-          </div>
-          <div className="annual-report-summary__item">
-            <span className="annual-report-summary__label">계약 건수</span>
-            <span className="annual-report-summary__value">
-              {AnnualReportApi.formatContractCount(report.contract_count)}
-            </span>
-          </div>
-        </div>
+        {isMobileView ? (
+          <>
+            {/* 모바일 요약 */}
+            <div className="ar-mobile-summary">
+              <div className="ar-mobile-summary__item">
+                <span className="ar-mobile-summary__label">발행일</span>
+                <span className="ar-mobile-summary__value">{formatDate(report.issue_date)}</span>
+              </div>
+              <div className="ar-mobile-summary__item">
+                <span className="ar-mobile-summary__label">총월보험료</span>
+                <span className="ar-mobile-summary__value ar-mobile-summary__value--primary">
+                  {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
+                </span>
+              </div>
+              <div className="ar-mobile-summary__item">
+                <span className="ar-mobile-summary__label">계약수</span>
+                <span className="ar-mobile-summary__value">{report.contract_count}건</span>
+              </div>
+            </div>
 
-        {/* Contracts Table */}
-        <div className="annual-report-contracts">
-          <h3 className="annual-report-contracts__title">
-            보험 계약 목록 ({report.contract_count}건)
-          </h3>
-
-          <div className="contracts-table-wrapper">
-            <table className="contracts-table">
-              <thead>
-                <tr>
-                  <th>순번</th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('insurance_company') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('insurance_company')}
-                  >
-                    보험사 {renderSortIcon('insurance_company')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('contract_number') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('contract_number')}
-                  >
-                    증권번호 {renderSortIcon('contract_number')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('product_name') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('product_name')}
-                  >
-                    보험상품 {renderSortIcon('product_name')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('contractor_name') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('contractor_name')}
-                  >
-                    계약자 {renderSortIcon('contractor_name')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('insured_name') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('insured_name')}
-                  >
-                    피보험자 {renderSortIcon('insured_name')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('contract_date') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('contract_date')}
-                  >
-                    계약일 {renderSortIcon('contract_date')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('status') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('status')}
-                  >
-                    계약상태 {renderSortIcon('status')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('coverage_amount') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('coverage_amount')}
-                  >
-                    가입금액(만원) {renderSortIcon('coverage_amount')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('insurance_period') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('insurance_period')}
-                  >
-                    보험기간 {renderSortIcon('insurance_period')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('premium_payment_period') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('premium_payment_period')}
-                  >
-                    납입기간 {renderSortIcon('premium_payment_period')}
-                  </th>
-                  <th
-                    className={`contracts-table__th--sortable ${isSortedColumn('monthly_premium') ? 'contracts-table__th--sorted' : ''}`}
-                    onClick={() => handleSort('monthly_premium')}
-                  >
-                    보험료(원) {renderSortIcon('monthly_premium')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {getSortedContracts(report.contracts).map((contract: InsuranceContract, index: number) => (
-                  <tr key={index}>
-                    <td className="contracts-table__cell--number">{index + 1}</td>
-                    <td className="contracts-table__cell--company">{contract.insurance_company}</td>
-                    <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
-                    <td className="contracts-table__cell--product">{contract.product_name}</td>
-                    <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
-                    <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
-                    <td className="contracts-table__cell--date">{contract.contract_date}</td>
-                    <td className="contracts-table__cell--status">
+            {/* 모바일 계약 카드 목록 */}
+            <div className="ar-mobile-contracts">
+              <h3 className="ar-mobile-contracts__title">보험 계약 ({report.contract_count}건)</h3>
+              {report.contracts.length === 0 ? (
+                <div className="ar-mobile-empty">대상 계약이 없습니다.</div>
+              ) : (
+                report.contracts.map((contract: InsuranceContract, index: number) => (
+                  <div className="ar-mobile-card" key={index}>
+                    <div className="ar-mobile-card__header">
+                      <span className="ar-mobile-card__product">{contract.product_name}</span>
                       <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
                         {contract.status || '-'}
                       </span>
-                    </td>
-                    <td className="contracts-table__cell--coverage">
-                      {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
-                    </td>
-                    <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
-                    <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
-                    <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
-                      {contract.monthly_premium.toLocaleString('ko-KR')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    </div>
+                    <div className="ar-mobile-card__company">{contract.insurance_company}</div>
+                    <div className="ar-mobile-card__body">
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">증권번호</span>
+                        <span className="ar-mobile-card__value">{contract.contract_number}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">계약자</span>
+                        <span className="ar-mobile-card__value">{contract.contractor_name || '-'}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">피보험자</span>
+                        <span className="ar-mobile-card__value">{contract.insured_name || '-'}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">계약일</span>
+                        <span className="ar-mobile-card__value">{contract.contract_date}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">가입금액</span>
+                        <span className="ar-mobile-card__value">{(contract.coverage_amount / 10000).toLocaleString('ko-KR')}만원</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">보험·납입</span>
+                        <span className="ar-mobile-card__value">{contract.insurance_period || '-'} · {contract.premium_payment_period || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="ar-mobile-card__premium">
+                      <span className="ar-mobile-card__premium-label">월 보험료</span>
+                      <span className="ar-mobile-card__premium-value">{contract.monthly_premium.toLocaleString('ko-KR')}원</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
 
-        {/* Footer Info */}
-        <div className="annual-report-page__footer">
-          <span className="annual-report-page__footer-text">
-            생성일: {formatDateTime(report.created_at)}
-          </span>
-        </div>
+            {/* 모바일 부활가능 실효계약 */}
+            <div className="ar-mobile-contracts ar-mobile-contracts--lapsed">
+              <h3 className="ar-mobile-contracts__title">
+                부활가능 실효계약 ({report.lapsed_contracts?.length || 0}건)
+              </h3>
+              {!report.lapsed_contracts || report.lapsed_contracts.length === 0 ? (
+                <div className="ar-mobile-empty">대상 계약이 없습니다.</div>
+              ) : (
+                report.lapsed_contracts.map((contract: InsuranceContract, index: number) => (
+                  <div className="ar-mobile-card" key={index}>
+                    <div className="ar-mobile-card__header">
+                      <span className="ar-mobile-card__product">{contract.product_name}</span>
+                      <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+                        {contract.status || '-'}
+                      </span>
+                    </div>
+                    <div className="ar-mobile-card__company">{contract.insurance_company}</div>
+                    <div className="ar-mobile-card__body">
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">증권번호</span>
+                        <span className="ar-mobile-card__value">{contract.contract_number}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">계약자</span>
+                        <span className="ar-mobile-card__value">{contract.contractor_name || '-'}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">피보험자</span>
+                        <span className="ar-mobile-card__value">{contract.insured_name || '-'}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">계약일</span>
+                        <span className="ar-mobile-card__value">{contract.contract_date}</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">가입금액</span>
+                        <span className="ar-mobile-card__value">{(contract.coverage_amount / 10000).toLocaleString('ko-KR')}만원</span>
+                      </div>
+                      <div className="ar-mobile-card__row">
+                        <span className="ar-mobile-card__label">보험·납입</span>
+                        <span className="ar-mobile-card__value">{contract.insurance_period || '-'} · {contract.premium_payment_period || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="ar-mobile-card__premium">
+                      <span className="ar-mobile-card__premium-label">월 보험료</span>
+                      <span className="ar-mobile-card__premium-value">{contract.monthly_premium.toLocaleString('ko-KR')}원</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* 모바일 푸터 */}
+            <div className="annual-report-page__footer">
+              <span className="annual-report-page__footer-text">
+                생성일: {formatDateTime(report.created_at)}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* 데스크탑: Summary Section */}
+            <div className="annual-report-summary">
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">발행일</span>
+                <span className="annual-report-summary__value">
+                  {formatDate(report.issue_date)}
+                </span>
+              </div>
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">총 월보험료</span>
+                <span className="annual-report-summary__value annual-report-summary__value--primary">
+                  {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
+                </span>
+              </div>
+              <div className="annual-report-summary__item">
+                <span className="annual-report-summary__label">계약 건수</span>
+                <span className="annual-report-summary__value">
+                  {AnnualReportApi.formatContractCount(report.contract_count)}
+                </span>
+              </div>
+            </div>
+
+            {/* 데스크탑: Contracts Table */}
+            <div className="annual-report-contracts">
+              <h3 className="annual-report-contracts__title">
+                보험 계약 목록 ({report.contract_count}건)
+              </h3>
+
+              <div className="contracts-table-wrapper">
+                <table className="contracts-table">
+                  <thead>
+                    <tr>
+                      <th>순번</th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('insurance_company') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('insurance_company')}
+                      >
+                        보험사 {renderSortIcon('insurance_company')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('contract_number') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('contract_number')}
+                      >
+                        증권번호 {renderSortIcon('contract_number')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('product_name') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('product_name')}
+                      >
+                        보험상품 {renderSortIcon('product_name')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('contractor_name') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('contractor_name')}
+                      >
+                        계약자 {renderSortIcon('contractor_name')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('insured_name') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('insured_name')}
+                      >
+                        피보험자 {renderSortIcon('insured_name')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('contract_date') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('contract_date')}
+                      >
+                        계약일 {renderSortIcon('contract_date')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('status') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('status')}
+                      >
+                        계약상태 {renderSortIcon('status')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('coverage_amount') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('coverage_amount')}
+                      >
+                        가입금액(만원) {renderSortIcon('coverage_amount')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('insurance_period') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('insurance_period')}
+                      >
+                        보험기간 {renderSortIcon('insurance_period')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('premium_payment_period') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('premium_payment_period')}
+                      >
+                        납입기간 {renderSortIcon('premium_payment_period')}
+                      </th>
+                      <th
+                        className={`contracts-table__th--sortable ${isSortedColumn('monthly_premium') ? 'contracts-table__th--sorted' : ''}`}
+                        onClick={() => handleSort('monthly_premium')}
+                      >
+                        보험료(원) {renderSortIcon('monthly_premium')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getSortedContracts(report.contracts).map((contract: InsuranceContract, index: number) => (
+                      <tr key={index}>
+                        <td className="contracts-table__cell--number">{index + 1}</td>
+                        <td className="contracts-table__cell--company">{contract.insurance_company}</td>
+                        <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
+                        <td className="contracts-table__cell--product">{contract.product_name}</td>
+                        <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
+                        <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
+                        <td className="contracts-table__cell--date">{contract.contract_date}</td>
+                        <td className="contracts-table__cell--status">
+                          <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+                            {contract.status || '-'}
+                          </span>
+                        </td>
+                        <td className="contracts-table__cell--coverage">
+                          {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                        </td>
+                        <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
+                        <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
+                        <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
+                          {contract.monthly_premium.toLocaleString('ko-KR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 데스크탑: Footer */}
+            <div className="annual-report-page__footer">
+              <span className="annual-report-page__footer-text">
+                생성일: {formatDateTime(report.created_at)}
+              </span>
+            </div>
+          </>
+        )}
       </main>
     </div>
   )
