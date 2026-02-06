@@ -858,22 +858,24 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     display: none;
   }
 
-  /* 리스트 간격 */
+  /* 리스트 간격 - 카드 사이 여백 확대 (Samsung 폰트 스케일링 대응) */
   .document-status-list {
-    gap: 8px;
+    gap: 12px;
     padding-right: 0;
   }
 
-  /* 카드형 아이템: 2행 - 텍스트 잘림 방지 위해 행 높이 확보 */
+  /* 카드형 아이템: 2행 - 모든 기기/브라우저/폰트에서 겹침 방지
+     minmax(0, auto): auto와 달리 칼럼이 축소 가능 → 좁은 화면에서 텍스트 truncate
+     gap 12px: Samsung 기기 폰트 스케일링(~1.3x)에도 충분한 행간 확보 */
   .status-item {
     display: grid;
-    grid-template-columns: 36px auto auto 1fr; /* PC 뱃지 레이아웃과 동일하게 아이콘 칼럼 확보 */
+    grid-template-columns: 36px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
     grid-template-rows: auto auto;
-    gap: 8px 8px;
+    gap: 12px 8px;
     align-items: center;
     height: auto;
-    min-height: 0; /* 콘텐츠에 맞게 자동 확장, 고정 높이 제약 없음 */
-    padding: 14px 12px;
+    min-height: 0;
+    padding: 16px 14px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
     overflow: visible;
@@ -924,6 +926,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0; /* grid item이 콘텐츠보다 작아질 수 있게 */
   }
 
   .status-item > .status-cell {
@@ -933,6 +936,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     font-size: var(--font-size-caption-2);
     line-height: 1.5;
     white-space: nowrap;
+    overflow: hidden;
+    min-width: 0; /* grid item이 콘텐츠보다 작아질 수 있게 */
   }
 
   .status-item > .status-customer {
@@ -945,6 +950,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0; /* grid item이 콘텐츠보다 작아질 수 있게 */
   }
 
   /* === 모바일에서 숨김: 크기, MIME타입, 문서유형, 액션 === */
@@ -963,7 +969,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
 
   .document-status-list--delete-mode .status-item,
   .document-status-list--bulk-link-mode .status-item {
-    grid-template-columns: 24px 36px auto auto 1fr; /* 두번째 칼럼: 아이콘+뱃지 */
+    grid-template-columns: 24px 36px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
   }
 
   .document-status-list--delete-mode .status-item > .document-icon-wrapper,
