@@ -896,6 +896,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </div>
                 </Tooltip>
               )}
+              {/* 🍎 CR BADGE: Customer Review (변액 리포트) 표시 (크레딧 부족 시 회색) */}
+              {document.is_customer_review && !document.is_annual_report && (
+                <Tooltip content={isCreditPending ? "변액 리포트 (크레딧 부족)" : "변액 리포트"}>
+                  <div className={`document-cr-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
+                    CR
+                  </div>
+                </Tooltip>
+              )}
               {/* 🍎 TXT/OCR/BIN BADGE: 처리 유형 표시 */}
               {(() => {
                 // 🔥 백엔드 badgeType 필드 우선 사용 (정렬과 일관성 유지)

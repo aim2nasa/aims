@@ -913,9 +913,12 @@
   --color-badge-ar-bg: rgba(139, 92, 246, 0.15);   /* AR badge background light */
   --color-badge-ar-bg-dark: rgba(139, 92, 246, 0.25); /* AR badge background dark */
 
-  /* CRS (Customer Review Service) Badge - Blue Primary theme */
-  --color-badge-crs-bg: rgba(59, 130, 246, 0.15);      /* CRS badge background light */
-  --color-badge-crs-bg-dark: rgba(59, 130, 246, 0.25);  /* CRS badge background dark */
+  /* CRS (Customer Review Sheet) Badge - Teal theme to distinguish from AR (purple) */
+  --color-badge-crs: #0d9488;                              /* Teal 600 - CRS badge light */
+  --color-badge-crs-dark: #0f766e;                         /* Teal 700 - CRS badge dark */
+  --color-badge-crs-glow: rgba(13, 148, 136, 0.5);        /* CRS badge hover glow */
+  --color-badge-crs-bg: rgba(13, 148, 136, 0.15);         /* CRS badge background light */
+  --color-badge-crs-bg-dark: rgba(13, 148, 136, 0.25);    /* CRS badge background dark */
 
   /* OCR Confidence Badge Colors */
   --color-badge-ocr-excellent: #22c55e;           /* Green 500 - 매우 높음/높음 (≥0.85) */

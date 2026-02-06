@@ -1284,6 +1284,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         </div>
                       </Tooltip>
                     )}
+                    {/* 🍎 CR BADGE: Customer Review (변액 리포트) 표시 */}
+                    {document.document_type === 'customer_review' && !document.isAnnualReport && (
+                      <Tooltip content="변액 리포트">
+                        <div className="document-cr-badge">
+                          CR
+                        </div>
+                      </Tooltip>
+                    )}
                     {/* 🍎 OCR/TXT BADGE */}
                     {(() => {
                       const typeLabel = DocumentUtils.getDocumentTypeLabel(document);
