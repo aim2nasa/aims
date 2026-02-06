@@ -10,12 +10,12 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
-const { utcNowISO, utcNowDate } = require('../lib/timeUtils');
+const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 const { escapeRegex, toSafeObjectId, isBinaryMimeType } = require('../lib/helpers');
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const { notifyCustomerDocSubscribers, notifyDocumentStatusSubscribers, notifyDocumentListSubscribers, notifyPersonalFilesSubscribers, sendSSE } = sseManager;
-const { prepareDocumentResponse } = require('../lib/documentStatusHelper');
+const { prepareDocumentResponse, isConvertibleFile } = require('../lib/documentStatusHelper');
 const pdfConversionService = require('../lib/pdfConversionService');
 
 const COLLECTION_NAME = COLLECTIONS.FILES;

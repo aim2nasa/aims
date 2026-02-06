@@ -25,6 +25,9 @@ module.exports = function(db, authenticateJWT) {
 
   const N8N_INTERNAL_URL = 'http://localhost:5678';
   const DOCUMENT_PIPELINE_URL = 'http://localhost:8100';
+  const COLLECTION_NAME = COLLECTIONS.FILES;
+  const FILES_COLLECTION = COLLECTIONS.FILES;
+  const arSSEClients = sseManager.channels.ar;
 
 // =============================================================================
 // n8n Webhook 프록시 엔드포인트 (보안: 내부망에서만 n8n 접근 가능)

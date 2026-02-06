@@ -9,7 +9,7 @@ const express = require('express');
 const { ObjectId } = require('mongodb');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
-const { utcNowISO, normalizeTimestamp } = require('../lib/timeUtils');
+const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, qdrantCollection) {
   const router = express.Router();

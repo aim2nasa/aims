@@ -11,7 +11,7 @@ const axios = require('axios');
 const fs = require('fs');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
-const { utcNowISO } = require('../lib/timeUtils');
+const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 const { sanitizeHtml, flattenObject, escapeRegex } = require('../lib/helpers');
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
@@ -29,6 +29,8 @@ const { prepareDocumentResponse } = require('../lib/documentStatusHelper');
 module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection, upload) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
+  const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
+  const COLLECTION_NAME = COLLECTIONS.FILES;
 
   // SSE channel aliases (sseManager.channels의 Map 직접 참조)
   const customerDocSSEClients = sseManager.channels.customerDoc;
@@ -38,6 +40,7 @@ module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPI
   const personalFilesSSEClients = sseManager.channels.personalFiles;
   const documentStatusSSEClients = sseManager.channels.documentStatus;
   const documentListSSEClients = sseManager.channels.documentList;
+  const userAccountSSEClients = sseManager.channels.userAccount;
 
 // ==================== 고객 관리 API ====================
 
