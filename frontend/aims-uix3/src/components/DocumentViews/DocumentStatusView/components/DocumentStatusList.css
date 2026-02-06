@@ -322,7 +322,7 @@ html[data-theme="dark"] .empty-message {
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 10px;
   align-items: center;
-  height: 32px;
+  height: 40px;
   padding: 6px 10px;
   background: var(--color-ios-bg-primary-light);
   border-radius: 4px;
@@ -865,17 +865,17 @@ html[data-theme="dark"] .action-btn--disabled:hover {
   }
 
   /* 카드형 아이템: 2행 - 모든 기기/브라우저/폰트에서 겹침 방지
-     minmax(0, auto): auto와 달리 칼럼이 축소 가능 → 좁은 화면에서 텍스트 truncate
-     gap 12px: Samsung 기기 폰트 스케일링(~1.3x)에도 충분한 행간 확보 */
+     아이콘이 row 1-2를 span하여 상하 뱃지(AR/CR 위, TXT/OCR 아래) 공간 충분 확보
+     minmax(0, auto): 칼럼 축소 허용 → 좁은 화면에서 텍스트 truncate */
   .status-item {
     display: grid;
-    grid-template-columns: 36px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
     grid-template-rows: auto auto;
-    gap: 12px 8px;
+    gap: 6px 8px;
     align-items: center;
     height: auto;
     min-height: 0;
-    padding: 16px 14px;
+    padding: 14px 12px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
     overflow: visible;
@@ -895,12 +895,14 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     transition: background 0.05s ease;
   }
 
-  /* === Row 1: 아이콘 + 파일명 === */
+  /* === 아이콘: Row 1~2 span → 상하 뱃지(AR/CR, TXT/OCR) 잘림 방지 === */
   .status-item > .document-icon-wrapper {
-    grid-row: 1;
+    grid-row: 1 / 3; /* 두 행 모두 차지 → 충분한 세로 공간 */
     grid-column: 1;
-    width: 24px;  /* PC와 동일 - 뱃지 오버레이 공간 확보 */
-    height: 24px; /* PC와 동일 */
+    width: 24px;
+    height: auto; /* 고정 높이 제거 → 두 행 높이에 맞춤 */
+    align-self: center;
+    overflow: visible; /* 뱃지가 래퍼 밖으로 나가도 표시 */
   }
 
   .status-item > .status-filename {
@@ -969,12 +971,12 @@ html[data-theme="dark"] .action-btn--disabled:hover {
 
   .document-status-list--delete-mode .status-item,
   .document-status-list--bulk-link-mode .status-item {
-    grid-template-columns: 24px 36px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+    grid-template-columns: 24px 40px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
   }
 
   .document-status-list--delete-mode .status-item > .document-icon-wrapper,
   .document-status-list--bulk-link-mode .status-item > .document-icon-wrapper {
-    grid-row: 1;
+    grid-row: 1 / 3; /* 삭제 모드에서도 두 행 span */
     grid-column: 2;
   }
 
