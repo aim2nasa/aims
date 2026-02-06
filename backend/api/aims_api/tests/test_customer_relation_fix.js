@@ -78,9 +78,18 @@ function assertIncludes(content, searchString, testName, minCount = 1) {
 
 console.log('\n🧪 Starting customer_relation → customerId Migration Tests\n');
 
-// server.js 파일 읽기
-const serverPath = path.join(__dirname, '../server.js');
-const serverContent = fs.readFileSync(serverPath, 'utf-8');
+// 리팩토링 후 라우트 파일들에서 코드 읽기 (server.js → routes/*.js로 이동됨)
+const routeFiles = [
+  path.join(__dirname, '../server.js'),
+  path.join(__dirname, '../routes/documents-routes.js'),
+  path.join(__dirname, '../routes/customers-routes.js'),
+  path.join(__dirname, '../routes/admin-routes.js'),
+  path.join(__dirname, '../routes/webhooks-routes.js'),
+];
+const serverContent = routeFiles
+  .filter(f => fs.existsSync(f))
+  .map(f => fs.readFileSync(f, 'utf-8'))
+  .join('\n');
 
 console.log('📋 Test Suite 1: No customer_relation.customer_id references\n');
 

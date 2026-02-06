@@ -200,9 +200,9 @@ describe('고객명 DB 유일성 검증', () => {
 
     beforeAll(() => {
       try {
-        // Windows 절대 경로 사용
-        const serverPath = 'D:\\aims\\backend\\api\\aims_api\\server.js'
-        serverSource = fs.readFileSync(serverPath, 'utf-8')
+        // 고객 라우트 파일 (server.js 리팩토링으로 customers-routes.js로 이동)
+        const routePath = 'D:\\aims\\backend\\api\\aims_api\\routes\\customers-routes.js'
+        serverSource = fs.readFileSync(routePath, 'utf-8')
         backendAvailable = true
       } catch {
         // CI 환경 등에서 백엔드 파일이 없을 수 있음
@@ -210,14 +210,14 @@ describe('고객명 DB 유일성 검증', () => {
       }
     })
 
-    test('POST /api/customers/validate-names 엔드포인트가 있어야 함', () => {
+    test('POST /customers/validate-names 엔드포인트가 있어야 함', () => {
       if (!backendAvailable) return // 백엔드 파일 없으면 스킵
-      expect(serverSource).toContain("app.post('/api/customers/validate-names'")
+      expect(serverSource).toContain("router.post('/customers/validate-names'")
     })
 
     test('authenticateJWT 미들웨어가 적용되어야 함', () => {
       if (!backendAvailable) return
-      expect(serverSource).toMatch(/app\.post\('\/api\/customers\/validate-names',\s*authenticateJWT/)
+      expect(serverSource).toMatch(/router\.post\('\/customers\/validate-names',\s*authenticateJWT/)
     })
 
     test('customers 배열을 받아야 함', () => {

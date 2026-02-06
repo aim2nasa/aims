@@ -73,14 +73,23 @@ function findCodeBlock(content, startPattern, endPatternOrLength) {
 console.log('\n🧪 Qdrant Deletion Verification Tests\n');
 
 // ==================== 서버 코드 로드 ====================
+// 리팩토링 후 라우트 파일들도 함께 읽기 (server.js → routes/*.js로 이동됨)
 
 const serverPath = path.join(__dirname, '../server.js');
 let serverContent;
 
 try {
-  serverContent = fs.readFileSync(serverPath, 'utf-8');
+  const routeFiles = [
+    serverPath,
+    path.join(__dirname, '../routes/documents-routes.js'),
+    path.join(__dirname, '../routes/customers-routes.js'),
+  ];
+  serverContent = routeFiles
+    .filter(f => fs.existsSync(f))
+    .map(f => fs.readFileSync(f, 'utf-8'))
+    .join('\n');
 } catch (err) {
-  console.log(`${RED}✗ Cannot read server.js: ${err.message}${RESET}`);
+  console.log(`${RED}✗ Cannot read server files: ${err.message}${RESET}`);
   process.exit(1);
 }
 
@@ -121,10 +130,10 @@ assertIncludes(
 
 console.log('\n📋 Test Suite 2: Single Document Deletion (DELETE /api/documents/:id)\n');
 
-// 단일 문서 삭제 API 블록 추출 (Qdrant 삭제까지 포함하려면 10000자 이상 필요)
+// 단일 문서 삭제 API 블록 추출 (리팩토링 후 router.delete)
 const singleDeleteBlock = findCodeBlock(
   serverContent,
-  "app\\.delete\\('/api/documents/:id'",
+  "router\\.delete\\('/documents/:id'",
   10000  // 약 10000자 추출 (Qdrant 삭제 코드 포함)
 );
 
@@ -167,8 +176,8 @@ if (!singleDeleteBlock) {
 
 console.log('\n📋 Test Suite 3: Bulk Document Deletion (DELETE /api/documents)\n');
 
-// 복수 문서 삭제 API 블록 추출
-const bulkDeleteStartIndex = serverContent.indexOf("app.delete('/api/documents', authenticateJWT");
+// 복수 문서 삭제 API 블록 추출 (리팩토링 후 router.delete)
+const bulkDeleteStartIndex = serverContent.indexOf("router.delete('/documents', authenticateJWT");
 if (bulkDeleteStartIndex === -1) {
   console.log(`${RED}✗ Could not find bulk document deletion API${RESET}`);
   testsFailed++;
@@ -196,10 +205,10 @@ if (bulkDeleteStartIndex === -1) {
 
 console.log('\n📋 Test Suite 4: Customer Cascade Deletion\n');
 
-// 고객 삭제 API 블록 추출
+// 고객 삭제 API 블록 추출 (리팩토링 후 router.delete)
 const customerDeleteBlock = findCodeBlock(
   serverContent,
-  "app\\.delete\\('/api/customers/:id'",
+  "router\\.delete\\('/customers/:id'",
   15000  // 고객 삭제는 더 큼 (cascade 삭제 포함)
 );
 

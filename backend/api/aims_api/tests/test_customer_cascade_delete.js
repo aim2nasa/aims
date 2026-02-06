@@ -65,15 +65,24 @@ console.log('\n🧪 Customer Cascade Delete Verification Tests\n');
 
 // ==================== 백엔드 검증 ====================
 
-const serverPath = path.join(__dirname, '../server.js');
-const serverContent = fs.readFileSync(serverPath, 'utf-8');
+// 리팩토링 후 라우트 파일들에서 코드 읽기 (server.js → routes/*.js로 이동됨)
+const routeFiles = [
+  path.join(__dirname, '../server.js'),
+  path.join(__dirname, '../routes/customers-routes.js'),
+  path.join(__dirname, '../routes/documents-routes.js'),
+  path.join(__dirname, '../routes/admin-routes.js'),
+];
+const serverContent = routeFiles
+  .filter(f => fs.existsSync(f))
+  .map(f => fs.readFileSync(f, 'utf-8'))
+  .join('\n');
 
 console.log('📋 Test Suite 1: Backend - Customer Deletion API\n');
 
-// 1. 고객 삭제 API 엔드포인트 존재
+// 1. 고객 삭제 API 엔드포인트 존재 (router.delete로 이동됨)
 assertIncludes(
   serverContent,
-  "app\\.delete\\('/api/customers/:id'",
+  "router\\.delete\\('/customers/:id'",
   'Customer deletion API endpoint exists'
 );
 
@@ -86,10 +95,12 @@ assertIncludes(
 );
 
 // 3. 고객 삭제 API 내의 cascade delete 블록 추출
-// Hard delete 로직을 포함하도록 catch 블록까지 추출
+// customers-routes.js에서 직접 추출 (리팩토링 후)
+const customersRoutePath = path.join(__dirname, '../routes/customers-routes.js');
+const customersRouteContent = fs.readFileSync(customersRoutePath, 'utf-8');
 const deleteApiBlock = findCodeBlock(
-  serverContent,
-  "app\\.delete\\('/api/customers/:id'",
+  customersRouteContent,
+  "router\\.delete\\('/customers/:id'",
   "\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*\\}\\s*\\}\\);"
 );
 

@@ -66,23 +66,23 @@ function findCodeBlock(content, startPattern, endPattern) {
 
 console.log('\n🧪 Cascade Delete ObjectId/String Compatibility Tests\n');
 
-// ==================== Backend (server.js) 검증 ====================
+// ==================== Backend 검증 (리팩토링 후 routes/customers-routes.js) ====================
 
-const serverPath = path.join(__dirname, '../server.js');
+const customersRoutePath = path.join(__dirname, '../routes/customers-routes.js');
 let serverContent = '';
 
 try {
-  serverContent = fs.readFileSync(serverPath, 'utf-8');
+  serverContent = fs.readFileSync(customersRoutePath, 'utf-8');
 } catch (err) {
-  console.log(`${RED}✗ Could not read server.js file: ${serverPath}${RESET}`);
+  console.log(`${RED}✗ Could not read customers-routes.js file: ${customersRoutePath}${RESET}`);
   process.exit(1);
 }
 
-// 고객 삭제 API 블록 추출
+// 고객 삭제 API 블록 추출 (리팩토링 후 router.delete)
 const deleteApiBlock = findCodeBlock(
   serverContent,
-  "app\\.delete\\('/api/customers/:id'",
-  "\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*?\\}\\s*\\}\\);"
+  "router\\.delete\\('/customers/:id'",
+  "\\}\\s*catch\\s*\\([^)]+\\)\\s*\\{[\\s\\S]*\\}\\s*\\}\\);"
 );
 
 if (!deleteApiBlock) {
