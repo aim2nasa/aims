@@ -860,7 +860,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
 
   /* 리스트 간격 */
   .document-status-list {
-    gap: 4px;
+    gap: 8px;
     padding-right: 0;
   }
 
@@ -907,7 +907,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     min-width: 0;
     font-size: var(--font-size-footnote);
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.5;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -919,8 +919,11 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 2;
     text-align: left;
     font-size: var(--font-size-caption-2);
-    line-height: 1.4;
+    line-height: 1.5;
     color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .status-item > .status-cell {
@@ -928,7 +931,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 3;
     justify-content: flex-start;
     font-size: var(--font-size-caption-2);
-    line-height: 1.4;
+    line-height: 1.5;
+    white-space: nowrap;
   }
 
   .status-item > .status-customer {
@@ -937,7 +941,10 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     justify-content: flex-start;
     text-align: left;
     font-size: var(--font-size-caption-2);
-    line-height: 1.4;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* === 모바일에서 숨김: 크기, MIME타입, 문서유형, 액션 === */
