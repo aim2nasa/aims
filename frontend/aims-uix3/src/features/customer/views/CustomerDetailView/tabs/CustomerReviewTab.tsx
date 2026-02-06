@@ -22,8 +22,8 @@ import { errorReporter } from '@/shared/lib/errorReporter';
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize';
 import './CustomerReviewTab.css';
 
-// 정렬 필드 타입
-type SortField = 'contractor_name' | 'policy_number' | 'product_name' | 'issue_date' | 'parsed_at' | 'status';
+// 정렬 필드 타입 (AnnualReportTab 스타일: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태)
+type SortField = 'contractor_name' | 'issue_date' | 'parsed_at' | 'product_name' | 'fund_count' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 interface CustomerReviewTabProps {
@@ -50,21 +50,23 @@ const ROW_GAP = 2;
 const DEFAULT_TABLE_HEADER_HEIGHT = 32;
 const DEFAULT_PAGINATION_HEIGHT = 26;
 
-// 🍎 컬럼 리사이즈 설정
+// 🍎 컬럼 리사이즈 설정 (AnnualReportTab 동일 패턴: 계약자, 발행일, 파싱일시, 상품명, 펀드 수, 상태)
 const CUSTOMER_REVIEW_COLUMNS: ColumnConfig[] = [
-  { id: 'contractor', minWidth: 50, maxWidth: 120 },
-  { id: 'policyNumber', minWidth: 80, maxWidth: 150 },
-  { id: 'product', minWidth: 100, maxWidth: 300 },
+  { id: 'contractor', minWidth: 50, maxWidth: 150 },
   { id: 'issueDate', minWidth: 70, maxWidth: 120 },
-  { id: 'parsedAt', minWidth: 100, maxWidth: 180 }
+  { id: 'parsedAt', minWidth: 100, maxWidth: 180 },
+  { id: 'product', minWidth: 80, maxWidth: 300 },
+  { id: 'fundCount', minWidth: 50, maxWidth: 100 },
+  { id: 'status', minWidth: 40, maxWidth: 80 }
 ];
 
 // 🍎 기본 컬럼 폭
 const DEFAULT_CONTRACTOR_WIDTH = 60;
-const DEFAULT_POLICY_NUMBER_WIDTH = 90;
-const DEFAULT_PRODUCT_WIDTH = 120;
 const DEFAULT_ISSUE_DATE_WIDTH = 80;
 const DEFAULT_PARSED_AT_WIDTH = 130;
+const DEFAULT_PRODUCT_WIDTH = 120;
+const DEFAULT_FUND_COUNT_WIDTH = 70;
+const DEFAULT_STATUS_WIDTH = 40;
 
 export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   customer,
@@ -181,13 +183,14 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     });
   }, [itemsPerPageMode, autoCalculatedItems]);
 
-  // 🍎 컬럼 리사이즈: 기본 폭 계산
+  // 🍎 컬럼 리사이즈: 기본 폭 계산 (AnnualReportTab 동일 패턴)
   const defaultColumnWidths = useMemo(() => ({
     contractor: DEFAULT_CONTRACTOR_WIDTH,
-    policyNumber: DEFAULT_POLICY_NUMBER_WIDTH,
-    product: DEFAULT_PRODUCT_WIDTH,
     issueDate: DEFAULT_ISSUE_DATE_WIDTH,
     parsedAt: DEFAULT_PARSED_AT_WIDTH,
+    product: DEFAULT_PRODUCT_WIDTH,
+    fundCount: DEFAULT_FUND_COUNT_WIDTH,
+    status: DEFAULT_STATUS_WIDTH,
   }), [])
 
   // 🍎 컬럼 리사이즈 훅
@@ -197,7 +200,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     getResizeHandleProps,
     wasJustResizing
   } = useColumnResize({
-    storageKey: 'customer-review-tab',
+    storageKey: 'customer-review-tab-v2',
     columns: CUSTOMER_REVIEW_COLUMNS,
     defaultWidths: defaultColumnWidths
   })
@@ -361,13 +364,11 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     const term = searchTerm.toLowerCase().trim();
     return reviews.filter(review => {
       const contractorName = (review.contractor_name || '').toLowerCase();
-      const policyNumber = (review.contract_info?.policy_number || '').toLowerCase();
       const productName = (review.product_name || '').toLowerCase();
       const issueDate = CustomerReviewApi.formatDate(review.issue_date).toLowerCase();
       const parsedAt = CustomerReviewApi.formatDateTime(review.parsed_at).toLowerCase();
 
       return contractorName.includes(term) ||
-             policyNumber.includes(term) ||
              productName.includes(term) ||
              issueDate.includes(term) ||
              parsedAt.includes(term);
@@ -383,17 +384,17 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         case 'contractor_name':
           comparison = (a.contractor_name || '').localeCompare(b.contractor_name || '', 'ko');
           break;
-        case 'policy_number':
-          comparison = (a.contract_info?.policy_number || '').localeCompare(b.contract_info?.policy_number || '', 'ko');
-          break;
-        case 'product_name':
-          comparison = (a.product_name || '').localeCompare(b.product_name || '', 'ko');
-          break;
         case 'issue_date':
           comparison = new Date(a.issue_date || 0).getTime() - new Date(b.issue_date || 0).getTime();
           break;
         case 'parsed_at':
           comparison = new Date(a.parsed_at || 0).getTime() - new Date(b.parsed_at || 0).getTime();
+          break;
+        case 'product_name':
+          comparison = (a.product_name || '').localeCompare(b.product_name || '', 'ko');
+          break;
+        case 'fund_count':
+          comparison = (a.fund_count || 0) - (b.fund_count || 0);
           break;
         case 'status':
           const statusOrder = { 'completed': 0, 'processing': 1, 'pending': 2, 'error': 3 };
@@ -509,14 +510,15 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
         className={`customer-review-table-container${isResizing ? ' is-resizing' : ''}`}
         style={{
           '--contractor-column-width': `${columnWidths['contractor'] || DEFAULT_CONTRACTOR_WIDTH}px`,
-          '--policy-number-column-width': `${columnWidths['policyNumber'] || DEFAULT_POLICY_NUMBER_WIDTH}px`,
-          '--product-column-width': `${columnWidths['product'] || DEFAULT_PRODUCT_WIDTH}px`,
           '--issue-date-column-width': `${columnWidths['issueDate'] || DEFAULT_ISSUE_DATE_WIDTH}px`,
           '--parsed-at-column-width': `${columnWidths['parsedAt'] || DEFAULT_PARSED_AT_WIDTH}px`,
+          '--product-column-width': `${columnWidths['product'] || DEFAULT_PRODUCT_WIDTH}px`,
+          '--fund-count-column-width': `${columnWidths['fundCount'] || DEFAULT_FUND_COUNT_WIDTH}px`,
+          '--status-column-width': `${columnWidths['status'] || DEFAULT_STATUS_WIDTH}px`,
         } as React.CSSProperties}
       >
-        {/* 테이블 헤더 */}
-        <div className={`customer-review-table-header ${isDevMode ? 'has-checkbox' : ''}`}>
+        {/* 테이블 헤더 (AnnualReportTab 동일 패턴) */}
+        <div className="customer-review-table-header">
           {isDevMode && (
             <div className="header-checkbox">
               <input
@@ -538,30 +540,6 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
               </span>
             </span>
             <div {...getResizeHandleProps('contractor')} />
-          </div>
-          <div
-            className="header-policy-number customer-review-table__sortable resizable-header"
-            onClick={() => handleSort('policy_number')}
-          >
-            <span className="customer-review-table__header-content">
-              증권번호
-              <span className={`customer-review-table__sort-icon ${sortField === 'policy_number' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'policy_number' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
-            </span>
-            <div {...getResizeHandleProps('policyNumber')} />
-          </div>
-          <div
-            className="header-product customer-review-table__sortable resizable-header"
-            onClick={() => handleSort('product_name')}
-          >
-            <span className="customer-review-table__header-content">
-              상품명
-              <span className={`customer-review-table__sort-icon ${sortField === 'product_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
-                {sortField === 'product_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
-              </span>
-            </span>
-            <div {...getResizeHandleProps('product')} />
           </div>
           <div
             className="header-issue-date customer-review-table__sortable resizable-header"
@@ -587,6 +565,42 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             </span>
             <div {...getResizeHandleProps('parsedAt')} />
           </div>
+          <div
+            className="header-product customer-review-table__sortable resizable-header"
+            onClick={() => handleSort('product_name')}
+          >
+            <span className="customer-review-table__header-content">
+              상품명
+              <span className={`customer-review-table__sort-icon ${sortField === 'product_name' ? 'customer-review-table__sort-icon--active' : ''}`}>
+                {sortField === 'product_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+            <div {...getResizeHandleProps('product')} />
+          </div>
+          <div
+            className="header-fund-count customer-review-table__sortable resizable-header"
+            onClick={() => handleSort('fund_count')}
+          >
+            <span className="customer-review-table__header-content">
+              펀드 수
+              <span className={`customer-review-table__sort-icon ${sortField === 'fund_count' ? 'customer-review-table__sort-icon--active' : ''}`}>
+                {sortField === 'fund_count' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+            <div {...getResizeHandleProps('fundCount')} />
+          </div>
+          <div
+            className="header-status customer-review-table__sortable resizable-header"
+            onClick={() => handleSort('status')}
+          >
+            <span className="customer-review-table__header-content">
+              상태
+              <span className={`customer-review-table__sort-icon ${sortField === 'status' ? 'customer-review-table__sort-icon--active' : ''}`}>
+                {sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+            <div {...getResizeHandleProps('status')} />
+          </div>
         </div>
 
         {/* 테이블 바디 */}
@@ -597,12 +611,11 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
             const isError = review.status === 'error';
             const isProcessing = review.status === 'processing';
             const isPending = review.status === 'pending';
-            const isNotCompleted = isError || isProcessing || isPending;
 
             return (
               <div
                 key={review.source_file_id || `review_${idx}`}
-                className={`customer-review-row ${isDevMode ? 'has-checkbox' : ''} ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
+                className={`customer-review-row ${isSelected ? 'customer-review-row--selected' : ''} ${isError ? 'customer-review-row--error' : ''} ${isProcessing ? 'customer-review-row--processing' : ''} ${isPending ? 'customer-review-row--pending' : ''}`}
                 onClick={() => handleViewReview(review)}
               >
                 {isDevMode && (
@@ -616,17 +629,44 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
                   </div>
                 )}
                 <div className="row-contractor">{review.contractor_name || '-'}</div>
-                <div className="row-policy-number" title={review.contract_info?.policy_number || ''}>
-                  {review.contract_info?.policy_number || '-'}
-                </div>
-                <div className="row-product" title={review.product_name || ''}>
-                  {review.product_name || '-'}
-                </div>
                 <div className="row-issue-date">
                   {CustomerReviewApi.formatDate(review.issue_date)}
                 </div>
                 <div className="row-parsed-at">
                   {review.parsed_at ? CustomerReviewApi.formatDateTime(review.parsed_at) : '-'}
+                </div>
+                <div className="row-product" title={review.product_name || ''}>
+                  {review.product_name || '-'}
+                </div>
+                <div className="row-fund-count">
+                  {review.fund_count != null ? `${review.fund_count}개` : '-'}
+                </div>
+                <div className="row-status">
+                  {isError && (
+                    <span
+                      className="status-badge status-badge--error"
+                      title={review.error_message || '파싱 실패'}
+                    >
+                      실패{review.retry_count ? ` (${review.retry_count}/3)` : ''}
+                    </span>
+                  )}
+                  {isProcessing && (
+                    <>
+                      <span className="status-badge status-badge--processing">
+                        <span className="status-spinner"></span>
+                        처리중
+                      </span>
+                      <span className="retry-indicator">[{review.retry_count || 1}/3]</span>
+                    </>
+                  )}
+                  {isPending && (
+                    <>
+                      <span className="status-badge status-badge--pending">
+                        대기중
+                      </span>
+                      <span className="retry-indicator">[{review.retry_count || 1}/3]</span>
+                    </>
+                  )}
                 </div>
               </div>
             );
