@@ -1,0 +1,143 @@
+[
+  {
+    "endpoint": "GET /api/documents?page=1&limit=5",
+    "name": "GET /api/documents?page=1&limit=5",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": {
+        "documents": "[]",
+        "pagination": {
+          "currentPage": "number",
+          "hasNext": "boolean",
+          "hasPrev": "boolean",
+          "totalCount": "number",
+          "totalPages": "number"
+        }
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.282Z"
+  },
+  {
+    "endpoint": "GET /api/documents?page=1&limit=5&search=test",
+    "name": "GET /api/documents?page=1&limit=5&search=test",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": {
+        "documents": "[]",
+        "pagination": {
+          "currentPage": "number",
+          "hasNext": "boolean",
+          "hasPrev": "boolean",
+          "totalCount": "number",
+          "totalPages": "number"
+        }
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.294Z"
+  },
+  {
+    "endpoint": "GET /api/documents/stats",
+    "name": "GET /api/documents/stats",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "active": "number",
+      "archived": "number",
+      "deleted": "number",
+      "mostUsedTags": "[]",
+      "ocrCompleted": "number",
+      "ocrPending": "number",
+      "success": "boolean",
+      "total": "number",
+      "totalSize": "number"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.308Z"
+  },
+  {
+    "endpoint": "GET /api/documents/status?page=1&limit=5",
+    "name": "GET /api/documents/status?page=1&limit=5",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": {
+        "documents": "[]",
+        "pagination": {
+          "currentPage": "number",
+          "limit": "number",
+          "totalCount": "number",
+          "totalPages": "number"
+        }
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.320Z"
+  },
+  {
+    "endpoint": "POST /api/documents/check-hash",
+    "name": "POST /api/documents/check-hash",
+    "status": 400,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.349Z"
+  },
+  {
+    "endpoint": "GET /api/documents?page=1&limit=-1",
+    "name": "docs-negative-limit",
+    "status": 400,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "expected": "string",
+      "provided": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.356Z"
+  },
+  {
+    "endpoint": "GET /api/documents?page=1&limit=9999",
+    "name": "docs-limit-too-high",
+    "status": 400,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "max_allowed": "number",
+      "provided": "number",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.362Z"
+  },
+  {
+    "endpoint": "GET /api/documents",
+    "name": "docs-no-auth",
+    "status": 401,
+    "contentType": "application/json",
+    "shape": {
+      "message": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.368Z"
+  }
+]

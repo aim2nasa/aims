@@ -11,6 +11,10 @@
     "test:ci": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:contracts": "cross-env ALLOW_TEST_AUTH=true jest --runInBand --testPathPattern=__tests__/contracts/",
+    "test:golden": "cross-env ALLOW_TEST_AUTH=true jest --runInBand --testPathPattern=__tests__/golden-master/",
+    "test:golden:capture": "node __tests__/golden-master/captureSnapshots.js",
+    "test:refactor": "npm run test:contracts && npm run test:golden && npm test",
     "start": "node server.js"
   },
   "keywords": [],

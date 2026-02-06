@@ -1,0 +1,18 @@
+[
+  {
+    "endpoint": "GET /api/annual-reports/all",
+    "name": "GET /api/annual-reports/all",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": {
+        "reports": "[]",
+        "total_count": "number"
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.791Z"
+  }
+]

@@ -1,0 +1,70 @@
+[
+  {
+    "endpoint": "GET /api/health",
+    "name": "GET /api/health",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "database": "string",
+      "message": "string",
+      "success": "boolean",
+      "timestamp": "string",
+      "version": "string",
+      "versionInfo": {
+        "buildTime": "string",
+        "fullVersion": "string",
+        "gitHash": "string",
+        "version": "string"
+      }
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:10.666Z"
+  },
+  {
+    "endpoint": "GET /api/health/deep",
+    "name": "GET /api/health/deep",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "checks": {
+        "fileQuery": {
+          "latency": "number",
+          "status": "string"
+        },
+        "mongodb": {
+          "latency": "number",
+          "status": "string"
+        },
+        "timestamp": "string"
+      },
+      "status": "string",
+      "totalLatency": "number",
+      "version": "string"
+    },
+    "hasSuccessField": false,
+    "capturedAt": "2026-02-06T18:57:10.682Z"
+  },
+  {
+    "endpoint": "GET /api/system/versions",
+    "name": "GET /api/system/versions",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "services": [
+        {
+          "displayName": "string",
+          "gitHash": "string",
+          "name": "string",
+          "status": "string",
+          "version": "string"
+        }
+      ],
+      "success": "boolean",
+      "timestamp": "string"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:10.701Z"
+  }
+]

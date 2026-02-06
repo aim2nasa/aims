@@ -1,0 +1,59 @@
+[
+  {
+    "endpoint": "GET /api/insurance-products",
+    "name": "GET /api/insurance-products",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": [
+        {
+          "_id": "string",
+          "category": "string",
+          "createdAt": "string",
+          "insurer_id": "string",
+          "productName": "string",
+          "saleEndDate": "string",
+          "saleStartDate": "string",
+          "status": "string",
+          "surveyDate": "string",
+          "updatedAt": "string"
+        }
+      ],
+      "limit": "number",
+      "skip": "number",
+      "success": "boolean",
+      "total": "number"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.567Z"
+  },
+  {
+    "endpoint": "GET /api/insurance-products/statistics",
+    "name": "GET /api/insurance-products/statistics",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": {
+        "active": "number",
+        "byCategory": {
+          "법인": "number",
+          "변액": "number",
+          "보장": "number",
+          "양로": "number",
+          "연금": "number",
+          "저축": "number"
+        },
+        "discontinued": "number",
+        "surveyDates": [
+          "string"
+        ],
+        "total": "number"
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.584Z"
+  }
+]

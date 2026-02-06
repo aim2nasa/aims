@@ -1,0 +1,641 @@
+{
+  "health": [
+    {
+      "endpoint": "GET /api/health",
+      "name": "GET /api/health",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "database": "string",
+        "message": "string",
+        "success": "boolean",
+        "timestamp": "string",
+        "version": "string",
+        "versionInfo": {
+          "buildTime": "string",
+          "fullVersion": "string",
+          "gitHash": "string",
+          "version": "string"
+        }
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:10.666Z"
+    },
+    {
+      "endpoint": "GET /api/health/deep",
+      "name": "GET /api/health/deep",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "checks": {
+          "fileQuery": {
+            "latency": "number",
+            "status": "string"
+          },
+          "mongodb": {
+            "latency": "number",
+            "status": "string"
+          },
+          "timestamp": "string"
+        },
+        "status": "string",
+        "totalLatency": "number",
+        "version": "string"
+      },
+      "hasSuccessField": false,
+      "capturedAt": "2026-02-06T18:57:10.682Z"
+    },
+    {
+      "endpoint": "GET /api/system/versions",
+      "name": "GET /api/system/versions",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "services": [
+          {
+            "displayName": "string",
+            "gitHash": "string",
+            "name": "string",
+            "status": "string",
+            "version": "string"
+          }
+        ],
+        "success": "boolean",
+        "timestamp": "string"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:10.701Z"
+    }
+  ],
+  "documents": [
+    {
+      "endpoint": "GET /api/documents?page=1&limit=5",
+      "name": "GET /api/documents?page=1&limit=5",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "documents": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "hasNext": "boolean",
+            "hasPrev": "boolean",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.282Z"
+    },
+    {
+      "endpoint": "GET /api/documents?page=1&limit=5&search=test",
+      "name": "GET /api/documents?page=1&limit=5&search=test",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "documents": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "hasNext": "boolean",
+            "hasPrev": "boolean",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.294Z"
+    },
+    {
+      "endpoint": "GET /api/documents/stats",
+      "name": "GET /api/documents/stats",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "active": "number",
+        "archived": "number",
+        "deleted": "number",
+        "mostUsedTags": "[]",
+        "ocrCompleted": "number",
+        "ocrPending": "number",
+        "success": "boolean",
+        "total": "number",
+        "totalSize": "number"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.308Z"
+    },
+    {
+      "endpoint": "GET /api/documents/status?page=1&limit=5",
+      "name": "GET /api/documents/status?page=1&limit=5",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "documents": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.320Z"
+    },
+    {
+      "endpoint": "POST /api/documents/check-hash",
+      "name": "POST /api/documents/check-hash",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.349Z"
+    },
+    {
+      "endpoint": "GET /api/documents?page=1&limit=-1",
+      "name": "docs-negative-limit",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "expected": "string",
+        "provided": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.356Z"
+    },
+    {
+      "endpoint": "GET /api/documents?page=1&limit=9999",
+      "name": "docs-limit-too-high",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "max_allowed": "number",
+        "provided": "number",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.362Z"
+    },
+    {
+      "endpoint": "GET /api/documents",
+      "name": "docs-no-auth",
+      "status": 401,
+      "contentType": "application/json",
+      "shape": {
+        "message": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.368Z"
+    }
+  ],
+  "customers": [
+    {
+      "endpoint": "GET /api/customers?page=1&limit=5",
+      "name": "GET /api/customers?page=1&limit=5",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "customers": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.380Z"
+    },
+    {
+      "endpoint": "GET /api/customers?page=1&limit=5&status=active",
+      "name": "GET /api/customers?page=1&limit=5&status=active",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "customers": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.392Z"
+    },
+    {
+      "endpoint": "GET /api/customers?page=1&limit=5&status=inactive",
+      "name": "GET /api/customers?page=1&limit=5&status=inactive",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "customers": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.403Z"
+    },
+    {
+      "endpoint": "GET /api/customers?page=1&limit=5&status=all",
+      "name": "GET /api/customers?page=1&limit=5&status=all",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "customers": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.413Z"
+    },
+    {
+      "endpoint": "GET /api/customers?page=1&limit=5&search=test",
+      "name": "GET /api/customers?page=1&limit=5&search=test",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "customers": "[]",
+          "pagination": {
+            "currentPage": "number",
+            "limit": "number",
+            "totalCount": "number",
+            "totalPages": "number"
+          }
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.424Z"
+    },
+    {
+      "endpoint": "GET /api/customers/stats",
+      "name": "GET /api/customers/stats",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "active": "number",
+        "inactive": "number",
+        "mostUsedTags": "[]",
+        "newThisMonth": "number",
+        "success": "boolean",
+        "total": "number",
+        "totalTags": "number"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.436Z"
+    },
+    {
+      "endpoint": "GET /api/customers/check-name?name=absolutely-nonexistent-name-xyz",
+      "name": "GET /api/customers/check-name?name=absolutely-nonexistent-name-xyz",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "customer": "null",
+        "exists": "boolean",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.445Z"
+    },
+    {
+      "endpoint": "GET /api/customers/000000000000000000000000",
+      "name": "cust-nonexistent",
+      "status": 404,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.453Z"
+    },
+    {
+      "endpoint": "GET /api/customers",
+      "name": "custs-no-auth",
+      "status": 401,
+      "contentType": "application/json",
+      "shape": {
+        "message": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.459Z"
+    },
+    {
+      "endpoint": "POST /api/customers",
+      "name": "create-cust-empty-body",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.466Z"
+    }
+  ],
+  "contracts": [
+    {
+      "endpoint": "GET /api/contracts?page=1&limit=5",
+      "name": "GET /api/contracts?page=1&limit=5",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": "[]",
+        "limit": "number",
+        "skip": "number",
+        "success": "boolean",
+        "total": "number"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.476Z"
+    },
+    {
+      "endpoint": "GET /api/contracts/000000000000000000000000",
+      "name": "contract-nonexistent",
+      "status": 404,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.485Z"
+    }
+  ],
+  "insurance": [
+    {
+      "endpoint": "GET /api/insurance-products",
+      "name": "GET /api/insurance-products",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": [
+          {
+            "_id": "string",
+            "category": "string",
+            "createdAt": "string",
+            "insurer_id": "string",
+            "productName": "string",
+            "saleEndDate": "string",
+            "saleStartDate": "string",
+            "status": "string",
+            "surveyDate": "string",
+            "updatedAt": "string"
+          }
+        ],
+        "limit": "number",
+        "skip": "number",
+        "success": "boolean",
+        "total": "number"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.567Z"
+    },
+    {
+      "endpoint": "GET /api/insurance-products/statistics",
+      "name": "GET /api/insurance-products/statistics",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "active": "number",
+          "byCategory": {
+            "법인": "number",
+            "변액": "number",
+            "보장": "number",
+            "양로": "number",
+            "연금": "number",
+            "저축": "number"
+          },
+          "discontinued": "number",
+          "surveyDates": [
+            "string"
+          ],
+          "total": "number"
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.584Z"
+    }
+  ],
+  "chat": [
+    {
+      "endpoint": "GET /api/chat/tools",
+      "name": "GET /api/chat/tools",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "count": "number",
+        "success": "boolean",
+        "tools": [
+          {
+            "function": {
+              "description": "string",
+              "name": "string",
+              "parameters": {
+                "properties": {
+                  "customerType": "object",
+                  "limit": "object",
+                  "query": "object",
+                  "region": "object",
+                  "status": "object"
+                },
+                "type": "string"
+              }
+            },
+            "type": "string"
+          }
+        ]
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.608Z"
+    },
+    {
+      "endpoint": "GET /api/chat/sessions",
+      "name": "GET /api/chat/sessions",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "pagination": {
+          "limit": "number",
+          "page": "number",
+          "total": "number",
+          "totalPages": "number"
+        },
+        "sessions": "[]",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.618Z"
+    },
+    {
+      "endpoint": "GET /api/chat/stats",
+      "name": "GET /api/chat/stats",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "stats": {
+          "newest_session": "null",
+          "oldest_session": "null",
+          "total_messages": "number",
+          "total_sessions": "number",
+          "total_tokens": "number"
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.627Z"
+    }
+  ],
+  "users": [
+    {
+      "endpoint": "GET /api/users",
+      "name": "GET /api/users",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": [
+          {
+            "avatarUrl": "string",
+            "email": "string",
+            "id": "string",
+            "name": "string",
+            "role": "string"
+          }
+        ],
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.636Z"
+    }
+  ],
+  "annual-reports": [
+    {
+      "endpoint": "GET /api/annual-reports/all",
+      "name": "GET /api/annual-reports/all",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "data": {
+          "reports": "[]",
+          "total_count": "number"
+        },
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.791Z"
+    }
+  ],
+  "address": [
+    {
+      "endpoint": "GET /api/address/test",
+      "name": "GET /api/address/test",
+      "status": 200,
+      "contentType": "application/json",
+      "shape": {
+        "message": "string",
+        "query": {},
+        "success": "boolean",
+        "timestamp": "string"
+      },
+      "hasSuccessField": true,
+      "successValue": true,
+      "capturedAt": "2026-02-06T18:57:11.798Z"
+    }
+  ],
+  "webhooks": [
+    {
+      "endpoint": "POST /api/webhooks/ar-status-change",
+      "name": "ar-webhook-empty",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.806Z"
+    },
+    {
+      "endpoint": "POST /api/webhooks/cr-status-change",
+      "name": "cr-webhook-empty",
+      "status": 400,
+      "contentType": "application/json",
+      "shape": {
+        "error": "string",
+        "success": "boolean"
+      },
+      "hasSuccessField": true,
+      "successValue": false,
+      "capturedAt": "2026-02-06T18:57:11.812Z"
+    }
+  ]
+}

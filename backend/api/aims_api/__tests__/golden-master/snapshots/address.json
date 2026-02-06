@@ -1,0 +1,17 @@
+[
+  {
+    "endpoint": "GET /api/address/test",
+    "name": "GET /api/address/test",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "message": "string",
+      "query": {},
+      "success": "boolean",
+      "timestamp": "string"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.798Z"
+  }
+]

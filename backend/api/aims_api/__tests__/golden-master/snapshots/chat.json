@@ -1,0 +1,72 @@
+[
+  {
+    "endpoint": "GET /api/chat/tools",
+    "name": "GET /api/chat/tools",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "count": "number",
+      "success": "boolean",
+      "tools": [
+        {
+          "function": {
+            "description": "string",
+            "name": "string",
+            "parameters": {
+              "properties": {
+                "customerType": "object",
+                "limit": "object",
+                "query": "object",
+                "region": "object",
+                "status": "object"
+              },
+              "type": "string"
+            }
+          },
+          "type": "string"
+        }
+      ]
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.608Z"
+  },
+  {
+    "endpoint": "GET /api/chat/sessions",
+    "name": "GET /api/chat/sessions",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "pagination": {
+        "limit": "number",
+        "page": "number",
+        "total": "number",
+        "totalPages": "number"
+      },
+      "sessions": "[]",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.618Z"
+  },
+  {
+    "endpoint": "GET /api/chat/stats",
+    "name": "GET /api/chat/stats",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "stats": {
+        "newest_session": "null",
+        "oldest_session": "null",
+        "total_messages": "number",
+        "total_sessions": "number",
+        "total_tokens": "number"
+      },
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.627Z"
+  }
+]

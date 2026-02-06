@@ -1,0 +1,31 @@
+[
+  {
+    "endpoint": "GET /api/contracts?page=1&limit=5",
+    "name": "GET /api/contracts?page=1&limit=5",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": "[]",
+      "limit": "number",
+      "skip": "number",
+      "success": "boolean",
+      "total": "number"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.476Z"
+  },
+  {
+    "endpoint": "GET /api/contracts/000000000000000000000000",
+    "name": "contract-nonexistent",
+    "status": 404,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.485Z"
+  }
+]

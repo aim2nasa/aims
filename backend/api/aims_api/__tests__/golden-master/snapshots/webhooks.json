@@ -1,0 +1,28 @@
+[
+  {
+    "endpoint": "POST /api/webhooks/ar-status-change",
+    "name": "ar-webhook-empty",
+    "status": 400,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.806Z"
+  },
+  {
+    "endpoint": "POST /api/webhooks/cr-status-change",
+    "name": "cr-webhook-empty",
+    "status": 400,
+    "contentType": "application/json",
+    "shape": {
+      "error": "string",
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": false,
+    "capturedAt": "2026-02-06T18:57:11.812Z"
+  }
+]

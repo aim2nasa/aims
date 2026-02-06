@@ -1,0 +1,23 @@
+[
+  {
+    "endpoint": "GET /api/users",
+    "name": "GET /api/users",
+    "status": 200,
+    "contentType": "application/json",
+    "shape": {
+      "data": [
+        {
+          "avatarUrl": "string",
+          "email": "string",
+          "id": "string",
+          "name": "string",
+          "role": "string"
+        }
+      ],
+      "success": "boolean"
+    },
+    "hasSuccessField": true,
+    "successValue": true,
+    "capturedAt": "2026-02-06T18:57:11.636Z"
+  }
+]
