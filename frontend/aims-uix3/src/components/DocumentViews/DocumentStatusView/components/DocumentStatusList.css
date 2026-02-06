@@ -869,11 +869,11 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     display: grid;
     grid-template-columns: 36px auto auto 1fr; /* PC 뱃지 레이아웃과 동일하게 아이콘 칼럼 확보 */
     grid-template-rows: auto auto;
-    gap: 3px 6px;
+    gap: 8px 8px;
     align-items: center;
     height: auto;
-    min-height: 50px;
-    padding: 10px 10px;
+    min-height: 0; /* 콘텐츠에 맞게 자동 확장, 고정 높이 제약 없음 */
+    padding: 14px 12px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
     overflow: visible;
@@ -907,6 +907,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     min-width: 0;
     font-size: var(--font-size-footnote);
     font-weight: 600;
+    line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -918,6 +919,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 2;
     text-align: left;
     font-size: var(--font-size-caption-2);
+    line-height: 1.4;
     color: var(--color-text-secondary);
   }
 
@@ -926,6 +928,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 3;
     justify-content: flex-start;
     font-size: var(--font-size-caption-2);
+    line-height: 1.4;
   }
 
   .status-item > .status-customer {
@@ -934,6 +937,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     justify-content: flex-start;
     text-align: left;
     font-size: var(--font-size-caption-2);
+    line-height: 1.4;
   }
 
   /* === 모바일에서 숨김: 크기, MIME타입, 문서유형, 액션 === */
