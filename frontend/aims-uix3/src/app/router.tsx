@@ -18,6 +18,7 @@ import { errorReporter } from '@/shared/lib/errorReporter';
 const HomePage = React.lazy(() => import('@/pages/home'));
 const AIAssistantPage = React.lazy(() => import('@/pages/AIAssistantPage'));
 const AnnualReportPage = React.lazy(() => import('@/pages/AnnualReportPage'));
+const CustomerReviewPage = React.lazy(() => import('@/pages/CustomerReviewPage'));
 
 /**
  * 페이지 로딩 스켈레톤
@@ -204,6 +205,17 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AnnualReportPage />
+        </Suspense>
+      </ErrorBoundary>
+    ),
+  },
+  // Customer Review 팝업 전용 라우트 (레이아웃 없이 독립)
+  {
+    path: '/customer-review',
+    element: (
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <CustomerReviewPage />
         </Suspense>
       </ErrorBoundary>
     ),

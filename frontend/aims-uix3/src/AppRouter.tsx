@@ -15,6 +15,8 @@ import App from './App';
 const AIAssistantPage = lazy(() => import('@/pages/AIAssistantPage'));
 // Annual Report 팝업 페이지 (lazy loading)
 const AnnualReportPage = lazy(() => import('@/pages/AnnualReportPage'));
+// Customer Review 팝업 페이지 (lazy loading)
+const CustomerReviewPage = lazy(() => import('@/pages/CustomerReviewPage'));
 
 export default function AppRouter() {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -72,6 +74,18 @@ export default function AppRouter() {
             <ProtectedRoute>
               <Suspense fallback={null}>
                 <AnnualReportPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Customer Review 팝업 전용 라우트 (메인 앱 레이아웃 없이 독립 렌더링) */}
+        <Route
+          path="/customer-review"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={null}>
+                <CustomerReviewPage />
               </Suspense>
             </ProtectedRoute>
           }

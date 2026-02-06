@@ -7,7 +7,7 @@
  * - Annual Report와 동일한 레이아웃 형식 적용
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
@@ -71,6 +71,30 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  /**
+   * 새 창에서 열기 핸들러
+   * 새 창을 열고 브라우저 내 모달은 닫음
+   */
+  const handleOpenPopup = useCallback(() => {
+    localStorage.setItem('aims-cr-popup-data', JSON.stringify({
+      review,
+    }));
+
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      '/customer-review',
+      'aims-cr-popup',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+
+    // 브라우저 내 모달 닫기
+    onClose();
+  }, [review, onClose]);
+
   if (!isOpen || !review) return null;
 
   const { contract_info, premium_info, fund_allocations } = review;
@@ -96,6 +120,7 @@ export const CustomerReviewModal: React.FC<CustomerReviewModalProps> = ({
           </div>
         </div>
       }
+      onOpenPopup={handleOpenPopup}
       initialWidth={1350}
       initialHeight={640}
       minWidth={1100}
