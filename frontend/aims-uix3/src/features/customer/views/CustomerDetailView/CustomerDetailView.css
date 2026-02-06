@@ -45,9 +45,10 @@
   flex-shrink: 0;
 }
 
-/* 🍎 탭 바 고정 (축소 방지) */
+/* 🍎 탭 바 고정 (축소 방지) + 7탭 수용 폭 확장 */
 .customer-detail-view__tabs {
   flex-shrink: 0;
+  max-width: 680px;
 }
 
 [data-theme="dark"] .customer-detail-view__actions {
