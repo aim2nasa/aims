@@ -700,44 +700,6 @@ html[data-theme="dark"] .document-item:active {
   transition: color 0.2s ease-out;
 }
 
-/* === 🍎 AR BADGE: Annual Report indicator === */
-.document-ar-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 12px;
-  padding: 0 3px;
-  background-color: var(--color-badge-ar);
-  border-radius: 6px;
-  border: 1.5px solid var(--color-ios-bg-primary-light);
-  color: white;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 8px deprecated (접근성) ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  pointer-events: auto;
-  cursor: help;
-  transition: all 0.2s ease-out;
-}
-
-html[data-theme="dark"] .document-ar-badge {
-  background-color: var(--color-badge-ar-dark);
-  border-color: var(--color-ios-bg-primary-dark);
-}
-
-.document-item:hover .document-ar-badge {
-  transform: scale(1.1);
-  box-shadow: 0 0 8px var(--color-badge-ar-glow);
-}
-
-html[data-theme="dark"] .document-item:hover .document-ar-badge {
-  box-shadow: 0 0 8px var(--color-badge-ar-glow);
-}
-
 /* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */
 
 /* PDF Files - Red theme */

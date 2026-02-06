@@ -1,0 +1,352 @@
+/* ============================================================
+ * 🍎 Document Badges - 공통 스타일
+ * ============================================================
+ * 모든 문서 뷰에서 공유하는 뱃지 스타일 (AR, CR, OCR, TXT, BIN)
+ * DocumentLibraryView는 별도 스타일 사용 (bottom-right 레이아웃)
+ * ============================================================ */
+
+/* --- Hover parent selectors (모든 뷰 통합) ---
+ * .status-item:hover           → DocumentStatusList
+ * .customer-documents-item:hover → DocumentsTab (고객 상세)
+ * .search-result-row:hover     → DocumentSearchView
+ * .file-list-row:hover         → PersonalFilesView (리스트)
+ * .file-grid-item:hover        → PersonalFilesView (그리드)
+ */
+
+/* === AR BADGE: Annual Report (상단 중앙, 보라색) === */
+.document-ar-badge {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-ar);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 2.5px;
+  padding: 0 2.5px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-ar-badge {
+  background-color: var(--color-badge-ar-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover .document-ar-badge,
+.customer-documents-item:hover .document-ar-badge,
+.search-result-row:hover .document-ar-badge,
+.file-list-row:hover .document-ar-badge,
+.file-grid-item:hover .document-ar-badge {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
+}
+
+html[data-theme="dark"] .status-item:hover .document-ar-badge,
+html[data-theme="dark"] .customer-documents-item:hover .document-ar-badge,
+html[data-theme="dark"] .search-result-row:hover .document-ar-badge,
+html[data-theme="dark"] .file-list-row:hover .document-ar-badge,
+html[data-theme="dark"] .file-grid-item:hover .document-ar-badge {
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
+}
+
+
+/* === CR BADGE: Customer Review / 변액 리포트 (상단 중앙, 틸) === */
+.document-cr-badge {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-crs);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 2.5px;
+  padding: 0 2.5px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-cr-badge {
+  background-color: var(--color-badge-crs-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover .document-cr-badge,
+.customer-documents-item:hover .document-cr-badge,
+.search-result-row:hover .document-cr-badge,
+.file-list-row:hover .document-cr-badge,
+.file-grid-item:hover .document-cr-badge {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-crs-glow);
+}
+
+html[data-theme="dark"] .status-item:hover .document-cr-badge,
+html[data-theme="dark"] .customer-documents-item:hover .document-cr-badge,
+html[data-theme="dark"] .search-result-row:hover .document-cr-badge,
+html[data-theme="dark"] .file-list-row:hover .document-cr-badge,
+html[data-theme="dark"] .file-grid-item:hover .document-cr-badge {
+  box-shadow: 0 0 8px var(--color-badge-crs-glow);
+}
+
+
+/* === 크레딧 부족 상태: 뱃지 비활성화 === */
+.badge--disabled {
+  background-color: var(--color-ios-text-tertiary-light);
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .badge--disabled {
+  background-color: var(--color-ios-text-tertiary-dark);
+}
+
+.status-item:hover .badge--disabled,
+.customer-documents-item:hover .badge--disabled,
+.search-result-row:hover .badge--disabled,
+.file-list-row:hover .badge--disabled,
+.file-grid-item:hover .badge--disabled {
+  transform: translateX(-50%) scale(1);
+  box-shadow: none;
+}
+
+
+/* === OCR BADGE: OCR 신뢰도 표시 (하단 중앙) === */
+.document-ocr-badge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-ocr-badge {
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+/* OCR Excellent (>= 0.95) */
+.document-ocr-badge.ocr-excellent {
+  background-color: var(--color-badge-ocr-excellent);
+}
+html[data-theme="dark"] .document-ocr-badge.ocr-excellent {
+  background-color: var(--color-badge-ocr-excellent-dark);
+}
+
+.status-item:hover .document-ocr-badge.ocr-excellent,
+.customer-documents-item:hover .document-ocr-badge.ocr-excellent,
+.search-result-row:hover .document-ocr-badge.ocr-excellent,
+.file-list-row:hover .document-ocr-badge.ocr-excellent,
+.file-grid-item:hover .document-ocr-badge.ocr-excellent {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ocr-excellent-glow);
+}
+html[data-theme="dark"] .status-item:hover .document-ocr-badge.ocr-excellent,
+html[data-theme="dark"] .customer-documents-item:hover .document-ocr-badge.ocr-excellent,
+html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-excellent,
+html[data-theme="dark"] .file-list-row:hover .document-ocr-badge.ocr-excellent,
+html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-excellent {
+  box-shadow: 0 0 8px var(--color-badge-ocr-excellent-glow-dark);
+}
+
+/* OCR High (>= 0.85) */
+.document-ocr-badge.ocr-high {
+  background-color: var(--color-badge-ocr-excellent);
+}
+html[data-theme="dark"] .document-ocr-badge.ocr-high {
+  background-color: var(--color-badge-ocr-excellent-dark);
+}
+
+.status-item:hover .document-ocr-badge.ocr-high,
+.customer-documents-item:hover .document-ocr-badge.ocr-high,
+.search-result-row:hover .document-ocr-badge.ocr-high,
+.file-list-row:hover .document-ocr-badge.ocr-high,
+.file-grid-item:hover .document-ocr-badge.ocr-high {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ocr-excellent-glow);
+}
+html[data-theme="dark"] .status-item:hover .document-ocr-badge.ocr-high,
+html[data-theme="dark"] .customer-documents-item:hover .document-ocr-badge.ocr-high,
+html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-high,
+html[data-theme="dark"] .file-list-row:hover .document-ocr-badge.ocr-high,
+html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-high {
+  box-shadow: 0 0 8px var(--color-badge-ocr-excellent-glow-dark);
+}
+
+/* OCR Medium (>= 0.70) */
+.document-ocr-badge.ocr-medium {
+  background-color: var(--color-badge-ocr-medium);
+}
+html[data-theme="dark"] .document-ocr-badge.ocr-medium {
+  background-color: var(--color-badge-ocr-medium-dark);
+}
+
+.status-item:hover .document-ocr-badge.ocr-medium,
+.customer-documents-item:hover .document-ocr-badge.ocr-medium,
+.search-result-row:hover .document-ocr-badge.ocr-medium,
+.file-list-row:hover .document-ocr-badge.ocr-medium,
+.file-grid-item:hover .document-ocr-badge.ocr-medium {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ocr-medium-glow);
+}
+html[data-theme="dark"] .status-item:hover .document-ocr-badge.ocr-medium,
+html[data-theme="dark"] .customer-documents-item:hover .document-ocr-badge.ocr-medium,
+html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-medium,
+html[data-theme="dark"] .file-list-row:hover .document-ocr-badge.ocr-medium,
+html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-medium {
+  box-shadow: 0 0 8px var(--color-badge-ocr-medium-glow-dark);
+}
+
+/* OCR Low (>= 0.50) */
+.document-ocr-badge.ocr-low {
+  background-color: var(--color-badge-ocr-low);
+}
+html[data-theme="dark"] .document-ocr-badge.ocr-low {
+  background-color: var(--color-badge-ocr-low-dark);
+}
+
+.status-item:hover .document-ocr-badge.ocr-low,
+.customer-documents-item:hover .document-ocr-badge.ocr-low,
+.search-result-row:hover .document-ocr-badge.ocr-low,
+.file-list-row:hover .document-ocr-badge.ocr-low,
+.file-grid-item:hover .document-ocr-badge.ocr-low {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ocr-low-glow);
+}
+html[data-theme="dark"] .status-item:hover .document-ocr-badge.ocr-low,
+html[data-theme="dark"] .customer-documents-item:hover .document-ocr-badge.ocr-low,
+html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-low,
+html[data-theme="dark"] .file-list-row:hover .document-ocr-badge.ocr-low,
+html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-low {
+  box-shadow: 0 0 8px var(--color-badge-ocr-low-glow-dark);
+}
+
+/* OCR Very Low (< 0.50) */
+.document-ocr-badge.ocr-very-low {
+  background-color: var(--color-badge-ocr-very-low);
+}
+html[data-theme="dark"] .document-ocr-badge.ocr-very-low {
+  background-color: var(--color-badge-ocr-very-low-dark);
+}
+
+.status-item:hover .document-ocr-badge.ocr-very-low,
+.customer-documents-item:hover .document-ocr-badge.ocr-very-low,
+.search-result-row:hover .document-ocr-badge.ocr-very-low,
+.file-list-row:hover .document-ocr-badge.ocr-very-low,
+.file-grid-item:hover .document-ocr-badge.ocr-very-low {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-ocr-very-low-glow);
+}
+html[data-theme="dark"] .status-item:hover .document-ocr-badge.ocr-very-low,
+html[data-theme="dark"] .customer-documents-item:hover .document-ocr-badge.ocr-very-low,
+html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-very-low,
+html[data-theme="dark"] .file-list-row:hover .document-ocr-badge.ocr-very-low,
+html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-very-low {
+  box-shadow: 0 0 8px var(--color-badge-ocr-very-low-glow-dark);
+}
+
+
+/* === TXT BADGE: TXT 기반 문서 (하단 중앙) === */
+.document-txt-badge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-txt);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-txt-badge {
+  background-color: var(--color-badge-txt-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover .document-txt-badge,
+.customer-documents-item:hover .document-txt-badge,
+.search-result-row:hover .document-txt-badge,
+.file-list-row:hover .document-txt-badge,
+.file-grid-item:hover .document-txt-badge {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-txt-glow);
+}
+
+html[data-theme="dark"] .status-item:hover .document-txt-badge,
+html[data-theme="dark"] .customer-documents-item:hover .document-txt-badge,
+html[data-theme="dark"] .search-result-row:hover .document-txt-badge,
+html[data-theme="dark"] .file-list-row:hover .document-txt-badge,
+html[data-theme="dark"] .file-grid-item:hover .document-txt-badge {
+  box-shadow: 0 0 8px var(--color-badge-txt-glow-dark);
+}
+
+
+/* === BIN BADGE: 바이너리 파일 (하단 중앙) === */
+.document-bin-badge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-bin);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-bin-badge {
+  background-color: var(--color-badge-bin-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover .document-bin-badge,
+.customer-documents-item:hover .document-bin-badge,
+.search-result-row:hover .document-bin-badge,
+.file-list-row:hover .document-bin-badge,
+.file-grid-item:hover .document-bin-badge {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px var(--color-badge-bin-glow);
+}

@@ -11,6 +11,7 @@ import './shared/design/theme.css'
 import './shared/styles/utilities.css'
 import './shared/styles/layout.css'
 import './shared/styles/components.css'
+import './shared/styles/document-badges.css'
 import './shared/styles/column-resize.css'
 import AppRouter from './AppRouter'
 
