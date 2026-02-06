@@ -431,6 +431,33 @@ html[data-theme="dark"] .document-ar-badge {
   border-color: var(--color-ios-bg-primary-dark);
 }
 
+/* CR BADGE: Customer Review (변액 리포트) indicator (상단 중앙, 틸) */
+.document-cr-badge {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-crs);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 2.5px;
+  padding: 0 2.5px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-cr-badge {
+  background-color: var(--color-badge-crs-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
 /* OCR BADGE: OCR 신뢰도 표시 */
 .document-ocr-badge {
   position: absolute;

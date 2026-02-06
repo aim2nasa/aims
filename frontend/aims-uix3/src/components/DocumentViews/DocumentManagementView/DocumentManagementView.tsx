@@ -740,6 +740,15 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                             </Tooltip>
                           )}
 
+                          {/* CR 뱃지 */}
+                          {doc.is_customer_review === true && !isAnnualReport && (
+                            <Tooltip content="변액 리포트">
+                              <div className="document-cr-badge">
+                                CR
+                              </div>
+                            </Tooltip>
+                          )}
+
                           {/* OCR, TXT, BIN 뱃지 */}
                           {ocrConfidence !== null && ocrLevel ? (
                             <Tooltip content={`OCR 신뢰도: ${(ocrConfidence * 100).toFixed(1)}% (${ocrLevel.label})`}>

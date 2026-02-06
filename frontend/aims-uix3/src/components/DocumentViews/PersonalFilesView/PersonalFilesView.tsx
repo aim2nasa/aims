@@ -2253,6 +2253,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                                 </div>
                               </Tooltip>
                             )}
+                            {/* 🍎 CR BADGE */}
+                            {(item.document as any)?.is_customer_review && !item.document?.is_annual_report && (
+                              <Tooltip content="변액 리포트">
+                                <div className="document-cr-badge">
+                                  CR
+                                </div>
+                              </Tooltip>
+                            )}
                             {/* 🍎 TXT/OCR/BIN BADGE */}
                             {item.document && (() => {
                               const backendBadgeType = (item.document as any).badgeType

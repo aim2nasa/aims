@@ -1495,6 +1495,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 </div>
                               </Tooltip>
                             ) : null}
+                            {/* 🍎 CR BADGE: Customer Review (변액 리포트) 표시 */}
+                            {('is_customer_review' in item && item.is_customer_review) && !('is_annual_report' in item && item.is_annual_report) ? (
+                              <Tooltip content="변액 리포트">
+                                <div className="document-cr-badge">
+                                  CR
+                                </div>
+                              </Tooltip>
+                            ) : null}
                             {/* 🍎 OCR BADGE: OCR 처리 완료 문서 신뢰도 표시 */}
                             {confidence !== null && confidence !== undefined ? (
                               <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${getOcrConfidenceLevel(confidence).label})`}>
