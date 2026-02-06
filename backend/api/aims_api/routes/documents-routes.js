@@ -160,9 +160,6 @@ async function triggerPdfConversionIfNeeded(document) {
 // PDF 변환 프록시 엔드포인트 (POC용)
 // ========================
 
-const PDF_CONVERTER_HOST = process.env.PDF_CONVERTER_HOST || 'localhost';
-const PDF_CONVERTER_PORT = process.env.PDF_CONVERTER_PORT || 8005;
-
 /**
  * PDF 변환 프록시 - 파일 업로드를 PDF 변환 서버로 전달
  * POST /api/pdf/convert
@@ -1355,7 +1352,7 @@ router.get('/documents/:id/status', authenticateJWT, async (req, res) => {
 /**
  * 당신이 원했던 엔드포인트: 단일 문서 ID로 상태 조회
  */
-app.get('/webhook/get-status/:document_id', async (req, res) => {
+router.get('/webhook/get-status/:document_id', async (req, res) => {
   try {
     const { document_id } = req.params;
 

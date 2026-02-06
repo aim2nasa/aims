@@ -9,11 +9,13 @@ const express = require('express');
 const { ObjectId } = require('mongodb');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
-const { utcNowISO } = require('../lib/timeUtils');
+const { utcNowISO, normalizeTimestamp } = require('../lib/timeUtils');
 
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, qdrantCollection) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
+  const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
+  const COLLECTION_NAME = COLLECTIONS.FILES;
 
 /**
  * Orphaned Relationships 조회 API (관리용)

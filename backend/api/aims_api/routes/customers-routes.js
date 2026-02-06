@@ -26,7 +26,7 @@ const {
 } = sseManager;
 const { prepareDocumentResponse } = require('../lib/documentStatusHelper');
 
-module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection) {
+module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection, upload) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
 

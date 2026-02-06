@@ -30,9 +30,6 @@ module.exports = function(db, authenticateJWT) {
 // n8n Webhook 프록시 엔드포인트 (보안: 내부망에서만 n8n 접근 가능)
 // =============================================================================
 
-const N8N_INTERNAL_URL = 'http://localhost:5678';
-const DOCUMENT_PIPELINE_URL = 'http://localhost:8100';
-
 /**
  * 스마트 검색 프록시 - Shadow Mode로 n8n과 FastAPI 동시 비교
  * 외부에서 직접 n8n에 접근하지 못하도록 aims_api를 통해 프록시
@@ -96,97 +93,6 @@ router.post('/n8n/docprep', authenticateJWT, async (req, res) => {
       res.status(500).json({ error: 'Upload service unavailable' });
     }
   }
-});
-
-// ==================== AI Chat / Audio / Internal API ====================
-const chatRoutes = require('./routes/chat-routes');
-app.use('/api', chatRoutes(db, analyticsDb, authenticateJWT, upload));
-
-
-const PORT = process.env.PORT || 3010;
-app.listen(PORT, '0.0.0.0', async () => {
-  // 버전 정보 출력
-  logVersionInfo();
-
-  console.log('🚀🚀🚀 ================================');
-  console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
-  console.log(`🚀 서버 시간: ${utcNowISO()}`);
-  console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
-  console.log('🚀🚀🚀 ================================\n');
-
-  // MongoDB 연결 대기 (최대 30초)
-  let dbWaitCount = 0;
-  while (!db && dbWaitCount < 30) {
-    console.log('[Metrics] MongoDB 연결 대기 중...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    dbWaitCount++;
-  }
-
-  if (!db) {
-    console.error('[Metrics] MongoDB 연결 실패 - 메트릭 수집 비활성화');
-  } else {
-    // 메트릭 수집 설정
-    await setupMetricsCollection();
-
-    // 즉시 1회 수집 후, 1분마다 수집
-    await collectAndSaveMetrics();
-    metricsCollectionInterval = setInterval(collectAndSaveMetrics, 60 * 1000);
-    console.log('[Metrics] 시스템 메트릭 수집 시작 (1분 간격)');
-
-    // 서비스 상태 모니터링 시작
-    serviceHealthMonitor.init(db);
-    serviceHealthMonitor.startMonitoring();
-
-    // 바이러스 스캔 자동 모니터링 시작
-    virusScanService.init(db);
-    virusScanService.startAutoScan();
-  }
-
-  console.log(`📋 API 엔드포인트:`);
-  console.log(`  GET  /api/documents - 모든 문서 목록 조회 (검색, 정렬, 페이징)`);
-  console.log(`  GET  /api/documents/status - 문서 목록 및 상태 조회`);
-  console.log(`  GET  /api/documents/:id/status - 특정 문서 상세 상태`);
-  console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회`);
-  console.log(`  GET  /api/documents/statistics - 처리 상태 통계`);
-  console.log(`  POST /api/documents/:id/retry - 문서 재처리`);
-  console.log(`  GET  /api/documents/status/live - 실시간 상태 (폴링용)`);
-  console.log(`  DELETE /api/documents/:id - 문서 삭제`);
-  console.log(`  GET  /api/health - 헬스체크`);
-
-  console.log(`\n👥 Customer Management APIs:`);
-  console.log(`  GET  /api/customers - 고객 목록 조회`);
-  console.log(`  POST /api/customers - 새 고객 등록`);
-  console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
-  console.log(`  PUT  /api/customers/:id - 고객 정보 수정`);
-  console.log(`  DELETE /api/customers/:id - 고객 삭제`);
-  console.log(`  GET /api/admin/orphaned-relationships - Orphaned relationships 조회`);
-  console.log(`  DELETE /api/admin/orphaned-relationships - Orphaned relationships 정리`);
-  console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
-  console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
-
-  console.log(`\n🏠 Address Search API:`);
-  console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
-  console.log(`  POST /api/geocode - 주소 → 좌표 변환 (네이버 Geocoding API)`);
-
-  console.log(`\n📊 Annual Report APIs:`);
-  console.log(`  POST /api/annual-report/parse - Annual Report 파싱 요청`);
-  console.log(`  GET  /api/annual-report/status/:file_id - 파싱 상태 조회`);
-  console.log(`  GET  /api/customers/:customerId/annual-reports - 고객 Annual Reports 목록`);
-  console.log(`  GET  /api/customers/:customerId/annual-reports/latest - 최신 Annual Report 조회`);
-
-  console.log(`
-📁 Personal Files APIs:`);
-  console.log(`  GET  /api/personal-files/folders/:folderId? - 폴더 내용 조회`);
-  console.log(`  POST /api/personal-files/folders - 폴더 생성`);
-  console.log(`  POST /api/personal-files/upload - 파일 업로드`);
-  console.log(`  PUT  /api/personal-files/:itemId/rename - 항목 이름 변경`);
-  console.log(`  DELETE /api/personal-files/:itemId - 항목 삭제`);
-  console.log(`  GET  /api/personal-files/:fileId/download - 파일 다운로드`);
-  console.log(`  GET  /api/customers/:customerId/annual-reports - 고객 Annual Reports 목록`);
-  console.log(`  GET  /api/customers/:customerId/annual-reports/latest - 최신 Annual Report 조회`);
-
-  console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
-  console.log(`=============================================\n`);
 });
 
 // ==================== AR Background Parsing Proxy ====================

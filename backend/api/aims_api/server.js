@@ -19,6 +19,7 @@ const backendLogger = require('./lib/backendLogger');
 const chatHistoryService = require('./lib/chatHistoryService');
 const { VERSION_INFO, logVersionInfo } = require('./version');
 const serviceHealthMonitor = require('./lib/serviceHealthMonitor');
+const virusScanService = require('./lib/virusScanService');
 const realtimeMetrics = require('./lib/realtimeMetrics');
 // 공유 스키마에서 컬렉션명 상수 import
 const { COLLECTIONS, CUSTOMER_FIELDS, CUSTOMER_STATUS } = require('@aims/shared-schema');
@@ -199,52 +200,31 @@ const registerFallbackHandlers = () => {
   });
 };
 
-// MongoDB 연결
-MongoClient.connect(MONGO_URI)
-  .then(client => {
-    console.log('MongoDB 연결 성공');
-    db = client.db(DB_NAME);
-  })
-  .catch(error => console.error('MongoDB 연결 실패:', error));
-
-// ==================== Document Routes ====================
-const documentsRoutes = require('./routes/documents-routes');
-app.use('/api', documentsRoutes(db, analyticsDb, authenticateJWT, upload, qdrantClient, QDRANT_COLLECTION));
-
-
-// Health/System 라우트 (routes/health-routes.js로 추출)
-app.use('/api', require('./routes/health-routes')(db));
-
-
-// User/Dev 라우트 (routes/users-routes.js로 추출)
-app.use('/api', require('./routes/users-routes')(db, authenticateJWT, generateToken, qdrantClient, QDRANT_COLLECTION));
-
-// ==================== Customer Routes ====================
-const customersRoutes = require('./routes/customers-routes');
-app.use('/api', customersRoutes(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, QDRANT_COLLECTION));
-
-// ==================== Admin Routes ====================
-const adminRoutes = require('./routes/admin-routes');
-app.use('/api', adminRoutes(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, QDRANT_COLLECTION));
-
-// ==================== Customer-Document, AR/CR, Address, Memos ====================
-// (Included in routes/customers-routes.js)
-
-
-// ==================== Insurance Products API ====================
-
-// Insurance/Contracts 라우트 (routes/insurance-contracts-routes.js로 추출)
-app.use('/api', require('./routes/insurance-contracts-routes')(db, authenticateJWTorAPIKey));
-
-
 // ==================== MongoDB 연결 & 서버 시작 ====================
 
-// 고객 관계 관리 라우트 설정
 MongoClient.connect(MONGO_URI)
   .then(client => {
     console.log('MongoDB 연결 성공');
     db = client.db(DB_NAME);
     analyticsDb = client.db(ANALYTICS_DB_NAME);
+
+    // ==================== 리팩토링된 라우트 등록 (db 연결 후) ====================
+    const documentsRoutes = require('./routes/documents-routes');
+    app.use('/api', documentsRoutes(db, analyticsDb, authenticateJWT, upload, qdrantClient, QDRANT_COLLECTION));
+
+    app.use('/api', require('./routes/health-routes')(db));
+    app.use('/api', require('./routes/users-routes')(db, authenticateJWT, generateToken, qdrantClient, QDRANT_COLLECTION));
+
+    const customersRoutes = require('./routes/customers-routes');
+    app.use('/api', customersRoutes(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, QDRANT_COLLECTION, upload));
+
+    const adminRoutes = require('./routes/admin-routes');
+    app.use('/api', adminRoutes(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, QDRANT_COLLECTION));
+
+    const chatRoutes = require('./routes/chat-routes');
+    app.use('/api', chatRoutes(db, analyticsDb, authenticateJWT, upload));
+
+    app.use('/api', require('./routes/insurance-contracts-routes')(db, authenticateJWTorAPIKey));
 
     // ActivityLogger 초기화
     activityLogger.initialize(analyticsDb).catch(err => {
@@ -354,8 +334,40 @@ MongoClient.connect(MONGO_URI)
     app.use('/api', virusScanRoutes);
     console.log('[Server] virusScanRoutes 등록 완료');
 
+    // ==================== Webhooks, AR/CR Background, n8n Proxy ====================
+    const webhooksRoutes = require('./routes/webhooks-routes');
+    app.use('/api', webhooksRoutes(db, authenticateJWT));
+
+    // ==================== Backup Management Routes ====================
+    const adminBackupRoutes = require('./routes/admin-backup-routes');
+    app.use('/api', adminBackupRoutes(db, authenticateJWT, requireRole));
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
+
+    // ==================== 서버 시작 ====================
+    const PORT = process.env.PORT || 3010;
+    app.listen(PORT, '0.0.0.0', async () => {
+      console.log('🚀🚀🚀 ================================');
+      console.log(`🚀 AIMS API 서버가 포트 ${PORT}에서 실행 중입니다.`);
+      console.log(`🚀 서버 시간: ${utcNowISO()}`);
+      console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
+      console.log('🚀🚀🚀 ================================\n');
+
+      // 메트릭 수집 설정
+      await setupMetricsCollection();
+      await collectAndSaveMetrics();
+      metricsCollectionInterval = setInterval(collectAndSaveMetrics, 60 * 1000);
+      console.log('[Metrics] 시스템 메트릭 수집 시작 (1분 간격)');
+
+      // 서비스 상태 모니터링 시작
+      serviceHealthMonitor.init(db);
+      serviceHealthMonitor.startMonitoring();
+
+      // 바이러스 스캔 자동 모니터링 시작
+      virusScanService.init(db);
+      virusScanService.startAutoScan();
+    });
   })
   .catch(error => {
     console.error('MongoDB 연결 실패:', error);
@@ -487,15 +499,5 @@ process.on('SIGINT', () => {
     console.log('[Metrics] Interval 정리 완료');
   }
 });
-
-// ==================== Webhooks, AR/CR Background, n8n Proxy ====================
-const webhooksRoutes = require('./routes/webhooks-routes');
-app.use('/api', webhooksRoutes(db, authenticateJWT));
-
-
-// ==================== Backup Management Routes ====================
-const adminBackupRoutes = require('./routes/admin-backup-routes');
-app.use('/api', adminBackupRoutes(db, authenticateJWT, requireRole));
-
 
 module.exports = app;
