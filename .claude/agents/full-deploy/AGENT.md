@@ -207,7 +207,7 @@ ssh rossi@100.110.215.65 'cd ~/aims && ./deploy_all.sh'
 
 ## Phase 3: 배포 후 검증
 
-### deploy-monitor 에이전트 호출
+### 3.1 서비스 헬스체크 (deploy-monitor 에이전트 호출)
 
 ```bash
 ssh rossi@100.110.215.65 'echo "=== 헬스체크 ===" && \
@@ -222,6 +222,24 @@ echo -n "pdf_converter: " && curl -s -o /dev/null -w "%{http_code}" http://local
 **판정 기준:**
 - ✅ 모든 서비스 200 응답
 - ⚠️ 일부 서비스 실패 → 사용자에게 알림
+
+### 3.2 스모크 Contract 테스트 (핵심 API 500 에러 검출)
+
+> 헬스체크 통과 후 실행. 모든 주요 API 엔드포인트가 500 없이 응답하는지 검증.
+> 서버 코드 리팩토링 시 누락된 import/상수로 인한 ReferenceError → 500을 감지.
+
+```bash
+cd d:/aims/backend/api/aims_api && npx jest __tests__/contracts/smoke.contract.test.js --forceExit --verbose
+```
+
+**판정 기준:**
+- ✅ 통과: 모든 엔드포인트 500/502/503 없음
+- ❌ 실패: 500 에러 발견 → **사용자에게 즉시 보고** (배포 롤백 필요 여부 판단)
+
+**실패 시 조치:**
+1. 실패한 엔드포인트 식별
+2. Docker 에러 로그 확인: `ssh rossi@100.110.215.65 'docker logs aims-api --tail 50 2>&1 | grep -A2 "ReferenceError\|TypeError\|Error:"'`
+3. 사용자에게 실패 엔드포인트 + 에러 내용 보고
 
 ---
 
@@ -314,6 +332,11 @@ ssh rossi@100.110.215.65 'cd ~/aims/backend/api/aims_api && ./deploy_aims_api.sh
 | pdf_proxy | ✅ | 200 |
 | annual_report_api | ✅ | 200 |
 | pdf_converter | ✅ | 200 |
+
+### Phase 3: 스모크 테스트
+| 항목 | 상태 |
+|------|------|
+| API 엔드포인트 500 검증 | ✅ 42 passed |
 
 ### 결론
 ✅ 전체 배포 성공
