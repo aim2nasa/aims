@@ -127,7 +127,7 @@ html[data-theme="dark"] .badge--disabled {
 /* === OCR BADGE: OCR 신뢰도 표시 (하단 중앙) === */
 .document-ocr-badge {
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   font-size: 7px;
@@ -273,7 +273,7 @@ html[data-theme="dark"] .file-grid-item:hover .document-ocr-badge.ocr-very-low {
 /* === TXT BADGE: TXT 기반 문서 (하단 중앙) === */
 .document-txt-badge {
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   font-size: 7px;
@@ -318,7 +318,7 @@ html[data-theme="dark"] .file-grid-item:hover .document-txt-badge {
 /* === BIN BADGE: 바이너리 파일 (하단 중앙) === */
 .document-bin-badge {
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   font-size: 7px;

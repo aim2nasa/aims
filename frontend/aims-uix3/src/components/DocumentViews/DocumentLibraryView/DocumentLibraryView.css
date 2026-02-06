@@ -1104,6 +1104,22 @@ html[data-theme="dark"] .document-type {
     border: none;
     border-radius: 0;
   }
+
+  /* 헤더 margin 축소 → 리스트에 공간 양보 */
+  .library-unified-header {
+    margin-bottom: 0;
+  }
+
+  /* 처리 현황 바 숨김 → 모바일에서 공간 확보 */
+  .document-library-view .processing-status-bar {
+    display: none;
+  }
+
+  /* 페이지네이션: 컴팩트 */
+  .document-library-view .document-pagination {
+    padding: 4px 0;
+    gap: 4px;
+  }
 }
 
 /* === 🍎 ACCESSIBILITY === */

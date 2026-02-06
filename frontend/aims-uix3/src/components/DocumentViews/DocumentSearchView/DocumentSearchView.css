@@ -856,7 +856,7 @@ html[data-theme="dark"] .row-index {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  overflow: visible; /* 뱃지가 영역 밖으로 나갈 수 있도록 허용 */
+  /* overflow: 기본값(visible) 사용 - 뱃지는 아이콘 bounds 내 위치 */
 }
 
 .row-title-wrapper .document-icon {
@@ -886,7 +886,6 @@ html[data-theme="dark"] .row-index {
 }
 
 .document-search-container .document-ocr-badge {
-  bottom: -3px;
   z-index: 10;
 }
 

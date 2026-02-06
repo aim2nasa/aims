@@ -329,7 +329,7 @@ html[data-theme="dark"] .empty-message {
   cursor: pointer;
   transition: all 0.2s ease-out;
   animation: itemFadeIn 0.25s ease-out;
-  overflow: visible; /* 배지가 셀 바깥으로 나가도 보이도록 */
+  /* overflow: 기본값(visible) - 뱃지 그림자는 .document-icon-wrapper에서 클리핑 */
 }
 
 /* 🍎 삭제 모드일 때: 체크박스 열 추가 */
@@ -864,21 +864,21 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     padding-right: 0;
   }
 
-  /* 카드형 아이템: 2행 - 모든 기기/브라우저/폰트에서 겹침 방지
-     아이콘이 row 1-2를 span하여 상하 뱃지(AR/CR 위, TXT/OCR 아래) 공간 충분 확보
-     minmax(0, auto): 칼럼 축소 허용 → 좁은 화면에서 텍스트 truncate */
+  /* 카드형 아이템: 2행 그리드 레이아웃
+     flex-shrink: 0 필수 → 부모 flex 컨테이너(height:100%)에서 카드 압축 방지
+     min-height: 64px → 어떤 환경에서도 최소 높이 보장 */
   .status-item {
     display: grid;
     grid-template-columns: 40px minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
     grid-template-rows: auto auto;
-    gap: 6px 8px;
+    gap: 10px 8px;
     align-items: center;
     height: auto;
-    min-height: 0;
-    padding: 14px 12px;
+    min-height: 64px;
+    padding: 16px 14px;
     border-radius: 8px;
     border: 0.5px solid var(--color-ios-separator-light);
-    overflow: visible;
+    flex-shrink: 0;
   }
 
   html[data-theme="dark"] .status-item {
@@ -902,16 +902,16 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     width: 24px;
     height: auto; /* 고정 높이 제거 → 두 행 높이에 맞춤 */
     align-self: center;
-    overflow: visible; /* 뱃지가 래퍼 밖으로 나가도 표시 */
+    overflow: hidden; /* 뱃지 box-shadow가 아이콘 영역을 넘어서지 않도록 클리핑 */
   }
 
   .status-item > .status-filename {
     grid-row: 1;
     grid-column: 2 / 5;
     min-width: 0;
-    font-size: var(--font-size-footnote);
+    font-size: var(--font-size-caption-1); /* 13→12px: 모바일 컴팩트 */
     font-weight: 600;
-    line-height: 1.5;
+    line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -922,8 +922,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-row: 2;
     grid-column: 2;
     text-align: left;
-    font-size: var(--font-size-caption-2);
-    line-height: 1.5;
+    font-size: 10px; /* 11→10px: 모바일 메타데이터 컴팩트 */
+    line-height: 1.4;
     color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -935,8 +935,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-row: 2;
     grid-column: 3;
     justify-content: flex-start;
-    font-size: var(--font-size-caption-2);
-    line-height: 1.5;
+    font-size: 10px; /* 11→10px */
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     min-width: 0; /* grid item이 콘텐츠보다 작아질 수 있게 */
@@ -947,8 +947,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 4;
     justify-content: flex-start;
     text-align: left;
-    font-size: var(--font-size-caption-2);
-    line-height: 1.5;
+    font-size: 10px; /* 11→10px */
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1019,7 +1019,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
   justify-content: flex-end;
   height: 24px;
   flex-shrink: 0;
-  overflow: visible; /* 배지가 바깥으로 나가도 보이도록 */
+  overflow: hidden; /* 뱃지 box-shadow가 아이콘 영역을 넘어서지 않도록 클리핑 */
 }
 
 .document-icon {
