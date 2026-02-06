@@ -876,16 +876,16 @@ html[data-theme="dark"] .row-index {
 
 /* 🍎 뱃지 스타일은 shared/styles/document-badges.css에서 공통 관리 */
 /* DocumentSearchView 전용 오버라이드: 뱃지 인터랙션 활성화 */
-.document-ar-badge,
-.document-cr-badge,
-.document-ocr-badge,
-.document-txt-badge,
-.document-bin-badge {
+.document-search-container .document-ar-badge,
+.document-search-container .document-cr-badge,
+.document-search-container .document-ocr-badge,
+.document-search-container .document-txt-badge,
+.document-search-container .document-bin-badge {
   pointer-events: auto;
   cursor: help;
 }
 
-.document-ocr-badge {
+.document-search-container .document-ocr-badge {
   bottom: -3px;
   z-index: 10;
 }

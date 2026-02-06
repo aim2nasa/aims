@@ -16,7 +16,7 @@
 /* === AR BADGE: Annual Report (상단 중앙, 보라색) === */
 .document-ar-badge {
   position: absolute;
-  top: -2px;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
   font-size: 6px;
@@ -61,7 +61,7 @@ html[data-theme="dark"] .file-grid-item:hover .document-ar-badge {
 /* === CR BADGE: Customer Review / 변액 리포트 (상단 중앙, 틸) === */
 .document-cr-badge {
   position: absolute;
-  top: -2px;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
   font-size: 6px;
