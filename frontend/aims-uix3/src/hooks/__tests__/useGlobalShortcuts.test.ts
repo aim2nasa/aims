@@ -3,7 +3,7 @@
  * @since 2026-02-05
  *
  * 테스트 범위:
- * 1. Developer Mode 토글 (Ctrl+Alt+Shift+D)
+ * 1. Developer Mode 토글 (Ctrl+Shift+E)
  * 2. 검색창 포커스 (Ctrl+K)
  * 3. 문서 검색 (Ctrl+Shift+F)
  * 4. 문서 등록 (Ctrl+Shift+U)
@@ -38,15 +38,17 @@ describe('useGlobalShortcuts', () => {
    */
   function dispatchKeyEvent(options: {
     key: string;
+    code?: string;
     ctrlKey?: boolean;
     altKey?: boolean;
     shiftKey?: boolean;
     target?: Element;
   }) {
-    const { key, ctrlKey = false, altKey = false, shiftKey = false, target } = options;
+    const { key, code, ctrlKey = false, altKey = false, shiftKey = false, target } = options;
 
     const event = new KeyboardEvent('keydown', {
       key,
+      code: code || `Key${key.toUpperCase()}`,
       ctrlKey,
       altKey,
       shiftKey,
@@ -66,27 +68,27 @@ describe('useGlobalShortcuts', () => {
   // 1. Developer Mode 토글 테스트
   // =============================================================================
 
-  describe('Developer Mode 토글 (Ctrl+Alt+Shift+D)', () => {
-    it('Ctrl+Alt+Shift+D로 Developer Mode를 토글해야 함', () => {
+  describe('Developer Mode 토글 (Ctrl+Shift+E)', () => {
+    it('Ctrl+Shift+E로 Developer Mode를 토글해야 함', () => {
       renderHook(() => useGlobalShortcuts({ onMenuClick: mockOnMenuClick }));
 
-      dispatchKeyEvent({ key: 'D', ctrlKey: true, altKey: true, shiftKey: true });
+      dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true, shiftKey: true });
 
       expect(mockToggleDevMode).toHaveBeenCalledTimes(1);
     });
 
-    it('Ctrl+D만으로는 토글하지 않아야 함', () => {
+    it('Ctrl+E만으로는 토글하지 않아야 함', () => {
       renderHook(() => useGlobalShortcuts({ onMenuClick: mockOnMenuClick }));
 
-      dispatchKeyEvent({ key: 'D', ctrlKey: true });
+      dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true });
 
       expect(mockToggleDevMode).not.toHaveBeenCalled();
     });
 
-    it('Ctrl+Shift+D만으로는 토글하지 않아야 함', () => {
+    it('Ctrl+Alt+Shift+E로는 토글하지 않아야 함 (Alt 포함 시 비활성)', () => {
       renderHook(() => useGlobalShortcuts({ onMenuClick: mockOnMenuClick }));
 
-      dispatchKeyEvent({ key: 'D', ctrlKey: true, shiftKey: true });
+      dispatchKeyEvent({ key: 'E', code: 'KeyE', ctrlKey: true, altKey: true, shiftKey: true });
 
       expect(mockToggleDevMode).not.toHaveBeenCalled();
     });

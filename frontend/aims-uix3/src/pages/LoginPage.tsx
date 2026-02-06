@@ -29,7 +29,7 @@ export default function LoginPage() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.code === 'KeyE') {
         e.preventDefault();
         toggleDevMode();
       }

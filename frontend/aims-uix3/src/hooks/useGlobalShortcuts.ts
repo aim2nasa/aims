@@ -14,7 +14,7 @@ export interface GlobalShortcutActions {
  * 전역 단축키 관리 훅
  *
  * 지원 단축키:
- * - Ctrl+Alt+Shift+D: Developer Mode 토글
+ * - Ctrl+Shift+E: Developer Mode 토글
  * - Ctrl+K: 검색창 포커스
  * - Ctrl+Shift+F: 문서 검색
  * - Ctrl+Shift+U: 문서 등록
@@ -25,7 +25,7 @@ export function useGlobalShortcuts({ onMenuClick }: GlobalShortcutActions): void
 
   // Developer Mode 토글 핸들러
   const handleDevModeShortcut = useCallback((e: KeyboardEvent) => {
-    if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'D') {
+    if (e.ctrlKey && e.shiftKey && !e.altKey && e.code === 'KeyE') {
       e.preventDefault()
       toggleDevMode()
     }
