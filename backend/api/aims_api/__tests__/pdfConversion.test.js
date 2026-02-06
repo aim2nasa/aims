@@ -26,8 +26,8 @@ describe('[회귀] PDF 변환 포트 설정 일관성', () => {
     expect(parseInt(portMatch[1])).toBe(expectedPort);
   });
 
-  test('server.js의 기본 포트가 8005여야 함', () => {
-    const filePath = path.join(__dirname, '../server.js');
+  test('documents-routes.js의 기본 포트가 8005여야 함', () => {
+    const filePath = path.join(__dirname, '../routes/documents-routes.js');
     const content = fs.readFileSync(filePath, 'utf8');
 
     // PDF_CONVERTER_PORT 기본값 확인

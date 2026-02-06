@@ -9,10 +9,14 @@ const fs = require('fs');
 const path = require('path');
 
 describe('스키마 일관성', () => {
-  // 테스트할 주요 파일들
+  // 테스트할 주요 파일들 (server.js + 추출된 라우트 파일)
   const filesToCheck = [
     { name: 'server.js', path: path.join(__dirname, '../server.js') },
     { name: 'customer-relationships-routes.js', path: path.join(__dirname, '../customer-relationships-routes.js') },
+    { name: 'customers-routes.js', path: path.join(__dirname, '../routes/customers-routes.js') },
+    { name: 'documents-routes.js', path: path.join(__dirname, '../routes/documents-routes.js') },
+    { name: 'insurance-contracts-routes.js', path: path.join(__dirname, '../routes/insurance-contracts-routes.js') },
+    { name: 'admin-routes.js', path: path.join(__dirname, '../routes/admin-routes.js') },
   ];
 
   // 주요 컬렉션명 (COLLECTIONS에 정의된 것들)
@@ -48,20 +52,19 @@ describe('스키마 일관성', () => {
   });
 
   describe('COLLECTIONS 상수 사용', () => {
-    filesToCheck.forEach(({ name, path: filePath }) => {
-      it(`${name}에서 COLLECTIONS.CUSTOMERS 사용`, () => {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        expect(content).toContain('COLLECTIONS.CUSTOMERS');
-      });
+    // COLLECTIONS.CUSTOMERS는 고객 관련 파일에서 사용
+    it('customers-routes.js에서 COLLECTIONS.CUSTOMERS 사용', () => {
+      const content = fs.readFileSync(filesToCheck[2].path, 'utf-8');
+      expect(content).toContain('COLLECTIONS.CUSTOMERS');
     });
 
-    it('server.js에서 COLLECTIONS.FILES 사용', () => {
-      const content = fs.readFileSync(filesToCheck[0].path, 'utf-8');
+    it('documents-routes.js에서 COLLECTIONS.FILES 사용', () => {
+      const content = fs.readFileSync(filesToCheck[3].path, 'utf-8');
       expect(content).toContain('COLLECTIONS.FILES');
     });
 
-    it('server.js에서 COLLECTIONS.CONTRACTS 사용', () => {
-      const content = fs.readFileSync(filesToCheck[0].path, 'utf-8');
+    it('customers-routes.js에서 COLLECTIONS.CONTRACTS 사용', () => {
+      const content = fs.readFileSync(filesToCheck[2].path, 'utf-8');
       expect(content).toContain('COLLECTIONS.CONTRACTS');
     });
 

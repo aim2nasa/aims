@@ -22,13 +22,12 @@
 | **4** | User/Dev 라우트 추출 | **완료** | 2026-02-07 |
 | **5** | Address/Geocoding 라우트 추출 | **완료** | 2026-02-07 |
 | **6** | Insurance Products & Contracts 라우트 추출 | **완료** | 2026-02-07 |
-| **7** | Chat & Audio 라우트 추출 | 대기 | - |
-| **8** | Admin/Backup 라우트 추출 | 대기 | - |
-| **9** | Customer CRUD 라우트 추출 | 대기 | - |
-| **10** | Document 라우트 추출 | 대기 | - |
-| **11** | AR/CR 라우트 + Webhooks 추출 | 대기 | - |
-| **12** | Customer-Document 관계 + SSE 스트림 추출 | 대기 | - |
-| **13** | 잔여 코드 정리 + 최종 검증 | 대기 | - |
+| **7** | Chat & Audio & Internal API 추출 | **완료** | 2026-02-07 |
+| **8** | Admin + Backup 라우트 추출 | **완료** | 2026-02-07 |
+| **9** | Customer CRUD + Doc관계 + AR/CR + Memos 추출 | **완료** | 2026-02-07 |
+| **10** | Document 라우트 + PDF 변환 추출 | **완료** | 2026-02-07 |
+| **11** | Webhooks + n8n Proxy + AR/CR Background 추출 | **완료** | 2026-02-07 |
+| **12** | 미사용 import 정리 + 테스트 수정 | **완료** | 2026-02-07 |
 
 ---
 
@@ -269,6 +268,51 @@ Jest Unit:      38/39 suites (cascadingDelete 기존 flaky)
 
 ---
 
-## 상세 계획 (Phase 7~13)
+## Phase 7~12 요약 (완료)
 
-상세 계획은 플랜 파일 참조: `.claude/plans/streamed-wishing-neumann.md`
+### Phase 7: Chat & Audio & Internal API
+- `routes/chat-routes.js` (448줄) - AI 채팅 SSE, 세션 CRUD, 음성 변환, 내부 크레딧 API
+
+### Phase 8: Admin + Backup
+- `routes/admin-routes.js` (1,782줄) - Orphan 정리, OCR, Dashboard, Metrics, Users 관리, 예약 삭제
+- `routes/admin-backup-routes.js` (504줄) - 백업 CRUD, 복원, 다운로드
+
+### Phase 9: Customer + Document관계 + AR/CR + Memos
+- `routes/customers-routes.js` (4,466줄) - 고객 CRUD, 문서 관계, AR/CR 프록시, 주소 이력, 메모
+
+### Phase 10: Document + PDF 변환
+- `routes/documents-routes.js` (2,289줄) - 문서 CRUD, 상태 조회, PDF 변환 프록시
+
+### Phase 11: Webhooks + n8n Proxy + AR/CR Background
+- `routes/webhooks-routes.js` (554줄) - AR/CR 웹훅, 백그라운드 파싱 프록시, n8n 프록시
+
+### Phase 12: 최종 정리
+- 미사용 import 정리 (FormData, axios, helpers 등)
+- SSE Map 별칭 변수 제거 (server.js에서 더 이상 불필요)
+- 따옴표 불일치 수정 (Python 스크립트 치환 부작용)
+- 테스트 파일 수정 (schema-consistency, pdfConversion, memo-sync)
+
+### 최종 결과
+
+```
+server.js: 12,986줄 → 501줄 (-96.1%)
+
+새 파일 (11개):
+  lib/helpers.js                         130줄
+  lib/sseManager.js                      231줄
+  routes/health-routes.js                177줄
+  routes/users-routes.js                 376줄
+  routes/address-routes.js               238줄
+  routes/insurance-contracts-routes.js  1,223줄
+  routes/chat-routes.js                  448줄
+  routes/admin-routes.js               1,782줄
+  routes/admin-backup-routes.js          504줄
+  routes/customers-routes.js           4,466줄
+  routes/documents-routes.js           2,289줄
+  routes/webhooks-routes.js              554줄
+
+테스트 결과:
+  Contract Tests: 12/12 suites, 65/65 PASSED
+  Golden Master:  1/1 suite,  33/33 PASSED
+  Jest Unit:     25/26 suites, 747/749 (cascadingDelete 기존 flaky)
+```

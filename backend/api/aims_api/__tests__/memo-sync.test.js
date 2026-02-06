@@ -8,8 +8,9 @@ const fs = require('fs');
 const path = require('path');
 
 describe('메모 동기화 (MCP 호환)', () => {
+  // 메모 코드가 customers-routes.js로 이동됨 (server.js 리팩토링 Phase 9)
   const serverCode = fs.readFileSync(
-    path.join(__dirname, '../server.js'),
+    path.join(__dirname, '../routes/customers-routes.js'),
     'utf-8'
   );
 
@@ -47,7 +48,7 @@ describe('메모 동기화 (MCP 호환)', () => {
     it('POST /api/customers/:id/memos에서 syncCustomerMemoField 호출', () => {
       // POST 핸들러 내에서 동기화 함수 호출 확인
       const postSection = serverCode.match(
-        /app\.post\('\/api\/customers\/:id\/memos'[\s\S]*?catch \(error\)/
+        /router\.post\('\/customers\/:id\/memos'[\s\S]*?catch \(error\)/
       );
       expect(postSection).not.toBeNull();
       expect(postSection[0]).toContain('await syncCustomerMemoField(id)');
@@ -56,7 +57,7 @@ describe('메모 동기화 (MCP 호환)', () => {
     it('PUT /api/customers/:id/memos/:memoId에서 syncCustomerMemoField 호출', () => {
       // PUT 핸들러 내에서 동기화 함수 호출 확인
       const putSection = serverCode.match(
-        /app\.put\('\/api\/customers\/:id\/memos\/:memoId'[\s\S]*?catch \(error\)/
+        /router\.put\('\/customers\/:id\/memos\/:memoId'[\s\S]*?catch \(error\)/
       );
       expect(putSection).not.toBeNull();
       expect(putSection[0]).toContain('await syncCustomerMemoField(id)');
@@ -65,7 +66,7 @@ describe('메모 동기화 (MCP 호환)', () => {
     it('DELETE /api/customers/:id/memos/:memoId에서 syncCustomerMemoField 호출', () => {
       // DELETE 핸들러 내에서 동기화 함수 호출 확인
       const deleteSection = serverCode.match(
-        /app\.delete\('\/api\/customers\/:id\/memos\/:memoId'[\s\S]*?catch \(error\)/
+        /router\.delete\('\/customers\/:id\/memos\/:memoId'[\s\S]*?catch \(error\)/
       );
       expect(deleteSection).not.toBeNull();
       expect(deleteSection[0]).toContain('await syncCustomerMemoField(id)');
