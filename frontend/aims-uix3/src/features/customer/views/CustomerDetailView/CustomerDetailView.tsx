@@ -4,7 +4,7 @@
  * @version 6.0.0
  *
  * 🍎 탭 기반 고객 정보 보기
- * - 기본정보, 가족관계(개인만), 문서, Annual Report
+ * - 기본정보, 가족관계(개인만), 문서, Annual Report, 변액 리포트
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -21,6 +21,7 @@ import { RelationshipsTab } from './tabs/RelationshipsTab';
 import { ContractsTab } from './tabs/ContractsTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { AnnualReportTab } from './tabs/AnnualReportTab';
+import { CustomerReviewTab } from './tabs/CustomerReviewTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
@@ -83,6 +84,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [contractCount, setContractCount] = useState(0);
   const [documentCount, setDocumentCount] = useState(0);
   const [annualReportCount, setAnnualReportCount] = useState(0);
+  const [customerReviewCount, setCustomerReviewCount] = useState(0);
+  const [customerReviewRefreshTrigger, setCustomerReviewRefreshTrigger] = useState(0);
   const confirmController = useAppleConfirmController();
 
   useEffect(() => {
@@ -510,11 +513,34 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           </svg>
         ),
         count: annualReportCount
+      },
+      {
+        key: 'customer_review',
+        label: '변액 리포트',
+        icon: (
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              '--icon-bg': 'var(--color-info-overlay-bg)',
+              '--icon-color': 'var(--color-info-overlay-icon)'
+            } as React.CSSProperties}
+          >
+            {/* Document background */}
+            <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--icon-bg)"/>
+            {/* Trend line */}
+            <polyline points="4,11 7,8 9,10 12,5" stroke="var(--icon-color)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          </svg>
+        ),
+        count: customerReviewCount
       }
     );
 
     return baseTabs;
-  }, [isBusinessCustomer, relationshipsCount, contractCount, documentCount, annualReportCount]);
+  }, [isBusinessCustomer, relationshipsCount, contractCount, documentCount, annualReportCount, customerReviewCount]);
 
   // 🍎 탭 내용 렌더링 (개수 업데이트를 위해 모든 탭을 숨김 상태로 렌더링)
   const renderTabContent = () => {
@@ -534,6 +560,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
             onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
+            onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)}
           />
         </div>
 
@@ -561,6 +588,15 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             customer={customer}
             onAnnualReportCountChange={setAnnualReportCount}
             refreshTrigger={(refreshTrigger || 0) + annualReportRefreshTrigger}
+          />
+        </div>
+
+        {/* 변액 리포트 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'customer_review' ? 'customer-detail-view__tab-panel--active' : ''}`}>
+          <CustomerReviewTab
+            customer={customer}
+            onCustomerReviewCountChange={setCustomerReviewCount}
+            refreshTrigger={(refreshTrigger || 0) + customerReviewRefreshTrigger}
           />
         </div>
       </>
