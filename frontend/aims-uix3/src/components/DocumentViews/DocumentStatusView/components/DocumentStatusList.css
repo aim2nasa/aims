@@ -867,7 +867,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
   /* 카드형 아이템: 2행 - 텍스트 잘림 방지 위해 행 높이 확보 */
   .status-item {
     display: grid;
-    grid-template-columns: 24px auto auto 1fr;
+    grid-template-columns: 36px auto auto 1fr; /* PC 뱃지 레이아웃과 동일하게 아이콘 칼럼 확보 */
     grid-template-rows: auto auto;
     gap: 3px 6px;
     align-items: center;
@@ -897,8 +897,8 @@ html[data-theme="dark"] .action-btn--disabled:hover {
   .status-item > .document-icon-wrapper {
     grid-row: 1;
     grid-column: 1;
-    width: 20px;
-    height: 20px;
+    width: 24px;  /* PC와 동일 - 뱃지 오버레이 공간 확보 */
+    height: 24px; /* PC와 동일 */
   }
 
   .status-item > .status-filename {
@@ -952,7 +952,7 @@ html[data-theme="dark"] .action-btn--disabled:hover {
 
   .document-status-list--delete-mode .status-item,
   .document-status-list--bulk-link-mode .status-item {
-    grid-template-columns: 24px 24px auto auto 1fr;
+    grid-template-columns: 24px 36px auto auto 1fr; /* 두번째 칼럼: 아이콘+뱃지 */
   }
 
   .document-status-list--delete-mode .status-item > .document-icon-wrapper,
@@ -981,23 +981,14 @@ html[data-theme="dark"] .action-btn--disabled:hover {
     grid-column: 5;
   }
 
-  /* 배지 위치 조정 (카드 내 인라인) */
-  .document-ar-badge,
-  .document-cr-badge,
-  .document-ocr-badge,
-  .document-txt-badge,
-  .document-bin-badge {
-    position: static;
-    transform: none;
-    margin-left: 2px;
-  }
-
+  /* 배지: PC와 동일하게 아이콘 위 절대 위치 유지 (hover 애니메이션만 비활성화) */
   .status-item:hover .document-ar-badge,
   .status-item:hover .document-cr-badge,
   .status-item:hover .document-ocr-badge,
   .status-item:hover .document-txt-badge,
   .status-item:hover .document-bin-badge {
-    transform: none;
+    transform: translateX(-50%);
+    box-shadow: none;
   }
 }
 
