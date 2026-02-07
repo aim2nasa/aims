@@ -100,6 +100,8 @@ fi
 # 3. 컨테이너 실행 (환경변수 전달 + 볼륨 마운트)
 echo "🚀 새 컨테이너 실행..."
 docker run -d --network host \
+  --memory=2g \
+  --restart=unless-stopped \
   -e NODE_ENV="${NODE_ENV:-development}" \
   -e PORT="3010" \
   -e MONGO_URI="mongodb://tars:27017/" \

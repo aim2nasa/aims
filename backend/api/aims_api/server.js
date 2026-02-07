@@ -79,48 +79,9 @@ app.use(backendLogger.middleware);
 // 실시간 메트릭 추적 미들웨어
 app.use(realtimeMetrics.trackingMiddleware);
 
-// 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
-app.use((req, res, next) => {
-  const timestamp = utcNowISO();
-  const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
-  
-  console.log(`\n======================================`);
-  console.log(`📥 [${timestamp}] ${req.method} ${req.url}`);
-  console.log(`🌍 클라이언트 IP:`, clientIP);
-  console.log(`📋 쿼리 파라미터:`, JSON.stringify(req.query, null, 2));
-  console.log(`📦 요청 헤더:`, JSON.stringify(req.headers, null, 2));
-  
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log(`📄 요청 바디:`, JSON.stringify(req.body, null, 2));
-  }
-  
-  console.log(`======================================\n`);
-  next();
-});
-
-// 🔍 응답 디버깅 미들웨어
-app.use((req, res, next) => {
-  const originalSend = res.send;
-  const originalJson = res.json;
-  
-  res.send = function(data) {
-    console.log(`📤 [응답] ${req.method} ${req.url} - Status: ${res.statusCode}`);
-    if (typeof data === 'string' && data.length < 500) {
-      console.log(`📤 응답 데이터:`, data);
-    } else if (typeof data === 'object') {
-      console.log(`📤 응답 JSON:`, JSON.stringify(data, null, 2));
-    }
-    return originalSend.call(this, data);
-  };
-  
-  res.json = function(data) {
-    console.log(`📤 [JSON 응답] ${req.method} ${req.url} - Status: ${res.statusCode}`);
-    console.log(`📤 응답 JSON:`, JSON.stringify(data, null, 2));
-    return originalJson.call(this, data);
-  };
-  
-  next();
-});
+// [2026-02-07] 디버깅 미들웨어 제거됨 (OOM 크래시 원인)
+// 모든 요청/응답을 JSON.stringify()하여 시간당 수GB 힙 할당 → GC 실패 → OOM
+// 필요 시 backendLogger로 선별적 로깅 사용
 
 // MongoDB 연결 설정
 const MONGO_URI = 'mongodb://tars:27017/';

@@ -10,7 +10,12 @@ const metricsCollector = require('./metricsCollector');
 let activeRequests = 0;
 let totalRequests = 0;
 let totalErrors = 0;
-let responseTimes = [];
+
+// 응답시간 순환 버퍼 (Ring Buffer) - shift() O(n) 대신 O(1) 삽입
+const MAX_RESPONSE_TIMES = 1000;
+const responseTimes = new Array(MAX_RESPONSE_TIMES).fill(0);
+let responseTimesIndex = 0;  // 다음 삽입 위치
+let responseTimesCount = 0;  // 실제 저장된 개수
 
 // 윈도우 기반 통계 (최근 60초)
 const WINDOW_SIZE = 60; // 60초
@@ -21,9 +26,6 @@ let currentSecond = Math.floor(Date.now() / 1000);
 // 동시접속 사용자 추적 (userId 기반)
 const activeUsers = new Map(); // userId -> { lastActivity, requestCount }
 const USER_TIMEOUT = 5 * 60 * 1000; // 5분 비활성시 제거
-
-// 응답시간 히스토그램 (최근 1000개)
-const MAX_RESPONSE_TIMES = 1000;
 
 /**
  * 현재 초 인덱스 업데이트 (슬라이딩 윈도우)
@@ -88,10 +90,10 @@ function onRequestEnd(startTime, isError = false) {
   const endTime = process.hrtime.bigint();
   const durationMs = Number(endTime - startTime) / 1000000;
 
-  responseTimes.push(durationMs);
-  if (responseTimes.length > MAX_RESPONSE_TIMES) {
-    responseTimes.shift();
-  }
+  // 순환 버퍼에 O(1)로 삽입 (배열 재할당 없음)
+  responseTimes[responseTimesIndex] = durationMs;
+  responseTimesIndex = (responseTimesIndex + 1) % MAX_RESPONSE_TIMES;
+  if (responseTimesCount < MAX_RESPONSE_TIMES) responseTimesCount++;
 }
 
 /**
@@ -110,14 +112,26 @@ function cleanupInactiveUsers() {
 setInterval(cleanupInactiveUsers, 30000);
 
 /**
+ * 순환 버퍼에서 유효한 데이터만 추출
+ * @returns {number[]}
+ */
+function getResponseTimesSnapshot() {
+  if (responseTimesCount === 0) return [];
+  if (responseTimesCount < MAX_RESPONSE_TIMES) {
+    return responseTimes.slice(0, responseTimesCount);
+  }
+  return [...responseTimes];
+}
+
+/**
  * 백분위수 계산
- * @param {number[]} arr - 정렬된 배열
+ * @param {number[]} arr - 배열
  * @param {number} p - 백분위수 (0-100)
  * @returns {number}
  */
 function percentile(arr, p) {
   if (arr.length === 0) return 0;
-  const sorted = [...arr].sort((a, b) => a - b);
+  const sorted = arr.sort((a, b) => a - b); // in-place 정렬 (스냅샷이므로 안전)
   const index = Math.ceil((p / 100) * sorted.length) - 1;
   return sorted[Math.max(0, index)];
 }
@@ -198,13 +212,14 @@ function getRealtimeMetrics() {
   const memory = metricsCollector.getMemoryUsage();
   const loadIndex = calculateLoadIndex();
 
-  // 응답시간 통계
-  const p50 = percentile(responseTimes, 50);
-  const p95 = percentile(responseTimes, 95);
-  const p99 = percentile(responseTimes, 99);
-  const avgResponseTime = responseTimes.length > 0
-    ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+  // 응답시간 통계 (순환 버퍼 스냅샷 1회 생성, 재사용)
+  const snapshot = getResponseTimesSnapshot();
+  const avgResponseTime = snapshot.length > 0
+    ? snapshot.reduce((a, b) => a + b, 0) / snapshot.length
     : 0;
+  const p50 = percentile(snapshot, 50);
+  const p95 = percentile(snapshot, 95);
+  const p99 = percentile(snapshot, 99);
 
   // 처리량 (requests per second)
   const requestsLast60s = getRequestsInLastSeconds(60);
@@ -242,7 +257,7 @@ function getRealtimeMetrics() {
       p50: Math.round(p50 * 100) / 100,
       p95: Math.round(p95 * 100) / 100,
       p99: Math.round(p99 * 100) / 100,
-      sampleCount: responseTimes.length
+      sampleCount: responseTimesCount
     },
 
     // 시스템 부하
@@ -301,7 +316,9 @@ function resetStats() {
   activeRequests = 0;
   totalRequests = 0;
   totalErrors = 0;
-  responseTimes = [];
+  responseTimes.fill(0);
+  responseTimesIndex = 0;
+  responseTimesCount = 0;
   requestsPerSecond.fill(0);
   errorsPerSecond.fill(0);
   activeUsers.clear();

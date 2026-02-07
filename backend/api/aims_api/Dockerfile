@@ -61,5 +61,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:${PORT}/api/health/deep || exit 1
 
-# 애플리케이션 실행
-CMD ["node", "server.js"]
+# 애플리케이션 실행 (힙 메모리 1.5GB 제한 - OOM 방지)
+CMD ["node", "--max-old-space-size=1536", "server.js"]

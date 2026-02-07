@@ -29,10 +29,16 @@ function sendSSE(res, event, data) {
   }
 }
 
+// logBuffer 최대 크기 (클라이언트 없을 때 무한 축적 방지)
+const MAX_LOG_BUFFER = SSE_BATCH_SIZE * 3; // 60개
+
 /**
  * 로그를 배치 버퍼에 추가
+ * 클라이언트가 없으면 버퍼링하지 않음 (메모리 누수 방지)
  */
 function queueLogForBroadcast(log) {
+  if (sseClients.size === 0) return; // 클라이언트 없으면 버퍼링 중단
+  if (logBuffer.length >= MAX_LOG_BUFFER) return; // 최대 크기 초과 시 드롭
   logBuffer.push(log);
 }
 
@@ -49,10 +55,10 @@ setInterval(() => {
     sendSSE(res, 'logs-batch', batch);
   });
 
-  // 버퍼 오버플로우 방지
-  if (logBuffer.length > SSE_BATCH_SIZE * 3) {
-    console.warn(`[SSE-Broadcast] 버퍼 오버플로우, ${logBuffer.length - SSE_BATCH_SIZE * 2}개 로그 삭제`);
-    logBuffer = logBuffer.slice(-SSE_BATCH_SIZE * 2);
+  // 버퍼 오버플로우 방지 (slice 대신 splice로 in-place 제거 → 배열 복사 방지)
+  if (logBuffer.length > MAX_LOG_BUFFER) {
+    const removeCount = logBuffer.length - SSE_BATCH_SIZE * 2;
+    logBuffer.splice(0, removeCount);
   }
 }, SSE_BATCH_INTERVAL);
 
