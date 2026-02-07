@@ -25,12 +25,16 @@ const {
   notifyCRSubscribers,
 } = sseManager;
 const { prepareDocumentResponse, analyzeDocumentStatus, isConvertibleFile } = require('../lib/documentStatusHelper');
+const createPdfConversionTrigger = require('../lib/pdfConversionTrigger');
 
 module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection, upload) {
   const router = express.Router();
   const QDRANT_COLLECTION = qdrantCollection;
   const CUSTOMERS_COLLECTION = COLLECTIONS.CUSTOMERS;
   const COLLECTION_NAME = COLLECTIONS.FILES;
+
+  // PDF 변환 오케스트레이션 (공유 모듈)
+  const { convertDocumentInBackground, triggerPdfConversionIfNeeded } = createPdfConversionTrigger(db);
 
   // SSE channel aliases (sseManager.channels의 Map 직접 참조)
   const customerDocSSEClients = sseManager.channels.customerDoc;
