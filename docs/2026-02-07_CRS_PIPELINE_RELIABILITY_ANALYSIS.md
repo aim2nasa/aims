@@ -145,6 +145,34 @@ SSE 이벤트는 개별 고객 단위이므로, 사용자가 다른 고객으로
 
 ---
 
+### 3.7 [CRITICAL] CRS/AR 감지 시 SSE 알림 부재 (근본 원인)
+
+**파일**: `backend/api/document_pipeline/routers/doc_prep_main.py`
+
+**문제**: doc_prep_main.py에서 CRS/AR을 감지하고 `cr_parsing_status: "pending"`으로 DB 업데이트하지만,
+프론트엔드에 SSE 알림을 보내지 않음. SSE 알림은 annual_report_api 파싱 완료(10~35초 후)에만 발생.
+
+**영향**: 프론트엔드가 CRS 감지 사실을 즉시 알 수 없어, 업로드 직후 탭 조회 시 빈 화면 표시.
+폴링/재시도는 이 근본 결함에 대한 보상 로직일 뿐.
+
+**데이터 흐름 (수정 전)**:
+```
+감지 → DB pending 저장 → ❌ SSE 없음 → ... 10~35초 ... → 파싱 완료 → ✅ SSE 전송
+```
+
+**데이터 흐름 (수정 후)**:
+```
+감지 → DB pending 저장 → ✅ SSE "pending" 즉시 전송 → 프론트엔드 즉시 갱신
+                        → ... 10~35초 ... → 파싱 완료 → ✅ SSE "completed" 전송
+```
+
+**수정 방안**: `_detect_and_process_customer_review()` 및 `_detect_and_process_annual_report()` 함수에서
+DB 업데이트 직후 aims_api 웹훅 호출 (`/api/webhooks/cr-status-change`, `/api/webhooks/ar-status-change`)
+
+**수정 상태**: ✅ 완료
+
+---
+
 ## 4. 수정 이력
 
 | 순번 | 수정 항목 | 파일 | 커밋 |
@@ -156,6 +184,7 @@ SSE 이벤트는 개별 고객 단위이므로, 사용자가 다른 고객으로
 | 5 | processing 타임아웃 복구 | `backend/api/annual_report_api/main.py` | - |
 | 6 | 프론트엔드 폴링 백업 | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
 | 7 | 빈 결과 재시도 강화 (1회→5회) | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
+| 8 | **[ROOT] CRS/AR 감지 즉시 SSE 알림** | `backend/api/document_pipeline/routers/doc_prep_main.py` | - |
 
 ---
 

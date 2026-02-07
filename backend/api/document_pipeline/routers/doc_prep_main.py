@@ -632,6 +632,24 @@ async def _detect_and_process_annual_report(
 
         logger.info(f"✅ AR 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
 
+        # 🔴 [ROOT FIX] AR 감지 즉시 SSE 알림 → 프론트엔드가 "파싱 대기 중" 즉시 표시
+        if customer_id:
+            try:
+                async with httpx.AsyncClient() as sse_client:
+                    await sse_client.post(
+                        f"{settings.AIMS_API_URL}/api/webhooks/ar-status-change",
+                        json={
+                            "customer_id": str(customer_id),
+                            "file_id": doc_id,
+                            "status": "pending"
+                        },
+                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                        timeout=5.0
+                    )
+                    logger.info(f"📡 AR 감지 SSE 알림 전송: customer_id={customer_id}, doc_id={doc_id}")
+            except Exception as sse_err:
+                logger.warning(f"⚠️ AR 감지 SSE 알림 실패 (무시): {sse_err}")
+
         return {
             "is_annual_report": True,
             "customer_id": customer_id,
@@ -851,6 +869,25 @@ async def _detect_and_process_customer_review(
         )
 
         logger.info(f"✅ CRS 플래그 설정 완료: doc_id={doc_id}, customer_id={customer_id}")
+
+        # 🔴 [ROOT FIX] CRS 감지 즉시 SSE 알림 → 프론트엔드가 "파싱 대기 중" 즉시 표시
+        # 이 알림 없이는 annual_report_api 파싱 완료(10~35초 후)까지 프론트엔드가 알 수 없음
+        if customer_id:
+            try:
+                async with httpx.AsyncClient() as sse_client:
+                    await sse_client.post(
+                        f"{settings.AIMS_API_URL}/api/webhooks/cr-status-change",
+                        json={
+                            "customer_id": str(customer_id),
+                            "file_id": doc_id,
+                            "status": "pending"
+                        },
+                        headers={"X-API-Key": settings.WEBHOOK_API_KEY},
+                        timeout=5.0
+                    )
+                    logger.info(f"📡 CRS 감지 SSE 알림 전송: customer_id={customer_id}, doc_id={doc_id}")
+            except Exception as sse_err:
+                logger.warning(f"⚠️ CRS 감지 SSE 알림 실패 (무시): {sse_err}")
 
         return {
             "is_customer_review": True,
