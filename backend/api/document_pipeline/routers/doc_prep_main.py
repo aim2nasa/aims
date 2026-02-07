@@ -342,36 +342,44 @@ async def doc_prep_main(
                     }
 
                     # 🍎 AR/CRS 파싱 판단 (텍스트 기반 - CLAUDE.md 0-2 규칙!)
+                    # 🔴 AR/CRS 감지를 개별 try/except로 격리하여 한쪽 실패가 다른 쪽에 영향 안 주도록
                     if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
                         # AR 감지
-                        ar_result = await _detect_and_process_annual_report(
-                            doc_id=doc_id,
-                            full_text=full_text,
-                            original_name=original_name,
-                            user_id=userId,
-                            files_collection=files_collection
-                        )
-                        if ar_result.get("is_annual_report"):
-                            meta_update["is_annual_report"] = True
-                            meta_update["document_type"] = "annual_report"
-                            meta_update["badgeType"] = "TXT"  # AR은 텍스트 추출 가능한 PDF
-                            logger.info(f"[CreditPending] AR 문서 감지 (텍스트 파싱): {original_name}")
-                        else:
-                            # CRS 감지
-                            crs_result = await _detect_and_process_customer_review(
+                        try:
+                            ar_result = await _detect_and_process_annual_report(
                                 doc_id=doc_id,
                                 full_text=full_text,
                                 original_name=original_name,
                                 user_id=userId,
                                 files_collection=files_collection
                             )
-                            if crs_result.get("is_customer_review"):
-                                meta_update["is_customer_review"] = True
-                                meta_update["document_type"] = "customer_review"
-                                meta_update["badgeType"] = "TXT"  # CRS도 텍스트 추출 가능한 PDF
-                                logger.info(f"[CreditPending] CRS 문서 감지 (텍스트 파싱): {original_name}")
+                            if ar_result.get("is_annual_report"):
+                                meta_update["is_annual_report"] = True
+                                meta_update["document_type"] = "annual_report"
+                                meta_update["badgeType"] = "TXT"
+                                logger.info(f"[CreditPending] AR 문서 감지 (텍스트 파싱): {original_name}")
+                        except Exception as ar_error:
+                            logger.error(f"[CreditPending] AR 감지 실패: {ar_error}", exc_info=True)
 
-                    # 문서 업데이트
+                        # CRS 감지 (AR이 아닌 경우에만)
+                        if not meta_update.get("is_annual_report"):
+                            try:
+                                crs_result = await _detect_and_process_customer_review(
+                                    doc_id=doc_id,
+                                    full_text=full_text,
+                                    original_name=original_name,
+                                    user_id=userId,
+                                    files_collection=files_collection
+                                )
+                                if crs_result.get("is_customer_review"):
+                                    meta_update["is_customer_review"] = True
+                                    meta_update["document_type"] = "customer_review"
+                                    meta_update["badgeType"] = "TXT"
+                                    logger.info(f"[CreditPending] CRS 문서 감지 (텍스트 파싱): {original_name}")
+                            except Exception as crs_error:
+                                logger.error(f"[CreditPending] CRS 감지 실패: {crs_error}", exc_info=True)
+
+                    # 문서 업데이트 (AR/CRS 감지 실패해도 메타 정보는 반드시 저장)
                     await files_collection.update_one(
                         {"_id": ObjectId(doc_id)},
                         {"$set": meta_update}
@@ -379,7 +387,7 @@ async def doc_prep_main(
                     logger.info(f"[CreditPending] 메타 정보 및 AR/CRS 판단 완료: {doc_id}")
 
                 except Exception as meta_error:
-                    logger.warning(f"[CreditPending] 메타 추출 실패 (무시): {meta_error}")
+                    logger.error(f"[CreditPending] 메타 추출 실패: {meta_error}", exc_info=True)
 
                 return {
                     "result": "success",
@@ -1180,27 +1188,36 @@ async def process_document_pipeline(
         await _notify_progress(doc_id, user_id, 50, "meta", "메타데이터 추출 완료")
 
         # 🔴 AR/CRS 자동 감지 (PDF 파일이고 텍스트가 있는 경우)
+        # AR/CRS 감지 실패가 문서 처리 전체를 중단시키지 않도록 개별 격리
+        is_ar_detected = False
         if detected_mime == "application/pdf" and full_text and len(full_text.strip()) > 0:
-            ar_detection = await _detect_and_process_annual_report(
-                doc_id=doc_id,
-                full_text=full_text,
-                original_name=original_name,
-                user_id=user_id,
-                files_collection=files_collection
-            )
-            if ar_detection.get("is_annual_report"):
-                logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, customer_id={ar_detection.get('customer_id')}")
-            else:
-                # AR이 아닌 경우 CRS 감지 시도
-                crs_detection = await _detect_and_process_customer_review(
+            try:
+                ar_detection = await _detect_and_process_annual_report(
                     doc_id=doc_id,
                     full_text=full_text,
                     original_name=original_name,
                     user_id=user_id,
                     files_collection=files_collection
                 )
-                if crs_detection.get("is_customer_review"):
-                    logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, customer_id={crs_detection.get('customer_id')}")
+                if ar_detection.get("is_annual_report"):
+                    is_ar_detected = True
+                    logger.info(f"✅ AR 자동 감지 완료: doc_id={doc_id}, customer_id={ar_detection.get('customer_id')}")
+            except Exception as ar_err:
+                logger.error(f"❌ AR 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={ar_err}", exc_info=True)
+
+            if not is_ar_detected:
+                try:
+                    crs_detection = await _detect_and_process_customer_review(
+                        doc_id=doc_id,
+                        full_text=full_text,
+                        original_name=original_name,
+                        user_id=user_id,
+                        files_collection=files_collection
+                    )
+                    if crs_detection.get("is_customer_review"):
+                        logger.info(f"✅ CRS 자동 감지 완료: doc_id={doc_id}, customer_id={crs_detection.get('customer_id')}")
+                except Exception as crs_err:
+                    logger.error(f"❌ CRS 감지 예외 (문서 처리 계속): doc_id={doc_id}, error={crs_err}", exc_info=True)
 
         # Step 4: Route based on MIME type
 

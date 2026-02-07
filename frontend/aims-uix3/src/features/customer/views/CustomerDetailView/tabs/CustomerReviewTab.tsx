@@ -111,12 +111,17 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     loadCustomerReviews();
   }, []);
 
-  // SSE 실시간 업데이트 (폴링 대체) - 통합 SSE 사용
+  // SSE 실시간 업데이트 - 통합 SSE 사용
   useCustomerSSE(customer._id, {
     onRefreshCR: handleSSERefresh,
   }, {
     enabled: Boolean(customer._id),
   });
+
+  // 🔴 폴링/재시도용 refs (loadCustomerReviews 정의 후 값 설정)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loadRef = useRef<() => void>(() => {});
+  const emptyRetryDoneRef = useRef(false);
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
@@ -235,6 +240,45 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
       setIsLoading(false);
     }
   };
+
+  // 🔴 폴링/재시도 refs에 최신 함수 바인딩
+  loadRef.current = loadCustomerReviews;
+
+  // 🔴 폴링 기반 자동 갱신 (SSE 백업 - 신뢰성 강화)
+  // pending/processing 상태 CRS가 있으면 5초마다 폴링하여 완료 감지
+  useEffect(() => {
+    const hasPending = reviews.some(r => r.status === 'pending' || r.status === 'processing');
+
+    if (hasPending && !pollingRef.current) {
+      pollingRef.current = setInterval(() => loadRef.current(), 5000);
+    }
+
+    if (!hasPending && pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [reviews]);
+
+  // 🔴 초기 로드 빈 결과 시 1회 지연 재시도 (레이스 컨디션 방지)
+  // 업로드 직후 파싱 미완료로 0건 반환되는 경우 대비
+  useEffect(() => {
+    if (!isLoading && reviews.length === 0 && !emptyRetryDoneRef.current) {
+      emptyRetryDoneRef.current = true;
+      const timer = setTimeout(() => loadRef.current(), 3000);
+      return () => { clearTimeout(timer); };
+    }
+    if (reviews.length > 0) {
+      emptyRetryDoneRef.current = false;
+    }
+    return undefined;
+  }, [isLoading, reviews.length]);
 
   const handleViewReview = (review: CustomerReview) => {
     // 실패/진행중 문서는 모달 열지 않음
