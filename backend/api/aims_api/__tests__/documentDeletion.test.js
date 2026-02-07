@@ -10,7 +10,7 @@
 
 const { ObjectId } = require('mongodb');
 const fs = require('fs').promises;
-const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
+const { connectWithFallback, ISOLATED_DB_NAME } = require('./testDbHelper');
 const COLLECTION_NAME = 'files';
 const CUSTOMERS_COLLECTION = 'customers';
 
@@ -28,7 +28,7 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
   beforeAll(async () => {
     const result = await connectWithFallback();
     client = result.client;
-    db = client.db(TEST_DB_NAME);
+    db = client.db(ISOLATED_DB_NAME);
     console.log(`[Setup] MongoDB connected: ${result.uri}`);
     filesCollection = db.collection(COLLECTION_NAME);
     customersCollection = db.collection(CUSTOMERS_COLLECTION);
@@ -52,8 +52,6 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       await customersCollection.deleteMany({ _id: { $in: createdCustomerIds } });
     }
 
-    // 혹시 모를 이름 패턴으로 남은 테스트 데이터 정리
-    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트고객/ } });
   });
 
   // 모든 테스트 후 연결 해제

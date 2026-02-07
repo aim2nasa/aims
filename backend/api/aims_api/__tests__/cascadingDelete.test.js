@@ -9,7 +9,7 @@
  */
 
 const { ObjectId } = require('mongodb');
-const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
+const { connectWithFallback, ISOLATED_DB_NAME } = require('./testDbHelper');
 
 describe('Cascading Delete 테스트', () => {
   let client;
@@ -28,7 +28,7 @@ describe('Cascading Delete 테스트', () => {
   beforeAll(async () => {
     const result = await connectWithFallback();
     client = result.client;
-    db = client.db(TEST_DB_NAME);
+    db = client.db(ISOLATED_DB_NAME);
     customersCollection = db.collection('customers');
     contractsCollection = db.collection('contracts');
     filesCollection = db.collection('files');

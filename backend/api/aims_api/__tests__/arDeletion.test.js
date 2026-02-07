@@ -10,7 +10,7 @@
  */
 
 const { ObjectId } = require('mongodb');
-const { connectWithFallback, TEST_DB_NAME } = require('./testDbHelper');
+const { connectWithFallback, ISOLATED_DB_NAME } = require('./testDbHelper');
 
 const FILES_COLLECTION = 'files';
 const CUSTOMERS_COLLECTION = 'customers';
@@ -29,7 +29,7 @@ describe('Annual Report 문서 삭제 시 파싱 데이터 자동 삭제', () =>
   beforeAll(async () => {
     const result = await connectWithFallback();
     client = result.client;
-    db = client.db(TEST_DB_NAME);
+    db = client.db(ISOLATED_DB_NAME);
     filesCollection = db.collection(FILES_COLLECTION);
     customersCollection = db.collection(CUSTOMERS_COLLECTION);
   });
@@ -52,8 +52,6 @@ describe('Annual Report 문서 삭제 시 파싱 데이터 자동 삭제', () =>
       await customersCollection.deleteMany({ _id: { $in: createdCustomerIds } });
     }
 
-    // 테스트 이름 패턴으로 남은 데이터 정리
-    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트AR고객/ } });
   });
 
   // 모든 테스트 후 연결 해제
