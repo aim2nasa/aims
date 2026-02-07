@@ -137,7 +137,7 @@ async def scan_pending_ar_documents(log_always: bool = False):
 
             # 🔴 조건4: processing 상태가 5분 이상 지속된 AR 문서 → 타임아웃 복구
             from datetime import timedelta
-            timeout_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
+            timeout_threshold = datetime.utcnow() - timedelta(minutes=5)
             stuck_ar = list(db["files"].find({
                 "is_annual_report": True,
                 "ar_parsing_status": "processing",
@@ -286,7 +286,7 @@ async def scan_and_process_pending_cr_documents(log_always: bool = False):
 
             # 🔴 조건4: processing 상태가 5분 이상 지속된 문서 → 타임아웃 복구
             from datetime import timedelta
-            timeout_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
+            timeout_threshold = datetime.utcnow() - timedelta(minutes=5)
             stuck_processing = list(db["files"].find({
                 "is_customer_review": True,
                 "cr_parsing_status": "processing",

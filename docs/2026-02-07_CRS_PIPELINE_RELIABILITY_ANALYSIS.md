@@ -173,6 +173,27 @@ DB 업데이트 직후 aims_api 웹훅 호출 (`/api/webhooks/cr-status-change`,
 
 ---
 
+### 3.8 [CRITICAL] 자가복구 타임아웃 코드 datetime 비교 버그
+
+**파일**: `backend/api/annual_report_api/main.py` (line 140, 289)
+
+**문제**: processing 타임아웃 복구 코드에서 `datetime.now(timezone.utc)` (timezone-aware)와
+MongoDB의 `updatedAt`/`createdAt` (timezone-naive)를 직접 비교.
+
+**에러**:
+```
+TypeError: can't compare offset-naive and offset-aware datetimes
+```
+
+**영향**: CRS 스캐너가 30초마다 예외 발생 → 자가복구 로직 전체 무력화.
+윤화영 고객의 CRS 문서(`00038235_cm_0003779167_label.pdf`)가 `processing` 상태로 12시간+ stuck.
+
+**수정 방안**: `datetime.now(timezone.utc)` → `datetime.utcnow()` (timezone-naive, MongoDB 호환)
+
+**수정 상태**: ✅ 완료 (배포 후 즉시 자가복구 작동 확인)
+
+---
+
 ## 4. 수정 이력
 
 | 순번 | 수정 항목 | 파일 | 커밋 |
@@ -185,6 +206,7 @@ DB 업데이트 직후 aims_api 웹훅 호출 (`/api/webhooks/cr-status-change`,
 | 6 | 프론트엔드 폴링 백업 | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
 | 7 | 빈 결과 재시도 강화 (1회→5회) | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
 | 8 | **[ROOT] CRS/AR 감지 즉시 SSE 알림** | `backend/api/document_pipeline/routers/doc_prep_main.py` | - |
+| 9 | **datetime 비교 버그 수정** | `backend/api/annual_report_api/main.py` | - |
 
 ---
 
