@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
-import { Tooltip, DocumentTypeCell } from '@/shared/ui'
+import { Tooltip, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
 import Button from '@/shared/ui/Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -60,27 +60,6 @@ export interface DocumentStatusListProps {
   onNavigate?: (viewKey: string) => void
   // 🍎 Context menu handler
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
-}
-
-/**
- * OCR 신뢰도를 5단계로 분류
- * 0.0 ~ 1.0 범위의 신뢰도를 색상 레벨로 변환
- */
-const getOcrConfidenceLevel = (confidence: number): {
-  color: string
-  label: string
-} => {
-  if (confidence >= 0.95) {
-    return { color: 'excellent', label: '매우 높음' }
-  } else if (confidence >= 0.85) {
-    return { color: 'high', label: '높음' }
-  } else if (confidence >= 0.70) {
-    return { color: 'medium', label: '보통' }
-  } else if (confidence >= 0.50) {
-    return { color: 'low', label: '낮음' }
-  } else {
-    return { color: 'very-low', label: '매우 낮음' }
-  }
 }
 
 /**
@@ -216,40 +195,6 @@ export const getErrorMessage = (document: Document): string | null => {
     const meta = document.meta as Record<string, unknown>
     if (meta['meta_status'] === 'error' && meta['message'] && typeof meta['message'] === 'string') {
       return formatErrorMessage(meta['message'])
-    }
-  }
-
-  return null
-}
-
-/**
- * Document에서 OCR confidence 추출
- *
- * 두 가지 소스에서 시도:
- * 1. document.ocr?.confidence (검색 API에서 사용)
- * 2. document.stages?.ocr?.message에서 파싱 (리스트 API에서 사용)
- */
-const getOcrConfidence = (document: Document): number | null => {
-  // 1. document.ocr?.confidence 먼저 시도 (검색 API)
-  if (document.ocr && typeof document.ocr !== 'string') {
-    const directConfidence = document.ocr.confidence
-    if (directConfidence) {
-      const parsed = parseFloat(directConfidence)
-      if (!isNaN(parsed)) return parsed
-    }
-  }
-
-  // 2. stages.ocr.message에서 파싱 시도 (리스트 API)
-  // 예: "OCR 완료 (신뢰도: 0.9817)"
-  const stageOcr = document.stages?.ocr
-  if (stageOcr && typeof stageOcr !== 'string') {
-    const ocrMessage = stageOcr.message
-    if (ocrMessage && typeof ocrMessage === 'string') {
-      const match = ocrMessage.match(/신뢰도:\s*([\d.]+)/)
-      if (match && match[1]) {
-        const parsed = parseFloat(match[1])
-        if (!isNaN(parsed)) return parsed
-      }
     }
   }
 
@@ -904,86 +849,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </div>
                 </Tooltip>
               )}
-              {/* 🍎 TXT/OCR/BIN BADGE: 처리 유형 표시 */}
-              {(() => {
-                // 🔥 백엔드 badgeType 필드 우선 사용 (정렬과 일관성 유지)
-                const backendBadgeType = (document as any).badgeType
-                if (backendBadgeType) {
-                  if (backendBadgeType === 'OCR') {
-                    const confidence = getOcrConfidence(document)
-                    if (confidence !== null) {
-                      const level = getOcrConfidenceLevel(confidence)
-                      return (
-                        <Tooltip content={isCreditPending ? `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (크레딧 부족)` : `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                          <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : `ocr-${level.color}`}`}>
-                            OCR
-                          </div>
-                        </Tooltip>
-                      )
-                    }
-                    // confidence 없으면 기본 OCR 뱃지
-                    return (
-                      <Tooltip content={isCreditPending ? "OCR 처리 (크레딧 부족)" : "OCR 처리 완료"}>
-                        <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : 'ocr-medium'}`}>
-                          OCR
-                        </div>
-                      </Tooltip>
-                    )
-                  }
-                  if (backendBadgeType === 'TXT') {
-                    return (
-                      <Tooltip content={isCreditPending ? "TXT 기반 문서 (크레딧 부족)" : "TXT 기반 문서"}>
-                        <div className={`document-txt-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
-                          TXT
-                        </div>
-                      </Tooltip>
-                    )
-                  }
-                  if (backendBadgeType === 'BIN') {
-                    return (
-                      <Tooltip content={isCreditPending ? "바이너리 파일 (크레딧 부족)" : "바이너리 파일 (텍스트 추출 불가)"}>
-                        <div className={`document-bin-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
-                          BIN
-                        </div>
-                      </Tooltip>
-                    )
-                  }
-                }
-
-                // 🔄 하위 호환성: badgeType 없으면 기존 로직 사용
-                const confidence = getOcrConfidence(document)
-                if (confidence === null) {
-                  // OCR 뱃지가 없는 경우, TXT 또는 BIN 타입 표시
-                  const typeLabel = DocumentUtils.getDocumentTypeLabel(document as any);
-                  if (typeLabel === 'TXT') {
-                    return (
-                      <Tooltip content={isCreditPending ? "TXT 기반 문서 (크레딧 부족)" : "TXT 기반 문서"}>
-                        <div className={`document-txt-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
-                          TXT
-                        </div>
-                      </Tooltip>
-                    );
-                  }
-                  if (typeLabel === 'BIN') {
-                    return (
-                      <Tooltip content={isCreditPending ? "바이너리 파일 (크레딧 부족)" : "바이너리 파일 (텍스트 추출 불가)"}>
-                        <div className={`document-bin-badge ${isCreditPending ? 'badge--disabled' : ''}`}>
-                          BIN
-                        </div>
-                      </Tooltip>
-                    );
-                  }
-                  return null;
-                }
-                const level = getOcrConfidenceLevel(confidence)
-                return (
-                  <Tooltip content={isCreditPending ? `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (크레딧 부족)` : `OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                    <div className={`document-ocr-badge ${isCreditPending ? 'badge--disabled' : `ocr-${level.color}`}`}>
-                      OCR
-                    </div>
-                  </Tooltip>
-                )
-              })()}
+              {/* 🍎 TXT/OCR/BIN BADGE: 공유 컴포넌트 */}
+              <DocumentTypeBadge document={document as any} isCreditPending={isCreditPending} />
             </div>
 
             {/* 파일명 + PDF 변환 상태 아이콘 */}

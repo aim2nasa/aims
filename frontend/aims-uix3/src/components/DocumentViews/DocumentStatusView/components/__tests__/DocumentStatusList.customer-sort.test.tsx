@@ -88,6 +88,7 @@ vi.mock('@/shared/ui', () => ({
   DocumentTypeCell: ({ documentType }: any) => (
     <span data-testid="document-type-cell">{documentType || '미지정'}</span>
   ),
+  DocumentTypeBadge: () => null,
 }))
 
 // Mock DocumentActionIcons

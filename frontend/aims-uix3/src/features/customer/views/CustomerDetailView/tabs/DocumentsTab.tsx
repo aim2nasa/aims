@@ -12,7 +12,7 @@ import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Customer } from '@/entities/customer/model'
-import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, DocumentTypeCell } from '@/shared/ui'
+import { Tooltip, Button, ContextMenu, useContextMenu, type ContextMenuSection, DocumentTypeCell, DocumentTypeBadge } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import SFSymbol, {
@@ -1292,41 +1292,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         </div>
                       </Tooltip>
                     )}
-                    {/* 🍎 OCR/TXT BADGE */}
-                    {(() => {
-                      const typeLabel = DocumentUtils.getDocumentTypeLabel(document);
-                      if (typeLabel === 'OCR' && document.ocrConfidence !== null && document.ocrConfidence !== undefined) {
-                        // OCR 뱃지 표시
-                        const confidence = typeof document.ocrConfidence === 'string'
-                          ? parseFloat(document.ocrConfidence)
-                          : document.ocrConfidence;
-                        const getConfidenceLevel = (conf: number) => {
-                          if (conf >= 0.95) return { color: 'excellent', label: '매우 높음' };
-                          if (conf >= 0.85) return { color: 'high', label: '높음' };
-                          if (conf >= 0.70) return { color: 'medium', label: '보통' };
-                          if (conf >= 0.50) return { color: 'low', label: '낮음' };
-                          return { color: 'very-low', label: '매우 낮음' };
-                        };
-                        const level = getConfidenceLevel(confidence);
-                        return (
-                          <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
-                            <div className={`document-ocr-badge ocr-${level.color}`}>
-                              OCR
-                            </div>
-                          </Tooltip>
-                        );
-                      } else if (typeLabel === 'TXT') {
-                        // TXT 뱃지 표시
-                        return (
-                          <Tooltip content="TXT 기반 문서">
-                            <div className="document-txt-badge">
-                              TXT
-                            </div>
-                          </Tooltip>
-                        );
-                      }
-                      return null;
-                    })()}
+                    {/* 🍎 OCR/TXT/BIN BADGE: 공유 컴포넌트 */}
+                    <DocumentTypeBadge document={document} />
                   </div>
 
                   {/* 파일명 */}

@@ -66,6 +66,8 @@ export type { EmptyStateProps, EmptyStateAction } from './EmptyState';
 export { DocumentTypeCell } from './DocumentTypeCell';
 export type { DocumentTypeCellProps } from './DocumentTypeCell';
 
+export { DocumentTypeBadge } from './DocumentTypeBadge';
+
 export { InitialFilterBar } from './InitialFilterBar';
 export type { InitialFilterBarProps, InitialType } from './InitialFilterBar';
 export {

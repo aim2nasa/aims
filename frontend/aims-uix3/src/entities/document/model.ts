@@ -114,6 +114,7 @@ export interface DocumentTypeInput {
     status?: string
     confidence?: number | string
   } | string
+  ocrConfidence?: number | string
   docembed?: {
     text_source?: string
   }
@@ -419,6 +420,63 @@ export const DocumentUtils = {
     if (type === 'txt') return 'TXT';
     if (type === 'bin') return 'BIN';
     return '';
+  },
+
+  /**
+   * OCR 신뢰도를 5단계로 분류
+   * 0.0 ~ 1.0 범위의 신뢰도를 색상 레벨로 변환
+   */
+  getOcrConfidenceLevel: (confidence: number): { color: string; label: string } => {
+    if (confidence >= 0.95) return { color: 'excellent', label: '매우 높음' }
+    if (confidence >= 0.85) return { color: 'high', label: '높음' }
+    if (confidence >= 0.70) return { color: 'medium', label: '보통' }
+    if (confidence >= 0.50) return { color: 'low', label: '낮음' }
+    return { color: 'very-low', label: '매우 낮음' }
+  },
+
+  /**
+   * 문서에서 OCR confidence 추출
+   * 여러 소스에서 시도:
+   * 1. document.ocrConfidence (CustomerDocumentItem)
+   * 2. document.ocr?.confidence (Document)
+   * 3. document.stages?.ocr?.message 파싱 (리스트 API)
+   */
+  getOcrConfidence: (document: DocumentTypeInput | null | undefined): number | null => {
+    if (!document) return null
+
+    // 1. ocrConfidence 직접 필드 (CustomerDocumentItem)
+    if (document.ocrConfidence !== null && document.ocrConfidence !== undefined) {
+      const parsed = typeof document.ocrConfidence === 'string'
+        ? parseFloat(document.ocrConfidence)
+        : document.ocrConfidence
+      if (!isNaN(parsed)) return parsed
+    }
+
+    // 2. ocr.confidence (Document)
+    if (document.ocr && typeof document.ocr !== 'string') {
+      const directConfidence = document.ocr.confidence
+      if (directConfidence !== null && directConfidence !== undefined) {
+        const parsed = typeof directConfidence === 'string'
+          ? parseFloat(directConfidence)
+          : directConfidence
+        if (!isNaN(parsed)) return parsed
+      }
+    }
+
+    // 3. stages.ocr.message 파싱 (예: "OCR 완료 (신뢰도: 0.9817)")
+    const stageOcr = document.stages?.ocr
+    if (stageOcr && typeof stageOcr !== 'string') {
+      const ocrMessage = stageOcr.message
+      if (ocrMessage && typeof ocrMessage === 'string') {
+        const match = ocrMessage.match(/신뢰도:\s*([\d.]+)/)
+        if (match && match[1]) {
+          const parsed = parseFloat(match[1])
+          if (!isNaN(parsed)) return parsed
+        }
+      }
+    }
+
+    return null
   },
 
   /**
