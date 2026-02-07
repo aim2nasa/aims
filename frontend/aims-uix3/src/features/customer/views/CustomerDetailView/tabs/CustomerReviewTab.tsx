@@ -121,7 +121,7 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
   // 🔴 폴링/재시도용 refs (loadCustomerReviews 정의 후 값 설정)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const loadRef = useRef<() => void>(() => {});
-  const emptyRetryDoneRef = useRef(false);
+  const emptyRetryCountRef = useRef(0);
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
@@ -266,16 +266,18 @@ export const CustomerReviewTab: React.FC<CustomerReviewTabProps> = ({
     };
   }, [reviews]);
 
-  // 🔴 초기 로드 빈 결과 시 1회 지연 재시도 (레이스 컨디션 방지)
-  // 업로드 직후 파싱 미완료로 0건 반환되는 경우 대비
+  // 🔴 초기 로드 빈 결과 시 점진적 재시도 (레이스 컨디션 방지)
+  // 업로드 직후 DB에 파일 미생성 상태일 수 있으므로 최대 5회(15초) 재시도
   useEffect(() => {
-    if (!isLoading && reviews.length === 0 && !emptyRetryDoneRef.current) {
-      emptyRetryDoneRef.current = true;
+    const MAX_EMPTY_RETRIES = 5;
+    if (!isLoading && reviews.length === 0 && emptyRetryCountRef.current < MAX_EMPTY_RETRIES) {
+      const retryNum = emptyRetryCountRef.current + 1;
+      emptyRetryCountRef.current = retryNum;
       const timer = setTimeout(() => loadRef.current(), 3000);
       return () => { clearTimeout(timer); };
     }
     if (reviews.length > 0) {
-      emptyRetryDoneRef.current = false;
+      emptyRetryCountRef.current = 0;
     }
     return undefined;
   }, [isLoading, reviews.length]);

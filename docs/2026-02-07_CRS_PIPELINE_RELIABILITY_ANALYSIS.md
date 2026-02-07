@@ -134,10 +134,14 @@ SSE 이벤트는 개별 고객 단위이므로, 사용자가 다른 고객으로
 **영향**: 사용자가 "등록이 안 된다"고 인식 (실제로는 10~35초 후에 완료됨).
 
 **수정 방안**:
-- `loadCustomerReviews()`에서 결과가 0건이고 해당 고객에 CRS 문서가 있을 때, 짧은 간격으로 폴링 재시도 (최대 30초).
+- `loadCustomerReviews()`에서 결과가 0건일 때, 3초 간격으로 최대 5회(15초) 점진적 재시도.
+- 결과에 `pending`/`processing` 상태가 있으면 5초 간격 폴링으로 전환 (파싱 완료 감지).
 - "파싱 진행 중" 상태를 명시적으로 표시.
 
-**수정 상태**: ✅ 완료
+**1차 수정**: 1회 3초 재시도 → **근본 재검증 후 불충분 판단** (서버 부하 시 3초 내 DB 미생성 가능)
+**2차 수정**: 최대 5회(15초) 점진적 재시도로 강화. 파일 DB 생성 → pending 반환 → 폴링 자동 전환.
+
+**수정 상태**: ✅ 완료 (2차)
 
 ---
 
@@ -151,6 +155,7 @@ SSE 이벤트는 개별 고객 단위이므로, 사용자가 다른 고객으로
 | 4 | save 실패 시 상태 일관성 | `backend/api/annual_report_api/routes/cr_background.py` | - |
 | 5 | processing 타임아웃 복구 | `backend/api/annual_report_api/main.py` | - |
 | 6 | 프론트엔드 폴링 백업 | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
+| 7 | 빈 결과 재시도 강화 (1회→5회) | `frontend/aims-uix3/.../CustomerReviewTab.tsx` | - |
 
 ---
 
