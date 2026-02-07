@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dashboardApi, type ServiceHealth, type WorkflowStatus, type HealthHistoryLog } from '@/features/dashboard/api';
+import { dashboardApi, type ServiceHealth, type HealthHistoryLog } from '@/features/dashboard/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { ResourceGauge, MetricsLineChart } from '@/shared/ui/Charts';
 import './SystemHealthPage.css';
@@ -120,40 +120,6 @@ const HealthCard = ({ service, health, description, port }: HealthCardProps) => 
           <span className="health-card__error-text">{health.error}</span>
         </div>
       )}
-    </div>
-  );
-};
-
-interface WorkflowCardProps {
-  workflow: WorkflowStatus;
-}
-
-const formatWorkflowDate = (isoString: string): string => {
-  const date = new Date(isoString);
-  return date.toLocaleString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-};
-
-const WorkflowCard = ({ workflow }: WorkflowCardProps) => {
-  return (
-    <div className={`workflow-card ${workflow.active ? '' : 'workflow-card--inactive'}`}>
-      <div className="workflow-card__header">
-        <span className="workflow-card__name">{workflow.name}</span>
-        <span className={`workflow-card__status ${workflow.active ? 'workflow-card__status--active' : 'workflow-card__status--inactive'}`}>
-          <span className={`workflow-card__indicator ${workflow.active ? 'workflow-card__indicator--active' : 'workflow-card__indicator--inactive'}`} />
-          {workflow.active ? 'Active' : 'Inactive'}
-        </span>
-      </div>
-      <div className="workflow-card__footer">
-        <span className="workflow-card__updated">
-          수정: {formatWorkflowDate(workflow.updatedAt)}
-        </span>
-      </div>
     </div>
   );
 };
@@ -1000,30 +966,6 @@ export const SystemHealthPage = () => {
             </section>
           ))}
 
-          {/* n8n 워크플로우 상태 */}
-          <section className="system-health-page__section">
-            <div className="system-health-page__tier-header">
-              <h2 className="system-health-page__section-title">n8n 워크플로우</h2>
-              <span className="system-health-page__tier-description">
-                {!isAimsApiHealthy
-                  ? 'aims_api 연결 필요'
-                  : data?.workflows
-                    ? `${data.workflows.filter(w => w.active).length}/${data.workflows.length} 활성화`
-                    : '로딩 중...'}
-              </span>
-            </div>
-            <div className="system-health-page__workflow-grid">
-              {isAimsApiHealthy && data?.workflows && data.workflows.length > 0 ? (
-                data.workflows.map((workflow) => (
-                  <WorkflowCard key={workflow.id} workflow={workflow} />
-                ))
-              ) : (
-                <div className="system-health-page__workflow-unavailable">
-                  aims_api(3010) 복구 후 표시됩니다
-                </div>
-              )}
-            </div>
-          </section>
         </div>
 
         {/* 우측: 포트 현황 + 상태 이력 */}
