@@ -401,10 +401,37 @@ function prepareDocumentResponse(doc) {
   };
 }
 
+/**
+ * 🔴 DEPRECATED: 기존 analyzeDocumentStatus() 함수
+ * → prepareDocumentResponse()로 대체됨
+ *
+ * 하위 호환성을 위해 유지. customers-routes.js 등에서 사용.
+ */
+function analyzeDocumentStatus(doc) {
+  if (doc.overallStatus === 'completed') {
+    const response = prepareDocumentResponse(doc);
+    return {
+      stages: response.computed.uiStages,
+      currentStage: response.computed.currentStage,
+      overallStatus: 'completed',
+      progress: 100
+    };
+  }
+
+  const response = prepareDocumentResponse(doc);
+  return {
+    stages: response.computed.uiStages,
+    currentStage: response.computed.currentStage,
+    overallStatus: response.computed.overallStatus,
+    progress: response.computed.progress
+  };
+}
+
 module.exports = {
   prepareDocumentResponse,
   formatBytes,
   isConvertibleFile,
   isNativePreviewable,
+  analyzeDocumentStatus,
   CONVERTIBLE_EXTENSIONS
 };

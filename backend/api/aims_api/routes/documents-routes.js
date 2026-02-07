@@ -15,7 +15,7 @@ const { escapeRegex, toSafeObjectId, isBinaryMimeType } = require('../lib/helper
 const activityLogger = require('../lib/activityLogger');
 const sseManager = require('../lib/sseManager');
 const { notifyCustomerDocSubscribers, notifyDocumentStatusSubscribers, notifyDocumentListSubscribers, notifyPersonalFilesSubscribers, sendSSE } = sseManager;
-const { prepareDocumentResponse, isConvertibleFile } = require('../lib/documentStatusHelper');
+const { prepareDocumentResponse, isConvertibleFile, analyzeDocumentStatus } = require('../lib/documentStatusHelper');
 const pdfConversionService = require('../lib/pdfConversionService');
 
 const COLLECTION_NAME = COLLECTIONS.FILES;
@@ -224,36 +224,7 @@ router.post('/pdf/convert', upload.single('file'), async (req, res) => {
   }
 });
 
-/**
- * 🔴 DEPRECATED: 기존 analyzeDocumentStatus() 함수
- * → prepareDocumentResponse()로 대체됨
- *
- * 하위 호환성을 위해 잠시 유지하지만, 곧 제거될 예정
- */
-function analyzeDocumentStatus(doc) {
-  // 🔄 DB에 overallStatus가 'completed'로 설정되어 있으면 그대로 반환
-  // (webhook에서 직접 설정한 경우 - SSE 실시간 업데이트 지원)
-  if (doc.overallStatus === 'completed') {
-    const response = prepareDocumentResponse(doc);
-    return {
-      stages: response.computed.uiStages,
-      currentStage: response.computed.currentStage,
-      overallStatus: 'completed',  // DB 값 우선
-      progress: 100
-    };
-  }
-
-  const response = prepareDocumentResponse(doc);
-  // 기존 API 응답 형식 유지 (computed만 반환)
-  return {
-    stages: response.computed.uiStages,
-    currentStage: response.computed.currentStage,
-    overallStatus: response.computed.overallStatus,
-    progress: response.computed.progress
-  };
-}
-
-// prepareDocumentResponse와 formatBytes는 lib/documentStatusHelper.js로 이동됨
+// analyzeDocumentStatus, prepareDocumentResponse, formatBytes는 lib/documentStatusHelper.js로 이동됨
 
 /**
  * 문서 통계 조회 API

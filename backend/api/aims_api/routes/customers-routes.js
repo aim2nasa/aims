@@ -24,7 +24,7 @@ const {
   notifyARSubscribers,
   notifyCRSubscribers,
 } = sseManager;
-const { prepareDocumentResponse } = require('../lib/documentStatusHelper');
+const { prepareDocumentResponse, analyzeDocumentStatus, isConvertibleFile } = require('../lib/documentStatusHelper');
 
 module.exports = function(db, analyticsDb, authenticateJWT, authenticateJWTorAPIKey, authenticateJWTWithQuery, qdrantClient, qdrantCollection, upload) {
   const router = express.Router();
