@@ -10,6 +10,8 @@ const { ObjectId } = require('mongodb');
 const { COLLECTIONS } = require('@aims/shared-schema');
 const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
+const metricsCollector = require('../lib/metricsCollector');
+const realtimeMetrics = require('../lib/realtimeMetrics');
 
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, qdrantCollection) {
   const router = express.Router();
