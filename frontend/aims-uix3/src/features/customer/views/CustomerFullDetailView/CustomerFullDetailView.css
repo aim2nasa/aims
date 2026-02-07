@@ -1849,39 +1849,43 @@ html[data-theme="dark"] .customer-full-detail__section-content--report .customer
 .customer-full-detail__section-content--report .customer-review-table-header {
   grid-template-columns:
     var(--contractor-column-width, 60px)
-    var(--policy-number-column-width, 90px)
-    var(--product-column-width, 1fr)
     var(--issue-date-column-width, 80px)
-    var(--parsed-at-column-width, 130px);
+    var(--parsed-at-column-width, 130px)
+    var(--product-column-width, 1fr)
+    var(--fund-count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
-.customer-full-detail__section-content--report .customer-review-table-header.has-checkbox {
+.customer-full-detail__section-content--report .customer-review-table-header:has(.header-checkbox) {
   grid-template-columns:
     28px
     var(--contractor-column-width, 60px)
-    var(--policy-number-column-width, 90px)
-    var(--product-column-width, 1fr)
     var(--issue-date-column-width, 80px)
-    var(--parsed-at-column-width, 130px);
+    var(--parsed-at-column-width, 130px)
+    var(--product-column-width, 1fr)
+    var(--fund-count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 .customer-full-detail__section-content--report .customer-review-row {
   grid-template-columns:
     var(--contractor-column-width, 60px)
-    var(--policy-number-column-width, 90px)
-    var(--product-column-width, 1fr)
     var(--issue-date-column-width, 80px)
-    var(--parsed-at-column-width, 130px);
+    var(--parsed-at-column-width, 130px)
+    var(--product-column-width, 1fr)
+    var(--fund-count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
-.customer-full-detail__section-content--report .customer-review-row.has-checkbox {
+.customer-full-detail__section-content--report .customer-review-row:has(.row-checkbox) {
   grid-template-columns:
     28px
     var(--contractor-column-width, 60px)
-    var(--policy-number-column-width, 90px)
-    var(--product-column-width, 1fr)
     var(--issue-date-column-width, 80px)
-    var(--parsed-at-column-width, 130px);
+    var(--parsed-at-column-width, 130px)
+    var(--product-column-width, 1fr)
+    var(--fund-count-column-width, 70px)
+    var(--status-column-width, 40px);
 }
 
 /* 셀 스타일 - nowrap으로 데이터 한 줄 유지 */
