@@ -1787,8 +1787,9 @@ def save_report_pdf(report_number):
         capture_step_screenshot(report_number, "after_arrow")
 
         # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (Click-Verify-Retry, 최대 3회)
-        # 지수 백오프: 30초 → 60초 → 120초 (총 최대 ~210초)
-        preview_timeouts = [30, 60, 120]
+        # 지수 백오프: 50초 → 60초 → 120초 (총 최대 ~230초)
+        # 첫 시도 30→50초: PDF 렌더링에 35~45초 소요되는 케이스 대응
+        preview_timeouts = [50, 60, 120]
         log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 3회 시도: %s초)..." % str(preview_timeouts))
         pdf_loaded = False
         metlife_error_in_retry = False
