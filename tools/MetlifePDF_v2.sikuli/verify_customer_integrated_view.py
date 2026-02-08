@@ -1350,16 +1350,32 @@ def download_annual_report():
     sleep(WAIT_SHORT)
 
     # 7-6: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
-    if exists(IMG_NO_BTN, 3):
+    no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
+    overwrite_detected = exists(no_btn_pattern, 3)
+
+    if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
+        # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
+        log(u"    [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
+        take_screenshot(u"step7_no_btn_fallback")
+        type("n", Key.ALT)
+        sleep(1)
+        # Alt+N으로 덮어쓰기 거부 성공 여부 확인
+        if exists(IMG_CANCEL_BTN, 3):
+            overwrite_detected = True
+            log(u"    [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
+
+    if overwrite_detected:
         # ★ CASE A: 중복 파일 → 덮어쓰기 취소
         log(u"    동일 파일 존재 - 덮어쓰기 취소")
-        no_match = find(IMG_NO_BTN)
-        no_x = int(no_match.getCenter().getX())
-        no_y = int(no_match.getCenter().getY())
-        log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
-        click(no_match)
-        capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
-        sleep(0.5)
+        # 아직 아니요(N) 버튼이 보이면 클릭 (Alt+N 폴백으로 이미 닫혔을 수 있음)
+        if exists(no_btn_pattern, 1):
+            no_match = find(no_btn_pattern)
+            no_x = int(no_match.getCenter().getX())
+            no_y = int(no_match.getCenter().getY())
+            log(u"        [좌표] 아니요(N) 버튼 클릭: (%d, %d)" % (no_x, no_y))
+            click(no_match)
+            capture_with_click_marker(no_x, no_y, "no_btn", 0, "step7_no_overwrite")
+            sleep(0.5)
         if exists(IMG_CANCEL_BTN, 3):
             cancel_match = find(IMG_CANCEL_BTN)
             cancel_x = int(cancel_match.getCenter().getX())
@@ -1396,7 +1412,7 @@ def download_annual_report():
         type(Key.F4, Key.ALT)
         sleep(WAIT_MEDIUM)
 
-        # 7-8: 예(Y) 클릭 (저장 확인)
+        # 7-8: 예(Y) 클릭 (저장 확인 / ezPDF 종료 확인)
         if exists(IMG_YES_BTN, 7):
             log(u"    예(Y) 클릭...")
             yes_match = find(IMG_YES_BTN)
@@ -1405,6 +1421,11 @@ def download_annual_report():
             log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
             click(yes_match)
             capture_with_click_marker(yes_x, yes_y, "yes_btn", 0, "step7_yes_confirm")
+            sleep(WAIT_SHORT)
+        elif exists(IMG_PDF_SAVE_BTN, 0):
+            # PDF 뷰어 아직 열림 = 이미지 미매칭 확인 다이얼로그 (ezPDF Reader 등)
+            log(u"    예(Y) 이미지 미매칭 → Enter 키로 확인 다이얼로그 닫기")
+            type(Key.ENTER)
             sleep(WAIT_SHORT)
 
         # 검증: PDF 저장 아이콘이 사라졌으면 PDF 뷰어가 닫힌 것
@@ -1416,8 +1437,8 @@ def download_annual_report():
         else:
             log(u"    [검증 실패] PDF 뷰어 아직 열림 (시도 %d/3)" % close_attempt)
             take_screenshot(u"step7_pdf_close_fail_%d" % close_attempt)
-            # 예상치 못한 다이얼로그 닫기
-            type(Key.ESC)
+            # 확인 다이얼로그가 남아있을 수 있음 → Enter로 기본 버튼 클릭
+            type(Key.ENTER)
             sleep(1)
 
     if not pdf_closed:
@@ -1924,17 +1945,31 @@ def save_report_pdf(report_number):
 
         # Step 8: 저장 결과 검증 (100% 확신 필수 - 저장 성공 또는 중복 스킵)
         log(u"    [8/11] 저장 완료 확인...")
-        if exists(IMG_NO_BTN, 3):
+        no_btn_pattern = Pattern(IMG_NO_BTN).similar(0.55)
+        overwrite_detected = exists(no_btn_pattern, 3)
+
+        if not overwrite_detected and exists(IMG_SAVE_S_BTN, 1):
+            # 이미지 매칭 실패했지만 저장 다이얼로그가 아직 열려있음 → 키보드 폴백
+            log(u"        [폴백] 아니요(N) 이미지 미매칭 → Alt+N 키보드 시도")
+            capture_step_screenshot(report_number, "no_btn_fallback")
+            type("n", Key.ALT)
+            sleep(1)
+            if exists(IMG_CANCEL_BTN, 3):
+                overwrite_detected = True
+                log(u"        [폴백 성공] Alt+N으로 덮어쓰기 다이얼로그 닫힘")
+
+        if overwrite_detected:
             # ★ CASE A: 중복 파일 → 덮어쓰기 취소
             log(u"        -> 동일 파일 존재! 스킵 처리...")
             capture_step_screenshot(report_number, "duplicate")
-            no_match = find(IMG_NO_BTN)
-            no_x = int(no_match.getCenter().getX())
-            no_y = int(no_match.getCenter().getY())
-            click(no_match)
-            capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
-            log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
-            sleep(WAIT_MEDIUM)
+            if exists(no_btn_pattern, 1):
+                no_match = find(no_btn_pattern)
+                no_x = int(no_match.getCenter().getX())
+                no_y = int(no_match.getCenter().getY())
+                click(no_match)
+                capture_with_click_marker(no_x, no_y, "no_btn", report_number, "no_overwrite_clicked")
+                log(u"        [좌표] 아니요(N) 클릭: (%d, %d)" % (no_x, no_y))
+                sleep(WAIT_MEDIUM)
             if exists(IMG_CANCEL_BTN, 3):
                 cancel_match = find(IMG_CANCEL_BTN)
                 cancel_x = int(cancel_match.getCenter().getX())
@@ -1978,7 +2013,7 @@ def save_report_pdf(report_number):
             type(Key.F4, Key.ALT)
             sleep(2)
 
-            # 예(Y) 확인 클릭
+            # 예(Y) 확인 클릭 (저장 확인 / ezPDF 종료 확인)
             if exists(IMG_YES_BTN, 7):
                 yes_match = find(IMG_YES_BTN)
                 ymx = int(yes_match.getCenter().getX())
@@ -1986,6 +2021,11 @@ def save_report_pdf(report_number):
                 click(yes_match)
                 log(u"        [좌표] 예(Y) 클릭: (%d, %d)" % (ymx, ymy))
                 capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
+                sleep(2)
+            elif exists(IMG_PDF_SAVE_BTN, 0):
+                # PDF 뷰어 아직 열림 = 이미지 미매칭 확인 다이얼로그 (ezPDF Reader 등)
+                log(u"        예(Y) 이미지 미매칭 → Enter 키로 확인 다이얼로그 닫기")
+                type(Key.ENTER)
                 sleep(2)
 
             # 검증: PDF 뷰어 닫혔는지 확인
@@ -1996,8 +2036,8 @@ def save_report_pdf(report_number):
             else:
                 log(u"        [WARN] PDF 뷰어 아직 열려있음 (시도 %d/3)" % close_attempt)
                 take_screenshot(u"step9_pdf_close_fail_%d" % close_attempt)
-                # 예상치 못한 다이얼로그 닫기 (Windows 종료 다이얼로그 등)
-                type(Key.ESC)
+                # 확인 다이얼로그가 남아있을 수 있음 → Enter로 기본 버튼 클릭
+                type(Key.ENTER)
                 sleep(1)
 
         if not pdf_viewer_closed:
@@ -2375,10 +2415,68 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
         log(u"PDF 저장 경로: %s" % pdf_save_dir)
     log(u"=" * 60)
 
-    # 1단계: 고객등록/조회 페이지 확인
+    # 1단계: 현재 화면 확인 + 이전 크래시 잔재 정리
     log(u"")
-    log(u"[1단계] 현재 화면 확인")
+    log(u"[1단계] 현재 화면 확인 + 화면 상태 복구")
     log(u"    고객등록/조회 페이지가 표시되어 있어야 합니다.")
+    take_screenshot(u"step1_initial_state")
+
+    # ★ 이전 크래시 잔재 정리 (V2 환경 대응)
+    # PDF 뷰어, 다이얼로그 등이 남아있을 수 있음
+    for cleanup_round in range(1, 4):
+        # 열린 다이얼로그 닫기 (ESC/Enter)
+        if exists(IMG_YES_BTN, 1):
+            log(u"    [복구] 예(Y) 다이얼로그 발견 → Enter로 닫기")
+            type(Key.ENTER)
+            sleep(1)
+        elif exists(IMG_NO_BTN, 1):
+            log(u"    [복구] 아니요(N) 다이얼로그 발견 → ESC로 닫기")
+            type(Key.ESC)
+            sleep(1)
+        elif exists(IMG_CANCEL_BTN, 1):
+            log(u"    [복구] 취소 다이얼로그 발견 → ESC로 닫기")
+            type(Key.ESC)
+            sleep(1)
+
+        # PDF 뷰어가 열려있으면 닫기
+        if exists(IMG_PDF_SAVE_BTN, 1):
+            log(u"    [복구] PDF 뷰어 열림 감지 → Alt+F4로 닫기 [%d/3]" % cleanup_round)
+            # PDF 뷰어 영역 클릭으로 포커스 확보
+            pdf_icon = find(IMG_PDF_SAVE_BTN)
+            click(Location(int(pdf_icon.getCenter().getX()) + 80, int(pdf_icon.getCenter().getY())))
+            sleep(0.5)
+            type(Key.F4, Key.ALT)
+            sleep(2)
+            # 종료 확인 다이얼로그 처리
+            if exists(IMG_YES_BTN, 3):
+                click(find(IMG_YES_BTN))
+                sleep(1)
+            else:
+                type(Key.ENTER)
+                sleep(1)
+            continue  # 다른 잔재가 더 있을 수 있으므로 다시 확인
+        else:
+            break  # PDF 뷰어 없음 → 정리 완료
+
+    # ★ 고객통합뷰가 이미 열려있는지 확인 (이전 크래시로 인한 잔재)
+    already_open = False
+    scroll_to_top()
+    sleep(1)
+    if exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 3):
+        log(u"    [복구] 고객통합뷰가 이미 열려있음 → X 버튼으로 닫고 다시 열기")
+        take_screenshot(u"step1_already_open")
+        # 고객통합뷰 닫기
+        if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 5):
+            click(find(IMG_INTEGRATED_VIEW_CLOSE_BTN))
+            sleep(WAIT_MEDIUM)
+            log(u"    [복구] 고객통합뷰 닫기 완료")
+        else:
+            log(u"    [복구] X 버튼 못 찾음 → ESC 시도")
+            type(Key.ESC)
+            sleep(WAIT_MEDIUM)
+
+    log(u"    [복구 완료] 화면 상태 정리됨")
+    take_screenshot(u"step1_cleanup_done")
 
     # 2단계: 고객통합뷰 버튼 클릭 + 스크롤 + 검증 (재시도 포함)
     # 고객통합뷰가 스크롤 아래 상태로 열릴 수 있으므로
@@ -2392,6 +2490,14 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
         if not wait_and_click(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, u"고객통합뷰 버튼"):
             log(u"    [ERROR] 고객통합뷰 버튼 찾기 실패")
             take_screenshot(u"step2_btn_not_found_attempt_%d" % attempt)
+            # 혹시 고객통합뷰가 이미 열려있을 수 있음 (버튼 이미지 변형)
+            if exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 3):
+                log(u"    [감지] 고객통합뷰가 이미 열려있음 → 스크롤 후 진행")
+                scroll_to_top()
+                sleep(2)
+                integrated_view_opened = True
+                take_screenshot(u"step2_already_open_detected")
+                break
             sleep(WAIT_MEDIUM)
             continue
 
