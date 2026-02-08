@@ -12,6 +12,8 @@ const backendLogger = require('../lib/backendLogger');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('../lib/timeUtils');
 const metricsCollector = require('../lib/metricsCollector');
 const realtimeMetrics = require('../lib/realtimeMetrics');
+const { escapeRegex } = require('../lib/helpers');
+const { getTierDefinitions } = require('../lib/storageQuotaService');
 
 module.exports = function(db, analyticsDb, authenticateJWT, requireRole, qdrantClient, qdrantCollection) {
   const router = express.Router();
