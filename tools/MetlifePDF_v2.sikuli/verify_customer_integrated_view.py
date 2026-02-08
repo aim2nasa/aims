@@ -1789,6 +1789,12 @@ def save_report_pdf(report_number):
             preview_match = find(preview_pattern)
             preview_x = int(preview_match.getCenter().getX())
             preview_y = int(preview_match.getCenter().getY())
+
+            # 첫 시도: 페이지 JS 초기화 대기 (버튼이 보여도 이벤트 핸들러 미바인딩 가능)
+            if preview_attempt == 1:
+                log(u"        [안정화] 페이지 초기화 대기 (5초)...")
+                sleep(5.0)
+
             log(u"        [좌표] 미리보기 버튼 클릭: (%d, %d)" % (preview_x, preview_y))
             click(preview_match)
             capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % preview_attempt)
