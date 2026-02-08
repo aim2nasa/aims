@@ -94,7 +94,7 @@ IMG_PDF_SAVE_BTN = "img/1769013494879.png"           # PDF 저장 아이콘
 IMG_SAVE_S_BTN = "img/1769013531968.png"             # 저장(S) 버튼
 IMG_NO_BTN = "img/1769099551754.png"                 # 아니요(N) 버튼
 IMG_CANCEL_BTN = "img/1769099662780.png"             # 취소 버튼
-IMG_YES_BTN = "img/1769013568800.png"                # 예(Y) 버튼
+IMG_YES_BTN = "img/1770543731384.png"                # 예(Y) 버튼 (포커스 있는 상태)
 IMG_REPORT_PRINT_X_BTN = "img/1769013600633.png"     # 보고서인쇄 X 버튼 (MetlifePDF용)
 
 # Annual Report 관련 이미지
@@ -1413,9 +1413,10 @@ def download_annual_report():
         sleep(WAIT_MEDIUM)
 
         # 7-8: 예(Y) 클릭 (저장 확인 / ezPDF 종료 확인)
-        if exists(IMG_YES_BTN, 7):
+        yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
+        if exists(yes_btn_pattern, 7):
             log(u"    예(Y) 클릭...")
-            yes_match = find(IMG_YES_BTN)
+            yes_match = find(yes_btn_pattern)
             yes_x = int(yes_match.getCenter().getX())
             yes_y = int(yes_match.getCenter().getY())
             log(u"        [좌표] 예(Y) 버튼 클릭: (%d, %d)" % (yes_x, yes_y))
@@ -1423,9 +1424,9 @@ def download_annual_report():
             capture_with_click_marker(yes_x, yes_y, "yes_btn", 0, "step7_yes_confirm")
             sleep(WAIT_SHORT)
         elif exists(IMG_PDF_SAVE_BTN, 0):
-            # PDF 뷰어 아직 열림 = 이미지 미매칭 확인 다이얼로그 (ezPDF Reader 등)
-            log(u"    예(Y) 이미지 미매칭 → Enter 키로 확인 다이얼로그 닫기")
-            type(Key.ENTER)
+            # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
+            log(u"    [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
+            type("y", Key.ALT)
             sleep(WAIT_SHORT)
 
         # 검증: PDF 저장 아이콘이 사라졌으면 PDF 뷰어가 닫힌 것
@@ -2014,8 +2015,9 @@ def save_report_pdf(report_number):
             sleep(2)
 
             # 예(Y) 확인 클릭 (저장 확인 / ezPDF 종료 확인)
-            if exists(IMG_YES_BTN, 7):
-                yes_match = find(IMG_YES_BTN)
+            yes_btn_pattern = Pattern(IMG_YES_BTN).similar(0.55)
+            if exists(yes_btn_pattern, 7):
+                yes_match = find(yes_btn_pattern)
                 ymx = int(yes_match.getCenter().getX())
                 ymy = int(yes_match.getCenter().getY())
                 click(yes_match)
@@ -2023,9 +2025,9 @@ def save_report_pdf(report_number):
                 capture_with_click_marker(ymx, ymy, "yes_btn", report_number, "yes_clicked")
                 sleep(2)
             elif exists(IMG_PDF_SAVE_BTN, 0):
-                # PDF 뷰어 아직 열림 = 이미지 미매칭 확인 다이얼로그 (ezPDF Reader 등)
-                log(u"        예(Y) 이미지 미매칭 → Enter 키로 확인 다이얼로그 닫기")
-                type(Key.ENTER)
+                # PDF 뷰어 아직 열림 → Alt+Y 키보드 폴백
+                log(u"        [폴백] 예(Y) 이미지 미매칭 → Alt+Y 키보드 시도")
+                type("y", Key.ALT)
                 sleep(2)
 
             # 검증: PDF 뷰어 닫혔는지 확인
