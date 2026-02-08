@@ -75,7 +75,7 @@ interface DocumentSearchViewProps {
 // 검색 모드 옵션 정의
 const SEARCH_MODE_OPTIONS: DropdownOption[] = [
   { value: 'keyword', label: '키워드 검색' },
-  { value: 'semantic', label: 'AI 검색 (실험적)' },
+  { value: 'semantic', label: '질문 검색' },
 ]
 
 // 키워드 모드 옵션 정의
@@ -1781,7 +1781,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <p className="step-description">• 미선택: 모든 고객 문서 검색</p>
                             <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠르고 정확)</p>
                             <p className="step-description">• 최근 선택한 5명이 드롭다운에 표시 (첫 사용시 비어있음)</p>
-                            <p className="step-description">📌 키워드 검색과 AI 검색 모두 지원</p>
+                            <p className="step-description">📌 키워드 검색과 질문 검색 모두 지원</p>
                           </div>
                         </div>
 
@@ -1800,15 +1800,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <div className="mode-options">
                               <div className="mode-option">
                                 <span className="mode-badge mode-keyword">키워드 검색 (기본)</span>
-                                <p className="mode-description">• DB에 저장된 정확한 내용을 검색</p>
+                                <p className="mode-description">• 특정 단어가 포함된 문서를 정확히 찾을 때</p>
                                 <p className="mode-description">• AND: 입력한 모든 키워드가 포함된 문서 검색</p>
                                 <p className="mode-description">• OR: 입력한 키워드 중 하나 이상 포함된 문서 검색</p>
                               </div>
                               <div className="mode-option">
-                                <span className="mode-badge mode-ai">AI 검색 (실험적)</span>
-                                <p className="mode-description">• 의미가 비슷한 내용 검색</p>
-                                <p className="mode-description">• 질문 형태 예시: "암 진단 시 보험금 얼마 받나요?"</p>
-                                <p className="mode-description">📌 결과가 부정확할 수 있으니 참고용으로만 사용하세요</p>
+                                <span className="mode-badge mode-ai">질문 검색</span>
+                                <p className="mode-description">• 질문으로 문서에서 답을 찾을 때</p>
+                                <p className="mode-description">• 예: "암 진단 시 보험금 얼마 받나요?"</p>
+                                <p className="mode-description">📌 크레딧을 사용합니다</p>
                               </div>
                             </div>
                           </div>
@@ -1834,7 +1834,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <ul className="tips-list">
                           <li>특정 고객 문서만 찾는다면 고객을 먼저 선택하세요</li>
                           <li>AND/OR 모드로 여러 단어 검색 조건을 조절할 수 있습니다</li>
-                          <li>AI 검색은 질문 형태로 입력하면 더 좋은 결과를 얻을 수 있습니다</li>
+                          <li>질문 검색은 "보험금 청구 절차는?" 같은 질문형으로 입력하세요</li>
                         </ul>
                       </div>
                     </div>

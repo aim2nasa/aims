@@ -119,8 +119,8 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const trigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(trigger)
 
-      // "AI 검색 (실험적)" 옵션 클릭
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      // "질문 검색" 옵션 클릭
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK 드롭다운이 표시되어야 함
@@ -139,7 +139,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const trigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(trigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       await waitFor(() => {
@@ -170,7 +170,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK 드롭다운 찾기 및 열기
@@ -202,7 +202,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK 드롭다운의 선택된 값 확인
@@ -224,7 +224,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK를 20으로 변경
@@ -251,7 +251,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       const topKDropdown = container.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
@@ -287,7 +287,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK를 5로 변경
@@ -317,7 +317,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK 드롭다운의 값이 15로 복원되어야 함
@@ -338,7 +338,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger1 = searchModeDropdown1?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger1)
 
-      const aiSearchOption1 = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption1 = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption1)
 
       const topKDropdown1 = container1.querySelector('[aria-label="AI 검색 결과 개수 선택"]')
@@ -361,7 +361,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger2 = searchModeDropdown2?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger2)
 
-      const aiSearchOption2 = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption2 = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption2)
 
       await waitFor(() => {
@@ -382,7 +382,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // topK를 15로 변경
@@ -446,7 +446,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const searchModeTrigger = searchModeDropdown?.querySelector('.ios-dropdown__trigger') as HTMLButtonElement
       await user.click(searchModeTrigger)
 
-      const aiSearchOption = await screen.findByRole('option', { name: 'AI 검색 (실험적)' })
+      const aiSearchOption = await screen.findByRole('option', { name: '질문 검색' })
       await user.click(aiSearchOption)
 
       // 기본값이 10인지 확인 (커밋 메시지: 기존 5개에서 10개로 변경)
