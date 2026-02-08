@@ -148,15 +148,21 @@ CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사
 
 
 def navigate_save_dialog_to_dir():
-    """저장 다이얼로그에서 PDF_DOWNLOAD_DIR 경로로 이동 (설정된 경우에만)"""
+    """저장 다이얼로그에서 PDF_DOWNLOAD_DIR 경로로 파일 저장 (설정된 경우에만)
+
+    원리: 파일명 필드 맨 앞에 경로를 삽입하여 전체 경로 완성
+    예: "filename.pdf" → "D:\\path\\to\\dir\\filename.pdf"
+    Windows 저장 다이얼로그는 전체 경로가 주어지면 해당 폴더에 저장함
+    """
     if not PDF_DOWNLOAD_DIR:
         return
     log(u"        [경로 설정] %s" % PDF_DOWNLOAD_DIR)
-    type("d", Key.ALT)  # 주소 바 포커스
+    # 파일명 입력란에 포커스가 있는 상태에서 맨 앞으로 이동 후 경로 삽입
     sleep(0.5)
-    paste(PDF_DOWNLOAD_DIR)  # 한글 경로 대비 paste 사용
-    type(Key.ENTER)
-    sleep(1.0)
+    type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
+    sleep(0.3)
+    paste(PDF_DOWNLOAD_DIR + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
+    sleep(0.3)
 
 
 LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
@@ -1807,8 +1813,8 @@ def save_report_pdf(report_number):
 
             # 첫 시도: 페이지 JS 초기화 대기 (버튼이 보여도 이벤트 핸들러 미바인딩 가능)
             if preview_attempt == 1:
-                log(u"        [안정화] 페이지 초기화 대기 (5초)...")
-                sleep(5.0)
+                log(u"        [안정화] 페이지 초기화 대기 (12초)...")
+                sleep(12.0)
 
             log(u"        [좌표] 미리보기 버튼 클릭: (%d, %d)" % (preview_x, preview_y))
             click(preview_match)
