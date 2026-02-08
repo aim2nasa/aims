@@ -88,7 +88,7 @@ html[data-theme="dark"] .document-search-container .search-icon {
 .document-search-container .search-input {
   flex: 1;
   width: 100%;
-  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
+  height: 30px; /* 다른 페이지와 일관된 컨트롤 높이 */
   border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
   border-radius: 8px;
   background: transparent;  /* ❌ 표준: 투명 배경 */
@@ -97,7 +97,7 @@ html[data-theme="dark"] .document-search-container .search-icon {
   font-weight: 400;
   color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
   outline: none;
-  padding: 0 8px 0 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+  padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
   transition: border-color 0.2s ease-out;
   box-sizing: border-box;
 }
@@ -242,8 +242,8 @@ html[data-theme="dark"] .reset-button:focus-visible {
 /* 검색 버튼 - iOS 스타일 */
 .search-button {
   flex-shrink: 0; /* 축소 방지 */
-  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
-  padding: 0 20px;
+  height: 30px; /* 다른 페이지와 일관된 컨트롤 높이 */
+  padding: 0 14px;
   border: none;
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
@@ -269,6 +269,12 @@ html[data-theme="dark"] .reset-button:focus-visible {
 .search-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* === 🍎 Dropdown 높이 오버라이드: 다른 페이지와 일관된 컨트롤 높이 === */
+.document-search-container .ios-dropdown__trigger {
+  min-height: 30px;
+  padding: 4px 12px;
 }
 
 /* === 🍎 ERROR MESSAGE: iOS Alert Style === */
@@ -1395,8 +1401,8 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
 /* === 🍎 고객 선택 버튼 (AIMS 공통 버튼 스타일) === */
 .customer-select-button {
   flex-shrink: 0;
-  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
-  padding: 0 20px;
+  height: 30px; /* 다른 페이지와 일관된 컨트롤 높이 */
+  padding: 0 14px;
   border: none;
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
@@ -1423,7 +1429,7 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
+  height: 30px; /* 다른 페이지와 일관된 컨트롤 높이 */
   padding: 0 10px;
   min-width: 132px; /* 120px → 132px (10% 증가) */
   max-width: 220px; /* 200px → 220px (10% 증가) */
@@ -2322,8 +2328,8 @@ html[data-theme="dark"] .doc-search-highlight--current {
 
   /* === 고객선택 버튼: 컴팩트 === */
   .customer-select-button {
-    height: 34px;
-    padding: 0 12px;
+    height: 28px;
+    padding: 0 10px;
     min-width: 70px;
     font-size: var(--font-size-caption-1);
   }
@@ -2332,7 +2338,7 @@ html[data-theme="dark"] .doc-search-highlight--current {
   .selected-customer-display {
     min-width: 0;
     max-width: none;
-    height: 34px;
+    height: 28px;
     padding: 0 8px;
     flex-shrink: 1;
   }
@@ -2340,25 +2346,25 @@ html[data-theme="dark"] .doc-search-highlight--current {
   /* 검색 입력: iOS zoom 방지 */
   .document-search-container .search-input {
     font-size: 16px;
-    height: 36px;
+    height: 28px;
   }
 
   /* 검색 버튼: 컴팩트 */
   .search-button {
-    height: 34px;
-    padding: 0 14px;
+    height: 28px;
+    padding: 0 10px;
     font-size: var(--font-size-caption-1);
   }
 
   /* 리셋 버튼: 터치 타겟 */
   .reset-button {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
 
   /* fulltext 버튼: 컴팩트 */
   .fulltext-button {
-    height: 34px;
+    height: 28px;
     padding: 0 8px;
     font-size: var(--font-size-caption-2);
   }
