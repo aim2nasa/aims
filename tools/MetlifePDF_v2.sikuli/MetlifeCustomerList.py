@@ -413,6 +413,32 @@ def print_customer_table(customers, chosung_name, page_num):
     log(u"  [OCR] ================================================")
 
 
+def generate_blind_customers(count):
+    """
+    No-OCR 모드: 행 번호 기반 가상 고객 리스트 생성
+
+    OCR 없이 순차적으로 행을 클릭하기 위해
+    행 번호를 고객명으로 사용하는 가상 데이터 생성.
+
+    Args:
+        count: 생성할 행 수
+
+    Returns:
+        list: 가상 고객 데이터 리스트
+    """
+    rows = []
+    for i in range(count):
+        rows.append({
+            u"고객명": u"ROW_%02d" % (i + 1),
+            u"구분": u"",
+            u"생년월일": u"",
+            u"보험나이": u"",
+            u"성별": u"",
+            u"휴대폰": u"",
+        })
+    return rows
+
+
 def get_row_y(header_y, row_index, is_scrolled=False):
     """
     특정 행의 Y좌표 계산
@@ -691,6 +717,14 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 알림 팝업 확인
             alert_occurred = dismiss_alert_if_exists()
 
+            # No-OCR 모드: 빈 행 감지 (클릭 후에도 목록 페이지에 있으면 빈 행)
+            if NO_OCR_MODE and not alert_occurred:
+                if exists(IMG_CUSTNAME, 1):
+                    global _no_ocr_empty_row_detected
+                    _no_ocr_empty_row_detected = True
+                    log(u"        [NO-OCR] 빈 행 감지 (행 %d) → 나머지 행 스킵" % (row_index + 1))
+                    break
+
             # 고객통합뷰 모드인 경우 리포트 다운로드 (알림이 없었을 때만)
             if INTEGRATED_VIEW_ENABLED:
                 if alert_occurred:
@@ -910,6 +944,7 @@ def parse_args():
         'start_from': None,  # 특정 고객부터 시작 (해당 고객 포함)
         'resume': False,  # checkpoint.json에서 위치 읽어서 재개
         'only': None,  # 특정 고객명만 처리 (동일 이름 여러 명 처리용)
+        'no_ocr': False,  # OCR 없이 순차 클릭 모드
     }
 
     # --no-click 옵션 처리
@@ -937,6 +972,11 @@ def parse_args():
     if '--resume' in args:
         result['resume'] = True
         args = [a for a in args if a != '--resume']
+
+    # --no-ocr 옵션 처리 (OCR 없이 순차 클릭)
+    if '--no-ocr' in args:
+        result['no_ocr'] = True
+        args = [a for a in args if a != '--no-ocr']
 
     # --only 옵션 처리 (특정 고객명만 처리)
     if '--only' in args:
@@ -968,6 +1008,7 @@ _arg_integrated_view = _parsed_args['integrated_view']
 _arg_start_from = _parsed_args['start_from']
 _arg_resume = _parsed_args['resume']
 _arg_only = _parsed_args['only']
+_arg_no_ocr = _parsed_args.get('no_ocr', False)
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
 _env_integrated_view = os.environ.get("METLIFE_INTEGRATED_VIEW", "").lower() in ("1", "true", "yes")
@@ -988,6 +1029,10 @@ START_FROM_CUSTOMER = _arg_start_from
 # --start-from 모드 플래그 (해당 고객부터 처리 시작)
 START_FROM_MODE = START_FROM_CUSTOMER is not None
 _start_from_found = False  # 해당 고객을 찾았는지 여부
+
+# --no-ocr 모드: OCR 없이 순차 클릭
+NO_OCR_MODE = _arg_no_ocr
+_no_ocr_empty_row_detected = False  # 빈 행 감지 플래그
 
 # --only 모드: 특정 고객명만 처리
 ONLY_CUSTOMER = _arg_only
@@ -1171,7 +1216,10 @@ else:
     CHOSUNG_BUTTONS = ALL_CHOSUNG_BUTTONS
 
 log("=" * 60)
-log(u"MetLife 고객목록조회 - Upstage Enhanced OCR 연동")
+if NO_OCR_MODE:
+    log(u"MetLife 고객목록조회 - [실험] No-OCR 순차 클릭 모드")
+else:
+    log(u"MetLife 고객목록조회 - Upstage Enhanced OCR 연동")
 log(u"로그 파일: %s" % os.path.basename(LOG_FILE))
 if SELECTED_CHOSUNG:
     log(u"선택 초성: %s" % SELECTED_CHOSUNG)
@@ -1181,6 +1229,8 @@ log(u"고객 클릭: %s" % (u"활성화" if CLICK_ENABLED else u"비활성화 (-
 log(u"통합뷰/리포트: %s" % (u"활성화 (--integrated-view)" if INTEGRATED_VIEW_ENABLED else u"비활성화"))
 if ONLY_MODE:
     log(u"특정 고객만: '%s' (--only 모드)" % ONLY_CUSTOMER)
+if NO_OCR_MODE:
+    log(u"OCR 모드: 비활성화 (--no-ocr) → 순차 클릭 + 빈 행 감지")
 log(u"네비 모드: Arrow Down (키보드)")
 
 # --resume 모드 처리
@@ -1399,119 +1449,134 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             prev_capture = capture_table_region()
             log(u"    [CAPTURE] 스크롤 전 테이블 전체 캡처 완료")
 
-            # 2. OCR 수행 (화면 캡처 포함)
-            customers, json_path = capture_and_ocr(chosung_name, global_page)
-
-            if not customers:
-                log(u"    [WARN] OCR 결과 없음 → 재시도...")
-                sleep(2)
+            # 2. 고객 인식 (OCR 또는 No-OCR)
+            if NO_OCR_MODE:
+                # No-OCR 모드: 행 번호 기반 가상 고객 생성
+                customers = generate_blind_customers(ROWS_PER_PAGE)
+                json_path = None
+                log(u"    [NO-OCR] %d행 가상 고객 생성 (OCR 스킵)" % len(customers))
+                _no_ocr_empty_row_detected = False  # 페이지마다 리셋
+            else:
                 customers, json_path = capture_and_ocr(chosung_name, global_page)
 
                 if not customers:
-                    # OCR 연속 실패 카운터 증가
-                    ocr_consecutive_failures += 1
-                    log(u"    [ERROR] OCR 연속 실패: %d/%d회" % (ocr_consecutive_failures, MAX_OCR_FAILURES))
+                    log(u"    [WARN] OCR 결과 없음 → 재시도...")
+                    sleep(2)
+                    customers, json_path = capture_and_ocr(chosung_name, global_page)
 
-                    if ocr_consecutive_failures >= MAX_OCR_FAILURES:
-                        log(u"")
-                        log(u"=" * 60)
-                        log(u"[FATAL] OCR %d회 연속 실패 - 프로그램 종료!" % MAX_OCR_FAILURES)
-                        log(u"        Upstage API 장애 가능성 있음")
-                        log(u"        잠시 후 다시 시도하세요")
-                        log(u"=" * 60)
-                        _close_log_file()
-                        exit(1)
+                    if not customers:
+                        # OCR 연속 실패 카운터 증가
+                        ocr_consecutive_failures += 1
+                        log(u"    [ERROR] OCR 연속 실패: %d/%d회" % (ocr_consecutive_failures, MAX_OCR_FAILURES))
 
-                    log(u"    [WARN] 재시도 실패 → 스크롤 끝으로 간주")
-                    # 이전 페이지의 16번째 행이 있으면 처리
-                    if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
-                        extra = prev_customers[ROWS_PER_PAGE]
-                        name = extra.get(u"고객명", "") or ""
-                        birth = extra.get(u"생년월일", "") or ""
-                        if name:
-                            log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
-                            total_rows += 1
+                        if ocr_consecutive_failures >= MAX_OCR_FAILURES:
+                            log(u"")
+                            log(u"=" * 60)
+                            log(u"[FATAL] OCR %d회 연속 실패 - 프로그램 종료!" % MAX_OCR_FAILURES)
+                            log(u"        Upstage API 장애 가능성 있음")
+                            log(u"        잠시 후 다시 시도하세요")
+                            log(u"=" * 60)
+                            _close_log_file()
+                            exit(1)
 
-                            # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
-                            if CLICK_ENABLED:
-                                # 16번째 행 클릭 전 헤더 위치 재측정
-                                try:
-                                    header = find(IMG_CUSTNAME)
-                                    new_base_y = header.getCenter().getY()
-                                    if new_base_y != base_y:
-                                        log(u"        [RECALIBRATE] 16번째 행: base_y %d → %d" % (base_y, new_base_y))
-                                        base_y = new_base_y
-                                except:
-                                    pass
+                        log(u"    [WARN] 재시도 실패 → 스크롤 끝으로 간주")
+                        # 이전 페이지의 16번째 행이 있으면 처리
+                        if prev_customers and len(prev_customers) > ROWS_PER_PAGE:
+                            extra = prev_customers[ROWS_PER_PAGE]
+                            name = extra.get(u"고객명", "") or ""
+                            birth = extra.get(u"생년월일", "") or ""
+                            if name:
+                                log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
+                                total_rows += 1
 
-                                log(u"        [LAST] %s 클릭..." % name)
-                                try:
-                                    row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
-                                    click(Location(fixed_x, row_y))
-                                    sleep(5)
-                                    dismiss_alert_if_exists()
-                                    log(u"        -> 종료(x) 클릭...")
-                                    click(IMG_CLOSE_BTN)
-                                    sleep(3)
-                                    dismiss_alert_if_exists()
-                                    log(u"        -> %s 처리 완료" % name)
-                                except Exception as e:
-                                    log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
-                                    total_errors += 1
-                                    error_customers.append({
-                                        u"초성": chosung_name,
-                                        u"페이지": global_page - 1,
-                                        u"행": ROWS_PER_PAGE + 1,
-                                        u"고객명": name,
-                                        u"오류": str(e)
-                                    })
-                    break  # 스크롤 루프 탈출
-            else:
-                # OCR 성공 시 연속 실패 카운터 리셋
-                ocr_consecutive_failures = 0
+                                # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
+                                if CLICK_ENABLED:
+                                    # 16번째 행 클릭 전 헤더 위치 재측정
+                                    try:
+                                        header = find(IMG_CUSTNAME)
+                                        new_base_y = header.getCenter().getY()
+                                        if new_base_y != base_y:
+                                            log(u"        [RECALIBRATE] 16번째 행: base_y %d → %d" % (base_y, new_base_y))
+                                            base_y = new_base_y
+                                    except:
+                                        pass
 
-            # OCR 결과 표 출력 (15행만 - 16번째는 마지막 페이지용으로 보관)
-            print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, global_page)
+                                    log(u"        [LAST] %s 클릭..." % name)
+                                    try:
+                                        row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
+                                        click(Location(fixed_x, row_y))
+                                        sleep(5)
+                                        dismiss_alert_if_exists()
+                                        log(u"        -> 종료(x) 클릭...")
+                                        click(IMG_CLOSE_BTN)
+                                        sleep(3)
+                                        dismiss_alert_if_exists()
+                                        log(u"        -> %s 처리 완료" % name)
+                                    except Exception as e:
+                                        log(u"        -> [ERROR] %s 처리 중 오류: %s" % (name, str(e)))
+                                        total_errors += 1
+                                        error_customers.append({
+                                            u"초성": chosung_name,
+                                            u"페이지": global_page - 1,
+                                            u"행": ROWS_PER_PAGE + 1,
+                                            u"고객명": name,
+                                            u"오류": str(e)
+                                        })
+                        break  # 스크롤 루프 탈출
+                else:
+                    # OCR 성공 시 연속 실패 카운터 리셋
+                    ocr_consecutive_failures = 0
+
+            # 결과 표 출력 (No-OCR 모드에서는 스킵)
+            if not NO_OCR_MODE:
+                print_customer_table(customers[:ROWS_PER_PAGE], chosung_name, global_page)
 
             # 3. 행수 카운트 (스크롤 중복만 제외 - 순서 비교 방식)
-            current_rows = []
-            for c in customers[:ROWS_PER_PAGE]:
-                name = c.get(u"고객명", "") or ""
-                birth = c.get(u"생년월일", "") or ""
-                if name:
-                    current_rows.append((name, birth))
+            if NO_OCR_MODE:
+                # No-OCR 모드: 이름 비교 불가 → 중복 감지 없이 전체 행 사용
+                scroll_dups = 0
+                page_rows = ROWS_PER_PAGE
+                total_rows += page_rows
+                log(u"    [NO-OCR] %d행 (중복 감지 비활성화)" % page_rows)
+            else:
+                current_rows = []
+                for c in customers[:ROWS_PER_PAGE]:
+                    name = c.get(u"고객명", "") or ""
+                    birth = c.get(u"생년월일", "") or ""
+                    if name:
+                        current_rows.append((name, birth))
 
-            # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 비교
-            scroll_dups = 0
-            if prev_page_rows:
-                # 이전 페이지 끝 N행과 현재 페이지 시작 N행이 얼마나 겹치는지 확인
-                for overlap in range(min(len(prev_page_rows), len(current_rows)), 0, -1):
-                    # 이전 페이지 끝 overlap행 vs 현재 페이지 시작 overlap행
-                    if prev_page_rows[-overlap:] == current_rows[:overlap]:
-                        scroll_dups = overlap
+                # 스크롤 중복 감지: 이전 페이지 끝과 현재 페이지 시작 비교
+                scroll_dups = 0
+                if prev_page_rows:
+                    # 이전 페이지 끝 N행과 현재 페이지 시작 N행이 얼마나 겹치는지 확인
+                    for overlap in range(min(len(prev_page_rows), len(current_rows)), 0, -1):
+                        # 이전 페이지 끝 overlap행 vs 현재 페이지 시작 overlap행
+                        if prev_page_rows[-overlap:] == current_rows[:overlap]:
+                            scroll_dups = overlap
+                            break
+
+                page_rows = len(current_rows) - scroll_dups
+                total_rows += page_rows
+
+                # 무한루프 방지: 연속 신규 행 0건 감지
+                if page_rows <= 0 and len(current_rows) > 0:
+                    zero_new_rows_count += 1
+                    log(u"    [STUCK] 신규 행 0건 (연속 %d회)" % zero_new_rows_count)
+                    if zero_new_rows_count >= 3:
+                        log(u"\n    *** 스크롤 진행 불가! 신규 행 0건 3회 연속 → 스크롤 끝 판정 ***")
                         break
+                else:
+                    zero_new_rows_count = 0
 
-            page_rows = len(current_rows) - scroll_dups
-            total_rows += page_rows
+                # 다음 페이지를 위해 현재 페이지 행 저장
+                prev_page_rows = current_rows
 
-            # 무한루프 방지: 연속 신규 행 0건 감지
-            if page_rows <= 0 and len(current_rows) > 0:
-                zero_new_rows_count += 1
-                log(u"    [STUCK] 신규 행 0건 (연속 %d회)" % zero_new_rows_count)
-                if zero_new_rows_count >= 3:
-                    log(u"\n    *** 스크롤 진행 불가! 신규 행 0건 3회 연속 → 스크롤 끝 판정 ***")
-                    break
-            else:
-                zero_new_rows_count = 0
-
-            # 다음 페이지를 위해 현재 페이지 행 저장
-            prev_page_rows = current_rows
-
-            # 페이지 처리 완료 요약
-            if scroll_dups > 0:
-                log(u"    [%s] %d행 (스크롤중복 %d행 제외)" % (page_label, page_rows, scroll_dups))
-            else:
-                log(u"    [%s] %d행" % (page_label, page_rows))
+                # 페이지 처리 완료 요약
+                if scroll_dups > 0:
+                    log(u"    [%s] %d행 (스크롤중복 %d행 제외)" % (page_label, page_rows, scroll_dups))
+                else:
+                    log(u"    [%s] %d행" % (page_label, page_rows))
 
             # 4. 고객 클릭 처리 (스크롤 중복 제외, CLICK_ENABLED일 때만)
             if CLICK_ENABLED:
@@ -1547,6 +1612,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 # --only 모드: 대상 고객 처리 완료 시 즉시 종료
                 if ONLY_MODE and _only_all_done:
                     log(u"\n    *** --only 모드: '%s' 처리 완료 (%d명) → 프로그램 종료 ***" % (ONLY_CUSTOMER, _only_found_count))
+                    break
+
+                # No-OCR 모드: 빈 행 감지 시 스크롤 루프 탈출
+                if NO_OCR_MODE and _no_ocr_empty_row_detected:
+                    log(u"\n    *** [NO-OCR] 빈 행 감지 → 이 페이지가 마지막 (스크롤 불필요) ***")
                     break
 
             # 5. 스크롤 (Page Down 키)
