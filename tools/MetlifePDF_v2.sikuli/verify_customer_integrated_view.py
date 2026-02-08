@@ -141,8 +141,22 @@ save_results = []  # [{'report_num': 1, 'saved': True, 'duplicate': False, 'erro
 global_screenshot_counter = 0
 
 # 외부 호출 시 사용되는 전역 변수
-PDF_DOWNLOAD_DIR = None  # PDF 저장 디렉토리 (외부에서 설정)
+PDF_DOWNLOAD_DIR = os.path.join(SCRIPT_DIR, "pdf")  # PDF 저장 디렉토리 (기본: 스크립트경로/pdf)
+if not os.path.exists(PDF_DOWNLOAD_DIR):
+    os.makedirs(PDF_DOWNLOAD_DIR)
 CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사용)
+
+
+def navigate_save_dialog_to_dir():
+    """저장 다이얼로그에서 PDF_DOWNLOAD_DIR 경로로 이동 (설정된 경우에만)"""
+    if not PDF_DOWNLOAD_DIR:
+        return
+    log(u"        [경로 설정] %s" % PDF_DOWNLOAD_DIR)
+    type("d", Key.ALT)  # 주소 바 포커스
+    sleep(0.5)
+    paste(PDF_DOWNLOAD_DIR)  # 한글 경로 대비 paste 사용
+    type(Key.ENTER)
+    sleep(1.0)
 
 
 LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
@@ -1338,9 +1352,10 @@ def download_annual_report():
             take_screenshot(u"step7_save_dialog_FATAL")
             raise NavigationResetRequired(u"AR PDF 저장 다이얼로그 열기 실패")
 
-    # 7-5: 저장(S) 버튼 클릭 (필수 - 조용히 넘어가지 않음)
+    # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
     log(u"    저장(S) 버튼 클릭...")
     take_screenshot(u"step7_before_save_s_btn")
+    navigate_save_dialog_to_dir()
     save_s_match = find(IMG_SAVE_S_BTN)
     ss_x = int(save_s_match.getCenter().getX())
     ss_y = int(save_s_match.getCenter().getY())
@@ -1938,9 +1953,10 @@ def save_report_pdf(report_number):
                 raise NavigationResetRequired(u"변액리포트 #%d: 저장 다이얼로그 열기 실패" % report_number)
             log(u"        [검증 성공] 재시도 후 저장 다이얼로그 열림")
 
-        # Step 7: 저장(S) 버튼 클릭 (Step 6 검증 통과 → 반드시 존재)
+        # Step 7: 저장 경로 설정 + 저장(S) 버튼 클릭
         log(u"    [7/11] 저장(S) 버튼 클릭...")
         capture_step_screenshot(report_number, "before_save_btn")
+        navigate_save_dialog_to_dir()
         save_s_match = find(IMG_SAVE_S_BTN)
         ssx = int(save_s_match.getCenter().getX())
         ssy = int(save_s_match.getCenter().getY())
