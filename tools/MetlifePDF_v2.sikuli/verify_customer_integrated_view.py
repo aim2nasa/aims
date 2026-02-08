@@ -1417,7 +1417,7 @@ def download_annual_report():
             log(u"    [검증 실패] PDF 뷰어 아직 열림 (시도 %d/3)" % close_attempt)
             take_screenshot(u"step7_pdf_close_fail_%d" % close_attempt)
             # 예상치 못한 다이얼로그 닫기
-            type(Key.ESCAPE)
+            type(Key.ESC)
             sleep(1)
 
     if not pdf_closed:
@@ -1997,7 +1997,7 @@ def save_report_pdf(report_number):
                 log(u"        [WARN] PDF 뷰어 아직 열려있음 (시도 %d/3)" % close_attempt)
                 take_screenshot(u"step9_pdf_close_fail_%d" % close_attempt)
                 # 예상치 못한 다이얼로그 닫기 (Windows 종료 다이얼로그 등)
-                type(Key.ESCAPE)
+                type(Key.ESC)
                 sleep(1)
 
         if not pdf_viewer_closed:
