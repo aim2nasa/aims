@@ -341,10 +341,10 @@ def capture_and_ocr(chosung_name, page_num):
     shutil.copy(captured_full, capture_path)
     log(u"  [OCR]   - 원본: %s" % capture_filename)
 
-    # 2. 테이블 영역만 크롭 (필터 영역 제외)
+    # 2. 테이블 영역만 크롭 (필터 영역 + AutoClicker 영역 제외)
     TABLE_REGION_X = 20
     TABLE_REGION_Y = 362
-    TABLE_REGION_WIDTH = 1890
+    TABLE_REGION_WIDTH = 1346
     TABLE_REGION_HEIGHT = 590
     table_region = Region(TABLE_REGION_X, TABLE_REGION_Y, TABLE_REGION_WIDTH, TABLE_REGION_HEIGHT)
     captured_cropped = capture(table_region)
@@ -957,8 +957,8 @@ FIRST_ROW_OFFSET = 32           # 첫 페이지: 헤더 → 첫 행 중앙 (픽�
 FIRST_ROW_OFFSET_SCROLLED = 32  # 스크롤 후 페이지 (P1과 동일하게 테스트)
 ROW_HEIGHT = 37                 # 행 간 간격 (픽셀) - 실측값
 # ================================
-ROWS_PER_PAGE = 13     # 화면에 보이는 행 수 (100% 줌 기준)
-MAX_CUSTOMERS_PER_PAGE = 13  # OCR로 인식하는 행 수
+ROWS_PER_PAGE = 12     # 화면에 완전히 보이는 행 수 (100% 줌, AC 영역 제외)
+MAX_CUSTOMERS_PER_PAGE = 12  # OCR로 처리하는 행 수
 
 # 고객명 정렬 이미지 [100% 줌 - 2026-01-29]
 IMG_CUSTNAME = "img/1769599404157.png"         # 고객명 ↓ 헤더 (내림차순 상태)
