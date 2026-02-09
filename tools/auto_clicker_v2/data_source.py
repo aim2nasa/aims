@@ -144,7 +144,7 @@ class LiveProcessSource(DataSource):
 
     def start(self, on_event: Callable[[LogEvent], None]) -> None:
         cmd = [
-            "java", "-Dfile.encoding=UTF-8",
+            "java",
             "-jar", SIKULIX_JAR,
             "-r", SIKULIX_SCRIPT,
         ]
@@ -197,20 +197,34 @@ class LiveProcessSource(DataSource):
 
     @staticmethod
     def _decode_line(raw_bytes: bytes) -> str:
-        """raw bytes → 문자열. CP949 먼저 시도 (한국어 Windows 기본)."""
+        """raw bytes → 문자열. SikuliX 0x82→0x5C 백슬래시 복원 + CP949 디코딩."""
+        # SikuliX/Jython이 백슬래시(0x5C)를 0x82로 출력하는 버그 보정
+        fixed = raw_bytes.replace(b'\x82', b'\x5c') if b'\x82' in raw_bytes else raw_bytes
+        try:
+            return fixed.decode("cp949").rstrip()
+        except UnicodeDecodeError:
+            pass
+        try:
+            return fixed.decode("utf-8").rstrip()
+        except UnicodeDecodeError:
+            pass
+        # 보정 실패 시 원본 바이트로 재시도
         try:
             return raw_bytes.decode("cp949").rstrip()
         except UnicodeDecodeError:
-            try:
-                return raw_bytes.decode("utf-8").rstrip()
-            except UnicodeDecodeError:
-                return raw_bytes.decode("utf-8", errors="replace").rstrip()
+            pass
+        try:
+            return raw_bytes.decode("utf-8").rstrip()
+        except UnicodeDecodeError:
+            return raw_bytes.decode("utf-8", errors="replace").rstrip()
 
     def _read_stdout(self) -> None:
         """백그라운드 스레드: stdout raw bytes → 인코딩 감지 → parse_line → 콜백"""
         _BASE = os.path.dirname(os.path.abspath(__file__))
         raw_log_path = os.path.join(_BASE, "live_raw_stdout.log")
         raw_log = open(raw_log_path, "w", encoding="utf-8")
+        hex_log_path = os.path.join(_BASE, "live_raw_hex.log")
+        hex_log = open(hex_log_path, "w", encoding="ascii")
 
         line_no = 0
         proc = self._process
@@ -226,6 +240,11 @@ class LiveProcessSource(DataSource):
                             break
 
                     line_no += 1
+                    # hex 덤프 (경로 깨짐 디버깅용)
+                    hex_str = raw_bytes.rstrip().hex()
+                    hex_log.write(f"{line_no:04d} | {hex_str}\n")
+                    hex_log.flush()
+
                     line = self._decode_line(raw_bytes)
                     raw_log.write(f"{line_no:04d} | {line}\n")
                     raw_log.flush()
@@ -246,4 +265,5 @@ class LiveProcessSource(DataSource):
                 pass
             raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
             raw_log.close()
+            hex_log.close()
             self._running = False
