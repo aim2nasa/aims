@@ -99,6 +99,16 @@ class AutoClickerApp(ctk.CTk):
         )
         self._compact_btn.pack(side="left", pady=5)
 
+        # 자동 축소 체크박스
+        self._auto_compact_var = ctk.BooleanVar(value=True)
+        self._auto_compact_cb = ctk.CTkCheckBox(
+            self._toolbar, text="자동축소",
+            variable=self._auto_compact_var,
+            font=ctk.CTkFont(family=_FONT, size=10),
+            width=30, height=20, checkbox_width=16, checkbox_height=16,
+        )
+        self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)
+
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
@@ -188,7 +198,7 @@ class AutoClickerApp(ctk.CTk):
         self._source.start(on_event=self._on_event)
         self._compact_panel.set_play_state("playing")
 
-        if not self._is_compact:
+        if self._auto_compact_var.get() and not self._is_compact:
             self._enter_compact()
 
         self._poll_update()
