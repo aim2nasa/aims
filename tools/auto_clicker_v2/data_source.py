@@ -132,10 +132,15 @@ class LiveProcessSource(DataSource):
     """SikuliX 프로세스 stdout을 실시간 읽어 이벤트 생성"""
 
     def __init__(self, chosung: str = "", save_dir: str = "",
-                 integrated_view: bool = True):
+                 integrated_view: bool = True,
+                 start_from: str = "", only_customer: str = "",
+                 resume: bool = False):
         self.chosung = chosung
         self.save_dir = save_dir
         self.integrated_view = integrated_view
+        self.start_from = start_from
+        self.only_customer = only_customer
+        self.resume = resume
         self._process: Optional[subprocess.Popen] = None
         self._thread: Optional[threading.Thread] = None
         self._running = False
@@ -155,6 +160,12 @@ class LiveProcessSource(DataSource):
             extra_args += ["--save-dir", self.save_dir]
         if self.integrated_view:
             extra_args += ["--integrated-view"]
+        if self.start_from:
+            extra_args += ["--start-from", self.start_from]
+        if self.only_customer:
+            extra_args += ["--only", self.only_customer]
+        if self.resume:
+            extra_args += ["--resume"]
         if extra_args:
             cmd += ["--"] + extra_args
 

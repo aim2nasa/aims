@@ -1284,7 +1284,12 @@ if _raw_chosung:
         SELECTED_CHOSUNG = _raw_chosung.decode('utf-8')
     else:
         SELECTED_CHOSUNG = _raw_chosung
-    CHOSUNG_BUTTONS = [(name, img) for name, img in ALL_CHOSUNG_BUTTONS if name == SELECTED_CHOSUNG]
+    # 콤마 구분 복수 초성 지원 (예: "ㄱ,ㄴ,ㄷ")
+    if u"," in SELECTED_CHOSUNG:
+        _selected_set = set(SELECTED_CHOSUNG.split(u","))
+        CHOSUNG_BUTTONS = [(name, img) for name, img in ALL_CHOSUNG_BUTTONS if name in _selected_set]
+    else:
+        CHOSUNG_BUTTONS = [(name, img) for name, img in ALL_CHOSUNG_BUTTONS if name == SELECTED_CHOSUNG]
     if not CHOSUNG_BUTTONS:
         raise ValueError(u"잘못된 초성: %s (가능: ㄱ,ㄴ,ㄷ,ㄹ,ㅁ,ㅂ,ㅅ,ㅇ,ㅈ,ㅊ,ㅋ,ㅌ,ㅍ,ㅎ,기타)" % SELECTED_CHOSUNG)
 else:

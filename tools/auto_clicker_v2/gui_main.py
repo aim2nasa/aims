@@ -34,6 +34,21 @@ NORMAL_X = 1376
 NORMAL_Y = 454
 _NORMAL_GEOMETRY = f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{NORMAL_X}+{NORMAL_Y}"
 
+_CHOSUNGS = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","기타"]
+
+_CHOSUNGS_FULL = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"]
+_DOUBLE_MAP = {"ㄲ": "ㄱ", "ㄸ": "ㄷ", "ㅃ": "ㅂ", "ㅆ": "ㅅ", "ㅉ": "ㅈ"}
+
+def _chosung_of(name: str) -> str:
+    """고객명 첫 글자에서 초성 추출 (홍길동 → ㅎ)"""
+    if not name:
+        return ""
+    code = ord(name[0])
+    if 0xAC00 <= code <= 0xD7A3:
+        ch = _CHOSUNGS_FULL[(code - 0xAC00) // 588]
+        return _DOUBLE_MAP.get(ch, ch)
+    return "기타"
+
 
 class AutoClickerApp(ctk.CTk):
     def __init__(self):
@@ -59,6 +74,11 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
+        self._settings = {
+            'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
+            'mode': 'normal',              # normal / start_from / only / resume
+            'target': '',                  # start_from, only 시 고객명
+        }
 
         self._build_ui()
         self.after(50, self._apply_titlebar_style)
@@ -124,7 +144,7 @@ class AutoClickerApp(ctk.CTk):
         # 사용법 단계
         steps = [
             "1.  MetDO 화면을 전체화면(최대화)으로 설정",
-            "2.  초성 선택 (기본: 전체)",
+            "2.  [설정]에서 초성 및 실행 옵션 변경 (선택)",
             "3.  [실행] 버튼 클릭",
         ]
         for i, step in enumerate(steps):
@@ -148,17 +168,14 @@ class AutoClickerApp(ctk.CTk):
         self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
         self._toolbar.pack_propagate(False)
 
-        # 초성 선택
-        self._chosung_var = ctk.StringVar(value="전체")
-        self._chosung_menu = ctk.CTkOptionMenu(
-            self._toolbar,
-            values=["전체", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ",
-                    "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ", "기타"],
-            variable=self._chosung_var, width=70,
+        # 설정 버튼
+        self._settings_btn = ctk.CTkButton(
+            self._toolbar, text="설정", width=50, height=28,
+            command=self._open_settings,
             font=ctk.CTkFont(family=_FONT, size=12),
-            dropdown_font=ctk.CTkFont(family=_FONT, size=12)
+            fg_color="gray30", hover_color="gray40"
         )
-        self._chosung_menu.pack(side="left", padx=(6, 8), pady=5)
+        self._settings_btn.pack(side="left", padx=(6, 8), pady=5)
 
         # 실행 버튼
         self._run_btn = ctk.CTkButton(
@@ -221,6 +238,14 @@ class AutoClickerApp(ctk.CTk):
             command=self._choose_save_dir,
         ).pack(side="right", padx=(0, 6), pady=3)
 
+        # 설정 요약 표시
+        self._settings_summary = ctk.CTkLabel(
+            self, text="초성: 전체",
+            font=ctk.CTkFont(family=_FONT, size=10), text_color="gray70",
+            height=18, anchor="w",
+        )
+        self._settings_summary.pack(fill="x", padx=10, pady=(1, 0))
+
         # 일반 모드 컨텐츠
         self._build_normal_content()
 
@@ -260,11 +285,30 @@ class AutoClickerApp(ctk.CTk):
         self._log_panel.clear()
         self._compact_panel.clear()
 
-        chosung = self._chosung_var.get()
-        if chosung == "전체":
-            chosung = ""
+        # 설정 유효성 검증
+        if not self._settings['chosungs']:
+            messagebox.showwarning(
+                "설정 오류",
+                "초성을 1개 이상 선택해주세요.\n[설정] 버튼에서 초성을 선택해주세요.",
+            )
+            return
 
-        self._source = LiveProcessSource(chosung=chosung, save_dir=self._save_dir)
+        mode = self._settings['mode']
+        target = self._settings['target']
+        if mode in ('start_from', 'only') and not target:
+            messagebox.showwarning(
+                "설정 오류",
+                "고객명을 입력해주세요.\n[설정] 버튼에서 고객명을 입력해주세요.",
+            )
+            return
+
+        chosung = self._get_chosung_arg()
+        self._source = LiveProcessSource(
+            chosung=chosung, save_dir=self._save_dir,
+            start_from=target if mode == 'start_from' else '',
+            only_customer=target if mode == 'only' else '',
+            resume=(mode == 'resume'),
+        )
 
         label = chosung or "전체"
         self._compact_panel.set_chosung(chosung)
@@ -364,6 +408,7 @@ class AutoClickerApp(ctk.CTk):
 
         self._toolbar.pack_forget()
         self._savedir_frame.pack_forget()
+        self._settings_summary.pack_forget()
         self._normal_frame.pack_forget()
         self._compact_panel.pack(fill="both", expand=True)
 
@@ -396,6 +441,7 @@ class AutoClickerApp(ctk.CTk):
 
         self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
         self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
+        self._settings_summary.pack(fill="x", padx=10, pady=(1, 0))
         self._normal_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
         self.geometry(_NORMAL_GEOMETRY)
@@ -415,6 +461,248 @@ class AutoClickerApp(ctk.CTk):
             elif self._state.is_complete:
                 self._compact_panel.set_play_state("complete")
             self._compact_panel.update_state(self._state)
+
+    # ===== 설정 모달 =====
+
+    def _open_settings(self):
+        """설정 모달 열기"""
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("설정")
+        dlg.resizable(False, False)
+        dlg.attributes("-topmost", True)
+        dlg.grab_set()
+
+        dlg_w = 620
+        _CLR_ON = "#2563eb"
+        _CLR_OFF = "#404040"
+        _CLR_HOVER_ON = "#3b82f6"
+        _CLR_HOVER_OFF = "#555555"
+
+        def _style(on):
+            return {"fg_color": _CLR_ON if on else _CLR_OFF,
+                    "hover_color": _CLR_HOVER_ON if on else _CLR_HOVER_OFF}
+
+        # ────────────────── 실행 모드 (항상 표시) ──────────────────
+        ctk.CTkLabel(
+            dlg, text="실행 모드", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
+        ).pack(fill="x", padx=24, pady=(18, 8))
+
+        _cur_mode = [self._settings['mode']]
+        target_var = ctk.StringVar(value=self._settings['target'])
+        _sel = set(self._settings['chosungs'])
+
+        mode_btns = {}
+        mode_descs = {
+            'normal':     "선택된 초성의 고객을 순서대로 처리",
+            'start_from': "지정 고객부터 이후 순서대로 처리",
+            'only':       "해당 고객만 처리 (동명이인 포함)",
+            'resume':     "마지막 중단 지점부터 자동 재개",
+        }
+
+        mode_desc_label = ctk.CTkLabel(
+            dlg, text="", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=11), text_color="#aaaaaa",
+        )
+
+        mode_row = ctk.CTkFrame(dlg, fg_color="transparent")
+        mode_row.pack(fill="x", padx=24, pady=(0, 4))
+
+        mode_labels = [
+            ('normal', '초성'),
+            ('start_from', '고객부터'),
+            ('only', '고객만'),
+            ('resume', '이어서'),
+        ]
+        for key, label in mode_labels:
+            btn = ctk.CTkButton(
+                mode_row, text=label, width=110, height=32, corner_radius=6,
+                font=ctk.CTkFont(family=_FONT, size=12),
+                **_style(key == _cur_mode[0]),
+                command=lambda k=key: _set_mode(k),
+            )
+            btn.pack(side="left", padx=3)
+            mode_btns[key] = btn
+
+        mode_desc_label.configure(text=mode_descs[_cur_mode[0]])
+        mode_desc_label.pack(fill="x", padx=28, pady=(2, 0))
+
+        sep_top = ctk.CTkFrame(dlg, height=1, fg_color="gray50")
+
+        # ────────────────── 초성 선택 (동적) ──────────────────
+        ch_section = ctk.CTkFrame(dlg, fg_color="transparent")
+
+        ctk.CTkLabel(
+            ch_section, text="초성 선택", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
+        ).pack(fill="x", padx=24, pady=(0, 8))
+
+        ch_btns = {}
+
+        def _sync_all():
+            ch_btns['ALL'].configure(**_style(len(_sel) == len(_CHOSUNGS)))
+
+        def _toggle(ch):
+            on = ch not in _sel
+            _sel.add(ch) if on else _sel.discard(ch)
+            ch_btns[ch].configure(**_style(on))
+            _sync_all()
+
+        def _toggle_all():
+            if len(_sel) == len(_CHOSUNGS):
+                _sel.clear()
+                for k in ch_btns: ch_btns[k].configure(**_style(False))
+            else:
+                _sel.update(_CHOSUNGS)
+                for k in ch_btns: ch_btns[k].configure(**_style(True))
+
+        ch_row = ctk.CTkFrame(ch_section, fg_color="transparent")
+        ch_row.pack(fill="x", padx=24, pady=(0, 0))
+
+        all_btn = ctk.CTkButton(
+            ch_row, text="ALL", width=42, height=32, corner_radius=6,
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
+            **_style(len(_sel) == len(_CHOSUNGS)), command=_toggle_all,
+        )
+        all_btn.pack(side="left", padx=(0, 6))
+        ch_btns['ALL'] = all_btn
+
+        for ch in _CHOSUNGS:
+            w = 38 if ch == "기타" else 30
+            btn = ctk.CTkButton(
+                ch_row, text=ch, width=w, height=32, corner_radius=6,
+                font=ctk.CTkFont(family=_FONT, size=13),
+                **_style(ch in _sel),
+                command=lambda c=ch: _toggle(c),
+            )
+            btn.pack(side="left", padx=1)
+            ch_btns[ch] = btn
+
+        # ────────────────── 고객명 입력 (동적) ──────────────────
+        target_section = ctk.CTkFrame(dlg, fg_color="transparent")
+
+        ctk.CTkLabel(
+            target_section, text="고객명", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
+        ).pack(fill="x", padx=24, pady=(0, 8))
+
+        target_inner = ctk.CTkFrame(target_section, fg_color="transparent")
+        target_inner.pack(fill="x", padx=24)
+
+        target_entry = ctk.CTkEntry(
+            target_inner, textvariable=target_var,
+            width=340, height=34,
+            font=ctk.CTkFont(family=_FONT, size=13),
+            placeholder_text="고객명 입력",
+        )
+        target_entry.pack(side="left")
+
+        # ────────────────── 하단 (항상 표시) ──────────────────
+        sep_bottom = ctk.CTkFrame(dlg, height=1, fg_color="gray50")
+        btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+
+        def _confirm():
+            self._settings['mode'] = _cur_mode[0]
+            self._settings['target'] = target_var.get().strip()
+            m = _cur_mode[0]
+            if m in ('start_from', 'only'):
+                # 고객명에서 초성 자동 추출
+                ch = _chosung_of(self._settings['target'])
+                self._settings['chosungs'] = {ch} if ch else set(_CHOSUNGS)
+            elif m == 'resume':
+                # 이어서: 초성 불필요 (스크립트가 저장 상태에서 판단)
+                self._settings['chosungs'] = set(_CHOSUNGS)
+            else:
+                self._settings['chosungs'] = set(_sel)
+            self._update_settings_summary()
+            dlg.destroy()
+
+        ctk.CTkButton(
+            btn_frame, text="확인", width=100, height=36,
+            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
+            command=_confirm,
+        ).pack(side="right", padx=(10, 0))
+
+        ctk.CTkButton(
+            btn_frame, text="취소", width=100, height=36,
+            font=ctk.CTkFont(family=_FONT, size=14),
+            fg_color="gray30", hover_color="gray40",
+            command=dlg.destroy,
+        ).pack(side="right")
+
+        # ────────────────── 동적 레이아웃 ──────────────────
+        _heights = {'normal': 300, 'start_from': 300, 'only': 300, 'resume': 230}
+        _dynamic = [sep_top, ch_section, target_section, sep_bottom, btn_frame]
+
+        _first_show = [True]
+
+        def _refresh():
+            m = _cur_mode[0]
+            for w in _dynamic:
+                w.pack_forget()
+
+            sep_top.pack(fill="x", padx=24, pady=(10, 14))
+
+            if m == 'normal':
+                ch_section.pack(fill="x", pady=(0, 10))
+            if m in ('start_from', 'only'):
+                target_section.pack(fill="x", pady=(0, 6))
+
+            sep_bottom.pack(fill="x", padx=24, pady=(10, 14))
+            btn_frame.pack(fill="x", padx=24, pady=(0, 18))
+
+            h = _heights.get(m, 300)
+            if _first_show[0]:
+                # 최초: 부모 중앙 배치
+                px = self.winfo_x() + (self.winfo_width() - dlg_w) // 2
+                py = self.winfo_y() + (self.winfo_height() - h) // 2
+                dlg.geometry(f"{dlg_w}x{h}+{px}+{py}")
+                _first_show[0] = False
+            else:
+                # 모드 전환: 현재 위치 유지, 높이만 변경
+                dlg.geometry(f"{dlg_w}x{h}")
+
+        def _set_mode(m):
+            _cur_mode[0] = m
+            for k, b in mode_btns.items():
+                b.configure(**_style(k == m))
+            mode_desc_label.configure(text=mode_descs[m])
+            if m in ('start_from', 'only'):
+                target_entry.focus_set()
+            _refresh()
+
+        _refresh()
+
+    def _get_chosung_arg(self) -> str:
+        """선택된 초성을 CLI 인자 문자열로 변환"""
+        if len(self._settings['chosungs']) == len(_CHOSUNGS):
+            return ""
+        if not self._settings['chosungs']:
+            return ""
+        return ",".join(c for c in _CHOSUNGS if c in self._settings['chosungs'])
+
+    def _update_settings_summary(self):
+        """메인 GUI 설정 요약 라벨 갱신"""
+        parts = []
+        chosungs = self._settings['chosungs']
+        if len(chosungs) == len(_CHOSUNGS):
+            parts.append("초성: 전체")
+        elif len(chosungs) == 0:
+            parts.append("초성: 없음")
+        else:
+            selected = [c for c in _CHOSUNGS if c in chosungs]
+            parts.append("초성: " + ",".join(selected))
+
+        mode = self._settings['mode']
+        target = self._settings['target']
+        if mode == 'start_from' and target:
+            parts.append(f"시작: {target}")
+        elif mode == 'only' and target:
+            parts.append(f"고객: {target}")
+        elif mode == 'resume':
+            parts.append("이어서")
+
+        self._settings_summary.configure(text=" | ".join(parts))
 
     # ===== 저장 경로 =====
 
