@@ -1,0 +1,218 @@
+# -*- coding: utf-8 -*-
+"""
+앱 상태 관리: LogEvent를 수신하여 GUI에 필요한 상태를 업데이트
+"""
+from dataclasses import dataclass, field
+from typing import Optional
+from log_parser import LogEvent
+
+
+@dataclass
+class CustomerRow:
+    no: int
+    name: str
+    type: str = ""
+    phone: str = ""
+    status: str = "pending"  # pending, processing, done, skipped, error
+
+
+@dataclass
+class AppState:
+    # 헤더 정보
+    ocr_mode: str = ""
+    chosung: str = ""
+    only_customer: str = ""
+    is_integrated_view: bool = False
+
+    # 진행 상황
+    current_phase: int = 0
+    current_phase_desc: str = ""
+    current_chosung: str = ""
+    current_navi: int = 0
+    current_scroll: int = 0
+    total_scroll: int = 0
+
+    # OCR
+    ocr_elapsed: float = 0.0
+    ocr_count: int = 0
+
+    # 고객 테이블
+    customers: list[CustomerRow] = field(default_factory=list)
+    current_customer_index: int = 0  # 1-based (로그 형식)
+    total_customers: int = 0
+    processed_count: int = 0
+
+    # PDF 결과
+    pdf_saved: int = 0
+    pdf_duplicates: int = 0
+    pdf_errors: int = 0
+    ar_saved: int = 0
+    ar_not_found: int = 0
+
+    # Summary
+    total_rows: int = 0
+    total_errors: int = 0
+    elapsed_time: str = ""
+
+    # 로그 라인 버퍼
+    log_lines: list[str] = field(default_factory=list)
+
+    # 완료 여부
+    is_complete: bool = False
+
+    # 내부 추적
+    _processing_customer: Optional[str] = field(default=None, repr=False)
+
+    def process_event(self, event: LogEvent) -> None:
+        """이벤트를 수신하여 상태 업데이트"""
+        # 모든 이벤트의 raw 텍스트를 로그에 추가
+        if event.raw and event.type != "raw_line":
+            self.log_lines.append(event.raw)
+        elif event.type == "raw_line":
+            # 구분선(===, ---, ###)과 [log] 라인은 제외
+            r = event.raw.strip()
+            if r and not r.startswith("=") and not r.startswith("-") and not r.startswith("#") and not r.startswith("[log]"):
+                self.log_lines.append(event.raw)
+
+        handler = _HANDLERS.get(event.type)
+        if handler:
+            handler(self, event)
+
+
+def _handle_header_ocr_mode(state: AppState, event: LogEvent):
+    state.ocr_mode = event.data["mode"]
+
+def _handle_header_chosung(state: AppState, event: LogEvent):
+    state.chosung = event.data["chosung"]
+
+def _handle_header_only(state: AppState, event: LogEvent):
+    state.only_customer = event.data["customer"]
+
+def _handle_header_integrated(state: AppState, event: LogEvent):
+    state.is_integrated_view = "활성화" in event.raw
+
+def _handle_phase_start(state: AppState, event: LogEvent):
+    state.current_phase = event.data["phase"]
+    state.current_phase_desc = event.data["desc"]
+
+def _handle_chosung_start(state: AppState, event: LogEvent):
+    state.current_chosung = event.data["chosung"]
+    # 초성 변경 시 고객 테이블 초기화
+    state.customers.clear()
+    state.processed_count = 0
+    state.current_customer_index = 0
+
+def _handle_navi_start(state: AppState, event: LogEvent):
+    state.current_navi = event.data["navi"]
+
+def _handle_scroll_page(state: AppState, event: LogEvent):
+    state.current_scroll = event.data["scroll_page"]
+    state.total_scroll = event.data["total_page"]
+
+def _handle_ocr_response(state: AppState, event: LogEvent):
+    state.ocr_elapsed = event.data["elapsed"]
+
+def _handle_ocr_result(state: AppState, event: LogEvent):
+    state.ocr_count = event.data["count"]
+    # 새 OCR 결과 시 고객 테이블 갱신 준비
+    state.customers.clear()
+
+def _handle_ocr_table_row(state: AppState, event: LogEvent):
+    d = event.data
+    state.customers.append(CustomerRow(
+        no=d["no"],
+        name=d["name"],
+        type=d["type"],
+        phone=d["phone"],
+        status="pending",
+    ))
+
+def _handle_customer_process_start(state: AppState, event: LogEvent):
+    state.total_customers = event.data["count"]
+
+def _handle_customer_click(state: AppState, event: LogEvent):
+    state.current_customer_index = event.data["index"]
+    name = event.data["name"]
+    state._processing_customer = name
+    # 테이블에서 해당 고객 상태 업데이트
+    for c in state.customers:
+        if c.name == name and c.status == "pending":
+            c.status = "processing"
+            break
+
+def _handle_customer_skip(state: AppState, event: LogEvent):
+    name = event.data["name"]
+    for c in state.customers:
+        if c.name == name and c.status == "pending":
+            c.status = "skipped"
+            break
+
+def _handle_customer_done(state: AppState, event: LogEvent):
+    name = event.data["name"]
+    state.processed_count += 1
+    for c in state.customers:
+        if c.name == name and c.status == "processing":
+            c.status = "done"
+            break
+    state._processing_customer = None
+
+def _handle_pdf_save_done(state: AppState, event: LogEvent):
+    state.pdf_saved += 1
+
+def _handle_pdf_duplicate(state: AppState, event: LogEvent):
+    state.pdf_duplicates += 1
+
+def _handle_ar_not_found(state: AppState, event: LogEvent):
+    state.ar_not_found += 1
+
+def _handle_ar_found(state: AppState, event: LogEvent):
+    state.ar_saved += 1
+
+def _handle_summary_total(state: AppState, event: LogEvent):
+    state.total_rows = event.data["rows"]
+    state.total_errors = event.data["errors"]
+    state.elapsed_time = event.data["elapsed"]
+
+def _handle_summary_pdf(state: AppState, event: LogEvent):
+    state.pdf_saved = event.data["saved"]
+    state.pdf_duplicates = event.data["duplicates"]
+    state.pdf_errors = event.data["errors"]
+
+def _handle_summary_ar(state: AppState, event: LogEvent):
+    state.ar_saved = event.data["saved"]
+    state.ar_not_found = event.data["not_found"]
+
+def _handle_complete_time(state: AppState, event: LogEvent):
+    state.elapsed_time = event.data["elapsed"]
+
+def _handle_complete_ok(state: AppState, event: LogEvent):
+    state.is_complete = True
+
+
+_HANDLERS = {
+    "header_ocr_mode": _handle_header_ocr_mode,
+    "header_chosung": _handle_header_chosung,
+    "header_only": _handle_header_only,
+    "header_integrated": _handle_header_integrated,
+    "phase_start": _handle_phase_start,
+    "chosung_start": _handle_chosung_start,
+    "navi_start": _handle_navi_start,
+    "scroll_page": _handle_scroll_page,
+    "ocr_response": _handle_ocr_response,
+    "ocr_result": _handle_ocr_result,
+    "ocr_table_row": _handle_ocr_table_row,
+    "customer_process_start": _handle_customer_process_start,
+    "customer_click": _handle_customer_click,
+    "customer_skip": _handle_customer_skip,
+    "customer_done": _handle_customer_done,
+    "pdf_save_done": _handle_pdf_save_done,
+    "pdf_duplicate": _handle_pdf_duplicate,
+    "pdf_verified_skip": _handle_pdf_duplicate,  # 중복 스킵도 동일 처리
+    "ar_not_found": _handle_ar_not_found,
+    "ar_found": _handle_ar_found,
+    "summary_total": _handle_summary_total,
+    "summary_pdf": _handle_summary_pdf,
+    "summary_ar": _handle_summary_ar,
+    "complete_time": _handle_complete_time,
+    "complete_ok": _handle_complete_ok,
+}
