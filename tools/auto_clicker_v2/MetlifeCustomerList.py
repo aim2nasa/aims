@@ -796,7 +796,7 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
                         from verify_customer_integrated_view import verify_customer_integrated_view
-                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name)
+                        view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
                         log(u"        -> 고객통합뷰 처리 완료")
                         # 결과 수집 (초성별 summary용)
                         if isinstance(view_result, dict):

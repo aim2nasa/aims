@@ -52,11 +52,11 @@ try:
 except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
-# 경로 설정
-SCRIPT_DIR = r"D:\aims\tools\MetlifePDF_v2.sikuli"
+# 경로 설정 (동적 감지 - auto_clicker_v2 기준)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCREENSHOT_DIR = os.path.join(SCRIPT_DIR, "screenshots")
-ERROR_DIR = os.path.join(SCRIPT_DIR, "errors")  # 오류 전용 폴더
-ERROR_LOG_FILE = os.path.join(ERROR_DIR, "error_log.txt")  # 오류 로그 파일
+ERROR_DIR = os.path.join(SCRIPT_DIR, "errors")
+ERROR_LOG_FILE = os.path.join(ERROR_DIR, "error_log.txt")
 
 # 스크린샷 폴더 생성
 if not os.path.exists(SCREENSHOT_DIR):
@@ -2415,17 +2415,30 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
         return False
 
 
-def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None):
+def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, output_dir=None):
     """
     고객통합뷰 진입/종료 검증
 
     Args:
         pdf_save_dir: PDF 저장 디렉토리 (None이면 기본 위치)
         customer_name: 고객명 (파일명에 사용, None이면 기본명)
+        output_dir: 출력 기본 디렉토리 (스크린샷/에러/로그 저장 위치)
 
     Returns:
         bool: 검증 성공 여부
     """
+    # 외부에서 호출 시 출력 경로 설정 (스크린샷/에러/로그)
+    global SCREENSHOT_DIR, ERROR_DIR, ERROR_LOG_FILE, LOG_FILE
+    if output_dir:
+        SCREENSHOT_DIR = os.path.join(output_dir, "screenshots")
+        ERROR_DIR = os.path.join(output_dir, "errors")
+        ERROR_LOG_FILE = os.path.join(ERROR_DIR, "error_log.txt")
+        LOG_FILE = os.path.join(output_dir, "debug_log.txt")
+        if not os.path.exists(SCREENSHOT_DIR):
+            os.makedirs(SCREENSHOT_DIR)
+        if not os.path.exists(ERROR_DIR):
+            os.makedirs(ERROR_DIR)
+
     # 외부에서 호출 시 PDF 저장 경로 설정
     global PDF_DOWNLOAD_DIR
     if pdf_save_dir:
