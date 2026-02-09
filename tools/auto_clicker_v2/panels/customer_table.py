@@ -38,14 +38,14 @@ class CustomerTablePanel(ctk.CTkFrame):
             background="#2b2b2b",
             foreground="white",
             fieldbackground="#2b2b2b",
-            rowheight=22,
-            font=(_FONT, 10),
+            rowheight=19,
+            font=(_FONT, 9),
         )
         style.configure(
             "Custom.Treeview.Heading",
             background="#3b3b3b",
             foreground="white",
-            font=(_FONT, 10, "bold"),
+            font=(_FONT, 9, "bold"),
         )
         style.map("Custom.Treeview", background=[("selected", "#1f538d")])
 

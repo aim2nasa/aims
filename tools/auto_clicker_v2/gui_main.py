@@ -26,14 +26,21 @@ from panels.compact_panel import CompactPanel
 COMPACT_HEIGHT = 47
 COMPACT_WIDTH = 850
 
+# 일반 모드 고정 크기/위치 (1920x1080 기준)
+NORMAL_WIDTH = 480
+NORMAL_HEIGHT = 440
+NORMAL_X = 1376
+NORMAL_Y = 454
+_NORMAL_GEOMETRY = f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{NORMAL_X}+{NORMAL_Y}"
+
 
 class AutoClickerApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
         self.title("AutoClicker v2")
-        self.geometry("580x480")
-        self.minsize(480, 380)
+        self.geometry(_NORMAL_GEOMETRY)
+        self.resizable(False, False)
 
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -51,7 +58,6 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
-        self._normal_geometry = "580x480"
 
         self._build_ui()
 
@@ -242,7 +248,6 @@ class AutoClickerApp(ctk.CTk):
     def _enter_compact(self):
         self._is_compact = True
         self._compact_btn.configure(text="\u2197 확대", fg_color="#1f538d")
-        self._normal_geometry = self.geometry()
 
         self._toolbar.pack_forget()
         self._savedir_frame.pack_forget()
@@ -256,8 +261,6 @@ class AutoClickerApp(ctk.CTk):
         compact_y = taskbar_y - COMPACT_HEIGHT
 
         self.withdraw()
-        self.minsize(1, 1)
-        self.resizable(False, False)
         self.geometry(f"{COMPACT_WIDTH}x{COMPACT_HEIGHT}+{compact_x}+{compact_y}")
         self.update_idletasks()
         self.overrideredirect(True)
@@ -277,9 +280,7 @@ class AutoClickerApp(ctk.CTk):
         self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
         self._normal_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
-        self.minsize(480, 380)
-        self.resizable(True, True)
-        self.geometry(self._normal_geometry)
+        self.geometry(_NORMAL_GEOMETRY)
 
         # 모드 전환 후 일반 패널 즉시 갱신 (폴링 중단 시에도 최신 상태 보장)
         self._progress_panel.update_state(self._state)
