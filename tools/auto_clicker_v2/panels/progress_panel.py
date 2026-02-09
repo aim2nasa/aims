@@ -19,18 +19,18 @@ class ProgressPanel(ctk.CTkFrame):
         # Line 1: 초성 + 현재활동 + 처리현황
         self._line1 = ctk.CTkLabel(
             self, text="대기 중",
-            font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
             text_color="#5dade2", anchor="w"
         )
-        self._line1.pack(fill="x", padx=8, pady=(4, 0))
+        self._line1.pack(fill="x", padx=8, pady=(2, 0))
 
         # Line 2: 단계 + 네비 + OCR + 소요시간
         self._line2 = ctk.CTkLabel(
             self, text="",
-            font=ctk.CTkFont(family=_FONT, size=11),
+            font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60", anchor="w"
         )
-        self._line2.pack(fill="x", padx=8, pady=(0, 4))
+        self._line2.pack(fill="x", padx=8, pady=(0, 2))
 
     def update_state(self, state) -> None:
         # === Line 1: [ㄱ] 활동 | 전체N 완료M ===
