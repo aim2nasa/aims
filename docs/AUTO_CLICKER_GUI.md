@@ -1,4 +1,4 @@
-# MetLife 고객목록 자동화 GUI 모니터 구현 계획
+# AutoClicker GUI 구현 계획
 
 ## Context
 
@@ -142,7 +142,7 @@ class LiveProcessSource(DataSource):
 ## 파일 구조
 
 ```
-tools/metlife_monitor/
+tools/auto_clicker/
 ├── main.py              # 엔트리포인트
 ├── log_parser.py        # 로그 → 이벤트 파싱
 ├── data_source.py       # FileReplay / LiveStream

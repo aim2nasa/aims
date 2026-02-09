@@ -26,7 +26,7 @@ COMPACT_HEIGHT = 47    # "다음" 버튼 하단(~Y=985) ~ 작업표시줄(Y=1032
 COMPACT_WIDTH = 850    # Nexacro 탭 우측 ~ 화면 끝
 
 
-class MetlifeMonitorApp(ctk.CTk):
+class AutoClickerApp(ctk.CTk):
     def __init__(self, save_dir: str = ""):
         super().__init__()
 

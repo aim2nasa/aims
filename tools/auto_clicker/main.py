@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-MetLife 고객목록 자동화 모니터 - 엔트리포인트
+AutoClicker - 엔트리포인트
 
 Usage:
     python main.py                                    # GUI 열기
@@ -14,7 +14,7 @@ import os
 # 모듈 경로 설정
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from gui_main import MetlifeMonitorApp
+from gui_main import AutoClickerApp
 
 
 def _parse_arg(name: str) -> str:
@@ -30,7 +30,7 @@ def main():
     save_dir = _parse_arg("--save-dir")
     replay_file = _parse_arg("--replay")
 
-    app = MetlifeMonitorApp(save_dir=save_dir)
+    app = AutoClickerApp(save_dir=save_dir)
 
     # --replay: 지정된 로그 파일을 자동으로 로드 + 시작
     if replay_file and os.path.exists(replay_file):
