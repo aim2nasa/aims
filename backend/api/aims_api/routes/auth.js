@@ -8,6 +8,9 @@ const { generateToken, authenticateJWT } = require('../middleware/auth');
 const activityLogger = require('../lib/activityLogger');
 const backendLogger = require('../lib/backendLogger');
 
+// 카카오 동의항목 scope (닉네임 + 프로필 사진 + 이메일 필수)
+const KAKAO_SCOPE = ['profile_nickname', 'profile_image', 'account_email'];
+
 // 허용된 리다이렉트 도메인 목록 (보안)
 // - 정확한 문자열 일치만 허용 (Open Redirect 방지)
 // - 모바일 딥링크는 고정 경로만 허용
@@ -98,10 +101,11 @@ module.exports = function(db) {
       // state에 redirect origin 인코딩하여 전달
       return passport.authenticate('kakao', {
         session: false,
+        scope: KAKAO_SCOPE,
         state: Buffer.from(redirectOrigin).toString('base64')
       })(req, res, next);
     }
-    passport.authenticate('kakao', { session: false })(req, res, next);
+    passport.authenticate('kakao', { session: false, scope: KAKAO_SCOPE })(req, res, next);
   });
 
   /**
@@ -115,10 +119,11 @@ module.exports = function(db) {
     if (redirectOrigin && isAllowedRedirect(redirectOrigin)) {
       return passport.authenticate('kakao-switch', {
         session: false,
+        scope: KAKAO_SCOPE,
         state: Buffer.from(redirectOrigin).toString('base64')
       })(req, res, next);
     }
-    passport.authenticate('kakao-switch', { session: false })(req, res, next);
+    passport.authenticate('kakao-switch', { session: false, scope: KAKAO_SCOPE })(req, res, next);
   });
 
   /**
