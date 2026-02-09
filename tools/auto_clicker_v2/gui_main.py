@@ -91,7 +91,7 @@ class AutoClickerApp(ctk.CTk):
 
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
-            self._toolbar, text="컴팩트", width=80,
+            self._toolbar, text="\u2199 축소", width=80,
             command=self._toggle_compact,
             font=ctk.CTkFont(family=_FONT, size=13),
             fg_color="gray30", hover_color="gray40"
@@ -184,7 +184,8 @@ class AutoClickerApp(ctk.CTk):
         self._source = LiveProcessSource(chosung=chosung, save_dir=self._save_dir)
 
         label = chosung or "전체"
-        self._compact_panel.set_file_loaded(f"[{label}] 실행 중")
+        self._compact_panel.set_chosung(chosung)
+        self._compact_panel.set_file_loaded(f"실행 중")
         self._run_btn.configure(
             text="중지", fg_color="#c0392b", hover_color="#e74c3c"
         )
@@ -252,7 +253,7 @@ class AutoClickerApp(ctk.CTk):
 
     def _enter_compact(self):
         self._is_compact = True
-        self._compact_btn.configure(text="일반", fg_color="#1f538d")
+        self._compact_btn.configure(text="\u2197 확대", fg_color="#1f538d")
         self._normal_geometry = self.geometry()
 
         self._toolbar.pack_forget()
@@ -277,7 +278,7 @@ class AutoClickerApp(ctk.CTk):
 
     def _exit_compact(self):
         self._is_compact = False
-        self._compact_btn.configure(text="컴팩트", fg_color="gray30")
+        self._compact_btn.configure(text="\u2199 축소", fg_color="gray30")
 
         self._compact_panel.pack_forget()
         self.overrideredirect(False)

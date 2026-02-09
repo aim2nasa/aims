@@ -36,14 +36,22 @@ class CompactPanel(ctk.CTkFrame):
 
         # === 단일 행 레이아웃 ===
 
-        # [⊞] 토글 버튼 (일반 모드로 전환)
+        # 토글 버튼: 컴팩트→일반(확대) 전환  ↗ = 크게 보기
         self._toggle_btn = ctk.CTkButton(
-            self, text="\u229E", width=28, height=22,
-            font=ctk.CTkFont(family=_FONT, size=13),
+            self, text="\u2197", width=28, height=22,
+            font=ctk.CTkFont(family=_FONT, size=15),
             fg_color="#1f538d", hover_color="#2a6cb8",
             command=self._fire_toggle
         )
         self._toggle_btn.pack(side="left", padx=(3, 4), pady=3)
+
+        # 선택한 초성
+        self._chosung_label = ctk.CTkLabel(
+            self, text="",
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
+            text_color="#5dade2"
+        )
+        self._chosung_label.pack(side="left", padx=(0, 6), pady=3)
 
         # 처리 완료 고객 수
         self._count_label = ctk.CTkLabel(
@@ -101,6 +109,11 @@ class CompactPanel(ctk.CTkFrame):
             self._on_toggle()
 
     # --- 외부에서 호출하는 상태 동기화 ---
+
+    def set_chosung(self, chosung: str):
+        """선택한 초성 표시"""
+        label = chosung or "전체"
+        self._chosung_label.configure(text=f"[{label}]")
 
     def set_file_loaded(self, filename: str):
         """실행 시작 시"""
@@ -163,6 +176,7 @@ class CompactPanel(ctk.CTkFrame):
             self._time_label.configure(text=state.elapsed_time)
 
     def clear(self) -> None:
+        self._chosung_label.configure(text="")
         self._count_label.configure(text="0명")
         self._customer_label.configure(text="대기 중")
         self._activity_label.configure(text="", text_color="gray60")
