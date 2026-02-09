@@ -614,6 +614,55 @@ def dismiss_alert_if_exists():
     return False
 
 
+def dismiss_notice_popups(max_attempts=10):
+    """
+    공지사항 팝업이 있으면 모두 닫기 (레이어링 대응).
+
+    MetLife 로그인 후 공지사항이 여러 개 겹쳐서 표시될 수 있다.
+    "오늘 하루 이 창을 열지 않음" 체크 → X 닫기를 반복하여 모두 제거한다.
+
+    Args:
+        max_attempts: 최대 시도 횟수 (무한루프 방지)
+
+    Returns:
+        int: 닫은 팝업 수
+    """
+    dismissed = 0
+    for _ in range(max_attempts):
+        # 체크박스 텍스트로 공지사항 팝업 감지
+        checkbox = exists(IMG_NOTICE_CHECKBOX, 2)
+        if not checkbox:
+            break
+
+        log(u"    [NOTICE] 공지사항 팝업 감지 (%d번째)" % (dismissed + 1))
+
+        # "오늘 하루 이 창을 열지 않음" 체크
+        try:
+            click(checkbox)
+            sleep(0.5)
+        except:
+            log(u"    [NOTICE] 체크박스 클릭 실패")
+
+        # X(닫기) 버튼 클릭
+        close_btn = exists(IMG_NOTICE_CLOSE, 2)
+        if close_btn:
+            try:
+                click(close_btn)
+                sleep(1)
+                dismissed += 1
+                log(u"    [NOTICE] 공지사항 팝업 닫음 (누적: %d)" % dismissed)
+            except:
+                log(u"    [NOTICE] X 버튼 클릭 실패")
+                break
+        else:
+            log(u"    [NOTICE] X 버튼 미발견 → 중단")
+            break
+
+    if dismissed > 0:
+        log(u"    [NOTICE] 총 %d개 공지사항 팝업 처리 완료" % dismissed)
+    return dismissed
+
+
 def process_customers(customers, fixed_x, base_y, chosung_name, global_page, skip_count=0, is_scrolled=False,
                       nav_page=1, scroll_page=1, resume_skip_until=-1):
     """
@@ -902,6 +951,10 @@ IMG_ARROW_ASC = "img/1769598893800.png"        # ↑ (오름차순 화살표)
 IMG_CLOSE_BTN = "img/1769602665952.png"        # 종료(x) 버튼 [100% 줌]
 IMG_ALERT_OK = "img/1769251121685.png"         # 알림 팝업 "확인" 버튼 (TODO: 100% 캡처 필요)
 IMG_NEXT_BTN = "img/next_btn_100.png"           # 다음 버튼 [100% 줌 - 2026-01-30]
+
+# 공지사항 팝업 (로그인 후 레이어링 표시)
+IMG_NOTICE_CHECKBOX = "img/notice_checkbox.png"  # "오늘 하루 이 창을 열지 않음" 체크박스+텍스트
+IMG_NOTICE_CLOSE = "img/notice_close_btn.png"    # 공지사항 X(닫기) 버튼
 
 # 초성 버튼 이미지 (전체) [100% 줌 - 2026-01-29]
 ALL_CHOSUNG_BUTTONS = [
@@ -1265,6 +1318,10 @@ try:
     click("img/1769598099792.png")  # MetLife 로고 [100% 줌]
     log(u"  [1-1] 메인 화면 로딩 대기 (10초)...")
     sleep(10)
+
+    # 공지사항 팝업 닫기 (레이어링 대응 - 모두 닫을 때까지 반복)
+    log(u"  [1-1a] 공지사항 팝업 확인...")
+    dismiss_notice_popups()
 
     log(u"  [1-2] 고객관리 클릭...")
     click("img/1769598228284.png")  # 고객관리 [100% 줌]
