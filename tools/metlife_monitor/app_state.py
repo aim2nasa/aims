@@ -40,7 +40,8 @@ class AppState:
     customers: list[CustomerRow] = field(default_factory=list)
     current_customer_index: int = 0  # 1-based (로그 형식)
     total_customers: int = 0
-    processed_count: int = 0
+    processed_count: int = 0  # 실제 처리 (done)
+    skipped_count: int = 0    # 스킵
 
     # PDF 결과
     pdf_saved: int = 0
@@ -62,6 +63,7 @@ class AppState:
 
     # 내부 추적
     _processing_customer: Optional[str] = field(default=None, repr=False)
+    _status_map: dict = field(default_factory=dict, repr=False)  # (row_no, name) -> status
 
     def process_event(self, event: LogEvent) -> None:
         """이벤트를 수신하여 상태 업데이트"""
@@ -100,6 +102,7 @@ def _handle_chosung_start(state: AppState, event: LogEvent):
     # 초성 변경 시 고객 테이블 초기화
     state.customers.clear()
     state.processed_count = 0
+    state.skipped_count = 0
     state.current_customer_index = 0
 
 def _handle_navi_start(state: AppState, event: LogEvent):
@@ -114,17 +117,25 @@ def _handle_ocr_response(state: AppState, event: LogEvent):
 
 def _handle_ocr_result(state: AppState, event: LogEvent):
     state.ocr_count = event.data["count"]
-    # 새 OCR 결과 시 고객 테이블 갱신 준비
+    # 기존 상태를 보존한 뒤 테이블 교체 준비 (스크롤 페이지 간 상태 복원)
+    state._status_map = {}
+    for c in state.customers:
+        if c.status != "pending":
+            state._status_map[(c.no, c.name)] = c.status
     state.customers.clear()
 
 def _handle_ocr_table_row(state: AppState, event: LogEvent):
     d = event.data
+    no = d["no"]
+    name = d["name"]
+    # 이전 OCR 스캔에서의 상태 복원 (동일 위치+이름이면 상태 유지)
+    restored_status = state._status_map.get((no, name), "pending")
     state.customers.append(CustomerRow(
-        no=d["no"],
-        name=d["name"],
+        no=no,
+        name=name,
         type=d["type"],
         phone=d["phone"],
-        status="pending",
+        status=restored_status,
     ))
 
 def _handle_customer_process_start(state: AppState, event: LogEvent):
@@ -142,6 +153,7 @@ def _handle_customer_click(state: AppState, event: LogEvent):
 
 def _handle_customer_skip(state: AppState, event: LogEvent):
     name = event.data["name"]
+    state.skipped_count += 1
     for c in state.customers:
         if c.name == name and c.status == "pending":
             c.status = "skipped"

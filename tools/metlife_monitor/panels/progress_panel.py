@@ -61,14 +61,23 @@ class ProgressPanel(ctk.CTkFrame):
         chosung = state.current_chosung or state.chosung or "-"
         self._chosung_val.configure(text=f"[{chosung}]")
 
-        # 프로그레스바
+        # 프로그레스바: done + skipped = 전체 진행률
         total = state.total_customers or state.ocr_count
-        processed = state.processed_count
+        done = state.processed_count
+        skipped = state.skipped_count
+        handled = done + skipped
         if total > 0:
-            progress = processed / total
+            progress = min(handled / total, 1.0)
             self._progress_bar.set(progress)
             pct = int(progress * 100)
-            self._progress_label.configure(text=f"{processed}/{total}명 처리 ({pct}%)")
+            if skipped > 0:
+                self._progress_label.configure(
+                    text=f"{done}명 처리, {skipped}명 스킵 ({handled}/{total}, {pct}%)"
+                )
+            else:
+                self._progress_label.configure(
+                    text=f"{done}/{total}명 처리 ({pct}%)"
+                )
         elif state.is_complete:
             self._progress_bar.set(1.0)
             self._progress_label.configure(text="완료")

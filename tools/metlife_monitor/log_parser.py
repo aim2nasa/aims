@@ -47,6 +47,10 @@ _PATTERNS = {
         r"^\s+\[OCR\]\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S*)\s+(\S*)\s+(\S*)\s+(\S+)$"
     ),
 
+    # 고객통합뷰 (customer_done보다 먼저 매칭되어야 함)
+    "integrated_view_enter": re.compile(r"^\s+-> 고객통합뷰 진입"),
+    "integrated_view_done": re.compile(r"^\s+-> 고객통합뷰 처리 완료$"),
+
     # 고객 처리
     "customer_process_start": re.compile(
         r"^\s+\[고객처리\] (\d+)명 처리 시작 \(중복 (\d+)행 스킵"
@@ -55,10 +59,6 @@ _PATTERNS = {
     "customer_skip": re.compile(r"^\s+\[(\d+)/(\d+)\] (\S+) 스킵"),
     "customer_done": re.compile(r"^\s+-> (\S+) 처리 완료$"),
     "customer_process_end": re.compile(r"^\s+\[고객처리\] (\d+)명 처리 완료$"),
-
-    # 고객통합뷰
-    "integrated_view_enter": re.compile(r"^\s+-> 고객통합뷰 진입"),
-    "integrated_view_done": re.compile(r"^\s+-> 고객통합뷰 처리 완료$"),
 
     # PDF
     "pdf_save_start": re.compile(r"^\s+===== PDF 저장 시작 \[보고서 #(\d+)\] =====$"),
