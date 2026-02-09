@@ -226,13 +226,13 @@ class AutoClickerApp(ctk.CTk):
         self._state.process_event(event)
 
     def _poll_update(self):
-        if self._is_compact:
-            self._compact_panel.update_state(self._state)
-        else:
-            self._progress_panel.update_state(self._state)
-            self._customer_panel.update_state(self._state)
-            self._log_panel.update_state(self._state)
-            self._pdf_panel.update_state(self._state)
+        # 항상 모든 패널 업데이트 (컴팩트/일반 모두)
+        # → 모드 전환 시 항상 최신 상태 보장
+        self._compact_panel.update_state(self._state)
+        self._progress_panel.update_state(self._state)
+        self._customer_panel.update_state(self._state)
+        self._log_panel.update_state(self._state)
+        self._pdf_panel.update_state(self._state)
 
         if self._state.is_complete or (self._source and not self._source.is_running()):
             self._status_label.configure(text="완료", text_color="#4CAF50")
@@ -292,6 +292,12 @@ class AutoClickerApp(ctk.CTk):
         self.minsize(900, 550)
         self.resizable(True, True)
         self.geometry(self._normal_geometry)
+
+        # 모드 전환 후 일반 패널 즉시 갱신 (폴링 중단 시에도 최신 상태 보장)
+        self._progress_panel.update_state(self._state)
+        self._customer_panel.update_state(self._state)
+        self._log_panel.update_state(self._state)
+        self._pdf_panel.update_state(self._state)
 
     def _sync_compact_state(self):
         if self._source:
