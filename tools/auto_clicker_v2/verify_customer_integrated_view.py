@@ -172,7 +172,10 @@ def log(msg):
     # 콘솔 출력 (Java -Dfile.encoding=UTF-8 설정으로 unicode 직접 출력)
     try:
         print(msg_unicode)
-        sys.stdout.flush()  # 파이프 모드에서 실시간 출력 보장
+        # Jython에서는 sys.stdout.flush()가 Java System.out을 flush하지 않음
+        # Java 레벨 flush 필요 (subprocess.PIPE 실시간 전달용)
+        from java.lang import System as _JS
+        _JS.out.flush()
     except:
         pass
 

@@ -61,6 +61,14 @@ class AppState:
     # 완료 여부
     is_complete: bool = False
 
+    # 현재 고객 상세 (고객통합뷰 처리)
+    current_customer_name: str = ""
+    current_activity: str = ""
+    total_customers_done: int = 0
+    _cur_variable_status: str = field(default="", repr=False)  # "" / "없음" / "N건"
+    _cur_ar_status: str = field(default="", repr=False)        # "" / "저장" / "미존재"
+    _cur_pdf_count: int = field(default=0, repr=False)
+
     # 내부 추적
     _processing_customer: Optional[str] = field(default=None, repr=False)
     _status_map: dict = field(default_factory=dict, repr=False)  # (row_no, name) -> status
@@ -96,6 +104,7 @@ def _handle_header_integrated(state: AppState, event: LogEvent):
 def _handle_phase_start(state: AppState, event: LogEvent):
     state.current_phase = event.data["phase"]
     state.current_phase_desc = event.data["desc"]
+    state.current_activity = event.data["desc"]
 
 def _handle_chosung_start(state: AppState, event: LogEvent):
     state.current_chosung = event.data["chosung"]
@@ -145,6 +154,12 @@ def _handle_customer_click(state: AppState, event: LogEvent):
     state.current_customer_index = event.data["index"]
     name = event.data["name"]
     state._processing_customer = name
+    state.current_customer_name = name
+    # 고객별 상태 초기화
+    state._cur_variable_status = ""
+    state._cur_ar_status = ""
+    state._cur_pdf_count = 0
+    state.current_activity = f"{name} 클릭"
     # 테이블에서 해당 고객 상태 업데이트
     for c in state.customers:
         if c.name == name and c.status == "pending":
@@ -170,15 +185,22 @@ def _handle_customer_done(state: AppState, event: LogEvent):
 
 def _handle_pdf_save_done(state: AppState, event: LogEvent):
     state.pdf_saved += 1
+    state._cur_pdf_count += 1
+    state._cur_variable_status = f"{state._cur_pdf_count}건"
+    state.current_activity = f"변액리포트 #{state._cur_pdf_count} 저장"
 
 def _handle_pdf_duplicate(state: AppState, event: LogEvent):
     state.pdf_duplicates += 1
 
 def _handle_ar_not_found(state: AppState, event: LogEvent):
     state.ar_not_found += 1
+    state._cur_ar_status = "미존재"
+    state.current_activity = "AR 미존재"
 
 def _handle_ar_found(state: AppState, event: LogEvent):
     state.ar_saved += 1
+    state._cur_ar_status = "저장"
+    state.current_activity = "AR 저장 완료"
 
 def _handle_summary_total(state: AppState, event: LogEvent):
     state.total_rows = event.data["rows"]
@@ -193,6 +215,22 @@ def _handle_summary_pdf(state: AppState, event: LogEvent):
 def _handle_summary_ar(state: AppState, event: LogEvent):
     state.ar_saved = event.data["saved"]
     state.ar_not_found = event.data["not_found"]
+
+def _handle_verify_customer(state: AppState, event: LogEvent):
+    name = event.data["name"]
+    state.current_customer_name = name
+    state._cur_variable_status = ""
+    state._cur_ar_status = ""
+    state._cur_pdf_count = 0
+    state.current_activity = f"{name} 고객통합뷰 진입"
+
+def _handle_variable_not_exist(state: AppState, event: LogEvent):
+    state._cur_variable_status = "없음"
+    state.current_activity = "변액계약 없음"
+
+def _handle_verify_success(state: AppState, event: LogEvent):
+    state.total_customers_done += 1
+    state.current_activity = f"{state.current_customer_name} 완료"
 
 def _handle_complete_time(state: AppState, event: LogEvent):
     state.elapsed_time = event.data["elapsed"]
@@ -222,6 +260,9 @@ _HANDLERS = {
     "ar_not_found": _handle_ar_not_found,
     "ar_found": _handle_ar_found,
     "ar_duplicate": _handle_ar_found,  # AR 중복도 저장 카운트에 포함
+    "verify_customer": _handle_verify_customer,
+    "variable_not_exist": _handle_variable_not_exist,
+    "verify_success": _handle_verify_success,
     "summary_total": _handle_summary_total,
     "summary_pdf": _handle_summary_pdf,
     "summary_ar": _handle_summary_ar,

@@ -122,8 +122,6 @@ class AutoClickerApp(ctk.CTk):
         self._compact_panel = CompactPanel(
             self,
             on_toggle=self._toggle_compact,
-            on_open=None,
-            on_play=self._toggle_pause,
         )
 
     def _build_normal_content(self):

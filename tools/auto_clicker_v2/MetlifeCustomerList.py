@@ -114,7 +114,10 @@ def log(msg):
     """콘솔과 파일에 동시 로그 출력 (예외 안전)"""
     try:
         print(msg)
-        sys.stdout.flush()  # 파이프 모드에서 실시간 출력 보장
+        # Jython에서는 sys.stdout.flush()가 Java System.out을 flush하지 않음
+        # Java 레벨 flush 필요 (subprocess.PIPE 실시간 전달용)
+        from java.lang import System as _JS
+        _JS.out.flush()
     except:
         pass  # 콘솔 출력 실패 무시
 

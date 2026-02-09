@@ -51,6 +51,11 @@ _PATTERNS = {
     "integrated_view_enter": re.compile(r"^\s+-> 고객통합뷰 진입"),
     "integrated_view_done": re.compile(r"^\s+-> 고객통합뷰 처리 완료$"),
 
+    # 고객통합뷰 검증 (verify_customer_integrated_view.py 출력)
+    "verify_customer": re.compile(r"^고객명: (.+)$"),
+    "variable_not_exist": re.compile(r"^\s+\[INFO\] '변액계약이 존재하지 않습니다'"),
+    "verify_success": re.compile(r"^\[SUCCESS\] 고객통합뷰 검증 완료"),
+
     # 고객 처리
     "customer_process_start": re.compile(
         r"^\s+\[고객처리\] (\d+)명 처리 시작 \(중복 (\d+)행 스킵"
@@ -209,6 +214,8 @@ def _extract_data(event_type: str, m: re.Match) -> dict:
         return {"elapsed": groups[0]}
     elif event_type == "complete_total":
         return {"rows": int(groups[0]), "errors": int(groups[1])}
+    elif event_type == "verify_customer":
+        return {"name": groups[0]}
 
     return {}
 

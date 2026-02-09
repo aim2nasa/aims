@@ -162,12 +162,11 @@ class LiveProcessSource(DataSource):
         self._running = True
         self._paused = False
 
+        # encoding 지정하지 않음 → raw bytes로 읽기 (CP949/UTF-8 자동 감지)
         self._process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            encoding="utf-8",
-            errors="replace",
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
 
@@ -194,11 +193,26 @@ class LiveProcessSource(DataSource):
     def is_running(self) -> bool:
         return self._running
 
+    @staticmethod
+    def _decode_line(raw_bytes: bytes) -> str:
+        """raw bytes → 문자열. UTF-8 시도 후 CP949 폴백."""
+        try:
+            return raw_bytes.decode("utf-8").rstrip()
+        except UnicodeDecodeError:
+            try:
+                return raw_bytes.decode("cp949").rstrip()
+            except UnicodeDecodeError:
+                return raw_bytes.decode("utf-8", errors="replace").rstrip()
+
     def _read_stdout(self) -> None:
-        """백그라운드 스레드: stdout 라인별 읽기 → parse_line → 콜백"""
+        """백그라운드 스레드: stdout raw bytes → 인코딩 감지 → parse_line → 콜백"""
+        _BASE = os.path.dirname(os.path.abspath(__file__))
+        raw_log_path = os.path.join(_BASE, "live_raw_stdout.log")
+        raw_log = open(raw_log_path, "w", encoding="utf-8")
+
         line_no = 0
         try:
-            for raw_line in self._process.stdout:
+            for raw_bytes in self._process.stdout:
                 if not self._running:
                     break
 
@@ -208,13 +222,19 @@ class LiveProcessSource(DataSource):
                         return
 
                 line_no += 1
-                event = parse_line(raw_line, line_no)
+                line = self._decode_line(raw_bytes)
+                raw_log.write(f"{line_no:04d} | {line}\n")
+                raw_log.flush()
+
+                event = parse_line(line, line_no)
                 if event and self._on_event:
                     self._on_event(event)
-        except Exception:
-            pass
+        except Exception as e:
+            raw_log.write(f"\n!!! EXCEPTION: {e}\n")
         finally:
-            # 프로세스 종료 대기
+            rc = None
             if self._process:
-                self._process.wait()
+                rc = self._process.wait()
+            raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
+            raw_log.close()
             self._running = False
