@@ -198,10 +198,11 @@ class AutoClickerApp(ctk.CTk):
         self._source.start(on_event=self._on_event)
         self._compact_panel.set_play_state("playing")
 
-        # 실행 중 항상 최상위 + 위치 고정
+        # 실행 중: 최상위 + 위치 고정 + 타이틀바 제거 (드래그 완전 차단)
         self.attributes("-topmost", True)
         if not self._is_compact:
             self.geometry(_NORMAL_GEOMETRY)
+            self.overrideredirect(True)
 
         if self._auto_compact_var.get() and not self._is_compact:
             self._enter_compact()
@@ -217,9 +218,12 @@ class AutoClickerApp(ctk.CTk):
         )
         self._status_label.configure(text="중지됨", text_color="gray60")
         self._compact_panel.set_play_state("stopped")
-        # 일반 모드면 topmost 해제
+        # 일반 모드: topmost 해제 + 타이틀바 복원
         if not self._is_compact:
+            self.overrideredirect(False)
+            self.title("AutoClicker v2")
             self.attributes("-topmost", False)
+            self.geometry(_NORMAL_GEOMETRY)
 
     def _toggle_pause(self):
         """일시정지 / 재개"""
@@ -238,6 +242,10 @@ class AutoClickerApp(ctk.CTk):
         self._state.process_event(event)
 
     def _poll_update(self):
+        # 실행 중 위치 강제 고정 (드래그 방지)
+        if not self._is_compact:
+            self.geometry(_NORMAL_GEOMETRY)
+
         # 항상 모든 패널 업데이트 (컴팩트/일반 모두)
         # → 모드 전환 시 항상 최신 상태 보장
         self._compact_panel.update_state(self._state)
@@ -252,9 +260,12 @@ class AutoClickerApp(ctk.CTk):
             self._run_btn.configure(
                 text="실행", fg_color="#2d7d46", hover_color="#3a9957"
             )
-            # 완료 → 일반 모드면 topmost 해제
+            # 완료 → 일반 모드: topmost 해제 + 타이틀바 복원
             if not self._is_compact:
+                self.overrideredirect(False)
+                self.title("AutoClicker v2")
                 self.attributes("-topmost", False)
+                self.geometry(_NORMAL_GEOMETRY)
         elif self._source and self._source.is_running():
             self.after(self._update_interval, self._poll_update)
 
