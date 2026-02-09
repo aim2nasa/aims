@@ -62,6 +62,20 @@ app.use(cors({
 }));
 app.use(express.json({ charset: 'utf-8' }));
 app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
+
+// JSON 파싱 에러 핸들러 (body-parser SyntaxError → 400 Bad Request)
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') {
+    console.warn(`[BodyParser] 잘못된 JSON 요청: ${req.method} ${req.originalUrl} (position: ${err.message?.match(/position (\d+)/)?.[1] || 'unknown'})`);
+    return res.status(400).json({
+      success: false,
+      error: '잘못된 JSON 형식입니다.',
+      timestamp: utcNowISO()
+    });
+  }
+  next(err);
+});
+
 app.use(cookieParser());
 
 // Multer 설정 (메모리 저장 - 프록시용)
