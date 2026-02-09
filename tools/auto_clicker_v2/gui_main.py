@@ -32,8 +32,8 @@ class AutoClickerApp(ctk.CTk):
         super().__init__()
 
         self.title("AutoClicker v2")
-        self.geometry("1100x700")
-        self.minsize(900, 550)
+        self.geometry("580x480")
+        self.minsize(480, 380)
 
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -51,7 +51,7 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
-        self._normal_geometry = "1100x700"
+        self._normal_geometry = "580x480"
 
         self._build_ui()
 
@@ -59,77 +59,72 @@ class AutoClickerApp(ctk.CTk):
 
     def _build_ui(self):
         # 상단 툴바
-        self._toolbar = ctk.CTkFrame(self, height=50)
-        self._toolbar.pack(fill="x", padx=8, pady=(8, 0))
+        self._toolbar = ctk.CTkFrame(self, height=40)
+        self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
         self._toolbar.pack_propagate(False)
 
         # 초성 선택
-        ctk.CTkLabel(
-            self._toolbar, text="초성:",
-            font=ctk.CTkFont(family=_FONT, size=13, weight="bold")
-        ).pack(side="left", padx=(10, 5), pady=8)
-
         self._chosung_var = ctk.StringVar(value="전체")
         self._chosung_menu = ctk.CTkOptionMenu(
             self._toolbar,
             values=["전체", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ",
                     "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ", "기타"],
-            variable=self._chosung_var, width=80,
-            font=ctk.CTkFont(family=_FONT, size=13),
-            dropdown_font=ctk.CTkFont(family=_FONT, size=13)
+            variable=self._chosung_var, width=70,
+            font=ctk.CTkFont(family=_FONT, size=12),
+            dropdown_font=ctk.CTkFont(family=_FONT, size=12)
         )
-        self._chosung_menu.pack(side="left", padx=(0, 15), pady=8)
+        self._chosung_menu.pack(side="left", padx=(6, 8), pady=5)
 
-        # 실행 버튼 (메인 액션)
+        # 실행 버튼
         self._run_btn = ctk.CTkButton(
-            self._toolbar, text="실행", width=120, height=34,
+            self._toolbar, text="실행", width=70, height=28,
             command=self._start,
-            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
+            font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
             fg_color="#2d7d46", hover_color="#3a9957"
         )
-        self._run_btn.pack(side="left", padx=(0, 10), pady=8)
+        self._run_btn.pack(side="left", padx=(0, 6), pady=5)
 
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
-            self._toolbar, text="\u2199 축소", width=80,
+            self._toolbar, text="\u2199 축소", width=60, height=28,
             command=self._toggle_compact,
-            font=ctk.CTkFont(family=_FONT, size=13),
+            font=ctk.CTkFont(family=_FONT, size=11),
             fg_color="gray30", hover_color="gray40"
         )
-        self._compact_btn.pack(side="left", padx=(10, 0), pady=8)
+        self._compact_btn.pack(side="left", pady=5)
 
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
-            font=ctk.CTkFont(family=_FONT, size=12), text_color="gray60"
+            font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
         )
-        self._status_label.pack(side="right", padx=15, pady=8)
+        self._status_label.pack(side="right", padx=8, pady=5)
 
         # 저장 경로 표시 + 변경 버튼
         self._save_dir = _DEFAULT_SAVE_DIR
 
-        self._savedir_frame = ctk.CTkFrame(self, height=30, fg_color="gray17")
-        self._savedir_frame.pack(fill="x", padx=8, pady=(4, 0))
+        self._savedir_frame = ctk.CTkFrame(self, height=24, fg_color="gray17")
+        self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
         self._savedir_frame.pack_propagate(False)
 
         ctk.CTkLabel(
             self._savedir_frame, text="저장:",
-            font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
-        ).pack(side="left", padx=(10, 4))
+            font=ctk.CTkFont(family=_FONT, size=10), text_color="gray60"
+        ).pack(side="left", padx=(6, 3))
 
         self._savedir_label = ctk.CTkLabel(
             self._savedir_frame, text=self._save_dir,
-            font=ctk.CTkFont(family=_FONT, size=11), text_color="gray80",
+            font=ctk.CTkFont(family=_FONT, size=10), text_color="gray80",
             anchor="w"
         )
-        self._savedir_label.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        self._savedir_label.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
         ctk.CTkButton(
-            self._savedir_frame, text="변경", width=50, height=22,
-            font=ctk.CTkFont(family=_FONT, size=11),
+            self._savedir_frame, text="변경", width=40, height=18,
+            font=ctk.CTkFont(family=_FONT, size=10),
             fg_color="gray30", hover_color="gray40",
             command=self._choose_save_dir,
-        ).pack(side="right", padx=(0, 8), pady=4)
+        ).pack(side="right", padx=(0, 6), pady=3)
 
         # 일반 모드 컨텐츠
         self._build_normal_content()
@@ -142,27 +137,20 @@ class AutoClickerApp(ctk.CTk):
 
     def _build_normal_content(self):
         self._normal_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self._normal_frame.pack(fill="both", expand=True, padx=8, pady=8)
+        self._normal_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
-        # 좌측 (진행 + PDF)
-        left = ctk.CTkFrame(self._normal_frame, width=260)
-        left.pack(side="left", fill="y", padx=(0, 5))
-        left.pack_propagate(False)
+        # 단일 컬럼: 진행 → PDF → 고객테이블 → 로그
+        self._progress_panel = ProgressPanel(self._normal_frame)
+        self._progress_panel.pack(fill="x", pady=(0, 2))
 
-        self._progress_panel = ProgressPanel(left)
-        self._progress_panel.pack(fill="x", padx=5, pady=(0, 5))
+        self._pdf_panel = PdfResultPanel(self._normal_frame)
+        self._pdf_panel.pack(fill="x", pady=(0, 2))
 
-        self._pdf_panel = PdfResultPanel(left)
-        self._pdf_panel.pack(fill="both", expand=True, padx=5)
+        self._customer_panel = CustomerTablePanel(self._normal_frame, height=140)
+        self._customer_panel.pack(fill="x", pady=(0, 2))
+        self._customer_panel.pack_propagate(False)
 
-        # 우측 (테이블 + 로그)
-        right = ctk.CTkFrame(self._normal_frame, fg_color="transparent")
-        right.pack(side="left", fill="both", expand=True)
-
-        self._customer_panel = CustomerTablePanel(right)
-        self._customer_panel.pack(fill="both", expand=True, pady=(0, 5))
-
-        self._log_panel = LogViewPanel(right)
+        self._log_panel = LogViewPanel(self._normal_frame)
         self._log_panel.pack(fill="both", expand=True)
 
     # ===== 실행 / 중지 =====
@@ -285,11 +273,11 @@ class AutoClickerApp(ctk.CTk):
         self.attributes("-topmost", False)
         self.title("AutoClicker v2")
 
-        self._toolbar.pack(fill="x", padx=8, pady=(8, 0))
-        self._savedir_frame.pack(fill="x", padx=8, pady=(4, 0))
-        self._normal_frame.pack(fill="both", expand=True, padx=8, pady=8)
+        self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
+        self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
+        self._normal_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
-        self.minsize(900, 550)
+        self.minsize(480, 380)
         self.resizable(True, True)
         self.geometry(self._normal_geometry)
 

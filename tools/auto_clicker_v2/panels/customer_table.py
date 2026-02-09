@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""고객 테이블 패널: OCR 인식된 고객 목록 + 처리 상태"""
+"""고객 테이블 패널: OCR 인식된 고객 목록 + 처리 상태 (컴팩트)"""
 import customtkinter as ctk
 from tkinter import ttk
 
+_FONT = "맑은 고딕"
 
 STATUS_ICONS = {
     "done": "[완료]",
@@ -25,15 +26,10 @@ class CustomerTablePanel(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self._title = ctk.CTkLabel(
-            self, text="고객 테이블 (OCR 결과)", font=ctk.CTkFont(family="맑은 고딕", size=14, weight="bold")
-        )
-        self._title.pack(padx=10, pady=(10, 5), anchor="w")
-
-        # Treeview (tkinter ttk - CustomTkinter에는 테이블 위젯이 없음)
+        # Treeview (타이틀 제거 - 바로 테이블)
         columns = ("no", "name", "type", "phone", "status")
         self._tree_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self._tree_frame.pack(padx=10, pady=5, fill="both", expand=True)
+        self._tree_frame.pack(padx=4, pady=2, fill="both", expand=True)
 
         style = ttk.Style()
         style.theme_use("clam")
@@ -42,14 +38,14 @@ class CustomerTablePanel(ctk.CTkFrame):
             background="#2b2b2b",
             foreground="white",
             fieldbackground="#2b2b2b",
-            rowheight=25,
-            font=("맑은 고딕", 11),
+            rowheight=22,
+            font=(_FONT, 10),
         )
         style.configure(
             "Custom.Treeview.Heading",
             background="#3b3b3b",
             foreground="white",
-            font=("맑은 고딕", 11, "bold"),
+            font=(_FONT, 10, "bold"),
         )
         style.map("Custom.Treeview", background=[("selected", "#1f538d")])
 
@@ -58,7 +54,7 @@ class CustomerTablePanel(ctk.CTkFrame):
             columns=columns,
             show="headings",
             style="Custom.Treeview",
-            height=10,
+            height=5,
         )
 
         self._tree.heading("no", text="No")
@@ -67,11 +63,11 @@ class CustomerTablePanel(ctk.CTkFrame):
         self._tree.heading("phone", text="휴대폰")
         self._tree.heading("status", text="상태")
 
-        self._tree.column("no", width=40, anchor="center")
-        self._tree.column("name", width=140)
-        self._tree.column("type", width=60, anchor="center")
-        self._tree.column("phone", width=130)
-        self._tree.column("status", width=80, anchor="center")
+        self._tree.column("no", width=30, anchor="center")
+        self._tree.column("name", width=80)
+        self._tree.column("type", width=40, anchor="center")
+        self._tree.column("phone", width=110)
+        self._tree.column("status", width=55, anchor="center")
 
         scrollbar = ttk.Scrollbar(
             self._tree_frame, orient="vertical", command=self._tree.yview
@@ -88,11 +84,9 @@ class CustomerTablePanel(ctk.CTkFrame):
 
     def update_state(self, state) -> None:
         """AppState의 고객 목록으로 테이블 갱신"""
-        # 기존 항목 제거
         for item in self._tree.get_children():
             self._tree.delete(item)
 
-        # 고객 추가
         for c in state.customers:
             status_text = STATUS_ICONS.get(c.status, "")
             tags = (c.status,) if c.status in STATUS_COLORS else ()
