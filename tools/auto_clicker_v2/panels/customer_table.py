@@ -83,16 +83,22 @@ class CustomerTablePanel(ctk.CTkFrame):
                 self._tree.tag_configure(status, foreground=color)
 
     def update_state(self, state) -> None:
-        """AppState의 고객 목록으로 테이블 갱신"""
+        """AppState의 고객 목록으로 테이블 갱신 + 처리 중 고객으로 자동 스크롤"""
         for item in self._tree.get_children():
             self._tree.delete(item)
 
+        scroll_target = None
         for c in state.customers:
             status_text = STATUS_ICONS.get(c.status, "")
             tags = (c.status,) if c.status in STATUS_COLORS else ()
-            self._tree.insert(
+            iid = self._tree.insert(
                 "",
                 "end",
                 values=(c.no, c.name, c.type, c.phone, status_text),
                 tags=tags,
             )
+            if c.status in ("processing", "done", "skipped"):
+                scroll_target = iid
+
+        if scroll_target:
+            self._tree.see(scroll_target)
