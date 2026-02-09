@@ -60,15 +60,15 @@ _PATTERNS = {
     "customer_done": re.compile(r"^\s+-> (\S+) 처리 완료$"),
     "customer_process_end": re.compile(r"^\s+\[고객처리\] (\d+)명 처리 완료$"),
 
-    # PDF
+    # PDF (변액리포트) - 실시간 이벤트
     "pdf_save_start": re.compile(r"^\s+===== PDF 저장 시작 \[보고서 #(\d+)\] =====$"),
-    "pdf_save_done": re.compile(r"^\s+===== PDF 저장 완료 \[보고서 #(\d+)\] =====$"),
-    "pdf_duplicate": re.compile(r"^\s+-> 동일 파일 존재! 스킵"),
-    "pdf_verified_skip": re.compile(r"^\s+\[VERIFIED\] 변액리포트 #(\d+) 중복 파일"),
+    "pdf_save_done": re.compile(r"^\s+\[VERIFIED\] 변액리포트 #(\d+) 저장 완료"),
+    "pdf_duplicate": re.compile(r"^\s+\[VERIFIED\] 변액리포트 #(\d+) 중복 파일"),
 
-    # Annual Report
+    # Annual Report - 실시간 이벤트
     "ar_not_found": re.compile(r"^\s+\[감지\] AR 미존재"),
-    "ar_found": re.compile(r"^\s+-> AR PDF 저장"),
+    "ar_found": re.compile(r"^\s+\[VERIFIED\] Annual Report 저장 완료"),
+    "ar_duplicate": re.compile(r"^\s+\[VERIFIED\] Annual Report 중복 파일"),
 
     # 스크롤 비교
     "compare": re.compile(
@@ -179,7 +179,7 @@ def _extract_data(event_type: str, m: re.Match) -> dict:
         return {"report_no": int(groups[0])}
     elif event_type == "pdf_save_done":
         return {"report_no": int(groups[0])}
-    elif event_type == "pdf_verified_skip":
+    elif event_type == "pdf_duplicate":
         return {"report_no": int(groups[0])}
     elif event_type == "compare":
         return {"similarity": float(groups[0])}

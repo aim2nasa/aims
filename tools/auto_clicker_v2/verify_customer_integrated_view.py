@@ -53,18 +53,11 @@ except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
 # 경로 설정 (동적 감지 - auto_clicker_v2 기준)
+# 주의: 모듈 레벨에서 폴더 생성하지 않음! output_dir로 전달받아 verify_customer_integrated_view() 내에서 생성
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SCREENSHOT_DIR = os.path.join(SCRIPT_DIR, "screenshots")
-ERROR_DIR = os.path.join(SCRIPT_DIR, "errors")
-ERROR_LOG_FILE = os.path.join(ERROR_DIR, "error_log.txt")
-
-# 스크린샷 폴더 생성
-if not os.path.exists(SCREENSHOT_DIR):
-    os.makedirs(SCREENSHOT_DIR)
-
-# 오류 전용 폴더 생성
-if not os.path.exists(ERROR_DIR):
-    os.makedirs(ERROR_DIR)
+SCREENSHOT_DIR = None  # verify_customer_integrated_view()에서 output_dir로 설정
+ERROR_DIR = None
+ERROR_LOG_FILE = None
 
 # 이미지 경로 설정
 IMG_CUSTOMER_INTEGRATED_VIEW_BTN = "img/1769492134172.png"  # 고객통합뷰 버튼
@@ -141,9 +134,7 @@ save_results = []  # [{'report_num': 1, 'saved': True, 'duplicate': False, 'erro
 global_screenshot_counter = 0
 
 # 외부 호출 시 사용되는 전역 변수
-PDF_DOWNLOAD_DIR = os.path.join(SCRIPT_DIR, "pdf")  # PDF 저장 디렉토리 (기본: 스크립트경로/pdf)
-if not os.path.exists(PDF_DOWNLOAD_DIR):
-    os.makedirs(PDF_DOWNLOAD_DIR)
+PDF_DOWNLOAD_DIR = None  # verify_customer_integrated_view()에서 pdf_save_dir로 설정
 CURRENT_CUSTOMER_NAME = None  # 현재 처리 중인 고객명 (파일명에 사용)
 
 
@@ -165,7 +156,7 @@ def navigate_save_dialog_to_dir():
     sleep(0.3)
 
 
-LOG_FILE = os.path.join(SCRIPT_DIR, "debug_log.txt")
+LOG_FILE = None  # verify_customer_integrated_view()에서 output_dir로 설정
 
 import codecs
 import subprocess
@@ -181,12 +172,14 @@ def log(msg):
     # 콘솔 출력 (Java -Dfile.encoding=UTF-8 설정으로 unicode 직접 출력)
     try:
         print(msg_unicode)
+        sys.stdout.flush()  # 파이프 모드에서 실시간 출력 보장
     except:
         pass
 
-    # 파일 저장
-    with codecs.open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(msg_unicode + u"\n")
+    # 파일 저장 (output_dir 설정 전에는 스킵)
+    if LOG_FILE:
+        with codecs.open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(msg_unicode + u"\n")
 
 
 def log_error(report_number, error_msg):
@@ -204,10 +197,11 @@ def log_error(report_number, error_msg):
     if isinstance(error_line, str):
         error_line = error_line.decode("utf-8", errors="replace")
 
-    with codecs.open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(error_line + u"\n")
+    if ERROR_LOG_FILE:
+        with codecs.open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(error_line + u"\n")
 
-    log(u"    [ERROR LOG] 오류 로그 저장: %s" % ERROR_LOG_FILE)
+    log(u"    [ERROR LOG] 오류 로그 저장: %s" % (ERROR_LOG_FILE or "미설정"))
 
 
 def capture_error_screenshot(report_number, step_name):
@@ -2850,28 +2844,14 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
 
 # 메인 실행
 if __name__ == "__main__":
-    # 로그 파일 초기화
-    with codecs.open(LOG_FILE, "w", encoding="utf-8") as f:
-        f.write(u"=== 실행 시작: %s ===\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
-
-    # 스크린샷 폴더 비우기
-    if os.path.exists(SCREENSHOT_DIR):
-        for filename in os.listdir(SCREENSHOT_DIR):
-            filepath = os.path.join(SCREENSHOT_DIR, filename)
-            if os.path.isfile(filepath) and filename.endswith('.png'):
-                os.remove(filepath)
-        print("[INFO] 스크린샷 폴더 초기화 완료")
-
-    # 오류 폴더 비우기
-    if os.path.exists(ERROR_DIR):
-        for filename in os.listdir(ERROR_DIR):
-            filepath = os.path.join(ERROR_DIR, filename)
-            if os.path.isfile(filepath):
-                os.remove(filepath)
-        print("[INFO] 오류 폴더 초기화 완료")
+    # 단독 실행 시 output 폴더 사용
+    _standalone_output = os.path.join(SCRIPT_DIR, "output", "standalone")
 
     try:
-        success = verify_customer_integrated_view()
+        success = verify_customer_integrated_view(
+            output_dir=_standalone_output,
+            pdf_save_dir=os.path.join(_standalone_output, "pdf"),
+        )
     except IntegratedViewError as e:
         log(u"[FATAL] 단독 실행 중 복구 불가 오류: %s" % unicode(e))
         success = False

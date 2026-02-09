@@ -114,6 +114,7 @@ def log(msg):
     """콘솔과 파일에 동시 로그 출력 (예외 안전)"""
     try:
         print(msg)
+        sys.stdout.flush()  # 파이프 모드에서 실시간 출력 보장
     except:
         pass  # 콘솔 출력 실패 무시
 

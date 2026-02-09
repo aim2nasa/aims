@@ -219,9 +219,9 @@ _HANDLERS = {
     "customer_done": _handle_customer_done,
     "pdf_save_done": _handle_pdf_save_done,
     "pdf_duplicate": _handle_pdf_duplicate,
-    "pdf_verified_skip": _handle_pdf_duplicate,  # 중복 스킵도 동일 처리
     "ar_not_found": _handle_ar_not_found,
     "ar_found": _handle_ar_found,
+    "ar_duplicate": _handle_ar_found,  # AR 중복도 저장 카운트에 포함
     "summary_total": _handle_summary_total,
     "summary_pdf": _handle_summary_pdf,
     "summary_ar": _handle_summary_ar,
