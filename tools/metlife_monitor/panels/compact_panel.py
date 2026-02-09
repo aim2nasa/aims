@@ -22,6 +22,12 @@ class CompactPanel(ctk.CTkFrame):
         self._on_open = on_open
         self._on_play = on_play
 
+        # 드래그 이동 (overrideredirect 모드: 타이틀바 없음)
+        self._drag_x = 0
+        self._drag_y = 0
+        self.bind("<Button-1>", self._start_drag)
+        self.bind("<B1-Motion>", self._do_drag)
+
         # === 단일 행 레이아웃 ===
 
         # [일반] 토글 버튼
@@ -65,6 +71,9 @@ class CompactPanel(ctk.CTkFrame):
         )
         self._status_label.pack(side="left", fill="x", expand=True,
                                 padx=(0, 4), pady=3)
+        # 상태 텍스트에도 드래그 바인딩
+        self._status_label.bind("<Button-1>", self._start_drag)
+        self._status_label.bind("<B1-Motion>", self._do_drag)
 
         # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
@@ -73,6 +82,17 @@ class CompactPanel(ctk.CTkFrame):
             text_color="gray60"
         )
         self._time_label.pack(side="right", padx=(0, 4), pady=3)
+
+    # --- 드래그 이동 ---
+
+    def _start_drag(self, event):
+        self._drag_x = event.x_root - self.winfo_toplevel().winfo_x()
+        self._drag_y = event.y_root - self.winfo_toplevel().winfo_y()
+
+    def _do_drag(self, event):
+        x = event.x_root - self._drag_x
+        y = event.y_root - self._drag_y
+        self.winfo_toplevel().geometry(f"+{x}+{y}")
 
     # --- Callbacks ---
 

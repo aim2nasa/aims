@@ -22,15 +22,15 @@ from panels.compact_panel import CompactPanel
 #   - 기타 버튼들: MetLife 고유 UI → 완전 다른 비주얼
 # ================================================
 
-COMPACT_HEIGHT = 32    # 극소형: 단일 행 (28px content + padding)
-COMPACT_WIDTH = 800    # 고객명 + 변액/AR 카운트 표시에 충분한 너비
+COMPACT_HEIGHT = 47    # "다음" 버튼 하단(~Y=985) ~ 작업표시줄(Y=1032)
+COMPACT_WIDTH = 850    # Nexacro 탭 우측 ~ 화면 끝
 
 
 class MetlifeMonitorApp(ctk.CTk):
     def __init__(self, save_dir: str = ""):
         super().__init__()
 
-        self.title("MetLife 고객목록 자동화 모니터")
+        self.title("AutoClicker")
         self.geometry("1100x700")
         self.minsize(900, 550)
 
@@ -159,9 +159,9 @@ class MetlifeMonitorApp(ctk.CTk):
             self._enter_compact()
 
     def _enter_compact(self):
-        """컴팩트 모드: 작업 표시줄 바로 위에 극소형 배치
+        """컴팩트 모드: 프레임 없는 극소형 창, 빨간 영역에 정확히 맞춤
 
-        -toolwindow: 얇은 타이틀바(~22px), 드래그 내장, 싱글/듀얼 모니터 호환
+        overrideredirect(True): 타이틀바/프레임 완전 제거 → 지정 영역 = 창 영역
         """
         self._is_compact = True
         self._compact_btn.configure(text="일반", fg_color="#1f538d")
@@ -179,20 +179,21 @@ class MetlifeMonitorApp(ctk.CTk):
         # 현재 재생 상태를 컴팩트 패널에 동기화
         self._sync_compact_state()
 
-        # -toolwindow: 얇은 타이틀바, 작업표시줄에서 숨김
-        self.attributes("-toolwindow", True)
-        self.attributes("-topmost", True)
-        self.title("MetLife Monitor")
-        self.minsize(400, COMPACT_HEIGHT)
-        self.resizable(True, False)
+        # 우측 하단 좌표 계산
+        work_right, taskbar_y = self._get_work_area()
+        compact_x = work_right - COMPACT_WIDTH  # 우측: 주 모니터 끝
+        compact_y = taskbar_y - COMPACT_HEIGHT  # 하단: 작업표시줄에 맞닿음
 
-        # 우측 하단 배치: Nexacro 탭 오른쪽 빈 영역, 작업 표시줄 바로 위
-        taskbar_y = self._get_work_area_bottom()
-        toolwindow_title_h = 8  # -toolwindow 타이틀바 보정 (작업표시줄 밀착)
-        compact_y = taskbar_y - COMPACT_HEIGHT - toolwindow_title_h
-        screen_w = self.winfo_screenwidth()
-        compact_x = screen_w - COMPACT_WIDTH  # 우측 정렬
+        # geometry를 먼저 설정 → update → overrideredirect
+        # (overrideredirect 이후 geometry()가 무시되는 Tkinter 버그 방지)
+        self.withdraw()
+        self.minsize(1, 1)  # minsize 제한 해제
+        self.resizable(False, False)
         self.geometry(f"{COMPACT_WIDTH}x{COMPACT_HEIGHT}+{compact_x}+{compact_y}")
+        self.update_idletasks()
+        self.overrideredirect(True)
+        self.attributes("-topmost", True)
+        self.deiconify()
 
     def _exit_compact(self):
         """일반 모드: 4패널 레이아웃 복원"""
@@ -202,10 +203,10 @@ class MetlifeMonitorApp(ctk.CTk):
         # 컴팩트 패널 숨기기
         self._compact_panel.pack_forget()
 
-        # toolwindow 해제
-        self.attributes("-toolwindow", False)
+        # 프레임 복원
+        self.overrideredirect(False)
         self.attributes("-topmost", False)
-        self.title("MetLife 고객목록 자동화 모니터")
+        self.title("AutoClicker")
 
         # 일반 모드 UI 복원
         self._toolbar.pack(fill="x", padx=5, pady=(5, 0))
@@ -337,19 +338,24 @@ class MetlifeMonitorApp(ctk.CTk):
             self._save_dir_btn.configure(text=self._truncate_path(path))
 
     @staticmethod
-    def _get_work_area_bottom() -> int:
-        """Windows 작업 표시줄 상단 Y 좌표 (= 사용 가능 영역 하단)"""
+    def _get_work_area() -> tuple[int, int]:
+        """주 모니터 작업 영역 (right, bottom) 반환
+
+        SPI_GETWORKAREA: 주 모니터의 작업 표시줄 제외 영역
+        - rect.right = 주 모니터 너비 (듀얼 모니터에서도 1920)
+        - rect.bottom = 작업 표시줄 상단 Y (예: 1032)
+        winfo_screenwidth()는 가상 데스크톱 전체 너비(3840)를 반환하므로 사용 금지!
+        """
         try:
             import ctypes
             import ctypes.wintypes
             rect = ctypes.wintypes.RECT()
-            # SPI_GETWORKAREA: 작업 표시줄 제외한 사용 가능 영역
             ctypes.windll.user32.SystemParametersInfoW(
                 0x0030, 0, ctypes.byref(rect), 0
             )
-            return rect.bottom
+            return rect.right, rect.bottom
         except Exception:
-            return 1032  # 1080p 기본값 (48px 작업 표시줄)
+            return 1920, 1032  # 1080p 기본값
 
     @staticmethod
     def _truncate_path(path: str, max_len: int = 20) -> str:

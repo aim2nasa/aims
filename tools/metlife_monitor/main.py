@@ -45,6 +45,10 @@ def main():
         # 약간의 딜레이 후 자동 시작
         app.after(500, app._toggle_play)
 
+    # --compact: 자동으로 컴팩트 모드 진입
+    if "--compact" in sys.argv:
+        app.after(500, app._toggle_compact)
+
     app.mainloop()
 
 
