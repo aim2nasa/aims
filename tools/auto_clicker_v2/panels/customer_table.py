@@ -26,7 +26,7 @@ class CustomerTablePanel(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         self._title = ctk.CTkLabel(
-            self, text="고객 테이블 (OCR 결과)", font=ctk.CTkFont(size=14, weight="bold")
+            self, text="고객 테이블 (OCR 결과)", font=ctk.CTkFont(family="맑은 고딕", size=14, weight="bold")
         )
         self._title.pack(padx=10, pady=(10, 5), anchor="w")
 

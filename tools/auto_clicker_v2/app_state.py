@@ -202,6 +202,10 @@ def _handle_ar_found(state: AppState, event: LogEvent):
     state._cur_ar_status = "저장"
     state.current_activity = "AR 저장 완료"
 
+def _handle_ar_duplicate(state: AppState, event: LogEvent):
+    state._cur_ar_status = "기저장"
+    state.current_activity = "AR 이미 저장됨 (스킵)"
+
 def _handle_summary_total(state: AppState, event: LogEvent):
     state.total_rows = event.data["rows"]
     state.total_errors = event.data["errors"]
@@ -259,7 +263,7 @@ _HANDLERS = {
     "pdf_duplicate": _handle_pdf_duplicate,
     "ar_not_found": _handle_ar_not_found,
     "ar_found": _handle_ar_found,
-    "ar_duplicate": _handle_ar_found,  # AR 중복도 저장 카운트에 포함
+    "ar_duplicate": _handle_ar_duplicate,
     "verify_customer": _handle_verify_customer,
     "variable_not_exist": _handle_variable_not_exist,
     "verify_success": _handle_verify_success,

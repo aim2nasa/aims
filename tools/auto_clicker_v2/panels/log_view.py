@@ -8,13 +8,13 @@ class LogViewPanel(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         self._title = ctk.CTkLabel(
-            self, text="실시간 로그", font=ctk.CTkFont(size=14, weight="bold")
+            self, text="실시간 로그", font=ctk.CTkFont(family="맑은 고딕", size=14, weight="bold")
         )
         self._title.pack(padx=10, pady=(10, 5), anchor="w")
 
         self._textbox = ctk.CTkTextbox(
             self,
-            font=ctk.CTkFont(family="Consolas", size=11),
+            font=ctk.CTkFont(family="맑은 고딕", size=11),
             wrap="none",
             state="disabled",
         )

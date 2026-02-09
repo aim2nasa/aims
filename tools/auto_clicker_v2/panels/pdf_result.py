@@ -8,13 +8,13 @@ class PdfResultPanel(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         self._title = ctk.CTkLabel(
-            self, text="PDF 결과", font=ctk.CTkFont(size=14, weight="bold")
+            self, text="PDF 결과", font=ctk.CTkFont(family="맑은 고딕", size=14, weight="bold")
         )
         self._title.pack(padx=10, pady=(10, 5), anchor="w")
 
         # 변액리포트 섹션
         self._var_title = ctk.CTkLabel(
-            self, text="변액리포트", font=ctk.CTkFont(size=12), text_color="gray60"
+            self, text="변액리포트", font=ctk.CTkFont(family="맑은 고딕", size=12), text_color="gray60"
         )
         self._var_title.pack(padx=10, anchor="w")
 
@@ -29,7 +29,7 @@ class PdfResultPanel(ctk.CTkFrame):
 
         # Annual Report 섹션
         self._ar_title = ctk.CTkLabel(
-            self, text="Annual Report", font=ctk.CTkFont(size=12), text_color="gray60"
+            self, text="Annual Report", font=ctk.CTkFont(family="맑은 고딕", size=12), text_color="gray60"
         )
         self._ar_title.pack(padx=10, anchor="w")
 
@@ -39,9 +39,10 @@ class PdfResultPanel(ctk.CTkFrame):
     def _make_counter(self, label: str, color: str) -> ctk.CTkLabel:
         frame = ctk.CTkFrame(self, fg_color="transparent")
         frame.pack(padx=15, fill="x")
-        ctk.CTkLabel(frame, text=label, width=50, anchor="w").pack(side="left")
+        ctk.CTkLabel(frame, text=label, width=50, anchor="w",
+                     font=ctk.CTkFont(family="맑은 고딕", size=12)).pack(side="left")
         val = ctk.CTkLabel(
-            frame, text="0", font=ctk.CTkFont(size=16, weight="bold"), text_color=color
+            frame, text="0", font=ctk.CTkFont(family="맑은 고딕", size=16, weight="bold"), text_color=color
         )
         val.pack(side="left")
         return val

@@ -8,18 +8,19 @@ class ProgressPanel(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         self._title = ctk.CTkLabel(
-            self, text="진행 상황", font=ctk.CTkFont(size=14, weight="bold")
+            self, text="진행 상황", font=ctk.CTkFont(family="맑은 고딕", size=14, weight="bold")
         )
         self._title.pack(padx=10, pady=(10, 5), anchor="w")
 
         # 초성
         self._chosung_frame = ctk.CTkFrame(self, fg_color="transparent")
         self._chosung_frame.pack(padx=10, fill="x")
-        ctk.CTkLabel(self._chosung_frame, text="초성:", width=60, anchor="w").pack(
+        ctk.CTkLabel(self._chosung_frame, text="초성:", width=60, anchor="w",
+                     font=ctk.CTkFont(family="맑은 고딕", size=12)).pack(
             side="left"
         )
         self._chosung_val = ctk.CTkLabel(
-            self._chosung_frame, text="-", font=ctk.CTkFont(size=16, weight="bold")
+            self._chosung_frame, text="-", font=ctk.CTkFont(family="맑은 고딕", size=16, weight="bold")
         )
         self._chosung_val.pack(side="left")
 
@@ -28,30 +29,34 @@ class ProgressPanel(ctk.CTkFrame):
         self._progress_bar.pack(padx=10, pady=(8, 2), fill="x")
         self._progress_bar.set(0)
 
-        self._progress_label = ctk.CTkLabel(self, text="대기 중")
+        self._progress_label = ctk.CTkLabel(self, text="대기 중",
+                                                  font=ctk.CTkFont(family="맑은 고딕", size=12))
         self._progress_label.pack(padx=10, anchor="w")
 
         # 단계 정보
         self._phase_label = ctk.CTkLabel(
-            self, text="단계: -", text_color="gray60"
+            self, text="단계: -", text_color="gray60",
+            font=ctk.CTkFont(family="맑은 고딕", size=12)
         )
         self._phase_label.pack(padx=10, pady=(8, 0), anchor="w")
 
         # 네비/스크롤
         self._navi_label = ctk.CTkLabel(
-            self, text="네비: - | 스크롤: -", text_color="gray60"
+            self, text="네비: - | 스크롤: -", text_color="gray60",
+            font=ctk.CTkFont(family="맑은 고딕", size=12)
         )
         self._navi_label.pack(padx=10, anchor="w")
 
         # OCR 응답시간
         self._ocr_label = ctk.CTkLabel(
-            self, text="OCR: -", text_color="gray60"
+            self, text="OCR: -", text_color="gray60",
+            font=ctk.CTkFont(family="맑은 고딕", size=12)
         )
         self._ocr_label.pack(padx=10, anchor="w")
 
         # 소요시간
         self._time_label = ctk.CTkLabel(
-            self, text="", font=ctk.CTkFont(size=12), text_color="gray60"
+            self, text="", font=ctk.CTkFont(family="맑은 고딕", size=12), text_color="gray60"
         )
         self._time_label.pack(padx=10, pady=(8, 5), anchor="w")
 

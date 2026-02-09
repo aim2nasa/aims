@@ -12,6 +12,9 @@
 """
 import customtkinter as ctk
 
+# 통일 폰트
+_FONT = "맑은 고딕"
+
 
 class CompactPanel(ctk.CTkFrame):
     """극소형 단일 행: 고객수 + 고객상태(변액/AR) + 활동로그 + 시간"""
@@ -36,7 +39,7 @@ class CompactPanel(ctk.CTkFrame):
         # [⊞] 토글 버튼 (일반 모드로 전환)
         self._toggle_btn = ctk.CTkButton(
             self, text="\u229E", width=28, height=22,
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(family=_FONT, size=13),
             fg_color="#1f538d", hover_color="#2a6cb8",
             command=self._fire_toggle
         )
@@ -45,7 +48,7 @@ class CompactPanel(ctk.CTkFrame):
         # 처리 완료 고객 수
         self._count_label = ctk.CTkLabel(
             self, text="0명",
-            font=ctk.CTkFont(family="Consolas", size=11, weight="bold"),
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
             text_color="#4CAF50"
         )
         self._count_label.pack(side="left", padx=(0, 6), pady=3)
@@ -53,7 +56,7 @@ class CompactPanel(ctk.CTkFrame):
         # 고객 상태 (이름 + 변액/AR)
         self._customer_label = ctk.CTkLabel(
             self, text="대기 중",
-            font=ctk.CTkFont(family="Consolas", size=11),
+            font=ctk.CTkFont(family=_FONT, size=11),
             anchor="w"
         )
         self._customer_label.pack(side="left", padx=(0, 6), pady=3)
@@ -63,7 +66,7 @@ class CompactPanel(ctk.CTkFrame):
         # 현재 활동 (간략 로그)
         self._activity_label = ctk.CTkLabel(
             self, text="",
-            font=ctk.CTkFont(family="Consolas", size=10),
+            font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60",
             anchor="w"
         )
@@ -75,7 +78,7 @@ class CompactPanel(ctk.CTkFrame):
         # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
             self, text="",
-            font=ctk.CTkFont(family="Consolas", size=10),
+            font=ctk.CTkFont(family=_FONT, size=10),
             text_color="gray60"
         )
         self._time_label.pack(side="right", padx=(0, 4), pady=3)

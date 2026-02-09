@@ -4,6 +4,7 @@
 컴팩트 모드: 실행 중 자동 전환, 극소형 상태바
 """
 import os
+import tkinter.font as tkfont
 import customtkinter as ctk
 from tkinter import filedialog
 
@@ -12,6 +13,10 @@ from data_source import LiveProcessSource
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_SAVE_DIR = os.path.join(_BASE_DIR, "output")
+
+# 통일 폰트
+_FONT = "맑은 고딕"
+
 from panels.progress_panel import ProgressPanel
 from panels.customer_table import CustomerTablePanel
 from panels.log_view import LogViewPanel
@@ -33,6 +38,15 @@ class AutoClickerApp(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        # 전역 기본 폰트 → 맑은 고딕 (궁서체/바탕체 제거)
+        for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont",
+                      "TkHeadingFont", "TkCaptionFont", "TkSmallCaptionFont",
+                      "TkIconFont", "TkTooltipFont"):
+            try:
+                tkfont.nametofont(name).configure(family=_FONT)
+            except Exception:
+                pass
+
         self._state = AppState()
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
@@ -52,7 +66,7 @@ class AutoClickerApp(ctk.CTk):
         # 초성 선택
         ctk.CTkLabel(
             self._toolbar, text="초성:",
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(family=_FONT, size=13, weight="bold")
         ).pack(side="left", padx=(10, 5), pady=8)
 
         self._chosung_var = ctk.StringVar(value="전체")
@@ -61,7 +75,8 @@ class AutoClickerApp(ctk.CTk):
             values=["전체", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ",
                     "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ", "기타"],
             variable=self._chosung_var, width=80,
-            font=ctk.CTkFont(size=13)
+            font=ctk.CTkFont(family=_FONT, size=13),
+            dropdown_font=ctk.CTkFont(family=_FONT, size=13)
         )
         self._chosung_menu.pack(side="left", padx=(0, 15), pady=8)
 
@@ -69,7 +84,7 @@ class AutoClickerApp(ctk.CTk):
         self._run_btn = ctk.CTkButton(
             self._toolbar, text="실행", width=120, height=34,
             command=self._start,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=ctk.CTkFont(family=_FONT, size=14, weight="bold"),
             fg_color="#2d7d46", hover_color="#3a9957"
         )
         self._run_btn.pack(side="left", padx=(0, 10), pady=8)
@@ -78,6 +93,7 @@ class AutoClickerApp(ctk.CTk):
         self._compact_btn = ctk.CTkButton(
             self._toolbar, text="컴팩트", width=80,
             command=self._toggle_compact,
+            font=ctk.CTkFont(family=_FONT, size=13),
             fg_color="gray30", hover_color="gray40"
         )
         self._compact_btn.pack(side="left", padx=(10, 0), pady=8)
@@ -85,7 +101,7 @@ class AutoClickerApp(ctk.CTk):
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
             self._toolbar, text="대기 중",
-            font=ctk.CTkFont(size=12), text_color="gray60"
+            font=ctk.CTkFont(family=_FONT, size=12), text_color="gray60"
         )
         self._status_label.pack(side="right", padx=15, pady=8)
 
@@ -98,19 +114,19 @@ class AutoClickerApp(ctk.CTk):
 
         ctk.CTkLabel(
             self._savedir_frame, text="저장:",
-            font=ctk.CTkFont(size=11), text_color="gray60"
+            font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
         ).pack(side="left", padx=(10, 4))
 
         self._savedir_label = ctk.CTkLabel(
             self._savedir_frame, text=self._save_dir,
-            font=ctk.CTkFont(size=11), text_color="gray80",
+            font=ctk.CTkFont(family=_FONT, size=11), text_color="gray80",
             anchor="w"
         )
         self._savedir_label.pack(side="left", fill="x", expand=True, padx=(0, 5))
 
         ctk.CTkButton(
             self._savedir_frame, text="변경", width=50, height=22,
-            font=ctk.CTkFont(size=11),
+            font=ctk.CTkFont(family=_FONT, size=11),
             fg_color="gray30", hover_color="gray40",
             command=self._choose_save_dir,
         ).pack(side="right", padx=(0, 8), pady=4)
@@ -311,3 +327,8 @@ class AutoClickerApp(ctk.CTk):
             return rect.right, rect.bottom
         except Exception:
             return 1920, 1032
+
+
+if __name__ == "__main__":
+    app = AutoClickerApp()
+    app.mainloop()
