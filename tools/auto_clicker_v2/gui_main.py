@@ -102,7 +102,7 @@ class AutoClickerApp(ctk.CTk):
         self._compact_btn.pack(side="left", pady=5)
 
         # 자동 축소 체크박스
-        self._auto_compact_var = ctk.BooleanVar(value=True)
+        self._auto_compact_var = ctk.BooleanVar(value=False)
         self._auto_compact_cb = ctk.CTkCheckBox(
             self._toolbar, text="자동축소",
             variable=self._auto_compact_var,
