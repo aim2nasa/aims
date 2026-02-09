@@ -7,7 +7,7 @@ import ctypes
 import os
 import tkinter.font as tkfont
 import customtkinter as ctk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 from app_state import AppState
 from data_source import LiveProcessSource
@@ -62,6 +62,83 @@ class AutoClickerApp(ctk.CTk):
 
         self._build_ui()
         self.after(50, self._apply_titlebar_style)
+        self.after(200, self._show_usage_guide)
+
+    # ===== 사용법 안내 =====
+
+    def _show_usage_guide(self):
+        """최초 실행 시 해상도 확인 + 사용법 안내 (1회)"""
+        try:
+            w = ctypes.windll.user32.GetSystemMetrics(0)
+            h = ctypes.windll.user32.GetSystemMetrics(1)
+        except Exception:
+            w, h = 0, 0
+
+        if w != 1920 or h != 1080:
+            messagebox.showerror(
+                "해상도 불일치",
+                f"현재 화면 해상도: {w}x{h}\n\n"
+                "AutoClicker v2는 1920x1080 해상도에서만\n"
+                "동작합니다.\n\n"
+                "화면 해상도를 변경 후 다시 실행해주세요.",
+            )
+            self.destroy()
+            return
+
+        self._show_guide_dialog(w, h)
+
+    def _show_guide_dialog(self, w: int, h: int):
+        """커스텀 사용법 다이얼로그"""
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("사용법")
+        dlg.resizable(False, False)
+        dlg.attributes("-topmost", True)
+        dlg.grab_set()
+
+        # 부모 창 중앙에 배치
+        dlg_w, dlg_h = 320, 220
+        px = self.winfo_x() + (self.winfo_width() - dlg_w) // 2
+        py = self.winfo_y() + (self.winfo_height() - dlg_h) // 2
+        dlg.geometry(f"{dlg_w}x{dlg_h}+{px}+{py}")
+
+        # 해상도 확인 행
+        res_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+        res_frame.pack(fill="x", padx=20, pady=(18, 0))
+
+        ctk.CTkLabel(
+            res_frame, text=f"화면 해상도: {w}x{h}",
+            font=ctk.CTkFont(family=_FONT, size=13),
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            res_frame, text="\u2713",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#4CAF50",
+        ).pack(side="left", padx=(6, 0))
+
+        # 구분선
+        ctk.CTkFrame(dlg, height=1, fg_color="gray40").pack(
+            fill="x", padx=20, pady=(12, 0),
+        )
+
+        # 사용법 단계
+        steps = [
+            "1.  MetDO 화면을 전체화면(최대화)으로 설정",
+            "2.  초성 선택 (기본: 전체)",
+            "3.  [실행] 버튼 클릭",
+        ]
+        for i, step in enumerate(steps):
+            ctk.CTkLabel(
+                dlg, text=step, anchor="w",
+                font=ctk.CTkFont(family=_FONT, size=12),
+            ).pack(fill="x", padx=20, pady=(10 if i == 0 else 2, 0))
+
+        # 확인 버튼
+        ctk.CTkButton(
+            dlg, text="확인", width=80, height=30,
+            font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
+            command=dlg.destroy,
+        ).pack(pady=(14, 0))
 
     # ===== UI 구성 =====
 
