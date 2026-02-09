@@ -3,6 +3,7 @@
 일반 모드: 초성 선택 → 실행 → 4패널 모니터링
 컴팩트 모드: 실행 중 자동 전환, 극소형 상태바
 """
+import ctypes
 import os
 import tkinter.font as tkfont
 import customtkinter as ctk
@@ -60,6 +61,7 @@ class AutoClickerApp(ctk.CTk):
         self._is_compact = False
 
         self._build_ui()
+        self.after(50, self._apply_titlebar_style)
 
     # ===== UI 구성 =====
 
@@ -224,6 +226,7 @@ class AutoClickerApp(ctk.CTk):
             self.title("AutoClicker v2")
             self.attributes("-topmost", False)
             self.geometry(_NORMAL_GEOMETRY)
+            self._apply_titlebar_style()
 
     def _toggle_pause(self):
         """일시정지 / 재개"""
@@ -266,6 +269,7 @@ class AutoClickerApp(ctk.CTk):
                 self.title("AutoClicker v2")
                 self.attributes("-topmost", False)
                 self.geometry(_NORMAL_GEOMETRY)
+                self._apply_titlebar_style()
         elif self._source and self._source.is_running():
             self.after(self._update_interval, self._poll_update)
 
@@ -306,6 +310,7 @@ class AutoClickerApp(ctk.CTk):
         self._compact_panel.pack_forget()
         self.overrideredirect(False)
         self.title("AutoClicker v2")
+        self._apply_titlebar_style()
 
         # 실행 중이면 topmost 유지, 아니면 해제
         is_running = self._source and self._source.is_running()
@@ -346,6 +351,28 @@ class AutoClickerApp(ctk.CTk):
             self._savedir_label.configure(text=path)
 
     # ===== 유틸 =====
+
+    def _apply_titlebar_style(self):
+        """타이틀바 스타일: 다크 모드 + 최소화 버튼 제거"""
+        try:
+            self.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+            # 다크 타이틀바
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            val = ctypes.c_int(1)
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                ctypes.byref(val), ctypes.sizeof(val),
+            )
+            # 최소화 버튼 제거
+            GWL_STYLE = -16
+            WS_MINIMIZEBOX = 0x00020000
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
+            ctypes.windll.user32.SetWindowLongW(
+                hwnd, GWL_STYLE, style & ~WS_MINIMIZEBOX
+            )
+        except Exception:
+            pass
 
     @staticmethod
     def _get_work_area() -> tuple[int, int]:
