@@ -78,6 +78,7 @@ class AutoClickerApp(ctk.CTk):
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
             'mode': 'normal',              # normal / start_from / only / resume
             'target': '',                  # start_from, only 시 고객명
+            'no_ocr': False,               # False=OCR 사용, True=OCR 비활성화
         }
 
         self._build_ui()
@@ -308,6 +309,7 @@ class AutoClickerApp(ctk.CTk):
             start_from=target if mode == 'start_from' else '',
             only_customer=target if mode == 'only' else '',
             resume=(mode == 'resume'),
+            no_ocr=self._settings['no_ocr'],
         )
 
         label = chosung or "전체"
@@ -597,6 +599,37 @@ class AutoClickerApp(ctk.CTk):
         )
         target_entry.pack(side="left")
 
+        # ────────────────── OCR 토글 (항상 표시) ──────────────────
+        ocr_section = ctk.CTkFrame(dlg, fg_color="transparent")
+        _ocr_on = [not self._settings['no_ocr']]  # True=OCR 사용
+
+        ocr_inner = ctk.CTkFrame(ocr_section, fg_color="transparent")
+        ocr_inner.pack(fill="x", padx=24)
+
+        ctk.CTkLabel(
+            ocr_inner, text="OCR", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=13, weight="bold"),
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            ocr_inner, text="화면 캡처 후 고객명 인식", anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=11), text_color="#aaaaaa",
+        ).pack(side="left", padx=(8, 0))
+
+        ocr_btn = ctk.CTkButton(
+            ocr_inner, text="ON" if _ocr_on[0] else "OFF",
+            width=50, height=28, corner_radius=6,
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
+            **_style(_ocr_on[0]),
+        )
+
+        def _toggle_ocr():
+            _ocr_on[0] = not _ocr_on[0]
+            ocr_btn.configure(text="ON" if _ocr_on[0] else "OFF", **_style(_ocr_on[0]))
+
+        ocr_btn.configure(command=_toggle_ocr)
+        ocr_btn.pack(side="right")
+
         # ────────────────── 하단 (항상 표시) ──────────────────
         sep_bottom = ctk.CTkFrame(dlg, height=1, fg_color="gray50")
         btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
@@ -604,6 +637,7 @@ class AutoClickerApp(ctk.CTk):
         def _confirm():
             self._settings['mode'] = _cur_mode[0]
             self._settings['target'] = target_var.get().strip()
+            self._settings['no_ocr'] = not _ocr_on[0]
             m = _cur_mode[0]
             if m in ('start_from', 'only'):
                 # 고객명에서 초성 자동 추출
@@ -631,8 +665,8 @@ class AutoClickerApp(ctk.CTk):
         ).pack(side="right")
 
         # ────────────────── 동적 레이아웃 ──────────────────
-        _heights = {'normal': 300, 'start_from': 300, 'only': 300, 'resume': 230}
-        _dynamic = [sep_top, ch_section, target_section, sep_bottom, btn_frame]
+        _heights = {'normal': 340, 'start_from': 340, 'only': 340, 'resume': 270}
+        _dynamic = [sep_top, ch_section, target_section, ocr_section, sep_bottom, btn_frame]
 
         _first_show = [True]
 
@@ -648,6 +682,7 @@ class AutoClickerApp(ctk.CTk):
             if m in ('start_from', 'only'):
                 target_section.pack(fill="x", pady=(0, 6))
 
+            ocr_section.pack(fill="x", pady=(6, 0))
             sep_bottom.pack(fill="x", padx=24, pady=(10, 14))
             btn_frame.pack(fill="x", padx=24, pady=(0, 18))
 
@@ -701,6 +736,9 @@ class AutoClickerApp(ctk.CTk):
             parts.append(f"고객: {target}")
         elif mode == 'resume':
             parts.append("이어서")
+
+        if self._settings['no_ocr']:
+            parts.append("OCR: OFF")
 
         self._settings_summary.configure(text=" | ".join(parts))
 

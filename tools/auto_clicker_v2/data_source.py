@@ -134,13 +134,14 @@ class LiveProcessSource(DataSource):
     def __init__(self, chosung: str = "", save_dir: str = "",
                  integrated_view: bool = True,
                  start_from: str = "", only_customer: str = "",
-                 resume: bool = False):
+                 resume: bool = False, no_ocr: bool = False):
         self.chosung = chosung
         self.save_dir = save_dir
         self.integrated_view = integrated_view
         self.start_from = start_from
         self.only_customer = only_customer
         self.resume = resume
+        self.no_ocr = no_ocr
         self._process: Optional[subprocess.Popen] = None
         self._thread: Optional[threading.Thread] = None
         self._running = False
@@ -166,6 +167,8 @@ class LiveProcessSource(DataSource):
             extra_args += ["--only", self.only_customer]
         if self.resume:
             extra_args += ["--resume"]
+        if self.no_ocr:
+            extra_args += ["--no-ocr"]
         if extra_args:
             cmd += ["--"] + extra_args
 
