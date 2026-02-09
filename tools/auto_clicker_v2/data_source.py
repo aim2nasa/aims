@@ -176,13 +176,15 @@ class LiveProcessSource(DataSource):
     def stop(self) -> None:
         self._running = False
         self._paused = False
-        if self._process:
-            self._process.terminate()
-            try:
-                self._process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self._process.kill()
-            self._process = None
+        proc = self._process
+        self._process = None
+        if proc and proc.pid:
+            # Windows: 프로세스 트리 전체 강제 종료 (Java 자식 포함)
+            subprocess.Popen(
+                f"taskkill /F /T /PID {proc.pid}",
+                shell=True,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
 
     def pause(self) -> None:
         self._paused = True
@@ -211,30 +213,37 @@ class LiveProcessSource(DataSource):
         raw_log = open(raw_log_path, "w", encoding="utf-8")
 
         line_no = 0
+        proc = self._process
         try:
-            for raw_bytes in self._process.stdout:
-                if not self._running:
-                    break
-
-                while self._paused:
-                    time.sleep(0.05)
+            if proc and proc.stdout:
+                for raw_bytes in proc.stdout:
                     if not self._running:
-                        return
+                        break
 
-                line_no += 1
-                line = self._decode_line(raw_bytes)
-                raw_log.write(f"{line_no:04d} | {line}\n")
-                raw_log.flush()
+                    while self._paused:
+                        time.sleep(0.05)
+                        if not self._running:
+                            break
 
-                event = parse_line(line, line_no)
-                if event and self._on_event:
-                    self._on_event(event)
+                    line_no += 1
+                    line = self._decode_line(raw_bytes)
+                    raw_log.write(f"{line_no:04d} | {line}\n")
+                    raw_log.flush()
+
+                    event = parse_line(line, line_no)
+                    if event and self._on_event:
+                        self._on_event(event)
+        except (OSError, ValueError):
+            pass  # 프로세스 종료 시 stdout 파이프 끊김 → 정상
         except Exception as e:
             raw_log.write(f"\n!!! EXCEPTION: {e}\n")
         finally:
             rc = None
-            if self._process:
-                rc = self._process.wait()
+            try:
+                if proc:
+                    rc = proc.wait(timeout=3)
+            except Exception:
+                pass
             raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
             raw_log.close()
             self._running = False

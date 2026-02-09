@@ -198,6 +198,11 @@ class AutoClickerApp(ctk.CTk):
         self._source.start(on_event=self._on_event)
         self._compact_panel.set_play_state("playing")
 
+        # 실행 중 항상 최상위 + 위치 고정
+        self.attributes("-topmost", True)
+        if not self._is_compact:
+            self.geometry(_NORMAL_GEOMETRY)
+
         if self._auto_compact_var.get() and not self._is_compact:
             self._enter_compact()
 
@@ -205,13 +210,16 @@ class AutoClickerApp(ctk.CTk):
 
     def _stop(self):
         """SikuliX 중지"""
-        if self._source and self._source.is_running():
+        if self._source:
             self._source.stop()
         self._run_btn.configure(
             text="실행", fg_color="#2d7d46", hover_color="#3a9957"
         )
         self._status_label.configure(text="중지됨", text_color="gray60")
         self._compact_panel.set_play_state("stopped")
+        # 일반 모드면 topmost 해제
+        if not self._is_compact:
+            self.attributes("-topmost", False)
 
     def _toggle_pause(self):
         """일시정지 / 재개"""
@@ -244,6 +252,9 @@ class AutoClickerApp(ctk.CTk):
             self._run_btn.configure(
                 text="실행", fg_color="#2d7d46", hover_color="#3a9957"
             )
+            # 완료 → 일반 모드면 topmost 해제
+            if not self._is_compact:
+                self.attributes("-topmost", False)
         elif self._source and self._source.is_running():
             self.after(self._update_interval, self._poll_update)
 
@@ -283,8 +294,12 @@ class AutoClickerApp(ctk.CTk):
 
         self._compact_panel.pack_forget()
         self.overrideredirect(False)
-        self.attributes("-topmost", False)
         self.title("AutoClicker v2")
+
+        # 실행 중이면 topmost 유지, 아니면 해제
+        is_running = self._source and self._source.is_running()
+        if not is_running:
+            self.attributes("-topmost", False)
 
         self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
         self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
