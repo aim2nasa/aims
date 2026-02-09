@@ -1,56 +1,70 @@
 # -*- coding: utf-8 -*-
-"""극소형 컴팩트 모드 패널: SikuliX 완전 분리용 단일 행 (32px)
+"""극소형 컴팩트 모드 패널: SikuliX 완전 분리용 단일 행
 
-안전 영역 분석 (1920x1080):
-- SikuliX 작업 영역: Y 113~952 (테이블 리전 + 페이지네이션)
-- 브라우저 영역: Y 0~1040
-- Windows 작업 표시줄: Y 1040~1080
-- GUI 배치: Y 1044 (작업 표시줄 위에 겹침, SikuliX 무간섭)
+안전 영역 (1920x1080 기준):
+- SikuliX TABLE_REGION: X=20~1910, Y=362~952
+- "다음" 버튼 클릭: Y≈955~985
+- 컴팩트 GUI 안전 배치: Y > 990 (테이블+페이지네이션 완전 아래)
+- -toolwindow: 얇은 타이틀바, 드래그 내장, 싱글/듀얼 모니터 호환
 """
 import customtkinter as ctk
 
 
 class CompactPanel(ctk.CTkFrame):
-    """극소형 단일 행 모니터 (높이 28px, 타이틀바 없음)"""
+    """극소형 단일 행: 고객명 + 변액/AR 카운트 + 진행률"""
 
-    def __init__(self, master, on_toggle=None, **kwargs):
+    def __init__(self, master, on_toggle=None, on_open=None, on_play=None,
+                 **kwargs):
         super().__init__(master, height=28, **kwargs)
         self.pack_propagate(False)
 
         self._on_toggle = on_toggle
-
-        # 드래그 이동 지원
-        self._drag_x = 0
-        self._drag_y = 0
-        self.bind("<Button-1>", self._start_drag)
-        self.bind("<B1-Motion>", self._do_drag)
+        self._on_open = on_open
+        self._on_play = on_play
 
         # === 단일 행 레이아웃 ===
 
-        # [일반] 토글 버튼 (좌측)
+        # [일반] 토글 버튼
         self._toggle_btn = ctk.CTkButton(
-            self, text="일반", width=40, height=22,
+            self, text="일반", width=36, height=22,
             font=ctk.CTkFont(size=10),
             fg_color="#1f538d", hover_color="#2a6cb8",
-            command=self._on_toggle_click
+            command=self._fire_toggle
         )
-        self._toggle_btn.pack(side="left", padx=(4, 6), pady=3)
+        self._toggle_btn.pack(side="left", padx=(3, 2), pady=3)
 
-        # 프로그레스바 (작은 크기)
-        self._progress_bar = ctk.CTkProgressBar(self, width=80, height=10)
+        # [📂] 파일 열기
+        self._open_btn = ctk.CTkButton(
+            self, text="\u2630", width=24, height=22,
+            font=ctk.CTkFont(size=11),
+            fg_color="gray30", hover_color="gray40",
+            command=self._fire_open
+        )
+        self._open_btn.pack(side="left", padx=(0, 2), pady=3)
+
+        # [▶] 재생/일시정지
+        self._play_btn = ctk.CTkButton(
+            self, text="\u25B6", width=24, height=22,
+            font=ctk.CTkFont(size=10),
+            fg_color="gray30", hover_color="gray40",
+            command=self._fire_play,
+            state="disabled"
+        )
+        self._play_btn.pack(side="left", padx=(0, 4), pady=3)
+
+        # 프로그레스바
+        self._progress_bar = ctk.CTkProgressBar(self, width=60, height=8)
         self._progress_bar.pack(side="left", padx=(0, 4), pady=3)
         self._progress_bar.set(0)
 
-        # 상태 텍스트 (메인 정보 - 한 줄에 모두 표시)
+        # 메인 상태 텍스트: 고객명 + 변액/AR 카운트 + 진행률
         self._status_label = ctk.CTkLabel(
-            self, text="대기 중",
+            self, text="파일을 열어주세요",
             font=ctk.CTkFont(family="Consolas", size=11),
             anchor="w"
         )
-        self._status_label.pack(side="left", fill="x", expand=True, padx=(0, 4), pady=3)
-        # 상태 텍스트에도 드래그 바인딩
-        self._status_label.bind("<Button-1>", self._start_drag)
-        self._status_label.bind("<B1-Motion>", self._do_drag)
+        self._status_label.pack(side="left", fill="x", expand=True,
+                                padx=(0, 4), pady=3)
 
         # 소요시간 (우측)
         self._time_label = ctk.CTkLabel(
@@ -58,73 +72,119 @@ class CompactPanel(ctk.CTkFrame):
             font=ctk.CTkFont(family="Consolas", size=10),
             text_color="gray60"
         )
-        self._time_label.pack(side="right", padx=(0, 6), pady=3)
+        self._time_label.pack(side="right", padx=(0, 4), pady=3)
 
-    def _on_toggle_click(self):
+    # --- Callbacks ---
+
+    def _fire_toggle(self):
         if self._on_toggle:
             self._on_toggle()
 
-    def _start_drag(self, event):
-        self._drag_x = event.x_root - self.winfo_toplevel().winfo_x()
-        self._drag_y = event.y_root - self.winfo_toplevel().winfo_y()
+    def _fire_open(self):
+        if self._on_open:
+            self._on_open()
 
-    def _do_drag(self, event):
-        x = event.x_root - self._drag_x
-        y = event.y_root - self._drag_y
-        self.winfo_toplevel().geometry(f"+{x}+{y}")
+    def _fire_play(self):
+        if self._on_play:
+            self._on_play()
+
+    # --- 외부에서 호출하는 상태 동기화 ---
+
+    def set_file_loaded(self, filename: str):
+        """파일 로드 완료 시: 재생 버튼 활성화"""
+        self._play_btn.configure(state="normal")
+        self._status_label.configure(text=f"{filename} | 준비됨")
+
+    def set_play_state(self, state: str):
+        """재생 상태: playing / paused / stopped / complete"""
+        if state == "playing":
+            self._play_btn.configure(text="\u23F8")  # ⏸
+        else:
+            self._play_btn.configure(text="\u25B6")  # ▶
+
+    # --- 주기적 상태 업데이트 ---
 
     def update_state(self, state) -> None:
-        """AppState로부터 단일 행 상태 업데이트"""
+        """AppState → 단일 행 상태 텍스트 생성
+
+        표시 형식:
+        [ㅋ] 3/8 37% | ▶코우머스 | 변액:2저장 1중복 | AR:3미존재 | N1 S1/2
+        """
         parts = []
 
-        # 초성
+        # 1) 초성 + 진행률
         chosung = state.current_chosung or state.chosung or "-"
-        parts.append(f"[{chosung}]")
-
-        # 진행률
         total = state.total_customers or state.ocr_count
         done = state.processed_count
         skipped = state.skipped_count
         handled = done + skipped
+
         if total > 0:
             progress = min(handled / total, 1.0)
             self._progress_bar.set(progress)
             pct = int(progress * 100)
             if skipped > 0:
-                parts.append(f"{done}+{skipped}s/{total} {pct}%")
+                parts.append(f"[{chosung}] {done}+{skipped}s/{total} {pct}%")
             else:
-                parts.append(f"{done}/{total} {pct}%")
+                parts.append(f"[{chosung}] {done}/{total} {pct}%")
         elif state.is_complete:
             self._progress_bar.set(1.0)
-            parts.append("완료")
+            parts.append(f"[{chosung}] 완료")
+        else:
+            parts.append(f"[{chosung}]")
 
-        # 현재 고객
+        # 2) 현재 고객명 (가장 중요)
         current = ""
+        current_status = ""
         for c in state.customers:
             if c.status == "processing":
                 current = c.name
+                current_status = "processing"
                 break
         if not current and state.customers:
             for c in reversed(state.customers):
                 if c.status in ("done", "skipped"):
                     current = c.name
+                    current_status = c.status
                     break
+
         if current:
-            parts.append(current)
+            if current_status == "processing":
+                parts.append(f">{current}")
+            elif current_status == "done":
+                parts.append(f"v{current}")
+            elif current_status == "skipped":
+                parts.append(f"-{current}")
+            else:
+                parts.append(current)
 
-        # PDF/AR
-        parts.append(
-            f"P:{state.pdf_saved}/{state.pdf_duplicates}/{state.pdf_errors}"
-            f" A:{state.ar_saved}/{state.ar_not_found}"
-        )
+        # 3) 변액 리포트 카운트 (핵심 정보)
+        pdf_items = []
+        if state.pdf_saved > 0:
+            pdf_items.append(f"{state.pdf_saved}저장")
+        if state.pdf_duplicates > 0:
+            pdf_items.append(f"{state.pdf_duplicates}중복")
+        if state.pdf_errors > 0:
+            pdf_items.append(f"{state.pdf_errors}오류")
+        pdf_text = " ".join(pdf_items) if pdf_items else "0"
+        parts.append(f"변액:{pdf_text}")
 
-        # 네비/스크롤
+        # 4) AR 카운트
+        ar_items = []
+        if state.ar_saved > 0:
+            ar_items.append(f"{state.ar_saved}저장")
+        if state.ar_not_found > 0:
+            ar_items.append(f"{state.ar_not_found}미존재")
+        ar_text = " ".join(ar_items) if ar_items else "0"
+        parts.append(f"AR:{ar_text}")
+
+        # 5) 네비/스크롤
         navi = state.current_navi or "-"
         scroll = state.current_scroll or "-"
         total_s = state.total_scroll or "-"
         parts.append(f"N{navi} S{scroll}/{total_s}")
 
-        # OCR
+        # 6) OCR 시간 (있을 때만)
         if state.ocr_elapsed > 0:
             parts.append(f"OCR:{state.ocr_elapsed:.1f}s")
 
