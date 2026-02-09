@@ -197,12 +197,12 @@ class LiveProcessSource(DataSource):
 
     @staticmethod
     def _decode_line(raw_bytes: bytes) -> str:
-        """raw bytes → 문자열. UTF-8 시도 후 CP949 폴백."""
+        """raw bytes → 문자열. CP949 먼저 시도 (한국어 Windows 기본)."""
         try:
-            return raw_bytes.decode("utf-8").rstrip()
+            return raw_bytes.decode("cp949").rstrip()
         except UnicodeDecodeError:
             try:
-                return raw_bytes.decode("cp949").rstrip()
+                return raw_bytes.decode("utf-8").rstrip()
             except UnicodeDecodeError:
                 return raw_bytes.decode("utf-8", errors="replace").rstrip()
 
