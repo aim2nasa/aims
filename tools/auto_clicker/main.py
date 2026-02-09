@@ -5,8 +5,10 @@ AutoClicker - 엔트리포인트
 Usage:
     python main.py                                    # GUI 열기
     python main.py --replay <log_file>                # 로그 파일 자동 리플레이
+    python main.py --live                             # SikuliX 실행 (전체 초성)
+    python main.py --live --chosung ㅋ                # SikuliX 실행 (특정 초성)
     python main.py --save-dir <path>                  # PDF 저장 경로 지정
-    python main.py --save-dir <path> --replay <log>   # 둘 다
+    python main.py --compact                          # 자동 컴팩트 모드
 """
 import sys
 import os
@@ -29,11 +31,17 @@ def _parse_arg(name: str) -> str:
 def main():
     save_dir = _parse_arg("--save-dir")
     replay_file = _parse_arg("--replay")
+    chosung = _parse_arg("--chosung")
+    is_live = "--live" in sys.argv
+    is_compact = "--compact" in sys.argv
 
     app = AutoClickerApp(save_dir=save_dir)
 
-    # --replay: 지정된 로그 파일을 자동으로 로드 + 시작
-    if replay_file and os.path.exists(replay_file):
+    if is_live:
+        # --live: SikuliX 실행 + 자동 컴팩트 모드
+        app.after(500, lambda: app._start_live(chosung=chosung))
+    elif replay_file and os.path.exists(replay_file):
+        # --replay: 지정된 로그 파일을 자동으로 로드 + 시작
         from data_source import FileReplaySource
         from app_state import AppState
 
@@ -42,11 +50,11 @@ def main():
         filename = os.path.basename(replay_file)
         app._file_label.configure(text=filename)
         app._compact_panel.set_file_loaded(filename)
-        # 약간의 딜레이 후 자동 시작
         app.after(500, app._toggle_play)
 
-    # --compact: 자동으로 컴팩트 모드 진입
-    if "--compact" in sys.argv:
+        if is_compact:
+            app.after(500, app._toggle_compact)
+    elif is_compact:
         app.after(500, app._toggle_compact)
 
     app.mainloop()

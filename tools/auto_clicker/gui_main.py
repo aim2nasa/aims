@@ -4,7 +4,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 
 from app_state import AppState
-from data_source import FileReplaySource
+from data_source import DataSource, FileReplaySource, LiveProcessSource
 from panels.progress_panel import ProgressPanel
 from panels.customer_table import CustomerTablePanel
 from panels.log_view import LogViewPanel
@@ -38,7 +38,7 @@ class AutoClickerApp(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self._state = AppState()
-        self._source: FileReplaySource | None = None
+        self._source: DataSource | None = None
         self._update_interval = 100  # ms
         self._is_compact = False
         self._save_dir = save_dir
@@ -76,6 +76,24 @@ class AutoClickerApp(ctk.CTk):
             variable=self._speed_var, width=80, command=self._on_speed_change
         )
         self._speed_menu.pack(side="left", padx=5, pady=5)
+
+        # SikuliX 실행 버튼
+        self._live_btn = ctk.CTkButton(
+            self._toolbar, text="SikuliX 실행", width=100,
+            command=self._start_live,
+            fg_color="#2d7d46", hover_color="#3a9957"
+        )
+        self._live_btn.pack(side="left", padx=(15, 5), pady=5)
+
+        # 초성 선택
+        self._chosung_var = ctk.StringVar(value="전체")
+        self._chosung_menu = ctk.CTkOptionMenu(
+            self._toolbar,
+            values=["전체", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ",
+                    "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ", "기타"],
+            variable=self._chosung_var, width=70
+        )
+        self._chosung_menu.pack(side="left", padx=(0, 5), pady=5)
 
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
@@ -234,6 +252,59 @@ class AutoClickerApp(ctk.CTk):
             # 현재 상태 즉시 반영
             self._compact_panel.update_state(self._state)
 
+    # ===== SikuliX 라이브 실행 =====
+
+    def _start_live(self, chosung: str = ""):
+        """SikuliX 프로세스를 시작하고 컴팩트 모드로 모니터링"""
+        # 기존 소스 정리
+        if self._source and self._source.is_running():
+            self._source.stop()
+
+        self._state = AppState()
+        self._log_panel.clear()
+        self._compact_panel.clear()
+
+        # 초성 결정
+        if not chosung:
+            chosung = self._chosung_var.get()
+        if chosung == "전체":
+            chosung = ""
+
+        self._source = LiveProcessSource(
+            chosung=chosung, save_dir=self._save_dir
+        )
+
+        label = f"LIVE: {chosung or '전체'}"
+        self._file_label.configure(text=label)
+        self._compact_panel.set_file_loaded(label)
+        self._play_btn.configure(state="disabled")
+        self._live_btn.configure(
+            text="중지", fg_color="#c0392b", hover_color="#e74c3c",
+            command=self._stop_live
+        )
+        self._status_label.configure(text="SikuliX 실행 중...", text_color="#4CAF50")
+
+        self._source.start(on_event=self._on_event)
+        self._compact_panel.set_play_state("playing")
+
+        # 자동으로 컴팩트 모드 진입
+        if not self._is_compact:
+            self._enter_compact()
+
+        self._poll_update()
+
+    def _stop_live(self):
+        """SikuliX 프로세스 중지"""
+        if self._source and self._source.is_running():
+            self._source.stop()
+        self._live_btn.configure(
+            text="SikuliX 실행", fg_color="#2d7d46", hover_color="#3a9957",
+            command=self._start_live
+        )
+        self._play_btn.configure(state="normal")
+        self._status_label.configure(text="중지됨", text_color="gray60")
+        self._compact_panel.set_play_state("stopped")
+
     # ===== 파일 열기 / 재생 제어 =====
 
     def _open_file(self):
@@ -288,7 +359,8 @@ class AutoClickerApp(ctk.CTk):
             filename = self._file_label.cget("text")
             if filename:
                 self._compact_panel.set_file_loaded(filename)
-            self._source.set_speed(self._get_speed())
+            if hasattr(self._source, 'set_speed'):
+                self._source.set_speed(self._get_speed())
             self._source.start(on_event=self._on_event)
             self._play_btn.configure(text="\u23F8 일시정지")
             self._compact_panel.set_play_state("playing")
@@ -309,10 +381,17 @@ class AutoClickerApp(ctk.CTk):
             self._log_panel.update_state(self._state)
             self._pdf_panel.update_state(self._state)
 
-        if self._state.is_complete:
+        if self._state.is_complete or (self._source and not self._source.is_running()):
             self._status_label.configure(text="완료", text_color="#4CAF50")
             self._play_btn.configure(text="\u25B6 다시 시작")
             self._compact_panel.set_play_state("complete")
+            # 라이브 모드 완료 시 버튼 복원
+            if isinstance(self._source, LiveProcessSource):
+                self._live_btn.configure(
+                    text="SikuliX 실행", fg_color="#2d7d46", hover_color="#3a9957",
+                    command=self._start_live
+                )
+                self._play_btn.configure(state="normal")
         elif self._source and self._source.is_running():
             self.after(self._update_interval, self._poll_update)
 
@@ -320,7 +399,7 @@ class AutoClickerApp(ctk.CTk):
 
     def _on_speed_change(self, value: str):
         speed = self._get_speed()
-        if self._source:
+        if self._source and hasattr(self._source, 'set_speed'):
             self._source.set_speed(speed)
 
     def _get_speed(self) -> float:

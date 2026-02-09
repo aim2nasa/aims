@@ -2,12 +2,17 @@
 """
 데이터 소스: 로그 파일 리플레이 / 실시간 프로세스 stdout
 """
+import subprocess
 import threading
 import time
 from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from log_parser import LogEvent, parse_line, parse_file
+
+# SikuliX 실행 경로
+SIKULIX_JAR = r"C:\Sikulix\sikulixide-2.0.5.jar"
+SIKULIX_SCRIPT = r"D:\aims\tools\MetlifePDF_v2.sikuli\MetlifeCustomerList.py"
 
 
 class DataSource(ABC):
@@ -118,3 +123,86 @@ class FileReplaySource(DataSource):
             return 0.02
 
         return self.line_delay
+
+
+class LiveProcessSource(DataSource):
+    """SikuliX 프로세스 stdout을 실시간 읽어 이벤트 생성"""
+
+    def __init__(self, chosung: str = "", save_dir: str = ""):
+        self.chosung = chosung
+        self.save_dir = save_dir
+        self._process: Optional[subprocess.Popen] = None
+        self._thread: Optional[threading.Thread] = None
+        self._running = False
+        self._paused = False
+        self._on_event: Optional[Callable] = None
+
+    def start(self, on_event: Callable[[LogEvent], None]) -> None:
+        cmd = [
+            "java", "-Dfile.encoding=UTF-8",
+            "-jar", SIKULIX_JAR,
+            "-r", SIKULIX_SCRIPT,
+        ]
+        if self.chosung:
+            cmd += ["--", "--chosung", self.chosung]
+
+        self._on_event = on_event
+        self._running = True
+        self._paused = False
+
+        self._process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+
+        self._thread = threading.Thread(target=self._read_stdout, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._running = False
+        self._paused = False
+        if self._process:
+            self._process.terminate()
+            try:
+                self._process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self._process.kill()
+            self._process = None
+
+    def pause(self) -> None:
+        self._paused = True
+
+    def resume(self) -> None:
+        self._paused = False
+
+    def is_running(self) -> bool:
+        return self._running
+
+    def _read_stdout(self) -> None:
+        """백그라운드 스레드: stdout 라인별 읽기 → parse_line → 콜백"""
+        line_no = 0
+        try:
+            for raw_line in self._process.stdout:
+                if not self._running:
+                    break
+
+                while self._paused:
+                    time.sleep(0.05)
+                    if not self._running:
+                        return
+
+                line_no += 1
+                event = parse_line(raw_line, line_no)
+                if event and self._on_event:
+                    self._on_event(event)
+        except Exception:
+            pass
+        finally:
+            # 프로세스 종료 대기
+            if self._process:
+                self._process.wait()
+            self._running = False
