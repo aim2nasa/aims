@@ -3,10 +3,15 @@
 일반 모드: 초성 선택 → 실행 → 4패널 모니터링
 컴팩트 모드: 실행 중 자동 전환, 극소형 상태바
 """
+import os
 import customtkinter as ctk
+from tkinter import filedialog
 
 from app_state import AppState
 from data_source import LiveProcessSource
+
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT_SAVE_DIR = os.path.join(_BASE_DIR, "output")
 from panels.progress_panel import ProgressPanel
 from panels.customer_table import CustomerTablePanel
 from panels.log_view import LogViewPanel
@@ -84,6 +89,32 @@ class AutoClickerApp(ctk.CTk):
         )
         self._status_label.pack(side="right", padx=15, pady=8)
 
+        # 저장 경로 표시 + 변경 버튼
+        self._save_dir = _DEFAULT_SAVE_DIR
+
+        self._savedir_frame = ctk.CTkFrame(self, height=30, fg_color="gray17")
+        self._savedir_frame.pack(fill="x", padx=8, pady=(4, 0))
+        self._savedir_frame.pack_propagate(False)
+
+        ctk.CTkLabel(
+            self._savedir_frame, text="저장:",
+            font=ctk.CTkFont(size=11), text_color="gray60"
+        ).pack(side="left", padx=(10, 4))
+
+        self._savedir_label = ctk.CTkLabel(
+            self._savedir_frame, text=self._save_dir,
+            font=ctk.CTkFont(size=11), text_color="gray80",
+            anchor="w"
+        )
+        self._savedir_label.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+        ctk.CTkButton(
+            self._savedir_frame, text="변경", width=50, height=22,
+            font=ctk.CTkFont(size=11),
+            fg_color="gray30", hover_color="gray40",
+            command=self._choose_save_dir,
+        ).pack(side="right", padx=(0, 8), pady=4)
+
         # 일반 모드 컨텐츠
         self._build_normal_content()
 
@@ -136,7 +167,7 @@ class AutoClickerApp(ctk.CTk):
         if chosung == "전체":
             chosung = ""
 
-        self._source = LiveProcessSource(chosung=chosung)
+        self._source = LiveProcessSource(chosung=chosung, save_dir=self._save_dir)
 
         label = chosung or "전체"
         self._compact_panel.set_file_loaded(f"[{label}] 실행 중")
@@ -211,6 +242,7 @@ class AutoClickerApp(ctk.CTk):
         self._normal_geometry = self.geometry()
 
         self._toolbar.pack_forget()
+        self._savedir_frame.pack_forget()
         self._normal_frame.pack_forget()
         self._compact_panel.pack(fill="both", expand=True)
 
@@ -239,6 +271,7 @@ class AutoClickerApp(ctk.CTk):
         self.title("AutoClicker v2")
 
         self._toolbar.pack(fill="x", padx=8, pady=(8, 0))
+        self._savedir_frame.pack(fill="x", padx=8, pady=(4, 0))
         self._normal_frame.pack(fill="both", expand=True, padx=8, pady=8)
 
         self.minsize(900, 550)
@@ -254,6 +287,17 @@ class AutoClickerApp(ctk.CTk):
             elif self._state.is_complete:
                 self._compact_panel.set_play_state("complete")
             self._compact_panel.update_state(self._state)
+
+    # ===== 저장 경로 =====
+
+    def _choose_save_dir(self):
+        path = filedialog.askdirectory(
+            title="저장 경로 선택",
+            initialdir=self._save_dir,
+        )
+        if path:
+            self._save_dir = path
+            self._savedir_label.configure(text=path)
 
     # ===== 유틸 =====
 

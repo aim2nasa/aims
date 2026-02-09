@@ -22,8 +22,22 @@ setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 
 # 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
 SCRIPT_DIR = r"D:\aims\tools\MetlifePDF_v2.sikuli"
-CAPTURE_BASE_DIR = r"D:\captures\metlife_ocr"
+_DEFAULT_CAPTURE_BASE = r"D:\captures\metlife_ocr"
 OCR_SCRIPT = SCRIPT_DIR + r"\ocr\upstage_ocr_api.py"
+
+
+def _parse_save_dir_early():
+    """--save-dir 인자를 미리 파싱하여 저장 경로 결정"""
+    args = sys.argv[1:] if len(sys.argv) > 1 else []
+    if '--' in args:
+        args = args[args.index('--') + 1:]
+    if '--save-dir' in args:
+        idx = args.index('--save-dir')
+        if idx + 1 < len(args):
+            return args[idx + 1]
+    return None
+
+CAPTURE_BASE_DIR = _parse_save_dir_early() or _DEFAULT_CAPTURE_BASE
 
 # ============================================================
 # 초성 파싱 (먼저 수행하여 폴더 경로 결정)
@@ -1041,6 +1055,11 @@ def parse_args():
             else:
                 result['only'] = raw_name
             args = args[:idx] + args[idx + 2:]
+
+    # --save-dir 옵션 제거 (이미 early parsing에서 처리됨)
+    if '--save-dir' in args:
+        idx = args.index('--save-dir')
+        args = args[:idx] + args[idx + 2:]
 
     # --chosung 옵션 처리
     if '--chosung' in args:

@@ -146,8 +146,13 @@ class LiveProcessSource(DataSource):
             "-jar", SIKULIX_JAR,
             "-r", SIKULIX_SCRIPT,
         ]
+        extra_args = []
         if self.chosung:
-            cmd += ["--", "--chosung", self.chosung]
+            extra_args += ["--chosung", self.chosung]
+        if self.save_dir:
+            extra_args += ["--save-dir", self.save_dir]
+        if extra_args:
+            cmd += ["--"] + extra_args
 
         self._on_event = on_event
         self._running = True
