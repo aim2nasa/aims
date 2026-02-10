@@ -1783,52 +1783,55 @@ def save_report_pdf(report_number):
         sleep(3.0)  # UI 전환 완료 대기 (1.0 → 3.0 증가)
         capture_step_screenshot(report_number, "after_arrow")
 
-        # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (Click-Verify-Retry, 최대 3회)
-        # 지수 백오프: 50초 → 60초 → 120초 (총 최대 ~230초)
-        # 첫 시도 30→50초: PDF 렌더링에 35~45초 소요되는 케이스 대응
-        preview_timeouts = [50, 60, 120]
-        log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 3회 시도: %s초)..." % str(preview_timeouts))
+        # Step 4+5: 미리보기 버튼 클릭 + PDF 로딩 (짧은 주기 재클릭 방식)
+        # 전략: 10초 간격으로 PDF 로딩 확인, 미리보기 버튼이 아직 보이면 재클릭
+        # 기존: 3회 × 긴 대기(50/60/120초) = 총 ~230초, 클릭 3회
+        # 개선: 최대 90초, 10초마다 확인 + 재클릭 → 클릭 최대 ~8회
+        PREVIEW_POLL = 10   # PDF 로딩 확인 주기 (초)
+        PREVIEW_MAX = 90    # 최대 총 대기 시간 (초)
+        log(u"    [4/11] 미리보기 버튼 클릭 + PDF 로딩 (최대 %d초, %d초마다 재클릭)..." % (PREVIEW_MAX, PREVIEW_POLL))
         pdf_loaded = False
         metlife_error_in_retry = False
 
-        for preview_attempt in range(1, 4):
-            wait_seconds = preview_timeouts[preview_attempt - 1]
-            log(u"        [미리보기 시도 %d/3] (대기 %d초)" % (preview_attempt, wait_seconds))
-            capture_step_screenshot(report_number, "before_preview_%d" % preview_attempt)
+        preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
+        if not exists(preview_pattern, 5):
+            result['error'] = u"미리보기 버튼 못 찾음"
+            log(u"        [FATAL] %s" % result['error'])
+            capture_error_screenshot(report_number, "preview_btn_not_found")
+            log_error(report_number, result['error'])
+            recover_to_report_list(report_number)
+            raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number)
 
-            preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
-            if not exists(preview_pattern, 5):
-                result['error'] = u"미리보기 버튼 못 찾음"
-                log(u"        [FATAL] %s" % result['error'])
-                capture_error_screenshot(report_number, "preview_btn_not_found")
-                log_error(report_number, result['error'])
-                recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 버튼 찾기 실패" % report_number)
+        # 첫 클릭 전 JS 초기화 대기 (버튼은 보이지만 이벤트 핸들러 미바인딩 가능)
+        log(u"        [안정화] 페이지 초기화 대기 (12초)...")
+        sleep(12.0)
 
-            preview_match = find(preview_pattern)
-            preview_x = int(preview_match.getCenter().getX())
-            preview_y = int(preview_match.getCenter().getY())
+        total_waited = 0
+        click_count = 0
 
-            # 첫 시도: 페이지 JS 초기화 대기 (버튼이 보여도 이벤트 핸들러 미바인딩 가능)
-            if preview_attempt == 1:
-                log(u"        [안정화] 페이지 초기화 대기 (12초)...")
-                sleep(12.0)
+        while total_waited < PREVIEW_MAX:
+            # 미리보기 버튼이 보이면 → 클릭 (미등록 또는 첫 시도)
+            if exists(preview_pattern, 2):
+                preview_match = find(preview_pattern)
+                preview_x = int(preview_match.getCenter().getX())
+                preview_y = int(preview_match.getCenter().getY())
+                click_count += 1
+                log(u"        [클릭 %d] 미리보기 버튼: (%d, %d)" % (click_count, preview_x, preview_y))
+                click(preview_match)
+                capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % click_count)
+            else:
+                log(u"        [대기] 미리보기 버튼 사라짐 → PDF 로딩 중...")
 
-            log(u"        [좌표] 미리보기 버튼 클릭: (%d, %d)" % (preview_x, preview_y))
-            click(preview_match)
-            capture_with_click_marker(preview_x, preview_y, "preview_btn", report_number, "preview_clicked_%d" % preview_attempt)
-
-            # PDF 로딩 대기 (지수 백오프: 30초 → 60초 → 120초)
-            log(u"        -> PDF 로딩 대기 (최대 %d초)..." % wait_seconds)
+            # PDF 저장 아이콘 출현 대기 (= PDF 로딩 완료 신호)
             try:
-                wait(IMG_PDF_SAVE_BTN, wait_seconds)
-                log(u"        -> [검증 성공] PDF 로딩 완료 (시도 %d/3)" % preview_attempt)
+                wait(IMG_PDF_SAVE_BTN, PREVIEW_POLL)
+                log(u"        -> [성공] PDF 로딩 완료 (클릭 %d회, 경과 ~%d초)" % (click_count, total_waited + PREVIEW_POLL))
                 capture_step_screenshot(report_number, "preview")
                 pdf_loaded = True
                 break
             except:
-                log(u"        [WARN] PDF 미로딩 (시도 %d/3, %d초 대기 후 타임아웃)" % (preview_attempt, wait_seconds))
-                capture_step_screenshot(report_number, "preview_timeout_%d" % preview_attempt)
+                total_waited += PREVIEW_POLL
+                log(u"        [미로딩] %d/%d초 경과 (클릭 %d회)" % (total_waited, PREVIEW_MAX, click_count))
 
                 # MetLife 명시적 오류 알림 확인 → 재시도 불가
                 alert_check_pattern = Pattern(IMG_ALERT_CONFIRM_BTN).similar(0.7)
@@ -1837,16 +1840,12 @@ def save_report_pdf(report_number):
                     metlife_error_in_retry = True
                     break
 
-                if preview_attempt < 3:
-                    log(u"        -> 3초 대기 후 재시도...")
-                    sleep(3)
-
         if not pdf_loaded:
             # === 3회 시도 모두 실패 (또는 MetLife 오류 감지) ===
             if metlife_error_in_retry:
                 result['error'] = u"PDF 로딩 중 MetLife 오류 발생"
             else:
-                result['error'] = u"PDF 로딩 타임아웃 (30초+60초+120초) - 미리보기 3회 재시도 모두 실패"
+                result['error'] = u"PDF 로딩 타임아웃 (%d초, %d회 재클릭) - 미리보기 반복 시도 모두 실패" % (PREVIEW_MAX, click_count)
             log(u"")
             log(u"    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             log(u"    [ERROR] 보고서 #%d 처리 오류 발생!" % report_number)
@@ -1917,12 +1916,24 @@ def save_report_pdf(report_number):
                 log(u"    [INFO] 보고서 #%d MetLife 오류 스킵 - 다음 보고서로 진행" % report_number)
                 return result
             else:
-                # === MetLife 오류 없이 3회 타임아웃 → 종료 ===
-                log(u"        [FATAL] 미리보기 3회 시도 모두 PDF 로딩 실패 → 프로그램 종료")
+                # === MetLife 오류 없이 타임아웃 → 종료 ===
+                log(u"")
+                log(u"        ╔══════════════════════════════════════════════╗")
+                log(u"        ║  PDF 미리보기 로딩 실패 상세                ║")
+                log(u"        ╠══════════════════════════════════════════════╣")
+                log(u"        ║  총 대기 시간: %3d초 (최대 %d초)           ║" % (total_waited, PREVIEW_MAX))
+                log(u"        ║  클릭 횟수:    %3d회 (%d초 간격)           ║" % (click_count, PREVIEW_POLL))
+                log(u"        ║  MetLife 오류: 없음                         ║")
+                log(u"        ║  PDF 저장 아이콘: 미출현                    ║")
+                log(u"        ╚══════════════════════════════════════════════╝")
+                log(u"")
+                log(u"        [FATAL] 미리보기 %d회 재클릭 모두 PDF 로딩 실패 (%d초 경과) → 프로그램 종료" % (click_count, PREVIEW_MAX))
                 capture_error_screenshot(report_number, "timeout_no_metlife_error")
                 copy_report_screenshots_to_error_folder(report_number)
                 recover_to_report_list(report_number)
-                raise NavigationResetRequired(u"변액리포트 #%d: 미리보기 3회 시도 PDF 로딩 실패" % report_number)
+                raise NavigationResetRequired(
+                    u"변액리포트 #%d: 미리보기 %d회 재클릭 PDF 로딩 실패 (%d초 경과)" % (report_number, click_count, total_waited)
+                )
 
         # Step 6: PDF 저장 아이콘 클릭 + 검증
         log(u"    [6/11] PDF 저장 아이콘 클릭...")

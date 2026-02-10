@@ -458,10 +458,35 @@ class AutoClickerApp(ctk.CTk):
         )
 
         if source_done and self._countdown_after_id is None:
-            # 프로세스 완료 + 카운트다운 없음 → 완료 처리
+            # 프로세스 완료 + 카운트다운 없음 → 완료/크래시 처리
             self._cancel_countdown()
-            self._status_label.configure(text="완료", text_color="#4CAF50")
-            self._compact_panel.set_play_state("complete")
+
+            # 크래시 감지: FATAL 로그 파싱 또는 비정상 exit code
+            crashed = self._state.is_crashed
+            if not crashed and self._source and hasattr(self._source, 'exit_code'):
+                ec = self._source.exit_code
+                if ec is not None and ec != 0:
+                    crashed = True
+
+            if crashed:
+                # 크래시 사유 조합
+                reason_parts = []
+                if self._state.crash_customer:
+                    reason_parts.append(f"고객: {self._state.crash_customer}")
+                if self._state.crash_position:
+                    reason_parts.append(f"위치: {self._state.crash_position}")
+                if self._state.crash_reason:
+                    reason_parts.append(f"원인: {self._state.crash_reason}")
+                reason_text = " | ".join(reason_parts) if reason_parts else "알 수 없는 오류"
+
+                self._status_label.configure(
+                    text=f"FATAL: {reason_text}",
+                    text_color="#e74c3c",
+                )
+                self._compact_panel.set_play_state("crashed")
+            else:
+                self._status_label.configure(text="완료", text_color="#4CAF50")
+                self._compact_panel.set_play_state("complete")
             self._run_btn.configure(
                 text="실행", fg_color="#2d7d46", hover_color="#3a9957",
                 state="normal",
@@ -542,6 +567,8 @@ class AutoClickerApp(ctk.CTk):
                 self._compact_panel.set_play_state(
                     "paused" if self._source._paused else "playing"
                 )
+            elif self._state.is_crashed:
+                self._compact_panel.set_play_state("crashed")
             elif self._state.is_complete:
                 self._compact_panel.set_play_state("complete")
             self._compact_panel.update_state(self._state)

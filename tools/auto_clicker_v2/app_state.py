@@ -61,6 +61,12 @@ class AppState:
     # 완료 여부
     is_complete: bool = False
 
+    # FATAL 크래시 정보
+    is_crashed: bool = False
+    crash_customer: str = ""
+    crash_reason: str = ""
+    crash_position: str = ""
+
     # 현재 고객 상세 (고객통합뷰 처리)
     current_customer_name: str = ""
     current_activity: str = ""
@@ -242,6 +248,18 @@ def _handle_complete_time(state: AppState, event: LogEvent):
 def _handle_complete_ok(state: AppState, event: LogEvent):
     state.is_complete = True
 
+def _handle_fatal_crash(state: AppState, event: LogEvent):
+    state.is_crashed = True
+
+def _handle_fatal_customer(state: AppState, event: LogEvent):
+    state.crash_customer = event.data["name"]
+
+def _handle_fatal_reason(state: AppState, event: LogEvent):
+    state.crash_reason = event.data["reason"]
+
+def _handle_fatal_position(state: AppState, event: LogEvent):
+    state.crash_position = event.data["position"]
+
 
 _HANDLERS = {
     "header_ocr_mode": _handle_header_ocr_mode,
@@ -272,4 +290,8 @@ _HANDLERS = {
     "summary_ar": _handle_summary_ar,
     "complete_time": _handle_complete_time,
     "complete_ok": _handle_complete_ok,
+    "fatal_crash": _handle_fatal_crash,
+    "fatal_customer": _handle_fatal_customer,
+    "fatal_reason": _handle_fatal_reason,
+    "fatal_position": _handle_fatal_position,
 }

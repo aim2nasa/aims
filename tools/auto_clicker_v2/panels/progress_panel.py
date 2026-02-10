@@ -39,7 +39,9 @@ class ProgressPanel(ctk.CTkFrame):
         if chosung:
             parts1.append(f"[{chosung}]")
 
-        if state.is_complete:
+        if state.is_crashed:
+            parts1.append("FATAL 오류 발생")
+        elif state.is_complete:
             parts1.append("처리 완료")
         elif state.current_activity:
             parts1.append(state.current_activity)
@@ -60,7 +62,7 @@ class ProgressPanel(ctk.CTkFrame):
         if counts:
             parts1.append(" ".join(counts))
 
-        color1 = "#4CAF50" if state.is_complete else "#5dade2"
+        color1 = "#e74c3c" if state.is_crashed else ("#4CAF50" if state.is_complete else "#5dade2")
         self._line1.configure(text=" | ".join(parts1), text_color=color1)
 
         # === Line 2: 단계 | N1 S1/3 | OCR:8.7초 | 소요:5분 ===

@@ -147,6 +147,7 @@ class LiveProcessSource(DataSource):
         self._running = False
         self._paused = False
         self._on_event: Optional[Callable] = None
+        self._exit_code: Optional[int] = None
 
     def start(self, on_event: Callable[[LogEvent], None]) -> None:
         cmd = [
@@ -208,6 +209,10 @@ class LiveProcessSource(DataSource):
 
     def is_running(self) -> bool:
         return self._running
+
+    @property
+    def exit_code(self) -> Optional[int]:
+        return self._exit_code
 
     @staticmethod
     def _decode_line(raw_bytes: bytes) -> str:
@@ -280,6 +285,7 @@ class LiveProcessSource(DataSource):
                     rc = proc.wait(timeout=3)
             except Exception:
                 pass
+            self._exit_code = rc
             raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
             raw_log.close()
             hex_log.close()

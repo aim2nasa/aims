@@ -102,6 +102,13 @@ _PATTERNS = {
         r"^\s+존재\+저장: (\d+)건 \| 미존재: (\d+)건 \| 버튼없음: (\d+)건$"
     ),
 
+    # FATAL 크래시 (MetlifeCustomerList.py 출력)
+    "fatal_crash": re.compile(r"^\s+\[FATAL\] 검증 실패 - 프로그램 종료$"),
+    "fatal_customer": re.compile(r"^\s+고객명: (.+)$"),
+    "fatal_reason": re.compile(r"^\s+원인: (.+)$"),
+    "fatal_position": re.compile(r"^\s+위치: (.+)$"),
+    "fatal_resume": re.compile(r"^\s+→ 문제 분석 후 --start-from '(.+)' 옵션으로 재개하세요\.$"),
+
     # 완료
     "complete_time": re.compile(r"^소요 시간: (.+)$"),
     "complete_total": re.compile(r"^총 행수: (\d+)행, 오류: (\d+)"),
@@ -216,6 +223,14 @@ def _extract_data(event_type: str, m: re.Match) -> dict:
         return {"rows": int(groups[0]), "errors": int(groups[1])}
     elif event_type == "verify_customer":
         return {"name": groups[0]}
+    elif event_type == "fatal_customer":
+        return {"name": groups[0]}
+    elif event_type == "fatal_reason":
+        return {"reason": groups[0]}
+    elif event_type == "fatal_position":
+        return {"position": groups[0]}
+    elif event_type == "fatal_resume":
+        return {"customer": groups[0]}
 
     return {}
 

@@ -123,6 +123,8 @@ class CompactPanel(ctk.CTkFrame):
         """재생 상태 - 컴팩트에서는 최소 표시"""
         if state == "complete":
             self._activity_label.configure(text="완료", text_color="#4CAF50")
+        elif state == "crashed":
+            self._activity_label.configure(text="FATAL 오류 발생", text_color="#e74c3c")
         elif state == "stopped":
             self._activity_label.configure(text="중지됨", text_color="#e74c3c")
 
@@ -160,6 +162,9 @@ class CompactPanel(ctk.CTkFrame):
             self._customer_label.configure(
                 text=f"{name}: {var_text} {ar_text}"
             )
+        elif state.is_crashed:
+            crash_msg = state.crash_customer or "오류"
+            self._customer_label.configure(text=f"FATAL: {crash_msg}")
         elif state.is_complete:
             self._customer_label.configure(text="처리 완료")
         else:
