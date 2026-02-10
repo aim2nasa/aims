@@ -1591,7 +1591,71 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                         row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
                                         click(Location(fixed_x, row_y))
                                         sleep(5)
-                                        dismiss_alert_if_exists()
+
+                                        # 알림 팝업 확인
+                                        alert_occurred = dismiss_alert_if_exists()
+
+                                        # 고객통합뷰 모드인 경우 리포트 다운로드 (정상 처리와 동일)
+                                        if INTEGRATED_VIEW_ENABLED:
+                                            if alert_occurred:
+                                                log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵")
+                                            else:
+                                                log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
+                                                try:
+                                                    from verify_customer_integrated_view import verify_customer_integrated_view
+                                                    view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
+                                                    log(u"        -> 고객통합뷰 처리 완료")
+                                                    if isinstance(view_result, dict):
+                                                        _chosung_customer_results.append(view_result)
+                                                except Exception as e2:
+                                                    err_type_name = e2.__class__.__name__
+                                                    err_msg = u"%s" % e2
+                                                    if err_type_name == 'NavigationResetRequired':
+                                                        _crash_log(u"")
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _crash_log(u"    고객명: %s" % name)
+                                                        _crash_log(u"    초성: %s" % chosung_name)
+                                                        _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                        _crash_log(u"    원인: %s" % err_msg)
+                                                        _crash_log(u"    " + u"=" * 60)
+                                                        _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                        _close_log_file()
+                                                        raise SystemExit(1)
+                                                    else:
+                                                        log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                                                        try:
+                                                            from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                            if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                                click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                                log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                                sleep(2)
+                                                        except:
+                                                            pass
+                                                        save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                except:
+                                                    exc_info = sys.exc_info()
+                                                    _crash_log(u"")
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _crash_log(u"    고객명: %s" % name)
+                                                    _crash_log(u"    초성: %s" % chosung_name)
+                                                    _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                    try:
+                                                        _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                        _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                                    except:
+                                                        pass
+                                                    _crash_log(u"    " + u"=" * 60)
+                                                    _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                                                    save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                    _close_log_file()
+                                                    raise SystemExit(1)
+                                                sleep(2)  # 화면 안정화 대기
+
                                         log(u"        -> 종료(x) 클릭...")
                                         click(IMG_CLOSE_BTN)
                                         sleep(3)
@@ -1738,7 +1802,71 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                 row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))  # 16번째 행
                                 click(Location(fixed_x, row_y))
                                 sleep(5)
-                                dismiss_alert_if_exists()
+
+                                # 알림 팝업 확인
+                                alert_occurred = dismiss_alert_if_exists()
+
+                                # 고객통합뷰 모드인 경우 리포트 다운로드 (정상 처리와 동일)
+                                if INTEGRATED_VIEW_ENABLED:
+                                    if alert_occurred:
+                                        log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵")
+                                    else:
+                                        log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
+                                        try:
+                                            from verify_customer_integrated_view import verify_customer_integrated_view
+                                            view_result = verify_customer_integrated_view(pdf_save_dir=PDF_SAVE_DIR, customer_name=name, output_dir=CAPTURE_DIR)
+                                            log(u"        -> 고객통합뷰 처리 완료")
+                                            if isinstance(view_result, dict):
+                                                _chosung_customer_results.append(view_result)
+                                        except Exception as e:
+                                            err_type_name = e.__class__.__name__
+                                            err_msg = u"%s" % e
+                                            if err_type_name == 'NavigationResetRequired':
+                                                _crash_log(u"")
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _crash_log(u"    [FATAL] 검증 실패 - 프로그램 종료")
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _crash_log(u"    고객명: %s" % name)
+                                                _crash_log(u"    초성: %s" % chosung_name)
+                                                _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                                _crash_log(u"    원인: %s" % err_msg)
+                                                _crash_log(u"    " + u"=" * 60)
+                                                _take_crash_screenshot(u"FATAL_verification_failed_%s" % name)
+                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                                _close_log_file()
+                                                raise SystemExit(1)
+                                            else:
+                                                log(u"        -> [ERROR] 고객통합뷰 처리 중 오류: %s" % err_msg)
+                                                try:
+                                                    from verify_customer_integrated_view import IMG_INTEGRATED_VIEW_CLOSE_BTN
+                                                    if exists(IMG_INTEGRATED_VIEW_CLOSE_BTN, 3):
+                                                        click(IMG_INTEGRATED_VIEW_CLOSE_BTN)
+                                                        log(u"        -> 고객통합뷰 X 버튼 클릭 (정리)")
+                                                        sleep(2)
+                                                except:
+                                                    pass
+                                                save_error(name, err_msg, chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                        except:
+                                            exc_info = sys.exc_info()
+                                            _crash_log(u"")
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _crash_log(u"    [FATAL] 고객통합뷰 Java 예외 - 프로그램 종료")
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _crash_log(u"    고객명: %s" % name)
+                                            _crash_log(u"    초성: %s" % chosung_name)
+                                            _crash_log(u"    위치: N%d-S%d-LAST" % (nav_page, scroll_page))
+                                            try:
+                                                _crash_log(u"    오류 타입: %s" % exc_info[0])
+                                                _crash_log(u"    오류 내용: %s" % exc_info[1])
+                                            except:
+                                                pass
+                                            _crash_log(u"    " + u"=" * 60)
+                                            _take_crash_screenshot(u"FATAL_java_exception_%s" % name)
+                                            save_error(name, u"Java exception: %s" % exc_info[1], chosung_name, nav_page, scroll_page, ROWS_PER_PAGE)
+                                            _close_log_file()
+                                            raise SystemExit(1)
+                                        sleep(2)  # 화면 안정화 대기
+
                                 log(u"        -> 종료(x) 클릭...")
                                 click(IMG_CLOSE_BTN)
                                 sleep(3)
