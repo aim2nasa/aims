@@ -945,10 +945,12 @@ if __name__ == "__main__":
     import argparse
 
     # ── 싱글 인스턴스 보호 (Windows Named Mutex) ──
-    _mutex_handle = ctypes.windll.kernel32.CreateMutexW(None, True, "AutoClickerV2_SingleInstance")
-    if ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
-        ctypes.windll.kernel32.CloseHandle(_mutex_handle)
-        messagebox.showwarning("AutoClicker v2", "이미 실행 중입니다.\n기존 창을 사용하세요.")
+    # use_last_error=True → ctypes가 내부적으로 GetLastError를 즉시 캡처
+    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _mutex_handle = _kernel32.CreateMutexW(None, True, "AutoClickerV2_SingleInstance")
+    if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
+        _kernel32.CloseHandle(_mutex_handle)
+        messagebox.showwarning("AutoClicker", "이미 실행 중입니다.\n기존 창을 사용하세요.")
         raise SystemExit(0)
 
     parser = argparse.ArgumentParser(description="AutoClicker v2")
