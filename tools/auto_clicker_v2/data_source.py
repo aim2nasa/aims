@@ -17,6 +17,9 @@ SIKULIX_JAR = r"C:\Sikulix\sikulixide-2.0.5.jar"
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SIKULIX_SCRIPT = os.path.join(_BASE_DIR, "MetlifeCustomerList.py")
 
+# 일시정지 신호 파일 (GUI ↔ SikuliX 프로세스 간 통신)
+PAUSE_SIGNAL_FILE = os.path.join(_BASE_DIR, ".pause_signal")
+
 
 class DataSource(ABC):
     """데이터 소스 추상 인터페이스"""
@@ -177,6 +180,12 @@ class LiveProcessSource(DataSource):
         self._running = True
         self._paused = False
 
+        # 이전 세션의 잔류 신호 파일 정리
+        try:
+            os.remove(PAUSE_SIGNAL_FILE)
+        except OSError:
+            pass
+
         # encoding 지정하지 않음 → raw bytes로 읽기 (CP949/UTF-8 자동 감지)
         self._process = subprocess.Popen(
             cmd,
@@ -191,6 +200,10 @@ class LiveProcessSource(DataSource):
     def stop(self) -> None:
         self._running = False
         self._paused = False
+        try:
+            os.remove(PAUSE_SIGNAL_FILE)
+        except OSError:
+            pass
         proc = self._process
         self._process = None
         if proc and proc.pid:
@@ -203,9 +216,18 @@ class LiveProcessSource(DataSource):
 
     def pause(self) -> None:
         self._paused = True
+        try:
+            with open(PAUSE_SIGNAL_FILE, "w") as f:
+                f.write("paused")
+        except OSError:
+            pass
 
     def resume(self) -> None:
         self._paused = False
+        try:
+            os.remove(PAUSE_SIGNAL_FILE)
+        except OSError:
+            pass
 
     def is_running(self) -> bool:
         return self._running

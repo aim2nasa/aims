@@ -133,6 +133,19 @@ def log(msg):
         pass  # 파일 쓰기 실패 무시 (프로세스 종료 시 발생 가능)
 
 
+# ===== 일시정지 신호 파일 체크 (GUI ↔ SikuliX IPC) =====
+_PAUSE_SIGNAL = os.path.join(r"D:\aims\tools\auto_clicker_v2", ".pause_signal")
+
+def check_pause():
+    """GUI 일시정지 신호 파일이 존재하면 삭제될 때까지 대기"""
+    if not os.path.exists(_PAUSE_SIGNAL):
+        return
+    log(u"    [PAUSE] 일시정지 감지 → 재개 대기 중...")
+    while os.path.exists(_PAUSE_SIGNAL):
+        time.sleep(0.5)
+    log(u"    [PAUSE] 재개됨!")
+
+
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
 DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장
 DIAGNOSTIC_DIR = os.path.join(CAPTURE_DIR, "diagnostic")
@@ -756,6 +769,8 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
                     log(u"        [ONLY] '%s' 처리 완료 (%d명) → 종료 예정" % (ONLY_CUSTOMER, _only_found_count))
                     return processed, error_customers, current_base_y
                 continue
+
+        check_pause()  # GUI 일시정지 체크
 
         log(u"        [%d/%d] %s 클릭..." % (i + 1, total_to_process, name))
 
@@ -1586,6 +1601,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                     except:
                                         pass
 
+                                    check_pause()  # GUI 일시정지 체크
                                     log(u"        [LAST] %s 클릭..." % name)
                                     try:
                                         row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))
@@ -1769,6 +1785,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     break
 
             # 5. 스크롤 (Page Down 키)
+            check_pause()  # GUI 일시정지 체크
             log(u"    [SCROLL] Page Down 스크롤...")
             scroll_page_down()
 
@@ -1797,6 +1814,7 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             except:
                                 pass
 
+                            check_pause()  # GUI 일시정지 체크
                             log(u"        [LAST] %s 클릭..." % name)
                             try:
                                 row_y = get_row_y(base_y, ROWS_PER_PAGE, is_scrolled=(scroll_page > 1))  # 16번째 행

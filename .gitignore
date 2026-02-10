@@ -46,6 +46,7 @@ tools/MetlifePDF.sikuli/debug_log.txt
 # AutoClicker v2 output (실행 결과물)
 tools/auto_clicker_v2/output/
 tools/auto_clicker_v2/*.log
+tools/auto_clicker_v2/.pause_signal
 
 # Mobile responsive screenshots (Puppeteer 자동 캡처)
 mobile/screenshots/
