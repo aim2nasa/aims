@@ -81,11 +81,29 @@ class AutoClickerApp(ctk.CTk):
             'no_ocr': False,               # False=OCR 사용, True=OCR 비활성화
         }
 
-        self._countdown_after_id = None  # 현재 예약된 after ID (취소용)
 
         self._build_ui()
         self.after(50, self._apply_titlebar_style)
         self.after(200, self._show_usage_guide)
+
+        # 디버그 로그 파일
+        import datetime
+        _base = os.path.dirname(os.path.abspath(__file__))
+        self._debug_log_path = os.path.join(_base, "debug_trace.log")
+        with open(self._debug_log_path, "w", encoding="utf-8") as f:
+            f.write(f"=== AutoClicker v2 Debug Log ===\n")
+            f.write(f"Started: {datetime.datetime.now()}\n\n")
+
+    def _debug_log(self, action: str, detail: str):
+        """디버그 로그 기록"""
+        import datetime
+        ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        line = f"[{ts}] {action}: {detail}\n"
+        try:
+            with open(self._debug_log_path, "a", encoding="utf-8") as f:
+                f.write(line)
+        except Exception:
+            pass
 
     # ===== 사용법 안내 =====
 
@@ -289,6 +307,9 @@ class AutoClickerApp(ctk.CTk):
 
     def _start(self):
         """SikuliX 실행 / 실행 중이면 일시정지·계속 토글"""
+        self._debug_log("_start", f"source={self._source is not None}, "
+                        f"is_running={self._source.is_running() if self._source else 'N/A'}, "
+                        f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source and self._source.is_running():
             self._toggle_pause()
             return
@@ -319,7 +340,7 @@ class AutoClickerApp(ctk.CTk):
             chosung=chosung, save_dir=self._save_dir,
             start_from=target if mode == 'start_from' else '',
             only_customer=target if mode == 'only' else '',
-            resume=(mode == 'resume'),
+            resume_mode=(mode == 'resume'),
             no_ocr=self._settings['no_ocr'],
         )
 
@@ -332,7 +353,9 @@ class AutoClickerApp(ctk.CTk):
         self._stop_btn.pack(side="left", padx=(0, 6), pady=5)
         self._status_label.configure(text=f"[{label}] 실행 중...", text_color="#4CAF50")
 
+        self._debug_log("_start", "source.start() 호출")
         self._source.start(on_event=self._on_event)
+        self._debug_log("_start", f"source started, is_running={self._source.is_running()}")
         self._compact_panel.set_play_state("playing")
 
         # 실행 중: 최상위 + 위치 고정 + 타이틀바 제거 (드래그 완전 차단)
@@ -348,7 +371,7 @@ class AutoClickerApp(ctk.CTk):
 
     def _stop(self):
         """SikuliX 중지"""
-        self._cancel_countdown()
+        self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source:
             self._source.stop()
         self._run_btn.configure(
@@ -367,28 +390,41 @@ class AutoClickerApp(ctk.CTk):
             self._apply_titlebar_style()
 
     def _toggle_pause(self):
-        """일시정지 / 재개 토글. 카운트다운 중 누르면 즉시 취소."""
+        """일시정지 / 재개 즉시 토글."""
+        self._debug_log("_toggle_pause ENTER",
+                        f"source={self._source is not None}, "
+                        f"is_running={self._source.is_running() if self._source else 'N/A'}, "
+                        f"paused={self._source._paused if self._source else 'N/A'}")
         if not self._source or not self._source.is_running():
-            return
-
-        # 카운트다운 진행 중 → 취소하고 일시정지 상태로 복귀
-        if self._countdown_after_id is not None:
-            self._cancel_countdown()
-            self._show_paused_ui()
+            self._debug_log("_toggle_pause EARLY RETURN", "source missing or not running!")
             return
 
         if self._source._paused:
-            # 재개: 3초 카운트다운 시작
-            self._countdown_remaining = 3
-            self._show_countdown_ui(3)
-            self._countdown_after_id = self.after(1000, self._countdown_tick)
+            # 즉시 재개
+            self._debug_log("_toggle_pause", "RESUMING")
+            try:
+                self._source.resume()
+            except Exception as e:
+                self._debug_log("_toggle_pause", f"resume() EXCEPTION: {e}")
+                self._source._paused = False
+            label = self._get_chosung_arg() or "전체"
+            self._run_btn.configure(
+                text="일시정지", fg_color="#e67e22", hover_color="#f39c12",
+                state="normal",
+            )
+            self._status_label.configure(
+                text=f"[{label}] 실행 중...", text_color="#4CAF50"
+            )
+            self._compact_panel.set_play_state("playing")
         else:
             # 즉시 일시정지
+            self._debug_log("_toggle_pause", "PAUSING → button='계속'")
             self._source.pause()
             self._show_paused_ui()
 
     def _show_paused_ui(self):
         """일시정지 UI 표시"""
+        self._debug_log("_show_paused_ui", "button → '계속'")
         self._run_btn.configure(
             text="계속", fg_color="#2980b9", hover_color="#3498db",
             state="normal",
@@ -396,44 +432,6 @@ class AutoClickerApp(ctk.CTk):
         self._status_label.configure(text="일시정지", text_color="#e67e22")
         self._compact_panel.set_play_state("paused")
 
-    def _show_countdown_ui(self, remaining: int):
-        """카운트다운 숫자 UI 표시"""
-        self._run_btn.configure(
-            text=f"{remaining}초", fg_color="#e67e22", hover_color="#f39c12",
-            state="normal",
-        )
-        self._status_label.configure(
-            text=f"{remaining}초 후 재개...", text_color="#e67e22"
-        )
-
-    def _cancel_countdown(self):
-        """예약된 after 콜백을 명시적으로 취소"""
-        if self._countdown_after_id is not None:
-            self.after_cancel(self._countdown_after_id)
-            self._countdown_after_id = None
-
-    def _countdown_tick(self):
-        """1초마다 호출. 0이 되면 재개."""
-        self._countdown_after_id = None  # 방금 실행된 after는 소멸
-        self._countdown_remaining -= 1
-
-        if self._countdown_remaining > 0:
-            self._show_countdown_ui(self._countdown_remaining)
-            self._countdown_after_id = self.after(1000, self._countdown_tick)
-        else:
-            # 카운트다운 완료 → 재개
-            if self._source and self._source.is_running():
-                self._source.resume()
-                self._run_btn.configure(
-                    text="일시정지", fg_color="#e67e22", hover_color="#f39c12",
-                    state="normal",
-                )
-                label = self._get_chosung_arg() or "전체"
-                self._status_label.configure(
-                    text=f"[{label}] 실행 중...", text_color="#4CAF50"
-                )
-                self._compact_panel.set_play_state("playing")
-            # 소스가 이미 죽었으면 _poll_update가 다음 틱에서 완료 처리
 
     # ===== 이벤트 처리 =====
 
@@ -457,9 +455,12 @@ class AutoClickerApp(ctk.CTk):
             self._source and not self._source.is_running()
         )
 
-        if source_done and self._countdown_after_id is None:
-            # 프로세스 완료 + 카운트다운 없음 → 완료/크래시 처리
-            self._cancel_countdown()
+        if source_done:
+            self._debug_log("_poll_update SOURCE_DONE",
+                            f"is_complete={self._state.is_complete}, "
+                            f"is_running={self._source.is_running() if self._source else 'N/A'}, "
+                            f"paused={self._source._paused if self._source else 'N/A'}, "
+                            f"btn_text={self._run_btn.cget('text')}")
 
             # 크래시 감지: FATAL 로그 파싱 또는 비정상 exit code
             crashed = self._state.is_crashed

@@ -2,6 +2,7 @@
 """
 데이터 소스: 로그 파일 리플레이 / 실시간 프로세스 stdout
 """
+import datetime
 import os
 import subprocess
 import threading
@@ -10,6 +11,17 @@ from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from log_parser import LogEvent, parse_line, parse_file
+
+
+def _ds_log(action: str, detail: str):
+    """data_source 디버그 로그"""
+    ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    _base = os.path.dirname(os.path.abspath(__file__))
+    try:
+        with open(os.path.join(_base, "debug_trace.log"), "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] DS.{action}: {detail}\n")
+    except Exception:
+        pass
 
 # SikuliX 실행 경로
 SIKULIX_JAR = r"C:\Sikulix\sikulixide-2.0.5.jar"
@@ -137,13 +149,13 @@ class LiveProcessSource(DataSource):
     def __init__(self, chosung: str = "", save_dir: str = "",
                  integrated_view: bool = True,
                  start_from: str = "", only_customer: str = "",
-                 resume: bool = False, no_ocr: bool = False):
+                 resume_mode: bool = False, no_ocr: bool = False):
         self.chosung = chosung
         self.save_dir = save_dir
         self.integrated_view = integrated_view
         self.start_from = start_from
         self.only_customer = only_customer
-        self.resume = resume
+        self.resume_mode = resume_mode
         self.no_ocr = no_ocr
         self._process: Optional[subprocess.Popen] = None
         self._thread: Optional[threading.Thread] = None
@@ -169,7 +181,7 @@ class LiveProcessSource(DataSource):
             extra_args += ["--start-from", self.start_from]
         if self.only_customer:
             extra_args += ["--only", self.only_customer]
-        if self.resume:
+        if self.resume_mode:
             extra_args += ["--resume"]
         if self.no_ocr:
             extra_args += ["--no-ocr"]
@@ -221,6 +233,7 @@ class LiveProcessSource(DataSource):
                 f.write("paused")
         except OSError:
             pass
+        _ds_log("pause", f"_paused=True, _running={self._running}")
 
     def resume(self) -> None:
         self._paused = False
@@ -228,6 +241,7 @@ class LiveProcessSource(DataSource):
             os.remove(PAUSE_SIGNAL_FILE)
         except OSError:
             pass
+        _ds_log("resume", f"_paused=False, _running={self._running}")
 
     def is_running(self) -> bool:
         return self._running
@@ -275,12 +289,16 @@ class LiveProcessSource(DataSource):
                     if not self._running:
                         break
 
+                    if self._paused:
+                        _ds_log("_read_stdout", f"entering pause loop, poll={proc.poll()}")
                     while self._paused:
                         time.sleep(0.05)
                         if not self._running:
+                            _ds_log("_read_stdout", "pause loop: _running=False, breaking")
                             break
                         # 프로세스 종료 감지 (pause 루프 탈출)
                         if proc and proc.poll() is not None:
+                            _ds_log("_read_stdout", f"pause loop: proc ended (poll={proc.poll()}), breaking")
                             break
 
                     line_no += 1
@@ -308,6 +326,7 @@ class LiveProcessSource(DataSource):
             except Exception:
                 pass
             self._exit_code = rc
+            _ds_log("_read_stdout FINALLY", f"exit_code={rc}, lines={line_no}, setting _running=False")
             raw_log.write(f"\n=== PROCESS EXIT (code={rc}, lines={line_no}) ===\n")
             raw_log.close()
             hex_log.close()
