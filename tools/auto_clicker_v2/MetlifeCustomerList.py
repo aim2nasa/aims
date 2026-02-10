@@ -145,6 +145,14 @@ def check_pause():
         time.sleep(0.5)
     log(u"    [PAUSE] 재개됨!")
 
+# ===== click() 래핑: 모든 클릭 전에 자동으로 일시정지 체크 =====
+_sikuli_click = click  # SikuliX 원본 click 보존
+
+def click(target, *args):
+    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
+    check_pause()
+    return _sikuli_click(target, *args)
+
 
 # 진단 모드 설정 (클릭 위치 분석용 스크린샷 저장)
 DIAGNOSTIC_MODE = True  # True면 클릭 전 스크린샷 저장

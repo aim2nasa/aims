@@ -52,6 +52,16 @@ try:
 except NameError:
     pass  # 외부 import 시 SikuliX 전역 객체가 없을 수 있음
 
+# ===== click() 래핑: 모든 클릭 전에 자동으로 일시정지 체크 =====
+_PAUSE_SIGNAL_PATH = os.path.join(r"D:\aims\tools\auto_clicker_v2", ".pause_signal")
+_sikuli_click = click
+
+def click(target, *args):
+    """SikuliX click 래퍼 - 클릭 전 항상 일시정지 체크"""
+    while os.path.exists(_PAUSE_SIGNAL_PATH):
+        time.sleep(0.5)
+    return _sikuli_click(target, *args)
+
 # 경로 설정 (동적 감지 - auto_clicker_v2 기준)
 # 주의: 모듈 레벨에서 폴더 생성하지 않음! output_dir로 전달받아 verify_customer_integrated_view() 내에서 생성
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
