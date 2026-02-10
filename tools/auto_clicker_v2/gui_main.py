@@ -51,7 +51,7 @@ def _chosung_of(name: str) -> str:
 
 
 class AutoClickerApp(ctk.CTk):
-    def __init__(self):
+    def __init__(self, cli_args=None):
         super().__init__()
 
         self.title("AutoClicker v2")
@@ -74,6 +74,7 @@ class AutoClickerApp(ctk.CTk):
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
         self._is_compact = False
+        self._cli_args = cli_args
         self._settings = {
             'chosungs': set(_CHOSUNGS),   # 기본: 전체 선택
             'mode': 'normal',              # normal / start_from / only / resume
@@ -81,10 +82,31 @@ class AutoClickerApp(ctk.CTk):
             'no_ocr': False,               # False=OCR 사용, True=OCR 비활성화
         }
 
+        # CLI 인수로 설정 오버라이드
+        if cli_args:
+            if cli_args.start_from:
+                self._settings['mode'] = 'start_from'
+                self._settings['target'] = cli_args.start_from
+                # 고객명에서 초성 자동 추출 (GUI 설정 다이얼로그와 동일 로직)
+                ch = _chosung_of(cli_args.start_from)
+                self._settings['chosungs'] = {ch} if ch else set(_CHOSUNGS)
+            elif getattr(cli_args, 'only', ''):
+                self._settings['mode'] = 'only'
+                self._settings['target'] = cli_args.only
+                ch = _chosung_of(cli_args.only)
+                self._settings['chosungs'] = {ch} if ch else set(_CHOSUNGS)
+            if cli_args.chosung:
+                self._settings['chosungs'] = {cli_args.chosung}
 
         self._build_ui()
+        # CLI 인수 적용 후 설정 요약 라벨 갱신
+        if cli_args and (cli_args.start_from or getattr(cli_args, 'only', '') or cli_args.chosung):
+            self._update_settings_summary()
         self.after(50, self._apply_titlebar_style)
-        self.after(200, self._show_usage_guide)
+        if cli_args and cli_args.auto_start:
+            self.after(500, self._start)  # 자동 실행
+        else:
+            self.after(200, self._show_usage_guide)
 
         # 디버그 로그 파일
         import datetime
@@ -902,5 +924,21 @@ class AutoClickerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
-    app = AutoClickerApp()
+    import argparse
+
+    # ── 싱글 인스턴스 보호 (Windows Named Mutex) ──
+    _mutex_handle = ctypes.windll.kernel32.CreateMutexW(None, True, "AutoClickerV2_SingleInstance")
+    if ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+        ctypes.windll.kernel32.CloseHandle(_mutex_handle)
+        messagebox.showwarning("AutoClicker v2", "이미 실행 중입니다.\n기존 창을 사용하세요.")
+        raise SystemExit(0)
+
+    parser = argparse.ArgumentParser(description="AutoClicker v2")
+    parser.add_argument("--chosung", type=str, default="", help="초성 (예: ㄱ)")
+    parser.add_argument("--start-from", type=str, default="", dest="start_from", help="시작 고객명")
+    parser.add_argument("--only", type=str, default="", help="특정 고객만")
+    parser.add_argument("--auto-start", action="store_true", dest="auto_start", help="자동 실행")
+    cli_args = parser.parse_args()
+
+    app = AutoClickerApp(cli_args=cli_args)
     app.mainloop()

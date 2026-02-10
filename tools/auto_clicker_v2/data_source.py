@@ -231,17 +231,19 @@ class LiveProcessSource(DataSource):
         try:
             with open(PAUSE_SIGNAL_FILE, "w") as f:
                 f.write("paused")
-        except OSError:
-            pass
-        _ds_log("pause", f"_paused=True, _running={self._running}")
+            exists = os.path.exists(PAUSE_SIGNAL_FILE)
+            _ds_log("pause", f"_paused=True, signal_file={exists}, path={PAUSE_SIGNAL_FILE}")
+        except OSError as e:
+            _ds_log("pause", f"_paused=True, signal_file FAILED: {e}")
 
     def resume(self) -> None:
         self._paused = False
+        existed = os.path.exists(PAUSE_SIGNAL_FILE)
         try:
             os.remove(PAUSE_SIGNAL_FILE)
         except OSError:
             pass
-        _ds_log("resume", f"_paused=False, _running={self._running}")
+        _ds_log("resume", f"_paused=False, signal_existed={existed}, removed={not os.path.exists(PAUSE_SIGNAL_FILE)}")
 
     def is_running(self) -> bool:
         return self._running
@@ -283,32 +285,44 @@ class LiveProcessSource(DataSource):
 
         line_no = 0
         proc = self._process
+        _pause_entered = False  # pause loop 진입 여부 (중복 로그 방지)
         try:
             if proc and proc.stdout:
                 for raw_bytes in proc.stdout:
                     if not self._running:
                         break
 
-                    if self._paused:
-                        _ds_log("_read_stdout", f"entering pause loop, poll={proc.poll()}")
-                    while self._paused:
-                        time.sleep(0.05)
-                        if not self._running:
-                            _ds_log("_read_stdout", "pause loop: _running=False, breaking")
-                            break
-                        # 프로세스 종료 감지 (pause 루프 탈출)
-                        if proc and proc.poll() is not None:
-                            _ds_log("_read_stdout", f"pause loop: proc ended (poll={proc.poll()}), breaking")
-                            break
-
+                    ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
                     line_no += 1
+
+                    # 일시정지 상태에서 stdout 수신 = SikuliX가 아직 동작 중!
+                    if self._paused and not _pause_entered:
+                        _ds_log("_read_stdout", f"⚠ LINE WHILE PAUSED: #{line_no}")
+
+                    # 프로세스가 살아있을 때만 pause 대기
+                    if self._paused and proc.poll() is None:
+                        if not _pause_entered:
+                            _ds_log("_read_stdout", f"entering pause loop (last line=#{line_no})")
+                            _pause_entered = True
+                        while self._paused:
+                            time.sleep(0.05)
+                            if not self._running:
+                                break
+                            if proc.poll() is not None:
+                                _ds_log("_read_stdout", f"pause loop: proc ended (poll={proc.poll()})")
+                                break
+                    else:
+                        if _pause_entered and not self._paused:
+                            _ds_log("_read_stdout", f"resumed at line #{line_no}")
+                            _pause_entered = False
+
                     # hex 덤프 (경로 깨짐 디버깅용)
                     hex_str = raw_bytes.rstrip().hex()
                     hex_log.write(f"{line_no:04d} | {hex_str}\n")
                     hex_log.flush()
 
                     line = self._decode_line(raw_bytes)
-                    raw_log.write(f"{line_no:04d} | {line}\n")
+                    raw_log.write(f"{ts} | {line_no:04d} | paused={self._paused} | {line}\n")
                     raw_log.flush()
 
                     event = parse_line(line, line_no)

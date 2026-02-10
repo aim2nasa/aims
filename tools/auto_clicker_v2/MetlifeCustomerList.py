@@ -557,18 +557,58 @@ def capture_table_region():
     return capture(table_region)
 
 
+def _compare_two_captures(path1, path2):
+    """두 캡처 이미지의 상단 10% 영역(첫 행) 픽셀 유사도 비교.
+
+    Page Down은 항상 첫 번째 행을 변경한다 (스크롤 끝이 아닌 한).
+    - 스크롤됨: 첫 행 완전 교체 → 상단 유사도 ~50% (확실히 낮음)
+    - 스크롤 끝: 첫 행 동일 → 상단 유사도 ~100% (확실히 높음)
+    전체 테이블이나 하단 비교는 행 구조가 균일해서 오탐 발생.
+
+    Returns:
+        (similarity, same_count, total_samples) 튜플.
+        이미지 크기가 다르면 (0.0, 0, 1) 반환.
+    """
+    from javax.imageio import ImageIO
+    from java.io import File
+
+    img1 = ImageIO.read(File(path1))
+    img2 = ImageIO.read(File(path2))
+
+    if img1.getWidth() != img2.getWidth() or img1.getHeight() != img2.getHeight():
+        return (0.0, 0, 1)
+
+    width = img1.getWidth()
+    height = img1.getHeight()
+
+    # 상단 10%만 비교 (첫 1-2행 영역 - Page Down 시 반드시 변경됨)
+    y_end = int(height * 0.10)
+    sample_step = max(1, min(width, y_end) // 20)
+
+    same_count = 0
+    diff_count = 0
+
+    for y in range(0, y_end, sample_step):
+        for x in range(0, width, sample_step):
+            p1 = img1.getRGB(x, y)
+            p2 = img2.getRGB(x, y)
+            if p1 == p2:
+                same_count += 1
+            else:
+                diff_count += 1
+
+    total_samples = same_count + diff_count
+    similarity = float(same_count) / total_samples if total_samples > 0 else 0
+    return (similarity, same_count, total_samples)
+
+
 def is_last_page(prev_capture_path):
     """
-    스크롤 전후 테이블 전체 영역 비교로 마지막 페이지 감지
+    스크롤 전후 테이블 상단 10%(첫 행) 비교로 마지막 페이지 감지.
 
-    스크롤 후 테이블 전체를 다시 캡처하여 스크롤 전 캡처와 비교.
-    98% 이상 동일하면 마지막 페이지로 판단.
-
-    임계값 98%인 이유:
-    - Nexacro 그리드의 Page Down은 커서 위치 기준으로 스크롤
-    - 커서가 상단에 있으면 부분 스크롤(1~2행)만 발생 가능 → 95% 유사
-    - 98% 이상이면 스크롤이 실질적으로 발생하지 않은 것으로 확정
-    - 부분 스크롤(90~97%)은 다음 루프에서 자연스럽게 처리
+    Page Down은 항상 첫 행을 바꾼다 (끝이 아닌 한).
+    상단 비교로 미세한 스크롤도 정확히 감지 (오탐 없음).
+    90% 이상 동일하면 마지막 페이지로 판정.
 
     Args:
         prev_capture_path: 스크롤 전 테이블 캡처 이미지 경로
@@ -577,49 +617,21 @@ def is_last_page(prev_capture_path):
         bool: 마지막 페이지면 True
     """
     try:
-        # 스크롤 후 테이블 전체 영역 캡처
         current_capture = capture_table_region()
 
-        # 두 이미지 비교 (Java ImageIO 사용)
-        from javax.imageio import ImageIO
-        from java.io import File
+        similarity, same_count, total_samples = _compare_two_captures(prev_capture_path, current_capture)
 
-        img1 = ImageIO.read(File(prev_capture_path))
-        img2 = ImageIO.read(File(current_capture))
-
-        # 크기가 다르면 다른 이미지
-        if img1.getWidth() != img2.getWidth() or img1.getHeight() != img2.getHeight():
+        if total_samples <= 1 and same_count == 0:
             log(u"    [COMPARE] 이미지 크기 다름 → 계속 진행")
             return False
 
-        # 픽셀 비교 (샘플링: 약 1000개 샘플 - 테이블 전체 비교)
-        width = img1.getWidth()
-        height = img1.getHeight()
-        sample_step = max(1, min(width, height) // 30)  # 약 900~1000개 샘플
+        log(u"    [COMPARE] 상단10%%(첫행) 비교: %.1f%% 동일 (%d/%d 샘플)" % (similarity * 100, same_count, total_samples))
 
-        same_count = 0
-        diff_count = 0
-
-        for y in range(0, height, sample_step):
-            for x in range(0, width, sample_step):
-                p1 = img1.getRGB(x, y)
-                p2 = img2.getRGB(x, y)
-                if p1 == p2:
-                    same_count += 1
-                else:
-                    diff_count += 1
-
-        total_samples = same_count + diff_count
-        similarity = float(same_count) / total_samples if total_samples > 0 else 0
-
-        log(u"    [COMPARE] 테이블 전체 비교: %.1f%% 동일 (%d/%d 샘플)" % (similarity * 100, same_count, total_samples))
-
-        # 98% 이상 동일하면 마지막 페이지 (스크롤이 실질적으로 발생하지 않음)
-        if similarity >= 0.98:
-            log(u"    [COMPARE] → 마지막 페이지 (98%+ 동일)")
+        if similarity >= 0.90:
+            log(u"    [COMPARE] → 첫 행 동일(90%+) → 마지막 페이지 확정")
             return True
         else:
-            log(u"    [COMPARE] → 계속 진행 (충분히 다름)")
+            log(u"    [COMPARE] → 첫 행 변경됨 → 계속 진행")
             return False
 
     except Exception as e:
@@ -1545,11 +1557,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 화면 안정화 대기
             sleep(2)
 
-            # 1. 스크롤 전 테이블 전체 캡처 (마지막 페이지 감지용)
-            prev_capture = capture_table_region()
-            log(u"    [CAPTURE] 스크롤 전 테이블 전체 캡처 완료")
+            # OCR 기반 스크롤 끝 감지 플래그 (매 반복 초기화)
+            _scroll_end_by_ocr = False
 
-            # 2. 고객 인식 (OCR 또는 No-OCR)
+            # 1. 고객 인식 (OCR 또는 No-OCR)
             if NO_OCR_MODE:
                 # No-OCR 모드: 행 번호 기반 가상 고객 생성
                 customers = generate_blind_customers(ROWS_PER_PAGE)
@@ -1586,11 +1597,25 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                             name = extra.get(u"고객명", "") or ""
                             birth = extra.get(u"생년월일", "") or ""
                             if name:
-                                log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
-                                total_rows += 1
+                                # --start-from / --only 모드 체크
+                                _skip_last = False
+                                if START_FROM_MODE and not _start_from_found:
+                                    if name == START_FROM_CUSTOMER:
+                                        _start_from_found = True
+                                        log(u"    [LAST] ★ %s 발견! → 이 고객부터 처리 시작" % name)
+                                    else:
+                                        log(u"    [LAST] %s 스킵 (--start-from '%s' 찾는 중)" % (name, START_FROM_CUSTOMER))
+                                        _skip_last = True
+                                if ONLY_MODE and not _skip_last and name != ONLY_CUSTOMER:
+                                    log(u"    [LAST] %s 스킵 (--only '%s' 모드)" % (name, ONLY_CUSTOMER))
+                                    _skip_last = True
 
-                                # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
-                                if CLICK_ENABLED:
+                                if not _skip_last:
+                                    log(u"    [LAST] 이전 페이지 16번째 행 추가: %s (%s)" % (name, birth))
+                                    total_rows += 1
+
+                                # 16번째 행 고객 클릭 처리 (CLICK_ENABLED이고 스킵 아닐 때만)
+                                if CLICK_ENABLED and not _skip_last:
                                     # 16번째 행 클릭 전 헤더 위치 재측정
                                     try:
                                         header = find(IMG_CUSTNAME)
@@ -1724,15 +1749,10 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 page_rows = len(current_rows) - scroll_dups
                 total_rows += page_rows
 
-                # 무한루프 방지: 연속 신규 행 0건 감지
+                # 스크롤 끝 감지 (OCR 기반): 신규 행 0건 = 이전 Page Down이 스크롤하지 못함
                 if page_rows <= 0 and len(current_rows) > 0:
-                    zero_new_rows_count += 1
-                    log(u"    [STUCK] 신규 행 0건 (연속 %d회)" % zero_new_rows_count)
-                    if zero_new_rows_count >= 3:
-                        log(u"\n    *** 스크롤 진행 불가! 신규 행 0건 3회 연속 → 스크롤 끝 판정 ***")
-                        break
-                else:
-                    zero_new_rows_count = 0
+                    _scroll_end_by_ocr = True
+                    log(u"    [SCROLL_END] OCR 기반 스크롤 끝 감지! (신규 행 0건 = 이전 Page Down 무효)")
 
                 # 다음 페이지를 위해 현재 페이지 행 저장
                 prev_page_rows = current_rows
@@ -1784,14 +1804,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     log(u"\n    *** [NO-OCR] 빈 행 감지 → 이 페이지가 마지막 (스크롤 불필요) ***")
                     break
 
-            # 5. 스크롤 (Page Down 키)
-            check_pause()  # GUI 일시정지 체크
-            log(u"    [SCROLL] Page Down 스크롤...")
-            scroll_page_down()
-
-            # 6. 스크롤 끝 감지 (스크롤 전후 테이블 전체 비교)
-            if is_last_page(prev_capture):
-                log(u"\n    *** 스크롤 끝 도달! (스크롤 전후 동일) ***")
+            # 5. 스크롤 끝 감지 (OCR 기반: 신규 행 0건 → LAST 핸들러 + break)
+            if _scroll_end_by_ocr:
+                log(u"\n    *** 스크롤 끝 도달! (OCR: 신규 행 0건 → 이전 Page Down 무효) ***")
 
                 # 마지막 페이지: 16번째 행이 있으면 처리
                 if len(customers) > ROWS_PER_PAGE:
@@ -1799,11 +1814,25 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     name = extra_customer.get(u"고객명", "") or ""
                     birth = extra_customer.get(u"생년월일", "") or ""
                     if name:
-                        log(u"    [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
-                        total_rows += 1
+                        # --start-from / --only 모드 체크
+                        _skip_last = False
+                        if START_FROM_MODE and not _start_from_found:
+                            if name == START_FROM_CUSTOMER:
+                                _start_from_found = True
+                                log(u"    [LAST] ★ %s 발견! → 이 고객부터 처리 시작" % name)
+                            else:
+                                log(u"    [LAST] %s 스킵 (--start-from '%s' 찾는 중)" % (name, START_FROM_CUSTOMER))
+                                _skip_last = True
+                        if ONLY_MODE and not _skip_last and name != ONLY_CUSTOMER:
+                            log(u"    [LAST] %s 스킵 (--only '%s' 모드)" % (name, ONLY_CUSTOMER))
+                            _skip_last = True
 
-                        # 16번째 행 고객 클릭 처리 (CLICK_ENABLED일 때만)
-                        if CLICK_ENABLED:
+                        if not _skip_last:
+                            log(u"    [LAST] 16번째 행 추가: %s (%s)" % (name, birth))
+                            total_rows += 1
+
+                        # 16번째 행 고객 클릭 처리 (CLICK_ENABLED이고 스킵 아닐 때만)
+                        if CLICK_ENABLED and not _skip_last:
                             # 16번째 행 클릭 전 헤더 위치 재측정
                             try:
                                 header = find(IMG_CUSTNAME)
@@ -1904,6 +1933,11 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                 log(u"    [네비 %d] 스크롤 페이지 %d개 완료" % (nav_page, scroll_page))
                 break  # 스크롤 루프 탈출
 
+            # 6. 스크롤 (Page Down 키)
+            check_pause()  # GUI 일시정지 체크
+            log(u"    [SCROLL] Page Down 스크롤...")
+            scroll_page_down()
+
             log(u"\n    *** 스크롤 %d → %d 이동 ***" % (scroll_page, scroll_page + 1))
             prev_customers = customers  # 다음 페이지 OCR 실패 시 복구용
             scroll_page += 1
@@ -1946,6 +1980,15 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             log(u"  #  [다음] 버튼 없음!")
             log(u"  #  초성 [%s] 모든 페이지 처리 완료!" % chosung_name)
             log(u"  " + u"#" * 50)
+            # 진단용: 다음 버튼 없음 시점의 전체 화면 캡처
+            try:
+                diag_path = os.path.join(CAPTURE_DIR, "DIAG_no_next_btn_nav%d_%s.png" % (nav_page, chosung_name))
+                diag_cap = capture(Screen())
+                import shutil
+                shutil.copy(diag_cap, diag_path)
+                log(u"  [DIAG] 다음버튼 없음 진단 캡처: %s" % diag_path)
+            except Exception as e:
+                log(u"  [DIAG] 진단 캡처 실패: %s" % str(e))
             break  # 네비 루프 탈출
 
     # 초성 처리 완료 Summary + 문제 Report
