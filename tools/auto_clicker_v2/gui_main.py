@@ -330,7 +330,7 @@ class AutoClickerApp(ctk.CTk):
         self._pdf_panel = PdfResultPanel(self._normal_frame)
         self._pdf_panel.pack(fill="x", pady=(0, 2))
 
-        self._customer_panel = CustomerTablePanel(self._normal_frame, height=190)
+        self._customer_panel = CustomerTablePanel(self._normal_frame, height=189)
         self._customer_panel.pack(fill="x", pady=(0, 2))
         self._customer_panel.pack_propagate(False)
 

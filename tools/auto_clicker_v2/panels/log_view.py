@@ -11,11 +11,12 @@ class LogViewPanel(ctk.CTkFrame):
 
         self._textbox = ctk.CTkTextbox(
             self,
-            font=ctk.CTkFont(family=_FONT, size=10),
+            font=ctk.CTkFont(family=_FONT, size=9),
             wrap="none",
             state="disabled",
+            border_width=0,
         )
-        self._textbox.pack(padx=4, pady=2, fill="both", expand=True)
+        self._textbox.pack(padx=4, pady=0, fill="both", expand=True)
 
         self._last_line_count = 0
 
