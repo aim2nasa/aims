@@ -99,6 +99,8 @@ class AutoClickerApp(ctk.CTk):
                 self._settings['chosungs'] = {cli_args.chosung}
 
         self._build_ui()
+        # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         # CLI 인수 적용 후 설정 요약 라벨 갱신
         if cli_args and (cli_args.start_from or getattr(cli_args, 'only', '') or cli_args.chosung):
             self._update_settings_summary()
@@ -229,15 +231,6 @@ class AutoClickerApp(ctk.CTk):
         )
         self._run_btn.pack(side="left", padx=(0, 4), pady=5)
 
-        # 중지 버튼 (실행 중에만 표시)
-        self._stop_btn = ctk.CTkButton(
-            self._toolbar, text="중지", width=40, height=28,
-            command=self._stop,
-            font=ctk.CTkFont(family=_FONT, size=11),
-            fg_color="#c0392b", hover_color="#e74c3c"
-        )
-        # 초기에는 숨김 (실행 시 표시)
-
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
             self._toolbar, text="\u2199 축소", width=60, height=28,
@@ -246,6 +239,16 @@ class AutoClickerApp(ctk.CTk):
             fg_color="gray30", hover_color="gray40"
         )
         self._compact_btn.pack(side="left", pady=5)
+
+        # 닫기 버튼 (우측 끝, 타이틀바 없을 때 앱 종료용)
+        self._close_btn = ctk.CTkButton(
+            self._toolbar, text="\u2715", width=28, height=28,
+            command=self._on_close,
+            font=ctk.CTkFont(family=_FONT, size=13),
+            fg_color="transparent", hover_color="#c0392b",
+            text_color="gray60",
+        )
+        # 초기에는 숨김 (실행 시 표시, 타이틀바 없을 때만 필요)
 
         # 자동 축소 체크박스
         self._auto_compact_var = ctk.BooleanVar(value=False)
@@ -372,8 +375,8 @@ class AutoClickerApp(ctk.CTk):
         self._run_btn.configure(
             text="일시정지", fg_color="#e67e22", hover_color="#f39c12"
         )
-        self._stop_btn.pack(side="left", padx=(0, 6), pady=5)
         self._status_label.configure(text=f"[{label}] 실행 중...", text_color="#4CAF50")
+        self._close_btn.pack(side="right", padx=(0, 4), pady=5)
 
         self._debug_log("_start", "source.start() 호출")
         self._source.start(on_event=self._on_event)
@@ -392,7 +395,7 @@ class AutoClickerApp(ctk.CTk):
         self._poll_update()
 
     def _stop(self):
-        """SikuliX 중지"""
+        """SikuliX 중지 (프로세스 종료, UI 초기화)"""
         self._debug_log("_stop", f"paused={self._source._paused if self._source else 'N/A'}")
         if self._source:
             self._source.stop()
@@ -400,8 +403,8 @@ class AutoClickerApp(ctk.CTk):
             text="실행", fg_color="#2d7d46", hover_color="#3a9957",
             state="normal",
         )
-        self._stop_btn.pack_forget()
         self._status_label.configure(text="중지됨", text_color="gray60")
+        self._close_btn.pack_forget()
         self._compact_panel.set_play_state("stopped")
         # 일반 모드: topmost 해제 + 타이틀바 복원
         if not self._is_compact:
@@ -410,6 +413,12 @@ class AutoClickerApp(ctk.CTk):
             self.attributes("-topmost", False)
             self.geometry(_NORMAL_GEOMETRY)
             self._apply_titlebar_style()
+
+    def _on_close(self):
+        """앱 종료: 실행 중인 SikuliX 프로세스 정리 후 앱 닫기"""
+        if self._source and self._source.is_running():
+            self._source.stop()
+        self.destroy()
 
     def _toggle_pause(self):
         """일시정지 / 재개 즉시 토글."""
@@ -514,7 +523,7 @@ class AutoClickerApp(ctk.CTk):
                 text="실행", fg_color="#2d7d46", hover_color="#3a9957",
                 state="normal",
             )
-            self._stop_btn.pack_forget()
+            self._close_btn.pack_forget()
             # 완료 → 일반 모드: topmost 해제 + 타이틀바 복원
             if not self._is_compact:
                 self.overrideredirect(False)
