@@ -252,6 +252,9 @@ class LiveProcessSource(DataSource):
                         time.sleep(0.05)
                         if not self._running:
                             break
+                        # 프로세스 종료 감지 (pause 루프 탈출)
+                        if proc and proc.poll() is not None:
+                            break
 
                     line_no += 1
                     # hex 덤프 (경로 깨짐 디버깅용)
