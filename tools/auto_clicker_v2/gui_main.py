@@ -32,6 +32,7 @@ from panels.customer_table import CustomerTablePanel
 from panels.log_view import LogViewPanel
 from panels.pdf_result import PdfResultPanel
 from panels.compact_panel import CompactPanel
+from settings_store import load_settings, save_settings
 
 COMPACT_HEIGHT = 47
 COMPACT_WIDTH = 850
@@ -91,7 +92,22 @@ class AutoClickerApp(ctk.CTk):
             'no_ocr': False,               # False=OCR 사용, True=OCR 비활성화
         }
 
-        # CLI 인수로 설정 오버라이드
+        # 레지스트리 저장값으로 오버라이드 (기본값 < 레지스트리 < CLI)
+        _saved = load_settings()
+        if _saved:
+            if 'chosungs' in _saved and _saved['chosungs']:
+                self._settings['chosungs'] = _saved['chosungs']
+            if 'mode' in _saved:
+                self._settings['mode'] = _saved['mode']
+            if 'target' in _saved:
+                self._settings['target'] = _saved['target']
+            if 'no_ocr' in _saved:
+                self._settings['no_ocr'] = _saved['no_ocr']
+
+        # 저장 경로 (레지스트리 복원 또는 기본값) - _build_ui 전에 설정
+        self._save_dir = (_saved or {}).get('save_dir') or _DEFAULT_SAVE_DIR
+
+        # CLI 인수로 설정 오버라이드 (최우선)
         if cli_args:
             if cli_args.start_from:
                 self._settings['mode'] = 'start_from'
@@ -277,8 +293,6 @@ class AutoClickerApp(ctk.CTk):
         self._status_label.pack(side="right", padx=8, pady=5)
 
         # 저장 경로 표시 + 변경 버튼
-        self._save_dir = _DEFAULT_SAVE_DIR
-
         self._savedir_frame = ctk.CTkFrame(self, height=20, fg_color="gray17")
         self._savedir_frame.pack(fill="x", padx=4, pady=(1, 0))
         self._savedir_frame.pack_propagate(False)
@@ -799,6 +813,7 @@ class AutoClickerApp(ctk.CTk):
             else:
                 self._settings['chosungs'] = set(_sel)
             self._update_settings_summary()
+            save_settings(self._settings, self._save_dir)
             dlg.destroy()
 
         ctk.CTkButton(
@@ -902,6 +917,7 @@ class AutoClickerApp(ctk.CTk):
         if path:
             self._save_dir = path
             self._savedir_label.configure(text=path)
+            save_settings(self._settings, self._save_dir)
 
     # ===== 유틸 =====
 
