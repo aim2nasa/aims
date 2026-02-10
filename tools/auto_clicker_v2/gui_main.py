@@ -15,6 +15,15 @@ from data_source import LiveProcessSource
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_SAVE_DIR = os.path.join(_BASE_DIR, "output")
 
+def _read_version() -> str:
+    try:
+        with open(os.path.join(_BASE_DIR, "VERSION"), "r") as f:
+            return f.read().strip()
+    except Exception:
+        return "0.0.0"
+
+_VERSION = _read_version()
+
 # 통일 폰트
 _FONT = "맑은 고딕"
 
@@ -54,7 +63,7 @@ class AutoClickerApp(ctk.CTk):
     def __init__(self, cli_args=None):
         super().__init__()
 
-        self.title("AutoClicker v2")
+        self.title(f"AutoClicker v{_VERSION}")
         self.geometry(_NORMAL_GEOMETRY)
         self.resizable(False, False)
 
@@ -409,7 +418,7 @@ class AutoClickerApp(ctk.CTk):
         # 일반 모드: topmost 해제 + 타이틀바 복원
         if not self._is_compact:
             self.overrideredirect(False)
-            self.title("AutoClicker v2")
+            self.title(f"AutoClicker v{_VERSION}")
             self.attributes("-topmost", False)
             self.geometry(_NORMAL_GEOMETRY)
             self._apply_titlebar_style()
@@ -527,7 +536,7 @@ class AutoClickerApp(ctk.CTk):
             # 완료 → 일반 모드: topmost 해제 + 타이틀바 복원
             if not self._is_compact:
                 self.overrideredirect(False)
-                self.title("AutoClicker v2")
+                self.title(f"AutoClicker v{_VERSION}")
                 self.attributes("-topmost", False)
                 self.geometry(_NORMAL_GEOMETRY)
                 self._apply_titlebar_style()
@@ -572,7 +581,7 @@ class AutoClickerApp(ctk.CTk):
 
         self._compact_panel.pack_forget()
         self.overrideredirect(False)
-        self.title("AutoClicker v2")
+        self.title(f"AutoClicker v{_VERSION}")
         self._apply_titlebar_style()
 
         # 실행 중이면 topmost 유지, 아니면 해제
