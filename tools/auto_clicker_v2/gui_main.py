@@ -61,7 +61,27 @@ def _chosung_of(name: str) -> str:
 
 
 class AutoClickerApp(ctk.CTk):
+    # 클래스 변수: mutex 핸들 (GC 방지)
+    _mutex_handle = None
+
     def __init__(self, cli_args=None):
+        # ── 싱글 인스턴스 보호 (super() 전에 실행 → 창 안 뜸) ──
+        _k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        _k32.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_wchar_p]
+        _k32.CreateMutexW.restype = ctypes.c_void_p
+        _k32.CloseHandle.argtypes = [ctypes.c_void_p]
+        _k32.CloseHandle.restype = ctypes.c_int
+        AutoClickerApp._mutex_handle = _k32.CreateMutexW(None, 1, "AutoClickerV2_SingleInstance")
+        if AutoClickerApp._mutex_handle is None or ctypes.get_last_error() == 183:
+            if AutoClickerApp._mutex_handle:
+                _k32.CloseHandle(AutoClickerApp._mutex_handle)
+            import tkinter as _tk
+            _tmp = _tk.Tk()
+            _tmp.withdraw()
+            messagebox.showwarning("AutoClicker", "이미 실행 중입니다.\n기존 창을 사용하세요.", parent=_tmp)
+            _tmp.destroy()
+            raise SystemExit(0)
+
         super().__init__()
 
         self.title(f"AutoClicker v{_VERSION}")
@@ -959,15 +979,6 @@ class AutoClickerApp(ctk.CTk):
 
 if __name__ == "__main__":
     import argparse
-
-    # ── 싱글 인스턴스 보호 (Windows Named Mutex) ──
-    # use_last_error=True → ctypes가 내부적으로 GetLastError를 즉시 캡처
-    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    _mutex_handle = _kernel32.CreateMutexW(None, True, "AutoClickerV2_SingleInstance")
-    if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
-        _kernel32.CloseHandle(_mutex_handle)
-        messagebox.showwarning("AutoClicker", "이미 실행 중입니다.\n기존 창을 사용하세요.")
-        raise SystemExit(0)
 
     parser = argparse.ArgumentParser(description="AutoClicker v2")
     parser.add_argument("--chosung", type=str, default="", help="초성 (예: ㄱ)")
