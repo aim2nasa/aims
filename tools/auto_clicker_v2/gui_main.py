@@ -178,14 +178,23 @@ class AutoClickerApp(ctk.CTk):
         )
         self._settings_btn.pack(side="left", padx=(6, 8), pady=5)
 
-        # 실행 버튼
+        # 실행 버튼 (실행 중에는 일시정지/계속 토글)
         self._run_btn = ctk.CTkButton(
             self._toolbar, text="실행", width=70, height=28,
             command=self._start,
             font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
             fg_color="#2d7d46", hover_color="#3a9957"
         )
-        self._run_btn.pack(side="left", padx=(0, 6), pady=5)
+        self._run_btn.pack(side="left", padx=(0, 4), pady=5)
+
+        # 중지 버튼 (실행 중에만 표시)
+        self._stop_btn = ctk.CTkButton(
+            self._toolbar, text="중지", width=40, height=28,
+            command=self._stop,
+            font=ctk.CTkFont(family=_FONT, size=11),
+            fg_color="#c0392b", hover_color="#e74c3c"
+        )
+        # 초기에는 숨김 (실행 시 표시)
 
         # 컴팩트 모드 토글
         self._compact_btn = ctk.CTkButton(
@@ -277,9 +286,9 @@ class AutoClickerApp(ctk.CTk):
     # ===== 실행 / 중지 =====
 
     def _start(self):
-        """SikuliX 실행 → 자동 컴팩트 모드"""
+        """SikuliX 실행 / 실행 중이면 일시정지·계속 토글"""
         if self._source and self._source.is_running():
-            self._stop()
+            self._toggle_pause()
             return
 
         self._state = AppState()
@@ -316,8 +325,9 @@ class AutoClickerApp(ctk.CTk):
         self._compact_panel.set_chosung(chosung)
         self._compact_panel.set_file_loaded(f"실행 중")
         self._run_btn.configure(
-            text="중지", fg_color="#c0392b", hover_color="#e74c3c"
+            text="일시정지", fg_color="#e67e22", hover_color="#f39c12"
         )
+        self._stop_btn.pack(side="left", padx=(0, 6), pady=5)
         self._status_label.configure(text=f"[{label}] 실행 중...", text_color="#4CAF50")
 
         self._source.start(on_event=self._on_event)
@@ -341,6 +351,7 @@ class AutoClickerApp(ctk.CTk):
         self._run_btn.configure(
             text="실행", fg_color="#2d7d46", hover_color="#3a9957"
         )
+        self._stop_btn.pack_forget()
         self._status_label.configure(text="중지됨", text_color="gray60")
         self._compact_panel.set_play_state("stopped")
         # 일반 모드: topmost 해제 + 타이틀바 복원
@@ -352,15 +363,40 @@ class AutoClickerApp(ctk.CTk):
             self._apply_titlebar_style()
 
     def _toggle_pause(self):
-        """일시정지 / 재개"""
+        """일시정지 / 재개 (재개 시 3초 카운트다운)"""
         if not self._source or not self._source.is_running():
             return
         if self._source._paused:
-            self._source.resume()
-            self._compact_panel.set_play_state("playing")
+            # 재개: 3초 카운트다운 후 실행
+            self._run_btn.configure(state="disabled")
+            self._resume_countdown(3)
         else:
+            # 일시정지
             self._source.pause()
+            self._run_btn.configure(
+                text="계속", fg_color="#2980b9", hover_color="#3498db"
+            )
+            self._status_label.configure(text="일시정지", text_color="#e67e22")
             self._compact_panel.set_play_state("paused")
+
+    def _resume_countdown(self, remaining: int):
+        """재개 카운트다운 (3, 2, 1 → 재개)"""
+        if remaining > 0:
+            self._status_label.configure(
+                text=f"{remaining}초 후 재개...", text_color="#e67e22"
+            )
+            self.after(1000, self._resume_countdown, remaining - 1)
+        else:
+            self._source.resume()
+            self._run_btn.configure(
+                text="일시정지", fg_color="#e67e22", hover_color="#f39c12",
+                state="normal",
+            )
+            label = self._get_chosung_arg() or "전체"
+            self._status_label.configure(
+                text=f"[{label}] 실행 중...", text_color="#4CAF50"
+            )
+            self._compact_panel.set_play_state("playing")
 
     # ===== 이벤트 처리 =====
 
@@ -384,8 +420,10 @@ class AutoClickerApp(ctk.CTk):
             self._status_label.configure(text="완료", text_color="#4CAF50")
             self._compact_panel.set_play_state("complete")
             self._run_btn.configure(
-                text="실행", fg_color="#2d7d46", hover_color="#3a9957"
+                text="실행", fg_color="#2d7d46", hover_color="#3a9957",
+                state="normal",
             )
+            self._stop_btn.pack_forget()
             # 완료 → 일반 모드: topmost 해제 + 타이틀바 복원
             if not self._is_compact:
                 self.overrideredirect(False)
