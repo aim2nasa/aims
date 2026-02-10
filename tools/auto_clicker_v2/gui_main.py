@@ -238,7 +238,7 @@ class AutoClickerApp(ctk.CTk):
             font=ctk.CTkFont(family=_FONT, size=11),
             fg_color="gray30", hover_color="gray40"
         )
-        self._compact_btn.pack(side="left", pady=5)
+        # self._compact_btn.pack(side="left", pady=5)  # 임시 숨김
 
         # 닫기 버튼 (우측 끝, 타이틀바 없을 때 앱 종료용)
         self._close_btn = ctk.CTkButton(
@@ -258,7 +258,7 @@ class AutoClickerApp(ctk.CTk):
             font=ctk.CTkFont(family=_FONT, size=10),
             width=30, height=20, checkbox_width=16, checkbox_height=16,
         )
-        self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)
+        # self._auto_compact_cb.pack(side="left", padx=(6, 0), pady=5)  # 임시 숨김
 
         # 상태 표시 (우측)
         self._status_label = ctk.CTkLabel(
