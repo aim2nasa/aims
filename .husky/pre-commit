@@ -2,7 +2,53 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Staged 파일 중 aims-uix3 변경이 없으면 종료
+# ==================== 서비스별 버전 자동 증가 ====================
+BUMP_SCRIPT="scripts/bump_version.py"
+
+if command -v python3 >/dev/null 2>&1; then
+  BUMP_PY="python3"
+elif command -v python >/dev/null 2>&1; then
+  BUMP_PY="python"
+elif command -v py >/dev/null 2>&1; then
+  BUMP_PY="py"
+else
+  BUMP_PY=""
+fi
+
+if [ -n "$BUMP_PY" ] && [ -f "$BUMP_SCRIPT" ]; then
+  if git diff --cached --name-only | grep -q "^tools/auto_clicker_v2/"; then
+    echo "[AutoClicker] 변경 감지 - 버전 자동 증가"
+    $BUMP_PY $BUMP_SCRIPT tools/auto_clicker_v2/VERSION
+    git add tools/auto_clicker_v2/VERSION
+  fi
+
+  if git diff --cached --name-only | grep -q "^backend/api/aims_api/"; then
+    echo "[aims_api] 변경 감지 - 버전 자동 증가"
+    $BUMP_PY $BUMP_SCRIPT backend/api/aims_api/VERSION
+    git add backend/api/aims_api/VERSION
+  fi
+
+  if git diff --cached --name-only | grep -q "^backend/api/aims_rag_api/"; then
+    echo "[aims_rag_api] 변경 감지 - 버전 자동 증가"
+    $BUMP_PY $BUMP_SCRIPT backend/api/aims_rag_api/VERSION
+    git add backend/api/aims_rag_api/VERSION
+  fi
+
+  if git diff --cached --name-only | grep -q "^backend/api/annual_report_api/"; then
+    echo "[annual_report_api] 변경 감지 - 버전 자동 증가"
+    $BUMP_PY $BUMP_SCRIPT backend/api/annual_report_api/VERSION
+    git add backend/api/annual_report_api/VERSION
+  fi
+
+  if git diff --cached --name-only | grep -q "^backend/api/pdf_proxy/"; then
+    echo "[pdf_proxy] 변경 감지 - 버전 자동 증가"
+    $BUMP_PY $BUMP_SCRIPT backend/api/pdf_proxy/VERSION
+    git add backend/api/pdf_proxy/VERSION
+  fi
+fi
+
+# ==================== Frontend 검사 ====================
+
 STAGED_FRONTEND_FILES=$(git diff --cached --name-only -- 'frontend/aims-uix3/*')
 
 if [ -z "$STAGED_FRONTEND_FILES" ]; then
