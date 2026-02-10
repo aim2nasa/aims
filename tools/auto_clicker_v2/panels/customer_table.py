@@ -38,23 +38,45 @@ class CustomerTablePanel(ctk.CTkFrame):
             background="#2b2b2b",
             foreground="white",
             fieldbackground="#2b2b2b",
-            rowheight=19,
-            font=(_FONT, 9),
+            rowheight=14,
+            font=(_FONT, 8),
         )
         style.configure(
             "Custom.Treeview.Heading",
-            background="#3b3b3b",
-            foreground="white",
-            font=(_FONT, 9, "bold"),
+            background="#2b2b2b",
+            foreground="#666666",
+            font=(_FONT, 7),
+            padding=(0, 1),
+            borderwidth=0,
+            relief="flat",
         )
         style.map("Custom.Treeview", background=[("selected", "#1f538d")])
+
+        # 스크롤바: 얇고 다크 테마 매칭
+        style.configure(
+            "Thin.Vertical.TScrollbar",
+            width=6,
+            troughcolor="#2b2b2b",
+            background="#555555",
+            borderwidth=0,
+            relief="flat",
+        )
+        style.map(
+            "Thin.Vertical.TScrollbar",
+            background=[("active", "#777777"), ("!active", "#555555")],
+        )
+
+        # Treeview 보더 제거
+        style.layout("Custom.Treeview", [
+            ("Custom.Treeview.treearea", {"sticky": "nswe"}),
+        ])
 
         self._tree = ttk.Treeview(
             self._tree_frame,
             columns=columns,
             show="headings",
             style="Custom.Treeview",
-            height=5,
+            height=12,
         )
 
         self._tree.heading("no", text="No")
@@ -70,7 +92,8 @@ class CustomerTablePanel(ctk.CTkFrame):
         self._tree.column("status", width=55, anchor="center")
 
         scrollbar = ttk.Scrollbar(
-            self._tree_frame, orient="vertical", command=self._tree.yview
+            self._tree_frame, orient="vertical", command=self._tree.yview,
+            style="Thin.Vertical.TScrollbar",
         )
         self._tree.configure(yscrollcommand=scrollbar.set)
 

@@ -209,42 +209,42 @@ class AutoClickerApp(ctk.CTk):
 
     def _build_ui(self):
         # 상단 툴바
-        self._toolbar = ctk.CTkFrame(self, height=40)
-        self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
+        self._toolbar = ctk.CTkFrame(self, height=30)
+        self._toolbar.pack(fill="x", padx=4, pady=(2, 0))
         self._toolbar.pack_propagate(False)
 
         # 설정 버튼
         self._settings_btn = ctk.CTkButton(
-            self._toolbar, text="설정", width=50, height=28,
+            self._toolbar, text="설정", width=46, height=22,
             command=self._open_settings,
-            font=ctk.CTkFont(family=_FONT, size=12),
-            fg_color="gray30", hover_color="gray40"
-        )
-        self._settings_btn.pack(side="left", padx=(6, 8), pady=5)
-
-        # 실행 버튼 (실행 중에는 일시정지/계속 토글)
-        self._run_btn = ctk.CTkButton(
-            self._toolbar, text="실행", width=70, height=28,
-            command=self._start,
-            font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
-            fg_color="#2d7d46", hover_color="#3a9957"
-        )
-        self._run_btn.pack(side="left", padx=(0, 4), pady=5)
-
-        # 컴팩트 모드 토글
-        self._compact_btn = ctk.CTkButton(
-            self._toolbar, text="\u2199 축소", width=60, height=28,
-            command=self._toggle_compact,
             font=ctk.CTkFont(family=_FONT, size=11),
             fg_color="gray30", hover_color="gray40"
         )
-        # self._compact_btn.pack(side="left", pady=5)  # 임시 숨김
+        self._settings_btn.pack(side="left", padx=(6, 6), pady=3)
+
+        # 실행 버튼 (실행 중에는 일시정지/계속 토글)
+        self._run_btn = ctk.CTkButton(
+            self._toolbar, text="실행", width=64, height=22,
+            command=self._start,
+            font=ctk.CTkFont(family=_FONT, size=11, weight="bold"),
+            fg_color="#2d7d46", hover_color="#3a9957"
+        )
+        self._run_btn.pack(side="left", padx=(0, 4), pady=3)
+
+        # 컴팩트 모드 토글
+        self._compact_btn = ctk.CTkButton(
+            self._toolbar, text="\u2199 축소", width=56, height=22,
+            command=self._toggle_compact,
+            font=ctk.CTkFont(family=_FONT, size=10),
+            fg_color="gray30", hover_color="gray40"
+        )
+        # self._compact_btn.pack(side="left", pady=3)  # 임시 숨김
 
         # 닫기 버튼 (우측 끝, 타이틀바 없을 때 앱 종료용)
         self._close_btn = ctk.CTkButton(
-            self._toolbar, text="\u2715", width=28, height=28,
+            self._toolbar, text="\u2715", width=24, height=22,
             command=self._on_close,
-            font=ctk.CTkFont(family=_FONT, size=13),
+            font=ctk.CTkFont(family=_FONT, size=12),
             fg_color="transparent", hover_color="#c0392b",
             text_color="gray60",
         )
@@ -270,8 +270,8 @@ class AutoClickerApp(ctk.CTk):
         # 저장 경로 표시 + 변경 버튼
         self._save_dir = _DEFAULT_SAVE_DIR
 
-        self._savedir_frame = ctk.CTkFrame(self, height=24, fg_color="gray17")
-        self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
+        self._savedir_frame = ctk.CTkFrame(self, height=20, fg_color="gray17")
+        self._savedir_frame.pack(fill="x", padx=4, pady=(1, 0))
         self._savedir_frame.pack_propagate(False)
 
         ctk.CTkLabel(
@@ -296,10 +296,10 @@ class AutoClickerApp(ctk.CTk):
         # 설정 요약 표시
         self._settings_summary = ctk.CTkLabel(
             self, text="초성: 전체",
-            font=ctk.CTkFont(family=_FONT, size=10), text_color="gray70",
-            height=18, anchor="w",
+            font=ctk.CTkFont(family=_FONT, size=9), text_color="gray70",
+            height=14, anchor="w",
         )
-        self._settings_summary.pack(fill="x", padx=10, pady=(1, 0))
+        self._settings_summary.pack(fill="x", padx=10, pady=(0, 0))
 
         # 일반 모드 컨텐츠
         self._build_normal_content()
@@ -321,7 +321,7 @@ class AutoClickerApp(ctk.CTk):
         self._pdf_panel = PdfResultPanel(self._normal_frame)
         self._pdf_panel.pack(fill="x", pady=(0, 2))
 
-        self._customer_panel = CustomerTablePanel(self._normal_frame, height=140)
+        self._customer_panel = CustomerTablePanel(self._normal_frame, height=190)
         self._customer_panel.pack(fill="x", pady=(0, 2))
         self._customer_panel.pack_propagate(False)
 
@@ -376,7 +376,7 @@ class AutoClickerApp(ctk.CTk):
             text="일시정지", fg_color="#e67e22", hover_color="#f39c12"
         )
         self._status_label.configure(text=f"[{label}] 실행 중...", text_color="#4CAF50")
-        self._close_btn.pack(side="right", padx=(0, 4), pady=5)
+        self._close_btn.pack(side="right", padx=(0, 4), pady=3)
 
         self._debug_log("_start", "source.start() 호출")
         self._source.start(on_event=self._on_event)
