@@ -42,6 +42,18 @@ def load_settings() -> dict:
         val, _ = winreg.QueryValueEx(key, "SaveDir")
         result["save_dir"] = val or ""
 
+        # window_x, window_y (마지막 창 위치)
+        try:
+            val, _ = winreg.QueryValueEx(key, "WindowX")
+            result["window_x"] = val
+        except FileNotFoundError:
+            pass
+        try:
+            val, _ = winreg.QueryValueEx(key, "WindowY")
+            result["window_y"] = val
+        except FileNotFoundError:
+            pass
+
     except FileNotFoundError:
         pass
     finally:
@@ -70,5 +82,11 @@ def save_settings(settings: dict, save_dir: str = "") -> None:
         # save_dir
         if save_dir:
             winreg.SetValueEx(key, "SaveDir", 0, winreg.REG_SZ, save_dir)
+
+        # window_x, window_y
+        if "window_x" in settings:
+            winreg.SetValueEx(key, "WindowX", 0, winreg.REG_DWORD, settings["window_x"])
+        if "window_y" in settings:
+            winreg.SetValueEx(key, "WindowY", 0, winreg.REG_DWORD, settings["window_y"])
     finally:
         winreg.CloseKey(key)

@@ -42,7 +42,6 @@ NORMAL_WIDTH = 480
 NORMAL_HEIGHT = 440
 NORMAL_X = 1376
 NORMAL_Y = 454
-_NORMAL_GEOMETRY = f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{NORMAL_X}+{NORMAL_Y}"
 
 _CHOSUNGS = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","기타"]
 
@@ -85,7 +84,9 @@ class AutoClickerApp(ctk.CTk):
         super().__init__()
 
         self.title(f"AutoClicker v{_VERSION}")
-        self.geometry(_NORMAL_GEOMETRY)
+        # 커서가 위치한 모니터에 배치
+        self._normal_x, self._normal_y = self._calc_default_position()
+        self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
         self.resizable(False, False)
 
         ctk.set_appearance_mode("dark")
@@ -174,31 +175,87 @@ class AutoClickerApp(ctk.CTk):
         except Exception:
             pass
 
+    # ===== 해상도 감지 =====
+
+    def _calc_default_position(self) -> tuple[int, int]:
+        """커서가 위치한 모니터 기준으로 기본 창 위치 계산
+
+        tkinter winfo_pointerx/y → ctypes EnumDisplayMonitors 로
+        동일 좌표계에서 커서 모니터를 찾고, 해당 모니터 우측에 배치.
+        """
+        try:
+            cx = self.winfo_pointerx()
+            cy = self.winfo_pointery()
+
+            import ctypes.wintypes
+            found = [None]
+
+            @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p,
+                                ctypes.POINTER(ctypes.wintypes.RECT), ctypes.c_void_p)
+            def _cb(hmon, hdc, lprect, lparam):
+                r = lprect.contents
+                if r.left <= cx < r.right and r.top <= cy < r.bottom:
+                    found[0] = (r.left, r.top, r.right - r.left, r.bottom - r.top)
+                    return 0
+                return 1
+
+            ctypes.windll.user32.EnumDisplayMonitors(None, None, _cb, 0)
+
+            if found[0]:
+                ml, mt, mw, mh = found[0]
+                x = ml + min(NORMAL_X, mw - NORMAL_WIDTH)
+                y = mt + min(NORMAL_Y, mh - NORMAL_HEIGHT)
+                return x, y
+        except Exception:
+            pass
+        return NORMAL_X, NORMAL_Y
+
+    def _get_window_monitor_resolution(self) -> tuple[int, int]:
+        """이 창이 위치한 모니터의 실제 물리 해상도 반환
+
+        1. MonitorFromWindow  → 창이 놓인 모니터 핸들
+        2. GetMonitorInfoW    → 해당 모니터의 디바이스 이름
+        3. EnumDisplaySettingsW(device) → DPI 무관 물리 해상도
+        """
+        try:
+            user32 = ctypes.windll.user32
+
+            # 1) 창이 위치한 모니터 핸들 (MONITOR_DEFAULTTONEAREST = 2)
+            hwnd = self.winfo_id()
+            hmon = user32.MonitorFromWindow(hwnd, 2)
+            if not hmon:
+                return 0, 0
+
+            # 2) MONITORINFOEXW (104 바이트) → szDevice 추출
+            #    cbSize(4) + rcMonitor(16) + rcWork(16) + dwFlags(4) + szDevice(64)
+            info = ctypes.create_string_buffer(104)
+            ctypes.c_uint.from_buffer(info, 0).value = 104          # cbSize
+            if not user32.GetMonitorInfoW(hmon, info):
+                return 0, 0
+            device = ctypes.wstring_at(ctypes.addressof(info) + 40, 32).rstrip("\x00")
+
+            # 3) 해당 모니터의 물리 해상도 (ENUM_CURRENT_SETTINGS = -1)
+            dm = ctypes.create_string_buffer(220)
+            ctypes.c_ushort.from_buffer(dm, 68).value = 220         # dmSize
+            if user32.EnumDisplaySettingsW(device, -1, dm):
+                w = ctypes.c_uint.from_buffer(dm, 172).value        # dmPelsWidth
+                h = ctypes.c_uint.from_buffer(dm, 176).value        # dmPelsHeight
+                return w, h
+        except Exception:
+            pass
+        return 0, 0
+
     # ===== 사용법 안내 =====
 
     def _show_usage_guide(self):
         """최초 실행 시 해상도 확인 + 사용법 안내 (1회)"""
-        try:
-            w = ctypes.windll.user32.GetSystemMetrics(0)
-            h = ctypes.windll.user32.GetSystemMetrics(1)
-        except Exception:
-            w, h = 0, 0
-
-        if w != 1920 or h != 1080:
-            messagebox.showerror(
-                "해상도 불일치",
-                f"현재 화면 해상도: {w}x{h}\n\n"
-                "AutoClicker v2는 1920x1080 해상도에서만\n"
-                "동작합니다.\n\n"
-                "화면 해상도를 변경 후 다시 실행해주세요.",
-            )
-            self.destroy()
-            return
-
+        w, h = self._get_window_monitor_resolution()
         self._show_guide_dialog(w, h)
 
     def _show_guide_dialog(self, w: int, h: int):
         """커스텀 사용법 다이얼로그"""
+        ok = (w == 1920 and h == 1080)
+
         dlg = ctk.CTkToplevel(self)
         dlg.title("사용법")
         dlg.resizable(False, False)
@@ -206,7 +263,7 @@ class AutoClickerApp(ctk.CTk):
         dlg.grab_set()
 
         # 부모 창 중앙에 배치
-        dlg_w, dlg_h = 320, 220
+        dlg_w, dlg_h = 320, (220 if ok else 240)
         px = self.winfo_x() + (self.winfo_width() - dlg_w) // 2
         py = self.winfo_y() + (self.winfo_height() - dlg_h) // 2
         dlg.geometry(f"{dlg_w}x{dlg_h}+{px}+{py}")
@@ -221,9 +278,10 @@ class AutoClickerApp(ctk.CTk):
         ).pack(side="left")
 
         ctk.CTkLabel(
-            res_frame, text="\u2713",
+            res_frame,
+            text="\u2713" if ok else "\u2717",
             font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#4CAF50",
+            text_color="#4CAF50" if ok else "#F44336",
         ).pack(side="left", padx=(6, 0))
 
         # 구분선
@@ -231,24 +289,48 @@ class AutoClickerApp(ctk.CTk):
             fill="x", padx=20, pady=(12, 0),
         )
 
-        # 사용법 단계
-        steps = [
-            "1.  MetDO 화면을 전체화면(최대화)으로 설정",
-            "2.  [설정]에서 초성 및 실행 옵션 변경 (선택)",
-            "3.  [실행] 버튼 클릭",
-        ]
-        for i, step in enumerate(steps):
-            ctk.CTkLabel(
-                dlg, text=step, anchor="w",
-                font=ctk.CTkFont(family=_FONT, size=12),
-            ).pack(fill="x", padx=20, pady=(10 if i == 0 else 2, 0))
+        if ok:
+            # 사용법 단계
+            steps = [
+                "1.  MetDO 화면을 전체화면(최대화)으로 설정",
+                "2.  [설정]에서 초성 및 실행 옵션 변경 (선택)",
+                "3.  [실행] 버튼 클릭",
+            ]
+            for i, step in enumerate(steps):
+                ctk.CTkLabel(
+                    dlg, text=step, anchor="w",
+                    font=ctk.CTkFont(family=_FONT, size=12),
+                ).pack(fill="x", padx=20, pady=(10 if i == 0 else 2, 0))
 
-        # 확인 버튼
-        ctk.CTkButton(
-            dlg, text="확인", width=80, height=30,
-            font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
-            command=dlg.destroy,
-        ).pack(pady=(14, 0))
+            ctk.CTkButton(
+                dlg, text="확인", width=80, height=30,
+                font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
+                command=dlg.destroy,
+            ).pack(pady=(14, 0))
+        else:
+            # 해상도 불일치 오류
+            ctk.CTkLabel(
+                dlg,
+                text="AutoClicker v2는 1920x1080 해상도에서만\n"
+                     "동작합니다.\n\n"
+                     "화면 해상도를 변경 후 다시 실행해주세요.",
+                font=ctk.CTkFont(family=_FONT, size=12),
+                text_color="#F44336",
+                justify="center",
+            ).pack(padx=20, pady=(12, 0))
+
+            def _close_app():
+                dlg.destroy()
+                self.destroy()
+
+            dlg.protocol("WM_DELETE_WINDOW", _close_app)
+
+            ctk.CTkButton(
+                dlg, text="종료", width=80, height=30,
+                font=ctk.CTkFont(family=_FONT, size=12, weight="bold"),
+                fg_color="#F44336", hover_color="#D32F2F",
+                command=_close_app,
+            ).pack(pady=(14, 0))
 
     # ===== UI 구성 =====
 
@@ -429,7 +511,7 @@ class AutoClickerApp(ctk.CTk):
         # 실행 중: 최상위 + 위치 고정 + 타이틀바 제거 (드래그 완전 차단)
         self.attributes("-topmost", True)
         if not self._is_compact:
-            self.geometry(_NORMAL_GEOMETRY)
+            self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
             self.overrideredirect(True)
 
         if self._auto_compact_var.get() and not self._is_compact:
@@ -454,11 +536,18 @@ class AutoClickerApp(ctk.CTk):
             self.overrideredirect(False)
             self.title(f"AutoClicker v{_VERSION}")
             self.attributes("-topmost", False)
-            self.geometry(_NORMAL_GEOMETRY)
+            self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
             self._apply_titlebar_style()
 
     def _on_close(self):
-        """앱 종료: 실행 중인 SikuliX 프로세스 정리 후 앱 닫기"""
+        """앱 종료: 창 위치 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
+        # 종료 시 창 위치 저장 (다음 실행 시 같은 모니터에 복원)
+        try:
+            self._settings["window_x"] = self.winfo_x()
+            self._settings["window_y"] = self.winfo_y()
+            save_settings(self._settings, self._save_dir)
+        except Exception:
+            pass
         if self._source and self._source.is_running():
             self._source.stop()
         self.destroy()
@@ -515,7 +604,7 @@ class AutoClickerApp(ctk.CTk):
     def _poll_update(self):
         # 실행 중 위치 강제 고정 (드래그 방지)
         if not self._is_compact:
-            self.geometry(_NORMAL_GEOMETRY)
+            self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
 
         # 항상 모든 패널 업데이트 (컴팩트/일반 모두)
         # → 모드 전환 시 항상 최신 상태 보장
@@ -572,7 +661,7 @@ class AutoClickerApp(ctk.CTk):
                 self.overrideredirect(False)
                 self.title(f"AutoClicker v{_VERSION}")
                 self.attributes("-topmost", False)
-                self.geometry(_NORMAL_GEOMETRY)
+                self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
                 self._apply_titlebar_style()
         else:
             # 카운트다운 진행 중이거나 소스 실행 중 → 폴링 계속
@@ -628,7 +717,7 @@ class AutoClickerApp(ctk.CTk):
         self._settings_summary.pack(fill="x", padx=10, pady=(1, 0))
         self._normal_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
-        self.geometry(_NORMAL_GEOMETRY)
+        self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
 
         # 모드 전환 후 일반 패널 즉시 갱신 (폴링 중단 시에도 최신 상태 보장)
         self._progress_panel.update_state(self._state)
