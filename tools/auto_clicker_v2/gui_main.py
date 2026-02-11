@@ -59,6 +59,50 @@ def _chosung_of(name: str) -> str:
     return "기타"
 
 
+def _enumerate_monitors() -> dict[int, tuple[int, int, int, int]]:
+    """Windows 디스플레이 번호 기준 모니터 정보 반환.
+
+    Returns: {1: (left, top, w, h), 2: (left, top, w, h), ...}
+    키 = Windows 설정 > 디스플레이에 표시되는 번호 (\\.\DISPLAY1 → 1)
+    """
+    result: dict[int, tuple[int, int, int, int]] = {}
+    try:
+        import ctypes as _ct
+        import ctypes.wintypes
+
+        user32 = _ct.windll.user32
+        handles: list[int] = []
+
+        @_ct.WINFUNCTYPE(_ct.c_int, _ct.c_void_p, _ct.c_void_p,
+                         _ct.POINTER(_ct.wintypes.RECT), _ct.c_void_p)
+        def _cb(hmon, hdc, lprect, lparam):
+            handles.append(hmon)
+            return 1
+
+        user32.EnumDisplayMonitors(None, None, _cb, 0)
+
+        for hmon in handles:
+            # MONITORINFOEXW: cbSize(4) + rcMonitor(16) + rcWork(16) + dwFlags(4) + szDevice(64)
+            info = _ct.create_string_buffer(104)
+            _ct.c_uint.from_buffer(info, 0).value = 104
+            if not user32.GetMonitorInfoW(hmon, info):
+                continue
+            # rcMonitor: offset 4, 4 ints (left, top, right, bottom)
+            left = _ct.c_long.from_buffer(info, 4).value
+            top = _ct.c_long.from_buffer(info, 8).value
+            right = _ct.c_long.from_buffer(info, 12).value
+            bottom = _ct.c_long.from_buffer(info, 16).value
+            # szDevice: offset 40, 32 wchars → e.g. "\\.\DISPLAY1"
+            device = _ct.wstring_at(_ct.addressof(info) + 40, 32).rstrip("\x00")
+            # 디스플레이 번호 추출
+            num = int("".join(c for c in device if c.isdigit()) or "0")
+            if num > 0:
+                result[num] = (left, top, right - left, bottom - top)
+    except Exception:
+        pass
+    return result
+
+
 class AutoClickerApp(ctk.CTk):
     # 클래스 변수: mutex 핸들 (GC 방지)
     _mutex_handle = None
@@ -84,9 +128,7 @@ class AutoClickerApp(ctk.CTk):
         super().__init__()
 
         self.title(f"AutoClicker v{_VERSION}")
-        # 커서가 위치한 모니터에 배치
-        self._normal_x, self._normal_y = self._calc_default_position()
-        self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
+        self._target_monitor = 0  # 0=자동, 1=모니터1, 2=모니터2
         self.resizable(False, False)
 
         ctk.set_appearance_mode("dark")
@@ -128,6 +170,10 @@ class AutoClickerApp(ctk.CTk):
         # 저장 경로 (레지스트리 복원 또는 기본값) - _build_ui 전에 설정
         self._save_dir = (_saved or {}).get('save_dir') or _DEFAULT_SAVE_DIR
 
+        # 모니터 설정 복원 (레지스트리)
+        if _saved and 'monitor' in _saved:
+            self._target_monitor = _saved['monitor']
+
         # CLI 인수로 설정 오버라이드 (최우선)
         if cli_args:
             if cli_args.start_from:
@@ -143,6 +189,12 @@ class AutoClickerApp(ctk.CTk):
                 self._settings['chosungs'] = {ch} if ch else set(_CHOSUNGS)
             if cli_args.chosung:
                 self._settings['chosungs'] = {cli_args.chosung}
+            if hasattr(cli_args, 'monitor') and cli_args.monitor:
+                self._target_monitor = cli_args.monitor
+
+        # 모니터 설정 적용하여 창 위치 계산
+        self._normal_x, self._normal_y = self._calc_default_position(self._target_monitor)
+        self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
 
         self._build_ui()
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
@@ -177,35 +229,30 @@ class AutoClickerApp(ctk.CTk):
 
     # ===== 해상도 감지 =====
 
-    def _calc_default_position(self) -> tuple[int, int]:
-        """커서가 위치한 모니터 기준으로 기본 창 위치 계산
+    def _calc_default_position(self, target_monitor: int = 0) -> tuple[int, int]:
+        """기본 창 위치 계산.
 
-        tkinter winfo_pointerx/y → ctypes EnumDisplayMonitors 로
-        동일 좌표계에서 커서 모니터를 찾고, 해당 모니터 우측에 배치.
+        Args:
+            target_monitor: 0=자동(커서 위치), Windows 디스플레이 번호
         """
         try:
-            cx = self.winfo_pointerx()
-            cy = self.winfo_pointery()
+            monitors = _enumerate_monitors()  # {1: (l,t,w,h), 2: ...}
 
-            import ctypes.wintypes
-            found = [None]
-
-            @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p,
-                                ctypes.POINTER(ctypes.wintypes.RECT), ctypes.c_void_p)
-            def _cb(hmon, hdc, lprect, lparam):
-                r = lprect.contents
-                if r.left <= cx < r.right and r.top <= cy < r.bottom:
-                    found[0] = (r.left, r.top, r.right - r.left, r.bottom - r.top)
-                    return 0
-                return 1
-
-            ctypes.windll.user32.EnumDisplayMonitors(None, None, _cb, 0)
-
-            if found[0]:
-                ml, mt, mw, mh = found[0]
+            if target_monitor > 0 and target_monitor in monitors:
+                ml, mt, mw, mh = monitors[target_monitor]
                 x = ml + min(NORMAL_X, mw - NORMAL_WIDTH)
                 y = mt + min(NORMAL_Y, mh - NORMAL_HEIGHT)
                 return x, y
+
+            # 자동: 커서가 위치한 모니터에 배치
+            cx = self.winfo_pointerx()
+            cy = self.winfo_pointery()
+
+            for ml, mt, mw, mh in monitors.values():
+                if ml <= cx < ml + mw and mt <= cy < mt + mh:
+                    x = ml + min(NORMAL_X, mw - NORMAL_WIDTH)
+                    y = mt + min(NORMAL_Y, mh - NORMAL_HEIGHT)
+                    return x, y
         except Exception:
             pass
         return NORMAL_X, NORMAL_Y
@@ -394,6 +441,10 @@ class AutoClickerApp(ctk.CTk):
         )
         self._status_label.pack(side="right", padx=8, pady=5)
 
+        # 모니터 전환 버튼 (2개 이상일 때만 표시)
+        self._mon_btns: dict[int, ctk.CTkButton] = {}
+        self._build_monitor_buttons()
+
         # 저장 경로 표시 + 변경 버튼
         self._savedir_frame = ctk.CTkFrame(self, height=20, fg_color="gray17")
         self._savedir_frame.pack(fill="x", padx=4, pady=(1, 0))
@@ -540,11 +591,11 @@ class AutoClickerApp(ctk.CTk):
             self._apply_titlebar_style()
 
     def _on_close(self):
-        """앱 종료: 창 위치 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
-        # 종료 시 창 위치 저장 (다음 실행 시 같은 모니터에 복원)
+        """앱 종료: 창 위치/모니터 저장 → SikuliX 프로세스 정리 → 앱 닫기"""
         try:
             self._settings["window_x"] = self.winfo_x()
             self._settings["window_y"] = self.winfo_y()
+            self._settings["monitor"] = self._target_monitor
             save_settings(self._settings, self._save_dir)
         except Exception:
             pass
@@ -1016,6 +1067,63 @@ class AutoClickerApp(ctk.CTk):
 
         self._settings_summary.configure(text=" | ".join(parts))
 
+    # ===== 모니터 전환 =====
+
+    def _build_monitor_buttons(self):
+        """모니터 2개 이상이면 툴바에 전환 버튼 표시.
+        번호는 Windows 설정 > 디스플레이 번호와 일치."""
+        monitors = _enumerate_monitors()  # {1: (l,t,w,h), 2: ...}
+        if len(monitors) < 2:
+            return
+
+        # 자동(0)이면 현재 커서 위치한 모니터를 기본 선택
+        if self._target_monitor == 0:
+            cx, cy = self.winfo_pointerx(), self.winfo_pointery()
+            for num, (ml, mt, mw, mh) in monitors.items():
+                if ml <= cx < ml + mw and mt <= cy < mt + mh:
+                    self._target_monitor = num
+                    break
+            else:
+                self._target_monitor = min(monitors.keys())
+
+        # 물리적 배치 순서 (left 좌표 내림차순) → side="right"로 pack하면 왼쪽→오른쪽 일치
+        for num, (ml, *_rest) in sorted(monitors.items(), key=lambda x: x[1][0], reverse=True):
+            current = (self._target_monitor == num)
+            btn = ctk.CTkButton(
+                self._toolbar, text=f"M{num}", width=30, height=22,
+                corner_radius=4,
+                font=ctk.CTkFont(family=_FONT, size=9, weight="bold"),
+                fg_color="gray30" if current else "#2563eb",
+                hover_color="gray40" if current else "#3b82f6",
+                border_width=2 if current else 0,
+                border_color="#7eb8ff",
+                command=lambda n=num: self._switch_monitor(n),
+            )
+            btn.pack(side="right", padx=1, pady=4)
+            self._mon_btns[num] = btn
+
+    def _switch_monitor(self, monitor_num: int):
+        """모니터 버튼 클릭 → 즉시 해당 모니터로 이동."""
+        if self._target_monitor == monitor_num:
+            return
+        self._target_monitor = monitor_num
+
+        for idx, btn in self._mon_btns.items():
+            current = (idx == self._target_monitor)
+            btn.configure(
+                fg_color="gray30" if current else "#2563eb",
+                hover_color="gray40" if current else "#3b82f6",
+                border_width=2 if current else 0,
+            )
+
+        # 즉시 창 위치 재계산 + 이동
+        self._normal_x, self._normal_y = self._calc_default_position(self._target_monitor)
+        self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
+
+        # 레지스트리 저장
+        self._settings['monitor'] = self._target_monitor
+        save_settings(self._settings, self._save_dir)
+
     # ===== 저장 경로 =====
 
     def _choose_save_dir(self):
@@ -1074,6 +1182,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-from", type=str, default="", dest="start_from", help="시작 고객명")
     parser.add_argument("--only", type=str, default="", help="특정 고객만")
     parser.add_argument("--auto-start", action="store_true", dest="auto_start", help="자동 실행")
+    parser.add_argument("--monitor", type=int, default=0, help="모니터 번호 (0=자동, 1=모니터1, 2=모니터2)")
     cli_args = parser.parse_args()
 
     app = AutoClickerApp(cli_args=cli_args)

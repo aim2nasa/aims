@@ -54,6 +54,13 @@ def load_settings() -> dict:
         except FileNotFoundError:
             pass
 
+        # monitor (0=자동, 1=모니터1, 2=모니터2)
+        try:
+            val, _ = winreg.QueryValueEx(key, "Monitor")
+            result["monitor"] = val
+        except FileNotFoundError:
+            pass
+
     except FileNotFoundError:
         pass
     finally:
@@ -88,5 +95,8 @@ def save_settings(settings: dict, save_dir: str = "") -> None:
             winreg.SetValueEx(key, "WindowX", 0, winreg.REG_DWORD, settings["window_x"])
         if "window_y" in settings:
             winreg.SetValueEx(key, "WindowY", 0, winreg.REG_DWORD, settings["window_y"])
+
+        # monitor
+        winreg.SetValueEx(key, "Monitor", 0, winreg.REG_DWORD, settings.get("monitor", 0))
     finally:
         winreg.CloseKey(key)
