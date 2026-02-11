@@ -173,12 +173,14 @@ def navigate_save_dialog_to_dir():
     """
     if not PDF_DOWNLOAD_DIR:
         return
-    log(u"        [경로 설정] %s" % PDF_DOWNLOAD_DIR)
+    # 반드시 백슬래시 사용 (Windows 저장 다이얼로그는 forward slash 미지원)
+    win_path = PDF_DOWNLOAD_DIR.replace("/", "\\")
+    log(u"        [경로 설정] %s" % win_path)
     # 파일명 입력란에 포커스가 있는 상태에서 맨 앞으로 이동 후 경로 삽입
     sleep(0.5)
     type(Key.HOME)  # 커서를 파일명 맨 앞으로 이동
     sleep(0.3)
-    paste(PDF_DOWNLOAD_DIR + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
+    paste(win_path + "\\")  # 경로를 파일명 앞에 삽입 → 전체경로\파일명.pdf
     sleep(0.3)
 
 
