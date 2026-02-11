@@ -199,9 +199,8 @@ class AutoClickerApp(ctk.CTk):
         self._build_ui()
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
         self.protocol("WM_DELETE_WINDOW", self._on_close)
-        # CLI 인수 적용 후 설정 요약 라벨 갱신
-        if cli_args and (cli_args.start_from or getattr(cli_args, 'only', '') or cli_args.chosung):
-            self._update_settings_summary()
+        # 설정 요약 라벨 갱신 (레지스트리/CLI 모두 반영)
+        self._update_settings_summary()
         self.after(50, self._apply_titlebar_style)
         if cli_args and cli_args.auto_start:
             self.after(500, self._start)  # 자동 실행
