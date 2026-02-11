@@ -240,16 +240,70 @@ def _crash_log(msg):
         pass
 
 
+# 디버그: 마지막 클릭/검색 위치 추적 (크래시 스크린샷에 오버레이용)
+_debug_markers = []  # [(type, x, y, w, h, label), ...] type: "click" | "region"
+
+def _debug_mark_click(x, y, label=""):
+    """클릭 위치 기록"""
+    global _debug_markers
+    _debug_markers.append(("click", int(x), int(y), 0, 0, label))
+    if len(_debug_markers) > 20:
+        _debug_markers = _debug_markers[-20:]
+
+def _debug_mark_region(x, y, w, h, label=""):
+    """검색 영역 기록"""
+    global _debug_markers
+    _debug_markers.append(("region", int(x), int(y), int(w), int(h), label))
+    if len(_debug_markers) > 20:
+        _debug_markers = _debug_markers[-20:]
+
 def _take_crash_screenshot(label):
-    """크래시 시 스크린샷 저장 (SikuliX capture 사용)"""
+    """크래시 시 스크린샷 저장 (SikuliX capture 사용) + 디버그 마커 오버레이"""
     try:
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_path = capture(SCREEN)
         if temp_path:
-            import shutil
             dest = os.path.join(CAPTURE_DIR, u"CRASH_%s_%s.png" % (label, ts))
-            shutil.copy(temp_path, dest)
-            log(u"[CRASH 스크린샷] %s" % dest)
+            # 디버그 마커가 있으면 스크린샷에 오버레이
+            if _debug_markers:
+                try:
+                    from javax.imageio import ImageIO
+                    from java.io import File as JFile
+                    from java.awt import Color, BasicStroke, Font, RenderingHints
+                    bimg = ImageIO.read(JFile(temp_path))
+                    g = bimg.createGraphics()
+                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                    for mtype, mx, my, mw, mh, mlabel in _debug_markers:
+                        if mtype == "click":
+                            # 빨간 십자 + 원
+                            g.setColor(Color.RED)
+                            g.setStroke(BasicStroke(2))
+                            g.drawLine(mx - 15, my, mx + 15, my)
+                            g.drawLine(mx, my - 15, mx, my + 15)
+                            g.drawOval(mx - 12, my - 12, 24, 24)
+                            if mlabel:
+                                g.setFont(Font("SansSerif", Font.BOLD, 12))
+                                g.drawString(mlabel, mx + 16, my - 4)
+                        elif mtype == "region":
+                            # 노란 사각형 (검색 영역)
+                            g.setColor(Color.YELLOW)
+                            g.setStroke(BasicStroke(2))
+                            g.drawRect(mx, my, mw, mh)
+                            if mlabel:
+                                g.setFont(Font("SansSerif", Font.BOLD, 12))
+                                g.drawString(mlabel, mx, my - 4)
+                    g.dispose()
+                    ImageIO.write(bimg, "png", JFile(dest))
+                    log(u"[CRASH 스크린샷] %s (마커 %d개)" % (dest, len(_debug_markers)))
+                except:
+                    # Java AWT 실패 시 원본 저장
+                    import shutil
+                    shutil.copy(temp_path, dest)
+                    log(u"[CRASH 스크린샷] %s (마커 오버레이 실패)" % dest)
+            else:
+                import shutil
+                shutil.copy(temp_path, dest)
+                log(u"[CRASH 스크린샷] %s" % dest)
     except:
         log(u"[WARN] 크래시 스크린샷 저장 실패")
 
@@ -1415,16 +1469,32 @@ try:
     dismiss_notice_popups()
 
     log(u"  [1-2] 고객관리 클릭...")
-    click("img/1769598228284.png")  # 고객관리 [100% 줌]
+    _mgmt = find("img/1769598228284.png")  # 고객관리 탭 [100% 줌]
+    _debug_mark_click(_mgmt.getTarget().x, _mgmt.getTarget().y, "1-2 mgmt tab")
+    click(_mgmt)
     sleep(5)  # 서브메뉴 열릴 시간 확보
 
+    # "고객등록 >"과 "고객관리 >"가 시각적으로 유사하여 오매칭 발생
+    # → 드롭다운은 고객관리 탭 아래~오른쪽에 나타남
+    #   상위 2행(계약정보, 고객등록)만 포함하여 "고객관리 >"(3번째 행) 제외
+    # → 템플릿도 현재 화면에서 재캡처 (기존 이미지는 렌더링 차이로 매칭 실패)
     log(u"  [1-3] 고객등록 클릭...")
-    click("img/1769598252586.png")  # 고객등록 [100% 줌]
+    _dd_region = Region(int(_mgmt.x), int(_mgmt.y + _mgmt.h), int(_mgmt.w) + 60, 75)
+    _debug_mark_region(_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h, "1-3 search")
+    log(u"  [DEBUG] 고객관리 탭: x=%d y=%d w=%d h=%d" % (_mgmt.x, _mgmt.y, _mgmt.w, _mgmt.h))
+    log(u"  [DEBUG] 검색 영역: x=%d y=%d w=%d h=%d" % (_dd_region.x, _dd_region.y, _dd_region.w, _dd_region.h))
+    _dd_region.click("img/customer_reg_menu.png")  # 고객등록 [100% 줌] (재캡처 템플릿)
+    try:
+        _lm = _dd_region.getLastMatch()
+        _debug_mark_click(_lm.getTarget().x, _lm.getTarget().y, "1-3 reg click")
+    except:
+        pass
     sleep(3)
 
     log(u"  [1-4] 고객목록조회 클릭...")
     click("img/1769598272319.png")  # 고객목록조회 [100% 줌]
     sleep(5)
+
 except:
     # bare except: Java 예외(SikuliX FindFailed) + Python 예외 모두 캐치
     exc_info = sys.exc_info()
