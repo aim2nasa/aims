@@ -542,6 +542,7 @@ class AutoClickerApp(ctk.CTk):
             only_customer=target if mode == 'only' else '',
             resume_mode=(mode == 'resume'),
             no_ocr=self._settings['no_ocr'],
+            scroll_test=(mode == 'scroll_test'),
         )
 
         label = chosung or "전체"
@@ -819,10 +820,11 @@ class AutoClickerApp(ctk.CTk):
 
         mode_btns = {}
         mode_descs = {
-            'normal':     "선택된 초성의 고객을 순서대로 처리",
-            'start_from': "지정 고객부터 이후 순서대로 처리",
-            'only':       "해당 고객만 처리 (동명이인 포함)",
-            'resume':     "마지막 중단 지점부터 자동 재개",
+            'normal':      "선택된 초성의 고객을 순서대로 처리",
+            'start_from':  "지정 고객부터 이후 순서대로 처리",
+            'only':        "해당 고객만 처리 (동명이인 포함)",
+            'resume':      "마지막 중단 지점부터 자동 재개",
+            'scroll_test': "스크롤만 테스트 (클릭 없이 페이지별 스크린샷)",
         }
 
         mode_desc_label = ctk.CTkLabel(
@@ -838,10 +840,11 @@ class AutoClickerApp(ctk.CTk):
             ('start_from', '고객부터'),
             ('only', '고객만'),
             ('resume', '이어서'),
+            ('scroll_test', '스크롤'),
         ]
         for key, label in mode_labels:
             btn = ctk.CTkButton(
-                mode_row, text=label, width=110, height=32, corner_radius=6,
+                mode_row, text=label, width=95, height=32, corner_radius=6,
                 font=ctk.CTkFont(family=_FONT, size=12),
                 **_style(key == _cur_mode[0]),
                 command=lambda k=key: _set_mode(k),
@@ -989,7 +992,7 @@ class AutoClickerApp(ctk.CTk):
         ).pack(side="right")
 
         # ────────────────── 동적 레이아웃 ──────────────────
-        _heights = {'normal': 340, 'start_from': 340, 'only': 340, 'resume': 270}
+        _heights = {'normal': 340, 'start_from': 340, 'only': 340, 'resume': 270, 'scroll_test': 340}
         _dynamic = [sep_top, ch_section, target_section, ocr_section, sep_bottom, btn_frame]
 
         _first_show = [True]
@@ -1001,7 +1004,7 @@ class AutoClickerApp(ctk.CTk):
 
             sep_top.pack(fill="x", padx=24, pady=(10, 14))
 
-            if m == 'normal':
+            if m in ('normal', 'scroll_test'):
                 ch_section.pack(fill="x", pady=(0, 10))
             if m in ('start_from', 'only'):
                 target_section.pack(fill="x", pady=(0, 6))
@@ -1060,6 +1063,8 @@ class AutoClickerApp(ctk.CTk):
             parts.append(f"고객: {target}")
         elif mode == 'resume':
             parts.append("이어서")
+        elif mode == 'scroll_test':
+            parts.append("스크롤 테스트")
 
         if self._settings['no_ocr']:
             parts.append("OCR: OFF")

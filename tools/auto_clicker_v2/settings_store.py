@@ -28,7 +28,7 @@ def load_settings() -> dict:
 
         # mode
         val, _ = winreg.QueryValueEx(key, "Mode")
-        result["mode"] = val if val in ("normal", "start_from", "only", "resume") else "normal"
+        result["mode"] = val if val in ("normal", "start_from", "only", "resume", "scroll_test") else "normal"
 
         # target
         val, _ = winreg.QueryValueEx(key, "Target")

@@ -1057,6 +1057,7 @@ def parse_args():
         'resume': False,  # checkpoint.json에서 위치 읽어서 재개
         'only': None,  # 특정 고객명만 처리 (동일 이름 여러 명 처리용)
         'no_ocr': False,  # OCR 없이 순차 클릭 모드
+        'scroll_test': False,  # 스크롤 테스트 모드 (클릭 없이 스크롤만)
     }
 
     # --no-click 옵션 처리
@@ -1089,6 +1090,11 @@ def parse_args():
     if '--no-ocr' in args:
         result['no_ocr'] = True
         args = [a for a in args if a != '--no-ocr']
+
+    # --scroll-test 옵션 처리 (스크롤 테스트: 클릭 없이 페이지별 스크린샷)
+    if '--scroll-test' in args:
+        result['scroll_test'] = True
+        args = [a for a in args if a != '--scroll-test']
 
     # --only 옵션 처리 (특정 고객명만 처리)
     if '--only' in args:
@@ -1126,6 +1132,7 @@ _arg_start_from = _parsed_args['start_from']
 _arg_resume = _parsed_args['resume']
 _arg_only = _parsed_args['only']
 _arg_no_ocr = _parsed_args.get('no_ocr', False)
+_arg_scroll_test = _parsed_args.get('scroll_test', False)
 _env_chosung = os.environ.get("METLIFE_CHOSUNG", "")
 _env_no_click = os.environ.get("METLIFE_NO_CLICK", "").lower() in ("1", "true", "yes")
 _env_integrated_view = os.environ.get("METLIFE_INTEGRATED_VIEW", "").lower() in ("1", "true", "yes")
@@ -1135,6 +1142,11 @@ _raw_chosung = _arg_chosung or _env_chosung
 
 # 고객 클릭 기능: 기본 활성화, --no-click 또는 환경변수로 비활성화
 CLICK_ENABLED = not (_arg_no_click or _env_no_click)
+
+# 스크롤 테스트 모드: 클릭 없이 스크롤만 수행 (페이지별 스크린샷 + 경계 로깅)
+SCROLL_TEST = _arg_scroll_test
+if SCROLL_TEST:
+    CLICK_ENABLED = False
 
 # 고객통합뷰 기능: --integrated-view 또는 환경변수로 활성화
 INTEGRATED_VIEW_ENABLED = _arg_integrated_view or _env_integrated_view
@@ -1156,6 +1168,13 @@ ONLY_CUSTOMER = _arg_only
 ONLY_MODE = ONLY_CUSTOMER is not None
 _only_found_count = 0  # 해당 고객 처리 횟수
 _only_all_done = False  # 모든 해당 고객 처리 완료 여부
+
+# 스크롤 테스트 디렉토리 (SCROLL_TEST 모드에서 페이지별 스크린샷 저장)
+SCROLL_TEST_DIR = None
+if SCROLL_TEST:
+    SCROLL_TEST_DIR = os.path.join(CAPTURE_DIR, "scroll_test")
+    if not os.path.exists(SCROLL_TEST_DIR):
+        os.makedirs(SCROLL_TEST_DIR)
 
 # 에러/체크포인트 파일 경로
 ERROR_FILE = os.path.join(CAPTURE_DIR, u"errors.json")
@@ -1353,6 +1372,9 @@ if ONLY_MODE:
     log(u"특정 고객만: '%s' (--only 모드)" % ONLY_CUSTOMER)
 if NO_OCR_MODE:
     log(u"OCR 모드: 비활성화 (--no-ocr) → 순차 클릭 + 빈 행 감지")
+if SCROLL_TEST:
+    log(u"스크롤 테스트: 활성화 (고객 클릭 비활성화, 페이지별 스크린샷)")
+    log(u"스크린샷 저장: %s" % SCROLL_TEST_DIR)
 log(u"네비 모드: Arrow Down (키보드)")
 
 # --resume 모드 처리
@@ -1768,6 +1790,9 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     _scroll_end_by_ocr = True
                     log(u"    [SCROLL_END] OCR 기반 스크롤 끝 감지! (신규 행 0건 = 이전 Page Down 무효)")
 
+                # 이전 페이지 마지막 고객명 보존 (스크롤 테스트 로깅용)
+                _st_prev_last = prev_page_rows[-1][0] if prev_page_rows else u""
+
                 # 다음 페이지를 위해 현재 페이지 행 저장
                 prev_page_rows = current_rows
 
@@ -1776,6 +1801,47 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                     log(u"    [%s] %d행 (스크롤중복 %d행 제외)" % (page_label, page_rows, scroll_dups))
                 else:
                     log(u"    [%s] %d행" % (page_label, page_rows))
+
+            # 3-1. 스크롤 테스트 로깅 (SCROLL_TEST 모드)
+            if SCROLL_TEST and not NO_OCR_MODE:
+                import shutil as _st_shutil
+                # 스크린샷 저장
+                try:
+                    _st_cap = capture(SCREEN)
+                    _st_fname = u"page_%s_N%d_S%d.png" % (chosung_name, nav_page, scroll_page)
+                    _st_dest = os.path.join(SCROLL_TEST_DIR, _st_fname)
+                    _st_shutil.copy(_st_cap, _st_dest)
+                except:
+                    _st_fname = u"(저장 실패)"
+
+                log(u"    [SCROLL_TEST] ──── 페이지 N%d-S%d ────" % (nav_page, scroll_page))
+                log(u"    [SCROLL_TEST] 스크린샷: %s" % _st_fname)
+
+                _st_ocr_total = len(customers)
+                _st_page_count = len(current_rows)
+                if scroll_dups > 0:
+                    log(u"    [SCROLL_TEST] 행수: %d (OCR 총 %d행, 중복 %d행)" % (page_rows, _st_ocr_total, scroll_dups))
+                    # 중복 행 상세 로깅
+                    if _st_prev_last and scroll_dups > 0:
+                        _st_dup_names = [r[0] for r in current_rows[:scroll_dups]]
+                        log(u"    [SCROLL_TEST] 경계: 이전 마지막=%s → 현재 첫번째=%s (중복 %d행: %s)" % (
+                            _st_prev_last,
+                            current_rows[0][0] if current_rows else u"?",
+                            scroll_dups,
+                            u", ".join(_st_dup_names)
+                        ))
+                else:
+                    log(u"    [SCROLL_TEST] 행수: %d (OCR 총 %d행)" % (page_rows, _st_ocr_total))
+
+                # 경계 고객 로깅 (첫번째 / 12번째 / 13번째)
+                _st_first = current_rows[0][0] if current_rows else u"없음"
+                _st_12th = current_rows[ROWS_PER_PAGE - 1][0] if len(current_rows) >= ROWS_PER_PAGE else u"없음"
+                _st_13th_name = u"없음"
+                if len(customers) > ROWS_PER_PAGE:
+                    _st_13th = customers[ROWS_PER_PAGE]
+                    _st_13th_name = _st_13th.get(u"고객명", "") or u"없음"
+                log(u"    [SCROLL_TEST] 첫번째: %s | %d번째: %s | %d번째(잘림): %s" % (
+                    _st_first, ROWS_PER_PAGE, _st_12th, ROWS_PER_PAGE + 1, _st_13th_name))
 
             # 4. 고객 클릭 처리 (스크롤 중복 제외, CLICK_ENABLED일 때만)
             if CLICK_ENABLED:
@@ -1821,6 +1887,27 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
             # 5. 스크롤 끝 감지 (OCR 기반: 신규 행 0건 → LAST 핸들러 + break)
             if _scroll_end_by_ocr:
                 log(u"\n    *** 스크롤 끝 도달! (OCR: 신규 행 0건 → 이전 Page Down 무효) ***")
+
+                # 스크롤 테스트: 마지막 페이지 스크린샷 + 요약
+                if SCROLL_TEST and not NO_OCR_MODE:
+                    import shutil as _st_shutil2
+                    try:
+                        _st_cap2 = capture(SCREEN)
+                        _st_fname2 = u"page_%s_N%d_S%d_LAST.png" % (chosung_name, nav_page, scroll_page)
+                        _st_dest2 = os.path.join(SCROLL_TEST_DIR, _st_fname2)
+                        _st_shutil2.copy(_st_cap2, _st_dest2)
+                    except:
+                        _st_fname2 = u"(저장 실패)"
+                    log(u"    [SCROLL_TEST] ──── 마지막 페이지 N%d-S%d ────" % (nav_page, scroll_page))
+                    log(u"    [SCROLL_TEST] 스크린샷: %s" % _st_fname2)
+                    _st_has_13th = len(customers) > ROWS_PER_PAGE
+                    if _st_has_13th:
+                        _st_13th_last = customers[ROWS_PER_PAGE]
+                        _st_13th_last_name = _st_13th_last.get(u"고객명", "") or u"없음"
+                        log(u"    [SCROLL_TEST] %d번째 행: 있음 → %s (마지막 페이지이므로 잘림 없이 처리 가능)" % (ROWS_PER_PAGE + 1, _st_13th_last_name))
+                    else:
+                        log(u"    [SCROLL_TEST] %d번째 행: 없음" % (ROWS_PER_PAGE + 1))
+                    log(u"    [SCROLL_TEST] 총 스크롤 페이지: %d (네비 %d)" % (scroll_page, nav_page))
 
                 # 마지막 페이지: 16번째 행이 있으면 처리
                 if len(customers) > ROWS_PER_PAGE:
@@ -2026,11 +2113,22 @@ minutes = int(elapsed_time // 60)
 seconds = int(elapsed_time % 60)
 
 log(u"\n" + "=" * 60)
-log(u"초성 버튼 테스트 완료!")
+if SCROLL_TEST:
+    log(u"스크롤 테스트 완료!")
+else:
+    log(u"초성 버튼 테스트 완료!")
 log(u"소요 시간: %d분 %d초" % (minutes, seconds))
 log(u"총 행수: %d행, 오류: %d명" % (all_total_rows, len(all_error_customers)))
 log(u"캡처/OCR 결과: %s" % CAPTURE_DIR)
 log(u"로그 파일: %s" % LOG_FILE)
+
+if SCROLL_TEST:
+    log(u"")
+    log(u"[SCROLL_TEST] ════════════════════════════════════")
+    log(u"[SCROLL_TEST] 스크롤 테스트 요약")
+    log(u"[SCROLL_TEST] 총 고객 수: %d행" % all_total_rows)
+    log(u"[SCROLL_TEST] 스크린샷 폴더: %s" % SCROLL_TEST_DIR)
+    log(u"[SCROLL_TEST] ════════════════════════════════════")
 
 # 오류 고객 목록 (로그에 기록)
 if all_error_customers:
