@@ -132,6 +132,7 @@ docker run -d --network host \
   -v /home/rossi/n8n-docker/n8n_data:/n8n_data:ro \
   -v /var/run/clamav:/var/run/clamav:ro \
   -v /var/lib/clamav:/var/lib/clamav:ro \
+  -v /home/rossi/aims/backend/api/aims_api/public:/app/public:ro \
   --name $CONTAINER_NAME \
   $IMAGE_NAME
 

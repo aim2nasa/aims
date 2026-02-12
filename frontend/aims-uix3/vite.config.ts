@@ -69,6 +69,12 @@ export default defineConfig({
         secure: false,
         changeOrigin: true
       },
+      // Static public files (인스톨러 다운로드 등)
+      '/public': {
+        target: 'http://100.110.215.65:3010',
+        secure: false,
+        changeOrigin: true
+      },
       // PDF Proxy (썸네일, PDF 메타데이터 수정)
       '/pdf-proxy': {
         target: 'http://100.110.215.65:8002',  // pdf_proxy 서비스

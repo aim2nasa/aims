@@ -44,6 +44,7 @@ const ContractAllView = lazy(() => import('./components/ContractViews/ContractAl
 const ContractImportView = lazy(() => import('./components/ContractViews/ContractImportView'))
 const BatchDocumentUploadView = lazy(() => import('./features/batch-upload/BatchDocumentUploadView'))
 const QuickActionsView = lazy(() => import('./components/QuickActionsViews/QuickActionsView'))
+const AutoClickerView = lazy(() => import('./components/AutoClickerView/AutoClickerView'))
 const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
@@ -442,7 +443,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "batch-document-upload" ||
         activeDocumentView === "quick-actions" ||
         activeDocumentView === "account-settings" ||
-        activeDocumentView === "inquiry") {
+        activeDocumentView === "inquiry" ||
+        activeDocumentView === "autoclicker") {
       setPaginationVisible(false)
       // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
       if (!selectedDocument && !selectedCustomer) {
@@ -512,6 +514,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
 
     setActiveDocumentView(viewToRestore)
+
+    // RightPane가 불필요한 뷰는 닫기
+    if (!urlCustomerId && !urlDocumentId) {
+      setRightPaneVisible(false)
+    }
 
     // 고객 ID가 URL에 있으면 고객 정보 로드
     if (urlCustomerId) {
@@ -752,6 +759,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const allViewKeys = [
       // 빠른 작업
       'quick-actions',
+      // AutoClicker
+      'autoclicker',
       // 문서 관리 View들
       'documents', 'documents-register', 'documents-library', 'documents-explorer', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
@@ -1791,6 +1800,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'quick-actions'}
               onClose={closeDocumentView}
               onNavigate={handleMenuClick}
+            />
+          </Suspense>
+
+          {/* AutoClicker View */}
+          <Suspense fallback={null}>
+            <AutoClickerView
+              visible={activeDocumentView === 'autoclicker'}
+              onClose={closeDocumentView}
             />
           </Suspense>
 

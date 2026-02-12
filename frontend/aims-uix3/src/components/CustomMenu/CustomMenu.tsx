@@ -185,6 +185,14 @@ const MenuIcons = {
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" opacity="0.85"/>
       <text x="12" y="13" textAnchor="middle" fontSize="10" fontWeight="bold" fill="var(--color-bg-primary, white)">?</text>
     </svg>
+  ),
+  // AutoClicker 아이콘 (커서 + 클릭 효과)
+  AutoClicker: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+      <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+      <circle cx="21" cy="10" r="1" opacity="0.35"/>
+    </svg>
   )
 }
 
@@ -398,6 +406,14 @@ const CustomMenu = ({
 
   // 메뉴 데이터 구조 - UX 최적화된 새로운 구조
   const menuItems: MenuItem[] = useMemo(() => [
+    // ━━━ AutoClicker ━━━
+    {
+      key: 'autoclicker',
+      icon: <span className="menu-icon-teal"><MenuIcons.AutoClicker /></span>,
+      label: collapsed ? '' : 'AutoClicker',
+      tooltipTitle: 'MetLife 고객 정보 자동수집',
+    },
+
     // 검색 결과 (동적 표시)
     ...(hasSearchResults ? [{
       key: 'search-results',
