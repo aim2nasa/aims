@@ -194,7 +194,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
           </h3>
           <div className="autoclicker-view__card">
             <ul className="autoclicker-view__notes">
-              <li>Windows PC에서만 사용할 수 있습니다.</li>
+              <li>Windows PC, 1920×1080 해상도에서만 사용할 수 있습니다.</li>
               <li>실행 버튼 클릭 시 브라우저가 외부 앱 실행을 확인하는 팝업이 나타날 수 있습니다.</li>
               <li>AutoClicker는 실행할 때마다 자동으로 최신 버전으로 업데이트됩니다.</li>
             </ul>
