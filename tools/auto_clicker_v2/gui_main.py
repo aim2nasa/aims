@@ -13,7 +13,7 @@ from tkinter import filedialog, messagebox
 
 from app_state import AppState
 from data_source import LiveProcessSource
-from path_helper import get_app_dir, get_version_file, get_output_dir
+from path_helper import get_app_dir, get_version_file, get_output_dir, is_frozen
 
 _BASE_DIR = get_app_dir()
 
@@ -128,7 +128,7 @@ class AutoClickerApp(ctk.CTk):
     # 클래스 변수: mutex 핸들 (GC 방지)
     _mutex_handle = None
 
-    def __init__(self, cli_args=None):
+    def __init__(self, cli_args=None, authenticated=False):
         # ── 싱글 인스턴스 보호 (super() 전에 실행 → 창 안 뜸) ──
         _k32 = ctypes.WinDLL("kernel32", use_last_error=True)
         _k32.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_wchar_p]
@@ -164,6 +164,7 @@ class AutoClickerApp(ctk.CTk):
             except Exception:
                 pass
 
+        self._authenticated = authenticated
         self._state = AppState()
         self._source: LiveProcessSource | None = None
         self._update_interval = 100
@@ -460,6 +461,15 @@ class AutoClickerApp(ctk.CTk):
             font=ctk.CTkFont(family=_FONT, size=11), text_color="gray60"
         )
         self._status_label.pack(side="right", padx=8, pady=5)
+
+        # 미인증 + 프로덕션 빌드 → 설정/실행 버튼 비활성화
+        if is_frozen() and not self._authenticated:
+            self._settings_btn.configure(state="disabled")
+            self._run_btn.configure(state="disabled", fg_color="gray40")
+            self._status_label.configure(
+                text="AIMS에서 실행해주세요",
+                text_color="#F44336",
+            )
 
         # 모니터 전환 버튼 (2개 이상일 때만 표시)
         self._mon_btns: dict[int, ctk.CTkButton] = {}
