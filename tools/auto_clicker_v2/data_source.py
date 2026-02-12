@@ -11,26 +11,22 @@ from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from log_parser import LogEvent, parse_line, parse_file
+from path_helper import get_app_dir, get_java_exe, get_sikulix_jar, get_sikulix_script, is_frozen
+
+_APP_DIR = get_app_dir()
 
 
 def _ds_log(action: str, detail: str):
     """data_source 디버그 로그"""
     ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    _base = os.path.dirname(os.path.abspath(__file__))
     try:
-        with open(os.path.join(_base, "debug_trace.log"), "a", encoding="utf-8") as f:
+        with open(os.path.join(_APP_DIR, "debug_trace.log"), "a", encoding="utf-8") as f:
             f.write(f"[{ts}] DS.{action}: {detail}\n")
     except Exception:
         pass
 
-# SikuliX 실행 경로
-SIKULIX_JAR = r"C:\Sikulix\sikulixide-2.0.5.jar"
-# 같은 폴더의 MetlifeCustomerList.py (v2 통합)
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SIKULIX_SCRIPT = os.path.join(_BASE_DIR, "MetlifeCustomerList.py")
-
 # 일시정지 신호 파일 (GUI ↔ SikuliX 프로세스 간 통신)
-PAUSE_SIGNAL_FILE = os.path.join(_BASE_DIR, ".pause_signal")
+PAUSE_SIGNAL_FILE = os.path.join(_APP_DIR, ".pause_signal")
 
 
 class DataSource(ABC):
@@ -168,9 +164,9 @@ class LiveProcessSource(DataSource):
 
     def start(self, on_event: Callable[[LogEvent], None]) -> None:
         cmd = [
-            "java",
-            "-jar", SIKULIX_JAR,
-            "-r", SIKULIX_SCRIPT,
+            get_java_exe(),
+            "-jar", get_sikulix_jar(),
+            "-r", get_sikulix_script(),
         ]
         extra_args = []
         if self.chosung:
@@ -202,12 +198,20 @@ class LiveProcessSource(DataSource):
         except OSError:
             pass
 
+        # SikuliX에 환경변수 전달 (패키징 모드에서 경로 해석에 사용)
+        env = os.environ.copy()
+        env["AC_HOME"] = _APP_DIR
+        if is_frozen():
+            import sys
+            env["AC_EXE_PATH"] = sys.executable
+
         # encoding 지정하지 않음 → raw bytes로 읽기 (CP949/UTF-8 자동 감지)
         self._process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             creationflags=subprocess.CREATE_NO_WINDOW,
+            env=env,
         )
 
         self._thread = threading.Thread(target=self._read_stdout, daemon=True)
@@ -281,10 +285,9 @@ class LiveProcessSource(DataSource):
 
     def _read_stdout(self) -> None:
         """백그라운드 스레드: stdout raw bytes → 인코딩 감지 → parse_line → 콜백"""
-        _BASE = os.path.dirname(os.path.abspath(__file__))
-        raw_log_path = os.path.join(_BASE, "live_raw_stdout.log")
+        raw_log_path = os.path.join(_APP_DIR, "live_raw_stdout.log")
         raw_log = open(raw_log_path, "w", encoding="utf-8")
-        hex_log_path = os.path.join(_BASE, "live_raw_hex.log")
+        hex_log_path = os.path.join(_APP_DIR, "live_raw_hex.log")
         hex_log = open(hex_log_path, "w", encoding="ascii")
 
         line_no = 0

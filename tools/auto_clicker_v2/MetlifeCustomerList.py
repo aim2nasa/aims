@@ -20,10 +20,13 @@ _robot = Robot()
 Settings.ActionLogs = False  # [log] CLICK 메시지 숨김
 setFindFailedResponse(ABORT)  # 이미지 못 찾으면 즉시 중단
 
-# 경로 설정 (SikuliX/Jython에서는 __file__ 사용 불가)
-SCRIPT_DIR = r"D:\aims\tools\MetlifePDF_v2.sikuli"
-_DEFAULT_CAPTURE_BASE = r"D:\captures\metlife_ocr"
-OCR_SCRIPT = SCRIPT_DIR + r"\ocr\upstage_ocr_api.py"
+# 경로 설정
+# AC_HOME 환경변수 (gui_main → data_source가 설정) 우선, 없으면 개발 경로 폴백
+SCRIPT_DIR = os.environ.get("AC_HOME", r"D:\aims\tools\auto_clicker_v2")
+_DEFAULT_CAPTURE_BASE = os.path.join(SCRIPT_DIR, "output")
+OCR_SCRIPT = os.path.join(SCRIPT_DIR, "ocr", "upstage_ocr_api.py")
+# 패키징 모드: AC_EXE_PATH가 설정되면 AutoClicker.exe --run-ocr 사용 (system Python 불필요)
+_AC_EXE_PATH = os.environ.get("AC_EXE_PATH", "")
 
 
 def _parse_save_dir_early():
@@ -445,7 +448,12 @@ def capture_and_ocr(chosung_name, page_num):
         # 환경변수에 CAPTURE_DIR 추가하여 OCR 스크립트에 전달
         ocr_env = os.environ.copy()
         ocr_env["METLIFE_CAPTURE_DIR"] = CAPTURE_DIR
-        result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path], env=ocr_env)
+        if _AC_EXE_PATH:
+            # 패키징 모드: AutoClicker.exe --run-ocr <image> <output>
+            result = subprocess.call([_AC_EXE_PATH, "--run-ocr", cropped_path, json_path], env=ocr_env)
+        else:
+            # 개발 모드: system Python으로 OCR 스크립트 직접 호출
+            result = subprocess.call(["python", OCR_SCRIPT, cropped_path, json_path], env=ocr_env)
         ocr_elapsed = time.time() - ocr_start
 
         if result != 0:

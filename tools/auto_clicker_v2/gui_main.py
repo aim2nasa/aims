@@ -11,13 +11,14 @@ from tkinter import filedialog, messagebox
 
 from app_state import AppState
 from data_source import LiveProcessSource
+from path_helper import get_app_dir, get_version_file, get_output_dir
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DEFAULT_SAVE_DIR = os.path.join(_BASE_DIR, "output")
+_BASE_DIR = get_app_dir()
+_DEFAULT_SAVE_DIR = get_output_dir()
 
 def _read_version() -> str:
     try:
-        with open(os.path.join(_BASE_DIR, "VERSION"), "r") as f:
+        with open(get_version_file(), "r") as f:
             return f.read().strip()
     except Exception:
         return "0.0.0"
@@ -209,8 +210,7 @@ class AutoClickerApp(ctk.CTk):
 
         # 디버그 로그 파일
         import datetime
-        _base = os.path.dirname(os.path.abspath(__file__))
-        self._debug_log_path = os.path.join(_base, "debug_trace.log")
+        self._debug_log_path = os.path.join(_BASE_DIR, "debug_trace.log")
         with open(self._debug_log_path, "w", encoding="utf-8") as f:
             f.write(f"=== AutoClicker v2 Debug Log ===\n")
             f.write(f"Started: {datetime.datetime.now()}\n\n")
