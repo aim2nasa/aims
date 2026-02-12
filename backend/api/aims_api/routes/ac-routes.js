@@ -1,13 +1,13 @@
 /**
- * ac-routes.js - AutoClicker 토큰 인증 라우트
+ * ac-routes.js - AutoClicker 라우트
  *
  * Phase 1: AIMS 웹 → URI Scheme → AC 토큰 인증
+ * Phase 2: AC 버전 체크 + 인스톨러 호스팅
  *
- * 흐름:
- *   1. AIMS 웹에서 POST /api/ac/request-token (JWT 인증)
- *   2. 서버가 1회용 nonce 생성 → ac_tokens에 저장 → 반환
- *   3. AIMS 웹이 aims-ac://start?token=NONCE URI 호출
- *   4. AC가 POST /api/ac/verify-token 으로 nonce 검증
+ * 엔드포인트:
+ *   POST /api/ac/request-token  — 1회용 nonce 발급 (JWT 필수)
+ *   POST /api/ac/verify-token   — nonce 검증 (인증 불필요)
+ *   GET  /api/ac/latest-version — 최신 AC 버전 정보 (인증 불필요)
  *
  * @since 2026-02-12
  */
@@ -141,6 +141,42 @@ module.exports = function(db, authenticateJWT) {
       res.status(500).json({
         success: false,
         message: '토큰 검증에 실패했습니다.',
+      });
+    }
+  });
+
+  /**
+   * GET /api/ac/latest-version
+   * AC 최신 버전 정보 조회 (Phase 2 자동 업데이트)
+   *
+   * 인증: 불필요 (공개 — 버전 정보만)
+   * 응답: { success, latest, installerUrl, releaseNotes }
+   */
+  router.get('/latest-version', async (req, res) => {
+    try {
+      const config = await db.collection('config').findOne({ _id: 'ac_latest_version' });
+
+      if (!config) {
+        // config 미설정 시 → 업데이트 없음 (현재 버전이 최신)
+        return res.json({
+          success: true,
+          latest: '0.0.0',
+          installerUrl: '',
+          releaseNotes: '',
+        });
+      }
+
+      res.json({
+        success: true,
+        latest: config.latest,
+        installerUrl: config.installerUrl || '',
+        releaseNotes: config.releaseNotes || '',
+      });
+    } catch (error) {
+      backendLogger.error('AC', '버전 조회 실패', error);
+      res.status(500).json({
+        success: false,
+        message: '버전 정보를 조회할 수 없습니다.',
       });
     }
   });

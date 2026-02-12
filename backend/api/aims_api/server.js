@@ -317,6 +317,9 @@ MongoClient.connect(MONGO_URI)
     const adminBackupRoutes = require('./routes/admin-backup-routes');
     app.use('/api', adminBackupRoutes(db, authenticateJWT, requireRole));
 
+    // ==================== AutoClicker Static Files (인스톨러 호스팅) ====================
+    app.use('/public', express.static(path.join(__dirname, 'public')));
+
     // ==================== AutoClicker Token Auth Routes ====================
     const acRoutes = require('./routes/ac-routes')(db, authenticateJWT);
     app.use('/api/ac', acRoutes);

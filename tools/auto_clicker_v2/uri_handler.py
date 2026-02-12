@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""URI Scheme 핸들러 — aims-ac:// URI 파싱 및 토큰 검증
+"""URI Scheme 핸들러 — aims-ac:// URI 파싱 및 토큰 검증 + 자동 업데이트
 
 Phase 1: AIMS 웹 → aims-ac://start?token=NONCE → AC 실행
+Phase 2: 토큰 검증 후 버전 체크 → 업데이트 필요 시 사일런트 자기 교체
 
 흐름:
   1. Windows가 aims-ac:// URI로 AutoClicker.exe 실행
   2. parse_uri()로 URI 파싱 → token 추출
   3. verify_token()으로 서버에 토큰 검증
-  4. 성공 시 GUI 시작 (cli_args 구성 → AutoClickerApp)
+  4. check_for_update()로 버전 체크 → 업데이트 시 다운로드 + updater.bat
+  5. 성공 시 GUI 시작 (cli_args 구성 → AutoClickerApp)
 """
 import json
 import sys
@@ -83,6 +85,16 @@ def _show_error(title: str, message: str):
     root.destroy()
 
 
+def _show_info(title: str, message: str):
+    """tkinter messagebox로 정보 표시"""
+    import tkinter as tk
+    root = tk.Tk()
+    root.withdraw()
+    from tkinter import messagebox
+    messagebox.showinfo(title, message, parent=root)
+    root.destroy()
+
+
 def handle_uri_launch(uri: str) -> int:
     """URI Scheme 실행 진입점
 
@@ -112,7 +124,27 @@ def handle_uri_launch(uri: str) -> int:
 
     user = result.get("user", {})
 
-    # 3. CLI args 구성 (gui_main.AutoClickerApp이 이해하는 형태)
+    # 3. 버전 체크 (Phase 2 자동 업데이트)
+    try:
+        from update_checker import check_for_update, download_installer, trigger_update
+
+        update_info = check_for_update()
+        if update_info:
+            _show_info(
+                "AutoClicker 업데이트",
+                f"새 버전 {update_info['latest']}이(가) 있습니다.\n"
+                f"(현재: {update_info['current']})\n\n"
+                "업데이트 후 AIMS 웹에서 다시 '자동수집'을 클릭하세요.",
+            )
+            download_installer(update_info["installerUrl"])
+            trigger_update()
+            return 0  # updater.bat이 AC 재실행
+    except SystemExit:
+        raise  # trigger_update()의 sys.exit(0) 전파
+    except Exception:
+        pass  # 업데이트 실패해도 GUI 진행
+
+    # 4. CLI args 구성 (gui_main.AutoClickerApp이 이해하는 형태)
     cli_args = types.SimpleNamespace(
         chosung=params.get("chosung", ""),
         start_from="",
@@ -121,7 +153,7 @@ def handle_uri_launch(uri: str) -> int:
         monitor=0,
     )
 
-    # 4. GUI 시작
+    # 5. GUI 시작
     from gui_main import AutoClickerApp
     app = AutoClickerApp(cli_args=cli_args)
     # 타이틀에 사용자 이름 표시
