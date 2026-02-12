@@ -85,10 +85,9 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
               <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
             </svg>
           </div>
-          <h2 className="autoclicker-view__hero-title">PDF 자동 다운로드</h2>
+          <h2 className="autoclicker-view__hero-title">AutoClicker란?</h2>
           <p className="autoclicker-view__hero-description">
-            설계사님의 고객 변액리포트(CRS), Annual Report PDF 파일들을
-            자동 다운로드하는 프로그램입니다. AutoClicker가 설치되어 있어야 합니다.
+            고객의 변액리포트(CRS), Annual Report(AR) 파일들을 자동으로 다운로드하는 프로그램입니다.
           </p>
 
           <div className="autoclicker-view__actions">

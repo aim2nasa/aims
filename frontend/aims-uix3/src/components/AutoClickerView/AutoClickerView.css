@@ -3,9 +3,9 @@
 .autoclicker-view__content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
-  padding: var(--spacing-6);
-  max-width: 640px;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-6);
+  max-width: 720px;
   margin: 0 auto;
 }
 
@@ -15,22 +15,22 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--spacing-8, 40px) var(--spacing-6);
+  padding: var(--spacing-5) var(--spacing-6);
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-secondary);
 }
 
 .autoclicker-view__hero-icon {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full, 50%);
   background: var(--color-primary-50, #eff6ff);
   color: var(--color-primary-600, #2563eb);
-  margin-bottom: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
 }
 
 html[data-theme="dark"] .autoclicker-view__hero-icon {
@@ -42,15 +42,15 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   font-size: var(--font-size-title-3, 18px);
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-2) 0;
+  margin: 0 0 var(--spacing-1) 0;
 }
 
 .autoclicker-view__hero-description {
   font-size: var(--font-size-footnote, 13px);
   color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-5) 0;
+  margin: 0 0 var(--spacing-4) 0;
   line-height: 1.5;
-  max-width: 400px;
+  white-space: nowrap;
 }
 
 /* 액션 버튼 */
@@ -64,7 +64,7 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-3) var(--spacing-5);
+  padding: var(--spacing-2) var(--spacing-5);
   font-size: var(--font-size-footnote, 13px);
   font-weight: var(--font-weight-semibold, 600);
   color: #fff;
@@ -94,7 +94,7 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
 .autoclicker-view__section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .autoclicker-view__section-title {
@@ -115,13 +115,13 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-secondary);
-  padding: var(--spacing-4);
+  padding: var(--spacing-3);
 }
 
 .autoclicker-view__card-text {
   font-size: var(--font-size-caption-1, 12px);
   color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-3) 0;
+  margin: 0 0 var(--spacing-2) 0;
   line-height: 1.5;
   text-align: center;
   white-space: nowrap;
@@ -173,7 +173,7 @@ html[data-theme="dark"] .autoclicker-view__download-btn:hover:not(:disabled) {
 .autoclicker-view__steps {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .autoclicker-view__step {
@@ -183,20 +183,20 @@ html[data-theme="dark"] .autoclicker-view__download-btn:hover:not(:disabled) {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-secondary);
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-3);
 }
 
 .autoclicker-view__step-number {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full, 50%);
   background: var(--color-primary-100, #dbeafe);
   color: var(--color-primary-700, #1d4ed8);
-  font-size: var(--font-size-caption-1, 12px);
+  font-size: var(--font-size-caption-2, 11px);
   font-weight: var(--font-weight-semibold, 600);
 }
 
@@ -210,14 +210,14 @@ html[data-theme="dark"] .autoclicker-view__step-number {
   font-size: var(--font-size-caption-1, 12px);
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-primary);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .autoclicker-view__step p {
   font-size: var(--font-size-caption-1, 12px);
   color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* 참고사항 목록 */
@@ -230,5 +230,5 @@ html[data-theme="dark"] .autoclicker-view__step-number {
 .autoclicker-view__notes li {
   font-size: var(--font-size-caption-1, 12px);
   color: var(--color-text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
 }
