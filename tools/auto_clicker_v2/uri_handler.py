@@ -149,7 +149,7 @@ def handle_uri_launch(uri: str) -> int:
         chosung=params.get("chosung", ""),
         start_from="",
         only="",
-        auto_start=True,  # URI 실행 = 항상 자동 시작
+        auto_start=False,  # 설정 확인 후 수동 시작
         monitor=0,
     )
 
