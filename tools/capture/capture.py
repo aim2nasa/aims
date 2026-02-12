@@ -6,6 +6,9 @@ import argparse
 import sys
 import os
 import glob
+import io
+import ctypes
+import ctypes.wintypes
 
 def next_path(base_dir, prefix):
     """capture_001.png, capture_002.png, ... 다음 번호 반환"""
@@ -102,6 +105,38 @@ def capture_all(output_path):
     print(f"OK: All {len(frames)} monitors {total_w}x{max_h} -> {output_path}")
     return True
 
+def copy_to_clipboard(image_path):
+    """PNG 파일을 클립보드에 복사 (Windows DIB 형식)"""
+    from PIL import Image
+    img = Image.open(image_path)
+    # BMP 형식으로 변환 (DIB 헤더 제거 = 14바이트 스킵)
+    bmp_buf = io.BytesIO()
+    img.save(bmp_buf, format="BMP")
+    bmp_data = bmp_buf.getvalue()[14:]  # BITMAPFILEHEADER 제거
+
+    CF_DIB = 8
+    kernel32 = ctypes.windll.kernel32
+    user32 = ctypes.windll.user32
+
+    # 64비트 호환: 인자/반환 타입 명시
+    kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
+    kernel32.GlobalAlloc.restype = ctypes.c_void_p
+    kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+    kernel32.GlobalLock.restype = ctypes.c_void_p
+    kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+    user32.OpenClipboard.argtypes = [ctypes.c_void_p]
+    user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+
+    user32.OpenClipboard(None)
+    user32.EmptyClipboard()
+    hmem = kernel32.GlobalAlloc(0x0042, len(bmp_data))
+    ptr = kernel32.GlobalLock(hmem)
+    ctypes.memmove(ptr, bmp_data, len(bmp_data))
+    kernel32.GlobalUnlock(hmem)
+    user32.SetClipboardData(CF_DIB, hmem)
+    user32.CloseClipboard()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--monitor", default="1", help="1=왼쪽모니터, 2=오른쪽모니터, all=전체")
@@ -128,4 +163,11 @@ if __name__ == "__main__":
             print(f"ERROR: Monitor {user_num} not found (available: {list(mon_map.keys())})")
             sys.exit(1)
         ok = capture_monitor(mon_map[user_num], user_num, output_path)
+
+    if ok:
+        try:
+            copy_to_clipboard(output_path)
+        except Exception as e:
+            print(f"WARN: clipboard copy failed: {e}")
+
     sys.exit(0 if ok else 1)
