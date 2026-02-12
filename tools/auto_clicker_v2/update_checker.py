@@ -78,6 +78,36 @@ def check_for_update() -> dict | None:
     return None
 
 
+# ── 업데이트 전후 인증 세션 보존 ──
+
+_RESTART_AUTH_FILE = "_restart_auth.json"
+_RESTART_AUTH_MAX_AGE = 300  # 5분
+
+
+def save_restart_auth(user: dict, params: dict) -> None:
+    """업데이트 전 인증 세션을 파일에 저장 (재시작 후 복원용)."""
+    import time
+    path = os.path.join(get_app_dir(), _RESTART_AUTH_FILE)
+    data = {"user": user, "params": dict(params), "timestamp": time.time()}
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+
+def load_restart_auth() -> dict | None:
+    """재시작 후 인증 세션 복원. 유효하면 dict 반환, 아니면 None."""
+    import time
+    path = os.path.join(get_app_dir(), _RESTART_AUTH_FILE)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        os.remove(path)  # 1회용 — 읽은 즉시 삭제
+        if time.time() - data.get("timestamp", 0) > _RESTART_AUTH_MAX_AGE:
+            return None
+        return data
+    except Exception:
+        return None
+
+
 def download_installer(url: str, progress_callback=None) -> str:
     """인스톨러를 temp/ 폴더에 다운로드.
 
@@ -304,6 +334,8 @@ echo [%date% %time%] Closing splash >> "%LOGFILE%"
 echo done > "{app_dir}\\_splash_done"
 timeout /t 1 /nobreak >nul
 
+echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
+start "" "{app_dir}\\AutoClicker.exe" --post-update
 echo [%date% %time%] Done >> "%LOGFILE%"
 del "{splash_ps1}" >nul 2>&1
 del "{splash_vbs}" >nul 2>&1

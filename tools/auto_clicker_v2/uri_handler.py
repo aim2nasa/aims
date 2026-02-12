@@ -126,16 +126,18 @@ def handle_uri_launch(uri: str) -> int:
 
     # 3. 버전 체크 (Phase 2 자동 업데이트)
     try:
-        from update_checker import check_for_update, download_with_progress, trigger_update
+        from update_checker import check_for_update, download_with_progress, trigger_update, save_restart_auth
 
         update_info = check_for_update()
         if update_info:
+            # 업데이트 전 인증 세션 저장 (재시작 시 복원용)
+            save_restart_auth(user, params)
             download_with_progress(
                 update_info["installerUrl"],
                 update_info["latest"],
             )
             trigger_update()
-            return 0  # updater.bat이 AC 재실행
+            return 0  # updater.bat이 --post-update와 함께 AC 재실행
     except SystemExit:
         raise  # trigger_update()의 sys.exit(0) 전파
     except Exception as e:

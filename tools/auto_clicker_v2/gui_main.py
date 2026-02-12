@@ -1309,9 +1309,27 @@ if __name__ == "__main__":
     parser.add_argument("--only", type=str, default="", help="특정 고객만")
     parser.add_argument("--auto-start", action="store_true", dest="auto_start", help="자동 실행")
     parser.add_argument("--monitor", type=int, default=0, help="모니터 번호 (0=자동, 1=모니터1, 2=모니터2)")
+    parser.add_argument("--post-update", action="store_true", dest="post_update", help="업데이트 후 재시작")
     cli_args = parser.parse_args()
 
-    app = AutoClickerApp(cli_args=cli_args)
+    # --post-update: 자동 업데이트 후 재시작 → 세션 파일에서 인증 복원
+    authenticated = False
+    user_name = ""
+    if cli_args.post_update:
+        from update_checker import load_restart_auth
+        session = load_restart_auth()
+        if session:
+            authenticated = True
+            user_name = session.get("user", {}).get("name", "")
+            # 세션에 저장된 초성 복원
+            chosung = session.get("params", {}).get("chosung", "")
+            if chosung:
+                cli_args.chosung = chosung
+
+    app = AutoClickerApp(cli_args=cli_args, authenticated=authenticated)
+
+    if user_name:
+        app.title(f"{app.title()} — {user_name}")
 
     # tkinter 콜백 예외도 파일에 기록
     def _tk_exception_handler(exc_type, exc_value, exc_tb):
