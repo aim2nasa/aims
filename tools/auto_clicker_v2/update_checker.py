@@ -126,11 +126,10 @@ def download_with_progress(url: str, version: str) -> str:
     root.resizable(False, False)
     root.attributes("-topmost", True)
 
-    # AC 윈도우 영역(모니터 2) 중앙에 배치
-    # AC: NORMAL_X=1376, NORMAL_Y=454, WIDTH=480, HEIGHT=440 → center=(1616, 674)
+    # 브라우저가 있는 모니터(주 모니터) 중앙에 배치
     w, h = 360, 120
-    sx = 1616 - w // 2
-    sy = 674 - h // 2
+    sx = root.winfo_screenwidth() // 2 - w // 2
+    sy = root.winfo_screenheight() // 2 - h // 2
     root.geometry(f"{w}x{h}+{sx}+{sy}")
 
     label = tk.Label(root, text=f"v{version} 다운로드 중...", font=("맑은 고딕", 10))
@@ -185,12 +184,15 @@ def download_with_progress(url: str, version: str) -> str:
     return result["path"]
 
 
-def _generate_splash_ps1(app_dir: str) -> str:
-    """설치 중 표시할 PowerShell WinForms 스플래시 스크립트 생성.
+def _generate_splash_files(app_dir: str) -> tuple[str, str]:
+    """설치 중 표시할 PowerShell WinForms 스플래시 + VBS 런처 생성.
+
+    VBS 런처로 PowerShell을 실행하면 창이 전혀 보이지 않음.
+    (bat에서 직접 powershell 실행 시 창이 순간 깜빡이는 문제 해결)
 
     sentinel 파일(_splash_done)이 생성되면 자동으로 닫힘.
     한글을 Unicode char 코드로 인코딩하여 ASCII bat 호환.
-    Returns: .ps1 파일 경로
+    Returns: (ps1_path, vbs_path)
     """
     # "업데이트 중..." / "잠시만 기다려주세요" 를 [char] 코드로 표현
     ps_script = '''Add-Type -AssemblyName System.Windows.Forms
@@ -200,7 +202,10 @@ $f.Text = "AIMS AutoClicker"
 $f.FormBorderStyle = "None"
 $f.Size = New-Object Drawing.Size(340, 100)
 $f.StartPosition = "Manual"
-$f.Location = New-Object Drawing.Point(1446, 624)
+$screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+$cx = $screen.X + [int](($screen.Width - 340) / 2)
+$cy = $screen.Y + [int](($screen.Height - 100) / 2)
+$f.Location = New-Object Drawing.Point($cx, $cy)
 $f.TopMost = $true
 $f.ShowInTaskbar = $false
 $f.BackColor = [Drawing.Color]::FromArgb(245, 245, 247)
@@ -232,7 +237,18 @@ $timer.Start()
     ps1_path = os.path.join(app_dir, "_update_splash.ps1")
     with open(ps1_path, "w", encoding="ascii", errors="replace") as f:
         f.write(ps_script)
-    return ps1_path
+
+    # VBS 래퍼: PowerShell을 완전히 숨겨서 실행 (창 깜빡임 제거)
+    # wscript Run 2번째 인자 0 = 완전히 숨김
+    vbs_script = (
+        'CreateObject("WScript.Shell").Run '
+        f'"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{ps1_path}""", 0, False'
+    )
+    vbs_path = os.path.join(app_dir, "_launch_splash.vbs")
+    with open(vbs_path, "w", encoding="ascii", errors="replace") as f:
+        f.write(vbs_script)
+
+    return ps1_path, vbs_path
 
 
 def trigger_update():
@@ -244,15 +260,15 @@ def trigger_update():
     app_dir = get_app_dir()
     updater = os.path.join(app_dir, "_do_update.bat")
 
-    # PowerShell 스플래시 스크립트 생성
-    splash_ps1 = _generate_splash_ps1(app_dir)
+    # PowerShell 스플래시 + VBS 런처 생성 (창 깜빡임 제거)
+    splash_ps1, splash_vbs = _generate_splash_files(app_dir)
 
     bat_content = f"""@echo off
 set "LOGFILE={app_dir}\\updater.log"
 echo [%date% %time%] Updater started > "%LOGFILE%"
 
 echo [%date% %time%] Starting splash >> "%LOGFILE%"
-start "" powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "{splash_ps1}"
+wscript "{splash_vbs}"
 
 echo [%date% %time%] Waiting 2 sec >> "%LOGFILE%"
 timeout /t 2 /nobreak >nul
@@ -287,6 +303,7 @@ echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
 start "" "{app_dir}\\AutoClicker.exe"
 echo [%date% %time%] Done >> "%LOGFILE%"
 del "{splash_ps1}" >nul 2>&1
+del "{splash_vbs}" >nul 2>&1
 del "%~f0" >nul 2>&1
 """
 
