@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+// SFSymbol 사용하지 않음 — 아이콘은 직접 SVG로 렌더링
 import { api } from '@/shared/lib/api'
 import './AutoClickerView.css'
 
@@ -40,7 +40,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         '/api/ac/request-token'
       )
       if (response.success && response.token) {
-        window.location.href = `aims-ac://start?token=${response.token}`
+        window.location.href = `aims-ac://start?token=${response.token}&auto_start=false`
       } else {
         alert('토큰 발급에 실패했습니다.')
       }
@@ -85,10 +85,10 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
               <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
             </svg>
           </div>
-          <h2 className="autoclicker-view__hero-title">MetLife 고객 정보 자동수집</h2>
+          <h2 className="autoclicker-view__hero-title">PDF 자동 다운로드</h2>
           <p className="autoclicker-view__hero-description">
-            MetLife 홈페이지에서 고객 정보를 자동으로 수집합니다.
-            AutoClicker가 설치되어 있어야 합니다.
+            설계사님의 고객 변액리포트(CRS), Annual Report PDF 파일들을
+            자동 다운로드하는 프로그램입니다. AutoClicker가 설치되어 있어야 합니다.
           </p>
 
           <div className="autoclicker-view__actions">
@@ -98,7 +98,9 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
               onClick={handleLaunch}
               disabled={launching}
             >
-              <SFSymbol name="play-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+              </svg>
               {launching ? '실행 중...' : 'AutoClicker 실행'}
             </button>
           </div>
@@ -107,7 +109,10 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 설치 가이드 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <SFSymbol name="arrow-down-circle" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+              <circle cx="12" cy="12" r="10" fill="none"/>
+            </svg>
             설치
           </h3>
           <div className="autoclicker-view__card">
@@ -120,7 +125,9 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
               onClick={handleDownload}
               disabled={!versionInfo?.installerUrl}
             >
-              <SFSymbol name="arrow-down-to-line" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3v12M5 12l7 7 7-7M4 21h16"/>
+              </svg>
               {versionInfo?.latest && versionInfo.latest !== '0.0.0'
                 ? `설치 프로그램 다운로드 (v${versionInfo.latest})`
                 : '설치 프로그램 다운로드'
@@ -137,7 +144,12 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 사용 방법 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <SFSymbol name="list-number" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
+              <text x="3" y="7" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">1</text>
+              <text x="3" y="13" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">2</text>
+              <text x="3" y="19" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">3</text>
+            </svg>
             사용 방법
           </h3>
           <div className="autoclicker-view__steps">
@@ -158,8 +170,8 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
             <div className="autoclicker-view__step">
               <span className="autoclicker-view__step-number">3</span>
               <div>
-                <strong>자동수집</strong>
-                <p>AutoClicker가 MetLife 홈페이지에서 고객 정보를 자동으로 수집합니다.</p>
+                <strong>자동 다운로드</strong>
+                <p>AutoClicker가 MetLife 홈페이지에서 PDF 파일들을 자동으로 다운로드합니다.</p>
               </div>
             </div>
           </div>
@@ -168,7 +180,9 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 참고사항 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <SFSymbol name="info-circle" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
             참고
           </h3>
           <div className="autoclicker-view__card">

@@ -1179,6 +1179,15 @@ class AutoClickerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
+    import sys
+
+    # URI Scheme 감지: aims-ac:// 로 시작하는 인자가 있으면 URI 핸들러로 분기
+    uri_arg = next((a for a in sys.argv[1:] if a.startswith("aims-ac://")), None)
+    if uri_arg:
+        from uri_handler import handle_uri_launch
+        sys.exit(handle_uri_launch(uri_arg))
+
+    # 일반 CLI 모드
     import argparse
 
     parser = argparse.ArgumentParser(description="AutoClicker v2")

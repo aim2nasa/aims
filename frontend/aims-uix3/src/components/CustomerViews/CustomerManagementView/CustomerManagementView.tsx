@@ -574,10 +574,10 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     return sorted;
   }, [customersData, activityPeriod]);
 
-  // AutoClicker 자동수집 상태
+  // AutoClicker PDF 자동 다운로드 상태
   const [acLoading, setAcLoading] = useState(false);
 
-  // AutoClicker 자동수집 실행
+  // AutoClicker PDF 자동 다운로드 실행
   const handleAutoCollect = useCallback(async () => {
     if (acLoading) return;
     setAcLoading(true);
@@ -586,10 +586,10 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         '/api/ac/request-token'
       );
       if (response.success && response.token) {
-        window.location.href = `aims-ac://start?token=${response.token}`;
+        window.location.href = `aims-ac://start?token=${response.token}&auto_start=false`;
       }
     } catch {
-      alert('자동수집 토큰 발급에 실패했습니다. 다시 시도하세요.');
+      alert('AutoClicker 토큰 발급에 실패했습니다. 다시 시도하세요.');
     } finally {
       setAcLoading(false);
     }
@@ -605,8 +605,8 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           <path d="M15.5 14l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
-      title: acLoading ? '토큰 발급 중...' : '자동수집',
-      description: 'MetLife 홈페이지에서 고객 정보를 자동으로 수집합니다. AutoClicker가 설치되어 있어야 합니다.',
+      title: acLoading ? '토큰 발급 중...' : 'PDF 자동 다운로드',
+      description: '변액리포트(CRS), Annual Report PDF 파일들을 자동 다운로드합니다. AutoClicker가 설치되어 있어야 합니다.',
       onClick: handleAutoCollect,
     },
     {

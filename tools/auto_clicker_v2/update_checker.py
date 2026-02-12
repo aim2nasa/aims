@@ -91,6 +91,9 @@ def download_installer(url: str) -> str:
     os.makedirs(temp_dir, exist_ok=True)
     dest = os.path.join(temp_dir, "AIMS_AutoClicker_Setup.exe")
 
+    # 상대 경로인 경우 절대 URL로 변환
+    if url.startswith("/"):
+        url = f"{AIMS_API_BASE}{url}"
     urlretrieve(url, dest)
     return dest
 

@@ -56,6 +56,7 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
 /* 액션 버튼 */
 .autoclicker-view__actions {
   display: flex;
+  justify-content: center;
   gap: var(--spacing-3);
 }
 

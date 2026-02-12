@@ -411,7 +411,7 @@ const CustomMenu = ({
       key: 'autoclicker',
       icon: <span className="menu-icon-teal"><MenuIcons.AutoClicker /></span>,
       label: collapsed ? '' : 'AutoClicker',
-      tooltipTitle: 'MetLife 고객 정보 자동수집',
+      tooltipTitle: 'PDF 자동 다운로드',
     },
 
     // 검색 결과 (동적 표시)

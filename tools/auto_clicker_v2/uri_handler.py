@@ -134,7 +134,7 @@ def handle_uri_launch(uri: str) -> int:
                 "AutoClicker 업데이트",
                 f"새 버전 {update_info['latest']}이(가) 있습니다.\n"
                 f"(현재: {update_info['current']})\n\n"
-                "업데이트 후 AIMS 웹에서 다시 '자동수집'을 클릭하세요.",
+                "확인을 누르면 자동으로 업데이트됩니다.",
             )
             download_installer(update_info["installerUrl"])
             trigger_update()
@@ -149,7 +149,7 @@ def handle_uri_launch(uri: str) -> int:
         chosung=params.get("chosung", ""),
         start_from="",
         only="",
-        auto_start=False,  # 설정 확인 후 수동 시작
+        auto_start=str(params.get("auto_start", "false")).lower() == "true",
         monitor=0,
     )
 
