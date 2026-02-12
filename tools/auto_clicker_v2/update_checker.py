@@ -126,10 +126,11 @@ def download_with_progress(url: str, version: str) -> str:
     root.resizable(False, False)
     root.attributes("-topmost", True)
 
-    # 화면 중앙 배치
+    # AC 윈도우 영역(모니터 2) 중앙에 배치
+    # AC: NORMAL_X=1376, NORMAL_Y=454, WIDTH=480, HEIGHT=440 → center=(1616, 674)
     w, h = 360, 120
-    sx = root.winfo_screenwidth() // 2 - w // 2
-    sy = root.winfo_screenheight() // 2 - h // 2
+    sx = 1616 - w // 2
+    sy = 674 - h // 2
     root.geometry(f"{w}x{h}+{sx}+{sy}")
 
     label = tk.Label(root, text=f"v{version} 다운로드 중...", font=("맑은 고딕", 10))
@@ -184,20 +185,77 @@ def download_with_progress(url: str, version: str) -> str:
     return result["path"]
 
 
+def _generate_splash_ps1(app_dir: str) -> str:
+    """설치 중 표시할 PowerShell WinForms 스플래시 스크립트 생성.
+
+    sentinel 파일(_splash_done)이 생성되면 자동으로 닫힘.
+    한글을 Unicode char 코드로 인코딩하여 ASCII bat 호환.
+    Returns: .ps1 파일 경로
+    """
+    # "업데이트 중..." / "잠시만 기다려주세요" 를 [char] 코드로 표현
+    ps_script = '''Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$f = New-Object Windows.Forms.Form
+$f.Text = "AIMS AutoClicker"
+$f.FormBorderStyle = "None"
+$f.Size = New-Object Drawing.Size(340, 100)
+$f.StartPosition = "Manual"
+$f.Location = New-Object Drawing.Point(1446, 624)
+$f.TopMost = $true
+$f.ShowInTaskbar = $false
+$f.BackColor = [Drawing.Color]::FromArgb(245, 245, 247)
+$l = New-Object Windows.Forms.Label
+$l.Text = [char]0xC5C5 + [char]0xB370 + [char]0xC774 + [char]0xD2B8 + " " + [char]0xC911 + "..."
+$l.Font = New-Object Drawing.Font("Malgun Gothic", 14)
+$l.AutoSize = $true
+$l.Location = New-Object Drawing.Point(100, 25)
+$f.Controls.Add($l)
+$l2 = New-Object Windows.Forms.Label
+$l2.Text = [char]0xC7A0 + [char]0xC2DC + [char]0xB9CC + " " + [char]0xAE30 + [char]0xB2E4 + [char]0xB824 + [char]0xC8FC + [char]0xC138 + [char]0xC694
+$l2.Font = New-Object Drawing.Font("Malgun Gothic", 9)
+$l2.ForeColor = [Drawing.Color]::FromArgb(136, 136, 136)
+$l2.AutoSize = $true
+$l2.Location = New-Object Drawing.Point(95, 55)
+$f.Controls.Add($l2)
+$sentinel = Join-Path (Split-Path $MyInvocation.MyCommand.Path) "_splash_done"
+$timer = New-Object Windows.Forms.Timer
+$timer.Interval = 500
+$timer.Add_Tick({
+    if (Test-Path $sentinel) {
+        Remove-Item $sentinel -Force -ErrorAction SilentlyContinue
+        $f.Close()
+    }
+})
+$timer.Start()
+[Windows.Forms.Application]::Run($f)
+'''
+    ps1_path = os.path.join(app_dir, "_update_splash.ps1")
+    with open(ps1_path, "w", encoding="ascii", errors="replace") as f:
+        f.write(ps_script)
+    return ps1_path
+
+
 def trigger_update():
     """updater.bat을 동적 생성 + detached 프로세스로 실행 후 AC 종료.
 
     bat 파일을 동적으로 생성하여 인코딩 문제 방지 (UTF-8 bat → CP949 cmd.exe 깨짐).
+    PowerShell WinForms 스플래시를 설치 완료까지 지속 표시.
     """
     app_dir = get_app_dir()
     updater = os.path.join(app_dir, "_do_update.bat")
 
-    # ASCII-only bat 파일 동적 생성 (인코딩 무관)
+    # PowerShell 스플래시 스크립트 생성
+    splash_ps1 = _generate_splash_ps1(app_dir)
+
     bat_content = f"""@echo off
 set "LOGFILE={app_dir}\\updater.log"
 echo [%date% %time%] Updater started > "%LOGFILE%"
-echo [%date% %time%] Waiting 3 sec... >> "%LOGFILE%"
-timeout /t 3 /nobreak >nul
+
+echo [%date% %time%] Starting splash >> "%LOGFILE%"
+start "" powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "{splash_ps1}"
+
+echo [%date% %time%] Waiting 2 sec >> "%LOGFILE%"
+timeout /t 2 /nobreak >nul
 
 set "INSTALLER={app_dir}\\temp\\AIMS_AutoClicker_Setup.exe"
 echo [%date% %time%] INSTALLER=%INSTALLER% >> "%LOGFILE%"
@@ -221,9 +279,14 @@ del "%INSTALLER%" >nul 2>&1
 rmdir "{app_dir}\\temp" >nul 2>&1
 
 :done
-echo [%date% %time%] Done >> "%LOGFILE%"
+echo [%date% %time%] Closing splash >> "%LOGFILE%"
+echo done > "{app_dir}\\_splash_done"
+timeout /t 1 /nobreak >nul
+
 echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
 start "" "{app_dir}\\AutoClicker.exe"
+echo [%date% %time%] Done >> "%LOGFILE%"
+del "{splash_ps1}" >nul 2>&1
 del "%~f0" >nul 2>&1
 """
 
@@ -231,11 +294,11 @@ del "%~f0" >nul 2>&1
         f.write(bat_content)
 
     CREATE_NEW_PROCESS_GROUP = 0x00000200
-    DETACHED_PROCESS = 0x00000008
+    CREATE_NO_WINDOW = 0x08000000
 
     subprocess.Popen(
         [updater],
-        creationflags=CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
+        creationflags=CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
         close_fds=True,
         cwd=app_dir,
     )

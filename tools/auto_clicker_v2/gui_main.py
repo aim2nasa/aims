@@ -1197,6 +1197,52 @@ if __name__ == "__main__":
 
     sys.excepthook = _log_uncaught
 
+    # 빌드 검증 모드: 패키징 후 필수 모듈 import 가능 여부 확인
+    # console=False 환경에서 stdout이 없으므로 파일로 결과 출력
+    if "--health-check" in sys.argv:
+        _hc_result_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),
+                                       "health_check_result.txt")
+        errors = []
+        # GUI/기본 모듈
+        for mod in ["tkinter", "tkinter.ttk", "threading", "json", "os", "sys",
+                     "subprocess", "traceback", "argparse", "logging"]:
+            try:
+                __import__(mod)
+            except ImportError as e:
+                errors.append(f"FAIL: {mod} - {e}")
+        # OCR 서브프로세스에서 필요한 모듈 (html.parser 사건 재발 방지)
+        for mod in ["html", "html.parser", "re", "urllib", "urllib.request",
+                     "urllib.error", "httpx", "httpcore", "h11", "sniffio",
+                     "certifi", "anyio"]:
+            try:
+                __import__(mod)
+            except ImportError as e:
+                errors.append(f"FAIL: {mod} - {e}")
+        # OCR 스크립트 자체 import 테스트
+        if getattr(sys, 'frozen', False):
+            _hc_ocr_dir = os.path.join(sys._MEIPASS, 'ocr')
+        else:
+            _hc_ocr_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ocr')
+        sys.path.insert(0, _hc_ocr_dir)
+        try:
+            import upstage_ocr_api  # noqa: F401
+        except ImportError as e:
+            errors.append(f"FAIL: upstage_ocr_api - {e}")
+        try:
+            import parse_customerlist_final  # noqa: F401
+        except ImportError as e:
+            errors.append(f"FAIL: parse_customerlist_final - {e}")
+
+        with open(_hc_result_file, "w", encoding="utf-8") as _hcf:
+            if errors:
+                _hcf.write("HEALTH CHECK FAILED\n")
+                for err in errors:
+                    _hcf.write(f"  {err}\n")
+                sys.exit(1)
+            else:
+                _hcf.write("HEALTH CHECK OK\n")
+                sys.exit(0)
+
     # OCR 서브프로세스 모드: 패키징된 exe에서 OCR 직접 실행
     # MetlifeCustomerList.py → subprocess.call([AutoClicker.exe, "--run-ocr", image, output])
     if "--run-ocr" in sys.argv:

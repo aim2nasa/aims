@@ -24,7 +24,7 @@ Write-Host ""
 
 # ─── 1단계: 전제조건 확인 ─────────────────────────────
 
-Write-Host "[1/4] 전제조건 확인..." -ForegroundColor Yellow
+Write-Host "[1/5] 전제조건 확인..." -ForegroundColor Yellow
 
 # PyInstaller 확인
 try {
@@ -37,7 +37,10 @@ try {
 }
 
 # Inno Setup 확인
-$InnoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+$InnoPath = "C:\Inno6\ISCC.exe"
+if (-not (Test-Path $InnoPath)) {
+    $InnoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+}
 if (-not (Test-Path $InnoPath)) {
     Write-Host "  WARNING: Inno Setup이 설치되지 않았습니다." -ForegroundColor Yellow
     Write-Host "  인스톨러 빌드를 건너뜁니다." -ForegroundColor Yellow
@@ -55,7 +58,11 @@ if (-not (Test-Path $JrePath)) {
     Write-Host "  다운로드: https://adoptium.net/temurin/releases/?os=windows&arch=x64&package=jre" -ForegroundColor Yellow
     $SkipJre = $true
 } else {
-    $jreVer = & $JrePath -version 2>&1 | Select-Object -First 1
+    try {
+        $jreVer = & $JrePath -version 2>&1 | Select-Object -First 1
+    } catch {
+        $jreVer = "detected"
+    }
     Write-Host "  JRE: $jreVer" -ForegroundColor Green
     $SkipJre = $false
 }
@@ -75,7 +82,7 @@ Write-Host ""
 
 # ─── 2단계: PyInstaller 빌드 ─────────────────────────────
 
-Write-Host "[2/4] PyInstaller 빌드..." -ForegroundColor Yellow
+Write-Host "[2/5] PyInstaller 빌드..." -ForegroundColor Yellow
 
 # 이전 빌드 정리
 $PyiDistDir = Join-Path $DistDir "AutoClicker"
@@ -87,11 +94,13 @@ if (Test-Path $PyiDistDir) {
 $SpecFile = Join-Path $BuildDir "AutoClicker.spec"
 Push-Location $ProjectDir
 try {
+    $ErrorActionPreference = "Continue"
     & python -m PyInstaller $SpecFile --noconfirm --clean 2>&1 | ForEach-Object {
         if ($_ -match "ERROR|FATAL") {
             Write-Host "  $_" -ForegroundColor Red
         }
     }
+    $ErrorActionPreference = "Stop"
     if ($LASTEXITCODE -ne 0) {
         throw "PyInstaller 빌드 실패 (exit code: $LASTEXITCODE)"
     }
@@ -106,13 +115,13 @@ if (-not (Test-Path $ExePath)) {
     exit 1
 }
 $ExeSize = (Get-Item $ExePath).Length / 1MB
-Write-Host "  AutoClicker.exe 생성 완료 ({0:N1} MB)" -f $ExeSize -ForegroundColor Green
+Write-Host ("  AutoClicker.exe 생성 완료 ({0:N1} MB)" -f $ExeSize) -ForegroundColor Green
 
 Write-Host ""
 
 # ─── 3단계: 외부 리소스 복사 ─────────────────────────────
 
-Write-Host "[3/4] 외부 리소스 복사..." -ForegroundColor Yellow
+Write-Host "[3/5] 외부 리소스 복사..." -ForegroundColor Yellow
 
 # SikuliX 스크립트
 Copy-Item (Join-Path $ProjectDir "MetlifeCustomerList.py") -Destination $PyiDistDir -Force
@@ -160,16 +169,47 @@ if (-not $SkipSikulix) {
 
 # 전체 배포 크기
 $TotalSize = (Get-ChildItem $PyiDistDir -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
-Write-Host "  총 배포 크기: {0:N1} MB" -f $TotalSize -ForegroundColor Cyan
+Write-Host ("  총 배포 크기: {0:N1} MB" -f $TotalSize) -ForegroundColor Cyan
 
 Write-Host ""
 
-# ─── 4단계: Inno Setup 인스톨러 ─────────────────────────────
+# ─── 4단계: 스모크 테스트 (빌드 검증) ─────────────────────────────
+
+Write-Host "[4/5] 스모크 테스트 (--health-check)..." -ForegroundColor Yellow
+
+# console=False exe → 결과를 파일로 출력
+$HealthResultFile = Join-Path $PyiDistDir "health_check_result.txt"
+if (Test-Path $HealthResultFile) { Remove-Item $HealthResultFile -Force }
+
+$proc = Start-Process -FilePath $ExePath -ArgumentList "--health-check" -PassThru -NoNewWindow
+$proc.WaitForExit(15000)  # 15초 타임아웃
+
+if (Test-Path $HealthResultFile) {
+    $HealthResult = (Get-Content $HealthResultFile -Raw).Trim()
+} else {
+    $HealthResult = "(result file not created)"
+}
+
+if ($HealthResult -match "HEALTH CHECK OK") {
+    Write-Host "  $HealthResult" -ForegroundColor Green
+    Remove-Item $HealthResultFile -Force -ErrorAction SilentlyContinue
+} else {
+    Write-Host "  SMOKE TEST FAILED!" -ForegroundColor Red
+    Write-Host "  $HealthResult" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Build aborted: required modules missing in packaged exe" -ForegroundColor Red
+    Write-Host "  Check hiddenimports in AutoClicker.spec" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+
+# ─── 5단계: Inno Setup 인스톨러 ─────────────────────────────
 
 if ($SkipInno) {
-    Write-Host "[4/4] Inno Setup 건너뜀 (미설치)" -ForegroundColor Yellow
+    Write-Host "[5/5] Inno Setup 건너뜀 (미설치)" -ForegroundColor Yellow
 } else {
-    Write-Host "[4/4] Inno Setup 인스톨러 빌드..." -ForegroundColor Yellow
+    Write-Host "[5/5] Inno Setup 인스톨러 빌드..." -ForegroundColor Yellow
 
     $IssFile = Join-Path $BuildDir "installer.iss"
     & $InnoPath $IssFile 2>&1 | ForEach-Object {
@@ -181,7 +221,7 @@ if ($SkipInno) {
     $SetupExe = Join-Path $DistDir "AIMS_AutoClicker_Setup_$Version.exe"
     if (Test-Path $SetupExe) {
         $SetupSize = (Get-Item $SetupExe).Length / 1MB
-        Write-Host "  인스톨러 생성 완료: AIMS_AutoClicker_Setup_$Version.exe ({0:N1} MB)" -f $SetupSize -ForegroundColor Green
+        Write-Host ("  인스톨러 생성 완료: AIMS_AutoClicker_Setup_$Version.exe ({0:N1} MB)" -f $SetupSize) -ForegroundColor Green
     } else {
         Write-Host "  WARNING: 인스톨러 생성 실패" -ForegroundColor Yellow
     }
