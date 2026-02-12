@@ -1,42 +1,42 @@
 @echo off
 :: AIMS AutoClicker - 자동 업데이트 런처
 :: Phase 2에서 사용: AC가 새 버전 감지 → updater.bat을 detached 실행 → AC 종료 → 사일런트 설치 → AC 재실행
-::
-:: 사용법 (AC 내부에서 호출):
-::   subprocess.Popen(["updater.bat"], creationflags=CREATE_NEW_PROCESS_GROUP, close_fds=True)
-::   sys.exit(0)  ← AC 자신 종료
-::
-:: updater.bat은 AC가 종료된 후:
-::   1. 2초 대기 (AC 프로세스 완전 종료)
-::   2. 인스톨러 사일런트 실행 (/VERYSILENT)
-::   3. AC 재실행
 
-echo [AutoClicker Updater] AC 프로세스 종료 대기...
-timeout /t 2 /nobreak >nul
+set "LOGFILE=%~dp0updater.log"
+
+echo [%date% %time%] === Updater started === > "%LOGFILE%"
+echo [%date% %time%] Waiting 3 sec for AC to exit... >> "%LOGFILE%"
+timeout /t 3 /nobreak >nul
 
 :: 인스톨러가 temp 폴더에 다운로드되어 있음
 set "INSTALLER=%~dp0temp\AIMS_AutoClicker_Setup.exe"
 set "INSTALL_DIR=%~dp0"
 
+echo [%date% %time%] INSTALLER=%INSTALLER% >> "%LOGFILE%"
+echo [%date% %time%] INSTALL_DIR=%INSTALL_DIR% >> "%LOGFILE%"
+
 if not exist "%INSTALLER%" (
-    echo [AutoClicker Updater] 오류: 인스톨러를 찾을 수 없습니다: %INSTALLER%
-    echo [AutoClicker Updater] 업데이트를 건너뜁니다.
+    echo [%date% %time%] ERROR: installer not found >> "%LOGFILE%"
     goto :launch
 )
 
-echo [AutoClicker Updater] 사일런트 설치 시작...
-"%INSTALLER%" /VERYSILENT /SUPPRESSMSGBOXES /DIR="%INSTALL_DIR%"
+for %%A in ("%INSTALLER%") do echo [%date% %time%] Installer size: %%~zA bytes >> "%LOGFILE%"
+
+echo [%date% %time%] Starting silent install... >> "%LOGFILE%"
+"%INSTALLER%" /VERYSILENT /SUPPRESSMSGBOXES /DIR="%INSTALL_DIR%" /LOG="%~dp0install.log"
+
+echo [%date% %time%] Installer exit code: %errorlevel% >> "%LOGFILE%"
 
 if errorlevel 1 (
-    echo [AutoClicker Updater] 오류: 설치 실패 (exit code: %errorlevel%)
+    echo [%date% %time%] ERROR: install failed >> "%LOGFILE%"
     goto :launch
 )
 
-echo [AutoClicker Updater] 설치 완료. 인스톨러 정리...
+echo [%date% %time%] Install complete. Cleaning up... >> "%LOGFILE%"
 del "%INSTALLER%" >nul 2>&1
 rmdir "%~dp0temp" >nul 2>&1
 
 :launch
-echo [AutoClicker Updater] AutoClicker 재실행...
-start "" "%~dp0AutoClicker.exe"
-exit
+echo [%date% %time%] Done. >> "%LOGFILE%"
+:: 업데이트 완료 알림 (사용자에게 AIMS 웹에서 다시 실행하라고 안내)
+powershell -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('업데이트가 완료되었습니다.`nAIMS 웹에서 다시 실행해주세요.', 'AutoClicker 업데이트', 'OK', 'Information')" >nul 2>&1

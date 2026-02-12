@@ -23,6 +23,7 @@ dist/
 tools/auto_clicker_v2/build/AutoClicker/
 tools/auto_clicker_v2/build/pyinstaller_build/
 tools/auto_clicker_v2/build/runtime/
+tools/auto_clicker_v2/build_pyinstaller/
 tools/auto_clicker_v2/dist/
 
 # VSCode settings (개인 개발 환경)

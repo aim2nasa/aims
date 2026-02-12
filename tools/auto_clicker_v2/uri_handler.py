@@ -126,23 +126,20 @@ def handle_uri_launch(uri: str) -> int:
 
     # 3. 버전 체크 (Phase 2 자동 업데이트)
     try:
-        from update_checker import check_for_update, download_installer, trigger_update
+        from update_checker import check_for_update, download_with_progress, trigger_update
 
         update_info = check_for_update()
         if update_info:
-            _show_info(
-                "AutoClicker 업데이트",
-                f"새 버전 {update_info['latest']}이(가) 있습니다.\n"
-                f"(현재: {update_info['current']})\n\n"
-                "확인을 누르면 자동으로 업데이트됩니다.",
+            download_with_progress(
+                update_info["installerUrl"],
+                update_info["latest"],
             )
-            download_installer(update_info["installerUrl"])
             trigger_update()
             return 0  # updater.bat이 AC 재실행
     except SystemExit:
         raise  # trigger_update()의 sys.exit(0) 전파
-    except Exception:
-        pass  # 업데이트 실패해도 GUI 진행
+    except Exception as e:
+        _show_error("업데이트 실패", f"업데이트 중 오류가 발생했습니다.\n{e}\n\n기존 버전으로 계속합니다.")
 
     # 4. CLI args 구성 (gui_main.AutoClickerApp이 이해하는 형태)
     cli_args = types.SimpleNamespace(
