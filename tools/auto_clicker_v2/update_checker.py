@@ -222,7 +222,8 @@ rmdir "{app_dir}\\temp" >nul 2>&1
 
 :done
 echo [%date% %time%] Done >> "%LOGFILE%"
-powershell -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')|Out-Null;[System.Windows.Forms.MessageBox]::Show('Update complete. Please restart from AIMS web.','AutoClicker','OK','Information')" >nul 2>&1
+echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
+start "" "{app_dir}\\AutoClicker.exe"
 del "%~f0" >nul 2>&1
 """
 

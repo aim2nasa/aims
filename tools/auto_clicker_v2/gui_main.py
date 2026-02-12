@@ -1197,6 +1197,27 @@ if __name__ == "__main__":
 
     sys.excepthook = _log_uncaught
 
+    # OCR 서브프로세스 모드: 패키징된 exe에서 OCR 직접 실행
+    # MetlifeCustomerList.py → subprocess.call([AutoClicker.exe, "--run-ocr", image, output])
+    if "--run-ocr" in sys.argv:
+        _ocr_idx = sys.argv.index("--run-ocr")
+        if _ocr_idx + 2 < len(sys.argv):
+            _ocr_image = sys.argv[_ocr_idx + 1]
+            _ocr_output = sys.argv[_ocr_idx + 2]
+            # sys.argv 재설정 → OCR 스크립트의 main()이 argv[1], argv[2] 사용
+            sys.argv = [sys.argv[0], _ocr_image, _ocr_output]
+            # OCR 모듈 경로 (frozen: _MEIPASS/ocr, dev: ./ocr)
+            if getattr(sys, 'frozen', False):
+                _ocr_dir = os.path.join(sys._MEIPASS, 'ocr')
+            else:
+                _ocr_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ocr')
+            sys.path.insert(0, _ocr_dir)
+            from upstage_ocr_api import main as _ocr_main
+            _ocr_main()
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
     # URI Scheme 감지: aims-ac:// 로 시작하는 인자가 있으면 URI 핸들러로 분기
     uri_arg = next((a for a in sys.argv[1:] if a.startswith("aims-ac://")), None)
     if uri_arg:

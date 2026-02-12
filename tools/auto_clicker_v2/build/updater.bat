@@ -37,6 +37,6 @@ del "%INSTALLER%" >nul 2>&1
 rmdir "%~dp0temp" >nul 2>&1
 
 :launch
+echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
+start "" "%INSTALL_DIR%AutoClicker.exe"
 echo [%date% %time%] Done. >> "%LOGFILE%"
-:: 업데이트 완료 알림 (사용자에게 AIMS 웹에서 다시 실행하라고 안내)
-powershell -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('업데이트가 완료되었습니다.`nAIMS 웹에서 다시 실행해주세요.', 'AutoClicker 업데이트', 'OK', 'Information')" >nul 2>&1
