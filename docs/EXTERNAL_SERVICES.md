@@ -1,29 +1,39 @@
 # AIMS 외부 서비스 현황
 
 > 최종 업데이트: 2026-02-13
+> 데이터 출처: 프로덕션 MongoDB `system_settings.ai_models` (2026-02-02 갱신)
 
 ## 유료 서비스 (API 사용량 기반 과금)
 
 ### 1. OpenAI API
 
-AIMS의 핵심 AI 서비스. 비용 비중이 가장 크다.
+AIMS의 AI 서비스. 월 예산 $10 설정.
 
-| 모델 | 용도 | 관련 서비스 |
-|------|------|-------------|
-| `gpt-4o` | AI 채팅 어시스턴트 (고객/문서/계약 관리 대화형 인터페이스) | aims_api |
-| `gpt-4.1` | Annual Report 테이블 파싱 | annual_report_api |
-| `text-embedding-3-small` | 문서 임베딩 생성 (1536차원) | embedding (크론탭) |
-| `gpt-4o` | 문서 요약 (Summary) | document_pipeline |
+| 모델 (실제 운영) | 용도 | 관련 서비스 | 과금 |
+|------------------|------|-------------|------|
+| `gpt-4.1-mini` | AI 채팅 + MCP 40개 도구 호출 | aims_api | 토큰 기반 |
+| `gpt-4.1-nano` | RAG 답변 생성 | aims_rag_api | 토큰 기반 |
+| `gpt-4o-mini` | RAG 쿼리 의도 분석 | aims_rag_api | 토큰 기반 |
+| `gpt-4o-mini` | 문서 요약 (Summary) | document_pipeline | 토큰 기반 |
+| `text-embedding-3-small` | 문서/쿼리 임베딩 (1536차원) | embedding (크론), aims_rag_api | 토큰 기반 |
+| `whisper-1` | 음성 텍스트 변환 (한국어 STT) | aims_api | $0.006/분 |
+
+> AR/CRS 파싱은 `pdfplumber_table` 파서를 사용하며 **OpenAI를 사용하지 않음**.
+> annualReport/customerReview에 모델 설정이 있으나 파서가 `pdfplumber_table`이므로 AI 호출 없음.
 
 **관련 파일:**
-- `backend/api/aims_api/lib/chatService.js` - 채팅 로직
-- `backend/api/annual_report_api/services/parser.py` - AR 파싱
-- `backend/embedding/create_embeddings.py` - 임베딩 생성
+- `backend/api/aims_api/lib/chatService.js` - 채팅 + MCP 도구 호출
+- `backend/api/aims_api/lib/aiModelSettings.js` - 모델 설정 (MongoDB 오버라이드)
+- `backend/api/aims_api/lib/transcribeService.js` - 음성 인식
+- `backend/api/aims_rag_api/rag_search.py` - RAG 답변 + 쿼리 임베딩
+- `backend/api/aims_rag_api/query_analyzer.py` - 쿼리 의도 분석
+- `backend/embedding/create_embeddings.py` - 문서 임베딩 생성
 - `backend/api/document_pipeline/services/openai_service.py` - 문서 요약
 
-**크레딧 관리:**
-- `backend/api/aims_api/lib/storageQuotaService.js` - 사용자별 크레딧 정책
-- `docs/EMBEDDING_CREDIT_POLICY.md` - 크레딧 정책 문서
+**모델 설정 위치:**
+- MongoDB: `docupload.system_settings` (`_id: "ai_models"`)
+- 코드 기본값: `backend/api/aims_api/lib/aiModelSettings.js` (MongoDB 설정이 우선)
+- 월 예산: $10 / 알림: 90%
 
 ---
 
@@ -37,7 +47,7 @@ AIMS의 핵심 AI 서비스. 비용 비중이 가장 크다.
 
 **관련 파일:**
 - `backend/api/document_pipeline/services/upstage_service.py` - OCR 서비스
-- `backend/api/annual_report_api/services/parser_upstage.py` - Upstage 기반 AR 파서
+- `backend/api/annual_report_api/services/parser_upstage.py` - Upstage 기반 AR 파서 (현재 미사용, 대안으로 존재)
 
 ---
 
@@ -111,11 +121,13 @@ AIMS의 핵심 AI 서비스. 비용 비중이 가장 크다.
 
 ---
 
-## 사용하지 않는 서비스
+## 사용하지 않는 서비스 (코드 존재, 실제 미사용)
 
 | 서비스 | 비고 |
 |--------|------|
-| Anthropic Claude API | `anthropic_service.py` 파일 존재하나 실제 호출 없음 (dead code). n8n Shadow Mode용으로 작성되었으나 n8n 제거로 폐기됨 |
+| Anthropic Claude API | `anthropic_service.py` 존재하나 import/호출 없음 (dead code) |
+| OpenAI AR 파싱 (`parser.py`) | 코드 존재하나 현재 `pdfplumber_table` 파서로 대체됨 |
+| Upstage AR 파서 (`parser_upstage.py`) | 코드 존재하나 현재 `pdfplumber_table` 파서로 대체됨 |
 | AWS (S3, CloudFront 등) | 미사용 |
 | MongoDB Atlas | 미사용 (자체 호스팅) |
 | Redis Cloud | 미사용 (자체 호스팅) |
@@ -126,8 +138,13 @@ AIMS의 핵심 AI 서비스. 비용 비중이 가장 크다.
 ## 비용 요약
 
 ```
-실질 과금 서비스:
-  1. OpenAI API      ← 가장 큰 비용 (채팅 + 임베딩 + AR파싱 + 요약)
+실질 과금 서비스 (월 예산 $10):
+  1. OpenAI API
+     - gpt-4.1-mini   ← 채팅 + MCP 도구 호출 (가장 큰 비중)
+     - gpt-4.1-nano   ← RAG 답변
+     - gpt-4o-mini    ← 쿼리 분석 + 문서 요약
+     - text-embedding-3-small ← 임베딩
+     - whisper-1      ← 음성 인식
   2. Upstage API     ← OCR 처리량에 비례
 
 인프라:
