@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
-// SFSymbol 사용하지 않음 — 아이콘은 직접 SVG로 렌더링
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { api } from '@/shared/lib/api'
 import './AutoClickerView.css'
 
@@ -91,7 +91,9 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
           </div>
           <h2 className="autoclicker-view__hero-title">AutoClicker란?</h2>
           <p className="autoclicker-view__hero-description">
-            고객의 변액리포트(CRS), Annual Report(AR) 파일들을 자동으로 다운로드하는 프로그램입니다.
+            고객의 변액리포트(CRS), Annual Report(AR) PDF 파일들을 자동으로 다운로드합니다.
+            <br />
+            다운로드된 PDF는 <span className="autoclicker-view__menu-ref"><span className="autoclicker-view__inline-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} /></span>고객·계약·문서 등록</span> 메뉴에서 고객 및 계약등록에 사용합니다.
           </p>
 
           <div className="autoclicker-view__actions">
@@ -114,7 +116,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 설치 가이드 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="autoclicker-view__section-icon--green" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12l7 7 7-7"/>
               <circle cx="12" cy="12" r="10" fill="none"/>
             </svg>
@@ -149,7 +151,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 사용 방법 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="autoclicker-view__section-icon--blue" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
               <text x="3" y="7" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">1</text>
               <text x="3" y="13" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">2</text>
@@ -185,7 +187,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         {/* 참고사항 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="autoclicker-view__section-icon--amber" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             참고

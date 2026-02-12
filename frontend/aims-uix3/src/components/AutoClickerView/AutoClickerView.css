@@ -105,6 +105,41 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   margin: 0;
 }
 
+/* 섹션 아이콘 색상 */
+.autoclicker-view__section-icon--green {
+  color: var(--color-green-600, #16a34a);
+}
+
+.autoclicker-view__section-icon--blue {
+  color: var(--color-primary-600, #2563eb);
+}
+
+.autoclicker-view__section-icon--amber {
+  color: var(--color-amber-600, #d97706);
+}
+
+/* 메뉴 참조 (인라인 배지) */
+.autoclicker-view__menu-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+  background: var(--color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  border-radius: var(--radius-sm, 4px);
+  padding: 1px 5px;
+  vertical-align: baseline;
+}
+
+html[data-theme="dark"] .autoclicker-view__menu-ref {
+  background: var(--color-fill-tertiary, rgba(255, 255, 255, 0.08));
+}
+
+.autoclicker-view__inline-icon-orange {
+  display: inline-flex;
+  color: var(--color-orange-500, #e67e22);
+}
+
 /* 카드 */
 .autoclicker-view__card {
   display: flex;
