@@ -136,7 +136,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
           </div>
           <h2 className="autoclicker-view__hero-title">AutoClicker란?</h2>
           <p className="autoclicker-view__hero-description">
-            고객의 변액리포트(CRS), Annual Report(AR) PDF 파일들을 자동으로 다운로드합니다.
+            MetLife 고객의 변액리포트(CRS), Annual Report(AR) PDF 파일들을 자동으로 다운로드합니다.
             <br />
             다운로드된 PDF는 <span className="autoclicker-view__menu-ref"><span className="autoclicker-view__inline-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} /></span>고객·계약·문서 등록</span> 메뉴에서 고객 및 계약등록에 사용합니다.
           </p>
