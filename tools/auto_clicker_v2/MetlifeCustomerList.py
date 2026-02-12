@@ -724,7 +724,8 @@ def dismiss_alert_if_exists():
     """
     try:
         if exists(IMG_ALERT_OK, 1):  # 1초 대기
-            log(u"        -> [ALERT] 알림 팝업 감지! 확인 클릭...")
+            log(u"        -> [ALERT] 알림 팝업 감지! 스크린샷 저장 후 확인 클릭...")
+            _take_crash_screenshot(u"ALERT_POPUP")
             click(IMG_ALERT_OK)
             sleep(1)
             return True
@@ -898,7 +899,8 @@ def process_customers(customers, fixed_x, base_y, chosung_name, global_page, ski
             # 고객통합뷰 모드인 경우 리포트 다운로드 (알림이 없었을 때만)
             if INTEGRATED_VIEW_ENABLED:
                 if alert_occurred:
-                    log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵")
+                    log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵 (스크린샷은 dismiss_alert_if_exists에서 저장됨)")
+                    save_error(name, u"알림 팝업 감지 (화면 캡처 저장됨)", chosung_name, nav_page, scroll_page, row_in_page)
                 else:
                     log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                     try:
@@ -1753,7 +1755,8 @@ for chosung_name, chosung_img in CHOSUNG_BUTTONS:
                                         # 고객통합뷰 모드인 경우 리포트 다운로드 (정상 처리와 동일)
                                         if INTEGRATED_VIEW_ENABLED:
                                             if alert_occurred:
-                                                log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵")
+                                                log(u"        -> [SKIP] 알림 발생 → 리포트 다운로드 스킵 (스크린샷은 dismiss_alert_if_exists에서 저장됨)")
+                                                save_error(name, u"알림 팝업 감지 (화면 캡처 저장됨)", chosung_name, nav_page, scroll_page, ROWS_PER_PAGE + 1)
                                             else:
                                                 log(u"        -> 고객통합뷰 진입 및 리포트 다운로드...")
                                                 try:

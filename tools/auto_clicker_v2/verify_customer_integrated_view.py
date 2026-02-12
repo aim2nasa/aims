@@ -2570,6 +2570,13 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         if not wait_and_click(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, u"고객통합뷰 버튼"):
             log(u"    [ERROR] 고객통합뷰 버튼 찾기 실패")
             take_screenshot(u"step2_btn_not_found_attempt_%d" % attempt)
+            # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
+                take_screenshot(u"step2_ALERT_POPUP_detected")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             # 혹시 고객통합뷰가 이미 열려있을 수 있음 (버튼 이미지 변형)
             if exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 3):
                 log(u"    [감지] 고객통합뷰가 이미 열려있음 → 스크롤 후 진행")
@@ -2598,6 +2605,13 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         else:
             log(u"    [검증 실패] 고객통합뷰 미열림 (시도 %d/3)" % attempt)
             take_screenshot(u"step2_verify_fail_attempt_%d" % attempt)
+            # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
+                take_screenshot(u"step2_ALERT_POPUP_detected_verify")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             sleep(WAIT_SHORT)
             type(Key.ESC)  # 혹시 열린 팝업 닫기
             sleep(WAIT_SHORT)
