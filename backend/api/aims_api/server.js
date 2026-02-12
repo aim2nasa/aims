@@ -317,6 +317,10 @@ MongoClient.connect(MONGO_URI)
     const adminBackupRoutes = require('./routes/admin-backup-routes');
     app.use('/api', adminBackupRoutes(db, authenticateJWT, requireRole));
 
+    // ==================== AutoClicker Token Auth Routes ====================
+    const acRoutes = require('./routes/ac-routes')(db, authenticateJWT);
+    app.use('/api/ac', acRoutes);
+
     console.log('[Server] fallbackHandlersRegistered BEFORE registerFallbackHandlers():', fallbackHandlersRegistered);
     registerFallbackHandlers();
 

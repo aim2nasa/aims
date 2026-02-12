@@ -7,6 +7,8 @@
      - SikuliX가 OCR을 호출할 때 사용 (패키징 후 system Python 불필요)
   3. 경로 진단 모드: AutoClicker.exe --check-paths
      - 패키징/개발 환경의 경로 해석 결과를 출력
+  4. URI Scheme 모드: AutoClicker.exe "aims-ac://start?token=NONCE"
+     - AIMS 웹에서 URI 호출 시 Windows가 실행 (Phase 1 토큰 인증)
 """
 import sys
 import os
@@ -67,6 +69,11 @@ elif len(sys.argv) >= 2 and sys.argv[1] == "--run-ocr":
     sys.argv = [sys.argv[0]] + sys.argv[2:]
     from ocr.upstage_ocr_api import main as ocr_main
     sys.exit(ocr_main())
+
+elif len(sys.argv) >= 2 and sys.argv[1].startswith("aims-ac://"):
+    # URI Scheme 모드: AIMS 웹 → aims-ac://start?token=NONCE → AC 실행
+    from uri_handler import handle_uri_launch
+    sys.exit(handle_uri_launch(sys.argv[1]))
 
 else:
     from gui_main import AutoClickerApp

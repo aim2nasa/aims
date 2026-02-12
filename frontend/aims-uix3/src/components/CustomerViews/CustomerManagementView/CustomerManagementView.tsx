@@ -19,6 +19,7 @@ import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { formatDate } from '@/shared/lib/timeUtils';
+import { api } from '@/shared/lib/api';
 import './CustomerManagementView.css';
 
 type ActivityPeriod = '1week' | '1month' | '2months' | '3months';
@@ -573,8 +574,41 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     return sorted;
   }, [customersData, activityPeriod]);
 
+  // AutoClicker 자동수집 상태
+  const [acLoading, setAcLoading] = useState(false);
+
+  // AutoClicker 자동수집 실행
+  const handleAutoCollect = useCallback(async () => {
+    if (acLoading) return;
+    setAcLoading(true);
+    try {
+      const response = await api.post<{ success: boolean; token: string; expiresIn: number }>(
+        '/api/ac/request-token'
+      );
+      if (response.success && response.token) {
+        window.location.href = `aims-ac://start?token=${response.token}`;
+      }
+    } catch {
+      alert('자동수집 토큰 발급에 실패했습니다. 다시 시도하세요.');
+    } finally {
+      setAcLoading(false);
+    }
+  }, [acLoading]);
+
   // 사용 가이드 섹션
   const guideSections: GuideSection[] = [
+    {
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-primary-500)' }}>
+          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 1.5a6.5 6.5 0 110 13 6.5 6.5 0 010-13z"/>
+          <path d="M10 5v4.5l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+          <path d="M15.5 14l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+      title: acLoading ? '토큰 발급 중...' : '자동수집',
+      description: 'MetLife 홈페이지에서 고객 정보를 자동으로 수집합니다. AutoClicker가 설치되어 있어야 합니다.',
+      onClick: handleAutoCollect,
+    },
     {
       icon: (
         <SFSymbol
