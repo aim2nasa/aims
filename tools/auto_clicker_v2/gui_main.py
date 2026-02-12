@@ -196,6 +196,7 @@ class AutoClickerApp(ctk.CTk):
         # 모니터 설정 적용하여 창 위치 계산
         self._normal_x, self._normal_y = self._calc_default_position(self._target_monitor)
         self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
+        self.attributes("-topmost", True)
 
         self._build_ui()
         # 앱 닫기(X) = 실행 중인 SikuliX 프로세스 강제 종료 후 종료
@@ -582,11 +583,10 @@ class AutoClickerApp(ctk.CTk):
         self._status_label.configure(text="중지됨", text_color="gray60")
         self._close_btn.pack_forget()
         self._compact_panel.set_play_state("stopped")
-        # 일반 모드: topmost 해제 + 타이틀바 복원
+        # 일반 모드: 타이틀바 복원 (topmost는 항상 유지)
         if not self._is_compact:
             self.overrideredirect(False)
             self.title(f"AutoClicker v{_VERSION}")
-            self.attributes("-topmost", False)
             self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
             self._apply_titlebar_style()
 
@@ -707,11 +707,10 @@ class AutoClickerApp(ctk.CTk):
                 state="normal",
             )
             self._close_btn.pack_forget()
-            # 완료 → 일반 모드: topmost 해제 + 타이틀바 복원
+            # 완료 → 일반 모드: 타이틀바 복원 (topmost는 항상 유지)
             if not self._is_compact:
                 self.overrideredirect(False)
                 self.title(f"AutoClicker v{_VERSION}")
-                self.attributes("-topmost", False)
                 self.geometry(f"{NORMAL_WIDTH}x{NORMAL_HEIGHT}+{self._normal_x}+{self._normal_y}")
                 self._apply_titlebar_style()
         else:
@@ -758,11 +757,7 @@ class AutoClickerApp(ctk.CTk):
         self.title(f"AutoClicker v{_VERSION}")
         self._apply_titlebar_style()
 
-        # 실행 중이면 topmost 유지, 아니면 해제
-        is_running = self._source and self._source.is_running()
-        if not is_running:
-            self.attributes("-topmost", False)
-
+        # topmost는 항상 유지
         self._toolbar.pack(fill="x", padx=4, pady=(4, 0))
         self._savedir_frame.pack(fill="x", padx=4, pady=(2, 0))
         self._settings_summary.pack(fill="x", padx=10, pady=(1, 0))
@@ -1179,7 +1174,28 @@ class AutoClickerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
+    import logging
     import sys
+    import traceback
+
+    # ── GUI 에러 로그 설정 ──
+    _gui_log_path = os.path.join(get_app_dir(), "gui_error.log")
+    _gui_logger = logging.getLogger("ac_gui")
+    _gui_logger.setLevel(logging.ERROR)
+    _fh = logging.FileHandler(_gui_log_path, encoding="utf-8")
+    _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    _gui_logger.addHandler(_fh)
+
+    def _log_uncaught(exc_type, exc_value, exc_tb):
+        """전역 예외 핸들러 — 파일에 기록"""
+        if issubclass(exc_type, (SystemExit, KeyboardInterrupt)):
+            sys.__excepthook__(exc_type, exc_value, exc_tb)
+            return
+        msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        _gui_logger.error(f"Uncaught exception:\n{msg}")
+        sys.__excepthook__(exc_type, exc_value, exc_tb)
+
+    sys.excepthook = _log_uncaught
 
     # URI Scheme 감지: aims-ac:// 로 시작하는 인자가 있으면 URI 핸들러로 분기
     uri_arg = next((a for a in sys.argv[1:] if a.startswith("aims-ac://")), None)
@@ -1199,4 +1215,12 @@ if __name__ == "__main__":
     cli_args = parser.parse_args()
 
     app = AutoClickerApp(cli_args=cli_args)
+
+    # tkinter 콜백 예외도 파일에 기록
+    def _tk_exception_handler(exc_type, exc_value, exc_tb):
+        msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        _gui_logger.error(f"Tkinter callback exception:\n{msg}")
+
+    app.report_callback_exception = _tk_exception_handler
+
     app.mainloop()
