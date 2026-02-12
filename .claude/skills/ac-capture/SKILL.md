@@ -1,50 +1,40 @@
 ---
 name: ac-capture
-description: AutoClicker GUI 캡처. AC 캡처, AC GUI, 화면 캡처 요청 시 자동 사용
+description: 화면 캡처. AC 캡처, AC GUI, 화면 캡처 요청 시 자동 사용
 ---
 
-# AutoClicker GUI 캡처
+# 화면 캡처 (DXGI Desktop Duplication)
 
-MetSquare 보안정책이 모니터1 캡처를 차단하므로 **모니터2에서 캡처** 후 AC 영역을 크롭한다.
+MetSquare 캡처 방지를 우회하는 DXGI 기반 캡처.
 
-## 캡처 절차
+## 캡처 명령
 
-### 1단계: 모니터2 전체 캡처
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -Command "
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-$mon2 = [System.Windows.Forms.Screen]::AllScreens[1].Bounds
-$bmp = New-Object System.Drawing.Bitmap($mon2.Width, $mon2.Height)
-$gfx = [System.Drawing.Graphics]::FromImage($bmp)
-$gfx.CopyFromScreen($mon2.Location, [System.Drawing.Point]::Empty, $mon2.Size)
-$bmp.Save('D:\tmp\mon2_now.png')
-$gfx.Dispose(); $bmp.Dispose()
-"
+```bash
+python D:\aims\tools\capture\capture.py --monitor <1|2|all>
 ```
 
-### 2단계: AC 창 영역 크롭
+| 파라미터 | 설명 |
+|----------|------|
+| `--monitor 1` | 모니터1 |
+| `--monitor 2` | 모니터2 |
+| `--monitor all` | 전체 (모니터 횡 결합) |
+| `--output <path>` | 경로 직접 지정 (미지정 시 자동 번호) |
 
-AC 창 위치: `NORMAL_X=1376, NORMAL_Y=454, WIDTH=480, HEIGHT=440`
+자동 저장: `D:\tmp\capture_001.png`, `capture_002.png`, ...
 
-```powershell
-powershell.exe -ExecutionPolicy Bypass -Command "
-Add-Type -AssemblyName System.Drawing
-$src = New-Object System.Drawing.Bitmap('D:\tmp\mon2_now.png')
-$rect = New-Object System.Drawing.Rectangle(1376, 430, 490, 460)
-$cropped = $src.Clone($rect, $src.PixelFormat)
-$cropped.Save('D:\tmp\ac_crop.png')
-$src.Dispose(); $cropped.Dispose()
-"
-```
+## 단축키 (시작 메뉴 바로가기)
 
-### 3단계: 이미지 확인
+| 단축키 | 동작 |
+|--------|------|
+| Ctrl+Alt+1 | 모니터1 → `D:\tmp\capture_NNN.png` |
+| Ctrl+Alt+2 | 모니터2 → `D:\tmp\capture_NNN.png` |
 
-Read 도구로 `D:\tmp\ac_crop.png` 확인.
+단축키 재생성: `powershell.exe -ExecutionPolicy Bypass -File "D:\aims\tools\capture\create_shortcuts.ps1"`
 
-## 주의사항
+## AC 프리셋
 
-- 모니터1 캡처 시 MetSquare가 빈 화면 반환 → **항상 모니터2 사용**
-- AC 창 위치/크기는 절대 변경 금지 (SikuliX 좌표계 연동)
-- 크롭 좌표에 약간의 여유(margin)를 두어 타이틀바 포함
+모니터2 캡처 후 `X=1376, Y=430, W=490, H=460` 크롭.
+
+## 캡처 후
+
+Read 도구로 가장 최근 `D:\tmp\capture_*.png` 확인.
