@@ -57,6 +57,9 @@ tools/auto_clicker_v2/output/
 tools/auto_clicker_v2/*.log
 tools/auto_clicker_v2/.pause_signal
 
+# Capture hotkey log (런타임 로그)
+tools/capture/hotkey.log
+
 # Mobile responsive screenshots (Puppeteer 자동 캡처)
 mobile/screenshots/
 mobile/screenshots_*/
