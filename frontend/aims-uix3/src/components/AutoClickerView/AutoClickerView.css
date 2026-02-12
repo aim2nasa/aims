@@ -1,4 +1,4 @@
-/* AutoClickerView — 설치/실행 가이드 */
+/* AutoClickerView — PDF 자동 다운로드 */
 
 .autoclicker-view__content {
   display: flex;
@@ -106,10 +106,6 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
 }
 
 /* 섹션 아이콘 색상 */
-.autoclicker-view__section-icon--green {
-  color: var(--color-green-600, #16a34a);
-}
-
 .autoclicker-view__section-icon--blue {
   color: var(--color-primary-600, #2563eb);
 }
@@ -149,57 +145,6 @@ html[data-theme="dark"] .autoclicker-view__menu-ref {
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-secondary);
   padding: var(--spacing-3);
-}
-
-.autoclicker-view__card-text {
-  font-size: var(--font-size-caption-1, 12px);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-2) 0;
-  line-height: 1.5;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.autoclicker-view__card-hint {
-  font-size: var(--font-size-caption-2, 11px);
-  color: var(--color-text-tertiary);
-  margin: var(--spacing-2) 0 0;
-  font-style: italic;
-}
-
-/* 다운로드 버튼 */
-.autoclicker-view__download-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
-  font-size: var(--font-size-caption-1, 12px);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-primary-600, #2563eb);
-  background: var(--color-primary-50, #eff6ff);
-  border: 1px solid var(--color-primary-200, #bfdbfe);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .autoclicker-view__download-btn {
-  color: var(--color-primary-400, #60a5fa);
-  background: var(--color-primary-900, #1e3a5f);
-  border-color: var(--color-primary-700, #1d4ed8);
-}
-
-.autoclicker-view__download-btn:hover:not(:disabled) {
-  background: var(--color-primary-100, #dbeafe);
-}
-
-html[data-theme="dark"] .autoclicker-view__download-btn:hover:not(:disabled) {
-  background: var(--color-primary-800, #1e40af);
-}
-
-.autoclicker-view__download-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* 단계 가이드 */

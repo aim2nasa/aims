@@ -31,7 +31,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
       .catch(() => { /* 실패해도 무시 */ })
   }, [visible])
 
-  // AC 실행 (토큰 발급 → URI Scheme)
+  // AC 실행: 설치됨 → 앱 실행, 미설치 → 인스톨러 자동 다운로드
   const handleLaunch = useCallback(async () => {
     if (launching) return
     setLaunching(true)
@@ -40,7 +40,23 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
         '/api/ac/request-token'
       )
       if (response.success && response.token) {
+        // blur 감지: 앱이 열리면 브라우저가 포커스를 잃음
+        let appOpened = false
+        const onBlur = () => { appOpened = true }
+        window.addEventListener('blur', onBlur)
+
         window.location.href = `aims-ac://start?token=${response.token}&auto_start=false`
+
+        // 3초 후 blur 없었으면 → 미설치 → 인스톨러 자동 다운로드
+        setTimeout(() => {
+          window.removeEventListener('blur', onBlur)
+          if (!appOpened && versionInfo?.installerUrl) {
+            const a = document.createElement('a')
+            a.href = versionInfo.installerUrl
+            a.download = ''
+            a.click()
+          }
+        }, 3000)
       } else {
         alert('토큰 발급에 실패했습니다.')
       }
@@ -49,17 +65,7 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
     } finally {
       setLaunching(false)
     }
-  }, [launching])
-
-  // 인스톨러 다운로드 (새 탭 없이 바로 다운로드)
-  const handleDownload = useCallback(() => {
-    if (versionInfo?.installerUrl) {
-      const a = document.createElement('a')
-      a.href = versionInfo.installerUrl
-      a.download = ''
-      a.click()
-    }
-  }, [versionInfo])
+  }, [launching, versionInfo])
 
   return (
     <CenterPaneView
@@ -113,41 +119,6 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
           </div>
         </div>
 
-        {/* 설치 가이드 */}
-        <div className="autoclicker-view__section">
-          <h3 className="autoclicker-view__section-title">
-            <svg className="autoclicker-view__section-icon--green" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12l7 7 7-7"/>
-              <circle cx="12" cy="12" r="10" fill="none"/>
-            </svg>
-            설치
-          </h3>
-          <div className="autoclicker-view__card">
-            <p className="autoclicker-view__card-text">
-              AutoClicker가 설치되어 있지 않다면 아래 버튼으로 다운로드하세요.
-            </p>
-            <button
-              type="button"
-              className="autoclicker-view__download-btn"
-              onClick={handleDownload}
-              disabled={!versionInfo?.installerUrl}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3v12M5 12l7 7 7-7M4 21h16"/>
-              </svg>
-              {versionInfo?.latest && versionInfo.latest !== '0.0.0'
-                ? `설치 프로그램 다운로드 (v${versionInfo.latest})`
-                : '설치 프로그램 다운로드'
-              }
-            </button>
-            {!versionInfo?.installerUrl && (
-              <p className="autoclicker-view__card-hint">
-                설치 프로그램이 아직 준비되지 않았습니다. 관리자에게 문의하세요.
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* 사용 방법 */}
         <div className="autoclicker-view__section">
           <h3 className="autoclicker-view__section-title">
@@ -163,19 +134,12 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
             <div className="autoclicker-view__step">
               <span className="autoclicker-view__step-number">1</span>
               <div>
-                <strong>설치</strong>
-                <p>위 다운로드 버튼으로 설치 프로그램을 받아 실행합니다. (최초 1회)</p>
+                <strong>실행</strong>
+                <p>"AutoClicker 실행" 버튼을 클릭합니다. 처음 사용 시 설치 프로그램이 자동으로 다운로드됩니다.</p>
               </div>
             </div>
             <div className="autoclicker-view__step">
               <span className="autoclicker-view__step-number">2</span>
-              <div>
-                <strong>실행</strong>
-                <p>"AutoClicker 실행" 버튼을 클릭합니다. 브라우저가 앱을 열겠냐고 묻는 팝업이 나타나면 "열기"를 선택합니다.</p>
-              </div>
-            </div>
-            <div className="autoclicker-view__step">
-              <span className="autoclicker-view__step-number">3</span>
               <div>
                 <strong>자동 다운로드</strong>
                 <p>AutoClicker가 MetLife 홈페이지에서 PDF 파일들을 자동으로 다운로드합니다.</p>
