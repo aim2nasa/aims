@@ -5,6 +5,8 @@
 """
 import ctypes
 import os
+import sys
+import shutil
 import tkinter.font as tkfont
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -14,6 +16,24 @@ from data_source import LiveProcessSource
 from path_helper import get_app_dir, get_version_file, get_output_dir
 
 _BASE_DIR = get_app_dir()
+
+# ── CustomTkinter 기본 아이콘을 커스텀 아이콘으로 교체 (모든 창에 적용) ──
+def _replace_ctk_default_icon():
+    if getattr(sys, 'frozen', False):
+        src = os.path.join(sys._MEIPASS, "autoclicker.ico")
+    else:
+        src = os.path.join(_BASE_DIR, "autoclicker.ico")
+    if not os.path.exists(src):
+        return
+    ctk_icon = os.path.join(
+        os.path.dirname(ctk.__file__), "assets", "icons", "CustomTkinter_icon_Windows.ico"
+    )
+    try:
+        shutil.copy2(src, ctk_icon)
+    except Exception:
+        pass
+
+_replace_ctk_default_icon()
 _DEFAULT_SAVE_DIR = get_output_dir()
 
 def _read_version() -> str:

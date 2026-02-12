@@ -68,6 +68,8 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
       titleIcon={
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+          <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+          <circle cx="21" cy="10" r="1" opacity="0.35"/>
         </svg>
       }
       onClose={onClose}
@@ -83,6 +85,8 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
           <div className="autoclicker-view__hero-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
               <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+              <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+              <circle cx="21" cy="10" r="1" opacity="0.35"/>
             </svg>
           </div>
           <h2 className="autoclicker-view__hero-title">AutoClicker란?</h2>
@@ -99,6 +103,8 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M5 2l12 10-5 .5 3 6.5-2 1-3-6.5L5 18V2z"/>
+                <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+                <circle cx="21" cy="10" r="1" opacity="0.35"/>
               </svg>
               {launching ? '실행 중...' : 'AutoClicker 실행'}
             </button>

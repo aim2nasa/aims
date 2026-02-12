@@ -147,6 +147,14 @@ Copy-Item (Join-Path $ProjectDir "VERSION") -Destination $PyiDistDir -Force
 Copy-Item (Join-Path $BuildDir "updater.bat") -Destination $PyiDistDir -Force
 Write-Host "  VERSION + updater.bat 복사 완료" -ForegroundColor Green
 
+# CustomTkinter 기본 아이콘 → 커스텀 아이콘으로 교체
+$CtkIconPath = Join-Path $PyiDistDir "_internal\customtkinter\assets\icons\CustomTkinter_icon_Windows.ico"
+$CustomIcon = Join-Path $ProjectDir "autoclicker.ico"
+if ((Test-Path $CtkIconPath) -and (Test-Path $CustomIcon)) {
+    Copy-Item $CustomIcon -Destination $CtkIconPath -Force
+    Write-Host "  CustomTkinter 기본 아이콘 → autoclicker.ico 교체 완료" -ForegroundColor Green
+}
+
 # output 디렉토리 생성
 $OutputDir = Join-Path $PyiDistDir "output"
 if (-not (Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir | Out-Null }
