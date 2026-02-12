@@ -150,9 +150,9 @@ def handle_uri_launch(uri: str) -> int:
         monitor=0,
     )
 
-    # 5. GUI 시작
+    # 5. GUI 시작 (인증 완료)
     from gui_main import AutoClickerApp
-    app = AutoClickerApp(cli_args=cli_args)
+    app = AutoClickerApp(cli_args=cli_args, authenticated=True)
     # 타이틀에 사용자 이름 표시
     app.title(f"{app.title()} — {user.get('name', '')}")
     app.mainloop()
