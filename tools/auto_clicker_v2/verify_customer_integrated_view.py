@@ -1350,6 +1350,12 @@ def download_annual_report():
     if not pdf_loaded:
         log(u"    [FATAL] Annual Report PDF 로딩 최종 실패 - %d회 시도 모두 타임아웃" % MAX_RETRY)
         take_screenshot(u"step7_annual_report_FATAL_timeout")
+        # 알림 팝업 확인 (MetDo 서비스 오류 등)
+        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            log(u"    [ALERT] MetDo 알림 팝업 감지!")
+            take_screenshot(u"step7_ALERT_POPUP_detected")
+            click(IMG_ALERT_CONFIRM_BTN)
+            sleep(1)
         raise NavigationResetRequired(u"Annual Report PDF 로딩 %d회 타임아웃" % MAX_RETRY)
 
     take_screenshot(u"step7_annual_report_loaded")
@@ -1381,6 +1387,12 @@ def download_annual_report():
         if not exists(IMG_SAVE_S_BTN, 5):
             log(u"    [FATAL] 저장 다이얼로그 2회 실패 → 종료 요청")
             take_screenshot(u"step7_save_dialog_FATAL")
+            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                take_screenshot(u"step7_ALERT_POPUP_save_dialog")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
             raise NavigationResetRequired(u"AR PDF 저장 다이얼로그 열기 실패")
 
     # 7-5: 저장 경로 설정 + 저장(S) 버튼 클릭
@@ -1491,6 +1503,12 @@ def download_annual_report():
     if not pdf_closed:
         log(u"    [FATAL] PDF 뷰어 3회 닫기 실패 → 종료 요청")
         take_screenshot(u"step7_pdf_close_FATAL")
+        # 알림 팝업 확인 (MetDo 서비스 오류 등)
+        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            log(u"    [ALERT] MetDo 알림 팝업 감지!")
+            take_screenshot(u"step7_ALERT_POPUP_pdf_close")
+            click(IMG_ALERT_CONFIRM_BTN)
+            sleep(1)
         raise NavigationResetRequired(u"AR PDF 뷰어 닫기 실패")
 
     log(u"    Annual Report 다운로드 완료")
@@ -1749,6 +1767,13 @@ def save_report_pdf(report_number):
         # Step 0: > 버튼 찾기 (기준점)
         log(u"    [0/11] > 버튼 찾기 (기준점)...")
         if not exists(IMG_ARROW_RIGHT_BTN, 5):
+            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                take_screenshot(u"ALERT_POPUP_arrow_btn")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             result['error'] = u"> 버튼 못 찾음"
             log(u"        [FATAL] %s" % result['error'])
             capture_error_screenshot(report_number, "arrow_btn_not_found")
@@ -1823,6 +1848,13 @@ def save_report_pdf(report_number):
 
         preview_pattern = Pattern(IMG_PREVIEW_PDF_BTN).similar(0.8)
         if not exists(preview_pattern, 5):
+            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                take_screenshot(u"ALERT_POPUP_preview_btn")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             result['error'] = u"미리보기 버튼 못 찾음"
             log(u"        [FATAL] %s" % result['error'])
             capture_error_screenshot(report_number, "preview_btn_not_found")
@@ -1957,6 +1989,12 @@ def save_report_pdf(report_number):
                 log(u"")
                 log(u"        [FATAL] 미리보기 %d회 재클릭 모두 PDF 로딩 실패 (%d초 경과) → 프로그램 종료" % (click_count, PREVIEW_MAX))
                 capture_error_screenshot(report_number, "timeout_no_metlife_error")
+                # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                    take_screenshot(u"ALERT_POPUP_pdf_timeout")
+                    click(IMG_ALERT_CONFIRM_BTN)
+                    sleep(1)
                 copy_report_screenshots_to_error_folder(report_number)
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(
@@ -1991,6 +2029,12 @@ def save_report_pdf(report_number):
             if not exists(IMG_SAVE_S_BTN, 5):
                 log(u"        [FATAL] 저장 다이얼로그 2회 실패")
                 capture_error_screenshot(report_number, "save_dialog_FATAL")
+                # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                    take_screenshot(u"ALERT_POPUP_save_dialog")
+                    click(IMG_ALERT_CONFIRM_BTN)
+                    sleep(1)
                 log_error(report_number, u"저장 다이얼로그 열기 실패")
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(u"변액리포트 #%d: 저장 다이얼로그 열기 실패" % report_number)
@@ -2052,6 +2096,12 @@ def save_report_pdf(report_number):
             if exists(IMG_SAVE_S_BTN, 2):
                 log(u"        [FATAL] 저장(S) 버튼 아직 표시됨 - 저장 실행 안 됨")
                 capture_error_screenshot(report_number, "save_not_completed")
+                # 알림 팝업 확인 (MetDo 서비스 오류 등)
+                if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                    log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                    take_screenshot(u"ALERT_POPUP_save_not_completed")
+                    click(IMG_ALERT_CONFIRM_BTN)
+                    sleep(1)
                 log_error(report_number, u"PDF 저장 실행 안 됨 (저장 다이얼로그 미닫힘)")
                 recover_to_report_list(report_number)
                 raise NavigationResetRequired(u"변액리포트 #%d: PDF 저장 실행 안 됨" % report_number)
@@ -2110,6 +2160,12 @@ def save_report_pdf(report_number):
         if not pdf_viewer_closed:
             log(u"        [FATAL] PDF 뷰어 3회 닫기 실패!")
             capture_error_screenshot(report_number, "pdf_viewer_not_closed")
+            # 알림 팝업 확인 (MetDo 서비스 오류 등)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지!")
+                take_screenshot(u"ALERT_POPUP_pdf_viewer_close")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
             log_error(report_number, u"PDF 뷰어 닫기 실패")
             recover_to_report_list(report_number)
             raise NavigationResetRequired(u"변액리포트 #%d: PDF 뷰어 닫기 실패" % report_number)
@@ -2181,6 +2237,12 @@ def save_report_pdf(report_number):
         result['error'] = u"%s" % e
         log(u"    [FATAL] PDF 저장 예외: %s" % result['error'])
         capture_error_screenshot(report_number, "exception")
+        # 알림 팝업 확인 (MetDo 서비스 오류 등)
+        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            log(u"    [ALERT] MetDo 알림 팝업 감지!")
+            take_screenshot(u"ALERT_POPUP_exception")
+            click(IMG_ALERT_CONFIRM_BTN)
+            sleep(1)
         log_error(report_number, result['error'])
         # Stack rewinding → NavigationResetRequired (코드 검증 실패 → 종료)
         recover_to_report_list(report_number)
@@ -2444,7 +2506,16 @@ def wait_and_click(img, description, wait_time=10, report_num=0, capture_click=T
             log(u"    [ERROR] %s 찾을 수 없음! (대기: %d초, 이미지: %s)" % (description, wait_time, str(img)))
             # 매칭 실패 시 현재 화면 캡처
             capture_search_failure(description, str(img), wait_time, report_num, "wait_and_click_fail")
+            # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등 - 어디서든 발생 가능)
+            if exists(IMG_ALERT_CONFIRM_BTN, 1):
+                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
+                take_screenshot(u"ALERT_POPUP_in_wait_and_click")
+                click(IMG_ALERT_CONFIRM_BTN)
+                sleep(1)
+                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
             return False
+    except NavigationResetRequired:
+        raise  # 알림 팝업 감지 시 상위로 전파
     except Exception as e:
         log(u"    [ERROR] %s 클릭 실패: %s (이미지: %s)" % (description, str(e), str(img)))
         capture_search_failure(description, str(img), wait_time, report_num, "wait_and_click_exception")
@@ -2570,13 +2641,7 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
         if not wait_and_click(IMG_CUSTOMER_INTEGRATED_VIEW_BTN, u"고객통합뷰 버튼"):
             log(u"    [ERROR] 고객통합뷰 버튼 찾기 실패")
             take_screenshot(u"step2_btn_not_found_attempt_%d" % attempt)
-            # 알림 팝업 확인 (MetDo "서비스처리 중 오류" 등)
-            if exists(IMG_ALERT_CONFIRM_BTN, 1):
-                log(u"    [ALERT] MetDo 알림 팝업 감지! 스크린샷 저장 후 프로그램 종료")
-                take_screenshot(u"step2_ALERT_POPUP_detected")
-                click(IMG_ALERT_CONFIRM_BTN)
-                sleep(1)
-                raise NavigationResetRequired(u"MetDo 알림 팝업 감지 - 서비스 오류 (스크린샷 확인)")
+            # NOTE: 알림 팝업 감지는 wait_and_click() 내부에서 자동 처리됨
             # 혹시 고객통합뷰가 이미 열려있을 수 있음 (버튼 이미지 변형)
             if exists(IMG_VARIABLE_INSURANCE_REPORT_BTN, 3):
                 log(u"    [감지] 고객통합뷰가 이미 열려있음 → 스크롤 후 진행")
@@ -2619,6 +2684,12 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     if not integrated_view_opened:
         log(u"    [FATAL] 고객통합뷰 3회 클릭 실패 → 프로그램 종료 요청")
         take_screenshot(u"step2_all_attempts_failed")
+        # 알림 팝업 확인 (MetDo 서비스 오류 등)
+        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            log(u"    [ALERT] MetDo 알림 팝업 감지!")
+            take_screenshot(u"step2_ALERT_POPUP_all_failed")
+            click(IMG_ALERT_CONFIRM_BTN)
+            sleep(1)
         raise NavigationResetRequired(u"고객통합뷰 3회 클릭 실패")
 
     # 3단계는 2단계에 통합됨 (스크롤 맨 위로 이동)
@@ -2858,6 +2929,12 @@ def verify_customer_integrated_view(pdf_save_dir=None, customer_name=None, outpu
     if not step8_closed:
         log(u"    [FATAL] 고객통합뷰 닫기 3회 실패 → 종료 요청")
         take_screenshot(u"step8_close_FATAL")
+        # 알림 팝업 확인 (MetDo 서비스 오류 등)
+        if exists(IMG_ALERT_CONFIRM_BTN, 1):
+            log(u"    [ALERT] MetDo 알림 팝업 감지!")
+            take_screenshot(u"step8_ALERT_POPUP_close_failed")
+            click(IMG_ALERT_CONFIRM_BTN)
+            sleep(1)
         raise NavigationResetRequired(u"고객통합뷰 닫기 실패")
 
     # 9단계: 완료 - 결과 집계
