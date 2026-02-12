@@ -45,6 +45,8 @@ tmpclaude-*
 # Sikuli screenshots (테스트 실행 중 생성)
 tools/MetlifePDF.sikuli/screenshots/
 tools/MetlifePDF.sikuli/debug_log.txt
+tools/auto_clicker_v2/debug_log.txt
+tools/auto_clicker_v2/temp/
 *.class
 
 # AutoClicker v2 output (실행 결과물)
