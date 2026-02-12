@@ -209,6 +209,11 @@ $f.Location = New-Object Drawing.Point($cx, $cy)
 $f.TopMost = $true
 $f.ShowInTaskbar = $false
 $f.BackColor = [Drawing.Color]::FromArgb(245, 245, 247)
+$f.Add_Paint({
+    $pen = New-Object Drawing.Pen([Drawing.Color]::FromArgb(200, 200, 205), 1)
+    $_.Graphics.DrawRectangle($pen, 0, 0, $f.Width - 1, $f.Height - 1)
+    $pen.Dispose()
+})
 $l = New-Object Windows.Forms.Label
 $l.Text = [char]0xC5C5 + [char]0xB370 + [char]0xC774 + [char]0xD2B8 + " " + [char]0xC911 + "..."
 $l.Font = New-Object Drawing.Font("Malgun Gothic", 14)
