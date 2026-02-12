@@ -18,6 +18,19 @@ interface VersionInfo {
 const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
   const [launching, setLaunching] = useState(false)
   const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null)
+  const [downloadHint, setDownloadHint] = useState(false)
+
+  // 인스톨러 완료 후 열린 페이지에서 설치 확인 플래그 설정
+  // (installer.iss [Run] → aims.giize.com/?view=autoclicker&ac_installed=1)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('ac_installed') === '1') {
+      localStorage.setItem('ac-installed', 'true')
+      params.delete('ac_installed')
+      const cleanSearch = params.toString()
+      window.history.replaceState({}, '', window.location.pathname + (cleanSearch ? '?' + cleanSearch : ''))
+    }
+  }, [])
 
   // 버전 정보 로드
   useEffect(() => {
@@ -31,41 +44,67 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
       .catch(() => { /* 실패해도 무시 */ })
   }, [visible])
 
-  // AC 실행: 설치됨 → 앱 실행, 미설치 → 인스톨러 자동 다운로드
+  const downloadInstaller = useCallback(() => {
+    if (versionInfo?.installerUrl) {
+      const a = document.createElement('a')
+      a.href = versionInfo.installerUrl
+      a.download = ''
+      a.click()
+    }
+  }, [versionInfo])
+
+  // AC 실행
+  // - 설치 기록 있음 → URI Scheme으로 앱 실행 (blur 감지로 성공 판단)
+  // - 설치 기록 없음 → 인스톨러 다운로드 (인스톨러가 AC 자동 실행)
+  // - URI Scheme 실패 (삭제됨) → 인스톨러 재다운로드
   const handleLaunch = useCallback(async () => {
     if (launching) return
     setLaunching(true)
     try {
-      const response = await api.post<{ success: boolean; token: string; expiresIn: number }>(
-        '/api/ac/request-token'
-      )
-      if (response.success && response.token) {
-        // blur 감지: 앱이 열리면 브라우저가 포커스를 잃음
-        let appOpened = false
-        const onBlur = () => { appOpened = true }
-        window.addEventListener('blur', onBlur)
+      const acInstalled = localStorage.getItem('ac-installed') === 'true'
+
+      if (acInstalled) {
+        // URI Scheme으로 앱 실행 시도
+        const response = await api.post<{ success: boolean; token: string; expiresIn: number }>(
+          '/api/ac/request-token'
+        )
+        if (!response.success || !response.token) {
+          alert('토큰 발급에 실패했습니다.')
+          return
+        }
 
         window.location.href = `aims-ac://start?token=${response.token}&auto_start=false`
 
-        // 3초 후 blur 없었으면 → 미설치 → 인스톨러 자동 다운로드
-        setTimeout(() => {
-          window.removeEventListener('blur', onBlur)
-          if (!appOpened && versionInfo?.installerUrl) {
-            const a = document.createElement('a')
-            a.href = versionInfo.installerUrl
-            a.download = ''
-            a.click()
+        // blur 감지: 앱이 포커스를 가져가면 성공
+        await new Promise<void>((resolve) => {
+          const failTimer = setTimeout(() => {
+            window.removeEventListener('blur', onBlur)
+            // 3초 내 blur 없음 → 삭제된 것으로 판단 → 인스톨러 재다운로드
+            localStorage.removeItem('ac-installed')
+            downloadInstaller()
+            resolve()
+          }, 3000)
+
+          const onBlur = () => {
+            clearTimeout(failTimer)
+            window.removeEventListener('blur', onBlur)
+            resolve()
           }
-        }, 3000)
+          window.addEventListener('blur', onBlur)
+        })
       } else {
-        alert('토큰 발급에 실패했습니다.')
+        // 미설치 → 인스톨러 다운로드 (인스톨러 완료 시 AC 자동 실행됨)
+        downloadInstaller()
+        localStorage.setItem('ac-installed', 'true')
+        setDownloadHint(true)
+        setTimeout(() => setDownloadHint(false), 10000)
       }
     } catch {
-      alert('AutoClicker 토큰 발급에 실패했습니다. 다시 시도하세요.')
+      alert('AutoClicker 실행에 실패했습니다. 다시 시도하세요.')
     } finally {
       setLaunching(false)
     }
-  }, [launching, versionInfo])
+  }, [launching, downloadInstaller])
 
   return (
     <CenterPaneView
@@ -117,6 +156,12 @@ const AutoClickerView = ({ visible, onClose }: AutoClickerViewProps) => {
               {launching ? '실행 중...' : 'AutoClicker 실행'}
             </button>
           </div>
+
+          {downloadHint && (
+            <p className="autoclicker-view__download-hint">
+              다운로드된 설치 파일을 실행하세요. 설치가 완료되면 AutoClicker가 자동으로 시작됩니다.
+            </p>
+          )}
         </div>
 
         {/* 사용 방법 */}

@@ -88,6 +88,19 @@ html[data-theme="dark"] .autoclicker-view__hero-icon {
   cursor: not-allowed;
 }
 
+/* 다운로드 안내 (10초 후 사라짐) */
+.autoclicker-view__download-hint {
+  margin-top: var(--spacing-3);
+  font-size: var(--font-size-caption-1, 12px);
+  color: var(--color-text-secondary);
+  animation: autoclicker-hint-fade 10s ease-out forwards;
+}
+
+@keyframes autoclicker-hint-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* 섹션 */
 .autoclicker-view__section {
   display: flex;

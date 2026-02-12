@@ -95,11 +95,6 @@ Root: HKCU; Subkey: "Software\Classes\aims-ac\DefaultIcon"; ValueType: string; V
 Root: HKCU; Subkey: "Software\Classes\aims-ac\shell\open\command"; ValueType: string; ValueName: ""; \
     ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
-[Run]
-; 설치 완료 후 실행 옵션
-Filename: "{app}\{#MyAppExeName}"; Description: "AutoClicker 실행"; \
-    Flags: nowait postinstall skipifsilent
-
 [UninstallDelete]
 ; 언인스톨 시 런타임 생성 파일도 정리
 Type: filesandordirs; Name: "{app}\output"
