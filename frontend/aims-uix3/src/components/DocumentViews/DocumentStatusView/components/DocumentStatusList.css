@@ -104,6 +104,47 @@ html[data-theme="dark"] .status-list-header {
   text-align: center;
 }
 
+/* 🍎 header-filename: 정렬 영역 + 별칭/원본 토글 래퍼 */
+.status-list-header .header-filename {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.header-filename__sort-area {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+/* 🍎 파일명 표시 모드 토글 버튼 */
+.filename-mode-toggle {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+}
+
+.filename-mode-toggle:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-tertiary);
+}
+
+.filename-mode-toggle:active {
+  opacity: 0.7;
+}
+
 /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
 .header-filename .header-icon-svg {
   color: var(--color-icon-blue);  /* 파일명 - 파란색 */

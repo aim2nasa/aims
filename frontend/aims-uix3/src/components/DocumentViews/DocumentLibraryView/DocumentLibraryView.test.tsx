@@ -156,6 +156,7 @@ vi.mock('@/services/DocumentStatusService', () => ({
   DocumentStatusService: {
     extractStatus: (document: any) => document.status || 'pending',
     extractFilename: (document: any) => document.filename || 'unknown.pdf',
+    extractOriginalFilename: (document: any) => document.originalName || document.filename || 'unknown.pdf',
     extractFileSize: (document: any) => document.fileSize || 0,
     extractUploadedDate: (document: any) => document.uploadTime || new Date().toISOString(),
     extractProgress: (document: any) => document.progress || 0,

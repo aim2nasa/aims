@@ -28,6 +28,8 @@ export interface DocumentStatusState {
   // 🍎 Sort State
   sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null
   sortDirection: 'asc' | 'desc'
+  // 🍎 검색 대상 필드
+  searchField: 'displayName' | 'originalName'
 }
 
 /**
@@ -62,6 +64,8 @@ export interface DocumentStatusActions {
   handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType') => void
   // 🍎 Optimistic Update Actions
   removeDocuments: (docIds: Set<string>) => void
+  // 🍎 검색 대상 필드 설정
+  setSearchField: (field: 'displayName' | 'originalName') => void
 }
 
 /**

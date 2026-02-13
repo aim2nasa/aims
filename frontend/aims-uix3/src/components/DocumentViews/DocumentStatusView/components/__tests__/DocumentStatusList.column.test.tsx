@@ -339,7 +339,7 @@ describe('DocumentStatusList - 칼럼 레이아웃 최적화 테스트 (커밋 b
         />
       )
 
-      const filenameHeader = document.querySelector('.header-filename') as HTMLElement
+      const filenameHeader = document.querySelector('.header-filename__sort-area') as HTMLElement
       filenameHeader?.click()
 
       expect(onColumnSort).toHaveBeenCalledWith('filename')

@@ -643,7 +643,7 @@ router.get('/documents', authenticateJWT, async (req, res) => {
  */
 router.get('/documents/status', authenticateJWT, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles' } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'excludeMyFiles', searchField } = req.query;
     const skip = (page - 1) * limit;
 
     // 🔍 정렬 파라미터 디버깅
@@ -683,7 +683,17 @@ router.get('/documents/status', authenticateJWT, async (req, res) => {
     }
 
     if (search) {
-      filter['upload.originalName'] = { $regex: search, $options: 'i' };
+      // 🍎 searchField에 따라 검색 대상 필드 결정
+      if (searchField === 'displayName') {
+        // 별칭 모드: displayName 우선, 없으면 originalName도 포함 (OR 검색)
+        filter['$or'] = [
+          { displayName: { $regex: search, $options: 'i' } },
+          { 'upload.originalName': { $regex: search, $options: 'i' } }
+        ];
+      } else {
+        // 원본 모드 (기본값): originalName에서만 검색
+        filter['upload.originalName'] = { $regex: search, $options: 'i' };
+      }
     }
 
     // 🔍 필터 디버깅

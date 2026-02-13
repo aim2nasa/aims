@@ -76,6 +76,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [totalPages, setTotalPages] = useState<number>(paginationCache.totalPages)
   const [totalCount, setTotalCount] = useState<number>(paginationCache.totalCount)
 
+  // 🍎 검색 대상 필드 ('displayName' = 별칭, 'originalName' = 원본)
+  const [searchField, setSearchField] = useState<'displayName' | 'originalName'>(() => {
+    if (typeof window === 'undefined') return 'displayName'
+    const mode = localStorage.getItem('aims-filename-mode')
+    return mode === 'original' ? 'originalName' : 'displayName'
+  })
+
   // 🍎 Sort State
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | 'docType' | null>('uploadDate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -124,7 +131,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🍎 페이지네이션 기반으로 변경: page와 limit 전달
         // 🔍 검색어도 함께 전달하여 백엔드에서 전체 라이브러리 검색
         // 🍎 파일 범위 필터도 백엔드로 전달
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam)
+        // 🍎 검색 대상 필드도 전달 (별칭/원본 모드에 따라)
+        const searchFieldParam = searchQuery ? searchField : undefined
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, undefined, fileScopeParam, searchFieldParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장 + 캐시 업데이트
@@ -218,7 +227,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, fileScope]
+    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, fileScope, searchField]
   )
 
   /**
@@ -367,9 +376,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     // 테스트 환경에서는 스킵
     if (typeof window === 'undefined') return
 
-    // 정렬/페이지/검색어 변경 시 즉시 재조회
+    // 정렬/페이지/검색어/검색필드 변경 시 즉시 재조회
     fetchDocumentsRef.current(false)
-  }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm])
+  }, [sortField, sortDirection, currentPage, itemsPerPage, searchTerm, searchField])
 
   // 🔄 SSE 훅 사용 (실시간 업데이트)
   // - document-list-change: 문서 업로드/삭제/연결 변경 시 즉시 반영
@@ -666,7 +675,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       totalCount,
       paginatedDocuments,
       sortField,
-      sortDirection
+      sortDirection,
+      searchField
     }),
     [
       documents,
@@ -684,7 +694,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       totalCount,
       paginatedDocuments,
       sortField,
-      sortDirection
+      sortDirection,
+      searchField
     ]
   )
 
@@ -712,7 +723,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setSortField,
       setSortDirection,
       handleColumnSort,
-      removeDocuments
+      removeDocuments,
+      setSearchField
     }),
     [
       fetchDocuments,

@@ -358,7 +358,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
       )
 
       const searchInput = container.querySelector('.search-input') as HTMLInputElement
-      expect(searchInput?.placeholder).toBe('파일명 검색')
+      expect(searchInput?.placeholder).toMatch(/파일명 검색/)
     })
 
     it('input type이 "text"여야 함', () => {

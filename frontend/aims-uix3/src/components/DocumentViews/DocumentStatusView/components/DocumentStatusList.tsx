@@ -60,6 +60,9 @@ export interface DocumentStatusListProps {
   onNavigate?: (viewKey: string) => void
   // 🍎 Context menu handler
   onRowContextMenu?: (document: Document, event: React.MouseEvent) => void
+  // 🍎 파일명 표시 모드
+  filenameMode?: 'display' | 'original'
+  onFilenameModeChange?: (mode: 'display' | 'original') => void
 }
 
 /**
@@ -224,7 +227,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onCustomerDoubleClick,
   onRefresh,
   onNavigate,
-  onRowContextMenu
+  onRowContextMenu,
+  filenameMode = 'display',
+  onFilenameModeChange
 }) => {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
@@ -550,27 +555,46 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             )
           )}
         </div>
-        <div
-          className={`header-filename ${onColumnSort ? 'header-sortable' : ''}`}
-          onClick={() => onColumnSort?.('filename')}
-          role={onColumnSort ? 'button' : undefined}
-          tabIndex={onColumnSort ? 0 : undefined}
-          aria-label={onColumnSort ? '파일명으로 정렬' : undefined}
-        >
-          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-            <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
-            <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
-          </svg>
-          <span>파일명</span>
-          {onColumnSort && (
-            sortField === 'filename' ? (
-              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-            ) : (
-              <span className="sort-indicator sort-indicator--both">
-                <span className="sort-arrow">▲</span>
-                <span className="sort-arrow">▼</span>
-              </span>
-            )
+        <div className="header-filename">
+          <div
+            className={onColumnSort ? 'header-sortable header-filename__sort-area' : 'header-filename__sort-area'}
+            onClick={() => onColumnSort?.('filename')}
+            role={onColumnSort ? 'button' : undefined}
+            tabIndex={onColumnSort ? 0 : undefined}
+            aria-label={onColumnSort ? '파일명으로 정렬' : undefined}
+          >
+            <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+              <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+              <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+            </svg>
+            <span>파일명</span>
+            {onColumnSort && (
+              sortField === 'filename' ? (
+                <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+              ) : (
+                <span className="sort-indicator sort-indicator--both">
+                  <span className="sort-arrow">▲</span>
+                  <span className="sort-arrow">▼</span>
+                </span>
+              )
+            )}
+          </div>
+          {/* 🍎 파일명 표시 모드 토글: 원본 ↔ 별칭 */}
+          {onFilenameModeChange && (
+            <Tooltip content={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}>
+              <button
+                type="button"
+                className="filename-mode-toggle"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const next = filenameMode === 'display' ? 'original' : 'display'
+                  onFilenameModeChange(next)
+                }}
+                aria-label={filenameMode === 'display' ? '원본 파일명 보기' : '별칭 보기'}
+              >
+                {filenameMode === 'display' ? '별칭' : '원본'}
+              </button>
+            </Tooltip>
           )}
         </div>
         {/* 🍎 문서 유형 칼럼 (새 칼럼) */}
@@ -855,18 +879,25 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 파일명 + PDF 변환 상태 아이콘 */}
             <div className="status-filename">
-              {/* 🍎 displayName이 있으면 원본 파일명을 툴팁으로 표시 (AR/CRS) */}
-              {document.displayName ? (
-                <Tooltip content={`원본: ${DocumentStatusService.extractOriginalFilename(document)}`}>
-                  <span className="status-filename-text">
-                    {document.displayName}
-                  </span>
-                </Tooltip>
-              ) : (
-                <span className="status-filename-text">
-                  {DocumentStatusService.extractFilename(document)}
-                </span>
-              )}
+              {/* 🍎 filenameMode에 따라 별칭/원본 전환 표시 */}
+              {(() => {
+                const hasDisplay = Boolean(document.displayName)
+                const originalName = DocumentStatusService.extractOriginalFilename(document)
+                const showName = filenameMode === 'display' && hasDisplay
+                  ? document.displayName!
+                  : originalName
+                const altName = filenameMode === 'display' && hasDisplay
+                  ? `원본: ${originalName}`
+                  : (hasDisplay ? `별칭: ${document.displayName}` : '')
+
+                return altName ? (
+                  <Tooltip content={altName}>
+                    <span className="status-filename-text">{showName}</span>
+                  </Tooltip>
+                ) : (
+                  <span className="status-filename-text">{showName}</span>
+                )
+              })()}
               {/* PDF 변환 상태 배지 (변환 대상 파일에만 표시) */}
               {(() => {
                 const uploadData = typeof document.upload === 'object' ? document.upload : null

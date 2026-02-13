@@ -203,7 +203,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         'uploadDate_desc', // sort (기본값)
         undefined, // searchQuery
         undefined, // customerLink
-        undefined  // fileScope
+        undefined, // fileScope
+        undefined  // searchField
       )
     })
   })
@@ -236,6 +237,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           1,
           15,
           'uploadDate_asc',
+          undefined,
           undefined,
           undefined,
           undefined
@@ -284,6 +286,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           1,
           15,
           'uploadDate_desc',
+          undefined,
           undefined,
           undefined,
           undefined
@@ -405,7 +408,8 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           'uploadDate_asc',
           '문서',
           undefined,
-          undefined
+          undefined,
+          'displayName'
         )
       })
     })
@@ -437,6 +441,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           1,
           30, // 변경된 페이지 크기 유지
           'uploadDate_asc',
+          undefined,
           undefined,
           undefined,
           undefined
@@ -481,6 +486,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           1,
           15,
           'uploadDate_asc',
+          undefined,
           undefined,
           undefined,
           undefined
@@ -544,6 +550,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         'uploadDate_desc',
         undefined,
         undefined,
+        undefined,
         undefined
       )
     })
@@ -585,6 +592,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           'uploadDate_asc', // 정렬 상태 유지
           undefined,
           undefined,
+          undefined,
           undefined
         )
       })
@@ -614,6 +622,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
         'uploadDate_desc', // 기본값
         undefined,
         undefined,
+        undefined,
         undefined
       )
 
@@ -641,6 +650,7 @@ describe('DocumentStatusProvider - 업로드 날짜 정렬 테스트', () => {
           1,
           15,
           'uploadDate_asc',
+          undefined,
           undefined,
           undefined,
           undefined
@@ -693,6 +703,7 @@ describe('DocumentStatusProvider - 모든 정렬 필드 테스트', () => {
           expect.any(Number),
           expect.any(Number),
           expectedParam,
+          undefined,
           undefined,
           undefined,
           undefined

@@ -105,6 +105,19 @@ const DocumentLibraryContent: React.FC<{
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
+  // 🍎 파일명 표시 모드: 'display' = displayName 우선, 'original' = 원본 파일명
+  const [filenameMode, setFilenameMode] = React.useState<'display' | 'original'>(() => {
+    if (typeof window === 'undefined') return 'display'
+    return (localStorage.getItem('aims-filename-mode') as 'display' | 'original') ?? 'display'
+  })
+
+  const handleFilenameModeChange = React.useCallback((mode: 'display' | 'original') => {
+    setFilenameMode(mode)
+    localStorage.setItem('aims-filename-mode', mode)
+    // 🍎 검색 필드도 동기화: 별칭 모드면 displayName, 원본 모드면 originalName 검색
+    actions.setSearchField(mode === 'display' ? 'displayName' : 'originalName')
+  }, [actions])
+
   // 🔴 현재 업로드 배치 ID (실시간 추적 - sessionStorage 변경 시 즉시 반영)
   const currentBatchId = useBatchId()
 
@@ -485,7 +498,7 @@ const DocumentLibraryContent: React.FC<{
               type="text"
               value={state.searchTerm}
               onChange={(e) => actions.setSearchTerm(e.target.value)}
-              placeholder="파일명 검색"
+              placeholder={filenameMode === 'display' ? '별칭 파일명 검색' : '원본 파일명 검색'}
               className="search-input"
             />
             {state.searchTerm && (
@@ -579,6 +592,8 @@ const DocumentLibraryContent: React.FC<{
         {...(onCustomerDoubleClick ? { onCustomerDoubleClick } : {})}
         {...(onNavigate ? { onNavigate } : {})}
         onRefresh={controller.refreshDocuments}
+        filenameMode={filenameMode}
+        onFilenameModeChange={handleFilenameModeChange}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
