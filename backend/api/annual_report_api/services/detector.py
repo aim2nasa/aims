@@ -153,23 +153,25 @@ def extract_customer_info_from_first_page(pdf_path: str, original_filename: str 
         import re
         import os
 
-        # 1. 고객명 추출: "Annual" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
-        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Annual Review Report"
-        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
-        normalized = ' '.join(first_page_text.split())
-        annual_idx = normalized.find('Annual')
-        if annual_idx > 0:
-            before = normalized[:annual_idx].strip()
-            go_idx = before.find(' 고')
-            if go_idx > 0:
-                name = before[:go_idx]
-            else:
-                space_idx = before.find(' ')
-                name = before[:space_idx] if space_idx > 0 else before
-            if len(name) >= 2:
-                result["customer_name"] = name
-                logger.info(f"📄 고객명 추출 (Annual 앞): {name}")
+        # 1. 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+        # PDF 포맷: "{NAME} 고객님을 위한\nAnnual Review Report"
+        # 에뮬레이션 파일: "MetLife\n{NAME} 고객님을 위한\nAnnual Review Report"
+        # → "Annual" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
+        lines = first_page_text.split('\n')
+        for i, line in enumerate(lines):
+            if 'Annual' in line:
+                if i > 0:
+                    name_line = lines[i - 1].strip()
+                    go_idx = name_line.find(' 고')
+                    if go_idx > 0:
+                        name = name_line[:go_idx]
+                    else:
+                        space_idx = name_line.find(' ')
+                        name = name_line[:space_idx] if space_idx > 0 else name_line
+                    if len(name) >= 2:
+                        result["customer_name"] = name
+                        logger.info(f"📄 고객명 추출 (Annual 위 줄): {name}")
+                break
 
         # 2. Report 제목 추출 (예: "Annual Review Report")
         title_pattern = r"(Annual\s+Review\s+Report)"

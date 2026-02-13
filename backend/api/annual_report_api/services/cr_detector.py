@@ -163,23 +163,24 @@ def extract_cr_metadata_from_first_page(pdf_path: str, original_filename: str = 
 
         # 🔴 고객명은 PDF 텍스트에서만 추출 (파일명 사용 절대 금지!)
 
-        # 0. 고객명 추출: "Customer" 앞 텍스트에서 추출
-        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Customer Review Service"
-        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
-        normalized_for_name = ' '.join(first_page_text.split())
-        customer_kw_idx = normalized_for_name.find('Customer')
-        if customer_kw_idx > 0:
-            before = normalized_for_name[:customer_kw_idx].strip()
-            go_idx = before.find(' 고')
-            if go_idx > 0:
-                _cn = before[:go_idx]
-            else:
-                space_idx = before.find(' ')
-                _cn = before[:space_idx] if space_idx > 0 else before
-            if len(_cn) >= 2:
-                result["contractor_name"] = _cn
-                logger.info(f"📄 CRS 고객명 추출 (Customer 앞): {_cn}")
+        # 0. 고객명 추출: "Customer" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+        # PDF 포맷: "{NAME} 고객님을 위한\nCustomer Review Service"
+        # → "Customer" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
+        lines = first_page_text.split('\n')
+        for i, line in enumerate(lines):
+            if 'Customer' in line:
+                if i > 0:
+                    name_line = lines[i - 1].strip()
+                    go_idx = name_line.find(' 고')
+                    if go_idx > 0:
+                        _cn = name_line[:go_idx]
+                    else:
+                        space_idx = name_line.find(' ')
+                        _cn = name_line[:space_idx] if space_idx > 0 else name_line
+                    if len(_cn) >= 2:
+                        result["contractor_name"] = _cn
+                        logger.info(f"📄 CRS 고객명 추출 (Customer 위 줄): {_cn}")
+                break
 
         # 1. 상품명 추출
         # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 또는 "무) xxx 종신, 10년납"

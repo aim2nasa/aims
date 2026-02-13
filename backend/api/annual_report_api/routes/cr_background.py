@@ -165,7 +165,7 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             logger.info(f"📄 [CR Parsing] 메타데이터 재추출 필요: {file_path}")
             metadata = extract_cr_metadata_from_first_page(file_path)
 
-        # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+        # 📎 파일명에서 날짜/상품명/증권번호만 추출 (🔴 고객명은 파일명에서 추출 절대 금지!)
         original_name = doc.get("upload", {}).get("originalName", "")
         from utils.filename_parser import parse_crs_filename
         fn_meta = parse_crs_filename(original_name)
@@ -176,9 +176,7 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
                 metadata["product_name"] = fn_meta["product_name"]
             if fn_meta.get("policy_number"):
                 metadata["policy_number"] = fn_meta["policy_number"]
-            if fn_meta.get("customer_name"):
-                metadata["contractor_name"] = fn_meta["customer_name"]
-            logger.info(f"📎 [CR Parsing] 파일명 메타데이터 적용: {fn_meta}")
+            logger.info(f"📎 [CR Parsing] 파일명에서 날짜/상품/증권번호 적용: issue_date={fn_meta.get('issue_date')}")
 
             # 파일명의 policy_number를 contract_info에도 반영
             if fn_meta.get("policy_number"):
@@ -200,14 +198,31 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
 
         if save_result["success"]:
             logger.info(f"✅ [CR Parsing] 파싱 완료: 증권번호={result.get('contract_info', {}).get('policy_number', 'N/A')}")
+            cr_update = {
+                "cr_parsing_status": "completed",
+                "cr_parsing_completed_at": datetime.now(timezone.utc),
+                "overallStatus": "completed",
+                "overallStatusUpdatedAt": datetime.now(timezone.utc)
+            }
+
+            # 📄 CRS displayName 자동 생성/보정
+            contractor = metadata.get("contractor_name", "")
+            product = metadata.get("product_name", "")
+            issue = metadata.get("issue_date", "")
+            if contractor and issue:
+                import re as _re
+                safe_product = _re.sub(r'[\\/:*?"<>|]', '', product).strip() if product else ""
+                if safe_product:
+                    new_display = f"{contractor}_CRS_{safe_product}_{issue}.pdf"
+                else:
+                    new_display = f"{contractor}_CRS_{issue}.pdf"
+                if doc.get("displayName") != new_display:
+                    cr_update["displayName"] = new_display
+                    logger.info(f"📄 [CR Parsing] displayName 생성: {new_display}")
+
             db["files"].update_one(
                 {"_id": doc["_id"]},
-                {"$set": {
-                    "cr_parsing_status": "completed",
-                    "cr_parsing_completed_at": datetime.now(timezone.utc),
-                    "overallStatus": "completed",
-                    "overallStatusUpdatedAt": datetime.now(timezone.utc)
-                }}
+                {"$set": cr_update}
             )
             return {"success": True, "message": "파싱 완료"}
         else:

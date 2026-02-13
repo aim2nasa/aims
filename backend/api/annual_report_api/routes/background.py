@@ -199,6 +199,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             # customer_id가 있으면 customerId도 업데이트
             if customer_id:
                 update_fields["customerId"] = ObjectId(customer_id)
+
+            # 📄 displayName 자동 생성/보정
+            if parsed_customer_name and metadata.get("issue_date"):
+                new_display = f"{parsed_customer_name}_AR_{metadata['issue_date']}.pdf"
+                if doc.get("displayName") != new_display:
+                    update_fields["displayName"] = new_display
+                    logger.info(f"📄 [Queue Parsing] displayName 생성: {new_display}")
+
             db["files"].update_one(
                 {"_id": doc["_id"]},
                 {"$set": update_fields}
@@ -415,14 +423,23 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 
                 if save_result["success"]:
                     logger.info(f"✅ [BG Parsing] 파싱 완료: {result.get('metadata', {}).get('issue_date', 'unknown')}")
+                    bg_update = {
+                        "ar_parsing_status": "completed",
+                        "ar_parsing_completed_at": datetime.now(timezone.utc),
+                        "overallStatus": "completed",
+                        "overallStatusUpdatedAt": datetime.now(timezone.utc)
+                    }
+
+                    # 📄 displayName 자동 생성/보정
+                    if parsed_customer_name and metadata.get("issue_date"):
+                        new_display = f"{parsed_customer_name}_AR_{metadata['issue_date']}.pdf"
+                        if doc.get("displayName") != new_display:
+                            bg_update["displayName"] = new_display
+                            logger.info(f"📄 [BG Parsing] displayName 생성: {new_display}")
+
                     db["files"].update_one(
                         {"_id": doc["_id"]},
-                        {"$set": {
-                            "ar_parsing_status": "completed",
-                            "ar_parsing_completed_at": datetime.now(timezone.utc),
-                            "overallStatus": "completed",  # 🔧 전체 문서 보기에서 표시되도록
-                            "overallStatusUpdatedAt": datetime.now(timezone.utc)
-                        }}
+                        {"$set": bg_update}
                     )
                     processing_count += 1
                 else:

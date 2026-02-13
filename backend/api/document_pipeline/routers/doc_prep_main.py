@@ -506,23 +506,26 @@ async def _detect_and_process_annual_report(
 
         logger.info(f"🔍 AR 감지: doc_id={doc_id}, 매칭={matched_required + matched_optional}")
 
-        # 2. 고객명 추출: "Annual" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
-        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Annual Review Report"
-        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+        # 2. 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+        # PDF 포맷: "{NAME} 고객님을 위한\nAnnual Review Report"
+        # 에뮬레이션 파일: "MetLife\n{NAME} 고객님을 위한\nAnnual Review Report"
+        # → "Annual" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
         customer_name = None
-        annual_idx = normalized_text.find('Annual')
-        if annual_idx > 0:
-            before = normalized_text[:annual_idx].strip()
-            go_idx = before.find(' 고')
-            if go_idx > 0:
-                name = before[:go_idx]
-            else:
-                space_idx = before.find(' ')
-                name = before[:space_idx] if space_idx > 0 else before
-            if len(name) >= 2:
-                customer_name = name
-                logger.info(f"📄 고객명 추출 (Annual 앞): {customer_name}")
+        lines = full_text.split('\n')
+        for i, line in enumerate(lines):
+            if 'Annual' in line:
+                if i > 0:
+                    name_line = lines[i - 1].strip()
+                    go_idx = name_line.find(' 고')
+                    if go_idx > 0:
+                        name = name_line[:go_idx]
+                    else:
+                        space_idx = name_line.find(' ')
+                        name = name_line[:space_idx] if space_idx > 0 else name_line
+                    if len(name) >= 2:
+                        customer_name = name
+                        logger.info(f"📄 고객명 추출 (Annual 위 줄): {customer_name}")
+                break
 
         # 3. 발행기준일 추출: PDF 텍스트에서 추출
         issue_date = None
@@ -710,23 +713,25 @@ async def _detect_and_process_customer_review(
 
         # 2. 메타데이터 추출 (고객명, 상품명, 발행일)
 
-        # 2-1. 고객명 추출: "Customer" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
-        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Customer Review Service"
-        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+        # 2-1. 고객명 추출: "Customer" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+        # PDF 포맷: "{NAME} 고객님을 위한\nCustomer Review Service"
+        # → "Customer" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
         customer_name = None
-        customer_kw_idx = normalized_text.find('Customer')
-        if customer_kw_idx > 0:
-            before = normalized_text[:customer_kw_idx].strip()
-            go_idx = before.find(' 고')
-            if go_idx > 0:
-                name = before[:go_idx]
-            else:
-                space_idx = before.find(' ')
-                name = before[:space_idx] if space_idx > 0 else before
-            if len(name) >= 2:
-                customer_name = name
-                logger.info(f"📄 CRS 고객명 추출 (Customer 앞): {customer_name}")
+        lines = full_text.split('\n')
+        for i, line in enumerate(lines):
+            if 'Customer' in line:
+                if i > 0:
+                    name_line = lines[i - 1].strip()
+                    go_idx = name_line.find(' 고')
+                    if go_idx > 0:
+                        name = name_line[:go_idx]
+                    else:
+                        space_idx = name_line.find(' ')
+                        name = name_line[:space_idx] if space_idx > 0 else name_line
+                    if len(name) >= 2:
+                        customer_name = name
+                        logger.info(f"📄 CRS 고객명 추출 (Customer 위 줄): {customer_name}")
+                break
         # fallback: "계약자" 필드에서 추출
         if not customer_name:
             contractor_idx = normalized_text.find('계약자')

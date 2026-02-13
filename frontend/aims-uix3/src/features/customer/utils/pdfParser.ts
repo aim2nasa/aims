@@ -107,24 +107,29 @@ function extractMetadata(text: string, normalizedText?: string) {
     metadata.issue_date = `${year}-${month}-${day}`;
   }
 
-  // 고객명 추출: "Annual" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
-  // PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Annual Review Report"
-  // 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-  // 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+  // 고객명 추출: "Annual" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+  // PDF 포맷: "{NAME} 고객님을 위한\nAnnual Review Report"
+  // 에뮬레이션 파일: "MetLife\n{NAME} 고객님을 위한\nAnnual Review Report"
+  // → "Annual" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
   {
-    const annualIdx = searchText.indexOf('Annual');
-    if (annualIdx > 0) {
-      const before = searchText.substring(0, annualIdx).trim();
-      const goIdx = before.indexOf(' 고');
-      let name = '';
-      if (goIdx > 0) {
-        name = before.substring(0, goIdx);
-      } else {
-        const spaceIdx = before.indexOf(' ');
-        name = spaceIdx > 0 ? before.substring(0, spaceIdx) : before;
-      }
-      if (name.length >= 2) {
-        metadata.customer_name = name;
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('Annual')) {
+        if (i > 0) {
+          const nameLine = lines[i - 1].trim();
+          const goIdx = nameLine.indexOf(' 고');
+          let name = '';
+          if (goIdx > 0) {
+            name = nameLine.substring(0, goIdx);
+          } else {
+            const spaceIdx = nameLine.indexOf(' ');
+            name = spaceIdx > 0 ? nameLine.substring(0, spaceIdx) : nameLine;
+          }
+          if (name.length >= 2) {
+            metadata.customer_name = name;
+          }
+        }
+        break;
       }
     }
   }
@@ -247,25 +252,28 @@ function extractCRMetadata(text: string) {
     }
   }
 
-  // 3. 계약자(고객명) 추출: "Customer" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
-  // PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Customer Review Service"
-  // 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
-  // 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+  // 3. 계약자(고객명) 추출: "Customer" 키워드가 포함된 줄의 바로 위 줄에서 추출 (🔴 파일명 사용 절대 금지!)
+  // PDF 포맷: "{NAME} 고객님을 위한\nCustomer Review Service"
+  // → "Customer" 위 줄 = "{NAME} 고객님을 위한" → 고객명 추출
   {
-    const normalizedCR = text.replace(/\s+/g, ' ');
-    const customerIdx = normalizedCR.indexOf('Customer');
-    if (customerIdx > 0) {
-      const before = normalizedCR.substring(0, customerIdx).trim();
-      const goIdx = before.indexOf(' 고');
-      let name = '';
-      if (goIdx > 0) {
-        name = before.substring(0, goIdx);
-      } else {
-        const spaceIdx = before.indexOf(' ');
-        name = spaceIdx > 0 ? before.substring(0, spaceIdx) : before;
-      }
-      if (name.length >= 2) {
-        metadata.contractor_name = name;
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('Customer')) {
+        if (i > 0) {
+          const nameLine = lines[i - 1].trim();
+          const goIdx = nameLine.indexOf(' 고');
+          let name = '';
+          if (goIdx > 0) {
+            name = nameLine.substring(0, goIdx);
+          } else {
+            const spaceIdx = nameLine.indexOf(' ');
+            name = spaceIdx > 0 ? nameLine.substring(0, spaceIdx) : nameLine;
+          }
+          if (name.length >= 2) {
+            metadata.contractor_name = name;
+          }
+        }
+        break;
       }
     }
   }
