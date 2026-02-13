@@ -1312,6 +1312,13 @@ if __name__ == "__main__":
     parser.add_argument("--post-update", action="store_true", dest="post_update", help="업데이트 후 재시작")
     cli_args = parser.parse_args()
 
+    # --post-update: 이중 실행 방지 (인스톨러 [Run] + 이전 버전 bat 동시 실행 대비)
+    if cli_args.post_update:
+        import ctypes
+        _mutex = ctypes.windll.kernel32.CreateMutexW(None, True, "AIMS_AutoClicker_PostUpdate")
+        if ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+            sys.exit(0)
+
     # --post-update: 자동 업데이트 후 재시작 → 세션 파일에서 인증 복원
     authenticated = False
     user_name = ""

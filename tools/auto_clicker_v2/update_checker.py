@@ -334,8 +334,6 @@ echo [%date% %time%] Closing splash >> "%LOGFILE%"
 echo done > "{app_dir}\\_splash_done"
 timeout /t 1 /nobreak >nul
 
-echo [%date% %time%] Restarting AutoClicker... >> "%LOGFILE%"
-start "" "{app_dir}\\AutoClicker.exe" --post-update
 echo [%date% %time%] Done >> "%LOGFILE%"
 del "{splash_ps1}" >nul 2>&1
 del "{splash_vbs}" >nul 2>&1

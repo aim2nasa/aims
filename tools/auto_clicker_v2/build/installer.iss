@@ -95,6 +95,12 @@ Root: HKCU; Subkey: "Software\Classes\aims-ac\DefaultIcon"; ValueType: string; V
 Root: HKCU; Subkey: "Software\Classes\aims-ac\shell\open\command"; ValueType: string; ValueName: ""; \
     ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
+[Run]
+; 설치 완료 후 AutoClicker 실행 (사일런트 모드에서도 실행)
+; --post-update 인자로 세션 파일(_restart_auth.json)에서 인증 복원
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--post-update"; \
+    Description: "AIMS AutoClicker 실행"; Flags: nowait postinstall
+
 [UninstallDelete]
 ; 언인스톨 시 런타임 생성 파일도 정리
 Type: filesandordirs; Name: "{app}\output"
