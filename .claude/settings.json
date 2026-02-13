@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py \"$CLAUDE_PROJECT_DIR/scripts/pre_commit_review.py\"",
+            "command": "py \"d:/aims/scripts/pre_commit_review.py\"",
             "timeout": 180,
             "statusMessage": "근본적 해결 검증 + 테스트 실행 중..."
           }
