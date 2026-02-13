@@ -124,11 +124,37 @@ def parse_single_cr_document(db, file_id: str, customer_id: str) -> dict:
             "customer_reviews.source_file_id": ObjectId(file_id)
         })
         if existing_cr:
-            logger.info(f"⏭️ [CR Parsing] 이미 파싱 완료된 CR 건너뛰기: file_id={file_id}")
-            db["files"].update_one(
-                {"_id": doc["_id"]},
-                {"$set": {"cr_parsing_status": "completed"}}
-            )
+            # 이미 파싱됨 → 상품명/displayName 누락 시 보정
+            cr_meta = doc.get("cr_metadata") or {}
+            needs_repair = not cr_meta.get("product_name")
+            if needs_repair and file_path and os.path.exists(file_path):
+                logger.info(f"🔧 [CR Parsing] 상품명 누락 보정: file_id={file_id}")
+                repaired = extract_cr_metadata_from_first_page(file_path)
+                repair_update = {"cr_parsing_status": "completed"}
+                if repaired.get("product_name"):
+                    cr_meta.update(repaired)
+                    repair_update["cr_metadata"] = cr_meta
+                    # displayName 보정
+                    contractor = cr_meta.get("contractor_name", "")
+                    product = repaired["product_name"]
+                    issue = cr_meta.get("issue_date", "")
+                    if contractor and issue:
+                        import re as _re
+                        safe_product = _re.sub(r'[\\/:*?"<>|]', '', product).strip()
+                        if safe_product:
+                            repair_update["displayName"] = f"{contractor}_CRS_{safe_product}_{issue}.pdf"
+                    # customers.customer_reviews 상품명도 보정
+                    db["customers"].update_one(
+                        {"_id": ObjectId(customer_id), "customer_reviews.source_file_id": ObjectId(file_id)},
+                        {"$set": {"customer_reviews.$.product_name": repaired["product_name"]}}
+                    )
+                    logger.info(f"✅ [CR Parsing] 상품명 보정 완료: {repaired['product_name']}")
+                db["files"].update_one({"_id": doc["_id"]}, {"$set": repair_update})
+            else:
+                db["files"].update_one(
+                    {"_id": doc["_id"]},
+                    {"$set": {"cr_parsing_status": "completed"}}
+                )
             return {"success": True, "message": "이미 파싱 완료됨", "skipped": True}
 
         # 3. CR 파서 설정 조회 및 파싱 실행
