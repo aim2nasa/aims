@@ -354,23 +354,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             ar_metadata = file_doc.get("ar_metadata", {}) or {}
             upload_info = file_doc.get("upload", {}) or {}
 
-            # 파일명에서 고객명 추출 (fallback)
-            filename = upload_info.get("originalName", "")
-            customer_name_from_filename = None
-            if filename:
-                import re
-                # 패턴 1: "홍길동보유계약현황202508.pdf" → "홍길동"
-                # 패턴 2: "안영미annual report202508.pdf" → "안영미"
-                # 패턴 3: "김철수Annual Report202508.pdf" → "김철수" (대소문자 무관)
-                patterns = [
-                    r'^(.+?)보유계약현황',
-                    r'^(.+?)[Aa]nnual\s*[Rr]eport',
-                ]
-                for pattern in patterns:
-                    match = re.match(pattern, filename, re.IGNORECASE)
-                    if match:
-                        customer_name_from_filename = match.group(1).strip()
-                        break
+            # 🔴 고객명은 파일명에서 추출 절대 금지! ar_metadata에서만 가져옴
 
             # ar_parsing_status가 없으면 "pending"으로 처리
             ar_status = file_doc.get("ar_parsing_status") or "pending"
@@ -378,7 +362,7 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             pending_report = {
                 "source_file_id": str(file_doc["_id"]),
                 "file_id": str(file_doc["_id"]),
-                "customer_name": ar_metadata.get("customer_name") or customer_name_from_filename,
+                "customer_name": ar_metadata.get("customer_name"),
                 "issue_date": ar_metadata.get("issue_date"),
                 "uploaded_at": upload_info.get("uploaded_at"),
                 "parsed_at": None,  # 파싱 미완료이므로 None

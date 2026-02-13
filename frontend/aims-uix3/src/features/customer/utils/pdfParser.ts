@@ -107,40 +107,25 @@ function extractMetadata(text: string, normalizedText?: string) {
     metadata.issue_date = `${year}-${month}-${day}`;
   }
 
-  // 고객명 추출: "고객님을 위한" 패턴 우선, " 고객" 반복 탐색 fallback
-  // "고객님을 위한"이 가장 정확 (고객센터, 고객님들 등 오매칭 방지)
-  // 영문/한글 무관 지원 (indexOf 기반)
-  const primaryMarker = '고객님을 위한'
-  const primaryIdx = searchText.indexOf(primaryMarker)
-  if (primaryIdx > 0) {
-    const before = searchText.substring(0, primaryIdx).trim()
-    const lastSpace = before.lastIndexOf(' ')
-    let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
-    const parenIdx = name.indexOf('(')
-    if (parenIdx > 0) {
-      name = name.substring(0, parenIdx).trim()
-    }
-    if (name.length >= 2) {
-      metadata.customer_name = name
-    }
-  }
-  // fallback: " 고객" 위치 기반 반복 탐색 (유효한 이름을 찾을 때까지)
-  if (!metadata.customer_name) {
-    let searchStart = 0
-    let gogaekIdx: number
-    while ((gogaekIdx = searchText.indexOf(' 고객', searchStart)) > 0) {
-      const before = searchText.substring(0, gogaekIdx).trim()
-      const lastSpace = before.lastIndexOf(' ')
-      let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
-      const parenIdx = name.indexOf('(')
-      if (parenIdx > 0) {
-        name = name.substring(0, parenIdx).trim()
+  // 고객명 추출: "Annual" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
+  // PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Annual Review Report"
+  // 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
+  // 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+  {
+    const annualIdx = searchText.indexOf('Annual');
+    if (annualIdx > 0) {
+      const before = searchText.substring(0, annualIdx).trim();
+      const goIdx = before.indexOf(' 고');
+      let name = '';
+      if (goIdx > 0) {
+        name = before.substring(0, goIdx);
+      } else {
+        const spaceIdx = before.indexOf(' ');
+        name = spaceIdx > 0 ? before.substring(0, spaceIdx) : before;
       }
-      if (name.length >= 2 && /^[가-힣a-zA-Z]/.test(name)) {
-        metadata.customer_name = name
-        break
+      if (name.length >= 2) {
+        metadata.customer_name = name;
       }
-      searchStart = gogaekIdx + 1
     }
   }
 
@@ -262,57 +247,58 @@ function extractCRMetadata(text: string) {
     }
   }
 
-  // 3. 계약자(고객명) 추출 - 위치 기반 (영문/한글/혼합 이름 지원)
-  // Reference: tools/pdf_sorter/pdf_classifier.py extract_customer_name()
-  const nameCandidates: string[] = []
-  const normalizedForFields = text.replace(/\s+/g, ' ')
-
-  // 방법 1: " 고객" 위치 기반 (join(' ')된 평면 텍스트에서 추출)
-  // "LEEJOOHYUN 고객님을 위한" → "LEEJOOHYUN"
-  // "홍길동 고객님을 위한" → "홍길동"
-  const gogaekIdx = normalizedForFields.indexOf(' 고객')
-  if (gogaekIdx > 0) {
-    const before = normalizedForFields.substring(0, gogaekIdx).trim()
-    const lastSpace = before.lastIndexOf(' ')
-    let name = lastSpace >= 0 ? before.substring(lastSpace + 1) : before
-    // 괄호 제거: "NAME(한글명)" → "NAME"
-    const parenIdx = name.indexOf('(')
-    if (parenIdx > 0) {
-      name = name.substring(0, parenIdx).trim()
-    }
-    if (name.length >= 2) {
-      nameCandidates.push(name)
-    }
-  }
-
-  // 방법 2: "계약자" 필드 + 다음 필드 마커까지 (영문/한글 무관)
-  // Reference: pdf_classifier.py:167-180
-  const contractorIdx = normalizedForFields.indexOf('계약자')
-  if (contractorIdx >= 0) {
-    let after = normalizedForFields.substring(contractorIdx + 3).replace(/^[\s:：]+/, '')
-    const fieldMarkers = ['피보험자', '사망', '증권번호', '보험기간', '보험료']
-    let end = after.length
-    for (const marker of fieldMarkers) {
-      const pos = after.indexOf(marker)
-      if (pos > 0 && pos < end) {
-        end = pos
+  // 3. 계약자(고객명) 추출: "Customer" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
+  // PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Customer Review Service"
+  // 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
+  // 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+  {
+    const normalizedCR = text.replace(/\s+/g, ' ');
+    const customerIdx = normalizedCR.indexOf('Customer');
+    if (customerIdx > 0) {
+      const before = normalizedCR.substring(0, customerIdx).trim();
+      const goIdx = before.indexOf(' 고');
+      let name = '';
+      if (goIdx > 0) {
+        name = before.substring(0, goIdx);
+      } else {
+        const spaceIdx = before.indexOf(' ');
+        name = spaceIdx > 0 ? before.substring(0, spaceIdx) : before;
+      }
+      if (name.length >= 2) {
+        metadata.contractor_name = name;
       }
     }
-    const name = after.substring(0, end).trim()
-    if (name.length >= 2) {
-      nameCandidates.push(name)
-    }
   }
 
-  // 가장 긴 이름 반환 (잘림 방지, Reference: pdf_classifier.py:183)
-  if (nameCandidates.length > 0) {
-    metadata.contractor_name = nameCandidates.sort((a, b) => b.length - a.length)[0]
+  // fallback: "계약자" 필드에서 추출
+  if (!metadata.contractor_name) {
+    const normalizedCR = text.replace(/\s+/g, ' ');
+    const contractorIdx = normalizedCR.indexOf('계약자');
+    if (contractorIdx >= 0) {
+      let after = normalizedCR.substring(contractorIdx + 3);
+      while (after.length > 0 && (after[0] === ':' || after[0] === '：' || after[0] === ' ')) {
+        after = after.substring(1);
+      }
+      const fieldMarkers = ['피보험자', '사망', '증권번호', '보험기간', '보험료'];
+      let end = after.length;
+      for (const marker of fieldMarkers) {
+        const pos = after.indexOf(marker);
+        if (pos > 0 && pos < end) {
+          end = pos;
+        }
+      }
+      const name = after.substring(0, end).trim();
+      if (name.length >= 2) {
+        metadata.contractor_name = name;
+      }
+    }
   }
 
   // 4. 피보험자 추출 (영문/한글 무관 - 필드 마커 기반)
-  const insuredIdx = normalizedForFields.indexOf('피보험자')
+  const normalizedFields = text.replace(/\s+/g, ' ')
+  const insuredIdx = normalizedFields.indexOf('피보험자')
   if (insuredIdx >= 0) {
-    let after = normalizedForFields.substring(insuredIdx + 4).replace(/^[\s:：]+/, '')
+    let after = normalizedFields.substring(insuredIdx + 4).replace(/^[\s:：]+/, '')
     const insuredMarkers = ['사망', '증권번호', '보험기간', '보험료', 'FSR']
     let end = after.length
     for (const marker of insuredMarkers) {
@@ -401,7 +387,7 @@ export async function checkCustomerReviewFromPDF(
     // 4. 메타데이터 추출 (PDF 파싱 = Source of Truth)
     const metadata = extractCRMetadata(text);
 
-    // 5. 파일명 = Fallback: PDF 파싱에서 빈 필드만 파일명으로 보충
+    // 5. 파일명 Fallback: 날짜/증권번호만 보충 (🔴 고객명은 파일명에서 추출 절대 금지!)
     // CRS 파일명 형식: {고객명}_CRS_{상품명}_{증권번호}_{YYYY-MM-DD}.pdf
     const baseName = file.name.replace(/\.pdf$/i, '');
     const fnDateMatch = baseName.match(/_(\d{4}-\d{2}-\d{2})$/);
@@ -411,29 +397,8 @@ export async function checkCustomerReviewFromPDF(
       }
       const withoutDate = baseName.slice(0, fnDateMatch.index);
       const fnPolicyMatch = withoutDate.match(/_(\d{8,15})$/);
-      if (fnPolicyMatch) {
-        if (!metadata.policy_number) {
-          metadata.policy_number = fnPolicyMatch[1];
-        }
-        const withoutPolicy = withoutDate.slice(0, fnPolicyMatch.index);
-        const crsIdx = withoutPolicy.indexOf('_CRS_');
-        if (crsIdx !== -1 && !metadata.contractor_name) {
-          metadata.contractor_name = withoutPolicy.slice(0, crsIdx);
-        }
-      } else {
-        if (!metadata.contractor_name) {
-          const crsFnMatch = baseName.match(/^(.+?)_CRS_/i);
-          if (crsFnMatch) {
-            metadata.contractor_name = crsFnMatch[1];
-          }
-        }
-      }
-    } else {
-      if (!metadata.contractor_name) {
-        const crsFnMatch = baseName.match(/^(.+?)_CRS_/i);
-        if (crsFnMatch) {
-          metadata.contractor_name = crsFnMatch[1];
-        }
+      if (fnPolicyMatch && !metadata.policy_number) {
+        metadata.policy_number = fnPolicyMatch[1];
       }
     }
 

@@ -153,27 +153,23 @@ def extract_customer_info_from_first_page(pdf_path: str, original_filename: str 
         import re
         import os
 
-        # 1. 고객명 추출: 파일명 우선 (Source of Truth - 한글/영문 모두 지원)
-        # 영문 고객명(JUNGCLAIREBOKYUNG 등)은 PDF에서 "자료는" 등으로 오매칭됨
-        if original_filename:
-            base = os.path.splitext(original_filename)[0]
-            fn_match = re.match(r'^(.+?)_AR_(\d{4}-\d{2}-\d{2})$', base)
-            if fn_match:
-                result["customer_name"] = fn_match.group(1).strip()
-                result["issue_date"] = fn_match.group(2)
-                logger.info(f"📄 고객명 추출 (파일명): {result['customer_name']}")
-
-        # Fallback: PDF 텍스트에서 한글 고객명 추출
-        if "customer_name" not in result:
-            customer_pattern1 = r"([가-힣]+)\s*고객님을\s*위한"
-            customer_match1 = re.search(customer_pattern1, first_page_text)
-            if customer_match1:
-                result["customer_name"] = customer_match1.group(1).strip()
+        # 1. 고객명 추출: "Annual" 앞 텍스트에서 추출 (🔴 파일명 사용 절대 금지!)
+        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Annual Review Report"
+        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
+        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+        normalized = ' '.join(first_page_text.split())
+        annual_idx = normalized.find('Annual')
+        if annual_idx > 0:
+            before = normalized[:annual_idx].strip()
+            go_idx = before.find(' 고')
+            if go_idx > 0:
+                name = before[:go_idx]
             else:
-                customer_pattern2 = r"고객님[:\s]*([가-힣]+)"
-                customer_match2 = re.search(customer_pattern2, first_page_text)
-                if customer_match2:
-                    result["customer_name"] = customer_match2.group(1).strip()
+                space_idx = before.find(' ')
+                name = before[:space_idx] if space_idx > 0 else before
+            if len(name) >= 2:
+                result["customer_name"] = name
+                logger.info(f"📄 고객명 추출 (Annual 앞): {name}")
 
         # 2. Report 제목 추출 (예: "Annual Review Report")
         title_pattern = r"(Annual\s+Review\s+Report)"

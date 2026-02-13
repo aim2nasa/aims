@@ -152,16 +152,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         logger.info(f"💾 [Queue Parsing] DB 저장 중...")
         metadata = doc.get("ar_metadata", {})
 
-        # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+        # 📎 파일명에서 날짜만 추출 (🔴 고객명은 파일명에서 추출 절대 금지!)
         original_name = doc.get("upload", {}).get("originalName", "")
         from utils.filename_parser import parse_ar_filename
         fn_meta = parse_ar_filename(original_name)
         if fn_meta:
             if fn_meta.get("issue_date"):
                 metadata["issue_date"] = fn_meta["issue_date"]
-            if fn_meta.get("customer_name"):
-                metadata["customer_name"] = fn_meta["customer_name"]
-            logger.info(f"📎 [Queue Parsing] 파일명 메타데이터 적용: {fn_meta}")
+            logger.info(f"📎 [Queue Parsing] 파일명에서 issue_date 적용: {fn_meta.get('issue_date')}")
 
         # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
         parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
@@ -173,6 +171,10 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
                 parsed_customer_name = extracted["customer_name"]
                 metadata["customer_name"] = parsed_customer_name
                 logger.info(f"📝 [Queue Parsing] PDF에서 customer_name 추출: {parsed_customer_name}")
+            # issue_date도 함께 가져오기
+            if not metadata.get("issue_date") and extracted.get("issue_date"):
+                metadata["issue_date"] = extracted["issue_date"]
+                logger.info(f"📝 [Queue Parsing] PDF에서 issue_date 추출: {extracted['issue_date']}")
 
         # ⭐ AR 파싱은 항상 파일을 업로드한 고객(customer_id 파라미터)에게 저장
         # customer_name은 AR 데이터 내에서 식별용으로만 사용
@@ -375,16 +377,14 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 logger.info(f"💾 [BG Parsing] DB 저장 중...")
                 metadata = doc.get("ar_metadata", {})
 
-                # 📎 파일명에서 메타데이터 추출 (Source of Truth)
+                # 📎 파일명에서 날짜만 추출 (🔴 고객명은 파일명에서 추출 절대 금지!)
                 original_name = doc.get("upload", {}).get("originalName", "")
                 from utils.filename_parser import parse_ar_filename
                 fn_meta = parse_ar_filename(original_name)
                 if fn_meta:
                     if fn_meta.get("issue_date"):
                         metadata["issue_date"] = fn_meta["issue_date"]
-                    if fn_meta.get("customer_name"):
-                        metadata["customer_name"] = fn_meta["customer_name"]
-                    logger.info(f"📎 [BG Parsing] 파일명 메타데이터 적용: {fn_meta}")
+                    logger.info(f"📎 [BG Parsing] 파일명에서 issue_date 적용: {fn_meta.get('issue_date')}")
 
                 # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
                 parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
@@ -396,6 +396,10 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                         parsed_customer_name = extracted["customer_name"]
                         metadata["customer_name"] = parsed_customer_name
                         logger.info(f"📝 [BG Parsing] PDF에서 customer_name 추출: {parsed_customer_name}")
+                    # issue_date도 함께 가져오기
+                    if not metadata.get("issue_date") and extracted.get("issue_date"):
+                        metadata["issue_date"] = extracted["issue_date"]
+                        logger.info(f"📝 [BG Parsing] PDF에서 issue_date 추출: {extracted['issue_date']}")
 
                 # ⭐ AR 파싱은 항상 파일을 업로드한 고객(doc_customer_id)에게 저장
                 # customer_name은 AR 데이터 내에서 식별용으로만 사용

@@ -161,14 +161,25 @@ def extract_cr_metadata_from_first_page(pdf_path: str, original_filename: str = 
 
         result = {}
 
-        # 파일명 = Source of Truth: 파일명에서 고객명 우선 추출 (한글/영문 모두 지원)
-        if original_filename:
-            import os
-            base = os.path.splitext(original_filename)[0]
-            crs_fn_match = re.match(r'^(.+?)_CRS_', base)
-            if crs_fn_match:
-                result["contractor_name"] = crs_fn_match.group(1).strip()
-                logger.info(f"📄 CRS 고객명 추출 (파일명): {result['contractor_name']}")
+        # 🔴 고객명은 PDF 텍스트에서만 추출 (파일명 사용 절대 금지!)
+
+        # 0. 고객명 추출: "Customer" 앞 텍스트에서 추출
+        # PDF 첫 페이지 포맷: "{NAME} 고객님을 위한 Customer Review Service"
+        # 1차: " 고" (공백+고) 앞의 텍스트 = 고객명
+        # 2차: " 고" 없으면 (긴 이름) 첫 공백 앞 텍스트 = 고객명
+        normalized_for_name = ' '.join(first_page_text.split())
+        customer_kw_idx = normalized_for_name.find('Customer')
+        if customer_kw_idx > 0:
+            before = normalized_for_name[:customer_kw_idx].strip()
+            go_idx = before.find(' 고')
+            if go_idx > 0:
+                _cn = before[:go_idx]
+            else:
+                space_idx = before.find(' ')
+                _cn = before[:space_idx] if space_idx > 0 else before
+            if len(_cn) >= 2:
+                result["contractor_name"] = _cn
+                logger.info(f"📄 CRS 고객명 추출 (Customer 앞): {_cn}")
 
         # 1. 상품명 추출
         # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 또는 "무) xxx 종신, 10년납"
@@ -204,19 +215,18 @@ def extract_cr_metadata_from_first_page(pdf_path: str, original_filename: str = 
                 year, month, day = alt_date_match.groups()
                 result["issue_date"] = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-        # 3. 계약자(고객명) 추출: 파일명에서 이미 추출된 경우 스킵
+        # 3. 계약자(고객명) fallback: "계약자" 필드에서 추출
         if "contractor_name" not in result:
-            # PDF 텍스트 Fallback 1: "참씨큐리티 고객님을 위한" (글자 수 제한 없음)
-            customer_name_pattern = r"([가-힣]+)\s*고객님을\s*위한"
-            customer_name_match = re.search(customer_name_pattern, first_page_text)
-            if customer_name_match:
-                result["contractor_name"] = customer_name_match.group(1).strip()
-            else:
-                # PDF 텍스트 Fallback 2: "계약자 : XXX" 패턴 (글자 수 제한 없음)
-                contractor_pattern = r"계약자\s*[:\s]+([가-힣]+)"
-                contractor_match = re.search(contractor_pattern, first_page_text)
-                if contractor_match:
-                    result["contractor_name"] = contractor_match.group(1).strip()
+            normalized_cr = ' '.join(first_page_text.split())
+            contractor_idx = normalized_cr.find('계약자')
+            if contractor_idx >= 0:
+                after = normalized_cr[contractor_idx + 3:]
+                while after and after[0] in (':', '：', ' '):
+                    after = after[1:]
+                space_idx = after.find(' ')
+                _cn = after[:space_idx].strip() if space_idx > 0 else after.strip()
+                if len(_cn) >= 2:
+                    result["contractor_name"] = _cn
 
         # 4. 피보험자 추출 (글자 수 제한 없음 - 법인명 지원)
         # 패턴: "피보험자 : 유진호" 또는 "피보험자: 참씨큐리티"
