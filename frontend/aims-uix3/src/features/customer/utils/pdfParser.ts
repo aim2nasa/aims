@@ -53,9 +53,16 @@ async function extractPdfText(file: File, maxPages = 1): Promise<string> {
     for (let i = 1; i <= pageCount; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ');
+      // PDF.js hasEOL을 사용하여 줄바꿈 보존 (고객명 추출에 줄 구조 필요)
+      const lineSegments: string[][] = [[]];
+      for (const item of textContent.items) {
+        if (!('str' in item)) continue;
+        lineSegments[lineSegments.length - 1].push(item.str);
+        if ((item as Record<string, unknown>)['hasEOL']) {
+          lineSegments.push([]);
+        }
+      }
+      const pageText = lineSegments.map(seg => seg.join(' ')).join('\n');
       texts.push(pageText);
     }
 
