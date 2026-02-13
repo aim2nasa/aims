@@ -182,24 +182,15 @@ def extract_cr_metadata_from_first_page(pdf_path: str, original_filename: str = 
                         logger.info(f"📄 CRS 고객명 추출 (Customer 위 줄): {_cn}")
                 break
 
-        # 1. 상품명 추출
-        # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 또는 "무) xxx 종신, 10년납"
-        # "무)" 또는 "유)" 로 시작하는 상품명
-        # 납입기간: 숫자+년납 (10년납) 또는 한글+납 (전기납, 단기납)
-        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기)(?:[,\s]*(?:\d+년?납?|[가-힣]+납))?)"
-        product_match = re.search(product_pattern, first_page_text)
-        if product_match:
-            product_name = product_match.group(1).strip()
-            # 발행일 이후 텍스트 제거
-            if "발행" in product_name:
-                product_name = product_name.split("발행")[0].strip()
-            result["product_name"] = product_name
-        else:
-            # 대체 패턴: 변액 보험 상품명 (더 정확하게)
-            alt_product_pattern = r"([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)"
-            alt_match = re.search(alt_product_pattern, first_page_text)
-            if alt_match:
-                result["product_name"] = alt_match.group(1).strip()
+        # 1. 상품명 추출: 발행일 바로 윗줄이 상품명
+        발행_idx = first_page_text.find("발행")
+        if 발행_idx > 0:
+            before = first_page_text[:발행_idx].rstrip()
+            nl = before.rfind("\n")
+            if nl >= 0:
+                product_line = before[nl + 1:].strip()
+                if product_line:
+                    result["product_name"] = product_line
 
         # 2. 발행(기준)일 추출
         # 패턴: "발행(기준)일: 2025년 9월 9일" 또는 "발행일: 2025년 9월 9일"

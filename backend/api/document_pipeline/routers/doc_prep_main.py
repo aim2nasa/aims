@@ -745,24 +745,16 @@ async def _detect_and_process_customer_review(
                     customer_name = name
                     logger.info(f"📄 CRS 계약자명 추출 (PDF fallback): {customer_name}")
 
-        # 2-2. 상품명 추출
-        # 패턴: "무) 실버플랜 변액유니버셜V보험(일시납) 종신, 전기납" 등
+        # 2-2. 상품명 추출: 발행일 바로 윗줄이 상품명
         product_name = None
-        product_pattern = r"([무유]\)\s*.+?(?:종신|년납|만기))"
-        product_match = re.search(product_pattern, full_text)
-        if product_match:
-            product_name = product_match.group(1).strip()
-            # 발행일 이후 텍스트 제거
-            if "발행" in product_name:
-                product_name = product_name.split("발행")[0].strip()
-            logger.info(f"📄 CRS 상품명 추출: {product_name}")
-        else:
-            # 대체 패턴: 변액 보험 상품명
-            alt_product_pattern = r"([가-힣]+\s*변액[가-힣]+보험[^\s발계피사]*)"
-            alt_match = re.search(alt_product_pattern, full_text)
-            if alt_match:
-                product_name = alt_match.group(1).strip()
-                logger.info(f"📄 CRS 상품명 추출 (대체): {product_name}")
+        발행_idx = full_text.find("발행")
+        if 발행_idx > 0:
+            before = full_text[:발행_idx].rstrip()
+            nl = before.rfind("\n")
+            if nl >= 0:
+                product_name = before[nl + 1:].strip()
+                if product_name:
+                    logger.info(f"📄 CRS 상품명 추출: {product_name}")
 
         # 2-3. 발행일 추출
         issue_date = None
